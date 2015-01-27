@@ -1,0 +1,18 @@
+{% load tri_tables %}
+
+<div class="table-container">
+
+<table {{ table|table_attrs }}>
+
+    {% include "tri_tables/object_list_header.html" %}
+
+    {% for row in table.data %}
+        {% cycle 'row1' 'row2' as row_color silent %}
+        {% include "tri_tables/table_row.html" %}
+    {% endfor %}
+</table>
+</div>
+
+{% if is_paginated %}
+  <div class="paginator">{% paginator %}</div>
+{% endif %}

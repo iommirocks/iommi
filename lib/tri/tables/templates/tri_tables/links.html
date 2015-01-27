@@ -1,0 +1,24 @@
+{% if links or grouped_links %}
+    <div class="links">
+        {% for category, category_id, links in grouped_links %}
+            <div class="dropdown">
+                <a id="id_dropdown_{{ category_id }}" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
+                    {{ category }} <i class="fa fa-lg fa-caret-down"></i>
+                </a>
+
+                <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_{{ category }}">
+                    {% for link in links %}
+                        <li role="presentation">
+                            <a role="menuitem" href="{{ link.url|escape }}">{{ link.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+
+        {% for link in links %}
+            {% if not forloop.first %} &nbsp; {% endif %}
+            <a href="{{ link.url|escape }}"{% if link.id %} id="{{ link.id }}"{% endif %}>{{ link.title }}</a>
+        {% endfor %}
+    </div>
+{% endif %}

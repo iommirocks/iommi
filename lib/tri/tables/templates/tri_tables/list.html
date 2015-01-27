@@ -1,0 +1,30 @@
+{% load triforms %}
+
+{% if filter_form %}
+    <form method="get" action=".">
+        <div class="compact">
+            {{ filter_form|as_compact }}
+            <div class="submit"><input class="button" type="submit" value="Filter" /></div>
+        </div>
+    </form>
+{% endif %}
+
+{% if bulk_form %}
+    <form method="post" action=".">{% csrf_token %}
+{% endif %}
+
+{% if not table.data and empty_message %}
+    {{ empty_message }}
+{% else %}
+    {% include "tri_tables/table.html" %}
+{% endif %}
+
+{% if bulk_form %}
+        <table class="newforms">
+            {{ bulk_form }}
+        </table>
+        <input type="submit" class="button" value="Bulk change"/>
+    </form>
+{% endif %}
+
+{% include "tri_tables/links.html" %}
