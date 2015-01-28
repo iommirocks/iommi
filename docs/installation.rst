@@ -4,7 +4,7 @@ Installation
 
 At the command line::
 
-    $ easy_install tri.tables
+    $ pip install tri.tables
 
 Or, if you have virtualenvwrapper installed::
 

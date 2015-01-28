@@ -5,17 +5,16 @@ Contents:
 =========
 
 .. include:: ../README.rst
-    :start-line: 16
+    :start-line: 3
 
 .. toctree::
    :maxdepth: 2
 
    installation
-   usage
-   tri.tables
-   contributing
-   authors
+   api
    history
+   authors
+   contributing
 
 Indices and tables
 ==================

@@ -17,11 +17,6 @@ from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatte
 
 
 class Struct(object):
-    """A dict-like object where keys can also be accessed as attributes.
-
-    Note: Raises KeyError
-    """
-
     def __init__(self, *args, **kwargs):
         if args and len(args) != 1:
             raise Exception("Unexpected number of non kwargs, expected 0 or 1 got %s" % (len(args)))
@@ -92,6 +87,14 @@ def prepare_headers(request, headers):
 
 
 def order_by_on_list(objects, order_field, is_desc):
+    """
+    Utility function to sort objects django-style even for non-query set collections
+
+    :param objects: list of objects to sort
+    :param order_field: field name, follows django conventions, so "foo__bar" means `foo.bar`, can be a callable.
+    :param is_desc: reverse the sorting
+    :return:
+    """
     if callable(order_field):
         objects.sort(key=order_field, reverse=is_desc)
         return
@@ -116,6 +119,9 @@ def order_by_on_list(objects, order_field, is_desc):
 
 
 class Column(Struct):
+    """
+    Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
+    """
 
     counter = 0
 
@@ -143,13 +149,26 @@ class Column(Struct):
                  cell_url=None,
                  cell_url_title=None,):
         """
-        @param cell_template: name of a template file, gets passed one argument: the row
-        @param cell_value: string or callable with one argument: the row
-        @param cell_format: string or callable with one argument: the value
-        @param cell_attrs: dict of attr name to callable with one argument: the row
-        @param cell_url: callable with one argument: the row
-        @param cell_url_title: callable with one argument: the row
-        @return:
+        :param name: the name of the attribute, follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
+        :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
+        :param css_class: CSS class of the header
+        :param url: URL of the header. This should only be used if "sorting" is off.
+        :param title: title/tool tip of header
+        :param show: set this to False to hide the column
+        :param sortable: set this to False to disable sorting on this column
+        :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
+        :param filter: set to false to disable filtering of this column.
+        :param filter_show: set to false to hide the filtering component for this column. Sometimes it's useful to allow filtering via the URL to get direct linking but you don't want the GUI added.
+        :param filter_field: a django field to use for the filter GUI. Use this if the default isn't what you wanted.
+        :param filter_type: by default the filtering is exact, but you can use `Column.CONTAINS` to make it a contains match and `Column.ICONTAINS` for case insensitive contains matching.
+        :param bulk: enable bulk editing for this column
+        :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
+        :param cell_template: name of a template file. The template gets two arguments: `row` and `user`.
+        :param cell_value: string or callable with one argument: the row. This is used to extract which data to display from the object.
+        :param cell_format: string or callable with one argument: the value. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
+        :param cell_attrs: dict of attr name to callable with one argument: the row
+        :param cell_url: callable with one argument: the row
+        :param cell_url_title: callable with one argument: the row
         """
         self.table = None  # this member is filled in by the table after it is constructed
 
@@ -197,7 +216,12 @@ class Column(Struct):
     })
 
     @staticmethod
-    def icon(icon, is_report, icon_title='', show=True, **kwargs):
+    def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
+        """
+        Shortcut to create font awesome-style icons.
+
+        :param icon: the font awesome name of the icon
+        """
         params = dict(
             name='',
             display_name='',
@@ -212,7 +236,10 @@ class Column(Struct):
         return Column(**params)
 
     @staticmethod
-    def edit(is_report, **kwargs):
+    def edit(is_report=False, **kwargs):
+        """
+        Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell_url to override.
+        """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'edit/',
         )
@@ -220,7 +247,10 @@ class Column(Struct):
         return Column.icon('pencil-square-o', is_report, 'Edit', **params)
 
     @staticmethod
-    def delete(is_report, **kwargs):
+    def delete(is_report=False, **kwargs):
+        """
+        Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell_url to override.
+        """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'delete/',
         )
@@ -228,7 +258,10 @@ class Column(Struct):
         return Column.icon('trash-o', is_report, 'Delete', **params)
 
     @staticmethod
-    def download(is_report, **kwargs):
+    def download(is_report=False, **kwargs):
+        """
+        Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell_url to override.
+        """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'download/',
             cell_value=lambda row: getattr(row, 'pk', False),
@@ -237,7 +270,10 @@ class Column(Struct):
         return Column.icon('download', is_report, 'Download', **params)
 
     @staticmethod
-    def run(is_report, show=True, **kwargs):
+    def run(is_report=False, show=True, **kwargs):
+        """
+        Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell_url to override.
+        """
         params = dict(
             name='',
             title='Run',
@@ -252,7 +288,13 @@ class Column(Struct):
         return Column(**params)
 
     @staticmethod
-    def select(is_report, checkbox_name='pk', show=True, checked=lambda x: False, **kwargs):
+    def select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, **kwargs):
+        """
+        Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
+
+        :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
+        :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
+        """
         params = dict(
             name='__select__',
             title='Select all',
@@ -267,7 +309,10 @@ class Column(Struct):
         return Column(**params)
 
     @staticmethod
-    def check(is_report, **kwargs):
+    def check(is_report=False, **kwargs):
+        """
+        Shortcut to render booleans as a check mark if true or blank if false.
+        """
         def render_icon(value):
             if callable(value):
                 value = value()
@@ -282,6 +327,9 @@ class Column(Struct):
 
     @staticmethod
     def link(**kwargs):
+        """
+        Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
+        """
         def url(row):
             r = lookup_attribute(kwargs['name'], row)
             return r.get_absolute_url() if r else ''
@@ -294,6 +342,9 @@ class Column(Struct):
 
     @staticmethod
     def number(**kwargs):
+        """
+        Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
+        """
         if 'cell_attrs' not in kwargs:
             kwargs['cell_attrs'] = {}
         if 'class' not in kwargs['cell_attrs']:
@@ -344,7 +395,7 @@ class BaseTable(object):
                     self.data = self.data.order_by(*order_args)
         self.headers = prepare_headers(request, self.columns)
 
-        # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the gruping
+        # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         header_groups = [Struct(display_name=g, sortable=False, colspan=len(list(l))) for g, l in groupby(self.headers, key=lambda header: header.get('group', id(header)))]
         for x in header_groups:
             if type(x.display_name) not in (str, unicode):
@@ -394,10 +445,36 @@ class DeclarativeColumnsMeta(type):
 
 
 class Table(BaseTable):
+    """
+    Describe a table. Example:
+
+    .. code:: python
+
+        class FooTable(Table):
+            a = Column()
+            b = Column()
+
+    """
+
+    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=True):
+        """
+        :param data: a list of QuerySet of objects
+        :param columns: (use this only when not using the declarative style) a list of Column objects
+        :param attrs: dict of strings to string of HTML attributes to apply to the table
+        :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
+        :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
+        :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
+        :param sortable: set this to false to turn off sorting for all columns
+        """
+        super(Table, self).__init__(data, columns, attrs, row_attrs, bulk_filter, bulk_exclude, sortable)
+
     __metaclass__ = DeclarativeColumnsMeta
 
 
 class Link(Struct):
+    """
+    Class that describes links to add underneath the table.
+    """
     def __init__(self, title, url, show=True, group=None, id=None):
         super(Link, self).__init__(title=title, url=url, show=show, group=group, id=id)
 
@@ -563,6 +640,19 @@ def render_table(request,
                  paginator=None,
                  show_hits=False,
                  hit_label='Items'):
+    """
+    Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
+
+    :param request: the request object. This is set on the table object so that it is available for lambda expressions.
+    :param table: an instance of Table
+    :param links: a list of instances of Link
+    :param context: dict of extra context parameters
+    :param template_name: if you need to render the table differently you can override this parameter
+    :param blank_on_empty: turn off the displaying of `{{ empty_message }}` in the template when the list is empty
+    :param show_hits: Display how many items there are total in the paginator.
+    :param hit_label: Label for the show_hits display.
+    :return: a string with the rendered HTML table
+    """
     if not context:
         context = {}
     context['filter_form'] = render_table_filters(request, table)
@@ -617,4 +707,7 @@ def render_table(request,
 
 
 def render_table_to_response(*args, **kwargs):
+    """
+    Shortcut for `HttpResponse(render_table(*args, **kwargs))`
+    """
     return HttpResponse(render_table(*args, **kwargs))
