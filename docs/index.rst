@@ -11,6 +11,7 @@ Contents:
    :maxdepth: 2
 
    installation
+   usage
    api
    history
    authors
