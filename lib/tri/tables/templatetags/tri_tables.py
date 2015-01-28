@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db.models import Manager
 from django.db.models.query import QuerySet
+from django.template.loader import render_to_string
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django import template
@@ -156,3 +157,10 @@ def paginator(context, adjacent_pages=6):
         "hit_label": context["hit_label"],
     }
 register.inclusion_tag("paginator.html", takes_context=True)(paginator)
+
+@register.filter()
+def as_compact(form):
+    r = []
+    for field in form.fields:
+        r.append(render_to_string('compact_form_row.html', {'field': form[field]}))
+    return mark_safe('\n'.join(r))
