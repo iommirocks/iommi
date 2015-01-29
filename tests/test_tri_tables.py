@@ -84,7 +84,7 @@ def test_render(table):
 
     assert expected == actual
 
-@pytest.mark.skipif(True, reason="Not fixed yet...")  # @todo figure out where the delete column disappears to.
+
 def test_output():
 
     is_report = False
@@ -102,7 +102,8 @@ def test_output():
 
     data = [
         Struct(foo="Hello räksmörgås ><&>",
-               bar=17),
+               bar=17,
+               get_absolute_url=lambda: '/somewhere/'),
     ]
 
     expected_html = """\
@@ -130,8 +131,8 @@ def test_output():
   <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
   <td class="rj"> 17 </td>
   <td> <i class="fa fa-lg fa-history"> </i> </td>
-  <td> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </td>
-  <td> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </td>
+  <td> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </a> </td>
+  <td> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
  </tr>
 </table>
 """
