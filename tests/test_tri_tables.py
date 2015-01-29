@@ -19,7 +19,7 @@ def _check_html(table, expected_html):
     assert prettified_expected == prettified_actual
 
 
-def data():
+def get_data():
     return [
         Struct(foo="Hello", bar=17),
         Struct(foo="world!", bar=42)
@@ -33,7 +33,7 @@ def explicit_table():
         Column.number(name="bar"),
     ]
 
-    return Table(data(), columns, attrs=dict(id='table_id'))
+    return Table(get_data(), columns, attrs=dict(id='table_id'))
 
 
 def declarative_table():
@@ -46,7 +46,7 @@ def declarative_table():
         foo = Column()
         bar = Column.number()
 
-    return TestTable(data())
+    return TestTable(get_data())
 
 
 @pytest.mark.parametrize('table', [
@@ -115,9 +115,9 @@ def test_output():
    <th class="subheader first_column ">
     <a href="?order=bar"> Bar </a>
    </th>
-   <th class="subheader first_column first_column"> </th>
-   <th class="subheader " title="Edit"> </th>
-   <th class="subheader first_column first_column" title="Delete"> </th>
+   <th class="thin subheader first_column first_column"> </th>
+   <th class="thin subheader " title="Edit"> </th>
+   <th class="thin subheader first_column first_column" title="Delete"> </th>
   </tr>
  </thead>
  <tr class="row1 ">
@@ -129,3 +129,108 @@ def test_output():
  </tr>
 </table>
 """)
+
+
+def test_name_traversal():
+    class TestTable(Table):
+        foo__bar = Column(sortable=False)
+
+    data = [Struct(foo=Struct(bar="bar"))]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column">Bar</th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>bar</td>
+      </tr>
+    </table>""")
+
+
+def test_display_name():
+    class TestTable(Table):
+        foo = Column(display_name="Bar", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column">Bar</th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_css_class():
+    class TestTable(Table):
+        foo = Column(css_class="some_class", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="some_class subheader first_column first_column">Foo</th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_header_url():
+    class TestTable(Table):
+        foo = Column(url="/some/url", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column">
+          <a href="/some/url">Foo</a>
+        </th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_title():
+    class TestTable(Table):
+        foo = Column(title="Some title", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column" title="Some title"> Foo </th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_show():
+    class TestTable(Table):
+        foo = Column(sortable=False)
+        bar = Column(sortable=False, show=False)
+
+    data = [Struct(foo="foo", bar="bar")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column"> Foo </th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
