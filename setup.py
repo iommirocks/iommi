@@ -2,10 +2,25 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Command
 
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
+
+
+class PyTest(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import sys, subprocess
+        errno = subprocess.call([sys.executable, 'runtests.py'])
+        raise SystemExit(errno)
 
 
 def read_reqs(name):
@@ -50,4 +65,5 @@ setup(
         'Programming Language :: Python :: 3.3',
     ],
     test_suite='tests',
+    cmdclass={'test': PyTest},
 )
