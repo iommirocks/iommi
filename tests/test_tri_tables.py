@@ -1,16 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import pytest
-
-if sys.version_info >= (3, 0):
-    # @todo figure out why...
-    pytest.skip("requires python2")
-
 from bs4 import BeautifulSoup
 from django.test import RequestFactory
 from tri.tables import render_table_to_response, Struct, Table, Column
+
+
+def _check_html(table, expected_html):
+    """
+    Verify that the table renders to the expected markup, modulo formatting
+    """
+    actual_html = str(render_table_to_response(request=RequestFactory().request(), table=table))
+
+    prettified_actual = BeautifulSoup(actual_html).find('table').prettify().strip()
+    prettified_expected = BeautifulSoup(expected_html).find('table').prettify().strip()
+
+    assert prettified_expected == prettified_actual
+
+
+def get_data():
+    return [
+        Struct(foo="Hello", bar=17),
+        Struct(foo="world!", bar=42)
+    ]
 
 
 def explicit_table():
@@ -20,12 +33,7 @@ def explicit_table():
         Column.number(name="bar"),
     ]
 
-    data = [
-        Struct(foo="Hello", bar=17),
-        Struct(foo="world!", bar=42)
-    ]
-
-    return Table(data, columns, attrs=dict(id='table_id'))
+    return Table(get_data(), columns, attrs=dict(id='table_id'))
 
 
 def declarative_table():
@@ -38,12 +46,7 @@ def declarative_table():
         foo = Column()
         bar = Column.number()
 
-    data = [
-        Struct(foo="Hello", bar=17),
-        Struct(foo="world!", bar=42)
-    ]
-
-    return TestTable(data)
+    return TestTable(get_data())
 
 
 @pytest.mark.parametrize('table', [
@@ -52,13 +55,7 @@ def declarative_table():
 ])
 def test_render(table):
 
-    request = RequestFactory().request()
-
-    result = str(render_table_to_response(request=request, table=table))
-
-    actual = BeautifulSoup(result).find('table').prettify().strip()
-
-    expected_html = """\
+    _check_html(table, """\
 <table class="listview" id="table_id">
  <thead>
   <tr>
@@ -78,11 +75,7 @@ def test_render(table):
   <td> world! </td>
   <td class="rj"> 42 </td>
  </tr>
-</table>"""
-
-    expected = BeautifulSoup(expected_html).find('table').prettify().strip()
-
-    assert expected == actual
+</table>""")
 
 
 def test_output():
@@ -106,7 +99,7 @@ def test_output():
                get_absolute_url=lambda: '/somewhere/'),
     ]
 
-    expected_html = """\
+    _check_html(TestTable(data), """\
 <table class="listview" id="table_id">
  <thead>
  <tr>
@@ -122,9 +115,9 @@ def test_output():
    <th class="subheader first_column ">
     <a href="?order=bar"> Bar </a>
    </th>
-   <th class="subheader first_column first_column"> </th>
-   <th class="subheader " title="Edit"> </th>
-   <th class="subheader first_column first_column" title="Delete"> </th>
+   <th class="thin subheader first_column first_column"> </th>
+   <th class="thin subheader " title="Edit"> </th>
+   <th class="thin subheader first_column first_column" title="Delete"> </th>
   </tr>
  </thead>
  <tr class="row1 ">
@@ -135,14 +128,109 @@ def test_output():
   <td> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
  </tr>
 </table>
-"""
+""")
 
-    request = RequestFactory().request()
 
-    result = str(render_table_to_response(request=request, table=TestTable(data)))
+def test_name_traversal():
+    class TestTable(Table):
+        foo__bar = Column(sortable=False)
 
-    actual = BeautifulSoup(result).find('table').prettify().strip()
+    data = [Struct(foo=Struct(bar="bar"))]
 
-    expected = BeautifulSoup(expected_html).find('table').prettify().strip()
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column">Bar</th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>bar</td>
+      </tr>
+    </table>""")
 
-    assert expected == actual
+
+def test_display_name():
+    class TestTable(Table):
+        foo = Column(display_name="Bar", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column">Bar</th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_css_class():
+    class TestTable(Table):
+        foo = Column(css_class="some_class", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="some_class subheader first_column first_column">Foo</th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_header_url():
+    class TestTable(Table):
+        foo = Column(url="/some/url", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column">
+          <a href="/some/url">Foo</a>
+        </th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_title():
+    class TestTable(Table):
+        foo = Column(title="Some title", sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column" title="Some title"> Foo </th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_show():
+    class TestTable(Table):
+        foo = Column(sortable=False)
+        bar = Column(sortable=False, show=False)
+
+    data = [Struct(foo="foo", bar="bar")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr><th class="subheader first_column first_column"> Foo </th></tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+      </tr>
+    </table>""")

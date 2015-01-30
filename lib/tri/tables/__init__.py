@@ -29,7 +29,7 @@ class Struct(object):
         return u"Struct(%s)" % unicode(self.__dict__)
 
     def __repr__(self):
-        return "Struct(%s)" % str(self.__dict__)
+        return "%s(%s)" % (self.__class__.__name__, str(self.__dict__))
 
     def __setitem__(self, key, value):
         self.__dict__[key] = value
@@ -81,7 +81,8 @@ def prepare_headers(request, headers):
             header['display_name'] = force_unicode(header['name'].rsplit('__', 1)[-1]).replace("_", " ").capitalize()
         if header.get('name') in ('edit', 'delete'):
             header['display_name'] = ''
-            header['css_class'] = 'thin'
+            if not header.get('css_class'):
+                header['css_class'] = 'thin'
         header['show'] = header.get('show', True)
     return headers
 
@@ -188,7 +189,7 @@ class Column(Struct):
         values = {k: v for k, v in dict(
             name=name,
             display_name=display_name,
-            css_class=css_class,
+            css_class=CssClass(css_class),
             url=url,
             title=title,
             show=show,
@@ -396,27 +397,37 @@ class BaseTable(object):
         self.headers = prepare_headers(request, self.columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
-        header_groups = [Struct(display_name=g, sortable=False, colspan=len(list(l))) for g, l in groupby(self.headers, key=lambda header: header.get('group', id(header)))]
+        header_groups = [Struct(display_name=g, sortable=False, colspan=len(list(l)), css_class=CssClass('superheader')) for g, l in groupby(self.headers, key=lambda header: header.get('group', id(header)))]
         for x in header_groups:
             if type(x.display_name) not in (str, unicode):
                 x.display_name = ''
         if all([x.display_name == '' for x in header_groups]):
             header_groups = []
 
-        for x in header_groups:
-            x.css_class = 'superheader'
-
         last_group = None
         for x in self.headers:
-            x.css_class = 'subheader'
+            x.css_class.add('subheader')
             if x.get('is_sorting'):
-                x.css_class += ' sorted_column'
+                x.css_class.add('sorted_column')
             if x.get('group') != last_group or x.get('group') is None:
-                x.css_class += ' first_column'
+                x.css_class.add('first_column')
             last_group = x.get('group')
         self.header_levels = [header_groups, self.headers] if len(header_groups) > 1 else [self.headers]
 
         return self.headers, self.header_levels
+
+
+class CssClass(object):
+
+    def __init__(self, s):
+        self.parts = s.split(' ') if s else []
+
+    def add(self, c):
+        if c not in self.parts:
+            self.parts.append(c)
+
+    def __str__(self):
+        return " ".join(self.parts)
 
 
 def get_declared_columns(bases, attrs):
