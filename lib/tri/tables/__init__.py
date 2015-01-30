@@ -551,6 +551,7 @@ def object_list_context(request,
                 raise Http404
 
         base_context.update({
+            'request': request,
             'is_paginated': paginator.num_pages > 1,
             'results_per_page': paginate_by,
             'has_next': paginator.num_pages > page,
