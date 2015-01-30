@@ -6,57 +6,37 @@ tri.tables is a library to make full featured HTML tables easily.
 Simple example
 --------------
 
-.. code:: python
+.. literalinclude:: ../examples/examples/views.py
+   :pyobject: readme_example_1
 
-    # Say I have a class...
-    class Foo(object):
-        def __init__(self, i):
-            self.a = i
-            self.b = 'foo'
-            self.c = (1, 2, 3, 4)
+And this is what you get:
 
-    # and a list of them
-    foos = [Foo(i) for i in xrange(10)]
-
-    # I can declare a table:
-    class FooTable(Table):
-        a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
-        b = Column()
-        last_c = Column(cell_format value: value[-1])  # We want to show the last value of the tuple, not the entire thing
-
-    # now to get an HTML table:
-    html_table = render_table(request, FooTable(foos))
+.. image:: table_example_1.png
 
 Fancy django features
 ---------------------
 
-.. code:: python
+Say I have some models:
 
-    # Say I have some models:
-    class Foo(models.Model):
-        a = models.IntegerField()
+.. literalinclude:: ../examples/examples/models.py
+   :pyobject: Foo
+.. literalinclude:: ../examples/examples/models.py
+   :pyobject: Bar
 
-    class Bar(models.Model):
-        b = models.ForeignKey(Foo)
-        c = models.CharField(max_length=255)
+Now I can display a list of Bars in a table like this:
 
-    # ...I can do this:
-    class BarTable(Table):
-        select = Column.select()  # Shortcut for creating checkboxes to select rows
-        b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-        c = Column(bulk=True)  # The form is created automatically
+.. literalinclude:: ../examples/examples/views.py
+   :pyobject: readme_example_2
 
-    html_table = render_table(request, BarTable(Bar.objects.all())
-
-    # ...and now I have a paginated and sortable table with bulk editing on the "c" column!
-
-This only scratches the surface. Some other features include:
+This gives me a view with filtering, sorting, bulk edit and pagination and this only scratches the surface. Some other features include:
 
 * automatic rowspan
 * filtering
 * grouping of headers
 * link creation
 * templates for cells
+
+All these examples and a bigger example using many more features can be found in the examples django project.
 
 Read the full documentation for more.
 

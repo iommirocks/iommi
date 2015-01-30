@@ -603,7 +603,7 @@ def set_display_none(rowspan_by_row):
 
 
 def render_table_filters(request, table):
-    filter_fields = [(col.name, col.get('filter_field'), col.get('filter_type')) for col in table.columns if col.filter and col.filter_show]
+    filter_fields = [(col.name, col.get('filter_field'), col.get('filter_type')) for col in table.columns if col.filter]
     if request.method == 'GET' and filter_fields and hasattr(table.data, 'model'):
         for name, _, filter_type in filter_fields:
             if name in request.GET and request.GET[name]:
@@ -612,16 +612,23 @@ def render_table_filters(request, table):
                 else:
                     table.data = table.data.filter(**{name: request.GET[name]})
 
-        class FilterForm(forms.ModelForm):
-            class Meta:
-                model = table.data.model
-                fields = [x[0] for x in filter_fields]
+        filter_fields_with_ui = [(col.name, col.get('filter_field'), col.get('filter_type')) for col in table.columns if col.filter and col.filter_show]
+        class FilterForm(forms.Form):
+            # class Meta:
+            #     fields = [x[0] for x in filter_fields_with_ui if '__' not in x[0]]
 
             def __init__(self, *args, **kwargs):
                 super(FilterForm, self).__init__(*args, **kwargs)
-                for name, filter_field, _ in filter_fields:
+                for name, filter_field, _ in filter_fields_with_ui:
                     if filter_field:
                         self.fields[name] = filter_field
+                    else:
+                        model = table.data.model
+                        last_name = name.split('__')[-1]
+                        for x in name.split('__')[:-1]:
+                            model = getattr(model, x).get_queryset().model
+                        field_by_name = forms.fields_for_model(model)
+                        self.fields[name] = field_by_name[last_name]
 
                 for field_name, field in self.fields.items():
                     if isinstance(field, fields.BooleanField):
@@ -634,6 +641,7 @@ def render_table_filters(request, table):
                     field.null = True
                     if hasattr(field, 'choices') and type(field.choices) in (list, tuple) and field.choices[0] != ('', ''):
                         field.choices = [('', '')] + field.choices
+
         filter_form = FilterForm(request.GET)
         filter_form._errors = {}
         return filter_form

@@ -1,0 +1,32 @@
+{% spaceless %}
+<span class="paginate-pages" onclick="Paginator.jumpToPage({{ pages }}, '{{ extra|escape }}')" title="Page Jump">{{ pages }} Page{{ pages|pluralize }}</span>
+{% if show_first %}<a href="?{{ extra|escape }}page=1" title="First Page"><span class="paginate-first">&laquo;</span></a>{% endif %}
+{% if has_previous %}<a href="?{{ extra|escape }}page={{ previous }}" title="Previous Page"><span class="paginate-previous">&lt;</span></a>{% endif %}
+{% for num in page_numbers %}
+  {% ifequal num page %}
+    <span class="paginate-current" title="Current Page">{{ num }}</span>
+  {% else %}
+    <a href="?{{ extra|escape }}page={{ num }}" title="Page {{ num }}"><span class="paginate-link">{{ num }}</span></a>
+  {% endifequal %}
+{% endfor %}
+{% if has_next %}<a href="?{{ extra|escape }}page={{ next }}" title="Next Page"><span class="paginate-next">&gt;</span></a>{% endif %}
+{% if show_last %}<a href="?{{ extra|escape }}page={{ pages }}" title="Last Page"><span class="paginate-last">&raquo;</span></a>{% endif %}
+{% if show_hits %}<span class="paginate-hits">{{ hits }} {{ hit_label }}</span>{% endif %}
+{% endspaceless %}
+
+<script type="text/javascript">
+//<![CDATA[
+var Paginator =
+{
+  jumpToPage: function(pages, extra) {
+    var page = prompt("Enter a number between 1 and " + pages + " to jump to that page", "");
+    if (page != undefined) {
+      page = parseInt(page, 10);
+      if (!isNaN(page) && page > 0 && page <= pages) {
+        window.location.href = "?" + extra + "page=" + page;
+      }
+    }
+  }
+};
+//]]>
+</script>
