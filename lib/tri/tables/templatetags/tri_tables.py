@@ -9,6 +9,7 @@ from django import template
 
 register = template.Library()
 
+
 @register.filter
 def table_row_css_class(obj, table):
     """
@@ -46,20 +47,22 @@ def header_row_attrs(obj, attrs):
     if not attrs:
         return ''
 
-    def evaluate(attr, value):
+    def evaluate(item):
+        attr, value = item
         value = escape(value(obj) if callable(value) else value)
         return '%s="%s"' % (attr, value) if value else ''
 
-    return mark_safe(' ' + ' '.join([evaluate(attr, value) for attr, value in attrs.items()]))
+    return mark_safe(' ' + ' '.join(map(evaluate, attrs.items())))
 
 
 @register.filter
 def table_attrs(table):
-    def evaluate(attr, value):
+    def evaluate(item):
+        attr, value = item
         value = escape(value() if callable(value) else value)
         return '%s="%s"' % (attr, value) if value else ''
 
-    return mark_safe(' ' + ' '.join([evaluate(attr, value) for attr, value in table.attrs.items()]))
+    return mark_safe(' ' + ' '.join(map(evaluate, table.attrs.items())))
 
 
 def lookup_attribute(config, obj):
@@ -162,12 +165,14 @@ def paginator(context, adjacent_pages=6):
     }
 register.inclusion_tag("tri_tables/paginator.html", takes_context=True)(paginator)
 
+
 @register.filter()
 def as_compact(form):
     r = []
     for field in form.fields:
         r.append(render_to_string('tri_tables/compact_form_row.html', {'field': form[field]}))
     return mark_safe('\n'.join(r))
+
 
 @register.filter(name='is_checkbox')
 def is_checkbox(field):

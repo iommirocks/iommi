@@ -175,7 +175,6 @@ class Column(Struct):
             assert cell_value is None or callable(cell_value)
             orig_cell_value = cell_value
             cell_value = lambda row: dict(row=row,
-                                          #request=request,
                                           user=self.table.request.user if self.table.request else None,
                                           **(orig_cell_value(row) if orig_cell_value is not None else {}))
             cell_format = lambda bindings: render_to_string(cell_template, bindings)
@@ -370,6 +369,7 @@ class BaseTable(object):
         self.bulk_filter = bulk_filter or {}
         self.bulk_exclude = bulk_exclude or {}
 
+    # noinspection PyProtectedMember
     def prepare_headers_and_sort(self, request):
         order = request.GET.get('order', None)
         if order is not None:
@@ -435,6 +435,7 @@ class CssClass(object):
         return " ".join(self.parts)
 
 
+# noinspection PyProtectedMember
 def get_declared_columns(bases, attrs):
 
     column_tuples = [(name, attrs.pop(name)) for name, obj in attrs.items() if isinstance(obj, Column)]
@@ -453,10 +454,10 @@ def get_declared_columns(bases, attrs):
 
 
 class DeclarativeColumnsMeta(type):
-    def __new__(cls, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs):
         attrs['_columns'] = get_declared_columns(bases, attrs)
         attrs['_meta'] = attrs.get('Meta', None)
-        new_class = super(DeclarativeColumnsMeta, cls).__new__(cls, name, bases, attrs)
+        new_class = super(DeclarativeColumnsMeta, mcs).__new__(mcs, name, bases, attrs)
         return new_class
 
 
@@ -516,8 +517,8 @@ def object_list_context(request,
     if links is not None:
         links = [link for link in links if link.show and link.url]
 
-        grouped_links = groupby((link for link in links if link.group is not None), key=lambda link: link.group)
-        grouped_links = [(g, slugify(g), list(l)) for g, l in grouped_links]  # because django templates are crap!
+        grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)
+        grouped_links = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # because django templates are crap!
 
         links = [link for link in links if link.group is None]
 
@@ -619,6 +620,7 @@ def render_table_filters(request, table):
                     table.data = table.data.filter(**{name: request.GET[name]})
 
         filter_fields_with_ui = [(col.name, col.get('filter_field'), col.get('filter_type')) for col in table.columns if col.filter and col.filter_show]
+
         class FilterForm(forms.Form):
             # class Meta:
             #     fields = [x[0] for x in filter_fields_with_ui if '__' not in x[0]]
