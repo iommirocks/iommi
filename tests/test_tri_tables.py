@@ -234,3 +234,25 @@ def test_show():
         <td>foo</td>
       </tr>
     </table>""")
+
+
+def test_attr():
+    class TestTable(Table):
+        foo = Column(sortable=False)
+        bar = Column(attr='foo', sortable=False)
+
+    data = [Struct(foo="foo")]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader first_column first_column"> Foo </th>
+          <th class="subheader first_column "> Bar </th>
+        </tr>
+      </thead>
+      <tr class="row1 ">
+        <td>foo</td>
+        <td>foo</td>
+      </tr>
+    </table>""")

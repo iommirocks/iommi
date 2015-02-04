@@ -121,6 +121,7 @@ class Column(Struct):
     # noinspection PyShadowingBuiltins
     def __init__(self,
                  name=None,
+                 attr=None,
                  display_name=None,
                  css_class=None,
                  url=None,
@@ -142,7 +143,8 @@ class Column(Struct):
                  cell_url=None,
                  cell_url_title=None,):
         """
-        :param name: the name of the attribute, follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
+        :param name: the name of the column
+        :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
         :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
         :param css_class: CSS class of the header
         :param url: URL of the header. This should only be used if "sorting" is off.
@@ -180,6 +182,7 @@ class Column(Struct):
 
         values = {k: v for k, v in dict(
             name=name,
+            attr=attr,
             display_name=display_name,
             css_class=CssClass(css_class),
             url=url,
@@ -324,7 +327,7 @@ class Column(Struct):
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
         def url(row):
-            r = lookup_attribute(kwargs['name'], row)
+            r = lookup_attribute(kwargs, row)
             return r.get_absolute_url() if r else ''
         params = dict(
             cell_url=url,
