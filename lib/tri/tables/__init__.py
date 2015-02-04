@@ -16,47 +16,39 @@ from django.utils.safestring import mark_safe
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, header_cell_formatter
 
 
-class Struct(object):
-    def __init__(self, *args, **kwargs):
-        if args and len(args) != 1:
-            raise Exception("Unexpected number of non kwargs, expected 0 or 1 got %s" % (len(args)))
-        elif args:
-            self.__dict__.update(args[0])
-        if kwargs:
-            self.__dict__.update(kwargs)
+class Struct(dict):
+    """
+    A dict-like object where keys can also be accessed as attributes.
+    """
 
-    def __unicode__(self):
-        return u"Struct(%s)" % unicode(self.__dict__)
+    __slots__ = ()
 
-    def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, str(self.__dict__))
+    def __getattribute__(self, k):
+        try:
+            return self[k]
+        except KeyError:
+            try:
+                return object.__getattribute__(self, k)
+            except AttributeError:
+                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, k))
 
-    def __setitem__(self, key, value):
-        self.__dict__[key] = value
+    def __setattr__(self, k, v):
+        self[k] = v
 
-    def __getitem__(self, key):
-        return self.__dict__[key]
-
-    def __contains__(self, key):
-        return key in self.__dict__
+    def __delattr__(self, k):
+        try:
+            del self[k]
+        except KeyError:
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, k))
 
     def copy(self):
-        return Struct(**self.__dict__)
+        return type(self)(**self)
 
-    def dict(self):
-        return self.__dict__
+    def __unicode__(self):
+        return u'%s(%s)' % (self.__class__.__name__, u', '.join([u'%s=%r' % (key, self[key]) for key in sorted(self.keys())]))
 
-    def get(self, key, default=None):
-        return self.__dict__.get(key, default)
-
-    def __cmp__(self, other):
-        if isinstance(other, Struct):
-            return cmp(self.__dict__, other.__dict__)
-        else:
-            return cmp(self.__dict__, other)
-
-    def items(self):
-        return self.__dict__.items()
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(['%s=%r' % (key, self[key]) for key in sorted(self.keys())]))
 
 
 def prepare_headers(request, headers):
