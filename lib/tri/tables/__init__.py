@@ -392,21 +392,31 @@ class BaseTable(object):
         self.headers = prepare_headers(request, self.columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
-        header_groups = [Struct(display_name=g, sortable=False, colspan=len(list(l)), css_class=CssClass('superheader')) for g, l in groupby(self.headers, key=lambda header: header.get('group', id(header)))]
+        header_groups = []
+        for group_name, group_iterator in groupby(self.headers, key=lambda header: header.get('group', id(header))):
+
+            header_group = list(group_iterator)
+
+            header_groups.append(Struct(display_name=group_name,
+                                        sortable=False,
+                                        colspan=len(header_group),
+                                        css_class=CssClass('superheader')))
+
+            for x in header_group:
+                x.css_class.add('subheader')
+                if x.get('is_sorting'):
+                    x.css_class.add('sorted_column')
+
+            header_group[0].css_class.add('first_column')
+
+        header_groups[0].css_class.add('first_column')
+
         for x in header_groups:
             if type(x.display_name) not in (str, unicode):
                 x.display_name = ''
         if all([x.display_name == '' for x in header_groups]):
             header_groups = []
 
-        last_group = None
-        for x in self.headers:
-            x.css_class.add('subheader')
-            if x.get('is_sorting'):
-                x.css_class.add('sorted_column')
-            if x.get('group') != last_group or x.get('group') is None:
-                x.css_class.add('first_column')
-            last_group = x.get('group')
         self.header_levels = [header_groups, self.headers] if len(header_groups) > 1 else [self.headers]
 
         return self.headers, self.header_levels

@@ -59,10 +59,10 @@ def test_render(table):
 <table class="listview" id="table_id">
  <thead>
   <tr>
-   <th class="subheader first_column first_column">
+   <th class="subheader first_column">
     <a href="?order=foo"> Foo </a>
    </th>
-   <th class="subheader first_column ">
+   <th class="subheader first_column">
     <a href="?order=bar"> Bar </a>
    </th>
   </tr>
@@ -104,20 +104,20 @@ def test_output():
  <thead>
  <tr>
    <th class="superheader first_column" colspan="1"> </th>
-   <th class="superheader " colspan="1"> </th>
-   <th class="superheader " colspan="2"> group </th>
-   <th class="superheader " colspan="1"> </th>
+   <th class="superheader" colspan="1"> </th>
+   <th class="superheader" colspan="2"> group </th>
+   <th class="superheader" colspan="1"> </th>
   </tr>
   <tr>
-   <th class="subheader first_column first_column">
+   <th class="subheader first_column">
     <a href="?order=foo"> Foo </a>
    </th>
-   <th class="subheader first_column ">
+   <th class="subheader first_column">
     <a href="?order=bar"> Bar </a>
    </th>
-   <th class="thin subheader first_column first_column"> </th>
-   <th class="thin subheader " title="Edit"> </th>
-   <th class="thin subheader first_column first_column" title="Delete"> </th>
+   <th class="thin subheader first_column"> </th>
+   <th class="thin subheader" title="Edit"> </th>
+   <th class="thin subheader first_column" title="Delete"> </th>
   </tr>
  </thead>
  <tr class="row1 ">
@@ -140,7 +140,7 @@ def test_name_traversal():
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
-        <tr><th class="subheader first_column first_column">Bar</th></tr>
+        <tr><th class="subheader first_column">Bar</th></tr>
       </thead>
       <tr class="row1 ">
         <td>bar</td>
@@ -157,7 +157,7 @@ def test_display_name():
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
-        <tr><th class="subheader first_column first_column">Bar</th></tr>
+        <tr><th class="subheader first_column">Bar</th></tr>
       </thead>
       <tr class="row1 ">
         <td>foo</td>
@@ -174,7 +174,7 @@ def test_css_class():
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
-        <tr><th class="some_class subheader first_column first_column">Foo</th></tr>
+        <tr><th class="some_class subheader first_column">Foo</th></tr>
       </thead>
       <tr class="row1 ">
         <td>foo</td>
@@ -191,7 +191,7 @@ def test_header_url():
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
-        <tr><th class="subheader first_column first_column">
+        <tr><th class="subheader first_column">
           <a href="/some/url">Foo</a>
         </th></tr>
       </thead>
@@ -210,7 +210,7 @@ def test_title():
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
-        <tr><th class="subheader first_column first_column" title="Some title"> Foo </th></tr>
+        <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
       </thead>
       <tr class="row1 ">
         <td>foo</td>
@@ -228,7 +228,7 @@ def test_show():
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
-        <tr><th class="subheader first_column first_column"> Foo </th></tr>
+        <tr><th class="subheader first_column"> Foo </th></tr>
       </thead>
       <tr class="row1 ">
         <td>foo</td>
@@ -247,8 +247,8 @@ def test_attr():
     <table class="listview">
       <thead>
         <tr>
-          <th class="subheader first_column first_column"> Foo </th>
-          <th class="subheader first_column "> Bar </th>
+          <th class="subheader first_column"> Foo </th>
+          <th class="subheader first_column"> Bar </th>
         </tr>
       </thead>
       <tr class="row1 ">
