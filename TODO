@@ -3,9 +3,6 @@
         b = Column(show=False, filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]))
     into
         b = Column(show=False, filter_choices=Foo.objects.all())
-- attr param to column
-    used to get the value of a cell. Default is to use the 'name' field like it is now. Useful for multiple columns that display one
-    column formatted in different ways.
 - When leaving out "filter=False" on a field that can't be filtered by django the error message is not helpful
 - bulk=True exception:
     TypeError at /transactions/

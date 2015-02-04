@@ -62,7 +62,10 @@ def table_attrs(table):
     return mark_safe(' ' + ' '.join([evaluate(attr, value) for attr, value in table.attrs.items()]))
 
 
-def lookup_attribute(attribute_path, obj):
+def lookup_attribute(config, obj):
+    attribute_path = config.get('attr', None)
+    if attribute_path is None:
+        attribute_path = config['name']
     for attribute_name in attribute_path.split('__'):
         obj = getattr(obj, attribute_name, settings.TEMPLATE_STRING_IF_INVALID)
         if obj is None:
@@ -104,7 +107,7 @@ def header_cell_formatter(obj, header):
     if 'cell_value' in header:
         value = header.cell_value(obj) if callable(header.cell_value) else header.cell_value
     else:
-        obj = lookup_attribute(header['name'], obj)
+        obj = lookup_attribute(header, obj)
         if obj is None:
             return ''
         value = obj
