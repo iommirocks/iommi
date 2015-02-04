@@ -83,7 +83,7 @@ def kitchen_sink(request):
                    cell_url_title='cell url title')
         e = Column(group='Foo', cell_value='explicit value', filter=False, sortable=False)
         f = Column(show=False, filter=False, sortable=False)
-        g = Column(attr='c', filter=False)
+        g = Column(attr='c', filter=False, sortable=False)
         django_templates_for_cells = Column(filter=False, sortable=False, cell_template='kitchen_sink_cell_template.html')
 
     return render_table_to_response(request, BarTable(Bar.objects.all()), template_name='base.html', paginate_by=20)

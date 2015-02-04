@@ -155,7 +155,7 @@ class Column(Struct):
         :param filter: set to false to disable filtering of this column.
         :param filter_show: set to false to hide the filtering component for this column. Sometimes it's useful to allow filtering via the URL to get direct linking but you don't want the GUI added.
         :param filter_field: a django field to use for the filter GUI. Use this if the default isn't what you wanted.
-        :param filter_type: by default the filtering is exact, but you can use `Column.CONTAINS` to make it a contains match and `Column.ICONTAINS` for case insensitive contains matching.
+        :param filter_type: by default the filtering is exact, but you can use `Column.FILTER_TYPES.CONTAINS` to make it a contains match and `Column.FILTER_TYPES.ICONTAINS` for case insensitive contains matching.
         :param bulk: enable bulk editing for this column
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
         :param cell_template: name of a template file. The template gets two arguments: `row` and `user`.

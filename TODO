@@ -1,3 +1,4 @@
+- Column(attr='...') should work even with filter and sort.
 - field_choices param to Column
     is a short form to change:
         b = Column(show=False, filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]))
