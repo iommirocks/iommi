@@ -1,0 +1,30 @@
+- field_choices param to Column
+    is a short form to change:
+        b = Column(show=False, filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]))
+    into
+        b = Column(show=False, filter_choices=Foo.objects.all())
+- attr param to column
+    used to get the value of a cell. Default is to use the 'name' field like it is now. Useful for multiple columns that display one
+    column formatted in different ways.
+- When leaving out "filter=False" on a field that can't be filtered by django the error message is not helpful
+- bulk=True exception:
+    TypeError at /transactions/
+    can only concatenate list (not "ModelChoiceIterator") to list
+        •                         field.choices = [('', '')] + field.choices ...
+        ▼ Local vars
+        Variable	Value
+        field
+        <django.forms.models.ModelChoiceField object at 0x10e5af9d0>
+        self
+        <tri.tables.BulkForm object at 0x10e593bd0>
+        args
+        ()
+        BulkForm
+        <class 'tri.tables.BulkForm'>
+        kwargs
+        {}
+- bulk_field param to Column just like filter_field (in mammon it would otherwise give you the option to choose all categories of all users, not just the current user)
+- bulk_choices param just like filter_choices
+- css/scss should be in the egg
+- in mammon the “description” bulk edit is actually an “append to description”. How do we handle that?
+= we should document our standard practice of defining your own Column with added shortcuts, this is a handy thing to do

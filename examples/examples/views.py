@@ -1,3 +1,4 @@
+from django import forms
 from examples.models import Bar, Foo
 from os.path import dirname, abspath, join
 from django.http import HttpResponse
@@ -62,6 +63,7 @@ def kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
+        b = Column(show=False, filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]))
         c = Column(bulk=True)  # The form is created automatically
         # TODO: examples for filter_field, filter_type
         d = Column(display_name='Display name',

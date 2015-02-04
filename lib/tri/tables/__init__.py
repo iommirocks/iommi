@@ -291,7 +291,7 @@ class Column(Struct):
         params = dict(
             name='__select__',
             title='Select all',
-            display_name='',
+            display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
             sortable=False,
             show=show and not is_report,
             filter=False,
