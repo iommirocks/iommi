@@ -63,7 +63,15 @@ def kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-        b = Column(show=False, filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]))
+        # b = Column(bulk=True, show=False, )
+        b = Column(
+            bulk=True,
+            show=False,
+            filter_choices=Foo.objects.all()[:10],
+            # The line above is short for: filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]),
+            bulk_choices=Foo.objects.all()[:10],
+            # bulk_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]),
+        )
         c = Column(bulk=True)  # The form is created automatically
         # TODO: examples for filter_field, filter_type
         d = Column(display_name='Display name',

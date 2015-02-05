@@ -1,4 +1,6 @@
 # coding: utf-8
+from django.db.models import QuerySet
+
 __version__ = '0.2.0'
 
 from copy import copy
@@ -132,8 +134,11 @@ class Column(Struct):
                  filter=True,
                  filter_show=True,
                  filter_field=None,
+                 filter_choices=None,
                  filter_type=None,
                  bulk=False,
+                 bulk_field=None,
+                 bulk_choices=None,
                  auto_rowspan=False,
 
                  cell_template=None,
@@ -155,8 +160,11 @@ class Column(Struct):
         :param filter: set to false to disable filtering of this column.
         :param filter_show: set to false to hide the filtering component for this column. Sometimes it's useful to allow filtering via the URL to get direct linking but you don't want the GUI added.
         :param filter_field: a django field to use for the filter GUI. Use this if the default isn't what you wanted.
+        :param filter_choices: an iterable of choices or a QuerySet of choices to be available for filtering. This is a short form for using filter_field and specifying the entire field yourself.
         :param filter_type: by default the filtering is exact, but you can use `Column.FILTER_TYPES.CONTAINS` to make it a contains match and `Column.FILTER_TYPES.ICONTAINS` for case insensitive contains matching.
         :param bulk: enable bulk editing for this column
+        :param bulk_field: a django field to use for the filter GUI. Use this if the default isn't what you wanted.
+        :param bulk_choices: an iterable of choices or a QuerySet of choices to be available for bulk editing. This is a short form for using bulk_field and specifying the entire field yourself.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
         :param cell_template: name of a template file. The template gets two arguments: `row` and `user`.
         :param cell_value: string or callable with one argument: the row. This is used to extract which data to display from the object.
@@ -192,8 +200,11 @@ class Column(Struct):
             filter=filter,
             filter_show=filter_show,
             filter_field=filter_field,
+            filter_choices=filter_choices,
             filter_type=filter_type,
             bulk=bulk,
+            bulk_field=bulk_field,
+            bulk_choices=bulk_choices,
             auto_rowspan=auto_rowspan,
 
             cell_value=cell_value,
@@ -610,24 +621,30 @@ def set_display_none(rowspan_by_row):
 
 
 def render_table_filters(request, table):
-    filter_fields = [(col.name, col.get('filter_field'), col.get('filter_type')) for col in table.columns if col.filter]
+    filter_fields = [(col.name, col.get('filter_type')) for col in table.columns if col.filter]
     if request.method == 'GET' and filter_fields and hasattr(table.data, 'model'):
-        for name, _, filter_type in filter_fields:
+        for name, filter_type in filter_fields:
             if name in request.GET and request.GET[name]:
                 if filter_type:
                     table.data = table.data.filter(**{name + '__' + filter_type.django_query_suffix: request.GET[name]})
                 else:
                     table.data = table.data.filter(**{name: request.GET[name]})
 
-        filter_fields_with_ui = [(col.name, col.get('filter_field'), col.get('filter_type')) for col in table.columns if col.filter and col.filter_show]
+        filtered_columns_with_ui = [col for col in table.columns if col.filter and col.filter_show]
 
         class FilterForm(forms.Form):
-            # class Meta:
-            #     fields = [x[0] for x in filter_fields_with_ui if '__' not in x[0]]
-
             def __init__(self, *args, **kwargs):
                 super(FilterForm, self).__init__(*args, **kwargs)
-                for name, filter_field, _ in filter_fields_with_ui:
+                for column in filtered_columns_with_ui:
+                    name = column.name
+                    filter_field = column.get('filter_field')
+                    if 'filter_choices' in column and not filter_field:
+                        filter_choices = column.filter_choices
+                        if isinstance(filter_choices, QuerySet):
+                            filter_choices = [(x.pk, x) for x in filter_choices]
+                        if ('', '') not in filter_choices:
+                            filter_choices = [('', '')] + filter_choices
+                        filter_field = forms.ChoiceField(choices=filter_choices)
                     if filter_field:
                         self.fields[name] = filter_field
                     else:
@@ -689,6 +706,7 @@ def render_table(request,
     bulk_form = None
     bulk_fields = [x.name for x in table.columns if x.bulk]
     if bulk_fields:
+        column_by_name = {column.name: column for column in table.columns if column.bulk}
         class BulkForm(forms.ModelForm):
             class Meta:
                 model = table.data.model
@@ -696,12 +714,24 @@ def render_table(request,
 
             def __init__(self, *args, **kwargs):
                 super(BulkForm, self).__init__(*args, **kwargs)
-                for field in self.fields.values():
+                for name, column in {k: v for k, v in column_by_name.items() if 'bulk_field' in v}.items():
+                    self.fields[name] = column.bulk_field
+
+                for field_name, field in self.fields.items():
                     field.required = False
                     field.blank = True
                     field.null = True
                     if hasattr(field, 'choices'):
-                        field.choices = [('', '')] + field.choices
+                        if 'bulk_choices' in column_by_name[field_name]:
+                            choices = column_by_name[field_name].bulk_choices
+                        else:
+                            choices = field.choices
+
+                        if isinstance(choices, QuerySet):
+                            choices = [(x.pk, x) for x in choices]
+                        if ('', '') not in choices:
+                            choices = [('', '')] + list(choices)
+                        field.choices = choices
         bulk_form = BulkForm
 
     if bulk_form:
@@ -737,4 +767,7 @@ def render_table_to_response(*args, **kwargs):
     """
     Shortcut for `HttpResponse(render_table(*args, **kwargs))`
     """
-    return HttpResponse(render_table(*args, **kwargs))
+    response = render_table(*args, **kwargs)
+    if isinstance(response,  HttpResponse):
+        return response
+    return HttpResponse(response)
