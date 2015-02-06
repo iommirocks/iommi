@@ -7,3 +7,4 @@
 - Column.number doesn't set rj on header
 - Column.icon should have an option to not set fa-lg, it's currently hard coded
 - Would be nice to be able to combine cell_format and cell_template. As it is now we need better docs for what cell_value does in this case
+- We could as an alternative accept any sequence for row-values as an alternative to objects with attributes. The ordering of columns would then select corresponding items in the row sequence.
