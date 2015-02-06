@@ -2,3 +2,8 @@
 - When leaving out "filter=False" on a field that can't be filtered by django the error message is not helpful
 - in mammon the "description" bulk edit is actually an "append to description". How do we handle that?
 - we should document our standard practice of defining your own Column with added shortcuts, this is a handy thing to do
+- scss/css in egg
+- i18n for the text (basically should just be the titles of the filter and bulk edit buttons)
+- Column.number doesn't set rj on header
+- Column.icon should have an option to not set fa-lg, it's currently hard coded
+- Would be nice to be able to combine cell_format and cell_template. As it is now we need better docs for what cell_value does in this case
