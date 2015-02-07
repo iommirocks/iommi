@@ -65,15 +65,27 @@ def table_attrs(table):
     return mark_safe(' ' + ' '.join(map(evaluate, table.attrs.items())))
 
 
-def lookup_attribute(config, obj):
-    attribute_path = config.get('attr', None)
+def lookup_attribute(column, row):
+    attribute_path = column.get('attr', None)
     if attribute_path is None:
-        attribute_path = config['name']
-    for attribute_name in attribute_path.split('__'):
-        obj = getattr(obj, attribute_name, settings.TEMPLATE_STRING_IF_INVALID)
-        if obj is None:
-            break
-    return obj
+        attribute_path = column['name']
+    try:
+        obj = row
+        for attribute_name in attribute_path.split('__'):
+            obj = getattr(obj, attribute_name)
+            if obj is None:
+                return
+        return obj
+    except AttributeError:
+        if hasattr(row, '__getitem__'):
+            try:
+                return row[attribute_path]
+            except (TypeError, KeyError):
+                try:
+                    return row[column.index]
+                except IndexError:
+                    pass
+    return settings.TEMPLATE_STRING_IF_INVALID
 
 
 def yes_no_formatter(value):

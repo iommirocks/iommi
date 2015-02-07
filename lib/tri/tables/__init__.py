@@ -336,15 +336,20 @@ class Column(Struct):
         """
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
-        def url(row):
-            r = lookup_attribute(kwargs, row)
-            return r.get_absolute_url() if r else ''
         params = dict(
-            cell_url=url,
             filter=False,
         )
         params.update(kwargs)
-        return Column(**params)
+        column = Column(**params)
+
+        if 'cell_url' not in kwargs:
+            def url(row):
+                r = lookup_attribute(column, row)
+                return r.get_absolute_url() if r else ''
+
+            column.cell_url = url
+
+        return column
 
     @staticmethod
     def number(**kwargs):
@@ -363,8 +368,10 @@ class BaseTable(object):
     def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=True):
         self.data = data
         self.columns = columns if columns is not None else getattr(self, '_columns', [])
-        for column in self.columns:
+        for index, column in enumerate(self.columns):
             column.table = self
+            column.index = index
+
         if not sortable:
             for column in self.columns:
                 column.sortable = False

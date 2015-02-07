@@ -148,6 +148,56 @@ def test_name_traversal():
     </table>""")
 
 
+def test_tuple_data():
+    class TestTable(Table):
+        a = Column(sortable=False)
+        b = Column(sortable=False)
+        c = Column(sortable=False)
+
+    data = [('a', 'b', 'c')]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader first_column"> A </th>
+          <th class="subheader first_column"> B </th>
+          <th class="subheader first_column"> C </th>
+        </tr>
+      </thead>
+      <tr class="row1 ">
+        <td>a</td>
+        <td>b</td>
+        <td>c</td>
+      </tr>
+    </table>""")
+
+
+def test_dict_data():
+    class TestTable(Table):
+        a = Column(sortable=False)
+        b = Column(sortable=False)
+        c = Column(sortable=False)
+
+    data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
+
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader first_column"> A </th>
+          <th class="subheader first_column"> B </th>
+          <th class="subheader first_column"> C </th>
+        </tr>
+      </thead>
+      <tr class="row1 ">
+        <td>a</td>
+        <td>b</td>
+        <td>c</td>
+      </tr>
+    </table>""")
+
+
 def test_display_name():
     class TestTable(Table):
         foo = Column(display_name="Bar", sortable=False)
