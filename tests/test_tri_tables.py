@@ -150,9 +150,13 @@ def test_name_traversal():
 
 def test_tuple_data():
     class TestTable(Table):
-        a = Column(sortable=False)
-        b = Column(sortable=False)
-        c = Column(sortable=False)
+
+        class Meta:
+            sortable = False
+
+        a = Column()
+        b = Column()
+        c = Column()
 
     data = [('a', 'b', 'c')]
 
@@ -175,9 +179,11 @@ def test_tuple_data():
 
 def test_dict_data():
     class TestTable(Table):
-        a = Column(sortable=False)
-        b = Column(sortable=False)
-        c = Column(sortable=False)
+        class Meta:
+            sortable = False
+        a = Column()
+        b = Column()
+        c = Column()
 
     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 

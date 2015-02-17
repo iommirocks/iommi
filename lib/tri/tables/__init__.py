@@ -363,29 +363,49 @@ class Column(Struct):
         return Column(**kwargs)
 
 
+def get_meta(cls):
+    """
+    Merge Meta classes from whole inheritance graph onto one object.
+    """
+    meta = BaseTable.Meta()
+    for class_ in reversed(cls.mro()):
+        if hasattr(class_, 'Meta'):
+            meta.update((k, v) for k, v in class_.Meta.__dict__.items() if not k.startswith('__'))
+    return meta
+
+
 class BaseTable(object):
 
-    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=True):
+    class Meta(Struct):
+        attrs = {}
+        row_attrs = {}
+        bulk_filter = {}
+        bulk_exclude = {}
+        sortable = True
+
+    def __init__(self, data, columns=None, **params):
         self.data = data
         self.columns = columns if columns is not None else getattr(self, '_columns', [])
         for index, column in enumerate(self.columns):
             column.table = self
             column.index = index
 
-        if not sortable:
+        meta = get_meta(self.__class__)
+        meta.update(**params)
+
+        self.attrs = meta.attrs
+        self.row_attrs = meta.row_attrs
+        self.bulk_filter = meta.bulk_filter
+        self.bulk_exclude = meta.bulk_exclude
+
+        if not meta.sortable:
             for column in self.columns:
                 column.sortable = False
 
-        self.attrs = attrs if attrs is not None else getattr(getattr(self, '_meta', object()), 'attrs', {})
-        self.row_attrs = row_attrs if row_attrs is not None else getattr(getattr(self, '_meta', object()), 'row_attrs', {})
-
         self.attrs.setdefault('class', 'listview')
-        self.row_css_class = self.row_attrs.get('class', '')
-        self.row_attrs.pop('class', None)
+        self.row_css_class = self.row_attrs.pop('class', '')
         self.headers = None
         self.header_levels = None
-        self.bulk_filter = bulk_filter or {}
-        self.bulk_exclude = bulk_exclude or {}
 
     # noinspection PyProtectedMember
     def prepare_headers_and_sort(self, request):
@@ -474,7 +494,6 @@ def get_declared_columns(bases, attrs):
 class DeclarativeColumnsMeta(type):
     def __new__(mcs, name, bases, attrs):
         attrs['_columns'] = get_declared_columns(bases, attrs)
-        attrs['_meta'] = attrs.get('Meta', None)
         new_class = super(DeclarativeColumnsMeta, mcs).__new__(mcs, name, bases, attrs)
         return new_class
 
@@ -486,12 +505,14 @@ class Table(BaseTable):
     .. code:: python
 
         class FooTable(Table):
+            class Meta:
+                sortable = False
             a = Column()
             b = Column()
 
     """
 
-    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=True):
+    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=None):
         """
         :param data: a list of QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -501,7 +522,14 @@ class Table(BaseTable):
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
         """
-        super(Table, self).__init__(data, columns, attrs, row_attrs, bulk_filter, bulk_exclude, sortable)
+        params = {k: v for k, v in dict(
+            attrs=attrs,
+            row_attrs=row_attrs,
+            bulk_filter=bulk_filter,
+            bulk_exclude=bulk_exclude,
+            sortable=sortable).items()
+            if v is not None}
+        super(Table, self).__init__(data, columns, **params)
 
     __metaclass__ = DeclarativeColumnsMeta
 
