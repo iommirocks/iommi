@@ -1,13 +1,10 @@
 # coding: utf-8
-from django.db.models import QuerySet
-
-__version__ = '0.3.0-dev'
-
 from copy import copy
 from itertools import groupby
 from django import forms
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
+from django.db.models.query import QuerySet
 from django.forms import fields
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import RequestContext
@@ -16,6 +13,9 @@ from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, header_cell_formatter
+
+
+__version__ = '0.3.0-dev'
 
 
 class Struct(dict):
