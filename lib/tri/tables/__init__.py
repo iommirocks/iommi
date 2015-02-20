@@ -1,7 +1,7 @@
 # coding: utf-8
 from django.db.models import QuerySet
 
-__version__ = '0.2.0'
+__version__ = '0.3.0-dev'
 
 from copy import copy
 from itertools import groupby
