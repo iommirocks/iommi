@@ -336,19 +336,18 @@ class Column(Struct):
         """
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
+        column = None  # Filled in later
+
+        def url(row):
+            r = lookup_attribute(column, row)
+            return r.get_absolute_url() if r else ''
+
         params = dict(
+            cell_url=url,
             filter=False,
         )
         params.update(kwargs)
         column = Column(**params)
-
-        if 'cell_url' not in kwargs:
-            def url(row):
-                r = lookup_attribute(column, row)
-                return r.get_absolute_url() if r else ''
-
-            column.cell_url = url
-
         return column
 
     @staticmethod
