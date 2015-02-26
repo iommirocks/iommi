@@ -512,7 +512,7 @@ class Table(BaseTable):
 
     """
 
-    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=None):
+    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=None, row_template=None):
         """
         :param data: a list of QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -527,7 +527,8 @@ class Table(BaseTable):
             row_attrs=row_attrs,
             bulk_filter=bulk_filter,
             bulk_exclude=bulk_exclude,
-            sortable=sortable).items()
+            sortable=sortable,
+            row_template=row_template).items()
             if v is not None}
         super(Table, self).__init__(data, columns, **params)
 
