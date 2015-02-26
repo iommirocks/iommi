@@ -65,6 +65,16 @@ def table_attrs(table):
     return mark_safe(' ' + ' '.join(map(evaluate, table.attrs.items())))
 
 
+@register.filter
+def row_template(table, row):
+    try:
+        return table.Meta.row_template(row)
+    except TypeError:
+        return table.Meta.row_template
+    except AttributeError:
+        return 'tri_tables/table_row.html'
+
+
 def lookup_attribute(column, row):
     attribute_path = column.get('attr', None)
     if attribute_path is None:

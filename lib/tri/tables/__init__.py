@@ -381,6 +381,7 @@ class BaseTable(object):
         bulk_filter = {}
         bulk_exclude = {}
         sortable = True
+        row_template = 'tri_tables/table_row.html'
 
     def __init__(self, data, columns=None, **params):
         self.data = data

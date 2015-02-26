@@ -8,7 +8,7 @@
 
     {% for row in table.data %}
         {% cycle 'row1' 'row2' as row_color silent %}
-        {% include "tri_tables/table_row.html" %}
+        {% include table|row_template:row %}
     {% endfor %}
 </table>
 </div>
