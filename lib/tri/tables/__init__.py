@@ -362,7 +362,7 @@ class Column(Struct):
         return Column(**kwargs)
 
 
-def get_meta(cls):
+def inherited_meta(cls):
     """
     Merge Meta classes from whole inheritance graph onto one object.
     """
@@ -390,21 +390,16 @@ class BaseTable(object):
             column.table = self
             column.index = index
 
-        meta = get_meta(self.__class__)
-        meta.update(**params)
-        self.Meta = meta
+        self.Meta = inherited_meta(self.__class__)
+        self.Meta.update(**params)
 
-        self.attrs = meta.attrs
-        self.row_attrs = meta.row_attrs
-        self.bulk_filter = meta.bulk_filter
-        self.bulk_exclude = meta.bulk_exclude
-
-        if not meta.sortable:
+        if not self.Meta.sortable:
             for column in self.columns:
                 column.sortable = False
 
-        self.attrs.setdefault('class', 'listview')
-        self.row_css_class = self.row_attrs.pop('class', '')
+        self.Meta.attrs.setdefault('class', 'listview')
+
+        self.row_css_class = self.Meta.row_attrs.pop('class', '')
         self.headers = None
         self.header_levels = None
 
@@ -517,7 +512,7 @@ class Table(BaseTable):
         """
         :param data: a list of QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
-        :param attrs: dict of strings to string of HTML attributes to apply to the table
+        :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
         :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
         :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
@@ -540,6 +535,7 @@ class Link(Struct):
     """
     Class that describes links to add underneath the table.
     """
+    # noinspection PyShadowingBuiltins
     def __init__(self, title, url, show=True, group=None, id=None):
         super(Link, self).__init__(title=title, url=url, show=show, group=group, id=id)
 
@@ -744,6 +740,7 @@ def render_table(request,
     bulk_fields = [x.name for x in table.columns if x.bulk]
     if bulk_fields:
         column_by_name = {column.name: column for column in table.columns if column.bulk}
+
         class BulkForm(forms.ModelForm):
             class Meta:
                 model = table.data.model
@@ -777,7 +774,11 @@ def render_table(request,
 
             f = bulk_form(request.POST)
             if f.is_valid():
-                table.data.filter(pk__in=pks).filter(**table.bulk_filter).exclude(**table.bulk_exclude).update(**{k: v for k, v in f.cleaned_data.items() if v})
+                table.data \
+                    .filter(pk__in=pks) \
+                    .filter(**table.Meta.bulk_filter) \
+                    .exclude(**table.Meta.bulk_exclude) \
+                    .update(**{k: v for k, v in f.cleaned_data.items() if v})
 
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
         else:

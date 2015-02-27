@@ -62,7 +62,7 @@ def table_attrs(table):
         value = escape(value() if callable(value) else value)
         return '%s="%s"' % (attr, value) if value else ''
 
-    return mark_safe(' ' + ' '.join(map(evaluate, table.attrs.items())))
+    return mark_safe(' ' + ' '.join(map(evaluate, table.Meta.attrs.items())))
 
 
 @register.filter
