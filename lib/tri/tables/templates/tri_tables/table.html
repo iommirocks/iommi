@@ -4,7 +4,7 @@
 
 <table {{ table|table_attrs }}>
 
-    {% include "tri_tables/object_list_header.html" %}
+    {% include "tri_tables/table_header_rows.html" %}
 
     {% for row in table.data %}
         {% cycle 'row1' 'row2' as row_color silent %}
