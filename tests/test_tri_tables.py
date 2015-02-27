@@ -204,9 +204,14 @@ def test_dict_data():
     </table>""")
 
 
+class NoSortTable(Table):
+    class Meta:
+        sortable = False
+
+
 def test_display_name():
-    class TestTable(Table):
-        foo = Column(display_name="Bar", sortable=False)
+    class TestTable(NoSortTable):
+        foo = Column(display_name="Bar")
 
     data = [Struct(foo="foo")]
 
@@ -222,8 +227,8 @@ def test_display_name():
 
 
 def test_css_class():
-    class TestTable(Table):
-        foo = Column(css_class="some_class", sortable=False)
+    class TestTable(NoSortTable):
+        foo = Column(css_class="some_class")
 
     data = [Struct(foo="foo")]
 
@@ -239,8 +244,8 @@ def test_css_class():
 
 
 def test_header_url():
-    class TestTable(Table):
-        foo = Column(url="/some/url", sortable=False)
+    class TestTable(NoSortTable):
+        foo = Column(url="/some/url")
 
     data = [Struct(foo="foo")]
 
@@ -258,8 +263,8 @@ def test_header_url():
 
 
 def test_title():
-    class TestTable(Table):
-        foo = Column(title="Some title", sortable=False)
+    class TestTable(NoSortTable):
+        foo = Column(title="Some title")
 
     data = [Struct(foo="foo")]
 
@@ -275,9 +280,9 @@ def test_title():
 
 
 def test_show():
-    class TestTable(Table):
-        foo = Column(sortable=False)
-        bar = Column(sortable=False, show=False)
+    class TestTable(NoSortTable):
+        foo = Column()
+        bar = Column(show=False)
 
     data = [Struct(foo="foo", bar="bar")]
 
@@ -293,9 +298,9 @@ def test_show():
 
 
 def test_attr():
-    class TestTable(Table):
-        foo = Column(sortable=False)
-        bar = Column(attr='foo', sortable=False)
+    class TestTable(NoSortTable):
+        foo = Column()
+        bar = Column(attr='foo')
 
     data = [Struct(foo="foo")]
 
@@ -310,5 +315,86 @@ def test_attr():
       <tr class="row1 ">
         <td>foo</td>
         <td>foo</td>
+      </tr>
+    </table>""")
+
+
+def test_row_attrs():
+    class TestTable(NoSortTable):
+        class Meta:
+            row_attrs = dict(foo=lambda row: "bar")
+        yada = Column()
+    data = [(1,), (2,)]
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader first_column"> Yada </th>
+        </tr>
+      </thead>
+      <tr class="row1 " foo="bar">
+        <td> 1 </td>
+      </tr>
+      <tr class="row2 " foo="bar">
+        <td> 2 </td>
+      </tr>
+    </table>""")
+
+
+def test_column_presets():
+    is_report = False
+
+    class TestTable(NoSortTable):
+        icon = Column.icon(is_report)
+        edit = Column.edit(is_report)
+        delete = Column.delete(is_report)
+        download = Column.download(is_report)
+        run = Column.run(is_report)
+        select = Column.select(is_report)
+        check = Column.check(is_report)
+        link = Column.link()
+        number = Column.number()
+
+    data = [Struct(pk=123, get_absolute_url=lambda: "http://yada/")]
+    _check_html(TestTable(data), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="thin subheader first_column"> </th>
+          <th class="thin subheader first_column" title="Edit"> </th>
+          <th class="thin subheader first_column" title="Delete"> </th>
+          <th class="thin subheader first_column" title="Download"> </th>
+          <th class="thin subheader first_column" title="Run"> Run </th>
+          <th class="thin nopad subheader first_column" title="Select all"> <i class="fa fa-check-square-o" /> </th>
+          <th class="subheader first_column"> Check </th>
+          <th class="subheader first_column"> Link </th>
+          <th class="subheader first_column"> Number </th>
+        </tr>
+      </thead>
+      <tr class="row1 " data-pk="123">
+        <td>
+          <i class="fa fa-lg fa-False" />
+        </td>
+        <td>
+          <a href="http://yada/edit/">
+            <i class="fa fa-lg fa-pencil-square-o" title="Edit" />
+          </a>
+        </td>
+        <td>
+          <a href="http://yada/delete/">
+            <i class="fa fa-lg fa-trash-o" title="Delete" />
+          </a>
+        </td>
+        <td>
+          <a href="http://yada/download/">
+            <i class="fa fa-lg fa-download" title="Download" />
+          </a>
+        </td>
+        <td>
+          <a href="http://yada/run/"> Run </a>
+        </td>
+        <td>
+          <input class="checkbox" name="pk_123" type="checkbox"/>
+        </td>
       </tr>
     </table>""")

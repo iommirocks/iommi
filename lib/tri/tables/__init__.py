@@ -392,6 +392,7 @@ class BaseTable(object):
 
         meta = get_meta(self.__class__)
         meta.update(**params)
+        self.Meta = meta
 
         self.attrs = meta.attrs
         self.row_attrs = meta.row_attrs
