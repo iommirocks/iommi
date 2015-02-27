@@ -632,11 +632,11 @@ def object_list_context(request,
             for row in table.data:
                 value = header_cell_formatter(row, column)
                 if prev_value != value:
-                    rowspan_by_row[row] = 1
+                    rowspan_by_row[id(row)] = 1
                     prev_value = value
                     prev_row = row
                 else:
-                    rowspan_by_row[prev_row] += 1
+                    rowspan_by_row[id(prev_row)] += 1
 
             if 'cell_attrs' not in column:
                 column.cell_attrs = {}
@@ -649,11 +649,11 @@ def object_list_context(request,
 
 
 def set_row_span(rowspan_by_row):
-    return lambda row: rowspan_by_row[row] if row in rowspan_by_row else ''
+    return lambda row: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else ''
 
 
 def set_display_none(rowspan_by_row):
-    return lambda row: 'display: none' if row not in rowspan_by_row else ''
+    return lambda row: 'display: none' if id(row) not in rowspan_by_row else ''
 
 
 def render_table_filters(request, table):
