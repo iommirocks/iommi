@@ -15,7 +15,7 @@ from django.utils.safestring import mark_safe
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, header_cell_formatter
 
 
-__version__ = '0.3.0-dev'
+__version__ = '0.3.0'
 
 
 class Struct(dict):
