@@ -25,25 +25,25 @@ def table_row_css_class(obj, table):
 
 
 @register.filter
-def header_cell_url(obj, header):
-    x = header['cell_url']
-    return x(obj) if callable(x) else x
+def table_cell_url(row, column):
+    cell_url = column['cell_url']
+    return cell_url(row) if callable(cell_url) else cell_url
 
 
 @register.filter
-def header_cell_url_title(obj, header):
-    x = header['cell_url_title']
-    return x(obj) if callable(x) else x
+def table_cell_url_title(row, column):
+    cell_url_title = column['cell_url_title']
+    return cell_url_title(row) if callable(cell_url_title) else cell_url_title
 
 
 @register.filter
-def header_cell_attrs(obj, header):
-    attrs = header.get('cell_attrs')
-    return header_row_attrs(obj, attrs)
+def table_cell_attrs(row, column):
+    cell_attrs = column.get('cell_attrs')
+    return table_row_attrs(row, cell_attrs)
 
 
 @register.filter
-def header_row_attrs(obj, attrs):
+def table_row_attrs(obj, attrs):
     if not attrs:
         return ''
 
@@ -93,7 +93,7 @@ def lookup_attribute(column, row):
             except (TypeError, KeyError):
                 try:
                     return row[column.index]
-                except IndexError:
+                except (TypeError, KeyError, IndexError):
                     pass
     return settings.TEMPLATE_STRING_IF_INVALID
 
@@ -128,17 +128,20 @@ def register_cell_formatter(type_or_class, formatter):
 
 
 @register.filter
-def header_cell_formatter(obj, header):
-    if 'cell_value' in header:
-        value = header.cell_value(obj) if callable(header.cell_value) else header.cell_value
+def table_cell_formatter(row, column):
+    """
+    @type column: tri.tables.Column
+    """
+    if 'cell_value' in column:
+        value = column.cell_value(row) if callable(column.cell_value) else column.cell_value
     else:
-        obj = lookup_attribute(header, obj)
-        if obj is None:
+        row = lookup_attribute(column, row)
+        if row is None:
             return ''
-        value = obj
+        value = row
 
-    if 'cell_format' in header:
-        return header.cell_format(value) if callable(header.cell_format) else header.cell_format
+    if 'cell_format' in column:
+        return column.cell_format(value) if callable(column.cell_format) else column.cell_format
 
     if isinstance(value, Manager):
         value = value.all()

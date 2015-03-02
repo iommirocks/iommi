@@ -13,7 +13,7 @@ from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, header_cell_formatter
+from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
 __version__ = '0.3.0'
@@ -400,7 +400,6 @@ class BaseTable(object):
         self.Meta.attrs.setdefault('class', 'listview')
 
         self.row_css_class = self.Meta.row_attrs.pop('class', '')
-        self.headers = None
         self.header_levels = None
 
     # noinspection PyProtectedMember
@@ -627,7 +626,7 @@ def object_list_context(request,
             prev_value = no_value_set
             prev_row = no_value_set
             for row in table.data:
-                value = header_cell_formatter(row, column)
+                value = table_cell_formatter(row, column)
                 if prev_value != value:
                     rowspan_by_row[id(row)] = 1
                     prev_value = value
