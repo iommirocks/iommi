@@ -1,6 +1,7 @@
 # coding: utf-8
 from copy import copy
 from itertools import groupby
+import itertools
 from django import forms
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
@@ -16,6 +17,8 @@ from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatte
 
 
 __version__ = '0.3.0'
+
+next_creation_count = itertools.count().next
 
 
 class Struct(dict):
@@ -118,8 +121,6 @@ class Column(Struct):
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
 
-    counter = 0
-
     # noinspection PyShadowingBuiltins
     def __init__(self,
                  name=None,
@@ -175,8 +176,7 @@ class Column(Struct):
         """
         self.table = None  # this member is filled in by the table after it is constructed
 
-        self.creation_count = Column.counter
-        Column.counter += 1
+        self.creation_count = next_creation_count()
 
         if cell_template is not None:
             assert cell_format is None

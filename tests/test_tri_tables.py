@@ -3,8 +3,18 @@
 
 import pytest
 from bs4 import BeautifulSoup
+from django.conf import settings
 from django.test import RequestFactory
+
 from tri.tables import render_table_to_response, Struct, Table, Column
+
+
+@pytest.fixture(autouse=True)
+def template_debug():
+    """
+    Cause exceptions during rendering to fail test with traceback
+    """
+    settings.TEMPLATE_DEBUG = True
 
 
 def _check_html(table, expected_html):
@@ -76,6 +86,21 @@ def test_render(table):
   <td class="rj"> 42 </td>
  </tr>
 </table>""")
+
+
+def test_inheritance():
+
+    class FooTable(Table):
+        foo = Column()
+
+    class BarTable(Table):
+        bar = Column()
+
+    class TestTable(FooTable, BarTable):
+        another = Column()
+
+    t = TestTable([])
+    assert [c.name for c in t.columns] == ['foo', 'bar', 'another']
 
 
 def test_output():
@@ -352,10 +377,14 @@ def test_column_presets():
         run = Column.run(is_report)
         select = Column.select(is_report)
         check = Column.check(is_report)
-        link = Column.link()
+        link = Column.link(cell_format="Yadahada name")
         number = Column.number()
 
-    data = [Struct(pk=123, get_absolute_url=lambda: "http://yada/")]
+    data = [Struct(pk=123,
+                   get_absolute_url=lambda: "http://yada/",
+                   check=True,
+                   link=Struct(get_absolute_url=lambda: "http://yadahada/"),
+                   number=123)]
     _check_html(TestTable(data), """\
     <table class="listview">
       <thead>
@@ -395,6 +424,15 @@ def test_column_presets():
         </td>
         <td>
           <input class="checkbox" name="pk_123" type="checkbox"/>
+        </td>
+        <td class="cj">
+          <i class="fa fa-check" title="Yes" />
+        </td>
+        <td>
+          <a href="http://yadahada/"> Yadahada name </a>
+        </td>
+        <td class="rj">
+          123
         </td>
       </tr>
     </table>""")
