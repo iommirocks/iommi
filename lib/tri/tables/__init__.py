@@ -145,7 +145,7 @@ class Column(Struct):
                  cell_template=None,
                  cell_value=None,
                  cell_format=None,
-                 cell_attrs=None,
+                 cell_attrs={},
                  cell_url=None,
                  cell_url_title=None,):
         """
@@ -399,7 +399,6 @@ class BaseTable(object):
 
         self.Meta.attrs.setdefault('class', 'listview')
 
-        self.row_css_class = self.Meta.row_attrs.pop('class', '')
         self.header_levels = None
 
     # noinspection PyProtectedMember
@@ -422,11 +421,11 @@ class BaseTable(object):
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.data = self.data.order_by(*order_args)
-        self.headers = prepare_headers(request, self.columns)
+        headers = prepare_headers(request, self.columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         header_groups = []
-        for group_name, group_iterator in groupby(self.headers, key=lambda header: header.get('group', id(header))):
+        for group_name, group_iterator in groupby(headers, key=lambda header: header.get('group', id(header))):
 
             header_group = list(group_iterator)
 
@@ -450,9 +449,9 @@ class BaseTable(object):
         if all([x.display_name == '' for x in header_groups]):
             header_groups = []
 
-        self.header_levels = [header_groups, self.headers] if len(header_groups) > 1 else [self.headers]
+        self.header_levels = [header_groups, headers] if len(header_groups) > 1 else [headers]
 
-        return self.headers, self.header_levels
+        return headers, self.header_levels
 
 
 class CssClass(object):
@@ -634,8 +633,6 @@ def object_list_context(request,
                 else:
                     rowspan_by_row[id(prev_row)] += 1
 
-            if 'cell_attrs' not in column:
-                column.cell_attrs = {}
             column.cell_attrs['rowspan'] = set_row_span(rowspan_by_row)
             assert 'style' not in column.cell_attrs  # TODO: support both specifying style cell_attrs and auto_rowspan
             column.cell_attrs['style'] = set_display_none(rowspan_by_row)

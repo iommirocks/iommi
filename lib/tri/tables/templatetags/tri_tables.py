@@ -11,15 +11,15 @@ register = template.Library()
 
 
 @register.filter
-def table_row_css_class(obj, table):
+def table_row_css_class(row, table):
     """
     @type table: tri.tables.BaseTable
     """
     if table is None:
         return ''
-    callable_or_string = table.row_css_class
-    if callable_or_string:
-        return callable_or_string(obj) if callable(callable_or_string) else callable_or_string
+    row_css_class = table.Meta.row_attrs.get('class', '')
+    if row_css_class:
+        return ' ' + (row_css_class(row) if callable(row_css_class) else row_css_class)
     else:
         return ''
 
@@ -39,20 +39,26 @@ def table_cell_url_title(row, column):
 @register.filter
 def table_cell_attrs(row, column):
     cell_attrs = column.get('cell_attrs')
-    return table_row_attrs(row, cell_attrs)
+    return attrs_to_string(row, cell_attrs)
 
 
 @register.filter
-def table_row_attrs(obj, attrs):
+def table_row_attrs(row, attrs):
+    attrs = attrs.copy()
+    attrs.pop('class', None)
+    return attrs_to_string(row, attrs)
+
+
+def attrs_to_string(row, attrs):
     if not attrs:
         return ''
 
     def evaluate(item):
         attr, value = item
-        value = escape(value(obj) if callable(value) else value)
-        return '%s="%s"' % (attr, value) if value else ''
+        value = escape(value(row) if callable(value) else value)
+        return ' %s="%s"' % (attr, value) if value else ''
 
-    return mark_safe(' ' + ' '.join(map(evaluate, attrs.items())))
+    return mark_safe(''.join(map(evaluate, attrs.items())))
 
 
 @register.filter
@@ -60,9 +66,9 @@ def table_attrs(table):
     def evaluate(item):
         attr, value = item
         value = escape(value() if callable(value) else value)
-        return '%s="%s"' % (attr, value) if value else ''
+        return ' %s="%s"' % (attr, value) if value else ''
 
-    return mark_safe(' ' + ' '.join(map(evaluate, table.Meta.attrs.items())))
+    return mark_safe(''.join(map(evaluate, table.Meta.attrs.items())))
 
 
 @register.filter

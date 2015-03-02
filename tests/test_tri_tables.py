@@ -77,11 +77,11 @@ def test_render(table):
    </th>
   </tr>
  </thead>
- <tr class="row1 ">
+ <tr class="row1">
   <td> Hello </td>
   <td class="rj"> 17 </td>
  </tr>
- <tr class="row2 ">
+ <tr class="row2">
   <td> world! </td>
   <td class="rj"> 42 </td>
  </tr>
@@ -145,7 +145,7 @@ def test_output():
    <th class="thin subheader first_column" title="Delete"> </th>
   </tr>
  </thead>
- <tr class="row1 ">
+ <tr class="row1">
   <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
   <td class="rj"> 17 </td>
   <td> <i class="fa fa-lg fa-history"> </i> </td>
@@ -167,7 +167,7 @@ def test_name_traversal():
       <thead>
         <tr><th class="subheader first_column">Bar</th></tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>bar</td>
       </tr>
     </table>""")
@@ -194,7 +194,7 @@ def test_tuple_data():
           <th class="subheader first_column"> C </th>
         </tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>a</td>
         <td>b</td>
         <td>c</td>
@@ -221,7 +221,7 @@ def test_dict_data():
           <th class="subheader first_column"> C </th>
         </tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>a</td>
         <td>b</td>
         <td>c</td>
@@ -245,7 +245,7 @@ def test_display_name():
       <thead>
         <tr><th class="subheader first_column">Bar</th></tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>foo</td>
       </tr>
     </table>""")
@@ -262,7 +262,7 @@ def test_css_class():
       <thead>
         <tr><th class="some_class subheader first_column">Foo</th></tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>foo</td>
       </tr>
     </table>""")
@@ -281,7 +281,7 @@ def test_header_url():
           <a href="/some/url">Foo</a>
         </th></tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>foo</td>
       </tr>
     </table>""")
@@ -298,7 +298,7 @@ def test_title():
       <thead>
         <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>foo</td>
       </tr>
     </table>""")
@@ -316,7 +316,7 @@ def test_show():
       <thead>
         <tr><th class="subheader first_column"> Foo </th></tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>foo</td>
       </tr>
     </table>""")
@@ -337,30 +337,38 @@ def test_attr():
           <th class="subheader first_column"> Bar </th>
         </tr>
       </thead>
-      <tr class="row1 ">
+      <tr class="row1">
         <td>foo</td>
         <td>foo</td>
       </tr>
     </table>""")
 
 
-def test_row_attrs():
+def test_attrs():
     class TestTable(NoSortTable):
         class Meta:
-            row_attrs = dict(foo=lambda row: "bar")
+            attrs = {
+                'class': 'classy',
+                'foo': 'bar'
+            }
+            row_attrs = {
+                'class': 'classier',
+                'foo': lambda row: "barier"
+            }
+
         yada = Column()
-    data = [(1,), (2,)]
-    _check_html(TestTable(data), """\
-    <table class="listview">
+
+    _check_html(TestTable([(1,), (2,)]), """\
+    <table class="classy" foo="bar">
       <thead>
         <tr>
           <th class="subheader first_column"> Yada </th>
         </tr>
       </thead>
-      <tr class="row1 " foo="bar">
+      <tr class="row1 classier" foo="barier">
         <td> 1 </td>
       </tr>
-      <tr class="row2 " foo="bar">
+      <tr class="row2 classier" foo="barier">
         <td> 2 </td>
       </tr>
     </table>""")
@@ -400,7 +408,7 @@ def test_column_presets():
           <th class="subheader first_column"> Number </th>
         </tr>
       </thead>
-      <tr class="row1 " data-pk="123">
+      <tr class="row1" data-pk="123">
         <td>
           <i class="fa fa-lg fa-False" />
         </td>
