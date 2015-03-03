@@ -145,7 +145,7 @@ class Column(Struct):
                  cell_template=None,
                  cell_value=None,
                  cell_format=None,
-                 cell_attrs={},
+                 cell_attrs=None,
                  cell_url=None,
                  cell_url_title=None,):
         """
@@ -209,7 +209,7 @@ class Column(Struct):
 
             cell_value=cell_value,
             cell_format=cell_format,
-            cell_attrs=cell_attrs,
+            cell_attrs=cell_attrs if cell_attrs is not None else {},
             cell_url=cell_url,
             cell_url_title=cell_url_title).items()
             if v is not None}
