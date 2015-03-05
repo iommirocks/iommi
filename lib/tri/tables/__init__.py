@@ -680,7 +680,7 @@ def render_table_filters(request, table):
                         model = table.data.model
                         last_name = name.split('__')[-1]
                         for x in name.split('__')[:-1]:
-                            model = getattr(model, x).get_queryset().model
+                            model = getattr(model, x).get_query_set().model
                         field_by_name = forms.fields_for_model(model)
                         self.fields[name] = field_by_name[last_name]
 
