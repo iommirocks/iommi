@@ -16,7 +16,7 @@ from django.utils.safestring import mark_safe
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
-__version__ = '0.5.0-dev'
+__version__ = '0.5.0'
 
 next_creation_count = itertools.count().next
 
