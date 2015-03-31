@@ -131,6 +131,7 @@ class Column(Struct):
                  title=None,
                  show=True,
                  sortable=True,
+                 sort_key=None,
                  group=None,
                  filter=True,
                  filter_show=True,
@@ -157,6 +158,7 @@ class Column(Struct):
         :param title: title/tool tip of header
         :param show: set this to False to hide the column
         :param sortable: set this to False to disable sorting on this column
+        :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param filter: set to false to disable filtering of this column.
         :param filter_show: set to false to hide the filtering component for this column. Sometimes it's useful to allow filtering via the URL to get direct linking but you don't want the GUI added.
@@ -196,6 +198,7 @@ class Column(Struct):
             title=title,
             show=show,
             sortable=sortable,
+            sort_key=sort_key,
             group=group,
             filter=filter,
             filter_show=filter_show,
@@ -407,11 +410,11 @@ class BaseTable(object):
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            selected_field_dict = [x for x in self.columns if x.get('name', None) == order_field][0]
-            order_args = selected_field_dict.get('order_field', selected_field_dict['name'])
+            sort_column = [x for x in self.columns if x.get('name', None) == order_field][0]
+            order_args = sort_column.get('sort_key', sort_column['name'])
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
-            if selected_field_dict.get('sortable', True):
+            if sort_column.get('sortable', True):
                 if isinstance(self.data, list):
                     order_by_on_list(self.data, order_args[0], is_desc)
                 else:

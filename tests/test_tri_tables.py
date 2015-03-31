@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from bs4 import BeautifulSoup
 from django.conf import settings
-from django.test import RequestFactory
+from tests.helpers import verify_table_html
 
-from tri.tables import render_table_to_response, Struct, Table, Column
+from tri.tables import Struct, Table, Column
 
 
 @pytest.fixture(autouse=True)
@@ -15,18 +14,6 @@ def template_debug():
     Cause exceptions during rendering to fail test with traceback
     """
     settings.TEMPLATE_DEBUG = True
-
-
-def _check_html(table, expected_html):
-    """
-    Verify that the table renders to the expected markup, modulo formatting
-    """
-    actual_html = str(render_table_to_response(request=RequestFactory().request(), table=table))
-
-    prettified_actual = BeautifulSoup(actual_html).find('table').prettify().strip()
-    prettified_expected = BeautifulSoup(expected_html).find('table').prettify().strip()
-
-    assert prettified_expected == prettified_actual
 
 
 def get_data():
@@ -65,7 +52,7 @@ def declarative_table():
 ])
 def test_render(table):
 
-    _check_html(table, """\
+    verify_table_html(table, """\
 <table class="listview" id="table_id">
  <thead>
   <tr>
@@ -124,7 +111,7 @@ def test_output():
                get_absolute_url=lambda: '/somewhere/'),
     ]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
 <table class="listview" id="table_id">
  <thead>
  <tr>
@@ -162,7 +149,7 @@ def test_name_traversal():
 
     data = [Struct(foo=Struct(bar="bar"))]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr><th class="subheader first_column">Bar</th></tr>
@@ -185,7 +172,7 @@ def test_tuple_data():
 
     data = [('a', 'b', 'c')]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr>
@@ -212,7 +199,7 @@ def test_dict_data():
 
     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr>
@@ -240,7 +227,7 @@ def test_display_name():
 
     data = [Struct(foo="foo")]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr><th class="subheader first_column">Bar</th></tr>
@@ -257,7 +244,7 @@ def test_css_class():
 
     data = [Struct(foo="foo")]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr><th class="some_class subheader first_column">Foo</th></tr>
@@ -274,7 +261,7 @@ def test_header_url():
 
     data = [Struct(foo="foo")]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr><th class="subheader first_column">
@@ -293,7 +280,7 @@ def test_title():
 
     data = [Struct(foo="foo")]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
@@ -311,7 +298,7 @@ def test_show():
 
     data = [Struct(foo="foo", bar="bar")]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr><th class="subheader first_column"> Foo </th></tr>
@@ -329,7 +316,7 @@ def test_attr():
 
     data = [Struct(foo="foo")]
 
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr>
@@ -358,7 +345,7 @@ def test_attrs():
 
         yada = Column()
 
-    _check_html(TestTable([(1,), (2,)]), """\
+    verify_table_html(TestTable([(1,), (2,)]), """\
     <table class="classy" foo="bar">
       <thead>
         <tr>
@@ -393,7 +380,7 @@ def test_column_presets():
                    check=True,
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
-    _check_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """\
     <table class="listview">
       <thead>
         <tr>
