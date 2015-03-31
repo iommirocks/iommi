@@ -4,6 +4,7 @@
 import pytest
 from django.conf import settings
 from tests.helpers import verify_table_html
+from tests.models import Foo
 
 from tri.tables import Struct, Table, Column
 
@@ -73,6 +74,40 @@ def test_render(table):
   <td class="rj"> 42 </td>
  </tr>
 </table>""")
+
+
+@pytest.mark.django_db
+def test_django_table():
+
+    Foo(a=17, b="Hej").save()
+    Foo(a=42, b="Hopp").save()
+
+    class TestTable(Table):
+        a = Column.number()
+        b = Column()
+
+    verify_table_html(TestTable(Foo.objects.all()), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader first_column">
+            <a href="?order=a"> A </a>
+          </th>
+          <th class="subheader first_column">
+            <a href="?order=b"> B </a>
+          </th>
+        </tr>
+      </thead>
+      <tr class="row1" data-pk="1">
+        <td class="rj"> 17 </td>
+        <td> Hej </td>
+      </tr>
+      <tr class="row2" data-pk="2">
+        <td class="rj"> 42 </td>
+        <td> Hopp </td>
+      </tr>
+    </table>
+    """)
 
 
 def test_inheritance():

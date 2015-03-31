@@ -2,6 +2,7 @@ from django.conf import settings
 import pytest
 
 from .helpers import verify_table_html
+from tests.models import Foo
 from tri.tables import Column, Table, Struct
 
 
@@ -14,15 +15,17 @@ def template_debug():
 
 
 def test_sort_list():
-    columns = [
-        Column(name="foo"),
-        Column.number(name="bar", sort_key=lambda row: abs(row.bar))
-    ]
 
-    verify_table_html(Table([Struct(foo='c', bar=3),
-                             Struct(foo='b', bar=-2),
-                             Struct(foo='a', bar=1)], columns),
-                      data=dict(order='bar'),
+    class TestTable(Table):
+        foo = Column()
+        bar = Column.number(sort_key=lambda row: abs(row.bar))
+
+    data = [Struct(foo='c', bar=3),
+            Struct(foo='b', bar=-2),
+            Struct(foo='a', bar=1)]
+
+    verify_table_html(TestTable(data),
+                      query=dict(order='bar'),
                       expected_html="""\
       <table class="listview">
         <thead>
@@ -51,5 +54,43 @@ def test_sort_list():
     """)
 
 
-def test_sort_query():
-    pass
+@pytest.mark.django_db
+def test_django_table():
+
+    Foo(a=4711, b="c").save()
+    Foo(a=17, b="a").save()
+    Foo(a=42, b="b").save()
+
+    class TestTable(Table):
+        a = Column.number()
+        b = Column()
+
+    verify_table_html(TestTable(Foo.objects.all()),
+                      query=dict(order='a'),
+                      expected_html="""\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader sorted_column first_column">
+            <a href="?order=-a"> A </a>
+          </th>
+          <th class="subheader first_column">
+            <a href="?order=b"> B </a>
+          </th>
+        </tr>
+      </thead>
+      <tr class="row1" data-pk="2">
+        <td class="rj"> 17 </td>
+        <td> a </td>
+      </tr>
+      <tr class="row2" data-pk="3">
+        <td class="rj"> 42 </td>
+        <td> b </td>
+      </tr>
+      <tr class="row1" data-pk="1">
+        <td class="rj"> 4711 </td>
+        <td> c </td>
+      </tr>
+    </table>
+    """)
+
