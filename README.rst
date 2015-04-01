@@ -40,6 +40,13 @@ All these examples and a bigger example using many more features can be found in
 
 Read the full documentation for more.
 
+
+Running tests
+-------------
+
+You need tox installed then just `make test`.
+
+
 License
 -------
 
