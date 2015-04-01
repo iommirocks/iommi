@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+from django.test import RequestFactory
 from django.conf import settings
 from tests.helpers import verify_table_html
 from tests.models import Foo
 
-from tri.tables import Struct, Table, Column, Link
+from tri.tables import Struct, Table, Column, Link, render_table
 
 
 @pytest.fixture(autouse=True)
@@ -535,3 +536,24 @@ def test_links():
         </a>
 
     </div>""", find=dict(class_='links'), links=links)
+
+
+@pytest.mark.django_db
+def test_bulk_edit():
+
+    Foo(a=1, b="").save()
+    Foo(a=2, b="").save()
+    Foo(a=3, b="").save()
+    Foo(a=4, b="").save()
+
+    class TestTable(Table):
+        a = Column.number(sortable=False, bulk=True)  # turn off sorting to not get the link with random query params
+        b = Column(bulk=True)
+
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(Foo.objects.all()))
+
+    assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
+        (1, 0, u'changed'),
+        (2, 0, u'changed'),
+        (3, 3, u''),
+        (4, 4, u''),]

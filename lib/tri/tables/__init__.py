@@ -775,7 +775,7 @@ def render_table(request,
                     .filter(pk__in=pks) \
                     .filter(**table.Meta.bulk_filter) \
                     .exclude(**table.Meta.bulk_exclude) \
-                    .update(**{k: v for k, v in f.cleaned_data.items() if v})
+                    .update(**{k: v for k, v in f.cleaned_data.items() if v is not None and v is not ''})
 
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
         else:
