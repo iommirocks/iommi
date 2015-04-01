@@ -3,7 +3,7 @@ import pytest
 
 from .helpers import verify_table_html
 from tests.models import Foo
-from tri.tables import Column, Table, Struct
+from tri.tables import Column, Table, Struct, order_by_on_list
 
 
 @pytest.fixture(autouse=True)
@@ -94,3 +94,12 @@ def test_django_table():
     </table>
     """)
 
+
+def test_order_by_on_list_nested():
+    data = [Struct(foo=Struct(bar='c')),
+            Struct(foo=Struct(bar=lambda: 'b')),
+            Struct(foo=lambda: Struct(bar='a'))]
+
+    sorted_data = data[:]
+    order_by_on_list(sorted_data, 'foo__bar')
+    assert sorted_data == list(reversed(data))

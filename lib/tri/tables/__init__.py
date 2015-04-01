@@ -78,13 +78,11 @@ def prepare_headers(request, headers):
             header['display_name'] = force_unicode(header['name'].rsplit('__', 1)[-1]).replace("_", " ").capitalize()
         if header.get('name') in ('edit', 'delete'):
             header['display_name'] = ''
-            if not header.get('css_class'):
-                header['css_class'] = 'thin'
         header['show'] = header.get('show', True)
     return headers
 
 
-def order_by_on_list(objects, order_field, is_desc):
+def order_by_on_list(objects, order_field, is_desc=False):
     """
     Utility function to sort objects django-style even for non-query set collections
 
@@ -108,7 +106,7 @@ def order_by_on_list(objects, order_field, is_desc):
                 p = getattr(p, prop)
                 if callable(p):
                     p = p()
-            except AttributeError:
+            except AttributeError:  # pragma: no cover
                 if settings.DEBUG:
                     raise
                 return p
@@ -555,7 +553,7 @@ def object_list_context(request,
                         paginator=None,
                         show_hits=False,
                         hit_label='Items'):
-    if extra_context is None:
+    if extra_context is None:  # pragma: no cover
         extra_context = {}
 
     grouped_links = {}
@@ -578,7 +576,7 @@ def object_list_context(request,
     if paginate_by:
         try:
             paginate_by = int(request.GET.get('page_size', paginate_by))
-        except ValueError:
+        except ValueError:  # pragma: no cover
             pass
         if paginator is None:
             paginator = Paginator(table.data, paginate_by)
@@ -589,13 +587,13 @@ def object_list_context(request,
             page = request.GET.get('page', 1)
         try:
             page = int(page)
-            if page < 1:
+            if page < 1:  # pragma: no cover
                 page = 1
-            if page > paginator.num_pages:
+            if page > paginator.num_pages:  # pragma: no cover
                 page = paginator.num_pages
             if object_list is None:
                 table.data = paginator.page(page).object_list
-        except (InvalidPage, ValueError):
+        except (InvalidPage, ValueError):  # pragma: no cover
             if page == 1:
                 table.data = []
             else:
@@ -615,7 +613,7 @@ def object_list_context(request,
             'hits': paginator.count,
             'show_hits': show_hits,
             'hit_label': hit_label})
-    else:
+    else:  # pragma: no cover
         base_context.update({
             'is_paginated': False})
     auto_rowspan_columns = [column for column in table.columns if column.auto_rowspan]

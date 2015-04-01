@@ -6,7 +6,7 @@ from django.conf import settings
 from tests.helpers import verify_table_html
 from tests.models import Foo
 
-from tri.tables import Struct, Table, Column
+from tri.tables import Struct, Table, Column, Link
 
 
 @pytest.fixture(autouse=True)
@@ -466,3 +466,72 @@ def test_column_presets():
         </td>
       </tr>
     </table>""")
+
+
+@pytest.mark.django_db
+def test_django_table_pagination():
+
+    for x in xrange(30):
+        Foo(a=x, b="").save()
+
+    class TestTable(Table):
+        a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
+
+    verify_table_html(TestTable(Foo.objects.all()), """\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="subheader first_column">
+            A
+          </th>
+        </tr>
+      </thead>
+      <tr class="row1" data-pk="3">
+        <td class="rj"> 2 </td>
+      </tr>
+      <tr class="row2" data-pk="4">
+        <td class="rj"> 3 </td>
+      </tr>
+    </table>
+    """,
+    query=dict(page_size=2, page=2))
+
+
+def test_links():
+    class TestTable(NoSortTable):
+        foo = Column(title="Some title")
+
+    links = [
+        Link('Foo', url='/foo/', show=False),
+        Link('Bar', url='/bar/'),
+        Link('Baz', url='/bar/', group='Other'),
+        Link('Qux', url='/bar/', group='Other'),
+        Link.icon('icon_foo', title='Icon foo', url='/icon_foo/'),
+    ]
+
+    data = [Struct(foo="foo")]
+
+    verify_table_html(TestTable(data), """
+    <div class="links">
+        <div class="dropdown">
+            <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
+                Other <i class="fa fa-lg fa-caret-down"></i>
+            </a>
+            <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
+                <li role="presentation">
+                    <a href="/bar/" role="menuitem">Baz</a>
+                </li>
+                <li role="presentation">
+                    <a href="/bar/" role="menuitem">Qux</a>
+                </li>
+            </ul>
+        </div>
+
+        <a href="/bar/">Bar</a>
+
+        <a href="/icon_foo/">
+            <i class="fa fa-icon_foo"></i>
+            Icon foo
+        </a>
+
+    </div>""", find=dict(class_='links'), links=links)
