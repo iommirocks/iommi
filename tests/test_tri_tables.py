@@ -413,7 +413,7 @@ def test_column_presets():
 
     data = [Struct(pk=123,
                    get_absolute_url=lambda: "http://yada/",
-                   check=True,
+                   check=lambda: True,
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
     verify_table_html(TestTable(data), """\
@@ -557,3 +557,22 @@ def test_bulk_edit():
         (2, 0, u'changed'),
         (3, 3, u''),
         (4, 4, u''),]
+
+
+def test_cell_template():
+    class TestTable(NoSortTable):
+        foo = Column(cell_template='test_cell_template.html')
+
+    data = [Struct(foo="foo")]
+
+    verify_table_html(TestTable(data), """\
+        <table class="listview">
+            <thead>
+                <tr><th class="subheader first_column">Foo</th></tr>
+            </thead>
+            <tr class="row1">
+                <td>
+                    test_cell_template.html contents
+                </td>
+            </tr>
+        </table>""")

@@ -581,7 +581,7 @@ def object_list_context(request,
         if paginator is None:
             paginator = Paginator(table.data, paginate_by)
             object_list = None
-        else:
+        else:  # pragma: no cover
             object_list = table.data
         if not page:
             page = request.GET.get('page', 1)

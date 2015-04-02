@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from tri.tables import render_table
 
@@ -9,7 +10,9 @@ def verify_table_html(table, expected_html, query=None, find=None, links=None):
     """
     if not find:
         find = dict(name='table')
-    actual_html = render_table(request=RequestFactory().get("/", query), table=table, links=links)
+    request = RequestFactory().get("/", query)
+    request.user = AnonymousUser()
+    actual_html = render_table(request=request, table=table, links=links)
 
     prettified_actual = BeautifulSoup(actual_html).find(**find).prettify().strip()
     prettified_expected = BeautifulSoup(expected_html).find(**find).prettify().strip()

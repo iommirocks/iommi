@@ -1,6 +1,10 @@
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+TEMPLATE_DIRS = [
+    os.path.join(BASE_DIR, 'tests'),
+]
+
 SECRET_KEY = "foobar"
 INSTALLED_APPS = [
     'tri.tables',
