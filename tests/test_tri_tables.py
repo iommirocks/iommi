@@ -56,24 +56,24 @@ def test_render(table):
 
     verify_table_html(table, """
         <table class="listview" id="table_id">
-         <thead>
-          <tr>
-           <th class="subheader first_column">
-            <a href="?order=foo"> Foo </a>
-           </th>
-           <th class="subheader first_column">
-            <a href="?order=bar"> Bar </a>
-           </th>
-          </tr>
-         </thead>
-         <tr class="row1">
-          <td> Hello </td>
-          <td class="rj"> 17 </td>
-         </tr>
-         <tr class="row2">
-          <td> world! </td>
-          <td class="rj"> 42 </td>
-         </tr>
+            <thead>
+                <tr>
+                    <th class="subheader first_column">
+                        <a href="?order=foo"> Foo </a>
+                    </th>
+                    <th class="subheader first_column">
+                        <a href="?order=bar"> Bar </a>
+                    </th>
+                </tr>
+            </thead>
+            <tr class="row1">
+                <td> Hello </td>
+                <td class="rj"> 17 </td>
+            </tr>
+            <tr class="row2">
+                <td> world! </td>
+                <td class="rj"> 42 </td>
+            </tr>
         </table>""")
 
 
@@ -87,28 +87,27 @@ def test_django_table():
         a = Column.number()
         b = Column()
 
-    verify_table_html(TestTable(Foo.objects.all()), """
-    <table class="listview">
-      <thead>
-        <tr>
-          <th class="subheader first_column">
-            <a href="?order=a"> A </a>
-          </th>
-          <th class="subheader first_column">
-            <a href="?order=b"> B </a>
-          </th>
-        </tr>
-      </thead>
-      <tr class="row1" data-pk="1">
-        <td class="rj"> 17 </td>
-        <td> Hej </td>
-      </tr>
-      <tr class="row2" data-pk="2">
-        <td class="rj"> 42 </td>
-        <td> Hopp </td>
-      </tr>
-    </table>
-    """)
+    verify_table_html(TestTable(Foo.objects.all()), """\
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column">
+                        <a href="?order=a"> A </a>
+                    </th>
+                    <th class="subheader first_column">
+                        <a href="?order=b"> B </a>
+                    </th>
+                </tr>
+            </thead>
+            <tr class="row1" data-pk="1">
+                <td class="rj"> 17 </td>
+                <td> Hej </td>
+            </tr>
+            <tr class="row2" data-pk="2">
+                <td class="rj"> 42 </td>
+                <td> Hopp </td>
+            </tr>
+        </table>""")
 
 
 def test_inheritance():
@@ -185,15 +184,17 @@ def test_name_traversal():
 
     data = [Struct(foo=Struct(bar="bar"))]
 
-    verify_table_html(TestTable(data), """
-    <table class="listview">
-      <thead>
-        <tr><th class="subheader first_column">Bar</th></tr>
-      </thead>
-      <tr class="row1">
-        <td>bar</td>
-      </tr>
-    </table>""")
+    verify_table_html(TestTable(data), """\
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column"> Bar </th>
+                </tr>
+            </thead>
+            <tr class="row1">
+                <td> bar </td>
+            </tr>
+        </table>""")
 
 
 def test_tuple_data():
@@ -209,20 +210,20 @@ def test_tuple_data():
     data = [('a', 'b', 'c')]
 
     verify_table_html(TestTable(data), """
-    <table class="listview">
-      <thead>
-        <tr>
-          <th class="subheader first_column"> A </th>
-          <th class="subheader first_column"> B </th>
-          <th class="subheader first_column"> C </th>
-        </tr>
-      </thead>
-      <tr class="row1">
-        <td>a</td>
-        <td>b</td>
-        <td>c</td>
-      </tr>
-    </table>""")
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column"> A </th>
+                    <th class="subheader first_column"> B </th>
+                    <th class="subheader first_column"> C </th>
+                </tr>
+            </thead>
+            <tr class="row1">
+                <td> a </td>
+                <td> b </td>
+                <td> c </td>
+            </tr>
+        </table>""")
 
 
 def test_dict_data():
@@ -235,21 +236,21 @@ def test_dict_data():
 
     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 
-    verify_table_html(TestTable(data), """
-    <table class="listview">
-      <thead>
-        <tr>
-          <th class="subheader first_column"> A </th>
-          <th class="subheader first_column"> B </th>
-          <th class="subheader first_column"> C </th>
-        </tr>
-      </thead>
-      <tr class="row1">
-        <td>a</td>
-        <td>b</td>
-        <td>c</td>
-      </tr>
-    </table>""")
+    verify_table_html(TestTable(data), """\
+        <table class="listview">
+             <thead>
+                 <tr>
+                     <th class="subheader first_column"> A </th>
+                     <th class="subheader first_column"> B </th>
+                     <th class="subheader first_column"> C </th>
+                 </tr>
+             </thead>
+             <tr class="row1">
+                 <td> a </td>
+                 <td> b </td>
+                 <td> c </td>
+             </tr>
+         </table>""")
 
 
 class NoSortTable(Table):
@@ -264,14 +265,16 @@ def test_display_name():
     data = [Struct(foo="foo")]
 
     verify_table_html(TestTable(data), """
-    <table class="listview">
-      <thead>
-        <tr><th class="subheader first_column">Bar</th></tr>
-      </thead>
-      <tr class="row1">
-        <td>foo</td>
-      </tr>
-    </table>""")
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column"> Bar </th>
+                </tr>
+            </thead>
+            <tr class="row1">
+                <td> foo </td>
+            </tr>
+        </table>""")
 
 
 def test_css_class():
@@ -282,12 +285,12 @@ def test_css_class():
 
     verify_table_html(TestTable(data), """
     <table class="listview">
-      <thead>
-        <tr><th class="some_class subheader first_column">Foo</th></tr>
-      </thead>
-      <tr class="row1">
-        <td>foo</td>
-      </tr>
+        <thead>
+            <tr><th class="some_class subheader first_column"> Foo </th></tr>
+        </thead>
+        <tr class="row1">
+            <td> foo </td>
+        </tr>
     </table>""")
 
 
@@ -299,14 +302,14 @@ def test_header_url():
 
     verify_table_html(TestTable(data), """
     <table class="listview">
-      <thead>
-        <tr><th class="subheader first_column">
-          <a href="/some/url">Foo</a>
-        </th></tr>
-      </thead>
-      <tr class="row1">
-        <td>foo</td>
-      </tr>
+        <thead>
+            <tr><th class="subheader first_column">
+                <a href="/some/url"> Foo </a>
+            </th></tr>
+        </thead>
+        <tr class="row1">
+            <td> foo </td>
+        </tr>
     </table>""")
 
 
@@ -318,12 +321,12 @@ def test_title():
 
     verify_table_html(TestTable(data), """
     <table class="listview">
-      <thead>
-        <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
-      </thead>
-      <tr class="row1">
-        <td>foo</td>
-      </tr>
+        <thead>
+            <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
+        </thead>
+        <tr class="row1">
+            <td> foo </td>
+        </tr>
     </table>""")
 
 
@@ -336,12 +339,12 @@ def test_show():
 
     verify_table_html(TestTable(data), """
     <table class="listview">
-      <thead>
-        <tr><th class="subheader first_column"> Foo </th></tr>
-      </thead>
-      <tr class="row1">
-        <td>foo</td>
-      </tr>
+        <thead>
+            <tr><th class="subheader first_column"> Foo </th></tr>
+        </thead>
+        <tr class="row1">
+            <td> foo </td>
+        </tr>
     </table>""")
 
 
@@ -354,16 +357,16 @@ def test_attr():
 
     verify_table_html(TestTable(data), """
     <table class="listview">
-      <thead>
-        <tr>
-          <th class="subheader first_column"> Foo </th>
-          <th class="subheader first_column"> Bar </th>
+        <thead>
+            <tr>
+                <th class="subheader first_column"> Foo </th>
+                <th class="subheader first_column"> Bar </th>
+            </tr>
+        </thead>
+        <tr class="row1">
+            <td> foo </td>
+            <td> foo </td>
         </tr>
-      </thead>
-      <tr class="row1">
-        <td>foo</td>
-        <td>foo</td>
-      </tr>
     </table>""")
 
 
@@ -382,19 +385,19 @@ def test_attrs():
         yada = Column()
 
     verify_table_html(TestTable([(1,), (2,)]), """
-    <table class="classy" foo="bar">
-      <thead>
-        <tr>
-          <th class="subheader first_column"> Yada </th>
-        </tr>
-      </thead>
-      <tr class="row1 classier" foo="barier">
-        <td> 1 </td>
-      </tr>
-      <tr class="row2 classier" foo="barier">
-        <td> 2 </td>
-      </tr>
-    </table>""")
+        <table class="classy" foo="bar">
+            <thead>
+                <tr>
+                  <th class="subheader first_column"> Yada </th>
+                </tr>
+            </thead>
+                <tr class="row1 classier" foo="barier">
+                    <td> 1 </td>
+                </tr>
+                <tr class="row2 classier" foo="barier">
+                    <td> 2 </td>
+                </tr>
+        </table>""")
 
 
 def test_column_presets():
@@ -417,56 +420,33 @@ def test_column_presets():
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
     verify_table_html(TestTable(data), """
-    <table class="listview">
-      <thead>
-        <tr>
-          <th class="thin subheader first_column"> </th>
-          <th class="thin subheader first_column" title="Edit"> </th>
-          <th class="thin subheader first_column" title="Delete"> </th>
-          <th class="thin subheader first_column" title="Download"> </th>
-          <th class="thin subheader first_column" title="Run"> Run </th>
-          <th class="thin nopad subheader first_column" title="Select all"> <i class="fa fa-check-square-o" /> </th>
-          <th class="subheader first_column"> Check </th>
-          <th class="subheader first_column"> Link </th>
-          <th class="subheader first_column"> Number </th>
-        </tr>
-      </thead>
-      <tr class="row1" data-pk="123">
-        <td>
-          <i class="fa fa-lg fa-False" />
-        </td>
-        <td>
-          <a href="http://yada/edit/">
-            <i class="fa fa-lg fa-pencil-square-o" title="Edit" />
-          </a>
-        </td>
-        <td>
-          <a href="http://yada/delete/">
-            <i class="fa fa-lg fa-trash-o" title="Delete" />
-          </a>
-        </td>
-        <td>
-          <a href="http://yada/download/">
-            <i class="fa fa-lg fa-download" title="Download" />
-          </a>
-        </td>
-        <td>
-          <a href="http://yada/run/"> Run </a>
-        </td>
-        <td>
-          <input class="checkbox" name="pk_123" type="checkbox"/>
-        </td>
-        <td class="cj">
-          <i class="fa fa-check" title="Yes" />
-        </td>
-        <td>
-          <a href="http://yadahada/"> Yadahada name </a>
-        </td>
-        <td class="rj">
-          123
-        </td>
-      </tr>
-    </table>""")
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="thin subheader first_column" />
+                    <th class="thin subheader first_column" title="Edit" />
+                    <th class="thin subheader first_column" title="Delete" />
+                    <th class="thin subheader first_column" title="Download" />
+                    <th class="thin subheader first_column" title="Run"> Run </th>
+                    <th class="thin nopad subheader first_column" title="Select all">
+                        <i class="fa fa-check-square-o" />
+                    </th>
+                    <th class="subheader first_column"> Check </th>
+                    <th class="subheader first_column"> Link </th>
+                    <th class="subheader first_column"> Number </th>
+                </tr>
+            </thead>
+            <tr class="row1" data-pk="123">
+                <td> <i class="fa fa-lg fa-False" /> </td>
+                <td> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
+                <td> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
+                <td> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
+                <td> <a href="http://yada/run/"> Run </a> </td>
+                <td> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td class="cj"> <i class="fa fa-check" title="Yes" /> </td>
+                <td> <a href="http://yadahada/"> Yadahada name </a> </td>
+                <td class="rj"> 123 </td>
+            </tr>
+        </table>""")
 
 
 @pytest.mark.django_db
@@ -478,24 +458,22 @@ def test_django_table_pagination():
     class TestTable(Table):
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
 
-    verify_table_html(TestTable(Foo.objects.all()), """
-    <table class="listview">
-      <thead>
-        <tr>
-          <th class="subheader first_column">
-            A
-          </th>
-        </tr>
-      </thead>
-      <tr class="row1" data-pk="3">
-        <td class="rj"> 2 </td>
-      </tr>
-      <tr class="row2" data-pk="4">
-        <td class="rj"> 3 </td>
-      </tr>
-    </table>
-    """,
-    query=dict(page_size=2, page=2))
+    verify_table_html(TestTable(Foo.objects.all()),
+                      query=dict(page_size=2, page=2),
+                      expected_html="""\
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column"> A </th>
+                </tr>
+            </thead>
+            <tr class="row1" data-pk="3">
+                <td class="rj"> 2 </td>
+            </tr>
+            <tr class="row2" data-pk="4">
+                <td class="rj"> 3 </td>
+            </tr>
+        </table>""")
 
 
 def test_links():
@@ -512,30 +490,29 @@ def test_links():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
-    <div class="links">
-        <div class="dropdown">
-            <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
-                Other <i class="fa fa-lg fa-caret-down"></i>
-            </a>
-            <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
-                <li role="presentation">
-                    <a href="/bar/" role="menuitem">Baz</a>
-                </li>
-                <li role="presentation">
-                    <a href="/bar/" role="menuitem">Qux</a>
-                </li>
-            </ul>
-        </div>
+    verify_table_html(TestTable(data),
+                      find=dict(class_='links'),
+                      links=links,
+                      expected_html="""\
+        <div class="links">
+            <div class="dropdown">
+                <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
+                    Other <i class="fa fa-lg fa-caret-down" />
+                </a>
+                <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
+                    <li role="presentation">
+                        <a href="/bar/" role="menuitem"> Baz </a>
+                    </li>
+                    <li role="presentation">
+                        <a href="/bar/" role="menuitem"> Qux </a>
+                    </li>
+                </ul>
+            </div>
 
-        <a href="/bar/">Bar</a>
+            <a href="/bar/"> Bar </a>
 
-        <a href="/icon_foo/">
-            <i class="fa fa-icon_foo"></i>
-            Icon foo
-        </a>
-
-    </div>""", find=dict(class_='links'), links=links)
+            <a href="/icon_foo/"> <i class="fa fa-icon_foo" /> Icon foo </a>
+        </div>""")
 
 
 @pytest.mark.django_db
@@ -566,10 +543,10 @@ def test_cell_template():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data), """\
         <table class="listview">
             <thead>
-                <tr><th class="subheader first_column">Foo</th></tr>
+                <tr><th class="subheader first_column"> Foo </th></tr>
             </thead>
             <tr class="row1">
                 <td>
@@ -593,26 +570,18 @@ def test_auto_rowspan():
     verify_table_html(TestTable(data), """
         <table class="listview">
             <thead>
-                <tr><th class="subheader first_column">Foo</th></tr>
+                <tr><th class="subheader first_column"> Foo </th></tr>
             </thead>
             <tr class="row1">
-                <td rowspan="2">
-                    1
-                </td>
+                <td rowspan="2"> 1 </td>
             </tr>
             <tr class="row2">
-                <td style="display: none">
-                    1
-                </td>
+                <td style="display: none"> 1 </td>
             </tr>
             <tr class="row1">
-                <td rowspan="2">
-                    2
-                </td>
+                <td rowspan="2"> 2 </td>
             </tr>
             <tr class="row2">
-                <td style="display: none">
-                    2
-                </td>
+                <td style="display: none"> 2 </td>
             </tr>
         </table>""")
