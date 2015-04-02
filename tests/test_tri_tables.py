@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from django.http import HttpResponse
 
 import pytest
 from django.test import RequestFactory
 from django.conf import settings
 from tests.helpers import verify_table_html
-from tests.models import Foo
+from tests.models import Foo, Bar
 
-from tri.tables import Struct, Table, Column, Link, render_table
+from tri.tables import Struct, Table, Column, Link, render_table, render_table_to_response
 
 
 @pytest.fixture(autouse=True)
@@ -87,7 +88,7 @@ def test_django_table():
         a = Column.number()
         b = Column()
 
-    verify_table_html(TestTable(Foo.objects.all()), """\
+    verify_table_html(TestTable(Foo.objects.all()), """
         <table class="listview">
             <thead>
                 <tr>
@@ -184,7 +185,7 @@ def test_name_traversal():
 
     data = [Struct(foo=Struct(bar="bar"))]
 
-    verify_table_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """
         <table class="listview">
             <thead>
                 <tr>
@@ -236,7 +237,7 @@ def test_dict_data():
 
     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 
-    verify_table_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """
         <table class="listview">
              <thead>
                  <tr>
@@ -460,7 +461,7 @@ def test_django_table_pagination():
 
     verify_table_html(TestTable(Foo.objects.all()),
                       query=dict(page_size=2, page=2),
-                      expected_html="""\
+                      expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -493,7 +494,7 @@ def test_links():
     verify_table_html(TestTable(data),
                       find=dict(class_='links'),
                       links=links,
-                      expected_html="""\
+                      expected_html="""
         <div class="links">
             <div class="dropdown">
                 <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
@@ -543,7 +544,7 @@ def test_cell_template():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """\
+    verify_table_html(TestTable(data), """
         <table class="listview">
             <thead>
                 <tr><th class="subheader first_column"> Foo </th></tr>
@@ -585,3 +586,192 @@ def test_auto_rowspan():
                 <td style="display: none"> 2 </td>
             </tr>
         </table>""")
+
+
+@pytest.mark.django_db
+def test_django_filters():
+
+    a = Foo.objects.create(a=1, b="a")
+    b = Foo.objects.create(a=2, b="b")
+    c = Foo.objects.create(a=3, b="c")
+    d = Foo.objects.create(a=4, b="d")
+
+    Bar(foo=a, foo2=a, foo3=a, c=True).save()
+    Bar(foo=b, foo2=b, foo3=b, c=False).save()
+    Bar(foo=c, foo2=c, foo3=c, c=False).save()
+    Bar(foo=d, foo2=d, foo3=d, c=False).save()
+
+    class TestTable(Table):
+        foo = Column()
+        foo2 = Column(filter_choices=[('a', 'a'), ('b', 'b')])
+        foo3 = Column(show=False, filter_choices=Foo.objects.all())
+        c = Column()
+        foo__a = Column.number()
+        foo__b = Column(filter_type=Column.FILTER_TYPES.CONTAINS)
+
+        class Meta:
+            # turn off sorting to not get the link with random query params
+            sortable = False
+
+    verify_table_html(TestTable(Bar.objects.all()), """
+        <form action="." method="get">
+            <div class="compact">
+                <div class="key-value">
+                    <div>
+                        <label for="id_foo">
+                            Foo:
+                        </label>
+                    </div>
+                    <select id="id_foo" name="foo">
+                        <option selected="selected" value="">
+                            ---------
+                        </option>
+                        <option value="1">
+                            Foo(1, a)
+                        </option>
+                        <option value="2">
+                            Foo(2, b)
+                        </option>
+                        <option value="3">
+                            Foo(3, c)
+                        </option>
+                        <option value="4">
+                            Foo(4, d)
+                        </option>
+                    </select>
+                </div>
+                <div class="key-value">
+                    <div>
+                        <label for="id_foo2">
+                            Foo2:
+                        </label>
+                    </div>
+                    <select id="id_foo2" name="foo2">
+                        <option selected="selected" value="">
+                        </option>
+                        <option value="a">
+                            a
+                        </option>
+                        <option value="b">
+                            b
+                        </option>
+                    </select>
+                </div>
+                <div class="key-value">
+                    <div>
+                        <label for="id_foo3">
+                            Foo3:
+                        </label>
+                    </div>
+                    <select id="id_foo3" name="foo3">
+                        <option selected="selected" value="">
+                        </option>
+                        <option value="1">
+                            Foo(1, a)
+                        </option>
+                        <option value="2">
+                            Foo(2, b)
+                        </option>
+                        <option value="3">
+                            Foo(3, c)
+                        </option>
+                        <option value="4">
+                            Foo(4, d)
+                        </option>
+                    </select>
+                </div>
+                <div class="key-value">
+                    <div>
+                        <label for="id_c">
+                            C:
+                        </label>
+                    </div>
+                    <select id="id_c" name="c">
+                        <option selected="selected" value="">
+                        </option>
+                        <option value="1">
+                            Yes
+                        </option>
+                        <option value="0">
+                            No
+                        </option>
+                    </select>
+                </div>
+                <div class="key-value">
+                    <div>
+                        <label for="id_foo__a">
+                            A:
+                        </label>
+                    </div>
+                    <input id="id_foo__a" name="foo__a" type="number" value="1"/>
+                </div>
+                <div class="key-value">
+                    <div>
+                        <label for="id_foo__b">
+                            B:
+                        </label>
+                    </div>
+                    <input id="id_foo__b" maxlength="255" name="foo__b" type="text"/>
+                </div>
+                <div class="submit">
+                    <input class="button" type="submit" value="Filter"/>
+                </div>
+            </div>
+        </form>""",
+        query=dict(foo__a=1),
+        find=dict(),
+    )
+
+    # case insensitive search
+    verify_table_html(TestTable(Bar.objects.all()), """
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column">
+                        Foo
+                    </th>
+                    <th class="subheader first_column">
+                        Foo2
+                    </th>
+                    <th class="subheader first_column">
+                        C
+                    </th>
+                    <th class="subheader first_column">
+                        A
+                    </th>
+                    <th class="subheader first_column">
+                        B
+                    </th>
+                </tr>
+            </thead>
+            <tr class="row1" data-pk="1">
+                <td>
+                    Foo(1, a)
+                </td>
+                <td>
+                    Foo(1, a)
+                </td>
+                <td>
+                    Yes
+                </td>
+                <td class="rj">
+                    1
+                </td>
+                <td>
+                    a
+                </td>
+            </tr>
+        </table>""",
+        query=dict(foo__b='A'),
+    )
+
+
+def test_render_table_to_response():
+    class TestTable(NoSortTable):
+        foo = Column(display_name="Bar")
+
+    data = [Struct(foo="foo")]
+
+    response = render_table_to_response(RequestFactory().get('/'), TestTable(data))
+    assert isinstance(response, HttpResponse)
+    assert '<table' in response.content

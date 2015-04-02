@@ -1,4 +1,3 @@
-from django import forms
 from examples.models import Bar, Foo
 from os.path import dirname, abspath, join
 from django.http import HttpResponse
@@ -13,6 +12,7 @@ def index(request):
         <a href="readme_example_2/">Example 2 from the README</a><br/>
         <a href="kitchen_sink/">Kitchen sink</a><br/>
         </body></html>""")
+
 
 def style(request):
     return HttpResponse(open(join(dirname(dirname(dirname(abspath(__file__)))), 'table.css')).read())
@@ -39,12 +39,14 @@ def readme_example_1(request):
     # now to get an HTML table:
     return render_table_to_response(request, FooTable(foos), template_name='base.html')
 
+
 def fill_dummy_data():
     if not Bar.objects.all():
         # Fill in some dummy data if none exists
         for i in xrange(200):
             f = Foo.objects.create(a=i)
             Bar.objects.create(b=f, c='foo%s' % (i % 3))
+
 
 def readme_example_2(request):
     fill_dummy_data()

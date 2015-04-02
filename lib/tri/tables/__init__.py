@@ -681,7 +681,11 @@ def render_table_filters(request, table):
                         model = table.data.model
                         last_name = name.split('__')[-1]
                         for x in name.split('__')[:-1]:
-                            model = getattr(model, x).get_query_set().model
+                            try:
+                                model = getattr(model, x).get_queryset().model
+                            except AttributeError:  # pragma: no cover
+                                # Support for old Django versions
+                                model = getattr(model, x).get_query_set().model
                         field_by_name = forms.fields_for_model(model)
                         self.fields[name] = field_by_name[last_name]
 
@@ -803,6 +807,6 @@ def render_table_to_response(*args, **kwargs):
     Shortcut for `HttpResponse(render_table(*args, **kwargs))`
     """
     response = render_table(*args, **kwargs)
-    if isinstance(response,  HttpResponse):
+    if isinstance(response, HttpResponse):  # pragma: no cover
         return response
     return HttpResponse(response)

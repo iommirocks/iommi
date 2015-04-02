@@ -18,7 +18,7 @@ def verify_table_html(table, expected_html, query=None, find=None, links=None):
     """
     Verify that the table renders to the expected markup, modulo formatting
     """
-    if not find:
+    if find is None:
         find = dict(name='table')
         if not expected_html.strip():
             expected_html = "<table/>"
