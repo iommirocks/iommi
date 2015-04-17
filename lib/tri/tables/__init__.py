@@ -238,6 +238,7 @@ class Column(Struct):
             title=icon_title,
             filter=False,
             cell_value=lambda row: True,
+            cell_attrs={'class': 'cj'},
             cell_format=lambda value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else '')
         params.update(kwargs)
         return Column(**params)
@@ -310,6 +311,7 @@ class Column(Struct):
             show=show and not is_report,
             filter=False,
             css_class='thin nopad',
+            cell_attrs={'class': 'cj'},
             cell_value=lambda row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         )
         params.update(kwargs)

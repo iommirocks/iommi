@@ -162,9 +162,9 @@ def test_output():
             <tr class="row1">
                 <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
                 <td class="rj"> 17 </td>
-                <td> <i class="fa fa-lg fa-history"> </i> </td>
-                <td> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </a> </td>
-                <td> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
+                <td class="cj"> <i class="fa fa-lg fa-history"> </i> </td>
+                <td class="cj"> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </a> </td>
+                <td class="cj"> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
             </tr>
         </table>
         """)
@@ -429,12 +429,12 @@ def test_column_presets():
                 </tr>
             </thead>
             <tr class="row1" data-pk="123">
-                <td> <i class="fa fa-lg fa-False" /> </td>
-                <td> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
-                <td> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
-                <td> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
+                <td class="cj"> <i class="fa fa-lg fa-False" /> </td>
+                <td class="cj"> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
+                <td class="cj"> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
+                <td class="cj"> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
                 <td> <a href="http://yada/run/"> Run </a> </td>
-                <td> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td class="cj"> <i class="fa fa-check" title="Yes" /> </td>
+                <td class="cj"> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td class="cj"> <i class="fa fa-check" title="Yes" /> </td>
                 <td> <a href="http://yadahada/"> Yadahada name </a> </td>
                 <td class="rj"> 123 </td>
             </tr>
