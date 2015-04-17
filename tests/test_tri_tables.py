@@ -4,19 +4,10 @@ from django.http import HttpResponse
 
 import pytest
 from django.test import RequestFactory
-from django.conf import settings
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
 
 from tri.tables import Struct, Table, Column, Link, render_table, render_table_to_response
-
-
-@pytest.fixture(autouse=True)
-def template_debug():
-    """
-    Cause exceptions during rendering to fail test with traceback
-    """
-    settings.TEMPLATE_DEBUG = True
 
 
 def get_data():

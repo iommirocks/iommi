@@ -5,6 +5,8 @@ TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, 'tests'),
 ]
 
+TEMPLATE_DEBUG = True
+
 SECRET_KEY = "foobar"
 INSTALLED_APPS = [
     'tri.tables',

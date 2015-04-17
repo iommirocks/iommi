@@ -6,12 +6,6 @@ from tests.models import Foo
 from tri.tables import Column, Table, Struct, order_by_on_list
 
 
-@pytest.fixture(autouse=True)
-def template_debug():
-    """
-    Cause exceptions during rendering to fail test with traceback
-    """
-    settings.TEMPLATE_DEBUG = True
 
 
 def test_sort_list():
