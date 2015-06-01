@@ -1,4 +1,1 @@
-Sphinx
-sphinx-rtd-theme==0.1.5
 django
-changelog
