@@ -13,47 +13,13 @@ from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
+from tri.struct import Struct
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
 __version__ = '0.7.0'
 
 next_creation_count = itertools.count().next
-
-
-class Struct(dict):
-    """
-    A dict-like object where keys can also be accessed as attributes.
-    """
-
-    __slots__ = ()
-
-    def __getattribute__(self, k):
-        try:
-            return self[k]
-        except KeyError:
-            try:
-                return object.__getattribute__(self, k)
-            except AttributeError:
-                raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, k))
-
-    def __setattr__(self, k, v):
-        self[k] = v
-
-    def __delattr__(self, k):
-        try:
-            del self[k]
-        except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, k))
-
-    def copy(self):
-        return type(self)(**self)
-
-    def __unicode__(self):
-        return u'%s(%s)' % (self.__class__.__name__, u', '.join([u'%s=%r' % (key, self[key]) for key in sorted(self.keys())]))
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(['%s=%r' % (key, self[key]) for key in sorted(self.keys())]))
 
 
 def prepare_headers(request, headers):
