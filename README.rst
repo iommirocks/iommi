@@ -9,7 +9,7 @@ tri.tables is a library to make full featured HTML tables easily.
 Simple example
 --------------
 
-::
+.. code:: python
 
     def readme_example_1(request):
         # Say I have a class...
@@ -41,14 +41,14 @@ Fancy django features
 
 Say I have some models:
 
-::
+.. code:: python
 
     class Foo(models.Model):
         a = models.IntegerField()
 
         def __unicode__(self):
             return 'Foo: %s' % self.a
-::
+.. code:: python
 
     class Bar(models.Model):
         b = models.ForeignKey(Foo)
@@ -56,7 +56,7 @@ Say I have some models:
 
 Now I can display a list of Bars in a table like this:
 
-::
+.. code:: python
 
     def readme_example_2(request):
         fill_dummy_data()
