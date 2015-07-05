@@ -12,6 +12,9 @@ Simple example
 .. literalinclude:: ../examples/examples/views.py
    :pyobject: readme_example_1
 
+.. literalinclude:: examples/examples/views.py
+   :pyobject: readme_example_1
+
 And this is what you get:
 
 .. image:: table_example_1.png
@@ -26,9 +29,17 @@ Say I have some models:
 .. literalinclude:: ../examples/examples/models.py
    :pyobject: Bar
 
+.. literalinclude:: examples/examples/models.py
+   :pyobject: Foo
+.. literalinclude:: examples/examples/models.py
+   :pyobject: Bar
+
 Now I can display a list of Bars in a table like this:
 
 .. literalinclude:: ../examples/examples/views.py
+   :pyobject: readme_example_2
+
+.. literalinclude:: examples/examples/views.py
    :pyobject: readme_example_2
 
 This gives me a view with filtering, sorting, bulk edit and pagination and this only scratches the surface. Some other features include:
@@ -59,4 +70,4 @@ BSD
 Documentation
 -------------
 
-http://tritables.rtfd.org.
+http://tritables.readthedocs.org.
