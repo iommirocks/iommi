@@ -9,7 +9,7 @@ python:
 install: pip install -r test_requirements.txt codecov
 
 # command to run tests, e.g. python setup.py test
-script: make test
+script: make coverage
 
 after_success:
     codecov
