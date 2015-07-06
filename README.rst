@@ -1,6 +1,9 @@
 .. image:: https://travis-ci.org/TriOptima/tri.tables.svg?branch=master
     :target: https://travis-ci.org/TriOptima/tri.tables
 
+.. image:: http://codecov.io/github/TriOptima/tri.tables/coverage.svg?branch=master 
+    :target: http://codecov.io/github/TriOptima/tri.tables?branch=master
+
 tri.tables
 ==========
 
