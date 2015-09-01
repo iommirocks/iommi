@@ -152,13 +152,8 @@ class Column(Struct):
                                           user=self.table.request.user if self.table.request else None,
                                           **(orig_cell_value(row) if orig_cell_value is not None else {}))
             cell_format = lambda bindings: render_to_string(cell_template, bindings)
-
-        if attr is None:
-            attr = name
-
-        if sort_key is None:
-            sort_key = attr
-
+        if name:
+            self._set_name(name)
         values = {k: v for k, v in dict(
             name=name,
             attr=attr,
@@ -193,6 +188,12 @@ class Column(Struct):
         'ICONTAINS': Struct({'django_query_suffix': 'icontains'}),
         'CONTAINS': Struct({'django_query_suffix': 'contains'})
     })
+
+    def _set_name(self, name):
+        self.name = name
+        self.attr = getattr(self, 'attr', name)
+        self.sort_key = getattr(self, 'attr')
+        self.display_name = getattr(self, 'display_name', force_unicode(name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
 
     @staticmethod
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
@@ -444,14 +445,11 @@ class CssClass(object):
 
 # noinspection PyProtectedMember
 def get_declared_columns(bases, attrs):
-
     column_tuples = [(name, attrs.pop(name)) for name, obj in attrs.items() if isinstance(obj, Column)]
     column_tuples.sort(key=lambda x: x[1].creation_count)
-
     columns = []
     for name, column in column_tuples:
-        column.name = name
-        column.attr = column.get('attr', column.name)
+        column._set_name(name)
         columns.append(column)
 
     for base in bases[::-1]:
@@ -628,12 +626,15 @@ def set_display_none(rowspan_by_row):
 def render_table_filters(request, table):
     filter_fields = [(col.name, col.get('filter_type')) for col in table.columns if col.filter]
     if request.method == 'GET' and filter_fields and hasattr(table.data, 'model'):
+        column_by_name = {column.name: column for column in table.columns}
+
         for name, filter_type in filter_fields:
             if name in request.GET and request.GET[name]:
+                column = column_by_name[name]
                 if filter_type:
-                    table.data = table.data.filter(**{name + '__' + filter_type.django_query_suffix: request.GET[name]})
+                    table.data = table.data.filter(**{column.attr + '__' + filter_type.django_query_suffix: request.GET[name]})
                 else:
-                    table.data = table.data.filter(**{name: request.GET[name]})
+                    table.data = table.data.filter(**{column.attr: request.GET[name]})
 
         filtered_columns_with_ui = [col for col in table.columns if col.filter and col.filter_show]
 
@@ -654,8 +655,9 @@ def render_table_filters(request, table):
                         self.fields[name] = filter_field
                     else:
                         model = table.data.model
-                        last_name = name.split('__')[-1]
-                        for x in name.split('__')[:-1]:
+                        attr = column.attr
+                        last_name = attr.split('__')[-1]
+                        for x in attr.split('__')[:-1]:
                             try:
                                 model = getattr(model, x).get_queryset().model
                             except AttributeError:  # pragma: no cover
@@ -663,6 +665,7 @@ def render_table_filters(request, table):
                                 model = getattr(model, x).get_query_set().model
                         field_by_name = forms.fields_for_model(model)
                         self.fields[name] = field_by_name[last_name]
+                        self.fields[name].label = column.display_name
 
                 for field_name, field in self.fields.items():
                     if isinstance(field, fields.BooleanField):
