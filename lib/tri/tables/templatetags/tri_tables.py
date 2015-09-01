@@ -82,9 +82,7 @@ def row_template(table, row):
 
 
 def lookup_attribute(column, row):
-    attribute_path = column.get('attr', None)
-    if attribute_path is None:
-        attribute_path = column['name']
+    attribute_path = column.attr
     try:
         obj = row
         for attribute_name in attribute_path.split('__'):

@@ -153,6 +153,12 @@ class Column(Struct):
                                           **(orig_cell_value(row) if orig_cell_value is not None else {}))
             cell_format = lambda bindings: render_to_string(cell_template, bindings)
 
+        if attr is None:
+            attr = name
+
+        if sort_key is None:
+            sort_key = attr
+
         values = {k: v for k, v in dict(
             name=name,
             attr=attr,
@@ -445,6 +451,7 @@ def get_declared_columns(bases, attrs):
     columns = []
     for name, column in column_tuples:
         column.name = name
+        column.attr = column.get('attr', column.name)
         columns.append(column)
 
     for base in bases[::-1]:
