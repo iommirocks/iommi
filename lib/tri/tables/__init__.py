@@ -188,7 +188,7 @@ class Column(Struct):
     def _set_name(self, name):
         self.name = name
         self.attr = getattr(self, 'attr', name)
-        self.sort_key = getattr(self, 'attr')
+        self.sort_key = getattr(self, 'sort_key', self.attr)
         self.display_name = getattr(self, 'display_name', force_unicode(name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
 
     @staticmethod
