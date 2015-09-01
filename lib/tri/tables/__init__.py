@@ -22,30 +22,26 @@ __version__ = '0.8.0'
 next_creation_count = itertools.count().next
 
 
-def prepare_headers(request, headers):
-    headers = [copy(header) for header in headers if header.get('show', True)]
-    for header in headers:
-        if header.get('sortable', True):
+def prepare_headers(request, columns):
+    columns = [copy(column) for column in columns if column.get('show', True)]
+    for column in columns:
+        if column.get('sortable', True):
             params = request.GET.copy()
             order = request.GET.get('order', None)
             if order is not None:
                 is_desc = len(order) > 0 and order[0] == '-'
                 order_field = is_desc and order[1:] or order
                 new_order = is_desc and order[1:] or "-%s" % order
-                if order is not None and order_field == header['name']:
+                if order is not None and order_field == column['name']:
                     params['order'] = new_order
                 else:
-                    params['order'] = header['name']
+                    params['order'] = column['name']
             else:
-                params['order'] = header['name']
-            header['is_sorting'] = False if order is None else (header['name'] == order or ('-' + header['name']) == order)
-            header['url'] = "?%s" % params.urlencode()
-        if 'display_name' not in header and 'name' in header:
-            header['display_name'] = force_unicode(header['name'].rsplit('__', 1)[-1]).replace("_", " ").capitalize()
-        if header.get('name') in ('edit', 'delete'):
-            header['display_name'] = ''
-        header['show'] = header.get('show', True)
-    return headers
+                params['order'] = column['name']
+            column['is_sorting'] = False if order is None else (column['name'] == order or ('-' + column['name']) == order)
+            column['url'] = "?%s" % params.urlencode()
+        column['show'] = column.get('show', True)
+    return columns
 
 
 def order_by_on_list(objects, order_field, is_desc=False):
@@ -223,6 +219,7 @@ class Column(Struct):
         """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'edit/',
+            display_name=''
         )
         params.update(kwargs)
         return Column.icon('pencil-square-o', is_report, 'Edit', **params)
@@ -234,6 +231,7 @@ class Column(Struct):
         """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'delete/',
+            display_name=''
         )
         params.update(kwargs)
         return Column.icon('trash-o', is_report, 'Delete', **params)
