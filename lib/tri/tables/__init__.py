@@ -22,30 +22,26 @@ __version__ = '0.8.0'
 next_creation_count = itertools.count().next
 
 
-def prepare_headers(request, headers):
-    headers = [copy(header) for header in headers if header.get('show', True)]
-    for header in headers:
-        if header.get('sortable', True):
+def prepare_headers(request, columns):
+    columns = [copy(column) for column in columns if column.get('show', True)]
+    for column in columns:
+        if column.get('sortable', True):
             params = request.GET.copy()
             order = request.GET.get('order', None)
             if order is not None:
                 is_desc = len(order) > 0 and order[0] == '-'
                 order_field = is_desc and order[1:] or order
                 new_order = is_desc and order[1:] or "-%s" % order
-                if order is not None and order_field == header['name']:
+                if order is not None and order_field == column['name']:
                     params['order'] = new_order
                 else:
-                    params['order'] = header['name']
+                    params['order'] = column['name']
             else:
-                params['order'] = header['name']
-            header['is_sorting'] = False if order is None else (header['name'] == order or ('-' + header['name']) == order)
-            header['url'] = "?%s" % params.urlencode()
-        if 'display_name' not in header and 'name' in header:
-            header['display_name'] = force_unicode(header['name'].rsplit('__', 1)[-1]).replace("_", " ").capitalize()
-        if header.get('name') in ('edit', 'delete'):
-            header['display_name'] = ''
-        header['show'] = header.get('show', True)
-    return headers
+                params['order'] = column['name']
+            column['is_sorting'] = False if order is None else (column['name'] == order or ('-' + column['name']) == order)
+            column['url'] = "?%s" % params.urlencode()
+        column['show'] = column.get('show', True)
+    return columns
 
 
 def order_by_on_list(objects, order_field, is_desc=False):
@@ -152,7 +148,8 @@ class Column(Struct):
                                           user=self.table.request.user if self.table.request else None,
                                           **(orig_cell_value(row) if orig_cell_value is not None else {}))
             cell_format = lambda bindings: render_to_string(cell_template, bindings)
-
+        if name:
+            self._set_name(name)
         values = {k: v for k, v in dict(
             name=name,
             attr=attr,
@@ -188,6 +185,12 @@ class Column(Struct):
         'CONTAINS': Struct({'django_query_suffix': 'contains'})
     })
 
+    def _set_name(self, name):
+        self.name = name
+        self.attr = getattr(self, 'attr', name)
+        self.sort_key = getattr(self, 'sort_key', self.attr)
+        self.display_name = getattr(self, 'display_name', force_unicode(name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
+
     @staticmethod
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
         """
@@ -216,6 +219,7 @@ class Column(Struct):
         """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'edit/',
+            display_name=''
         )
         params.update(kwargs)
         return Column.icon('pencil-square-o', is_report, 'Edit', **params)
@@ -227,6 +231,7 @@ class Column(Struct):
         """
         params = dict(
             cell_url=lambda row: row.get_absolute_url() + 'delete/',
+            display_name=''
         )
         params.update(kwargs)
         return Column.icon('trash-o', is_report, 'Delete', **params)
@@ -359,6 +364,7 @@ class BaseTable(object):
             column.table = self
             column.index = index
 
+        # noinspection PyTypeChecker
         self.Meta = inherited_meta(self.__class__)
         self.Meta.update(**params)
 
@@ -438,13 +444,11 @@ class CssClass(object):
 
 # noinspection PyProtectedMember
 def get_declared_columns(bases, attrs):
-
     column_tuples = [(name, attrs.pop(name)) for name, obj in attrs.items() if isinstance(obj, Column)]
     column_tuples.sort(key=lambda x: x[1].creation_count)
-
     columns = []
     for name, column in column_tuples:
-        column.name = name
+        column._set_name(name)
         columns.append(column)
 
     for base in bases[::-1]:
@@ -621,12 +625,15 @@ def set_display_none(rowspan_by_row):
 def render_table_filters(request, table):
     filter_fields = [(col.name, col.get('filter_type')) for col in table.columns if col.filter]
     if request.method == 'GET' and filter_fields and hasattr(table.data, 'model'):
+        column_by_name = {col.name: col for col in table.columns}
+
         for name, filter_type in filter_fields:
             if name in request.GET and request.GET[name]:
+                col = column_by_name[name]
                 if filter_type:
-                    table.data = table.data.filter(**{name + '__' + filter_type.django_query_suffix: request.GET[name]})
+                    table.data = table.data.filter(**{col.attr + '__' + filter_type.django_query_suffix: request.GET[name]})
                 else:
-                    table.data = table.data.filter(**{name: request.GET[name]})
+                    table.data = table.data.filter(**{col.attr: request.GET[name]})
 
         filtered_columns_with_ui = [col for col in table.columns if col.filter and col.filter_show]
 
@@ -634,7 +641,6 @@ def render_table_filters(request, table):
             def __init__(self, *args, **kwargs):
                 super(FilterForm, self).__init__(*args, **kwargs)
                 for column in filtered_columns_with_ui:
-                    name = column.name
                     filter_field = column.get('filter_field')
                     if 'filter_choices' in column and not filter_field:
                         filter_choices = column.filter_choices
@@ -644,18 +650,20 @@ def render_table_filters(request, table):
                             filter_choices = [('', '')] + filter_choices
                         filter_field = forms.ChoiceField(choices=filter_choices)
                     if filter_field:
-                        self.fields[name] = filter_field
+                        self.fields[column.name] = filter_field
                     else:
                         model = table.data.model
-                        last_name = name.split('__')[-1]
-                        for x in name.split('__')[:-1]:
+                        attr = column.attr
+                        last_name = attr.split('__')[-1]
+                        for x in attr.split('__')[:-1]:
                             try:
                                 model = getattr(model, x).get_queryset().model
                             except AttributeError:  # pragma: no cover
                                 # Support for old Django versions
                                 model = getattr(model, x).get_query_set().model
                         field_by_name = forms.fields_for_model(model)
-                        self.fields[name] = field_by_name[last_name]
+                        self.fields[column.name] = field_by_name[last_name]
+                        self.fields[column.name].label = column.display_name
 
                 for field_name, field in self.fields.items():
                     if isinstance(field, fields.BooleanField):
@@ -731,7 +739,7 @@ def render_table(request,
                             choices = field.choices
 
                         if isinstance(choices, QuerySet):
-                            choices = [(x.pk, x) for x in choices]
+                            choices = [(c.pk, c) for c in choices]
                         if ('', '') not in choices:
                             choices = [('', '')] + list(choices)
                         field.choices = choices

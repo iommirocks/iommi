@@ -1,11 +1,8 @@
-from django.conf import settings
 import pytest
 
 from .helpers import verify_table_html
 from tests.models import Foo
 from tri.tables import Column, Table, Struct, order_by_on_list
-
-
 
 
 def test_sort_list():

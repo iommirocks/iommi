@@ -593,7 +593,7 @@ def test_django_filters():
     Bar(foo=d, foo2=d, foo3=d, c=False).save()
 
     class TestTable(Table):
-        foo = Column()
+        foo1 = Column(attr='foo', display_name="FOOOH")
         foo2 = Column(filter_choices=[('a', 'a'), ('b', 'b')])
         foo3 = Column(show=False, filter_choices=Foo.objects.all())
         c = Column()
@@ -609,11 +609,11 @@ def test_django_filters():
             <div class="compact">
                 <div class="key-value">
                     <div>
-                        <label for="id_foo">
-                            Foo:
+                        <label for="id_foo1">
+                            FOOOH:
                         </label>
                     </div>
-                    <select id="id_foo" name="foo">
+                    <select id="id_foo1" name="foo1">
                         <option selected="selected" value="">
                             ---------
                         </option>
@@ -709,9 +709,8 @@ def test_django_filters():
                 </div>
             </div>
         </form>""",
-        query=dict(foo__a=1),
-        find=dict(),
-    )
+                      query=dict(foo__a=1),
+                      find=dict())
 
     # case insensitive search
     verify_table_html(TestTable(Bar.objects.all()), """
@@ -719,7 +718,7 @@ def test_django_filters():
             <thead>
                 <tr>
                     <th class="subheader first_column">
-                        Foo
+                        FOOOH
                     </th>
                     <th class="subheader first_column">
                         Foo2
@@ -753,8 +752,7 @@ def test_django_filters():
                 </td>
             </tr>
         </table>""",
-        query=dict(foo__b='A'),
-    )
+                      query=dict(foo__b='A'))
 
 
 def test_render_table_to_response():
