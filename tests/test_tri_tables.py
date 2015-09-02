@@ -710,7 +710,7 @@ def test_django_filters():
             </div>
         </form>""",
                       query=dict(foo__a=1),
-                      find=dict())
+                      find=dict(name='form'))
 
     # case insensitive search
     verify_table_html(TestTable(Bar.objects.all()), """
