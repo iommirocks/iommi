@@ -593,7 +593,7 @@ def test_django_filters():
     Bar(foo=d, foo2=d, foo3=d, c=False).save()
 
     class TestTable(Table):
-        foo = Column()
+        foo1 = Column(attr='foo', display_name="FOOOH")
         foo2 = Column(filter_choices=[('a', 'a'), ('b', 'b')])
         foo3 = Column(show=False, filter_choices=Foo.objects.all())
         c = Column()
@@ -609,11 +609,11 @@ def test_django_filters():
             <div class="compact">
                 <div class="key-value">
                     <div>
-                        <label for="id_foo">
-                            Foo:
+                        <label for="id_foo1">
+                            FOOOH:
                         </label>
                     </div>
-                    <select id="id_foo" name="foo">
+                    <select id="id_foo1" name="foo1">
                         <option selected="selected" value="">
                             ---------
                         </option>
@@ -719,7 +719,7 @@ def test_django_filters():
             <thead>
                 <tr>
                     <th class="subheader first_column">
-                        Foo
+                        FOOOH
                     </th>
                     <th class="subheader first_column">
                         Foo2
