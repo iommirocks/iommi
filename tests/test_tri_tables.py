@@ -709,9 +709,8 @@ def test_django_filters():
                 </div>
             </div>
         </form>""",
-        query=dict(foo__a=1),
-        find=dict(),
-    )
+                      query=dict(foo__a=1),
+                      find=dict())
 
     # case insensitive search
     verify_table_html(TestTable(Bar.objects.all()), """
@@ -753,8 +752,7 @@ def test_django_filters():
                 </td>
             </tr>
         </table>""",
-        query=dict(foo__b='A'),
-    )
+                      query=dict(foo__b='A'))
 
 
 def test_render_table_to_response():

@@ -364,6 +364,7 @@ class BaseTable(object):
             column.table = self
             column.index = index
 
+        # noinspection PyTypeChecker
         self.Meta = inherited_meta(self.__class__)
         self.Meta.update(**params)
 
@@ -624,15 +625,15 @@ def set_display_none(rowspan_by_row):
 def render_table_filters(request, table):
     filter_fields = [(col.name, col.get('filter_type')) for col in table.columns if col.filter]
     if request.method == 'GET' and filter_fields and hasattr(table.data, 'model'):
-        column_by_name = {column.name: column for column in table.columns}
+        column_by_name = {col.name: col for col in table.columns}
 
         for name, filter_type in filter_fields:
             if name in request.GET and request.GET[name]:
-                column = column_by_name[name]
+                col = column_by_name[name]
                 if filter_type:
-                    table.data = table.data.filter(**{column.attr + '__' + filter_type.django_query_suffix: request.GET[name]})
+                    table.data = table.data.filter(**{col.attr + '__' + filter_type.django_query_suffix: request.GET[name]})
                 else:
-                    table.data = table.data.filter(**{column.attr: request.GET[name]})
+                    table.data = table.data.filter(**{col.attr: request.GET[name]})
 
         filtered_columns_with_ui = [col for col in table.columns if col.filter and col.filter_show]
 
@@ -640,7 +641,6 @@ def render_table_filters(request, table):
             def __init__(self, *args, **kwargs):
                 super(FilterForm, self).__init__(*args, **kwargs)
                 for column in filtered_columns_with_ui:
-                    name = column.name
                     filter_field = column.get('filter_field')
                     if 'filter_choices' in column and not filter_field:
                         filter_choices = column.filter_choices
@@ -650,7 +650,7 @@ def render_table_filters(request, table):
                             filter_choices = [('', '')] + filter_choices
                         filter_field = forms.ChoiceField(choices=filter_choices)
                     if filter_field:
-                        self.fields[name] = filter_field
+                        self.fields[column.name] = filter_field
                     else:
                         model = table.data.model
                         attr = column.attr
@@ -662,8 +662,8 @@ def render_table_filters(request, table):
                                 # Support for old Django versions
                                 model = getattr(model, x).get_query_set().model
                         field_by_name = forms.fields_for_model(model)
-                        self.fields[name] = field_by_name[last_name]
-                        self.fields[name].label = column.display_name
+                        self.fields[column.name] = field_by_name[last_name]
+                        self.fields[column.name].label = column.display_name
 
                 for field_name, field in self.fields.items():
                     if isinstance(field, fields.BooleanField):
@@ -739,7 +739,7 @@ def render_table(request,
                             choices = field.choices
 
                         if isinstance(choices, QuerySet):
-                            choices = [(x.pk, x) for x in choices]
+                            choices = [(c.pk, c) for c in choices]
                         if ('', '') not in choices:
                             choices = [('', '')] + list(choices)
                         field.choices = choices
