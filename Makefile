@@ -7,8 +7,7 @@ help:
 	@echo "test - run tests"
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
-	@echo "release - package and upload a release"
-	@echo "sdist - package"
+	@echo "dist - package"
 
 clean: clean-build clean-pyc
 	rm -fr htmlcov/
