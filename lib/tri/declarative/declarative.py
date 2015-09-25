@@ -11,6 +11,8 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
 
         The members of the Meta class will be injected to constructor calls. e.g.:
 
+        .. code:: python
+
             @with_meta
             class Foo(object):
 
@@ -25,6 +27,8 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
 
         The passing of the merged name space to the constructor is optional (there is a getter class
         method to obtain the same value:
+
+        .. code:: python
 
             @with_meta(add_init_kwargs=False)
             class Foo(object):
@@ -100,40 +104,34 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
     """
         Class decorator to enable classes to be defined in the style of django models.
 
+        .. code:: python
+
             @declarative(str)
             class Foo(object):
                 def __init__(self, foo, members):
                     assert foo == 'foo'
-                    assert members == ['bar', 'baz']
+                    assert members == OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
 
             class MyFoo(Foo):
                 class Meta:
                     foo = 'foo'
 
-                bar = 'bar'
-                baz = 'baz'
+                bar = 'barbar'
+                baz = 'bazbaz'
 
             f = MyFoo()
 
 
         is equivalent to:
 
+        .. code:: python
+
             class Foo(object):
                 def __init__(self, foo, members):
                     assert foo == 'foo'
-                    assert members == ['bar', 'baz']
+                    assert members == OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
 
-            f = Foo(foo='foo', members=['bar', 'baz'])
-
-
-        If possible, the declared name is stored on the members:
-
-            @declarative(Struct, add_init_kwargs=False)
-            class Foo(object):
-                foo = Struct(bar='bar')
-
-            assert Foo().foo == Struct(name='foo', bar='bar')
-
+            f = Foo(foo='foo', members=OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
     """
 
     def get_members(cls):
