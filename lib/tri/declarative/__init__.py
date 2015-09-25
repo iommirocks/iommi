@@ -1,6 +1,9 @@
 from functools import wraps
 
 
+__version__ = '0.1.0'
+
+
 def should_not_evaluate(f):
     if not callable(f):
         return f
