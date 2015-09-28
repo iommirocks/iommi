@@ -28,7 +28,7 @@ def test_find_members():
         foo = Member(foo='bar')
 
     subject = MyDeclarative()
-    assert OrderedDict(foo=Member(foo='bar')) == subject.members
+    assert OrderedDict([('foo', Member(foo='bar'))]) == subject.members
 
 
 def test_find_members_inherited():
@@ -40,7 +40,7 @@ def test_find_members_inherited():
         bar = Member(foo='baz')
 
     subject = MyDeclarativeSubclass()
-    assert OrderedDict(foo=Member(foo='bar'), bar=Member(foo='baz')) == subject.members
+    assert OrderedDict([('foo', Member(foo='bar')), ('bar', Member(foo='baz'))]) == subject.members
 
 
 def test_find_members_from_base():
@@ -52,7 +52,7 @@ def test_find_members_from_base():
     class Sub(Base):
         bar = Member(bar='bar')
 
-    assert OrderedDict(foo=Member(foo='foo'), bar=Member(bar='bar')) == Sub.Meta.members
+    assert OrderedDict([('foo', Member(foo='foo')), ('bar', Member(bar='bar'))]) == Sub.Meta.members
 
 
 def test_find_members_shadow():
@@ -63,7 +63,7 @@ def test_find_members_shadow():
     class Sub(Base):
         foo = Member(bar='baz')
 
-    assert OrderedDict(foo=Member(bar='baz')) == Sub.Meta.members
+    assert OrderedDict([('foo', Member(bar='baz'))]) == Sub.Meta.members
 
 
 def test_member_attribute_naming():
@@ -77,5 +77,5 @@ def test_member_attribute_naming():
         bar = Member(baz='buzz')
 
     subject = MyDeclarative()
-    assert OrderedDict(bar=Member(baz='buzz')) == subject.foo
+    assert OrderedDict([('bar', Member(baz='buzz'))]) == subject.foo
 
