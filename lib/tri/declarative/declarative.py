@@ -8,8 +8,7 @@ from tri.struct import Struct
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
     """
         Class decorator to enable a class (and it's sub-classes) to have a 'Meta' class attribute.
-
-        The members of the Meta class will be injected to constructor calls. e.g.:
+        The members of the Meta class will be injected as arguments to constructor calls. e.g.:
 
         .. code:: python
 
@@ -19,14 +18,46 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
                 class Meta:
                     foo = 'bar'
 
-                def __init__(self, foo):
+                def __init__(self, foo, buz):
                     assert foo == 'bar'
+                    assert buz == 'buz'
+
+            foo = Foo(buz='buz')
+
+            # Members of the 'Meta' class can be accessed thru the get_meta() class method.
+            assert foo.get_meta() == {'foo': 'bar'}
+            assert Foo.get_meta() == {'foo': 'bar'}
+
+            Foo()  # Crashes, has 'foo' parameter, but no has no 'buz' parameter.
 
 
-        This can be used e.g to enable sub-classes to modify constructor defaults.
+        Another example:
 
-        The passing of the merged name space to the constructor is optional (there is a getter class
-        method to obtain the same value:
+        .. code:: python
+
+            class Foo(object):
+
+                class Meta:
+                    foo = 'bar'
+                    bar = 'bar'
+
+            @with_meta
+            class Bar(Foo):
+
+                class Meta:
+                    foo = 'foo'
+                    buz = 'buz'
+
+                def __init__(self, *args, **kwargs):
+                    assert kwargs['foo'] == 'foo'  # from Bar (overrides Foo)
+                    assert kwargs['bar'] == 'bar'  # from Foo
+                    assert kwargs['buz'] == 'buz'  # from Bar
+
+
+        This can be used e.g to enable sub-classes to modify constructor default arguments.
+
+        The passing of the merged name space to the constructor is optional.
+        It can be disabled by passing add_init_kwargs=False to the decorator.
 
         .. code:: python
 
@@ -77,6 +108,19 @@ def declarative_member(class_to_decorate):
         Class decorator that ensures that instances will be ordered after creation order when sorted.
 
         This is useful for classes intended to be used as members of a @declarative class when member order matters.
+
+        .. code:: python
+
+        @declarative_member
+        class Thing(object):
+            pass
+
+        t1 = Thing()
+        t2 = Thing()
+        t3 = Thing()
+
+        assert sorted([t2, t3, t1]) == [t1, t2, t3]
+
     """
 
     next_index = itertools.count().next
@@ -103,35 +147,87 @@ def declarative_member(class_to_decorate):
 def declarative(member_class, parameter='members', add_init_kwargs=True):
     """
         Class decorator to enable classes to be defined in the style of django models.
+        That is, @declarative classes will get an additional argument to constructor,
+        containing an OrderedDict with all class members matching the specified type.
+
 
         .. code:: python
 
             @declarative(str)
             class Foo(object):
-                def __init__(self, foo, members):
-                    assert foo == 'foo'
+                bar = 'barbar'
+                baz = 'bazbaz'
+                boink = 17
+
+                def __init__(self, members):
+                    assert members == OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
+                    assert 'boink' not in members
+
+            f = Foo()
+
+        The class members will also be collected from sub-classes:
+
+        .. code:: python
+
+            @declarative(str)
+            class Foo(object):
+
+                def __init__(self, members):
                     assert members == OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
 
             class MyFoo(Foo):
-                class Meta:
-                    foo = 'foo'
-
                 bar = 'barbar'
                 baz = 'bazbaz'
+
+                def __init__(self):
+                    super(MyFoo, self).__init__()
 
             f = MyFoo()
 
 
-        is equivalent to:
+        The parameter can be given another name:
 
         .. code:: python
 
+            @declarative(str, 'things')
             class Foo(object):
-                def __init__(self, foo, members):
-                    assert foo == 'foo'
-                    assert members == OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
 
-            f = Foo(foo='foo', members=OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz')])
+                bar = 'barbar'
+
+                def __init__(self, things):
+                    assert things == OrderedDict([('bar', 'barbar')])
+
+            f = Foo()
+
+
+        The class members will be collected from all sub-classes. Note that the collected dict will be ordered by
+        sorting on the values (in the 'str' example, in alphabetical order). If creation order is needed, use the
+         @declarative_member decorator.
+
+        Also note that the collection of class members based on their class does NOT interfere with
+        instance constructor argument of the same type.
+
+        .. code:: python
+
+            @declarative(str)
+            class Foo(object):
+                a_thing = 'foo'
+                def __init__(self, members):
+                    assert members == OrderedDict([('bar', 'barbar'), ('baz', 'bazbaz'), ('a_thing', 'foo'])
+                    assert 'other_string' not in members
+
+
+            class MyFoo(Foo):
+                bar = 'barbar'
+
+            class MyOtherFoo(MyFoo):
+                baz = 'bazbaz'
+
+                def __init__(self, other_string)
+                    assert other_string == 'elephant'
+
+            f = MyOtherFoo('elephant)
+
     """
 
     def get_members(cls):
