@@ -1,8 +1,9 @@
 import pytest
-from tri.declarative.declarative import declarative, declarative_member
+
+from tri.declarative import declarative, creation_ordered
 
 
-@declarative_member
+@creation_ordered
 class Field(object):
     def __init__(self, mandatory=False):
         self.mandatory = mandatory

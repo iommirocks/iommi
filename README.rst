@@ -37,7 +37,7 @@ collected and sent as :code:`members` constructor keyword argument.
 
 .. code:: python
 
-    from tri.declarative.declarative import declarative
+    from tri.declarative import declarative
 
     @declarative(str)
     class Foo(object):
@@ -56,7 +56,7 @@ The value of the :code:`members` argument will also be collected from sub-classe
 
 .. code:: python
 
-    from tri.declarative.declarative import declarative
+    from tri.declarative import declarative
 
     @declarative(str)
     class Foo(object):
@@ -101,7 +101,7 @@ argument of the same type.
 
 .. code:: python
 
-    from tri.declarative.declarative import declarative
+    from tri.declarative import declarative
 
     @declarative(str)
     class Foo(object):
@@ -137,7 +137,7 @@ The members of the Meta class will be injected as arguments to constructor calls
 
 .. code:: python
 
-    from tri.declarative.declarative import with_meta
+    from tri.declarative import with_meta
 
     @with_meta
     class Foo(object):
@@ -162,7 +162,7 @@ Another example:
 
 .. code:: python
 
-    from tri.declarative.declarative import with_meta
+    from tri.declarative import with_meta
 
     class Foo(object):
 
@@ -190,7 +190,7 @@ It can be disabled by passing add_init_kwargs=False to the decorator.
 
 .. code:: python
 
-    from tri.declarative.declarative import with_meta
+    from tri.declarative import with_meta
 
     @with_meta(add_init_kwargs=False)
     class Foo(object):
@@ -200,8 +200,8 @@ It can be disabled by passing add_init_kwargs=False to the decorator.
     assert Foo().get_meta() == {'foo': 'bar'}
 
 
-@declarative_member
--------------------
+@creation_ordered
+-----------------
 
 Class decorator that ensures that instances will be ordered after creation order when sorted.
 
@@ -209,9 +209,9 @@ This is useful for classes intended to be used as members of a :code:`@declarati
 
 .. code:: python
 
-    from tri.declarative.declarative import declarative_member
+    from tri.declarative import creation_ordered
 
-    @declarative_member
+    @creation_ordered
     class Thing(object):
         pass
 
@@ -229,10 +229,10 @@ Below is a more complete example of using @declarative:
 
 .. code:: python
 
-    from tri.declarative.declarative import declarative, declarative_member
+    from tri.declarative import declarative, creation_ordered
 
 
-    @declarative_member
+    @creation_ordered
     class Field(object):
         pass
 
@@ -277,7 +277,7 @@ Below is a more complete example of using @declarative:
     assert my_user.password == 'Batman'
     assert my_user.insert_statement() == "INSERT INTO User(username, password, age) VALUES ('Bruce_Wayne', 'Batman', 42)"
 
-    # Fields are ordered by creation time (due to having used the @declarative_member decorator)
+    # Fields are ordered by creation time (due to having used the @creation_ordered decorator)
     assert my_user.get_meta().table_fields.keys() == ['username', 'password', 'age']
 
 

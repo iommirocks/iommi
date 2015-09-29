@@ -1,10 +1,10 @@
 from collections import OrderedDict
 from tri.struct import Struct
 
-from tri.declarative.declarative import declarative_member, declarative
+from tri.declarative import creation_ordered, declarative
 
 
-@declarative_member
+@creation_ordered
 class Member(Struct):
     pass
 

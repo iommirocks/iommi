@@ -1,4 +1,4 @@
-from tri.declarative.declarative import with_meta
+from tri.declarative import with_meta
 
 
 def test_empty():
