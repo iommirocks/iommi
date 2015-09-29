@@ -6,7 +6,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -52,7 +52,9 @@ def creation_ordered(class_to_decorate):
         Class decorator that ensures that instances will be ordered after creation order when sorted.
     """
 
-    next_index = itertools.count().next
+    def next_index(index=[0]):
+        index[0] += 1
+        return index[0]
 
     __init__orig = class_to_decorate.__init__
 
