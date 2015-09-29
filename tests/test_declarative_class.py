@@ -79,3 +79,18 @@ def test_member_attribute_naming():
     subject = MyDeclarative()
     assert OrderedDict([('bar', Member(baz='buzz'))]) == subject.foo
 
+
+# @todo fix this...
+# def test_multiple_types():
+#
+#     @declarative(int, 'ints')
+#     @declarative(str, 'strs')
+#     class Foo(object):
+#         a = 1
+#         b = "b"
+#
+#         def __init__(self, ints, strs):
+#             assert OrderedDict([('a', 1)]) == ints
+#             assert OrderedDict([('b', 'b')]) == strs
+#
+#     Foo()
