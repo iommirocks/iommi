@@ -35,9 +35,9 @@ class SimpleSQLModel(object):
 
     def insert_statement(self):
         return 'INSERT INTO %s(%s) VALUES (%s)' % (self.__class__.__name__,
-                                                 ', '.join(self.table_fields.keys()),
-                                                 ', '.join([field.render(getattr(self, name))
-                                                            for name, field in self.table_fields.items()]))
+                                                   ', '.join(self.table_fields.keys()),
+                                                   ', '.join(field.render(getattr(self, name))
+                                                             for name, field in self.table_fields.items()))
 
 
 class User(SimpleSQLModel):
