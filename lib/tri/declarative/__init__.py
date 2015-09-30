@@ -90,7 +90,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
 
         def generate_member_bindings():
             for name, obj in cls.__dict__.items():
-                if isinstance(obj, member_class):
+                if isinstance(obj, member_class) and not name.startswith('__'):
                     yield name, obj
 
         members.update(sorted(generate_member_bindings(), key=lambda x: x[1]))

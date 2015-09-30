@@ -80,6 +80,15 @@ def test_member_attribute_naming():
     assert OrderedDict([('bar', Member(baz='buzz'))]) == subject.foo
 
 
+def test_string_memebers():
+
+    @declarative(str)
+    class Declarative(object):
+
+        foo = 'bar'
+
+    assert OrderedDict([('foo', 'bar')]) == Declarative.Meta.members
+
 # @todo fix this...
 # def test_multiple_types():
 #
