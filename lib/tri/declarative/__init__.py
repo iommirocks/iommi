@@ -52,9 +52,7 @@ def creation_ordered(class_to_decorate):
         Class decorator that ensures that instances will be ordered after creation order when sorted.
     """
 
-    def next_index(index=[0]):
-        index[0] += 1
-        return index[0]
+    next_index = functools.partial(next, itertools.count())
 
     __init__orig = class_to_decorate.__init__
 
