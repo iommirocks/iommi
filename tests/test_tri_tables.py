@@ -24,7 +24,7 @@ def explicit_table():
         Column.number(name="bar"),
     ]
 
-    return Table(get_data(), columns, attrs=dict(id='table_id'))
+    return Table(get_data(), columns=columns, attrs=dict(id='table_id'))
 
 
 def declarative_table():

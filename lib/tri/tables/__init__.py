@@ -13,6 +13,7 @@ from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
+from tri.declarative import declarative, creation_ordered, with_meta
 from tri.struct import Struct
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
 
@@ -76,6 +77,7 @@ def order_by_on_list(objects, order_field, is_desc=False):
     objects.sort(key=get_property, reverse=is_desc)
 
 
+@creation_ordered
 class Column(Struct):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
@@ -336,20 +338,23 @@ class Column(Struct):
         return Column(**kwargs)
 
 
-def inherited_meta(cls):
+@declarative(Column, 'columns')
+class Table(object):
+
     """
-    Merge Meta classes from whole inheritance graph onto one object.
+    Describe a table. Example:
+
+    .. code:: python
+
+        class FooTable(Table):
+            class Meta:
+                sortable = False
+            a = Column()
+            b = Column()
+
     """
-    meta = BaseTable.Meta()
-    for class_ in reversed(cls.mro()):
-        if hasattr(class_, 'Meta'):
-            meta.update((k, v) for k, v in class_.Meta.__dict__.items() if not k.startswith('__'))
-    return meta
 
-
-class BaseTable(object):
-
-    class Meta(Struct):
+    class Meta:
         attrs = {}
         row_attrs = {}
         bulk_filter = {}
@@ -357,15 +362,30 @@ class BaseTable(object):
         sortable = True
         row_template = 'tri_tables/table_row.html'
 
-    def __init__(self, data, columns=None, **params):
+    """
+    :param data: a list of QuerySet of objects
+    :param columns: (use this only when not using the declarative style) a list of Column objects
+    :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
+    :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
+    :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
+    :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
+    :param sortable: set this to false to turn off sorting for all columns
+    """
+    def __init__(self, data, columns, **params):
         self.data = data
-        self.columns = columns if columns is not None else getattr(self, '_columns', [])
+
+        if isinstance(columns, dict):
+            for name, column in columns.items():
+                column._set_name(name)
+            self.columns = columns.values()
+        else:
+            self.columns = columns
+
         for index, column in enumerate(self.columns):
             column.table = self
             column.index = index
 
-        # noinspection PyTypeChecker
-        self.Meta = inherited_meta(self.__class__)
+        self.Meta = self.get_meta()
         self.Meta.update(**params)
 
         if not self.Meta.sortable:
@@ -440,66 +460,6 @@ class CssClass(object):
 
     def __str__(self):
         return " ".join(self.parts)
-
-
-# noinspection PyProtectedMember
-def get_declared_columns(bases, attrs):
-    column_tuples = [(name, attrs.pop(name)) for name, obj in attrs.items() if isinstance(obj, Column)]
-    column_tuples.sort(key=lambda x: x[1].creation_count)
-    columns = []
-    for name, column in column_tuples:
-        column._set_name(name)
-        columns.append(column)
-
-    for base in bases[::-1]:
-        if hasattr(base, '_columns'):
-            columns = base._columns + columns
-
-    return columns
-
-
-class DeclarativeColumnsMeta(type):
-    def __new__(mcs, name, bases, attrs):
-        attrs['_columns'] = get_declared_columns(bases, attrs)
-        new_class = super(DeclarativeColumnsMeta, mcs).__new__(mcs, name, bases, attrs)
-        return new_class
-
-
-class Table(BaseTable):
-    """
-    Describe a table. Example:
-
-    .. code:: python
-
-        class FooTable(Table):
-            class Meta:
-                sortable = False
-            a = Column()
-            b = Column()
-
-    """
-
-    def __init__(self, data, columns=None, attrs=None, row_attrs=None, bulk_filter=None, bulk_exclude=None, sortable=None, row_template=None):
-        """
-        :param data: a list of QuerySet of objects
-        :param columns: (use this only when not using the declarative style) a list of Column objects
-        :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
-        :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
-        :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
-        :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
-        :param sortable: set this to false to turn off sorting for all columns
-        """
-        params = {k: v for k, v in dict(
-            attrs=attrs,
-            row_attrs=row_attrs,
-            bulk_filter=bulk_filter,
-            bulk_exclude=bulk_exclude,
-            sortable=sortable,
-            row_template=row_template).items()
-            if v is not None}
-        super(Table, self).__init__(data, columns, **params)
-
-    __metaclass__ = DeclarativeColumnsMeta
 
 
 class Link(Struct):
