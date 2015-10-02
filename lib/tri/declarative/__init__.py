@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import functools
 from functools import total_ordering, wraps
+import inspect
 import itertools
 
 from tri.struct import Struct
@@ -24,8 +25,20 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
     if add_init_kwargs:
         __init__orig = class_to_decorate.__init__
 
+        try:
+            pos_arg_names, _, _, _ = inspect.getargspec(__init__orig)
+            pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
+        except TypeError:
+            # We might fail on not being able to find the signature of builtin constructors
+            pos_arg_names = None
+
         def __init__(self, *args, **kwargs):
             new_kwargs = {}
+            if pos_arg_names is not None:
+                assert len(pos_arg_names) >= len(args), 'Too many positional argument'
+                new_kwargs.update((k, v) for k, v in zip(pos_arg_names, args))
+                args = []
+                assert set(new_kwargs.keys()).intersection(set(kwargs)) == set(), 'Multiple values for keyword argument'
             new_kwargs.update((k, v) for k, v in self.get_meta().items() if not k.startswith('_'))
             new_kwargs.update(kwargs)
             __init__orig(self, *args, **new_kwargs)

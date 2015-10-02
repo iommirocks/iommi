@@ -83,3 +83,20 @@ def test_inheritance_with_override():
             assert 'baz' == foo
 
     TestSubclass()
+
+
+def test_pos_arg_override():
+
+    @with_meta
+    class Test(object):
+        class Meta:
+            foo = 'foo'
+            bar = 'bar'
+
+        def __init__(self, apa, foo, gapa, **kwargs):
+            assert 'apa' == apa
+            assert 'foo' == foo
+            assert 'gapa' == gapa
+            assert 'bar' in kwargs
+
+    Test('apa', gapa='gapa')
