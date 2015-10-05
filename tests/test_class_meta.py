@@ -1,3 +1,4 @@
+import pytest
 from tri.declarative import with_meta
 
 
@@ -100,3 +101,70 @@ def test_pos_arg_override():
             assert 'bar' in kwargs
 
     Test('apa', gapa='gapa')
+
+
+def test_args_get_by_pos():
+
+    @with_meta
+    class Test(object):
+        class Meta:
+            foo = 'foo'
+
+        def __init__(self, foo):
+            assert 'foo' == foo
+
+    Test()
+
+
+def test_args_get_by_name():
+
+    @with_meta
+    class Test(object):
+        class Meta:
+            foo = 'foo'
+
+        def __init__(self, foo=None):
+            assert 'foo' == foo
+
+    Test()
+
+
+def test_args_override_by_pos():
+
+    @with_meta
+    class Test(object):
+        class Meta:
+            foo = 'foo'
+
+        def __init__(self, foo):
+            assert 'bar' == foo
+
+    Test('bar')
+
+
+def test_args_override_by_name():
+
+    @with_meta
+    class Test(object):
+        class Meta:
+            foo = 'foo'
+
+        def __init__(self, foo):
+            assert 'bar' == foo
+
+    Test(foo='bar')
+
+
+def test_too_many_args_check():
+
+    @with_meta
+    class Test(object):
+        class Meta:
+            foo = 'foo'
+
+        def __init__(self, foo):
+            pass
+
+    with pytest.raises(TypeError):
+        Test('foo', 'bar')
+

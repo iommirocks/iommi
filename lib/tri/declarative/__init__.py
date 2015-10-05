@@ -34,12 +34,12 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
 
         def __init__(self, *args, **kwargs):
             new_kwargs = {}
+            new_kwargs.update((k, v) for k, v in self.get_meta().items() if not k.startswith('_'))
             if pos_arg_names is not None:
-                assert len(pos_arg_names) >= len(args), 'Too many positional argument'
+                if len(args) > len(pos_arg_names):
+                    raise TypeError('Too many positional argument')
                 new_kwargs.update((k, v) for k, v in zip(pos_arg_names, args))
                 args = []
-                assert set(new_kwargs.keys()).intersection(set(kwargs)) == set(), 'Multiple values for keyword argument'
-            new_kwargs.update((k, v) for k, v in self.get_meta().items() if not k.startswith('_'))
             new_kwargs.update(kwargs)
             __init__orig(self, *args, **new_kwargs)
 
