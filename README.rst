@@ -158,6 +158,22 @@ The members of the Meta class will be injected as arguments to constructor calls
     Foo()  # Crashes, has 'foo' parameter, but no has no 'buz' parameter.
 
 
+The passing of the merged name space to the constructor is optional.
+It can be disabled by passing :code:`add_init_kwargs=False` to the decorator.
+
+.. code:: python
+
+    from tri.declarative import with_meta
+
+    @with_meta(add_init_kwargs=False)
+    class Foo(object):
+        class Meta:
+            foo = 'bar'
+
+    Foo()  # No longer crashes
+    assert Foo().get_meta() == {'foo': 'bar'}
+
+
 Another example:
 
 .. code:: python
@@ -184,20 +200,6 @@ Another example:
 
 
 This can be used e.g to enable sub-classes to modify constructor default arguments.
-
-The passing of the merged name space to the constructor is optional.
-It can be disabled by passing add_init_kwargs=False to the decorator.
-
-.. code:: python
-
-    from tri.declarative import with_meta
-
-    @with_meta(add_init_kwargs=False)
-    class Foo(object):
-        class Meta:
-            foo = 'bar'
-
-    assert Foo().get_meta() == {'foo': 'bar'}
 
 
 @creation_ordered

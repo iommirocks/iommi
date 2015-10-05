@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -140,10 +140,8 @@ def should_not_evaluate(f):
     return wrapper
 
 
+# Bypass the no_evaluate flag
 def should_evaluate(f):
-    """
-    Bypass the no_evaluate flag
-    """
     if not callable(f):
         return f
 
