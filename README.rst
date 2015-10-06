@@ -1,6 +1,8 @@
 .. image:: https://travis-ci.org/TriOptima/tri.declarative.svg?branch=master
     :target: https://travis-ci.org/TriOptima/tri.declarative
-
+.. image:: http://codecov.io/github/TriOptima/tri.declarative/coverage.svg?branch=master
+    :target: http://codecov.io/github/TriOptima/tri.declarative?branch=master
+    
 tri.declarative
 ===============
 
