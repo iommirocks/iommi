@@ -80,7 +80,7 @@ def test_member_attribute_naming():
     assert OrderedDict([('bar', Member(baz='buzz'))]) == subject.foo
 
 
-def test_string_memebers():
+def test_string_members():
 
     @declarative(str)
     class Declarative(object):
@@ -89,17 +89,48 @@ def test_string_memebers():
 
     assert OrderedDict([('foo', 'bar')]) == Declarative.Meta.members
 
-# @todo fix this...
-# def test_multiple_types():
-#
-#     @declarative(int, 'ints')
-#     @declarative(str, 'strs')
-#     class Foo(object):
-#         a = 1
-#         b = "b"
-#
-#         def __init__(self, ints, strs):
-#             assert OrderedDict([('a', 1)]) == ints
-#             assert OrderedDict([('b', 'b')]) == strs
-#
-#     Foo()
+
+def test_multiple_types():
+
+    @declarative(int, 'ints')
+    @declarative(str, 'strs')
+    class Foo(object):
+        a = 1
+        b = "b"
+
+        def __init__(self, ints, strs):
+            assert OrderedDict([('a', 1)]) == ints
+            assert OrderedDict([('b', 'b')]) == strs
+
+    Foo()
+
+
+def test_multiple_types_inheritance():
+
+    @declarative(int, 'ints')
+    class Foo(object):
+        i = 1
+        a = 'a'
+        def __init__(self, **kwargs):
+            assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == kwargs['ints']
+            super(Foo, self).__init__()
+
+    @declarative(str, 'strs')
+    class Bar(Foo):
+
+        j = 2
+        b = "b"
+
+        def __init__(self, **kwargs):
+            assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == kwargs['ints']
+            assert OrderedDict([('b', 'b'), ('c', 'c')]) == kwargs['strs']
+            super(Bar, self).__init__()
+
+    class Boink(Bar):
+        k = 3
+        c = 'c'
+
+        def __init__(self):
+            super(Boink, self).__init__()
+
+    Boink()
