@@ -1,0 +1,15 @@
+<tr{{ field.render_container_css_classes }}>
+    <td{{ field.render_label_container_css_classes }}>
+        <div class="formlabel">{% block label %}{% include field.label_template %}{% endblock %}</div>
+        <div class="formdescr">{{ field.help_text }}</div>
+        {% block extra_description_container %}{% endblock %}
+    </td>
+    <td{{ field.render_input_container_css_classes }}>
+        {% block field %}
+            {% block input %}{% include field.input_template %}{% endblock %}
+            {% block errors %}{% include field.errors_template %}{% endblock %}
+
+            {% block extra_content %}{% endblock %}
+        {% endblock %}
+    </td>
+</tr>

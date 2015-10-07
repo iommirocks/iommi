@@ -1,0 +1,5 @@
+{% for choice in field.choices %}
+    <input type="radio" {% if field.value == choice.0|stringformat:"s" %}checked{% endif %} value="{{ choice.0 }}" name="{{ field.name }}" id="{{ field.id }}_{{ forloop.counter }}">
+    <label for="{{ field.id }}_{{ forloop.counter }}">{{ choice.1 }}</label>
+    {% if not forloop.last %}<br>{% endif %}
+{% endfor %}

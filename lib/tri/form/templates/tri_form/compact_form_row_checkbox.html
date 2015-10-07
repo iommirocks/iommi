@@ -1,0 +1,8 @@
+{% extends "tri_form/compact_form_row.html" %}
+
+{% block label %}&nbsp;{% endblock %}
+
+{% block errors %}
+    {% include field.label_template %}
+    {% include field.errors_template %}
+{% endblock %}

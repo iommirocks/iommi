@@ -1,0 +1,6 @@
+beautifulsoup4 == 4.3.2
+coverage == 3.7.1
+pytest == 2.6.4
+pytest-django == 2.8.0
+tox == 1.9.2
+-rrequirements.txt
