@@ -31,6 +31,18 @@ def test_find_members():
     assert OrderedDict([('foo', Member(foo='bar'))]) == subject.members
 
 
+def test_find_members_not_shadowed_by_meta():
+
+    class MyDeclarative(Declarative):
+        foo = Member(foo='bar')
+
+        class Meta:
+            pass
+
+    subject = MyDeclarative()
+    assert OrderedDict([('foo', Member(foo='bar'))]) == subject.members
+
+
 def test_find_members_inherited():
 
     class MyDeclarative(Declarative):
@@ -111,13 +123,13 @@ def test_multiple_types_inheritance():
     class Foo(object):
         i = 1
         a = 'a'
+
         def __init__(self, **kwargs):
             assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == kwargs['ints']
             super(Foo, self).__init__()
 
     @declarative(str, 'strs')
     class Bar(Foo):
-
         j = 2
         b = "b"
 
@@ -126,11 +138,11 @@ def test_multiple_types_inheritance():
             assert OrderedDict([('b', 'b'), ('c', 'c')]) == kwargs['strs']
             super(Bar, self).__init__()
 
-    class Boink(Bar):
+    class Baz(Bar):
         k = 3
         c = 'c'
 
         def __init__(self):
-            super(Boink, self).__init__()
+            super(Baz, self).__init__()
 
-    Boink()
+    Baz()

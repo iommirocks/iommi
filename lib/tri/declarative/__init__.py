@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -88,7 +88,7 @@ def creation_ordered(class_to_decorate):
 
 
 def gather_members_to_meta(cls):
-    for parameter, member_class in cls.Meta._member_class_by_parameter.items():
+    for parameter, member_class in get_meta(cls)._member_class_by_parameter.items():
 
         all_members = OrderedDict()
 
