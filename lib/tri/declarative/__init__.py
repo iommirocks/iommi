@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -48,8 +48,8 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
 
 def get_meta(class_with_meta):
     """
-    Collect all members of any contained :code:`Meta` class declarations from the given class or any of its base classes.
-    (Sub class values take precedence.)
+        Collect all members of any contained :code:`Meta` class declarations from the given class or any of its base classes.
+        (Sub class values take precedence.)
     """
     merged_attributes = Struct()
     for class_ in reversed(class_with_meta.mro()):
