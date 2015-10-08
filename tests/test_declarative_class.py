@@ -55,6 +55,22 @@ def test_find_members_inherited():
     assert OrderedDict([('foo', Member(foo='bar')), ('bar', Member(foo='baz'))]) == subject.members
 
 
+def test_isolated_inheritance():
+    @declarative(int, add_init_kwargs=False)
+    class Base(object):
+        a = 1
+
+    class Foo(Base):
+        b = 2
+
+    class Bar(Base):
+        c = 3
+
+    assert OrderedDict([('a', 1)]) == Base.get_meta().members
+    assert OrderedDict([('a', 1), ('b', 2)]) == Foo.get_meta().members
+    assert OrderedDict([('a', 1), ('c', 3)]) == Bar.get_meta().members
+
+
 def test_find_members_from_base():
 
     @declarative(Member)
