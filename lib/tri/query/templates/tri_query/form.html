@@ -1,0 +1,126 @@
+<div>
+    <a href="#" id="tri_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
+
+    <form id="tri_query_form" class="compact">
+        <table style="width: 100%">
+            <tr class="tri_query_form_advanced" style="display: none">
+                <td><label for="id_query">Search query:</label></td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="tri_query_form_simple">
+                        {{ form.compact }}
+                    </div>
+                    <div class="tri_query_form_advanced" style="display: none">
+                        <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.tri_query_advanced_value }}"/>
+                    </div>
+                </td>
+                <td class="tri_query_toggle_help" style="display: none">
+                    <span>Show help</span> <i class="fa fa-chevron-down"></i>
+                </td>
+            </tr>
+            <tr>
+                <td class="tri_query_help" style="display: none">
+                    <div class="tri_query_available_fields">
+                        <h3>Available fields</h3>
+                        <ul>
+                            {% for variable in form.tri_query.variables %}
+                                <li>{{ variable.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="tri_query_available_query_commands">
+                        <h3>Queries</h3>
+                        <ul>
+                            <li>Search for an exact value: field_name=value</li>
+                            <li>Search for an exact value containing space: field_name="value with space"</li>
+                            <li>Containing a text: field_name:val</li>
+                            <li>Exclude a value: field_name!=value</li>
+                            <li>You can also use <, >, <= and >= to find ranges of values: field_name<10</li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <div id="tri_query_error">
+            {{ tri_query_error }}
+        </div>
+
+        <style type="text/css" scoped>
+            .tri_query_available_fields,
+            .tri_query_available_query_commands {
+                display: inline-block;
+                vertical-align: top;
+                margin-right: 10px;
+            }
+            .tri_query_toggle_help,
+            .tri_query_help {
+                margin-left: 3px;
+            }
+            .tri_query_toggle_help {
+                cursor: pointer;
+                width: 100px;
+            }
+            #tri_query_toggle_simple_mode {
+                float: right;
+            }
+            #tri_query_error {
+                color: red;
+            }
+        </style>
+   </form>
+</div>
+
+<script>
+    $(document).ready(function() {
+        function toggle_simple_advanced() {
+            var toggle_simple_mode = $("#tri_query_toggle_simple_mode");
+            var simple = $("#tri_query_form_simple");
+            var adv = $(".tri_query_form_advanced");
+            var q = $('#id_query');
+            if (toggle_simple_mode.data('advanced_mode') === 'simple') {
+                q.val(q.data('query'));
+                toggle_simple_mode.data('advanced_mode', 'advanced');
+                adv.show();
+                simple.hide();
+                toggle_simple_mode.html('Switch to basic search');
+                $('.tri_query_toggle_help').show();
+            }
+            else {
+                q.data('query', q.val());
+                q.val('');
+                toggle_simple_mode.data('advanced_mode', 'simple');
+                adv.hide();
+                simple.show();
+                toggle_simple_mode.html('Switch to advanced search');
+                $('.tri_query_toggle_help').hide();
+                if ($('.tri_query_help').is(':visible')) {
+                    toggle_help();
+                }
+            }
+            return false;
+        }
+
+        function toggle_help() {
+            $('.tri_query_help').toggle();
+            var icon = $('.tri_query_toggle_help i');
+            if (icon.hasClass('fa-chevron-down')) {
+                icon.removeClass('fa-chevron-down');
+                icon.addClass('fa-chevron-up');
+                $('.tri_query_toggle_help span').text('Hide help');
+            }
+            else {
+                icon.removeClass('fa-chevron-up');
+                icon.addClass('fa-chevron-down');
+                $('.tri_query_toggle_help span').text('Show help');
+            }
+        }
+
+        if ($('#id_query').data('query') !== '') {
+            toggle_simple_advanced();
+        }
+
+        $("#tri_query_toggle_simple_mode").click(toggle_simple_advanced);
+        $('.tri_query_toggle_help').click(toggle_help);
+    });
+</script>

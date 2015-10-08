@@ -1,0 +1,5 @@
+tri.declarative == 0.4.0
+tri.struct
+django == 1.7
+tri.form
+pyparsing
