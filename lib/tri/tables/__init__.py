@@ -339,6 +339,7 @@ class Column(Struct):
 
 
 @declarative(Column, 'columns')
+@with_meta
 class Table(object):
 
     """
