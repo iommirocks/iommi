@@ -130,6 +130,85 @@ argument of the same type.
     f = MyOtherFoo('elephant')
 
 
+@creation_ordered
+-----------------
+
+Class decorator that ensures that instances will be ordered after creation order when sorted.
+
+This is useful for classes intended to be used as members of a :code:`@declarative` class when member order matters.
+
+.. code:: python
+
+    from tri.declarative import creation_ordered
+
+    @creation_ordered
+    class Thing(object):
+        pass
+
+    t1 = Thing()
+    t2 = Thing()
+    t3 = Thing()
+
+    assert sorted([t2, t3, t1]) == [t1, t2, t3]
+
+
+Real world use-case
+-------------------
+
+Below is a more complete example of using @declarative:
+
+.. code:: python
+
+    from tri.declarative import declarative, creation_ordered
+
+
+    @creation_ordered
+    class Field(object):
+        pass
+
+
+    class IntField(Field):
+        def render(self, value):
+            return '%s' % value
+
+
+    class StringField(Field):
+        def render(self, value):
+            return "'%s'" % value
+
+
+    @declarative(Field, 'table_fields')
+    class SimpleSQLModel(object):
+
+        def __init__(self, **kwargs):
+            self.table_fields = kwargs.pop('table_fields')
+
+            for name in kwargs:
+                assert name in self.table_fields
+                setattr(self, name, kwargs[name])
+
+        def insert_statement(self):
+            return 'INSERT INTO %s(%s) VALUES (%s)' % (self.__class__.__name__,
+                                                     ', '.join(self.table_fields.keys()),
+                                                     ', '.join([field.render(getattr(self, name))
+                                                                for name, field in self.table_fields.items()]))
+
+
+    class User(SimpleSQLModel):
+        username = StringField()
+        password = StringField()
+        age = IntField()
+
+
+    my_user = User(username='Bruce_Wayne', password='Batman', age=42)
+    assert my_user.username == 'Bruce_Wayne'
+    assert my_user.password == 'Batman'
+    assert my_user.insert_statement() == "INSERT INTO User(username, password, age) VALUES ('Bruce_Wayne', 'Batman', 42)"
+
+    # Fields are ordered by creation time (due to having used the @creation_ordered decorator)
+    assert my_user.get_meta().table_fields.keys() == ['username', 'password', 'age']
+
+
 @with_meta
 ----------
 
@@ -202,87 +281,3 @@ Another example:
 
 
 This can be used e.g to enable sub-classes to modify constructor default arguments.
-
-
-@creation_ordered
------------------
-
-Class decorator that ensures that instances will be ordered after creation order when sorted.
-
-This is useful for classes intended to be used as members of a :code:`@declarative` class when member order matters.
-
-.. code:: python
-
-    from tri.declarative import creation_ordered
-
-    @creation_ordered
-    class Thing(object):
-        pass
-
-    t1 = Thing()
-    t2 = Thing()
-    t3 = Thing()
-
-    assert sorted([t2, t3, t1]) == [t1, t2, t3]
-
-
-Real world use-case
--------------------
-
-Below is a more complete example of using @declarative:
-
-.. code:: python
-
-    from tri.declarative import declarative, creation_ordered
-
-
-    @creation_ordered
-    class Field(object):
-        pass
-
-
-    class IntField(Field):
-        def render(self, value):
-            return '%s' % value
-
-
-    class StringField(Field):
-        def render(self, value):
-            return "'%s'" % value
-
-
-    @declarative(Field, 'table_fields')
-    class SimpleSQLModel(object):
-
-        def __init__(self, **kwargs):
-            self.table_fields = kwargs.pop('table_fields')
-
-
-
-            for name in kwargs:
-                assert name in self.table_fields
-                setattr(self, name, kwargs[name])
-
-        def insert_statement(self):
-            return 'INSERT INTO %s(%s) VALUES (%s)' % (self.__class__.__name__,
-                                                     ', '.join(self.table_fields.keys()),
-                                                     ', '.join([field.render(getattr(self, name))
-                                                                for name, field in self.table_fields.items()]))
-
-
-    class User(SimpleSQLModel):
-        username = StringField()
-        password = StringField()
-        age = IntField()
-
-
-    my_user = User(username='Bruce_Wayne', password='Batman', age=42)
-    assert my_user.username == 'Bruce_Wayne'
-    assert my_user.password == 'Batman'
-    assert my_user.insert_statement() == "INSERT INTO User(username, password, age) VALUES ('Bruce_Wayne', 'Batman', 42)"
-
-    # Fields are ordered by creation time (due to having used the @creation_ordered decorator)
-    assert my_user.get_meta().table_fields.keys() == ['username', 'password', 'age']
-
-
-

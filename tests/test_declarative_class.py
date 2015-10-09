@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from tri.struct import Struct
 
-from tri.declarative import creation_ordered, declarative
+from tri.declarative import creation_ordered, declarative, with_meta
 
 
 @creation_ordered
@@ -66,9 +66,9 @@ def test_isolated_inheritance():
     class Bar(Base):
         c = 3
 
-    assert OrderedDict([('a', 1)]) == Base.get_meta().members
-    assert OrderedDict([('a', 1), ('b', 2)]) == Foo.get_meta().members
-    assert OrderedDict([('a', 1), ('c', 3)]) == Bar.get_meta().members
+    assert OrderedDict([('a', 1)]) == Base.get_declared()
+    assert OrderedDict([('a', 1), ('b', 2)]) == Foo.get_declared()
+    assert OrderedDict([('a', 1), ('c', 3)]) == Bar.get_declared()
 
 
 def test_find_members_from_base():
@@ -80,7 +80,7 @@ def test_find_members_from_base():
     class Sub(Base):
         bar = Member(bar='bar')
 
-    assert OrderedDict([('foo', Member(foo='foo')), ('bar', Member(bar='bar'))]) == Sub.Meta.members
+    assert OrderedDict([('foo', Member(foo='foo')), ('bar', Member(bar='bar'))]) == Sub._declarative_members
 
 
 def test_find_members_shadow():
@@ -91,7 +91,7 @@ def test_find_members_shadow():
     class Sub(Base):
         foo = Member(bar='baz')
 
-    assert OrderedDict([('foo', Member(bar='baz'))]) == Sub.Meta.members
+    assert OrderedDict([('foo', Member(bar='baz'))]) == Sub._declarative_members
 
 
 def test_member_attribute_naming():
@@ -115,51 +115,83 @@ def test_string_members():
 
         foo = 'bar'
 
-    assert OrderedDict([('foo', 'bar')]) == Declarative.Meta.members
+    assert OrderedDict([('foo', 'bar')]) == Declarative.get_declared()
 
 
-# @todo Fix this again:
-# def test_multiple_types():
-#
-#     @declarative(int, 'ints')
-#     @declarative(str, 'strs')
-#     class Foo(object):
-#         a = 1
-#         b = "b"
-#
-#         def __init__(self, ints, strs):
-#             assert OrderedDict([('a', 1)]) == ints
-#             assert OrderedDict([('b', 'b')]) == strs
-#
-#     Foo()
-#
-#
-# def test_multiple_types_inheritance():
-#
-#     @declarative(int, 'ints')
-#     class Foo(object):
-#         i = 1
-#         a = 'a'
-#
-#         def __init__(self, **kwargs):
-#             assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == kwargs['ints']
-#             super(Foo, self).__init__()
-#
-#     @declarative(str, 'strs')
-#     class Bar(Foo):
-#         j = 2
-#         b = "b"
-#
-#         def __init__(self, **kwargs):
-#             assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == kwargs['ints']
-#             assert OrderedDict([('b', 'b'), ('c', 'c')]) == kwargs['strs']
-#             super(Bar, self).__init__()
-#
-#     class Baz(Bar):
-#         k = 3
-#         c = 'c'
-#
-#         def __init__(self):
-#             super(Baz, self).__init__()
-#
-#     Baz()
+def test_declarative_and_meta():
+
+    @with_meta
+    @declarative(str)
+    class Foo(object):
+        foo = 'foo'
+
+        class Meta:
+            bar = 'bar'
+
+        def __init__(self, members, bar):
+            assert OrderedDict([('foo', 'foo')]) == members
+            assert 'bar' == bar
+
+    Foo()
+
+
+def test_declarative_and_meta_other_order():
+
+    @declarative(str)
+    @with_meta
+    class Foo(object):
+        foo = 'foo'
+
+        class Meta:
+            bar = 'bar'
+
+        def __init__(self, members, bar):
+            assert OrderedDict([('foo', 'foo')]) == members
+            assert 'bar' == bar
+
+    Foo()
+
+
+def test_multiple_types():
+
+    @declarative(int, 'ints')
+    @declarative(str, 'strs')
+    class Foo(object):
+        a = 1
+        b = "b"
+
+        def __init__(self, ints, strs):
+            assert OrderedDict([('a', 1)]) == ints
+            assert OrderedDict([('b', 'b')]) == strs
+
+    Foo()
+
+
+def test_multiple_types_inheritance():
+
+    @declarative(int, 'ints')
+    class Foo(object):
+        i = 1
+        a = 'a'
+
+        def __init__(self, ints):
+            assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == ints
+            super(Foo, self).__init__()
+
+    @declarative(str, 'strs')
+    class Bar(Foo):
+        j = 2
+        b = "b"
+
+        def __init__(self, strs):
+            assert OrderedDict([('b', 'b'), ('c', 'c')]) == strs
+            super(Bar, self).__init__()
+
+    class Baz(Bar):
+        k = 3
+        c = 'c'
+
+        def __init__(self):
+            super(Baz, self).__init__()
+
+    Baz()
