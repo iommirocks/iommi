@@ -41,10 +41,10 @@ def read_version():
 setup(
     name='tri.form',
     version=read_version(),
-    description='tri.form supplies classes that can be used like dictionaries and as objects with attribute access at the same time',
+    description='tri.form is a form library',
     long_description=readme + '\n\n' + history,
-    author='Johan Lübcke',
-    author_email='johan.lubcke@trioptima.com',
+    author='Anders Hovmöller',
+    author_email='anders.hovmoller@trioptima.com',
     url='',
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
