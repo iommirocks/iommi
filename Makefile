@@ -36,7 +36,6 @@ coverage:
 
 docs:
 	tox -e docs
-	py.test test_readme.py
 
 dist: clean
 	python setup.py sdist
