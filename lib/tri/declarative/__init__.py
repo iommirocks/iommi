@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -100,7 +100,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
 
         new_class = DeclarativeMeta(class_to_decorate.__name__,
                                     class_to_decorate.__bases__,
-                                    dict(class_to_decorate.__dict__))
+                                    {k: v for k, v in class_to_decorate.__dict__.items() if k not in ['__dict__', '__weakref__']})
 
         if add_init_kwargs:
             def get_extra_args_function(self):
@@ -127,12 +127,14 @@ def get_declared(cls, parameter='members'):
 def add_args_to_init_call(cls, get_extra_args_function):
     __init__orig = object.__getattribute__(cls, '__init__')  # Use object.__getattribute__ to not have the original implementation bind to the class
 
-    try:
-        pos_arg_names, _, _, _ = inspect.getargspec(__init__orig)
-        pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
-    except TypeError:
-        # We might fail on not being able to find the signature of builtin constructors
-        pos_arg_names = None
+    pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
+    if pos_arg_names is None:
+        try:
+            pos_arg_names, _, _, _ = inspect.getargspec(__init__orig)
+            pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
+        except TypeError:
+            # We might fail on not being able to find the signature of builtin constructors
+            pass
 
     def __init__(self, *args, **kwargs):
         new_kwargs = {}
@@ -145,6 +147,7 @@ def add_args_to_init_call(cls, get_extra_args_function):
         new_kwargs.update(kwargs)
         __init__orig(self, *args, **new_kwargs)
 
+    __init__.pos_arg_names = pos_arg_names
     setattr(cls, '__init__', __init__)
 
 

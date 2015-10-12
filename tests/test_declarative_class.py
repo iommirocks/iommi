@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from tri.struct import Struct
 
-from tri.declarative import creation_ordered, declarative, with_meta
+from tri.declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
 
 
 @creation_ordered
@@ -195,3 +195,31 @@ def test_multiple_types_inheritance():
             super(Baz, self).__init__()
 
     Baz()
+
+
+def test_add_args_to_init_call():
+
+    class C(object):
+        def __init__(self, x, y=None):
+            self.x = x
+            self.y = y
+
+    add_args_to_init_call(C, lambda self: dict(x=17))
+
+    c = C()
+    assert 17 == c.x
+    assert None == c.y
+
+    add_args_to_init_call(C, lambda self: dict(y=42))
+
+    c = C()
+    assert 17 == c.x
+    assert 42 == c.y
+
+    c = C(x=1, y=2)
+    assert 1 == c.x
+    assert 2 == c.y
+
+    c = C(1, 2)
+    assert 1 == c.x
+    assert 2 == c.y
