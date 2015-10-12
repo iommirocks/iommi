@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from datetime import date
 from django.db.models import Q, F
+from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from tri.struct import FrozenStruct
@@ -100,6 +101,25 @@ class Variable(FrozenStruct):
     @staticmethod
     def choice(**kwargs):  # pragma: no cover
         kwargs.setdefault('form_field__class', tri.form.Field.choice)
+        return Variable(**kwargs)
+
+    @staticmethod
+    def choice_queryset(**kwargs):
+        kwargs.setdefault('form_field__class', tri.form.Field.choice_queryset)
+        kwargs.setdefault('form_field__choices', kwargs['choices'])
+        kwargs.setdefault('form_field__model', kwargs['model'])
+        kwargs.setdefault('op_to_q_op', lambda op: 'exact')
+
+        def choice_queryset_value_to_q(variable, op, value_string_or_f):
+            assert op == '='
+            try:
+                instance = variable.model.objects.get(**{variable.value_to_q_lookup: value_string_or_f})
+            except ObjectDoesNotExist:
+                return None
+            return Q(**{variable.attr + '__pk': instance.pk})
+
+        kwargs.setdefault('value_to_q_lookup', 'name')
+        kwargs.setdefault('value_to_q', choice_queryset_value_to_q)
         return Variable(**kwargs)
 
     @staticmethod
@@ -281,7 +301,10 @@ class Query(object):
                 value_string_or_f = F(self.variable_by_name[value_string_or_variable_name.lower()].attr)
             else:
                 value_string_or_f = value_string_or_variable_name
-            return variable.value_to_q(variable=variable, op=op, value_string_or_f=value_string_or_f)
+            result = variable.value_to_q(variable=variable, op=op, value_string_or_f=value_string_or_f)
+            if result is None:
+                raise QueryException('Unknown value "%s" for variable "%s"' % (value_string_or_f, variable.name))
+            return result
         raise QueryException('Unknown variable "%s"' % variable_name)
 
     def freetext_as_q(self, token):
@@ -326,10 +349,12 @@ class Query(object):
         elif form.is_valid():
             # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
             result = ['%s=%s' % (field.name, value_to_query_string_value_string(field.value)) for field in form.fields if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
-            freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
-            if freetext:
-                # TODO: handle escaping for freetext, this will blow up if the value contains "
-                result.append('(%s)' % ' or '.join(['%s:"%s"' % (f.name, freetext) for f in self.freetext_variables]))
+
+            if FREETEXT_SEARCH_NAME in form.fields_by_name:
+                freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
+                if freetext:
+                    # TODO: handle escaping for freetext, this will blow up if the value contains "
+                    result.append('(%s)' % ' or '.join(['%s:"%s"' % (f.name, freetext) for f in self.freetext_variables]))
             return ' and '.join(result)
         else:
             return ''
