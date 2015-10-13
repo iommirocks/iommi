@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.9.0'
+__version__ = '0.10.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -242,3 +242,68 @@ def remove_keys_recursive(item, keys_to_remove):
 
 def remove_show_recursive(item):
     return remove_keys_recursive(item, {'show'})
+
+
+def extract_subkeys(kwargs, prefix, defaults=None):
+    """
+    Extract
+
+    >>> foo = {
+    ...     'foo__foo': 1,
+    ...     'foo__bar': 2,
+    ...     'baz': 3,
+    ... }
+    >>> assert extract_subkeys(foo, 'foo', defaults={'quux': 4}) == {
+    ...     'foo': 1,
+    ...     'bar': 2,
+    ...     'quux': 4,
+    ... }
+
+    @type kwargs: dict
+    @return dict
+    """
+
+    prefix += '__'
+    result = {k[len(prefix):]: v for k, v in kwargs.items() if k.startswith(prefix)}
+    if defaults is not None:
+        return setdefaults(result, defaults)
+    else:
+        return result
+
+
+def setdefaults(d, d2):
+    """
+    @type d: dict
+    @type d2: dict
+    @return dict
+    """
+    for k, v in d2.items():
+        d.setdefault(k, v)
+    return d
+
+
+def getattr_path(obj, path):
+    """
+    Get an attribute path, as defined by a string separated by '__'.
+    getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
+    will short circuit to return None if something on the path is None.
+    """
+    path = path.split('__')
+    for name in path:
+        obj = getattr(obj, name)
+        if obj is None:
+            return None
+    return obj
+
+
+def setattr_path(obj, path, value):
+    """
+    Set an attribute path, as defined by a string separated by '__'.
+    setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
+    """
+    path = path.split('__')
+    o = obj
+    for name in path[:-1]:
+        o = getattr(o, name)
+    setattr(o, path[-1], value)
+    return obj
