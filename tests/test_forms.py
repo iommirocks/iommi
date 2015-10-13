@@ -4,11 +4,11 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, QuerySet
+from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
 from tests.models import Foo, FieldFromModelForeignKeyTest, FormFromModelTest, FooField, RegisterFieldFactoryTest
-from tri.form import getattr_path, setattr_path, BoundField, setdefaults
+from tri.form import getattr_path, setattr_path, BoundField
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
 
@@ -249,23 +249,6 @@ def test_setattr_path():
 
 def test_multi_select_with_one_value_only():
     assert ['a'] == Form(data=Data(foo=['a']), fields=[Field.multi_choice(name='foo', choices=['a', 'b'])]).validate().fields[0].value_list
-
-
-def test_setdefaults():
-    a = {'foo2': 7}
-    a.setdefault('foo', 1)
-    a.setdefault('foo2', 2)
-    a.setdefault('foo3', 3)
-    a.setdefault('foo4', 5)
-
-    b = setdefaults({'foo2': 7}, {
-        'foo': 1,
-        'foo2': 2,
-        'foo3': 3,
-        'foo4': 5,
-    })
-
-    assert a == b
 
 
 def test_render_table():
