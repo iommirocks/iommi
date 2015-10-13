@@ -341,7 +341,6 @@ class Field(FrozenStruct):
         kwargs.setdefault('internal', Struct()).model = model
         kwargs.setdefault('parse', lambda form, field, string_value: field.internal.model.objects.get(pk=string_value) if string_value else None)
         kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, choice.pk, unicode(choice), choice == field.value))
-        assert isinstance(kwargs['choices'], QuerySet) or callable(kwargs['choices'])
 
         return Field.choice(**kwargs)
 
