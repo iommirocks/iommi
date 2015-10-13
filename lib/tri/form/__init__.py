@@ -10,19 +10,21 @@ from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
 from tri.struct import Struct, FrozenStruct
-from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative
+from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path
 
 try:
     from django.template.loader import get_template_from_string
 except ImportError:
     # Django 1.8+
+    # noinspection PyUnresolvedReferences
     from django.template import engines
+    
     def get_template_from_string(template_code, origin=None, name=None):
         del origin, name  # the origin and name parameters seems not to be implemented in django 1.8
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 
 def foreign_key_factory(model_field, kwargs):
@@ -49,63 +51,6 @@ _field_factory_by_django_field_type = OrderedDict([
 
 def register_field_factory(field_class, factory):
     _field_factory_by_django_field_type[field_class] = factory
-
-
-def extract_subkeys(kwargs, prefix, defaults=None):
-    """
-    Extract
-
-    >>> foo = {
-    ...     'foo__foo': 1,
-    ...     'foo__bar': 2,
-    ...     'baz': 3,
-    ... }
-    >>> assert extract_subkeys(foo, defaults={'quux': 4}) == {
-    ...     'foo': 1,
-    ...     'bar': 2,
-    ...     'quux': 4,
-    ... }
-    """
-
-    prefix += '__'
-    result = {k[len(prefix):]: v for k, v in kwargs.items() if k.startswith(prefix)}
-    if defaults is not None:
-        return setdefaults(result, defaults)
-    else:
-        return result
-
-
-def setdefaults(d, d2):
-    for k, v in d2.items():
-        d.setdefault(k, v)
-    return d
-
-
-def getattr_path(obj, path):
-    """
-    Get an attribute path, as defined by a string separated by '__'.
-    getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
-    will short circuit to return None if something on the path is None.
-    """
-    path = path.split('__')
-    for name in path:
-        obj = getattr(obj, name)
-        if obj is None:
-            return None
-    return obj
-
-
-def setattr_path(obj, path, value):
-    """
-    Set an attribute path, as defined by a string separated by '__'.
-    setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
-    """
-    path = path.split('__')
-    o = obj
-    for name in path[:-1]:
-        o = getattr(obj, name)
-    setattr(o, path[-1], value)
-    return obj
 
 
 class BoundField(Struct):
@@ -182,7 +127,7 @@ class BoundField(Struct):
         return self.render_css_classes('input_container_css_classes')
 
 
-def DEFAULT_PARSE(form, field, string_value):
+def default_parse(form, field, string_value):
     del form, field
     return string_value
 
@@ -233,7 +178,7 @@ class Field(FrozenStruct):
             kwargs.setdefault('id', 'id_%s' % name)
             kwargs.setdefault('label', name.capitalize().replace('_', ' '))
         kwargs.setdefault('is_valid', lambda form, field, parsed_data: (True, ''))
-        kwargs.setdefault('parse', DEFAULT_PARSE)
+        kwargs.setdefault('parse', default_parse)
         kwargs.setdefault('initial')
         kwargs.setdefault('initial_list')
         kwargs.setdefault('template', 'tri_form/{style}_form_row.html')
@@ -312,7 +257,7 @@ class Field(FrozenStruct):
         if not kwargs.get('required', True):
             kwargs['original_choices'] = kwargs.pop('choices')
             kwargs['choices'] = lambda form, field: [None] + list(evaluate(should_evaluate(field.original_choices), form=form, field=field))
-            kwargs['original_parse'] = should_not_evaluate(kwargs.pop('parse', DEFAULT_PARSE))
+            kwargs['original_parse'] = should_not_evaluate(kwargs.pop('parse', default_parse))
             kwargs['parse'] = lambda form, field, string_value: None if string_value == '' else field.original_parse(form=form, field=field, string_value=string_value)
         else:
             kwargs['original_choices'] = kwargs['choices']
@@ -529,6 +474,7 @@ class Form(object):
             for field in self.fields:
                 if field.is_list:
                     try:
+                        # noinspection PyUnresolvedReferences
                         raw_data_list = data.getlist(field.name)
                     except AttributeError:  # pragma: no cover
                         raw_data_list = data.get(field.name)
