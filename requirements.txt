@@ -1,4 +1,4 @@
-tri.declarative == 0.4.0
+tri.declarative
 tri.struct
 django == 1.7
 tri.form
