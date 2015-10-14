@@ -1,10 +1,10 @@
-.. image:: https://travis-ci.org/TriOptima/tri.tables.svg?branch=master
-    :target: https://travis-ci.org/TriOptima/tri.tables
+.. image:: https://travis-ci.org/TriOptima/tri.table.svg?branch=master
+    :target: https://travis-ci.org/TriOptima/tri.table
 
-tri.tables
+tri.table
 ==========
 
-tri.tables is a library to make full featured HTML tables easily:
+tri.table is a library to make full featured HTML tables easily:
 
 * generates header, rows and cells
 * grouping of headers

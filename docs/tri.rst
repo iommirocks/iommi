@@ -6,7 +6,7 @@ Subpackages
 
 .. toctree::
 
-    tri.tables
+    tri.table
 
 Module contents
 ---------------

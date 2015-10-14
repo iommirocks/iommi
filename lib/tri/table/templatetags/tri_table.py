@@ -13,7 +13,7 @@ register = template.Library()
 @register.filter
 def table_row_css_class(row, table):
     """
-    @type table: tri.tables.BaseTable
+    @type table: tri.table.BaseTable
     """
     if table is None:
         return ''
@@ -78,7 +78,7 @@ def row_template(table, row):
     except TypeError:
         return table.Meta.row_template
     except AttributeError:
-        return 'tri_tables/table_row.html'
+        return 'tri_table/table_row.html'
 
 
 def lookup_attribute(column, row):
@@ -134,7 +134,7 @@ def register_cell_formatter(type_or_class, formatter):
 @register.filter
 def table_cell_formatter(row, column):
     """
-    @type column: tri.tables.Column
+    @type column: tri.table.Column
     """
     if 'cell_value' in column:
         value = column.cell_value(row) if callable(column.cell_value) else column.cell_value
@@ -192,21 +192,4 @@ def paginator(context, adjacent_pages=6):
         "show_hits": context["show_hits"],
         "hit_label": context["hit_label"],
     }
-register.inclusion_tag("tri_tables/paginator.html", takes_context=True)(paginator)
-
-
-@register.filter()
-def as_compact(form):
-    r = []
-    for field in form.fields:
-        r.append(render_to_string('tri_tables/compact_form_row.html', {'field': form[field]}))
-    return mark_safe('\n'.join(r))
-
-
-@register.filter(name='is_checkbox')
-def is_checkbox(field):
-    try:
-        return isinstance(field.field.widget, CheckboxInput)
-    except AttributeError:
-        pass
-    return False
+register.inclusion_tag("tri_table/paginator.html", takes_context=True)(paginator)

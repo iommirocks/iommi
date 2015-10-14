@@ -1,12 +1,7 @@
-{% load tri_tables %}
+{% load tri_table %}
 
 {% if filter_form %}
-    <form method="get" action=".">
-        <div class="compact">
-            {{ filter_form|as_compact }}
-            <div class="submit"><input class="button" type="submit" value="Filter" /></div>
-        </div>
-    </form>
+    {% include "tri_query/form.html" with form=filter_form %}
 {% endif %}
 
 {% if bulk_form %}
@@ -16,7 +11,7 @@
 {% if not table.data and empty_message %}
     {{ empty_message }}
 {% else %}
-    {% include "tri_tables/table.html" %}
+    {% include "tri_table/table.html" %}
 {% endif %}
 
 {% if bulk_form %}
@@ -27,4 +22,4 @@
     </form>
 {% endif %}
 
-{% include "tri_tables/links.html" %}
+{% include "tri_table/links.html" %}

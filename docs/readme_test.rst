@@ -1,4 +1,4 @@
-Welcome to tri.tables's documentation!
+Welcome to tri.table's documentation!
 ======================================
 
 .. include:: ../README.rst

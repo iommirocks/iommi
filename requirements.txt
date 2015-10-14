@@ -1,3 +1,4 @@
 django
 tri.declarative
 tri.struct
+tri.query

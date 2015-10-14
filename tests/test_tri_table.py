@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 from django.http import HttpResponse
 
 import pytest
@@ -7,7 +8,7 @@ from django.test import RequestFactory
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
 
-from tri.tables import Struct, Table, Column, Link, render_table, render_table_to_response
+from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response
 
 
 def get_data():
@@ -58,47 +59,61 @@ def test_render(table):
                     </th>
                 </tr>
             </thead>
-            <tr class="row1">
-                <td> Hello </td>
-                <td class="rj"> 17 </td>
-            </tr>
-            <tr class="row2">
-                <td> world! </td>
-                <td class="rj"> 42 </td>
-            </tr>
+            <tbody>
+                <tr class="row1">
+                    <td> Hello </td>
+                    <td class="rj"> 17 </td>
+                </tr>
+                <tr class="row2">
+                    <td> world! </td>
+                    <td class="rj"> 42 </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
 @pytest.mark.django_db
 def test_django_table():
 
-    Foo(a=17, b="Hej").save()
-    Foo(a=42, b="Hopp").save()
+    f1 = Foo.objects.create(a=17, b="Hej")
+    f2 = Foo.objects.create(a=42, b="Hopp")
+
+    Bar(foo=f1, c=True).save()
+    Bar(foo=f2, c=False).save()
 
     class TestTable(Table):
-        a = Column.number()
-        b = Column()
+        foo__a = Column.number()
+        foo__b = Column()
+        foo = Column.choice_queryset(model=Foo, choices=Foo.objects.all())
 
-    verify_table_html(TestTable(Foo.objects.all()), """
+    verify_table_html(TestTable(Bar.objects.all()), """
         <table class="listview">
             <thead>
                 <tr>
                     <th class="subheader first_column">
-                        <a href="?order=a"> A </a>
+                        <a href="?order=foo__a"> A </a>
                     </th>
                     <th class="subheader first_column">
-                        <a href="?order=b"> B </a>
+                        <a href="?order=foo__b"> B </a>
+                    </th>
+                    <th class="subheader first_column">
+                        <a href="?order=foo"> Foo </a>
                     </th>
                 </tr>
             </thead>
-            <tr class="row1" data-pk="1">
-                <td class="rj"> 17 </td>
-                <td> Hej </td>
-            </tr>
-            <tr class="row2" data-pk="2">
-                <td class="rj"> 42 </td>
-                <td> Hopp </td>
-            </tr>
+            <tbody>
+                <tr class="row1" data-pk="1">
+                    <td class="rj"> 17 </td>
+                    <td> Hej </td>
+                    <td> Foo(17, Hej) </td>
+
+                </tr>
+                <tr class="row2" data-pk="2">
+                    <td class="rj"> 42 </td>
+                    <td> Hopp </td>
+                    <td> Foo(42, Hopp) </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -159,13 +174,15 @@ def test_output():
                     <th class="thin subheader first_column" title="Delete"> </th>
                 </tr>
             </thead>
-            <tr class="row1">
-                <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
-                <td class="rj"> 17 </td>
-                <td class="cj"> <i class="fa fa-lg fa-history"> </i> </td>
-                <td class="cj"> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </a> </td>
-                <td class="cj"> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
-            </tr>
+            <tbody>
+                <tr class="row1">
+                    <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
+                    <td class="rj"> 17 </td>
+                    <td class="cj"> <i class="fa fa-lg fa-history"> </i> </td>
+                    <td class="cj"> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </a> </td>
+                    <td class="cj"> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
+                </tr>
+            </tbody>
         </table>
         """)
 
@@ -183,9 +200,11 @@ def test_name_traversal():
                     <th class="subheader first_column"> Bar </th>
                 </tr>
             </thead>
-            <tr class="row1">
-                <td> bar </td>
-            </tr>
+            <tbody>
+                <tr class="row1">
+                    <td> bar </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -210,11 +229,13 @@ def test_tuple_data():
                     <th class="subheader first_column"> C </th>
                 </tr>
             </thead>
-            <tr class="row1">
-                <td> a </td>
-                <td> b </td>
-                <td> c </td>
-            </tr>
+            <tbody>
+                <tr class="row1">
+                    <td> a </td>
+                    <td> b </td>
+                    <td> c </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -237,11 +258,13 @@ def test_dict_data():
                      <th class="subheader first_column"> C </th>
                  </tr>
              </thead>
-             <tr class="row1">
-                 <td> a </td>
-                 <td> b </td>
-                 <td> c </td>
-             </tr>
+             <tbody>
+                 <tr class="row1">
+                     <td> a </td>
+                     <td> b </td>
+                     <td> c </td>
+                 </tr>
+             </tbody>
          </table>""")
 
 
@@ -263,9 +286,32 @@ def test_display_name():
                     <th class="subheader first_column"> Bar </th>
                 </tr>
             </thead>
-            <tr class="row1">
-                <td> foo </td>
-            </tr>
+            <tbody>
+                <tr class="row1">
+                    <td> foo </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+
+def test_link():
+    class TestTable(NoSortTable):
+        foo = Column.link(display_name="Bar", cell_value='foo', cell_url_title="url_title_goes_here")
+
+    data = [Struct(foo=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
+
+    verify_table_html(TestTable(data), """
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="subheader first_column"> Bar </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="row1">
+                    <td> <a href="/get/absolute/url/result" title="url_title_goes_here"> foo </a> </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -280,9 +326,11 @@ def test_css_class():
         <thead>
             <tr><th class="some_class subheader first_column"> Foo </th></tr>
         </thead>
-        <tr class="row1">
-            <td> foo </td>
-        </tr>
+        <tbody>
+            <tr class="row1">
+                <td> foo </td>
+            </tr>
+        </tbody>
     </table>""")
 
 
@@ -299,9 +347,11 @@ def test_header_url():
                 <a href="/some/url"> Foo </a>
             </th></tr>
         </thead>
-        <tr class="row1">
-            <td> foo </td>
-        </tr>
+        <tbody>
+            <tr class="row1">
+                <td> foo </td>
+            </tr>
+        </tbody>
     </table>""")
 
 
@@ -315,10 +365,12 @@ def test_title():
     <table class="listview">
         <thead>
             <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
-        </thead>
-        <tr class="row1">
-            <td> foo </td>
-        </tr>
+        </thead>\
+        <tbody>
+            <tr class="row1">
+                <td> foo </td>
+            </tr>
+        </tbody>
     </table>""")
 
 
@@ -334,9 +386,11 @@ def test_show():
         <thead>
             <tr><th class="subheader first_column"> Foo </th></tr>
         </thead>
-        <tr class="row1">
-            <td> foo </td>
-        </tr>
+        <tbody>
+            <tr class="row1">
+                <td> foo </td>
+            </tr>
+        </tbody>
     </table>""")
 
 
@@ -355,10 +409,12 @@ def test_attr():
                 <th class="subheader first_column"> Bar </th>
             </tr>
         </thead>
-        <tr class="row1">
-            <td> foo </td>
-            <td> foo </td>
-        </tr>
+        <tbody>
+            <tr class="row1">
+                <td> foo </td>
+                <td> foo </td>
+            </tr>
+        </tbody>
     </table>""")
 
 
@@ -383,13 +439,15 @@ def test_attrs():
                   <th class="subheader first_column"> Yada </th>
                 </tr>
             </thead>
+            <tbody>
                 <tr class="row1 classier" foo="barier">
                     <td> 1 </td>
                 </tr>
                 <tr class="row2 classier" foo="barier">
                     <td> 2 </td>
                 </tr>
-        </table>""")
+            </tbody>
+        </table>""", find=dict(class_='classy'))
 
 
 def test_column_presets():
@@ -428,16 +486,18 @@ def test_column_presets():
                     <th class="subheader first_column"> Number </th>
                 </tr>
             </thead>
-            <tr class="row1" data-pk="123">
-                <td class="cj"> <i class="fa fa-lg fa-False" /> </td>
-                <td class="cj"> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
-                <td class="cj"> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
-                <td class="cj"> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
-                <td> <a href="http://yada/run/"> Run </a> </td>
-                <td class="cj"> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td class="cj"> <i class="fa fa-check" title="Yes" /> </td>
-                <td> <a href="http://yadahada/"> Yadahada name </a> </td>
-                <td class="rj"> 123 </td>
-            </tr>
+            <tbody>
+                <tr class="row1" data-pk="123">
+                    <td class="cj"> <i class="fa fa-lg fa-False" /> </td>
+                    <td class="cj"> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
+                    <td class="cj"> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
+                    <td class="cj"> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
+                    <td> <a href="http://yada/run/"> Run </a> </td>
+                    <td class="cj"> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td class="cj"> <i class="fa fa-check" title="Yes" /> </td>
+                    <td> <a href="http://yadahada/"> Yadahada name </a> </td>
+                    <td class="rj"> 123 </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -459,12 +519,14 @@ def test_django_table_pagination():
                     <th class="subheader first_column"> A </th>
                 </tr>
             </thead>
-            <tr class="row1" data-pk="3">
-                <td class="rj"> 2 </td>
-            </tr>
-            <tr class="row2" data-pk="4">
-                <td class="rj"> 3 </td>
-            </tr>
+            <tbody>
+                <tr class="row1" data-pk="3">
+                    <td class="rj"> 2 </td>
+                </tr>
+                <tr class="row2" data-pk="4">
+                    <td class="rj"> 3 </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -509,6 +571,7 @@ def test_links():
 
 @pytest.mark.django_db
 def test_bulk_edit():
+    assert Foo.objects.all().count() == 0
 
     Foo(a=1, b="").save()
     Foo(a=2, b="").save()
@@ -516,8 +579,12 @@ def test_bulk_edit():
     Foo(a=4, b="").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, bulk=True)  # turn off sorting to not get the link with random query params
-        b = Column(bulk=True)
+        a = Column.number(sortable=False, bulk_field=True)  # turn off sorting to not get the link with random query params
+        b = Column(bulk_field=True)
+
+    result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(Foo.objects.all()))
+    assert '<form method="post" action=".">' in result
+    assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
     render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(Foo.objects.all()))
 
@@ -527,6 +594,73 @@ def test_bulk_edit():
         (3, 3, u''),
         (4, 4, u''),
     ]
+
+
+@pytest.mark.django_db
+def test_query_variable():
+    assert Foo.objects.all().count() == 0
+
+    Foo(a=1, b="foo").save()
+    Foo(a=2, b="foo").save()
+    Foo(a=3, b="bar").save()
+    Foo(a=4, b="bar").save()
+
+    class TestTable(Table):
+        a = Column.number(sortable=False, query_variable=True, query_variable__form_field__show=True)  # turn off sorting to not get the link with random query params
+        b = Column(query_variable=True, query_variable__form_field__show=True)
+
+        class Meta:
+            sortable = False
+
+    verify_table_html(query=dict(a='1'), table=TestTable(Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    <tbody>
+        <tr class="row1" data-pk="1">
+            <td class="rj">
+                1
+            </td>
+            <td>
+                foo
+            </td>
+        </tr>
+    </table>""")
+    verify_table_html(query=dict(b='bar'), table=TestTable(Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    <tbody>
+        <tr class="row1" data-pk="3">
+            <td class="rj">
+                3
+            </td>
+            <td>
+                bar
+            </td>
+        </tr>
+        <tr class="row2" data-pk="4">
+            <td class="rj">
+                4
+            </td>
+            <td>
+                bar
+            </td>
+        </tr>
+    </tbody>""")
+    verify_table_html(query=dict(query='b="bar"'), table=TestTable(Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    <tbody>
+        <tr class="row1" data-pk="3">
+            <td class="rj">
+                3
+            </td>
+            <td>
+                bar
+            </td>
+        </tr>
+        <tr class="row2" data-pk="4">
+            <td class="rj">
+                4
+            </td>
+            <td>
+                bar
+            </td>
+        </tr>
+    </tbody>""")
 
 
 def test_cell_template():
@@ -540,11 +674,13 @@ def test_cell_template():
             <thead>
                 <tr><th class="subheader first_column"> Foo </th></tr>
             </thead>
-            <tr class="row1">
-                <td>
-                    test_cell_template.html contents
-                </td>
-            </tr>
+            <tbody>
+                <tr class="row1">
+                    <td>
+                        test_cell_template.html contents
+                    </td>
+                </tr>
+            </tbody>
         </table>""")
 
 
@@ -564,195 +700,21 @@ def test_auto_rowspan():
             <thead>
                 <tr><th class="subheader first_column"> Foo </th></tr>
             </thead>
-            <tr class="row1">
-                <td rowspan="2"> 1 </td>
-            </tr>
-            <tr class="row2">
-                <td style="display: none"> 1 </td>
-            </tr>
-            <tr class="row1">
-                <td rowspan="2"> 2 </td>
-            </tr>
-            <tr class="row2">
-                <td style="display: none"> 2 </td>
-            </tr>
-        </table>""")
-
-
-@pytest.mark.django_db
-def test_django_filters():
-
-    a = Foo.objects.create(a=1, b="a")
-    b = Foo.objects.create(a=2, b="b")
-    c = Foo.objects.create(a=3, b="c")
-    d = Foo.objects.create(a=4, b="d")
-
-    Bar(foo=a, foo2=a, foo3=a, c=True).save()
-    Bar(foo=b, foo2=b, foo3=b, c=False).save()
-    Bar(foo=c, foo2=c, foo3=c, c=False).save()
-    Bar(foo=d, foo2=d, foo3=d, c=False).save()
-
-    class TestTable(Table):
-        foo1 = Column(attr='foo', display_name="FOOOH")
-        foo2 = Column(filter_choices=[('a', 'a'), ('b', 'b')])
-        foo3 = Column(show=False, filter_choices=Foo.objects.all())
-        c = Column()
-        foo__a = Column.number()
-        foo__b = Column(filter_type=Column.FILTER_TYPES.CONTAINS)
-
-        class Meta:
-            # turn off sorting to not get the link with random query params
-            sortable = False
-
-    verify_table_html(TestTable(Bar.objects.all()), """
-        <form action="." method="get">
-            <div class="compact">
-                <div class="key-value">
-                    <div>
-                        <label for="id_foo1">
-                            FOOOH:
-                        </label>
-                    </div>
-                    <select id="id_foo1" name="foo1">
-                        <option selected="selected" value="">
-                            ---------
-                        </option>
-                        <option value="1">
-                            Foo(1, a)
-                        </option>
-                        <option value="2">
-                            Foo(2, b)
-                        </option>
-                        <option value="3">
-                            Foo(3, c)
-                        </option>
-                        <option value="4">
-                            Foo(4, d)
-                        </option>
-                    </select>
-                </div>
-                <div class="key-value">
-                    <div>
-                        <label for="id_foo2">
-                            Foo2:
-                        </label>
-                    </div>
-                    <select id="id_foo2" name="foo2">
-                        <option selected="selected" value="">
-                        </option>
-                        <option value="a">
-                            a
-                        </option>
-                        <option value="b">
-                            b
-                        </option>
-                    </select>
-                </div>
-                <div class="key-value">
-                    <div>
-                        <label for="id_foo3">
-                            Foo3:
-                        </label>
-                    </div>
-                    <select id="id_foo3" name="foo3">
-                        <option selected="selected" value="">
-                        </option>
-                        <option value="1">
-                            Foo(1, a)
-                        </option>
-                        <option value="2">
-                            Foo(2, b)
-                        </option>
-                        <option value="3">
-                            Foo(3, c)
-                        </option>
-                        <option value="4">
-                            Foo(4, d)
-                        </option>
-                    </select>
-                </div>
-                <div class="key-value">
-                    <div>
-                        <label for="id_c">
-                            C:
-                        </label>
-                    </div>
-                    <select id="id_c" name="c">
-                        <option selected="selected" value="">
-                        </option>
-                        <option value="1">
-                            Yes
-                        </option>
-                        <option value="0">
-                            No
-                        </option>
-                    </select>
-                </div>
-                <div class="key-value">
-                    <div>
-                        <label for="id_foo__a">
-                            A:
-                        </label>
-                    </div>
-                    <input id="id_foo__a" name="foo__a" type="number" value="1"/>
-                </div>
-                <div class="key-value">
-                    <div>
-                        <label for="id_foo__b">
-                            B:
-                        </label>
-                    </div>
-                    <input id="id_foo__b" maxlength="255" name="foo__b" type="text"/>
-                </div>
-                <div class="submit">
-                    <input class="button" type="submit" value="Filter"/>
-                </div>
-            </div>
-        </form>""",
-                      query=dict(foo__a=1),
-                      find=dict(name='form'))
-
-    # case insensitive search
-    verify_table_html(TestTable(Bar.objects.all()), """
-        <table class="listview">
-            <thead>
-                <tr>
-                    <th class="subheader first_column">
-                        FOOOH
-                    </th>
-                    <th class="subheader first_column">
-                        Foo2
-                    </th>
-                    <th class="subheader first_column">
-                        C
-                    </th>
-                    <th class="subheader first_column">
-                        A
-                    </th>
-                    <th class="subheader first_column">
-                        B
-                    </th>
+            <tbody>
+                <tr class="row1">
+                    <td rowspan="2"> 1 </td>
                 </tr>
-            </thead>
-            <tr class="row1" data-pk="1">
-                <td>
-                    Foo(1, a)
-                </td>
-                <td>
-                    Foo(1, a)
-                </td>
-                <td>
-                    Yes
-                </td>
-                <td class="rj">
-                    1
-                </td>
-                <td>
-                    a
-                </td>
-            </tr>
-        </table>""",
-                      query=dict(foo__b='A'))
+                <tr class="row2">
+                    <td style="display: none"> 1 </td>
+                </tr>
+                <tr class="row1">
+                    <td rowspan="2"> 2 </td>
+                </tr>
+                <tr class="row2">
+                    <td style="display: none"> 2 </td>
+                </tr>
+            </tbody>
+        </table>""")
 
 
 def test_render_table_to_response():

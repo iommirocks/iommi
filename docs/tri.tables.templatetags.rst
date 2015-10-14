@@ -1,13 +1,13 @@
-tri.tables.templatetags package
-===============================
+tri.table.templatetags package
+==============================
 
 Submodules
 ----------
 
-tri.tables.templatetags.tri_tables module
------------------------------------------
+tri.table.templatetags.tri_table module
+---------------------------------------
 
-.. automodule:: tri.tables.templatetags.tri_tables
+.. automodule:: tri.table.templatetags.tri_table
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ tri.tables.templatetags.tri_tables module
 Module contents
 ---------------
 
-.. automodule:: tri.tables.templatetags
+.. automodule:: tri.table.templatetags
     :members:
     :undoc-members:
     :show-inheritance:

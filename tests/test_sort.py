@@ -2,7 +2,7 @@ import pytest
 
 from .helpers import verify_table_html
 from tests.models import Foo
-from tri.tables import Column, Table, Struct, order_by_on_list
+from tri.table import Column, Table, Struct, order_by_on_list
 
 
 def test_sort_list():
@@ -29,18 +29,20 @@ def test_sort_list():
             </th>
           </tr>
         </thead>
-        <tr class="row1">
-          <td> a </td>
-          <td class="rj"> 1 </td>
-        </tr>
-        <tr class="row2">
-          <td> b </td>
-          <td class="rj"> -2 </td>
-        </tr>
-        <tr class="row1">
-          <td> c </td>
-          <td class="rj"> 3 </td>
-        </tr>
+        <tbody>
+          <tr class="row1">
+            <td> a </td>
+            <td class="rj"> 1 </td>
+          </tr>
+          <tr class="row2">
+            <td> b </td>
+            <td class="rj"> -2 </td>
+          </tr>
+          <tr class="row1">
+            <td> c </td>
+            <td class="rj"> 3 </td>
+          </tr>
+        </tbody>
       </table>
     """)
 
@@ -70,18 +72,20 @@ def test_django_table():
           </th>
         </tr>
       </thead>
-      <tr class="row1" data-pk="2">
-        <td class="rj"> 17 </td>
-        <td> a </td>
-      </tr>
-      <tr class="row2" data-pk="3">
-        <td class="rj"> 42 </td>
-        <td> b </td>
-      </tr>
-      <tr class="row1" data-pk="1">
-        <td class="rj"> 4711 </td>
-        <td> c </td>
-      </tr>
+      <tbody>
+        <tr class="row1" data-pk="2">
+          <td class="rj"> 17 </td>
+          <td> a </td>
+        </tr>
+        <tr class="row2" data-pk="3">
+          <td class="rj"> 42 </td>
+          <td> b </td>
+        </tr>
+        <tr class="row1" data-pk="1">
+          <td class="rj"> 4711 </td>
+          <td> c </td>
+        </tr>
+      </tbody>
     </table>
     """)
 

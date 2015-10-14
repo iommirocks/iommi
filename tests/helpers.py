@@ -2,7 +2,7 @@ import re
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
-from tri.tables import render_table
+from tri.table import render_table
 
 
 def reindent(s, before=" ", after="    "):
@@ -19,7 +19,7 @@ def verify_table_html(table, expected_html, query=None, find=None, links=None):
     Verify that the table renders to the expected markup, modulo formatting
     """
     if find is None:
-        find = dict(name='table')
+        find = dict(class_='listview')
         if not expected_html.strip():
             expected_html = "<table/>"
 

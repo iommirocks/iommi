@@ -2,23 +2,23 @@
 from copy import copy
 from itertools import groupby
 import itertools
-from django import forms
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
-from django.db.models.query import QuerySet
-from django.forms import fields
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from tri.declarative import declarative, creation_ordered, with_meta
+from django.db.models import QuerySet
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive
+from tri.form import extract_subkeys, Field, Form
 from tri.struct import Struct
-from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
+from tri.query import Query, Variable
+from tri.table.templatetags.tri_table import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
-__version__ = '0.10.0'
+__version__ = '0.1.0'
 
 next_creation_count = itertools.count().next
 
@@ -95,14 +95,6 @@ class Column(Struct):
                  sortable=True,
                  sort_key=None,
                  group=None,
-                 filter=True,
-                 filter_show=True,
-                 filter_field=None,
-                 filter_choices=None,
-                 filter_type=None,
-                 bulk=False,
-                 bulk_field=None,
-                 bulk_choices=None,
                  auto_rowspan=False,
 
                  cell_template=None,
@@ -110,7 +102,9 @@ class Column(Struct):
                  cell_format=None,
                  cell_attrs=None,
                  cell_url=None,
-                 cell_url_title=None,):
+                 cell_url_title=None,
+                 **kwargs
+                 ):
         """
         :param name: the name of the column
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
@@ -122,14 +116,6 @@ class Column(Struct):
         :param sortable: set this to False to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
-        :param filter: set to false to disable filtering of this column.
-        :param filter_show: set to false to hide the filtering component for this column. Sometimes it's useful to allow filtering via the URL to get direct linking but you don't want the GUI added.
-        :param filter_field: a django field to use for the filter GUI. Use this if the default isn't what you wanted.
-        :param filter_choices: an iterable of choices or a QuerySet of choices to be available for filtering. This is a short form for using filter_field and specifying the entire field yourself.
-        :param filter_type: by default the filtering is exact, but you can use `Column.FILTER_TYPES.CONTAINS` to make it a contains match and `Column.FILTER_TYPES.ICONTAINS` for case insensitive contains matching.
-        :param bulk: enable bulk editing for this column
-        :param bulk_field: a django field to use for the filter GUI. Use this if the default isn't what you wanted.
-        :param bulk_choices: an iterable of choices or a QuerySet of choices to be available for bulk editing. This is a short form for using bulk_field and specifying the entire field yourself.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
         :param cell_template: name of a template file. The template gets two arguments: `row` and `user`.
         :param cell_value: string or callable with one argument: the row. This is used to extract which data to display from the object.
@@ -146,46 +132,67 @@ class Column(Struct):
             assert cell_format is None
             assert cell_value is None or callable(cell_value)
             orig_cell_value = cell_value
-            cell_value = lambda row: dict(row=row,
-                                          user=self.table.request.user if self.table.request else None,
-                                          **(orig_cell_value(row) if orig_cell_value is not None else {}))
-            cell_format = lambda bindings: render_to_string(cell_template, bindings)
+
+            def cell_value(row):
+                return dict(row=row,
+                            user=self.table.request.user if self.table.request else None,
+                            **(orig_cell_value(row) if orig_cell_value is not None else {}))
+
+            def cell_format(bindings):
+                return render_to_string(cell_template, bindings)
+
         if name:
             self._set_name(name)
-        values = {k: v for k, v in dict(
-            name=name,
-            attr=attr,
-            display_name=display_name,
-            css_class=CssClass(css_class),
-            url=url,
-            title=title,
-            show=show,
-            sortable=sortable,
-            sort_key=sort_key,
-            group=group,
-            filter=filter,
-            filter_show=filter_show,
-            filter_field=filter_field,
-            filter_choices=filter_choices,
-            filter_type=filter_type,
-            bulk=bulk,
-            bulk_field=bulk_field,
-            bulk_choices=bulk_choices,
-            auto_rowspan=auto_rowspan,
+        values = {k: v
+                  for k, v in dict(
+                      name=name,
+                      attr=attr,
+                      display_name=display_name,
+                      css_class=CssClass(css_class),
+                      url=url,
+                      title=title,
+                      show=show,
+                      sortable=sortable,
+                      sort_key=sort_key,
+                      group=group,
+                      auto_rowspan=auto_rowspan,
 
-            cell_value=cell_value,
-            cell_format=cell_format,
-            cell_attrs=cell_attrs if cell_attrs is not None else {},
-            cell_url=cell_url,
-            cell_url_title=cell_url_title).items()
-            if v is not None}
+                      cell_value=cell_value,
+                      cell_format=cell_format,
+                      cell_attrs=cell_attrs if cell_attrs is not None else {},
+                      cell_url=cell_url,
+                      cell_url_title=cell_url_title,
+                  ).items()
+                  if v is not None}
+
+        def bulk_field(column):
+            defaults = {
+                'class': Field.from_model,
+                'model': column.table.Meta.model,
+                'name': column.name,
+                'field_name': column.attr,
+                'required': False,
+                'empty_choice_tuple': (None, '', '---', True),
+            }
+            bulk_field_kwargs = extract_subkeys(kwargs, 'bulk_field', defaults=defaults)
+            return bulk_field_kwargs.pop('class')(**bulk_field_kwargs)
+
+        kwargs['bulk_field'] = bulk_field if kwargs.get('bulk_field') else None
+
+        def query_variable(column):
+            defaults = {
+                'class': Variable,
+                'name': column.name,
+                'model': column.table.Meta.model,
+            }
+            query_variable_kwargs = extract_subkeys(kwargs, 'query_variable', defaults=defaults)
+            return query_variable_kwargs.pop('class')(**query_variable_kwargs)
+
+        kwargs['query_variable'] = query_variable if kwargs.get('query_variable') else None
+
+        values.update(kwargs)
 
         super(Column, self).__init__(**values)
-
-    FILTER_TYPES = Struct({
-        'ICONTAINS': Struct({'django_query_suffix': 'icontains'}),
-        'CONTAINS': Struct({'django_query_suffix': 'contains'})
-    })
 
     def _set_name(self, name):
         self.name = name
@@ -337,6 +344,25 @@ class Column(Struct):
             kwargs['cell_attrs']['class'] = 'rj'
         return Column(**kwargs)
 
+    @staticmethod
+    def choice_queryset(**kwargs):
+        setdefaults(kwargs, dict(
+            bulk_field__class=Field.choice_queryset,
+            query_variable__class=Variable.choice_queryset,
+        ))
+        return Column.choice(**kwargs)
+
+    @staticmethod
+    def choice(**kwargs):
+        choices = kwargs['choices']
+        setdefaults(kwargs, dict(
+            bulk_field__class=Field.choice,
+            bulk_field__choices=choices,
+            query_variable__class=Variable.choice,
+            query_variable__choices=choices,
+        ))
+        return Column(**kwargs)
+
 
 @declarative(Column, 'columns')
 @with_meta
@@ -361,22 +387,29 @@ class Table(object):
         bulk_filter = {}
         bulk_exclude = {}
         sortable = True
-        row_template = 'tri_tables/table_row.html'
+        row_template = 'tri_table/table_row.html'
+        model = None
 
-    """
-    :param data: a list of QuerySet of objects
-    :param columns: (use this only when not using the declarative style) a list of Column objects
-    :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
-    :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
-    :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
-    :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
-    :param sortable: set this to false to turn off sorting for all columns
-    """
-    def __init__(self, data, columns, **params):
+    def __init__(self, data, columns=None, **kwargs):
+        """
+        :param data: a list of QuerySet of objects
+        :param columns: (use this only when not using the declarative style) a list of Column objects
+        :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
+        :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
+        :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
+        :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
+        :param sortable: set this to false to turn off sorting for all columns
+        """
+        assert columns is not None, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
+
         self.data = data
+
+        if isinstance(self.data, QuerySet):
+            kwargs['model'] = data.model
 
         if isinstance(columns, dict):
             for name, column in columns.items():
+                # noinspection PyProtectedMember
                 column._set_name(name)
             self.columns = columns.values()
         else:
@@ -387,7 +420,7 @@ class Table(object):
             column.index = index
 
         self.Meta = self.get_meta()
-        self.Meta.update(**params)
+        self.Meta.update(**kwargs)
 
         if not self.Meta.sortable:
             for column in self.columns:
@@ -413,7 +446,7 @@ class Table(object):
                 else:
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in DEV, but just ignore in PROD
-                        valid_sort_fields = {x.name for x in self.data.model._meta.fields}
+                        valid_sort_fields = {x.name for x in self.Meta.model._meta.fields}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.data = self.data.order_by(*order_args)
@@ -583,71 +616,11 @@ def set_display_none(rowspan_by_row):
     return lambda row: 'display: none' if id(row) not in rowspan_by_row else ''
 
 
-def render_table_filters(request, table):
-    filter_fields = [(col.name, col.get('filter_type')) for col in table.columns if col.filter]
-    if request.method == 'GET' and filter_fields and hasattr(table.data, 'model'):
-        column_by_name = {col.name: col for col in table.columns}
-
-        for name, filter_type in filter_fields:
-            if name in request.GET and request.GET[name]:
-                col = column_by_name[name]
-                if filter_type:
-                    table.data = table.data.filter(**{col.attr + '__' + filter_type.django_query_suffix: request.GET[name]})
-                else:
-                    table.data = table.data.filter(**{col.attr: request.GET[name]})
-
-        filtered_columns_with_ui = [col for col in table.columns if col.filter and col.filter_show]
-
-        class FilterForm(forms.Form):
-            def __init__(self, *args, **kwargs):
-                super(FilterForm, self).__init__(*args, **kwargs)
-                for column in filtered_columns_with_ui:
-                    filter_field = column.get('filter_field')
-                    if 'filter_choices' in column and not filter_field:
-                        filter_choices = column.filter_choices
-                        if isinstance(filter_choices, QuerySet):
-                            filter_choices = [(x.pk, x) for x in filter_choices]
-                        if ('', '') not in filter_choices:
-                            filter_choices = [('', '')] + filter_choices
-                        filter_field = forms.ChoiceField(choices=filter_choices)
-                    if filter_field:
-                        self.fields[column.name] = filter_field
-                    else:
-                        model = table.data.model
-                        attr = column.attr
-                        last_name = attr.split('__')[-1]
-                        for x in attr.split('__')[:-1]:
-                            try:
-                                model = getattr(model, x).get_queryset().model
-                            except AttributeError:  # pragma: no cover
-                                # Support for old Django versions
-                                model = getattr(model, x).get_query_set().model
-                        field_by_name = forms.fields_for_model(model)
-                        self.fields[column.name] = field_by_name[last_name]
-                        self.fields[column.name].label = column.display_name
-
-                for field_name, field in self.fields.items():
-                    if isinstance(field, fields.BooleanField):
-                        self.fields[field_name] = forms.ChoiceField(label=field.label, help_text=field.help_text, required=False, choices=[('', ''), ('1', 'Yes'), ('0', 'No')])
-                        self.fields[field_name].creation_counter = field.creation_counter
-
-                for field in self.fields.values():
-                    field.required = False
-                    field.blank = True
-                    field.null = True
-                    if hasattr(field, 'choices') and type(field.choices) in (list, tuple) and field.choices[0] != ('', ''):
-                        field.choices = [('', '')] + field.choices
-
-        filter_form = FilterForm(request.GET)
-        filter_form._errors = {}
-        return filter_form
-
-
 def render_table(request,
                  table,
                  links=None,
                  context=None,
-                 template_name='tri_tables/list.html',
+                 template_name='tri_table/list.html',
                  blank_on_empty=False,
                  paginate_by=40,
                  page=None,
@@ -670,57 +643,31 @@ def render_table(request,
     """
     if not context:
         context = {}
-    context['filter_form'] = render_table_filters(request, table)
+
+    query = Query(variables=[evaluate_recursive(column.query_variable, column=column) for column in table.columns if column.query_variable])
+    query_form = query.form(request) if query.variables else None
+    context['filter_form'] = query_form
+
+    if query_form:
+        table.data = table.data.filter(query.request_to_q(request))
 
     table.request = request
 
-    bulk_form = None
-    bulk_fields = [x.name for x in table.columns if x.bulk]
-    if bulk_fields:
-        column_by_name = {column.name: column for column in table.columns if column.bulk}
+    bulk_fields = [evaluate_recursive(column.bulk_field, column=column) for column in table.columns if column.bulk_field]
+    bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
+    context['bulk_form'] = bulk_form
 
-        class BulkForm(forms.ModelForm):
-            class Meta:
-                model = table.data.model
-                fields = bulk_fields
+    if bulk_form and request.method == 'POST':
+        pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
 
-            def __init__(self, *args, **kwargs):
-                super(BulkForm, self).__init__(*args, **kwargs)
-                for name, column in {k: v for k, v in column_by_name.items() if 'bulk_field' in v}.items():
-                    self.fields[name] = column.bulk_field
+        if bulk_form.is_valid():
+            table.Meta.model.objects.all() \
+                .filter(pk__in=pks) \
+                .filter(**table.Meta.bulk_filter) \
+                .exclude(**table.Meta.bulk_exclude) \
+                .update(**{field.name: field.value for field in bulk_form.fields if field.value is not None and field.value is not ''})
 
-                for field_name, field in self.fields.items():
-                    field.required = False
-                    field.blank = True
-                    field.null = True
-                    if hasattr(field, 'choices'):
-                        if 'bulk_choices' in column_by_name[field_name]:
-                            choices = column_by_name[field_name].bulk_choices
-                        else:
-                            choices = field.choices
-
-                        if isinstance(choices, QuerySet):
-                            choices = [(c.pk, c) for c in choices]
-                        if ('', '') not in choices:
-                            choices = [('', '')] + list(choices)
-                        field.choices = choices
-        bulk_form = BulkForm
-
-    if bulk_form:
-        if request.method == 'POST':
-            pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
-
-            f = bulk_form(request.POST)
-            if f.is_valid():
-                table.data \
-                    .filter(pk__in=pks) \
-                    .filter(**table.Meta.bulk_filter) \
-                    .exclude(**table.Meta.bulk_exclude) \
-                    .update(**{k: v for k, v in f.cleaned_data.items() if v is not None and v is not ''})
-
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-        else:
-            context['bulk_form'] = bulk_form()
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     context = object_list_context(request,
                                   table=table,
@@ -733,7 +680,7 @@ def render_table(request,
                                   show_hits=show_hits,
                                   hit_label=hit_label)
 
-    if not table.data and blank_on_empty:
+    if not table.data and blank_on_empty:  # pragma: no cover
         return ''
 
     return get_template(template_name).render(context)

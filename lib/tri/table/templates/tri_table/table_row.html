@@ -1,8 +1,8 @@
-{% load tri_tables %}
+{% load tri_table %}
 <tr{% if row.pk %} data-pk="{{ row.pk }}"{% endif %} class="{{ row_color }}{{ row|table_row_css_class:table }}"{{ row|table_row_attrs:table.Meta.row_attrs }}>
     {% for column in table.columns %}
         {% if column.show %}
-            {% include "tri_tables/table_cell.html" %}
+            {% include "tri_table/table_cell.html" %}
         {% endif %}
     {% endfor %}
 </tr>

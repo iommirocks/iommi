@@ -1,8 +1,8 @@
-from examples.models import Bar, Foo
+from .models import Bar, Foo
 from os.path import dirname, abspath, join
 from django.http import HttpResponse
-from tri.tables import Table, render_table_to_response
-from tri.tables import Column
+from tri.table import Table, render_table_to_response
+from tri.table import Column
 
 
 def index(request):
@@ -37,14 +37,14 @@ def readme_example_1(request):
         sum_c = Column(cell_value=lambda row: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
     # now to get an HTML table:
-    return render_table_to_response(request, FooTable(foos), template_name='base.html')
+    return render_table_to_response(request, FooTable(data=foos), template_name='base.html')
 
 
 def fill_dummy_data():
     if not Bar.objects.all():
         # Fill in some dummy data if none exists
         for i in xrange(200):
-            f = Foo.objects.create(a=i)
+            f = Foo.objects.create(a=i, name='Foo: %s' % i)
             Bar.objects.create(b=f, c='foo%s' % (i % 3))
 
 
@@ -54,9 +54,9 @@ def readme_example_2(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-        c = Column(bulk=True)  # The form is created automatically
+        c = Column(bulk_field=True)  # The form is created automatically
 
-    return render_table_to_response(request, BarTable(Bar.objects.all()), template_name='base.html', paginate_by=20)
+    return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
 
 
 def kitchen_sink(request):
@@ -65,17 +65,16 @@ def kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-        # b = Column(bulk=True, show=False, )
-        b = Column(
-            bulk=True,
+        b = Column.choice_queryset(
             show=False,
-            filter_choices=Foo.objects.all()[:10],
-            # The line above is short for: filter_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]),
-            bulk_choices=Foo.objects.all()[:10],
-            # bulk_field=forms.ChoiceField(choices=[('', '')] + [(x.pk, x) for x in Foo.objects.all()[:10]]),
+            choices=Foo.objects.all()[:10],
+            model=Foo,
+            bulk_field=True,
+            query_variable=True,
+            query_variable__form_field__show=True,
         )
-        c = Column(bulk=True)  # The form is created automatically
-        # TODO: examples for filter_field, filter_type
+        c = Column(bulk_field=True)  # The form is created automatically
+
         d = Column(display_name='Display name',
                    css_class='css_class',
                    url='url',
@@ -96,4 +95,7 @@ def kitchen_sink(request):
         g = Column(attr='c', filter=False, sortable=False)
         django_templates_for_cells = Column(filter=False, sortable=False, cell_template='kitchen_sink_cell_template.html')
 
-    return render_table_to_response(request, BarTable(Bar.objects.all()), template_name='base.html', paginate_by=20)
+        class Meta:
+            model = Bar
+
+    return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)

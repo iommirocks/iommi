@@ -1,6 +1,6 @@
 API documentation
 =================
 
-.. automodule:: tri.tables
+.. automodule:: tri.table
    :members:
    :special-members:
