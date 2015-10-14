@@ -41,7 +41,7 @@ def create_or_edit_object(
 
     kwargs_for_center = extract_subkeys(kwargs, 'render', {
         'context_instance': RequestContext(request, c),
-        'template_name': 'base/create_or_edit_object_block.html',
+        'template_name': 'tri_form/create_or_edit_object_block.html',
     })
     return render(**kwargs_for_center)
 
