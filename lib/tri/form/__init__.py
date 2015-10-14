@@ -269,7 +269,7 @@ class Field(FrozenStruct):
 
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
-        kwargs.setdefault('empty_choice_tuple', (None, '', 'ALL'))
+        kwargs.setdefault('empty_choice_tuple', (None, '', 'ALL', True))
         kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value))
         kwargs['choice_to_option'] = should_not_evaluate(kwargs['choice_to_option'])
         kwargs.setdefault('input_template', 'tri_form/choice.html')
