@@ -163,7 +163,7 @@ def should_not_evaluate(f):
     return wrapper
 
 
-# Bypass the no_evaluate flag
+# Bypass the should_not_evaluate flag
 def should_evaluate(f):
     if not callable(f):
         return f
