@@ -395,11 +395,11 @@ class Field(FrozenStruct):
         """
         Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
 
-        .. code::python
+        .. code:: python
 
             Field.comma_separated(Field.email)
 
-        @type parent_field: Field
+        :type parent_field: Field
         """
         kwargs = dict(parent_field)
 
@@ -440,7 +440,7 @@ class Form(object):
     """
     Describe a Form. Example:
 
-    .. code::python
+    .. code:: python
 
         class MyForm(Form):
             a = Field()
@@ -450,7 +450,7 @@ class Form(object):
 
     You can also create an instance of a form with this syntax if it's more convenient:
 
-    .. code::python
+    .. code:: python
 
         form = MyForm(data={}, fields=[Field(name='a'), Field.email(name='b')])
 
@@ -458,9 +458,9 @@ class Form(object):
     """
     def __init__(self, request=None, data=None, instance=None, fields=None, model=None):
         """
-        @type fields: list of Field
-        @type data: dict[basestring, basestring]
-        @type model: django.db.models.Model
+        :type fields: list of Field
+        :type data: dict[basestring, basestring]
+        :type model: django.db.models.Model
         """
         self.request = request
         if data is None and request:
@@ -505,7 +505,7 @@ class Form(object):
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
 
-        .. code::python
+        .. code:: python
 
             class Foo(Model):
                 foo = IntegerField()
