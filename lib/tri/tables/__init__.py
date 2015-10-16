@@ -18,7 +18,7 @@ from tri.struct import Struct
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
-__version__ = '0.10.0'
+__version__ = '0.11.0'
 
 next_creation_count = itertools.count().next
 
@@ -38,7 +38,7 @@ def prepare_headers(request, columns):
                 else:
                     params['order'] = column['name']
             else:
-                params['order'] = column['name']
+                params['order'] = column['name'] if not column['sort_default_desc'] else '-' + column['name']
             column['is_sorting'] = False if order is None else (column['name'] == order or ('-' + column['name']) == order)
             column['url'] = "?%s" % params.urlencode()
         column['show'] = column.get('show', True)
@@ -94,6 +94,7 @@ class Column(Struct):
                  show=True,
                  sortable=True,
                  sort_key=None,
+                 sort_default_desc=False,
                  group=None,
                  filter=True,
                  filter_show=True,
@@ -121,6 +122,7 @@ class Column(Struct):
         :param show: set this to False to hide the column
         :param sortable: set this to False to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
+        :param sort_default_desc: Set to True to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param filter: set to false to disable filtering of this column.
         :param filter_show: set to false to hide the filtering component for this column. Sometimes it's useful to allow filtering via the URL to get direct linking but you don't want the GUI added.
@@ -162,6 +164,7 @@ class Column(Struct):
             show=show,
             sortable=sortable,
             sort_key=sort_key,
+            sort_default_desc=sort_default_desc,
             group=group,
             filter=filter,
             filter_show=filter_show,
