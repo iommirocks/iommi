@@ -140,7 +140,7 @@ class Query(object):
     """
     Declare a query language. Example:
 
-    .. code::python
+    .. code:: python
 
         class CarQuery(Query):
             make = Variable.choice(choices=[(x, x) for x in ['Toyota', 'Volvo', 'Ford]])
@@ -149,13 +149,13 @@ class Query(object):
         query_set = CarQuery().request_to_q(request)
     """
     variables = []
-    """@type: list of Variable"""
+    """:type: list of Variable"""
     variable_by_name = {}
     freetext_variables = []
 
     def __init__(self, variables=None):  # variables=None to make pycharm tooling not confused
         """
-        @type variables: list of Variable
+        :type variables: list of Variable
         """
         assert variables is not None
         if isinstance(variables, dict):  # Declarative case
@@ -170,8 +170,8 @@ class Query(object):
 
     def parse(self, query_string):
         """
-        @type query_string: str | unicode
-        @rtype: Q
+        :type query_string: str | unicode
+        :rtype: Q
         """
         query_string = query_string.strip()
         if not query_string:
@@ -185,7 +185,7 @@ class Query(object):
 
     def compile(self, tokens):
         """
-        @rtype: Q
+        :rtype: Q
         """
         items = []
         for token in tokens:
@@ -341,7 +341,7 @@ class Query(object):
         """
         Based on the data in the request, return the equivalent query string that you can use with parse() to create a query set.
 
-        @type request: django.http.request.HttpRequest
+        :type request: django.http.request.HttpRequest
         """
         form = self.form(request)
         if request_data(request).get(ADVANCED_QUERY_PARAM, '').strip():
