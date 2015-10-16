@@ -16,6 +16,7 @@ def create_or_edit_object(
         redirect=lambda request, redirect_to: HttpResponseRedirect(redirect_to),
         **kwargs):
     kwargs.setdefault('form__class', Form.from_model)
+    kwargs.setdefault('template_name', 'tri_form/create_or_edit_object_block.html')
     p = extract_subkeys(kwargs, 'form', defaults={'model': model, 'instance': instance, 'data': request.POST if request.method == 'POST' else None})
     form = kwargs['form__class'](**p)
 
@@ -41,7 +42,7 @@ def create_or_edit_object(
 
     kwargs_for_center = extract_subkeys(kwargs, 'render', {
         'context_instance': RequestContext(request, c),
-        'template_name': 'tri_form/create_or_edit_object_block.html',
+        'template_name': kwargs['template_name'],
     })
     return render(**kwargs_for_center)
 
