@@ -2,5 +2,5 @@ API documentation
 =================
 
 .. automodule:: tri.form
-   :members:
-   :special-members:
+   :members: Form, Field, register_field_factory
+   :undoc-members:

@@ -5,7 +5,7 @@ from datetime import datetime
 from collections import OrderedDict
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, QuerySet
+from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey
 from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
@@ -56,7 +56,7 @@ def register_field_factory(field_class, factory):
 class BoundField(Struct):
     """
     An internal class that is used to handle the mutable data used during parsing and validation of a Field.
-    
+
     The life cycle of the data is:
         1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
         2. parsed_data/parsed_data_list: set if parsing is successful, which only happens if the previous step succeeded
@@ -64,7 +64,7 @@ class BoundField(Struct):
 
     The variables *_list should be used if the input is a list.
     """
-    
+
     def __init__(self, field, form):
         super(BoundField, self).__init__(field)
         self.form = form
@@ -83,7 +83,7 @@ class BoundField(Struct):
 
     def evaluate(self):
         """
-        Evaluates callable/lambda members. After this function is called all members will be values. 
+        Evaluates callable/lambda members. After this function is called all members will be values.
         """
         members_to_evaluate = {k: v for k, v in self.items() if k not in ('parse', 'is_valid', 'form', 'internal', 'post_validation', 'render_value')}
         for k, v in members_to_evaluate.items():
@@ -437,30 +437,35 @@ class Field(FrozenStruct):
 
 @declarative(Field, 'fields')
 class Form(object):
-    def __init__(self, data=None, instance=None, fields=None, model=None):
+    """
+    Describe a Form. Example:
+
+    .. code::python
+
+        class MyForm(Form):
+            a = Field()
+            b = Field.email()
+
+        form = MyForm(data={})
+
+    You can also create an instance of a form with this syntax if it's more convenient:
+
+    .. code::python
+
+        form = MyForm(data={}, fields=[Field(name='a'), Field.email(name='b')])
+
+    See tri.declarative docs for more on this dual style of declaration.
+    """
+    def __init__(self, request=None, data=None, instance=None, fields=None, model=None):
         """
-        Describe a Form. Example:
-
-        .. code::python
-
-            class MyForm(Form):
-                a = Field()
-                b = Field.email()
-
-            form = MyForm(data={})
-
-        You can also create an instance of a form with this syntax if it's more convenient:
-
-        .. code::python
-
-            form = MyForm(data={}, fields=[Field(name='a'), Field.email(name='b')])
-
-        See tri.declarative docs for more on this dual style of declaration.
-
         @type fields: list of Field
         @type data: dict[basestring, basestring]
         @type model: django.db.models.Model
         """
+        self.request = request
+        if data is None and request:
+            data = request.POST if request.method == 'POST' else request.GET
+
         if isinstance(fields, dict):  # Declarative case
             fields = [field + dict(name=name) for name, field in fields.items()]
         self.fields = [BoundField(field, self) for field in fields]
