@@ -40,11 +40,11 @@ def create_or_edit_object(
     }
     c.update(kwargs.get('render__context', {}))
 
-    kwargs_for_center = extract_subkeys(kwargs, 'render', {
+    kwargs_for_render = extract_subkeys(kwargs, 'render', {
         'context_instance': RequestContext(request, c),
         'template_name': kwargs['template_name'],
     })
-    return render(**kwargs_for_center)
+    return render(**kwargs_for_render)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect):

@@ -204,6 +204,10 @@ class Field(FrozenStruct):
         super(Field, self).__init__(**kwargs)
 
     @staticmethod
+    def text(**kwargs):
+        return Field(**kwargs)
+
+    @staticmethod
     def hidden(**kwargs):
         kwargs.setdefault('input_type', 'hidden')
         return Field(**kwargs)
@@ -230,6 +234,9 @@ class Field(FrozenStruct):
 
     @staticmethod
     def boolean(**kwargs):
+        """
+        Boolean field. Tries hard to parse a boolean value from its input.
+        """
         def bool_parse(string_value, **_):
             s = string_value.lower()
             if s in ('1', 'true', 't', 'yes', 'y', 'on'):
