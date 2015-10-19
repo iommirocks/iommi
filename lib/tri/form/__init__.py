@@ -24,7 +24,7 @@ except ImportError:
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 
 
 def foreign_key_factory(model_field, kwargs):
