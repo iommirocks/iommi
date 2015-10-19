@@ -95,16 +95,32 @@ class Variable(FrozenStruct):
         super(Variable, self).__init__(**kwargs)
 
     @staticmethod
+    def text(**kwargs):
+        return Variable(**kwargs)
+
+    @staticmethod
     def case_sensitive(**kwargs):
+        """
+        Case insensitive text field.
+        """
         return Variable(op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op], **kwargs)
 
     @staticmethod
     def choice(**kwargs):  # pragma: no cover
+        """
+        Field that has one value out of a set.
+        :type choices: list
+        """
+        kwargs.setdefault('form_field__choices', kwargs.get('choices'))
         kwargs.setdefault('form_field__class', tri.form.Field.choice)
         return Variable(**kwargs)
 
     @staticmethod
     def choice_queryset(**kwargs):
+        """
+        Field that has one value out of a set.
+        :type choices: django.db.models.QuerySet
+        """
         kwargs.setdefault('form_field__class', tri.form.Field.choice_queryset)
         kwargs.setdefault('form_field__choices', kwargs['choices'])
         kwargs.setdefault('form_field__model', kwargs['model'])
@@ -124,6 +140,9 @@ class Variable(FrozenStruct):
 
     @staticmethod
     def boolean(**kwargs):  # pragma: no cover
+        """
+        Boolean field. Tries hard to parse a boolean value from its input.
+        """
         kwargs.setdefault('form_field__class', tri.form.Field.boolean)
         return Variable(**kwargs)
 
@@ -143,7 +162,7 @@ class Query(object):
     .. code:: python
 
         class CarQuery(Query):
-            make = Variable.choice(choices=[(x, x) for x in ['Toyota', 'Volvo', 'Ford]])
+            make = Variable.choice(choices=['Toyota', 'Volvo', 'Ford])
             model = Variable()
 
         query_set = CarQuery().request_to_q(request)
@@ -330,7 +349,7 @@ class Query(object):
                 params['name'] = variable.name
                 fields.append(variable.form_field__class(**params))
 
-        form = tri.form.Form(request_data(request), fields=fields)
+        form = tri.form.Form(request=request, fields=fields)
         form.request = request
         form.tri_query = self
         form.tri_query_advanced_value = request_data(request).get(ADVANCED_QUERY_PARAM, '')

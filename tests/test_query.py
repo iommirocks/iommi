@@ -89,7 +89,6 @@ def test_request_to_q_freetext():
     assert repr(query.request_to_q(Struct(method='GET', GET=Data(**{FREETEXT_SEARCH_NAME: "asd"})))) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
 
-
 def test_self_reference_with_f_object():
     assert repr(query.parse('foo_name=bar_name')) == repr(Q(**{'foo__iexact': F('bar')}))
 
