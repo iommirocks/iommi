@@ -27,24 +27,25 @@ except ImportError:
 __version__ = '1.0.3'
 
 
-def foreign_key_factory(model_field, kwargs):
+def foreign_key_factory(model_field, **kwargs):
     kwargs.setdefault('choices', model_field.related_field.model.objects.all())
-    return Field.choice_queryset(model=model_field.related_field.model, **kwargs)
+    kwargs.setdefault('model', model_field.related_field.model)
+    return Field.choice_queryset(**kwargs)
 
 # The order here is significant because of inheritance structure. More specific must be below less specific.
 _field_factory_by_django_field_type = OrderedDict([
-    (CharField, lambda model_field, kwargs: Field(**kwargs)),
-    (URLField, lambda model_field, kwargs: Field.url(**kwargs)),
-    (TimeField, lambda model_field, kwargs: Field.time(**kwargs)),
-    (EmailField, lambda model_field, kwargs: Field.email(**kwargs)),
-    (DecimalField, lambda model_field, kwargs: Field.decimal(**kwargs)),
-    (DateField, lambda model_field, kwargs: Field.date(**kwargs)),
-    (DateTimeField, lambda model_field, kwargs: Field.datetime(**kwargs)),
-    (CommaSeparatedIntegerField, lambda model_field, kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs))),
-    (BooleanField, lambda model_field, kwargs: Field.boolean(**kwargs)),
-    (TextField, lambda model_field, kwargs: Field.text(**kwargs)),
-    (FloatField, lambda model_field, kwargs: Field.float(**kwargs)),
-    (IntegerField, lambda model_field, kwargs: Field.integer(**kwargs)),
+    (CharField, lambda model_field, **kwargs: Field(**kwargs)),
+    (URLField, lambda model_field, **kwargs: Field.url(**kwargs)),
+    (TimeField, lambda model_field, **kwargs: Field.time(**kwargs)),
+    (EmailField, lambda model_field, **kwargs: Field.email(**kwargs)),
+    (DecimalField, lambda model_field, **kwargs: Field.decimal(**kwargs)),
+    (DateField, lambda model_field, **kwargs: Field.date(**kwargs)),
+    (DateTimeField, lambda model_field, **kwargs: Field.datetime(**kwargs)),
+    (CommaSeparatedIntegerField, lambda model_field, **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs))),
+    (BooleanField, lambda model_field, **kwargs: Field.boolean(**kwargs)),
+    (TextField, lambda model_field, **kwargs: Field.text(**kwargs)),
+    (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
+    (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
     (ForeignKey, foreign_key_factory),
 ])
 
@@ -172,7 +173,7 @@ class Field(FrozenStruct):
         :parma is_list: interpret request data as a list (can NOT be a callable). Default False
         """
         kwargs.setdefault('internal', Struct())
-        if 'name' in kwargs:
+        if kwargs.get('name'):
             name = kwargs['name']
             kwargs.setdefault('attr', name)
             kwargs.setdefault('id', 'id_%s' % name)
@@ -193,10 +194,11 @@ class Field(FrozenStruct):
         kwargs.setdefault('post_validation', lambda form, field: None)
         kwargs.setdefault('render_value', lambda form, field, value: unicode(value))
         kwargs.setdefault('is_list', False)
+        kwargs.setdefault('model', None)
 
         # grab help_text from model if applicable
         # noinspection PyProtectedMember
-        kwargs.setdefault('help_text', lambda form, field: '' if form.model is None else form.model._meta.get_field_by_name(field.name)[0].help_text or '')
+        kwargs.setdefault('help_text', lambda form, field: '' if field.model is None else field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or '')
 
         kwargs.setdefault('editable', True)
         kwargs.setdefault('strip_input', True)
@@ -387,6 +389,8 @@ class Field(FrozenStruct):
             # noinspection PyProtectedMember
             model_field = model._meta.get_field(field_name)
 
+        kwargs.setdefault('name', field_name)
+
         factory = _field_factory_by_django_field_type.get(type(model_field))
 
         if factory is None:
@@ -395,7 +399,19 @@ class Field(FrozenStruct):
                     factory = func
                     break
         assert factory is not None
-        return factory(model_field=model_field, kwargs=kwargs)
+        return factory(model_field=model_field, model=should_not_evaluate(model), **kwargs)
+
+    @staticmethod
+    def from_model_expand(model, field_name=None, model_field=None, **kwargs):
+        if model_field is None:
+            # noinspection PyProtectedMember
+            model_field = model._meta.get_field(field_name)
+        assert isinstance(model_field, ForeignKey)
+        # noinspection PyProtectedMember
+        return [Field(**{k: '%s__%s' % (model_field.name, v) if k == 'name' else v
+                         for k, v in x.items()})
+                for x in Form.fields_from_model(model=model_field.related_field.model, **kwargs)]
+
 
     @staticmethod
     def comma_separated(parent_field):
@@ -507,6 +523,28 @@ class Form(object):
         self.validate()
 
     @staticmethod
+    def fields_from_model(model, include=None, exclude=None, **kwargs):
+        def should_include(name):
+            if exclude is not None and name in exclude:
+                return False
+            if include is not None:
+                return name in include
+            return True
+
+        fields = []
+        # noinspection PyProtectedMember
+        for field, _ in model._meta.get_fields_with_model():
+            if should_include(field.name) and not isinstance(field, AutoField):
+                subkeys = extract_subkeys(kwargs, field.name)
+                foo = subkeys.get('class', Field.from_model)(name=field.name, model=model, model_field=field, **subkeys)
+                if isinstance(foo, list):
+                    fields.extend(foo)
+                else:
+                    fields.append(foo)
+        return fields
+
+
+    @staticmethod
     def from_model(data, model, instance=None, include=None, exclude=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
@@ -523,19 +561,7 @@ class Form(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-
-        def should_include(name):
-            if exclude is not None and name in exclude:
-                return False
-            if include is not None:
-                return name in include
-            return True
-
-        # noinspection PyProtectedMember
-        fields = [Field.from_model(name=field.name, model=model, model_field=field, **extract_subkeys(kwargs, field.name))
-                  for field, _ in model._meta.get_fields_with_model()
-                  if should_include(field.name) and not isinstance(field, AutoField)]
-        return Form(data=data, model=model, instance=instance, fields=fields)
+        return Form(data=data, model=model, instance=instance, fields=Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs))
 
     def is_valid(self):
         if self._valid is None:

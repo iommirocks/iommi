@@ -305,7 +305,7 @@ def test_multi_choice():
 
 
 def test_help_text_from_model():
-    assert Form(data=Data(foo='1'), fields=[Field(name='foo')], model=Foo).validate().fields[0].help_text == 'foo_help_text'
+    assert Form(data=Data(foo='1'), fields=[Field.from_model(model=Foo, field_name='foo')], model=Foo).validate().fields[0].help_text == 'foo_help_text'
 
 
 @pytest.mark.django_db
@@ -357,8 +357,13 @@ def test_field_from_model_supports_all_types():
 
 
 def test_field_from_model_foreign_key():
-    assert isinstance(Field.from_model(FieldFromModelForeignKeyTest, 'foo').choices, QuerySet)
+    assert isinstance(Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk').choices, QuerySet)
 
+
+def test_field_from_model_foreign_key2():
+    assert Form.from_model(data={},
+                           model=FieldFromModelForeignKeyTest,
+                           foo_fk__class=Field.from_model_expand).fields_by_name.keys() == ['foo_fk__foo']
 
 def test_register_field_factory():
     register_field_factory(FooField, lambda **kwargs: 7)

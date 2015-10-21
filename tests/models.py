@@ -32,7 +32,7 @@ class Foo(Model):
 
 
 class FieldFromModelForeignKeyTest(Model):
-    foo = ForeignKey(Foo)
+    foo_fk = ForeignKey(Foo)
 
 
 class FooField(IntegerField):
