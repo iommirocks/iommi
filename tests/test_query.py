@@ -15,8 +15,8 @@ class Data(Struct):
 
 
 class TestQuery(Query):
-    foo_name = Variable(attr='foo', freetext=True, form_field__show=True)
-    bar_name = Variable.case_sensitive(attr='bar', freetext=True, form_field__show=True)
+    foo_name = Variable(attr='foo', freetext=True, gui__show=True)
+    bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui=True)  # short form for gui__show
     baz_name = Variable(attr='baz')
 
 query = TestQuery()
@@ -79,7 +79,7 @@ def test_request_to_q_advanced():
 
 
 def test_request_to_q_simple():
-    query2 = Query(variables=query.variables + [Variable.boolean(name='bazaar', attr='quux__bar__bazaar', form_field__show=True)])
+    query2 = Query(variables=query.variables + [Variable.boolean(name='bazaar', attr='quux__bar__bazaar', gui__show=True)])
     # noinspection PyTypeChecker
     assert repr(query2.request_to_q(Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'})))) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
 

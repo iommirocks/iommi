@@ -12,7 +12,7 @@ import tri.form
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 
 class QueryException(Exception):
@@ -63,17 +63,17 @@ class Variable(FrozenStruct):
     """
     def __init__(self, **kwargs):
         """
-        Parameters with the prefix "form_field__" will be passed along downstream to the tri.form.Field instance if applicable. This can be used to tweak the basic style interface.
+        Parameters with the prefix "gui__" will be passed along downstream to the tri.form.Field instance if applicable. This can be used to tweak the basic style interface.
 
-        :param form_field__show: set to True to display a GUI element for this variable in the basic style interface.
-        :param form_field__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
+        :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
+        :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
         if 'name' in kwargs:
             name = kwargs['name']
             kwargs.setdefault('attr', name)
-        kwargs.setdefault('form_field__show')
-        kwargs.setdefault('form_field__class', tri.form.Field)
-        kwargs.setdefault('form_field__required', False)
+        kwargs.setdefault('gui__show', kwargs.get('gui'))
+        kwargs.setdefault('gui__class', tri.form.Field)
+        kwargs.setdefault('gui__required', False)
         kwargs.setdefault('op_to_q_op', lambda op: Q_OP_BY_OP[op])
 
         def default_value_to_q(variable, op, value_string_or_f):
@@ -111,8 +111,9 @@ class Variable(FrozenStruct):
         Field that has one value out of a set.
         :type choices: list
         """
-        kwargs.setdefault('form_field__choices', kwargs.get('choices'))
-        kwargs.setdefault('form_field__class', tri.form.Field.choice)
+        kwargs.setdefault('gui__choices', kwargs.get('choices'))
+        kwargs.setdefault('gui__class', tri.form.Field.choice)
+        kwargs.setdefault('gui__class', tri.form.Field.choice)
         return Variable(**kwargs)
 
     @staticmethod
@@ -121,9 +122,12 @@ class Variable(FrozenStruct):
         Field that has one value out of a set.
         :type choices: django.db.models.QuerySet
         """
-        kwargs.setdefault('form_field__class', tri.form.Field.choice_queryset)
-        kwargs.setdefault('form_field__choices', kwargs['choices'])
-        kwargs.setdefault('form_field__model', kwargs['model'])
+        kwargs.setdefault('gui__class', tri.form.Field.choice_queryset)
+        kwargs.setdefault('gui__choices', kwargs['choices'])
+        kwargs.setdefault('gui__model', kwargs['model'])
+        kwargs.setdefault('gui__class', tri.form.Field.choice_queryset)
+        kwargs.setdefault('gui__choices', kwargs['choices'])
+        kwargs.setdefault('gui__model', kwargs['model'])
         kwargs.setdefault('op_to_q_op', lambda op: 'exact')
 
         def choice_queryset_value_to_q(variable, op, value_string_or_f):
@@ -143,7 +147,7 @@ class Variable(FrozenStruct):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
-        kwargs.setdefault('form_field__class', tri.form.Field.boolean)
+        kwargs.setdefault('gui__class', tri.form.Field.boolean)
         return Variable(**kwargs)
 
 
@@ -343,11 +347,11 @@ class Query(object):
             fields.append(tri.form.Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
 
         for variable in self.variables:
-            if variable.form_field__show is not None:
-                # pass form_field__* parameters to the GUI component
-                params = {k[len('form_field__'):]: v for k, v in variable.items() if k.startswith('form_field__') and k != 'form_field__class'}
+            if variable.gui__show is not None:
+                # pass gui__* parameters to the GUI component
+                params = {k[len('gui__'):]: v for k, v in variable.items() if k.startswith('gui__') and k != 'gui__class'}
                 params['name'] = variable.name
-                fields.append(variable.form_field__class(**params))
+                fields.append(variable.gui__class(**params))
 
         form = tri.form.Form(request=request, fields=fields)
         form.request = request
