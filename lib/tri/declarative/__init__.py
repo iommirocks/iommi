@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.10.0'
+__version__ = '0.11.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -307,3 +307,35 @@ def setattr_path(obj, path, value):
         o = getattr(o, name)
     setattr(o, path[-1], value)
     return obj
+
+
+LAST = object()
+
+def sort_after(l):
+    to_be_moved_by_index = []
+    to_be_moved_by_name = []
+    to_be_moved_last = []
+    result = []
+    for x in l:
+        after = getattr(x, 'after', None)
+        if after is None:
+            result.append(x)
+        elif after is LAST:
+            to_be_moved_last.append(x)
+        elif type(after) == int:
+            to_be_moved_by_index.append(x)
+        else:
+            to_be_moved_by_name.append(x)
+
+    for x in reversed(to_be_moved_by_name):
+        for i, y in enumerate(result):
+            if y.name == x.after:
+                result.insert(i+1, x)
+                break
+
+    for x in reversed(to_be_moved_by_index):
+        result.insert(x.after, x)
+
+    result.extend(to_be_moved_last)
+
+    return result
