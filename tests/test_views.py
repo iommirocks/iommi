@@ -4,17 +4,17 @@ import pytest
 from tests.models import CreateOrEditObjectTest, get_saved_something
 from tri.struct import Struct
 
-from tri.form.views import create_or_edit_object
+from tri.form.views import create_or_edit_object, create_object, edit_object
+
 
 @pytest.mark.django_db
 def test_create_or_edit_object():
     # 1. View create form
     request = Struct(method='GET', META={}, user=Struct(is_authenticated=lambda: True))
 
-    response = create_or_edit_object(
+    response = create_object(
         request=request,
         model=CreateOrEditObjectTest,
-        is_create=True,
         form__f_int__initial=1,
         form__f_float__initial=lambda **kwargs: 2,
         render=lambda **kwargs: kwargs)
@@ -32,10 +32,9 @@ def test_create_or_edit_object():
         'f_float': '5.1',
         'f_bool': 'True',
     }
-    create_or_edit_object(
+    create_object(
         request=request,
         model=CreateOrEditObjectTest,
-        is_create=True,
         render=lambda **kwargs: kwargs)
     assert get_saved_something() is not None
     assert get_saved_something().f_int == 3
@@ -45,11 +44,9 @@ def test_create_or_edit_object():
     # 3. View edit form
     request.method = 'GET'
     del request.POST
-    response = create_or_edit_object(
+    response = edit_object(
         request=request,
-        model=CreateOrEditObjectTest,
         instance=get_saved_something(),
-        is_create=False,
         render=lambda **kwargs: kwargs)
     form = response['context_instance']['form']
     assert form.fields_by_name['f_int'].value == 3
@@ -63,10 +60,9 @@ def test_create_or_edit_object():
         'f_float': '11.2',
         # Not sending a parameter in a POST is the same thing as false
     }
-    create_or_edit_object(
+    edit_object(
         request=request,
-        model=CreateOrEditObjectTest,
-        is_create=True,
+        instance=get_saved_something(),
         render=lambda **kwargs: kwargs)
     assert get_saved_something() is not None
     assert get_saved_something().f_int == 7

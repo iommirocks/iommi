@@ -39,7 +39,7 @@ class TestForm(Form):
 def test_parse():
     # The spaces in the data are there to check that we strip input
     form = TestForm(
-        data=Data(
+        request=Struct(method='POST', POST=Data(
             party='ABC ',
             username='abc_foo ',
             joined=' 2014-12-12 01:02:03  ',
@@ -48,7 +48,7 @@ def test_parse():
             manages=['DEF  ', 'KTH '],
             a_date='  2014-02-12  ',
             a_time='  01:02:03  ',
-        ))
+        )))
 
     form.validate()
     assert [x.errors for x in form.fields] == [set() for _ in form.fields]

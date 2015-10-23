@@ -4,6 +4,46 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from tri.form import Form, extract_subkeys
 
+def edit_object(
+        request,
+        instance,
+        redirect_to=None,
+        on_save=lambda kwargs: None,
+        render=render_to_string,
+        redirect=lambda request, redirect_to: HttpResponseRedirect(redirect_to),
+        **kwargs):
+    assert 'is_create' not in kwargs
+    assert 'model' not in kwargs
+    model = instance.__class__
+    return create_or_edit_object(
+        request,
+        model,
+        is_create=False,
+        instance=instance,
+        redirect_to=redirect_to,
+        on_save=on_save,
+        render=render,
+        redirect=redirect,
+        **kwargs)
+
+def create_object(
+        request,
+        model,
+        redirect_to=None,
+        on_save=lambda kwargs: None,
+        render=render_to_string,
+        redirect=lambda request, redirect_to: HttpResponseRedirect(redirect_to),
+        **kwargs):
+    assert 'is_create' not in kwargs
+    return create_or_edit_object(
+        request,
+        model,
+        is_create=True,
+        redirect_to=redirect_to,
+        on_save=on_save,
+        render=render,
+        redirect=redirect,
+        **kwargs)
 
 def create_or_edit_object(
         request,
@@ -24,7 +64,8 @@ def create_or_edit_object(
     model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
 
     if request.method == 'POST' and form.is_valid():
-        if is_create and instance is None:
+        if is_create:
+            assert instance is None
             instance = model()
         form.apply(instance)
         instance.save()

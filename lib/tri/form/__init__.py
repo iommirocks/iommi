@@ -14,7 +14,7 @@ from tri.declarative import evaluate, should_show, should_not_evaluate, should_e
 
 try:
     from django.template.loader import get_template_from_string
-except ImportError:
+except ImportError:  # pragma: no cover
     # Django 1.8+
     # noinspection PyUnresolvedReferences
     from django.template import engines
@@ -24,7 +24,7 @@ except ImportError:
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 
 def foreign_key_factory(model_field, **kwargs):
@@ -206,7 +206,7 @@ class Field(FrozenStruct):
         super(Field, self).__init__(**kwargs)
 
     @staticmethod
-    def text(**kwargs):
+    def text(**kwargs):  # pragma: no cover
         return Field(**kwargs)
 
     @staticmethod
@@ -403,7 +403,7 @@ class Field(FrozenStruct):
 
     @staticmethod
     def from_model_expand(model, field_name=None, model_field=None, **kwargs):
-        if model_field is None:
+        if model_field is None:  # pragma: no cover
             # noinspection PyProtectedMember
             model_field = model._meta.get_field(field_name)
         assert isinstance(model_field, OneToOneField)
