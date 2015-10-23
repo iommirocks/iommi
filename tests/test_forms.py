@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
-from tests.models import Foo, FieldFromModelForeignKeyTest, FormFromModelTest, FooField, RegisterFieldFactoryTest
+from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest
 from tri.form import getattr_path, setattr_path, BoundField
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
@@ -356,14 +356,21 @@ def test_field_from_model_supports_all_types():
     assert not_supported == []
 
 
+@pytest.mark.django_db
 def test_field_from_model_foreign_key():
-    assert isinstance(Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk').choices, QuerySet)
+    Foo.objects.create(foo=2)
+    Foo.objects.create(foo=3)
+    Foo.objects.create(foo=5)
+    choices = Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk').choices
+    assert isinstance(choices, QuerySet)
+    assert set(choices) == set(Foo.objects.all())
 
 
+@pytest.mark.django_db
 def test_field_from_model_foreign_key2():
     assert Form.from_model(data={},
-                           model=FieldFromModelForeignKeyTest,
-                           foo_fk__class=Field.from_model_expand).fields_by_name.keys() == ['foo_fk__foo']
+                           model=FieldFromModelOneToOneTest,
+                           foo_one_to_one__class=Field.from_model_expand).fields_by_name.keys() == ['foo_one_to_one__foo']
 
 def test_register_field_factory():
     register_field_factory(FooField, lambda **kwargs: 7)

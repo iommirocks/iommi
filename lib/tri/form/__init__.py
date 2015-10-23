@@ -5,7 +5,7 @@ from datetime import datetime
 from collections import OrderedDict
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey
+from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField
 from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
@@ -406,7 +406,7 @@ class Field(FrozenStruct):
         if model_field is None:
             # noinspection PyProtectedMember
             model_field = model._meta.get_field(field_name)
-        assert isinstance(model_field, ForeignKey)
+        assert isinstance(model_field, OneToOneField)
         # noinspection PyProtectedMember
         return [Field(**{k: '%s__%s' % (model_field.name, v) if k == 'name' else v
                          for k, v in x.items()})
