@@ -12,7 +12,7 @@ import tri.form
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 
 class QueryException(Exception):
@@ -95,7 +95,7 @@ class Variable(FrozenStruct):
         super(Variable, self).__init__(**kwargs)
 
     @staticmethod
-    def text(**kwargs):
+    def text(**kwargs):  # pragma: no cover
         return Variable(**kwargs)
 
     @staticmethod
@@ -113,7 +113,6 @@ class Variable(FrozenStruct):
         """
         kwargs.setdefault('gui__choices', kwargs.get('choices'))
         kwargs.setdefault('gui__class', tri.form.Field.choice)
-        kwargs.setdefault('gui__class', tri.form.Field.choice)
         return Variable(**kwargs)
 
     @staticmethod
@@ -125,16 +124,13 @@ class Variable(FrozenStruct):
         kwargs.setdefault('gui__class', tri.form.Field.choice_queryset)
         kwargs.setdefault('gui__choices', kwargs['choices'])
         kwargs.setdefault('gui__model', kwargs['model'])
-        kwargs.setdefault('gui__class', tri.form.Field.choice_queryset)
-        kwargs.setdefault('gui__choices', kwargs['choices'])
-        kwargs.setdefault('gui__model', kwargs['model'])
         kwargs.setdefault('op_to_q_op', lambda op: 'exact')
 
         def choice_queryset_value_to_q(variable, op, value_string_or_f):
             assert op == '='
             try:
                 instance = variable.model.objects.get(**{variable.value_to_q_lookup: value_string_or_f})
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist:  # pragma: no cover
                 return None
             return Q(**{variable.attr + '__pk': instance.pk})
 
@@ -148,6 +144,14 @@ class Variable(FrozenStruct):
         Boolean field. Tries hard to parse a boolean value from its input.
         """
         kwargs.setdefault('gui__class', tri.form.Field.boolean)
+        return Variable(**kwargs)
+
+    @staticmethod
+    def integer(**kwargs):  # pragma: no cover
+        """
+        Boolean field. Tries hard to parse a boolean value from its input.
+        """
+        kwargs.setdefault('gui__class', tri.form.Field.integer)
         return Variable(**kwargs)
 
 
@@ -252,7 +256,7 @@ class Query(object):
                     if p1 <= p2:
                         stack.pop()
                         result_q.append(t2)
-                    else:
+                    else:  # pragma: no cover
                         break
                 stack.append((token, PRECEDENCE[token]))
         while stack:
