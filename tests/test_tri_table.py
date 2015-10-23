@@ -579,8 +579,8 @@ def test_bulk_edit():
     Foo(a=4, b="").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, bulk_field=True)  # turn off sorting to not get the link with random query params
-        b = Column(bulk_field=True)
+        a = Column.number(sortable=False, bulk=True)  # turn off sorting to not get the link with random query params
+        b = Column(bulk=True)
 
     result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(Foo.objects.all()))
     assert '<form method="post" action=".">' in result
@@ -597,7 +597,7 @@ def test_bulk_edit():
 
 
 @pytest.mark.django_db
-def test_query_variable():
+def test_query():
     assert Foo.objects.all().count() == 0
 
     Foo(a=1, b="foo").save()
@@ -606,8 +606,8 @@ def test_query_variable():
     Foo(a=4, b="bar").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, query_variable=True, query_variable__form_field__show=True)  # turn off sorting to not get the link with random query params
-        b = Column(query_variable=True, query_variable__form_field__show=True)
+        a = Column.number(sortable=False, query=True, query__gui=True)  # turn off sorting to not get the link with random query params
+        b = Column(query=True, query__gui=True)
 
         class Meta:
             sortable = False

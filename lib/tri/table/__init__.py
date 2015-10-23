@@ -165,7 +165,7 @@ class Column(Struct):
                   ).items()
                   if v is not None}
 
-        def bulk_field(column):
+        def bulk(column):
             defaults = {
                 'class': Field.from_model,
                 'model': column.table.Meta.model,
@@ -177,18 +177,20 @@ class Column(Struct):
             bulk_field_kwargs = extract_subkeys(kwargs, 'bulk_field', defaults=defaults)
             return bulk_field_kwargs.pop('class')(**bulk_field_kwargs)
 
-        kwargs['bulk_field'] = bulk_field if kwargs.get('bulk_field') else None
+        kwargs.setdefault('bulk__show', kwargs.get('bulk'))
+        kwargs.setdefault('bulk__class_internal', bulk)
 
-        def query_variable(column):
+        def query(column):
             defaults = {
                 'class': Variable,
                 'name': column.name,
                 'model': column.table.Meta.model,
             }
-            query_variable_kwargs = extract_subkeys(kwargs, 'query_variable', defaults=defaults)
-            return query_variable_kwargs.pop('class')(**query_variable_kwargs)
+            query_kwargs = extract_subkeys(kwargs, 'query', defaults=defaults)
+            return query_kwargs.pop('class')(**query_kwargs)
 
-        kwargs['query_variable'] = query_variable if kwargs.get('query_variable') else None
+        kwargs.setdefault('query__show', kwargs.get('query'))
+        kwargs.setdefault('query__class_internal', query)
 
         values.update(kwargs)
 
@@ -347,8 +349,10 @@ class Column(Struct):
     @staticmethod
     def choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
-            bulk_field__class=Field.choice_queryset,
-            query_variable__class=Variable.choice_queryset,
+            bulk__class=Field.choice_queryset,
+            bulk__model=kwargs.get('model'),
+            query__class=Variable.choice_queryset,
+            query__model=kwargs.get('model'),
         ))
         return Column.choice(**kwargs)
 
@@ -356,10 +360,10 @@ class Column(Struct):
     def choice(**kwargs):
         choices = kwargs['choices']
         setdefaults(kwargs, dict(
-            bulk_field__class=Field.choice,
-            bulk_field__choices=choices,
-            query_variable__class=Variable.choice,
-            query_variable__choices=choices,
+            bulk__class=Field.choice,
+            bulk__choices=choices,
+            query__class=Variable.choice,
+            query__choices=choices,
         ))
         return Column(**kwargs)
 
@@ -644,7 +648,7 @@ def render_table(request,
     if not context:
         context = {}
 
-    query = Query(variables=[evaluate_recursive(column.query_variable, column=column) for column in table.columns if column.query_variable])
+    query = Query(variables=[evaluate_recursive(column.query__class_internal, column=column) for column in table.columns if column.query__show])
     query_form = query.form(request) if query.variables else None
     context['filter_form'] = query_form
 
@@ -653,7 +657,7 @@ def render_table(request,
 
     table.request = request
 
-    bulk_fields = [evaluate_recursive(column.bulk_field, column=column) for column in table.columns if column.bulk_field]
+    bulk_fields = [evaluate_recursive(column.bulk__class_internal, column=column) for column in table.columns if column.bulk__show]
     bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
     context['bulk_form'] = bulk_form
 

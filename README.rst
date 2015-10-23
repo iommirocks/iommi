@@ -82,8 +82,13 @@ Now I can display a list of Bars in a table like this:
 
         class BarTable(Table):
             select = Column.select()  # Shortcut for creating checkboxes to select rows
-            b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-            c = Column(bulk_field=True)  # The form is created automatically
+            b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
+                query=True,  # put this field into the query language
+                query__gui=True)  # put this field into the simple filtering GUI
+            c = Column(
+                bulk=True,  # Enable bulk editing for this field
+                query=True,
+                query__gui=True)
 
         return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
 

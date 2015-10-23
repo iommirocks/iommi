@@ -53,8 +53,13 @@ def readme_example_2(request):
 
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
-        b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-        c = Column(bulk_field=True)  # The form is created automatically
+        b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
+            query=True,  # put this field into the query language
+            query__gui=True)  # put this field into the simple filtering GUI
+        c = Column(
+            bulk=True,  # Enable bulk editing for this field
+            query=True,
+            query__gui=True)
 
     return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
 
@@ -68,12 +73,12 @@ def kitchen_sink(request):
         b = Column.choice_queryset(
             show=False,
             choices=Foo.objects.all()[:10],
-            model=Foo,
-            bulk_field=True,
-            query_variable=True,
-            query_variable__form_field__show=True,
+            model=Bar,
+            bulk=True,
+            query=True,
+            query__gui=True,
         )
-        c = Column(bulk_field=True)  # The form is created automatically
+        c = Column(bulk=True)  # The form is created automatically
 
         d = Column(display_name='Display name',
                    css_class='css_class',
@@ -81,7 +86,6 @@ def kitchen_sink(request):
                    title='title',
                    sortable=False,
                    group='Foo',
-                   filter=False,
                    auto_rowspan=True,
                    cell_value=lambda row: row.b.a // 3,
                    cell_format=lambda value: '- %s -' % value,
@@ -90,10 +94,10 @@ def kitchen_sink(request):
                        'title': 'cell title'},
                    cell_url='url',
                    cell_url_title='cell url title')
-        e = Column(group='Foo', cell_value='explicit value', filter=False, sortable=False)
-        f = Column(show=False, filter=False, sortable=False)
-        g = Column(attr='c', filter=False, sortable=False)
-        django_templates_for_cells = Column(filter=False, sortable=False, cell_template='kitchen_sink_cell_template.html')
+        e = Column(group='Foo', cell_value='explicit value', sortable=False)
+        f = Column(show=False, sortable=False)
+        g = Column(attr='c', sortable=False)
+        django_templates_for_cells = Column(sortable=False, cell_template='kitchen_sink_cell_template.html')
 
         class Meta:
             model = Bar
