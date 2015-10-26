@@ -634,16 +634,16 @@ class Link(Struct):
         return Link(mark_safe('<i class="fa fa-%s"></i> %s' % (icon, title)), **kwargs)
 
 
-def object_list_context(request,
-                        table,
-                        links=None,
-                        paginate_by=None,
-                        page=None,
-                        extra_context=None,
-                        context_processors=None,
-                        paginator=None,
-                        show_hits=False,
-                        hit_label='Items'):
+def table_context(request,
+                  table,
+                  links=None,
+                  paginate_by=None,
+                  page=None,
+                  extra_context=None,
+                  context_processors=None,
+                  paginator=None,
+                  show_hits=False,
+                  hit_label='Items'):
     """
     :type table: Table
     """
@@ -776,16 +776,16 @@ def render_table(request,
 
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-    context = object_list_context(request,
-                                  table=table,
-                                  links=links,
-                                  paginate_by=paginate_by,
-                                  page=page,
-                                  extra_context=context,
-                                  context_processors=context_processors,
-                                  paginator=paginator,
-                                  show_hits=show_hits,
-                                  hit_label=hit_label)
+    context = table_context(request,
+                            table=table,
+                            links=links,
+                            paginate_by=paginate_by,
+                            page=page,
+                            extra_context=context,
+                            context_processors=context_processors,
+                            paginator=paginator,
+                            show_hits=show_hits,
+                            hit_label=hit_label)
 
     if not table.data and blank_on_empty:  # pragma: no cover
         return ''
