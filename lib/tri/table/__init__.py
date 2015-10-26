@@ -475,6 +475,8 @@ class Table(object):
         """
         assert columns is not None, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
+        self._has_prepared = False
+
         self.data = data
         self.request = request
 
@@ -500,9 +502,30 @@ class Table(object):
 
         self.header_levels = None
 
-    # noinspection PyProtectedMember
-    def prepare(self):
-        # evaluate members
+    def _prepare_auto_rowspan(self):
+        auto_rowspan_columns = [column for column in self.columns if column.auto_rowspan]
+
+        if auto_rowspan_columns:
+            self.data = list(self.data)
+            no_value_set = object()
+            for column in auto_rowspan_columns:
+                rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
+                prev_value = no_value_set
+                prev_row = no_value_set
+                for bound_row in self.bound_rows():
+                    value = column.cell_contents(bound_row=bound_row, column=column)
+                    if prev_value != value:
+                        rowspan_by_row[id(bound_row.row)] = 1
+                        prev_value = value
+                        prev_row = bound_row.row
+                    else:
+                        rowspan_by_row[id(prev_row)] += 1
+
+                column.cell__attrs['rowspan'] = set_row_span(rowspan_by_row)
+                assert 'style' not in column.cell__attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
+                column.cell__attrs['style'] = set_display_none(rowspan_by_row)
+
+    def _prepare_evaluate_members(self):
         for column in self.columns:
             column.evaluate()
 
@@ -516,6 +539,7 @@ class Table(object):
             for column in self.columns:
                 column.sortable = False
 
+    def _prepare_sorting(self):
         # sorting
         order = self.request.GET.get('order', None)
         if order is not None:
@@ -536,7 +560,7 @@ class Table(object):
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.data = self.data.order_by(*order_args)
 
-        # headers
+    def _prepare_headers(self):
         headers = prepare_headers(self.request, self.columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
@@ -571,7 +595,18 @@ class Table(object):
             header_groups = []
 
         self.header_levels = [header_groups, headers] if len(header_groups) > 1 else [headers]
+        return headers
 
+    # noinspection PyProtectedMember
+    def prepare(self):
+        if self._has_prepared:
+            return
+        self._has_prepared = True
+
+        self._prepare_evaluate_members()
+        self._prepare_sorting()
+        headers = self._prepare_headers()
+        self._prepare_auto_rowspan()
         return headers, self.header_levels
 
     def bound_rows(self):
@@ -675,27 +710,6 @@ def object_list_context(request,
     else:  # pragma: no cover
         base_context.update({
             'is_paginated': False})
-    auto_rowspan_columns = [column for column in table.columns if column.auto_rowspan]
-
-    if auto_rowspan_columns:
-        table.data = list(table.data)
-        no_value_set = object()
-        for column in auto_rowspan_columns:
-            rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
-            prev_value = no_value_set
-            prev_row = no_value_set
-            for bound_row in table.bound_rows():
-                value = column.cell_contents(bound_row=bound_row, column=column)
-                if prev_value != value:
-                    rowspan_by_row[id(bound_row.row)] = 1
-                    prev_value = value
-                    prev_row = bound_row.row
-                else:
-                    rowspan_by_row[id(prev_row)] += 1
-
-            column.cell__attrs['rowspan'] = set_row_span(rowspan_by_row)
-            assert 'style' not in column.cell__attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
-            column.cell__attrs['style'] = set_display_none(rowspan_by_row)
 
     base_context.update(extra_context)
     return RequestContext(request, base_context, context_processors)

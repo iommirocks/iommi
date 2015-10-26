@@ -765,7 +765,7 @@ def test_cell_lambda():
         </table>""")
 
 
-def test_auto_rowspan():
+def test_auto_rowspan_and_render_twice():
     class TestTable(NoSortTable):
         foo = Column(auto_rowspan=True)
 
@@ -776,7 +776,7 @@ def test_auto_rowspan():
         Struct(foo=2),
     ]
 
-    verify_table_html(TestTable(data=data), """
+    expected = """
         <table class="listview">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
@@ -795,7 +795,12 @@ def test_auto_rowspan():
                     <td style="display: none"> 2 </td>
                 </tr>
             </tbody>
-        </table>""")
+        </table>"""
+
+
+    t = TestTable(data=data)
+    verify_table_html(t, expected)
+    verify_table_html(t, expected)
 
 
 def test_render_table_to_response():
