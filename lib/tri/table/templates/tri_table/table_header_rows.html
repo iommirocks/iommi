@@ -3,7 +3,7 @@
         <tr>
             {% for header in headers %}
                 {% spaceless %}
-                    <th{% if header.title %} title="{{ header.title }}"{% endif %}{% if header.colspan %} colspan="{{ header.colspan }}"{% endif %} class="{{ header.css_class }}">
+                    <th{% if header.title %} title="{{ header.title }}"{% endif %}{% if header.colspan %} colspan="{{ header.colspan }}"{% endif %} class="{{ header.render_css_class }}">
                         {% if header.url %}
                             <a href="{{ header.url }}">
                         {% endif %}

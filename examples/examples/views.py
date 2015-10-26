@@ -33,8 +33,8 @@ def readme_example_1(request):
     class FooTable(Table):
         a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
         b = Column()
-        c = Column(cell_format=lambda value: value[-1])  # Display the last value of the tuple
-        sum_c = Column(cell_value=lambda row: sum(row.c), sortable=False)  # Calculate a value not present in Foo
+        c = Column(cell__format=lambda table, column, row, value: value[-1])  # Display the last value of the tuple
+        sum_c = Column(cell__value=lambda table, column, row: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
     # now to get an HTML table:
     return render_table_to_response(request, FooTable(data=foos), template_name='base.html')
@@ -73,7 +73,7 @@ def kitchen_sink(request):
         b = Column.choice_queryset(
             show=False,
             choices=Foo.objects.all()[:10],
-            model=Bar,
+            model=Foo,
             bulk=True,
             query=True,
             query__gui=True,
@@ -81,23 +81,23 @@ def kitchen_sink(request):
         c = Column(bulk=True)  # The form is created automatically
 
         d = Column(display_name='Display name',
-                   css_class='css_class',
+                   css_class={'css_class'},
                    url='url',
                    title='title',
                    sortable=False,
                    group='Foo',
                    auto_rowspan=True,
-                   cell_value=lambda row: row.b.a // 3,
-                   cell_format=lambda value: '- %s -' % value,
-                   cell_attrs={
-                       'class': lambda row: 'cj',
+                   cell__value=lambda table, column, row: row.b.a // 3,
+                   cell__format=lambda table, column, row, value: '- %s -' % value,
+                   cell__attrs={
+                       'class': lambda table, column, row: 'cj',
                        'title': 'cell title'},
-                   cell_url='url',
-                   cell_url_title='cell url title')
-        e = Column(group='Foo', cell_value='explicit value', sortable=False)
+                   cell__url='url',
+                   cell__url_title='cell url title')
+        e = Column(group='Foo', cell__value='explicit value', sortable=False)
         f = Column(show=False, sortable=False)
         g = Column(attr='c', sortable=False)
-        django_templates_for_cells = Column(sortable=False, cell_template='kitchen_sink_cell_template.html')
+        django_templates_for_cells = Column(sortable=False, cell__value=None, cell__template='kitchen_sink_cell_template.html')
 
         class Meta:
             model = Bar

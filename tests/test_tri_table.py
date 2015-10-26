@@ -8,7 +8,7 @@ from django.test import RequestFactory
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
 
-from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response
+from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, render_attrs
 
 
 def get_data():
@@ -25,7 +25,7 @@ def explicit_table():
         Column.number(name="bar"),
     ]
 
-    return Table(get_data(), columns=columns, attrs=dict(id='table_id'))
+    return Table(data=get_data(), columns=columns, attrs=lambda table: {'class': 'listview', 'id': 'table_id'})
 
 
 def declarative_table():
@@ -33,12 +33,20 @@ def declarative_table():
     class TestTable(Table):
 
         class Meta:
-            attrs = dict(id='table_id')
+            attrs = {
+                'class': lambda table: 'listview',
+                'id': lambda table: 'table_id',
+            }
 
         foo = Column()
         bar = Column.number()
 
-    return TestTable(get_data())
+    return TestTable(data=get_data())
+
+
+def test_render_attrs():
+    assert render_attrs(None) == ''
+    assert render_attrs({'foo': 'bar', 'baz': 'quux'}) == ' baz="quux" foo="bar"'
 
 
 @pytest.mark.parametrize('table', [
@@ -51,10 +59,10 @@ def test_render(table):
         <table class="listview" id="table_id">
             <thead>
                 <tr>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=foo"> Foo </a>
                     </th>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=bar"> Bar </a>
                     </th>
                 </tr>
@@ -86,17 +94,17 @@ def test_django_table():
         foo__b = Column()
         foo = Column.choice_queryset(model=Foo, choices=Foo.objects.all())
 
-    verify_table_html(TestTable(Bar.objects.all()), """
+    verify_table_html(TestTable(data=Bar.objects.all()), """
         <table class="listview">
             <thead>
                 <tr>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=foo__a"> A </a>
                     </th>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=foo__b"> B </a>
                     </th>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=foo"> Foo </a>
                     </th>
                 </tr>
@@ -128,7 +136,7 @@ def test_inheritance():
     class TestTable(FooTable, BarTable):
         another = Column()
 
-    t = TestTable([])
+    t = TestTable(data=[])
     assert [c.name for c in t.columns] == ['foo', 'bar', 'another']
 
 
@@ -139,7 +147,10 @@ def test_output():
     class TestTable(Table):
 
         class Meta:
-            attrs = dict(id='table_id')
+            attrs = {
+                'class': 'listview',
+                'id': 'table_id',
+            }
 
         foo = Column()
         bar = Column.number()
@@ -153,25 +164,25 @@ def test_output():
                get_absolute_url=lambda: '/somewhere/'),
     ]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview" id="table_id">
             <thead>
                 <tr>
-                    <th class="superheader first_column" colspan="1"> </th>
+                    <th class="first_column superheader" colspan="1"> </th>
                     <th class="superheader" colspan="1"> </th>
                     <th class="superheader" colspan="2"> group </th>
                     <th class="superheader" colspan="1"> </th>
                 </tr>
                 <tr>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=foo"> Foo </a>
                     </th>
-                    <th class="subheader first_column">
+                    <th class="first_column subheader">
                         <a href="?order=bar"> Bar </a>
                     </th>
-                    <th class="thin subheader first_column"> </th>
-                    <th class="thin subheader" title="Edit"> </th>
-                    <th class="thin subheader first_column" title="Delete"> </th>
+                    <th class="first_column subheader thin"> </th>
+                    <th class="subheader thin" title="Edit"> </th>
+                    <th class="first_column subheader thin" title="Delete"> </th>
                 </tr>
             </thead>
             <tbody>
@@ -193,11 +204,11 @@ def test_name_traversal():
 
     data = [Struct(foo=Struct(bar="bar"))]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
                 <tr>
-                    <th class="subheader first_column"> Bar </th>
+                    <th class="first_column subheader"> Bar </th>
                 </tr>
             </thead>
             <tbody>
@@ -208,64 +219,64 @@ def test_name_traversal():
         </table>""")
 
 
-def test_tuple_data():
-    class TestTable(Table):
+# def test_tuple_data():
+#     class TestTable(Table):
+#
+#         class Meta:
+#             sortable = False
+#
+#         a = Column()
+#         b = Column()
+#         c = Column()
+#
+#     data = [('a', 'b', 'c')]
+#
+#     verify_table_html(TestTable(data=data), """
+#         <table class="listview">
+#             <thead>
+#                 <tr>
+#                     <th class="first_column subheader"> A </th>
+#                     <th class="first_column subheader"> B </th>
+#                     <th class="first_column subheader"> C </th>
+#                 </tr>
+#             </thead>
+#             <tbody>
+#                 <tr class="row1">
+#                     <td> a </td>
+#                     <td> b </td>
+#                     <td> c </td>
+#                 </tr>
+#             </tbody>
+#         </table>""")
 
-        class Meta:
-            sortable = False
 
-        a = Column()
-        b = Column()
-        c = Column()
-
-    data = [('a', 'b', 'c')]
-
-    verify_table_html(TestTable(data), """
-        <table class="listview">
-            <thead>
-                <tr>
-                    <th class="subheader first_column"> A </th>
-                    <th class="subheader first_column"> B </th>
-                    <th class="subheader first_column"> C </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="row1">
-                    <td> a </td>
-                    <td> b </td>
-                    <td> c </td>
-                </tr>
-            </tbody>
-        </table>""")
-
-
-def test_dict_data():
-    class TestTable(Table):
-        class Meta:
-            sortable = False
-        a = Column()
-        b = Column()
-        c = Column()
-
-    data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
-
-    verify_table_html(TestTable(data), """
-        <table class="listview">
-             <thead>
-                 <tr>
-                     <th class="subheader first_column"> A </th>
-                     <th class="subheader first_column"> B </th>
-                     <th class="subheader first_column"> C </th>
-                 </tr>
-             </thead>
-             <tbody>
-                 <tr class="row1">
-                     <td> a </td>
-                     <td> b </td>
-                     <td> c </td>
-                 </tr>
-             </tbody>
-         </table>""")
+# def test_dict_data():
+#     class TestTable(Table):
+#         class Meta:
+#             sortable = False
+#         a = Column()
+#         b = Column()
+#         c = Column()
+#
+#     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
+#
+#     verify_table_html(TestTable(data=data), """
+#         <table class="listview">
+#              <thead>
+#                  <tr>
+#                      <th class="first_column subheader"> A </th>
+#                      <th class="first_column subheader"> B </th>
+#                      <th class="first_column subheader"> C </th>
+#                  </tr>
+#              </thead>
+#              <tbody>
+#                  <tr class="row1">
+#                      <td> a </td>
+#                      <td> b </td>
+#                      <td> c </td>
+#                  </tr>
+#              </tbody>
+#          </table>""")
 
 
 class NoSortTable(Table):
@@ -279,11 +290,11 @@ def test_display_name():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
                 <tr>
-                    <th class="subheader first_column"> Bar </th>
+                    <th class="first_column subheader"> Bar </th>
                 </tr>
             </thead>
             <tbody>
@@ -296,15 +307,15 @@ def test_display_name():
 
 def test_link():
     class TestTable(NoSortTable):
-        foo = Column.link(display_name="Bar", cell_value='foo', cell_url_title="url_title_goes_here")
+        foo = Column.link(display_name="Bar", cell__value='foo', cell__url_title="url_title_goes_here")
 
     data = [Struct(foo=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
                 <tr>
-                    <th class="subheader first_column"> Bar </th>
+                    <th class="first_column subheader"> Bar </th>
                 </tr>
             </thead>
             <tbody>
@@ -317,14 +328,14 @@ def test_link():
 
 def test_css_class():
     class TestTable(NoSortTable):
-        foo = Column(css_class="some_class")
+        foo = Column(css_class={"some_class"})
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
     <table class="listview">
         <thead>
-            <tr><th class="some_class subheader first_column"> Foo </th></tr>
+            <tr><th class="first_column some_class subheader"> Foo </th></tr>
         </thead>
         <tbody>
             <tr class="row1">
@@ -340,10 +351,10 @@ def test_header_url():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
     <table class="listview">
         <thead>
-            <tr><th class="subheader first_column">
+            <tr><th class="first_column subheader">
                 <a href="/some/url"> Foo </a>
             </th></tr>
         </thead>
@@ -364,7 +375,7 @@ def test_title():
     verify_table_html(TestTable(data), """
     <table class="listview">
         <thead>
-            <tr><th class="subheader first_column" title="Some title"> Foo </th></tr>
+            <tr><th class="first_column subheader" title="Some title"> Foo </th></tr>
         </thead>\
         <tbody>
             <tr class="row1">
@@ -381,10 +392,36 @@ def test_show():
 
     data = [Struct(foo="foo", bar="bar")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
     <table class="listview">
         <thead>
-            <tr><th class="subheader first_column"> Foo </th></tr>
+            <tr><th class="first_column subheader"> Foo </th></tr>
+        </thead>
+        <tbody>
+            <tr class="row1">
+                <td> foo </td>
+            </tr>
+        </tbody>
+    </table>""")
+
+
+def test_show_lambda():
+    def show_callable(table, column):
+        assert isinstance(table,  TestTable)
+        assert column.name == 'bar'
+        return False
+
+
+    class TestTable(NoSortTable):
+        foo = Column()
+        bar = Column(show=show_callable)
+
+    data = [Struct(foo="foo", bar="bar")]
+
+    verify_table_html(TestTable(data=data), """
+    <table class="listview">
+        <thead>
+            <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
         <tbody>
             <tr class="row1">
@@ -401,12 +438,12 @@ def test_attr():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
     <table class="listview">
         <thead>
             <tr>
-                <th class="subheader first_column"> Foo </th>
-                <th class="subheader first_column"> Bar </th>
+                <th class="first_column subheader"> Foo </th>
+                <th class="first_column subheader"> Bar </th>
             </tr>
         </thead>
         <tbody>
@@ -423,27 +460,27 @@ def test_attrs():
         class Meta:
             attrs = {
                 'class': 'classy',
-                'foo': 'bar'
+                'foo': lambda table: 'bar'
             }
-            row_attrs = {
+            row__attrs = {
                 'class': 'classier',
-                'foo': lambda row: "barier"
+                'foo': lambda table: "barier"
             }
 
         yada = Column()
 
-    verify_table_html(TestTable([(1,), (2,)]), """
+    verify_table_html(TestTable(data=[Struct(yada=1), Struct(yada=2)]), """
         <table class="classy" foo="bar">
             <thead>
                 <tr>
-                  <th class="subheader first_column"> Yada </th>
+                  <th class="first_column subheader"> Yada </th>
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1 classier" foo="barier">
+                <tr class="classier row1" foo="barier">
                     <td> 1 </td>
                 </tr>
-                <tr class="row2 classier" foo="barier">
+                <tr class="classier row2" foo="barier">
                     <td> 2 </td>
                 </tr>
             </tbody>
@@ -461,7 +498,7 @@ def test_column_presets():
         run = Column.run(is_report)
         select = Column.select(is_report)
         check = Column.check(is_report)
-        link = Column.link(cell_format="Yadahada name")
+        link = Column.link(cell__format="Yadahada name")
         number = Column.number()
 
     data = [Struct(pk=123,
@@ -469,21 +506,21 @@ def test_column_presets():
                    check=lambda: True,
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
                 <tr>
-                    <th class="thin subheader first_column" />
-                    <th class="thin subheader first_column" title="Edit" />
-                    <th class="thin subheader first_column" title="Delete" />
-                    <th class="thin subheader first_column" title="Download" />
-                    <th class="thin subheader first_column" title="Run"> Run </th>
-                    <th class="thin nopad subheader first_column" title="Select all">
+                    <th class="first_column subheader thin" />
+                    <th class="first_column subheader thin" title="Edit" />
+                    <th class="first_column subheader thin" title="Delete" />
+                    <th class="first_column subheader thin" title="Download" />
+                    <th class="first_column subheader thin" title="Run"> Run </th>
+                    <th class="first_column nopad subheader thin" title="Select all">
                         <i class="fa fa-check-square-o" />
                     </th>
-                    <th class="subheader first_column"> Check </th>
-                    <th class="subheader first_column"> Link </th>
-                    <th class="subheader first_column"> Number </th>
+                    <th class="first_column subheader"> Check </th>
+                    <th class="first_column subheader"> Link </th>
+                    <th class="first_column subheader"> Number </th>
                 </tr>
             </thead>
             <tbody>
@@ -505,18 +542,19 @@ def test_column_presets():
 def test_django_table_pagination():
 
     for x in xrange(30):
-        Foo(a=x, b="").save()
+        Foo(a=x, b="foo").save()
 
     class TestTable(Table):
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
+        b = Column(show=False)  # should still be able to filter on this though!
 
-    verify_table_html(TestTable(Foo.objects.all()),
-                      query=dict(page_size=2, page=2),
+    verify_table_html(TestTable(data=Foo.objects.all()),
+                      query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
         <table class="listview">
             <thead>
                 <tr>
-                    <th class="subheader first_column"> A </th>
+                    <th class="first_column subheader"> A </th>
                 </tr>
             </thead>
             <tbody>
@@ -544,7 +582,7 @@ def test_links():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data),
+    verify_table_html(TestTable(data=data),
                       find=dict(class_='links'),
                       links=links,
                       expected_html="""
@@ -582,11 +620,11 @@ def test_bulk_edit():
         a = Column.number(sortable=False, bulk=True)  # turn off sorting to not get the link with random query params
         b = Column(bulk=True)
 
-    result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(Foo.objects.all()))
+    result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()))
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(Foo.objects.all()))
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()))
 
     assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
         (1, 0, u'changed'),
@@ -612,7 +650,7 @@ def test_query():
         class Meta:
             sortable = False
 
-    verify_table_html(query=dict(a='1'), table=TestTable(Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(a='1'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="1">
             <td class="rj">
@@ -623,7 +661,7 @@ def test_query():
             </td>
         </tr>
     </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='bar'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="3">
             <td class="rj">
@@ -642,7 +680,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(query='b="bar"'), table=TestTable(Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="3">
             <td class="rj">
@@ -665,19 +703,62 @@ def test_query():
 
 def test_cell_template():
     class TestTable(NoSortTable):
-        foo = Column(cell_template='test_cell_template.html')
+        foo = Column(cell__template='test_cell_template.html')
 
-    data = [Struct(foo="foo")]
+    data = [Struct(foo="sentinel")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
-                <tr><th class="subheader first_column"> Foo </th></tr>
+                <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
             <tbody>
                 <tr class="row1">
                     <td>
                         test_cell_template.html contents
+                    </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+
+def test_row_template():
+    class TestTable(NoSortTable):
+        foo = Column()
+
+        class Meta:
+            row__template = lambda table: 'test_table_row.html'
+
+    data = [Struct(foo="sentinel")]
+
+    verify_table_html(TestTable(data=data), """
+        <table class="listview">
+            <thead>
+                <tr><th class="first_column subheader"> Foo </th></tr>
+            </thead>
+            <tbody>
+                sentinel
+            </tbody>
+        </table>""")
+
+
+def test_cell_lambda():
+    class TestTable(NoSortTable):
+        sentinel1 = 'sentinel1'
+
+        sentinel2 = Column(cell__value=lambda table, column, row: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
+
+    data = [Struct(sentinel3="sentinel3")]
+
+    verify_table_html(TestTable(data=data), """
+        <table class="listview">
+            <thead>
+                <tr><th class="first_column subheader"> Sentinel2 </th></tr>
+            </thead>
+            <tbody>
+                <tr class="row1">
+                    <td>
+                        sentinel1 sentinel2 sentinel3
                     </td>
                 </tr>
             </tbody>
@@ -695,10 +776,10 @@ def test_auto_rowspan():
         Struct(foo=2),
     ]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
-                <tr><th class="subheader first_column"> Foo </th></tr>
+                <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
             <tbody>
                 <tr class="row1">
@@ -723,6 +804,76 @@ def test_render_table_to_response():
 
     data = [Struct(foo="foo")]
 
-    response = render_table_to_response(RequestFactory().get('/'), TestTable(data))
+    response = render_table_to_response(RequestFactory().get('/'), TestTable(data=data))
     assert isinstance(response, HttpResponse)
     assert '<table' in response.content
+
+
+@pytest.mark.django_db
+def test_default_formatters():
+    class TestTable(NoSortTable):
+        foo = Column()
+
+    class SomeType(object):
+        def __unicode__(self):
+            return 'this should not end up in the table'
+
+    register_cell_formatter(SomeType, lambda table, column, row, value: 'sentinel')
+
+    assert Foo.objects.all().count() == 0
+
+    Foo(a=1, b="3").save()
+    Foo(a=2, b="5").save()
+
+    data = [
+        Struct(foo=1),
+        Struct(foo=True),
+        Struct(foo=False),
+        Struct(foo=[1, 2, 3]),
+        Struct(foo=SomeType()),
+        Struct(foo=Foo.objects.all()),
+        Struct(foo=None),
+    ]
+
+    verify_table_html(TestTable(data=data), """
+        <table class="listview">
+            <thead>
+                <tr><th class="first_column subheader"> Foo </th></tr>
+            </thead>
+            <tbody>
+                <tr class="row1">
+                    <td>
+                        1
+                    </td>
+                </tr>
+                <tr class="row2">
+                    <td>
+                        Yes
+                    </td>
+                </tr>
+                <tr class="row1">
+                    <td>
+                        No
+                    </td>
+                </tr>
+                <tr class="row2">
+                    <td>
+                        1, 2, 3
+                    </td>
+                </tr>
+                <tr class="row1">
+                    <td>
+                        sentinel
+                    </td>
+                </tr>
+                <tr class="row2">
+                    <td>
+                        Foo(1, 3), Foo(2, 5)
+                    </td>
+                </tr>
+                <tr class="row1">
+                    <td>
+                    </td>
+                </tr>
+            </tbody>
+        </table>""")

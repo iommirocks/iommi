@@ -1,17 +1,13 @@
 {% load tri_table %}
-{% load cycle from future %}
 
 <div class="table-container">
 
-<table{{ table|table_attrs }}>
+<table{{ table.render_attrs }}>
 
     {% include "tri_table/table_header_rows.html" %}
 
     <tbody>
-        {% for row in table.data %}
-            {% cycle 'row1' 'row2' as row_color silent %}
-            {% include table|row_template:row %}
-        {% endfor %}
+       {{ table.render_tbody|safe }}
     </tbody>
 </table>
 </div>

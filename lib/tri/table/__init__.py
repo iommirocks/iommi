@@ -1,5 +1,5 @@
 # coding: utf-8
-from copy import copy
+from __future__ import absolute_import, unicode_literals
 from itertools import groupby
 import itertools
 from django.conf import settings
@@ -11,11 +11,10 @@ from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
 from tri.form import extract_subkeys, Field, Form
-from tri.struct import Struct
+from tri.struct import Struct, FrozenStruct
 from tri.query import Query, Variable
-from tri.table.templatetags.tri_table import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
 __version__ = '0.1.0'
@@ -24,9 +23,8 @@ next_creation_count = itertools.count().next
 
 
 def prepare_headers(request, columns):
-    columns = [copy(column) for column in columns if column.get('show', True)]
     for column in columns:
-        if column.get('sortable', True):
+        if column.sortable:
             params = request.GET.copy()
             order = request.GET.get('order', None)
             if order is not None:
@@ -39,9 +37,10 @@ def prepare_headers(request, columns):
                     params['order'] = column['name']
             else:
                 params['order'] = column['name']
-            column['is_sorting'] = False if order is None else (column['name'] == order or ('-' + column['name']) == order)
-            column['url'] = "?%s" % params.urlencode()
-        column['show'] = column.get('show', True)
+            column.is_sorting = False if order is None else (column.name == order or ('-' + column.name) == order)
+            column.url = "?%s" % params.urlencode()
+        else:
+            column.is_sorting = False
     return columns
 
 
@@ -58,53 +57,107 @@ def order_by_on_list(objects, order_field, is_desc=False):
         objects.sort(key=order_field, reverse=is_desc)
         return
 
-    property_path = order_field.split('__')
+    objects.sort(key=lambda x: getattr_path(x, order_field), reverse=is_desc)
 
-    def get_property(p):
-        p = getattr(p, property_path[0])
-        if callable(p):
-            p = p()
-        for prop in property_path[1:]:
-            try:
-                p = getattr(p, prop)
-                if callable(p):
-                    p = p()
-            except AttributeError:  # pragma: no cover
-                if settings.DEBUG:
-                    raise
-                return p
-        return p
-    objects.sort(key=get_property, reverse=is_desc)
+
+def render_attrs(attrs):
+    """
+    Render HTML attributes, or return '' if no attributes needs to be rendered.
+    """
+    if attrs is not None:
+        return mark_safe(' %s' % ' '.join(['%s="%s"' % (key, value) for key, value in sorted(attrs.items()) if value]))
+    return ''
+
+
+def yes_no_formatter(table, column, row, value):
+    """ Handle True/False from Django model and 1/0 from raw sql """
+    del table, column, row
+    if value is True or value == 1:
+        return 'Yes'
+    if value is False or value == 0:
+        return 'No'
+    if value is None:  # pragma: no cover
+        return ''
+    assert False, "Unable to convert {} to Yes/No".format(value)   # pragma: no cover
+
+
+def list_formatter(table, column, row, value):
+    del table, column, row
+    return ', '.join([unicode(x) for x in value])
+
+
+_cell_formatters = {
+    bool: yes_no_formatter,
+    tuple: list_formatter,
+    list: list_formatter,
+    set: list_formatter,
+    QuerySet: lambda table, column, row, value: list_formatter(table=table, column=column, row=row, value=list(value))
+}
+
+
+def register_cell_formatter(type_or_class, formatter):
+    """
+    Register a default formatter for a type. A formatter is a function that takes four keyword arguments: table, column, row, value
+    """
+    global _cell_formatters
+    _cell_formatters[type_or_class] = formatter
+
+
+def default_cell_formatter(table, column, row, value):
+    """
+    @type column: tri.table.BoundColumn
+    """
+    formatter = _cell_formatters.get(type(value))
+    if formatter:
+        value = formatter(table=table, column=column, row=row, value=value)
+
+    if value is None:
+        return ''
+
+    return value
+
+
+class BoundRow(Struct):
+    """
+    Internal class used in row rendering
+    """
+    def __init__(self, table, row, **kwargs):
+        """
+        :type table: Table
+        """
+        self.table = table
+        self.row = row
+        super(BoundRow, self).__init__(**evaluate_recursive(kwargs, table=table, row=row))
+
+    def render(self):
+        if self.template:
+            # positional arguments here to get compatibility with both django 1.7 and 1.8+
+            return render_to_string(self.template, dict(bound_row=self, row=self.row, table=self.table))
+        else:
+            return '<tr%s>%s</tr>' % (self.render_attrs(), self.render_cells())
+
+    def render_attrs(self):
+        attrs = self.attrs.copy()
+        if attrs['class']:
+            attrs['class'] += ' '
+        attrs['class'] += 'row%s' % (self.row_index % 2 + 1)
+        pk = getattr(self.row, 'pk', None)
+        if pk:
+            attrs['data-pk'] = pk
+        return render_attrs(attrs)
+
+    def render_cells(self):
+        return '\n'.join([column.render_cell(bound_row=self, column=column) for column in self.table.columns])
 
 
 @creation_ordered
-class Column(Struct):
+class Column(FrozenStruct):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self,
-                 name=None,
-                 attr=None,
-                 display_name=None,
-                 css_class=None,
-                 url=None,
-                 title=None,
-                 show=True,
-                 sortable=True,
-                 sort_key=None,
-                 group=None,
-                 auto_rowspan=False,
-
-                 cell_template=None,
-                 cell_value=None,
-                 cell_format=None,
-                 cell_attrs=None,
-                 cell_url=None,
-                 cell_url_title=None,
-                 **kwargs
-                 ):
+    def __init__(self, **kwargs):
         """
         :param name: the name of the column
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
@@ -117,64 +170,49 @@ class Column(Struct):
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
-        :param cell_template: name of a template file. The template gets two arguments: `row` and `user`.
-        :param cell_value: string or callable with one argument: the row. This is used to extract which data to display from the object.
-        :param cell_format: string or callable with one argument: the value. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
-        :param cell_attrs: dict of attr name to callable with one argument: the row
-        :param cell_url: callable with one argument: the row
-        :param cell_url_title: callable with one argument: the row
+        :param cell__template: name of a template file. The template gets two arguments: `row` and `user`.
+        :param cell__value: string or callable with one argument: the row. This is used to extract which data to display from the object.
+        :param cell__format: string or callable with one argument: the value. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
+        :param cell__attrs: dict of attr name to callable with one argument: the row
+        :param cell__url: callable with one argument: the row
+        :param cell__url_title: callable with one argument: the row
         """
-        self.table = None  # this member is filled in by the table after it is constructed
-
-        self.creation_count = next_creation_count()
-
-        if cell_template is not None:
-            assert cell_format is None
-            assert cell_value is None or callable(cell_value)
-            orig_cell_value = cell_value
-
-            def cell_value(row):
-                return dict(row=row,
-                            user=self.table.request.user if self.table.request else None,
-                            **(orig_cell_value(row) if orig_cell_value is not None else {}))
-
-            def cell_format(bindings):
-                return render_to_string(cell_template, bindings)
-
-        if name:
-            self._set_name(name)
-        values = {k: v
-                  for k, v in dict(
-                      name=name,
-                      attr=attr,
-                      display_name=display_name,
-                      css_class=CssClass(css_class),
-                      url=url,
-                      title=title,
-                      show=show,
-                      sortable=sortable,
-                      sort_key=sort_key,
-                      group=group,
-                      auto_rowspan=auto_rowspan,
-
-                      cell_value=cell_value,
-                      cell_format=cell_format,
-                      cell_attrs=cell_attrs if cell_attrs is not None else {},
-                      cell_url=cell_url,
-                      cell_url_title=cell_url_title,
-                  ).items()
-                  if v is not None}
+        setdefaults(kwargs, dict(
+            name=None,
+            attrs={},
+            attr=lambda table, column: column.name,
+            css_class=set(),
+            url=None,
+            title=None,
+            show=True,
+            sort_key=lambda column: column.attr,
+            display_name=lambda table, column: force_unicode(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize(),
+            sortable=True,
+            group=None,
+            auto_rowspan=False,
+            cell__template=None,
+            cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
+            cell__format=default_cell_formatter,
+            cell__attrs={},
+            cell__url=None,
+            cell__url_title=None,
+        ))
 
         def bulk(column):
             defaults = {
-                'class': Field.from_model,
-                'model': column.table.Meta.model,
                 'name': column.name,
                 'field_name': column.attr,
                 'required': False,
                 'empty_choice_tuple': (None, '', '---', True),
             }
-            bulk_field_kwargs = extract_subkeys(kwargs, 'bulk_field', defaults=defaults)
+            # handle callable fields specially
+            model = kwargs.pop('bulk_field__model', column.table.Meta.model)
+            cls = kwargs.pop('bulk_field__class', Field.from_model)
+
+            bulk_field_kwargs = evaluate_recursive(extract_subkeys(kwargs, 'bulk_field', defaults=defaults), table=column.table, column=column)
+
+            bulk_field_kwargs.setdefault('model', model)
+            bulk_field_kwargs.setdefault('class', cls)
             return bulk_field_kwargs.pop('class')(**bulk_field_kwargs)
 
         kwargs.setdefault('bulk__show', kwargs.get('bulk'))
@@ -192,15 +230,7 @@ class Column(Struct):
         kwargs.setdefault('query__show', kwargs.get('query'))
         kwargs.setdefault('query__class_internal', query)
 
-        values.update(kwargs)
-
-        super(Column, self).__init__(**values)
-
-    def _set_name(self, name):
-        self.name = name
-        self.attr = getattr(self, 'attr', name)
-        self.sort_key = getattr(self, 'sort_key', self.attr)
-        self.display_name = getattr(self, 'display_name', force_unicode(name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
+        super(Column, self).__init__(**kwargs)
 
     @staticmethod
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
@@ -213,23 +243,23 @@ class Column(Struct):
             name='',
             display_name='',
             sortable=False,
-            css_class='thin',
+            css_class={'thin'},
             show=show and not is_report,
             title=icon_title,
             filter=False,
-            cell_value=lambda row: True,
-            cell_attrs={'class': 'cj'},
-            cell_format=lambda value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else '')
+            cell__value=lambda table, column, row: True,
+            cell__attrs={'class': 'cj'},
+            cell__format=lambda table, column, row, value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else '')
         params.update(kwargs)
         return Column(**params)
 
     @staticmethod
     def edit(is_report=False, **kwargs):
         """
-        Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell_url to override.
+        Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
         """
         params = dict(
-            cell_url=lambda row: row.get_absolute_url() + 'edit/',
+            cell__url=lambda table, column, row: row.get_absolute_url() + 'edit/',
             display_name=''
         )
         params.update(kwargs)
@@ -238,10 +268,10 @@ class Column(Struct):
     @staticmethod
     def delete(is_report=False, **kwargs):
         """
-        Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell_url to override.
+        Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
         """
         params = dict(
-            cell_url=lambda row: row.get_absolute_url() + 'delete/',
+            cell__url=lambda table, column, row: row.get_absolute_url() + 'delete/',
             display_name=''
         )
         params.update(kwargs)
@@ -250,11 +280,11 @@ class Column(Struct):
     @staticmethod
     def download(is_report=False, **kwargs):
         """
-        Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell_url to override.
+        Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
         """
         params = dict(
-            cell_url=lambda row: row.get_absolute_url() + 'download/',
-            cell_value=lambda row: getattr(row, 'pk', False),
+            cell__url=lambda table, column, row: row.get_absolute_url() + 'download/',
+            cell__value=lambda table, column, row: getattr(row, 'pk', False),
         )
         params.update(kwargs)
         return Column.icon('download', is_report, 'Download', **params)
@@ -262,15 +292,15 @@ class Column(Struct):
     @staticmethod
     def run(is_report=False, show=True, **kwargs):
         """
-        Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell_url to override.
+        Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
         """
         params = dict(
             name='',
             title='Run',
             sortable=False,
-            css_class='thin',
-            cell_url=lambda row: row.get_absolute_url() + 'run/',
-            cell_value='Run',
+            css_class={'thin'},
+            cell__url=lambda table, column, row: row.get_absolute_url() + 'run/',
+            cell__value='Run',
             show=show and not is_report,
             filter=False,
         )
@@ -292,9 +322,9 @@ class Column(Struct):
             sortable=False,
             show=show and not is_report,
             filter=False,
-            css_class='thin nopad',
-            cell_attrs={'class': 'cj'},
-            cell_value=lambda row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
+            css_class={'thin', 'nopad'},
+            cell__attrs={'class': 'cj'},
+            cell__value=lambda table, column, row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         )
         params.update(kwargs)
         return Column(**params)
@@ -310,8 +340,8 @@ class Column(Struct):
             return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
 
         params = dict(
-            cell_format=yes_no_formatter if is_report else render_icon,
-            cell_attrs={'class': 'cj'},
+            cell__format=lambda table, column, row, value: yes_no_formatter(table=table, column=column, row=row, value=value) if is_report else render_icon(value),
+            cell__attrs={'class': 'cj'},
         )
         params.update(kwargs)
         return Column(**params)
@@ -321,29 +351,26 @@ class Column(Struct):
         """
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
-        column = None  # Filled in later
-
-        def url(row):
-            r = lookup_attribute(column, row)
+        def url(table, column, row):
+            r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
 
         params = dict(
-            cell_url=url,
+            cell__url=url,
             filter=False,
         )
         params.update(kwargs)
-        column = Column(**params)
-        return column
+        return Column(**params)
 
     @staticmethod
     def number(**kwargs):
         """
         Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
         """
-        if 'cell_attrs' not in kwargs:
-            kwargs['cell_attrs'] = {}
-        if 'class' not in kwargs['cell_attrs']:
-            kwargs['cell_attrs']['class'] = 'rj'
+        if 'cell__attrs' not in kwargs:
+            kwargs['cell__attrs'] = {}
+        if 'class' not in kwargs['cell__attrs']:
+            kwargs['cell__attrs']['class'] = 'rj'
         return Column(**kwargs)
 
     @staticmethod
@@ -368,6 +395,47 @@ class Column(Struct):
         return Column(**kwargs)
 
 
+class BoundColumn(Struct):
+    def render_css_class(self):
+        return ' '.join(sorted(self.css_class))
+
+    def cell_contents(self, bound_row, column):
+        return evaluate(self.cell__value, table=bound_row.table, column=column, row=bound_row.row)
+
+    def render_cell(self, bound_row, column):
+        assert self.show
+
+        row = bound_row.row
+        value = self.cell_contents(bound_row=bound_row, column=column)
+
+        if self.cell__template:
+            value = render_to_string(self.cell__template, {'table': bound_row.table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
+
+        cell_contents = evaluate(self.cell__format, table=self.table, column=self, row=row, value=value)
+        if column.cell__url:
+            cell__url = column.cell__url(table=bound_row.table, column=column, row=row) if callable(column.cell__url) else column.cell__url
+
+            cell__url_title = column.cell__url_title(row) if callable(column.cell__url_title) else column.cell__url_title
+            cell_contents = '<a href="{}"{}>{}</a>'.format(
+                cell__url,
+                ' title=%s' % cell__url_title if cell__url_title else '',
+                cell_contents,
+            )
+        return '<td{attrs}>{cell_contents}</td>'.format(
+            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=bound_row.table, column=column, row=row)),
+            cell_contents=cell_contents,
+        )
+
+
+    def evaluate(self):
+        """
+        Evaluates callable/lambda members. After this function is called all members will be values.
+        """
+        members_to_evaluate = {k: v for k, v in self.items() if '__' not in k and k not in ('sort_key', 'model')}
+        for k, v in members_to_evaluate.items():
+            self[k] = evaluate_recursive(v, table=self.table, column=self)
+
+
 @declarative(Column, 'columns')
 @with_meta
 class Table(object):
@@ -386,20 +454,21 @@ class Table(object):
     """
 
     class Meta:
-        attrs = {}
-        row_attrs = {}
+        attrs = {'class': 'listview'}
         bulk_filter = {}
         bulk_exclude = {}
         sortable = True
-        row_template = 'tri_table/table_row.html'
+        row__attrs = {'class': ''}
+        row__template = None
         model = None
 
-    def __init__(self, data, columns=None, **kwargs):
+    def __init__(self, data, request=None, columns=None, **kwargs):
         """
         :param data: a list of QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
         :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
-        :param row_attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
+        :param row__attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
+        :param row__template: name of template to use for rendering the row
         :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
@@ -407,17 +476,20 @@ class Table(object):
         assert columns is not None, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
         self.data = data
+        self.request = request
 
         if isinstance(self.data, QuerySet):
             kwargs['model'] = data.model
 
         if isinstance(columns, dict):
             for name, column in columns.items():
-                # noinspection PyProtectedMember
-                column._set_name(name)
+                dict.__setitem__(column, 'name', name)
             self.columns = columns.values()
         else:
             self.columns = columns
+            """:type : list of Column"""
+
+        self.columns = [BoundColumn(table=self, **column) for column in self.columns]
 
         for index, column in enumerate(self.columns):
             column.table = self
@@ -426,25 +498,34 @@ class Table(object):
         self.Meta = self.get_meta()
         self.Meta.update(**kwargs)
 
+        self.header_levels = None
+
+    # noinspection PyProtectedMember
+    def prepare(self):
+        # evaluate members
+        for column in self.columns:
+            column.evaluate()
+
+        self.columns = [column for column in self.columns if column.show]
+
+        model = self.Meta.pop('model')  # avoid trying to eval model, since it's callable
+        self.Meta = evaluate_recursive(self.Meta, table=self)
+        self.Meta.model = model
+
         if not self.Meta.sortable:
             for column in self.columns:
                 column.sortable = False
 
-        self.Meta.attrs.setdefault('class', 'listview')
-
-        self.header_levels = None
-
-    # noinspection PyProtectedMember
-    def prepare_headers_and_sort(self, request):
-        order = request.GET.get('order', None)
+        # sorting
+        order = self.request.GET.get('order', None)
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            sort_column = [x for x in self.columns if x.get('name', None) == order_field][0]
-            order_args = sort_column.get('sort_key', sort_column['name'])
+            sort_column = [x for x in self.columns if x.name == order_field][0]
+            order_args = evaluate(sort_column.sort_key, column=sort_column)
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
-            if sort_column.get('sortable', True):
+            if sort_column.sortable:
                 if isinstance(self.data, list):
                     order_by_on_list(self.data, order_args[0], is_desc)
                 else:
@@ -454,22 +535,29 @@ class Table(object):
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.data = self.data.order_by(*order_args)
-        headers = prepare_headers(request, self.columns)
+
+        # headers
+        headers = prepare_headers(self.request, self.columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         header_groups = []
-        for group_name, group_iterator in groupby(headers, key=lambda header: header.get('group', id(header))):
+
+        class HeaderGroup(Struct):
+            def render_css_class(self):
+                return ' '.join(sorted(self.css_class))
+
+        for group_name, group_iterator in groupby(headers, key=lambda header: header.group or id(header)):
 
             header_group = list(group_iterator)
 
-            header_groups.append(Struct(display_name=group_name,
+            header_groups.append(HeaderGroup(display_name=group_name,
                                         sortable=False,
                                         colspan=len(header_group),
-                                        css_class=CssClass('superheader')))
+                                        css_class={'superheader'}))
 
             for x in header_group:
                 x.css_class.add('subheader')
-                if x.get('is_sorting'):
+                if x.is_sorting:
                     x.css_class.add('sorted_column')
 
             header_group[0].css_class.add('first_column')
@@ -486,18 +574,16 @@ class Table(object):
 
         return headers, self.header_levels
 
+    def bound_rows(self):
+        row_params = extract_subkeys(self.Meta, 'row')
+        for i, row in enumerate(self.data):
+            yield BoundRow(table=self, row=row, row_index=i, **row_params)
 
-class CssClass(object):
+    def render_attrs(self):
+        return render_attrs(self.Meta.attrs)
 
-    def __init__(self, s):
-        self.parts = s.split(' ') if s else []
-
-    def add(self, c):
-        if c not in self.parts:
-            self.parts.append(c)
-
-    def __str__(self):
-        return " ".join(self.parts)
+    def render_tbody(self):
+        return '\n'.join([bound_row.render() for bound_row in self.bound_rows()])
 
 
 class Link(Struct):
@@ -523,6 +609,9 @@ def object_list_context(request,
                         paginator=None,
                         show_hits=False,
                         hit_label='Items'):
+    """
+    :type table: Table
+    """
     if extra_context is None:  # pragma: no cover
         extra_context = {}
 
@@ -535,7 +624,7 @@ def object_list_context(request,
 
         links = [link for link in links if link.group is None]
 
-    table.prepare_headers_and_sort(request)
+    table.prepare()
 
     base_context = {
         'links': links,
@@ -595,29 +684,29 @@ def object_list_context(request,
             rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
             prev_value = no_value_set
             prev_row = no_value_set
-            for row in table.data:
-                value = table_cell_formatter(row, column)
+            for bound_row in table.bound_rows():
+                value = column.cell_contents(bound_row=bound_row, column=column)
                 if prev_value != value:
-                    rowspan_by_row[id(row)] = 1
+                    rowspan_by_row[id(bound_row.row)] = 1
                     prev_value = value
-                    prev_row = row
+                    prev_row = bound_row.row
                 else:
                     rowspan_by_row[id(prev_row)] += 1
 
-            column.cell_attrs['rowspan'] = set_row_span(rowspan_by_row)
-            assert 'style' not in column.cell_attrs  # TODO: support both specifying style cell_attrs and auto_rowspan
-            column.cell_attrs['style'] = set_display_none(rowspan_by_row)
+            column.cell__attrs['rowspan'] = set_row_span(rowspan_by_row)
+            assert 'style' not in column.cell__attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
+            column.cell__attrs['style'] = set_display_none(rowspan_by_row)
 
     base_context.update(extra_context)
     return RequestContext(request, base_context, context_processors)
 
 
 def set_row_span(rowspan_by_row):
-    return lambda row: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else ''
+    return lambda table, column, row: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else ''
 
 
 def set_display_none(rowspan_by_row):
-    return lambda row: 'display: none' if id(row) not in rowspan_by_row else ''
+    return lambda table, column, row: 'display: none' if id(row) not in rowspan_by_row else ''
 
 
 def render_table(request,

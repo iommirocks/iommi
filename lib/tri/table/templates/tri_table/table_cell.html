@@ -1,3 +1,0 @@
-{% load tri_table %}
-{# This template is formatted like this for good reasons! It enables the css style pre-wrap to be used. Please don't format it nicely. No "spaceless" doesn't do what you hope it does (T_T)  #}
-<td{{ row|table_cell_attrs:column }}>{% if 'cell_url' in column and row|table_cell_url:column %}<a href="{{ row|table_cell_url:column }}"{% if 'cell_url_title' in column %} title="{{ row|table_cell_url_title:column }}"{% endif %}>{% endif %}{{ row|table_cell_formatter:column }}{% if 'cell_url' in column %}</a>{% endif %}</td>

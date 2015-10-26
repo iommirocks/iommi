@@ -9,22 +9,22 @@ def test_sort_list():
 
     class TestTable(Table):
         foo = Column()
-        bar = Column.number(sort_key=lambda row: abs(row.bar))
+        bar = Column.number(sort_key='bar')
 
     data = [Struct(foo='c', bar=3),
-            Struct(foo='b', bar=-2),
+            Struct(foo='b', bar=2),
             Struct(foo='a', bar=1)]
 
-    verify_table_html(TestTable(data),
+    verify_table_html(TestTable(data=data),
                       query=dict(order='bar'),
                       expected_html="""\
       <table class="listview">
         <thead>
           <tr>
-            <th class="subheader first_column">
+            <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="subheader sorted_column first_column">
+            <th class="first_column sorted_column subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
@@ -36,7 +36,7 @@ def test_sort_list():
           </tr>
           <tr class="row2">
             <td> b </td>
-            <td class="rj"> -2 </td>
+            <td class="rj"> 2 </td>
           </tr>
           <tr class="row1">
             <td> c </td>
@@ -58,16 +58,16 @@ def test_django_table():
         a = Column.number()
         b = Column()
 
-    verify_table_html(TestTable(Foo.objects.all()),
+    verify_table_html(TestTable(data=Foo.objects.all()),
                       query=dict(order='a'),
                       expected_html="""\
     <table class="listview">
       <thead>
         <tr>
-          <th class="subheader sorted_column first_column">
+          <th class="first_column sorted_column subheader">
             <a href="?order=-a"> A </a>
           </th>
-          <th class="subheader first_column">
+          <th class="first_column subheader">
             <a href="?order=b"> B </a>
           </th>
         </tr>
@@ -92,9 +92,12 @@ def test_django_table():
 
 def test_order_by_on_list_nested():
     data = [Struct(foo=Struct(bar='c')),
-            Struct(foo=Struct(bar=lambda: 'b')),
-            Struct(foo=lambda: Struct(bar='a'))]
+            Struct(foo=Struct(bar='b')),
+            Struct(foo=Struct(bar='a'))]
 
     sorted_data = data[:]
     order_by_on_list(sorted_data, 'foo__bar')
+    assert sorted_data == list(reversed(data))
+
+    order_by_on_list(sorted_data, lambda x: x.foo.bar)
     assert sorted_data == list(reversed(data))
