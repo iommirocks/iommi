@@ -18,7 +18,7 @@ from tri.struct import Struct
 from tri.tables.templatetags.tri_tables import lookup_attribute, yes_no_formatter, table_cell_formatter
 
 
-__version__ = '0.11.0'
+__version__ = '0.12.0'
 
 next_creation_count = itertools.count().next
 
@@ -29,16 +29,14 @@ def prepare_headers(request, columns):
         if column.get('sortable', True):
             params = request.GET.copy()
             order = request.GET.get('order', None)
+            start_sort_desc = column['sort_default_desc']
+            params['order'] = column['name'] if not start_sort_desc else '-' + column['name']
             if order is not None:
                 is_desc = len(order) > 0 and order[0] == '-'
                 order_field = is_desc and order[1:] or order
-                new_order = is_desc and order[1:] or "-%s" % order
-                if order is not None and order_field == column['name']:
+                if order_field == column['name']:
+                    new_order = is_desc and order[1:] or "-%s" % order
                     params['order'] = new_order
-                else:
-                    params['order'] = column['name']
-            else:
-                params['order'] = column['name'] if not column['sort_default_desc'] else '-' + column['name']
             column['is_sorting'] = False if order is None else (column['name'] == order or ('-' + column['name']) == order)
             column['url'] = "?%s" % params.urlencode()
         column['show'] = column.get('show', True)
