@@ -1,17 +1,21 @@
 {% load tri_table %}
 
-<div class="table-container">
+{% if not table.data and empty_message %}
+    {{ empty_message }}
+{% else %}
+    <div class="table-container">
 
-<table{{ table.render_attrs }}>
+    <table{{ table.render_attrs }}>
 
-    {% include "tri_table/table_header_rows.html" %}
+        {% include "tri_table/table_header_rows.html" %}
 
-    <tbody>
-       {{ table.render_tbody|safe }}
-    </tbody>
-</table>
-</div>
+        <tbody>
+           {{ table.render_tbody|safe }}
+        </tbody>
+    </table>
+    </div>
 
-{% if is_paginated %}
-  <div class="paginator">{% paginator %}</div>
+    {% if is_paginated %}
+      <div class="paginator">{% paginator %}</div>
+    {% endif %}
 {% endif %}

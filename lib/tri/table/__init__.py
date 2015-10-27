@@ -14,7 +14,7 @@ from django.db.models import QuerySet
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
 from tri.form import extract_subkeys, Field, Form
 from tri.struct import Struct, FrozenStruct
-from tri.query import Query, Variable
+from tri.query import Query, Variable, QueryException
 
 
 __version__ = '0.1.0'
@@ -348,7 +348,7 @@ class Column(FrozenStruct):
             cell__format=lambda table, column, row, value: yes_no_formatter(table=table, column=column, row=row, value=value) if is_report else render_icon(value),
             cell__attrs={'class': 'cj'},
             query__class=Variable.boolean,
-            bulk__class=Variable.boolean,
+            bulk__class=Field.boolean,
         )
         params.update(kwargs)
         return Column(**params)
@@ -768,8 +768,13 @@ def render_table(request,
     query_form = query.form(request) if query.variables else None
     context['filter_form'] = query_form
 
+    query_error = ''
     if query_form:
-        table.data = table.data.filter(query.request_to_q(request))
+        try:
+            table.data = table.data.filter(query.request_to_q(request))
+        except QueryException as e:
+            query_error = e.message
+    context['tri_query_error'] = query_error
 
     bulk_fields = [evaluate_recursive(column.bulk__class_internal, column=column) for column in table.bound_columns if column.bulk__show]
     bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None

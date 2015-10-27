@@ -8,11 +8,7 @@
     <form method="post" action=".">{% csrf_token %}
 {% endif %}
 
-{% if not table.data and empty_message %}
-    {{ empty_message }}
-{% else %}
-    {% include "tri_table/table.html" %}
-{% endif %}
+{% include "tri_table/table.html" %}
 
 {% if bulk_form %}
         <table class="newforms">
