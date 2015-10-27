@@ -154,21 +154,32 @@ def test_choice_queryset():
     Bar.objects.create(foo=foos[1])
 
     class Query2(Query):
-        foo = Variable.choice_queryset(model=Foo, choices=lambda **_: Foo.objects.all(), gui=True, value_to_q_lookup='pk')
+        foo = Variable.choice_queryset(
+            model=Foo,
+            choices=lambda **_: Foo.objects.all(),
+            gui=True,
+            value_to_q_lookup='value')
 
     query2 = Query2()
 
-    random_valid_pk = Foo.objects.all().order_by('?')[0].pk
+    random_valid_obj = Foo.objects.all().order_by('?')[0]
 
     # test GUI
     form = query2.form(Struct(method='POST', POST=Data({'foo': 'asdasdasdasd'})))
     assert not form.is_valid()
-    form = query2.form(Struct(method='POST', POST=Data({'foo': str(random_valid_pk)})))
+    form = query2.form(Struct(method='POST', POST=Data({'foo': str(random_valid_obj.pk)})))
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == {None} | set(Foo.objects.all())
 
     # test query
     # noinspection PyTypeChecker
-    q = query2.request_to_q(Struct(method='POST', POST=Data({'query': 'foo=%s' % str(random_valid_pk)})))
-    assert repr(q) == repr(Q(**{'foo__pk': random_valid_pk}))
-    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_pk))
+    q = query2.request_to_q(Struct(method='POST', POST=Data({'query': 'foo=%s' % str(random_valid_obj.value)})))
+    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
+    assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
+
+    # test searching for something that does not exist
+    value_that_does_not_exist = 11
+    assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
+    with pytest.raises(QueryException) as e:
+        query2.request_to_q(Struct(method='POST', POST=Data({'query': 'foo=%s' % str(11)})))
+    assert e.value.message == 'Unknown value "%s" for variable "foo"' % value_that_does_not_exist

@@ -7,12 +7,12 @@ from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from tri.struct import FrozenStruct
-from tri.declarative import declarative, creation_ordered
+from tri.declarative import declarative, creation_ordered, extract_subkeys
 import tri.form
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.1.1'
+__version__ = '1.1.2'
 
 
 class QueryException(Exception):
@@ -56,6 +56,21 @@ def value_to_query_string_value_string(v):
     return '"%s"' % v
 
 
+def default_value_to_q(variable, op, value_string_or_f):
+    negated = False
+    if op in ('!=', '!:'):
+        negated = True
+        op = op[1:]
+    if isinstance(value_string_or_f, basestring) and value_string_or_f.lower() == 'null':
+        r = Q(**{variable.attr: None})
+    else:
+        r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
+    if negated:
+        return ~r
+    else:
+        return r
+
+
 @creation_ordered
 class Variable(FrozenStruct):
     """
@@ -75,20 +90,6 @@ class Variable(FrozenStruct):
         kwargs.setdefault('gui__class', tri.form.Field)
         kwargs.setdefault('gui__required', False)
         kwargs.setdefault('op_to_q_op', lambda op: Q_OP_BY_OP[op])
-
-        def default_value_to_q(variable, op, value_string_or_f):
-            negated = False
-            if op in ('!=', '!:'):
-                negated = True
-                op = op[1:]
-            if isinstance(value_string_or_f, basestring) and value_string_or_f.lower() == 'null':
-                r = Q(**{variable.attr: None})
-            else:
-                r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
-            if negated:
-                return ~r
-            else:
-                return r
 
         kwargs.setdefault('value_to_q', default_value_to_q)
 
@@ -130,7 +131,7 @@ class Variable(FrozenStruct):
             assert op == '='
             try:
                 instance = variable.model.objects.get(**{variable.value_to_q_lookup: value_string_or_f})
-            except ObjectDoesNotExist:  # pragma: no cover
+            except ObjectDoesNotExist:
                 return None
             return Q(**{variable.attr + '__pk': instance.pk})
 
@@ -143,7 +144,12 @@ class Variable(FrozenStruct):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
+        def boolean_value_to_q(variable, op, value_string_or_f):
+            if isinstance(value_string_or_f, basestring):
+                value_string_or_f = tri.form.bool_parse(value_string_or_f)
+            return default_value_to_q(variable, op, value_string_or_f)
         kwargs.setdefault('gui__class', tri.form.Field.boolean)
+        kwargs.setdefault('value_to_q', boolean_value_to_q)
         return Variable(**kwargs)
 
     @staticmethod
@@ -351,17 +357,15 @@ class Query(object):
             fields.append(tri.form.Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
 
         for variable in self.variables:
-            if variable.gui__show is not None:
+            if variable.gui__show:
                 # pass gui__* parameters to the GUI component
-                params = {k[len('gui__'):]: v for k, v in variable.items() if k.startswith('gui__') and k != 'gui__class'}
-                params['name'] = variable.name
-                fields.append(variable.gui__class(**params))
+                params = extract_subkeys(variable, 'gui', defaults={'name': variable.name})
+                fields.append(params.pop('class')(**params))
 
         form = tri.form.Form(request=request, fields=fields)
         form.request = request
         form.tri_query = self
         form.tri_query_advanced_value = request_data(request).get(ADVANCED_QUERY_PARAM, '')
-        form.validate()
         return form
 
     def request_to_query_string(self, request):
