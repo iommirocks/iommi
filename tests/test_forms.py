@@ -25,7 +25,7 @@ class TestForm(Form):
     party = Field.choice(choices=['ABC'], required=False)
     username = Field(
         is_valid=lambda form, field, parsed_data: (
-            parsed_data.startswith(form.fields_by_name['party'].parsed_data.lower() + '_'),
+            parsed_data.startswith(form.fields_by_name['party'].parsed_data.lower() + '_') if parsed_data is not None else None,
             'Username must begin with "%s_"' % form.fields_by_name['party'].parsed_data)
     )
     joined = Field.datetime(attr='contact__joined')
@@ -34,6 +34,12 @@ class TestForm(Form):
     staff = Field.boolean()
     admin = Field.boolean()
     manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
+
+
+def test_required():
+    form = TestForm(request=Struct(method='POST', POST=Data({'-': '-'})))
+    assert form.fields_by_name['a_date'].value is None
+    assert form.fields_by_name['a_date'].errors == {'This field is required'}
 
 
 def test_parse():
@@ -142,7 +148,6 @@ def test_parse_errors():
 
     with pytest.raises(AssertionError):
         form.apply(Struct())
-
 
 def test_initial_from_instance():
     assert Form(instance=Struct(a=Struct(b=7)), fields=[Field(name='a__b')]).fields[0].initial == 7
