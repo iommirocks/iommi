@@ -497,13 +497,13 @@ def test_column_presets():
         download = Column.download(is_report)
         run = Column.run(is_report)
         select = Column.select(is_report)
-        check = Column.check(is_report)
+        boolean = Column.boolean(is_report)
         link = Column.link(cell__format="Yadahada name")
         number = Column.number()
 
     data = [Struct(pk=123,
                    get_absolute_url=lambda: "http://yada/",
-                   check=lambda: True,
+                   boolean=lambda: True,
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
     verify_table_html(TestTable(data=data), """
@@ -518,7 +518,7 @@ def test_column_presets():
                     <th class="first_column nopad subheader thin" title="Select all">
                         <i class="fa fa-check-square-o" />
                     </th>
-                    <th class="first_column subheader"> Check </th>
+                    <th class="first_column subheader"> Boolean </th>
                     <th class="first_column subheader"> Link </th>
                     <th class="first_column subheader"> Number </th>
                 </tr>

@@ -22,8 +22,11 @@ __version__ = '0.1.0'
 next_creation_count = itertools.count().next
 
 
-def prepare_headers(request, columns):
-    for column in columns:
+def prepare_headers(request, bound_columns):
+    """
+    :type bound_columns: list of BoundColumn
+    """
+    for column in bound_columns:
         if column.sortable:
             params = request.GET.copy()
             order = request.GET.get('order', None)
@@ -41,7 +44,7 @@ def prepare_headers(request, columns):
             column.url = "?%s" % params.urlencode()
         else:
             column.is_sorting = False
-    return columns
+    return bound_columns
 
 
 def order_by_on_list(objects, order_field, is_desc=False):
@@ -147,7 +150,7 @@ class BoundRow(Struct):
         return render_attrs(attrs)
 
     def render_cells(self):
-        return '\n'.join([column.render_cell(bound_row=self, column=column) for column in self.table.columns])
+        return '\n'.join([column.render_cell(bound_row=self, column=column) for column in self.table.shown_bound_columns])
 
 
 @creation_ordered
@@ -202,6 +205,7 @@ class Column(FrozenStruct):
             defaults = {
                 'name': column.name,
                 'field_name': column.attr,
+                'attr': column.attr,
                 'required': False,
                 'empty_choice_tuple': (None, '', '---', True),
             }
@@ -222,6 +226,7 @@ class Column(FrozenStruct):
             defaults = {
                 'class': Variable,
                 'name': column.name,
+                'attr': column.attr,
                 'model': column.table.Meta.model,
             }
             query_kwargs = extract_subkeys(kwargs, 'query', defaults=defaults)
@@ -330,7 +335,7 @@ class Column(FrozenStruct):
         return Column(**params)
 
     @staticmethod
-    def check(is_report=False, **kwargs):
+    def boolean(is_report=False, **kwargs):
         """
         Shortcut to render booleans as a check mark if true or blank if false.
         """
@@ -342,6 +347,8 @@ class Column(FrozenStruct):
         params = dict(
             cell__format=lambda table, column, row, value: yes_no_formatter(table=table, column=column, row=row, value=value) if is_report else render_icon(value),
             cell__attrs={'class': 'cj'},
+            query__class=Variable.boolean,
+            bulk__class=Variable.boolean,
         )
         params.update(kwargs)
         return Column(**params)
@@ -491,11 +498,8 @@ class Table(object):
             self.columns = columns
             """:type : list of Column"""
 
-        self.columns = [BoundColumn(table=self, **column) for column in self.columns]
-
-        for index, column in enumerate(self.columns):
-            column.table = self
-            column.index = index
+        self.bound_columns = None
+        self.shown_bound_columns = None
 
         self.Meta = self.get_meta()
         self.Meta.update(**kwargs)
@@ -503,7 +507,7 @@ class Table(object):
         self.header_levels = None
 
     def _prepare_auto_rowspan(self):
-        auto_rowspan_columns = [column for column in self.columns if column.auto_rowspan]
+        auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
 
         if auto_rowspan_columns:
             self.data = list(self.data)
@@ -526,18 +530,18 @@ class Table(object):
                 column.cell__attrs['style'] = set_display_none(rowspan_by_row)
 
     def _prepare_evaluate_members(self):
-        for column in self.columns:
-            column.evaluate()
+        for bound_column in self.bound_columns:
+            bound_column.evaluate()
 
-        self.columns = [column for column in self.columns if column.show]
+        self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
 
         model = self.Meta.pop('model')  # avoid trying to eval model, since it's callable
         self.Meta = evaluate_recursive(self.Meta, table=self)
         self.Meta.model = model
 
         if not self.Meta.sortable:
-            for column in self.columns:
-                column.sortable = False
+            for bound_column in self.bound_columns:
+                bound_column.sortable = False
 
     def _prepare_sorting(self):
         # sorting
@@ -545,7 +549,7 @@ class Table(object):
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            sort_column = [x for x in self.columns if x.name == order_field][0]
+            sort_column = [x for x in self.shown_bound_columns if x.name == order_field][0]
             order_args = evaluate(sort_column.sort_key, column=sort_column)
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
@@ -561,7 +565,7 @@ class Table(object):
                     self.data = self.data.order_by(*order_args)
 
     def _prepare_headers(self):
-        headers = prepare_headers(self.request, self.columns)
+        headers = prepare_headers(self.request, self.shown_bound_columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         header_groups = []
@@ -598,9 +602,18 @@ class Table(object):
         return headers
 
     # noinspection PyProtectedMember
-    def prepare(self):
+    def prepare(self, request):
         if self._has_prepared:
             return
+
+        self.bound_columns = [BoundColumn(table=self, **column) for column in self.columns]
+
+        for index, column in enumerate(self.bound_columns):
+            column.table = self
+            column.index = index
+
+        self.request = request
+
         self._has_prepared = True
 
         self._prepare_evaluate_members()
@@ -658,8 +671,6 @@ def table_context(request,
         grouped_links = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # because django templates are crap!
 
         links = [link for link in links if link.group is None]
-
-    table.prepare()
 
     base_context = {
         'links': links,
@@ -751,16 +762,16 @@ def render_table(request,
     if not context:
         context = {}
 
-    query = Query(variables=[evaluate_recursive(column.query__class_internal, column=column) for column in table.columns if column.query__show])
+    table.prepare(request)
+
+    query = Query(variables=[evaluate_recursive(column.query__class_internal, column=column) for column in table.bound_columns if column.query__show])
     query_form = query.form(request) if query.variables else None
     context['filter_form'] = query_form
 
     if query_form:
         table.data = table.data.filter(query.request_to_q(request))
 
-    table.request = request
-
-    bulk_fields = [evaluate_recursive(column.bulk__class_internal, column=column) for column in table.columns if column.bulk__show]
+    bulk_fields = [evaluate_recursive(column.bulk__class_internal, column=column) for column in table.bound_columns if column.bulk__show]
     bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
     context['bulk_form'] = bulk_form
 
