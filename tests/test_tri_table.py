@@ -650,6 +650,8 @@ def test_query():
         class Meta:
             sortable = False
 
+    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(data=Foo.objects.all()), find=dict(id='tri_query_error'), expected_html='<div id="tri_query_error">Invalid syntax for query</div>')
+
     verify_table_html(query=dict(a='1'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="1">

@@ -101,3 +101,69 @@ def test_order_by_on_list_nested():
 
     order_by_on_list(sorted_data, lambda x: x.foo.bar)
     assert sorted_data == list(reversed(data))
+
+
+def test_sort_default_desc_no_sort():
+
+    class TestTable(Table):
+        foo = Column()
+        bar = Column(sort_default_desc=True)
+
+    verify_table_html(TestTable(data=[]),
+                      query=dict(),
+                      find=dict(name='thead'),
+                      expected_html="""\
+        <thead>
+          <tr>
+            <th class="first_column subheader">
+              <a href="?order=foo"> Foo </a>
+            </th>
+            <th class="first_column subheader">
+              <a href="?order=-bar"> Bar </a>
+            </th>
+        </thead>
+    """)
+
+
+def test_sort_default_desc_other_col_sorted():
+
+    class TestTable(Table):
+        foo = Column()
+        bar = Column(sort_default_desc=True)
+
+    verify_table_html(TestTable([]),
+                      query=dict(order='foo'),
+                      find=dict(name='thead'),
+                      expected_html="""\
+        <thead>
+          <tr>
+            <th class="first_column sorted_column subheader">
+              <a href="?order=-foo"> Foo </a>
+            </th>
+            <th class="first_column subheader">
+              <a href="?order=-bar"> Bar </a>
+            </th>
+        </thead>
+    """)
+
+
+def test_sort_default_desc_already_sorted():
+
+    class TestTable(Table):
+        foo = Column()
+        bar = Column(sort_default_desc=True)
+
+    verify_table_html(TestTable([]),
+                      query=dict(order='bar'),
+                      find=dict(name='thead'),
+                      expected_html="""\
+        <thead>
+          <tr>
+            <th class="first_column subheader">
+              <a href="?order=foo"> Foo </a>
+            </th>
+            <th class="first_column sorted_column subheader">
+              <a href="?order=-bar"> Bar </a>
+            </th>
+        </thead>
+    """)

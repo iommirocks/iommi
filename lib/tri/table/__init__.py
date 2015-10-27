@@ -30,16 +30,14 @@ def prepare_headers(request, bound_columns):
         if column.sortable:
             params = request.GET.copy()
             order = request.GET.get('order', None)
+            start_sort_desc = column['sort_default_desc']
+            params['order'] = column['name'] if not start_sort_desc else '-' + column['name']
             if order is not None:
                 is_desc = len(order) > 0 and order[0] == '-'
                 order_field = is_desc and order[1:] or order
-                new_order = is_desc and order[1:] or "-%s" % order
-                if order is not None and order_field == column['name']:
+                if order_field == column['name']:
+                    new_order = is_desc and order[1:] or "-%s" % order
                     params['order'] = new_order
-                else:
-                    params['order'] = column['name']
-            else:
-                params['order'] = column['name']
             column.is_sorting = False if order is None else (column.name == order or ('-' + column.name) == order)
             column.url = "?%s" % params.urlencode()
         else:
@@ -171,6 +169,7 @@ class Column(FrozenStruct):
         :param show: set this to False to hide the column
         :param sortable: set this to False to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
+        :param sort_default_desc: Set to True to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
         :param cell__template: name of a template file. The template gets two arguments: `row` and `user`.
@@ -189,6 +188,7 @@ class Column(FrozenStruct):
             title=None,
             show=True,
             sort_key=lambda column: column.attr,
+            sort_default_desc=False,
             display_name=lambda table, column: force_unicode(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize(),
             sortable=True,
             group=None,
