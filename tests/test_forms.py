@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
 from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest
-from tri.form import getattr_path, setattr_path, BoundField
+from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
 
@@ -213,7 +213,7 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).validate().compact() == '7 compact'
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).validate().compact() == '7 compact\n' + AVOID_EMPTY_FORM
 
 
 def test_render_attrs():
@@ -286,13 +286,13 @@ def test_radio():
         'c',
     ]
     soup = BeautifulSoup(Form(data=Data(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).validate().table())
-    assert len(soup.find_all('input')) == len(choices)
+    assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
     assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
 
 
 def test_hidden():
     soup = BeautifulSoup(Form(data=Data(foo='1'), fields=[Field.hidden(name='foo')]).validate().table())
-    assert [(x.attrs['type'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', '1')]
+    assert [(x.attrs['type'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', '1'), ('hidden', '-')]
 
 
 def test_password():
@@ -394,3 +394,18 @@ def test_render_custom():
             initial='not sentinel value',
             render_value=lambda form, field, value: sentinel),
     ]).validate().table()
+
+
+def test_boolean_initial_true():
+    fields = [Field.boolean(name='foo', initial=True), Field(name='bar', required=False)]
+
+    form = Form(data=Data(), fields=fields).validate()
+    assert form.fields_by_name['foo'].value is True
+
+    # If there are arguments, but not for key foo it means checkbox for foo has been unchecked.
+    # Field foo should therefore be false.
+    form = Form(data=Data(bar='baz'), fields=fields).validate()
+    assert form.fields_by_name['foo'].value is False
+
+    form = Form(data=Data(foo='on', bar='baz'), fields=fields).validate()
+    assert form.fields_by_name['foo'].value is True

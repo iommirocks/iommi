@@ -24,7 +24,25 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.0.4'
+__version__ = '1.0.5'
+
+
+# This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
+# parameters in the request. More specifically, the problem occurs when the checkbox is checked by default,
+# as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
+# is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
+# (at least) this key-value.
+AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
+
+
+def bool_parse(string_value):
+    s = string_value.lower()
+    if s in ('1', 'true', 't', 'yes', 'y', 'on'):
+        return True
+    elif s in ('0', 'false', 'f', 'no', 'n', 'off'):
+        return False
+    else:
+        raise ValueError('%s is not a valid boolean value' % string_value)
 
 
 def foreign_key_factory(model_field, **kwargs):
@@ -194,6 +212,7 @@ class Field(FrozenStruct):
         kwargs.setdefault('post_validation', lambda form, field: None)
         kwargs.setdefault('render_value', lambda form, field, value: unicode(value))
         kwargs.setdefault('is_list', False)
+        kwargs.setdefault('is_boolean', False)
         kwargs.setdefault('model', None)
 
         # grab help_text from model if applicable
@@ -239,18 +258,11 @@ class Field(FrozenStruct):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
-        def bool_parse(string_value, **_):
-            s = string_value.lower()
-            if s in ('1', 'true', 't', 'yes', 'y', 'on'):
-                return True
-            elif s in ('0', 'false', 'f', 'no', 'n', 'off'):
-                return False
-            else:
-                raise ValueError('%s is not a valid boolean value' % string_value)
-        kwargs.setdefault('parse', bool_parse)
+        kwargs.setdefault('parse', lambda string_value, **_: bool_parse(string_value))
         kwargs.setdefault('required', False)
         kwargs.setdefault('template', 'tri_form/{style}_form_row_checkbox.html')
         kwargs.setdefault('input_template', 'tri_form/checkbox.html')
+        kwargs.setdefault('is_boolean', True)
         return Field(**kwargs)
 
     @staticmethod
@@ -412,7 +424,6 @@ class Field(FrozenStruct):
                          for k, v in x.items()})
                 for x in Form.fields_from_model(model=model_field.related_field.model, **kwargs)]
 
-
     @staticmethod
     def comma_separated(parent_field):
         """
@@ -519,7 +530,8 @@ class Form(object):
         self.style = None
         self.model = model
         self._valid = None
-        self.should_parse = data is not None
+        self.should_parse = bool(data)
+        self.evaluate()
         self.validate()
 
     @staticmethod
@@ -542,7 +554,6 @@ class Form(object):
                 else:
                     fields.append(foo)
         return fields
-
 
     @staticmethod
     def from_model(data, model, instance=None, include=None, exclude=None, **kwargs):
@@ -587,15 +598,14 @@ class Form(object):
                 field.errors.add(msg)
 
     def parse(self):
-        if not self.should_parse:
-            return
-
         for field in self.fields:
             if field.is_list:
                 if field.raw_data_list is not None:
                     field.parsed_data_list = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
                 else:
                     field.parsed_data_list = None
+            elif field.is_boolean:
+                field.parsed_data = self.parse_field_raw_value(field, '0' if field.raw_data is None else field.raw_data)
             else:
                 if field.raw_data is not None:
                     field.parsed_data = self.parse_field_raw_value(field, field.raw_data)
@@ -605,32 +615,35 @@ class Form(object):
     def evaluate(self):
         for field in self.fields:
             field.evaluate()
-
-    def validate(self):
-        self.evaluate()
-
         self.fields = [field for field in self.fields if should_show(field)]
         self.fields_by_name = {field.name: field for field in self.fields}
 
-        self.parse()
+    def validate(self):
+        if self.should_parse:
+            self.parse()
 
-        for field in self.fields:
-            value = None
-            value_list = None
-            if field.parsed_data_list is not None or field.initial_list is not None:
-                value_list = field.parsed_data_list if self.should_parse else field.initial_list
-                value_list = [self.validate_field_parsed_data(field, x) for x in value_list]
-            else:
-                value = field.parsed_data if self.should_parse else field.initial
-                value = self.validate_field_parsed_data(field, value)
+            for field in self.fields:
+                value = None
+                value_list = None
+                if field.is_list:
+                    if field.parsed_data_list:
+                        value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list]
+                else:
+                    value = self.validate_field_parsed_data(field, field.parsed_data)
 
-            if self.should_parse and not field.errors:
-                if field.required and not value and not value_list:
-                    field.errors.add('This field is required')
+                if not field.errors:
+                    if field.required and not value and not value_list:
+                        field.errors.add('This field is required')
 
-            if not field.errors:
-                field.value = value
-                field.value_list = value_list
+                if not field.errors:
+                    field.value = value
+                    field.value_list = value_list
+        else:
+            for field in self.fields:
+                if field.is_list:
+                    field.value_list = field.initial_list
+                else:
+                    field.value = field.initial
 
         for field in self.fields:
             field.post_validation(form=self, field=field)
@@ -672,6 +685,7 @@ class Form(object):
                 r.append(get_template_from_string(field.template_string, origin='tri.form', name='Form.render').render(Context(context)))
             else:
                 r.append(render_to_string(field.template.format(style=style), context))
+        r.append(AVOID_EMPTY_FORM)
         return mark_safe('\n'.join(r))
 
     def apply(self, instance):

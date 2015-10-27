@@ -4,7 +4,7 @@ import pytest
 from tests.models import CreateOrEditObjectTest, get_saved_something
 from tri.struct import Struct
 
-from tri.form.views import create_or_edit_object, create_object, edit_object
+from tri.form.views import create_object, edit_object
 
 
 @pytest.mark.django_db
@@ -21,6 +21,9 @@ def test_create_or_edit_object():
     assert response['context_instance']['object_name'] == 'create or edit object test'
     assert response['context_instance']['is_create'] == True
     form = response['context_instance']['form']
+    assert not form.should_parse
+    assert form.fields_by_name['f_int'].initial == 1
+    assert form.fields_by_name['f_int'].errors == set()
     assert form.fields_by_name['f_int'].value == 1
     assert form.fields_by_name['f_float'].value == 2
     assert form.fields_by_name['f_bool'].value is None
