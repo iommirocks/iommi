@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Here's the recent changes to tri.tables.
+Here's the recent changes to tri.table.
 
 .. changelog::
     :version: dev

@@ -2,6 +2,8 @@
 examples/db.sqlite3
 env
 table.css.map
+.DS_Store
+.idea
 
 # C extensions
 *.so

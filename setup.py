@@ -29,7 +29,7 @@ def read_reqs(name):
 
 
 def read_version():
-    with open(os.path.join('lib', 'tri/tables', '__init__.py')) as f:
+    with open(os.path.join('lib', 'tri/table', '__init__.py')) as f:
         m = re.search(r'''__version__\s*=\s*['"]([^'"]*)['"]''', f.read())
         if m:
             return m.group(1)
@@ -39,9 +39,9 @@ def read_version():
 # NB: _don't_ add namespace_packages to setup(), it'll break
 #     everything using imp.find_module
 setup(
-    name='tri.tables',
+    name='tri.table',
     version=read_version(),
-    description='tri.tables is a library to make full featured HTML tables easily',
+    description='tri.table is a library to make full featured HTML tables easily',
     long_description=readme + '\n\n' + history,
     author='Anders Hovmöller',
     author_email='anders.hovmoller@trioptima.com',
@@ -52,7 +52,7 @@ setup(
     install_requires=read_reqs('requirements.txt'),
     license="BSD",
     zip_safe=False,
-    keywords='tri.tables',
+    keywords='tri.table',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

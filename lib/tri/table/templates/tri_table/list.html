@@ -1,0 +1,21 @@
+{% load tri_table %}
+
+{% if filter_form %}
+    {% include "tri_query/form.html" with form=filter_form %}
+{% endif %}
+
+{% if bulk_form %}
+    <form method="post" action=".">{% csrf_token %}
+{% endif %}
+
+{% include "tri_table/table.html" %}
+
+{% if bulk_form %}
+        <table class="newforms">
+            {{ bulk_form }}
+        </table>
+        <input type="submit" class="button" value="Bulk change"/>
+    </form>
+{% endif %}
+
+{% include "tri_table/links.html" %}

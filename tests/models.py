@@ -11,6 +11,4 @@ class Foo(models.Model):
 
 class Bar(models.Model):
     foo = models.ForeignKey(Foo)
-    foo2 = models.ForeignKey(Foo)
-    foo3 = models.ForeignKey(Foo)
     c = models.BooleanField()

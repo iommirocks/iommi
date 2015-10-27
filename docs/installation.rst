@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ pip install tri.tables
+    $ pip install tri.table
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv tri.tables
-    $ pip install tri.tables
+    $ mkvirtualenv tri.table
+    $ pip install tri.table

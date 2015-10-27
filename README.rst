@@ -1,13 +1,13 @@
-.. image:: https://travis-ci.org/TriOptima/tri.tables.svg?branch=master
-    :target: https://travis-ci.org/TriOptima/tri.tables
+.. image:: https://travis-ci.org/TriOptima/tri.table.svg?branch=master
+    :target: https://travis-ci.org/TriOptima/tri.table
 
-.. image:: http://codecov.io/github/TriOptima/tri.tables/coverage.svg?branch=master 
-    :target: http://codecov.io/github/TriOptima/tri.tables?branch=master
+.. image:: http://codecov.io/github/TriOptima/tri.table/coverage.svg?branch=master
+    :target: http://codecov.io/github/TriOptima/tri.table?branch=master
 
-tri.tables
-==========
+tri.table
+=========
 
-tri.tables is a library to make full featured HTML tables easily:
+tri.table is a library to make full featured HTML tables easily:
 
 * generates header, rows and cells
 * grouping of headers
@@ -45,11 +45,11 @@ Simple example
         class FooTable(Table):
             a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
             b = Column()
-            c = Column(cell_format=lambda value: value[-1])  # Display the last value of the tuple
-            sum_c = Column(cell_value=lambda row: sum(row.c), sortable=False)  # Calculate a value not present in Foo
+            c = Column(cell__format=lambda table, column, row, value: value[-1])  # Display the last value of the tuple
+            sum_c = Column(cell__value=lambda table, column, row: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
         # now to get an HTML table:
-        return render_table_to_response(request, FooTable(foos), template_name='base.html')
+        return render_table_to_response(request, FooTable(data=foos), template_name='base.html')
 
 And this is what you get:
 
@@ -82,10 +82,15 @@ Now I can display a list of Bars in a table like this:
 
         class BarTable(Table):
             select = Column.select()  # Shortcut for creating checkboxes to select rows
-            b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
-            c = Column(bulk=True)  # The form is created automatically
+            b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
+                query=True,  # put this field into the query language
+                query__gui=True)  # put this field into the simple filtering GUI
+            c = Column(
+                bulk=True,  # Enable bulk editing for this field
+                query=True,
+                query__gui=True)
 
-        return render_table_to_response(request, BarTable(Bar.objects.all()), template_name='base.html', paginate_by=20)
+        return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 
@@ -93,10 +98,15 @@ All these examples and a bigger example using many more features can be found in
 
 Read the full documentation for more.
 
+Usage
+-----
+
+Add tri.form, tri.query, tri.table to INSTALLED_APPS.
+
 Motivation
 ----------
 
-tri.tables grew out of a frustration with how tables were created at TriOptima. We have a /lot/ of tables and the code to produce them included long HTML templates and often the code to extract and massage the data in some trivial way ended up as methods on the model classes or template tags, even though it was only used by one view. 
+tri.table grew out of a frustration with how tables were created at TriOptima. We have a /lot/ of tables and the code to produce them included long HTML templates and often the code to extract and massage the data in some trivial way ended up as methods on the model classes or template tags, even though it was only used by one view.
 
 This code was also error prone to change since we often have columns that we show or hide based on the permissions of the user, which meant the `thead` and `tbody` had to be in sync. When you have a lot of columns and more and more complex logic for when to show/hide columns this can become harder than it sounds!
 

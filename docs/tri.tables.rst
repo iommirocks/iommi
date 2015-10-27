@@ -1,4 +1,4 @@
-tri.tables package
+tri.table package
 ==================
 
 Subpackages
@@ -6,12 +6,12 @@ Subpackages
 
 .. toctree::
 
-    tri.tables.templatetags
+    tri.table.templatetags
 
 Module contents
 ---------------
 
-.. automodule:: tri.tables
+.. automodule:: tri.table
     :members:
     :undoc-members:
     :show-inheritance:
