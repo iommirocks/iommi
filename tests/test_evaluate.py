@@ -1,6 +1,8 @@
+import sys
 from tri.declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, should_not_evaluate, \
-    should_evaluate, force_evaluate
+    should_evaluate, force_evaluate, get_signature
 from tri.struct import Struct
+import pytest
 
 
 def test_evaluate_recursive():
@@ -57,3 +59,26 @@ def test_no_evaluate_kwargs_mismatch():
 
     assert f is evaluate(f)
     assert f is evaluate(f, y=1)
+
+
+def test_get_signature():
+    def f(a, b):
+        pass
+
+    def f2(b, a):
+        pass
+
+    f3 = lambda a, b: None
+
+    assert get_signature(f) == get_signature(f2) == get_signature(f3) == 'a,b'
+
+    assert get_signature(dir) is None
+
+
+@pytest.mark.skipif(sys.version_info > (3,0), reason='Python 3 DOES support classes as callables')
+def test_get_signature_class():
+    class Foo(object):
+        pass
+
+    assert get_signature(Foo) is None
+

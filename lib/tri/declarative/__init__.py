@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.12.0'
+__version__ = '0.12.1'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -158,8 +158,11 @@ def get_signature(func):
     try:
         return func.__tri_declarative_signature
     except AttributeError:
-        names, _, _, _ = inspect.getargspec(func)
-        func.__tri_declarative_signature = create_signature(names)
+        try:
+            names, _, _, _ = inspect.getargspec(func)
+            func.__tri_declarative_signature = create_signature(names)
+        except TypeError:
+            return None
         return func.__tri_declarative_signature
 
 
