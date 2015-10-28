@@ -17,7 +17,7 @@ from tri.struct import Struct, FrozenStruct
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 next_creation_count = itertools.count().next
 
@@ -193,6 +193,7 @@ class Column(FrozenStruct):
             sortable=True,
             group=None,
             auto_rowspan=False,
+
             cell__template=None,
             cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
             cell__format=default_cell_formatter,
@@ -201,39 +202,8 @@ class Column(FrozenStruct):
             cell__url_title=None,
         ))
 
-        def bulk(column):
-            defaults = {
-                'name': column.name,
-                'field_name': column.attr,
-                'attr': column.attr,
-                'required': False,
-                'empty_choice_tuple': (None, '', '---', True),
-            }
-            # handle callable fields specially
-            model = kwargs.pop('bulk_field__model', column.table.Meta.model)
-            cls = kwargs.pop('bulk_field__class', Field.from_model)
-
-            bulk_field_kwargs = evaluate_recursive(extract_subkeys(kwargs, 'bulk_field', defaults=defaults), table=column.table, column=column)
-
-            bulk_field_kwargs.setdefault('model', model)
-            bulk_field_kwargs.setdefault('class', cls)
-            return bulk_field_kwargs.pop('class')(**bulk_field_kwargs)
-
         kwargs.setdefault('bulk__show', kwargs.get('bulk'))
-        kwargs.setdefault('bulk__class_internal', bulk)
-
-        def query(column):
-            defaults = {
-                'class': Variable,
-                'name': column.name,
-                'attr': column.attr,
-                'model': column.table.Meta.model,
-            }
-            query_kwargs = extract_subkeys(kwargs, 'query', defaults=defaults)
-            return query_kwargs.pop('class')(**query_kwargs)
-
         kwargs.setdefault('query__show', kwargs.get('query'))
-        kwargs.setdefault('query__class_internal', query)
 
         super(Column, self).__init__(**kwargs)
 
@@ -434,15 +404,6 @@ class BoundColumn(Struct):
         )
 
 
-    def evaluate(self):
-        """
-        Evaluates callable/lambda members. After this function is called all members will be values.
-        """
-        members_to_evaluate = {k: v for k, v in self.items() if '__' not in k and k not in ('sort_key', 'model')}
-        for k, v in members_to_evaluate.items():
-            self[k] = evaluate_recursive(v, table=self.table, column=self)
-
-
 @declarative(Column, 'columns')
 @with_meta
 class Table(object):
@@ -505,6 +466,10 @@ class Table(object):
         self.Meta.update(**kwargs)
 
         self.header_levels = None
+        self.query = None
+        self.query_form = None
+        self.query_error = None
+        self.bulk_form = None
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -530,9 +495,6 @@ class Table(object):
                 column.cell__attrs['style'] = set_display_none(rowspan_by_row)
 
     def _prepare_evaluate_members(self):
-        for bound_column in self.bound_columns:
-            bound_column.evaluate()
-
         self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
 
         model = self.Meta.pop('model')  # avoid trying to eval model, since it's callable
@@ -606,7 +568,7 @@ class Table(object):
         if self._has_prepared:
             return
 
-        self.bound_columns = [BoundColumn(table=self, **column) for column in self.columns]
+        self.bound_columns = [evaluate_recursive(BoundColumn(table=self, **column), table=self, column=column) for column in self.columns]
 
         for index, column in enumerate(self.bound_columns):
             column.table = self
@@ -620,6 +582,44 @@ class Table(object):
         self._prepare_sorting()
         headers = self._prepare_headers()
         self._prepare_auto_rowspan()
+
+        if self.Meta.model:
+            def bulk(column):
+                defaults = {
+                    'name': column.name,
+                    'field_name': column.attr,
+                    'attr': column.attr,
+                    'required': False,
+                    'empty_choice_tuple': (None, '', '---', True),
+                    'model': self.Meta.model,
+                    'class': Field.from_model,
+                }
+                bulk_field_kwargs = extract_subkeys(column, 'bulk', defaults=defaults)
+                return bulk_field_kwargs.pop('class')(**bulk_field_kwargs)
+
+            def query(column):
+                defaults = {
+                    'class': Variable,
+                    'name': column.name,
+                    'attr': column.attr,
+                    'model': column.table.Meta.model,
+                }
+                query_kwargs = extract_subkeys(column, 'query', defaults=defaults)
+                return query_kwargs.pop('class')(**query_kwargs)
+
+            self.query = Query(variables=[query(column) for column in self.bound_columns if column.query__show])
+            self.query_form = self.query.form(request) if self.query.variables else None
+
+            self.query_error = ''
+            if self.query_form:
+                try:
+                    self.data = self.data.filter(self.query.request_to_q(request))
+                except QueryException as e:
+                    self.query_error = e.message
+
+            bulk_fields = [bulk(column) for column in self.bound_columns if column.bulk__show]
+            self.bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
+
         return headers, self.header_levels
 
     def bound_rows(self):
@@ -764,31 +764,19 @@ def render_table(request,
 
     table.prepare(request)
 
-    query = Query(variables=[evaluate_recursive(column.query__class_internal, column=column) for column in table.bound_columns if column.query__show])
-    query_form = query.form(request) if query.variables else None
-    context['filter_form'] = query_form
+    context['bulk_form'] = table.bulk_form
+    context['query_form'] = table.query_form
+    context['tri_query_error'] = table.query_error
 
-    query_error = ''
-    if query_form:
-        try:
-            table.data = table.data.filter(query.request_to_q(request))
-        except QueryException as e:
-            query_error = e.message
-    context['tri_query_error'] = query_error
-
-    bulk_fields = [evaluate_recursive(column.bulk__class_internal, column=column) for column in table.bound_columns if column.bulk__show]
-    bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
-    context['bulk_form'] = bulk_form
-
-    if bulk_form and request.method == 'POST':
+    if table.bulk_form and request.method == 'POST':
         pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
 
-        if bulk_form.is_valid():
+        if table.bulk_form.is_valid():
             table.Meta.model.objects.all() \
                 .filter(pk__in=pks) \
                 .filter(**table.Meta.bulk_filter) \
                 .exclude(**table.Meta.bulk_exclude) \
-                .update(**{field.name: field.value for field in bulk_form.fields if field.value is not None and field.value is not ''})
+                .update(**{field.name: field.value for field in table.bulk_form.fields if field.value is not None and field.value is not ''})
 
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 

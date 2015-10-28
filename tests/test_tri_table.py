@@ -92,9 +92,17 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=Foo, choices=Foo.objects.all())
+        foo = Column.choice_queryset(model=Foo, choices=lambda table, column: Foo.objects.all(), query=True, bulk=True, query__gui=True)
 
-    verify_table_html(TestTable(data=Bar.objects.all()), """
+    t = TestTable(data=Bar.objects.all())
+
+    t.prepare(RequestFactory().get("/", ''))
+
+    assert list(t.bound_columns[-1].choices) == list(Foo.objects.all())
+    assert list(t.bulk_form.fields[-1].choices) == [None] + list(Foo.objects.all())  # None because bulk fields are always not required
+    assert list(t.query_form.fields[-1].choices) == [None] + list(Foo.objects.all())  # None because query fields are always not required
+
+    verify_table_html(t, """
         <table class="listview">
             <thead>
                 <tr>
@@ -123,6 +131,7 @@ def test_django_table():
                 </tr>
             </tbody>
         </table>""")
+
 
 
 def test_inheritance():
