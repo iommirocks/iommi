@@ -168,3 +168,14 @@ def test_too_many_args_check():
     with pytest.raises(TypeError):
         Test('foo', 'bar')
 
+
+def test_add_init_kwargs():
+    @with_meta(add_init_kwargs=True)
+    class Test(object):
+        class Meta:
+            foo = 'bar'
+
+        def __init__(self, foo):
+            assert 'bar' == foo
+
+    Test()

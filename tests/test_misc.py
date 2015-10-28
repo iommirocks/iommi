@@ -69,5 +69,5 @@ def test_order_after():
     ]
 
     expected_order = sorted(objects, key=lambda x: x.expected_position)
-    assert range(len(objects)) == [y.expected_position for y in expected_order], 'check expected_order'
+    assert list(range(len(objects))) == [y.expected_position for y in expected_order], 'check expected_order'
     assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]

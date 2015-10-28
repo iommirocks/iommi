@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.11.0'
+__version__ = '0.12.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -151,6 +151,22 @@ def add_args_to_init_call(cls, get_extra_args_function):
     setattr(cls, '__init__', __init__)
 
 
+def get_signature(func):
+    """
+    :type func: Callable
+    """
+    try:
+        return func.__tri_declarative_signature
+    except AttributeError:
+        names, _, _, _ = inspect.getargspec(func)
+        func.__tri_declarative_signature = create_signature(names)
+        return func.__tri_declarative_signature
+
+
+def create_signature(names):
+    return ','.join(sorted(names))
+
+
 def should_not_evaluate(f):
     if not callable(f):
         return f
@@ -159,7 +175,8 @@ def should_not_evaluate(f):
     def wrapper(*args, **kwargs):
         return f(*args, **kwargs)
 
-    wrapper.__evaluate = False
+    wrapper.__tri_declarative_signature = None
+    wrapper.__tri_declarative_signature_underlying = get_signature(f)
     return wrapper
 
 
@@ -172,35 +189,41 @@ def should_evaluate(f):
     def wrapper(*args, **kwargs):
         return f(*args, **kwargs)
 
-    wrapper.__evaluate = True
+    # noinspection PyUnresolvedReferences
+    signature = get_signature(f)
+    wrapper.__tri_declarative_signature = signature if signature is not None else f.__tri_declarative_signature_underlying
     return wrapper
 
 
-def force_evaluate(f, *args, **kwargs):
-    return evaluate(should_evaluate(f), *args, **kwargs)
+def force_evaluate(f, **kwargs):
+    return evaluate(should_evaluate(f), **kwargs)
 
 
-def evaluate(func_or_value, *args, **kwargs):
-    if not getattr(func_or_value, '__evaluate', True):
-        return func_or_value
-    elif callable(func_or_value):
-        return func_or_value(*args, **kwargs)
-    else:
-        return func_or_value
+def evaluate(func_or_value, signature=None, **kwargs):
+    if callable(func_or_value):
+        if signature is None:
+            signature = create_signature(kwargs)
+
+        if get_signature(func_or_value) == signature:
+            return func_or_value(**kwargs)
+    return func_or_value
 
 
-def evaluate_recursive(func_or_value, *args, **kwargs):
+def evaluate_recursive(func_or_value, signature=None, **kwargs):
+    if signature is None:
+        signature = create_signature(kwargs)
+
     if isinstance(func_or_value, dict):
         # The type(item)(** stuff is to preserve the original type
-        return type(func_or_value)(**{k: evaluate_recursive(v, *args, **kwargs) for k, v in func_or_value.items()})
+        return type(func_or_value)(**{k: evaluate_recursive(v, signature=signature, **kwargs) for k, v in func_or_value.items()})
 
     if isinstance(func_or_value, list):
-        return [evaluate_recursive(v, *args, **kwargs) for v in func_or_value]
+        return [evaluate_recursive(v, signature=signature, **kwargs) for v in func_or_value]
 
     if isinstance(func_or_value, set):
-        return {evaluate_recursive(v, *args, **kwargs) for v in func_or_value}
+        return {evaluate_recursive(v, signature=signature, **kwargs) for v in func_or_value}
 
-    return evaluate(func_or_value, *args, **kwargs)
+    return evaluate(func_or_value, signature=signature, **kwargs)
 
 
 def should_show(item):
@@ -311,6 +334,7 @@ def setattr_path(obj, path, value):
 
 LAST = object()
 
+
 def sort_after(l):
     to_be_moved_by_index = []
     to_be_moved_by_name = []
@@ -330,7 +354,7 @@ def sort_after(l):
     for x in reversed(to_be_moved_by_name):
         for i, y in enumerate(result):
             if y.name == x.after:
-                result.insert(i+1, x)
+                result.insert(i + 1, x)
                 break
 
     for x in reversed(to_be_moved_by_index):
