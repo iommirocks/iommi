@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.0.5'
+__version__ = '1.0.6'
 
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
@@ -46,8 +46,8 @@ def bool_parse(string_value):
 
 
 def foreign_key_factory(model_field, **kwargs):
-    kwargs.setdefault('choices', model_field.related_field.model.objects.all())
-    kwargs.setdefault('model', model_field.related_field.model)
+    kwargs.setdefault('choices', model_field.foreign_related_fields[0].model.objects.all())
+    kwargs.setdefault('model', model_field.foreign_related_fields[0].model)
     return Field.choice_queryset(**kwargs)
 
 # The order here is significant because of inheritance structure. More specific must be below less specific.
