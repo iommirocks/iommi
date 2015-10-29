@@ -1,1 +1,1 @@
-tri.struct
+tri.struct ==  1.0.0
