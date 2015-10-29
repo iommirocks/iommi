@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import pytest
 from tri.struct import Struct
 
 from tri.declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
@@ -29,6 +30,12 @@ def test_find_members():
 
     subject = MyDeclarative()
     assert OrderedDict([('foo', Member(foo='bar'))]) == subject.members
+
+
+def test_find_member_fail_on_tuple():
+    with pytest.raises(TypeError):
+        class MyDeclarative(Declarative):
+            foo = Member(foo='bar'),
 
 
 def test_find_members_not_shadowed_by_meta():

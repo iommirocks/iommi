@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.12.2'
+__version__ = '0.13.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -86,6 +86,8 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
             for name, obj in cls.__dict__.items():
                 if isinstance(obj, member_class) and not name.startswith('__'):
                     yield name, obj
+                if type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
+                    raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)
 
         members.update(sorted(generate_member_bindings(), key=lambda x: x[1]))
 
