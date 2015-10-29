@@ -16,7 +16,7 @@ def test_create_or_edit_object():
         request=request,
         model=CreateOrEditObjectTest,
         form__f_int__initial=1,
-        form__f_float__initial=lambda **kwargs: 2,
+        form__f_float__initial=lambda form, field: 2,
         render=lambda **kwargs: kwargs)
     assert response['context_instance']['object_name'] == 'create or edit object test'
     assert response['context_instance']['is_create'] == True

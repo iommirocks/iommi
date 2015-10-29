@@ -377,6 +377,7 @@ def test_field_from_model_foreign_key2():
                            model=FieldFromModelOneToOneTest,
                            foo_one_to_one__class=Field.from_model_expand).fields_by_name.keys() == ['foo_one_to_one__foo']
 
+
 def test_register_field_factory():
     register_field_factory(FooField, lambda **kwargs: 7)
 

@@ -9,7 +9,7 @@ from django.db.models import IntegerField, FloatField, TextField, BooleanField, 
 from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
-from tri.struct import Struct, FrozenStruct
+from tri.struct import Struct, FrozenStruct, merged
 from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path
 
 try:
@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.0.6'
+__version__ = '1.0.7'
 
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
@@ -501,7 +501,7 @@ class Form(object):
             data = request.POST if request.method == 'POST' else request.GET
 
         if isinstance(fields, dict):  # Declarative case
-            fields = [field + dict(name=name) for name, field in fields.items()]
+            fields = [merged(field, dict(name=name)) for name, field in fields.items()]
         self.fields = [BoundField(field, self) for field in fields]
 
         if instance is not None:
