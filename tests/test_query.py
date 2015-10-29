@@ -156,7 +156,7 @@ def test_choice_queryset():
     class Query2(Query):
         foo = Variable.choice_queryset(
             model=Foo,
-            choices=lambda **_: Foo.objects.all(),
+            choices=Foo.objects.all(),
             gui=True,
             value_to_q_lookup='value')
 
