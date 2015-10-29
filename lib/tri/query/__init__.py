@@ -12,7 +12,7 @@ import tri.form
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.1.2'
+__version__ = '1.1.3'
 
 
 class QueryException(Exception):
