@@ -17,7 +17,7 @@ from tri.struct import Struct, FrozenStruct
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 next_creation_count = itertools.count().next
 
@@ -568,13 +568,13 @@ class Table(object):
         if self._has_prepared:
             return
 
+        self.request = request
+
         self.bound_columns = [evaluate_recursive(BoundColumn(table=self, **column), table=self, column=column) for column in self.columns]
 
         for index, column in enumerate(self.bound_columns):
             column.table = self
             column.index = index
-
-        self.request = request
 
         self._has_prepared = True
 
