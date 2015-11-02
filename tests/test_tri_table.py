@@ -893,3 +893,24 @@ def test_default_formatters():
                 </tr>
             </tbody>
         </table>""")
+
+
+@pytest.mark.django_db
+def test_choice_queryset():
+    assert Foo.objects.all().count() == 0
+
+    Foo.objects.create(a=1)
+    Foo.objects.create(a=2)
+
+    class FooTable(Table):
+        foo = Column.choice_queryset(query=True, query__gui=True, bulk=True, choices=lambda table, column: Foo.objects.filter(a=1))
+
+        class Meta:
+            model = Foo
+
+    table = FooTable(data=Foo.objects.all())
+    table.prepare(RequestFactory().get("/"))
+
+    assert repr(table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(table.bulk_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
+    assert repr(table.query_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
