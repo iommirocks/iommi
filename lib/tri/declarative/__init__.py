@@ -161,15 +161,15 @@ def get_signature(func):
         return func.__tri_declarative_signature
     except AttributeError:
         try:
-            names, _, _, _ = inspect.getargspec(func)
-            func.__tri_declarative_signature = create_signature(names)
+            names, _, keywords, _ = inspect.getargspec(func)
+            func.__tri_declarative_signature = create_signature(names, bool(keywords))
         except TypeError:
             return None
         return func.__tri_declarative_signature
 
 
-def create_signature(names):
-    return ','.join(sorted(names))
+def create_signature(names, keywords=False):
+    return ','.join(sorted(names)) + (',*' if keywords else '')
 
 
 def should_not_evaluate(f):
@@ -204,12 +204,34 @@ def force_evaluate(f, **kwargs):
     return evaluate(should_evaluate(f), **kwargs)
 
 
+_matches_cache = {}
+
+
+def matches(caller_parameters, callee_parameters):
+    if caller_parameters == callee_parameters:
+        return True
+
+    cache_key = caller_parameters + ';' + callee_parameters
+    cached_value = _matches_cache.get(cache_key, None)
+    if cached_value is not None:
+        return cached_value
+
+    if callee_parameters.endswith(',*'):
+        result = set(caller_parameters.split(',')) > set(callee_parameters.split(',')[:-1])
+    else:
+        result = False
+
+    _matches_cache[cache_key] = result
+    return result
+
+
 def evaluate(func_or_value, signature=None, **kwargs):
     if callable(func_or_value):
         if signature is None:
             signature = create_signature(kwargs)
 
-        if get_signature(func_or_value) == signature:
+        callee_parameters = get_signature(func_or_value)
+        if callee_parameters is not None and matches(signature, callee_parameters):
             return func_or_value(**kwargs)
     return func_or_value
 

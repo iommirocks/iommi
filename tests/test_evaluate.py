@@ -1,6 +1,6 @@
 import sys
 from tri.declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, should_not_evaluate, \
-    should_evaluate, force_evaluate, get_signature
+    should_evaluate, force_evaluate, get_signature, matches
 from tri.struct import Struct
 import pytest
 
@@ -74,6 +74,28 @@ def test_get_signature():
 
     assert get_signature(dir) is None
 
+
+def test_get_signature_varargs():
+    assert get_signature(lambda a, b, **c: None) == "a,b,*"
+
+
+def test_evaluate_subset_parameters():
+    def f(x, **_):
+        return x
+
+    assert 17 == evaluate(f, x=17, y=42)
+
+
+def test_match_caching():
+    assert matches("a,b", "a,b")
+    assert matches("a,b", "a,*")
+    assert not matches("a,b", "c,*")
+    assert {'a,b;a,*': True,
+            'a,b;c,*': False}
+    assert matches("a,b", "a,*")
+    assert not matches("a,b", "c,*")
+    assert {'a,b;a,*': True,
+            'a,b;c,*': False}
 
 @pytest.mark.skipif(sys.version_info > (3,0), reason='Python 3 DOES support classes as callables')
 def test_get_signature_class():
