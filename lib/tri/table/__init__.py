@@ -17,7 +17,7 @@ from tri.struct import Struct, FrozenStruct
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.0.2'
+__version__ = '1.1.0'
 
 next_creation_count = itertools.count().next
 
@@ -172,12 +172,12 @@ class Column(FrozenStruct):
         :param sort_default_desc: Set to True to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
-        :param cell__template: name of a template file. The template gets two arguments: `row` and `user`.
-        :param cell__value: string or callable with one argument: the row. This is used to extract which data to display from the object.
-        :param cell__format: string or callable with one argument: the value. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
-        :param cell__attrs: dict of attr name to callable with one argument: the row
-        :param cell__url: callable with one argument: the row
-        :param cell__url_title: callable with one argument: the row
+        :param cell__template: name of a template file. The template gets arguments: `table`, `bound_column`, `bound_row`, `row` and `value`.
+        :param cell__value: string or callable that receives kw arguments: `table`, `column` and `row`. This is used to extract which data to display from the object.
+        :param cell__format: string or callable that receives kw arguments: `table`, `column`, `row` and `value`. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
+        :param cell__attrs: dict of attr name to callables that receive kw arguments: `table`, `column`, `row` and `value`.
+        :param cell__url: callable that receives kw arguments: `table`, `column`, `row` and `value`.
+        :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
         setdefaults(kwargs, dict(
             name=None,
@@ -234,7 +234,7 @@ class Column(FrozenStruct):
         Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
         """
         params = dict(
-            cell__url=lambda table, column, row: row.get_absolute_url() + 'edit/',
+            cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
             display_name=''
         )
         params.update(kwargs)
@@ -246,7 +246,7 @@ class Column(FrozenStruct):
         Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
         """
         params = dict(
-            cell__url=lambda table, column, row: row.get_absolute_url() + 'delete/',
+            cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
             display_name=''
         )
         params.update(kwargs)
@@ -258,8 +258,8 @@ class Column(FrozenStruct):
         Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
         """
         params = dict(
-            cell__url=lambda table, column, row: row.get_absolute_url() + 'download/',
-            cell__value=lambda table, column, row: getattr(row, 'pk', False),
+            cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
+            cell__value=lambda row, **_: getattr(row, 'pk', False),
         )
         params.update(kwargs)
         return Column.icon('download', is_report, 'Download', **params)
@@ -274,7 +274,7 @@ class Column(FrozenStruct):
             title='Run',
             sortable=False,
             css_class={'thin'},
-            cell__url=lambda table, column, row: row.get_absolute_url() + 'run/',
+            cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
             cell__value='Run',
             show=show and not is_report,
             filter=False,
@@ -328,7 +328,7 @@ class Column(FrozenStruct):
         """
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
-        def url(table, column, row):
+        def url(table, column, row, value):
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
 
@@ -385,21 +385,22 @@ class BoundColumn(Struct):
         row = bound_row.row
         value = self.cell_contents(bound_row=bound_row, column=column)
 
+        table = bound_row.table
         if self.cell__template:
-            value = render_to_string(self.cell__template, {'table': bound_row.table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
+            value = render_to_string(self.cell__template, {'table': table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
 
         cell_contents = evaluate(self.cell__format, table=self.table, column=self, row=row, value=value)
         if column.cell__url:
-            cell__url = column.cell__url(table=bound_row.table, column=column, row=row) if callable(column.cell__url) else column.cell__url
+            cell__url = column.cell__url(table=table, column=column, row=row, value=value) if callable(column.cell__url) else column.cell__url
 
-            cell__url_title = column.cell__url_title(row) if callable(column.cell__url_title) else column.cell__url_title
+            cell__url_title = column.cell__url_title(table=table, column=column, row=row, value=value) if callable(column.cell__url_title) else column.cell__url_title
             cell_contents = '<a href="{}"{}>{}</a>'.format(
                 cell__url,
                 ' title=%s' % cell__url_title if cell__url_title else '',
                 cell_contents,
             )
         return '<td{attrs}>{cell_contents}</td>'.format(
-            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=bound_row.table, column=column, row=row)),
+            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=column, row=row, value=value)),
             cell_contents=cell_contents,
         )
 
@@ -727,11 +728,11 @@ def table_context(request,
 
 
 def set_row_span(rowspan_by_row):
-    return lambda table, column, row: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else ''
+    return lambda row, **_: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else ''
 
 
 def set_display_none(rowspan_by_row):
-    return lambda table, column, row: 'display: none' if id(row) not in rowspan_by_row else ''
+    return lambda row, **_: 'display: none' if id(row) not in rowspan_by_row else ''
 
 
 def render_table(request,
