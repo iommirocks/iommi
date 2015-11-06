@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.13.0'
+__version__ = '0.14.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -161,15 +161,27 @@ def get_signature(func):
         return func.__tri_declarative_signature
     except AttributeError:
         try:
-            names, _, keywords, _ = inspect.getargspec(func)
-            func.__tri_declarative_signature = create_signature(names, bool(keywords))
+            names, _, keywords, defaults = inspect.getargspec(func)
         except TypeError:
             return None
+        func.__tri_declarative_signature = create_signature(names, number_of_defaults=len(defaults) if defaults else 0, keywords=bool(keywords))
         return func.__tri_declarative_signature
 
 
-def create_signature(names, keywords=False):
-    return ','.join(sorted(names)) + (',*' if keywords else '')
+def create_signature(names, number_of_defaults, keywords):
+    names = sorted(names)
+    if number_of_defaults:
+        result = ','.join(names[:-number_of_defaults]) + \
+                 (',[' + ','.join(names[-number_of_defaults:]) + ']')
+    else:
+        result = ','.join(names)
+    if keywords:
+        result += ',*'
+    return result
+
+
+def signature_from_kwargs(kwargs):
+    return ','.join(sorted(kwargs.keys()))
 
 
 def should_not_evaluate(f):
@@ -207,6 +219,25 @@ def force_evaluate(f, **kwargs):
 _matches_cache = {}
 
 
+def split(parameters):
+    if parameters.endswith(',*'):
+        parameters = parameters[:-2]
+        keywords = True
+    else:
+        keywords = False
+
+    parts = parameters.split(',[')
+    if len(parts) == 1:
+        required = parameters.split(',')
+        optional = []
+    else:
+        required, optional = parts
+        required = required.split(',')
+        optional = optional[:-1].split(',')
+
+    return required, optional, keywords
+
+
 def matches(caller_parameters, callee_parameters):
     if caller_parameters == callee_parameters:
         return True
@@ -216,10 +247,14 @@ def matches(caller_parameters, callee_parameters):
     if cached_value is not None:
         return cached_value
 
-    if callee_parameters.endswith(',*'):
-        result = set(caller_parameters.split(',')) > set(callee_parameters.split(',')[:-1])
+    required, optional, keywords = split(callee_parameters)
+    required = set(required)
+    caller = set(caller_parameters.split(','))
+    if keywords:
+        result = caller >= required
     else:
-        result = False
+        optional = set(optional)
+        result = caller >= required and required.union(optional) >= set(caller)
 
     _matches_cache[cache_key] = result
     return result
@@ -228,7 +263,7 @@ def matches(caller_parameters, callee_parameters):
 def evaluate(func_or_value, signature=None, **kwargs):
     if callable(func_or_value):
         if signature is None:
-            signature = create_signature(kwargs)
+            signature = signature_from_kwargs(kwargs)
 
         callee_parameters = get_signature(func_or_value)
         if callee_parameters is not None and matches(signature, callee_parameters):
@@ -238,7 +273,7 @@ def evaluate(func_or_value, signature=None, **kwargs):
 
 def evaluate_recursive(func_or_value, signature=None, **kwargs):
     if signature is None:
-        signature = create_signature(kwargs)
+        signature = signature_from_kwargs(kwargs)
 
     if isinstance(func_or_value, dict):
         # The type(item)(** stuff is to preserve the original type

@@ -1,6 +1,6 @@
 import sys
 from tri.declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, should_not_evaluate, \
-    should_evaluate, force_evaluate, get_signature, matches
+    should_evaluate, force_evaluate, get_signature, matches, create_signature
 from tri.struct import Struct
 import pytest
 
@@ -76,7 +76,7 @@ def test_get_signature():
 
 
 def test_get_signature_varargs():
-    assert get_signature(lambda a, b, **c: None) == "a,b,*"
+    assert "a,b,*" == get_signature(lambda a, b, **c: None)
 
 
 def test_evaluate_subset_parameters():
@@ -96,6 +96,28 @@ def test_match_caching():
     assert not matches("a,b", "c,*")
     assert {'a,b;a,*': True,
             'a,b;c,*': False}
+
+
+def test_get_signature_description():
+    assert 'a,b' == get_signature(lambda a, b: None)
+    assert 'a,b,[c,d]' == get_signature(lambda a, b, c=None, d=None: None)
+    assert 'a,b,[c,d],*' == get_signature(lambda a, b, c=None, d=None, **_: None)
+
+
+def test_match_optionals():
+    assert matches("a,b", "a,b,[c]")
+    assert matches("a,b,c", "a,b,[c]")
+    assert matches("a,b", "a,b,[c],*")
+    assert not matches("a,b,d", "a,b,[c]")
+    assert matches("a,b,d", "a,b,[c],*")
+
+
+def test_evaluate_extra_kwargs_with_defaults():
+    def f(x, y=17):
+        return x
+
+    assert 17 == evaluate(f, x=17)
+
 
 @pytest.mark.skipif(sys.version_info > (3,0), reason='Python 3 DOES support classes as callables')
 def test_get_signature_class():
