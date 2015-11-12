@@ -6,13 +6,13 @@ from django.db.models import Q, F
 from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
-from tri.struct import FrozenStruct
+from tri.struct import FrozenStruct, merged
 from tri.declarative import declarative, creation_ordered, extract_subkeys
 import tri.form
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.1.4'
+__version__ = '1.2.0'
 
 
 class QueryException(Exception):
@@ -192,7 +192,7 @@ class Query(object):
         """
         assert variables is not None
         if isinstance(variables, dict):  # Declarative case
-            self.variables = [variable + dict(name=name) for name, variable in variables.items()]
+            self.variables = [merged(variable, name=name) for name, variable in variables.items()]
         else:
             self.variables = variables
 

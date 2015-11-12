@@ -1,5 +1,5 @@
 tri.declarative
-tri.struct == 1.0.0
+tri.struct
 django == 1.7
 tri.form
 pyparsing
