@@ -7,12 +7,16 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.14.0'
+__version__ = '0.15.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
     """
-    Class decorator to enable a class (and it's sub-classes) to have a 'Meta' class attribute.
+        Class decorator to enable a class (and it's sub-classes) to have a 'Meta' class attribute.
+
+        @type class_to_decorate: class
+        @type add_init_kwargs: bool
+        @return class
     """
 
     if class_to_decorate is None:
@@ -32,6 +36,9 @@ def get_meta(cls):
     """
         Collect all members of any contained :code:`Meta` class declarations from the given class or any of its base classes.
         (Sub class values take precedence.)
+
+        @type cls: class
+        @return Struct
     """
     merged_attributes = Struct()
     for class_ in reversed(cls.mro()):
@@ -46,6 +53,9 @@ def get_meta(cls):
 def creation_ordered(class_to_decorate):
     """
         Class decorator that ensures that instances will be ordered after creation order when sorted.
+
+        @type class_to_decorate: class
+        @return class
     """
 
     next_index = functools.partial(next, itertools.count())
@@ -74,6 +84,10 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
         Class decorator to enable classes to be defined in the style of django models.
         That is, @declarative classes will get an additional argument to constructor,
         containing an OrderedDict with all class members matching the specified type.
+
+        @type member_class: class
+        @type parameter: str
+        @type add_init_kwargs: bool
     """
 
     def get_members(cls):
@@ -121,6 +135,9 @@ def get_declared(cls, parameter='members'):
         Get the :code:`OrderedDict` value of the parameter collected by the :code:`@declarative` class decorator.
         This is the same value that would be submitted to the :code:`__init__` invocation in the :code:`members`
         argument (or another name if overridden by the :code:`parameter` specification)
+        @type cls: class
+        @type parameter: str
+        @return OrderedDict
     """
 
     return getattr(cls, '_declarative_' + parameter)
@@ -155,7 +172,8 @@ def add_args_to_init_call(cls, get_extra_args_function):
 
 def get_signature(func):
     """
-    :type func: Callable
+        @type func: Callable
+        @return str
     """
     try:
         return func.__tri_declarative_signature
