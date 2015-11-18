@@ -17,7 +17,7 @@ from tri.struct import Struct, FrozenStruct
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 next_creation_count = itertools.count().next
 
@@ -666,6 +666,7 @@ def table_context(request,
 
     grouped_links = {}
     if links is not None:
+        links = evaluate_recursive(links, table=table)
         links = [link for link in links if link.show and link.url]
 
         grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)

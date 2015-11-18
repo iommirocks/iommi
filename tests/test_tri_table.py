@@ -581,15 +581,15 @@ def test_links():
     class TestTable(NoSortTable):
         foo = Column(title="Some title")
 
+    data = [Struct(foo="foo")]
+
     links = [
-        Link('Foo', url='/foo/', show=False),
-        Link('Bar', url='/bar/'),
+        Link('Foo', url='/foo/', show=lambda table: table.data is not data),
+        Link('Bar', url='/bar/', show=lambda table: table.data is data),
         Link('Baz', url='/bar/', group='Other'),
         Link('Qux', url='/bar/', group='Other'),
         Link.icon('icon_foo', title='Icon foo', url='/icon_foo/'),
     ]
-
-    data = [Struct(foo="foo")]
 
     verify_table_html(TestTable(data=data),
                       find=dict(class_='links'),
