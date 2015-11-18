@@ -3,7 +3,6 @@
 {% if not table.data and empty_message %}
     {{ empty_message }}
 {% else %}
-    <div class="table-container">
 
         <table{{ table.render_attrs }}>
 
@@ -18,5 +17,4 @@
           <div class="paginator">{% paginator %}</div>
         {% endif %}
 
-    </div>
 {% endif %}

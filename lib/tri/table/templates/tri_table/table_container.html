@@ -1,0 +1,17 @@
+{% load tri_table %}
+
+<form method="post" action=".">{% csrf_token %}
+
+    {% include "tri_table/table.html" %}
+
+    {% if bulk_form %}
+        <table class="newforms">
+            {{ bulk_form }}
+        </table>
+
+        <input type="submit" class="button" value="Bulk change"/>
+    {% endif %}
+
+    {% include "tri_table/links.html" %}
+
+</form>

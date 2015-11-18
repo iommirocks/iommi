@@ -4,18 +4,6 @@
     {% include "tri_query/form.html" with form=query_form %}
 {% endif %}
 
-{% if bulk_form %}
-    <form method="post" action=".">{% csrf_token %}
-{% endif %}
-
-{% include "tri_table/table.html" %}
-
-{% if bulk_form %}
-        <table class="newforms">
-            {{ bulk_form }}
-        </table>
-        <input type="submit" class="button" value="Bulk change"/>
-    </form>
-{% endif %}
-
-{% include "tri_table/links.html" %}
+<div class="table-container">
+    {% include "tri_table/table_container.html" %}
+</div>
