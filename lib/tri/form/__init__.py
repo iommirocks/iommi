@@ -268,20 +268,23 @@ class Field(FrozenStruct):
     @staticmethod
     def choice(**kwargs):
         """
-        Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title 'ALL'. To override that text pass in the parameter empty_label.
-        :param empty_label: default 'ALL'
+        Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
+        :param empty_label: default '---'
         :param choices: list of objects
         :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
         """
         assert 'choices' in kwargs
 
-        if not kwargs.get('required', True):
+        kwargs.setdefault('required', True)
+        kwargs.setdefault('is_list', False)
+
+        if kwargs['required'] or kwargs['is_list']:
+            kwargs['original_choices'] = kwargs['choices']
+        else:
             kwargs['original_choices'] = kwargs.pop('choices')
             kwargs['choices'] = lambda form, field: [None] + list(evaluate(should_evaluate(field.original_choices), form=form, field=field))
             kwargs['original_parse'] = should_not_evaluate(kwargs.pop('parse', default_parse))
             kwargs['parse'] = lambda form, field, string_value: None if string_value == '' else field.original_parse(form=form, field=field, string_value=string_value)
-        else:
-            kwargs['original_choices'] = kwargs['choices']
 
         def choice_is_valid(form, field, parsed_data):
             del form
@@ -290,7 +293,7 @@ class Field(FrozenStruct):
 
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
-        kwargs.setdefault('empty_choice_tuple', (None, '', 'ALL', True))
+        kwargs.setdefault('empty_choice_tuple', (None, '', '---', True))
         kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value))
         kwargs['choice_to_option'] = should_not_evaluate(kwargs['choice_to_option'])
         kwargs.setdefault('input_template', 'tri_form/choice.html')
@@ -402,6 +405,7 @@ class Field(FrozenStruct):
             model_field = model._meta.get_field(field_name)
 
         kwargs.setdefault('name', field_name)
+        kwargs.setdefault('required', not model_field.null and not model_field.blank)
 
         factory = _field_factory_by_django_field_type.get(type(model_field))
 
@@ -507,7 +511,11 @@ class Form(object):
         if instance is not None:
             for field in self.fields:
                 if field.attr:
-                    field.initial = getattr_path(instance, field.attr)
+                    initial = getattr_path(instance, field.attr)
+                    if field.is_list:
+                        field.initial_list = initial
+                    else:
+                        field.initial = initial
 
         if data:
             for field in self.fields:
