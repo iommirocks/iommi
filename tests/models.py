@@ -37,8 +37,10 @@ class Foo(Model):
 class FieldFromModelForeignKeyTest(Model):
     foo_fk = ForeignKey(Foo)
 
+
 class FieldFromModelOneToOneTest(Model):
     foo_one_to_one = OneToOneField(Foo)
+
 
 class FooField(IntegerField):
     pass

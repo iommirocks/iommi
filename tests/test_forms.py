@@ -149,8 +149,13 @@ def test_parse_errors():
     with pytest.raises(AssertionError):
         form.apply(Struct())
 
+
 def test_initial_from_instance():
     assert Form(instance=Struct(a=Struct(b=7)), fields=[Field(name='a__b')]).fields[0].initial == 7
+
+
+def test_initial_list_from_instance():
+    assert Form(instance=Struct(a=Struct(b=[7])), fields=[Field(name='a__b', is_list=True)]).fields[0].initial_list == [7]
 
 
 def test_show():
