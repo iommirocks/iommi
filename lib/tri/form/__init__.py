@@ -47,7 +47,7 @@ def bool_parse(string_value):
 
 def foreign_key_factory(model_field, **kwargs):
     kwargs.setdefault('choices', model_field.foreign_related_fields[0].model.objects.all())
-    kwargs.setdefault('model', model_field.foreign_related_fields[0].model)
+    kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(**kwargs)
 
 # The order here is significant because of inheritance structure. More specific must be below less specific.
@@ -411,7 +411,7 @@ class Field(FrozenStruct):
                     factory = func
                     break
         assert factory is not None
-        return factory(model_field=model_field, model=should_not_evaluate(model), **kwargs)
+        return factory(model_field=model_field, model=model, **kwargs)
 
     @staticmethod
     def from_model_expand(model, field_name=None, model_field=None, **kwargs):
