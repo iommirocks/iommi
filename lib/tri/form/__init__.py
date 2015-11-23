@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
 from tri.struct import Struct, FrozenStruct, merged
-from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path
+from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults
 
 try:
     from django.template.loader import get_template_from_string
@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
@@ -374,17 +374,18 @@ class Field(FrozenStruct):
         return Field(**kwargs)
 
     @staticmethod
-    def heading(label, show=True, template='tri_form/heading.html'):
+    def heading(label, show=True, template='tri_form/heading.html', **kwargs):
         """
         Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
         """
-        kwargs = dict(
+        setdefaults(kwargs, dict(
             label=label,
             show=show,
             template=template,
             editable=False,
+            attr=None,
             name='@@heading@@',
-        )
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -506,7 +507,7 @@ class Form(object):
 
         if isinstance(fields, dict):  # Declarative case
             fields = [merged(field, dict(name=name)) for name, field in fields.items()]
-        self.fields = [BoundField(field, self) for field in fields]
+        self.fields = sort_after([BoundField(field, self) for field in fields])
 
         if instance is not None:
             for field in self.fields:
@@ -564,7 +565,7 @@ class Form(object):
         return fields
 
     @staticmethod
-    def from_model(data, model, instance=None, include=None, exclude=None, **kwargs):
+    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -580,7 +581,7 @@ class Form(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        return Form(data=data, model=model, instance=instance, fields=Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs))
+        return Form(data=data, model=model, instance=instance, fields=Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs) + (extra_fields if extra_fields is not None else []))
 
     def is_valid(self):
         if self._valid is None:
