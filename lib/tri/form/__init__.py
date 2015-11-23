@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
