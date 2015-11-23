@@ -132,7 +132,7 @@ class BoundField(Struct):
 
     def render_container_css_classes(self):
         c = self.get('container_css_classes', set())
-        if self.get('required', False):
+        if self.get('required', False) and self.get('editable', True):
             c.add('required')
         if self.form.style == 'compact':
             c.add('key-value')
@@ -607,6 +607,9 @@ class Form(object):
 
     def parse(self):
         for field in self.fields:
+            if not field.editable:
+                continue
+
             if field.is_list:
                 if field.raw_data_list is not None:
                     field.parsed_data_list = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
@@ -631,6 +634,9 @@ class Form(object):
             self.parse()
 
             for field in self.fields:
+                if not field.editable:
+                    continue
+
                 value = None
                 value_list = None
                 if field.is_list:
@@ -702,6 +708,8 @@ class Form(object):
         """
         assert self.is_valid()
         for field in self.fields:
+            if not field.editable:
+                continue
             if field.attr is not None:
                 if field.value is not None:
                     setattr_path(instance, field.attr, field.value)
