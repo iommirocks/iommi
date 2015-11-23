@@ -4,11 +4,12 @@ from django.template import RequestContext
 from django.template.loader import render_to_string
 from tri.form import Form, extract_subkeys
 
+
 def edit_object(
         request,
         instance,
         redirect_to=None,
-        on_save=lambda kwargs: None,
+        on_save=lambda **kwargs: None,
         render=render_to_string,
         redirect=lambda request, redirect_to: HttpResponseRedirect(redirect_to),
         **kwargs):
@@ -26,11 +27,12 @@ def edit_object(
         redirect=redirect,
         **kwargs)
 
+
 def create_object(
         request,
         model,
         redirect_to=None,
-        on_save=lambda kwargs: None,
+        on_save=lambda **kwargs: None,
         render=render_to_string,
         redirect=lambda request, redirect_to: HttpResponseRedirect(redirect_to),
         **kwargs):
@@ -45,13 +47,14 @@ def create_object(
         redirect=redirect,
         **kwargs)
 
+
 def create_or_edit_object(
         request,
         model,
         is_create,
         instance=None,
         redirect_to=None,
-        on_save=lambda kwargs: None,
+        on_save=lambda **kwargs: None,
         render=render_to_string,
         redirect=lambda request, redirect_to: HttpResponseRedirect(redirect_to),
         **kwargs):
@@ -70,7 +73,8 @@ def create_or_edit_object(
         form.apply(instance)
         instance.save()
 
-        on_save(kwargs)
+        kwargs['instance'] = instance
+        on_save(**kwargs)
 
         return create_or_edit_object_redirect(is_create, redirect_to, request, redirect)
 
