@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
 from tri.struct import Struct, FrozenStruct, merged
-from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path
+from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults
 
 try:
     from django.template.loader import get_template_from_string
@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
@@ -132,7 +132,7 @@ class BoundField(Struct):
 
     def render_container_css_classes(self):
         c = self.get('container_css_classes', set())
-        if self.get('required', False):
+        if self.get('required', False) and self.get('editable', True):
             c.add('required')
         if self.form.style == 'compact':
             c.add('key-value')
@@ -268,20 +268,23 @@ class Field(FrozenStruct):
     @staticmethod
     def choice(**kwargs):
         """
-        Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title 'ALL'. To override that text pass in the parameter empty_label.
-        :param empty_label: default 'ALL'
+        Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
+        :param empty_label: default '---'
         :param choices: list of objects
         :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
         """
         assert 'choices' in kwargs
 
-        if not kwargs.get('required', True):
+        kwargs.setdefault('required', True)
+        kwargs.setdefault('is_list', False)
+
+        if kwargs['required'] or kwargs['is_list']:
+            kwargs['original_choices'] = kwargs['choices']
+        else:
             kwargs['original_choices'] = kwargs.pop('choices')
             kwargs['choices'] = lambda form, field: [None] + list(evaluate(should_evaluate(field.original_choices), form=form, field=field))
             kwargs['original_parse'] = should_not_evaluate(kwargs.pop('parse', default_parse))
             kwargs['parse'] = lambda form, field, string_value: None if string_value == '' else field.original_parse(form=form, field=field, string_value=string_value)
-        else:
-            kwargs['original_choices'] = kwargs['choices']
 
         def choice_is_valid(form, field, parsed_data):
             del form
@@ -290,7 +293,7 @@ class Field(FrozenStruct):
 
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
-        kwargs.setdefault('empty_choice_tuple', (None, '', 'ALL', True))
+        kwargs.setdefault('empty_choice_tuple', (None, '', '---', True))
         kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value))
         kwargs['choice_to_option'] = should_not_evaluate(kwargs['choice_to_option'])
         kwargs.setdefault('input_template', 'tri_form/choice.html')
@@ -371,17 +374,18 @@ class Field(FrozenStruct):
         return Field(**kwargs)
 
     @staticmethod
-    def heading(label, show=True, template='tri_form/heading.html'):
+    def heading(label, show=True, template='tri_form/heading.html', **kwargs):
         """
         Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
         """
-        kwargs = dict(
+        setdefaults(kwargs, dict(
             label=label,
             show=show,
             template=template,
             editable=False,
+            attr=None,
             name='@@heading@@',
-        )
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -402,6 +406,7 @@ class Field(FrozenStruct):
             model_field = model._meta.get_field(field_name)
 
         kwargs.setdefault('name', field_name)
+        kwargs.setdefault('required', not model_field.null and not model_field.blank)
 
         factory = _field_factory_by_django_field_type.get(type(model_field))
 
@@ -502,12 +507,16 @@ class Form(object):
 
         if isinstance(fields, dict):  # Declarative case
             fields = [merged(field, dict(name=name)) for name, field in fields.items()]
-        self.fields = [BoundField(field, self) for field in fields]
+        self.fields = sort_after([BoundField(field, self) for field in fields])
 
         if instance is not None:
             for field in self.fields:
                 if field.attr:
-                    field.initial = getattr_path(instance, field.attr)
+                    initial = getattr_path(instance, field.attr)
+                    if field.is_list:
+                        field.initial_list = initial
+                    else:
+                        field.initial = initial
 
         if data:
             for field in self.fields:
@@ -556,7 +565,7 @@ class Form(object):
         return fields
 
     @staticmethod
-    def from_model(data, model, instance=None, include=None, exclude=None, **kwargs):
+    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -572,7 +581,7 @@ class Form(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        return Form(data=data, model=model, instance=instance, fields=Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs))
+        return Form(data=data, model=model, instance=instance, fields=Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs) + (extra_fields if extra_fields is not None else []))
 
     def is_valid(self):
         if self._valid is None:
@@ -599,6 +608,9 @@ class Form(object):
 
     def parse(self):
         for field in self.fields:
+            if not field.editable:
+                continue
+
             if field.is_list:
                 if field.raw_data_list is not None:
                     field.parsed_data_list = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
@@ -623,6 +635,9 @@ class Form(object):
             self.parse()
 
             for field in self.fields:
+                if not field.editable:
+                    continue
+
                 value = None
                 value_list = None
                 if field.is_list:
@@ -694,6 +709,8 @@ class Form(object):
         """
         assert self.is_valid()
         for field in self.fields:
+            if not field.editable:
+                continue
             if field.attr is not None:
                 if field.value is not None:
                     setattr_path(instance, field.attr, field.value)
