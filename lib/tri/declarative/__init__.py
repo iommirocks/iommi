@@ -7,7 +7,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.15.0'
+__version__ = '0.16.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -93,7 +93,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
     def get_members(cls):
         members = OrderedDict()
         for base in cls.__bases__:
-            inherited_members = getattr(base, '_declarative_' + parameter, {})
+            inherited_members = get_declared(base, parameter)
             members.update(inherited_members)
 
         def generate_member_bindings():
@@ -111,7 +111,8 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
 
         class DeclarativeMeta(class_to_decorate.__class__):
             def __init__(cls, name, bases, dict):
-                setattr(cls, '_declarative_' + parameter, get_members(cls))
+                members = get_members(cls)
+                set_declared(cls, members, parameter)
                 super(DeclarativeMeta, cls).__init__(name, bases, dict)
 
         new_class = DeclarativeMeta(class_to_decorate.__name__,
@@ -120,14 +121,25 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
 
         if add_init_kwargs:
             def get_extra_args_function(self):
-                return {parameter: getattr(self, '_declarative_' + parameter)}
+                return {parameter: get_declared(self, parameter)}
             add_args_to_init_call(new_class, get_extra_args_function)
 
         setattr(new_class, 'get_declared', classmethod(get_declared))
+        setattr(new_class, 'set_declared', classmethod(set_declared))
 
         return new_class
 
     return decorator
+
+
+def set_declared(cls, value, parameter='members'):
+    """
+        @type cls: class
+        @type value: OrderedDict
+        @type parameter: str
+    """
+
+    setattr(cls, '_declarative_' + parameter, value)
 
 
 def get_declared(cls, parameter='members'):
@@ -140,7 +152,7 @@ def get_declared(cls, parameter='members'):
         @return OrderedDict
     """
 
-    return getattr(cls, '_declarative_' + parameter)
+    return getattr(cls, '_declarative_' + parameter, {})
 
 
 def add_args_to_init_call(cls, get_extra_args_function):
@@ -155,19 +167,25 @@ def add_args_to_init_call(cls, get_extra_args_function):
             # We might fail on not being able to find the signature of builtin constructors
             pass
 
-    def __init__(self, *args, **kwargs):
-        new_kwargs = {}
-        new_kwargs.update(get_extra_args_function(self))
-        if pos_arg_names:
-            if len(args) > len(pos_arg_names):
-                raise TypeError('Too many positional argument')
-            new_kwargs.update((k, v) for k, v in zip(pos_arg_names, args))
-            args = []
-        new_kwargs.update(kwargs)
-        __init__orig(self, *args, **new_kwargs)
+    def argument_injector_wrapper(self, *args, **kwargs):
+        new_args, new_kwargs = inject_args(args, kwargs, get_extra_args_function(self), pos_arg_names)
+        __init__orig(self, *new_args, **new_kwargs)
 
-    __init__.pos_arg_names = pos_arg_names
-    setattr(cls, '__init__', __init__)
+    argument_injector_wrapper.pos_arg_names = pos_arg_names
+    setattr(cls, '__init__', argument_injector_wrapper)
+
+
+def inject_args(args, kwargs, extra_args, pos_arg_names):
+    new_kwargs = dict(extra_args)
+    if pos_arg_names:
+        if len(args) > len(pos_arg_names):
+            raise TypeError('Too many positional argument')
+        new_kwargs.update((k, v) for k, v in zip(pos_arg_names, args))
+        new_args = []
+    else:
+        new_args = args
+    new_kwargs.update(kwargs)
+    return new_args, new_kwargs
 
 
 def get_signature(func):
