@@ -26,6 +26,9 @@ except ImportError:  # pragma: no cover
 
 __version__ = '1.3.0'
 
+def capitalize(s):
+    return s[0].upper() + s[1:] if s else s
+
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
 # parameters in the request. More specifically, the problem occurs when the checkbox is checked by default,
@@ -172,7 +175,7 @@ class Field(FrozenStruct):
         :param initial: initial value of the field 
         :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
         :param id: the HTML id attribute. Default: 'id_%s' % name
-        :param label: the text in the HTML label tag. Default: name.capitalize().replace('_', ' ')
+        :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'tri_form/{style}_form_row.html'
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
         :param input_template: django template filename for the template for just the input control. Default: 'tri_form/input.html'
@@ -195,7 +198,7 @@ class Field(FrozenStruct):
             name = kwargs['name']
             kwargs.setdefault('attr', name)
             kwargs.setdefault('id', 'id_%s' % name)
-            kwargs.setdefault('label', name.capitalize().replace('_', ' '))
+            kwargs.setdefault('label', capitalize(name).replace('_', ' '))
         kwargs.setdefault('is_valid', lambda form, field, parsed_data: (True, ''))
         kwargs.setdefault('parse', default_parse)
         kwargs.setdefault('initial')
@@ -407,6 +410,7 @@ class Field(FrozenStruct):
 
         kwargs.setdefault('name', field_name)
         kwargs.setdefault('required', not model_field.null and not model_field.blank)
+        kwargs.setdefault('label', capitalize(model_field.verbose_name))
 
         factory = _field_factory_by_django_field_type.get(type(model_field))
 
