@@ -710,7 +710,9 @@ class Form(object):
         assert self.is_valid()
         for field in self.fields:
             if not field.editable:
-                continue
+                field.value = field.initial
+                field.value_list = field.initial_list
+
             if field.attr is not None:
                 if field.value is not None:
                     setattr_path(instance, field.attr, field.value)
