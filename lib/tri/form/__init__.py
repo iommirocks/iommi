@@ -24,7 +24,8 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.4.0'
+__version__ = '1.5.0'
+
 
 def capitalize(s):
     return s[0].upper() + s[1:] if s else s
@@ -499,7 +500,7 @@ class Form(object):
 
     See tri.declarative docs for more on this dual style of declaration.
     """
-    def __init__(self, request=None, data=None, instance=None, fields=None, model=None):
+    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None):
         """
         :type fields: list of Field
         :type data: dict[basestring, basestring]
@@ -539,13 +540,16 @@ class Form(object):
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
+        if post_validation is not None:
+            self.post_validation = post_validation
         self.fields_by_name = {field.name: field for field in self.fields}
         self.style = None
         self.model = model
         self._valid = None
+        self.errors = []
         self.should_parse = bool(data)
         self.evaluate()
-        self.validate()
+        self.is_valid()
 
     @staticmethod
     def fields_from_model(model, include=None, exclude=None, **kwargs):
@@ -569,7 +573,7 @@ class Form(object):
         return fields
 
     @staticmethod
-    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -585,7 +589,8 @@ class Form(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        return Form(data=data, model=model, instance=instance, fields=Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs) + (extra_fields if extra_fields is not None else []))
+        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs) + (extra_fields if extra_fields is not None else [])
+        return Form(data=data, model=model, instance=instance, fields=fields, post_validation=post_validation)
 
     def is_valid(self):
         if self._valid is None:
@@ -595,7 +600,8 @@ class Form(object):
                     self._valid = False
                     break
             else:
-                self._valid = True
+                if not self.errors:
+                    self._valid = True
         return self._valid
 
     def parse_field_raw_value(self, field, raw_data):
@@ -666,7 +672,11 @@ class Form(object):
 
         for field in self.fields:
             field.post_validation(form=self, field=field)
+        self.post_validation(form=self)
         return self
+
+    def post_validation(self, form):
+        pass
 
     def validate_field_parsed_data(self, field, value):
         is_valid, error = field.is_valid(
@@ -682,6 +692,9 @@ class Form(object):
                 assert error != ''
                 field.errors.add(e)
         return value
+
+    def add_error(self, msg):
+        self.errors.append(msg)
 
     def __unicode__(self):
         return self.table()

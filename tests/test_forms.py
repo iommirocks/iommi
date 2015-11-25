@@ -34,6 +34,7 @@ class TestForm(Form):
     staff = Field.boolean()
     admin = Field.boolean()
     manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
+    not_editable = Field.text(initial='Some non-editable text', editable=False)
 
 
 def test_required():
@@ -99,10 +100,13 @@ def test_parse():
         username='abc_foo',
         manages=['DEF', 'KTH'],
         a_date=date(2014, 2, 12),
-        a_time=time(01, 02, 03))
+        a_time=time(01, 02, 03),
+        not_editable='Some non-editable text')
 
 
 def test_parse_errors():
+    def post_validation(form):
+        form.add_error('General snafu')
     form = TestForm(
         data=Data(
             party='foo',
@@ -112,9 +116,13 @@ def test_parse_errors():
             admin='foo',
             a_date='fooasd',
             a_time='asdasd',
-        ))
+        ),
+        post_validation=post_validation)
 
     assert not form.is_valid()
+
+    assert form.errors == ["General snafu"]
+
     assert form.fields_by_name['party'].parsed_data == 'foo'
     assert form.fields_by_name['party'].errors == {'foo not in available choices'}
     assert form.fields_by_name['party'].value is None
