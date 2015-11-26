@@ -1,4 +1,5 @@
 django
 tri.declarative
+tri.named_struct
 tri.struct
 tri.query

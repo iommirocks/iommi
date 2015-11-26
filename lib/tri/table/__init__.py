@@ -13,7 +13,8 @@ from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
 from tri.form import extract_subkeys, Field, Form
-from tri.struct import Struct, FrozenStruct
+from tri.named_struct import NamedFrozenStruct, NamedStructField, NamedStruct
+from tri.struct import Struct, merged
 from tri.query import Query, Variable, QueryException
 
 
@@ -148,15 +149,46 @@ class BoundRow(Struct):
         return render_attrs(attrs)
 
     def render_cells(self):
-        return '\n'.join([column.render_cell(bound_row=self, column=column) for column in self.table.shown_bound_columns])
+        return '\n'.join([bound_column.render_cell(bound_row=self) for bound_column in self.table.shown_bound_columns])
 
 
-@creation_ordered
-class Column(FrozenStruct):
+class ColumnBase(NamedStruct):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
 
+    name = NamedStructField()
+    attrs = NamedStructField(default={})
+    attr = NamedStructField(default=lambda table, column: column.name)
+    css_class = NamedStructField(default=set())
+    url = NamedStructField()
+    title = NamedStructField()
+    show = NamedStructField(default=True)
+    sort_key = NamedStructField(lambda column: column.attr)
+    sort_default_desc = NamedStructField(default=False)
+    display_name = NamedStructField(default=lambda table, column: force_unicode(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
+    sortable = NamedStructField(default=True)
+    group = NamedStructField()
+    auto_rowspan = NamedStructField(default=False)
+
+    cell__template = NamedStructField()
+    cell__value = NamedStructField(default=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)))
+    cell__format = NamedStructField(default=default_cell_formatter)
+    cell__attrs = NamedStructField(default={})
+    cell__url = NamedStructField()
+    """ @type : str or callable """
+    cell__url_title = NamedStructField()
+    """ @type : str or callable """
+
+    model = NamedStructField()
+    choices = NamedStructField()
+    bulk = NamedStructField()
+    query = NamedStructField()
+
+
+# @frozen
+@creation_ordered
+class Column(ColumnBase):
     # noinspection PyShadowingBuiltins
     def __init__(self, **kwargs):
         """
@@ -180,30 +212,13 @@ class Column(FrozenStruct):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
         setdefaults(kwargs, dict(
-            name=None,
-            attrs={},
-            attr=lambda table, column: column.name,
-            css_class=set(),
-            url=None,
-            title=None,
-            show=True,
-            sort_key=lambda column: column.attr,
-            sort_default_desc=False,
-            display_name=lambda table, column: force_unicode(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize(),
-            sortable=True,
-            group=None,
-            auto_rowspan=False,
-
-            cell__template=None,
-            cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
-            cell__format=default_cell_formatter,
-            cell__attrs={},
-            cell__url=None,
-            cell__url_title=None,
+            bulk__show=kwargs.pop('bulk', False),
+            query__show=kwargs.pop('query', False)
         ))
 
-        kwargs.setdefault('bulk__show', kwargs.get('bulk'))
-        kwargs.setdefault('query__show', kwargs.get('query'))
+        kwargs['bulk'] = Struct(extract_subkeys(kwargs, 'bulk'))
+        kwargs['query'] = Struct(extract_subkeys(kwargs, 'query'))
+        kwargs = {k: v for k, v in kwargs.items() if not k.startswith('bulk__') and not k.startswith('query__')}
 
         super(Column, self).__init__(**kwargs)
 
@@ -214,62 +229,58 @@ class Column(FrozenStruct):
 
         :param icon: the font awesome name of the icon
         """
-        params = dict(
+        setdefaults(kwargs, dict(
             name='',
             display_name='',
             sortable=False,
             css_class={'thin'},
             show=show and not is_report,
             title=icon_title,
-            filter=False,
             cell__value=lambda table, column, row: True,
             cell__attrs={'class': 'cj'},
-            cell__format=lambda table, column, row, value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else '')
-        params.update(kwargs)
-        return Column(**params)
+            cell__format=lambda table, column, row, value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
+        ))
+        return Column(**kwargs)
 
     @staticmethod
     def edit(is_report=False, **kwargs):
         """
         Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
         """
-        params = dict(
+        setdefaults(kwargs, dict(
             cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
             display_name=''
-        )
-        params.update(kwargs)
-        return Column.icon('pencil-square-o', is_report, 'Edit', **params)
+        ))
+        return Column.icon('pencil-square-o', is_report, 'Edit', **kwargs)
 
     @staticmethod
     def delete(is_report=False, **kwargs):
         """
         Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
         """
-        params = dict(
+        setdefaults(kwargs, dict(
             cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
             display_name=''
-        )
-        params.update(kwargs)
-        return Column.icon('trash-o', is_report, 'Delete', **params)
+        ))
+        return Column.icon('trash-o', is_report, 'Delete', **kwargs)
 
     @staticmethod
     def download(is_report=False, **kwargs):
         """
         Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
         """
-        params = dict(
+        setdefaults(kwargs, dict(
             cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
             cell__value=lambda row, **_: getattr(row, 'pk', False),
-        )
-        params.update(kwargs)
-        return Column.icon('download', is_report, 'Download', **params)
+        ))
+        return Column.icon('download', is_report, 'Download', **kwargs)
 
     @staticmethod
     def run(is_report=False, show=True, **kwargs):
         """
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
         """
-        params = dict(
+        setdefaults(kwargs, dict(
             name='',
             title='Run',
             sortable=False,
@@ -277,10 +288,8 @@ class Column(FrozenStruct):
             cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
             cell__value='Run',
             show=show and not is_report,
-            filter=False,
-        )
-        params.update(kwargs)
-        return Column(**params)
+        ))
+        return Column(**kwargs)
 
     @staticmethod
     def select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, **kwargs):
@@ -290,19 +299,17 @@ class Column(FrozenStruct):
         :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
         """
-        params = dict(
+        setdefaults(kwargs, dict(
             name='__select__',
             title='Select all',
             display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
             sortable=False,
             show=show and not is_report,
-            filter=False,
             css_class={'thin', 'nopad'},
             cell__attrs={'class': 'cj'},
             cell__value=lambda table, column, row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
-        )
-        params.update(kwargs)
-        return Column(**params)
+        ))
+        return Column(**kwargs)
 
     @staticmethod
     def boolean(is_report=False, **kwargs):
@@ -314,14 +321,13 @@ class Column(FrozenStruct):
                 value = value()
             return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
 
-        params = dict(
+        setdefaults(kwargs, dict(
             cell__format=lambda table, column, row, value: yes_no_formatter(table=table, column=column, row=row, value=value) if is_report else render_icon(value),
             cell__attrs={'class': 'cj'},
             query__class=Variable.boolean,
             bulk__class=Field.boolean,
-        )
-        params.update(kwargs)
-        return Column(**params)
+        ))
+        return Column(**kwargs)
 
     @staticmethod
     def link(**kwargs):
@@ -332,12 +338,10 @@ class Column(FrozenStruct):
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
 
-        params = dict(
+        setdefaults(kwargs, dict(
             cell__url=url,
-            filter=False,
-        )
-        params.update(kwargs)
-        return Column(**params)
+        ))
+        return Column(**kwargs)
 
     @staticmethod
     def number(**kwargs):
@@ -380,35 +384,45 @@ class Column(FrozenStruct):
 
 
 
-class BoundColumn(Struct):
+class BoundColumn(ColumnBase):
+
+    table = NamedStructField()
+    """ @type : Table """
+    column = NamedStructField()
+    """ @type : Column """
+    index = NamedStructField()
+    """ @type : int """
+    is_sorting = NamedStructField()
+    """ @type : bool """
+
     def render_css_class(self):
         return ' '.join(sorted(self.css_class))
 
-    def cell_contents(self, bound_row, column):
-        return evaluate(self.cell__value, table=bound_row.table, column=column, row=bound_row.row)
+    def cell_contents(self, bound_row):
+        return evaluate(self.cell__value, table=bound_row.table, column=self.column, row=bound_row.row)
 
-    def render_cell(self, bound_row, column):
+    def render_cell(self, bound_row):
         assert self.show
 
         row = bound_row.row
-        value = self.cell_contents(bound_row=bound_row, column=column)
+        value = self.cell_contents(bound_row=bound_row)
 
         table = bound_row.table
         if self.cell__template:
             value = render_to_string(self.cell__template, {'table': table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
 
         cell_contents = evaluate(self.cell__format, table=self.table, column=self, row=row, value=value)
-        if column.cell__url:
-            cell__url = column.cell__url(table=table, column=column, row=row, value=value) if callable(column.cell__url) else column.cell__url
+        if self.cell__url:
+            cell__url = self.cell__url(table=table, column=self, row=row, value=value) if callable(self.cell__url) else self.cell__url
 
-            cell__url_title = column.cell__url_title(table=table, column=column, row=row, value=value) if callable(column.cell__url_title) else column.cell__url_title
+            cell__url_title = self.cell__url_title(table=table, column=(self), row=row, value=value) if callable(self.cell__url_title) else self.cell__url_title
             cell_contents = '<a href="{}"{}>{}</a>'.format(
                 cell__url,
                 ' title=%s' % cell__url_title if cell__url_title else '',
                 cell_contents,
             )
         return '<td{attrs}>{cell_contents}</td>'.format(
-            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=column, row=row, value=value)),
+            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=(self), row=row, value=value)),
             cell_contents=cell_contents,
         )
 
@@ -499,7 +513,7 @@ class Table(object):
                 prev_value = no_value_set
                 prev_row = no_value_set
                 for bound_row in self.bound_rows():
-                    value = column.cell_contents(bound_row=bound_row, column=column)
+                    value = column.cell_contents(bound_row=bound_row)
                     if prev_value != value:
                         rowspan_by_row[id(bound_row.row)] = 1
                         prev_value = value
@@ -587,11 +601,13 @@ class Table(object):
 
         self.request = request
 
-        self.bound_columns = [evaluate_recursive(BoundColumn(table=self, **column), table=self, column=column) for column in self.columns]
+        def bind_columns():
+            for index, column in enumerate(self.columns):
+                values = evaluate_recursive(Struct(column), table=self, column=column)
+                values = merged(values, column=column, table=self, index=index)
+                yield BoundColumn(**values)
 
-        for index, column in enumerate(self.bound_columns):
-            column.table = self
-            column.index = index
+        self.bound_columns = list(bind_columns())
 
         self._has_prepared = True
 
@@ -602,7 +618,7 @@ class Table(object):
 
         if self.Meta.model:
             def bulk(column):
-                defaults = {
+                bulk_kwargs = {
                     'name': column.name,
                     'field_name': column.attr,
                     'attr': column.attr,
@@ -611,21 +627,21 @@ class Table(object):
                     'model': self.Meta.model,
                     'class': Field.from_model,
                 }
-                bulk_field_kwargs = extract_subkeys(column, 'bulk', defaults=defaults)
-                return bulk_field_kwargs.pop('class')(**bulk_field_kwargs)
+                bulk_kwargs.update(column.bulk)
+                return bulk_kwargs.pop('class')(**bulk_kwargs)
 
             def query(column):
-                defaults = {
+                query_kwargs = {
                     'class': Variable,
                     'name': column.name,
                     'gui__label': column.display_name,
                     'attr': column.attr,
                     'model': column.table.Meta.model,
                 }
-                query_kwargs = extract_subkeys(column, 'query', defaults=defaults)
+                query_kwargs.update(column.query)
                 return query_kwargs.pop('class')(**query_kwargs)
 
-            self.query = Query(variables=[query(column) for column in self.bound_columns if column.query__show])
+            self.query = Query(variables=[query(column) for column in self.bound_columns if column.query.show])
             self.query_form = self.query.form(request) if self.query.variables else None
 
             self.query_error = ''
@@ -635,7 +651,7 @@ class Table(object):
                 except QueryException as e:
                     self.query_error = e.message
 
-            bulk_fields = [bulk(column) for column in self.bound_columns if column.bulk__show]
+            bulk_fields = [bulk(column) for column in self.bound_columns if column.bulk.show]
             self.bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
 
         return headers, self.header_levels
