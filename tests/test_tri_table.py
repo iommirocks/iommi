@@ -733,6 +733,27 @@ def test_cell_template():
         </table>""")
 
 
+def test_no_header_template():
+    class TestTable(NoSortTable):
+        class Meta:
+            header__template = None
+
+        foo = Column()
+
+    data = [Struct(foo="bar")]
+
+    verify_table_html(TestTable(data=data), """
+        <table class="listview">
+            <tbody>
+                <tr class="row1">
+                    <td>
+                        bar
+                    </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+
 def test_row_template():
     class TestTable(NoSortTable):
         foo = Column()

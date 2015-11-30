@@ -6,7 +6,7 @@
 
         <table{{ table.render_attrs }}>
 
-            {% include "tri_table/table_header_rows.html" %}
+            {{ table.render_header|safe }}
 
             <tbody>
                {{ table.render_tbody|safe }}

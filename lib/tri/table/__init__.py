@@ -429,6 +429,8 @@ class Table(object):
         sortable = True
         row__attrs = {'class': ''}
         row__template = None
+        header__template = "tri_table/table_header_rows.html"
+
         model = None
 
     def __init__(self, data, request=None, columns=None, **kwargs):
@@ -441,6 +443,8 @@ class Table(object):
         :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
+        :param header__template:
+
         """
         assert columns is not None, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
@@ -602,6 +606,7 @@ class Table(object):
                 defaults = {
                     'class': Variable,
                     'name': column.name,
+                    'gui__label': column.display_name,
                     'attr': column.attr,
                     'model': column.table.Meta.model,
                 }
@@ -633,6 +638,11 @@ class Table(object):
 
     def render_tbody(self):
         return '\n'.join([bound_row.render() for bound_row in self.bound_rows()])
+
+    def render_header(self):
+        if not self.Meta.header__template:
+            return ''
+        return render_to_string(self.Meta.header__template, dict(table=self))
 
 
 class Link(Struct):
