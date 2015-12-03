@@ -6,7 +6,9 @@
 
         <table{{ table.render_attrs }}>
 
-            {{ table.render_header|safe }}
+            {% if table.Meta.header__template %}
+                {% include  table.Meta.header__template %}
+            {% endif %}
 
             <tbody>
                {{ table.render_tbody|safe }}
