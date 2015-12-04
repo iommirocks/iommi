@@ -7,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from tri.struct import FrozenStruct, merged
-from tri.declarative import declarative, creation_ordered, extract_subkeys
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults
 import tri.form
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
@@ -57,6 +57,8 @@ def value_to_query_string_value_string(v):
 
 
 def default_value_to_q(variable, op, value_string_or_f):
+    if variable.attr is None:
+        return Q()
     negated = False
     if op in ('!=', '!:'):
         negated = True
@@ -86,12 +88,15 @@ class Variable(FrozenStruct):
         if 'name' in kwargs:
             name = kwargs['name']
             kwargs.setdefault('attr', name)
-        kwargs.setdefault('gui__show', kwargs.get('gui'))
-        kwargs.setdefault('gui__class', tri.form.Field)
-        kwargs.setdefault('gui__required', False)
-        kwargs.setdefault('op_to_q_op', lambda op: Q_OP_BY_OP[op])
 
-        kwargs.setdefault('value_to_q', default_value_to_q)
+        setdefaults(kwargs, dict(
+            gui__show=kwargs.get('gui'),
+            gui__class=tri.form.Field,
+            gui__required=False,
+            gui_op='=',
+            op_to_q_op=lambda op: Q_OP_BY_OP[op],
+            value_to_q=default_value_to_q
+        ))
 
         super(Variable, self).__init__(**kwargs)
 
@@ -102,7 +107,7 @@ class Variable(FrozenStruct):
     @staticmethod
     def case_sensitive(**kwargs):
         """
-        Case insensitive text field.
+        Case sensitive text field.
         """
         return Variable(op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op], **kwargs)
 
@@ -112,8 +117,10 @@ class Variable(FrozenStruct):
         Field that has one value out of a set.
         :type choices: list
         """
-        kwargs.setdefault('gui__choices', kwargs.get('choices'))
-        kwargs.setdefault('gui__class', tri.form.Field.choice)
+        setdefaults(kwargs, dict(
+            gui__choices=kwargs.get('choices'),
+            gui__class=tri.form.Field.choice,
+        ))
         return Variable(**kwargs)
 
     @staticmethod
@@ -122,21 +129,24 @@ class Variable(FrozenStruct):
         Field that has one value out of a set.
         :type choices: django.db.models.QuerySet
         """
-        kwargs.setdefault('gui__class', tri.form.Field.choice_queryset)
-        kwargs.setdefault('gui__choices', kwargs['choices'])
-        kwargs.setdefault('gui__model', kwargs['model'])
-        kwargs.setdefault('op_to_q_op', lambda op: 'exact')
-
         def choice_queryset_value_to_q(variable, op, value_string_or_f):
             assert op == '='
+            if variable.attr is None:
+                return Q()
             try:
                 instance = variable.model.objects.get(**{variable.value_to_q_lookup: value_string_or_f})
             except ObjectDoesNotExist:
                 return None
             return Q(**{variable.attr + '__pk': instance.pk})
 
-        kwargs.setdefault('value_to_q_lookup', 'name')
-        kwargs.setdefault('value_to_q', choice_queryset_value_to_q)
+        setdefaults(kwargs, dict(
+            gui__class=tri.form.Field.choice_queryset,
+            gui__choices=kwargs['choices'],
+            gui__model=kwargs['model'],
+            op_to_q_op=lambda op: 'exact',
+            value_to_q_lookup='name',
+            value_to_q=choice_queryset_value_to_q,
+        ))
         return Variable(**kwargs)
 
     @staticmethod
@@ -148,8 +158,11 @@ class Variable(FrozenStruct):
             if isinstance(value_string_or_f, basestring):
                 value_string_or_f = tri.form.bool_parse(value_string_or_f)
             return default_value_to_q(variable, op, value_string_or_f)
-        kwargs.setdefault('gui__class', tri.form.Field.boolean)
-        kwargs.setdefault('value_to_q', boolean_value_to_q)
+
+        setdefaults(kwargs, dict(
+            gui__class=tri.form.Field.boolean,
+            value_to_q=boolean_value_to_q,
+        ))
         return Variable(**kwargs)
 
     @staticmethod
@@ -157,7 +170,9 @@ class Variable(FrozenStruct):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
-        kwargs.setdefault('gui__class', tri.form.Field.integer)
+        setdefaults(kwargs, dict(
+            gui__class=tri.form.Field.integer,
+        ))
         return Variable(**kwargs)
 
 
@@ -379,7 +394,9 @@ class Query(object):
             return request_data(request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
             # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
-            result = ['%s=%s' % (field.name, value_to_query_string_value_string(field.value)) for field in form.fields if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
+            result = [''.join([field.name, self.variable_by_name[field.name].gui_op, value_to_query_string_value_string(field.value)])
+                      for field in form.fields
+                      if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
 
             if FREETEXT_SEARCH_NAME in form.fields_by_name:
                 freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
