@@ -13,8 +13,8 @@ from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
 from tri.form import extract_subkeys, Field, Form
-from tri.named_struct import NamedFrozenStruct, NamedStructField, NamedStruct
-from tri.struct import Struct, merged
+from tri.named_struct import NamedStructField, NamedStruct
+from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
 
 
@@ -186,9 +186,8 @@ class ColumnBase(NamedStruct):
     query = NamedStructField()
 
 
-# @frozen
 @creation_ordered
-class Column(ColumnBase):
+class Column(Frozen, ColumnBase):
     # noinspection PyShadowingBuiltins
     def __init__(self, **kwargs):
         """
@@ -211,14 +210,16 @@ class Column(ColumnBase):
         :param cell__url: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
+
         setdefaults(kwargs, dict(
-            bulk__show=kwargs.pop('bulk', False),
-            query__show=kwargs.pop('query', False)
+            bulk=(Struct(extract_subkeys(kwargs, 'bulk', defaults=dict(show=False)))),
+            query=(Struct(extract_subkeys(kwargs, 'query', defaults=dict(show=False))))
         ))
 
-        kwargs['bulk'] = Struct(extract_subkeys(kwargs, 'bulk'))
-        kwargs['query'] = Struct(extract_subkeys(kwargs, 'query'))
         kwargs = {k: v for k, v in kwargs.items() if not k.startswith('bulk__') and not k.startswith('query__')}
+
+        assert isinstance(kwargs['bulk'], dict)
+        assert isinstance(kwargs['query'], dict)
 
         super(Column, self).__init__(**kwargs)
 
