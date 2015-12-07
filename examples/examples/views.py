@@ -55,7 +55,7 @@ def readme_example_2(request):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
             query_show=True,  # put this field into the query language
-            query__gui_show=True)  # put this field into the simple filtering GUI
+            query__gui__show=True)  # put this field into the simple filtering GUI
         c = Column(
             bulk__show=True,  # Enable bulk editing for this field
             query__show=True,
