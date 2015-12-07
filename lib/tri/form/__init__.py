@@ -9,7 +9,8 @@ from django.db.models import IntegerField, FloatField, TextField, BooleanField, 
 from django.template.loader import render_to_string
 from django.template.context import Context
 from django.utils.safestring import mark_safe
-from tri.struct import Struct, FrozenStruct, merged
+from tri.named_struct import NamedStruct, NamedStructField
+from tri.struct import Struct, Frozen, merged
 from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults
 
 try:
@@ -76,7 +77,76 @@ def register_field_factory(field_class, factory):
     _field_factory_by_django_field_type[field_class] = factory
 
 
-class BoundField(Struct):
+def default_parse(form, field, string_value):
+    del form, field
+    return string_value
+
+
+class FieldBase(NamedStruct):
+    name = NamedStructField()
+
+    show = NamedStructField(default=True)
+
+    attr = NamedStructField()
+    id = NamedStructField()
+    label = NamedStructField()
+
+    is_valid = NamedStructField(default=lambda form, field, parsed_data: (True, ''))
+    parse = NamedStructField(default=default_parse)
+    """ @type callable """
+    initial = NamedStructField()
+    initial_list = NamedStructField()
+    template = NamedStructField(default='tri_form/{style}_form_row.html')
+    template_string = NamedStructField()
+    attrs = NamedStructField(default={})
+    input_template = NamedStructField(default='tri_form/input.html')
+    label_template = NamedStructField(default='tri_form/label.html')
+    errors_template = NamedStructField(default='tri_form/errors.html')
+    required = NamedStructField(default=True)
+    container_css_classes = NamedStructField(default=set())
+    label_container_css_classes = NamedStructField(default={'description_container'})
+    input_container_css_classes = NamedStructField(default=set())
+    post_validation = NamedStructField(default=lambda form, field: None)
+    render_value = NamedStructField(default=lambda form, field, value: unicode(value))
+    is_list = NamedStructField(default=False)
+    is_boolean = NamedStructField(default=False)
+    model = NamedStructField()
+
+    # grab help_text from model if applicable
+    # noinspection PyProtectedMember
+    help_text = NamedStructField(default=lambda form, field: '' if field.model is None else field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or '')
+
+    editable = NamedStructField(default=True)
+    strip_input = NamedStructField(default=True)
+    input_type = NamedStructField(default='text')
+
+    internal = NamedStructField(default=Struct())
+    choice_to_option = NamedStructField()
+    empty_choice_tuple = NamedStructField()
+    choices = NamedStructField()
+    original_choices = NamedStructField()
+    original_parse = NamedStructField()
+
+
+class BoundField(FieldBase):
+
+    form = NamedStructField()
+    errors = NamedStructField()
+
+    # raw_data/raw_data contains the strings grabbed directly from the request data
+    raw_data = NamedStructField()
+    raw_data_list = NamedStructField()
+
+    # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
+    parsed_data = NamedStructField()
+    parsed_data_list = NamedStructField()
+
+    # value/value_data_list is the final step that contains parsed and valid data
+    value = NamedStructField()
+    value_list = NamedStructField()
+
+    choice_tuples = NamedStructField()
+
     """
     An internal class that is used to handle the mutable data used during parsing and validation of a Field.
 
@@ -89,20 +159,9 @@ class BoundField(Struct):
     """
 
     def __init__(self, field, form):
-        super(BoundField, self).__init__(field)
+        super(BoundField, self).__init__(**field)
         self.form = form
-
         self.errors = set()
-
-        # raw_data/raw_data contains the strings grabbed directly from the request data
-        self.raw_data = None
-        self.raw_data_list = None
-        # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
-        self.parsed_data = None
-        self.parsed_data_list = None
-        # value/value_data_list is the final step that contains parsed and valid data
-        self.value = None
-        self.value_list = None
 
     def evaluate(self):
         """
@@ -122,9 +181,8 @@ class BoundField(Struct):
         """
         Render HTML attributes, or return '' if no attributes needs to be rendered.
         """
-        attrs = self.get('attrs')
-        if attrs is not None:
-            return mark_safe(' %s ' % ' '.join(['%s="%s"' % (key, value) for key, value in attrs.items()]))
+        if self.attrs:
+            return mark_safe(' %s ' % ' '.join(['%s="%s"' % (key, value) for key, value in self.attrs.items()]))
         return ''
 
     def render_css_classes(self, key):
@@ -150,13 +208,8 @@ class BoundField(Struct):
         return self.render_css_classes('input_container_css_classes')
 
 
-def default_parse(form, field, string_value):
-    del form, field
-    return string_value
-
-
 @creation_ordered
-class Field(FrozenStruct):
+class Field(Frozen, FieldBase):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
     """
@@ -194,38 +247,15 @@ class Field(FrozenStruct):
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :parma is_list: interpret request data as a list (can NOT be a callable). Default False
         """
-        kwargs.setdefault('internal', Struct())
-        if kwargs.get('name'):
-            name = kwargs['name']
-            kwargs.setdefault('attr', name)
-            kwargs.setdefault('id', 'id_%s' % name)
-            kwargs.setdefault('label', capitalize(name).replace('_', ' '))
-        kwargs.setdefault('is_valid', lambda form, field, parsed_data: (True, ''))
-        kwargs.setdefault('parse', default_parse)
-        kwargs.setdefault('initial')
-        kwargs.setdefault('initial_list')
-        kwargs.setdefault('template', 'tri_form/{style}_form_row.html')
-        kwargs.setdefault('template_string')
-        kwargs.setdefault('input_template', 'tri_form/input.html')
-        kwargs.setdefault('label_template', 'tri_form/label.html')
-        kwargs.setdefault('errors_template', 'tri_form/errors.html')
-        kwargs.setdefault('required', True)
-        kwargs.setdefault('container_css_classes', set())
-        kwargs.setdefault('label_container_css_classes', {'description_container'})
-        kwargs.setdefault('input_container_css_classes', set())
-        kwargs.setdefault('post_validation', lambda form, field: None)
-        kwargs.setdefault('render_value', lambda form, field, value: unicode(value))
-        kwargs.setdefault('is_list', False)
-        kwargs.setdefault('is_boolean', False)
-        kwargs.setdefault('model', None)
+        name = kwargs.get('name')
+        if name:
+            if not kwargs.get('attr'):
+                kwargs['attr'] = name
+            if not kwargs.get('id'):
+                kwargs['id'] = 'id_%s' % name
+            if not kwargs.get('label'):
+                kwargs['label'] = capitalize(name).replace('_', ' ')
 
-        # grab help_text from model if applicable
-        # noinspection PyProtectedMember
-        kwargs.setdefault('help_text', lambda form, field: '' if field.model is None else field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or '')
-
-        kwargs.setdefault('editable', True)
-        kwargs.setdefault('strip_input', True)
-        kwargs.setdefault('input_type', 'text')
         super(Field, self).__init__(**kwargs)
 
     @staticmethod
