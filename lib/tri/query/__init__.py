@@ -1,12 +1,11 @@
 from __future__ import unicode_literals, absolute_import
-from collections import OrderedDict
 
 from datetime import date
 from django.db.models import Q, F
 from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
-from tri.struct import Frozen, merged, FrozenStruct
+from tri.struct import Frozen, merged, Struct
 from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults
 from tri.named_struct import NamedStruct, NamedStructField
 import tri.form
@@ -110,7 +109,7 @@ class Variable(Frozen, VariableBase):
                 kwargs['attr'] = name
 
         setdefaults(kwargs, dict(
-            gui=FrozenStruct(extract_subkeys(kwargs, 'gui', defaults={
+            gui=Struct(extract_subkeys(kwargs, 'gui', defaults={
                 'show': False,
                 'class': tri.form.Field,
                 'required': False
@@ -219,7 +218,6 @@ class Query(object):
     variables = []
     """:type: list of Variable"""
     variable_by_name = {}
-    freetext_variables = []
 
     def __init__(self, variables=None):  # variables=None to make pycharm tooling not confused
         """
@@ -232,9 +230,6 @@ class Query(object):
             self.variables = variables
 
         self.variable_by_name = {variable.name: variable for variable in self.variables}
-
-        # Should be OrderedSet, but that doesn't exist in the standard library :(
-        self.freetext_variables = OrderedDict((variable, None) for variable in self.variables if variable.freetext)
 
     def parse(self, query_string):
         """
@@ -376,11 +371,13 @@ class Query(object):
         raise QueryException('Unknown variable "%s"' % variable_name)
 
     def freetext_as_q(self, token):
-        assert self.freetext_variables
+        assert any(v.freetext for v in self.variables)
         assert len(token) == 1
         token = token[0].strip('"')
 
-        return reduce(operator.or_, [Q(**{variable.attr + '__' + variable.op_to_q_op(':'): token}) for variable in self.freetext_variables])
+        return reduce(operator.or_, [Q(**{variable.attr + '__' + variable.op_to_q_op(':'): token})
+                                     for variable in self.variables
+                                     if variable.freetext])
 
     def form(self, request):
         """
@@ -388,7 +385,7 @@ class Query(object):
         """
         fields = []
 
-        if self.freetext_variables:
+        if any(v.freetext for v in self.variables):
             fields.append(tri.form.Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
 
         for variable in self.variables:
@@ -414,7 +411,9 @@ class Query(object):
             return request_data(request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
             # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
-            result = [''.join([field.name, self.variable_by_name[field.name].gui_op, value_to_query_string_value_string(field.value)])
+            result = [''.join([field.name,
+                               self.variable_by_name[field.name].gui_op,
+                               value_to_query_string_value_string(field.value)])
                       for field in form.fields
                       if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
 
@@ -422,7 +421,9 @@ class Query(object):
                 freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
                 if freetext:
                     # TODO: handle escaping for freetext, this will blow up if the value contains "
-                    result.append('(%s)' % ' or '.join(['%s:"%s"' % (f.name, freetext) for f in self.freetext_variables]))
+                    result.append('(%s)' % ' or '.join(['%s:"%s"' % (variable.name, freetext)
+                                                        for variable in self.variables
+                                                        if variable.freetext]))
             return ' and '.join(result)
         else:
             return ''
