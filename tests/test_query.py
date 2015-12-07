@@ -120,6 +120,12 @@ def test_invalid_form_data():
     assert repr(query2.request_to_q(request)) == repr(Q())
 
 
+def test_none_attr():
+    query2 = Query(variables=[Variable(name='bazaar', attr=None, gui__show=True)])
+    # noinspection PyTypeChecker
+    assert repr(query2.request_to_q(Struct(method='GET', GET=Data(**{'bazaar': 'foo'})))) == repr(Q())
+
+
 def test_request_to_q_freetext():
     # noinspection PyTypeChecker
     assert repr(query.request_to_q(Struct(method='GET', GET=Data(**{FREETEXT_SEARCH_NAME: "asd"})))) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
@@ -159,6 +165,11 @@ def test_choice_queryset():
             choices=Foo.objects.all(),
             gui=True,
             value_to_q_lookup='value')
+        baz = Variable.choice_queryset(
+            model=Foo,
+            attr=None,
+            choices=None,
+        )
 
     query2 = Query2()
 
@@ -173,7 +184,7 @@ def test_choice_queryset():
 
     # test query
     # noinspection PyTypeChecker
-    q = query2.request_to_q(Struct(method='POST', POST=Data({'query': 'foo=%s' % str(random_valid_obj.value)})))
+    q = query2.request_to_q(Struct(method='POST', POST=Data({'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)})))
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
 
