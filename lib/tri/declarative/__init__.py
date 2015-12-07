@@ -365,9 +365,44 @@ def remove_show_recursive(item):
     return remove_keys_recursive(item, {'show'})
 
 
+def collect_namespaces(values):
+    """
+    Gather mappings with keys of the shape '<base_key>__<sub_key>' as new dicts under '<base_key>', indexed by '<sub_key>'.
+
+    >>> foo = dict(
+    ...     foo__foo=1,
+    ...     foo__bar=2,
+    ...     bar__foo=3,
+    ...     bar__bar=4,
+    ...     foo_baz=5,
+    ...     baz=6
+    ... )
+
+    >>> assert collect_namespaces(foo) == dict(
+    ...     foo=dict(foo=1, bar=2),
+    ...     bar=dict(foo=3, bar=4),
+    ...     foo_baz=5,
+    ...     baz=6
+    ... )
+
+    @type values: dict
+    @rtype: dict
+    """
+    namespaces = {}
+    result = dict(values)
+    for key, value in values.items():
+        parts = key.split('__', 1)
+        if len(parts) == 2:
+            prefix, name = parts
+            namespaces.setdefault(prefix, values.get(prefix, dict()))[name] = result.pop(key)
+    for prefix, namespace in namespaces.items():
+        result[prefix] = namespace
+    return result
+
+
 def extract_subkeys(kwargs, prefix, defaults=None):
     """
-    Extract
+    Extract mappings of the shape '<base_key>__<sub_key>' to new mappings under '<sub_key>'.
 
     >>> foo = {
     ...     'foo__foo': 1,

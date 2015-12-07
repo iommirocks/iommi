@@ -1,5 +1,5 @@
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces
 
 
 def test_extract_subkeys():
@@ -18,6 +18,28 @@ def test_extract_subkeys():
         'foo': 1,
         'bar': 2,
     }
+
+
+def test_collect_namespaces():
+    values = dict(
+        foo__foo=1,
+        foo__bar=2,
+        bar__foo=3,
+        bar__bar=4,
+        foo_baz=5,
+        baz=6
+    )
+
+    assert dict(foo=dict(foo=1, bar=2), bar=dict(foo=3, bar=4), foo_baz=5, baz=6) == collect_namespaces(values)
+
+
+def test_collect_namespaces_merge_existing():
+    values = dict(
+        foo=dict(bar=1),
+        foo__baz=2
+    )
+
+    assert dict(foo=dict(bar=1, baz=2)) == collect_namespaces(values)
 
 
 def test_getattr_path_and_setattr_path():
