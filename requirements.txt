@@ -1,3 +1,4 @@
 tri.declarative
+tri.named_struct
 tri.struct
 django == 1.7
