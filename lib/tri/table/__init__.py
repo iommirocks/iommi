@@ -17,7 +17,7 @@ from tri.struct import Struct, FrozenStruct
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 next_creation_count = itertools.count().next
 
