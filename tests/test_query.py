@@ -16,8 +16,8 @@ class Data(Struct):
 
 
 class TestQuery(Query):
-    foo_name = Variable(attr='foo', freetext=True, gui=True)
-    bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui=True)  # short form for gui__show
+    foo_name = Variable(attr='foo', freetext=True, gui__show=True)
+    bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui__show=True)  # short form for gui__show
     baz_name = Variable(attr='baz')
 
 query = TestQuery()
@@ -90,7 +90,7 @@ def test_request_to_q_simple():
 
 
 def test_request_to_q_simple_int():
-    query2 = Query(variables=[Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui=True)])
+    query2 = Query(variables=[Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui__show=True)])
     # noinspection PyTypeChecker
     assert repr(query2.request_to_q(Struct(method='GET', GET=Data(**{'bazaar': '11'})))) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
 
@@ -112,7 +112,7 @@ def test_invalid_variable():
 
 
 def test_invalid_form_data():
-    query2 = Query(variables=[Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui=True)])
+    query2 = Query(variables=[Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui__show=True)])
     request = Struct(method='GET', GET=Data(**{'bazaar': 'asds'}))
     # noinspection PyTypeChecker
     assert query2.request_to_query_string(request) == ''
@@ -163,7 +163,7 @@ def test_choice_queryset():
         foo = Variable.choice_queryset(
             model=Foo,
             choices=Foo.objects.all(),
-            gui=True,
+            gui__show=True,
             value_to_q_lookup='value')
         baz = Variable.choice_queryset(
             model=Foo,
