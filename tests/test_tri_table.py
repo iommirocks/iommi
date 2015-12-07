@@ -92,7 +92,7 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=Foo, choices=lambda table, column: Foo.objects.all(), query=True, bulk=True, query__gui=True)
+        foo = Column.choice_queryset(model=Foo, choices=lambda table, column: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
     t = TestTable(data=Bar.objects.all())
 
@@ -415,10 +415,9 @@ def test_show():
 
 def test_show_lambda():
     def show_callable(table, column):
-        assert isinstance(table,  TestTable)
+        assert isinstance(table, TestTable)
         assert column.name == 'bar'
         return False
-
 
     class TestTable(NoSortTable):
         foo = Column()
@@ -625,8 +624,8 @@ def test_bulk_edit():
     Foo(a=4, b="").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, bulk=True)  # turn off sorting to not get the link with random query params
-        b = Column(bulk=True)
+        a = Column.number(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
+        b = Column(bulk__show=True)
 
     result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()))
     assert '<form method="post" action=".">' in result
@@ -652,8 +651,8 @@ def test_query():
     Foo(a=4, b="bar").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, query=True, query__gui=True)  # turn off sorting to not get the link with random query params
-        b = Column.substring(query=True, query__gui=True)
+        a = Column.number(sortable=False, query__show=True, query__gui__show=True)  # turn off sorting to not get the link with random query params
+        b = Column.substring(query__show=True, query__gui__show=True)
 
         class Meta:
             sortable = False
@@ -847,7 +846,6 @@ def test_auto_rowspan_and_render_twice():
             </tbody>
         </table>"""
 
-
     t = TestTable(data=data)
     verify_table_html(t, expected)
     verify_table_html(t, expected)
@@ -942,14 +940,14 @@ def test_choice_queryset():
     Foo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query=True, query__gui=True, bulk=True, choices=lambda table, column: Foo.objects.filter(a=1))
+        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column: Foo.objects.filter(a=1))
 
         class Meta:
             model = Foo
 
-    table = FooTable(data=Foo.objects.all())
-    table.prepare(RequestFactory().get("/"))
+    foo_table = FooTable(data=Foo.objects.all())
+    foo_table.prepare(RequestFactory().get("/"))
 
-    assert repr(table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(table.bulk_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
-    assert repr(table.query_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
+    assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(foo_table.bulk_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
+    assert repr(foo_table.query_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))

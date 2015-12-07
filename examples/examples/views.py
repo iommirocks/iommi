@@ -54,12 +54,12 @@ def readme_example_2(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
-            query=True,  # put this field into the query language
-            query__gui=True)  # put this field into the simple filtering GUI
+            query_show=True,  # put this field into the query language
+            query__gui__show=True)  # put this field into the simple filtering GUI
         c = Column(
-            bulk=True,  # Enable bulk editing for this field
-            query=True,
-            query__gui=True)
+            bulk__show=True,  # Enable bulk editing for this field
+            query__show=True,
+            query__gui__show=True)
 
     return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
 
@@ -75,8 +75,8 @@ def kitchen_sink(request):
             choices=Foo.objects.all()[:10],
             model=Foo,
             bulk=True,
-            query=True,
-            query__gui=True,
+            query__show=True,
+            query__gui__show=True,
         )
         c = Column(bulk=True)  # The form is created automatically
 
