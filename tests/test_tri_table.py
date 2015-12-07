@@ -133,7 +133,6 @@ def test_django_table():
         </table>""")
 
 
-
 def test_inheritance():
 
     class FooTable(Table):
@@ -654,7 +653,7 @@ def test_query():
 
     class TestTable(Table):
         a = Column.number(sortable=False, query=True, query__gui=True)  # turn off sorting to not get the link with random query params
-        b = Column(query=True, query__gui=True)
+        b = Column.substring(query=True, query__gui=True)
 
         class Meta:
             sortable = False
@@ -710,6 +709,25 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
+    verify_table_html(query=dict(b='fo'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    <tbody>
+        <tr class="row1" data-pk="1">
+            <td class="rj">
+                1
+            </td>
+            <td>
+                foo
+            </td>
+        </tr>
+        <tr class="row2" data-pk="2">
+            <td class="rj">
+                2
+            </td>
+            <td>
+                foo
+            </td>
+        </tr>
+    </table>""")
 
 
 def test_cell_template():

@@ -371,6 +371,14 @@ class Column(FrozenStruct):
         ))
         return Column(**kwargs)
 
+    @staticmethod
+    def substring(**kwargs):
+        setdefaults(kwargs, dict(
+            query__gui_op=':',
+        ))
+        return Column(**kwargs)
+
+
 
 class BoundColumn(Struct):
     def render_css_class(self):
