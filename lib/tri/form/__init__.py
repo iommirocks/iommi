@@ -120,7 +120,7 @@ class FieldBase(NamedStruct):
     strip_input = NamedStructField(default=True)
     input_type = NamedStructField(default='text')
 
-    internal = NamedStructField(default=Struct())
+    extra = NamedStructField(default=Struct())
     choice_to_option = NamedStructField()
     empty_choice_tuple = NamedStructField()
     choices = NamedStructField()
@@ -167,7 +167,7 @@ class BoundField(FieldBase):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        members_to_evaluate = {k: v for k, v in self.items() if k not in ('parse', 'is_valid', 'form', 'internal', 'post_validation', 'render_value')}
+        members_to_evaluate = {k: v for k, v in self.items() if k != 'post_validation'}
         for k, v in members_to_evaluate.items():
             self[k] = evaluate(v, form=self.form, field=self)
         if not self.editable:
@@ -341,8 +341,8 @@ class Field(Frozen, FieldBase):
     @staticmethod
     def choice_queryset(**kwargs):
         model = kwargs.pop('model')
-        kwargs.setdefault('internal', Struct()).model = model
-        kwargs.setdefault('parse', lambda form, field, string_value: field.internal.model.objects.get(pk=string_value) if string_value else None)
+        kwargs.setdefault('extra', Struct()).model = model
+        kwargs.setdefault('parse', lambda form, field, string_value: field.extra.model.objects.get(pk=string_value) if string_value else None)
         kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, choice.pk, unicode(choice), choice == field.value))
 
         return Field.choice(**kwargs)
