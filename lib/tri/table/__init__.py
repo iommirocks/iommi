@@ -18,7 +18,7 @@ from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 next_creation_count = itertools.count().next
 
@@ -235,7 +235,7 @@ class Column(Frozen, ColumnBase):
             display_name='',
             sortable=False,
             css_class={'thin'},
-            show=show and not is_report,
+            show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
             title=icon_title,
             cell__value=lambda table, column, row: True,
             cell__attrs={'class': 'cj'},
@@ -288,7 +288,7 @@ class Column(Frozen, ColumnBase):
             css_class={'thin'},
             cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
             cell__value='Run',
-            show=show and not is_report,
+            show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
         ))
         return Column(**kwargs)
 
@@ -305,7 +305,7 @@ class Column(Frozen, ColumnBase):
             title='Select all',
             display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
             sortable=False,
-            show=show and not is_report,
+            show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
             css_class={'thin', 'nopad'},
             cell__attrs={'class': 'cj'},
             cell__value=lambda table, column, row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),

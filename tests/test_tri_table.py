@@ -421,7 +421,7 @@ def test_show_lambda():
 
     class TestTable(NoSortTable):
         foo = Column()
-        bar = Column(show=show_callable)
+        bar = Column.icon('foo', show=show_callable)
 
     data = [Struct(foo="foo", bar="bar")]
 
