@@ -1,13 +1,15 @@
 from __future__ import unicode_literals, absolute_import
-from decimal import Decimal
-import re
-from datetime import datetime
+
 from collections import OrderedDict
+from datetime import datetime
+from decimal import Decimal
+
+import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField
-from django.template.loader import render_to_string
 from django.template.context import Context
+from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
@@ -51,7 +53,9 @@ def bool_parse(string_value):
 
 
 def foreign_key_factory(model_field, **kwargs):
-    kwargs.setdefault('choices', model_field.foreign_related_fields[0].model.objects.all())
+    setdefaults(kwargs, dict(
+        choices=model_field.foreign_related_fields[0].model.objects.all()
+    ))
     kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(**kwargs)
 
@@ -122,10 +126,9 @@ class FieldBase(NamedStruct):
 
     extra = NamedStructField(default=Struct())
     choice_to_option = NamedStructField()
+    empty_label = NamedStructField()
     empty_choice_tuple = NamedStructField()
     choices = NamedStructField()
-    original_choices = NamedStructField()
-    original_parse = NamedStructField()
 
 
 class BoundField(FieldBase):
@@ -264,22 +267,30 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def hidden(**kwargs):
-        kwargs.setdefault('input_type', 'hidden')
+        setdefaults(kwargs, dict(
+            input_type='hidden'
+        ))
         return Field(**kwargs)
 
     @staticmethod
     def text(**kwargs):
-        kwargs.setdefault('input_template', 'tri_form/text.html')
+        setdefaults(kwargs, dict(
+            input_template='tri_form/text.html'
+        ))
         return Field(**kwargs)
 
     @staticmethod
     def integer(**kwargs):
-        kwargs.setdefault('parse', lambda string_value, **_: int(string_value))
+        setdefaults(kwargs, dict(
+            parse=lambda string_value, **_: int(string_value)
+        ))
         return Field(**kwargs)
 
     @staticmethod
     def float(**kwargs):
-        kwargs.setdefault('parse', lambda string_value, **_: float(string_value))
+        setdefaults(kwargs, dict(
+            parse=lambda string_value, **_: float(string_value)
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -292,11 +303,13 @@ class Field(Frozen, FieldBase):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
-        kwargs.setdefault('parse', lambda string_value, **_: bool_parse(string_value))
-        kwargs.setdefault('required', False)
-        kwargs.setdefault('template', 'tri_form/{style}_form_row_checkbox.html')
-        kwargs.setdefault('input_template', 'tri_form/checkbox.html')
-        kwargs.setdefault('is_boolean', True)
+        setdefaults(kwargs, dict(
+            parse=lambda string_value, **_: bool_parse(string_value),
+            required=False,
+            template='tri_form/{style}_form_row_checkbox.html',
+            input_template='tri_form/checkbox.html',
+            is_boolean=True
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -309,16 +322,29 @@ class Field(Frozen, FieldBase):
         """
         assert 'choices' in kwargs
 
-        kwargs.setdefault('required', True)
-        kwargs.setdefault('is_list', False)
+        setdefaults(kwargs, dict(
+            required=True,
+            is_list=False,
+            empty_label='---'
+        ))
 
-        if kwargs['required'] or kwargs['is_list']:
-            kwargs['original_choices'] = kwargs['choices']
-        else:
-            kwargs['original_choices'] = kwargs.pop('choices')
-            kwargs['choices'] = lambda form, field: [None] + list(evaluate(should_evaluate(field.original_choices), form=form, field=field))
-            kwargs['original_parse'] = should_not_evaluate(kwargs.pop('parse', default_parse))
-            kwargs['parse'] = lambda form, field, string_value: None if string_value == '' else field.original_parse(form=form, field=field, string_value=string_value)
+        if not kwargs['required'] and not kwargs['is_list']:
+            original_choices = kwargs['choices']
+
+            def choices(form, field):
+                return [None] + list(evaluate(original_choices, form=form, field=field))
+
+            original_parse = kwargs.get('parse', default_parse)
+
+            def parse(form, field, string_value):
+                if string_value == '':
+                    return None
+                return original_parse(form=form, field=field, string_value=string_value)
+
+            kwargs.update(
+                choices=choices,
+                parse=parse
+            )
 
         def choice_is_valid(form, field, parsed_data):
             del form
@@ -327,43 +353,53 @@ class Field(Frozen, FieldBase):
 
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
-        kwargs.setdefault('empty_choice_tuple', (None, '', '---', True))
-        kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value))
-        kwargs['choice_to_option'] = should_not_evaluate(kwargs['choice_to_option'])
-        kwargs.setdefault('input_template', 'tri_form/choice.html')
-        kwargs.setdefault('is_valid', choice_is_valid)
-
         def choice_post_validation(form, field):
-            field.choice_tuples = [field.choice_to_option(form=form, field=field, choice=choice) if choice is not None else field.empty_choice_tuple for choice in field.choices]
-        kwargs.setdefault('post_validation', choice_post_validation)
+            field.choice_tuples = [field.choice_to_option(form=form, field=field, choice=choice) if choice is not None else field.empty_choice_tuple
+                                   for choice in field.choices]
+
+        setdefaults(kwargs, dict(
+            empty_choice_tuple=(None, '', kwargs['empty_label'], True),
+            choice_to_option=lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value),
+            input_template='tri_form/choice.html',
+            is_valid=choice_is_valid,
+            post_validation=choice_post_validation
+        ))
+        kwargs['choice_to_option'] = should_not_evaluate(kwargs['choice_to_option'])
         return Field(**kwargs)
 
     @staticmethod
     def choice_queryset(**kwargs):
         model = kwargs.pop('model')
-        kwargs.setdefault('extra', Struct()).model = model
-        kwargs.setdefault('parse', lambda form, field, string_value: field.extra.model.objects.get(pk=string_value) if string_value else None)
-        kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, choice.pk, unicode(choice), choice == field.value))
-
+        setdefaults(kwargs, dict(
+            extra=Struct(model=model),
+            parse=lambda form, field, string_value: field.extra.model.objects.get(pk=string_value) if string_value else None,
+            choice_to_option=lambda form, field, choice: (choice, choice.pk, unicode(choice), choice == field.value)
+        ))
         return Field.choice(**kwargs)
 
     @staticmethod
     def multi_choice(**kwargs):
-        kwargs.setdefault('attrs', {'multiple': ''})
-        kwargs.setdefault('choice_to_option', lambda form, field, choice: (choice, unicode(choice), unicode(choice), field.value_list and choice in field.value_list))
-        kwargs.setdefault('is_list', True)
+        setdefaults(kwargs, dict(
+            attrs={'multiple': ''},
+            choice_to_option=lambda form, field, choice: (choice, unicode(choice), unicode(choice), field.value_list and choice in field.value_list),
+            is_list=True
+        ))
         return Field.choice(**kwargs)
 
     @staticmethod
     def multi_choice_queryset(**kwargs):
-        kwargs.setdefault('attrs', {'multiple': ''})
-        kwargs.setdefault('choice_to_option', should_not_evaluate(lambda form, field, choice: (choice, choice.pk, unicode(choice), field.value_list and choice in field.value_list)))
-        kwargs.setdefault('is_list', True)
+        setdefaults(kwargs, dict(
+            attrs={'multiple': ''},
+            choice_to_option=should_not_evaluate(lambda form, field, choice: (choice, choice.pk, unicode(choice), field.value_list and choice in field.value_list)),
+            is_list=True
+        ))
         return Field.choice_queryset(**kwargs)
 
     @staticmethod
     def radio(**kwargs):
-        kwargs.setdefault('input_template', 'tri_form/radio.html')
+        setdefaults(kwargs, dict(
+            input_template='tri_form/radio.html'
+        ))
         return Field.choice(**kwargs)
 
     @staticmethod
@@ -373,7 +409,9 @@ class Field(Frozen, FieldBase):
                 return datetime.strptime(string_value, '%Y-%m-%d %H:%M:%S')
             except ValueError as e:
                 raise ValidationError(e.message)
-        kwargs.setdefault('parse', parse_datetime)
+        setdefaults(kwargs, dict(
+            parse=parse_datetime
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -383,7 +421,9 @@ class Field(Frozen, FieldBase):
                 return datetime.strptime(string_value, '%Y-%m-%d').date()
             except ValueError as e:
                 raise ValidationError(e.message)
-        kwargs.setdefault('parse', parse_date)
+        setdefaults(kwargs, dict(
+            parse=parse_date
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -393,18 +433,24 @@ class Field(Frozen, FieldBase):
                 return datetime.strptime(string_value, '%H:%M:%S').time()
             except ValueError as e:
                 raise ValidationError(e.message)
-        kwargs.setdefault('parse', parse_time)
+        setdefaults(kwargs, dict(
+            parse=parse_time
+        ))
         return Field(**kwargs)
 
     @staticmethod
     def decimal(**kwargs):
-        kwargs.setdefault('parse', lambda string_value, **_: Decimal(string_value))
+        setdefaults(kwargs, dict(
+            parse=lambda string_value, **_: Decimal(string_value)
+        ))
         return Field(**kwargs)
 
     @staticmethod
     def url(**kwargs):
-        kwargs.setdefault('input_type', 'email')
-        kwargs.setdefault('parse', lambda string_value, **_: URLValidator(string_value) or string_value)
+        setdefaults(kwargs, dict(
+            input_type='email',
+            parse=lambda string_value, **_: URLValidator(string_value) or string_value
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -424,13 +470,17 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def email(**kwargs):
-        kwargs.setdefault('input_type', 'email')
-        kwargs.setdefault('parse', lambda string_value, **_: validate_email(string_value) or string_value)
+        setdefaults(kwargs, dict(
+            input_type='email',
+            parse=lambda string_value, **_: validate_email(string_value) or string_value
+        ))
         return Field(**kwargs)
 
     @staticmethod
     def phone_number(**kwargs):
-        kwargs.setdefault('is_valid', lambda form, field, parsed_data: (re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'))
+        setdefaults(kwargs, dict(
+            is_valid=lambda form, field, parsed_data: (re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567')
+        ))
         return Field(**kwargs)
 
     @staticmethod
@@ -439,9 +489,11 @@ class Field(Frozen, FieldBase):
             # noinspection PyProtectedMember
             model_field = model._meta.get_field(field_name)
 
-        kwargs.setdefault('name', field_name)
-        kwargs.setdefault('required', not model_field.null and not model_field.blank)
-        kwargs.setdefault('label', capitalize(model_field.verbose_name))
+        setdefaults(kwargs, dict(
+            name=field_name,
+            required=not model_field.null and not model_field.blank,
+            label=capitalize(model_field.verbose_name)
+        ))
 
         factory = _field_factory_by_django_field_type.get(type(model_field))
 
