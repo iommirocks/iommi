@@ -6,13 +6,14 @@ from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces, \
+    filter_show_recursive, evaluate_recursive
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.form import Form, Field, bool_parse
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 
 class QueryException(Exception):
@@ -78,12 +79,15 @@ MISSING = object()
 
 class VariableBase(NamedStruct):
     name = NamedStructField()
+
+    show = NamedStructField(default=True)
+
     attr = NamedStructField(default=MISSING)
     gui = NamedStructField()
 
     gui_op = NamedStructField(default='=')
     op_to_q_op = NamedStructField(default=lambda op: Q_OP_BY_OP[op])
-    """ @type: (unicode) -> Q """
+    """ :type: (unicode) -> Q """
     value_to_q = NamedStructField(default=default_value_to_q)
     freetext = NamedStructField()
 
@@ -93,6 +97,11 @@ class VariableBase(NamedStruct):
 
     choices = NamedStructField()
     value_to_q_lookup = NamedStructField()
+
+
+class BoundVariable(VariableBase):
+    query = NamedStructField()
+    """ :type: Query """
 
 
 @creation_ordered
@@ -220,20 +229,29 @@ class Query(object):
         query_set = CarQuery().request_to_q(request)
     """
     variables = []
-    """:type: list of Variable"""
-    variable_by_name = {}
+    """ :type: list of Variable """
+    bound_variables = []
+    """ :type: list of BoundVariable """
+    bound_variable_by_name = {}
 
-    def __init__(self, variables=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, request=None, variables=None, **kwargs):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
+        :type request: django.http.request.HttpRequest
         """
+        self.request = request
+
         assert variables is not None
         if isinstance(variables, dict):  # Declarative case
             self.variables = [merged(variable, name=name) for name, variable in variables.items()]
         else:
             self.variables = variables
 
-        self.variable_by_name = {variable.name: variable for variable in self.variables}
+        bound_variables = [BoundVariable(**merged(Struct(x), query=self)) for x in self.variables]
+        bound_variables = [evaluate_recursive(x, query=self, variable=x) for x in bound_variables]
+        self.bound_variables = filter_show_recursive(bound_variables)
+
+        self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
 
         self.gui_kwargs = extract_subkeys(kwargs, 'gui')
 
@@ -364,10 +382,10 @@ class Query(object):
         Convert a parsed token of variable_name OPERATOR variable_name into a Q object
         """
         variable_name, op, value_string_or_variable_name = token
-        variable = self.variable_by_name.get(variable_name.lower())
+        variable = self.bound_variable_by_name.get(variable_name.lower())
         if variable:
-            if isinstance(value_string_or_variable_name, basestring) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.variable_by_name:
-                value_string_or_f = F(self.variable_by_name[value_string_or_variable_name.lower()].attr)
+            if isinstance(value_string_or_variable_name, basestring) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.bound_variable_by_name:
+                value_string_or_f = F(self.bound_variable_by_name[value_string_or_variable_name.lower()].attr)
             else:
                 value_string_or_f = value_string_or_variable_name
             result = variable.value_to_q(variable=variable, op=op, value_string_or_f=value_string_or_f)
@@ -406,19 +424,17 @@ class Query(object):
         form.tri_query_advanced_value = request_data(request).get(ADVANCED_QUERY_PARAM, '')
         return form
 
-    def request_to_query_string(self, request):
+    def to_query_string(self):
         """
         Based on the data in the request, return the equivalent query string that you can use with parse() to create a query set.
-
-        :type request: django.http.request.HttpRequest
         """
-        form = self.form(request)
-        if request_data(request).get(ADVANCED_QUERY_PARAM, '').strip():
-            return request_data(request).get(ADVANCED_QUERY_PARAM)
+        form = self.form(self.request)
+        if request_data(self.request).get(ADVANCED_QUERY_PARAM, '').strip():
+            return request_data(self.request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
             # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
             result = [''.join([field.name,
-                               self.variable_by_name[field.name].gui_op,
+                               self.bound_variable_by_name[field.name].gui_op,
                                value_to_query_string_value_string(field.value)])
                       for field in form.fields
                       if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
@@ -434,8 +450,8 @@ class Query(object):
         else:
             return ''
 
-    def request_to_q(self, request):
+    def to_q(self):
         """
         Create a query set based on the data in the request.
         """
-        return self.parse(self.request_to_query_string(request))
+        return self.parse(self.to_query_string())
