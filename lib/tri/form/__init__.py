@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
-from tri.declarative import evaluate, should_show, should_not_evaluate, should_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults
+from tri.declarative import evaluate, should_show, should_not_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults, collect_namespaces
 
 try:
     from django.template.loader import get_template_from_string
@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 
 def capitalize(s):
@@ -96,8 +96,9 @@ class FieldBase(NamedStruct):
     label = NamedStructField()
 
     is_valid = NamedStructField(default=lambda form, field, parsed_data: (True, ''))
+    """ @type: (Form, Field, object) -> boolean """
     parse = NamedStructField(default=default_parse)
-    """ @type callable """
+    """ @type: (Form, Field, unicode) -> object """
     initial = NamedStructField()
     initial_list = NamedStructField()
     template = NamedStructField(default='tri_form/{style}_form_row.html')
@@ -111,7 +112,9 @@ class FieldBase(NamedStruct):
     label_container_css_classes = NamedStructField(default={'description_container'})
     input_container_css_classes = NamedStructField(default=set())
     post_validation = NamedStructField(default=lambda form, field: None)
+    """ @type: (Form, Field) -> None """
     render_value = NamedStructField(default=lambda form, field, value: unicode(value))
+    """ @type: (Form, Field, object) -> unicode """
     is_list = NamedStructField(default=False)
     is_boolean = NamedStructField(default=False)
     model = NamedStructField()
@@ -250,6 +253,7 @@ class Field(Frozen, FieldBase):
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :parma is_list: interpret request data as a list (can NOT be a callable). Default False
         """
+
         name = kwargs.get('name')
         if name:
             if not kwargs.get('attr'):
@@ -259,7 +263,7 @@ class Field(Frozen, FieldBase):
             if not kwargs.get('label'):
                 kwargs['label'] = capitalize(name).replace('_', ' ')
 
-        super(Field, self).__init__(**kwargs)
+        super(Field, self).__init__(**collect_namespaces(kwargs))
 
     @staticmethod
     def text(**kwargs):  # pragma: no cover
