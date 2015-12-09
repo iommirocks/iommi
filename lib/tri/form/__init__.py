@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 
 
 def capitalize(s):
@@ -251,7 +251,7 @@ class Field(Frozen, FieldBase):
         :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: True
         :param input_type: the type attribute on the standard input HTML tag. Default: 'text'
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
-        :parma is_list: interpret request data as a list (can NOT be a callable). Default False
+        :param is_list: interpret request data as a list (can NOT be a callable). Default False
         """
 
         name = kwargs.get('name')
@@ -262,6 +262,10 @@ class Field(Frozen, FieldBase):
                 kwargs['id'] = 'id_%s' % name
             if not kwargs.get('label'):
                 kwargs['label'] = capitalize(name).replace('_', ' ')
+
+        setdefaults(kwargs, dict(
+            extra=Struct()
+        ))
 
         super(Field, self).__init__(**collect_namespaces(kwargs))
 
