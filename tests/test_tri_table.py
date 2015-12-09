@@ -951,3 +951,22 @@ def test_choice_queryset():
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
     assert repr(foo_table.query_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
+
+
+@pytest.mark.django_db
+def test_query_namespace_inject():
+    class FooException(Exception):
+        pass
+
+    def post_validation(form):
+        del form
+        raise FooException()
+
+    with pytest.raises(FooException):
+        foo = Table(
+            data=[],
+            model=Foo,
+            request=Struct(method='POST', POST={}, GET=Struct(urlencode=lambda: None)),
+            columns=[Column(name='foo', query__show=True, query__gui__show=True)],
+            query__gui__post_validation=post_validation)
+        foo.prepare(foo.request)

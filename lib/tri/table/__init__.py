@@ -18,7 +18,7 @@ from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 next_creation_count = itertools.count().next
 
@@ -107,7 +107,7 @@ def register_cell_formatter(type_or_class, formatter):
 
 def default_cell_formatter(table, column, row, value):
     """
-    @type column: tri.table.BoundColumn
+    :type column: tri.table.BoundColumn
     """
     formatter = _cell_formatters.get(type(value))
     if formatter:
@@ -158,6 +158,7 @@ class ColumnBase(NamedStruct):
     """
 
     name = NamedStructField()
+    """ :type: unicode """
     attrs = NamedStructField(default={})
     attr = NamedStructField(default=lambda table, column: column.name)
     css_class = NamedStructField(default=set())
@@ -176,14 +177,16 @@ class ColumnBase(NamedStruct):
     cell__format = NamedStructField(default=default_cell_formatter)
     cell__attrs = NamedStructField(default={})
     cell__url = NamedStructField()
-    """ @type : str or callable """
+    """ :type : str or callable """
     cell__url_title = NamedStructField()
-    """ @type : str or callable """
+    """ :type : str or callable """
 
     model = NamedStructField()
     choices = NamedStructField()
     bulk = NamedStructField()
     query = NamedStructField()
+
+    extra = NamedStructField(default=Struct())
 
 
 @creation_ordered
@@ -336,6 +339,7 @@ class Column(Frozen, ColumnBase):
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
         def url(table, column, row, value):
+            del table, value
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
 
@@ -384,17 +388,16 @@ class Column(Frozen, ColumnBase):
         return Column(**kwargs)
 
 
-
 class BoundColumn(ColumnBase):
 
     table = NamedStructField()
-    """ @type : Table """
+    """ :type: Table """
     column = NamedStructField()
-    """ @type : Column """
+    """ :type: Column """
     index = NamedStructField()
-    """ @type : int """
+    """ :type: int """
     is_sorting = NamedStructField()
-    """ @type : bool """
+    """ :type: bool """
 
     def render_css_class(self):
         return ' '.join(sorted(self.css_class))
@@ -416,14 +419,14 @@ class BoundColumn(ColumnBase):
         if self.cell__url:
             cell__url = self.cell__url(table=table, column=self, row=row, value=value) if callable(self.cell__url) else self.cell__url
 
-            cell__url_title = self.cell__url_title(table=table, column=(self), row=row, value=value) if callable(self.cell__url_title) else self.cell__url_title
+            cell__url_title = self.cell__url_title(table=table, column=self, row=row, value=value) if callable(self.cell__url_title) else self.cell__url_title
             cell_contents = '<a href="{}"{}>{}</a>'.format(
                 cell__url,
                 ' title=%s' % cell__url_title if cell__url_title else '',
                 cell_contents,
             )
         return '<td{attrs}>{cell_contents}</td>'.format(
-            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=(self), row=row, value=value)),
+            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=self, row=row, value=value)),
             cell_contents=cell_contents,
         )
 
@@ -503,6 +506,9 @@ class Table(object):
         self.query_error = None
         self.bulk_form = None
 
+        self.query_kwargs = extract_subkeys(kwargs, 'query')
+        self.bulk_kwargs = extract_subkeys(kwargs, 'bulk')
+
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
 
@@ -553,6 +559,7 @@ class Table(object):
                 else:
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in DEV, but just ignore in PROD
+                        # noinspection PyProtectedMember
                         valid_sort_fields = {x.name for x in self.Meta.model._meta.fields}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
@@ -572,10 +579,11 @@ class Table(object):
 
             header_group = list(group_iterator)
 
-            header_groups.append(HeaderGroup(display_name=group_name,
-                                        sortable=False,
-                                        colspan=len(header_group),
-                                        css_class={'superheader'}))
+            header_groups.append(HeaderGroup(
+                display_name=group_name,
+                sortable=False,
+                colspan=len(header_group),
+                css_class={'superheader'}))
 
             for x in header_group:
                 x.css_class.add('subheader')
@@ -621,7 +629,6 @@ class Table(object):
             def bulk(column):
                 bulk_kwargs = {
                     'name': column.name,
-                    'field_name': column.attr,
                     'attr': column.attr,
                     'required': False,
                     'empty_choice_tuple': (None, '', '---', True),
@@ -629,6 +636,8 @@ class Table(object):
                     'class': Field.from_model,
                 }
                 bulk_kwargs.update(column.bulk)
+                if bulk_kwargs['class'] == Field.from_model:
+                    bulk_kwargs['field_name'] = column.attr
                 return bulk_kwargs.pop('class')(**bulk_kwargs)
 
             def query(column):
@@ -642,18 +651,18 @@ class Table(object):
                 query_kwargs.update(column.query)
                 return query_kwargs.pop('class')(**query_kwargs)
 
-            self.query = Query(variables=[query(column) for column in self.bound_columns if column.query.show])
+            self.query = Query(request=request, variables=[query(bound_column) for bound_column in self.bound_columns if bound_column.query.show], **self.query_kwargs)
             self.query_form = self.query.form(request) if self.query.variables else None
 
             self.query_error = ''
             if self.query_form:
                 try:
-                    self.data = self.data.filter(self.query.request_to_q(request))
+                    self.data = self.data.filter(self.query.to_q())
                 except QueryException as e:
                     self.query_error = e.message
 
-            bulk_fields = [bulk(column) for column in self.bound_columns if column.bulk.show]
-            self.bulk_form = Form(data=request.POST, fields=bulk_fields) if bulk_fields else None
+            bulk_fields = [bulk(bound_column) for bound_column in self.bound_columns if bound_column.bulk.show]
+            self.bulk_form = Form(data=request.POST, fields=bulk_fields, **self.bulk_kwargs) if bulk_fields else None
 
         return headers, self.header_levels
 
