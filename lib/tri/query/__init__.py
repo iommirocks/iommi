@@ -6,13 +6,13 @@ from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces
 from tri.named_struct import NamedStruct, NamedStructField
-import tri.form
+from tri.form import Form, Field, bool_parse
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 
 class QueryException(Exception):
@@ -83,10 +83,14 @@ class VariableBase(NamedStruct):
 
     gui_op = NamedStructField(default='=')
     op_to_q_op = NamedStructField(default=lambda op: Q_OP_BY_OP[op])
+    """ @type: (unicode) -> Q """
     value_to_q = NamedStructField(default=default_value_to_q)
     freetext = NamedStructField()
 
     model = NamedStructField()
+
+    extra = NamedStructField()
+
     choices = NamedStructField()
     value_to_q_lookup = NamedStructField()
 
@@ -109,15 +113,15 @@ class Variable(Frozen, VariableBase):
                 kwargs['attr'] = name
 
         setdefaults(kwargs, dict(
-            gui=Struct(extract_subkeys(kwargs, 'gui', defaults={
+            gui=Struct({
                 'show': False,
-                'class': tri.form.Field,
-                'required': False
-            })),
+                'class': Field,
+                'required': False,
+            }),
+            extra=Struct(),
         ))
-        kwargs = {k: v for k, v in kwargs.items() if not k.startswith('gui__')}
 
-        super(Variable, self).__init__(**kwargs)
+        super(Variable, self).__init__(**collect_namespaces(kwargs))
 
     @staticmethod
     def text(**kwargs):  # pragma: no cover
@@ -138,7 +142,7 @@ class Variable(Frozen, VariableBase):
         """
         setdefaults(kwargs, dict(
             gui__choices=kwargs.get('choices'),
-            gui__class=tri.form.Field.choice,
+            gui__class=Field.choice,
         ))
         return Variable(**kwargs)
 
@@ -159,7 +163,7 @@ class Variable(Frozen, VariableBase):
             return Q(**{variable.attr + '__pk': instance.pk})
 
         setdefaults(kwargs, dict(
-            gui__class=tri.form.Field.choice_queryset,
+            gui__class=Field.choice_queryset,
             gui__choices=kwargs['choices'],
             gui__model=kwargs['model'],
             op_to_q_op=lambda op: 'exact',
@@ -175,11 +179,11 @@ class Variable(Frozen, VariableBase):
         """
         def boolean_value_to_q(variable, op, value_string_or_f):
             if isinstance(value_string_or_f, basestring):
-                value_string_or_f = tri.form.bool_parse(value_string_or_f)
+                value_string_or_f = bool_parse(value_string_or_f)
             return default_value_to_q(variable, op, value_string_or_f)
 
         setdefaults(kwargs, dict(
-            gui__class=tri.form.Field.boolean,
+            gui__class=Field.boolean,
             value_to_q=boolean_value_to_q,
         ))
         return Variable(**kwargs)
@@ -190,7 +194,7 @@ class Variable(Frozen, VariableBase):
         Boolean field. Tries hard to parse a boolean value from its input.
         """
         setdefaults(kwargs, dict(
-            gui__class=tri.form.Field.integer,
+            gui__class=Field.integer,
         ))
         return Variable(**kwargs)
 
@@ -219,7 +223,7 @@ class Query(object):
     """:type: list of Variable"""
     variable_by_name = {}
 
-    def __init__(self, variables=None):  # variables=None to make pycharm tooling not confused
+    def __init__(self, variables=None, **kwargs):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         """
@@ -230,6 +234,8 @@ class Query(object):
             self.variables = variables
 
         self.variable_by_name = {variable.name: variable for variable in self.variables}
+
+        self.gui_kwargs = extract_subkeys(kwargs, 'gui')
 
     def parse(self, query_string):
         """
@@ -386,7 +392,7 @@ class Query(object):
         fields = []
 
         if any(v.freetext for v in self.variables):
-            fields.append(tri.form.Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
+            fields.append(Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
 
         for variable in self.variables:
             if variable.gui.show:
@@ -394,7 +400,7 @@ class Query(object):
                 params = merged(variable.gui, name=variable.name)
                 fields.append(params.pop('class')(**params))
 
-        form = tri.form.Form(request=request, fields=fields)
+        form = Form(request=request, fields=fields, **self.gui_kwargs)
         form.request = request
         form.tri_query = self
         form.tri_query_advanced_value = request_data(request).get(ADVANCED_QUERY_PARAM, '')

@@ -17,7 +17,7 @@ class Data(Struct):
 
 class TestQuery(Query):
     foo_name = Variable(attr='foo', freetext=True, gui__show=True)
-    bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui__show=True)  # short form for gui__show
+    bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui__show=True)
     baz_name = Variable(attr='baz')
 
 query = TestQuery()
@@ -89,7 +89,7 @@ def test_request_to_q_simple():
     assert repr(query2.request_to_q(Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'})))) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
 
 
-def test_request_to_q_simple_int():
+def test_integer_request_to_q_simple():
     query2 = Query(variables=[Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui__show=True)])
     # noinspection PyTypeChecker
     assert repr(query2.request_to_q(Struct(method='GET', GET=Data(**{'bazaar': '11'})))) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
@@ -148,6 +148,7 @@ def test_invalid_syntax():
         query.parse('asdadad213124av@$#$#')
 
     assert e.value.message == 'Invalid syntax for query'
+
 
 @pytest.mark.django_db
 def test_choice_queryset():
