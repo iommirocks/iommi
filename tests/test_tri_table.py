@@ -14,7 +14,7 @@ from tri.table import Struct, Table, Column, Link, render_table, render_table_to
 def get_data():
     return [
         Struct(foo="Hello", bar=17),
-        Struct(foo="world!", bar=42)
+        Struct(foo="<evil/> &", bar=42)
     ]
 
 
@@ -53,7 +53,7 @@ def test_render_attrs():
     explicit_table(),
     declarative_table()
 ])
-def test_render(table):
+def test_render_impl(table):
 
     verify_table_html(table, """
         <table class="listview" id="table_id">
@@ -73,7 +73,7 @@ def test_render(table):
                     <td class="rj"> 17 </td>
                 </tr>
                 <tr class="row2">
-                    <td> world! </td>
+                    <td> &lt;evil/&gt; &amp; </td>
                     <td class="rj"> 42 </td>
                 </tr>
             </tbody>
