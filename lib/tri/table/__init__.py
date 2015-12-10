@@ -216,13 +216,15 @@ class Column(Frozen, ColumnBase):
 
         setdefaults(kwargs, dict(
             bulk=(Struct(extract_subkeys(kwargs, 'bulk', defaults=dict(show=False)))),
-            query=(Struct(extract_subkeys(kwargs, 'query', defaults=dict(show=False))))
+            query=(Struct(extract_subkeys(kwargs, 'query', defaults=dict(show=False)))),
+            extra=(Struct(extract_subkeys(kwargs, 'extra'))),
         ))
 
-        kwargs = {k: v for k, v in kwargs.items() if not k.startswith('bulk__') and not k.startswith('query__')}
+        kwargs = {k: v for k, v in kwargs.items() if not k.startswith('bulk__') and not k.startswith('query__') and not k.startswith('extra__')}
 
         assert isinstance(kwargs['bulk'], dict)
         assert isinstance(kwargs['query'], dict)
+        assert isinstance(kwargs['extra'], dict)
 
         super(Column, self).__init__(**kwargs)
 

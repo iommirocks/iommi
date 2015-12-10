@@ -970,3 +970,11 @@ def test_query_namespace_inject():
             columns=[Column(name='foo', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
         foo.prepare(foo.request)
+
+
+def test_extra():
+    class TestTable(Table):
+        foo = Column(extra__foo=1, extra__bar=2)
+
+    assert TestTable(data=[]).columns[0].extra.foo == 1
+    assert TestTable(data=[]).columns[0].extra.bar == 2
