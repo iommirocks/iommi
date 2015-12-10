@@ -19,7 +19,7 @@ from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.6.0'
+__version__ = '1.7.0'
 
 next_creation_count = itertools.count().next
 
