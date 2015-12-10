@@ -9,6 +9,7 @@ from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
+from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
@@ -85,7 +86,7 @@ def yes_no_formatter(table, column, row, value):
 
 def list_formatter(table, column, row, value):
     del table, column, row
-    return ', '.join([unicode(x) for x in value])
+    return ', '.join([conditional_escape(x) for x in value])
 
 
 _cell_formatters = {
@@ -116,7 +117,7 @@ def default_cell_formatter(table, column, row, value):
     if value is None:
         return ''
 
-    return value
+    return conditional_escape(value)
 
 
 class BoundRow(Struct):
