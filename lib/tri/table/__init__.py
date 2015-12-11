@@ -19,7 +19,7 @@ from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.7.0'
+__version__ = '1.8.0'
 
 next_creation_count = itertools.count().next
 
@@ -416,18 +416,20 @@ class BoundColumn(ColumnBase):
 
         table = bound_row.table
         if self.cell__template:
-            value = render_to_string(self.cell__template, {'table': table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
+            cell_contents = render_to_string(self.cell__template, {'table': table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
+        else:
+            cell_contents = evaluate(self.cell__format, table=self.table, column=self, row=row, value=value)
 
-        cell_contents = evaluate(self.cell__format, table=self.table, column=self, row=row, value=value)
-        if self.cell__url:
-            cell__url = self.cell__url(table=table, column=self, row=row, value=value) if callable(self.cell__url) else self.cell__url
+            if self.cell__url:
+                cell__url = self.cell__url(table=table, column=self, row=row, value=value) if callable(self.cell__url) else self.cell__url
 
-            cell__url_title = self.cell__url_title(table=table, column=self, row=row, value=value) if callable(self.cell__url_title) else self.cell__url_title
-            cell_contents = '<a href="{}"{}>{}</a>'.format(
-                cell__url,
-                ' title=%s' % cell__url_title if cell__url_title else '',
-                cell_contents,
-            )
+                cell__url_title = self.cell__url_title(table=table, column=self, row=row, value=value) if callable(self.cell__url_title) else self.cell__url_title
+                cell_contents = '<a href="{}"{}>{}</a>'.format(
+                    cell__url,
+                    ' title=%s' % cell__url_title if cell__url_title else '',
+                    cell_contents,
+                )
+
         return '<td{attrs}>{cell_contents}</td>'.format(
             attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=self, row=row, value=value)),
             cell_contents=cell_contents,

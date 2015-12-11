@@ -730,8 +730,11 @@ def test_query():
 
 
 def test_cell_template():
+    def explode(**_):
+        assert False
+
     class TestTable(NoSortTable):
-        foo = Column(cell__template='test_cell_template.html')
+        foo = Column(cell__template='test_cell_template.html', cell__format=explode, cell__url=explode, cell__url_title=explode)
 
     data = [Struct(foo="sentinel")]
 
