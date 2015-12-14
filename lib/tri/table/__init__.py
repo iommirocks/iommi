@@ -1,7 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import, unicode_literals
 from itertools import groupby
-import itertools
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponse, Http404, HttpResponseRedirect
@@ -20,8 +19,6 @@ from tri.query import Query, Variable, QueryException
 
 
 __version__ = '1.8.0'
-
-next_creation_count = itertools.count().next
 
 
 def prepare_headers(request, bound_columns):
