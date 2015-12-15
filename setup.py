@@ -21,6 +21,49 @@ def read_version():
         raise ValueError("couldn't find version")
 
 
+class Tag(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        from subprocess import call
+        version = read_version()
+        errno = call(['git', 'tag', '--annotate', version, '--message', 'Version %s' % version])
+        if errno == 0:
+            print("Added tag for version %s" % version)
+        raise SystemExit(errno)
+
+
+class ReleaseCheck(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        from subprocess import check_output
+        tag = check_output(['git', 'describe', '--all', '--exact-match', 'HEAD']).strip()
+        version = read_version()
+        if tag != version:
+            print('Missing %s tag on release' % version)
+            raise SystemExit(1)
+
+        current_branch = check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
+        if current_branch != 'master':
+            print('Only release from master')
+            raise SystemExit(1)
+
+        print("Ok to distribute files")
+
+
 # NB: _don't_ add namespace_packages to setup(), it'll break
 #     everything using imp.find_module
 setup(
@@ -49,4 +92,6 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     test_suite='tests',
+    cmdclass={'release_check': ReleaseCheck,
+              'tag': Tag},
 )

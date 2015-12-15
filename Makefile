@@ -42,3 +42,13 @@ dist: clean
 	python setup.py bdist_wheel
 	python setup.py bdist_egg
 	ls -l dist
+
+tag:
+	python setup.py tag
+
+release: clean
+	python setup.py release_check
+	python setup.py sdist
+	python setup.py bdist_wheel
+	python setup.py bdist_egg
+	ls -l dist
