@@ -82,4 +82,4 @@ BSD
 Documentation
 -------------
 
-http://triform.readthedocs.org.
+http://triquery.readthedocs.org
