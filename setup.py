@@ -92,6 +92,6 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     test_suite='tests',
-    cmdclass={'release_check': ReleaseCheck,
-              'tag': Tag},
+    cmdclass={'tag': Tag,
+              'release_check': ReleaseCheck},
 )
