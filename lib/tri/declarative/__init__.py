@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import functools
+from copy import copy
 from functools import total_ordering, wraps
 import inspect
 import itertools
@@ -7,7 +8,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.18.0'
+__version__ = '0.19.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -119,10 +120,16 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
                                     class_to_decorate.__bases__,
                                     {k: v for k, v in class_to_decorate.__dict__.items() if k not in ['__dict__', '__weakref__']})
 
+        def get_extra_args_function(self):
+            members = get_declared(self, parameter)
+            copied_members = OrderedDict((k, copy(v)) for k, v in members.items())
+            self.__dict__.update(copied_members)
+            return {parameter: copied_members}
+
         if add_init_kwargs:
-            def get_extra_args_function(self):
-                return {parameter: get_declared(self, parameter)}
             add_args_to_init_call(new_class, get_extra_args_function)
+        else:
+            add_init_call_hook(new_class, get_extra_args_function)
 
         setattr(new_class, 'get_declared', classmethod(get_declared))
         setattr(new_class, 'set_declared', classmethod(set_declared))
@@ -168,11 +175,27 @@ def add_args_to_init_call(cls, get_extra_args_function):
             pass
 
     def argument_injector_wrapper(self, *args, **kwargs):
-        new_args, new_kwargs = inject_args(args, kwargs, get_extra_args_function(self), pos_arg_names)
+        extra_kwargs = get_extra_args_function(self)
+        new_args, new_kwargs = inject_args(args, kwargs, extra_kwargs, pos_arg_names)
         __init__orig(self, *new_args, **new_kwargs)
 
     argument_injector_wrapper.pos_arg_names = pos_arg_names
     setattr(cls, '__init__', argument_injector_wrapper)
+
+
+def add_init_call_hook(cls, init_hook):
+    # Use object.__getattribute__ to not have the original implementation bind to the class
+    # Extra acrobatics to get None if no __init__ is defined
+    __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)
+
+    def init_hook_wrapper(self, *args, **kwargs):
+        _ = init_hook(self)
+        if __init__orig is None:
+            super(cls, self).__init__(*args, **kwargs)
+        else:
+            __init__orig(self, *args, **kwargs)
+
+    setattr(cls, '__init__', init_hook_wrapper)
 
 
 def inject_args(args, kwargs, extra_args, pos_arg_names):
