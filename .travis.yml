@@ -12,4 +12,3 @@ deploy:
   on:
     tags: true
     repo: TriOptima/tri.declarative
-  distributions: "sdist bdist_egg bdist_wheel"
