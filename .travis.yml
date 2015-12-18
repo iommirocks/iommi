@@ -1,15 +1,15 @@
-# Config file for automatic testing at travis-ci.org
-
 language: python
-
 python:
-  - "2.7"
-
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+- '2.7'
 install: pip install -r test_requirements.txt codecov
-
-# command to run tests, e.g. python setup.py test
 script: make coverage
-
-after_success:
-    codecov
+after_success: codecov
+deploy:
+  provider: pypi
+  user: j_lubcke
+  password:
+    secure: avY6WD95XBnoH+wUc6MVhpTia3cf7NXdfDlJapUGnYoSJLB4ISb6ZPG0JUoQ76kcOquKCo09d250H1FcRCsYPkhgFiWTk9L1qGi3tVx65345cwy4sPJn2HDzX/XUkXOT3G+litf7h4P/Z6BcbEy6Wu0kIy9UzCwfHkkTMuC/ZiwyIfbRpX1MJzLzZeuVHVtHLKAweq24rl9VEKxjOM0gd2h82LDMT9IE90s4qwq6iUqUAnU6FA2hy5QC6tAWcl5Rrrhax0y0EeyFnFS4OxsdBP1gFmMvfSLfD1mhqKNNBElf5RSkRcv5NE0jXVi73/UVkbwWibA3nJoYYJPDV+om3moUy/j39w/ERGQL9uBoOQuRO+K/7Ph7G6Xk63dVSRJvbICEc2sUL9j4tjwc+ZiiG3rU5GFvuf4gnPC/hJ/fd0QTaJXQe/f0hwdwovo7SCWP9TmoKsp7b1BnARS3IAb/NMjzzmNg6Xa2Csf1mdgGVPQXckG41syotjowq8Q2IW5IVL4HvHy8QicJUYtlmXfH4s8r+urZWXkX5UbfqaF+6EsR6rw1p0NcHqcO1fbofE/X7EUHgaBub9RGhG1K+nDAPa5oZYmqb9ovU7YnlgEGcKqMW4ifJs/qkiIGNOR8GGHIHeZDNxHdox9TQNSA0YNkUezR8tZxTeM+foD9QhC34RY=
+  on:
+    tags: true
+    repo: TriOptima/tri.table
+  distributions: "sdist bdist_egg bdist_wheel"
