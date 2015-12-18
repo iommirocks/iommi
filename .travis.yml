@@ -1,7 +1,7 @@
 language: python
 python:
 - '2.7'
-install: pip install -r test_requirements.txt codecov tox
+install: pip install -r test_requirements.txt codecov
 script: make coverage
 after_success: codecov
 deploy:
