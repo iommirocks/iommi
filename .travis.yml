@@ -1,7 +1,15 @@
 language: python
 python:
-  - "2.7"
+- '2.7'
 install: pip install -r test_requirements.txt codecov
 script: make coverage
-after_success:
-    codecov
+after_success: codecov
+deploy:
+  provider: pypi
+  user: j_lubcke
+  password:
+    secure: GP/vGk9q++12p0v6hXpEfHJzADApvtPwf60DUf2U8SNWaZ+ErhaOnwyZkVyxFZ+YpFB+9uTUUcFzOhV4UCIVYCMq21gMkwnP2Dagsg2Yox8YuyzyWc0WVOYm9kZm+8fgpHcFkl33jTMB0BLAJ2xBCM/3PWsly1HKz1Hf/WBugpzEk/sWAOAnF0EZWHBH8YPaMhXze2m9mU0NdlumD/7Ia76jSLgHzIjvGvdECxnWs+pQHJTTpFgVcvg8hVcoIBuvu8apqewBtGQa3DAA+d5bNqinN/IHLQfNQ7HX02pHcO+n8EOaWlQ+dAQugOFHJXJ+fm4v4l616V360+MB2J/iekQIduRB4ZIw+Ouixl4NullqWeBqpIOkukQHpDAJHIPwCgIzzeYcSB045/E55c0CgHS4y45wiPBNLZW+7wmmZ2t51rOLqrNXgRqEfzL34VNqgJNgyKKjilSJtgAx70PJBOZiD+5UHF4EPihXQmTonAW4halmuS0KVz7NpyYZdAKzcyvaJAUbbRXDKeseyio6iW5sjOjYzZ6mt8PXJU7R8TzqLJ/MwTZ4khH03VleGZWWGJaauexUitr5o+AUNpnyO0hzBS+K9M0eS2ijN2F2BCM/zgOZ9h3FpU/WZXDH2ihZpWNzWi9nfrwqkUtIVhN2wZSUvD6fxrLMNvb9n1iRa1U=
+  on:
+    tags: true
+    repo: TriOptima/tri.form
+  distributions: "sdist bdist_egg bdist_wheel"
