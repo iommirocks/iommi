@@ -317,6 +317,14 @@ def test_password():
     assert ' type="password" ' in Form(data=Data(foo='1'), fields=[Field.password(name='foo')]).validate().table()
 
 
+def test_choice_not_required():
+    class MyForm(Form):
+        foo = Field.choice(required=False, choices=['bar'])
+
+    assert MyForm(request=Struct(method='POST', POST=Data(foo='bar'))).validate().fields[0].value == 'bar'
+    assert MyForm(request=Struct(method='POST', POST=Data(foo=''))).validate().fields[0].value is None
+
+
 def test_multi_choice():
     soup = BeautifulSoup(Form(data=Data(foo=['0']), fields=[Field.multi_choice(name='foo', choices=['a'])]).validate().table())
     assert [x.attrs['multiple'] for x in soup.find_all('select')] == ['']
