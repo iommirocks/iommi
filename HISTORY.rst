@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.19.0 (...)
-~~~~~~~~~~~~
+0.19.0 (2016-01-12)
+~~~~~~~~~~~~~~~~~~~
 
 * When making instances of a class decorated with `@declarative` the declared
   values are copied (shallow) before being passed to `__init__`.
