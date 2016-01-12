@@ -54,7 +54,7 @@ def test_sort_key():
         b = "x"
 
         def __init__(self, members):
-            assert ['b', 'a'] == members.keys()
+            assert ['b', 'a'] == list(members.keys())
 
     Ok()
 
@@ -255,7 +255,7 @@ def test_add_args_to_init_call():
 
 def test_copy_of_constructor_args():
 
-    @declarative(list)
+    @declarative(list, sort_key=lambda x: x)
     class C(object):
         x = []
 
@@ -270,7 +270,7 @@ def test_copy_of_constructor_args():
 
 def test_copy_of_attributes():
 
-    @declarative(list)
+    @declarative(list, sort_key=lambda x: x)
     class C(object):
         x = []
 
@@ -286,7 +286,7 @@ def test_copy_of_attributes():
 
 def test_copy_of_attributes_no_kwargs_injection():
 
-    @declarative(list, add_init_kwargs=False)
+    @declarative(list, add_init_kwargs=False, sort_key=lambda x: x)
     class C(object):
         x = []
 
@@ -302,7 +302,7 @@ def test_copy_of_attributes_no_kwargs_injection():
 
 def test_copy_of_attributes_no_kwargs_injection_with_no_init():
 
-    @declarative(list, add_init_kwargs=False)
+    @declarative(list, add_init_kwargs=False, sort_key=lambda x: x)
     class C(object):
         x = []
 
