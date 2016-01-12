@@ -24,7 +24,7 @@ BSD
 Documentation
 -------------
 
-http://declarative.readthedocs.org.
+https://trideclarative.readthedocs.org.
 
 
 Usage
