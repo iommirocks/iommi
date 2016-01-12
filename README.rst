@@ -135,4 +135,4 @@ BSD
 Documentation
 -------------
 
-http://tritables.readthedocs.org.
+https://tritable.readthedocs.org.
