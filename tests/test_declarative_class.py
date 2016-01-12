@@ -251,3 +251,80 @@ def test_add_args_to_init_call():
     c = C(1, 2)
     assert 1 == c.x
     assert 2 == c.y
+
+
+def test_copy_of_constructor_args():
+
+    @declarative(list)
+    class C(object):
+        x = []
+
+        def __init__(self, members):
+            members['x'].append('foo')
+
+    a = C()
+    _ = C()
+
+    assert a.x == ['foo']  # Only added once for each instance
+
+
+def test_copy_of_attributes():
+
+    @declarative(list)
+    class C(object):
+        x = []
+
+        def __init__(self, members):
+            pass
+
+    a = C()
+    b = C()
+
+    a.x.append('bar')
+    assert b.x == []  # No leak from other instance
+
+
+def test_copy_of_attributes_no_kwargs_injection():
+
+    @declarative(list, add_init_kwargs=False)
+    class C(object):
+        x = []
+
+        def __init__(self):
+            pass
+
+    a = C()
+    b = C()
+
+    a.x.append('bar')
+    assert b.x == []  # No leak from other instance
+
+
+def test_copy_of_attributes_no_kwargs_injection_with_no_init():
+
+    @declarative(list, add_init_kwargs=False)
+    class C(object):
+        x = []
+
+    a = C()
+    b = C()
+
+    a.x.append('bar')
+    assert b.x == []  # No leak from other instance
+
+
+def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
+
+    class MyException(Exception):
+        pass
+
+    class C(object):
+        def __init__(self):
+            raise MyException()
+
+    @declarative(list, add_init_kwargs=False)
+    class D(C):
+        pass
+
+    with pytest.raises(MyException):
+        D()
