@@ -38,6 +38,27 @@ def test_find_member_fail_on_tuple():
             foo = Member(foo='bar'),
 
 
+def test_missing_ordering():
+    with pytest.raises(TypeError):
+        @declarative(str)
+        class Fail(object):
+            x = "x"
+
+        Fail()
+
+
+def test_sort_key():
+    @declarative(str, sort_key=lambda x: x)
+    class Ok(object):
+        a = "y"
+        b = "x"
+
+        def __init__(self, members):
+            assert ['b', 'a'] == members.keys()
+
+    Ok()
+
+
 def test_find_members_not_shadowed_by_meta():
 
     class MyDeclarative(Declarative):
@@ -63,7 +84,7 @@ def test_find_members_inherited():
 
 
 def test_isolated_inheritance():
-    @declarative(int, add_init_kwargs=False)
+    @declarative(int, add_init_kwargs=False, sort_key=lambda x: x)
     class Base(object):
         a = 1
 
@@ -117,7 +138,7 @@ def test_member_attribute_naming():
 
 def test_string_members():
 
-    @declarative(str)
+    @declarative(str, sort_key=lambda x: x)
     class Declarative(object):
 
         foo = 'bar'
@@ -128,7 +149,7 @@ def test_string_members():
 def test_declarative_and_meta():
 
     @with_meta
-    @declarative(str)
+    @declarative(str, sort_key=lambda x: x)
     class Foo(object):
         foo = 'foo'
 
@@ -144,7 +165,7 @@ def test_declarative_and_meta():
 
 def test_declarative_and_meta_other_order():
 
-    @declarative(str)
+    @declarative(str, sort_key=lambda x: x)
     @with_meta
     class Foo(object):
         foo = 'foo'
@@ -161,8 +182,8 @@ def test_declarative_and_meta_other_order():
 
 def test_multiple_types():
 
-    @declarative(int, 'ints')
-    @declarative(str, 'strs')
+    @declarative(int, 'ints', sort_key=lambda x: x)
+    @declarative(str, 'strs', sort_key=lambda x: x)
     class Foo(object):
         a = 1
         b = "b"
@@ -176,7 +197,7 @@ def test_multiple_types():
 
 def test_multiple_types_inheritance():
 
-    @declarative(int, 'ints')
+    @declarative(int, 'ints', sort_key=lambda x: x)
     class Foo(object):
         i = 1
         a = 'a'
@@ -185,7 +206,7 @@ def test_multiple_types_inheritance():
             assert OrderedDict([('i', 1), ('j', 2), ('k', 3)]) == ints
             super(Foo, self).__init__()
 
-    @declarative(str, 'strs')
+    @declarative(str, 'strs', sort_key=lambda x: x)
     class Bar(Foo):
         j = 2
         b = "b"

@@ -79,15 +79,27 @@ def creation_ordered(class_to_decorate):
     return class_to_decorate
 
 
-def declarative(member_class, parameter='members', add_init_kwargs=True):
+def default_sort_key(x):
+    # noinspection PyProtectedMember
+    return x._index
+
+
+def declarative(member_class, parameter='members', add_init_kwargs=True, sort_key=default_sort_key):
     """
         Class decorator to enable classes to be defined in the style of django models.
         That is, @declarative classes will get an additional argument to constructor,
         containing an OrderedDict with all class members matching the specified type.
 
+        @param member_class: Class to decorate
+        @param parameter: Name of constructor parameter to inject
+        @param add_init_kwargs: If constructor parameter should be injected (Default: True)
+        @param sort_key: Function to invoke on members to obtain ordering (Default is
+        to use ordering from `@creation_ordered`)
+
         @type member_class: class
         @type parameter: str
         @type add_init_kwargs: bool
+        @type sort_key: (object) -> object
     """
 
     def get_members(cls):
@@ -103,7 +115,15 @@ def declarative(member_class, parameter='members', add_init_kwargs=True):
                 if type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
                     raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)
 
-        members.update(sorted(generate_member_bindings(), key=lambda x: x[1]))
+        bindings = generate_member_bindings()
+        try:
+            sorted_bindings = sorted(bindings, key=lambda x: sort_key(x[1]))
+        except AttributeError:
+            if sort_key is default_sort_key:
+                raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
+            else:
+                raise
+        members.update(sorted_bindings)
 
         return members
 
