@@ -87,14 +87,17 @@ def default_parse(form, field, string_value):
     return string_value
 
 
+MISSING = object()
+
+
 class FieldBase(NamedStruct):
     name = NamedStructField()
 
     show = NamedStructField(default=True)
 
-    attr = NamedStructField()
-    id = NamedStructField()
-    label = NamedStructField()
+    attr = NamedStructField(default=MISSING)
+    id = NamedStructField(default=MISSING)
+    label = NamedStructField(default=MISSING)
 
     is_valid = NamedStructField(default=lambda form, field, parsed_data: (True, ''))
     """ @type: (Form, Field, object) -> boolean """
@@ -167,6 +170,13 @@ class BoundField(FieldBase):
 
     def __init__(self, field, form):
         super(BoundField, self).__init__(**field)
+        if self.attr is MISSING:
+            self.attr = self.name
+        if self.id is MISSING:
+            self.id = 'id_%s' % self.name if self.name else ''
+        if self.label is MISSING:
+            self.label = capitalize(self.name).replace('_', ' ') if self.name else ''
+
         self.form = form
         self.errors = set()
 
@@ -256,15 +266,6 @@ class Field(Frozen, FieldBase):
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :param is_list: interpret request data as a list (can NOT be a callable). Default False
         """
-
-        name = kwargs.get('name')
-        if name:
-            if not kwargs.get('attr'):
-                kwargs['attr'] = name
-            if not kwargs.get('id'):
-                kwargs['id'] = 'id_%s' % name
-            if not kwargs.get('label'):
-                kwargs['label'] = capitalize(name).replace('_', ' ')
 
         setdefaults(kwargs, dict(
             extra=Struct()

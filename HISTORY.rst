@@ -6,6 +6,8 @@ Changelog
 
 Bugfix release.
 
+* Fixed default value handling of 'attr' to make None a valid value when no attribute should be read.
+
 * Fixed CSS handling on required fields.
 
 
