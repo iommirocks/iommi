@@ -104,14 +104,14 @@ class FieldBase(NamedStruct):
     initial_list = NamedStructField()
     template = NamedStructField(default='tri_form/{style}_form_row.html')
     template_string = NamedStructField()
-    attrs = NamedStructField(default_factory=dict)
+    attrs = NamedStructField(default={})
     input_template = NamedStructField(default='tri_form/input.html')
     label_template = NamedStructField(default='tri_form/label.html')
     errors_template = NamedStructField(default='tri_form/errors.html')
     required = NamedStructField(default=True)
-    container_css_classes = NamedStructField(default_factory=set)
-    label_container_css_classes = NamedStructField(default_factory=lambda: {'description_container'})
-    input_container_css_classes = NamedStructField(default_factory=set)
+    container_css_classes = NamedStructField(default=set())
+    label_container_css_classes = NamedStructField(default={'description_container'})
+    input_container_css_classes = NamedStructField(default=set())
     post_validation = NamedStructField(default=lambda form, field: None)
     """ @type: (Form, Field) -> None """
     render_value = NamedStructField(default=lambda form, field, value: unicode(value))
@@ -128,7 +128,7 @@ class FieldBase(NamedStruct):
     strip_input = NamedStructField(default=True)
     input_type = NamedStructField(default='text')
 
-    extra = NamedStructField(default_factory=Struct)
+    extra = NamedStructField(default=Struct())
     choice_to_option = NamedStructField()
     empty_label = NamedStructField()
     empty_choice_tuple = NamedStructField()
@@ -192,26 +192,27 @@ class BoundField(FieldBase):
             return mark_safe(' %s ' % ' '.join(['%s="%s"' % (key, value) for key, value in self.attrs.items()]))
         return ''
 
+    def render_css_classes(self, key):
+        """
+        Render CSS classes, or return '' if no attributes needs to be rendered.
+        """
+        classes = self.get(key)
+        return '' if not classes else mark_safe(' class="%s"' % ' '.join(sorted(classes)))
+
     def render_container_css_classes(self):
-        container_css_classes = set(self.container_css_classes)
-        if self.required and self.editable:
-            container_css_classes.add('required')
+        c = self.get('container_css_classes', set())
+        if self.get('required', False) and self.get('editable', True):
+            c.add('required')
         if self.form.style == 'compact':
-            container_css_classes.add('key-value')
-        return render_css_classes(container_css_classes)
+            c.add('key-value')
+        self['container_css_classes'] = c
+        return self.render_css_classes('container_css_classes')
 
     def render_label_container_css_classes(self):
-        return render_css_classes(self.label_container_css_classes)
+        return self.render_css_classes('label_container_css_classes')
 
     def render_input_container_css_classes(self):
-        return render_css_classes(self.input_container_css_classes)
-
-
-def render_css_classes(classes):
-    """
-    Render CSS classes, or return '' if no attributes needs to be rendered.
-    """
-    return '' if not classes else mark_safe(' class="%s"' % ' '.join(sorted(classes)))
+        return self.render_css_classes('input_container_css_classes')
 
 
 @creation_ordered
