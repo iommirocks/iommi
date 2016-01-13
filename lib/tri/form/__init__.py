@@ -28,7 +28,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.7.0'
+__version__ = '1.8.0'
 
 
 def capitalize(s):
@@ -98,6 +98,8 @@ class FieldBase(NamedStruct):
     attr = NamedStructField(default=MISSING)
     id = NamedStructField(default=MISSING)
     label = NamedStructField(default=MISSING)
+
+    after = NamedStructField()
 
     is_valid = NamedStructField(default=lambda form, field, parsed_data: (True, ''))
     """ @type: (Form, Field, object) -> boolean """
