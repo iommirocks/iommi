@@ -3,6 +3,7 @@ from __future__ import unicode_literals, absolute_import
 from collections import OrderedDict
 from datetime import datetime
 from decimal import Decimal
+from itertools import chain
 
 import re
 from django.core.exceptions import ValidationError
@@ -27,7 +28,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.6.1'
+__version__ = '1.7.0'
 
 
 def capitalize(s):
@@ -337,11 +338,6 @@ class Field(Frozen, FieldBase):
         ))
 
         if not kwargs['required'] and not kwargs['is_list']:
-            original_choices = kwargs['choices']
-
-            def choices(form, field):
-                return [None] + list(evaluate(original_choices, form=form, field=field))
-
             original_parse = kwargs.get('parse', default_parse)
 
             def parse(form, field, string_value):
@@ -350,7 +346,6 @@ class Field(Frozen, FieldBase):
                 return original_parse(form=form, field=field, string_value=string_value)
 
             kwargs.update(
-                choices=choices,
                 parse=parse
             )
 
@@ -361,16 +356,18 @@ class Field(Frozen, FieldBase):
 
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
-        def choice_post_validation(form, field):
-            field.choice_tuples = [field.choice_to_option(form=form, field=field, choice=choice) if choice is not None else field.empty_choice_tuple
-                                   for choice in field.choices]
+        def post_validation(form, field):
+            choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
+            if not field['required'] and not field['is_list']:
+                choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
+            field.choice_tuples = choice_tuples
 
         setdefaults(kwargs, dict(
             empty_choice_tuple=(None, '', kwargs['empty_label'], True),
             choice_to_option=lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value),
             input_template='tri_form/choice.html',
             is_valid=choice_is_valid,
-            post_validation=choice_post_validation
+            post_validation=post_validation
         ))
         kwargs['choice_to_option'] = should_not_evaluate(kwargs['choice_to_option'])
         return Field(**kwargs)
