@@ -202,8 +202,10 @@ class BoundField(FieldBase):
     def render_container_css_classes(self):
         c = self.get('container_css_classes', set())
         if self.get('required', False) and self.get('editable', True):
+            c = set(c)
             c.add('required')
         if self.form.style == 'compact':
+            c = set(c)
             c.add('key-value')
         self['container_css_classes'] = c
         return self.render_css_classes('container_css_classes')
