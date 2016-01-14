@@ -1,3 +1,6 @@
+{% if field.errors %}
+<ul class="errorlist">
 {% for error in field.errors %}
-    <div class="error">{{ error }}</div>
+    <li>{{ error }}</ul>
 {% endfor %}
+{% endif %}
