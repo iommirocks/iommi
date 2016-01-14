@@ -194,7 +194,8 @@ class BoundField(FieldBase):
             self.input_template = 'tri_form/non_editable.html'
 
     def rendered_value(self):
-        return self.render_value(form=self.form, field=self, value=self.value)
+        value = self.raw_data if self.errors else self.value
+        return self.render_value(form=self.form, field=self, value=value if value else '')
 
     def render_attrs(self):
         """
@@ -752,10 +753,10 @@ class Form(object):
                 if not field.errors:
                     if field.required and not value and not value_list:
                         field.errors.add('This field is required')
+                    else:
+                        field.value = value
+                        field.value_list = value_list
 
-                if not field.errors:
-                    field.value = value
-                    field.value_list = value_list
         else:
             for field in self.fields:
                 if field.is_list:
