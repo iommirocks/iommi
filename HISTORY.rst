@@ -6,6 +6,10 @@ Changelog
 
 * Fixed default value initialization on Field attributes to not reuse containers.
 
+* Added support for ManyToManyField when generating forms for model objects.
+
+* Added 'read_from_instance' and 'write_to_instance' callbacks for customized instance marshalling.
+
 
 1.8.0 (2016-01-13)
 ~~~~~~~~~~~~~~~~~~

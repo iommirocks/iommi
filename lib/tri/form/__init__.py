@@ -8,7 +8,7 @@ from itertools import chain
 import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField
+from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField
 from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -60,6 +60,16 @@ def foreign_key_factory(model_field, **kwargs):
     kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(**kwargs)
 
+
+def many_to_many_factory(model_field, **kwargs):
+    setdefaults(kwargs, dict(
+        choices=model_field.rel.to.objects.all(),
+        read_from_instance=lambda field, instance: getattr_path(instance, field.attr).all()
+    ))
+    kwargs['model'] = model_field.rel.to
+    return Field.multi_choice_queryset(**kwargs)
+
+
 # The order here is significant because of inheritance structure. More specific must be below less specific.
 _field_factory_by_django_field_type = OrderedDict([
     (CharField, lambda model_field, **kwargs: Field(**kwargs)),
@@ -75,6 +85,7 @@ _field_factory_by_django_field_type = OrderedDict([
     (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
     (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
     (ForeignKey, foreign_key_factory),
+    (ManyToManyField, many_to_many_factory)
 ])
 
 
@@ -85,6 +96,14 @@ def register_field_factory(field_class, factory):
 def default_parse(form, field, string_value):
     del form, field
     return string_value
+
+
+def default_read_from_instance(field, instance):
+    return getattr_path(instance, field.attr)
+
+
+def default_write_to_instance(field, instance, value):
+    setattr_path(instance, field.attr, value)
 
 
 MISSING = object()
@@ -138,6 +157,11 @@ class FieldBase(NamedStruct):
     empty_label = NamedStructField()
     empty_choice_tuple = NamedStructField()
     choices = NamedStructField()
+
+    read_from_instance = NamedStructField(default=default_read_from_instance)
+    """ @type: (Field, object) -> None """
+    write_to_instance = NamedStructField(default=default_write_to_instance)
+    """ @type: (Field, object, object) -> None """
 
 
 class BoundField(FieldBase):
@@ -265,6 +289,8 @@ class Field(Frozen, FieldBase):
         :param input_type: the type attribute on the standard input HTML tag. Default: 'text'
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :param is_list: interpret request data as a list (can NOT be a callable). Default False
+        :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
+        :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
         setdefaults(kwargs, dict(
@@ -272,10 +298,6 @@ class Field(Frozen, FieldBase):
         ))
 
         super(Field, self).__init__(**collect_namespaces(kwargs))
-
-    @staticmethod
-    def text(**kwargs):  # pragma: no cover
-        return Field(**kwargs)
 
     @staticmethod
     def hidden(**kwargs):
@@ -400,7 +422,7 @@ class Field(Frozen, FieldBase):
     def multi_choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
             attrs={'multiple': ''},
-            choice_to_option=should_not_evaluate(lambda form, field, choice: (choice, choice.pk, unicode(choice), field.value_list and choice in field.value_list)),
+            choice_to_option=lambda form, field, choice: (choice, choice.pk, unicode(choice), field.value_list and choice in field.value_list),
             is_list=True
         ))
         return Field.choice_queryset(**kwargs)
@@ -475,6 +497,18 @@ class Field(Frozen, FieldBase):
             editable=False,
             attr=None,
             name='@@heading@@',
+        ))
+        return Field(**kwargs)
+
+    @staticmethod
+    def info(value, **kwargs):
+        """
+        Shortcut to create an info entry.
+        """
+        setdefaults(kwargs, dict(
+            initial=value,
+            editable=False,
+            attr=None,
         ))
         return Field(**kwargs)
 
@@ -607,15 +641,18 @@ class Form(object):
         if isinstance(fields, dict):  # Declarative case
             fields = [merged(field, dict(name=name)) for name, field in fields.items()]
         self.fields = sort_after([BoundField(field, self) for field in fields])
+        """ @type: list of BoundField """
 
         if instance is not None:
             for field in self.fields:
                 if field.attr:
-                    initial = getattr_path(instance, field.attr)
+                    initial = field.read_from_instance(field, instance)
                     if field.is_list:
                         field.initial_list = initial
                     else:
                         field.initial = initial
+
+            self.instance = instance
 
         if data:
             for field in self.fields:
@@ -656,7 +693,7 @@ class Form(object):
 
         fields = []
         # noinspection PyProtectedMember
-        for field, _ in model._meta.get_fields_with_model():
+        for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
             if should_include(field.name) and not isinstance(field, AutoField):
                 subkeys = extract_subkeys(kwargs, field.name)
                 foo = subkeys.get('class', Field.from_model)(name=field.name, model=model, model_field=field, **subkeys)
@@ -745,7 +782,7 @@ class Form(object):
                 value = None
                 value_list = None
                 if field.is_list:
-                    if field.parsed_data_list:
+                    if field.parsed_data_list is not None:
                         value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list]
                 else:
                     value = self.validate_field_parsed_data(field, field.parsed_data)
@@ -825,7 +862,4 @@ class Form(object):
                 field.value_list = field.initial_list
 
             if field.attr is not None:
-                if field.value is not None:
-                    setattr_path(instance, field.attr, field.value)
-                else:
-                    setattr_path(instance, field.attr, field.value_list)
+                field.write_to_instance(field, instance, field.value_list if field.is_list else field.value)
