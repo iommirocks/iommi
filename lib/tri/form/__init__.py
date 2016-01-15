@@ -8,7 +8,7 @@ from itertools import chain
 import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField
+from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField
 from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -60,6 +60,16 @@ def foreign_key_factory(model_field, **kwargs):
     kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(**kwargs)
 
+
+def many_to_many_factory(model_field, **kwargs):
+    setdefaults(kwargs, dict(
+        choices=model_field.rel.to.objects.all(),
+        read_from_instance=lambda field, instance: getattr_path(instance, field.attr).all()
+    ))
+    kwargs['model'] = model_field.rel.to
+    return Field.multi_choice_queryset(**kwargs)
+
+
 # The order here is significant because of inheritance structure. More specific must be below less specific.
 _field_factory_by_django_field_type = OrderedDict([
     (CharField, lambda model_field, **kwargs: Field(**kwargs)),
@@ -75,6 +85,7 @@ _field_factory_by_django_field_type = OrderedDict([
     (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
     (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
     (ForeignKey, foreign_key_factory),
+    (ManyToManyField, many_to_many_factory)
 ])
 
 
@@ -681,7 +692,7 @@ class Form(object):
 
         fields = []
         # noinspection PyProtectedMember
-        for field, _ in model._meta.get_fields_with_model():
+        for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
             if should_include(field.name) and not isinstance(field, AutoField):
                 subkeys = extract_subkeys(kwargs, field.name)
                 foo = subkeys.get('class', Field.from_model)(name=field.name, model=model, model_field=field, **subkeys)

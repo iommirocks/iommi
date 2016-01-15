@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
-from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest
+from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest
 from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
@@ -392,6 +392,16 @@ def test_field_from_model_foreign_key():
     Foo.objects.create(foo=3)
     Foo.objects.create(foo=5)
     choices = Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk').choices
+    assert isinstance(choices, QuerySet)
+    assert set(choices) == set(Foo.objects.all())
+
+
+@pytest.mark.django_db
+def test_field_from_model_many_to_many():
+    Foo.objects.create(foo=2)
+    Foo.objects.create(foo=3)
+    Foo.objects.create(foo=5)
+    choices = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many').choices
     assert isinstance(choices, QuerySet)
     assert set(choices) == set(Foo.objects.all())
 

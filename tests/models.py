@@ -1,4 +1,4 @@
-from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField
+from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField
 
 saved_something = None
 
@@ -40,6 +40,10 @@ class FieldFromModelForeignKeyTest(Model):
 
 class FieldFromModelOneToOneTest(Model):
     foo_one_to_one = OneToOneField(Foo)
+
+
+class FieldFromModelManyToManyTest(Model):
+    foo_many_to_many = ManyToManyField(Foo)
 
 
 class FooField(IntegerField):
