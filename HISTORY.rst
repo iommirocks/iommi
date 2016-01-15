@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.9.0 ()
-~~~~~~~~
+1.9.0 (2016-01-15)
+~~~~~~~~~~~~~~~~~~
 
 * Fixed default value initialization on Field attributes to not reuse containers.
 
