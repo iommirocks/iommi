@@ -297,6 +297,10 @@ def test_heading():
     assert '<th colspan="2">#foo#</th>' in Form(data={}, fields=[Field.heading(label='#foo#')]).validate().table()
 
 
+def test_info():
+    assert '#foo#' in Form(data={}, fields=[Field.info(value='#foo#')]).validate().table()
+
+
 def test_radio():
     choices = [
         'a',
