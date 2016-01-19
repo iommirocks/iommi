@@ -99,8 +99,8 @@ def test_django_table():
     t.prepare(RequestFactory().get("/", ''))
 
     assert list(t.bound_columns[-1].choices) == list(Foo.objects.all())
-    assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())  # None because bulk fields are always not required
-    assert list(t.query_form.fields[-1].choices) == list(Foo.objects.all())  # None because query fields are always not required
+    assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())
+    assert list(t.query_form.fields[-1].choices) == list(Foo.objects.all())
 
     verify_table_html(t, """
         <table class="listview">
