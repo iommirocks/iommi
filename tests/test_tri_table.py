@@ -99,8 +99,8 @@ def test_django_table():
     t.prepare(RequestFactory().get("/", ''))
 
     assert list(t.bound_columns[-1].choices) == list(Foo.objects.all())
-    assert list(t.bulk_form.fields[-1].choices) == [None] + list(Foo.objects.all())  # None because bulk fields are always not required
-    assert list(t.query_form.fields[-1].choices) == [None] + list(Foo.objects.all())  # None because query fields are always not required
+    assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())
+    assert list(t.query_form.fields[-1].choices) == list(Foo.objects.all())
 
     verify_table_html(t, """
         <table class="listview">
@@ -952,8 +952,8 @@ def test_choice_queryset():
     foo_table.prepare(RequestFactory().get("/"))
 
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(foo_table.bulk_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
-    assert repr(foo_table.query_form.fields[0].choices) == repr([None] + list(Foo.objects.filter(a=1)))
+    assert repr(foo_table.bulk_form.fields[0].choices) == repr(list(Foo.objects.filter(a=1)))
+    assert repr(foo_table.query_form.fields[0].choices) == repr(list(Foo.objects.filter(a=1)))
 
 
 @pytest.mark.django_db
