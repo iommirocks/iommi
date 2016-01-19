@@ -211,7 +211,7 @@ def test_choice_queryset():
     assert not form.is_valid()
     form = query2.form(Struct(method='POST', POST=Data({'foo': str(random_valid_obj.pk)})))
     assert form.is_valid()
-    assert set(form.fields_by_name['foo'].choices) == {None} | set(Foo.objects.all())
+    assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
 
     # test query
     # noinspection PyTypeChecker
