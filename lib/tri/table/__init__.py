@@ -22,8 +22,7 @@ from tri.declarative import declarative, creation_ordered, with_meta, setdefault
 from tri.form import Field, Form
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
-from tri.query import Query, Variable, QueryException
-
+from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 __version__ = '1.14.0'
 
@@ -346,6 +345,24 @@ class Column(Frozen, ColumnBase):
     def substring(**kwargs):
         setdefaults(kwargs, dict(
             query__gui_op=':',
+        ))
+        return Column(**kwargs)
+
+    @staticmethod
+    def date(**kwargs):
+        setdefaults(kwargs, dict(
+            query__gui__class=Field.date,
+            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+            bulk__class=Field.date,
+        ))
+        return Column(**kwargs)
+
+    @staticmethod
+    def datetime(**kwargs):
+        setdefaults(kwargs, dict(
+            query__gui__class=Field.date,
+            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+            bulk__class=Field.date,
         ))
         return Column(**kwargs)
 
