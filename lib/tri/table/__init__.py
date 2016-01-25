@@ -65,7 +65,7 @@ def render_attrs(attrs):
     Render HTML attributes, or return '' if no attributes needs to be rendered.
     """
     if attrs is not None:
-        return mark_safe(' %s' % ' '.join(['%s="%s"' % (key, value) for key, value in sorted(attrs.items()) if value]))
+        return mark_safe(' %s' % ' '.join(['%s="%s"' % (key, value) for key, value in sorted(attrs.items()) if value is not None]))
     return ''
 
 
@@ -142,7 +142,7 @@ class BoundRow(Struct):
             attrs['class'] += ' '
         attrs['class'] += 'row%s' % (self.row_index % 2 + 1)
         pk = getattr(self.row, 'pk', None)
-        if pk:
+        if pk is not None:
             attrs['data-pk'] = pk
         return render_attrs(attrs)
 
@@ -774,11 +774,11 @@ def table_context(request,
 
 
 def set_row_span(rowspan_by_row):
-    return lambda row, **_: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else ''
+    return lambda row, **_: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
 
 
 def set_display_none(rowspan_by_row):
-    return lambda row, **_: 'display: none' if id(row) not in rowspan_by_row else ''
+    return lambda row, **_: 'display: none' if id(row) not in rowspan_by_row else None
 
 
 def render_table(request,
