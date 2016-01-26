@@ -731,8 +731,7 @@ class Form(object):
                     self._valid = False
                     break
             else:
-                if not self.errors:
-                    self._valid = True
+                self._valid = not self.errors
         return self._valid
 
     def parse_field_raw_value(self, field, raw_data):
