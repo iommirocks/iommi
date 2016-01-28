@@ -315,20 +315,23 @@ def test_display_name():
 
 def test_link():
     class TestTable(NoSortTable):
-        foo = Column.link(display_name="Bar", cell__value='foo', cell__url_title="url_title_goes_here")
+        foo = Column.link(cell__url='https://whereever', cell__url_title="whatever")
+        bar = Column.link(cell__value='bar', cell__url_title=lambda **_: "url_title_goes_here")
 
-    data = [Struct(foo=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
+    data = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
     verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
                 <tr>
+                    <th class="first_column subheader"> Foo </th>
                     <th class="first_column subheader"> Bar </th>
                 </tr>
             </thead>
             <tbody>
                 <tr class="row1">
-                    <td> <a href="/get/absolute/url/result" title="url_title_goes_here"> foo </a> </td>
+                    <td> <a href="https://whereever" title="whatever"> foo </a> </td>
+                    <td> <a href="/get/absolute/url/result" title="url_title_goes_here"> bar </a> </td>
                 </tr>
             </tbody>
         </table>""")
@@ -745,9 +748,7 @@ def test_cell_template():
             </thead>
             <tbody>
                 <tr class="row1">
-                    <td>
-                        test_cell_template.html contents
-                    </td>
+                    Custom rendered: sentinel
                 </tr>
             </tbody>
         </table>""")
@@ -777,19 +778,29 @@ def test_no_header_template():
 def test_row_template():
     class TestTable(NoSortTable):
         foo = Column()
+        bar = Column()
 
         class Meta:
             row__template = lambda table: 'test_table_row.html'
 
-    data = [Struct(foo="sentinel")]
+    data = [Struct(foo="sentinel", bar="schmentinel")]
 
     verify_table_html(TestTable(data=data), """
         <table class="listview">
             <thead>
-                <tr><th class="first_column subheader"> Foo </th></tr>
+                <tr>
+                  <th class="first_column subheader"> Foo </th>
+                  <th class="first_column subheader"> Bar </th>
+                </tr>
             </thead>
             <tbody>
-                sentinel
+
+             All columns:
+             <td> sentinel </td>
+             <td> schmentinel </td>
+
+             One by name:
+              <td> sentinel </td>
             </tbody>
         </table>""")
 

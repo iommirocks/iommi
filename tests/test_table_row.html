@@ -1,1 +1,7 @@
-sentinel
+All columns:
+{% for cell in bound_row %}
+     {{ cell }}
+{% endfor %}
+
+One by name:
+{{ bound_row.foo }}

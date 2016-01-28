@@ -1,5 +1,7 @@
 # coding: utf-8
 from __future__ import absolute_import, unicode_literals
+
+from collections import OrderedDict
 from itertools import groupby
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
@@ -8,7 +10,7 @@ from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_unicode
-from django.utils.html import conditional_escape
+from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
@@ -115,39 +117,6 @@ def default_cell_formatter(table, column, row, value):
         return ''
 
     return conditional_escape(value)
-
-
-class BoundRow(Struct):
-    """
-    Internal class used in row rendering
-    """
-    def __init__(self, table, row, **kwargs):
-        """
-        :type table: Table
-        """
-        self.table = table
-        self.row = row
-        super(BoundRow, self).__init__(**evaluate_recursive(kwargs, table=table, row=row))
-
-    def render(self):
-        if self.template:
-            # positional arguments here to get compatibility with both django 1.7 and 1.8+
-            return render_to_string(self.template, dict(bound_row=self, row=self.row, table=self.table))
-        else:
-            return '<tr%s>%s</tr>' % (self.render_attrs(), self.render_cells())
-
-    def render_attrs(self):
-        attrs = self.attrs.copy()
-        if attrs['class']:
-            attrs['class'] += ' '
-        attrs['class'] += 'row%s' % (self.row_index % 2 + 1)
-        pk = getattr(self.row, 'pk', None)
-        if pk is not None:
-            attrs['data-pk'] = pk
-        return render_attrs(attrs)
-
-    def render_cells(self):
-        return '\n'.join([bound_column.render_cell(bound_row=self) for bound_column in self.table.shown_bound_columns])
 
 
 class ColumnBase(NamedStruct):
@@ -402,35 +371,98 @@ class BoundColumn(ColumnBase):
     def render_css_class(self):
         return ' '.join(sorted(self.css_class))
 
-    def cell_contents(self, bound_row):
-        return evaluate(self.cell__value, table=bound_row.table, column=self.column, row=bound_row.row)
 
-    def render_cell(self, bound_row):
-        assert self.show
+class BoundRow(object):
+    """
+    Internal class used in row rendering
+    """
 
-        row = bound_row.row
-        value = self.cell_contents(bound_row=bound_row)
+    def __init__(self, table, row, row_index, attrs, template):
+        self.table = table
+        """ :type : Table """
+        self.row = row
+        """ :type : object """
+        self.row_index = row_index
+        """ :type : int """
+        self.attrs = attrs
+        """ :type : dict """
+        self.template = template
 
-        table = bound_row.table
-        if self.cell__template:
-            cell_contents = render_to_string(self.cell__template, {'table': table, 'bound_column': self, 'bound_row': bound_row, 'row': bound_row.row, 'value': value})
+    def render(self):
+        if self.template:
+            # positional arguments here to get compatibility with both django 1.7 and 1.8+
+            return render_to_string(self.template, dict(bound_row=self, row=self.row, table=self.table))
         else:
-            cell_contents = evaluate(self.cell__format, table=self.table, column=self, row=row, value=value)
+            return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
-            if self.cell__url:
-                cell__url = self.cell__url(table=table, column=self, row=row, value=value) if callable(self.cell__url) else self.cell__url
+    def render_attrs(self):
+        attrs = self.attrs.copy()
+        if attrs['class']:
+            attrs['class'] += ' '
+        attrs['class'] += 'row%s' % (self.row_index % 2 + 1)
+        pk = getattr(self.row, 'pk', None)
+        if pk is not None:
+            attrs['data-pk'] = pk
+        return render_attrs(attrs)
 
-                cell__url_title = self.cell__url_title(table=table, column=self, row=row, value=value) if callable(self.cell__url_title) else self.cell__url_title
-                cell_contents = '<a href="{}"{}>{}</a>'.format(
-                    cell__url,
-                    ' title=%s' % cell__url_title if cell__url_title else '',
-                    cell_contents,
-                )
+    def render_cells(self):
+        return mark_safe('\n'.join(bound_cell.render() for bound_cell in self))
 
-        return '<td{attrs}>{cell_contents}</td>'.format(
-            attrs=render_attrs(evaluate_recursive(self.cell__attrs, table=table, column=self, row=row, value=value)),
-            cell_contents=cell_contents,
-        )
+    def __iter__(self):
+        for bound_column in self.table.shown_bound_columns:
+            yield BoundCell(bound_row=self, bound_column=bound_column)
+
+    def __getitem__(self, name):
+        bound_column = self.table.bound_column_by_name[name]
+        return BoundCell(bound_row=self, bound_column=bound_column)
+
+
+class BoundCell(object):
+
+    def __init__(self, bound_row, bound_column):
+
+        assert bound_column.show
+
+        self.bound_column = bound_column
+        self.bound_row = bound_row
+        self.table = bound_row.table
+        self.row = bound_row.row
+
+        self.value = evaluate(bound_column.cell__value, table=bound_row.table, column=bound_column.column, row=bound_row.row)
+
+    def render(self):
+        cell__template = self.bound_column.cell__template
+        if cell__template:
+            return render_to_string(cell__template, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value))
+        else:
+            return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
+
+    def render_attrs(self):
+        return render_attrs(evaluate_recursive(self.bound_column.cell__attrs, table=self.table, column=self.bound_column, row=self.row, value=self.value))
+
+    def render_cell_contents(self):
+        cell_contents = self.render_formatted()
+
+        cell__url = self.bound_column.cell__url
+        if cell__url:
+            if callable(cell__url):
+                cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+
+            cell__url_title = self.bound_column.cell__url_title
+            if callable(cell__url_title):
+                cell__url_title = cell__url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+
+            cell_contents = format_html('<a href="{}"{}>{}</a>',
+                                        mark_safe(cell__url),
+                                        mark_safe(' title=%s' % cell__url_title) if cell__url_title else '',
+                                        cell_contents)
+        return mark_safe(cell_contents)
+
+    def render_formatted(self):
+        return evaluate(self.bound_column.cell__format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+
+    def __unicode__(self):
+        return self.render()
 
 
 @declarative(Column, 'columns')
@@ -498,6 +530,7 @@ class Table(object):
 
         self.bound_columns = None
         self.shown_bound_columns = None
+        self.bound_column_by_name = None
 
         self.Meta = self.get_meta()
         self.Meta.update(**kwargs)
@@ -522,7 +555,7 @@ class Table(object):
                 prev_value = no_value_set
                 prev_row = no_value_set
                 for bound_row in self.bound_rows():
-                    value = column.cell_contents(bound_row=bound_row)
+                    value = BoundCell(bound_row, column).value
                     if prev_value != value:
                         rowspan_by_row[id(bound_row.row)] = 1
                         prev_value = value
@@ -619,6 +652,7 @@ class Table(object):
                 yield BoundColumn(**values)
 
         self.bound_columns = list(bind_columns())
+        self.bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self.bound_columns)
 
         self._has_prepared = True
 
