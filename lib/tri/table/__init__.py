@@ -13,7 +13,7 @@ from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces
 from tri.form import extract_subkeys, Field, Form
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
@@ -67,8 +67,24 @@ def render_attrs(attrs):
     Render HTML attributes, or return '' if no attributes needs to be rendered.
     """
     if attrs is not None:
-        return mark_safe(' %s' % ' '.join(['%s="%s"' % (key, value) for key, value in sorted(attrs.items()) if value is not None]))
+        def parts():
+            for key, value in sorted(attrs.items()):
+                if value is None:
+                    continue
+                if value is True:
+                    yield '%s' % (key, )
+                    continue
+                if isinstance(value, dict):
+                    if not value:
+                        continue
+                    value = render_class(value)
+                yield '%s="%s"' % (key, value)
+        return mark_safe(' %s' % ' '.join(parts()))
     return ''
+
+
+def render_class(class_dict):
+    return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
 
 
 def yes_no_formatter(table, column, row, value):
@@ -126,7 +142,7 @@ class ColumnBase(NamedStruct):
 
     name = NamedStructField()
     """ :type: unicode """
-    attrs = NamedStructField(default={})
+    attrs = NamedStructField()
     attr = NamedStructField(default=lambda table, column: column.name)
     css_class = NamedStructField(default=set())
     url = NamedStructField()
@@ -138,16 +154,7 @@ class ColumnBase(NamedStruct):
     sortable = NamedStructField(default=True)
     group = NamedStructField()
     auto_rowspan = NamedStructField(default=False)
-
-    cell__template = NamedStructField()
-    cell__value = NamedStructField(default=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)))
-    cell__format = NamedStructField(default=default_cell_formatter)
-    cell__attrs = NamedStructField(default={})
-    cell__url = NamedStructField()
-    """ :type : str or callable """
-    cell__url_title = NamedStructField()
-    """ :type : str or callable """
-
+    cell = NamedStructField()
     model = NamedStructField()
     choices = NamedStructField()
     bulk = NamedStructField()
@@ -181,19 +188,30 @@ class Column(Frozen, ColumnBase):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
 
+        kwargs.update({'attrs__class__' + c: True for c in kwargs.get('css_class', {})})
+
         setdefaults(kwargs, dict(
-            bulk=(Struct(extract_subkeys(kwargs, 'bulk', defaults=dict(show=False)))),
-            query=(Struct(extract_subkeys(kwargs, 'query', defaults=dict(show=False)))),
-            extra=(Struct(extract_subkeys(kwargs, 'extra'))),
+            bulk__show=False,
+            query__show=False,
+            extra=Struct(),
+            attrs__class={},
+            cell__template=None,
+            cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
+            cell__format=default_cell_formatter,
+            cell__attrs__class={},
+            cell__url=None,
+            cell__url_title=None
         ))
+        namespaces = Struct(collect_namespaces(kwargs))
+        namespaces.attrs = Struct(collect_namespaces(namespaces.attrs))
+        namespaces.cell = Struct(collect_namespaces(namespaces.cell))
+        namespaces.cell.attrs = Struct(collect_namespaces(namespaces.cell.attrs))
 
-        kwargs = {k: v for k, v in kwargs.items() if not k.startswith('bulk__') and not k.startswith('query__') and not k.startswith('extra__')}
+        namespaces.bulk = Struct(namespaces.bulk)
+        namespaces.query = Struct(namespaces.query)
+        namespaces.extra = Struct(namespaces.extra)
 
-        assert isinstance(kwargs['bulk'], dict)
-        assert isinstance(kwargs['query'], dict)
-        assert isinstance(kwargs['extra'], dict)
-
-        super(Column, self).__init__(**kwargs)
+        super(Column, self).__init__(**namespaces)
 
     @staticmethod
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
@@ -206,11 +224,11 @@ class Column(Frozen, ColumnBase):
             name='',
             display_name='',
             sortable=False,
-            css_class={'thin'},
+            attrs__class__thin=True,
             show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
             title=icon_title,
             cell__value=lambda table, column, row: True,
-            cell__attrs={'class': 'cj'},
+            cell__attrs__class__cj=True,
             cell__format=lambda table, column, row, value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
         ))
         return Column(**kwargs)
@@ -279,7 +297,7 @@ class Column(Frozen, ColumnBase):
             sortable=False,
             show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
             css_class={'thin', 'nopad'},
-            cell__attrs={'class': 'cj'},
+            cell__attrs__class__cj=True,
             cell__value=lambda table, column, row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         ))
         return Column(**kwargs)
@@ -296,7 +314,7 @@ class Column(Frozen, ColumnBase):
 
         setdefaults(kwargs, dict(
             cell__format=lambda table, column, row, value: yes_no_formatter(table=table, column=column, row=row, value=value) if is_report else render_icon(value),
-            cell__attrs={'class': 'cj'},
+            cell__attrs__class__cj=True,
             query__class=Variable.boolean,
             bulk__class=Field.boolean,
         ))
@@ -322,10 +340,9 @@ class Column(Frozen, ColumnBase):
         """
         Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
         """
-        if 'cell__attrs' not in kwargs:
-            kwargs['cell__attrs'] = {}
-        if 'class' not in kwargs['cell__attrs']:
-            kwargs['cell__attrs']['class'] = 'rj'
+        setdefaults(kwargs, dict(
+            cell__attrs__class__rj=True
+        ))
         return Column(**kwargs)
 
     @staticmethod
@@ -369,7 +386,7 @@ class BoundColumn(ColumnBase):
     """ :type: bool """
 
     def render_css_class(self):
-        return ' '.join(sorted(self.css_class))
+        return render_class(self.attrs['class'])
 
 
 class BoundRow(object):
@@ -377,29 +394,29 @@ class BoundRow(object):
     Internal class used in row rendering
     """
 
-    def __init__(self, table, row, row_index, attrs, template):
+    def __init__(self, table, row, row_index):
         self.table = table
         """ :type : Table """
         self.row = row
         """ :type : object """
         self.row_index = row_index
-        """ :type : int """
-        self.attrs = attrs
-        """ :type : dict """
-        self.template = template
+
+        args = Struct(evaluate_recursive(extract_subkeys(table.Meta, 'row'), table=table, row=row))
+        self.template = args.template
+        self.attrs = args.attrs
 
     def render(self):
-        if self.template:
+        template = self.template
+        if template:
             # positional arguments here to get compatibility with both django 1.7 and 1.8+
-            return render_to_string(self.template, dict(bound_row=self, row=self.row, table=self.table))
+            return render_to_string(template, dict(bound_row=self, row=self.row, table=self.table))
         else:
             return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
     def render_attrs(self):
         attrs = self.attrs.copy()
-        if attrs['class']:
-            attrs['class'] += ' '
-        attrs['class'] += 'row%s' % (self.row_index % 2 + 1)
+        attrs['class'] = attrs['class'].copy()
+        attrs['class'].setdefault('row%s' % (self.row_index % 2 + 1), True)
         pk = getattr(self.row, 'pk', None)
         if pk is not None:
             attrs['data-pk'] = pk
@@ -428,27 +445,28 @@ class BoundCell(object):
         self.table = bound_row.table
         self.row = bound_row.row
 
-        self.value = evaluate(bound_column.cell__value, table=bound_row.table, column=bound_column.column, row=bound_row.row)
+        self.value = evaluate(bound_column.cell.value, table=bound_row.table, column=bound_column.column, row=bound_row.row)
 
     def render(self):
-        cell__template = self.bound_column.cell__template
+        cell__template = self.bound_column.cell.template
         if cell__template:
             return render_to_string(cell__template, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value))
         else:
             return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
     def render_attrs(self):
-        return render_attrs(evaluate_recursive(self.bound_column.cell__attrs, table=self.table, column=self.bound_column, row=self.row, value=self.value))
+        attrs = evaluate_recursive(self.bound_column.cell.attrs, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return render_attrs(attrs)
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
 
-        cell__url = self.bound_column.cell__url
+        cell__url = self.bound_column.cell.url
         if cell__url:
             if callable(cell__url):
                 cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
-            cell__url_title = self.bound_column.cell__url_title
+            cell__url_title = self.bound_column.cell.url_title
             if callable(cell__url_title):
                 cell__url_title = cell__url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
@@ -459,10 +477,13 @@ class BoundCell(object):
         return mark_safe(cell_contents)
 
     def render_formatted(self):
-        return evaluate(self.bound_column.cell__format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return evaluate(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
     def __unicode__(self):
         return self.render()
+
+    def __repr__(self):
+        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.column, self.bound_row.row)
 
 
 @declarative(Column, 'columns')
@@ -483,11 +504,12 @@ class Table(object):
     """
 
     class Meta:
-        attrs = {'class': 'listview'}
         bulk_filter = {}
         bulk_exclude = {}
         sortable = True
-        row__attrs = {'class': ''}
+        attrs = Struct()
+        attrs__class__listview = True
+        row__attrs = Struct()
         row__template = None
         filter__template = 'tri_query/form.html'
         header__template = 'tri_table/table_header_rows.html'
@@ -563,16 +585,28 @@ class Table(object):
                     else:
                         rowspan_by_row[id(prev_row)] += 1
 
-                column.cell__attrs['rowspan'] = set_row_span(rowspan_by_row)
-                assert 'style' not in column.cell__attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
-                column.cell__attrs['style'] = set_display_none(rowspan_by_row)
+                column.cell.attrs['rowspan'] = set_row_span(rowspan_by_row)
+                assert 'style' not in column.cell.attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
+                column.cell.attrs['style'] = set_display_none(rowspan_by_row)
 
     def _prepare_evaluate_members(self):
         self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
 
-        model = self.Meta.pop('model')  # avoid trying to eval model, since it's callable
         self.Meta = evaluate_recursive(self.Meta, table=self)
-        self.Meta.model = model
+
+        if 'class' in self.Meta.attrs and isinstance(self.Meta.attrs['class'], basestring):
+            self.Meta.attrs['class'] = {k: True for k in self.Meta.attrs['class'].split(' ')}
+        else:
+            self.Meta.attrs['class'] = {}
+        self.Meta.attrs.update(extract_subkeys(self.Meta, 'attrs'))
+        self.Meta.attrs = collect_namespaces(self.Meta.attrs)
+
+        if 'class' in self.Meta.row__attrs and isinstance(self.Meta.row__attrs['class'], basestring):
+            self.Meta.row__attrs['class'] = {k: True for k in self.Meta.row__attrs['class'].split(' ')}
+        else:
+            self.Meta.row__attrs['class'] = {}
+        self.Meta.row__attrs.update(extract_subkeys(self.Meta, 'row__attrs'))
+        self.Meta.row__attrs = collect_namespaces(self.Meta.row__attrs)
 
         if not self.Meta.sortable:
             for bound_column in self.bound_columns:
@@ -608,7 +642,7 @@ class Table(object):
 
         class HeaderGroup(Struct):
             def render_css_class(self):
-                return ' '.join(sorted(self.css_class))
+                return render_class(self.attrs['class'])
 
         for group_name, group_iterator in groupby(headers, key=lambda header: header.group or id(header)):
 
@@ -618,16 +652,17 @@ class Table(object):
                 display_name=group_name,
                 sortable=False,
                 colspan=len(header_group),
-                css_class={'superheader'}))
+                attrs=Struct({'class': Struct(superheader=True)})
+            ))
 
             for x in header_group:
-                x.css_class.add('subheader')
+                x.attrs['class']['subheader'] = True
                 if x.is_sorting:
-                    x.css_class.add('sorted_column')
+                    x.attrs['class']['sorted_column'] = True
 
-            header_group[0].css_class.add('first_column')
+            header_group[0].attrs['class']['first_column'] = True
 
-        header_groups[0].css_class.add('first_column')
+        header_groups[0].attrs['class']['first_column'] = True
 
         for x in header_groups:
             if type(x.display_name) not in (str, unicode):
@@ -703,12 +738,12 @@ class Table(object):
         return headers, self.header_levels
 
     def bound_rows(self):
-        row_params = extract_subkeys(self.Meta, 'row')
         for i, row in enumerate(self.data):
-            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(row_params, table=self, row=row))
+            yield BoundRow(table=self, row=row, row_index=i)
 
     def render_attrs(self):
-        return render_attrs(self.Meta.attrs)
+        attrs = self.Meta.attrs.copy()
+        return render_attrs(attrs)
 
     def render_tbody(self):
         return '\n'.join([bound_row.render() for bound_row in self.bound_rows()])

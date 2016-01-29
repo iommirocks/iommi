@@ -47,6 +47,7 @@ def declarative_table():
 def test_render_attrs():
     assert render_attrs(None) == ''
     assert render_attrs({'foo': 'bar', 'baz': 'quux'}) == ' baz="quux" foo="bar"'
+    assert render_attrs({'foo': True, 'class': dict(foo=False, bar=True, baz=True)}) == ' class="bar baz" foo'
 
 
 @pytest.mark.parametrize('table', [
@@ -339,17 +340,22 @@ def test_link():
 
 def test_css_class():
     class TestTable(NoSortTable):
-        foo = Column(css_class={"some_class"})
+        foo = Column(attrs__class__some_class=True)
+        legacy_foo = Column(css_class={"some_other_class"})
 
-    data = [Struct(foo="foo")]
+    data = [Struct(foo="foo", legacy_foo="foo")]
 
     verify_table_html(TestTable(data=data), """
     <table class="listview">
         <thead>
-            <tr><th class="first_column some_class subheader"> Foo </th></tr>
+            <tr>
+                <th class="first_column some_class subheader"> Foo </th>
+                <th class="first_column some_other_class subheader"> Legacy foo </th>
+            </tr>
         </thead>
         <tbody>
             <tr class="row1">
+                <td> foo </td>
                 <td> foo </td>
             </tr>
         </tbody>
@@ -480,7 +486,7 @@ def test_attrs():
         yada = Column()
 
     verify_table_html(TestTable(data=[Struct(yada=1), Struct(yada=2)]), """
-        <table class="classy" foo="bar">
+        <table class="classy listview" foo="bar">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Yada </th>
@@ -494,7 +500,36 @@ def test_attrs():
                     <td> 2 </td>
                 </tr>
             </tbody>
-        </table>""", find=dict(class_='classy'))
+        </table>""")
+
+
+def test_attrs_new_syntax():
+    class TestTable(NoSortTable):
+        class Meta:
+            attrs__class__classy = True
+            attrs__foo = lambda table: 'bar'
+
+            row__attrs__class__classier = True
+            row__attrs__foo = lambda table: "barier"
+
+        yada = Column()
+
+    verify_table_html(TestTable(data=[Struct(yada=1), Struct(yada=2)]), """
+        <table class="classy listview" foo="bar">
+            <thead>
+                <tr>
+                  <th class="first_column subheader"> Yada </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="classier row1" foo="barier">
+                    <td> 1 </td>
+                </tr>
+                <tr class="classier row2" foo="barier">
+                    <td> 2 </td>
+                </tr>
+            </tbody>
+        </table>""")
 
 
 def test_column_presets():
