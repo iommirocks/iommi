@@ -705,7 +705,7 @@ class Table(object):
     def bound_rows(self):
         row_params = extract_subkeys(self.Meta, 'row')
         for i, row in enumerate(self.data):
-            yield BoundRow(table=self, row=row, row_index=i, **row_params)
+            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(row_params, table=self, row=row))
 
     def render_attrs(self):
         return render_attrs(self.Meta.attrs)
