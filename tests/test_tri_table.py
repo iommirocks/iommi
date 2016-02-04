@@ -474,7 +474,7 @@ def test_attrs():
             }
             row__attrs = {
                 'class': 'classier',
-                'foo': lambda table: "barier"
+                'foo': lambda table, row: "barier"
             }
 
         yada = Column()
