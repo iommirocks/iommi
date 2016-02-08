@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.10.0 (2016-xx-xx)
+1.10.0 (2016-02-08)
 ~~~~~~~~~~~~~~~~~~~
 
 * Made sure form validation is only run once
