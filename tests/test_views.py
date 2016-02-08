@@ -17,10 +17,12 @@ def test_create_or_edit_object():
         model=CreateOrEditObjectTest,
         form__f_int__initial=1,
         form__f_float__initial=lambda form, field: 2,
+        render__context={'foo': 'FOO'},
         render=lambda **kwargs: kwargs)
     assert response['context_instance']['object_name'] == 'create or edit object test'
     assert response['context_instance']['is_create'] == True
     form = response['context_instance']['form']
+    assert response['context_instance']['foo'] == 'FOO'
     assert not form.should_parse
     assert form.fields_by_name['f_int'].initial == 1
     assert form.fields_by_name['f_int'].errors == set()

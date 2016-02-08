@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.10.0 (2016-xx-xx)
+~~~~~~~~~~~~~~~~~~~
+
+* Made sure form validation is only run once
+
+* Fixed input form class and render context to create_or_edit_object view
+
+
 1.9.0 (2016-01-15)
 ~~~~~~~~~~~~~~~~~~
 
