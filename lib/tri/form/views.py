@@ -60,8 +60,11 @@ def create_or_edit_object(
         **kwargs):
     kwargs.setdefault('form__class', Form.from_model)
     kwargs.setdefault('template_name', 'tri_form/create_or_edit_object_block.html')
-    p = extract_subkeys(kwargs, 'form', defaults={'model': model, 'instance': instance, 'data': request.POST if request.method == 'POST' else None})
-    form = kwargs['form__class'](**p)
+    p = extract_subkeys(kwargs, 'form', defaults=dict(request=request,
+                                                      model=model,
+                                                      instance=instance,
+                                                      data=request.POST if request.method == 'POST' else None))
+    form = p.pop('class')(**p)
 
     # noinspection PyProtectedMember
     model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
@@ -84,6 +87,7 @@ def create_or_edit_object(
         'object_name': model_verbose_name,
     }
     c.update(kwargs.get('render__context', {}))
+    kwargs.pop('render__context', None)
 
     kwargs_for_render = extract_subkeys(kwargs, 'render', {
         'context_instance': RequestContext(request, c),
