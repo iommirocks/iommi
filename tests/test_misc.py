@@ -1,5 +1,6 @@
+import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty
 
 
 def test_extract_subkeys():
@@ -93,3 +94,12 @@ def test_order_after():
     expected_order = sorted(objects, key=lambda x: x.expected_position)
     assert list(range(len(objects))) == [y.expected_position for y in expected_order], 'check expected_order'
     assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]
+
+
+def test_assert_kwargs_empty():
+    assert_kwargs_empty({})
+
+    with pytest.raises(TypeError) as e:
+        assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
+
+    assert e.value.message == "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'"

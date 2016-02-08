@@ -539,3 +539,10 @@ def sort_after(l):
     result.extend(to_be_moved_last)
 
     return result
+
+
+def assert_kwargs_empty(kwargs):
+    if kwargs:
+        import traceback
+        function_name = traceback.extract_stack()[-2][2]
+        raise TypeError('%s() got unexpected keyword arguments %s' % (function_name, ', '.join(["'%s'" % x for x in sorted(kwargs.keys())])))
