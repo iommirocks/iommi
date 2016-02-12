@@ -328,3 +328,9 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
 
     with pytest.raises(MyException):
         D()
+
+
+def test_creation_ordered():
+    l = [Member() for _ in range(100)]
+
+    assert sorted(reversed(l)) == l
