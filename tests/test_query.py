@@ -100,8 +100,8 @@ def test_parenthesis():
 
 
 def test_request_to_q_advanced():
-    query = TestQuery(request=Struct(method='GET', GET=Data(**{ADVANCED_QUERY_PARAM: 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'})))
     # noinspection PyTypeChecker
+    query = TestQuery(request=Struct(method='GET', GET=Data(**{ADVANCED_QUERY_PARAM: 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'})))
     assert repr(query.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
 
 
@@ -109,8 +109,8 @@ def test_request_to_q_simple():
     class Query2(TestQuery):
         bazaar = Variable.boolean(attr='quux__bar__bazaar', gui__show=True)
 
-    query2 = Query2(request=Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'})))
     # noinspection PyTypeChecker
+    query2 = Query2(request=Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'})))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
 
 
@@ -118,13 +118,14 @@ def test_integer_request_to_q_simple():
     class Query2(Query):
         bazaar = Variable.integer(attr='quux__bar__bazaar', gui__show=True)
 
-    query2 = Query2(request=Struct(method='GET', GET=Data(**{'bazaar': '11'})))
     # noinspection PyTypeChecker
+    query2 = Query2(request=Struct(method='GET', GET=Data(**{'bazaar': '11'})))
     assert repr(query2.to_q()) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
 
 
 def test_invalid_value():
     request = Struct(method='GET', GET=Data(**{'query': 'bazaar=asd'}))
+    # noinspection PyTypeChecker
     query2 = Query(request=request, variables=[Variable.integer(name='bazaar', value_to_q=lambda variable, op, value_string_or_f: None)])
     with pytest.raises(QueryException) as e:
         query2.to_q()
@@ -132,6 +133,7 @@ def test_invalid_value():
 
 
 def test_invalid_variable():
+    # noinspection PyTypeChecker
     query2 = Query(request=Struct(method='GET', GET=Data(**{'query': 'not_bazaar=asd'})), variables=[Variable(name='bazaar')])
     with pytest.raises(QueryException) as e:
         query2.to_q()
@@ -139,22 +141,21 @@ def test_invalid_variable():
 
 
 def test_invalid_form_data():
+    # noinspection PyTypeChecker
     query2 = Query(request=Struct(method='GET', GET=Data(**{'bazaar': 'asds'})), variables=[Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui__show=True)])
-    # noinspection PyTypeChecker
     assert query2.to_query_string() == ''
-    # noinspection PyTypeChecker
     assert repr(query2.to_q()) == repr(Q())
 
 
 def test_none_attr():
-    query2 = Query(request=Struct(method='GET', GET=Data(**{'bazaar': 'foo'})), variables=[Variable(name='bazaar', attr=None, gui__show=True)])
     # noinspection PyTypeChecker
+    query2 = Query(request=Struct(method='GET', GET=Data(**{'bazaar': 'foo'})), variables=[Variable(name='bazaar', attr=None, gui__show=True)])
     assert repr(query2.to_q()) == repr(Q())
 
 
 def test_request_to_q_freetext():
-    query = TestQuery(request=Struct(method='GET', GET=Data(**{FREETEXT_SEARCH_NAME: "asd"})))
     # noinspection PyTypeChecker
+    query = TestQuery(request=Struct(method='GET', GET=Data(**{FREETEXT_SEARCH_NAME: "asd"})))
     assert repr(query.to_q()) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
 
@@ -204,6 +205,7 @@ def test_choice_queryset():
         )
 
     random_valid_obj = Foo.objects.all().order_by('?')[0]
+    # noinspection PyTypeChecker
     query2 = Query2(request=Struct(method='POST', POST=Data({'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)})))
 
     # test GUI
@@ -220,6 +222,7 @@ def test_choice_queryset():
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
 
     # test searching for something that does not exist
+    # noinspection PyTypeChecker
     query2 = Query2(request=Struct(method='POST', POST=Data({'query': 'foo=%s' % str(11)})))
     value_that_does_not_exist = 11
     assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
