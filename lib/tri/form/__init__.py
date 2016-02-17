@@ -8,7 +8,7 @@ from itertools import chain
 import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField
+from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField
 from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -84,6 +84,7 @@ _field_factory_by_django_field_type = OrderedDict([
     (TextField, lambda model_field, **kwargs: Field.text(**kwargs)),
     (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
     (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
+    (FileField, lambda model_field, **kwargs: Field.file(**kwargs)),
     (ForeignKey, foreign_key_factory),
     (ManyToManyField, many_to_many_factory)
 ])
@@ -124,6 +125,7 @@ class FieldBase(NamedStruct):
     """ @type: (Form, Field, object) -> boolean """
     parse = NamedStructField(default=default_parse)
     """ @type: (Form, Field, unicode) -> object """
+    parse_empty_string_as_none = NamedStructField(default=True)
     initial = NamedStructField()
     initial_list = NamedStructField()
     template = NamedStructField(default='tri_form/{style}_form_row.html')
@@ -368,8 +370,6 @@ class Field(Frozen, FieldBase):
             original_parse = kwargs.get('parse', default_parse)
 
             def parse(form, field, string_value):
-                if string_value == '':
-                    return None
                 return original_parse(form=form, field=field, string_value=string_value)
 
             kwargs.update(
@@ -436,37 +436,46 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def datetime(**kwargs):
-        def parse_datetime(string_value, **_):
+        iso_format = '%Y-%m-%d %H:%M:%S'
+
+        def datetime_parse(string_value, **_):
             try:
-                return datetime.strptime(string_value, '%Y-%m-%d %H:%M:%S')
+                return datetime.strptime(string_value, iso_format)
             except ValueError as e:
                 raise ValidationError(e.message)
         setdefaults(kwargs, dict(
-            parse=parse_datetime
+            parse=datetime_parse,
+            render_value=lambda value, **_: value.strftime(iso_format),
         ))
         return Field(**kwargs)
 
     @staticmethod
     def date(**kwargs):
-        def parse_date(string_value, **_):
+        iso_format = '%Y-%m-%d'
+
+        def date_parse(string_value, **_):
             try:
-                return datetime.strptime(string_value, '%Y-%m-%d').date()
+                return datetime.strptime(string_value, iso_format).date()
             except ValueError as e:
                 raise ValidationError(e.message)
         setdefaults(kwargs, dict(
-            parse=parse_date
+            parse=date_parse,
+            render_value=lambda value, **_: value.strftime(iso_format),
         ))
         return Field(**kwargs)
 
     @staticmethod
     def time(**kwargs):
-        def parse_time(string_value, **_):
+        iso_format = '%H:%M:%S'
+
+        def time_parse(string_value, **_):
             try:
-                return datetime.strptime(string_value, '%H:%M:%S').time()
+                return datetime.strptime(string_value, iso_format).time()
             except ValueError as e:
                 raise ValidationError(e.message)
         setdefaults(kwargs, dict(
-            parse=parse_time
+            parse=time_parse,
+            render_value=lambda value, **_: value.strftime(iso_format),
         ))
         return Field(**kwargs)
 
@@ -482,6 +491,19 @@ class Field(Frozen, FieldBase):
         setdefaults(kwargs, dict(
             input_type='email',
             parse=lambda string_value, **_: URLValidator(string_value) or string_value
+        ))
+        return Field(**kwargs)
+
+    @staticmethod
+    def file(**kwargs):
+        def file_write_to_instance(field, instance, value):
+            if value:
+                default_write_to_instance(field=field, instance=instance, value=value)
+
+        setdefaults(kwargs, dict(
+            input_type='file',
+            template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
+            write_to_instance=file_write_to_instance,
         ))
         return Field(**kwargs)
 
@@ -546,7 +568,8 @@ class Field(Frozen, FieldBase):
                 if isinstance(model_field, django_field_type):
                     factory = func
                     break
-        assert factory is not None
+        if factory is None:  # pragma: no cover
+            raise AssertionError('No factory for %s. Register a factory with tri.form.register_field_factory' % model_field)
         return factory(model_field=model_field, model=model, **kwargs)
 
     @staticmethod
@@ -759,7 +782,9 @@ class Form(object):
             elif field.is_boolean:
                 field.parsed_data = self.parse_field_raw_value(field, '0' if field.raw_data is None else field.raw_data)
             else:
-                if field.raw_data is not None:
+                if field.raw_data == '' and field.parse_empty_string_as_none:
+                    field.parsed_data = None
+                elif field.raw_data is not None:
                     field.parsed_data = self.parse_field_raw_value(field, field.raw_data)
                 else:
                     field.parsed_data = None
