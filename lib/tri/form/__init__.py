@@ -227,9 +227,7 @@ class BoundField(FieldBase):
         """
         Render HTML attributes, or return '' if no attributes needs to be rendered.
         """
-        if self.attrs:
-            return mark_safe(' %s ' % ' '.join(['%s="%s"' % (key, value) for key, value in self.attrs.items()]))
-        return ''
+        return render_attrs(self.attrs)
 
     def render_container_css_classes(self):
         container_css_classes = set(self.container_css_classes)
@@ -244,6 +242,28 @@ class BoundField(FieldBase):
 
     def render_input_container_css_classes(self):
         return render_css_classes(self.input_container_css_classes)
+
+
+def render_attrs(attrs):
+    """
+    Render HTML attributes, or return '' if no attributes needs to be rendered.
+    """
+    if attrs is not None:
+        def parts():
+            for key, value in sorted(attrs.items()):
+                if value is None:
+                    continue
+                if isinstance(value, dict):
+                    if not value:
+                        continue
+                    value = render_class(value)
+                yield '%s="%s"' % (key, value)
+        return mark_safe(' %s' % ' '.join(parts()))
+    return ''
+
+
+def render_class(class_dict):
+    return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
 
 
 def render_css_classes(classes):
@@ -296,10 +316,13 @@ class Field(Frozen, FieldBase):
         """
 
         setdefaults(kwargs, dict(
-            extra=Struct()
+            extra=Struct(),
+            attrs__class={}
         ))
 
-        super(Field, self).__init__(**collect_namespaces(kwargs))
+        namespaces = Struct(collect_namespaces(kwargs))
+        namespaces.attrs = Struct(collect_namespaces(namespaces.attrs))
+        super(Field, self).__init__(**namespaces)
 
     @staticmethod
     def hidden(**kwargs):

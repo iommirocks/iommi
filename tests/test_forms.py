@@ -8,6 +8,7 @@ from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
 from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest
+from tri.declarative import with_meta
 from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
@@ -237,8 +238,13 @@ def test_render_template_string():
 
 
 def test_render_attrs():
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs={'foo': '1'})]).validate().fields[0].render_attrs() == ' foo="1" '
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).validate().fields[0].render_attrs() == ''
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs={'foo': '1'})]).validate().fields[0].render_attrs() == ' foo="1"'
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).validate().fields[0].render_attrs() == ' '
+
+
+def test_render_attrs_new_style():
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs__foo='1')]).validate().fields[0].render_attrs() == ' foo="1"'
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).validate().fields[0].render_attrs() == ' '
 
 
 def test_bound_field_render_css_classes():
