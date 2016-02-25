@@ -36,6 +36,8 @@ class TestForm(Form):
     manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
     not_editable = Field.text(initial='Some non-editable text', editable=False)
 
+    # TODO: tests for all shortcuts with required=False
+
 
 def test_required():
     form = TestForm(request=Struct(method='POST', POST=Data({'-': '-'})))
@@ -420,11 +422,21 @@ def test_register_field_factory():
 
 
 def test_render_datetime_iso():
-    assert '2001-02-03 12:13:14' in Form(fields=[
+    table = Form(fields=[
         Field.datetime(
             name='foo',
-            initial=datetime(2001, 2, 3, 12, 13, 14))
+            initial=datetime(2001, 2, 3, 12, 13, 14, 7777))
     ]).validate().table()
+    assert '2001-02-03 12:13:14' in table
+    assert '7777' not in table
+
+
+def test_datetime_not_required():
+    assert Form(fields=[
+        Field.datetime(
+            required=False,
+            name='foo')
+    ], data={'foo': ''}).is_valid()
 
 
 def test_render_custom():
@@ -450,3 +462,24 @@ def test_boolean_initial_true():
 
     form = Form(data=Data(foo='on', bar='baz'), fields=fields).validate()
     assert form.fields_by_name['foo'].value is True
+
+
+def test_file():
+    class FooForm(Form):
+        foo = Field.file(required=False)
+    form = FooForm(data=Data(foo='1'))
+    instance = Struct(foo=None)
+    assert form.is_valid()
+    form.apply(instance)
+    assert instance.foo == '1'
+
+    # Non-existent form entry should not overwrite data
+    form = FooForm(data=Data(foo=''))
+    assert form.is_valid(), {x.name: x.errors for x in form.fields}
+    form.apply(instance)
+    assert instance.foo == '1'
+
+    form = FooForm(data=Data())
+    assert form.is_valid(), {x.name: x.errors for x in form.fields}
+    form.apply(instance)
+    assert instance.foo == '1'
