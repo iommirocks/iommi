@@ -122,7 +122,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True, sort_ke
         except AttributeError:
             if sort_key is default_sort_key:
                 raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
-            else:
+            else:  # pragma: no cover
                 raise
         members.update(sorted_bindings)
 
