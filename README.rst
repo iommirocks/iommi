@@ -6,7 +6,137 @@
 tri.declarative
 ===============
 
-tri.declarative contains class decorators to define classes with subclass semantics in the style of django Model classes.
+tri.declarative contains tools that make it easy to write declarative code. This includes:
+
+- `class decorators`_ to define classes with subclass semantics in the style of django Model classes
+- recursively evaluating_ embedded lambda expressions in complex data structures
+- recursively filtering_ of complex data structures
+- `keyword argument dispatching`_
+- `get/set attribute given a path string`_ (e.g. 'foo__bar__baz')
+
+
+Class decorators
+----------------
+
+With just a few lines of code, turn your API from:
+
+.. code-block:: python
+
+    quux = Foo(things=[Bar(name='a', param=1), Bar(name='b', param=2), Bar(name='c', param=2)], baz=3)
+
+into:
+
+.. code-block:: python
+
+    class Quux(Foo):
+        a = Bar(param=1)
+        b = Bar(param=2)
+        c = Bar(param=2)
+
+        class Meta:
+            baz = 3
+
+And you can still use the first style when it's more convenient!
+
+More detailed usage examples on `@declarative`_ below.
+
+
+Evaluating
+----------
+
+.. code-block:: python
+
+    d = dict(
+        foo=lambda x: x*2,
+        bar=lambda y: y+5,
+        baz=[
+            foo=lambda x: x*6,
+        ],
+    )
+
+    # evaluate only one level
+    assert evaluate(d, x=2) == dict(
+        foo=4,
+        bar=lambda y: y+5,  # this function doesn't match the signature so isn't evaluated
+        baz=[
+            foo=lambda x: x*6,  # one level down so isn't evaluated
+        ],
+    )
+
+    # evaluate recursively
+    assert evaluate_recursive(d, x=2) == dict(
+        foo=4,
+        bar=lambda y: y+5,  # this function doesn't match the signature so isn't evaluated
+        baz=[
+            foo=12,
+        ],
+    )
+
+
+Filtering
+---------
+
+.. code-block:: python
+
+    d = dict(
+        foo=dict(
+            show=False,
+            x=1,
+        ),
+        bar=dict(
+            show=True,
+            x=2,
+        ),
+    )
+
+    assert filter_show_recursive(d) == dict(
+        bar=dict(
+            show=True,
+            x=2,
+        ),
+    )
+
+
+Keyword argument dispatching
+----------------------------
+
+setdefaults, collect_namespaces and assert_kwargs_empty:
+
+.. code-block:: python
+
+    def foo(**kwargs):
+        setdefaults(kwargs, dict(
+            bar__baz=3,
+            bar__qwe=5,
+            baz__asd=2,
+        ))
+        kwargs = collect_namespaces(kwargs)
+        bar(**kwargs.pop('bar', {}))
+        baz(**kwargs.pop('baz', {}))
+        assert_kwargs_empty(kwargs)
+
+Get/set attribute given a path string
+-------------------------------------
+
+.. code-block:: python
+
+    class Foo(object):
+        def __init__(a):
+            self.a = a
+
+    class Bar(object):
+        def __init__(b):
+            self.b = b
+
+    class Baz(object):
+        def __init__(c):
+            self.c = c
+
+    x = Foo(Bar(Baz(c=3)))
+
+    assert getattr_path(x, 'a__b__c') == 3
+    assert setattr_path(x, 'a__b__c', 10)
+    assert getattr_path(x, 'a__b__c') == 10
 
 
 Running tests
@@ -34,10 +164,10 @@ Usage
 @declarative
 ------------
 
-In example below, the :code:`@declarative(str)` decorator will ensure that all :code:`str` members of class Foo will be
+In the example below, the :code:`@declarative(str)` decorator will ensure that all :code:`str` members of class Foo will be
 collected and sent as :code:`members` constructor keyword argument.
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import declarative
 
@@ -56,7 +186,7 @@ collected and sent as :code:`members` constructor keyword argument.
 
 The value of the :code:`members` argument will also be collected from sub-classes:
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import declarative
 
@@ -79,7 +209,7 @@ The value of the :code:`members` argument will also be collected from sub-classe
 
 The :code:`members` argument can be given another name (:code:`things` in the example below).
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative.declarative import declarative
 
@@ -101,7 +231,7 @@ Note that the collected dict is an :code:`OrderedDict` and will be ordered by cl
 Also note that the collection of *class* members based on their class does *not* interfere with *instance* constructor
 argument of the same type.
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import declarative
 
@@ -112,7 +242,7 @@ argument of the same type.
 
         def __init__(self, members):
             assert members == OrderedDict([('alice', '1'), ('charlie', '3'),
-                                           ('bob, '2'), ('dave', '4'),
+                                           ('bob', '2'), ('dave', '4'),
                                            ('eric', '5')])
             assert 'animal' not in members
 
@@ -137,7 +267,7 @@ Class decorator that ensures that instances will be ordered after creation order
 
 This is useful for classes intended to be used as members of a :code:`@declarative` class when member order matters.
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import creation_ordered
 
@@ -157,7 +287,7 @@ Real world use-case
 
 Below is a more complete example of using @declarative:
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import declarative, creation_ordered
 
@@ -216,7 +346,7 @@ Class decorator to enable a class (and it's sub-classes) to have a 'Meta' class 
 
 The members of the Meta class will be injected as arguments to constructor calls. e.g.:
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import with_meta
 
@@ -242,7 +372,7 @@ The members of the Meta class will be injected as arguments to constructor calls
 The passing of the merged name space to the constructor is optional.
 It can be disabled by passing :code:`add_init_kwargs=False` to the decorator.
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import with_meta
 
@@ -257,7 +387,7 @@ It can be disabled by passing :code:`add_init_kwargs=False` to the decorator.
 
 Another example:
 
-.. code:: python
+.. code-block:: python
 
     from tri.declarative import with_meta
 
