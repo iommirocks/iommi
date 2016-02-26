@@ -164,7 +164,7 @@ def test_declarative_and_meta():
 
 
 # Not yet working...
-@pytest.skip
+@pytest.mark.skipif(True, reason="Not yet working")
 def test_declarative_and_meta_subclass_no_constructor():
     @declarative(str, sort_key=lambda x: x)
     class Foo(object):

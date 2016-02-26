@@ -102,4 +102,4 @@ def test_assert_kwargs_empty():
     with pytest.raises(TypeError) as e:
         assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
 
-    assert e.value.message == "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'"
+    assert str(e.value) == "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'"
