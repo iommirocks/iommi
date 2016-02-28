@@ -1,3 +1,4 @@
+import pytest
 from tri.struct import Struct
 from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces
 
@@ -93,3 +94,16 @@ def test_order_after():
     expected_order = sorted(objects, key=lambda x: x.expected_position)
     assert list(range(len(objects))) == [y.expected_position for y in expected_order], 'check expected_order'
     assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]
+
+
+def test_sort_after_points_to_nothing():
+    objects = [
+        Struct(name='quux'),
+        Struct(name='foo'),
+        Struct(name='quux6', after='does-not-exist'),
+    ]
+
+    with pytest.raises(KeyError) as e:
+        sort_after(objects)
+
+    assert e.value.message == 'Tried to order after does-not-exist but that key does not exist'
