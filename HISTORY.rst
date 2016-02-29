@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.20.0 (2016-02-29)
+~~~~~~~~~~~~~~~~~~~
+
+* Added `assert_kwargs_not_empty` convenience function.
+
+* Improved documentation.
+
+
 0.19.0 (2016-01-12)
 ~~~~~~~~~~~~~~~~~~~
 
