@@ -465,10 +465,10 @@ class BoundCell(object):
         cell_contents = self.render_formatted()
 
         cell__url = self.bound_column.cell.url
-        if cell__url:
-            if callable(cell__url):
-                cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        if callable(cell__url):
+            cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
+        if cell__url:
             cell__url_title = self.bound_column.cell.url_title
             if callable(cell__url_title):
                 cell__url_title = cell__url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
