@@ -194,11 +194,11 @@ class Column(Frozen, ColumnBase):
             bulk__show=False,
             query__show=False,
             extra=Struct(),
-            attrs__class={},
+            attrs={},
             cell__template=None,
             cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
             cell__format=default_cell_formatter,
-            cell__attrs__class={},
+            cell__attrs={},
             cell__url=None,
             cell__url_title=None
         ))
@@ -210,6 +210,9 @@ class Column(Frozen, ColumnBase):
         namespaces.bulk = Struct(namespaces.bulk)
         namespaces.query = Struct(namespaces.query)
         namespaces.extra = Struct(namespaces.extra)
+
+        setdefaults(namespaces.attrs, {'class': {}})
+        setdefaults(namespaces.cell.attrs, {'class': {}})
 
         super(Column, self).__init__(**namespaces)
 
@@ -462,10 +465,10 @@ class BoundCell(object):
         cell_contents = self.render_formatted()
 
         cell__url = self.bound_column.cell.url
-        if cell__url:
-            if callable(cell__url):
-                cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        if callable(cell__url):
+            cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
+        if cell__url:
             cell__url_title = self.bound_column.cell.url_title
             if callable(cell__url_title):
                 cell__url_title = cell__url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
