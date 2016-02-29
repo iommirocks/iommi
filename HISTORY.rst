@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.12.0 ()
-~~~~~~~~~
+1.12.0 (2016-02-29)
+~~~~~~~~~~~~~~~~~~~
 
 * Changed syntax for specifying html attributes and classes. They are now use the same way of addressing as
   other things, e.g.: Column(attrs__foo="bar", attrs__class__baz=True) will yield something like
