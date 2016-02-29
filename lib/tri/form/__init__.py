@@ -317,11 +317,13 @@ class Field(Frozen, FieldBase):
 
         setdefaults(kwargs, dict(
             extra=Struct(),
-            attrs__class={}
+            attrs={}
         ))
 
         namespaces = Struct(collect_namespaces(kwargs))
         namespaces.attrs = Struct(collect_namespaces(namespaces.attrs))
+
+        setdefaults(namespaces.attrs, {'class': {}})
         super(Field, self).__init__(**namespaces)
 
     @staticmethod
