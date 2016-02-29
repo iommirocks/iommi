@@ -87,9 +87,8 @@ def render_class(class_dict):
     return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
 
 
-def yes_no_formatter(table, column, row, value):
+def yes_no_formatter(value, **_):
     """ Handle True/False from Django model and 1/0 from raw sql """
-    del table, column, row
     if value is True or value == 1:
         return 'Yes'
     if value is False or value == 0:
@@ -99,8 +98,7 @@ def yes_no_formatter(table, column, row, value):
     assert False, "Unable to convert {} to Yes/No".format(value)   # pragma: no cover
 
 
-def list_formatter(table, column, row, value):
-    del table, column, row
+def list_formatter(value, **_):
     return ', '.join([conditional_escape(x) for x in value])
 
 
@@ -109,7 +107,7 @@ _cell_formatters = {
     tuple: list_formatter,
     list: list_formatter,
     set: list_formatter,
-    QuerySet: lambda table, column, row, value: list_formatter(table=table, column=column, row=row, value=list(value))
+    QuerySet: lambda value, **_: list_formatter(list(value))
 }
 
 
@@ -299,7 +297,8 @@ class Column(Frozen, ColumnBase):
             display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
             sortable=False,
             show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
-            css_class={'thin', 'nopad'},
+            attrs__class__thin=True,
+            attrs__class__nopad=True,
             cell__attrs__class__cj=True,
             cell__value=lambda table, column, row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         ))

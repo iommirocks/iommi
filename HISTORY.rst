@@ -8,6 +8,7 @@ Changelog
   other things, e.g.: Column(attrs__foo="bar", attrs__class__baz=True) will yield something like
   `<th class="baz" foo=bar>...</th>`
 
+
 1.11.0 (2016-02-04)
 ~~~~~~~~~~~~~~~~~~~
 
