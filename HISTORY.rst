@@ -1,12 +1,17 @@
 Changelog
 =========
 
-1.11.0 ()
-~~~~~~~~~
 
-* Changed syntax for specifying html attributes and classes. They are now use the same way of addressing as
-  other things, e.g.: Field.choice(attrs__foo="bar", attrs__class__baz=True) will yield something like
-  `<select ... class="baz" foo=bar>...</select>`
+1.11.0 (2016-02-29)
+~~~~~~~~~~~~~~~~~~~
+
+* Datetime fields used to not roundtrip cleanly via the form (they output
+  milliseconds then failed on parsing them) Field.file didn't exist.
+
+* Changed syntax for specifying html attributes and classes. They are now use
+  the same way of addressing as other things, e.g.:
+  Field.choice(attrs__foo="bar", attrs__class__baz=True) will yield something
+  like `<select ... class="baz" foo=bar>...</select>`
 
 
 1.10.0 (2016-02-08)
