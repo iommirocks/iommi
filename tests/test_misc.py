@@ -43,6 +43,14 @@ def test_collect_namespaces_merge_existing():
     assert dict(foo=dict(bar=1, baz=2)) == collect_namespaces(values)
 
 
+def test_collect_namespaces_non_dict_existing_value():
+    values = dict(
+        foo='bar',
+        foo__baz=False
+    )
+    assert dict(foo=dict(bar=True, baz=False)) == collect_namespaces(values)
+
+
 def test_getattr_path_and_setattr_path():
     class Baz(object):
         def __init__(self):

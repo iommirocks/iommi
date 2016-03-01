@@ -437,7 +437,14 @@ def collect_namespaces(values):
         parts = key.split('__', 1)
         if len(parts) == 2:
             prefix, name = parts
-            namespaces.setdefault(prefix, values.get(prefix, dict()))[name] = result.pop(key)
+            if prefix not in namespaces:
+                initial_namespace = values.get(prefix)
+                if initial_namespace is None:
+                    initial_namespace = {}
+                elif not isinstance(initial_namespace, dict):
+                    initial_namespace = {initial_namespace: True}
+                namespaces[prefix] = initial_namespace
+            namespaces[prefix][name] = result.pop(key)
     for prefix, namespace in namespaces.items():
         result[prefix] = namespace
     return result

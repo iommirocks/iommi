@@ -1,6 +1,14 @@
 Changelog
 =========
 
+
+0.21.0 (2016-03--01)
+~~~~~~~~~~~~~~~~~~~~
+
+* Fix corner case in collect_namespaces where one parameter imply a value and
+  others imply a namespace.
+
+
 0.20.0 (2016-02-29)
 ~~~~~~~~~~~~~~~~~~~
 
