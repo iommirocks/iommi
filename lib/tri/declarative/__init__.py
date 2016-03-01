@@ -488,6 +488,16 @@ def setdefaults(d, d2):
     return d
 
 
+def setdefaults_path(d, d2):
+    for k, v in d2.items():
+        path = k.split('__')
+        o = d
+        for name in path[:-1]:
+            o = o[name]
+        o.setdefault(path[-1], v)
+    return d
+
+
 def getattr_path(obj, path):
     """
     Get an attribute path, as defined by a string separated by '__'.

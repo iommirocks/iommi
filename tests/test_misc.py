@@ -1,6 +1,6 @@
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path
 
 
 def test_extract_subkeys():
@@ -76,6 +76,24 @@ def test_getattr_path_and_setattr_path():
 
     setattr_path(foo, 'bar', None)
     assert foo.bar is None
+
+
+def test_setdefaults_path():
+    actual = setdefaults_path(dict(
+            x=1,
+            y=dict(z=2)
+    ), dict(
+            a=3,
+            x=4,
+            y__b=5,
+            y__z=6
+    ))
+    expected = dict(
+            x=1,
+            a=3,
+            y=dict(z=2, b=5)
+    )
+    assert actual == expected
 
 
 def test_order_after():
