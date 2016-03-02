@@ -77,7 +77,7 @@ setup(
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
     include_package_data=True,
-    install_requires=read_reqs('requirements.txt'),
+    install_requires=['Django >= 1.7'] + read_reqs('requirements.txt'),
     license="BSD",
     zip_safe=False,
     keywords='tri.form',

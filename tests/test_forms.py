@@ -381,6 +381,8 @@ def test_field_from_model_supports_all_types():
         'IPAddressField',
         'NullBooleanField',
         'SlugField',
+        'DurationField',
+        'UUIDField'
     }
     field_type_names = [x for x in dir(fields) if x.endswith('Field') and x not in blacklist]
 
