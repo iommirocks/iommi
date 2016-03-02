@@ -3,7 +3,10 @@ from __future__ import unicode_literals, absolute_import
 from collections import OrderedDict
 from datetime import datetime
 from decimal import Decimal
+from distutils.version import StrictVersion
 from itertools import chain
+
+import django
 
 import re
 from django.core.exceptions import ValidationError
@@ -655,6 +658,24 @@ class Field(Frozen, FieldBase):
         return Field(**kwargs)
 
 
+if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
+    def get_fields(model):
+        # noinspection PyProtectedMember
+        for field in model._meta.get_fields():
+            if field.many_to_one:
+                continue
+            if field.auto_created:
+                continue
+            yield field
+else:
+    def get_fields(model):
+        # noinspection PyProtectedMember
+        for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
+            if isinstance(field, AutoField):
+                continue
+            yield field
+
+
 @declarative(Field, 'fields')
 class Form(object):
     """
@@ -740,15 +761,17 @@ class Form(object):
             return True
 
         fields = []
-        # noinspection PyProtectedMember
-        for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
-            if should_include(field.name) and not isinstance(field, AutoField):
-                subkeys = extract_subkeys(kwargs, field.name)
-                foo = subkeys.get('class', Field.from_model)(name=field.name, model=model, model_field=field, **subkeys)
-                if isinstance(foo, list):
-                    fields.extend(foo)
-                else:
-                    fields.append(foo)
+
+        for field in get_fields(model):
+            if not should_include(field.name):
+                continue
+            subkeys = extract_subkeys(kwargs, field.name)
+            foo = subkeys.get('class', Field.from_model)(name=field.name, model=model, model_field=field, **subkeys)
+            if isinstance(foo, list):
+                fields.extend(foo)
+            else:
+                fields.append(foo)
+
         return fields
 
     @staticmethod
