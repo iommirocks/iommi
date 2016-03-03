@@ -485,7 +485,7 @@ class BoundCell(object):
         return self.render()
 
     def __repr__(self):
-        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.column, self.bound_row.row)
+        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.column, self.bound_row.row)  # pragma: no cover
 
 
 @declarative(Column, 'columns')
