@@ -199,11 +199,15 @@ class Variable(Frozen, VariableBase):
 
     @staticmethod
     def integer(**kwargs):  # pragma: no cover
-        """
-        Boolean field. Tries hard to parse a boolean value from its input.
-        """
         setdefaults(kwargs, dict(
             gui__class=Field.integer,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def float(**kwargs):  # pragma: no cover
+        setdefaults(kwargs, dict(
+            gui__class=Field.float,
         ))
         return Variable(**kwargs)
 
