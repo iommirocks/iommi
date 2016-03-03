@@ -13,7 +13,7 @@ from tri.form import Form, Field, bool_parse
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 
 class QueryException(Exception):
