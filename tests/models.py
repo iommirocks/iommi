@@ -1,5 +1,4 @@
 from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField
-
 saved_something = None
 
 
@@ -32,6 +31,10 @@ class Foo(Model):
 
     def __repr__(self):
         return 'Foo pk: %s' % self.pk
+
+
+class Bar(Model):
+    foo = ForeignKey(Foo, related_name='bars')
 
 
 class FieldFromModelForeignKeyTest(Model):

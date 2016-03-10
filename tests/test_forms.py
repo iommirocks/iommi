@@ -7,7 +7,8 @@ from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
-from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest
+from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, \
+    Bar
 from tri.declarative import with_meta
 from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
 from tri.struct import Struct
@@ -421,6 +422,13 @@ def test_field_from_model_foreign_key2():
     assert Form.from_model(data={},
                            model=FieldFromModelOneToOneTest,
                            foo_one_to_one__class=Field.from_model_expand).fields_by_name.keys() == ['foo_one_to_one__foo']
+
+
+@pytest.mark.django_db
+def test_field_from_model_many_to_one_foreign_key():
+    assert Form.from_model(data={},
+                           model=Bar,
+                           foo=Field.from_model).fields_by_name.keys() == ['foo']
 
 
 def test_register_field_factory():
