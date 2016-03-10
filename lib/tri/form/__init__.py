@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.12.0'
+__version__ = '1.13.0'
 
 
 def capitalize(s):
@@ -659,11 +659,9 @@ class Field(Frozen, FieldBase):
 
 
 if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
-    def get_fields(model):
+    def get_fields(model):  # pragma: no cover
         # noinspection PyProtectedMember
         for field in model._meta.get_fields():
-            if field.many_to_one:
-                continue
             if field.auto_created:
                 continue
             yield field
