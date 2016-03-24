@@ -122,6 +122,19 @@ def test_order_after():
     assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]
 
 
+def test_sort_after_points_to_nothing():
+    objects = [
+        Struct(name='quux'),
+        Struct(name='foo'),
+        Struct(name='quux6', after='does-not-exist'),
+    ]
+
+    with pytest.raises(KeyError) as e:
+        sort_after(objects)
+
+    assert e.value.message == 'Tried to order after does-not-exist but that key does not exist'
+
+
 def test_assert_kwargs_empty():
     assert_kwargs_empty({})
 

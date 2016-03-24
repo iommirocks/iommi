@@ -548,7 +548,11 @@ def sort_after(l):
         for i, y in enumerate(result):
             if y.name == x.after:
                 result.insert(i + 1, x)
+                del to_be_moved_by_name[-1]
                 break
+
+    if to_be_moved_by_name:
+        raise KeyError('Tried to order after %s but %s does not exist' % (', '.join([x.after for x in to_be_moved_by_name]), 'those keys' if len(to_be_moved_by_name) > 1 else 'that key'))
 
     for x in reversed(to_be_moved_by_index):
         result.insert(x.after, x)
