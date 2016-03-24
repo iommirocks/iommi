@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+0.22.0 ()
+~~~~~~~~~
+
+* Tweaked namespace merge in `setdefaults_path`
+
+
 0.21.0 (2016-03-01)
 ~~~~~~~~~~~~~~~~~~~
 
