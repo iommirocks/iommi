@@ -2,9 +2,11 @@ Changelog
 =========
 
 
-0.22.0 ()
-~~~~~~~~~
+0.22.0 (2016-03-24)
+~~~~~~~~~~~~~~~~~~~
 
+* `sort_after()` should produce an error when attempting to sort after non-existant keys
+  
 * Tweaked namespace merge in `setdefaults_path`
 
 
