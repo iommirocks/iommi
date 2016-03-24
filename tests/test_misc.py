@@ -96,6 +96,23 @@ def test_setdefaults_path():
     assert actual == expected
 
 
+def test_setdefaults_path():
+    actual = setdefaults_path(dict(
+        x=1,
+        y=Struct(z="foo")
+    ), dict(
+        y__a__b=17,
+        y__z__c=True
+    ))
+    expected = dict(
+        x=1,
+        y=Struct(a=Struct(b=17),
+                 z=Struct(foo=True,
+                          c=True))
+    )
+    assert actual == expected
+
+
 def test_order_after():
     objects = [
         # header1

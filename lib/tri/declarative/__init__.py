@@ -488,14 +488,19 @@ def setdefaults(d, d2):
     return d
 
 
-def setdefaults_path(d, d2):
-    for k, v in d2.items():
+def setdefaults_path(target, defaults, namespace_factory=Struct):
+    for k, v in defaults.items():
         path = k.split('__')
-        o = d
-        for name in path[:-1]:
-            o = o[name]
-        o.setdefault(path[-1], v)
-    return d
+        namespace = target
+        for path_component in path[:-1]:
+            next = namespace.get(path_component)
+            if next is None:
+                namespace[path_component] = namespace_factory()
+            elif not isinstance(next, dict):
+                namespace[path_component] = namespace_factory(**{next: True})
+            namespace = namespace[path_component]
+        namespace.setdefault(path[-1], v)
+    return target
 
 
 def getattr_path(obj, path):
