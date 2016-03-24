@@ -1,6 +1,6 @@
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path
 
 
 def test_extract_subkeys():
@@ -43,6 +43,14 @@ def test_collect_namespaces_merge_existing():
     assert dict(foo=dict(bar=1, baz=2)) == collect_namespaces(values)
 
 
+def test_collect_namespaces_non_dict_existing_value():
+    values = dict(
+        foo='bar',
+        foo__baz=False
+    )
+    assert dict(foo=dict(bar=True, baz=False)) == collect_namespaces(values)
+
+
 def test_getattr_path_and_setattr_path():
     class Baz(object):
         def __init__(self):
@@ -68,6 +76,24 @@ def test_getattr_path_and_setattr_path():
 
     setattr_path(foo, 'bar', None)
     assert foo.bar is None
+
+
+def test_setdefaults_path():
+    actual = setdefaults_path(dict(
+            x=1,
+            y=dict(z=2)
+    ), dict(
+            a=3,
+            x=4,
+            y__b=5,
+            y__z=6
+    ))
+    expected = dict(
+            x=1,
+            a=3,
+            y=dict(z=2, b=5)
+    )
+    assert actual == expected
 
 
 def test_order_after():
@@ -107,3 +133,12 @@ def test_sort_after_points_to_nothing():
         sort_after(objects)
 
     assert e.value.message == 'Tried to order after does-not-exist but that key does not exist'
+
+
+def test_assert_kwargs_empty():
+    assert_kwargs_empty({})
+
+    with pytest.raises(TypeError) as e:
+        assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
+
+    assert str(e.value) == "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'"

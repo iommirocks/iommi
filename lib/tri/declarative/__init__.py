@@ -8,7 +8,7 @@ import itertools
 from tri.struct import Struct
 
 
-__version__ = '0.19.0'
+__version__ = '0.21.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -122,7 +122,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True, sort_ke
         except AttributeError:
             if sort_key is default_sort_key:
                 raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
-            else:
+            else:  # pragma: no cover
                 raise
         members.update(sorted_bindings)
 
@@ -437,7 +437,14 @@ def collect_namespaces(values):
         parts = key.split('__', 1)
         if len(parts) == 2:
             prefix, name = parts
-            namespaces.setdefault(prefix, values.get(prefix, dict()))[name] = result.pop(key)
+            if prefix not in namespaces:
+                initial_namespace = values.get(prefix)
+                if initial_namespace is None:
+                    initial_namespace = {}
+                elif not isinstance(initial_namespace, dict):
+                    initial_namespace = {initial_namespace: True}
+                namespaces[prefix] = initial_namespace
+            namespaces[prefix][name] = result.pop(key)
     for prefix, namespace in namespaces.items():
         result[prefix] = namespace
     return result
@@ -478,6 +485,16 @@ def setdefaults(d, d2):
     """
     for k, v in d2.items():
         d.setdefault(k, v)
+    return d
+
+
+def setdefaults_path(d, d2):
+    for k, v in d2.items():
+        path = k.split('__')
+        o = d
+        for name in path[:-1]:
+            o = o[name]
+        o.setdefault(path[-1], v)
     return d
 
 
@@ -543,3 +560,10 @@ def sort_after(l):
     result.extend(to_be_moved_last)
 
     return result
+
+
+def assert_kwargs_empty(kwargs):
+    if kwargs:
+        import traceback
+        function_name = traceback.extract_stack()[-2][2]
+        raise TypeError('%s() got unexpected keyword arguments %s' % (function_name, ', '.join(["'%s'" % x for x in sorted(kwargs.keys())])))

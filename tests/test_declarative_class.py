@@ -163,6 +163,44 @@ def test_declarative_and_meta():
     Foo()
 
 
+# Not yet working...
+@pytest.mark.skipif(True, reason="Not yet working")
+def test_declarative_and_meta_subclass_no_constructor():
+    @declarative(str, sort_key=lambda x: x)
+    class Foo(object):
+
+        def __init__(self, members, bar):
+            assert OrderedDict() == members
+            assert 'bar' == bar
+
+    @with_meta
+    class Bar(Foo):
+        class Meta:
+            bar = 'bar'
+
+    Bar()
+
+
+def test_declarative_and_meta_subclass_no_constructor_hack_workaround():
+    @declarative(str, sort_key=lambda x: x)
+    class Foo(object):
+
+        def __init__(self, members, bar):
+            assert OrderedDict() == members
+            assert 'bar' == bar
+
+    @with_meta
+    class Bar(Foo):
+        class Meta:
+            bar = 'bar'
+
+        # This is a hack to make the @with_meta argument injector not tripping up when finding the paren constructor
+        def __init__(self, *args, **kwargs):
+            super(Bar, self).__init__(*args, **kwargs)
+
+    Bar()
+
+
 def test_declarative_and_meta_other_order():
 
     @declarative(str, sort_key=lambda x: x)
@@ -328,3 +366,9 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
 
     with pytest.raises(MyException):
         D()
+
+
+def test_creation_ordered():
+    l = [Member() for _ in range(100)]
+
+    assert sorted(reversed(l)) == l
