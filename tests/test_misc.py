@@ -149,7 +149,7 @@ def test_sort_after_points_to_nothing():
     with pytest.raises(KeyError) as e:
         sort_after(objects)
 
-    assert e.value.message == 'Tried to order after does-not-exist but that key does not exist'
+    assert 'Tried to order after does-not-exist but that key does not exist' in str(e)
 
 
 def test_assert_kwargs_empty():
