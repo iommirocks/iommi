@@ -17,7 +17,9 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
-from tri.declarative import evaluate, should_show, should_not_evaluate, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults, collect_namespaces
+from tri.declarative import evaluate, should_show, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults, collect_namespaces
+
+from tri.form.render import render_attrs
 
 try:
     from django.template.loader import get_template_from_string
@@ -247,28 +249,6 @@ class BoundField(FieldBase):
         return render_css_classes(self.input_container_css_classes)
 
 
-def render_attrs(attrs):
-    """
-    Render HTML attributes, or return '' if no attributes needs to be rendered.
-    """
-    if attrs is not None:
-        def parts():
-            for key, value in sorted(attrs.items()):
-                if value is None:
-                    continue
-                if isinstance(value, dict):
-                    if not value:
-                        continue
-                    value = render_class(value)
-                yield '%s="%s"' % (key, value)
-        return mark_safe(' %s' % ' '.join(parts()))
-    return ''
-
-
-def render_class(class_dict):
-    return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
-
-
 def render_css_classes(classes):
     """
     Render CSS classes, or return '' if no attributes needs to be rendered.
@@ -447,7 +427,7 @@ class Field(Frozen, FieldBase):
     @staticmethod
     def multi_choice(**kwargs):
         setdefaults(kwargs, dict(
-            attrs={'multiple': ''},
+            attrs__multiple=True,
             choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list),
             is_list=True
         ))
@@ -456,7 +436,7 @@ class Field(Frozen, FieldBase):
     @staticmethod
     def multi_choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
-            attrs={'multiple': ''},
+            attrs__multiple=True,
             choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list),
             is_list=True
         ))
