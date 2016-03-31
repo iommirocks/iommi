@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.13.0'
+__version__ = '1.14.0'
 
 
 def capitalize(s):
@@ -143,7 +143,7 @@ class FieldBase(NamedStruct):
     input_container_css_classes = NamedStructField(default_factory=set)
     post_validation = NamedStructField(default=lambda form, field: None)
     """ @type: (Form, Field) -> None """
-    render_value = NamedStructField(default=lambda form, field, value: unicode(value))
+    render_value = NamedStructField(default=lambda form, field, value: "%s" % value)
     """ @type: (Form, Field, object) -> unicode """
     is_list = NamedStructField(default=False)
     is_boolean = NamedStructField(default=False)
@@ -352,8 +352,15 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def float(**kwargs):
+        def parse_float(string_value, **_):
+            try:
+                return float(string_value)
+            except ValueError:
+                # Acrobatics so we get equal formatting in python 2/3
+                raise ValueError("could not convert string to float: %s" % string_value)
+
         setdefaults(kwargs, dict(
-            parse=lambda string_value, **_: float(string_value)
+            parse=parse_float
         ))
         return Field(**kwargs)
 
@@ -419,7 +426,7 @@ class Field(Frozen, FieldBase):
 
         setdefaults(kwargs, dict(
             empty_choice_tuple=(None, '', kwargs['empty_label'], True),
-            choice_to_option=lambda form, field, choice: (choice, unicode(choice), unicode(choice), choice == field.value),
+            choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, choice == field.value),
             input_template='tri_form/choice.html',
             is_valid=choice_is_valid,
             post_validation=post_validation
@@ -433,7 +440,7 @@ class Field(Frozen, FieldBase):
         setdefaults(kwargs, dict(
             extra=Struct(model=model),
             parse=lambda form, field, string_value: field.extra.model.objects.get(pk=string_value) if string_value else None,
-            choice_to_option=lambda form, field, choice: (choice, choice.pk, unicode(choice), choice == field.value)
+            choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value)
         ))
         return Field.choice(**kwargs)
 
@@ -441,7 +448,7 @@ class Field(Frozen, FieldBase):
     def multi_choice(**kwargs):
         setdefaults(kwargs, dict(
             attrs={'multiple': ''},
-            choice_to_option=lambda form, field, choice: (choice, unicode(choice), unicode(choice), field.value_list and choice in field.value_list),
+            choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list),
             is_list=True
         ))
         return Field.choice(**kwargs)
@@ -450,7 +457,7 @@ class Field(Frozen, FieldBase):
     def multi_choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
             attrs={'multiple': ''},
-            choice_to_option=lambda form, field, choice: (choice, choice.pk, unicode(choice), field.value_list and choice in field.value_list),
+            choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list),
             is_list=True
         ))
         return Field.choice_queryset(**kwargs)
@@ -470,7 +477,7 @@ class Field(Frozen, FieldBase):
             try:
                 return datetime.strptime(string_value, iso_format)
             except ValueError as e:
-                raise ValidationError(e.message)
+                raise ValidationError(str(e))
         setdefaults(kwargs, dict(
             parse=datetime_parse,
             render_value=lambda value, **_: value.strftime(iso_format),
@@ -485,7 +492,7 @@ class Field(Frozen, FieldBase):
             try:
                 return datetime.strptime(string_value, iso_format).date()
             except ValueError as e:
-                raise ValidationError(e.message)
+                raise ValidationError(str(e))
         setdefaults(kwargs, dict(
             parse=date_parse,
             render_value=lambda value, **_: value.strftime(iso_format),
@@ -500,7 +507,7 @@ class Field(Frozen, FieldBase):
             try:
                 return datetime.strptime(string_value, iso_format).time()
             except ValueError as e:
-                raise ValidationError(e.message)
+                raise ValidationError(str(e))
         setdefaults(kwargs, dict(
             parse=time_parse,
             render_value=lambda value, **_: value.strftime(iso_format),
@@ -632,7 +639,7 @@ class Field(Frozen, FieldBase):
                 try:
                     result.append(parent_field.parse(form=form, field=field, string_value=x.strip()))
                 except ValueError as e:
-                    errors.append('Invalid value "%s": %s' % (x, e.message))
+                    errors.append('Invalid value "%s": %s' % (x, e))
                 except ValidationError as e:
                     for message in e.messages:
                         errors.append('Invalid value "%s": %s' % (x, message))
@@ -807,11 +814,11 @@ class Form(object):
         try:
             return field.parse(form=self, field=field, string_value=raw_data)
         except ValueError as e:
-            assert e.message != ''
-            field.errors.add(e.message)
+            assert str(e) != ''
+            field.errors.add(str(e))
         except ValidationError as e:
             for message in e.messages:
-                msg = unicode(message)
+                msg = "%s" % message
                 assert msg != ''
                 field.errors.add(msg)
 
@@ -897,7 +904,7 @@ class Form(object):
     def add_error(self, msg):
         self.errors.append(msg)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.table()
 
     def compact(self):

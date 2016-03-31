@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 import pytest
 from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, \
     Bar
-from tri.declarative import with_meta
 from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
@@ -71,8 +70,8 @@ def test_parse():
     assert form.fields_by_name['username'].value == 'abc_foo'
 
     assert form.fields_by_name['joined'].raw_data == '2014-12-12 01:02:03'
-    assert form.fields_by_name['joined'].parsed_data == datetime(2014, 12, 12, 01, 02, 03)
-    assert form.fields_by_name['joined'].value == datetime(2014, 12, 12, 01, 02, 03)
+    assert form.fields_by_name['joined'].parsed_data == datetime(2014, 12, 12, 1, 2, 3)
+    assert form.fields_by_name['joined'].value == datetime(2014, 12, 12, 1, 2, 3)
 
     assert form.fields_by_name['staff'].raw_data == 'true'
     assert form.fields_by_name['staff'].parsed_data is True
@@ -91,8 +90,8 @@ def test_parse():
     assert form.fields_by_name['a_date'].value == date(2014, 2, 12)
 
     assert form.fields_by_name['a_time'].raw_data == '01:02:03'
-    assert form.fields_by_name['a_time'].parsed_data == time(01, 02, 03)
-    assert form.fields_by_name['a_time'].value == time(01, 02, 03)
+    assert form.fields_by_name['a_time'].parsed_data == time(1, 2, 3)
+    assert form.fields_by_name['a_time'].value == time(1, 2, 3)
 
     instance = Struct(contact=Struct())
     form.apply(instance)
@@ -104,7 +103,7 @@ def test_parse():
         username='abc_foo',
         manages=['DEF', 'KTH'],
         a_date=date(2014, 2, 12),
-        a_time=time(01, 02, 03),
+        a_time=time(1, 2, 3),
         not_editable='Some non-editable text')
 
 
@@ -171,8 +170,8 @@ def test_initial_list_from_instance():
 
 
 def test_show():
-    assert Form(data=Data(), fields=[Field(name='foo', show=False)]).validate().fields_by_name.keys() == []
-    assert Form(data=Data(), fields=[Field(name='foo', show=lambda form, field: False)]).validate().fields_by_name.keys() == []
+    assert list(Form(data=Data(), fields=[Field(name='foo', show=False)]).validate().fields_by_name.keys()) == []
+    assert list(Form(data=Data(), fields=[Field(name='foo', show=lambda form, field: False)]).validate().fields_by_name.keys()) == []
 
 
 def test_non_editable():
@@ -299,7 +298,7 @@ def test_render_table():
     assert '<tr' in table
 
     # Assert that table is the default
-    assert table == unicode(form)
+    assert table == "%s" % form
 
 
 def test_heading():
@@ -365,8 +364,25 @@ def test_field_from_model():
 
 
 def test_form_from_model():
-    assert [x.value for x in Form.from_model(model=FormFromModelTest, include=['f_int', 'f_float', 'f_bool'], data=Data(f_int='1', f_float='1.1', f_bool='true')).validate().fields] == [1, 1.1, True]
-    assert [x.errors for x in Form.from_model(model=FormFromModelTest, exclude=['f_int_excluded'], data=Data(f_int='1.1', f_float='true', f_bool='asd')).validate().fields] == [{"invalid literal for int() with base 10: '1.1'"}, {'could not convert string to float: true'}, {u'asd is not a valid boolean value'}]
+    assert [x.value for x in Form.from_model(
+        model=FormFromModelTest,
+        include=['f_int', 'f_float', 'f_bool'],
+        data=Data(f_int='1', f_float='1.1', f_bool='true')
+    ).validate().fields] == [
+        1,
+        1.1,
+        True
+    ]
+
+    assert [x.errors for x in Form.from_model(
+        model=FormFromModelTest,
+        exclude=['f_int_excluded'],
+        data=Data(f_int='1.1', f_float='true', f_bool='asd')
+    ).validate().fields] == [
+        {"invalid literal for int() with base 10: '1.1'"},
+        {'could not convert string to float: true'},
+        {u'asd is not a valid boolean value'}
+    ]
 
 
 def test_field_from_model_supports_all_types():
@@ -419,16 +435,20 @@ def test_field_from_model_many_to_many():
 
 @pytest.mark.django_db
 def test_field_from_model_foreign_key2():
-    assert Form.from_model(data={},
-                           model=FieldFromModelOneToOneTest,
-                           foo_one_to_one__class=Field.from_model_expand).fields_by_name.keys() == ['foo_one_to_one__foo']
+    assert set(Form.from_model(
+        data={},
+        model=FieldFromModelOneToOneTest,
+        foo_one_to_one__class=Field.from_model_expand
+    ).fields_by_name.keys()) == {'foo_one_to_one__foo'}
 
 
 @pytest.mark.django_db
 def test_field_from_model_many_to_one_foreign_key():
-    assert Form.from_model(data={},
-                           model=Bar,
-                           foo=Field.from_model).fields_by_name.keys() == ['foo']
+    assert set(Form.from_model(
+        data={},
+        model=Bar,
+        foo=Field.from_model
+    ).fields_by_name.keys()) == {'foo'}
 
 
 def test_register_field_factory():
