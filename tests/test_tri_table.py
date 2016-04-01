@@ -8,7 +8,7 @@ from django.test import RequestFactory
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
 
-from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, render_attrs
+from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter
 
 
 def get_data():
@@ -42,12 +42,6 @@ def declarative_table():
         bar = Column.number()
 
     return TestTable(data=get_data())
-
-
-def test_render_attrs():
-    assert render_attrs(None) == ''
-    assert render_attrs({'foo': 'bar', 'baz': 'quux'}) == ' baz="quux" foo="bar"'
-    assert render_attrs({'foo': True, 'class': dict(foo=False, bar=True, baz=True)}) == ' class="bar baz" foo'
 
 
 @pytest.mark.parametrize('table', [
