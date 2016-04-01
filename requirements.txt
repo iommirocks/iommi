@@ -3,3 +3,4 @@ tri.named_struct
 tri.struct
 tri.form
 pyparsing
+six
