@@ -1,10 +1,12 @@
 Changelog
 =========
 
-1.14.0 ()
-~~~~~~~~~
+1.14.0 (2016-04-01)
+~~~~~~~~~~~~~~~~~~~
 
 * Added python 3 support
+
+* Added render helper functions for reuse by tri.table et al
 
 
 1.13.0 (2016-03-10)
