@@ -3,6 +3,9 @@ from __future__ import absolute_import, unicode_literals
 
 from collections import OrderedDict
 from itertools import groupby
+
+from tri.form.render import render_attrs, render_class
+
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponse, Http404, HttpResponseRedirect
@@ -60,31 +63,6 @@ def order_by_on_list(objects, order_field, is_desc=False):
         return
 
     objects.sort(key=lambda x: getattr_path(x, order_field), reverse=is_desc)
-
-
-def render_attrs(attrs):
-    """
-    Render HTML attributes, or return '' if no attributes needs to be rendered.
-    """
-    if attrs is not None:
-        def parts():
-            for key, value in sorted(attrs.items()):
-                if value is None:
-                    continue
-                if value is True:
-                    yield '%s' % (key, )
-                    continue
-                if isinstance(value, dict):
-                    if not value:
-                        continue
-                    value = render_class(value)
-                yield '%s="%s"' % (key, value)
-        return mark_safe(' %s' % ' '.join(parts()))
-    return ''
-
-
-def render_class(class_dict):
-    return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
 
 
 def yes_no_formatter(value, **_):
