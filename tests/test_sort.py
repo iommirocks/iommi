@@ -1,6 +1,8 @@
+from __future__ import unicode_literals
+
 import pytest
 
-from .helpers import verify_table_html
+from tests.helpers import verify_table_html
 from tests.models import Foo
 from tri.table import Column, Table, Struct, order_by_on_list
 
