@@ -59,7 +59,7 @@ def test_unknown_field():
     with pytest.raises(QueryException) as e:
         query.parse('unknown_variable=1')
 
-    assert 'Unknown variable "unknown_variable"' == e.value.message
+    assert 'Unknown variable "unknown_variable"' in str(e)
     assert isinstance(e.value, QueryException)
 
 
@@ -129,7 +129,7 @@ def test_invalid_value():
     query2 = Query(request=request, variables=[Variable.integer(name='bazaar', value_to_q=lambda variable, op, value_string_or_f: None)])
     with pytest.raises(QueryException) as e:
         query2.to_q()
-    assert e.value.message == 'Unknown value "asd" for variable "bazaar"'
+    assert 'Unknown value "asd" for variable "bazaar"' in str(e)
 
 
 def test_invalid_variable():
@@ -137,7 +137,7 @@ def test_invalid_variable():
     query2 = Query(request=Struct(method='GET', GET=Data(**{'query': 'not_bazaar=asd'})), variables=[Variable(name='bazaar')])
     with pytest.raises(QueryException) as e:
         query2.to_q()
-    assert e.value.message == 'Unknown variable "not_bazaar"'
+    assert 'Unknown variable "not_bazaar"' in str(e)
 
 
 def test_invalid_form_data():
@@ -179,7 +179,7 @@ def test_invalid_syntax():
     with pytest.raises(QueryException) as e:
         query.parse('asdadad213124av@$#$#')
 
-    assert e.value.message == 'Invalid syntax for query'
+    assert 'Invalid syntax for query' in str(e)
 
 
 @pytest.mark.django_db
@@ -228,4 +228,4 @@ def test_choice_queryset():
     assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
         query2.to_q()
-    assert e.value.message == 'Unknown value "%s" for variable "foo"' % value_that_does_not_exist
+    assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)

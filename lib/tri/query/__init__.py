@@ -1,10 +1,12 @@
 from __future__ import unicode_literals, absolute_import
 
 from datetime import date
+from functools import reduce
 from django.db.models import Q, F
 from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
+from six import string_types, text_type, integer_types
 from tri.struct import Frozen, merged, Struct
 from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces, \
     filter_show_recursive, evaluate_recursive
@@ -52,7 +54,7 @@ def request_data(request):
 def value_to_query_string_value_string(v):
     if type(v) == bool:
         return {True: '1', False: '0'}.get(v)
-    if type(v) in (int, float, long):
+    if type(v) in integer_types or type(v) is float:
         return str(v)
     return '"%s"' % v
 
@@ -64,7 +66,7 @@ def default_value_to_q(variable, op, value_string_or_f):
     if op in ('!=', '!:'):
         negated = True
         op = op[1:]
-    if isinstance(value_string_or_f, basestring) and value_string_or_f.lower() == 'null':
+    if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
         r = Q(**{variable.attr: None})
     else:
         r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
@@ -187,7 +189,7 @@ class Variable(Frozen, VariableBase):
         Boolean field. Tries hard to parse a boolean value from its input.
         """
         def boolean_value_to_q(variable, op, value_string_or_f):
-            if isinstance(value_string_or_f, basestring):
+            if isinstance(value_string_or_f, string_types):
                 value_string_or_f = bool_parse(value_string_or_f)
             return default_value_to_q(variable, op, value_string_or_f)
 
@@ -212,7 +214,7 @@ class Variable(Frozen, VariableBase):
         return Variable(**kwargs)
 
 
-class StringValue(unicode):
+class StringValue(text_type):
     def __new__(cls, s):
         if s.startswith('"') and s.endswith('"'):
             s = s[1:-1]
@@ -388,7 +390,7 @@ class Query(object):
         variable_name, op, value_string_or_variable_name = token
         variable = self.bound_variable_by_name.get(variable_name.lower())
         if variable:
-            if isinstance(value_string_or_variable_name, basestring) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.bound_variable_by_name:
+            if isinstance(value_string_or_variable_name, string_types) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.bound_variable_by_name:
                 value_string_or_f = F(self.bound_variable_by_name[value_string_or_variable_name.lower()].attr)
             else:
                 value_string_or_f = value_string_or_variable_name
