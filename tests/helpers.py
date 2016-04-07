@@ -1,3 +1,5 @@
+from __future__ import division
+from __future__ import unicode_literals
 import re
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
@@ -9,7 +11,7 @@ def reindent(s, before=" ", after="    "):
 
     def reindent_line(line):
         m = re.match(r'^((' + re.escape(before) + r')*)(.*)', line)
-        return after * (len(m.group(1)) / len(before)) + m.group(3)
+        return after * (len(m.group(1)) // len(before)) + m.group(3)
 
     return "\n".join(reindent_line(line) for line in s.splitlines())
 

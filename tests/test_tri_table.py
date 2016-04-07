@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.http import HttpResponse
 
-import pytest
+from django.http import HttpResponse
 from django.test import RequestFactory
+from django.utils.encoding import python_2_unicode_compatible
+import pytest
+
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
 
@@ -580,7 +582,7 @@ def test_column_presets():
 @pytest.mark.django_db
 def test_django_table_pagination():
 
-    for x in xrange(30):
+    for x in range(30):
         Foo(a=x, b="foo").save()
 
     class TestTable(Table):
@@ -902,7 +904,7 @@ def test_render_table_to_response():
 
     response = render_table_to_response(RequestFactory().get('/'), TestTable(data=data))
     assert isinstance(response, HttpResponse)
-    assert '<table' in response.content
+    assert b'<table' in response.content
 
 
 @pytest.mark.django_db
@@ -910,8 +912,9 @@ def test_default_formatters():
     class TestTable(NoSortTable):
         foo = Column()
 
+    @python_2_unicode_compatible
     class SomeType(object):
-        def __unicode__(self):
+        def __str__(self):
             return 'this should not end up in the table'
 
     register_cell_formatter(SomeType, lambda table, column, row, value: 'sentinel')

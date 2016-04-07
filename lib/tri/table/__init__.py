@@ -1,5 +1,6 @@
 # coding: utf-8
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 from collections import OrderedDict
 from itertools import groupby
@@ -12,10 +13,11 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string, get_template
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
+from six import string_types
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces
 from tri.form import extract_subkeys, Field, Form
 from tri.named_struct import NamedStructField, NamedStruct
@@ -23,7 +25,7 @@ from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
 
 
-__version__ = '1.12.0'
+__version__ = '1.13.0'
 
 
 def prepare_headers(request, bound_columns):
@@ -126,7 +128,7 @@ class ColumnBase(NamedStruct):
     show = NamedStructField(default=True)
     sort_key = NamedStructField(lambda column: column.attr)
     sort_default_desc = NamedStructField(default=False)
-    display_name = NamedStructField(default=lambda table, column: force_unicode(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
+    display_name = NamedStructField(default=lambda table, column: force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
     sortable = NamedStructField(default=True)
     group = NamedStructField()
     auto_rowspan = NamedStructField(default=False)
@@ -414,6 +416,7 @@ class BoundRow(object):
         return BoundCell(bound_row=self, bound_column=bound_column)
 
 
+@python_2_unicode_compatible
 class BoundCell(object):
 
     def __init__(self, bound_row, bound_column):
@@ -459,7 +462,7 @@ class BoundCell(object):
     def render_formatted(self):
         return evaluate(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.render()
 
     def __repr__(self):
@@ -525,7 +528,7 @@ class Table(object):
         if isinstance(columns, dict):
             for name, column in columns.items():
                 dict.__setitem__(column, 'name', name)
-            self.columns = columns.values()
+            self.columns = list(columns.values())
         else:
             self.columns = columns
             """:type : list of Column"""
@@ -574,14 +577,14 @@ class Table(object):
 
         self.Meta = evaluate_recursive(self.Meta, table=self)
 
-        if 'class' in self.Meta.attrs and isinstance(self.Meta.attrs['class'], basestring):
+        if 'class' in self.Meta.attrs and isinstance(self.Meta.attrs['class'], string_types):
             self.Meta.attrs['class'] = {k: True for k in self.Meta.attrs['class'].split(' ')}
         else:
             self.Meta.attrs['class'] = {}
         self.Meta.attrs.update(extract_subkeys(self.Meta, 'attrs'))
         self.Meta.attrs = collect_namespaces(self.Meta.attrs)
 
-        if 'class' in self.Meta.row__attrs and isinstance(self.Meta.row__attrs['class'], basestring):
+        if 'class' in self.Meta.row__attrs and isinstance(self.Meta.row__attrs['class'], string_types):
             self.Meta.row__attrs['class'] = {k: True for k in self.Meta.row__attrs['class'].split(' ')}
         else:
             self.Meta.row__attrs['class'] = {}
@@ -645,7 +648,7 @@ class Table(object):
         header_groups[0].attrs['class']['first_column'] = True
 
         for x in header_groups:
-            if type(x.display_name) not in (str, unicode):
+            if not isinstance(x.display_name, string_types):
                 x.display_name = ''
         if all([x.display_name == '' for x in header_groups]):
             header_groups = []
@@ -710,7 +713,7 @@ class Table(object):
                 try:
                     self.data = self.data.filter(self.query.to_q())
                 except QueryException as e:
-                    self.query_error = e.message
+                    self.query_error = str(e)
 
             bulk_fields = [bulk(bound_column) for bound_column in self.bound_columns if bound_column.bulk.show]
             self.bulk_form = Form(data=request.POST, fields=bulk_fields, **self.bulk_kwargs) if bulk_fields else None
