@@ -24,4 +24,3 @@ def render_attrs(attrs):
 
 def render_class(class_dict):
     return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
-

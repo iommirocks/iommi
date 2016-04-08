@@ -27,7 +27,7 @@ except ImportError:  # pragma: no cover
     # Django 1.8+
     # noinspection PyUnresolvedReferences
     from django.template import engines
-    
+
     def get_template_from_string(template_code, origin=None, name=None):
         del origin, name  # the origin and name parameters seems not to be implemented in django 1.8
         return engines['django'].from_string(template_code)
@@ -262,19 +262,19 @@ class Field(Frozen, FieldBase):
     Class that describes a field, i.e. what input controls to render, the label, etc.
     """
     def __init__(self, **kwargs):
-        """        
+        """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
-        
+
         All these parameters can be callables, and if they are, will be evaluated with the keyword arguments form and field. The only exceptions are is_valid (which gets form, field and parsed_data), render_value (which takes form, field and value) and parse (which gets form, field, string_value). Example of using a lambda to specify a value:
-        
+
         .. code:: python
 
             Field(id=lambda form, field: 'my_id_%s' % field.name)
-        
-        :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally request.GET or request.POST) 
+
+        :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally request.GET or request.POST)
         :param is_valid: validation function. Should return a tuple of (bool, reason_for_failure_if_bool_is_false) or raise ValidationError. Default: lambda form, field, parsed_data: (True, '')
         :param parse: parse function. Default just returns the string input unchanged: lambda form, field, string_value: string_value
-        :param initial: initial value of the field 
+        :param initial: initial value of the field
         :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
         :param id: the HTML id attribute. Default: 'id_%s' % name
         :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
