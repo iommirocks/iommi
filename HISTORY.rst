@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.15.0 ()
+1.15.0 (2016-04-08)
 ~~~~~~~~~~~~~~~~~~~
 
 * Fixed radio button render
