@@ -20,7 +20,7 @@ def test_create_or_edit_object():
         render__context={'foo': 'FOO'},
         render=lambda **kwargs: kwargs)
     assert response['context_instance']['object_name'] == 'create or edit object test'
-    assert response['context_instance']['is_create'] == True
+    assert response['context_instance']['is_create'] is True
     form = response['context_instance']['form']
     assert response['context_instance']['foo'] == 'FOO'
     assert not form.should_parse
