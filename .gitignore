@@ -1,9 +1,10 @@
 *.py[cod]
 examples/db.sqlite3
-env
+venv
 table.css.map
-.DS_Store
 .idea
+.DS_Store
+.cache
 
 # C extensions
 *.so
@@ -42,3 +43,6 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+
+# tests
+results/
