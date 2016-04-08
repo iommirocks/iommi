@@ -7,6 +7,6 @@ class Foo(Model):
     def __repr__(self):
         return 'Foo pk: %s' % self.pk
 
+
 class Bar(Model):
     foo = ForeignKey(Foo)
-
