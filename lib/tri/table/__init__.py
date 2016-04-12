@@ -19,7 +19,9 @@ from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path
-from tri.form import Field, Form
+from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, \
+    sort_after
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
@@ -188,6 +190,10 @@ class Column(Frozen, ColumnBase):
         super(Column, self).__init__(**new_kwargs)
 
     @staticmethod
+    def text(**kwargs):
+        return Column(**kwargs)
+
+    @staticmethod
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
         """
         Shortcut to create font awesome-style icons.
@@ -321,12 +327,31 @@ class Column(Frozen, ColumnBase):
         return Column(**kwargs)
 
     @staticmethod
+    def float(**kwargs):
+        return Column.number(**kwargs)
+
+    @staticmethod
+    def integer(**kwargs):
+        return Column.number(**kwargs)
+
+    @staticmethod
     def choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
             bulk__class=Field.choice_queryset,
             bulk__model=kwargs.get('model'),
             query__class=Variable.choice_queryset,
             query__model=kwargs.get('model'),
+        ))
+        return Column.choice(**kwargs)
+
+    @staticmethod
+    def multi_choice_queryset(**kwargs):
+        setdefaults(kwargs, dict(
+            bulk__class=Field.multi_choice_queryset,
+            bulk__model=kwargs.get('model'),
+            query__class=Variable.multi_choice_queryset,
+            query__model=kwargs.get('model'),
+            cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
         ))
         return Column.choice(**kwargs)
 
@@ -365,6 +390,33 @@ class Column(Frozen, ColumnBase):
             bulk__class=Field.date,
         ))
         return Column(**kwargs)
+
+    @staticmethod
+    def email(**kwargs):
+        setdefaults(kwargs, dict(
+            bulk__class=Field.email,
+            # TODO: query__class=Variable.email,
+        ))
+        return Column(**kwargs)
+
+    @staticmethod
+    def from_model(model, field_name=None, model_field=None, **kwargs):
+        return member_from_model(
+            model=model,
+            factory_lookup=_column_factory_by_django_field_type,
+            field_name=field_name,
+            model_field=model_field,
+            defaults_factory=lambda model_field: {},
+            **kwargs)
+
+    @staticmethod
+    def expand_member(model, field_name=None, model_field=None, **kwargs):
+        return expand_member(
+            model=model,
+            factory_lookup=_column_factory_by_django_field_type,
+            field_name=field_name,
+            model_field=model_field,
+            **kwargs)
 
 
 class BoundColumn(ColumnBase):
@@ -511,7 +563,7 @@ class Table(object):
 
         model = None
 
-    def __init__(self, data, request=None, columns=None, columns_dict=None, **kwargs):
+    def __init__(self, data=None, request=None, columns=None, columns_dict=None, **kwargs):
         """
         :param data: a list of QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -528,6 +580,10 @@ class Table(object):
         """
 
         self._has_prepared = False
+
+        if data is None:
+            assert 'model' in kwargs and kwargs['model'] is not None
+            data = kwargs['model'].objects.all()
 
         self.data = data
         self.request = request
@@ -658,7 +714,8 @@ class Table(object):
 
             header_group[0].attrs['class']['first_column'] = True
 
-        header_groups[0].attrs['class']['first_column'] = True
+        if header_groups:
+            header_groups[0].attrs['class']['first_column'] = True
 
         for x in header_groups:
             if not isinstance(x.display_name, string_types):
@@ -765,6 +822,33 @@ class Table(object):
     def render_tbody(self):
         return '\n'.join([bound_row.render() for bound_row in self.bound_rows()])
 
+    @staticmethod
+    def columns_from_model(**kwargs):
+        kwargs = collect_namespaces(kwargs)
+        kwargs['db_field'] = kwargs.pop('column', {})
+        return create_members_from_model(default_factory=Column.from_model, **kwargs)
+
+    @staticmethod
+    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+        """
+        Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
+        of "the_name_of_the_field__param". For example:
+
+        .. code:: python
+
+            class Foo(Model):
+                foo = IntegerField()
+
+            Table.from_model(data=request.GET, model=Foo, field__foo__help_text='Overridden help text')
+
+        :param include: fields to include. Defaults to all
+        :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
+
+        """
+        kwargs = collect_namespaces(kwargs)
+        columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('column', {}))
+        return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
+
 
 class Link(Struct):
     """
@@ -794,6 +878,8 @@ def table_context(request,
     """
     if extra_context is None:  # pragma: no cover
         extra_context = {}
+
+    assert table.data is not None
 
     grouped_links = {}
     if links is not None:
@@ -868,7 +954,7 @@ def set_display_none(rowspan_by_row):
 
 
 def render_table(request,
-                 table,
+                 table=None,
                  links=None,
                  context=None,
                  template_name='tri_table/list.html',
@@ -878,7 +964,8 @@ def render_table(request,
                  context_processors=None,
                  paginator=None,
                  show_hits=False,
-                 hit_label='Items'):
+                 hit_label='Items',
+                 **kwargs):
     """
     Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
 
@@ -894,6 +981,14 @@ def render_table(request,
     """
     if not context:
         context = {}
+
+    kwargs = collect_namespaces(kwargs)
+
+    if table is None:
+        table_kwargs = kwargs.pop('table', {})
+        if 'model' not in table_kwargs:
+            table_kwargs['model'] = table_kwargs['data'].model
+        table = Table.from_model(**table_kwargs)
 
     table.prepare(request)
 
@@ -942,3 +1037,7 @@ def render_table_to_response(*args, **kwargs):
     if isinstance(response, HttpResponse):  # pragma: no cover
         return response
     return HttpResponse(response)
+
+from .db_compat import setup, _column_factory_by_django_field_type
+
+setup()

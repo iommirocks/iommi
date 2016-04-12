@@ -1048,3 +1048,10 @@ def test_extra():
 
     assert TestTable(data=[]).columns[0].extra.foo == 1
     assert TestTable(data=[]).columns[0].extra.bar == 2
+
+
+def test_from_model():
+    t = Table.from_model(data=Foo.objects.all(), model=Foo)
+    assert [x.name for x in t.columns] == ['id', 'a', 'b']
+    assert [x.name for x in t.columns if x.show] == ['a', 'b']
+

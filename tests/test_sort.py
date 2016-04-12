@@ -50,7 +50,7 @@ def test_sort_list():
 
 
 @pytest.mark.django_db
-def test_django_table():
+def test_sort_django_table():
 
     Foo(a=4711, b="c").save()
     Foo(a=17, b="a").save()
