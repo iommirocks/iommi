@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
-from tri.declarative import evaluate, should_show, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults, collect_namespaces
+from tri.declarative import evaluate, should_show, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path
 
 from tri.form.render import render_attrs
 
@@ -298,16 +298,13 @@ class Field(Frozen, FieldBase):
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
-        setdefaults(kwargs, dict(
+        new_kwargs = Struct()
+        setdefaults_path(new_kwargs, kwargs)
+        setdefaults_path(new_kwargs, dict(
             extra=Struct(),
-            attrs={}
+            attrs__class={},
         ))
-
-        namespaces = Struct(collect_namespaces(kwargs))
-        namespaces.attrs = Struct(collect_namespaces(namespaces.attrs))
-
-        setdefaults(namespaces.attrs, {'class': {}})
-        super(Field, self).__init__(**namespaces)
+        super(Field, self).__init__(**new_kwargs)
 
     @staticmethod
     def hidden(**kwargs):
