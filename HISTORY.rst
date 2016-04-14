@@ -2,6 +2,14 @@ Changelog
 =========
 
 
+0.23.0 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* `setdefaults_path` now accepts multiple default dicts. (To simplify the pattern of
+  shortcuts in tri.form, tri.query and tri.table where we now will end up with:
+  `new_kwargs = setdefaults_path(Struct(), kwargs, dict(....))`
+
+
 0.22.0 (2016-03-24)
 ~~~~~~~~~~~~~~~~~~~
 

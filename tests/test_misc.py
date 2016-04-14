@@ -96,7 +96,7 @@ def test_setdefaults_path():
     assert actual == expected
 
 
-def test_setdefaults_path():
+def test_setdefaults_namespace_merge():
     actual = setdefaults_path(dict(
         x=1,
         y=Struct(z="foo")
@@ -110,6 +110,22 @@ def test_setdefaults_path():
                  z=Struct(foo=True,
                           c=True))
     )
+    assert actual == expected
+
+
+def test_setdefaults_path_factory():
+    actual = setdefaults_path(dict(), dict(a__b=17), namespace_factory=dict)
+    expected = dict(a=dict(b=17))
+
+    assert actual == expected
+    assert type(expected['a']) == dict
+
+
+def test_setdefaults_path_multiple_defaults():
+    actual = setdefaults_path(Struct(),
+                              Struct(a=17, b=42),
+                              Struct(a=19, c=4711))
+    expected = dict(a=17, b=42, c=4711)
     assert actual == expected
 
 
