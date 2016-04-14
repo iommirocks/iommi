@@ -1,6 +1,6 @@
 import sys
 from tri.declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, should_not_evaluate, \
-    should_evaluate, force_evaluate, get_signature, matches, create_signature
+    should_evaluate, force_evaluate, get_signature, matches
 from tri.struct import Struct
 import pytest
 
@@ -68,11 +68,13 @@ def test_get_signature():
     def f2(b, a):
         pass
 
-    f3 = lambda a, b: None
+    assert 'a,b' == get_signature(f) == get_signature(f2) == get_signature(lambda a, b: None)
 
-    assert get_signature(f) == get_signature(f2) == get_signature(f3) == 'a,b'
 
-    assert get_signature(dir) is None
+def test_get_signature_fails_on_native():
+    # isinstance will return False for a native function. A string will also return False.
+    f = 'this is not a function'
+    assert None is get_signature(f)
 
 
 def test_get_signature_varargs():
@@ -119,10 +121,9 @@ def test_evaluate_extra_kwargs_with_defaults():
     assert 17 == evaluate(f, x=17)
 
 
-@pytest.mark.skipif(sys.version_info > (3,0), reason='Python 3 DOES support classes as callables')
+@pytest.mark.skipif(sys.version_info > (3, 0), reason='Python 3 DOES support classes as callables')
 def test_get_signature_class():
     class Foo(object):
         pass
 
-    assert get_signature(Foo) is None
-
+    assert None is get_signature(Foo)

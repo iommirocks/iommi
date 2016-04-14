@@ -65,35 +65,35 @@ def test_getattr_path_and_setattr_path():
             self.bar = Bar()
 
     foo = Foo()
-    assert getattr_path(foo, 'bar__baz__quux') == 3
+    assert 3 == getattr_path(foo, 'bar__baz__quux')
 
     setattr_path(foo, 'bar__baz__quux', 7)
 
-    assert getattr_path(foo, 'bar__baz__quux') == 7
+    assert 7 == getattr_path(foo, 'bar__baz__quux')
 
     setattr_path(foo, 'bar__baz', None)
-    assert getattr_path(foo, 'bar__baz__quux') is None
+    assert None is getattr_path(foo, 'bar__baz__quux')
 
     setattr_path(foo, 'bar', None)
-    assert foo.bar is None
+    assert None is foo.bar
 
 
 def test_setdefaults_path():
     actual = setdefaults_path(dict(
-            x=1,
-            y=dict(z=2)
+        x=1,
+        y=dict(z=2)
     ), dict(
-            a=3,
-            x=4,
-            y__b=5,
-            y__z=6
+        a=3,
+        x=4,
+        y__b=5,
+        y__z=6
     ))
     expected = dict(
-            x=1,
-            a=3,
-            y=dict(z=2, b=5)
+        x=1,
+        a=3,
+        y=dict(z=2, b=5)
     )
-    assert actual == expected
+    assert expected == actual
 
 
 def test_setdefaults_namespace_merge():
@@ -110,15 +110,15 @@ def test_setdefaults_namespace_merge():
                  z=Struct(foo=True,
                           c=True))
     )
-    assert actual == expected
+    assert expected == actual
 
 
 def test_setdefaults_path_factory():
     actual = setdefaults_path(dict(), dict(a__b=17), namespace_factory=dict)
     expected = dict(a=dict(b=17))
 
-    assert actual == expected
-    assert type(expected['a']) == dict
+    assert expected == actual
+    assert dict == type(expected['a'])
 
 
 def test_setdefaults_path_multiple_defaults():
@@ -126,7 +126,7 @@ def test_setdefaults_path_multiple_defaults():
                               Struct(a=17, b=42),
                               Struct(a=19, c=4711))
     expected = dict(a=17, b=42, c=4711)
-    assert actual == expected
+    assert expected == actual
 
 
 def test_order_after():
@@ -151,7 +151,7 @@ def test_order_after():
     ]
 
     expected_order = sorted(objects, key=lambda x: x.expected_position)
-    assert list(range(len(objects))) == [y.expected_position for y in expected_order], 'check expected_order'
+    assert [y.expected_position for y in expected_order], 'check expected_order' == list(range(len(objects)))
     assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]
 
 
@@ -174,4 +174,4 @@ def test_assert_kwargs_empty():
     with pytest.raises(TypeError) as e:
         assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
 
-    assert str(e.value) == "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'"
+    assert "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" == str(e.value)
