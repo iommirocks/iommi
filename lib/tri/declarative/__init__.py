@@ -209,7 +209,7 @@ def add_init_call_hook(cls, init_hook):
     __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)
 
     def init_hook_wrapper(self, *args, **kwargs):
-        _ = init_hook(self)
+        init_hook(self)
         if __init__orig is None:
             super(cls, self).__init__(*args, **kwargs)
         else:

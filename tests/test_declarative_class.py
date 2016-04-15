@@ -20,7 +20,7 @@ def test_constructor_noop():
 
     subject = Declarative(members={'foo': Member(foo='bar')})
 
-    assert subject.members == {'foo': Member(foo='bar')}
+    assert {'foo': Member(foo='bar')} == subject.members
 
 
 def test_find_members():
@@ -143,7 +143,7 @@ def test_string_members():
 
         foo = 'bar'
 
-    assert OrderedDict([('foo', 'bar')]) == Declarative.get_declared()
+    assert Declarative.get_declared() == OrderedDict([('foo', 'bar')])
 
 
 def test_declarative_and_meta():
@@ -274,7 +274,7 @@ def test_add_args_to_init_call():
 
     c = C()
     assert 17 == c.x
-    assert None == c.y
+    assert None is c.y
 
     add_args_to_init_call(C, lambda self: dict(y=42))
 
@@ -301,9 +301,9 @@ def test_copy_of_constructor_args():
             members['x'].append('foo')
 
     a = C()
-    _ = C()
+    C()
 
-    assert a.x == ['foo']  # Only added once for each instance
+    assert ['foo'] == a.x  # Only added once for each instance
 
 
 def test_copy_of_attributes():
@@ -319,7 +319,7 @@ def test_copy_of_attributes():
     b = C()
 
     a.x.append('bar')
-    assert b.x == []  # No leak from other instance
+    assert [] == b.x  # No leak from other instance
 
 
 def test_copy_of_attributes_no_kwargs_injection():
@@ -335,7 +335,7 @@ def test_copy_of_attributes_no_kwargs_injection():
     b = C()
 
     a.x.append('bar')
-    assert b.x == []  # No leak from other instance
+    assert [] == b.x  # No leak from other instance
 
 
 def test_copy_of_attributes_no_kwargs_injection_with_no_init():
@@ -348,7 +348,7 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init():
     b = C()
 
     a.x.append('bar')
-    assert b.x == []  # No leak from other instance
+    assert [] == b.x  # No leak from other instance
 
 
 def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
@@ -371,4 +371,4 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
 def test_creation_ordered():
     l = [Member() for _ in range(100)]
 
-    assert sorted(reversed(l)) == l
+    assert l == sorted(reversed(l))

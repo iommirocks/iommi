@@ -49,13 +49,12 @@ class User(SimpleSQLModel):
 def test_orm():
     my_user = User(username='Bruce_Wayne', password='Batman', age=42)
 
-    assert my_user.username == 'Bruce_Wayne'
-    assert my_user.password == 'Batman'
-    assert my_user.insert_statement() == "INSERT INTO User(username, password, age) VALUES ('Bruce_Wayne', 'Batman', 42)"
+    assert 'Bruce_Wayne' == my_user.username
+    assert 'Batman' == my_user.password
+    assert "INSERT INTO User(username, password, age) VALUES ('Bruce_Wayne', 'Batman', 42)" == my_user.insert_statement()
 
     with pytest.raises(AssertionError):
         User(banana="WAT")
 
     with pytest.raises(AssertionError):
         User(password='Batman', age=42)
-
