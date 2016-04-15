@@ -14,6 +14,7 @@ from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField
 from django.template.context import Context
 from django.template.loader import render_to_string
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
@@ -658,6 +659,7 @@ else:
             yield field
 
 
+@python_2_unicode_compatible
 @declarative(Field, 'fields')
 class Form(object):
     """
