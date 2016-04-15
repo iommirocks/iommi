@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '1.15.0'
+__version__ = '1.16.0'
 
 
 def capitalize(s):
