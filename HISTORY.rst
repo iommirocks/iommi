@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.23.0 (----------)
+0.23.0 (2016-04-15)
 ~~~~~~~~~~~~~~~~~~~
 
 * `setdefaults_path` now accepts multiple default dicts. (To simplify the pattern of
