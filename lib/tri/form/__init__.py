@@ -18,7 +18,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
-from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path, collect_namespaces, assert_kwargs_empty
+from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path, collect_namespaces, assert_kwargs_empty, with_meta
 
 from tri.form.render import render_attrs
 
@@ -741,7 +741,8 @@ else:
 
 
 @python_2_unicode_compatible
-@declarative(Field, 'fields')
+@declarative(Field, 'fields_dict')
+@with_meta
 class Form(object):
     """
     Describe a Form. Example:
@@ -762,7 +763,7 @@ class Form(object):
 
     See tri.declarative docs for more on this dual style of declaration.
     """
-    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None):
+    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None):
         """
         :type fields: list of Field
         :type data: dict[basestring, basestring]
@@ -772,9 +773,12 @@ class Form(object):
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
 
-        if isinstance(fields, dict):  # Declarative case
-            fields = [merged(field, dict(name=name)) for name, field in fields.items()]
-        self.fields = sort_after([BoundField(field, self) for field in fields])
+        def unbound_fields():
+            for field in fields if fields is not None else []:
+                yield field
+            for name, field in fields_dict.items():
+                yield merged(field, dict(name=name))
+        self.fields = sort_after([BoundField(f, self) for f in unbound_fields()])
         """ @type: list of BoundField """
 
         if instance is not None:

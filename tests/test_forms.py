@@ -14,6 +14,17 @@ from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
 
 
+def test_declaration_merge():
+
+    class MyForm(Form):
+        class Meta:
+            fields = [Field(name='foo')]
+
+        bar = Field()
+
+    assert {'foo', 'bar'} == set(MyForm().fields_by_name.keys())
+
+
 class Data(Struct):
     def getlist(self, key):
         r = self.get(key)
