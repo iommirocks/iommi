@@ -1,12 +1,14 @@
 Changelog
 =========
 
-2.0.0 (2016-04-14)
+2.0.0 (2016-04-18)
 ~~~~~~~~~~~~~~~~~~
 
 * Changed Form.from_model method to require database field kwargs under 'field__' namespace. This is a breaking change.
 
 * Fixed saving of foreign keys in django create view
+
+* Enable mixing column definitions in both declared fields and class meta.
 
 
 1.16.0 (2016-04-15)
