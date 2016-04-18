@@ -18,7 +18,7 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST
 from tri.form import Field, Form
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
@@ -26,6 +26,8 @@ from tri.query import Query, Variable, QueryException
 
 
 __version__ = '1.13.0'
+
+LAST = LAST
 
 
 def prepare_headers(request, bound_columns):
@@ -120,6 +122,7 @@ class ColumnBase(NamedStruct):
 
     name = NamedStructField()
     """ :type: unicode """
+    after = NamedStructField()
     attrs = NamedStructField()
     attr = NamedStructField(default=lambda table, column: column.name)
     css_class = NamedStructField(default=set())
@@ -469,7 +472,7 @@ class BoundCell(object):
         return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.column, self.bound_row.row)  # pragma: no cover
 
 
-@declarative(Column, 'columns')
+@declarative(Column, 'columns_dict')
 @with_meta
 class Table(object):
 
@@ -500,7 +503,7 @@ class Table(object):
 
         model = None
 
-    def __init__(self, data, request=None, columns=None, **kwargs):
+    def __init__(self, data, request=None, columns=None, columns_dict=None, **kwargs):
         """
         :param data: a list of QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -515,7 +518,6 @@ class Table(object):
         :param links__template:
 
         """
-        assert columns is not None, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
         self._has_prepared = False
 
@@ -525,13 +527,16 @@ class Table(object):
         if isinstance(self.data, QuerySet):
             kwargs['model'] = data.model
 
-        if isinstance(columns, dict):
-            for name, column in columns.items():
+        def generate_columns():
+            for column in columns if columns is not None else []:
+                yield column
+            for name, column in columns_dict.items():
                 dict.__setitem__(column, 'name', name)
-            self.columns = list(columns.values())
-        else:
-            self.columns = columns
-            """:type : list of Column"""
+                yield column
+        self.columns = sort_after(list(generate_columns()))
+        """:type : list of Column"""
+
+        assert len(self.columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
         self.bound_columns = None
         self.shown_bound_columns = None
