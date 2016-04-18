@@ -22,7 +22,7 @@ class Data(Struct):
         return r
 
 
-class TestForm(Form):
+class MyTestForm(Form):
     party = Field.choice(choices=['ABC'], required=False)
     username = Field(
         is_valid=lambda form, field, parsed_data: (
@@ -41,14 +41,14 @@ class TestForm(Form):
 
 
 def test_required():
-    form = TestForm(request=Struct(method='POST', POST=Data({'-': '-'})))
+    form = MyTestForm(request=Struct(method='POST', POST=Data({'-': '-'})))
     assert form.fields_by_name['a_date'].value is None
     assert form.fields_by_name['a_date'].errors == {'This field is required'}
 
 
 def test_parse():
     # The spaces in the data are there to check that we strip input
-    form = TestForm(
+    form = MyTestForm(
         request=Struct(method='POST', POST=Data(
             party='ABC ',
             username='abc_foo ',
@@ -110,7 +110,7 @@ def test_parse():
 def test_parse_errors():
     def post_validation(form):
         form.add_error('General snafu')
-    form = TestForm(
+    form = MyTestForm(
         data=Data(
             party='foo',
             username='bar_foo',
@@ -438,7 +438,7 @@ def test_field_from_model_foreign_key2():
     assert set(Form.from_model(
         data={},
         model=FieldFromModelOneToOneTest,
-        foo_one_to_one__class=Field.from_model_expand
+        field__foo_one_to_one__class=Field.from_model_expand
     ).fields_by_name.keys()) == {'foo_one_to_one__foo'}
 
 
@@ -447,7 +447,7 @@ def test_field_from_model_many_to_one_foreign_key():
     assert set(Form.from_model(
         data={},
         model=Bar,
-        foo=Field.from_model
+        field__foo__class=Field.from_model
     ).fields_by_name.keys()) == {'foo'}
 
 

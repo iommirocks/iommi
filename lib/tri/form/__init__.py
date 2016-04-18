@@ -11,14 +11,14 @@ import django
 import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField
+from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
 from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen, merged
-from tri.declarative import evaluate, should_show, creation_ordered, declarative, extract_subkeys, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path
+from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path, collect_namespaces, assert_kwargs_empty
 
 from tri.form.render import render_attrs
 
@@ -61,7 +61,7 @@ def bool_parse(string_value):
 
 def foreign_key_factory(model_field, **kwargs):
     setdefaults(kwargs, dict(
-        choices=model_field.foreign_related_fields[0].model.objects.all()
+        choices=model_field.foreign_related_fields[0].model.objects.all(),
     ))
     kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(**kwargs)
@@ -70,7 +70,8 @@ def foreign_key_factory(model_field, **kwargs):
 def many_to_many_factory(model_field, **kwargs):
     setdefaults(kwargs, dict(
         choices=model_field.rel.to.objects.all(),
-        read_from_instance=lambda field, instance: getattr_path(instance, field.attr).all()
+        read_from_instance=lambda field, instance: getattr_path(instance, field.attr).all(),
+        extra__django_related_field=True,
     ))
     kwargs['model'] = model_field.rel.to
     return Field.multi_choice_queryset(**kwargs)
@@ -90,10 +91,24 @@ _field_factory_by_django_field_type = OrderedDict([
     (TextField, lambda model_field, **kwargs: Field.text(**kwargs)),
     (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
     (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
+    (AutoField, lambda model_field, **kwargs: Field.integer(**setdefaults(kwargs, dict(show=False)))),
+    (ManyToOneRel, None),
+    (ManyToManyRel, None),
     (FileField, lambda model_field, **kwargs: Field.file(**kwargs)),
     (ForeignKey, foreign_key_factory),
     (ManyToManyField, many_to_many_factory)
 ])
+
+
+def _django_field_defaults(model_field):
+    r = {}
+    if hasattr(model_field, 'verbose_name'):
+        r['label'] = capitalize(model_field.verbose_name)
+
+    if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
+        r['required'] = not model_field.null and not model_field.blank
+
+    return r
 
 
 def register_field_factory(field_class, factory):
@@ -114,6 +129,88 @@ def default_write_to_instance(field, instance, value):
 
 
 MISSING = object()
+
+
+def is_primary_key_field(field):
+    return isinstance(field, AutoField)
+
+
+def create_members_from_model(default_factory, model, include=None, exclude=None, extra=None, **kwargs):
+    def should_include(name):
+        if exclude is not None and name in exclude:
+            return False
+        if include is not None:
+            return name in include
+        return True
+
+    kwargs = collect_namespaces(kwargs)
+    field_kwargs = collect_namespaces(kwargs.pop('db_field', {}))
+
+    members = []
+    # noinspection PyProtectedMember
+    for field in get_fields(model):
+        if should_include(field.name):
+            subkeys = field_kwargs.pop(field.name, {})
+            subkeys.setdefault('class', default_factory)
+            if is_primary_key_field(field):
+                subkeys.setdefault('show', False)
+            foo = subkeys.pop('class')(name=field.name, model=model, model_field=field, **subkeys)
+            if foo is None:
+                continue
+            if isinstance(foo, list):
+                members.extend(foo)
+            else:
+                members.append(foo)
+    assert_kwargs_empty(kwargs)
+    return members + (extra if extra is not None else [])
+
+
+def member_from_model(model, factory_lookup, defaults_factory, field_name=None, model_field=None, **kwargs):
+    if model_field is None:
+        # noinspection PyProtectedMember
+        model_field = model._meta.get_field(field_name)
+
+    setdefaults(kwargs, dict(
+        name=field_name,
+    ))
+    setdefaults(kwargs, defaults_factory(model_field))
+
+    factory = factory_lookup.get(type(model_field), MISSING)
+
+    if factory is MISSING:
+        for django_field_type, func in reversed(factory_lookup.items()):
+            if isinstance(model_field, django_field_type):
+                factory = func
+                break
+
+    if factory is MISSING:  # pragma: no cover
+        raise AssertionError('No factory for %s. Register a factory with tri.form.register_field_factory, you can also register one that returns None to not handle this field type' % type(model_field))
+
+    return factory(model_field=model_field, model=model, **kwargs) if factory else None
+
+
+def expand_member(model, factory_lookup, defaults_factory, field_name=None, model_field=None, **kwargs):
+    if model_field is None:  # pragma: no cover
+        # noinspection PyProtectedMember
+        model_field = model._meta.get_field(field_name)
+    assert isinstance(model_field, OneToOneField)
+
+    kwargs = collect_namespaces(kwargs)
+
+    name = kwargs.pop('name')
+
+    def kwargs_for_subfield(sub_model_field):
+        kw = kwargs.pop(sub_model_field, {})
+        kw.setdefault('name', name + '__' + sub_model_field.name)
+        return kw
+
+    result = [member_from_model(model=model_field.related_field.model,
+                                factory_lookup=factory_lookup,
+                                defaults_factory=defaults_factory,
+                                field_name=sub_model_field.name,
+                                **kwargs_for_subfield(sub_model_field))
+              for sub_model_field in get_fields(model=model_field.related_field.model)]
+    return [x for x in result if x is not None]
 
 
 class FieldBase(NamedStruct):
@@ -299,12 +396,14 @@ class Field(Frozen, FieldBase):
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
-        new_kwargs = Struct()
-        setdefaults_path(new_kwargs, kwargs)
-        setdefaults_path(new_kwargs, dict(
-            extra=Struct(),
-            attrs__class={},
-        ))
+        new_kwargs = setdefaults_path(
+            Struct(),
+            kwargs,
+            dict(
+                extra=Struct(),
+                attrs__class={},
+            ))
+
         super(Field, self).__init__(**new_kwargs)
 
     @staticmethod
@@ -359,7 +458,7 @@ class Field(Frozen, FieldBase):
             required=False,
             template='tri_form/{style}_form_row_checkbox.html',
             input_template='tri_form/checkbox.html',
-            is_boolean=True
+            is_boolean=True,
         ))
         return Field(**kwargs)
 
@@ -458,7 +557,7 @@ class Field(Frozen, FieldBase):
                 raise ValidationError(str(e))
         setdefaults(kwargs, dict(
             parse=datetime_parse,
-            render_value=lambda value, **_: value.strftime(iso_format),
+            render_value=lambda value, **_: value.strftime(iso_format) if value else '',
         ))
         return Field(**kwargs)
 
@@ -473,7 +572,7 @@ class Field(Frozen, FieldBase):
                 raise ValidationError(str(e))
         setdefaults(kwargs, dict(
             parse=date_parse,
-            render_value=lambda value, **_: value.strftime(iso_format),
+            render_value=lambda value, **_: value.strftime(iso_format) if value else '',
         ))
         return Field(**kwargs)
 
@@ -564,37 +663,23 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
-        if model_field is None:
-            # noinspection PyProtectedMember
-            model_field = model._meta.get_field(field_name)
-
-        setdefaults(kwargs, dict(
-            name=field_name,
-            required=not model_field.null and not model_field.blank,
-            label=capitalize(model_field.verbose_name)
-        ))
-
-        factory = _field_factory_by_django_field_type.get(type(model_field))
-
-        if factory is None:
-            for django_field_type, func in reversed(_field_factory_by_django_field_type.items()):
-                if isinstance(model_field, django_field_type):
-                    factory = func
-                    break
-        if factory is None:  # pragma: no cover
-            raise AssertionError('No factory for %s. Register a factory with tri.form.register_field_factory' % model_field)
-        return factory(model_field=model_field, model=model, **kwargs)
+        return member_from_model(
+            model=model,
+            factory_lookup=_field_factory_by_django_field_type,
+            defaults_factory=_django_field_defaults,
+            field_name=field_name,
+            model_field=model_field,
+            **kwargs)
 
     @staticmethod
     def from_model_expand(model, field_name=None, model_field=None, **kwargs):
-        if model_field is None:  # pragma: no cover
-            # noinspection PyProtectedMember
-            model_field = model._meta.get_field(field_name)
-        assert isinstance(model_field, OneToOneField)
-        # noinspection PyProtectedMember
-        return [Field(**{k: '%s__%s' % (model_field.name, v) if k == 'name' else v
-                         for k, v in x.items()})
-                for x in Form.fields_from_model(model=model_field.related_field.model, **kwargs)]
+        return expand_member(
+            model=model,
+            factory_lookup=_field_factory_by_django_field_type,
+            defaults_factory=_django_field_defaults,
+            field_name=field_name,
+            model_field=model_field,
+            **kwargs)
 
     @staticmethod
     def comma_separated(parent_field):
@@ -647,15 +732,11 @@ if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
     def get_fields(model):  # pragma: no cover
         # noinspection PyProtectedMember
         for field in model._meta.get_fields():
-            if field.auto_created:
-                continue
             yield field
 else:
     def get_fields(model):
         # noinspection PyProtectedMember
         for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
-            if isinstance(field, AutoField):
-                continue
             yield field
 
 
@@ -736,27 +817,8 @@ class Form(object):
         self.is_valid()
 
     @staticmethod
-    def fields_from_model(model, include=None, exclude=None, **kwargs):
-        def should_include(name):
-            if exclude is not None and name in exclude:
-                return False
-            if include is not None:
-                return name in include
-            return True
-
-        fields = []
-
-        for field in get_fields(model):
-            if not should_include(field.name):
-                continue
-            subkeys = extract_subkeys(kwargs, field.name)
-            foo = subkeys.get('class', Field.from_model)(name=field.name, model=model, model_field=field, **subkeys)
-            if isinstance(foo, list):
-                fields.extend(foo)
-            else:
-                fields.append(foo)
-
-        return fields
+    def fields_from_model(**kwargs):
+        return create_members_from_model(default_factory=Field.from_model, **kwargs)
 
     @staticmethod
     def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
@@ -769,14 +831,15 @@ class Form(object):
             class Foo(Model):
                 foo = IntegerField()
 
-            Form.from_model(data=request.GET, model=Foo, foo__help_text='Overridden help text')
+            Form.from_model(data=request.GET, model=Foo, field__foo__help_text='Overridden help text')
 
         :param include: fields to include. Defaults to all
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, **kwargs) + (extra_fields if extra_fields is not None else [])
-        return Form(data=data, model=model, instance=instance, fields=fields, post_validation=post_validation)
+        kwargs = collect_namespaces(kwargs)
+        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('field', {}))
+        return Form(data=data, model=model, instance=instance, fields=fields, post_validation=post_validation, **kwargs)
 
     def is_valid(self):
         if self._valid is None:
@@ -913,9 +976,22 @@ class Form(object):
         """
         assert self.is_valid()
         for field in self.fields:
-            if not field.editable:
-                field.value = field.initial
-                field.value_list = field.initial_list
+            self.apply_field(instance=instance, field=field)
 
-            if field.attr is not None:
-                field.write_to_instance(field, instance, field.value_list if field.is_list else field.value)
+    @staticmethod
+    def apply_field(instance, field):
+        if not field.editable:
+            field.value = field.initial
+            field.value_list = field.initial_list
+
+        if field.attr is not None:
+            field.write_to_instance(field, instance, field.value_list if field.is_list else field.value)
+
+    def get_errors(self):
+        r = {}
+        if self.errors:
+            r['global'] = self.errors
+        field_errors = {x.name: x.errors for x in self.fields if x.errors}
+        if field_errors:
+            r['fields'] = field_errors
+        return r
