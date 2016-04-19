@@ -1,6 +1,8 @@
 {% load tri_table %}
 
-{% if not table.data and empty_message %}
+{% if not table.data and invalid_form_message %}
+    {{ invalid_form_message }}
+{% elif not table.data and empty_message %}
     {{ empty_message }}
 {% else %}
 

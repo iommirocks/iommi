@@ -898,6 +898,10 @@ def render_table(request,
     if not table.data and blank_on_empty:  # pragma: no cover
         return ''
 
+    if table.query_form and not table.query_form.is_valid():
+        table.data = None
+        context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
+
     return get_template(template_name).render(context)
 
 
