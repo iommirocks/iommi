@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.8.0 (2016-04-19)
+~~~~~~~~~~~~~~~~~~
+
+* Added robustness in when arguments are passed as `dict(foo=dict(bar=17))` or `foo__bar=17`
+
+
 1.7.0 (2016-04-08)
 ~~~~~~~~~~~~~~~~~~
 
