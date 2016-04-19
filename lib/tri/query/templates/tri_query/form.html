@@ -42,6 +42,13 @@
                 </td>
             </tr>
         </table>
+        {% if query_form.errors %}
+          <ul class="errorlist">
+            {% for error in query_form.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
         <div id="tri_query_error">
             {{ tri_query_error }}
         </div>
