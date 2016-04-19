@@ -16,7 +16,7 @@ def reindent(s, before=" ", after="    "):
     return "\n".join(reindent_line(line) for line in s.splitlines())
 
 
-def verify_table_html(table, expected_html, query=None, find=None, links=None):
+def verify_table_html(expected_html, query=None, find=None, links=None, **kwargs):
     """
     Verify that the table renders to the expected markup, modulo formatting
     """
@@ -27,7 +27,7 @@ def verify_table_html(table, expected_html, query=None, find=None, links=None):
 
     request = RequestFactory().get("/", query)
     request.user = AnonymousUser()
-    actual_html = render_table(request=request, table=table, links=links)
+    actual_html = render_table(request=request, links=links, **kwargs)
 
     prettified_actual = reindent(BeautifulSoup(actual_html).find(**find).prettify()).strip()
     prettified_expected = reindent(BeautifulSoup(expected_html).find(**find).prettify()).strip()

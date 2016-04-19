@@ -52,7 +52,7 @@ def declarative_table():
 ])
 def test_render_impl(table):
 
-    verify_table_html(table, """
+    verify_table_html(table=table, expected_html="""
         <table class="listview" id="table_id">
             <thead>
                 <tr>
@@ -119,7 +119,7 @@ def test_django_table():
     assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())
     assert list(t.query_form.fields[-1].choices) == list(Foo.objects.all())
 
-    verify_table_html(t, """
+    verify_table_html(table=t, expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -189,7 +189,7 @@ def test_output():
                get_absolute_url=lambda: '/somewhere/'),
     ]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview" id="table_id">
             <thead>
                 <tr>
@@ -229,7 +229,7 @@ def test_name_traversal():
 
     data = [Struct(foo=Struct(bar="bar"))]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -315,7 +315,7 @@ def test_display_name():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -337,7 +337,7 @@ def test_link():
 
     data = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -363,7 +363,7 @@ def test_css_class():
 
     data = [Struct(foo="foo", legacy_foo="foo", legacy_bar="bar")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
     <table class="listview">
         <thead>
             <tr>
@@ -388,7 +388,7 @@ def test_header_url():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
     <table class="listview">
         <thead>
             <tr><th class="first_column subheader">
@@ -409,7 +409,7 @@ def test_title():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data), """
+    verify_table_html(table=TestTable(data), expected_html="""
     <table class="listview">
         <thead>
             <tr><th class="first_column subheader" title="Some title"> Foo </th></tr>
@@ -429,7 +429,7 @@ def test_show():
 
     data = [Struct(foo="foo", bar="bar")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
     <table class="listview">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
@@ -454,7 +454,7 @@ def test_show_lambda():
 
     data = [Struct(foo="foo", bar="bar")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
     <table class="listview">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
@@ -474,7 +474,7 @@ def test_attr():
 
     data = [Struct(foo="foo")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
     <table class="listview">
         <thead>
             <tr>
@@ -505,7 +505,7 @@ def test_attrs():
 
         yada = Column()
 
-    verify_table_html(TestTable(data=[Struct(yada=1), Struct(yada=2)]), """
+    verify_table_html(table=TestTable(data=[Struct(yada=1), Struct(yada=2)]), expected_html="""
         <table class="classy listview" foo="bar">
             <thead>
                 <tr>
@@ -534,7 +534,7 @@ def test_attrs_new_syntax():
 
         yada = Column()
 
-    verify_table_html(TestTable(data=[Struct(yada=1), Struct(yada=2)]), """
+    verify_table_html(table=TestTable(data=[Struct(yada=1), Struct(yada=2)]), expected_html="""
         <table class="classy listview" foo="bar">
             <thead>
                 <tr>
@@ -571,7 +571,7 @@ def test_column_presets():
                    boolean=lambda: True,
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -613,7 +613,7 @@ def test_django_table_pagination():
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
         b = Column(show=False)  # should still be able to filter on this though!
 
-    verify_table_html(TestTable(data=Foo.objects.all()),
+    verify_table_html(table=TestTable(data=Foo.objects.all()),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
         <table class="listview">
@@ -647,7 +647,7 @@ def test_links():
         Link.icon('icon_foo', title='Icon foo', url='/icon_foo/'),
     ]
 
-    verify_table_html(TestTable(data=data),
+    verify_table_html(table=TestTable(data=data),
                       find=dict(class_='links'),
                       links=links,
                       expected_html="""
@@ -796,7 +796,7 @@ def test_cell_template():
 
     data = [Struct(foo="sentinel")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
@@ -818,7 +818,7 @@ def test_no_header_template():
 
     data = [Struct(foo="bar")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <tbody>
                 <tr class="row1">
@@ -840,7 +840,7 @@ def test_row_template():
 
     data = [Struct(foo="sentinel", bar="schmentinel")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr>
@@ -868,7 +868,7 @@ def test_cell_lambda():
 
     data = [Struct(sentinel3="sentinel3")]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr><th class="first_column subheader"> Sentinel2 </th></tr>
@@ -916,8 +916,8 @@ def test_auto_rowspan_and_render_twice():
         </table>"""
 
     t = TestTable(data=data)
-    verify_table_html(t, expected)
-    verify_table_html(t, expected)
+    verify_table_html(table=t, expected_html=expected)
+    verify_table_html(table=t, expected_html=expected)
 
 
 def test_render_table_to_response():
@@ -958,7 +958,7 @@ def test_default_formatters():
         Struct(foo=None),
     ]
 
-    verify_table_html(TestTable(data=data), """
+    verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
