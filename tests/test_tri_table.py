@@ -77,6 +77,26 @@ def test_render_impl(table):
         </table>""")
 
 
+def test_test_declaration_merge():
+
+    class MyTable(Table):
+        class Meta:
+            columns = [Column(name='foo')]
+
+        bar = Column()
+
+    assert {'foo', 'bar'} == {column.name for column in MyTable([]).columns}
+
+
+def test_ordering():
+
+    class MyTable(Table):
+        foo = Column(after='bar')
+        bar = Column()
+
+    assert ['bar', 'foo'] == [column.name for column in MyTable([]).columns]
+
+
 @pytest.mark.django_db
 def test_django_table():
 

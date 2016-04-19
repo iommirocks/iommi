@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.14.0 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* Added `after` attribute on `Column` to enable custom column ordering (See `tri.declarative.sort_after()`)
+
+* Enable mixing column definitions in both declared fields and class meta.
+
+
 1.13.0 (2016-04-08)
 ~~~~~~~~~~~~~~~~~~~
 
