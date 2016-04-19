@@ -1,4 +1,4 @@
-tri.declarative
+tri.declarative>=0.23.0
 tri.named_struct
 tri.struct
 tri.form

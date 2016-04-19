@@ -8,8 +8,7 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces, \
-    filter_show_recursive, evaluate_recursive
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces, filter_show_recursive, evaluate_recursive, setdefaults_path
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.form import Form, Field, bool_parse
 
@@ -118,21 +117,23 @@ class Variable(Frozen, VariableBase):
         :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
         :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
+
         name = kwargs.get('name')
         if name:
             if kwargs.get('attr') is MISSING:
                 kwargs['attr'] = name
 
-        setdefaults(kwargs, dict(
-            gui=Struct({
-                'show': False,
-                'class': Field,
-                'required': False,
-            }),
-            extra=Struct(),
-        ))
+        new_kwargs = setdefaults_path(
+            Struct(),
+            kwargs,
+            dict(
+                gui__show=False,
+                gui__class=Field,
+                gui__required=False,
+                extra=Struct(),
+            ))
 
-        super(Variable, self).__init__(**collect_namespaces(kwargs))
+        super(Variable, self).__init__(**new_kwargs)
 
     @staticmethod
     def text(**kwargs):  # pragma: no cover

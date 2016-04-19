@@ -3,6 +3,7 @@ from datetime import date
 from django.db.models import Q, F
 import pytest
 from tests.models import Foo, Bar
+from tri.form import Field
 from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME
 from tri.struct import Struct
 
@@ -15,7 +16,7 @@ class Data(Struct):
         return r
 
 
-class TestQuery(Query):
+class MyTestQuery(Query):
     foo_name = Variable(attr='foo', freetext=True, gui__show=True)
     bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui__show=True)
     baz_name = Variable(attr='baz')
@@ -42,6 +43,13 @@ def test_show():
     assert [x.name for x in ShowQuery(request=Struct(GET=Data(foo='show'))).bound_variables] == ['foo', 'bar']
 
 
+def test_namespace_merge():
+    v = Variable(gui__show=True)
+    assert v.gui['class'] == Field
+    v = Variable(gui=Struct(show=True))
+    assert v.gui['class'] == Field
+
+
 def test_request_data():
     r = Struct(method='POST', POST='POST', GET='GET')
     assert request_data(r) == 'POST'
@@ -50,12 +58,12 @@ def test_request_data():
 
 
 def test_empty_string():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('')) == repr(Q())
 
 
 def test_unknown_field():
-    query = TestQuery()
+    query = MyTestQuery()
     with pytest.raises(QueryException) as e:
         query.parse('unknown_variable=1')
 
@@ -64,49 +72,49 @@ def test_unknown_field():
 
 
 def test_ops():
-    query = TestQuery()
+    query = MyTestQuery()
     for op, cmd in Q_OP_BY_OP.items():
         assert repr(query.parse('foo_name%s1' % op)) == repr(Q(**{'foo__%s' % cmd: 1}))
 
 
 def test_freetext():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('"asd"')) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
 
 def test_or():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name="asd" or bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) | Q(**{'bar__exact': 7}))
 
 
 def test_and():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name="asd" and bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7}))
 
 
 def test_negation():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name!:"asd" and bar_name != 7')) == repr(~Q(**{'foo__icontains': 'asd'}) & ~Q(**{'bar__exact': 7}))
 
 
 def test_precedence():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name="asd" and bar_name = 7 or baz_name = 11')) == repr((Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7})) | Q(**{'baz__iexact': 11}))
 
 
 def test_parenthesis():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name="asd" and (bar_name = 7 or baz_name = 11)')) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
 
 
 def test_request_to_q_advanced():
     # noinspection PyTypeChecker
-    query = TestQuery(request=Struct(method='GET', GET=Data(**{ADVANCED_QUERY_PARAM: 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'})))
+    query = MyTestQuery(request=Struct(method='GET', GET=Data(**{ADVANCED_QUERY_PARAM: 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'})))
     assert repr(query.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
 
 
 def test_request_to_q_simple():
-    class Query2(TestQuery):
+    class Query2(MyTestQuery):
         bazaar = Variable.boolean(attr='quux__bar__bazaar', gui__show=True)
 
     # noinspection PyTypeChecker
@@ -116,7 +124,7 @@ def test_request_to_q_simple():
 
 def test_integer_request_to_q_simple():
     class Query2(Query):
-        bazaar = Variable.integer(attr='quux__bar__bazaar', gui__show=True)
+        bazaar = Variable.integer(attr='quux__bar__bazaar', gui=Struct(show=True))
 
     # noinspection PyTypeChecker
     query2 = Query2(request=Struct(method='GET', GET=Data(**{'bazaar': '11'})))
@@ -155,27 +163,27 @@ def test_none_attr():
 
 def test_request_to_q_freetext():
     # noinspection PyTypeChecker
-    query = TestQuery(request=Struct(method='GET', GET=Data(**{FREETEXT_SEARCH_NAME: "asd"})))
+    query = MyTestQuery(request=Struct(method='GET', GET=Data(**{FREETEXT_SEARCH_NAME: "asd"})))
     assert repr(query.to_q()) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
 
 def test_self_reference_with_f_object():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name=bar_name')) == repr(Q(**{'foo__iexact': F('bar')}))
 
 
 def test_null():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name=null')) == repr(Q(**{'foo': None}))
 
 
 def test_date():
-    query = TestQuery()
+    query = MyTestQuery()
     assert repr(query.parse('foo_name=2014-03-07')) == repr(Q(**{'foo__iexact': date(2014, 3, 7)}))
 
 
 def test_invalid_syntax():
-    query = TestQuery()
+    query = MyTestQuery()
     with pytest.raises(QueryException) as e:
         query.parse('asdadad213124av@$#$#')
 
