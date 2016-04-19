@@ -18,8 +18,8 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces
-from tri.form import extract_subkeys, Field, Form
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys
+from tri.form import Field, Form
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException
