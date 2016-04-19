@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import pytest
 from tri.struct import Struct
 from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path
@@ -113,12 +115,10 @@ def test_setdefaults_namespace_merge():
     assert expected == actual
 
 
-def test_setdefaults_path_factory():
-    actual = setdefaults_path(dict(), dict(a__b=17), namespace_factory=dict)
-    expected = dict(a=dict(b=17))
-
+def test_setdefaults_kwargs():
+    actual = setdefaults_path({}, x__y=17)
+    expected = dict(x=dict(y=17))
     assert expected == actual
-    assert dict == type(expected['a'])
 
 
 def test_setdefaults_path_multiple_defaults():
@@ -127,6 +127,24 @@ def test_setdefaults_path_multiple_defaults():
                               Struct(a=19, c=4711))
     expected = dict(a=17, b=42, c=4711)
     assert expected == actual
+
+
+def test_setdefaults_path_ordering():
+    expected = Struct(x=Struct(y=17, z=42))
+
+    actual_foo = setdefaults_path(Struct(),
+                                  OrderedDict([
+                                      ('x', {'z': 42}),
+                                      ('x__y', 17),
+                                  ]))
+    assert actual_foo == expected
+
+    actual_bar = setdefaults_path(Struct(),
+                                  OrderedDict([
+                                      ('x__y', 17),
+                                      ('x', {'z': 42}),
+                                  ]))
+    assert actual_bar == expected
 
 
 def test_order_after():
@@ -174,4 +192,4 @@ def test_assert_kwargs_empty():
     with pytest.raises(TypeError) as e:
         assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
 
-    assert "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" == str(e.value)
+    assert "assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" in str(e.value)
