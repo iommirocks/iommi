@@ -1,4 +1,5 @@
 from __future__ import unicode_literals, absolute_import
+import re
 from datetime import date, time
 from datetime import datetime
 
@@ -12,6 +13,12 @@ from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, Foo
 from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
 from tri.struct import Struct
 from tri.form import Form, Field, register_field_factory
+
+
+def assert_one_error_and_matches_reg_exp(errors, reg_exp):
+    error = list(errors)[0]
+    assert len(errors) == 1
+    assert re.search(reg_exp, error)
 
 
 def test_declaration_merge():
@@ -146,7 +153,7 @@ def test_parse_errors():
     assert form.fields_by_name['username'].value is None
 
     assert form.fields_by_name['joined'].raw_data == 'foo'
-    assert form.fields_by_name['joined'].errors == {"time data 'foo' does not match format '%Y-%m-%d %H:%M:%S'"}
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['joined'].errors, "time data [u]?'foo' does not match format [u]?'%Y-%m-%d %H:%M:%S'")
     assert form.fields_by_name['joined'].parsed_data is None
     assert form.fields_by_name['joined'].value is None
 
@@ -159,12 +166,12 @@ def test_parse_errors():
     assert form.fields_by_name['admin'].value is None
 
     assert form.fields_by_name['a_date'].raw_data == 'fooasd'
-    assert form.fields_by_name['a_date'].errors == {"time data 'fooasd' does not match format '%Y-%m-%d'"}
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['a_date'].errors, "time data [u]?'fooasd' does not match format [u]?'%Y-%m-%d'")
     assert form.fields_by_name['a_date'].parsed_data is None
     assert form.fields_by_name['a_date'].value is None
 
     assert form.fields_by_name['a_time'].raw_data == 'asdasd'
-    assert form.fields_by_name['a_time'].errors == {"time data 'asdasd' does not match format '%H:%M:%S'"}
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['a_time'].errors, "time data [u]?'asdasd' does not match format [u]?'%H:%M:%S'")
     assert form.fields_by_name['a_time'].parsed_data is None
     assert form.fields_by_name['a_time'].value is None
 
@@ -191,7 +198,8 @@ def test_non_editable():
 
 def test_integer_field():
     assert Form(data=Data(foo=' 7  '), fields=[Field.integer(name='foo')]).validate().fields[0].parsed_data == 7
-    assert Form(data=Data(foo=' foo  '), fields=[Field.integer(name='foo')]).validate().fields[0].errors == {"invalid literal for int() with base 10: 'foo'"}
+    actual_errors = Form(data=Data(foo=' foo  '), fields=[Field.integer(name='foo')]).validate().fields[0].errors
+    assert_one_error_and_matches_reg_exp(actual_errors, "invalid literal for int\(\) with base 10: [u]?'foo'")
 
 
 def test_float_field():
@@ -374,7 +382,7 @@ def test_field_from_model():
     assert not FooForm(data=Data(foo='asd')).is_valid()
 
 
-def test_form_from_model():
+def test_form_from_model_valid_form():
     assert [x.value for x in Form.from_model(
         model=FormFromModelTest,
         include=['f_int', 'f_float', 'f_bool'],
@@ -385,15 +393,18 @@ def test_form_from_model():
         True
     ]
 
-    assert [x.errors for x in Form.from_model(
+
+def test_form_from_model_invalid_form():
+    actual_errors = [x.errors for x in Form.from_model(
         model=FormFromModelTest,
         exclude=['f_int_excluded'],
         data=Data(f_int='1.1', f_float='true', f_bool='asd')
-    ).validate().fields] == [
-        {"invalid literal for int() with base 10: '1.1'"},
-        {'could not convert string to float: true'},
-        {u'asd is not a valid boolean value'}
-    ]
+    ).validate().fields]
+
+    assert len(actual_errors) == 3
+    assert {'could not convert string to float: true'} in actual_errors
+    assert {u'asd is not a valid boolean value'} in actual_errors
+    assert {"invalid literal for int() with base 10: '1.1'"} in actual_errors or {"invalid literal for int() with base 10: u'1.1'"} in actual_errors
 
 
 def test_field_from_model_supports_all_types():
