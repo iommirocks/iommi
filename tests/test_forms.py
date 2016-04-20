@@ -424,6 +424,16 @@ def test_field_from_model_supports_all_types():
     assert not_supported == []
 
 
+def test_field_from_model_blank_handling():
+    from django.db.models import CharField
+
+    subject = Field.from_model(model=Foo, model_field=CharField(blank=False))
+    assert True is subject.parse_empty_string_as_none
+
+    subject = Field.from_model(model=Foo, model_field=CharField(blank=True))
+    assert False is subject.parse_empty_string_as_none
+
+
 @pytest.mark.django_db
 def test_field_from_model_foreign_key():
     Foo.objects.create(foo=2)

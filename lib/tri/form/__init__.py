@@ -108,6 +108,9 @@ def _django_field_defaults(model_field):
     if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
         r['required'] = not model_field.null and not model_field.blank
 
+    if hasattr(model_field, 'blank'):
+        r['parse_empty_string_as_none'] = not model_field.blank
+
     return r
 
 
