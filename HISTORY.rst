@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.24.0 (----------)
+0.24.0 (2016-04-20)
 ~~~~~~~~~~~~~~~~~~~
 
 * Fix bug in `setdefault_path` tripping up on key ordering.
