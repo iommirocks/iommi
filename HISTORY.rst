@@ -2,6 +2,15 @@ Changelog
 =========
 
 
+0.24.0 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix bug in `setdefault_path` tripping up on key ordering.
+
+* Dropped `namespace_factory` keyword argument to `setdefaults_path` not likely
+  ever beeing used.
+
+
 0.23.0 (2016-04-15)
 ~~~~~~~~~~~~~~~~~~~
 

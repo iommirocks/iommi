@@ -488,21 +488,19 @@ def setdefaults(d, d2):
     return d
 
 
-def setdefaults_path(target, *default_dicts, **kwargs):
-    namespace_factory = kwargs.pop('namespace_factory', Struct)
-    assert len(kwargs) == 0, "Unexpected keyword argument(s): %s" % kwargs
-    for defaults in default_dicts:
-        for k, v in defaults.items():
-            path = k.split('__')
+def setdefaults_path(target, *defaults, **kwargs):
+    for mappings in list(defaults) + [kwargs]:
+        for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
             namespace = target
-            for path_component in path[:-1]:
-                next = namespace.get(path_component)
-                if next is None:
-                    namespace[path_component] = namespace_factory()
-                elif not isinstance(next, dict):
-                    namespace[path_component] = namespace_factory(**{next: True})
-                namespace = namespace[path_component]
-            namespace.setdefault(path[-1], v)
+            parts = path.split('__')
+            for part in parts[:-1]:
+                current = namespace.get(part)
+                if current is None:
+                    namespace[part] = Struct()
+                elif not isinstance(current, dict):
+                    namespace[part] = Struct(**{current: True})
+                namespace = namespace[part]
+            namespace.setdefault(parts[-1], value)
     return target
 
 
