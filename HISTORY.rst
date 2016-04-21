@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.10.0 (2016-04-21)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix over-eager assert not allowing variable-less Query objects.
+
+
 1.9.0 (2016-04-21)
 ~~~~~~~~~~~~~~~~~~
 

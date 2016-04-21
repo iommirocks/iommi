@@ -289,8 +289,6 @@ class Query(object):
                 ))
         bound_variables = list(generate_bound_variables())
 
-        assert len(bound_variables) > 0
-
         bound_variables = [evaluate_recursive(x, query=self, variable=x) for x in bound_variables]
         self.bound_variables = filter_show_recursive(bound_variables)
 
