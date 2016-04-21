@@ -153,7 +153,7 @@ def test_parse_errors():
     assert form.fields_by_name['username'].value is None
 
     assert form.fields_by_name['joined'].raw_data == 'foo'
-    assert_one_error_and_matches_reg_exp(form.fields_by_name['joined'].errors, "time data [u]?'foo' does not match format [u]?'%Y-%m-%d %H:%M:%S'")
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['joined'].errors, "time data u?'foo' does not match format u?'%Y-%m-%d %H:%M:%S'")
     assert form.fields_by_name['joined'].parsed_data is None
     assert form.fields_by_name['joined'].value is None
 
@@ -166,12 +166,12 @@ def test_parse_errors():
     assert form.fields_by_name['admin'].value is None
 
     assert form.fields_by_name['a_date'].raw_data == 'fooasd'
-    assert_one_error_and_matches_reg_exp(form.fields_by_name['a_date'].errors, "time data [u]?'fooasd' does not match format [u]?'%Y-%m-%d'")
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['a_date'].errors, "time data u?'fooasd' does not match format u?'%Y-%m-%d'")
     assert form.fields_by_name['a_date'].parsed_data is None
     assert form.fields_by_name['a_date'].value is None
 
     assert form.fields_by_name['a_time'].raw_data == 'asdasd'
-    assert_one_error_and_matches_reg_exp(form.fields_by_name['a_time'].errors, "time data [u]?'asdasd' does not match format [u]?'%H:%M:%S'")
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['a_time'].errors, "time data u?'asdasd' does not match format u?'%H:%M:%S'")
     assert form.fields_by_name['a_time'].parsed_data is None
     assert form.fields_by_name['a_time'].value is None
 
@@ -199,7 +199,7 @@ def test_non_editable():
 def test_integer_field():
     assert Form(data=Data(foo=' 7  '), fields=[Field.integer(name='foo')]).validate().fields[0].parsed_data == 7
     actual_errors = Form(data=Data(foo=' foo  '), fields=[Field.integer(name='foo')]).validate().fields[0].errors
-    assert_one_error_and_matches_reg_exp(actual_errors, "invalid literal for int\(\) with base 10: [u]?'foo'")
+    assert_one_error_and_matches_reg_exp(actual_errors, "invalid literal for int\(\) with base 10: u?'foo'")
 
 
 def test_float_field():
