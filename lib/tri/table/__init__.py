@@ -1036,6 +1036,6 @@ def render_table_to_response(*args, **kwargs):
         return response
     return HttpResponse(response)
 
-from .db_compat import setup, _column_factory_by_django_field_type
+from .db_compat import setup, _column_factory_by_django_field_type  # noqa
 
 setup()

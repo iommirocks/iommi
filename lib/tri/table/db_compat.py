@@ -7,8 +7,7 @@ _column_factory_by_django_field_type = None
 
 def setup():
     from tri.table import Column
-    # noinspection PyUnresolvedReferences
-    from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToOneRel, ManyToManyField, ManyToManyRel
+    from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel
     # from django.db.models.fields.reverse_related import ManyToManyRel as ManyToManyRel_Related
 
     def foreign_key_factory(model_field, **kwargs):
