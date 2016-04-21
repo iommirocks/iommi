@@ -8,9 +8,9 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, setdefaults_path, sort_after
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, setdefaults_path, sort_after, collect_namespaces
 from tri.named_struct import NamedStruct, NamedStructField
-from tri.form import Form, Field, bool_parse
+from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -182,6 +182,13 @@ class Variable(Frozen, VariableBase):
         return Variable(**kwargs)
 
     @staticmethod
+    def multi_choice_queryset(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.multi_choice_queryset
+        ))
+        return Variable.choice_queryset(**kwargs)
+
+    @staticmethod
     def boolean(**kwargs):  # pragma: no cover
         """
         Boolean field. Tries hard to parse a boolean value from its input.
@@ -210,6 +217,25 @@ class Variable(Frozen, VariableBase):
             gui__class=Field.float,
         ))
         return Variable(**kwargs)
+
+    @staticmethod
+    def from_model(model, field_name=None, model_field=None, **kwargs):
+        return member_from_model(
+            model=model,
+            factory_lookup=_variable_factory_by_django_field_type,
+            field_name=field_name,
+            model_field=model_field,
+            defaults_factory=lambda model_field: {},
+            **kwargs)
+
+    @staticmethod
+    def expand_member(model, field_name=None, model_field=None, **kwargs):
+        return expand_member(
+            model=model,
+            factory_lookup=_variable_factory_by_django_field_type,
+            field_name=field_name,
+            model_field=model_field,
+            **kwargs)
 
 
 class StringValue(text_type):
@@ -472,3 +498,35 @@ class Query(object):
         Create a query set based on the data in the request.
         """
         return self.parse(self.to_query_string())
+
+    @staticmethod
+    def variables_from_model(**kwargs):
+        kwargs = collect_namespaces(kwargs)
+        kwargs['db_field'] = kwargs.pop('variable', {})
+        return create_members_from_model(default_factory=Variable.from_model, **kwargs)
+
+    @staticmethod
+    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+        """
+        Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
+        of "the_name_of_the_field__param". For example:
+
+        .. code:: python
+
+            class Foo(Model):
+                foo = IntegerField()
+
+            Table.from_model(data=request.GET, model=Foo, field__foo__help_text='Overridden help text')
+
+        :param include: fields to include. Defaults to all
+        :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
+
+        """
+        kwargs = collect_namespaces(kwargs)
+        variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('variable', {}))
+        return Query(data=data, model=model, instance=instance, variables=variables, post_validation=post_validation, **kwargs)
+
+
+from .db_compat import setup, _variable_factory_by_django_field_type
+
+setup()

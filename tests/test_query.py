@@ -237,3 +237,9 @@ def test_choice_queryset():
     with pytest.raises(QueryException) as e:
         query2.to_q()
     assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
+
+
+def test_from_model():
+    t = Query.from_model(data=Foo.objects.all(), model=Foo)
+    assert [x.name for x in t.variables] == ['id', 'value']
+    assert [x.name for x in t.variables if x.show] == ['value']
