@@ -14,7 +14,7 @@ from tri.form import Form, Field, bool_parse, member_from_model, expand_member, 
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.8.0'
+__version__ = '1.9.0'
 
 
 class QueryException(Exception):

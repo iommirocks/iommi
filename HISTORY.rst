@@ -1,12 +1,14 @@
 Changelog
 =========
 
-1.9.0 (----------)
+1.9.0 (2016-04-21)
 ~~~~~~~~~~~~~~~~~~
 
 * Enable mixing variable definitions in both declared variables and class meta.
 
 * Added `after` attribute on `Variable` to enable custom variable ordering (See `tri.declarative.sort_after()`)
+
+* Added Variable.from_model, Query.from_model
 
 
 1.8.0 (2016-04-19)
