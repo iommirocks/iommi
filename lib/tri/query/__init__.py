@@ -8,7 +8,7 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, collect_namespaces, filter_show_recursive, evaluate_recursive, setdefaults_path
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, setdefaults_path, sort_after
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.form import Form, Field, bool_parse
 
@@ -81,6 +81,8 @@ MISSING = object()
 class VariableBase(NamedStruct):
     name = NamedStructField()
 
+    after = NamedStructField()
+
     show = NamedStructField(default=True)
 
     attr = NamedStructField(default=MISSING)
@@ -117,11 +119,6 @@ class Variable(Frozen, VariableBase):
         :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
         :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
-
-        name = kwargs.get('name')
-        if name:
-            if kwargs.get('attr') is MISSING:
-                kwargs['attr'] = name
 
         new_kwargs = setdefaults_path(
             Struct(),
@@ -222,7 +219,7 @@ class StringValue(text_type):
         return super(StringValue, cls).__new__(cls, s)
 
 
-@declarative(Variable, 'variables')
+@declarative(Variable, 'variables_dict')
 class Query(object):
     """
     Declare a query language. Example:
@@ -241,20 +238,33 @@ class Query(object):
     """ :type: list of BoundVariable """
     bound_variable_by_name = {}
 
-    def __init__(self, request=None, variables=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, request=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
         """
         self.request = request
 
-        assert variables is not None
-        if isinstance(variables, dict):  # Declarative case
-            self.variables = [merged(variable, name=name) for name, variable in variables.items()]
-        else:
-            self.variables = variables
+        def generate_variables():
+            if variables is not None:
+                for variable in variables:
+                    yield variable
+            for name, variable in variables_dict.items():
+                dict.__setitem__(variable, 'name', name)
+                yield variable
+        self.variables = sort_after(list(generate_variables()))
 
-        bound_variables = [BoundVariable(**merged(Struct(x), query=self)) for x in self.variables]
+        def generate_bound_variables():
+            for x in self.variables:
+                yield BoundVariable(**merged(
+                    Struct(x),
+                    query=self,
+                    attr=x.attr if x.attr is not MISSING else x.name
+                ))
+        bound_variables = list(generate_bound_variables())
+
+        assert len(bound_variables) > 0
+
         bound_variables = [evaluate_recursive(x, query=self, variable=x) for x in bound_variables]
         self.bound_variables = filter_show_recursive(bound_variables)
 
