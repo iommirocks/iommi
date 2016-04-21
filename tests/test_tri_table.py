@@ -358,8 +358,10 @@ def test_css_class():
     class TestTable(NoSortTable):
         foo = Column(attrs__class__some_class=True)
         legacy_foo = Column(css_class={"some_other_class"})
+        legacy_bar = Column(cell__attrs={'class': 'foo'},
+                            cell__attrs__class__bar=True)
 
-    data = [Struct(foo="foo", legacy_foo="foo")]
+    data = [Struct(foo="foo", legacy_foo="foo", legacy_bar="bar")]
 
     verify_table_html(TestTable(data=data), """
     <table class="listview">
@@ -367,12 +369,14 @@ def test_css_class():
             <tr>
                 <th class="first_column some_class subheader"> Foo </th>
                 <th class="first_column some_other_class subheader"> Legacy foo </th>
+                <th class="first_column subheader"> Legacy bar </th>
             </tr>
         </thead>
         <tbody>
             <tr class="row1">
                 <td> foo </td>
                 <td> foo </td>
+                <td class="bar foo"> bar </td>
             </tr>
         </tbody>
     </table>""")

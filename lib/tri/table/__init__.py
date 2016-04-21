@@ -18,7 +18,7 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path
 from tri.form import Field, Form
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
@@ -171,31 +171,22 @@ class Column(Frozen, ColumnBase):
 
         kwargs.update({'attrs__class__' + c: True for c in kwargs.get('css_class', {})})
 
-        setdefaults(kwargs, dict(
-            bulk__show=False,
-            query__show=False,
-            extra=Struct(),
-            attrs={},
-            cell__template=None,
-            cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
-            cell__format=default_cell_formatter,
-            cell__attrs={},
-            cell__url=None,
-            cell__url_title=None
-        ))
-        namespaces = Struct(collect_namespaces(kwargs))
-        namespaces.attrs = Struct(collect_namespaces(namespaces.attrs))
-        namespaces.cell = Struct(collect_namespaces(namespaces.cell))
-        namespaces.cell.attrs = Struct(collect_namespaces(namespaces.cell.attrs))
-
-        namespaces.bulk = Struct(namespaces.bulk)
-        namespaces.query = Struct(namespaces.query)
-        namespaces.extra = Struct(namespaces.extra)
-
-        setdefaults(namespaces.attrs, {'class': {}})
-        setdefaults(namespaces.cell.attrs, {'class': {}})
-
-        super(Column, self).__init__(**namespaces)
+        new_kwargs = setdefaults_path(
+            Struct(),
+            kwargs,
+            dict(
+                bulk__show=False,
+                query__show=False,
+                extra=Struct(),
+                attrs__class={},
+                cell__template=None,
+                cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
+                cell__format=default_cell_formatter,
+                cell__attrs__class={},
+                cell__url=None,
+                cell__url_title=None,
+            ))
+        super(Column, self).__init__(**new_kwargs)
 
     @staticmethod
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
@@ -685,32 +676,30 @@ class Table(object):
         self._prepare_auto_rowspan()
 
         if self.Meta.model:
-            def bulk(column):
-                bulk_kwargs = {
-                    'name': column.name,
-                    'attr': column.attr,
-                    'required': False,
-                    'empty_choice_tuple': (None, '', '---', True),
-                    'model': self.Meta.model,
-                    'class': Field.from_model,
-                }
-                bulk_kwargs.update(column.bulk)
-                if bulk_kwargs['class'] == Field.from_model:
-                    bulk_kwargs['field_name'] = column.attr
-                return bulk_kwargs.pop('class')(**bulk_kwargs)
 
-            def query(column):
-                query_kwargs = {
-                    'class': Variable,
-                    'name': column.name,
-                    'gui__label': column.display_name,
-                    'attr': column.attr,
-                    'model': column.table.Meta.model,
-                }
-                query_kwargs.update(column.query)
-                return query_kwargs.pop('class')(**query_kwargs)
+            def generate_variables():
+                for column in self.bound_columns:
+                    if column.query.show:
+                        query_kwargs = setdefaults_path(
+                            Struct(),
+                            column.query,
+                            dict(
+                                name=column.name,
+                                gui__label=column.display_name,
+                                attr=column.attr,
+                                model=column.table.Meta.model,
+                            ), {
+                                'class': Variable,
+                            }
+                        )
+                        yield query_kwargs.pop('class')(**query_kwargs)
+            variables = list(generate_variables())
 
-            self.query = Query(request=request, variables=[query(bound_column) for bound_column in self.bound_columns if bound_column.query.show], **self.query_kwargs)
+            self.query = Query(
+                request=request,
+                variables=variables,
+                **self.query_kwargs
+            )
             self.query_form = self.query.form(request) if self.query.variables else None
 
             self.query_error = ''
@@ -720,8 +709,31 @@ class Table(object):
                 except QueryException as e:
                     self.query_error = str(e)
 
-            bulk_fields = [bulk(bound_column) for bound_column in self.bound_columns if bound_column.bulk.show]
-            self.bulk_form = Form(data=request.POST, fields=bulk_fields, **self.bulk_kwargs) if bulk_fields else None
+            def generate_bulk_fields():
+                for column in self.bound_columns:
+                    if column.bulk.show:
+                        bulk_kwargs = setdefaults_path(
+                            Struct(),
+                            column.bulk,
+                            dict(
+                                name=column.name,
+                                attr=column.attr,
+                                required=False,
+                                empty_choice_tuple=(None, '', '---', True),
+                                model=self.Meta.model,
+                            ), {
+                                'class': Field.from_model,
+                            }
+                        )
+                        if bulk_kwargs['class'] == Field.from_model:
+                            bulk_kwargs['field_name'] = column.attr
+                        yield bulk_kwargs.pop('class')(**bulk_kwargs)
+            bulk_fields = list(generate_bulk_fields())
+
+            self.bulk_form = Form(
+                data=request.POST,
+                fields=bulk_fields,
+                **self.bulk_kwargs) if bulk_fields else None
 
         return headers, self.header_levels
 
