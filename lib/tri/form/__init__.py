@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
-from tri.struct import Struct, Frozen, merged
+from tri.struct import Struct, Frozen
 from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path, collect_namespaces, assert_kwargs_empty, with_meta
 
 from tri.form.render import render_attrs
@@ -777,10 +777,12 @@ class Form(object):
             data = request.POST if request.method == 'POST' else request.GET
 
         def unbound_fields():
-            for field in fields if fields is not None else []:
-                yield field
+            if fields is not None:
+                for field in fields:
+                    yield field
             for name, field in fields_dict.items():
-                yield merged(field, dict(name=name))
+                dict.__setitem__(field, 'name', name)
+                yield field
         self.fields = sort_after([BoundField(f, self) for f in unbound_fields()])
         """ @type: list of BoundField """
 
