@@ -527,6 +527,6 @@ class Query(object):
         return Query(data=data, model=model, instance=instance, variables=variables, post_validation=post_validation, **kwargs)
 
 
-from .db_compat import setup, _variable_factory_by_django_field_type
+from .db_compat import setup, _variable_factory_by_django_field_type  # noqa
 
 setup()
