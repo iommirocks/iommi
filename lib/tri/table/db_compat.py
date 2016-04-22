@@ -32,7 +32,7 @@ def setup():
         (TextField, lambda model_field, **kwargs: Column.text(**kwargs)),
         (FloatField, lambda model_field, **kwargs: Column.float(**kwargs)),
         (IntegerField, lambda model_field, **kwargs: Column.integer(**kwargs)),
-        (AutoField, lambda model_field, **kwargs: Column.integer(**kwargs)),
+        (AutoField, lambda model_field, **kwargs: Column.integer(**setdefaults(kwargs, dict(show=False)))),
         (ManyToOneRel, None),
         (ManyToManyField, lambda model_field, **kwargs: Column.multi_choice_queryset(**setdefaults(kwargs, dict(choices=model_field.rel.to._default_manager.all())))),
         (ManyToManyRel, None),
