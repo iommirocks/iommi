@@ -131,10 +131,6 @@ def default_write_to_instance(field, instance, value):
 MISSING = object()
 
 
-def is_primary_key_field(field):
-    return isinstance(field, AutoField)
-
-
 def create_members_from_model(default_factory, model, include=None, exclude=None, extra=None, **kwargs):
     def should_include(name):
         if exclude is not None and name in exclude:
@@ -152,8 +148,6 @@ def create_members_from_model(default_factory, model, include=None, exclude=None
         if should_include(field.name):
             subkeys = field_kwargs.pop(field.name, {})
             subkeys.setdefault('class', default_factory)
-            if is_primary_key_field(field):
-                subkeys.setdefault('show', False)
             foo = subkeys.pop('class')(name=field.name, model=model, model_field=field, **subkeys)
             if foo is None:
                 continue
