@@ -1,6 +1,8 @@
 language: python
 python:
 - '2.7'
+- '3.5'
+- 'pypy'
 install: pip install tox
 script: make coverage
 after_success: codecov
