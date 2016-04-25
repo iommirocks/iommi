@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.16.0 (2016-04-25)
+~~~~~~~~~~~~~~~~~~~
+
+* Minor bugfix for fields-from-model handling of auto fields
+
+
 1.15.0 (2016-04-21)
 ~~~~~~~~~~~~~~~~~~~
 
