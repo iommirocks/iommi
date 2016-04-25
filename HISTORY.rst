@@ -1,5 +1,11 @@
 Changelog
 =========
+2.2.0 (2014-04-25)
+~~~~~~~~~~~~~~~~~~
+
+* Minor bugfix for fields-from-model handling of auto fields
+
+
 2.1.0 (2014-04-20)
 ~~~~~~~~~~~~~~~~~~
 
