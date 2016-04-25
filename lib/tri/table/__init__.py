@@ -844,7 +844,7 @@ class Table(object):
 
         """
         kwargs = collect_namespaces(kwargs)
-        columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('column', {}))
+        columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=kwargs.pop('column', {}))
         return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
 
 
@@ -982,8 +982,8 @@ def render_table(request,
 
     kwargs = collect_namespaces(kwargs)
 
-    if table is None:
-        table_kwargs = kwargs.pop('table', {})
+    if table is None or isinstance(table, dict):
+        table_kwargs = table if isinstance(table, dict) else kwargs.pop('table', {})
         if 'model' not in table_kwargs:
             table_kwargs['model'] = table_kwargs['data'].model
         table = Table.from_model(**table_kwargs)
