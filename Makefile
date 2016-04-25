@@ -1,4 +1,4 @@
-.PHONY: clean-pyc clean-build docs clean
+.PHONY: clean-pyc clean-build docs clean lint test coverage docs dist tag release-check
 
 help:
 	@echo "clean-build - remove build artifacts"
@@ -9,7 +9,7 @@ help:
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "dist - package"
 	@echo "tag - set a tag with the current version number"
-	@echo "release - check release tag and build release artifacts"
+	@echo "release-check - check release tag"
 
 clean: clean-build clean-pyc
 	rm -fr htmlcov/
@@ -48,9 +48,5 @@ dist: clean
 tag:
 	python setup.py tag
 
-release: clean
+release-check:
 	python setup.py release_check
-	python setup.py sdist
-	python setup.py bdist_wheel
-	python setup.py bdist_egg
-	ls -l dist
