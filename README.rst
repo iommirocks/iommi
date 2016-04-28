@@ -100,20 +100,18 @@ Filtering
 Keyword argument dispatching
 ----------------------------
 
-setdefaults, collect_namespaces and assert_kwargs_empty:
+@dispatch:
 
 .. code-block:: python
 
-    def foo(**kwargs):
-        setdefaults(kwargs, dict(
-            bar__baz=3,
-            bar__qwe=5,
-            baz__asd=2,
-        ))
-        kwargs = collect_namespaces(kwargs)
-        bar(**kwargs.pop('bar', {}))
-        baz(**kwargs.pop('baz', {}))
-        assert_kwargs_empty(kwargs)
+    @dispatch(
+        bar={},
+        baz__foo=2)
+    def foo(bar, baz):
+        do_bar(**bar)
+        do_baz(**baz)
+
+
 
 Get/set attribute given a path string
 -------------------------------------
@@ -135,6 +133,7 @@ Get/set attribute given a path string
     x = Foo(Bar(Baz(c=3)))
 
     assert getattr_path(x, 'a__b__c') == 3
+
     assert setattr_path(x, 'a__b__c', 10)
     assert getattr_path(x, 'a__b__c') == 10
 
