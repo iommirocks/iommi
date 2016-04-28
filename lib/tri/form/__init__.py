@@ -18,7 +18,8 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen
-from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, setattr_path, sort_after, setdefaults, setdefaults_path, collect_namespaces, assert_kwargs_empty, with_meta
+from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, \
+    assert_kwargs_empty
 
 from tri.form.render import render_attrs
 
@@ -60,19 +61,21 @@ def bool_parse(string_value):
 
 
 def foreign_key_factory(model_field, **kwargs):
-    setdefaults(kwargs, dict(
+    setdefaults_path(
+        kwargs,
         choices=model_field.foreign_related_fields[0].model.objects.all(),
-    ))
+    )
     kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(**kwargs)
 
 
 def many_to_many_factory(model_field, **kwargs):
-    setdefaults(kwargs, dict(
+    setdefaults_path(
+        kwargs,
         choices=model_field.rel.to.objects.all(),
         read_from_instance=lambda field, instance: getattr_path(instance, field.attr).all(),
         extra__django_related_field=True,
-    ))
+    )
     kwargs['model'] = model_field.rel.to
     return Field.multi_choice_queryset(**kwargs)
 
@@ -91,7 +94,7 @@ _field_factory_by_django_field_type = OrderedDict([
     (TextField, lambda model_field, **kwargs: Field.text(**kwargs)),
     (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
     (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
-    (AutoField, lambda model_field, **kwargs: Field.integer(**setdefaults(kwargs, dict(show=False)))),
+    (AutoField, lambda model_field, **kwargs: Field.integer(**setdefaults_path(kwargs, show=False))),
     (ManyToOneRel, None),
     (ManyToManyRel, None),
     (FileField, lambda model_field, **kwargs: Field.file(**kwargs)),
@@ -134,7 +137,8 @@ def default_write_to_instance(field, instance, value):
 MISSING = object()
 
 
-def create_members_from_model(default_factory, model, include=None, exclude=None, extra=None, **kwargs):
+@dispatch
+def create_members_from_model(default_factory, model, db_field, include=None, exclude=None, extra=None):
     def should_include(name):
         if exclude is not None and name in exclude:
             return False
@@ -142,14 +146,11 @@ def create_members_from_model(default_factory, model, include=None, exclude=None
             return name in include
         return True
 
-    kwargs = collect_namespaces(kwargs)
-    field_kwargs = collect_namespaces(kwargs.pop('db_field', {}))
-
     members = []
     # noinspection PyProtectedMember
     for field in get_fields(model):
         if should_include(field.name):
-            subkeys = field_kwargs.pop(field.name, {})
+            subkeys = db_field.pop(field.name, {})
             subkeys.setdefault('class', default_factory)
             foo = subkeys.pop('class')(name=field.name, model=model, model_field=field, **subkeys)
             if foo is None:
@@ -158,7 +159,6 @@ def create_members_from_model(default_factory, model, include=None, exclude=None
                 members.extend(foo)
             else:
                 members.append(foo)
-    assert_kwargs_empty(kwargs)
     return members + (extra if extra is not None else [])
 
 
@@ -167,10 +167,11 @@ def member_from_model(model, factory_lookup, defaults_factory, field_name=None, 
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
 
-    setdefaults(kwargs, dict(
+    setdefaults_path(
+        kwargs,
+        defaults_factory(model_field),
         name=field_name,
-    ))
-    setdefaults(kwargs, defaults_factory(model_field))
+    )
 
     factory = factory_lookup.get(type(model_field), MISSING)
 
@@ -186,27 +187,21 @@ def member_from_model(model, factory_lookup, defaults_factory, field_name=None, 
     return factory(model_field=model_field, model=model, **kwargs) if factory else None
 
 
-def expand_member(model, factory_lookup, defaults_factory, field_name=None, model_field=None, **kwargs):
+@dispatch(field={})
+def expand_member(model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
     if model_field is None:  # pragma: no cover
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
     assert isinstance(model_field, OneToOneField)
 
-    kwargs = collect_namespaces(kwargs)
-
-    name = kwargs.pop('name')
-
-    def kwargs_for_subfield(sub_model_field):
-        kw = kwargs.pop(sub_model_field, {})
-        kw.setdefault('name', name + '__' + sub_model_field.name)
-        return kw
-
     result = [member_from_model(model=model_field.related_field.model,
                                 factory_lookup=factory_lookup,
                                 defaults_factory=defaults_factory,
                                 field_name=sub_model_field.name,
-                                **kwargs_for_subfield(sub_model_field))
+                                name=name + '__' + sub_model_field.name,
+                                **field.pop(sub_model_field.name, {}))
               for sub_model_field in get_fields(model=model_field.related_field.model)]
+    assert_kwargs_empty(field)
     return [x for x in result if x is not None]
 
 
@@ -303,6 +298,7 @@ class BoundField(FieldBase):
         if self.id is MISSING:
             self.id = 'id_%s' % self.name if self.name else ''
         if self.label is MISSING:
+            # noinspection PyTypeChecker
             self.label = capitalize(self.name).replace('_', ' ') if self.name else ''
 
         self.form = form
@@ -405,23 +401,26 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def hidden(**kwargs):
-        setdefaults(kwargs, dict(
-            input_type='hidden'
-        ))
+        setdefaults_path(
+            kwargs,
+            input_type='hidden',
+        )
         return Field(**kwargs)
 
     @staticmethod
     def text(**kwargs):
-        setdefaults(kwargs, dict(
-            input_template='tri_form/text.html'
-        ))
+        setdefaults_path(
+            kwargs,
+            input_template='tri_form/text.html',
+        )
         return Field(**kwargs)
 
     @staticmethod
     def integer(**kwargs):
-        setdefaults(kwargs, dict(
-            parse=lambda string_value, **_: int(string_value)
-        ))
+        setdefaults_path(
+            kwargs,
+            parse=lambda string_value, **_: int(string_value),
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -433,16 +432,18 @@ class Field(Frozen, FieldBase):
                 # Acrobatics so we get equal formatting in python 2/3
                 raise ValueError("could not convert string to float: %s" % string_value)
 
-        setdefaults(kwargs, dict(
-            parse=parse_float
-        ))
+        setdefaults_path(
+            kwargs,
+            parse=parse_float,
+        )
         return Field(**kwargs)
 
     @staticmethod
     def password(**kwargs):
-        setdefaults(kwargs, dict(
-            input_type='password'
-        ))
+        setdefaults_path(
+            kwargs,
+            input_type='password',
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -450,13 +451,14 @@ class Field(Frozen, FieldBase):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             parse=lambda string_value, **_: bool_parse(string_value),
             required=False,
             template='tri_form/{style}_form_row_checkbox.html',
             input_template='tri_form/checkbox.html',
             is_boolean=True,
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -469,11 +471,12 @@ class Field(Frozen, FieldBase):
         """
         assert 'choices' in kwargs
 
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             required=True,
             is_list=False,
-            empty_label='---'
-        ))
+            empty_label='---',
+        )
 
         if not kwargs['required'] and not kwargs['is_list']:
             original_parse = kwargs.get('parse', default_parse)
@@ -498,49 +501,54 @@ class Field(Frozen, FieldBase):
                 choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
             field.choice_tuples = choice_tuples
 
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             empty_choice_tuple=(None, '', kwargs['empty_label'], True),
             choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, choice == field.value),
             input_template='tri_form/choice.html',
             is_valid=choice_is_valid,
-            post_validation=post_validation
-        ))
+            post_validation=post_validation,
+        )
 
         return Field(**kwargs)
 
     @staticmethod
     def choice_queryset(**kwargs):
         model = kwargs.pop('model')
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             extra=Struct(model=model),
             parse=lambda form, field, string_value: field.extra.model.objects.get(pk=string_value) if string_value else None,
-            choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value)
-        ))
+            choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value),
+        )
         return Field.choice(**kwargs)
 
     @staticmethod
     def multi_choice(**kwargs):
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             attrs__multiple=True,
             choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list),
-            is_list=True
-        ))
+            is_list=True,
+        )
         return Field.choice(**kwargs)
 
     @staticmethod
     def multi_choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             attrs__multiple=True,
             choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list),
-            is_list=True
-        ))
+            is_list=True,
+        )
         return Field.choice_queryset(**kwargs)
 
     @staticmethod
     def radio(**kwargs):
-        setdefaults(kwargs, dict(
-            input_template='tri_form/radio.html'
-        ))
+        setdefaults_path(
+            kwargs,
+            input_template='tri_form/radio.html',
+        )
         return Field.choice(**kwargs)
 
     @staticmethod
@@ -552,10 +560,12 @@ class Field(Frozen, FieldBase):
                 return datetime.strptime(string_value, iso_format)
             except ValueError as e:
                 raise ValidationError(str(e))
-        setdefaults(kwargs, dict(
+
+        setdefaults_path(
+            kwargs,
             parse=datetime_parse,
             render_value=lambda value, **_: value.strftime(iso_format) if value else '',
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -567,10 +577,12 @@ class Field(Frozen, FieldBase):
                 return datetime.strptime(string_value, iso_format).date()
             except ValueError as e:
                 raise ValidationError(str(e))
-        setdefaults(kwargs, dict(
+
+        setdefaults_path(
+            kwargs,
             parse=date_parse,
             render_value=lambda value, **_: value.strftime(iso_format) if value else '',
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -582,25 +594,29 @@ class Field(Frozen, FieldBase):
                 return datetime.strptime(string_value, iso_format).time()
             except ValueError as e:
                 raise ValidationError(str(e))
-        setdefaults(kwargs, dict(
+
+        setdefaults_path(
+            kwargs,
             parse=time_parse,
             render_value=lambda value, **_: value.strftime(iso_format),
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
     def decimal(**kwargs):
-        setdefaults(kwargs, dict(
-            parse=lambda string_value, **_: Decimal(string_value)
-        ))
+        setdefaults_path(
+            kwargs,
+            parse=lambda string_value, **_: Decimal(string_value),
+        )
         return Field(**kwargs)
 
     @staticmethod
     def url(**kwargs):
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             input_type='email',
-            parse=lambda string_value, **_: URLValidator(string_value) or string_value
-        ))
+            parse=lambda string_value, **_: URLValidator(string_value) or string_value,
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -609,11 +625,12 @@ class Field(Frozen, FieldBase):
             if value:
                 default_write_to_instance(field=field, instance=instance, value=value)
 
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             input_type='file',
             template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
             write_to_instance=file_write_to_instance,
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -621,14 +638,15 @@ class Field(Frozen, FieldBase):
         """
         Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
         """
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             label=label,
             show=show,
             template=template,
             editable=False,
             attr=None,
             name='@@heading@@',
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -636,26 +654,29 @@ class Field(Frozen, FieldBase):
         """
         Shortcut to create an info entry.
         """
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             initial=value,
             editable=False,
             attr=None,
-        ))
+        )
         return Field(**kwargs)
 
     @staticmethod
     def email(**kwargs):
-        setdefaults(kwargs, dict(
+        setdefaults_path(
+            kwargs,
             input_type='email',
-            parse=lambda string_value, **_: validate_email(string_value) or string_value
-        ))
+            parse=lambda string_value, **_: validate_email(string_value) or string_value,
+        )
         return Field(**kwargs)
 
     @staticmethod
     def phone_number(**kwargs):
-        setdefaults(kwargs, dict(
-            is_valid=lambda form, field, parsed_data: (re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567')
-        ))
+        setdefaults_path(
+            kwargs,
+            is_valid=lambda form, field, parsed_data: (re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'),
+        )
         return Field(**kwargs)
 
     @staticmethod
@@ -824,7 +845,8 @@ class Form(object):
         return create_members_from_model(default_factory=Field.from_model, **kwargs)
 
     @staticmethod
-    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    @dispatch(field={})
+    def from_model(data, model, field, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -840,8 +862,7 @@ class Form(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        kwargs = collect_namespaces(kwargs)
-        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('field', {}))
+        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=field)
         return Form(data=data, model=model, instance=instance, fields=fields, post_validation=post_validation, **kwargs)
 
     def is_valid(self):
