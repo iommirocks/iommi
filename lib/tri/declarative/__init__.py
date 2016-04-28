@@ -573,3 +573,17 @@ def assert_kwargs_empty(kwargs):
         import traceback
         function_name = traceback.extract_stack()[-2][2]
         raise TypeError('%s() got unexpected keyword arguments %s' % (function_name, ', '.join(["'%s'" % x for x in sorted(kwargs.keys())])))
+
+
+def dispatch(*function, **defaults):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            return f(*args, **setdefaults_path(Struct(), kwargs, defaults))
+        return wrapper
+
+    if function:
+        assert len(function) == 1
+        return decorator(function[0])
+
+    return decorator

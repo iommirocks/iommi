@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch
 
 
 def test_extract_subkeys():
@@ -193,3 +193,27 @@ def test_assert_kwargs_empty():
         assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
 
     assert "assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" in str(e.value)
+
+
+def test_dispatch():
+    @dispatch(bar__a='5', bar__quux__title='hi!')
+    def foo(a, b, c, bar, baz):
+        x = do_bar(**bar)
+        y = do_baz(**baz)
+        # do something with the inputs a, b, c...
+        return a + b + c + x + y
+
+    @dispatch(b='X', quux={}, )
+    def do_bar(a, b, quux):
+        return a + b + do_quux(**quux)
+
+    def do_baz(a, b, c):
+        # something...
+        return a + b + c
+
+    @dispatch
+    def do_quux(title):
+        # something...
+        return title
+
+    assert foo('1', '2', '3', bar__quux__title='7', baz__a='A', baz__b='B', baz__c='C') == '1235X7ABC'
