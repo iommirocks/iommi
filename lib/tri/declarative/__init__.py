@@ -488,6 +488,9 @@ def setdefaults(d, d2):
     return d
 
 
+EMPTY = object()
+
+
 def setdefaults_path(target, *defaults, **kwargs):
     for mappings in list(defaults) + [kwargs]:
         for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
@@ -499,7 +502,11 @@ def setdefaults_path(target, *defaults, **kwargs):
                     namespace[part] = Struct()
                 elif not isinstance(current, dict):
                     namespace[part] = Struct(**{current: True})
+                elif not isinstance(current, Struct):
+                    namespace[part] = Struct(current)
                 namespace = namespace[part]
+            if value is EMPTY:
+                value = {}
             namespace.setdefault(parts[-1], value)
     return target
 

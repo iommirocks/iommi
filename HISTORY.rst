@@ -4,6 +4,13 @@ Changelog
 0.25.0 (2016-04-2*)
 ~~~~~~~~~~~~~~~~~~~
 
+* Added `EMPTY` marker to `setdefaults_path` to avoid mixup when empty dict is 
+  provided in function defaults.
+
+
+0.25.0 (2016-04-2*)
+~~~~~~~~~~~~~~~~~~~
+
 * Added @dispatch decorator
 
 
