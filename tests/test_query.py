@@ -213,18 +213,17 @@ def test_choice_queryset():
         )
 
     random_valid_obj = Foo.objects.all().order_by('?')[0]
-    # noinspection PyTypeChecker
-    query2 = Query2(request=Struct(method='POST', POST=Data({'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)})))
 
     # test GUI
-    form = query2.form(Struct(method='POST', POST=Data({'foo': 'asdasdasdasd'})))
+    form = Query2(Struct(method='POST', POST=Data({'foo': 'asdasdasdasd'}))).form()
     assert not form.is_valid()
-    form = query2.form(Struct(method='POST', POST=Data({'foo': str(random_valid_obj.pk)})))
+    form = Query2(Struct(method='POST', POST=Data({'foo': str(random_valid_obj.pk)}))).form()
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
 
     # test query
     # noinspection PyTypeChecker
+    query2 = Query2(request=Struct(method='POST', POST=Data({'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)})))
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))

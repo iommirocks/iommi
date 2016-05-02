@@ -270,6 +270,7 @@ class Query(object):
         :type request: django.http.request.HttpRequest
         """
         self.request = request
+        self._form = None
 
         def generate_variables():
             if variables is not None:
@@ -444,10 +445,12 @@ class Query(object):
                                      for variable in self.variables
                                      if variable.freetext])
 
-    def form(self, request):
+    def form(self):
         """
         Create a form and validate input based on a request.
         """
+        if self._form:
+            return self._form
         fields = []
 
         if any(v.freetext for v in self.variables):
@@ -459,17 +462,17 @@ class Query(object):
                 params = merged(variable.gui, name=variable.name)
                 fields.append(params.pop('class')(**params))
 
-        form = Form(request=request, fields=fields, **self.gui_kwargs)
-        form.request = request
+        form = Form(request=self.request, fields=fields, **self.gui_kwargs)
         form.tri_query = self
-        form.tri_query_advanced_value = request_data(request).get(ADVANCED_QUERY_PARAM, '')
+        form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
+        self._form = form
         return form
 
     def to_query_string(self):
         """
         Based on the data in the request, return the equivalent query string that you can use with parse() to create a query set.
         """
-        form = self.form(self.request)
+        form = self.form()
         if request_data(self.request).get(ADVANCED_QUERY_PARAM, '').strip():
             return request_data(self.request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():

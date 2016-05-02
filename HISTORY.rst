@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.0.0 (****-**-**)
+~~~~~~~~~~~~~~~~~~
+
+* Cache form on Query
+
+* Render global form errors
+
 1.11.0 (2016-04-25)
 ~~~~~~~~~~~~~~~~~~~
 
