@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch, EMPTY
 
 
 def test_extract_subkeys():
@@ -112,6 +112,12 @@ def test_setdefaults_namespace_merge():
                  z=Struct(foo=True,
                           c=True))
     )
+    assert expected == actual
+
+
+def test_setdefaults_path_empty_marker():
+    actual = setdefaults_path(Struct(), foo=EMPTY, bar__boink=EMPTY)
+    expected = dict(foo={}, bar=dict(boink={}))
     assert expected == actual
 
 
