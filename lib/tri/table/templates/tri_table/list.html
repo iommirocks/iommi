@@ -1,7 +1,7 @@
 {% load tri_table %}
 
-{% if query_form and table.Meta.filter__template%}
-    {% include table.Meta.filter__template with form=query_form %}
+{% if query_form and table.filter.template %}
+    {% include table.filter.template with form=query_form %}
 {% endif %}
 
 <div class="table-container">

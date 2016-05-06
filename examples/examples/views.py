@@ -78,7 +78,7 @@ def kitchen_sink(request):
             query__show=True,
             query__gui__show=True,
         )
-        c = Column(bulk=True)  # The form is created automatically
+        c = Column(bulk__show=True)  # The form is created automatically
 
         d = Column(display_name='Display name',
                    css_class={'css_class'},

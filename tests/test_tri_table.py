@@ -32,7 +32,7 @@ def explicit_table():
         Column.number(name="bar"),
     ]
 
-    return Table(data=get_data(), columns=columns, attrs=lambda table: {'class': 'listview', 'id': 'table_id'})
+    return Table(data=get_data(), columns=columns, attrs__class__another_class=True, attrs__id='table_id')
 
 
 def declarative_table():
@@ -40,10 +40,8 @@ def declarative_table():
     class TestTable(Table):
 
         class Meta:
-            attrs = {
-                'class': lambda table: 'listview',
-                'id': lambda table: 'table_id',
-            }
+            attrs__class__another_class = lambda table: True
+            attrs__id = lambda table: 'table_id'
 
         foo = Column()
         bar = Column.number()
@@ -58,7 +56,7 @@ def declarative_table():
 def test_render_impl(table):
 
     verify_table_html(table=table, expected_html="""
-        <table class="listview" id="table_id">
+        <table class="another_class listview" id="table_id">
             <thead>
                 <tr>
                     <th class="first_column subheader">
@@ -82,7 +80,7 @@ def test_render_impl(table):
         </table>""")
 
 
-def test_test_declaration_merge():
+def test_declaration_merge():
 
     class MyTable(Table):
         class Meta:
@@ -91,6 +89,21 @@ def test_test_declaration_merge():
         bar = Column()
 
     assert {'foo', 'bar'} == {column.name for column in MyTable([]).columns}
+
+
+def test_kwarg_column_config_injection():
+    class MyTable(Table):
+        foo = Column()
+
+    table = MyTable([], column__foo__extra__stuff="baz")
+    table.prepare(RequestFactory().get("/"))
+    assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
+
+
+def test_bad_arg():
+    with pytest.raises(TypeError) as e:
+        Table(data=[], columns=[Column()], foo=None)
+    assert 'foo' in str(e)
 
 
 def test_ordering():
@@ -499,14 +512,10 @@ def test_attr():
 def test_attrs():
     class TestTable(NoSortTable):
         class Meta:
-            attrs = {
-                'class': 'classy',
-                'foo': lambda table: 'bar'
-            }
-            row__attrs = {
-                'class': 'classier',
-                'foo': lambda table, row, **_: "barier"
-            }
+            attrs__class = 'classy'
+            attrs__foo = lambda table: 'bar'
+            row__attrs__class = 'classier'
+            row__attrs__foo = lambda table, row, **_: "barier"
 
         yada = Column()
 

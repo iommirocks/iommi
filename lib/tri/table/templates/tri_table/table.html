@@ -8,8 +8,8 @@
 
         <table{{ table.render_attrs }}>
 
-            {% if table.Meta.header__template %}
-                {% include  table.Meta.header__template %}
+            {% if table.header.template %}
+                {% include  table.header.template %}
             {% endif %}
 
             <tbody>

@@ -12,8 +12,8 @@
         <input type="submit" class="button" value="Bulk change"/>
     {% endif %}
 
-    {% if table.Meta.links__template %}
-        {% include table.Meta.links__template %}
+    {% if table.links.template %}
+        {% include table.links.template %}
     {% endif %}
 
 </form>
