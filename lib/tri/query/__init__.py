@@ -166,7 +166,7 @@ class Variable(Frozen, VariableBase):
             if variable.attr is None:
                 return Q()
             try:
-                instance = kwargs['choices'].get(**{variable.value_to_q_lookup: value_string_or_f})
+                instance = kwargs['choices'].get(**{variable.value_to_q_lookup: text_type(value_string_or_f)})
             except ObjectDoesNotExist:
                 return None
             return Q(**{variable.attr + '__pk': instance.pk})
