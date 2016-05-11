@@ -19,7 +19,7 @@ from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen
 from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, \
-    assert_kwargs_empty
+    assert_kwargs_empty, EMPTY
 
 from tri.form.render import render_attrs
 
@@ -352,6 +352,10 @@ class Field(Frozen, FieldBase):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
     """
+    @dispatch(
+        extra=EMPTY,
+        attrs__class=EMPTY,
+    )
     def __init__(self, **kwargs):
         """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
@@ -389,15 +393,7 @@ class Field(Frozen, FieldBase):
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
-        new_kwargs = setdefaults_path(
-            Struct(),
-            kwargs,
-            dict(
-                extra=Struct(),
-                attrs__class={},
-            ))
-
-        super(Field, self).__init__(**new_kwargs)
+        super(Field, self).__init__(**kwargs)
 
     @staticmethod
     def hidden(**kwargs):
@@ -799,7 +795,7 @@ class Form(object):
                 dict.__setitem__(field, 'name', name)
                 yield field
         self.fields = sort_after([BoundField(f, self) for f in unbound_fields()])
-        """ @type: list of BoundField """
+        """ :type: list of BoundField"""
 
         if instance is not None:
             for field in self.fields:
@@ -811,6 +807,8 @@ class Form(object):
                         field.initial = initial
 
             self.instance = instance
+        else:
+            self.instance = None
 
         if data:
             for field in self.fields:
@@ -829,16 +827,18 @@ class Form(object):
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
-        if post_validation is not None:
-            self.post_validation = post_validation
+        self.post_validation = post_validation if post_validation is not None else lambda form: None
         self.fields_by_name = {field.name: field for field in self.fields}
         self.style = None
         self.model = model
+        """ :type model: django.db.models.Model """
         self._valid = None
         self.errors = []
         self.should_parse = bool(data)
+        """ :type: bool"""
         self.evaluate()
         self.is_valid()
+        """ :type: list of str """
 
     @staticmethod
     def fields_from_model(**kwargs):
@@ -948,9 +948,6 @@ class Form(object):
             field.post_validation(form=self, field=field)
         self.post_validation(form=self)
         return self
-
-    def post_validation(self, form):
-        pass
 
     def validate_field_parsed_data(self, field, value):
         is_valid, error = field.is_valid(
