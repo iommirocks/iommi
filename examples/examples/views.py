@@ -72,7 +72,7 @@ def kitchen_sink(request):
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
         b = Column.choice_queryset(
             show=False,
-            choices=Foo.objects.all()[:10],
+            choices=Foo.objects.all(),
             model=Foo,
             bulk__show=True,
             query__show=True,
@@ -89,9 +89,8 @@ def kitchen_sink(request):
                    auto_rowspan=True,
                    cell__value=lambda table, column, row: row.b.a // 3,
                    cell__format=lambda table, column, row, value: '- %s -' % value,
-                   cell__attrs={
-                       'class': lambda table, column, row: 'cj',
-                       'title': 'cell title'},
+                   cell__attrs__class__cj=True,
+                   cell__attrs__title='cell title',
                    cell__url='url',
                    cell__url_title='cell url title')
         e = Column(group='Foo', cell__value='explicit value', sortable=False)

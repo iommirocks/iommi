@@ -745,7 +745,6 @@ class Table(object):
         self._prepare_evaluate_members()
         self._prepare_sorting()
         headers = self._prepare_headers()
-        self._prepare_auto_rowspan()
 
         if self.Meta.model:
 
@@ -806,6 +805,8 @@ class Table(object):
                 data=request.POST,
                 fields=bulk_fields,
                 **self.bulk_kwargs) if bulk_fields else None
+
+        self._prepare_auto_rowspan()
 
         return headers, self.header_levels
 
