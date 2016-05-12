@@ -18,8 +18,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen
-from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, \
-    assert_kwargs_empty, EMPTY
+from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY
 
 from tri.form.render import render_attrs
 
@@ -187,7 +186,9 @@ def member_from_model(model, factory_lookup, defaults_factory, field_name=None, 
     return factory(model_field=model_field, model=model, **kwargs) if factory else None
 
 
-@dispatch(field={})
+@dispatch(
+    field=EMPTY,
+)
 def expand_member(model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
     if model_field is None:  # pragma: no cover
         # noinspection PyProtectedMember
@@ -845,7 +846,9 @@ class Form(object):
         return create_members_from_model(default_factory=Field.from_model, **kwargs)
 
     @staticmethod
-    @dispatch(field={})
+    @dispatch(
+        field=EMPTY,
+    )
     def from_model(data, model, field, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
