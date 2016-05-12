@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import pytest
 from tests.models import CreateOrEditObjectTest, get_saved_something
+from tri.form import INITIALS_FROM_GET
 from tri.struct import Struct
 
 from tri.form.views import create_object, edit_object
@@ -23,7 +24,7 @@ def test_create_or_edit_object():
     assert response['context_instance']['is_create'] is True
     form = response['context_instance']['form']
     assert response['context_instance']['foo'] == 'FOO'
-    assert not form.should_parse
+    assert form.mode is INITIALS_FROM_GET
     assert form.fields_by_name['f_int'].initial == 1
     assert form.fields_by_name['f_int'].errors == set()
     assert form.fields_by_name['f_int'].value == 1
@@ -37,6 +38,7 @@ def test_create_or_edit_object():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
+        '-': '-',
     }
     create_object(
         request=request,
@@ -65,6 +67,7 @@ def test_create_or_edit_object():
     request.POST = {
         'f_int': '7',
         'f_float': '11.2',
+        '-': '-',
         # Not sending a parameter in a POST is the same thing as false
     }
     response = edit_object(
