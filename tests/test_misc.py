@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch, EMPTY
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch, EMPTY, Namespace, flatten
 
 
 def test_extract_subkeys():
@@ -115,9 +115,65 @@ def test_setdefaults_namespace_merge():
     assert expected == actual
 
 
+def test_namespace_repr():
+    actual = repr(Namespace(a=1, b=2, c=Namespace(d=3, e=Namespace(f=4))))
+    expected = "Namespace(a=1, b=2, c__d=3, c__e__f=4)"
+    assert expected == actual
+
+
+def test_namespace_repr_empty_members():
+    actual = repr(Namespace(a=Namespace(b=Namespace())))
+    expected = "Namespace(a__b=Namespace)"
+
+
+def test_namespace_get_set():
+    n = Namespace(a=1, b__c=2)
+    assert n.a == 1
+    assert n.b.c == 2
+
+
+def test_namespace_flatten():
+    actual = flatten(Namespace(a=1, b=2, c=Namespace(d=3, e=Namespace(f=4))))
+    expected = dict(a=1, b=2, c__d=3, c__e__f=4)
+    assert actual == expected
+
+
+def test_namespace_funcal():
+    def f(**kwargs):
+        assert {'a': 1, 'b__c': 2, 'b__d': 3} == kwargs
+
+    f(**flatten(Namespace(a=1, b=Namespace(c=2, d=3))))
+
+
+def test_namespace_flatten_loop_detection():
+    n1 = Namespace()
+    n1.foo = n1
+    n1.bar = 'baz'
+    n2 = Namespace()
+    n2.buzz = n1
+    assert {'buzz__bar': 'baz'} == flatten(n2)
+
+
+# def test_namespace_repr_loop_detection():
+#     n1 = Namespace()
+#     n1.foo = n1
+#     n1.bar = 'baz'
+#     n2 = Namespace()
+#     n2.buzz = n1
+#     assert "Namespace(buzz__bar='baz', buzz__foo=Namespace(...))" == repr(n2)
+
+
 def test_setdefaults_path_empty_marker():
     actual = setdefaults_path(Struct(), foo=EMPTY, bar__boink=EMPTY)
     expected = dict(foo={}, bar=dict(boink={}))
+    assert expected == actual
+
+
+def test_setdefaults_path_empty_marker_no_side_effect():
+    actual = setdefaults_path(Namespace(a__b=1, a__c=2),
+                              a=Namespace(d=3),
+                              a__e=4)
+    expected = Namespace(a__b=1, a__c=2, a__d=3, a__e=4)
     assert expected == actual
 
 
@@ -151,6 +207,20 @@ def test_setdefaults_path_ordering():
                                       ('x', {'z': 42}),
                                   ]))
     assert actual_bar == expected
+
+
+def test_setdefatults_path_retain_empty():
+    actual = setdefaults_path(Namespace(a=Namespace()), a__b=Namespace())
+    expected = Namespace(a__b=Namespace())
+    assert expected == actual
+
+    actual = setdefaults_path(Namespace(), attrs__class=Namespace())
+    expected = Namespace(attrs__class=Namespace())
+    assert expected == actual
+
+
+def test_namespace_retain_empty():
+    assert Namespace(a=Namespace(b=Namespace())).a.b == Namespace()
 
 
 def test_order_after():

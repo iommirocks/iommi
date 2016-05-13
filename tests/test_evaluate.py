@@ -106,6 +106,7 @@ def test_get_signature_description():
 
 
 def test_match_optionals():
+    assert matches("a,b", "a,b||")
     assert matches("a,b", "a,b|c|")
     assert matches("a,b,c", "a,b|c|")
     assert matches("a,b", "a,b|c|*")
