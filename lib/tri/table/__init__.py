@@ -18,7 +18,7 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path, dispatch, EMPTY
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
@@ -145,7 +145,18 @@ class ColumnBase(NamedStruct):
 
 @creation_ordered
 class Column(Frozen, ColumnBase):
-    # noinspection PyShadowingBuiltins
+    @dispatch(
+        bulk__show=False,
+        query__show=False,
+        attrs=EMPTY,
+        attrs__class=EMPTY,
+        cell__template=None,
+        cell__attrs=EMPTY,
+        cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
+        cell__format=default_cell_formatter,
+        cell__url=None,
+        cell__url_title=None,
+    )
     def __init__(self, **kwargs):
         """
         :param name: the name of the column
@@ -168,24 +179,8 @@ class Column(Frozen, ColumnBase):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
 
-        kwargs.update({'attrs__class__' + c: True for c in kwargs.get('css_class', {})})
-
-        new_kwargs = setdefaults_path(
-            Struct(),
-            kwargs,
-            dict(
-                bulk__show=False,
-                query__show=False,
-                extra=Struct(),
-                attrs__class={},
-                cell__template=None,
-                cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
-                cell__format=default_cell_formatter,
-                cell__attrs__class={},
-                cell__url=None,
-                cell__url_title=None,
-            ))
-        super(Column, self).__init__(**new_kwargs)
+        setdefaults_path(kwargs, {'attrs__class__' + c: True for c in kwargs.get('css_class', {})})
+        super(Column, self).__init__(**kwargs)
 
     @staticmethod
     def text(**kwargs):
