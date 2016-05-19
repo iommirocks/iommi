@@ -8,11 +8,10 @@ from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
-from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, \
-    Bar
-from tri.form import getattr_path, setattr_path, BoundField, AVOID_EMPTY_FORM
+from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, Bar
+from tri.declarative import getattr_path, setattr_path
 from tri.struct import Struct
-from tri.form import Form, Field, register_field_factory
+from tri.form import BoundField, AVOID_EMPTY_FORM, Form, Field, register_field_factory
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -472,11 +471,14 @@ def test_field_from_model_many_to_many():
 
 @pytest.mark.django_db
 def test_field_from_model_foreign_key2():
-    assert set(Form.from_model(
+    form = Form.from_model(
         data={},
         model=FieldFromModelOneToOneTest,
-        field__foo_one_to_one__class=Field.from_model_expand
-    ).fields_by_name.keys()) == {'foo_one_to_one__foo'}
+        field__foo_one_to_one__class=Field.from_model_expand,
+        field__foo_one_to_one__field__foo__label='blaha',
+    )
+    assert set(form.fields_by_name.keys()) == {'foo_one_to_one__foo'}
+    assert form.fields_by_name['foo_one_to_one__foo'].label == 'blaha'
 
 
 @pytest.mark.django_db
