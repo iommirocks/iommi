@@ -5,9 +5,13 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.db import models
 from django.db.models import QuerySet
 from bs4 import BeautifulSoup
 import pytest
+from django.test import RequestFactory
+from django.utils.encoding import smart_text
+
 from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, Bar
 from tri.declarative import getattr_path, setattr_path
 from tri.struct import Struct
@@ -143,7 +147,7 @@ def test_parse_errors():
 
     assert not form.is_valid()
 
-    assert form.errors == ["General snafu"]
+    assert form.errors == {'General snafu'}
 
     assert form.fields_by_name['party'].parsed_data == 'foo'
     assert form.fields_by_name['party'].errors == {'foo not in available choices'}
@@ -370,9 +374,15 @@ def test_help_text_from_model():
 
 
 @pytest.mark.django_db
-def test_choices_from_query_set():
+def test_choice_query():
     user = User.objects.create(username='foo')
-    assert [x.pk for x in Form(fields=[Field.multi_choice_queryset(name='foo', model=User, choices=User.objects.all())]).validate().fields[0].choices] == [user.pk]
+    user2 = User.objects.create(username='foo2')
+
+    class MyForm(Form):
+        foo = Field.multi_choice_queryset(attr=None, model=User, choices=User.objects.exclude(username=user2.username))
+
+    assert [x.pk for x in MyForm().validate().fields[0].choices] == [user.pk]
+    assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).validate().fields[0].errors == {'%s not in available choices' % user2.pk}
 
 
 def test_field_from_model():
@@ -569,7 +579,7 @@ def test_mode_full_form_from_request():
     # empty POST
     form = FooForm(request=Struct(method='POST', POST={'-': '-'}))
     assert not form.is_valid()
-    assert form.errors == []
+    assert form.errors == set()
     assert form.fields_by_name['foo'].errors == {'This field is required'}
     assert form.fields_by_name['bar'].errors == {'This field is required'}
     assert form.fields_by_name['baz'].errors == set()  # not present in POST request means false
@@ -610,3 +620,27 @@ def test_mode_initials_from_get():
     assert form.fields_by_name['foo'].errors == set()
     assert form.fields_by_name['bar'].errors == set()
     assert form.fields_by_name['baz'].errors == set()
+
+
+def test_form_errors_function():
+    class MyForm(Form):
+        foo = Field(is_valid=lambda **_: (False, 'field error'))
+
+    def post_validation(form):
+        form.add_error('global error')
+
+    assert MyForm(request=RequestFactory().post('/', {'-': '-'}), post_validation=post_validation).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
+
+
+def test_null_field_factory():
+    class ShouldBeNullField(models.Field):
+        pass
+
+    class FooModel(models.Model):
+        should_be_null = ShouldBeNullField()
+        foo = models.IntegerField()
+
+    register_field_factory(ShouldBeNullField, lambda **_: None)
+
+    form = Form.from_model(data=None, model=FooModel)
+    assert list(form.fields_by_name.keys()) == ['foo']

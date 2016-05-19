@@ -1,12 +1,25 @@
 Changelog
 =========
-2.2.0 (2014-04-25)
+
+3.0.0 (2016-05-26)
+~~~~~~~~~~~~~~~~~~
+
+* Parse modes introduced. This fixes validation of partially submitted forms, using tri.form for filters and other problems.
+
+* Refactored to use tri.declarative @dispatch
+
+* Added __field__ endpoint handling. This is useful for e.g. loading choices with ajax instead of up front.
+
+* Form.errors is now a set
+
+
+2.2.0 (2016-04-25)
 ~~~~~~~~~~~~~~~~~~
 
 * Minor bugfix for fields-from-model handling of auto fields
 
 
-2.1.0 (2014-04-20)
+2.1.0 (2016-04-20)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix broken blank field value on fields from django model when django model
