@@ -75,6 +75,7 @@ def test_parse():
             manages=['DEF  ', 'KTH '],
             a_date='  2014-02-12  ',
             a_time='  01:02:03  ',
+            **{'-': '-'}
         )))
 
     form.validate()
@@ -136,6 +137,7 @@ def test_parse_errors():
             admin='foo',
             a_date='fooasd',
             a_time='asdasd',
+            **{'-': ''}
         ),
         post_validation=post_validation)
 
@@ -324,7 +326,10 @@ def test_heading():
 
 
 def test_info():
-    assert '#foo#' in Form(data={}, fields=[Field.info(value='#foo#')]).validate().table()
+    form = Form(data={}, fields=[Field.info(value='#foo#')])
+    form.validate()
+    assert form.is_valid()
+    assert '#foo#' in form.table()
 
 
 def test_radio():
@@ -351,8 +356,8 @@ def test_choice_not_required():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=['bar'])
 
-    assert MyForm(request=Struct(method='POST', POST=Data(foo='bar'))).validate().fields[0].value == 'bar'
-    assert MyForm(request=Struct(method='POST', POST=Data(foo=''))).validate().fields[0].value is None
+    assert MyForm(request=Struct(method='POST', POST=Data(foo='bar', **{'-': '-'}))).validate().fields[0].value == 'bar'
+    assert MyForm(request=Struct(method='POST', POST=Data(foo='', **{'-': '-'}))).validate().fields[0].value is None
 
 
 def test_multi_choice():
@@ -527,10 +532,10 @@ def test_boolean_initial_true():
 
     # If there are arguments, but not for key foo it means checkbox for foo has been unchecked.
     # Field foo should therefore be false.
-    form = Form(data=Data(bar='baz'), fields=fields).validate()
+    form = Form(data=Data(bar='baz', **{'-': '-'}), fields=fields).validate()
     assert form.fields_by_name['foo'].value is False
 
-    form = Form(data=Data(foo='on', bar='baz'), fields=fields).validate()
+    form = Form(data=Data(foo='on', bar='baz', **{'-': '-'}), fields=fields).validate()
     assert form.fields_by_name['foo'].value is True
 
 
@@ -553,3 +558,55 @@ def test_file():
     assert form.is_valid(), {x.name: x.errors for x in form.fields}
     form.apply(instance)
     assert instance.foo == '1'
+
+
+def test_mode_full_form_from_request():
+    class FooForm(Form):
+        foo = Field(required=True)
+        bar = Field(required=True)
+        baz = Field.boolean(initial=True)
+
+    # empty POST
+    form = FooForm(request=Struct(method='POST', POST={'-': '-'}))
+    assert not form.is_valid()
+    assert form.errors == []
+    assert form.fields_by_name['foo'].errors == {'This field is required'}
+    assert form.fields_by_name['bar'].errors == {'This field is required'}
+    assert form.fields_by_name['baz'].errors == set()  # not present in POST request means false
+
+    form = FooForm(request=Struct(method='POST', POST={'-': '-', 'foo': 'x', 'bar': 'y', 'baz': 'false'}))
+    assert form.is_valid()
+    assert form.fields_by_name['baz'].value is False
+
+    # all params in GET
+    form = FooForm(request=Struct(method='GET', GET={'-': '-'}))
+    assert not form.is_valid()
+    assert form.fields_by_name['foo'].errors == {'This field is required'}
+    assert form.fields_by_name['bar'].errors == {'This field is required'}
+    assert form.fields_by_name['baz'].errors == set()  # not present in POST request means false
+
+    form = FooForm(request=Struct(method='GET', GET={'-': '-', 'foo': 'x', 'bar': 'y', 'baz': 'on'}))
+    assert not form.errors
+    assert not form.fields[0].errors
+
+    assert form.is_valid()
+
+
+def test_mode_initials_from_get():
+    class FooForm(Form):
+        foo = Field(required=True)
+        bar = Field(required=True)
+        baz = Field.boolean(initial=True)
+
+    # empty GET
+    form = FooForm(request=Struct(method='GET', GET={}))
+    assert form.is_valid()
+
+    # initials from GET
+    form = FooForm(request=Struct(method='GET', GET={'foo': 'foo_initial'}))
+    assert form.is_valid()
+    assert form.fields_by_name['foo'].value == 'foo_initial'
+
+    assert form.fields_by_name['foo'].errors == set()
+    assert form.fields_by_name['bar'].errors == set()
+    assert form.fields_by_name['baz'].errors == set()

@@ -48,6 +48,9 @@ def capitalize(s):
 # (at least) this key-value.
 AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
 
+FULL_FORM_FROM_REQUEST = 'full_form_from_request'
+INITIALS_FROM_GET = 'initials_from_get'
+
 
 def bool_parse(string_value):
     s = string_value.lower()
@@ -788,6 +791,9 @@ class Form(object):
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
 
+        if data is None:
+            data = {}
+
         def unbound_fields():
             if fields is not None:
                 for field in fields:
@@ -811,16 +817,24 @@ class Form(object):
         else:
             self.instance = None
 
+        self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
+        if self.mode == INITIALS_FROM_GET and request:
+            assert request.method == 'GET'
+
         if data:
             for field in self.fields:
                 if field.is_list:
                     try:
+                        # django and similar
                         # noinspection PyUnresolvedReferences
                         raw_data_list = data.getlist(field.name)
                     except AttributeError:  # pragma: no cover
+                        # werkzeug and similar
                         raw_data_list = data.get(field.name)
+
                     if raw_data_list and field.strip_input:
                         raw_data_list = [x.strip() for x in raw_data_list]
+
                     if raw_data_list is not None:
                         field.raw_data_list = raw_data_list
                 else:
@@ -835,8 +849,6 @@ class Form(object):
         """ :type model: django.db.models.Model """
         self._valid = None
         self.errors = []
-        self.should_parse = bool(data)
-        """ :type: bool"""
         self.evaluate()
         self.is_valid()
         """ :type: list of str """
@@ -896,6 +908,9 @@ class Form(object):
             if not field.editable:
                 continue
 
+            if self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None:
+                continue
+
             if field.is_list:
                 if field.raw_data_list is not None:
                     field.parsed_data_list = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
@@ -918,34 +933,33 @@ class Form(object):
         self.fields_by_name = {field.name: field for field in self.fields}
 
     def validate(self):
-        if self.should_parse:
-            self.parse()
+        self.parse()
 
-            for field in self.fields:
-                if not field.editable:
-                    continue
-
-                value = None
-                value_list = None
-                if field.is_list:
-                    if field.parsed_data_list is not None:
-                        value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list]
-                else:
-                    value = self.validate_field_parsed_data(field, field.parsed_data)
-
-                if not field.errors:
-                    if field.required and not value and not value_list:
-                        field.errors.add('This field is required')
-                    else:
-                        field.value = value
-                        field.value_list = value_list
-
-        else:
-            for field in self.fields:
+        for field in self.fields:
+            if self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None:
                 if field.is_list:
                     field.value_list = field.initial_list
                 else:
                     field.value = field.initial
+                continue
+
+            if not field.editable:
+                continue
+
+            value = None
+            value_list = None
+            if field.is_list:
+                if field.parsed_data_list is not None:
+                    value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list]
+            else:
+                value = self.validate_field_parsed_data(field, field.parsed_data)
+
+            if not field.errors:
+                if self.mode is FULL_FORM_FROM_REQUEST and field.required and not value and not value_list:
+                    field.errors.add('This field is required')
+                else:
+                    field.value = value
+                    field.value_list = value_list
 
         for field in self.fields:
             field.post_validation(form=self, field=field)
@@ -959,7 +973,7 @@ class Form(object):
             parsed_data=value)
         if is_valid and not field.errors and field.parsed_data is not None:
             value = field.parsed_data
-        elif not is_valid and self.should_parse:
+        elif not is_valid and self.mode:
             if not isinstance(error, set):
                 error = {error}
             for e in error:
