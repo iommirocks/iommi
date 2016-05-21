@@ -166,6 +166,8 @@ class Variable(Frozen, VariableBase):
                 raise QueryException('Invalid operator "%s" for variable "%s"' % (op, variable.name))
             if variable.attr is None:
                 return Q()
+            if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
+                return Q(**{variable.attr: None})
             try:
                 instance = kwargs['choices'].get(**{variable.value_to_q_lookup: text_type(value_string_or_f)})
             except ObjectDoesNotExist:
