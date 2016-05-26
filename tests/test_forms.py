@@ -265,6 +265,10 @@ def test_render_template_string():
     assert Form(data=Data(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).compact() == '7 compact\n' + AVOID_EMPTY_FORM
 
 
+def test_render_template():
+    assert '<form' in Form(request=RequestFactory().get('/'), data=Data(foo='7'), fields=[Field(name='foo')]).render()
+
+
 def test_render_attrs():
     assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs={'foo': '1'})]).fields[0].render_attrs() == ' foo="1"'
     assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).fields[0].render_attrs() == ' '
@@ -647,3 +651,15 @@ def test_null_field_factory():
 
     form = Form.from_model(data=None, model=FooModel)
     assert list(form.fields_by_name.keys()) == ['foo']
+
+
+@pytest.mark.django_db
+def test_choice_queryset_ajax():
+    User.objects.create(username='foo')
+    user2 = User.objects.create(username='bar')
+
+    class MyForm(Form):
+        username = Field.choice_queryset(choices=User.objects.all())
+
+    form = MyForm(request=RequestFactory().get('/'))
+    assert form.endpoint_dispatch(key='field__username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]

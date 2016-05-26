@@ -1,0 +1,32 @@
+<input type="hidden" name="{{ field.name }}" id="{{ field.id }}"{{ field.render_attrs }} style="width: 176px;"/>
+
+
+<script type="text/javascript">
+    var id_field = "#{{ field.id }}";
+    $(id_field).select2({
+        ajax: {
+            url: "",
+            dataType: "json",
+            data: function (term, page) {
+                return {
+                    '{{ field.endpoint_url }}': term, // search term
+                    page: page
+                };
+            },
+            results: function (data) {
+                return {results: data};
+            },
+            cache: true
+        },
+        allowClear: true,
+        minimumInputLength: 2,
+        initSelection : function (element, callback) {
+            var data = {id: "{{ field.value.pk }}", text: "{{ field.value }}"};
+            callback(data);
+        }
+    });
+
+    {% if field.value %}
+        $(id_field).select2("val", "{{ field.value }}", true);
+    {% endif %}
+</script>
