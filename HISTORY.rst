@@ -1,6 +1,15 @@
 Changelog
 =========
 
+
+3.2.0 (2016-05-??)
+~~~~~~~~~~~~~~~~~~
+
+* default_help_text should not blow up on invalid references
+
+* Removed some dead code
+
+
 3.1.0 (2016-05-26)
 ~~~~~~~~~~~~~~~~~~
 
