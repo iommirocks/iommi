@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-3.2.0 (2016-05-??)
+3.2.0 (2016-05-26)
 ~~~~~~~~~~~~~~~~~~
 
 * default_help_text should not blow up on invalid references
