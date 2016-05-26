@@ -12,6 +12,8 @@ Changelog
 
 * Form.errors is now a set
 
+* views.create_object/edit_object/create_or_edit_object now default parameter `render` to render_to_response instead of render_to_string. This is a potential braking change.
+
 
 2.2.0 (2016-04-25)
 ~~~~~~~~~~~~~~~~~~
