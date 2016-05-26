@@ -10,6 +10,7 @@ import django
 
 import re
 from django.core.exceptions import ValidationError
+from django.db.models.fields import FieldDoesNotExist
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
 from django.template import RequestContext
@@ -35,7 +36,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '3.1.0'
+__version__ = '3.2.0'
 
 
 def capitalize(s):
@@ -213,7 +214,10 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
 def default_help_text(field, **_):
     if field.model is None or field.attr is None:
         return ''
-    return field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or ''
+    try:
+        return field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or ''
+    except FieldDoesNotExist:  # pragma: no cover
+        return ''
 
 
 class FieldBase(NamedStruct):
@@ -509,9 +513,6 @@ class Field(Frozen, FieldBase):
 
         def choice_is_valid(form, field, parsed_data):
             del form
-            if not field.required and parsed_data is None:
-                return True, ''
-
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
         def post_validation(form, field):
@@ -765,8 +766,6 @@ class Field(Frozen, FieldBase):
             return ', '.join(result)
 
         def is_valid_comma_separated(form, field, parsed_data):
-            if parsed_data is None:
-                return True, None
             errors = set()
             for x in parsed_data.split(','):
                 x = x.strip()
@@ -991,7 +990,8 @@ class Form(object):
                 if field.parsed_data_list is not None:
                     value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list]
             else:
-                value = self.validate_field_parsed_data(field, field.parsed_data)
+                if field.parsed_data is not None:
+                    value = self.validate_field_parsed_data(field, field.parsed_data)
 
             if not field.errors:
                 if self.mode is FULL_FORM_FROM_REQUEST and field.required and not value and not value_list:

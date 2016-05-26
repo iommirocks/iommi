@@ -636,7 +636,7 @@ def test_form_errors_function():
     def post_validation(form):
         form.add_error('global error')
 
-    assert MyForm(request=RequestFactory().post('/', {'-': '-'}), post_validation=post_validation).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
+    assert MyForm(request=RequestFactory().post('/', {'-': '-', 'foo': 'asd'}), post_validation=post_validation).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
 
 
 def test_null_field_factory():
