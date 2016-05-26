@@ -1,10 +1,12 @@
 Changelog
 =========
 
-3.0.1 (----------)
+3.1.0 (2016-05-26)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixed confusing naming of Field.text to Field.textarea
+
+* Support for ajax backend. New parameters to Field: endpoint_url and endpoint_dispatch. For now only implemented for Field.choice_queryset and tailored for select2. To use it: specify template_name='tri_form/choice_select2.html'.
 
 
 3.0.0 (2016-05-26)

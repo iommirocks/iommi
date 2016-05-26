@@ -1,12 +1,12 @@
 from os.path import dirname, abspath, join
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
 from examples.models import Foo
 from tri.form import Form, Field
-from tri.form.views import create_or_edit_object, create_object, edit_object
+from tri.form.views import create_object, edit_object
 
 
 def index(request):
@@ -47,7 +47,7 @@ def example_1(request):
                 </body>
             </html>
         """,
-        form.render(request),
+        form.render(),
         message))
 
 

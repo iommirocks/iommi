@@ -35,7 +35,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '3.0.0'
+__version__ = '3.1.0'
 
 
 def capitalize(s):
@@ -270,6 +270,10 @@ class FieldBase(NamedStruct):
     """ @type: (Field, object) -> None """
     write_to_instance = NamedStructField(default=default_write_to_instance)
     """ @type: (Field, object, object) -> None """
+
+    endpoint_dispatch = NamedStructField(default=lambda **_: None)
+    """ @type: (Form, Field, str) -> None """
+    endpoint_url = NamedStructField(default=None)
 
 
 class BoundField(FieldBase):
@@ -534,10 +538,23 @@ class Field(Frozen, FieldBase):
             del form
             return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
+        def choice_queryset_endpoint_dispatch(field, value, **_):
+            limit = 10
+            result = field.choices.filter(**{field.attr + '__icontains': value}).values_list(*['pk', field.attr])
+            return [
+                dict(
+                    id=row[0],
+                    text=row[1],
+                )
+                for row in result[:limit]
+            ]
+
         setdefaults_path(
             kwargs,
             parse=lambda form, field, string_value: field.model.objects.get(pk=string_value) if string_value else None,
             choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value),
+            endpoint_url=lambda form, field: '?' + form.endpoint_dispatch_prefix + '__' + field.name,
+            endpoint_dispatch=choice_queryset_endpoint_dispatch,
             is_valid=choice_queryset_is_valid,
         )
         return Field.choice(**kwargs)
@@ -801,12 +818,13 @@ class Form(object):
 
     See tri.declarative docs for more on this dual style of declaration.
     """
-    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None):
+    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix='form'):
         """
         :type fields: list of Field
         :type data: dict[basestring, basestring]
         :type model: django.db.models.Model
         """
+        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
         self.request = request
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
@@ -1014,7 +1032,11 @@ class Form(object):
     def table(self):
         return self.render(style='table', template_name=None)
 
-    def render(self, request=None, style='compact', template_name="tri_form/form.html"):
+    def render(self, style='compact', template_name="tri_form/form.html"):
+        """
+        :type style: str| unicode
+        :type template_name: str | unicode | None
+        """
         self.style = style
         r = []
         for field in self.fields:
@@ -1032,7 +1054,7 @@ class Form(object):
             return mark_safe('\n'.join(r))
         else:
             return render_to_string(
-                context_instance=RequestContext(request, dict(form=self)),
+                context_instance=RequestContext(self.request, dict(form=self)),
                 template_name=template_name,
             )
 
@@ -1061,3 +1083,10 @@ class Form(object):
         if field_errors:
             r['fields'] = field_errors
         return r
+
+    def endpoint_dispatch(self, key, value):
+        if key.startswith('field__'):
+            key = key[len('field__'):]
+            field = self.fields_by_name.get(key, None)
+            if field is not None:
+                return field.endpoint_dispatch(form=self, field=field, value=value)
