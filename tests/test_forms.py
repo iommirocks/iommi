@@ -82,7 +82,6 @@ def test_parse():
             **{'-': '-'}
         )))
 
-    form.validate()
     assert [x.errors for x in form.fields] == [set() for _ in form.fields]
     assert form.is_valid()
     assert form.fields_by_name['party'].parsed_data == 'ABC'
@@ -193,27 +192,32 @@ def test_initial_list_from_instance():
 
 
 def test_show():
-    assert list(Form(data=Data(), fields=[Field(name='foo', show=False)]).validate().fields_by_name.keys()) == []
-    assert list(Form(data=Data(), fields=[Field(name='foo', show=lambda form, field: False)]).validate().fields_by_name.keys()) == []
+    assert list(Form(data=Data(), fields=[Field(name='foo', show=False)]).fields_by_name.keys()) == []
+    assert list(Form(data=Data(), fields=[Field(name='foo', show=lambda form, field: False)]).fields_by_name.keys()) == []
 
 
 def test_non_editable():
-    assert Form(data=Data(), fields=[Field(name='foo', editable=False)]).validate().fields[0].input_template == 'tri_form/non_editable.html'
+    assert Form(data=Data(), fields=[Field(name='foo', editable=False)]).fields[0].input_template == 'tri_form/non_editable.html'
+
+
+def test_text_fields():
+    assert '<input type="text" ' in Form(data=Data(), fields=[Field.text(name='foo')]).compact()
+    assert '<textarea' in Form(data=Data(), fields=[Field.textarea(name='foo')]).compact()
 
 
 def test_integer_field():
-    assert Form(data=Data(foo=' 7  '), fields=[Field.integer(name='foo')]).validate().fields[0].parsed_data == 7
-    actual_errors = Form(data=Data(foo=' foo  '), fields=[Field.integer(name='foo')]).validate().fields[0].errors
+    assert Form(data=Data(foo=' 7  '), fields=[Field.integer(name='foo')]).fields[0].parsed_data == 7
+    actual_errors = Form(data=Data(foo=' foo  '), fields=[Field.integer(name='foo')]).fields[0].errors
     assert_one_error_and_matches_reg_exp(actual_errors, "invalid literal for int\(\) with base 10: u?'foo'")
 
 
 def test_float_field():
-    assert Form(data=Data(foo=' 7.3  '), fields=[Field.float(name='foo')]).validate().fields[0].parsed_data == 7.3
-    assert Form(data=Data(foo=' foo  '), fields=[Field.float(name='foo')]).validate().fields[0].errors == {"could not convert string to float: foo"}
+    assert Form(data=Data(foo=' 7.3  '), fields=[Field.float(name='foo')]).fields[0].parsed_data == 7.3
+    assert Form(data=Data(foo=' foo  '), fields=[Field.float(name='foo')]).fields[0].errors == {"could not convert string to float: foo"}
 
 
 def test_email_field():
-    assert Form(data=Data(foo=' 5  '), fields=[Field.email(name='foo')]).validate().fields[0].errors == {u'Enter a valid email address.'}
+    assert Form(data=Data(foo=' 5  '), fields=[Field.email(name='foo')]).fields[0].errors == {u'Enter a valid email address.'}
     assert Form(data=Data(foo='foo@example.com'), fields=[Field.email(name='foo')]).is_valid()
 
 
@@ -230,13 +234,13 @@ def test_comma_separated_errors_on_parse():
 
     assert Form(
         data=Data(foo='5, 7'),
-        fields=[Field.comma_separated(Field(name='foo', parse=raise_always_value_error))]).validate().fields[0].errors == {
+        fields=[Field.comma_separated(Field(name='foo', parse=raise_always_value_error))]).fields[0].errors == {
             u'Invalid value "5": foo 5!',
             u'Invalid value "7": foo 7!'}
 
     assert Form(
         data=Data(foo='5, 7'),
-        fields=[Field.comma_separated(Field(name='foo', parse=raise_always_validation_error))]).validate().fields[0].errors == {
+        fields=[Field.comma_separated(Field(name='foo', parse=raise_always_validation_error))]).fields[0].errors == {
             u'Invalid value "5": foo 5!',
             u'Invalid value "5": bar 5!',
             u'Invalid value "7": foo 7!',
@@ -246,29 +250,29 @@ def test_comma_separated_errors_on_parse():
 def test_comma_separated_errors_on_validation():
     assert Form(
         data=Data(foo='5, 7'),
-        fields=[Field.comma_separated(Field(name='foo', is_valid=lambda parsed_data, **_: (False, 'foo %s!' % parsed_data)))]).validate().fields[0].errors == {
+        fields=[Field.comma_separated(Field(name='foo', is_valid=lambda parsed_data, **_: (False, 'foo %s!' % parsed_data)))]).fields[0].errors == {
             u'Invalid value "5": foo 5!',
             u'Invalid value "7": foo 7!'}
 
 
 def test_phone_field():
-    assert Form(data=Data(foo=' asdasd  '), fields=[Field.phone_number(name='foo')]).validate().fields[0].errors == {u'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'}
+    assert Form(data=Data(foo=' asdasd  '), fields=[Field.phone_number(name='foo')]).fields[0].errors == {u'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'}
     assert Form(data=Data(foo='+1 (212) 123 4567'), fields=[Field.phone_number(name='foo')]).is_valid()
     assert Form(data=Data(foo='+46 70 123 123'), fields=[Field.phone_number(name='foo')]).is_valid()
 
 
 def test_render_template_string():
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).validate().compact() == '7 compact\n' + AVOID_EMPTY_FORM
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).compact() == '7 compact\n' + AVOID_EMPTY_FORM
 
 
 def test_render_attrs():
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs={'foo': '1'})]).validate().fields[0].render_attrs() == ' foo="1"'
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).validate().fields[0].render_attrs() == ' '
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs={'foo': '1'})]).fields[0].render_attrs() == ' foo="1"'
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).fields[0].render_attrs() == ' '
 
 
 def test_render_attrs_new_style():
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs__foo='1')]).validate().fields[0].render_attrs() == ' foo="1"'
-    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).validate().fields[0].render_attrs() == ' '
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo', attrs__foo='1')]).fields[0].render_attrs() == ' foo="1"'
+    assert Form(data=Data(foo='7'), fields=[Field(name='foo')]).fields[0].render_attrs() == ' '
 
 
 def test_bound_field_render_css_classes():
@@ -298,7 +302,7 @@ def test_setattr_path():
 
 
 def test_multi_select_with_one_value_only():
-    assert ['a'] == Form(data=Data(foo=['a']), fields=[Field.multi_choice(name='foo', choices=['a', 'b'])]).validate().fields[0].value_list
+    assert ['a'] == Form(data=Data(foo=['a']), fields=[Field.multi_choice(name='foo', choices=['a', 'b'])]).fields[0].value_list
 
 
 def test_render_table():
@@ -312,7 +316,7 @@ def test_render_table():
                 help_text='^^^13^^^',
                 label='***17***',
             )
-        ]).validate()
+        ])
     table = form.table()
     assert '!!!7!!!' in table
     assert '###5###' in table
@@ -326,12 +330,11 @@ def test_render_table():
 
 
 def test_heading():
-    assert '<th colspan="2">#foo#</th>' in Form(data={}, fields=[Field.heading(label='#foo#')]).validate().table()
+    assert '<th colspan="2">#foo#</th>' in Form(data={}, fields=[Field.heading(label='#foo#')]).table()
 
 
 def test_info():
     form = Form(data={}, fields=[Field.info(value='#foo#')])
-    form.validate()
     assert form.is_valid()
     assert '#foo#' in form.table()
 
@@ -342,35 +345,35 @@ def test_radio():
         'b',
         'c',
     ]
-    soup = BeautifulSoup(Form(data=Data(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).validate().table())
+    soup = BeautifulSoup(Form(data=Data(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).table())
     assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
     assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
 
 
 def test_hidden():
-    soup = BeautifulSoup(Form(data=Data(foo='1'), fields=[Field.hidden(name='foo')]).validate().table())
+    soup = BeautifulSoup(Form(data=Data(foo='1'), fields=[Field.hidden(name='foo')]).table())
     assert [(x.attrs['type'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', '1'), ('hidden', '-')]
 
 
 def test_password():
-    assert ' type="password" ' in Form(data=Data(foo='1'), fields=[Field.password(name='foo')]).validate().table()
+    assert ' type="password" ' in Form(data=Data(foo='1'), fields=[Field.password(name='foo')]).table()
 
 
 def test_choice_not_required():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=['bar'])
 
-    assert MyForm(request=Struct(method='POST', POST=Data(foo='bar', **{'-': '-'}))).validate().fields[0].value == 'bar'
-    assert MyForm(request=Struct(method='POST', POST=Data(foo='', **{'-': '-'}))).validate().fields[0].value is None
+    assert MyForm(request=Struct(method='POST', POST=Data(foo='bar', **{'-': '-'}))).fields[0].value == 'bar'
+    assert MyForm(request=Struct(method='POST', POST=Data(foo='', **{'-': '-'}))).fields[0].value is None
 
 
 def test_multi_choice():
-    soup = BeautifulSoup(Form(data=Data(foo=['0']), fields=[Field.multi_choice(name='foo', choices=['a'])]).validate().table())
+    soup = BeautifulSoup(Form(data=Data(foo=['0']), fields=[Field.multi_choice(name='foo', choices=['a'])]).table())
     assert [x.attrs['multiple'] for x in soup.find_all('select')] == ['']
 
 
 def test_help_text_from_model():
-    assert Form(data=Data(foo='1'), fields=[Field.from_model(model=Foo, field_name='foo')], model=Foo).validate().fields[0].help_text == 'foo_help_text'
+    assert Form(data=Data(foo='1'), fields=[Field.from_model(model=Foo, field_name='foo')], model=Foo).fields[0].help_text == 'foo_help_text'
 
 
 @pytest.mark.django_db
@@ -381,8 +384,8 @@ def test_choice_query():
     class MyForm(Form):
         foo = Field.multi_choice_queryset(attr=None, model=User, choices=User.objects.exclude(username=user2.username))
 
-    assert [x.pk for x in MyForm().validate().fields[0].choices] == [user.pk]
-    assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).validate().fields[0].errors == {'%s not in available choices' % user2.pk}
+    assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
+    assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
 
 
 def test_field_from_model():
@@ -392,7 +395,7 @@ def test_field_from_model():
         class Meta:
             model = Foo
 
-    assert FooForm(data=Data(foo='1')).validate().fields[0].value == 1
+    assert FooForm(data=Data(foo='1')).fields[0].value == 1
     assert not FooForm(data=Data(foo='asd')).is_valid()
 
 
@@ -401,7 +404,7 @@ def test_form_from_model_valid_form():
         model=FormFromModelTest,
         include=['f_int', 'f_float', 'f_bool'],
         data=Data(f_int='1', f_float='1.1', f_bool='true')
-    ).validate().fields] == [
+    ).fields] == [
         1,
         1.1,
         True
@@ -413,7 +416,7 @@ def test_form_from_model_invalid_form():
         model=FormFromModelTest,
         exclude=['f_int_excluded'],
         data=Data(f_int='1.1', f_float='true', f_bool='asd')
-    ).validate().fields]
+    ).fields]
 
     assert len(actual_errors) == 3
     assert {'could not convert string to float: true'} in actual_errors
@@ -511,7 +514,7 @@ def test_render_datetime_iso():
         Field.datetime(
             name='foo',
             initial=datetime(2001, 2, 3, 12, 13, 14, 7777))
-    ]).validate().table()
+    ]).table()
     assert '2001-02-03 12:13:14' in table
     assert '7777' not in table
 
@@ -531,21 +534,21 @@ def test_render_custom():
             name='foo',
             initial='not sentinel value',
             render_value=lambda form, field, value: sentinel),
-    ]).validate().table()
+    ]).table()
 
 
 def test_boolean_initial_true():
     fields = [Field.boolean(name='foo', initial=True), Field(name='bar', required=False)]
 
-    form = Form(data=Data(), fields=fields).validate()
+    form = Form(data=Data(), fields=fields)
     assert form.fields_by_name['foo'].value is True
 
     # If there are arguments, but not for key foo it means checkbox for foo has been unchecked.
     # Field foo should therefore be false.
-    form = Form(data=Data(bar='baz', **{'-': '-'}), fields=fields).validate()
+    form = Form(data=Data(bar='baz', **{'-': '-'}), fields=fields)
     assert form.fields_by_name['foo'].value is False
 
-    form = Form(data=Data(foo='on', bar='baz', **{'-': '-'}), fields=fields).validate()
+    form = Form(data=Data(foo='on', bar='baz', **{'-': '-'}), fields=fields)
     assert form.fields_by_name['foo'].value is True
 
 

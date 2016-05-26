@@ -418,6 +418,14 @@ class Field(Frozen, FieldBase):
     def text(**kwargs):
         setdefaults_path(
             kwargs,
+            input_type='text',
+        )
+        return Field(**kwargs)
+
+    @staticmethod
+    def textarea(**kwargs):
+        setdefaults_path(
+            kwargs,
             input_template='tri_form/text.html',
         )
         return Field(**kwargs)

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+3.0.1 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed confusing naming of Field.text to Field.textarea
+
+
 3.0.0 (2016-05-26)
 ~~~~~~~~~~~~~~~~~~
 
