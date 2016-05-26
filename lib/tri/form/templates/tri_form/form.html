@@ -1,0 +1,15 @@
+<form action="" method="post">{% csrf_token %}
+
+    {% for error in form.errors %}
+    <div class="error">{{ error }}</div>
+    {% endfor %}
+
+    <div>
+        {{ form }}
+    </div>
+
+    <div class="form_buttons clear">
+        <input type="submit" class="button" value="Submit" accesskey="s" />
+    </div>
+</form>
+

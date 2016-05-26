@@ -12,6 +12,7 @@ import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
+from django.template import RequestContext
 from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
@@ -854,7 +855,8 @@ class Form(object):
                         field.raw_data = field.raw_data.strip()
 
         self.post_validation = post_validation if post_validation is not None else lambda form: None
-        self.fields_by_name = {field.name: field for field in self.fields}
+        self.fields_by_name = None
+        """ :type: dict[str, BoundField] """
         self.style = None
         self.model = model
         """ :type model: django.db.models.Model """
@@ -941,7 +943,7 @@ class Form(object):
         for field in self.fields:
             field.evaluate()
         self.fields = [field for field in self.fields if should_show(field)]
-        self.fields_by_name = {field.name: field for field in self.fields}
+        self.fields_by_name = Struct({field.name: field for field in self.fields})
 
     def validate(self):
         self.parse()
@@ -999,12 +1001,12 @@ class Form(object):
         return self.table()
 
     def compact(self):
-        return self.render(style='compact')
+        return self.render(template_name=None)
 
     def table(self):
-        return self.render(style='table')
+        return self.render(style='table', template_name=None)
 
-    def render(self, style):
+    def render(self, request=None, style='compact', template_name="tri_form/form.html"):
         self.style = style
         r = []
         for field in self.fields:
@@ -1017,7 +1019,14 @@ class Form(object):
             else:
                 r.append(render_to_string(field.template.format(style=style), context))
         r.append(AVOID_EMPTY_FORM)
-        return mark_safe('\n'.join(r))
+
+        if template_name is None:
+            return mark_safe('\n'.join(r))
+        else:
+            return render_to_string(
+                context_instance=RequestContext(request, dict(form=self)),
+                template_name=template_name,
+            )
 
     def apply(self, instance):
         """

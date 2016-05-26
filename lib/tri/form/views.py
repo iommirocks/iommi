@@ -1,7 +1,7 @@
 from __future__ import unicode_literals, absolute_import
 from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.template.loader import render_to_string
 from tri.form import Form
 from tri.declarative import extract_subkeys
 
@@ -11,7 +11,7 @@ def edit_object(
         instance,
         redirect_to=None,
         on_save=lambda **kwargs: None,
-        render=render_to_string,
+        render=render_to_response,
         redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
         **kwargs):
     assert 'is_create' not in kwargs
@@ -34,7 +34,7 @@ def create_object(
         model,
         redirect_to=None,
         on_save=lambda **kwargs: None,
-        render=render_to_string,
+        render=render_to_response,
         redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
         **kwargs):
     assert 'is_create' not in kwargs
@@ -56,7 +56,7 @@ def create_or_edit_object(
         instance=None,
         redirect_to=None,
         on_save=lambda **kwargs: None,
-        render=render_to_string,
+        render=render_to_response,
         redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
         **kwargs):
     kwargs.setdefault('form__class', Form.from_model)
