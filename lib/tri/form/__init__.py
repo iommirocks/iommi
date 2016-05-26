@@ -18,7 +18,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.struct import Struct, Frozen
-from tri.declarative import evaluate, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY
+from tri.declarative import evaluate_recursive, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY
 
 from tri.form.render import render_attrs
 
@@ -34,7 +34,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '2.2.0'
+__version__ = '3.0.0'
 
 
 def capitalize(s):
@@ -209,6 +209,12 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
     return [x for x in result if x is not None]
 
 
+def default_help_text(field, **_):
+    if field.model is None or field.attr is None:
+        return ''
+    return field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or ''
+
+
 class FieldBase(NamedStruct):
     name = NamedStructField()
 
@@ -247,7 +253,7 @@ class FieldBase(NamedStruct):
 
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
-    help_text = NamedStructField(default=lambda form, field: '' if field.model is None else field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or '')
+    help_text = NamedStructField(default=default_help_text)
 
     editable = NamedStructField(default=True)
     strip_input = NamedStructField(default=True)
@@ -314,7 +320,7 @@ class BoundField(FieldBase):
         """
         members_to_evaluate = {k: v for k, v in self.items() if k != 'post_validation'}
         for k, v in members_to_evaluate.items():
-            self[k] = evaluate(v, form=self.form, field=self)
+            self[k] = evaluate_recursive(v, form=self.form, field=self)
         if not self.editable:
             # noinspection PyAttributeOutsideInit
             self.input_template = 'tri_form/non_editable.html'
@@ -514,12 +520,16 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def choice_queryset(**kwargs):
-        model = kwargs.pop('model')
+
+        def choice_queryset_is_valid(form, field, parsed_data):
+            del form
+            return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
+
         setdefaults_path(
             kwargs,
-            extra=Struct(model=model),
-            parse=lambda form, field, string_value: field.extra.model.objects.get(pk=string_value) if string_value else None,
+            parse=lambda form, field, string_value: field.model.objects.get(pk=string_value) if string_value else None,
             choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value),
+            is_valid=choice_queryset_is_valid,
         )
         return Field.choice(**kwargs)
 
@@ -747,12 +757,13 @@ class Field(Frozen, FieldBase):
 
 
 if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
-    def get_fields(model):  # pragma: no cover
+    def get_fields(model):
         # noinspection PyProtectedMember
         for field in model._meta.get_fields():
             yield field
 else:
-    def get_fields(model):
+    # This is actually covered by tests, but only in a specific version of django :P
+    def get_fields(model):  # pragma: no cover
         # noinspection PyProtectedMember
         for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
             yield field
@@ -819,7 +830,7 @@ class Form(object):
 
         self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
         if self.mode == INITIALS_FROM_GET and request:
-            assert request.method == 'GET'
+            assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
 
         if data:
             for field in self.fields:
@@ -848,7 +859,7 @@ class Form(object):
         self.model = model
         """ :type model: django.db.models.Model """
         self._valid = None
-        self.errors = []
+        self.errors = set()
         self.evaluate()
         self.is_valid()
         """ :type: list of str """
@@ -982,7 +993,7 @@ class Form(object):
         return value
 
     def add_error(self, msg):
-        self.errors.append(msg)
+        self.errors.add(msg)
 
     def __str__(self):
         return self.table()
