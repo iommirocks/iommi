@@ -277,7 +277,7 @@ class FieldBase(NamedStruct):
 
     endpoint_dispatch = NamedStructField(default=lambda **_: None)
     """ @type: (Form, Field, str) -> None """
-    endpoint_url = NamedStructField(default=None)
+    endpoint_path = NamedStructField(default=None)
 
 
 class BoundField(FieldBase):
@@ -541,7 +541,7 @@ class Field(Frozen, FieldBase):
 
         def choice_queryset_endpoint_dispatch(field, value, **_):
             limit = 10
-            result = field.choices.filter(**{field.attr + '__icontains': value}).values_list(*['pk', field.attr])
+            result = field.choices.filter(**{field.extra.endpoint_attr + '__icontains': value}).values_list(*['pk', field.extra.endpoint_attr])
             return [
                 dict(
                     id=row[0],
@@ -550,12 +550,14 @@ class Field(Frozen, FieldBase):
                 for row in result[:limit]
             ]
 
-        setdefaults_path(
+        kwargs = setdefaults_path(
+            Struct(),
             kwargs,
             parse=lambda form, field, string_value: field.model.objects.get(pk=string_value) if string_value else None,
             choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value),
-            endpoint_url=lambda form, field: '?' + form.endpoint_dispatch_prefix + '__' + field.name,
+            endpoint_path=lambda form, field: '__' + form.endpoint_dispatch_prefix + '__field__' + field.name,
             endpoint_dispatch=choice_queryset_endpoint_dispatch,
+            extra__endpoint_attr='name',
             is_valid=choice_queryset_is_valid,
         )
         return Field.choice(**kwargs)

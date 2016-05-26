@@ -659,7 +659,7 @@ def test_choice_queryset_ajax():
     user2 = User.objects.create(username='bar')
 
     class MyForm(Form):
-        username = Field.choice_queryset(choices=User.objects.all())
+        username = Field.choice_queryset(choices=User.objects.all(), extra__endpoint_attr='username')
 
     form = MyForm(request=RequestFactory().get('/'))
     assert form.endpoint_dispatch(key='field__username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]
