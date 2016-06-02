@@ -2,7 +2,8 @@ from __future__ import unicode_literals, absolute_import
 from datetime import date
 from django.db.models import Q, F
 import pytest
-from tests.models import Foo, Bar
+from django.test import RequestFactory
+from tests.models import Foo, Bar, Baz
 from tri.form import Field
 from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME
 from tri.struct import Struct
@@ -215,22 +216,20 @@ def test_choice_queryset():
     random_valid_obj = Foo.objects.all().order_by('?')[0]
 
     # test GUI
-    form = Query2(Struct(method='POST', POST=Data({'foo': 'asdasdasdasd'}))).form()
+    form = Query2(RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
     assert not form.is_valid()
-    form = Query2(Struct(method='POST', POST=Data({'foo': str(random_valid_obj.pk)}))).form()
+    form = Query2(RequestFactory().post('/', {'-': '-', 'foo': str(random_valid_obj.pk)})).form()
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
 
     # test query
-    # noinspection PyTypeChecker
-    query2 = Query2(request=Struct(method='POST', POST=Data({'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)})))
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)}))
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
 
     # test searching for something that does not exist
-    # noinspection PyTypeChecker
-    query2 = Query2(request=Struct(method='POST', POST=Data({'query': 'foo=%s' % str(11)})))
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s' % str(11)}))
     value_that_does_not_exist = 11
     assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
@@ -242,3 +241,22 @@ def test_from_model():
     t = Query.from_model(data=Foo.objects.all(), model=Foo)
     assert [x.name for x in t.variables] == ['id', 'value']
     assert [x.name for x in t.variables if x.show] == ['value']
+
+
+@pytest.mark.django_db
+def test_endpoint_dispatch():
+    Baz.objects.create(name='foo')
+    x = Baz.objects.create(name='bar')
+
+    class MyQuery(Query):
+        foo = Variable.choice_queryset(
+            gui__show=True,
+            gui__attr='name',
+            model=Baz,
+            choices=Baz.objects.all(),
+        )
+
+    query = MyQuery(RequestFactory().get('/'))
+
+    assert '__query__gui__field__foo' == query.form().fields_by_name.foo.endpoint_path
+    assert query.endpoint_dispatch(key='gui__field__foo', value='ar') == [{'id': x.pk, 'text': x.name}]

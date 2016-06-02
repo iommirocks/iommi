@@ -1,12 +1,20 @@
 Changelog
 =========
 
-2.0.0 (****-**-**)
+2.0.0 (2016-06-02)
 ~~~~~~~~~~~~~~~~~~
 
 * Cache form on Query
 
 * Render global form errors
+
+* Query.form() no longer takes a request parameter, since it was redundant anyway. This is a potential breaking change.
+
+* Correctly dispatch attr to underlying tri.form
+
+* Support for ajax backend. New parameter to Query: endpoint_dispatch_prefix.
+
+
 
 1.11.0 (2016-04-25)
 ~~~~~~~~~~~~~~~~~~~

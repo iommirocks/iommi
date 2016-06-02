@@ -14,7 +14,7 @@ from tri.form import Form, Field, bool_parse, member_from_model, expand_member, 
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '1.11.0'
+__version__ = '2.0.0'
 
 
 class QueryException(Exception):
@@ -264,11 +264,12 @@ class Query(object):
     """ :type: list of BoundVariable """
     bound_variable_by_name = {}
 
-    def __init__(self, request=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, request=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', **kwargs):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
         """
+        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
         self.request = request
         self._form = None
 
@@ -456,13 +457,19 @@ class Query(object):
         if any(v.freetext for v in self.variables):
             fields.append(Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
 
-        for variable in self.variables:
-            if variable.gui.show:
+        for variable in self.bound_variables:
+            if variable.gui is not None and variable.gui.show:
                 # pass gui__* parameters to the GUI component
-                params = merged(variable.gui, name=variable.name)
+                assert variable.name is not MISSING
+                assert variable.attr is not MISSING
+                params = merged(variable.gui, name=variable.name, attr=variable.attr)
                 fields.append(params.pop('class')(**params))
 
-        form = Form(request=self.request, fields=fields, **self.gui_kwargs)
+        form = Form(
+            request=self.request,
+            fields=fields,
+            endpoint_dispatch_prefix='__'.join([self.endpoint_dispatch_prefix, 'gui']),
+            **self.gui_kwargs)
         form.tri_query = self
         form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
         self._form = form
@@ -526,6 +533,10 @@ class Query(object):
         kwargs = collect_namespaces(kwargs)
         variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('variable', {}))
         return Query(data=data, model=model, instance=instance, variables=variables, post_validation=post_validation, **kwargs)
+
+    def endpoint_dispatch(self, key, value):
+        if key.startswith('gui__'):
+            return self.form().endpoint_dispatch(key=key[len('gui__'):], value=value)
 
 
 from .db_compat import setup, _variable_factory_by_django_field_type  # noqa

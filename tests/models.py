@@ -1,4 +1,4 @@
-from django.db.models import Model, IntegerField, ForeignKey
+from django.db.models import Model, IntegerField, ForeignKey, CharField
 
 
 class Foo(Model):
@@ -10,3 +10,7 @@ class Foo(Model):
 
 class Bar(Model):
     foo = ForeignKey(Foo)
+
+
+class Baz(Model):
+    name = CharField(max_length=255)
