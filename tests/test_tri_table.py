@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import json
+
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
@@ -1036,7 +1038,7 @@ def test_query_namespace_inject():
         foo = Table(
             data=[],
             model=Foo,
-            request=Struct(method='POST', POST={}, GET=Struct(urlencode=lambda: None)),
+            request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: None)),
             columns=[Column(name='foo', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
         foo.prepare(foo.request)
@@ -1054,3 +1056,24 @@ def test_from_model():
     t = Table.from_model(data=Foo.objects.all(), model=Foo)
     assert [x.name for x in t.columns] == ['id', 'a', 'b']
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
+
+
+@pytest.mark.django_db
+def test_ajax_endpoint():
+    f1 = Foo.objects.create(a=17, b="Hej")
+    f2 = Foo.objects.create(a=42, b="Hopp")
+
+    Bar(foo=f1, c=True).save()
+    Bar(foo=f2, c=False).save()
+
+    class TestTable(Table):
+        foo = Column.choice_queryset(
+            model=Foo,
+            choices=lambda table, column: Foo.objects.all(),
+            query__gui__extra__endpoint_attr='b',
+            query__show=True,
+            bulk__show=True,
+            query__gui__show=True)
+
+    result = render_table(request=RequestFactory().get("/", {'__query__gui__field__foo': 'hopp'}), table=TestTable(data=Bar.objects.all()))
+    assert json.loads(result.content) == [{'id': 2, 'text': 'Hopp'}]

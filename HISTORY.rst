@@ -1,6 +1,14 @@
 Changelog
 =========
 
+2.0.0 (2016-06-02)
+~~~~~~~~~~~~~~~~~~
+
+* Support for ajax backend
+
+* Dependent tri.form and tri.query libraries have new major versions
+
+
 1.16.0 (2016-04-25)
 ~~~~~~~~~~~~~~~~~~~
 

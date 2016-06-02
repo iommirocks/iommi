@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import json
 from collections import OrderedDict
 from itertools import groupby
 
@@ -423,6 +424,15 @@ class BoundColumn(ColumnBase):
     is_sorting = NamedStructField()
     """ :type: bool """
 
+    def __init__(self, **kwargs):
+        new_kwargs = setdefaults_path(
+            Struct(),
+            kwargs,
+            bulk__attr=kwargs.get('attr'),
+            query__attr=kwargs.get('attr'),
+        )
+        super(BoundColumn, self).__init__(**new_kwargs)
+
     def render_css_class(self):
         return render_class(self.attrs['class'])
 
@@ -766,7 +776,7 @@ class Table(object):
                 variables=variables,
                 **self.query_kwargs
             )
-            self.query_form = self.query.form(request) if self.query.variables else None
+            self.query_form = self.query.form() if self.query.variables else None
 
             self.query_error = ''
             if self.query_form:
@@ -799,6 +809,7 @@ class Table(object):
             self.bulk_form = Form(
                 data=request.POST,
                 fields=bulk_fields,
+                endpoint_dispatch_prefix='bulk',
                 **self.bulk_kwargs) if bulk_fields else None
 
         self._prepare_auto_rowspan()
@@ -842,6 +853,12 @@ class Table(object):
         kwargs = collect_namespaces(kwargs)
         columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=kwargs.pop('column', {}))
         return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
+
+    def endpoint_dispatch(self, key, value):
+        if key.startswith('query__'):
+            return self.query.endpoint_dispatch(key=key[len('query__'):], value=value)
+        if key.startswith('bulk__'):
+            return self.bulk.endpoint_dispatch(key=key[len('bulk__'):], value=value)
 
 
 class Link(Struct):
@@ -985,6 +1002,13 @@ def render_table(request,
         table = Table.from_model(**table_kwargs)
 
     table.prepare(request)
+    assert isinstance(table, Table)
+
+    for key, value in request.GET.items():
+        if key.startswith('__'):
+            data = table.endpoint_dispatch(key=key[2:], value=value)
+            if data:
+                return HttpResponse(json.dumps(data), content_type='application/json')
 
     context['bulk_form'] = table.bulk_form
     context['query_form'] = table.query_form
