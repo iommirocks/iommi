@@ -258,5 +258,5 @@ def test_endpoint_dispatch():
 
     query = MyQuery(RequestFactory().get('/'))
 
-    assert '__gui__field__foo' == query.form().fields_by_name.foo.endpoint_path
+    assert '__query__gui__field__foo' == query.form().fields_by_name.foo.endpoint_path
     assert query.endpoint_dispatch(key='gui__field__foo', value='ar') == [{'id': x.pk, 'text': x.name}]
