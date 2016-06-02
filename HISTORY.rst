@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.25.0 (2016-05-06)
+0.26.0 (2016-05-06)
 ~~~~~~~~~~~~~~~~~~~
 
 * Added `EMPTY` marker to `setdefaults_path` to avoid mixup when empty dict is 
