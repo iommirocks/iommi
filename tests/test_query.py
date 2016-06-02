@@ -3,7 +3,6 @@ from datetime import date
 from django.db.models import Q, F
 import pytest
 from django.test import RequestFactory
-from django.utils.encoding import smart_text
 from tests.models import Foo, Bar, Baz
 from tri.form import Field
 from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME
@@ -257,4 +256,7 @@ def test_endpoint_dispatch():
             choices=Baz.objects.all(),
         )
 
-    assert MyQuery(RequestFactory().get('/')).endpoint_dispatch(key='gui__field__foo', value='ar') == [{'id': x.pk, 'text': x.name}]
+    query = MyQuery(RequestFactory().get('/'))
+
+    assert '__gui__field__foo' == query.form().fields_by_name.foo.endpoint_path
+    assert query.endpoint_dispatch(key='gui__field__foo', value='ar') == [{'id': x.pk, 'text': x.name}]
