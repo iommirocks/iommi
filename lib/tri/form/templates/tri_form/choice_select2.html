@@ -9,7 +9,7 @@
             dataType: "json",
             data: function (term, page) {
                 return {
-                    '{{ field.endpoint_url }}': term, // search term
+                    '{{ field.endpoint_path }}': term, // search term
                     page: page
                 };
             },
