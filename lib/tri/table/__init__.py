@@ -25,7 +25,7 @@ from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
-__version__ = '1.16.0'
+__version__ = '2.0.0'
 
 LAST = LAST
 
