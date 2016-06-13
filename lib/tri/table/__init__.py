@@ -25,9 +25,17 @@ from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen, merged
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
+from tri.table.db_compat import setup_db_compat
+
 __version__ = '2.0.0'
 
 LAST = LAST
+
+_column_factory_by_field_type = OrderedDict()
+
+
+def register_column_factory(field_class, factory):
+    _column_factory_by_field_type[field_class] = factory
 
 
 def prepare_headers(request, bound_columns):
@@ -397,7 +405,7 @@ class Column(Frozen, ColumnBase):
     def from_model(model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
             model=model,
-            factory_lookup=_column_factory_by_django_field_type,
+            factory_lookup=_column_factory_by_field_type,
             field_name=field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
@@ -407,7 +415,7 @@ class Column(Frozen, ColumnBase):
     def expand_member(model, field_name=None, model_field=None, **kwargs):
         return expand_member(
             model=model,
-            factory_lookup=_column_factory_by_django_field_type,
+            factory_lookup=_column_factory_by_field_type,
             field_name=field_name,
             model_field=model_field,
             **kwargs)
@@ -1056,6 +1064,4 @@ def render_table_to_response(*args, **kwargs):
         return response
     return HttpResponse(response)
 
-from .db_compat import setup, _column_factory_by_django_field_type  # noqa
-
-setup()
+setup_db_compat()
