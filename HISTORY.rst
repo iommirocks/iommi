@@ -4,7 +4,7 @@ Changelog
 3.4.0 (----------)
 ~~~~~~~~~~~~~~~~~~
 
-*
+* Added better error messages when missing django model mappings
 
 
 3.3.0 (2016-06-02)

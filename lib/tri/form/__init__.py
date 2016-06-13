@@ -115,6 +115,7 @@ def setup_db_compat_django():
 
 setup_db_compat_django()
 
+
 def _django_field_defaults(model_field):
     r = {}
     if hasattr(model_field, 'verbose_name'):
@@ -170,7 +171,7 @@ def create_members_from_model(default_factory, model, db_field, include=None, ex
     return members + (extra if extra is not None else [])
 
 
-def member_from_model(model, factory_lookup, defaults_factory, field_name=None, model_field=None, **kwargs):
+def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
     if model_field is None:
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
@@ -190,7 +191,10 @@ def member_from_model(model, factory_lookup, defaults_factory, field_name=None, 
                 break
 
     if factory is MISSING:  # pragma: no cover
-        raise AssertionError('No factory for %s. Register a factory with tri.form.register_field_factory, you can also register one that returns None to not handle this field type' % type(model_field))
+        message = 'No factory for %s.' % type(model_field)
+        if factory_lookup_register_function is not None:
+            message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
+        raise AssertionError(message)
 
     return factory(model_field=model_field, model=model, **kwargs) if factory else None
 
@@ -206,6 +210,7 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
 
     result = [member_from_model(model=model_field.related_field.model,
                                 factory_lookup=factory_lookup,
+                                factory_lookup_register_function=register_field_factory,
                                 defaults_factory=defaults_factory,
                                 field_name=sub_model_field.name,
                                 name=name + '__' + sub_model_field.name,
@@ -727,6 +732,7 @@ class Field(Frozen, FieldBase):
         return member_from_model(
             model=model,
             factory_lookup=_field_factory_by_field_type,
+            factory_lookup_register_function=register_field_factory,
             defaults_factory=_django_field_defaults,
             field_name=field_name,
             model_field=model_field,
