@@ -1076,4 +1076,4 @@ def test_ajax_endpoint():
             query__gui__show=True)
 
     result = render_table(request=RequestFactory().get("/", {'__query__gui__field__foo': 'hopp'}), table=TestTable(data=Bar.objects.all()))
-    assert json.loads(result.content) == [{'id': 2, 'text': 'Hopp'}]
+    assert json.loads(result.content.decode('utf8')) == [{'id': 2, 'text': 'Hopp'}]
