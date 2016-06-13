@@ -390,6 +390,7 @@ class Field(Frozen, FieldBase):
         :param parse: parse function. Default just returns the string input unchanged: lambda form, field, string_value: string_value
         :param initial: initial value of the field
         :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
+        :param attrs: a dict containing any custom html attributes to be sent to the input_template.
         :param id: the HTML id attribute. Default: 'id_%s' % name
         :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'tri_form/{style}_form_row.html'
