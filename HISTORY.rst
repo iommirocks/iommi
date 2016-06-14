@@ -4,7 +4,9 @@ Changelog
 2.1.0 (----------)
 ~~~~~~~~~~~~~~~~~~
 
-* Renamed `register_field_factory` to the clearer `register_column_factory`
+* Renamed `db_compat.register_field_factory` to the clearer `register_column_factory`
+
+* Improved error reporting on missing django field type column factory declaration.
 
 
 2.0.0 (2016-06-02)

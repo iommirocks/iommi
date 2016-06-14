@@ -1,6 +1,6 @@
 tri.declarative >=0.26.0
 tri.named_struct
-tri.form >=3.3.0, <4.0.0
+tri.form >=3.4.0, <4.0.0
 tri.struct
 tri.query >=2.0.0, <3.0.0
 six
