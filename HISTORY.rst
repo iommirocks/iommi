@@ -6,6 +6,8 @@ Changelog
 
 * Renamed `register_field_factory` to the clearer `register_column_factory`
 
+* Added iteration interface to table to loop over bound rows
+
 
 2.0.0 (2016-06-02)
 ~~~~~~~~~~~~~~~~~~
