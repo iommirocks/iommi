@@ -6,6 +6,8 @@ Changelog
 
 * Added better error messages when missing django model mappings
 
+* Fix population of read-only fields from initial value
+
 
 3.3.0 (2016-06-02)
 ~~~~~~~~~~~~~~~~~~
