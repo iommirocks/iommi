@@ -84,27 +84,36 @@ def many_to_many_factory(model_field, **kwargs):
     return Field.multi_choice_queryset(**kwargs)
 
 
-# The order here is significant because of inheritance structure. More specific must be below less specific.
-_field_factory_by_django_field_type = OrderedDict([
-    (CharField, lambda model_field, **kwargs: Field(**kwargs)),
-    (URLField, lambda model_field, **kwargs: Field.url(**kwargs)),
-    (TimeField, lambda model_field, **kwargs: Field.time(**kwargs)),
-    (EmailField, lambda model_field, **kwargs: Field.email(**kwargs)),
-    (DecimalField, lambda model_field, **kwargs: Field.decimal(**kwargs)),
-    (DateField, lambda model_field, **kwargs: Field.date(**kwargs)),
-    (DateTimeField, lambda model_field, **kwargs: Field.datetime(**kwargs)),
-    (CommaSeparatedIntegerField, lambda model_field, **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs))),
-    (BooleanField, lambda model_field, **kwargs: Field.boolean(**kwargs)),
-    (TextField, lambda model_field, **kwargs: Field.text(**kwargs)),
-    (FloatField, lambda model_field, **kwargs: Field.float(**kwargs)),
-    (IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs)),
-    (AutoField, lambda model_field, **kwargs: Field.integer(**setdefaults_path(kwargs, show=False))),
-    (ManyToOneRel, None),
-    (ManyToManyRel, None),
-    (FileField, lambda model_field, **kwargs: Field.file(**kwargs)),
-    (ForeignKey, foreign_key_factory),
-    (ManyToManyField, many_to_many_factory)
-])
+_field_factory_by_field_type = OrderedDict()
+
+
+def register_field_factory(field_class, factory):
+    _field_factory_by_field_type[field_class] = factory
+
+
+def setup_db_compat_django():
+    # The order here is significant because of inheritance structure. More specific must be below less specific.
+    register_field_factory(CharField, lambda model_field, **kwargs: Field(**kwargs))
+    register_field_factory(URLField, lambda model_field, **kwargs: Field.url(**kwargs))
+    register_field_factory(TimeField, lambda model_field, **kwargs: Field.time(**kwargs))
+    register_field_factory(EmailField, lambda model_field, **kwargs: Field.email(**kwargs))
+    register_field_factory(DecimalField, lambda model_field, **kwargs: Field.decimal(**kwargs))
+    register_field_factory(DateField, lambda model_field, **kwargs: Field.date(**kwargs))
+    register_field_factory(DateTimeField, lambda model_field, **kwargs: Field.datetime(**kwargs))
+    register_field_factory(CommaSeparatedIntegerField, lambda model_field, **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs)))
+    register_field_factory(BooleanField, lambda model_field, **kwargs: Field.boolean(**kwargs))
+    register_field_factory(TextField, lambda model_field, **kwargs: Field.text(**kwargs))
+    register_field_factory(FloatField, lambda model_field, **kwargs: Field.float(**kwargs))
+    register_field_factory(IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs))
+    register_field_factory(AutoField, lambda model_field, **kwargs: Field.integer(**setdefaults_path(kwargs, show=False)))
+    register_field_factory(ManyToOneRel, None)
+    register_field_factory(ManyToManyRel, None)
+    register_field_factory(FileField, lambda model_field, **kwargs: Field.file(**kwargs))
+    register_field_factory(ForeignKey, foreign_key_factory)
+    register_field_factory(ManyToManyField, many_to_many_factory)
+
+
+setup_db_compat_django()
 
 
 def _django_field_defaults(model_field):
@@ -119,10 +128,6 @@ def _django_field_defaults(model_field):
         r['parse_empty_string_as_none'] = not model_field.blank
 
     return r
-
-
-def register_field_factory(field_class, factory):
-    _field_factory_by_django_field_type[field_class] = factory
 
 
 def default_parse(form, field, string_value):
@@ -166,7 +171,7 @@ def create_members_from_model(default_factory, model, db_field, include=None, ex
     return members + (extra if extra is not None else [])
 
 
-def member_from_model(model, factory_lookup, defaults_factory, field_name=None, model_field=None, **kwargs):
+def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
     if model_field is None:
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
@@ -186,7 +191,10 @@ def member_from_model(model, factory_lookup, defaults_factory, field_name=None, 
                 break
 
     if factory is MISSING:  # pragma: no cover
-        raise AssertionError('No factory for %s. Register a factory with tri.form.register_field_factory, you can also register one that returns None to not handle this field type' % type(model_field))
+        message = 'No factory for %s.' % type(model_field)
+        if factory_lookup_register_function is not None:
+            message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
+        raise AssertionError(message)
 
     return factory(model_field=model_field, model=model, **kwargs) if factory else None
 
@@ -202,6 +210,7 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
 
     result = [member_from_model(model=model_field.related_field.model,
                                 factory_lookup=factory_lookup,
+                                factory_lookup_register_function=register_field_factory,
                                 defaults_factory=defaults_factory,
                                 field_name=sub_model_field.name,
                                 name=name + '__' + sub_model_field.name,
@@ -723,7 +732,8 @@ class Field(Frozen, FieldBase):
     def from_model(model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
             model=model,
-            factory_lookup=_field_factory_by_django_field_type,
+            factory_lookup=_field_factory_by_field_type,
+            factory_lookup_register_function=register_field_factory,
             defaults_factory=_django_field_defaults,
             field_name=field_name,
             model_field=model_field,
@@ -733,7 +743,7 @@ class Field(Frozen, FieldBase):
     def from_model_expand(model, field_name=None, model_field=None, **kwargs):
         return expand_member(
             model=model,
-            factory_lookup=_field_factory_by_django_field_type,
+            factory_lookup=_field_factory_by_field_type,
             defaults_factory=_django_field_defaults,
             field_name=field_name,
             model_field=model_field,
