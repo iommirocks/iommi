@@ -1079,6 +1079,24 @@ def test_ajax_endpoint():
     assert json.loads(result.content.decode('utf8')) == [{'id': 2, 'text': 'Hopp'}]
 
 
+def test_ajax_data_endpoint():
+
+    class TestTable(Table):
+        class Meta:
+            endpoint__data = lambda table, key, value: [{cell.bound_column.name: cell.value for cell in row} for row in table]
+
+        foo = Column()
+        bar = Column()
+
+    table = TestTable(data=[
+        Struct(foo=1, bar=2),
+        Struct(foo=3, bar=4),
+    ])
+
+    result = render_table(request=RequestFactory().get("/", {'__data': ''}), table=table)
+    assert json.loads(result.content.decode('utf8')) == [dict(foo=1, bar=2), dict(foo=3, bar=4)]
+
+
 def test_table_iteration():
 
     class TestTable(Table):
@@ -1093,12 +1111,18 @@ def test_table_iteration():
 
     table = TestTable(request=RequestFactory().get('/'))
 
-    def traverse_table():
-        for bound_row in table:
-            yield {bound_cell.bound_column.name: bound_cell.value for bound_cell in bound_row}
-
     expected = [
         dict(foo='a', bar=2),
         dict(foo='b', bar=3),
     ]
-    assert expected == list(traverse_table())
+    assert expected == [{bound_cell.bound_column.name: bound_cell.value for bound_cell in bound_row} for bound_row in table]
+
+
+def test_ajax_custom_endpoint():
+    class TestTable(Table):
+        class Meta:
+            endpoint__foo = lambda table, key, value: dict(baz=value)
+        spam = Column()
+
+    result = render_table(request=RequestFactory().get("/", {'__foo': 'bar'}), table=TestTable(data=[]))
+    assert json.loads(result.content.decode('utf8')) == dict(baz='bar')
