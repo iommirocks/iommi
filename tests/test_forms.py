@@ -191,6 +191,14 @@ def test_initial_list_from_instance():
     assert Form(instance=Struct(a=Struct(b=[7])), fields=[Field(name='a__b', is_list=True)]).fields[0].initial_list == [7]
 
 
+def test_non_editable_from_initial():
+    class MyForm(Form):
+        foo = Field(editable=False, initial=':bar:')
+
+    assert ':bar:' in MyForm(request=RequestFactory().get('/')).render()
+    assert ':bar:' in MyForm(request=RequestFactory().post('/', {'-': '-'})).render()
+
+
 def test_show():
     assert list(Form(data=Data(), fields=[Field(name='foo', show=False)]).fields_by_name.keys()) == []
     assert list(Form(data=Data(), fields=[Field(name='foo', show=lambda form, field: False)]).fields_by_name.keys()) == []

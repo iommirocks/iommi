@@ -987,14 +987,11 @@ class Form(object):
         self.parse()
 
         for field in self.fields:
-            if self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None:
+            if (not field.editable) or (self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None):
                 if field.is_list:
                     field.value_list = field.initial_list
                 else:
                     field.value = field.initial
-                continue
-
-            if not field.editable:
                 continue
 
             value = None
