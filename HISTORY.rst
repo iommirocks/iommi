@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.1.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Renamed `register_field_factory` to the clearer `register_column_factory`
+
+
 2.0.0 (2016-06-02)
 ~~~~~~~~~~~~~~~~~~
 
