@@ -8,6 +8,8 @@ Changelog
 
 * Added iteration interface to table to loop over bound rows
 
+* Added `endpoint` meta class parameter to table to enable custom json endpoints
+
 
 2.0.0 (2016-06-02)
 ~~~~~~~~~~~~~~~~~~

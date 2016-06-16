@@ -572,6 +572,9 @@ class Table(object):
         header__template = 'tri_table/table_header_rows.html'
         links__template = 'tri_table/links.html'
 
+        endpoint__query__ = lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value)
+        endpoint__bulk__ = lambda table, key, value: table.bulk.endpoint_dispatch(key=key, value=value)
+
         model = None
 
     def __init__(self, data=None, request=None, columns=None, columns_dict=None, **kwargs):
@@ -628,6 +631,7 @@ class Table(object):
 
         self.query_kwargs = extract_subkeys(kwargs, 'query')
         self.bulk_kwargs = extract_subkeys(kwargs, 'bulk')
+        self.endpoint = extract_subkeys(kwargs, 'endpoint')
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -867,10 +871,9 @@ class Table(object):
         return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
 
     def endpoint_dispatch(self, key, value):
-        if key.startswith('query__'):
-            return self.query.endpoint_dispatch(key=key[len('query__'):], value=value)
-        if key.startswith('bulk__'):
-            return self.bulk.endpoint_dispatch(key=key[len('bulk__'):], value=value)
+        for endpoint, handler in self.endpoint.items():
+            if key.startswith(endpoint):
+                return handler(table=self, key=key[len(endpoint):], value=value)
 
 
 class Link(Struct):
