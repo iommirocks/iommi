@@ -676,3 +676,9 @@ def test_choice_queryset_ajax():
 
     form = MyForm(request=RequestFactory().get('/'))
     assert form.endpoint_dispatch(key='field__username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]
+
+
+def test_is_empty_form_marker():
+    request = RequestFactory().get('/')
+    assert AVOID_EMPTY_FORM in Form(request=request).render()
+    assert AVOID_EMPTY_FORM not in Form(request=request, is_full_form=False).render()
