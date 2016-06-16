@@ -1,6 +1,12 @@
 Changelog
 =========
 
+3.5.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Added `is_full_form` parameter to form to optionally control the rendering of the "-"="-" marker form field
+
+
 3.4.0 (2016-06-15)
 ~~~~~~~~~~~~~~~~~~
 

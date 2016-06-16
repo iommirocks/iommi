@@ -830,13 +830,14 @@ class Form(object):
 
     See tri.declarative docs for more on this dual style of declaration.
     """
-    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix='form'):
+    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix='form', is_full_form=True):
         """
         :type fields: list of Field
         :type data: dict[basestring, basestring]
         :type model: django.db.models.Model
         """
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
+        self.is_full_form = is_full_form
         self.request = request
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
@@ -1058,7 +1059,8 @@ class Form(object):
                 r.append(get_template_from_string(field.template_string, origin='tri.form', name='Form.render').render(Context(context)))
             else:
                 r.append(render_to_string(field.template.format(style=style), context))
-        r.append(AVOID_EMPTY_FORM)
+        if self.is_full_form:
+            r.append(AVOID_EMPTY_FORM)
 
         if template_name is None:
             return mark_safe('\n'.join(r))
