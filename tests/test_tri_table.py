@@ -1077,3 +1077,28 @@ def test_ajax_endpoint():
 
     result = render_table(request=RequestFactory().get("/", {'__query__gui__field__foo': 'hopp'}), table=TestTable(data=Bar.objects.all()))
     assert json.loads(result.content.decode('utf8')) == [{'id': 2, 'text': 'Hopp'}]
+
+
+def test_table_iteration():
+
+    class TestTable(Table):
+        class Meta:
+            data = [
+                Struct(foo='a', bar=1),
+                Struct(foo='b', bar=2)
+            ]
+
+        foo = Column()
+        bar = Column(cell__value=lambda row, **_: row['bar'] + 1)
+
+    table = TestTable(request=RequestFactory().get('/'))
+
+    def traverse_table():
+        for bound_row in table:
+            yield {bound_cell.bound_column.name: bound_cell.value for bound_cell in bound_row}
+
+    expected = [
+        dict(foo='a', bar=2),
+        dict(foo='b', bar=3),
+    ]
+    assert expected == list(traverse_table())

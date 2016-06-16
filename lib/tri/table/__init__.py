@@ -825,6 +825,10 @@ class Table(object):
         return headers, self.header_levels
 
     def bound_rows(self):
+        return self
+
+    def __iter__(self):
+        self.prepare(self.request)
         for i, row in enumerate(self.data):
             yield BoundRow(table=self, row=row, row_index=i)
 
