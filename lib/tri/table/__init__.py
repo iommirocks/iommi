@@ -406,6 +406,7 @@ class Column(Frozen, ColumnBase):
         return member_from_model(
             model=model,
             factory_lookup=_column_factory_by_field_type,
+            factory_lookup_register_function=register_column_factory,
             field_name=field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
