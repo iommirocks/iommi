@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.1.0 (----------)
+2.1.0 (2016-06-16)
 ~~~~~~~~~~~~~~~~~~
 
 * Renamed `db_compat.register_field_factory` to the clearer `register_column_factory`
