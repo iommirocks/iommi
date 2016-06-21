@@ -573,8 +573,8 @@ class Table(object):
         header__template = 'tri_table/table_header_rows.html'
         links__template = 'tri_table/links.html'
 
-        endpoint__query__ = lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value)
-        endpoint__bulk__ = lambda table, key, value: table.bulk.endpoint_dispatch(key=key, value=value)
+        endpoint__query__ = lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None
+        endpoint__bulk__ = lambda table, key, value: table.bulk.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None
 
         model = None
 
