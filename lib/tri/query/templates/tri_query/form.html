@@ -49,9 +49,12 @@
             {% endfor %}
           </ul>
         {% endif %}
-        <div id="tri_query_error">
-            {{ tri_query_error }}
-        </div>
+
+        {% if tri_query_error %}
+          <div id="tri_query_error">
+              {{ tri_query_error }}
+          </div>
+        {% endif %}
 
         <style type="text/css" scoped>
             .tri_query_available_fields,
