@@ -68,7 +68,7 @@ def test_get_signature():
     def f2(b, a):
         pass
 
-    assert 'a,b' == get_signature(f) == get_signature(f2) == get_signature(lambda a, b: None)
+    assert 'a,b||' == get_signature(f) == get_signature(f2) == get_signature(lambda a, b: None)
 
 
 def test_get_signature_fails_on_native():
@@ -78,7 +78,7 @@ def test_get_signature_fails_on_native():
 
 
 def test_get_signature_varargs():
-    assert "a,b,*" == get_signature(lambda a, b, **c: None)
+    assert "a,b||*" == get_signature(lambda a, b, **c: None)
 
 
 def test_evaluate_subset_parameters():
@@ -89,29 +89,30 @@ def test_evaluate_subset_parameters():
 
 
 def test_match_caching():
-    assert matches("a,b", "a,b")
-    assert matches("a,b", "a,*")
-    assert not matches("a,b", "c,*")
-    assert {'a,b;a,*': True,
-            'a,b;c,*': False}
-    assert matches("a,b", "a,*")
-    assert not matches("a,b", "c,*")
-    assert {'a,b;a,*': True,
-            'a,b;c,*': False}
+    assert matches("a,b", "a,b||")
+    assert matches("a,b", "a||*")
+    assert not matches("a,b", "c||*")
+    assert matches("a,b", "a||*")
+    assert not matches("a,b", "c||*")
 
 
 def test_get_signature_description():
-    assert 'a,b' == get_signature(lambda a, b: None)
-    assert 'a,b,[c,d]' == get_signature(lambda a, b, c=None, d=None: None)
-    assert 'a,b,[c,d],*' == get_signature(lambda a, b, c=None, d=None, **_: None)
+    assert 'a,b||' == get_signature(lambda a, b: None)
+    assert 'a,b|c,d|' == get_signature(lambda a, b, c=None, d=None: None)
+    assert 'c,d|a,b|' == get_signature(lambda d, c, b=None, a=None: None)
+    assert 'a,b|c,d|*' == get_signature(lambda a, b, c=None, d=None, **_: None)
+    assert '||*' == get_signature(lambda **_: None)
 
 
 def test_match_optionals():
-    assert matches("a,b", "a,b,[c]")
-    assert matches("a,b,c", "a,b,[c]")
-    assert matches("a,b", "a,b,[c],*")
-    assert not matches("a,b,d", "a,b,[c]")
-    assert matches("a,b,d", "a,b,[c],*")
+    assert matches("a,b", "a,b|c|")
+    assert matches("a,b,c", "a,b|c|")
+    assert matches("a,b", "a,b|c|*")
+    assert not matches("a,b,d", "a,b|c|")
+    assert matches("a,b,d", "a,b|c|*")
+    assert matches("", "||")
+    assert matches("", "||*")
+    assert matches("a,b,c", "||*")
 
 
 def test_evaluate_extra_kwargs_with_defaults():
