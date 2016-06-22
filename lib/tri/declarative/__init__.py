@@ -1,12 +1,10 @@
 from collections import OrderedDict
-import functools
 from copy import copy
-from functools import total_ordering, wraps
+import functools
 import inspect
 import itertools
 
 from tri.struct import Struct
-
 
 __version__ = '0.26.0'
 
@@ -75,7 +73,7 @@ def creation_ordered(class_to_decorate):
 
     setattr(class_to_decorate, '__lt__', __lt__)
 
-    class_to_decorate = total_ordering(class_to_decorate)
+    class_to_decorate = functools.total_ordering(class_to_decorate)
 
     return class_to_decorate
 
@@ -131,6 +129,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True, sort_ke
     def decorator(class_to_decorate):
 
         class DeclarativeMeta(class_to_decorate.__class__):
+            # noinspection PyTypeChecker
             def __init__(cls, name, bases, dict):
                 members = get_members(cls)
                 set_declared(cls, members, parameter)
@@ -239,24 +238,25 @@ def get_signature(func):
     try:
         return func.__tri_declarative_signature
     except AttributeError:
-        try:
-            names, _, keywords, defaults = inspect.getargspec(func)
-        except TypeError:
-            return None
-        func.__tri_declarative_signature = create_signature(names, number_of_defaults=len(defaults) if defaults else 0, keywords=bool(keywords))
-        return func.__tri_declarative_signature
+        pass
 
+    try:
+        names, _, varkw, defaults = inspect.getargspec(func)
+    except TypeError:
+        return None
 
-def create_signature(names, number_of_defaults, keywords):
-    names = sorted(names)
-    if number_of_defaults:
-        result = ','.join(names[:-number_of_defaults]) + \
-                 (',[' + ','.join(names[-number_of_defaults:]) + ']')
+    number_of_defaults = len(defaults) if defaults else 0
+    if number_of_defaults > 0:
+        required = ','.join(sorted(names[:-number_of_defaults]))
+        optional = ','.join(sorted(names[-number_of_defaults:]))
     else:
-        result = ','.join(names)
-    if keywords:
-        result += ',*'
-    return result
+        required = ','.join(sorted(names))
+        optional = ''
+    wildcard = '*' if varkw is not None else ''
+
+    signature = '|'.join((required, optional, wildcard))
+    func.__tri_declarative_signature = signature
+    return signature
 
 
 def signature_from_kwargs(kwargs):
@@ -267,7 +267,7 @@ def should_not_evaluate(f):
     if not callable(f):
         return f
 
-    @wraps(f)
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         return f(*args, **kwargs)
 
@@ -281,7 +281,7 @@ def should_evaluate(f):
     if not callable(f):
         return f
 
-    @wraps(f)
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         return f(*args, **kwargs)
 
@@ -298,41 +298,25 @@ def force_evaluate(f, **kwargs):
 _matches_cache = {}
 
 
-def split(parameters):
-    if parameters.endswith(',*'):
-        parameters = parameters[:-2]
-        keywords = True
-    else:
-        keywords = False
-
-    parts = parameters.split(',[')
-    if len(parts) == 1:
-        required = parameters.split(',')
-        optional = []
-    else:
-        required, optional = parts
-        required = required.split(',')
-        optional = optional[:-1].split(',')
-
-    return required, optional, keywords
-
-
 def matches(caller_parameters, callee_parameters):
     if caller_parameters == callee_parameters:
         return True
 
-    cache_key = caller_parameters + ';' + callee_parameters
+    cache_key = ';'.join((caller_parameters, callee_parameters))
     cached_value = _matches_cache.get(cache_key, None)
     if cached_value is not None:
         return cached_value
 
-    required, optional, keywords = split(callee_parameters)
-    required = set(required)
-    caller = set(caller_parameters.split(','))
-    if keywords:
+    caller = set(caller_parameters.split(',')) if caller_parameters else set()
+
+    a, b, c = callee_parameters.split('|')
+    required = set(a.split(',')) if a else set()
+    optional = set(b.split(',')) if b else set()
+    wildcard = (c == '*')
+
+    if wildcard:
         result = caller >= required
     else:
-        optional = set(optional)
         result = caller >= required and required.union(optional) >= set(caller)
 
     _matches_cache[cache_key] = result
