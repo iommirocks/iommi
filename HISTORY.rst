@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.2.0 (----------)
+2.2.0 (2016-06-23)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix missing namespace collection for column custimization of Table.from_model
