@@ -847,7 +847,7 @@ class Table(object):
     @staticmethod
     def columns_from_model(**kwargs):
         kwargs = collect_namespaces(kwargs)
-        kwargs['db_field'] = kwargs.pop('column', {})
+        kwargs['db_field'] = collect_namespaces(kwargs.pop('column', {}))
         return create_members_from_model(default_factory=Column.from_model, **kwargs)
 
     @staticmethod
