@@ -1053,9 +1053,17 @@ def test_extra():
 
 
 def test_from_model():
-    t = Table.from_model(data=Foo.objects.all(), model=Foo)
+    t = Table.from_model(
+        model=Foo,
+        data=Foo.objects.all(),
+        column__a__display_name='Some a',
+        column__a__extra__stuff='Some stuff',
+    )
     assert [x.name for x in t.columns] == ['id', 'a', 'b']
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
+    t.prepare(RequestFactory().get("/"))
+    assert 'Some a' == t.bound_column_by_name['a'].display_name
+    assert 'Some stuff' == t.bound_column_by_name['a'].extra.stuff
 
 
 @pytest.mark.django_db
