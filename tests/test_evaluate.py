@@ -111,8 +111,12 @@ def test_match_optionals():
     assert not matches("a,b,d", "a,b|c|")
     assert matches("a,b,d", "a,b|c|*")
     assert matches("", "||")
-    assert matches("", "||*")
-    assert matches("a,b,c", "||*")
+    assert not matches("a", "||")
+
+
+def test_match_special_case():
+    assert not matches("", "||*")
+    assert not matches("a,b,c", "||*")
 
 
 def test_evaluate_extra_kwargs_with_defaults():
