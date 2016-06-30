@@ -314,6 +314,9 @@ def matches(caller_parameters, callee_parameters):
     optional = set(b.split(',')) if b else set()
     wildcard = (c == '*')
 
+    if not required and not optional and wildcard:
+        return False  # Special case to not match no-specification function "lambda **whatever: ..."
+
     if wildcard:
         result = caller >= required
     else:
