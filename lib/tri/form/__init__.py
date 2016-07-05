@@ -602,18 +602,26 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def datetime(**kwargs):
-        iso_format = '%Y-%m-%d %H:%M:%S'
+        iso_formats = [
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M',
+            '%Y-%m-%d %H',
+        ]
 
         def datetime_parse(string_value, **_):
-            try:
-                return datetime.strptime(string_value, iso_format)
-            except ValueError as e:
-                raise ValidationError(str(e))
+            errors = []
+            for iso_format in iso_formats:
+                try:
+                    return datetime.strptime(string_value, iso_format)
+                except ValueError as e:
+                    errors.append('%s' % e)
+            assert errors
+            raise ValidationError('Time data "%s" does not match any of the formats %s' % (string_value, ', '.join('"%s"' % x for x in iso_formats)))
 
         setdefaults_path(
             kwargs,
             parse=datetime_parse,
-            render_value=lambda value, **_: value.strftime(iso_format) if value else '',
+            render_value=lambda value, **_: value.strftime(iso_formats[0]) if value else '',
         )
         return Field(**kwargs)
 

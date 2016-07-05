@@ -149,7 +149,7 @@ def test_parse_errors():
     assert form.fields_by_name['username'].value is None
 
     assert form.fields_by_name['joined'].raw_data == 'foo'
-    assert_one_error_and_matches_reg_exp(form.fields_by_name['joined'].errors, "time data u?'foo' does not match format u?'%Y-%m-%d %H:%M:%S'")
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['joined'].errors, 'Time data "foo" does not match any of the formats .*')
     assert form.fields_by_name['joined'].parsed_data is None
     assert form.fields_by_name['joined'].value is None
 
@@ -516,22 +516,127 @@ def test_register_field_factory():
     assert Field.from_model(RegisterFieldFactoryTest, 'foo') == 7
 
 
-def test_render_datetime_iso():
-    table = Form(fields=[
-        Field.datetime(
-            name='foo',
-            initial=datetime(2001, 2, 3, 12, 13, 14, 7777))
-    ]).table()
-    assert '2001-02-03 12:13:14' in table
-    assert '7777' not in table
+def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None):
+    SENTINEL = object()
+    if normalizing is None:
+        normalizing = []
+
+    def test_empty_string_data():
+        f = Form(fields=[shortcut(required=False, name='foo')], data={'foo': ''})
+        assert not f.get_errors()
+        assert f.fields_by_name['foo'].value is None
+        assert f.fields_by_name['foo'].value_list is None
+
+    def test_empty_data():
+        f = Form(fields=[shortcut(required=False, name='foo')], data={})
+        assert not f.get_errors()
+        assert f.fields_by_name['foo'].value is None
+        assert f.fields_by_name['foo'].value_list is None
+
+    def test_editable_false():
+        f = Form(fields=[shortcut(required=False, name='foo', initial=SENTINEL, editable=False)], data={'foo': 'asdasasd'})
+        assert not f.get_errors()
+        assert f.fields_by_name['foo'].value is SENTINEL or f.fields_by_name['foo'].value_list is SENTINEL
+
+    def test_roundtrip_from_initial_to_raw_string():
+        for raw, initial in raw_and_parsed_data_tuples:
+            form = Form(fields=[shortcut(required=True, name='foo', initial=initial)], data={})
+            assert not form.get_errors()
+            f = form.fields_by_name['foo']
+            if f.is_list:
+                assert initial == f.value_list
+            else:
+                assert initial == f.value
+            assert raw == f.rendered_value(), 'Roundtrip failed'
+
+    def test_roundtrip_from_raw_string_to_initial():
+        for raw, initial in raw_and_parsed_data_tuples:
+            form = Form(fields=[shortcut(required=True, name='foo')], data={'foo': raw})
+            assert not form.get_errors(), 'input: %s' % raw
+            f = form.fields_by_name['foo']
+            if f.is_list:
+                assert f.raw_data_list == raw
+                assert f.value_list == initial
+                if initial:
+                    assert [type(x) for x in f.value_list] == [type(x) for x in initial]
+            else:
+                assert f.raw_data == raw
+                assert f.value == initial
+                assert type(f.value) == type(initial)
+
+    def test_normalizing():
+        for non_normalized, normalized in normalizing:
+            form = Form(fields=[shortcut(required=True, name='foo')], data={'foo': non_normalized})
+            assert not form.get_errors()
+            assert form.fields_by_name['foo'].rendered_value() == normalized
+
+    test_empty_string_data()
+    test_empty_data()
+    test_roundtrip_from_initial_to_raw_string()
+    test_roundtrip_from_raw_string_to_initial()
+    test_editable_false()
+    test_normalizing()
 
 
-def test_datetime_not_required():
-    assert Form(fields=[
-        Field.datetime(
-            required=False,
-            name='foo')
-    ], data={'foo': ''}).is_valid()
+def test_datetime():
+    shortcut_test(
+        Field.datetime,
+        raw_and_parsed_data_tuples=[
+            ('2001-02-03 12:13:14', datetime(2001, 2, 3, 12, 13, 14)),
+        ],
+        normalizing=[
+            ('2001-02-03 12:13', '2001-02-03 12:13:00'),
+            ('2001-02-03 12', '2001-02-03 12:00:00'),
+        ],
+    )
+
+
+def test_date():
+    shortcut_test(
+        Field.date,
+        raw_and_parsed_data_tuples=[
+            ('2001-02-03', date(2001, 2, 3)),
+        ],
+    )
+
+
+def test_time():
+    shortcut_test(
+        Field.time,
+        raw_and_parsed_data_tuples=[
+            ('12:34:56', time(12, 34, 56)),
+        ],
+        normalizing=[
+            ('2:34:56', '02:34:56'),
+        ],
+    )
+
+
+def test_integer():
+    shortcut_test(
+        Field.integer,
+        raw_and_parsed_data_tuples=[
+            ('123', 123),
+        ],
+        normalizing=[
+            ('00123', '123'),
+        ],
+    )
+
+
+def test_float():
+    shortcut_test(
+        Field.float,
+        raw_and_parsed_data_tuples=[
+            ('123.0', 123.0),
+            ('123.123', 123.123),
+        ],
+        normalizing=[
+            ('123', '123.0'),
+            ('00123', '123.0'),
+            ('00123.123', '123.123'),
+        ],
+    )
 
 
 def test_render_custom():
