@@ -3,7 +3,7 @@ python:
 - '2.7'
 - '3.5'
 - 'pypy'
-install: pip install tox
+install: pip install tox codecov
 script: make coverage
 after_success: codecov
 deploy:
