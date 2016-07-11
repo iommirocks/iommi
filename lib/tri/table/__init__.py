@@ -192,7 +192,7 @@ class Column(Frozen, ColumnBase):
         super(Column, self).__init__(**kwargs)
 
     @staticmethod
-    def text(**kwargs):
+    def text(**kwargs):  # pragma: no cover
         return Column(**kwargs)
 
     @staticmethod
@@ -330,10 +330,18 @@ class Column(Frozen, ColumnBase):
 
     @staticmethod
     def float(**kwargs):
+        setdefaults(kwargs, dict(
+            query__class=Variable.float,
+            bulk__class=Field.float,
+        ))
         return Column.number(**kwargs)
 
     @staticmethod
     def integer(**kwargs):
+        setdefaults(kwargs, dict(
+            query__class=Variable.integer,
+            bulk__class=Field.integer,
+        ))
         return Column.number(**kwargs)
 
     @staticmethod
@@ -379,6 +387,7 @@ class Column(Frozen, ColumnBase):
     def date(**kwargs):
         setdefaults(kwargs, dict(
             query__gui__class=Field.date,
+            # TODO: query__class=Variable.date,
             query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
             bulk__class=Field.date,
         ))
@@ -387,9 +396,10 @@ class Column(Frozen, ColumnBase):
     @staticmethod
     def datetime(**kwargs):
         setdefaults(kwargs, dict(
-            query__gui__class=Field.date,
+            query__gui__class=Field.datetime,
+            # TODO: query__class=Variable.datetime,
             query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.date,
+            bulk__class=Field.datetime,
         ))
         return Column(**kwargs)
 
@@ -398,6 +408,7 @@ class Column(Frozen, ColumnBase):
         setdefaults(kwargs, dict(
             bulk__class=Field.email,
             # TODO: query__class=Variable.email,
+            query__gui__class=Field.email,
         ))
         return Column(**kwargs)
 
