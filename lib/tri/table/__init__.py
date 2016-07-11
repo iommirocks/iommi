@@ -17,7 +17,7 @@ from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
-from django.db.models import QuerySet
+from django.db.models import QuerySet, warnings
 from six import string_types
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path, dispatch, EMPTY
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
@@ -607,7 +607,8 @@ class Table(object):
 
         self._has_prepared = False
 
-        if data is None:
+        if data is None:  # pragma: no cover
+            warnings.warn('deriving model from data queryset is deprecated, use Table.from_model', DeprecationWarning)
             assert 'model' in kwargs and kwargs['model'] is not None
             data = kwargs['model'].objects.all()
 
@@ -862,7 +863,7 @@ class Table(object):
         return create_members_from_model(default_factory=Column.from_model, **kwargs)
 
     @staticmethod
-    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    def from_model(data=None, model=None, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -879,6 +880,9 @@ class Table(object):
 
         """
         kwargs = collect_namespaces(kwargs)
+        assert model or data, "model or data must be specified"
+        if model is None and isinstance(data, QuerySet):
+            model = data.model
         columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=kwargs.pop('column', {}))
         return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
 
@@ -1024,8 +1028,6 @@ def render_table(request,
 
     if table is None or isinstance(table, dict):
         table_kwargs = table if isinstance(table, dict) else kwargs.pop('table', {})
-        if 'model' not in table_kwargs:
-            table_kwargs['model'] = table_kwargs['data'].model
         table = Table.from_model(**table_kwargs)
 
     table.prepare(request)
