@@ -882,8 +882,8 @@ class Link(Struct):
     Class that describes links to add underneath the table.
     """
     # noinspection PyShadowingBuiltins
-    def __init__(self, title, url, show=True, group=None, id=None):
-        super(Link, self).__init__(title=title, url=url, show=show, group=group, id=id)
+    def __init__(self, title, url, show=True, group=None, id=None, **kwargs):
+        super(Link, self).__init__(title=title, url=url, show=show, group=group, id=id, **kwargs)
 
     @staticmethod
     def icon(icon, title, **kwargs):
