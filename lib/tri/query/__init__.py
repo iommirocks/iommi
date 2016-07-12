@@ -14,7 +14,7 @@ from tri.form import Form, Field, bool_parse, member_from_model, expand_member, 
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 
 
 class QueryException(Exception):
@@ -399,7 +399,11 @@ class Query(object):
 
         def parse_date_str(token):
             y, _, m, _, d = token
-            return date(*map(int, (y, m, d)))
+            try:
+                date_object = date(*map(int, (y, m, d)))
+            except ValueError:
+                raise QueryException('Date %s-%s-%s is out of range' % (y, m, d))
+            return date_object
         date_str = (integer('year') + '-' + integer('month') + '-' + integer('day')).setParseAction(parse_date_str)
 
         # define query tokens
