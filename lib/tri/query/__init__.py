@@ -399,7 +399,11 @@ class Query(object):
 
         def parse_date_str(token):
             y, _, m, _, d = token
-            return date(*map(int, (y, m, d)))
+            try:
+                date_object = date(*map(int, (y, m, d)))
+            except ValueError:
+                raise QueryException('Date %s-%s-%s is out of range' % (y, m, d))
+            return date_object
         date_str = (integer('year') + '-' + integer('month') + '-' + integer('day')).setParseAction(parse_date_str)
 
         # define query tokens

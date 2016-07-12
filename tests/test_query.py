@@ -183,6 +183,14 @@ def test_date():
     assert repr(query.parse('foo_name=2014-03-07')) == repr(Q(**{'foo__iexact': date(2014, 3, 7)}))
 
 
+def test_date_out_of_range():
+    query = MyTestQuery()
+    with pytest.raises(QueryException) as e:
+        query.parse('foo_name=2014-03-37')
+
+    assert 'out of range' in str(e)
+
+
 def test_invalid_syntax():
     query = MyTestQuery()
     with pytest.raises(QueryException) as e:
