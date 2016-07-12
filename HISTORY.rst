@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.3.0 (2016-07-12)
+~~~~~~~~~~~~~~~~~~
+
+* Added pass-through of extra arguments to `Link` objects for custom attributes.
+
+
 2.2.0 (2016-06-23)
 ~~~~~~~~~~~~~~~~~~
 
