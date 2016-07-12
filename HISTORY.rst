@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.1.0 (**********)
+2.1.0 (2016-07-12)
 ~~~~~~~~~~~~~~~~~~
 
 * Check for dates that are out of range
