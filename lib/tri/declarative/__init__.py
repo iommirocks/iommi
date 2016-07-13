@@ -6,7 +6,7 @@ import itertools
 
 from tri.struct import Struct
 
-__version__ = '0.26.0'
+__version__ = '0.27.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):

@@ -101,6 +101,7 @@ def test_get_signature_description():
     assert 'a,b|c,d|' == get_signature(lambda a, b, c=None, d=None: None)
     assert 'c,d|a,b|' == get_signature(lambda d, c, b=None, a=None: None)
     assert 'a,b|c,d|*' == get_signature(lambda a, b, c=None, d=None, **_: None)
+    assert 'c,d|a,b|*' == get_signature(lambda d, c, b=None, a=None, **_: None)
     assert '||*' == get_signature(lambda **_: None)
 
 
