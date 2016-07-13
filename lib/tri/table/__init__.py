@@ -505,6 +505,24 @@ class BoundCell(object):
 
         self.value = evaluate(bound_column.cell.value, table=bound_row.table, column=bound_column.column, row=bound_row.row)
 
+    @property
+    def attrs(self):
+        return evaluate_recursive(self.bound_column.cell.attrs, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+
+    @property
+    def url(self):
+        url = self.bound_column.cell.url
+        if callable(url):
+            url = url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return url
+
+    @property
+    def url_title(self):
+        url_title = self.bound_column.cell.url_title
+        if callable(url_title):
+            url_title = url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return url_title
+
     def render(self):
         cell__template = self.bound_column.cell.template
         if cell__template:
@@ -513,24 +531,17 @@ class BoundCell(object):
             return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
     def render_attrs(self):
-        attrs = evaluate_recursive(self.bound_column.cell.attrs, table=self.table, column=self.bound_column, row=self.row, value=self.value)
-        return render_attrs(attrs)
+        return render_attrs(self.attrs)
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
 
-        cell__url = self.bound_column.cell.url
-        if callable(cell__url):
-            cell__url = cell__url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
-
-        if cell__url:
-            cell__url_title = self.bound_column.cell.url_title
-            if callable(cell__url_title):
-                cell__url_title = cell__url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
-
-            cell_contents = format_html('<a href="{}"{}>{}</a>',
-                                        mark_safe(cell__url),
-                                        mark_safe(' title=%s' % cell__url_title) if cell__url_title else '',
+        url = self.url
+        if url:
+            url_title = self.url_title
+            cell_contents = format_html('<a{}{}>{}</a>',
+                                        format_html(' href="{}"', url),
+                                        format_html(' title="{}"', url_title) if url_title else '',
                                         cell_contents)
         return mark_safe(cell_contents)
 
