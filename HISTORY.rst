@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-2.4.0 (----------)
+2.4.0 (2016-07-13)
 ~~~~~~~~~~~~~~~~~~
 
 * Made more parts of `BoundCell` available for reuse.
