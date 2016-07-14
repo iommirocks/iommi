@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.5.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Added optional `endpoint_dispatch_prefix` table configuration to enable multiple
+  tables on the same endpoint.
+
 
 2.4.0 (2016-07-13)
 ~~~~~~~~~~~~~~~~~~
