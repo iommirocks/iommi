@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.5.0 (----------)
+2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~
 
 * Added optional `endpoint_dispatch_prefix` table configuration to enable multiple
