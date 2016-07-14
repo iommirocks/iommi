@@ -1164,6 +1164,20 @@ def test_ajax_data_endpoint():
     assert json.loads(result.content.decode('utf8')) == [dict(foo=1, bar=2), dict(foo=3, bar=4)]
 
 
+def test_ajax_endpoint_namespacing():
+    class TestTable(Table):
+        class Meta:
+            endpoint_dispatch_prefix = 'foo'
+            endpoint__bar = lambda **_: 17
+
+        baz = Column()
+
+    result = render_table(request=RequestFactory().get("/", {'__not_foo__bar': ''}), table=TestTable(data=[]))
+    assert result is None
+    result = render_table(request=RequestFactory().get("/", {'__foo__bar': ''}), table=TestTable(data=[]))
+    assert 17 == json.loads(result.content.decode('utf8'))
+
+
 def test_table_iteration():
 
     class TestTable(Table):

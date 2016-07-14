@@ -595,8 +595,9 @@ class Table(object):
         header__template = 'tri_table/table_header_rows.html'
         links__template = 'tri_table/links.html'
 
-        endpoint__query__ = lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None
-        endpoint__bulk__ = lambda table, key, value: table.bulk.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None
+        endpoint_dispatch_prefix = None
+        endpoint__query = lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None
+        endpoint__bulk = lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None
 
         model = None
 
@@ -810,6 +811,7 @@ class Table(object):
             self.query = Query(
                 request=request,
                 variables=variables,
+                endpoint_dispatch_prefix='__'.join(part for part in [self.Meta.endpoint_dispatch_prefix, 'form'] if part is not None),
                 **self.query_kwargs
             )
             self.query_form = self.query.form() if self.query.variables else None
@@ -845,7 +847,7 @@ class Table(object):
             self.bulk_form = Form(
                 data=request.POST,
                 fields=bulk_fields,
-                endpoint_dispatch_prefix='bulk',
+                endpoint_dispatch_prefix='__'.join(part for part in [self.Meta.endpoint_dispatch_prefix, 'bulk'] if part is not None),
                 **self.bulk_kwargs) if bulk_fields else None
 
         self._prepare_auto_rowspan()
@@ -898,9 +900,12 @@ class Table(object):
         return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
 
     def endpoint_dispatch(self, key, value):
+        parts = key.split('__', 1)
+        prefix = parts.pop(0)
+        remaining_key = parts[0] if parts else None
         for endpoint, handler in self.endpoint.items():
-            if key.startswith(endpoint):
-                return handler(table=self, key=key[len(endpoint):], value=value)
+            if prefix == endpoint:
+                return handler(table=self, key=remaining_key, value=value)
 
 
 class Link(Struct):
@@ -1046,7 +1051,15 @@ def render_table(request,
 
     for key, value in request.GET.items():
         if key.startswith('__'):
-            data = table.endpoint_dispatch(key=key[2:], value=value)
+            remaining_key = key[2:]
+            expected_prefix = table.Meta.endpoint_dispatch_prefix
+            if expected_prefix is not None:
+                parts = remaining_key.split('__', 1)
+                prefix = parts.pop(0)
+                if prefix != expected_prefix:
+                    return
+                remaining_key = parts[0] if parts else None
+            data = table.endpoint_dispatch(key=remaining_key, value=value)
             if data:
                 return HttpResponse(json.dumps(data), content_type='application/json')
 
