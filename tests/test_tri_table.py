@@ -8,6 +8,9 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
 import pytest
+from tri.declarative import getattr_path
+from tri.form import Field
+from tri.query import Variable
 
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
@@ -1026,6 +1029,29 @@ def test_choice_queryset():
 
 
 @pytest.mark.django_db
+def test_multi_choice_queryset():
+    assert Foo.objects.all().count() == 0
+
+    Foo.objects.create(a=1)
+    Foo.objects.create(a=2)
+    Foo.objects.create(a=3)
+    Foo.objects.create(a=4)
+
+    class FooTable(Table):
+        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column: Foo.objects.exclude(a=3).exclude(a=4))
+
+        class Meta:
+            model = Foo
+
+    foo_table = FooTable(data=Foo.objects.all())
+    foo_table.prepare(RequestFactory().get("/"))
+
+    assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.bulk_form.fields[0].choices) == repr(list(Foo.objects.exclude(a=3).exclude(a=4)))
+    assert repr(foo_table.query_form.fields[0].choices) == repr(list(Foo.objects.exclude(a=3).exclude(a=4)))
+
+
+@pytest.mark.django_db
 def test_query_namespace_inject():
     class FooException(Exception):
         pass
@@ -1042,6 +1068,39 @@ def test_query_namespace_inject():
             columns=[Column(name='foo', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
         foo.prepare(foo.request)
+
+
+def test_float():
+    x = Column.float()
+    assert getattr_path(x, 'query__class') == Variable.float
+    assert getattr_path(x, 'bulk__class') == Field.float
+
+
+def test_integer():
+    x = Column.integer()
+    assert getattr_path(x, 'query__class') == Variable.integer
+    assert getattr_path(x, 'bulk__class') == Field.integer
+
+
+def test_date():
+    x = Column.date()
+    # TODO: should check for Variable.date
+    assert getattr_path(x, 'query__gui__class') == Field.date
+    assert getattr_path(x, 'bulk__class') == Field.date
+
+
+def test_datetime():
+    x = Column.datetime()
+    # TODO: should check for Variable.datetime
+    assert getattr_path(x, 'query__gui__class') == Field.datetime
+    assert getattr_path(x, 'bulk__class') == Field.datetime
+
+
+def test_email():
+    x = Column.email()
+    # TODO: should check for Variable.email
+    assert getattr_path(x, 'query__gui__class') == Field.email
+    assert getattr_path(x, 'bulk__class') == Field.email
 
 
 def test_extra():
