@@ -4,7 +4,7 @@ import functools
 import inspect
 import itertools
 
-from tri.struct import Struct
+from tri.struct import Struct, Frozen
 
 __version__ = '0.27.0'
 
@@ -299,9 +299,6 @@ _matches_cache = {}
 
 
 def matches(caller_parameters, callee_parameters):
-    if caller_parameters == callee_parameters:
-        return True
-
     cache_key = ';'.join((caller_parameters, callee_parameters))
     cached_value = _matches_cache.get(cache_key, None)
     if cached_value is not None:
@@ -475,27 +472,88 @@ def setdefaults(d, d2):
     return d
 
 
-EMPTY = object()
+class Namespace(Struct):
+    def __init__(self, *args, **kwargs):
+        if args or kwargs:
+            super(Namespace, self).__init__(setdefaults_path(Namespace(), *args, **kwargs))
+
+    def __repr__(self):
+        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: len(x[0]))))
+
+    def __str__(self):
+        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: len(x[0]))))
+
+
+def flatten(namespace):
+    return dict(flatten_items(namespace))
+
+
+def flatten_items(namespace):
+    def mappings(n, visited=None, prefix=''):
+        for key, value in n.items():
+            path = prefix + key
+            if isinstance(value, Namespace):
+                visited = [] if visited is None else visited
+                if value not in visited:
+                    visited.append(value)
+                    if value:
+                        for mapping in mappings(value, visited=visited, prefix=path + '__'):
+                            yield mapping
+                    else:
+                        yield path, Namespace()
+            else:
+                yield path, value
+    return mappings(namespace)
+
+
+class FrozenNamespace(Frozen, Namespace):
+    pass
+
+
+EMPTY = FrozenNamespace()
 
 
 def setdefaults_path(target, *defaults, **kwargs):
+
+    def setdefault(path, value):
+        namespace = target
+        parts = path.split('__')
+        for part in parts[:-1]:
+            current = namespace.get(part)
+            if current is None:
+                namespace[part] = Namespace()
+            elif not isinstance(current, dict):
+                namespace[part] = Namespace(**{current: True})
+            else:
+                namespace[part] = Namespace(current)
+            namespace = namespace[part]
+        namespace.setdefault(parts[-1], value)
+
     for mappings in list(defaults) + [kwargs]:
         for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
-            namespace = target
-            parts = path.split('__')
-            for part in parts[:-1]:
-                current = namespace.get(part)
-                if current is None:
-                    namespace[part] = Struct()
-                elif not isinstance(current, dict):
-                    namespace[part] = Struct(**{current: True})
-                elif not isinstance(current, Struct):
-                    namespace[part] = Struct(current)
-                namespace = namespace[part]
-            if value is EMPTY:
-                value = {}
-            namespace.setdefault(parts[-1], value)
+            if not isinstance(value, Namespace):
+                setdefault(path, value)
+            else:
+                if value:
+                    for path2, value in flatten(value).items():
+                        setdefault('__'.join((path, path2)), value)
+                else:
+                    setdefault(path, Namespace())
     return target
+
+
+def dispatch(*function, **defaults):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            return f(*args, **setdefaults_path(Namespace(), kwargs, defaults))
+        return wrapper
+
+    if function:
+        assert len(function) == 1
+        return decorator(function[0])
+
+    return decorator
 
 
 def getattr_path(obj, path):
@@ -569,15 +627,3 @@ def assert_kwargs_empty(kwargs):
         raise TypeError('%s() got unexpected keyword arguments %s' % (function_name, ', '.join(["'%s'" % x for x in sorted(kwargs.keys())])))
 
 
-def dispatch(*function, **defaults):
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            return f(*args, **setdefaults_path(Struct(), kwargs, defaults))
-        return wrapper
-
-    if function:
-        assert len(function) == 1
-        return decorator(function[0])
-
-    return decorator

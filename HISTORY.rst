@@ -1,11 +1,20 @@
 Changelog
 =========
 
+0.28.0 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* Added `Namespace` subclass of `tri.struct.Struct` to explicit capture the
+  path splitting semantics. (And added method for flattening a `Namespace` back
+  to path notation.)
+
+
 0.27.0 (2016-07-13)
 ~~~~~~~~~~~~~~~~~~~
 
 * Fix bug in `evaluate` signature detection with optional arguments. 
   (`lambda a, b=17: a+b` was correctly matched but `lambda b, a=17: a+b` was not)
+
 
 0.26.0 (2016-05-06)
 ~~~~~~~~~~~~~~~~~~~
