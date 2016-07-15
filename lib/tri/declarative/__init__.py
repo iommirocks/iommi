@@ -6,7 +6,7 @@ import itertools
 
 from tri.struct import Struct, Frozen
 
-__version__ = '0.27.0'
+__version__ = '0.28.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -478,10 +478,10 @@ class Namespace(Struct):
             super(Namespace, self).__init__(setdefaults_path(Namespace(), *args, **kwargs))
 
     def __repr__(self):
-        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: len(x[0]))))
+        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
 
     def __str__(self):
-        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: len(x[0]))))
+        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
 
 
 def flatten(namespace):
@@ -625,5 +625,3 @@ def assert_kwargs_empty(kwargs):
         import traceback
         function_name = traceback.extract_stack()[-2][2]
         raise TypeError('%s() got unexpected keyword arguments %s' % (function_name, ', '.join(["'%s'" % x for x in sorted(kwargs.keys())])))
-
-

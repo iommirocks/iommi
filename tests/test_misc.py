@@ -123,7 +123,8 @@ def test_namespace_repr():
 
 def test_namespace_repr_empty_members():
     actual = repr(Namespace(a=Namespace(b=Namespace())))
-    expected = "Namespace(a__b=Namespace)"
+    expected = "Namespace(a__b=Namespace())"
+    assert expected == actual
 
 
 def test_namespace_get_set():
