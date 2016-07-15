@@ -116,8 +116,14 @@ def test_setdefaults_namespace_merge():
 
 
 def test_namespace_repr():
-    actual = repr(Namespace(a=1, b=2, c=Namespace(d=3, e=Namespace(f=4))))
-    expected = "Namespace(a=1, b=2, c__d=3, c__e__f=4)"
+    actual = repr(Namespace(a=1, b=2, c=Namespace(d=3, e=Namespace(f='4'))))
+    expected = "Namespace(a=1, b=2, c__d=3, c__e__f='4')"  # Quotes since repr is called on values
+    assert expected == actual
+
+
+def test_namespace_str():
+    actual = str(Namespace(a="1"))
+    expected = "Namespace(a=1)"  # No quotes on string since str is used on values
     assert expected == actual
 
 
