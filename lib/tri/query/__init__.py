@@ -489,11 +489,18 @@ class Query(object):
             return request_data(self.request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
             # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
-            result = [''.join([field.name,
-                               self.bound_variable_by_name[field.name].gui_op,
-                               value_to_query_string_value_string(field.value)])
+            def expr(field, is_list, value):
+                if is_list:
+                    return ' AND '.join([expr(field, is_list=False, value=x) for x in field.value_list])
+                return ''.join([
+                        field.name,
+                        self.bound_variable_by_name[field.name].gui_op,
+                        value_to_query_string_value_string(value)],
+                )
+
+            result = [expr(field, field.is_list, field.value)
                       for field in form.fields
-                      if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
+                      if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '') or field.value_list not in (None, [])]
 
             if FREETEXT_SEARCH_NAME in form.fields_by_name:
                 freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
