@@ -244,6 +244,14 @@ def test_choice_queryset():
         query2.to_q()
     assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
 
+    # test invalid ops
+    valid_ops = ['=']
+    for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
+        query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.value))}))
+        with pytest.raises(QueryException) as e:
+            q = query2.to_q()
+        assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
+
 
 def test_from_model():
     t = Query.from_model(data=Foo.objects.all(), model=Foo)
