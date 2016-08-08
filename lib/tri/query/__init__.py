@@ -162,7 +162,8 @@ class Variable(Frozen, VariableBase):
         :type choices: django.db.models.QuerySet
         """
         def choice_queryset_value_to_q(variable, op, value_string_or_f):
-            assert op == '='
+            if op != '=':
+                raise QueryException('Invalid operator "%s" for variable "%s"' % (op, variable.name))
             if variable.attr is None:
                 return Q()
             try:
