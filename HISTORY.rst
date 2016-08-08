@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.1.1 (2016-08-08)
+~~~~~~~~~~~~~~~~~~
+
+* Report invalid operators for choice queryset as errors instead of crashing
+
+
 2.1.0 (2016-07-12)
 ~~~~~~~~~~~~~~~~~~
 
