@@ -1007,7 +1007,7 @@ class Form(object):
             value_list = None
             if field.is_list:
                 if field.parsed_data_list is not None:
-                    value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list]
+                    value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list if x is not None]
             else:
                 if field.parsed_data is not None:
                     value = self.validate_field_parsed_data(field, field.parsed_data)
