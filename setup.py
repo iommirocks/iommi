@@ -73,7 +73,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author='Anders Hovmöller',
     author_email='anders.hovmoller@trioptima.com',
-    url='',
+    url='https://github.com/TriOptima/tri.query',
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
     include_package_data=True,
