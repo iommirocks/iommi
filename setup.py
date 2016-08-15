@@ -73,7 +73,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author='Johan Lübcke',
     author_email='johan.lubcke@trioptima.com',
-    url='',
+    url='https://github.com/TriOptima/tri.declarative',
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
     include_package_data=True,
