@@ -16,6 +16,7 @@ def edit_object(
         **kwargs):
     assert 'is_create' not in kwargs
     assert 'model' not in kwargs
+    assert instance is not None
     model = instance.__class__
     return create_or_edit_object(
         request,
