@@ -226,9 +226,12 @@ def test_choice_queryset():
     # test GUI
     form = Query2(RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
     assert not form.is_valid()
-    form = Query2(RequestFactory().post('/', {'-': '-', 'foo': str(random_valid_obj.pk)})).form()
+    query2 = Query2(RequestFactory().post('/', {'-': '-', 'foo': str(random_valid_obj.pk)}))
+    form = query2.form()
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
+    q = query2.to_q()
+    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
 
     # test query
     query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)}))
@@ -249,7 +252,67 @@ def test_choice_queryset():
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
         query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.value))}))
         with pytest.raises(QueryException) as e:
-            q = query2.to_q()
+            query2.to_q()
+        assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
+
+
+@pytest.mark.django_db
+def test_multi_choice_queryset():
+    foos = [Foo.objects.create(value=5), Foo.objects.create(value=7)]
+
+    # make sure we get either 1 or 3 objects later when we choose a random pk
+    Bar.objects.create(foo=foos[0])
+    Bar.objects.create(foo=foos[1])
+    Bar.objects.create(foo=foos[1])
+    Bar.objects.create(foo=foos[1])
+    Bar.objects.create(foo=foos[1])
+    Bar.objects.create(foo=foos[1])
+    Bar.objects.create(foo=foos[1])
+
+    class Query2(Query):
+        foo = Variable.multi_choice_queryset(
+            model=Foo,
+            choices=Foo.objects.all(),
+            gui__show=True,
+            value_to_q_lookup='value')
+        baz = Variable.multi_choice_queryset(
+            model=Foo,
+            attr=None,
+            choices=None,
+        )
+
+    random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
+
+    # test GUI
+    form = Query2(RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
+    assert not form.is_valid()
+    query2 = Query2(RequestFactory().post('/', {'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
+    form = query2.form()
+    assert form.is_valid()
+    assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
+    q = query2.to_q()
+    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk__in=[random_valid_obj.pk, random_valid_obj2.pk]))
+
+    # test query
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)}))
+    q = query2.to_q()
+    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
+    assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
+
+    # test searching for something that does not exist
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s' % str(11)}))
+    value_that_does_not_exist = 11
+    assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
+    with pytest.raises(QueryException) as e:
+        query2.to_q()
+    assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
+
+    # test invalid ops
+    valid_ops = ['=']
+    for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
+        query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.value))}))
+        with pytest.raises(QueryException) as e:
+            query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
 
 
