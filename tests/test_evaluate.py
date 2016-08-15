@@ -41,6 +41,7 @@ def test_no_evaluate():
     assert 19 == should_not_evaluate(19)  # should_not_evaluate() on a non-callable is a no-op
     assert 19 == should_evaluate(19)  # should_evaluate() on a non-callable is a no-op
     assert 46 == evaluate(should_evaluate(should_not_evaluate(f)), x=23)
+    assert 42 == evaluate(42)
 
 
 def test_no_evaluate_recursive():

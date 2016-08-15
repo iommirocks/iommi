@@ -179,3 +179,15 @@ def test_add_init_kwargs():
             assert 'bar' == foo
 
     Test()
+
+
+def test_not_add_init_kwargs():
+    @with_meta(add_init_kwargs=False)
+    class Test(object):
+        class Meta:
+            foo = 'bar'
+
+        def __init__(self):
+            assert 'bar' == self.get_meta().foo
+
+    Test()
