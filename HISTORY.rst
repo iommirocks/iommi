@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+3.6.0 (2016-08-16)
+~~~~~~~~~~~~~~~~~~
+
+* Field.datetime is more forgiving in the formats it receives: it will not accept ISO8601 formats but missing seconds or seconds+minutes
+
+* Field.boolean field didn't respect specified input_template
+
+* Inputs that were parsed to lists where the field was a list now works properly: None is not passed to the validation function.
+
+* Fixed pypi rendering of documentation
+
+* More honest coverage numbers
+
+
 3.5.0 (2016-06-16)
 ~~~~~~~~~~~~~~~~~~
 
