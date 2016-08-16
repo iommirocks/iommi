@@ -1,4 +1,5 @@
-from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField
+from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField, FileField
+
 saved_something = None
 
 
@@ -22,6 +23,7 @@ class FormFromModelTest(Model):
     f_int = IntegerField()
     f_float = FloatField()
     f_bool = BooleanField()
+    f_file = FileField()
 
     f_int_excluded = IntegerField()
 

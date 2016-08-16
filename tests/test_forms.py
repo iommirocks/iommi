@@ -322,6 +322,7 @@ def test_render_table():
             label_container_css_classes={'$$$11$$$'},
             help_text='^^^13^^^',
             label='***17***',
+            id='$$$$5$$$$$'
         )
 
     table = MyForm().table()
@@ -330,6 +331,7 @@ def test_render_table():
     assert '$$$11$$$' in table
     assert '^^^13^^^' in table
     assert '***17***' in table
+    assert 'id="$$$$5$$$$$"' in table
     assert '<tr' in table
 
     # Assert that table is the default
@@ -422,10 +424,10 @@ def test_form_from_model_invalid_form():
     actual_errors = [x.errors for x in Form.from_model(
         model=FormFromModelTest,
         exclude=['f_int_excluded'],
-        data=dict(f_int='1.1', f_float='true', f_bool='asd')
+        data=dict(f_int='1.1', f_float='true', f_bool='asd', f_file='foo')
     ).fields]
 
-    assert len(actual_errors) == 3
+    assert len(actual_errors) == 4
     assert {'could not convert string to float: true'} in actual_errors
     assert {u'asd is not a valid boolean value'} in actual_errors
     assert {"invalid literal for int() with base 10: '1.1'"} in actual_errors or {"invalid literal for int() with base 10: u'1.1'"} in actual_errors
@@ -778,9 +780,11 @@ def test_choice_queryset_ajax():
 
     class MyForm(Form):
         username = Field.choice_queryset(choices=User.objects.all(), extra__endpoint_attr='username')
+        not_returning_anything = Field.integer()
 
     form = MyForm(request=RequestFactory().get('/'))
     assert form.endpoint_dispatch(key='field__username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]
+    assert form.endpoint_dispatch(key='field__not_returning_anything', value='ar') is None
 
 
 def test_is_empty_form_marker():
