@@ -81,7 +81,7 @@ Changelog
 2.0.0 (2016-04-18)
 ~~~~~~~~~~~~~~~~~~
 
-* Changed Form.from_model method to require database field kwargs under 'field__' namespace. This is a breaking change.
+* Changed Form.from_model method to require database field kwargs under `field__` namespace. This is a breaking change.
 
 * Fixed saving of foreign keys in django create view
 
