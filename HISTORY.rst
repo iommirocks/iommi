@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2.2.0 (2016-08-16)
+~~~~~~~~~~~~~~~~~~
+
+* Variable.choice_queryset handles the string "null" the same way as everything else
+
+* Queries that have multi-select inputs now work
+
+
 2.1.1 (2016-08-08)
 ~~~~~~~~~~~~~~~~~~
 
