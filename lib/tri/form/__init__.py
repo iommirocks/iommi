@@ -450,15 +450,18 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def integer(**kwargs):
+        def int_parse(string_value, **_):
+            return int(string_value)
+
         setdefaults_path(
             kwargs,
-            parse=lambda string_value, **_: int(string_value),
+            parse=int_parse,
         )
         return Field(**kwargs)
 
     @staticmethod
     def float(**kwargs):
-        def parse_float(string_value, **_):
+        def float_parse(string_value, **_):
             try:
                 return float(string_value)
             except ValueError:
@@ -467,7 +470,7 @@ class Field(Frozen, FieldBase):
 
         setdefaults_path(
             kwargs,
-            parse=parse_float,
+            parse=float_parse,
         )
         return Field(**kwargs)
 
@@ -525,19 +528,22 @@ class Field(Frozen, FieldBase):
             del form
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
-        def post_validation(form, field):
+        def choice_post_validation(form, field):
             choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
             if not field.required and not field.is_list:
                 choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
             field.choice_tuples = choice_tuples
 
+        def choice_choice_to_option(form, field, choice):
+            return choice, "%s" % choice, "%s" % choice, choice == field.value
+
         setdefaults_path(
             kwargs,
             empty_choice_tuple=(None, '', kwargs['empty_label'], True),
-            choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, choice == field.value),
+            choice_to_option=choice_choice_to_option,
             input_template='tri_form/choice.html',
             is_valid=choice_is_valid,
-            post_validation=post_validation,
+            post_validation=choice_post_validation,
         )
 
         return Field(**kwargs)
@@ -545,8 +551,7 @@ class Field(Frozen, FieldBase):
     @staticmethod
     def choice_queryset(**kwargs):
 
-        def choice_queryset_is_valid(form, field, parsed_data):
-            del form
+        def choice_queryset_is_valid(field, parsed_data, **_):
             return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
         def choice_queryset_endpoint_dispatch(field, value, **_):
@@ -560,12 +565,21 @@ class Field(Frozen, FieldBase):
                 for row in result[:limit]
             ]
 
+        def choice_queryset_parse(field, string_value, **_):
+            return field.model.objects.get(pk=string_value) if string_value else None
+
+        def choice_queryset_choice_to_option(field, choice, **_):
+            return choice, choice.pk, "%s" % choice, choice == field.value
+
+        def choice_queryset_endpoint_path(form, field):
+            return '__' + form.endpoint_dispatch_prefix + '__field__' + field.name
+
         kwargs = setdefaults_path(
             Struct(),
             kwargs,
-            parse=lambda form, field, string_value: field.model.objects.get(pk=string_value) if string_value else None,
-            choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, choice == field.value),
-            endpoint_path=lambda form, field: '__' + form.endpoint_dispatch_prefix + '__field__' + field.name,
+            parse=choice_queryset_parse,
+            choice_to_option=choice_queryset_choice_to_option,
+            endpoint_path=choice_queryset_endpoint_path,
             endpoint_dispatch=choice_queryset_endpoint_dispatch,
             extra__endpoint_attr='name',
             is_valid=choice_queryset_is_valid,
@@ -574,20 +588,26 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def multi_choice(**kwargs):
+        def multi_choice_choice_to_option(field, choice, **_):
+            return choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list
+
         setdefaults_path(
             kwargs,
             attrs__multiple=True,
-            choice_to_option=lambda form, field, choice: (choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list),
+            choice_to_option=multi_choice_choice_to_option,
             is_list=True,
         )
         return Field.choice(**kwargs)
 
     @staticmethod
     def multi_choice_queryset(**kwargs):
+        def multi_choice_queryset_choice_to_option(field, choice, **_):
+            return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
+
         setdefaults_path(
             kwargs,
             attrs__multiple=True,
-            choice_to_option=lambda form, field, choice: (choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list),
+            choice_to_option=multi_choice_queryset_choice_to_option,
             is_list=True,
         )
         return Field.choice_queryset(**kwargs)
@@ -618,10 +638,13 @@ class Field(Frozen, FieldBase):
             assert errors
             raise ValidationError('Time data "%s" does not match any of the formats %s' % (string_value, ', '.join('"%s"' % x for x in iso_formats)))
 
+        def datetime_render_value(value, **_):
+            return value.strftime(iso_formats[0]) if value else ''
+
         setdefaults_path(
             kwargs,
             parse=datetime_parse,
-            render_value=lambda value, **_: value.strftime(iso_formats[0]) if value else '',
+            render_value=datetime_render_value,
         )
         return Field(**kwargs)
 
@@ -635,10 +658,13 @@ class Field(Frozen, FieldBase):
             except ValueError as e:
                 raise ValidationError(str(e))
 
+        def date_render_value(value, **_):
+            return value.strftime(iso_format) if value else ''
+
         setdefaults_path(
             kwargs,
             parse=date_parse,
-            render_value=lambda value, **_: value.strftime(iso_format) if value else '',
+            render_value=date_render_value,
         )
         return Field(**kwargs)
 
@@ -652,27 +678,36 @@ class Field(Frozen, FieldBase):
             except ValueError as e:
                 raise ValidationError(str(e))
 
+        def time_render_value(value, **_):
+            return value.strftime(iso_format)
+
         setdefaults_path(
             kwargs,
             parse=time_parse,
-            render_value=lambda value, **_: value.strftime(iso_format),
+            render_value=time_render_value,
         )
         return Field(**kwargs)
 
     @staticmethod
     def decimal(**kwargs):
+        def decimal_parse(string_value, **_):
+            return Decimal(string_value)
+
         setdefaults_path(
             kwargs,
-            parse=lambda string_value, **_: Decimal(string_value),
+            parse=decimal_parse,
         )
         return Field(**kwargs)
 
     @staticmethod
     def url(**kwargs):
+        def url_parse(string_value, **_):
+            return URLValidator(string_value) or string_value
+
         setdefaults_path(
             kwargs,
             input_type='email',
-            parse=lambda string_value, **_: URLValidator(string_value) or string_value,
+            parse=url_parse,
         )
         return Field(**kwargs)
 
@@ -721,18 +756,24 @@ class Field(Frozen, FieldBase):
 
     @staticmethod
     def email(**kwargs):
+        def email_parse(string_value, **_):
+            return validate_email(string_value) or string_value
+
         setdefaults_path(
             kwargs,
             input_type='email',
-            parse=lambda string_value, **_: validate_email(string_value) or string_value,
+            parse=email_parse,
         )
         return Field(**kwargs)
 
     @staticmethod
     def phone_number(**kwargs):
+        def phone_number_is_valid(parsed_data, **_):
+            return re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
+
         setdefaults_path(
             kwargs,
-            is_valid=lambda form, field, parsed_data: (re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'),
+            is_valid=phone_number_is_valid,
         )
         return Field(**kwargs)
 
