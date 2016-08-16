@@ -1,6 +1,6 @@
 tri.declarative>=0.26.0
 tri.named_struct
 tri.struct
-tri.form>=3.3.0,<4.0.0
+tri.form>=3.6.0,<4.0.0
 pyparsing
 six

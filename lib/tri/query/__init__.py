@@ -2,7 +2,7 @@ from __future__ import unicode_literals, absolute_import
 
 from datetime import date
 from functools import reduce
-from django.db.models import Q, F
+from django.db.models import Q, F, Model
 from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
@@ -50,11 +50,13 @@ def request_data(request):
         assert False, "unknown request method %s" % request.method  # pragma: no cover
 
 
-def value_to_query_string_value_string(v):
+def value_to_query_string_value_string(variable, v):
     if type(v) == bool:
         return {True: '1', False: '0'}.get(v)
     if type(v) in integer_types or type(v) is float:
         return str(v)
+    if isinstance(v, Model):
+        v = getattr(v, variable.value_to_q_lookup)
     return '"%s"' % v
 
 
@@ -491,11 +493,18 @@ class Query(object):
             return request_data(self.request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
             # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
-            result = [''.join([field.name,
-                               self.bound_variable_by_name[field.name].gui_op,
-                               value_to_query_string_value_string(field.value)])
+            def expr(field, is_list, value):
+                if is_list:
+                    return ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list])
+                return ''.join([
+                    field.name,
+                    self.bound_variable_by_name[field.name].gui_op,
+                    value_to_query_string_value_string(self.bound_variable_by_name[field.name], value)],
+                )
+
+            result = [expr(field, field.is_list, field.value)
                       for field in form.fields
-                      if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '')]
+                      if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '') or field.value_list not in (None, [])]
 
             if FREETEXT_SEARCH_NAME in form.fields_by_name:
                 freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
