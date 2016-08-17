@@ -542,7 +542,7 @@ class BoundCell(object):
     def render(self):
         cell__template = self.bound_column.cell.template
         if cell__template:
-            return render_to_string(cell__template, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value))
+            return render_to_string(cell__template, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self))
         else:
             return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 

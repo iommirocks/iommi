@@ -19,6 +19,8 @@ Changelog
 
 * Added `extra` namespace to `Table`
 
+* Added `bound_cell` parameter to rendering of cell templates.
+
 
 2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~
