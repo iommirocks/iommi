@@ -457,6 +457,7 @@ class BoundColumn(ColumnBase):
     def render_css_class(self):
         return render_class(self.attrs['class'])
 
+
 class BoundRow(object):
     """
     Internal class used in row rendering
