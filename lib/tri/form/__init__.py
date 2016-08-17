@@ -208,14 +208,14 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
         model_field = model._meta.get_field(field_name)
     assert isinstance(model_field, OneToOneField)
 
-    result = [member_from_model(model=model_field.related_field.model,
+    result = [member_from_model(model=model_field.rel.to,
                                 factory_lookup=factory_lookup,
                                 factory_lookup_register_function=register_field_factory,
                                 defaults_factory=defaults_factory,
                                 field_name=sub_model_field.name,
                                 name=name + '__' + sub_model_field.name,
                                 **field.pop(sub_model_field.name, {}))
-              for sub_model_field in get_fields(model=model_field.related_field.model)]
+              for sub_model_field in get_fields(model=model_field.rel.to)]
     assert_kwargs_empty(field)
     return [x for x in result if x is not None]
 
@@ -224,7 +224,7 @@ def default_help_text(field, **_):
     if field.model is None or field.attr is None:
         return ''
     try:
-        return field.model._meta.get_field_by_name(field.attr.rsplit('__', 1)[-1])[0].help_text or ''
+        return field.model._meta.get_field(field.attr.rsplit('__', 1)[-1]).help_text or ''
     except FieldDoesNotExist:  # pragma: no cover
         return ''
 
@@ -1114,10 +1114,17 @@ class Form(object):
         if template_name is None:
             return mark_safe('\n'.join(r))
         else:
-            return render_to_string(
-                context_instance=RequestContext(self.request, dict(form=self)),
-                template_name=template_name,
-            )
+            if django.VERSION < (1, 8):
+                return render_to_string(
+                    context_instance=RequestContext(self.request, dict(form=self)),
+                    template_name=template_name,
+                )
+            else:
+                return render_to_string(
+                    template_name=template_name,
+                    context=dict(form=self),
+                    request=self.request
+                )
 
     def apply(self, instance):
         """
