@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
 import pytest
-from tri.declarative import getattr_path
+from tri.declarative import getattr_path, Namespace
 from tri.form import Field
 from tri.query import Variable
 
@@ -505,7 +505,7 @@ def test_attrs():
             }
             row__attrs = {
                 'class': 'classier',
-                'foo': lambda table, row: "barier"
+                'foo': lambda table, row, **_: "barier"
             }
 
         yada = Column()
@@ -869,7 +869,7 @@ def test_cell_lambda():
     class TestTable(NoSortTable):
         sentinel1 = 'sentinel1'
 
-        sentinel2 = Column(cell__value=lambda table, column, row: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
+        sentinel2 = Column(cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
 
     data = [Struct(sentinel3="sentinel3")]
 
@@ -1111,6 +1111,30 @@ def test_extra():
     assert TestTable(data=[]).columns[0].extra.bar == 2
 
 
+def test_row_extra():
+    class TestTable(Table):
+        result = Column(cell__value=lambda bound_row, **_: bound_row.extra.foo)
+
+        class Meta:
+            row__extra__foo = lambda table, row, **_: row.a + row.b
+
+    bound_row = list(TestTable(request=RequestFactory().get(path='/'), data=[Struct(a=5, b=7)]))[0]
+    assert bound_row.extra.foo == 5 + 7
+    assert bound_row['result'].value == 5 + 7
+
+
+def test_row_extra_struct():
+    class TestTable(Table):
+        result = Column(cell__value=lambda bound_row, **_: bound_row.extra.foo)
+
+        class Meta:
+            row__extra = lambda table, row, **_: Namespace(foo=row.a + row.b)
+
+    bound_row = list(TestTable(request=RequestFactory().get(path='/'), data=[Struct(a=5, b=7)]))[0]
+    assert bound_row.extra.foo == 5 + 7
+    assert bound_row['result'].value == 5 + 7
+
+
 def test_from_model():
     t = Table.from_model(
         model=Foo,
@@ -1207,3 +1231,7 @@ def test_ajax_custom_endpoint():
 
     result = render_table(request=RequestFactory().get("/", {'__foo': 'bar'}), table=TestTable(data=[]))
     assert json.loads(result.content.decode('utf8')) == dict(baz='bar')
+
+
+def test_row_level_additions():
+    pass
