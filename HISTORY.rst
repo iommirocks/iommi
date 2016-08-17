@@ -13,6 +13,8 @@ Changelog
 
 * `BoundRow` now supports `extra`.
 
+* compatibible with Django 1.9 & 1.10
+
 
 2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~
