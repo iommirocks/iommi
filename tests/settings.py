@@ -8,6 +8,18 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 TEMPLATE_DEBUG = True
 
+# Django >=1.9
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'debug': TEMPLATE_DEBUG,
+        }
+    }
+]
+
 SECRET_KEY = "foobar"
 INSTALLED_APPS = [
     'django.contrib.auth',
