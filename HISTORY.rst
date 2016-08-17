@@ -1,10 +1,20 @@
 Changelog
 ---------
 
-2.x.x (in development)
-~~~~~~~~~~~~~~~~~~~~~~
+3.0.0 (..........)
+~~~~~~~~~~~~~~~~~~
+
+* `bound_row` is passed to row level callables. This is a potential breaking
+  change if you didn't do `**_` at the end of your function signatures (which you
+  should!)
+
+* `bound_row` and `bound_column` is passed to cell level callables. This is a
+  potential breaking change like above.
+
+* `BoundRow` now supports `extra`.
 
 * compatibible with Django 1.9 & 1.10
+
 
 2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~

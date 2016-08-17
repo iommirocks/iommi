@@ -110,7 +110,7 @@ def register_cell_formatter(type_or_class, formatter):
     _cell_formatters[type_or_class] = formatter
 
 
-def default_cell_formatter(table, column, row, value):
+def default_cell_formatter(table, column, row, value, **_):
     """
     :type column: tri.table.BoundColumn
     """
@@ -133,14 +133,14 @@ class ColumnBase(NamedStruct):
     """ :type: unicode """
     after = NamedStructField()
     attrs = NamedStructField()
-    attr = NamedStructField(default=lambda table, column: column.name)
+    attr = NamedStructField(default=lambda table, column, **_: column.name)
     css_class = NamedStructField(default=set())
     url = NamedStructField()
     title = NamedStructField()
     show = NamedStructField(default=True)
     sort_key = NamedStructField(lambda column: column.attr)
     sort_default_desc = NamedStructField(default=False)
-    display_name = NamedStructField(default=lambda table, column: force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
+    display_name = NamedStructField(default=lambda table, column, **_: force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
     sortable = NamedStructField(default=True)
     group = NamedStructField()
     auto_rowspan = NamedStructField(default=False)
@@ -162,7 +162,7 @@ class Column(Frozen, ColumnBase):
         attrs__class=EMPTY,
         cell__template=None,
         cell__attrs=EMPTY,
-        cell__value=lambda table, column, row: getattr_path(row, evaluate(column.attr, table=table, column=column)),
+        cell__value=lambda table, column, row, **_: getattr_path(row, evaluate(column.attr, table=table, column=column)),
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
@@ -208,11 +208,11 @@ class Column(Frozen, ColumnBase):
             display_name='',
             sortable=False,
             attrs__class__thin=True,
-            show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
+            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
             title=icon_title,
-            cell__value=lambda table, column, row: True,
+            cell__value=lambda table, column, row, **_: True,
             cell__attrs__class__cj=True,
-            cell__format=lambda table, column, row, value: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
+            cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
         ))
         return Column(**kwargs)
 
@@ -261,7 +261,7 @@ class Column(Frozen, ColumnBase):
             css_class={'thin'},
             cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
             cell__value='Run',
-            show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
+            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
         ))
         return Column(**kwargs)
 
@@ -278,11 +278,11 @@ class Column(Frozen, ColumnBase):
             title='Select all',
             display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
             sortable=False,
-            show=lambda table, column: evaluate(show, table=table, column=column) and not is_report,
+            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
             attrs__class__thin=True,
             attrs__class__nopad=True,
             cell__attrs__class__cj=True,
-            cell__value=lambda table, column, row: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
+            cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         ))
         return Column(**kwargs)
 
@@ -297,7 +297,7 @@ class Column(Frozen, ColumnBase):
             return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
 
         setdefaults(kwargs, dict(
-            cell__format=lambda table, column, row, value: yes_no_formatter(table=table, column=column, row=row, value=value) if is_report else render_icon(value),
+            cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
             cell__attrs__class__cj=True,
             query__class=Variable.boolean,
             bulk__class=Field.boolean,
@@ -463,16 +463,19 @@ class BoundRow(object):
     Internal class used in row rendering
     """
 
-    def __init__(self, table, row, row_index):
+    @dispatch(
+        attrs=EMPTY,
+        extra=EMPTY,
+    )
+    def __init__(self, table, row, row_index, template, attrs, extra):
         self.table = table
         """ :type : Table """
         self.row = row
         """ :type : object """
         self.row_index = row_index
-
-        args = Struct(evaluate_recursive(extract_subkeys(table.Meta, 'row'), table=table, row=row))
-        self.template = args.template
-        self.attrs = args.attrs
+        self.template = template
+        self.attrs = attrs
+        self.extra = extra
 
     def render(self):
         template = self.template
@@ -515,7 +518,7 @@ class BoundCell(object):
         self.table = bound_row.table
         self.row = bound_row.row
 
-        self.value = evaluate(bound_column.cell.value, table=bound_row.table, column=bound_column.column, row=bound_row.row)
+        self.value = evaluate(bound_column.cell.value, table=bound_row.table, column=bound_column.column, row=bound_row.row, bound_row=bound_row, bound_column=bound_column)
 
     @property
     def attrs(self):
@@ -861,7 +864,7 @@ class Table(object):
     def __iter__(self):
         self.prepare(self.request)
         for i, row in enumerate(self.data):
-            yield BoundRow(table=self, row=row, row_index=i)
+            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(extract_subkeys(self.Meta, 'row'), table=self, row=row))
 
     def render_attrs(self):
         attrs = self.Meta.attrs.copy()
