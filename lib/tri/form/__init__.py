@@ -572,7 +572,7 @@ class Field(Frozen, FieldBase):
             return choice, choice.pk, "%s" % choice, choice == field.value
 
         def choice_queryset_endpoint_path(form, field):
-            return '__' + form.endpoint_dispatch_prefix + '__field__' + field.name
+            return '__' + '__'.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
 
         kwargs = setdefaults_path(
             Struct(),
