@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
+import warnings
 from collections import OrderedDict
 from itertools import groupby
 
@@ -17,7 +18,7 @@ from django.template.loader import render_to_string, get_template
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
-from django.db.models import QuerySet, warnings
+from django.db.models import QuerySet
 from six import string_types
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path, dispatch, EMPTY
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
