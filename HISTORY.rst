@@ -1,10 +1,11 @@
 Changelog
 ---------
 
-2.x.x (in development)
-~~~~~~~~~~~~~~~~~~~~~~
+2.6.0 (2016-08-17)
+~~~~~~~~~~~~~~~~~~
 
-* compatibible with Django 1.9 & 1.10
+* Compatibible with Django 1.9 & 1.10
+
 
 2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~
