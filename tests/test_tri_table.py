@@ -1024,8 +1024,8 @@ def test_choice_queryset():
     foo_table.prepare(RequestFactory().get("/"))
 
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(foo_table.bulk_form.fields[0].choices) == repr(list(Foo.objects.filter(a=1)))
-    assert repr(foo_table.query_form.fields[0].choices) == repr(list(Foo.objects.filter(a=1)))
+    assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(foo_table.query_form.fields[0].choices) == repr(Foo.objects.filter(a=1))
 
 
 @pytest.mark.django_db
@@ -1047,8 +1047,8 @@ def test_multi_choice_queryset():
     foo_table.prepare(RequestFactory().get("/"))
 
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.bulk_form.fields[0].choices) == repr(list(Foo.objects.exclude(a=3).exclude(a=4)))
-    assert repr(foo_table.query_form.fields[0].choices) == repr(list(Foo.objects.exclude(a=3).exclude(a=4)))
+    assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.query_form.fields[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
 
 
 @pytest.mark.django_db
