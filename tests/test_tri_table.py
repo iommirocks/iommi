@@ -1244,3 +1244,13 @@ def test_ajax_custom_endpoint():
 
 def test_row_level_additions():
     pass
+
+
+def test_table_extra_namespace():
+    class TestTable(Table):
+        class Meta:
+            extra__foo = 17
+
+        foo = Column()
+
+    assert 17 == TestTable(request=RequestFactory().get('/'), data=[]).extra.foo
