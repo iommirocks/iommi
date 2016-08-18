@@ -15,6 +15,8 @@ Changelog
 
 * compatibible with Django 1.9 & 1.10
 
+* Added strict check on the kwargs config namespace of `Table`
+
 
 2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~

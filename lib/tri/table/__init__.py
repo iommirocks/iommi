@@ -20,10 +20,10 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, extract_subkeys, sort_after, LAST, setdefaults_path, dispatch, EMPTY
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
 from tri.named_struct import NamedStructField, NamedStruct
-from tri.struct import Struct, Frozen, merged
+from tri.struct import Struct, Frozen
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
@@ -144,6 +144,7 @@ class ColumnBase(NamedStruct):
     sortable = NamedStructField(default=True)
     group = NamedStructField()
     auto_rowspan = NamedStructField(default=False)
+    """ :type: bool """
     cell = NamedStructField()
     model = NamedStructField()
     choices = NamedStructField()
@@ -487,7 +488,7 @@ class BoundRow(object):
 
     def render_attrs(self):
         attrs = self.attrs.copy()
-        attrs['class'] = attrs['class'].copy()
+        attrs['class'] = attrs['class'].copy() if isinstance(attrs['class'], dict) else {k: True for k in attrs['class'].split(' ')}
         attrs['class'].setdefault('row%s' % (self.row_index % 2 + 1), True)
         pk = getattr(self.row, 'pk', None)
         if pk is not None:
@@ -570,6 +571,16 @@ class BoundCell(object):
         return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.column, self.bound_row.row)  # pragma: no cover
 
 
+class TemplateConfig(NamedStruct):
+    template = NamedStructField()
+
+
+class RowConfig(NamedStruct):
+    attrs = NamedStructField()
+    template = NamedStructField()
+    extra = NamedStructField()
+
+
 @declarative(Column, 'columns_dict')
 @with_meta
 class Table(object):
@@ -587,27 +598,29 @@ class Table(object):
 
     """
 
-    class Meta:
-        bulk_filter = {}
-        bulk_exclude = {}
-        sortable = True
-        attrs = Struct()
-        attrs__class__listview = True
-        row__attrs = Struct()
-        row__template = None
-        filter__template = 'tri_query/form.html'
-        header__template = 'tri_table/table_header_rows.html'
-        links__template = 'tri_table/links.html'
+    @dispatch(
+        column=EMPTY,
+        bulk_filter={},
+        bulk_exclude={},
+        sortable=True,
+        attrs=EMPTY,
+        attrs__class__listview=True,
+        row__attrs__class=EMPTY,
+        row__template=None,
+        filter__template='tri_query/form.html',
+        header__template='tri_table/table_header_rows.html',
+        links__template='tri_table/links.html',
+        model=None,
+        query=EMPTY,
+        bulk=EMPTY,
 
-        endpoint_dispatch_prefix = None
-        endpoint__query = lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None
-        endpoint__bulk = lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None
-
-        model = None
-
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, **kwargs):
+        endpoint_dispatch_prefix=None,
+        endpoint__query=lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None,
+        endpoint__bulk=lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None,
+    )
+    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None):
         """
-        :param data: a list of QuerySet of objects
+        :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
         :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
         :param row__attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
@@ -618,49 +631,66 @@ class Table(object):
         :param filter__template:
         :param header__template:
         :param links__template:
-
         """
-
-        self._has_prepared = False
 
         if data is None:  # pragma: no cover
             warnings.warn('deriving model from data queryset is deprecated, use Table.from_model', DeprecationWarning)
-            assert 'model' in kwargs and kwargs['model'] is not None
-            data = kwargs['model'].objects.all()
+            assert model is not None
+            data = model.objects.all()
+
+        if isinstance(data, QuerySet):
+            model = data.model
+
+        def generate_columns():
+            for column_ in columns if columns is not None else []:
+                yield column_
+            for name, column_ in columns_dict.items():
+                dict.__setitem__(column_, 'name', name)
+                yield column_
+        columns = sort_after(list(generate_columns()))
+
+        assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
         self.data = data
         self.request = request
+        self.columns = columns
+        """ :type : list of Column """
 
-        if isinstance(self.data, QuerySet):
-            kwargs['model'] = data.model
+        self.model = model
+        self.instance = instance
 
-        def generate_columns():
-            for column in columns if columns is not None else []:
-                yield column
-            for name, column in columns_dict.items():
-                dict.__setitem__(column, 'name', name)
-                yield column
-        self.columns = sort_after(list(generate_columns()))
-        """:type : list of Column"""
+        self.filter = TemplateConfig(**filter)
+        self.links = TemplateConfig(**links)
+        self.header = TemplateConfig(**header)
+        self.row = RowConfig(**row)
+        self.bulk_exclude = bulk_exclude
+        self.sortable = sortable
+        self.column = column
+        self.bulk = bulk
+        self.bulk_filter = bulk_filter
+        self.endpoint = endpoint
+        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
+        self.attrs = attrs
 
-        assert len(self.columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
-
-        self.bound_columns = None
-        self.shown_bound_columns = None
-        self.bound_column_by_name = None
-
-        self.Meta = self.get_meta()
-        self.Meta.update(**kwargs)
-
-        self.header_levels = None
+        self.query_args = query
         self.query = None
+        """ :type : tri.query.Query """
         self.query_form = None
+        """ :type : tri.form.Form """
         self.query_error = None
-        self.bulk_form = None
+        """ :type : list of str """
 
-        self.query_kwargs = extract_subkeys(kwargs, 'query')
-        self.bulk_kwargs = extract_subkeys(kwargs, 'bulk')
-        self.endpoint = extract_subkeys(kwargs, 'endpoint')
+        self.bulk_form = None
+        """ :type : tri.form.Form """
+        self.bound_columns = None
+        """ :type : list of BoundColumn """
+        self.shown_bound_columns = None
+        """ :type : list of BoundColumn """
+        self.bound_column_by_name = None
+        """ :type: dict[str, BoundColumn] """
+        self._has_prepared = False
+        """ :type: bool """
+        self.header_levels = None
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -688,23 +718,24 @@ class Table(object):
     def _prepare_evaluate_members(self):
         self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
 
-        self.Meta = evaluate_recursive(self.Meta, table=self)
+        for attr in (
+            'column',
+            'bulk_filter',
+            'bulk_exclude',
+            'sortable',
+            'attrs',
+            'row',
+            'filter',
+            'header',
+            'links',
+            'model',
+            'query',
+            'bulk',
+            'endpoint',
+        ):
+            setattr(self, attr, evaluate_recursive(getattr(self, attr), table=self))
 
-        if 'class' in self.Meta.attrs and isinstance(self.Meta.attrs['class'], string_types):
-            self.Meta.attrs['class'] = {k: True for k in self.Meta.attrs['class'].split(' ')}
-        else:
-            self.Meta.attrs['class'] = {}
-        self.Meta.attrs.update(extract_subkeys(self.Meta, 'attrs'))
-        self.Meta.attrs = collect_namespaces(self.Meta.attrs)
-
-        if 'class' in self.Meta.row__attrs and isinstance(self.Meta.row__attrs['class'], string_types):
-            self.Meta.row__attrs['class'] = {k: True for k in self.Meta.row__attrs['class'].split(' ')}
-        else:
-            self.Meta.row__attrs['class'] = {}
-        self.Meta.row__attrs.update(extract_subkeys(self.Meta, 'row__attrs'))
-        self.Meta.row__attrs = collect_namespaces(self.Meta.row__attrs)
-
-        if not self.Meta.sortable:
+        if not self.sortable:
             for bound_column in self.bound_columns:
                 bound_column.sortable = False
 
@@ -725,50 +756,50 @@ class Table(object):
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in DEV, but just ignore in PROD
                         # noinspection PyProtectedMember
-                        valid_sort_fields = {x.name for x in self.Meta.model._meta.fields}
+                        valid_sort_fields = {x.name for x in self.model._meta.fields}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.data = self.data.order_by(*order_args)
 
     def _prepare_headers(self):
-        headers = prepare_headers(self.request, self.shown_bound_columns)
+        bound_columns = prepare_headers(self.request, self.shown_bound_columns)
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
-        header_groups = []
+        group_columns = []
 
-        class HeaderGroup(Struct):
+        class GroupColumn(Namespace):
             def render_css_class(self):
                 return render_class(self.attrs['class'])
 
-        for group_name, group_iterator in groupby(headers, key=lambda header: header.group or id(header)):
+        for group_name, group_iterator in groupby(bound_columns, key=lambda header: header.group or id(header)):
 
-            header_group = list(group_iterator)
+            columns_in_group = list(group_iterator)
 
-            header_groups.append(HeaderGroup(
+            group_columns.append(GroupColumn(
                 display_name=group_name,
                 sortable=False,
-                colspan=len(header_group),
-                attrs=Struct({'class': Struct(superheader=True)})
+                colspan=len(columns_in_group),
+                attrs__class__superheader=True,
             ))
 
-            for x in header_group:
-                x.attrs['class']['subheader'] = True
-                if x.is_sorting:
-                    x.attrs['class']['sorted_column'] = True
+            for bound_column in columns_in_group:
+                bound_column.attrs['class'].subheader = True
+                if bound_column.is_sorting:
+                    bound_column.attrs['class'].sorted_column = True
 
-            header_group[0].attrs['class']['first_column'] = True
+            columns_in_group[0].attrs['class'].first_column = True
 
-        if header_groups:
-            header_groups[0].attrs['class']['first_column'] = True
+        if group_columns:
+            group_columns[0].attrs['class'].first_column = True
 
-        for x in header_groups:
-            if not isinstance(x.display_name, string_types):
-                x.display_name = ''
-        if all([x.display_name == '' for x in header_groups]):
-            header_groups = []
+        for group_column in group_columns:
+            if not isinstance(group_column.display_name, string_types):
+                group_column.display_name = ''
+        if all(c.display_name == '' for c in group_columns):
+            group_columns = []
 
-        self.header_levels = [header_groups, headers] if len(header_groups) > 1 else [headers]
-        return headers
+        self.header_levels = [group_columns, bound_columns] if len(group_columns) > 1 else [bound_columns]
+        return bound_columns
 
     # noinspection PyProtectedMember
     def prepare(self, request):
@@ -780,7 +811,14 @@ class Table(object):
         def bind_columns():
             for index, column in enumerate(self.columns):
                 values = evaluate_recursive(Struct(column), table=self, column=column)
-                values = merged(values, column=column, table=self, index=index)
+                values = setdefaults_path(
+                    Struct(),
+                    self.column.get(column.name, {}),
+                    values,
+                    column=column,
+                    table=self,
+                    index=index,
+                )
                 yield BoundColumn(**values)
 
         self.bound_columns = list(bind_columns())
@@ -792,7 +830,7 @@ class Table(object):
         self._prepare_sorting()
         headers = self._prepare_headers()
 
-        if self.Meta.model:
+        if self.model:
 
             def generate_variables():
                 for column in self.bound_columns:
@@ -804,7 +842,7 @@ class Table(object):
                                 name=column.name,
                                 gui__label=column.display_name,
                                 attr=column.attr,
-                                model=column.table.Meta.model,
+                                model=column.table.model,
                             ), {
                                 'class': Variable,
                             }
@@ -815,8 +853,8 @@ class Table(object):
             self.query = Query(
                 request=request,
                 variables=variables,
-                endpoint_dispatch_prefix='__'.join(part for part in [self.Meta.endpoint_dispatch_prefix, 'form'] if part is not None),
-                **self.query_kwargs
+                endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'form'] if part is not None),
+                **flatten(self.query_args)
             )
             self.query_form = self.query.form() if self.query.variables else None
 
@@ -838,7 +876,7 @@ class Table(object):
                                 attr=column.attr,
                                 required=False,
                                 empty_choice_tuple=(None, '', '---', True),
-                                model=self.Meta.model,
+                                model=self.model,
                             ), {
                                 'class': Field.from_model,
                             }
@@ -851,8 +889,9 @@ class Table(object):
             self.bulk_form = Form(
                 data=request.POST,
                 fields=bulk_fields,
-                endpoint_dispatch_prefix='__'.join(part for part in [self.Meta.endpoint_dispatch_prefix, 'bulk'] if part is not None),
-                **self.bulk_kwargs) if bulk_fields else None
+                endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
+                **flatten(self.bulk)
+            ) if bulk_fields else None
 
         self._prepare_auto_rowspan()
 
@@ -864,10 +903,10 @@ class Table(object):
     def __iter__(self):
         self.prepare(self.request)
         for i, row in enumerate(self.data):
-            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(extract_subkeys(self.Meta, 'row'), table=self, row=row))
+            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
     def render_attrs(self):
-        attrs = self.Meta.attrs.copy()
+        attrs = self.attrs.copy()
         return render_attrs(attrs)
 
     def render_tbody(self):
@@ -880,7 +919,7 @@ class Table(object):
         return create_members_from_model(default_factory=Column.from_model, **kwargs)
 
     @staticmethod
-    def from_model(data=None, model=None, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    def from_model(data=None, model=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -901,7 +940,7 @@ class Table(object):
         if model is None and isinstance(data, QuerySet):
             model = data.model
         columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=kwargs.pop('column', {}))
-        return Table(data=data, model=model, instance=instance, columns=columns, post_validation=post_validation, **kwargs)
+        return Table(data=data, model=model, instance=instance, columns=columns, **kwargs)
 
     def endpoint_dispatch(self, key, value):
         parts = key.split('__', 1)
@@ -1046,8 +1085,8 @@ def render_table(request,
 
     kwargs = collect_namespaces(kwargs)
 
-    if table is None or isinstance(table, dict):
-        table_kwargs = table if isinstance(table, dict) else kwargs.pop('table', {})
+    if table is None:
+        table_kwargs = kwargs.pop('table', {})
         table = Table.from_model(**table_kwargs)
 
     table.prepare(request)
@@ -1056,7 +1095,7 @@ def render_table(request,
     for key, value in request.GET.items():
         if key.startswith('__'):
             remaining_key = key[2:]
-            expected_prefix = table.Meta.endpoint_dispatch_prefix
+            expected_prefix = table.endpoint_dispatch_prefix
             if expected_prefix is not None:
                 parts = remaining_key.split('__', 1)
                 prefix = parts.pop(0)
@@ -1075,10 +1114,10 @@ def render_table(request,
         pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
 
         if table.bulk_form.is_valid():
-            table.Meta.model.objects.all() \
+            table.model.objects.all() \
                 .filter(pk__in=pks) \
-                .filter(**table.Meta.bulk_filter) \
-                .exclude(**table.Meta.bulk_exclude) \
+                .filter(**table.bulk_filter) \
+                .exclude(**table.bulk_exclude) \
                 .update(**{field.name: field.value for field in table.bulk_form.fields if field.value is not None and field.value is not ''})
 
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
