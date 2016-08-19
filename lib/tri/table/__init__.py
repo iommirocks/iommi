@@ -28,7 +28,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '2.5.0'
+__version__ = '3.0.0'
 
 LAST = LAST
 
@@ -617,8 +617,10 @@ class Table(object):
         endpoint_dispatch_prefix=None,
         endpoint__query=lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None,
         endpoint__bulk=lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None,
+
+        extra=EMPTY,
     )
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None):
+    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None, extra=None):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -691,6 +693,9 @@ class Table(object):
         self._has_prepared = False
         """ :type: bool """
         self.header_levels = None
+
+        self.extra = extra
+        """ :type: tri.declarative.Namespace """
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]

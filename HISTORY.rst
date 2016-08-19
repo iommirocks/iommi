@@ -17,6 +17,8 @@ Changelog
 
 * Added strict check on the kwargs config namespace of `Table`
 
+* Added `extra` namespace to `Table`
+
 
 2.5.0 (2016-07-14)
 ~~~~~~~~~~~~~~~~~~
