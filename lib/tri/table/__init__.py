@@ -853,7 +853,7 @@ class Table(object):
             self.query = Query(
                 request=request,
                 variables=variables,
-                endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'form'] if part is not None),
+                endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
                 **flatten(self.query_args)
             )
             self.query_form = self.query.form() if self.query.variables else None
