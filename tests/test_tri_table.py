@@ -127,7 +127,7 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=Foo, choices=lambda table, column: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
+        foo = Column.choice_queryset(model=Foo, choices=lambda table, column, **_: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
     t = TestTable(data=Bar.objects.all())
 
@@ -955,7 +955,7 @@ def test_default_formatters():
         def __str__(self):
             return 'this should not end up in the table'
 
-    register_cell_formatter(SomeType, lambda table, column, row, value: 'sentinel')
+    register_cell_formatter(SomeType, lambda value, **_: 'sentinel')
 
     assert Foo.objects.all().count() == 0
 
@@ -1024,7 +1024,7 @@ def test_choice_queryset():
     Foo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column: Foo.objects.filter(a=1))
+        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: Foo.objects.filter(a=1))
 
         class Meta:
             model = Foo
@@ -1047,7 +1047,7 @@ def test_multi_choice_queryset():
     Foo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column: Foo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: Foo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
             model = Foo
@@ -1169,7 +1169,7 @@ def test_ajax_endpoint():
     class TestTable(Table):
         foo = Column.choice_queryset(
             model=Foo,
-            choices=lambda table, column: Foo.objects.all(),
+            choices=lambda table, column, **_: Foo.objects.all(),
             query__gui__extra__endpoint_attr='b',
             query__show=True,
             bulk__show=True,

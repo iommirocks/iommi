@@ -33,8 +33,8 @@ def readme_example_1(request):
     class FooTable(Table):
         a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
         b = Column()
-        c = Column(cell__format=lambda table, column, row, value: value[-1])  # Display the last value of the tuple
-        sum_c = Column(cell__value=lambda table, column, row: sum(row.c), sortable=False)  # Calculate a value not present in Foo
+        c = Column(cell__format=lambda table, column, row, value, **_: value[-1])  # Display the last value of the tuple
+        sum_c = Column(cell__value=lambda table, column, row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
     # now to get an HTML table:
     return render_table_to_response(request, FooTable(data=foos), template_name='base.html')
@@ -87,8 +87,8 @@ def kitchen_sink(request):
                    sortable=False,
                    group='Foo',
                    auto_rowspan=True,
-                   cell__value=lambda table, column, row: row.b.a // 3,
-                   cell__format=lambda table, column, row, value: '- %s -' % value,
+                   cell__value=lambda row, **_: row.b.a // 3,
+                   cell__format=lambda value, **_: '- %s -' % value,
                    cell__attrs__class__cj=True,
                    cell__attrs__title='cell title',
                    cell__url='url',
