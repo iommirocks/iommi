@@ -261,7 +261,7 @@ class Query(object):
             make = Variable.choice(choices=['Toyota', 'Volvo', 'Ford])
             model = Variable()
 
-        query_set = CarQuery().request_to_q(request)
+        query_set = Car.objects.filter(CarQuery(request=request).to_q())
     """
     variables = []
     """ :type: list of Variable """
