@@ -659,6 +659,8 @@ def test_links():
         Link('Baz', url='/bar/', group='Other'),
         Link('Qux', url='/bar/', group='Other'),
         Link.icon('icon_foo', title='Icon foo', url='/icon_foo/'),
+        Link.icon('icon_bar', icon_classes=['lg'], title='Icon bar', url='/icon_bar/'),
+        Link.icon('icon_baz', icon_classes=['one', 'two'], title='Icon baz', url='/icon_baz/'),
     ]
 
     verify_table_html(table=TestTable(data=data),
@@ -682,7 +684,9 @@ def test_links():
 
             <a href="/bar/"> Bar </a>
 
-            <a href="/icon_foo/"> <i class="fa fa-icon_foo" /> Icon foo </a>
+            <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
+            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
+            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
         </div>""")
 
 
