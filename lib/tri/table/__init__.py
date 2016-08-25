@@ -966,7 +966,9 @@ class Link(Struct):
 
     @staticmethod
     def icon(icon, title, **kwargs):
-        return Link(mark_safe('<i class="fa fa-%s"></i> %s' % (icon, title)), **kwargs)
+        icon_classes = kwargs.pop('icon_classes', [])
+        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes])
+        return Link(mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)), **kwargs)
 
 
 def table_context(request,
