@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-3.0.0 (..........)
+3.0.0 (2016-09-02)
 ~~~~~~~~~~~~~~~~~~
 
 * `bound_row` is passed to row level callables. This is a potential breaking
