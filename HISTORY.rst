@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-3.0.1 (----------)
+3.0.1 (2016-09-06)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix crash on unidentified sort parameter.
