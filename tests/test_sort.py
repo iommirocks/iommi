@@ -49,6 +49,43 @@ def test_sort_list():
     """)
 
 
+def test_sort_list_bad_parameter():
+
+    class TestTable(Table):
+        foo = Column()
+        bar = Column.number(sort_key='bar')
+
+    data = [Struct(foo='b', bar=2),
+            Struct(foo='a', bar=1)]
+
+    verify_table_html(table=TestTable(data=data),
+                      query=dict(order='barfology'),
+                      expected_html="""\
+      <table class="listview">
+        <thead>
+          <tr>
+            <th class="first_column subheader">
+              <a href="?order=foo"> Foo </a>
+            </th>
+            <th class="first_column subheader">
+              <a href="?order=bar"> Bar </a>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row1">
+            <td> b </td>
+            <td class="rj"> 2 </td>
+          </tr>
+          <tr class="row2">
+            <td> a </td>
+            <td class="rj"> 1 </td>
+          </tr>
+        </tbody>
+      </table>
+    """)
+
+
 @pytest.mark.django_db
 def test_sort_django_table():
 

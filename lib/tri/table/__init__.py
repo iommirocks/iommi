@@ -750,7 +750,10 @@ class Table(object):
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            sort_column = [x for x in self.shown_bound_columns if x.name == order_field][0]
+            tmp = [x for x in self.shown_bound_columns if x.name == order_field]
+            if len(tmp) == 0:
+                return  # Unidentified sort column
+            sort_column = tmp[0]
             order_args = evaluate(sort_column.sort_key, column=sort_column)
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
