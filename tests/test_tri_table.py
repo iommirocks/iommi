@@ -1183,6 +1183,18 @@ def test_ajax_endpoint():
     assert json.loads(result.content.decode('utf8')) == [{'id': 2, 'text': 'Hopp'}]
 
 
+@pytest.mark.django_db
+def test_ajax_endpoint_empty_response():
+    class TestTable(Table):
+        class Meta:
+            endpoint__foo = lambda **_: []
+
+        bar = Column()
+
+    result = render_table(request=RequestFactory().get("/", {'__foo': ''}), table=TestTable(data=[]))
+    assert [] == json.loads(result.content.decode('utf8'))
+
+
 def test_ajax_data_endpoint():
 
     class TestTable(Table):
