@@ -800,6 +800,20 @@ def test_choice_queryset_ajax():
     assert form.endpoint_dispatch(key='field__not_returning_anything', value='ar') is None
 
 
+def test_ajax_namespacing():
+    class MyForm(Form):
+        foo = Field(
+            endpoint__=lambda **_: 'default',
+            endpoint__bar=lambda **_: 'bar',
+            endpoint__baaz=lambda **_: 'baaz',
+        )
+
+    form = MyForm(request=RequestFactory().get('/'))
+    assert 'default' == form.endpoint_dispatch(key='field__foo', value=None)
+    assert 'bar' == form.endpoint_dispatch(key='field__foo__bar', value=None)
+    assert 'baaz' == form.endpoint_dispatch(key='field__foo__baaz', value=None)
+
+
 def test_is_empty_form_marker():
     request = RequestFactory().get('/')
     assert AVOID_EMPTY_FORM in Form(request=request).render()
