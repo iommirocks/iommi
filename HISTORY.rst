@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+3.0.2 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Fix failure in endpoint result return on empty payload.
+  `[]` is a valid endpoint dispatch result.
+
+
 3.0.1 (2016-09-06)
 ~~~~~~~~~~~~~~~~~~
 

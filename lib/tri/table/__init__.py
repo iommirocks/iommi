@@ -1113,7 +1113,7 @@ def render_table(request,
                     return
                 remaining_key = parts[0] if parts else None
             data = table.endpoint_dispatch(key=remaining_key, value=value)
-            if data:
+            if data is not None:
                 return HttpResponse(json.dumps(data), content_type='application/json')
 
     context['bulk_form'] = table.bulk_form
