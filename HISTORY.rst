@@ -6,6 +6,8 @@ Changelog
 
 * Add `endpoint` namespace to `Form` and `Field` constructor to add custom endpoint callbacks.
 
+* Add `config` and `validate` endpoint implementations
+
 * Fix formatting of form field error output when there are multiple field errors
 
 * Fix bug in form validation signaling required field missing on choices where the value is falsy, e.g. 0

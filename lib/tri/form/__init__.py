@@ -141,19 +141,12 @@ def default_write_to_instance(field, instance, value):
 
 
 def default_endpoint_dispatch(field, key, **kwargs):
-    prefix = ''
-    if key:
-        parts = key.split('__', 1)
-        if len(parts) == 2:
-            prefix, key = parts
-        else:
-            prefix = parts[0]
-            key = None
-
+    parts = key.split('__', 1)
+    prefix = parts.pop(0)
+    remaining_key = parts[0] if parts else ''
     endpoint = field.endpoint.get(prefix, None)
-    if endpoint is None:
-        return None  # HttpResponseBadRequest()
-    return endpoint(field=field, key=key, **kwargs)
+    if endpoint is not None:
+        return endpoint(field=field, key=remaining_key, **kwargs)
 
 MISSING = object()
 
@@ -298,8 +291,8 @@ class FieldBase(NamedStruct):
     """ @type: (Field, object, object) -> None """
 
     endpoint_dispatch = NamedStructField(default=default_endpoint_dispatch)
-    endpoint = NamedStructField()
     """ @type: (Form, Field, str) -> None """
+    endpoint = NamedStructField()
     endpoint_path = NamedStructField(default=None)
 
 
@@ -389,6 +382,19 @@ def render_css_classes(classes):
     return '' if not classes else mark_safe(' class="%s"' % ' '.join(sorted(classes)))
 
 
+def default_endpoint__config(field, key, value, **_):
+    return dict(
+        name=field.name,
+    )
+
+
+def default_endpoint__validate(field, key, value, **_):
+    return dict(
+        valid=not bool(field.errors),
+        errors=list(field.errors),
+    )
+
+
 @creation_ordered
 class Field(Frozen, FieldBase):
     """
@@ -398,6 +404,8 @@ class Field(Frozen, FieldBase):
         extra=EMPTY,
         attrs__class=EMPTY,
         endpoint=EMPTY,
+        endpoint__config=default_endpoint__config,
+        endpoint__validate=default_endpoint__validate,
     )
     def __init__(self, **kwargs):
         """
@@ -874,14 +882,11 @@ else:
 
 def default_endpoint__field(form, key, value):
     parts = key.split('__', 1)
-    if len(parts) == 2:
-        field_name, key = parts
-    else:
-        field_name = parts[0]
-        key = None
-    field = form.fields_by_name.get(field_name, None)
+    prefix = parts.pop(0)
+    remaining_key = parts[0] if parts else ''
+    field = form.fields_by_name.get(prefix, None)
     if field is not None:
-        return field.endpoint_dispatch(form=form, field=field, key=key, value=value)
+        return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
 @python_2_unicode_compatible
@@ -1200,9 +1205,9 @@ class Form(object):
     def endpoint_dispatch(self, key, value):
         parts = key.split('__', 1)
         prefix = parts.pop(0)
-        remaining_key = parts[0] if parts else None
-        for endpoint, handler in self.endpoint.items():
-            if prefix == endpoint:
-                return handler(form=self, key=remaining_key, value=value)
+        remaining_key = parts[0] if parts else ''
+        handler = self.endpoint.get(prefix, None)
+        if handler is not None:
+            return handler(form=self, key=remaining_key, value=value)
 
 setup_db_compat_django()
