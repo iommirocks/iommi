@@ -162,7 +162,12 @@ def test_namespace_flatten_loop_detection():
 
 
 def test_flatten_broken():
-    assert flatten(Namespace(party1_labels=Namespace(show=True), party2_labels=Namespace(show=True))) == {'party1_labels__show': True, 'party2_labels__show': True}
+    assert dict(party1_labels__show=True, party2_labels__show=True) == flatten(Namespace(party1_labels=Namespace(show=True), party2_labels=Namespace(show=True)))
+
+
+def test_flatten_identity_on_namespace_should_not_trigger_loop_detection():
+    foo = Namespace(show=True)
+    assert dict(party1_labels__show=True, party2_labels__show=True) == flatten(Namespace(party1_labels=foo, party2_labels=foo))
 
 
 # def test_namespace_repr_loop_detection():
