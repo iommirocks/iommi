@@ -494,8 +494,8 @@ def flatten_items(namespace):
             path = prefix + key
             if isinstance(value, Namespace):
                 visited = [] if visited is None else visited
-                if value not in visited:
-                    visited.append(value)
+                if id(value) not in visited:
+                    visited.append(id(value))
                     if value:
                         for mapping in mappings(value, visited=visited, prefix=path + '__'):
                             yield mapping
