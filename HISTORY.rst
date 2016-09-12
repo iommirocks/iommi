@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+3.8.0 (2016-09-12)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed namespace dispatch bugs in `create_or_edit_object`
+
+
 3.7.0 (2016-08-17)
 ~~~~~~~~~~~~~~~~~~
 

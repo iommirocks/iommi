@@ -1,9 +1,14 @@
 from __future__ import unicode_literals, absolute_import
+
+import json
+
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from tri.form import Form
-from tri.declarative import extract_subkeys
+from tri.declarative import extract_subkeys, setdefaults_path
+from tri.struct import Struct
 
 
 def edit_object(
@@ -60,13 +65,32 @@ def create_or_edit_object(
         render=render_to_response,
         redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
         **kwargs):
-    kwargs.setdefault('form__class', Form.from_model)
-    kwargs.setdefault('template_name', 'tri_form/create_or_edit_object_block.html')
-    p = extract_subkeys(kwargs, 'form', defaults=dict(request=request,
-                                                      model=model,
-                                                      instance=instance,
-                                                      data=request.POST if request.method == 'POST' else None))
+    kwargs = setdefaults_path(
+        Struct(),
+        kwargs,
+        template_name='tri_form/create_or_edit_object_block.html',
+        form__class=Form.from_model,
+        form__request=request,
+        form__model=model,
+        form__instance=instance,
+        form__data=request.POST if request.method == 'POST' else None,
+    )
+    p = kwargs.form
     form = p.pop('class')(**p)
+
+    for key, value in request.GET.items():
+        if key.startswith('__'):
+            remaining_key = key[2:]
+            expected_prefix = form.endpoint_dispatch_prefix
+            if expected_prefix is not None:
+                parts = remaining_key.split('__', 1)
+                prefix = parts.pop(0)
+                if prefix != expected_prefix:
+                    return
+                remaining_key = parts[0] if parts else None
+            data = form.endpoint_dispatch(key=remaining_key, value=value)
+            if data:
+                return HttpResponse(json.dumps(data), content_type='application/json')
 
     # noinspection PyProtectedMember
     model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
@@ -93,8 +117,8 @@ def create_or_edit_object(
         'is_create': is_create,
         'object_name': model_verbose_name,
     }
-    c.update(kwargs.get('render__context', {}))
-    kwargs.pop('render__context', None)
+    c.update(kwargs.get('render_context', {}))
+    kwargs.pop('render_context', None)
 
     kwargs_for_render = extract_subkeys(kwargs, 'render', {
         'context_instance': RequestContext(request, c),
