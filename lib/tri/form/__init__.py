@@ -950,9 +950,9 @@ class Form(object):
         """ :type model: django.db.models.Model """
         self._valid = None
         self.errors = set()
+        """ :type: set of str """
         self.evaluate()
         self.is_valid()
-        """ :type: list of str """
 
     @staticmethod
     def fields_from_model(**kwargs):
