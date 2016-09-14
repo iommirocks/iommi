@@ -1,8 +1,20 @@
 Changelog
 ---------
 
-3.8.0 (----------)
+4.0.0 (2016-09-14)
 ~~~~~~~~~~~~~~~~~~
+
+* Improved handling of `from_model`. You can now do the following without issues:
+
+.. code:: python
+
+    form = Form.from_model(field__foo__class=Form.integer)
+
+* The incorrectly named parameter `db_field` to `Form.fields_from_model` has been renamed to the correct `field`.
+
+* The parameter `db_field` to `create_members_from_model` has been renamed to `member_params_by_member_name`.
+
+* Better logic for figuring out which mode we're in when POST-ing
 
 * Allow `None` as `endpoint_dispatch_prefix`.
 

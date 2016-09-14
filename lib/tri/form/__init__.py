@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '3.8.0'
+__version__ = '4.0.0'
 
 
 def capitalize(s):
@@ -70,7 +70,7 @@ def foreign_key_factory(model_field, **kwargs):
         choices=model_field.foreign_related_fields[0].model.objects.all(),
     )
     kwargs['model'] = model_field.foreign_related_fields[0].model
-    return Field.choice_queryset(**kwargs)
+    return Field.choice_queryset(model_field=model_field, **kwargs)
 
 
 def many_to_many_factory(model_field, **kwargs):
@@ -81,7 +81,7 @@ def many_to_many_factory(model_field, **kwargs):
         extra__django_related_field=True,
     )
     kwargs['model'] = model_field.rel.to
-    return Field.multi_choice_queryset(**kwargs)
+    return Field.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
 _field_factory_by_field_type = OrderedDict()
@@ -93,27 +93,24 @@ def register_field_factory(field_class, factory):
 
 def setup_db_compat_django():
     # The order here is significant because of inheritance structure. More specific must be below less specific.
-    register_field_factory(CharField, lambda model_field, **kwargs: Field(**kwargs))
-    register_field_factory(URLField, lambda model_field, **kwargs: Field.url(**kwargs))
-    register_field_factory(TimeField, lambda model_field, **kwargs: Field.time(**kwargs))
-    register_field_factory(EmailField, lambda model_field, **kwargs: Field.email(**kwargs))
-    register_field_factory(DecimalField, lambda model_field, **kwargs: Field.decimal(**kwargs))
-    register_field_factory(DateField, lambda model_field, **kwargs: Field.date(**kwargs))
-    register_field_factory(DateTimeField, lambda model_field, **kwargs: Field.datetime(**kwargs))
-    register_field_factory(CommaSeparatedIntegerField, lambda model_field, **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs)))
-    register_field_factory(BooleanField, lambda model_field, **kwargs: Field.boolean(**kwargs))
-    register_field_factory(TextField, lambda model_field, **kwargs: Field.text(**kwargs))
-    register_field_factory(FloatField, lambda model_field, **kwargs: Field.float(**kwargs))
-    register_field_factory(IntegerField, lambda model_field, **kwargs: Field.integer(**kwargs))
-    register_field_factory(AutoField, lambda model_field, **kwargs: Field.integer(**setdefaults_path(kwargs, show=False)))
+    register_field_factory(CharField, Field)
+    register_field_factory(URLField, Field.url)
+    register_field_factory(TimeField, Field.time)
+    register_field_factory(EmailField, Field.email)
+    register_field_factory(DecimalField, Field.decimal)
+    register_field_factory(DateField, Field.date)
+    register_field_factory(DateTimeField, Field.datetime)
+    register_field_factory(CommaSeparatedIntegerField, lambda **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs)))
+    register_field_factory(BooleanField, Field.boolean)
+    register_field_factory(TextField, Field.text)
+    register_field_factory(FloatField, Field.float)
+    register_field_factory(IntegerField, Field.integer)
+    register_field_factory(AutoField, lambda **kwargs: Field.integer(**setdefaults_path(kwargs, show=False)))
     register_field_factory(ManyToOneRel, None)
     register_field_factory(ManyToManyRel, None)
-    register_field_factory(FileField, lambda model_field, **kwargs: Field.file(**kwargs))
+    register_field_factory(FileField, Field.file)
     register_field_factory(ForeignKey, foreign_key_factory)
     register_field_factory(ManyToManyField, many_to_many_factory)
-
-
-setup_db_compat_django()
 
 
 def _django_field_defaults(model_field):
@@ -147,7 +144,7 @@ MISSING = object()
 
 
 @dispatch
-def create_members_from_model(default_factory, model, db_field, include=None, exclude=None, extra=None):
+def create_members_from_model(default_factory, model, member_params_by_member_name, include=None, exclude=None, extra=None):
     def should_include(name):
         if exclude is not None and name in exclude:
             return False
@@ -159,7 +156,7 @@ def create_members_from_model(default_factory, model, db_field, include=None, ex
     # noinspection PyProtectedMember
     for field in get_fields(model):
         if should_include(field.name):
-            subkeys = db_field.pop(field.name, {})
+            subkeys = member_params_by_member_name.pop(field.name, {})
             subkeys.setdefault('class', default_factory)
             foo = subkeys.pop('class')(name=field.name, model=model, model_field=field, **subkeys)
             if foo is None:
@@ -264,6 +261,7 @@ class FieldBase(NamedStruct):
     is_list = NamedStructField(default=False)
     is_boolean = NamedStructField(default=False)
     model = NamedStructField()
+    model_field = NamedStructField()
 
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
@@ -882,7 +880,7 @@ class Form(object):
     def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix='form', is_full_form=True):
         """
         :type fields: list of Field
-        :type data: dict[basestring, basestring]
+        :type data: dict[basestring, any]
         :type model: django.db.models.Model
         """
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
@@ -918,6 +916,9 @@ class Form(object):
             self.instance = None
 
         self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
+        if request and request.method == 'POST':
+            self.mode = FULL_FORM_FROM_REQUEST
+
         if self.mode == INITIALS_FROM_GET and request:
             assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
 
@@ -955,8 +956,15 @@ class Form(object):
         self.is_valid()
 
     @staticmethod
-    def fields_from_model(**kwargs):
-        return create_members_from_model(default_factory=Field.from_model, **kwargs)
+    @dispatch(
+        field=EMPTY,
+    )
+    def fields_from_model(field, **kwargs):
+        return create_members_from_model(
+            member_params_by_member_name=field,
+            default_factory=Field.from_model,
+            **kwargs
+        )
 
     @staticmethod
     @dispatch(
@@ -978,7 +986,7 @@ class Form(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=field)
+        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
         return Form(data=data, model=model, instance=instance, fields=fields, post_validation=post_validation, **kwargs)
 
     def is_valid(self):
@@ -1115,6 +1123,7 @@ class Form(object):
             return mark_safe('\n'.join(r))
         else:
             if django.VERSION < (1, 8):
+                # noinspection PyArgumentList
                 return render_to_string(
                     context_instance=RequestContext(self.request, dict(form=self)),
                     template_name=template_name,
@@ -1158,3 +1167,6 @@ class Form(object):
             field = self.fields_by_name.get(key, None)
             if field is not None:
                 return field.endpoint_dispatch(form=self, field=field, value=value)
+
+
+setup_db_compat_django()
