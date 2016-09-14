@@ -791,3 +791,10 @@ def test_is_empty_form_marker():
     request = RequestFactory().get('/')
     assert AVOID_EMPTY_FORM in Form(request=request).render()
     assert AVOID_EMPTY_FORM not in Form(request=request, is_full_form=False).render()
+
+
+def test_json_parsing():
+    # NOTE: Parsing json input requires that any numbers that come in must avoid the string strip
+    f = Form(data={'foo': 1}, fields=[Field.integer(name='foo', strip_input=False)])
+    assert f.is_valid()
+    assert f.fields_by_name['foo'].value == 1
