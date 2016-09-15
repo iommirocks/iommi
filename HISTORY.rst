@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+3.1.0 (2016-09-15)
+~~~~~~~~~~~~~~~~~~
+
+* Moved to the simplified factory system for `from_model`
+
+* Added shortcuts to `Variable`: url, time, datetime, date, email, decimal
+
+
 3.0.0 (2016-09-14)
 ~~~~~~~~~~~~~~~~~~
 
