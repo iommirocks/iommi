@@ -8,13 +8,13 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, setdefaults_path, sort_after, collect_namespaces
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, setdefaults_path, sort_after, dispatch, EMPTY
 from tri.named_struct import NamedStruct, NamedStructField
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '2.2.0'
+__version__ = '3.0.0'
 
 
 class QueryException(Exception):
@@ -524,13 +524,21 @@ class Query(object):
         return self.parse(self.to_query_string())
 
     @staticmethod
-    def variables_from_model(**kwargs):
-        kwargs = collect_namespaces(kwargs)
-        kwargs['db_field'] = kwargs.pop('variable', {})
-        return create_members_from_model(default_factory=Variable.from_model, **kwargs)
+    @dispatch(
+        variable=EMPTY,
+    )
+    def variables_from_model(variable, **kwargs):
+        return create_members_from_model(
+            member_params_by_member_name=variable,
+            default_factory=Variable.from_model,
+            **kwargs
+        )
 
     @staticmethod
-    def from_model(data, model, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    @dispatch(
+        variable=EMPTY,
+    )
+    def from_model(data, model, variable, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -546,8 +554,7 @@ class Query(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        kwargs = collect_namespaces(kwargs)
-        variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, db_field=kwargs.pop('variable', {}))
+        variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
         return Query(data=data, model=model, instance=instance, variables=variables, post_validation=post_validation, **kwargs)
 
     def endpoint_dispatch(self, key, value):
