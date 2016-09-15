@@ -265,6 +265,15 @@ def test_order_after():
     assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]
 
 
+@pytest.mark.skipif(True, reason="Not yet implemented")
+def test_sort_after_chaining():
+    objects = [
+        Struct(name='foo', after='bar'),
+        Struct(name='bar', after=0),
+    ]
+    assert ['bar', 'foo'] == [x.name for x in sort_after(objects)]
+
+
 def test_sort_after_points_to_nothing():
     objects = [
         Struct(name='quux'),
