@@ -59,6 +59,17 @@ def test_required():
     assert form.fields_by_name['a_date'].errors == {'This field is required'}
 
 
+def test_required_with_falsy_option():
+    class MyForm(Form):
+        foo = Field.choice(
+            choices=[0, 1],
+            parse=lambda string_value, **_: int(string_value)
+        )
+    form = MyForm(request=RequestFactory().post('/', {'foo': '0', '-': '-'}))
+    assert form.fields_by_name.foo.value == 0
+    assert form.fields_by_name.foo.errors == set()
+
+
 def test_parse():
     # The spaces in the data are there to check that we strip input
     form = MyTestForm(
