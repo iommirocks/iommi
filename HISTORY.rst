@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-3.1.0 (2016-09-15)
+3.1.0 (2016-09-19)
 ~~~~~~~~~~~~~~~~~~
 
 * Moved to the simplified factory system for `from_model`
