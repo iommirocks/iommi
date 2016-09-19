@@ -2,6 +2,7 @@ from __future__ import unicode_literals, absolute_import
 
 import json
 
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -96,21 +97,31 @@ def create_or_edit_object(
     model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
 
     if request.method == 'POST' and form.is_valid():
+
         if is_create:
             assert instance is None
             instance = model()
-            for field in form.fields:
+            for field in form.fields:  # two phase save for creation in django, have to save main object before related stuff
                 if not field.extra.get('django_related_field', False):
                     form.apply_field(field=field, instance=instance)
 
+        try:
+            instance.validate_unique()
+        except ValidationError as e:
+            form.errors.update(set(e.messages))
+            form._valid = False
+
+        if form.is_valid():
+            if is_create:  # two phase save for creation in django...
+                instance.save()
+
+            form.apply(instance)
             instance.save()
-        form.apply(instance)
-        instance.save()
 
-        kwargs['instance'] = instance
-        on_save(**kwargs)
+            kwargs['instance'] = instance
+            on_save(**kwargs)
 
-        return create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form)
+            return create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form)
 
     c = {
         'form': form,
