@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.1.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Fix formatting of form field error output when there are multiple field errors
+
+
 4.0.0 (2016-09-14)
 ~~~~~~~~~~~~~~~~~~
 
