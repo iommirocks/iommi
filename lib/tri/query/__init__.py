@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 
+from collections import OrderedDict
 from datetime import date
 from functools import reduce
 from django.db.models import Q, F, Model
@@ -39,6 +40,12 @@ Q_OP_BY_OP = {
 
 FREETEXT_SEARCH_NAME = 'term'
 ADVANCED_QUERY_PARAM = 'query'
+
+_variable_factory_by_django_field_type = OrderedDict()
+
+
+def register_variable_factory(field_class, factory):
+    _variable_factory_by_django_field_type[field_class] = factory
 
 
 def request_data(request):
@@ -97,6 +104,7 @@ class VariableBase(NamedStruct):
     freetext = NamedStructField()
 
     model = NamedStructField()
+    model_field = NamedStructField()
 
     extra = NamedStructField()
 
@@ -220,6 +228,48 @@ class Variable(Frozen, VariableBase):
     def float(**kwargs):  # pragma: no cover
         setdefaults(kwargs, dict(
             gui__class=Field.float,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def url(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.url,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def time(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.time,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def datetime(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.datetime,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def date(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.date,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def email(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.email,
+        ))
+        return Variable(**kwargs)
+
+    @staticmethod
+    def decimal(**kwargs):
+        setdefaults(kwargs, dict(
+            gui__class=Field.decimal,
         ))
         return Variable(**kwargs)
 
@@ -562,6 +612,6 @@ class Query(object):
             return self.form().endpoint_dispatch(key=key[len('gui__'):], value=value)
 
 
-from .db_compat import setup, _variable_factory_by_django_field_type  # noqa
+from .db_compat import setup_db_compat  # noqa
 
-setup()
+setup_db_compat()
