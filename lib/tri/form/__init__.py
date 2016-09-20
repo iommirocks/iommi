@@ -1062,7 +1062,7 @@ class Form(object):
                     value = self.validate_field_parsed_data(field, field.parsed_data)
 
             if not field.errors:
-                if self.mode is FULL_FORM_FROM_REQUEST and field.required and not value and not value_list:
+                if self.mode is FULL_FORM_FROM_REQUEST and field.required and value in [None, ''] and not value_list:
                     field.errors.add('This field is required')
                 else:
                     field.value = value
