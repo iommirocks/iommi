@@ -704,7 +704,7 @@ class Field(Frozen, FieldBase):
 
         setdefaults_path(
             kwargs,
-            input_type='email',
+            input_type='url',
             parse=url_parse,
         )
         return Field(**kwargs)

@@ -8,6 +8,10 @@ Changelog
 
 * Fix bug in form validation signaling required field missing on choices where the value is falsy, e.g. 0
 
+* Implement djangos uniqueness validation on save in forms/views.py
+
+* Fixed input type on url field
+
 
 4.0.0 (2016-09-14)
 ~~~~~~~~~~~~~~~~~~
