@@ -1,11 +1,19 @@
 Changelog
 ---------
 
-3.0.2 (----------)
+4.0.0 (2016-09-15)
 ~~~~~~~~~~~~~~~~~~
+
+* Updated to newest tri.form, tri.query, tri.declarative. This gives us simpler factories for `from_model` methods.
+
+* Added shortcuts to `Column`: `time` and `decimal`
+
+* The following shortcuts have been updated to use the corresponding `Variable` shortcuts: date, datetime and email
 
 * Fix failure in endpoint result return on empty payload.
   `[]` is a valid endpoint dispatch result.
+
+* `render_table`/`render_table_to_response` no longer allow table to be passed as a positional argument
 
 
 3.0.1 (2016-09-06)

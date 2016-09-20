@@ -20,7 +20,7 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 from six import string_types
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, collect_namespaces, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, Frozen
@@ -28,7 +28,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '3.0.2'
+__version__ = '4.0.0'
 
 LAST = LAST
 
@@ -147,6 +147,7 @@ class ColumnBase(NamedStruct):
     """ :type: bool """
     cell = NamedStructField()
     model = NamedStructField()
+    model_field = NamedStructField()
     choices = NamedStructField()
     bulk = NamedStructField()
     query = NamedStructField()
@@ -388,8 +389,7 @@ class Column(Frozen, ColumnBase):
     @staticmethod
     def date(**kwargs):
         setdefaults(kwargs, dict(
-            query__gui__class=Field.date,
-            # TODO: query__class=Variable.date,
+            query__class=Variable.date,
             query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
             bulk__class=Field.date,
         ))
@@ -398,19 +398,34 @@ class Column(Frozen, ColumnBase):
     @staticmethod
     def datetime(**kwargs):
         setdefaults(kwargs, dict(
-            query__gui__class=Field.datetime,
-            # TODO: query__class=Variable.datetime,
+            query__class=Variable.datetime,
             query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
             bulk__class=Field.datetime,
         ))
         return Column(**kwargs)
 
     @staticmethod
+    def time(**kwargs):
+        setdefaults(kwargs, dict(
+            query__class=Variable.time,
+            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+            bulk__class=Field.time,
+        ))
+        return Column(**kwargs)
+
+    @staticmethod
     def email(**kwargs):
         setdefaults(kwargs, dict(
+            query__class=Variable.email,
             bulk__class=Field.email,
-            # TODO: query__class=Variable.email,
-            query__gui__class=Field.email,
+        ))
+        return Column(**kwargs)
+
+    @staticmethod
+    def decimal(**kwargs):
+        setdefaults(kwargs, dict(
+            bulk__class=Field.decimal,
+            query__class=Variable.decimal,
         ))
         return Column(**kwargs)
 
@@ -630,9 +645,6 @@ class Table(object):
         :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
-        :param filter__template:
-        :param header__template:
-        :param links__template:
         """
 
         if data is None:  # pragma: no cover
@@ -921,13 +933,21 @@ class Table(object):
         return '\n'.join([bound_row.render() for bound_row in self.bound_rows()])
 
     @staticmethod
-    def columns_from_model(**kwargs):
-        kwargs = collect_namespaces(kwargs)
-        kwargs['db_field'] = collect_namespaces(kwargs.pop('column', {}))
-        return create_members_from_model(default_factory=Column.from_model, **kwargs)
+    @dispatch(
+        column=EMPTY,
+    )
+    def columns_from_model(column, **kwargs):
+        return create_members_from_model(
+            member_params_by_member_name=column,
+            default_factory=Column.from_model,
+            **kwargs
+        )
 
     @staticmethod
-    def from_model(data=None, model=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    @dispatch(
+        column=EMPTY,
+    )
+    def from_model(data=None, model=None, column=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -943,11 +963,10 @@ class Table(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        kwargs = collect_namespaces(kwargs)
         assert model or data, "model or data must be specified"
         if model is None and isinstance(data, QuerySet):
             model = data.model
-        columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=kwargs.pop('column', {}))
+        columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
         return Table(data=data, model=model, instance=instance, columns=columns, **kwargs)
 
     def endpoint_dispatch(self, key, value):
@@ -1064,8 +1083,11 @@ def set_display_none(rowspan_by_row):
     return lambda row, **_: 'display: none' if id(row) not in rowspan_by_row else None
 
 
+@dispatch(
+    table=EMPTY,
+)
 def render_table(request,
-                 table=None,
+                 table,
                  links=None,
                  context=None,
                  template_name='tri_table/list.html',
@@ -1075,8 +1097,7 @@ def render_table(request,
                  context_processors=None,
                  paginator=None,
                  show_hits=False,
-                 hit_label='Items',
-                 **kwargs):
+                 hit_label='Items'):
     """
     Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
 
@@ -1093,11 +1114,8 @@ def render_table(request,
     if not context:
         context = {}
 
-    kwargs = collect_namespaces(kwargs)
-
-    if table is None:
-        table_kwargs = kwargs.pop('table', {})
-        table = Table.from_model(**table_kwargs)
+    if table is None or isinstance(table, Namespace):
+        table = Table.from_model(**table)
 
     table.prepare(request)
     assert isinstance(table, Table)

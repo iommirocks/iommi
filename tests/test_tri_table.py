@@ -944,7 +944,7 @@ def test_render_table_to_response():
 
     data = [Struct(foo="foo")]
 
-    response = render_table_to_response(RequestFactory().get('/'), TestTable(data=data))
+    response = render_table_to_response(RequestFactory().get('/'), table=TestTable(data=data))
     assert isinstance(response, HttpResponse)
     assert b'<table' in response.content
 
@@ -1097,22 +1097,19 @@ def test_integer():
 
 def test_date():
     x = Column.date()
-    # TODO: should check for Variable.date
-    assert getattr_path(x, 'query__gui__class') == Field.date
+    assert getattr_path(x, 'query__class') == Variable.date
     assert getattr_path(x, 'bulk__class') == Field.date
 
 
 def test_datetime():
     x = Column.datetime()
-    # TODO: should check for Variable.datetime
-    assert getattr_path(x, 'query__gui__class') == Field.datetime
+    assert getattr_path(x, 'query__class') == Variable.datetime
     assert getattr_path(x, 'bulk__class') == Field.datetime
 
 
 def test_email():
     x = Column.email()
-    # TODO: should check for Variable.email
-    assert getattr_path(x, 'query__gui__class') == Field.email
+    assert getattr_path(x, 'query__class') == Variable.email
     assert getattr_path(x, 'bulk__class') == Field.email
 
 
