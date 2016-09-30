@@ -854,6 +854,12 @@ else:
             yield field
 
 
+def default_endpoint__field(form, key, value):
+    field = form.fields_by_name.get(key, None)
+    if field is not None:
+        return field.endpoint_dispatch(form=form, field=field, value=value)
+
+
 @python_2_unicode_compatible
 @declarative(Field, 'fields_dict')
 @with_meta
@@ -877,7 +883,11 @@ class Form(object):
 
     See tri.declarative docs for more on this dual style of declaration.
     """
-    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix='form', is_full_form=True):
+    @dispatch(
+        endpoint_dispatch_prefix=None,
+        endpoint__field=default_endpoint__field,
+    )
+    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix=None, is_full_form=True, endpoint=None):
         """
         :type fields: list of Field
         :type data: dict[basestring, any]
@@ -952,6 +962,8 @@ class Form(object):
         self._valid = None
         self.errors = set()
         """ :type: set of str """
+        self.endpoint = endpoint
+        """ :type: tri.declarative.Namespace """
         self.evaluate()
         self.is_valid()
 
@@ -1162,11 +1174,11 @@ class Form(object):
         return r
 
     def endpoint_dispatch(self, key, value):
-        if key.startswith('field__'):
-            key = key[len('field__'):]
-            field = self.fields_by_name.get(key, None)
-            if field is not None:
-                return field.endpoint_dispatch(form=self, field=field, value=value)
-
+        parts = key.split('__', 1)
+        prefix = parts.pop(0)
+        remaining_key = parts[0] if parts else None
+        for endpoint, handler in self.endpoint.items():
+            if prefix == endpoint:
+                return handler(form=self, key=remaining_key, value=value)
 
 setup_db_compat_django()

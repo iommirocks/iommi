@@ -509,9 +509,11 @@ def test_field_from_model_foreign_key2():
         model=FieldFromModelOneToOneTest,
         field__foo_one_to_one__class=Field.from_model_expand,
         field__foo_one_to_one__field__foo__label='blaha',
+        field__foo_one_to_one__field__foo__extra__stuff='blahada',
     )
     assert set(form.fields_by_name.keys()) == {'foo_one_to_one__foo'}
     assert form.fields_by_name['foo_one_to_one__foo'].label == 'blaha'
+    assert form.fields_by_name['foo_one_to_one__foo'].extra.stuff == 'blahada'
 
 
 @pytest.mark.django_db
@@ -809,3 +811,12 @@ def test_json_parsing():
     f = Form(data={'foo': 1}, fields=[Field.integer(name='foo', strip_input=False)])
     assert f.is_valid()
     assert f.fields_by_name['foo'].value == 1
+
+
+def test_custom_endpoint():
+    class MyForm(Form):
+        class Meta:
+            endpoint__foo = lambda key, value, **_: 'foo' + value
+
+    form = MyForm(data={})
+    assert 'foobar' == form.endpoint_dispatch(key='foo', value='bar')
