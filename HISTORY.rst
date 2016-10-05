@@ -4,6 +4,8 @@ Changelog
 4.1.0 (----------)
 ~~~~~~~~~~~~~~~~~~
 
+* Add `endpoint` namespace to `Form` constructor to add custom endpoint callbacks.
+
 * Fix formatting of form field error output when there are multiple field errors
 
 * Fix bug in form validation signaling required field missing on choices where the value is falsy, e.g. 0
