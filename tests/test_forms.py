@@ -1,4 +1,5 @@
 from __future__ import unicode_literals, absolute_import
+
 import re
 from datetime import date, time
 from datetime import datetime
@@ -812,6 +813,27 @@ def test_ajax_namespacing():
     assert 'default' == form.endpoint_dispatch(key='field__foo', value=None)
     assert 'bar' == form.endpoint_dispatch(key='field__foo__bar', value=None)
     assert 'baaz' == form.endpoint_dispatch(key='field__foo__baaz', value=None)
+
+
+def test_ajax_config_and_validate():
+    class MyForm(Form):
+        foo = Field()
+        bar = Field(post_validation=lambda field, **_: field.errors.add('FAIL'))
+
+    form = MyForm(request=RequestFactory().get('/'))
+    assert dict(
+        name='foo',
+    ) == form.endpoint_dispatch(key='field__foo__config', value=None)
+
+    assert dict(
+        valid=True,
+        errors=[]
+    ) == form.endpoint_dispatch(key='field__foo__validate', value='new value')
+
+    assert dict(
+        valid=False,
+        errors=['FAIL']
+    ) == form.endpoint_dispatch(key='field__bar__validate', value='new value')
 
 
 def test_is_empty_form_marker():
