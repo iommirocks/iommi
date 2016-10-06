@@ -1,12 +1,16 @@
 Changelog
 ---------
 
-4.1.0 (----------)
+4.2.0 (2016-10-06)
 ~~~~~~~~~~~~~~~~~~
 
 * Add `endpoint` namespace to `Form` and `Field` constructor to add custom endpoint callbacks.
 
 * Add `config` and `validate` endpoint implementations
+
+
+4.1.0 (2016-09-20)
+~~~~~~~~~~~~~~~~~~
 
 * Fix formatting of form field error output when there are multiple field errors
 
