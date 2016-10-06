@@ -140,6 +140,21 @@ def default_write_to_instance(field, instance, value):
     setattr_path(instance, field.attr, value)
 
 
+def default_endpoint_dispatch(field, key, **kwargs):
+    prefix = ''
+    if key:
+        parts = key.split('__', 1)
+        if len(parts) == 2:
+            prefix, key = parts
+        else:
+            prefix = parts[0]
+            key = None
+
+    endpoint = field.endpoint.get(prefix, None)
+    if endpoint is None:
+        return None  # HttpResponseBadRequest()
+    return endpoint(field=field, key=key, **kwargs)
+
 MISSING = object()
 
 
@@ -282,7 +297,8 @@ class FieldBase(NamedStruct):
     write_to_instance = NamedStructField(default=default_write_to_instance)
     """ @type: (Field, object, object) -> None """
 
-    endpoint_dispatch = NamedStructField(default=lambda **_: None)
+    endpoint_dispatch = NamedStructField(default=default_endpoint_dispatch)
+    endpoint = NamedStructField()
     """ @type: (Form, Field, str) -> None """
     endpoint_path = NamedStructField(default=None)
 
@@ -381,6 +397,7 @@ class Field(Frozen, FieldBase):
     @dispatch(
         extra=EMPTY,
         attrs__class=EMPTY,
+        endpoint=EMPTY,
     )
     def __init__(self, **kwargs):
         """
@@ -552,7 +569,7 @@ class Field(Frozen, FieldBase):
         def choice_queryset_is_valid(field, parsed_data, **_):
             return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
-        def choice_queryset_endpoint_dispatch(field, value, **_):
+        def choice_queryset_endpoint__select2(field, value, **_):
             limit = 10
             result = field.choices.filter(**{field.extra.endpoint_attr + '__icontains': value}).values_list(*['pk', field.extra.endpoint_attr])
             return [
@@ -578,7 +595,8 @@ class Field(Frozen, FieldBase):
             parse=choice_queryset_parse,
             choice_to_option=choice_queryset_choice_to_option,
             endpoint_path=choice_queryset_endpoint_path,
-            endpoint_dispatch=choice_queryset_endpoint_dispatch,
+            endpoint__=choice_queryset_endpoint__select2,  # Backwards compatible
+            endpoint__select2=choice_queryset_endpoint__select2,
             extra__endpoint_attr='name',
             is_valid=choice_queryset_is_valid,
         )
@@ -855,9 +873,15 @@ else:
 
 
 def default_endpoint__field(form, key, value):
-    field = form.fields_by_name.get(key, None)
+    parts = key.split('__', 1)
+    if len(parts) == 2:
+        field_name, key = parts
+    else:
+        field_name = parts[0]
+        key = None
+    field = form.fields_by_name.get(field_name, None)
     if field is not None:
-        return field.endpoint_dispatch(form=form, field=field, value=value)
+        return field.endpoint_dispatch(form=form, field=field, key=key, value=value)
 
 
 @python_2_unicode_compatible
