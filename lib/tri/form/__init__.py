@@ -552,10 +552,12 @@ class Field(Frozen, FieldBase):
             return parsed_data in field.choices, '%s not in available choices' % parsed_data
 
         def choice_post_validation(form, field):
-            choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
-            if not field.required and not field.is_list:
-                choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
-            field.choice_tuples = choice_tuples
+            def choice_tuples_lazy():
+                choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
+                if not field.required and not field.is_list:
+                    choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
+                return choice_tuples
+            field.choice_tuples = choice_tuples_lazy
 
         def choice_choice_to_option(form, field, choice):
             return choice, "%s" % choice, "%s" % choice, choice == field.value
