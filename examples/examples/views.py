@@ -37,7 +37,7 @@ def readme_example_1(request):
         sum_c = Column(cell__value=lambda table, column, row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
     # now to get an HTML table:
-    return render_table_to_response(request, FooTable(data=foos), template_name='base.html')
+    return render_table_to_response(request, table=FooTable(data=foos), template_name='base.html')
 
 
 def fill_dummy_data():
@@ -61,7 +61,7 @@ def readme_example_2(request):
             query__show=True,
             query__gui__show=True)
 
-    return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
+    return render_table_to_response(request, table=BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
 
 
 def kitchen_sink(request):
@@ -101,4 +101,4 @@ def kitchen_sink(request):
         class Meta:
             model = Bar
 
-    return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
+    return render_table_to_response(request, table=BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
