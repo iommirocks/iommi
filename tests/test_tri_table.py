@@ -827,6 +827,28 @@ def test_cell_template():
         </table>""")
 
 
+def test_cell_template_string():
+    def explode(**_):
+        assert False
+
+    class TestTable(NoSortTable):
+        foo = Column(cell__template_string='Custom renderedXXXX: {{ row.foo }}', cell__format=explode, cell__url=explode, cell__url_title=explode)
+
+    data = [Struct(foo="sentinel")]
+
+    verify_table_html(table=TestTable(data=data), expected_html="""
+        <table class="listview">
+            <thead>
+                <tr><th class="first_column subheader"> Foo </th></tr>
+            </thead>
+            <tbody>
+                <tr class="row1">
+                    Custom renderedXXXX: sentinel
+                </tr>
+            </tbody>
+        </table>""")
+
+
 def test_no_header_template():
     class TestTable(NoSortTable):
         class Meta:

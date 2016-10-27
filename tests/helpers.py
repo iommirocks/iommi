@@ -29,7 +29,7 @@ def verify_table_html(expected_html, query=None, find=None, links=None, **kwargs
     request.user = AnonymousUser()
     actual_html = render_table(request=request, links=links, **kwargs)
 
-    prettified_actual = reindent(BeautifulSoup(actual_html).find(**find).prettify()).strip()
     prettified_expected = reindent(BeautifulSoup(expected_html).find(**find).prettify()).strip()
+    prettified_actual = reindent(BeautifulSoup(actual_html).find(**find).prettify()).strip()
 
     assert prettified_expected == prettified_actual

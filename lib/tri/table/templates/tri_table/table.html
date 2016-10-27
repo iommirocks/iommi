@@ -8,12 +8,10 @@
 
         <table{{ table.render_attrs }}>
 
-            {% if table.header.template %}
-                {% include  table.header.template %}
-            {% endif %}
+            {{ table.render_header }}
 
             <tbody>
-               {{ table.render_tbody|safe }}
+               {{ table.render_tbody }}
             </tbody>
         </table>
 
