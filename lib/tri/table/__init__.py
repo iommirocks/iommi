@@ -497,7 +497,7 @@ class BoundRow(object):
         template = self.template
         if template:
             # positional arguments here to get compatibility with both django 1.7 and 1.8+
-            return render_to_string(template, dict(bound_row=self, row=self.row, table=self.table))
+            return render_to_string(template, RequestContext(self.table.request, dict(bound_row=self, row=self.row, table=self.table)))
         else:
             return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
@@ -557,7 +557,7 @@ class BoundCell(object):
     def render(self):
         cell__template = self.bound_column.cell.template
         if cell__template:
-            return render_to_string(cell__template, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self))
+            return render_to_string(cell__template, RequestContext(self.table.request, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)))
         else:
             return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
