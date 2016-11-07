@@ -827,6 +827,57 @@ def test_cell_template():
         </table>""")
 
 
+@pytest.mark.django_db
+def test_template_string():
+
+    Foo.objects.create(a=1)
+
+    def explode(**_):
+        assert False
+
+    class TestTable(NoSortTable):
+        class Meta:
+            model = Foo
+            links__template = None
+            links__template_string = "What links"
+            header__template = None
+            header__template_string = "What headers"
+            filter__template = None
+            filter__template_string = "What filters"
+
+            row__template_string = "Oh, rows: {{ bound_row.render_cells }}"
+
+        a = Column(
+            cell__template_string='Custom cell: {{ row.a }}',
+            cell__format=explode,
+            cell__url=explode,
+            cell__url_title=explode,
+            query__show=True,
+            query__gui__show=True,
+        )
+
+    verify_table_html(
+        table=TestTable(),
+        find=dict(),
+        # find=dict(class_='table-container'),
+        links=[
+            Link('foo', 'bar'),
+        ],
+        expected_html="""
+        What filters
+        <div class="table-container">
+            <form action="." method="post">
+                <table class="listview">
+                    What headers
+                    <tbody>
+                        Oh, rows: Custom cell: 1
+                    </tbody>
+                </table>
+                What links
+            </form>
+        </div>""")
+
+
 def test_cell_template_string():
     def explode(**_):
         assert False

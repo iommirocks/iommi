@@ -7,7 +7,6 @@ import warnings
 from collections import OrderedDict
 from itertools import groupby
 
-from django.template import Context
 from django.template import Template
 from tri.form.render import render_attrs, render_class
 
@@ -506,7 +505,7 @@ class BoundRow(object):
                 return render_to_string(self.template, context)
             else:
                 template = Template(self.template_string)
-                return template.render(Context(context))
+                return template.render(context)
 
         return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
@@ -567,12 +566,12 @@ class BoundCell(object):
         cell__template = self.bound_column.cell.template
         cell__template_string = self.bound_column.cell.template_string
         if cell__template or cell__template_string:
-            context =  RequestContext(self.table.request, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self))
+            context = RequestContext(self.table.request, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self))
             if cell__template:
                 return render_to_string(cell__template, context)
             else:
                 template = Template(cell__template_string)
-                return template.render(Context(context))
+                return template.render(context)
 
         return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
@@ -738,28 +737,21 @@ class Table(object):
         return self.render_template_config(self.header, self.context)
 
     def render_filter(self):
-        # tri.query is used to render the filters. And both tri.query and tri.table use context variable 'form'.
-        # So, in tri.table, we use the  'query_form' to represent the form used for the filters, and then
-        # rename it to 'form' when we pass it to the filters rendering (in 'tri_query/form.html').
-        context = self.context
-        form = context.get('query_form')
-
-        # tri_query/form.html renders things even if there is no form to renders, and we don't want that.
-        # So, if we don't have a form, we simply return an empty string.
-        if not form:
+        if not self.query_form:
             return ''
+        context = self.context
         with context.push():
-            context['form'] = context.get('query_form')
+            context['form'] = self.query_form
             return self.render_template_config(self.filter, context)
 
     @staticmethod
-    def render_template_config(template_config, context_dict):
+    def render_template_config(template_config, context):
         if template_config.template or template_config.template_string:
             if template_config.template:
-                return render_to_string(template_config.template, context_dict)
+                return render_to_string(template_config.template, context)
             else:
                 template = Template(template_config.template_string)
-                return template.render(Context(context_dict))
+                return template.render(context)
         return ''
 
     def _prepare_auto_rowspan(self):
