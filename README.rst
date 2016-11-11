@@ -51,7 +51,7 @@ Simple example
             sum_c = Column(cell__value=lambda table, column, row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
         # now to get an HTML table:
-        return render_table_to_response(request, FooTable(data=foos), template_name='base.html')
+        return render_table_to_response(request, FooTable(data=foos), template='base.html')
 
 And this is what you get:
 
@@ -92,7 +92,7 @@ Now I can display a list of Bars in a table like this:
                 query_show=True,
                 query__gui__show=True)
 
-        return render_table_to_response(request, BarTable(data=Bar.objects.all()), template_name='base.html', paginate_by=20)
+        return render_table_to_response(request, BarTable(data=Bar.objects.all()), template='base.html', paginate_by=20)
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 

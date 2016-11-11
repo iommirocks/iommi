@@ -27,9 +27,10 @@ def verify_table_html(expected_html, query=None, find=None, links=None, **kwargs
 
     request = RequestFactory().get("/", query)
     request.user = AnonymousUser()
+    request.META['CSRF_COOKIE'] = None
     actual_html = render_table(request=request, links=links, **kwargs)
 
     prettified_expected = reindent(BeautifulSoup(expected_html).find(**find).prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html).find(**find).prettify()).strip()
 
-    assert prettified_expected == prettified_actual
+    assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)

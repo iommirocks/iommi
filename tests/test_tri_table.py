@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 from django.http import HttpResponse
+from django.template import Template
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
 import pytest
@@ -838,17 +839,14 @@ def test_template_string():
     class TestTable(NoSortTable):
         class Meta:
             model = Foo
-            links__template = None
-            links__template_string = "What links"
-            header__template = None
-            header__template_string = "What headers"
-            filter__template = None
-            filter__template_string = "What filters"
+            links__template = Template('What links')
+            header__template = Template('What headers')
+            filter__template = Template('What filters')
 
-            row__template_string = "Oh, rows: {{ bound_row.render_cells }}"
+            row__template = Template('Oh, rows: {{ bound_row.render_cells }}')
 
         a = Column(
-            cell__template_string='Custom cell: {{ row.a }}',
+            cell__template=Template('Custom cell: {{ row.a }}'),
             cell__format=explode,
             cell__url=explode,
             cell__url_title=explode,
@@ -859,7 +857,6 @@ def test_template_string():
     verify_table_html(
         table=TestTable(),
         find=dict(),
-        # find=dict(class_='table-container'),
         links=[
             Link('foo', 'bar'),
         ],
@@ -883,7 +880,12 @@ def test_cell_template_string():
         assert False
 
     class TestTable(NoSortTable):
-        foo = Column(cell__template_string='Custom renderedXXXX: {{ row.foo }}', cell__format=explode, cell__url=explode, cell__url_title=explode)
+        foo = Column(
+            cell__template=Template('Custom renderedXXXX: {{ row.foo }}'),
+            cell__format=explode,
+            cell__url=explode,
+            cell__url_title=explode,
+        )
 
     data = [Struct(foo="sentinel")]
 
