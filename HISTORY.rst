@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+4.1.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* `*.template` overrides can now be specified as `django.template.Template` instances.
+
+* The `template_name` parameter to `render_table` is now deprecated and superceeded by a `template` parameter.
+
+
 4.0.0 (2016-09-15)
 ~~~~~~~~~~~~~~~~~~
 

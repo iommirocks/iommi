@@ -19,7 +19,7 @@ from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
-from six import string_types
+import six
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
 from tri.named_struct import NamedStructField, NamedStruct
@@ -183,7 +183,7 @@ class Column(Frozen, ColumnBase):
         :param sort_default_desc: Set to True to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
-        :param cell__template: name of a template file. The template gets arguments: `table`, `bound_column`, `bound_row`, `row` and `value`.
+        :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `bound_column`, `bound_row`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
         :param cell__value: string or callable that receives kw arguments: `table`, `column` and `row`. This is used to extract which data to display from the object.
         :param cell__format: string or callable that receives kw arguments: `table`, `column`, `row` and `value`. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
         :param cell__attrs: dict of attr name to callables that receive kw arguments: `table`, `column`, `row` and `value`.
@@ -494,12 +494,15 @@ class BoundRow(object):
         self.extra = extra
 
     def render(self):
-        template = self.template
-        if template:
-            # positional arguments here to get compatibility with both django 1.7 and 1.8+
-            return render_to_string(template, RequestContext(self.table.request, dict(bound_row=self, row=self.row, table=self.table)))
-        else:
-            return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
+        if self.template:
+            context = RequestContext(self.table.request, dict(bound_row=self, row=self.row, table=self.table))
+            if isinstance(self.template, six.string_types):
+                # positional arguments here to get compatibility with both django 1.7 and 1.8+
+                return render_to_string(self.template, context)
+            else:
+                return self.template.render(context)
+
+        return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
     def render_attrs(self):
         attrs = self.attrs.copy()
@@ -557,9 +560,13 @@ class BoundCell(object):
     def render(self):
         cell__template = self.bound_column.cell.template
         if cell__template:
-            return render_to_string(cell__template, RequestContext(self.table.request, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)))
-        else:
-            return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
+            context = RequestContext(self.table.request, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self))
+            if isinstance(cell__template, six.string_types):
+                return render_to_string(cell__template, context)
+            else:
+                return cell__template.render(context)
+
+        return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
     def render_attrs(self):
         return render_attrs(self.attrs)
@@ -622,7 +629,7 @@ class Table(object):
         attrs__class__listview=True,
         row__attrs__class=EMPTY,
         row__template=None,
-        filter__template='tri_query/form.html',
+        filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
         header__template='tri_table/table_header_rows.html',
         links__template='tri_table/links.html',
         model=None,
@@ -641,7 +648,7 @@ class Table(object):
         :param columns: (use this only when not using the declarative style) a list of Column objects
         :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
         :param row__attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
-        :param row__template: name of template to use for rendering the row
+        :param row__template: name of template (or `Template` object) to use for rendering the row
         :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
@@ -708,6 +715,29 @@ class Table(object):
 
         self.extra = extra
         """ :type: tri.declarative.Namespace """
+
+    def render_links(self):
+        return self.render_template_config(self.links, self.context)
+
+    def render_header(self):
+        return self.render_template_config(self.header, self.context)
+
+    def render_filter(self):
+        if not self.query_form:
+            return ''
+        context = self.context
+        with context.push():
+            context['form'] = self.query_form
+            return self.render_template_config(self.filter, context)
+
+    @staticmethod
+    def render_template_config(template_config, context):
+        if template_config.template:
+            if isinstance(template_config.template, six.string_types):
+                return render_to_string(template_config.template, context)
+            else:
+                return template_config.template.render(context)
+        return ''
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -813,7 +843,7 @@ class Table(object):
             group_columns[0].attrs['class'].first_column = True
 
         for group_column in group_columns:
-            if not isinstance(group_column.display_name, string_types):
+            if not isinstance(group_column.display_name, six.string_types):
                 group_column.display_name = ''
         if all(c.display_name == '' for c in group_columns):
             group_columns = []
@@ -930,7 +960,7 @@ class Table(object):
         return render_attrs(attrs)
 
     def render_tbody(self):
-        return '\n'.join([bound_row.render() for bound_row in self.bound_rows()])
+        return mark_safe('\n'.join([bound_row.render() for bound_row in self.bound_rows()]))
 
     @staticmethod
     @dispatch(
@@ -1090,7 +1120,8 @@ def render_table(request,
                  table,
                  links=None,
                  context=None,
-                 template_name='tri_table/list.html',
+                 template_name='tri_table/list.html',  # deprecated
+                 template=None,
                  blank_on_empty=False,
                  paginate_by=40,
                  page=None,
@@ -1105,7 +1136,7 @@ def render_table(request,
     :param table: an instance of Table
     :param links: a list of instances of Link
     :param context: dict of extra context parameters
-    :param template_name: if you need to render the table differently you can override this parameter
+    :param template: if you need to render the table differently you can override this parameter with either a name of a template to load or a `Template` instance.
     :param blank_on_empty: turn off the displaying of `{{ empty_message }}` in the template when the list is empty
     :param show_hits: Display how many items there are total in the paginator.
     :param hit_label: Label for the show_hits display.
@@ -1150,25 +1181,33 @@ def render_table(request,
 
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-    context = table_context(request,
-                            table=table,
-                            links=links,
-                            paginate_by=paginate_by,
-                            page=page,
-                            extra_context=context,
-                            context_processors=context_processors,
-                            paginator=paginator,
-                            show_hits=show_hits,
-                            hit_label=hit_label)
+    table.context = table_context(
+        request,
+        table=table,
+        links=links,
+        paginate_by=paginate_by,
+        page=page,
+        extra_context=context,
+        context_processors=context_processors,
+        paginator=paginator,
+        show_hits=show_hits,
+        hit_label=hit_label,
+    )
 
     if not table.data and blank_on_empty:  # pragma: no cover
         return ''
 
     if table.query_form and not table.query_form.is_valid():
         table.data = None
-        context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
+        table.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-    return get_template(template_name).render(context)
+    if not template:
+        template = template_name
+
+    if isinstance(template, six.string_types):
+        return get_template(template_name).render(table.context)
+    else:
+        return template.render(table.context)
 
 
 def render_table_to_response(*args, **kwargs):

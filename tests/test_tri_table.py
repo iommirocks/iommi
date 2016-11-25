@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 from django.http import HttpResponse
+from django.template import Template
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
 import pytest
@@ -822,6 +823,80 @@ def test_cell_template():
             <tbody>
                 <tr class="row1">
                     Custom rendered: sentinel
+                </tr>
+            </tbody>
+        </table>""")
+
+
+@pytest.mark.django_db
+def test_template_string():
+
+    Foo.objects.create(a=1)
+
+    def explode(**_):
+        assert False
+
+    class TestTable(NoSortTable):
+        class Meta:
+            model = Foo
+            links__template = Template('What links')
+            header__template = Template('What headers')
+            filter__template = Template('What filters')
+
+            row__template = Template('Oh, rows: {{ bound_row.render_cells }}')
+
+        a = Column(
+            cell__template=Template('Custom cell: {{ row.a }}'),
+            cell__format=explode,
+            cell__url=explode,
+            cell__url_title=explode,
+            query__show=True,
+            query__gui__show=True,
+        )
+
+    verify_table_html(
+        table=TestTable(),
+        find=dict(),
+        links=[
+            Link('foo', 'bar'),
+        ],
+        expected_html="""
+        What filters
+        <div class="table-container">
+            <form action="." method="post">
+                <table class="listview">
+                    What headers
+                    <tbody>
+                        Oh, rows: Custom cell: 1
+                    </tbody>
+                </table>
+                What links
+            </form>
+        </div>""")
+
+
+def test_cell_template_string():
+    def explode(**_):
+        assert False
+
+    class TestTable(NoSortTable):
+        foo = Column(
+            cell__template=Template('Custom renderedXXXX: {{ row.foo }}'),
+            cell__format=explode,
+            cell__url=explode,
+            cell__url_title=explode,
+        )
+
+    data = [Struct(foo="sentinel")]
+
+    verify_table_html(table=TestTable(data=data), expected_html="""
+        <table class="listview">
+            <thead>
+                <tr><th class="first_column subheader"> Foo </th></tr>
+            </thead>
+            <tbody>
+                <tr class="row1">
+                    Custom renderedXXXX: sentinel
                 </tr>
             </tbody>
         </table>""")
