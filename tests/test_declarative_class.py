@@ -372,3 +372,21 @@ def test_creation_ordered():
     l = [Member() for _ in range(100)]
 
     assert l == sorted(reversed(l))
+
+
+def test_getter_and_setter_interface():
+    @declarative(str, sort_key=lambda x: x, add_init_kwargs=False)
+    class Foo(object):
+        foo = "foo"
+        bar = "bar"
+
+    assert dict(foo="foo", bar="bar") == Foo.get_declared()
+    assert dict(foo="foo", bar="bar") == Foo().get_declared()
+
+    class Bar(Foo):
+        pass
+
+    assert dict(foo='foo', bar='bar') == Bar.get_declared()
+    Bar.set_declared(dict(baz='baz'))
+    assert dict(baz='baz') == Bar.get_declared()
+
