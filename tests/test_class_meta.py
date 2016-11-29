@@ -174,6 +174,7 @@ def test_add_init_kwargs():
     class Test(object):
         class Meta:
             foo = 'bar'
+            _bar = 'baz'
 
         def __init__(self, foo):
             assert 'bar' == foo

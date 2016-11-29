@@ -390,3 +390,13 @@ def test_getter_and_setter_interface():
     Bar.set_declared(dict(baz='baz'))
     assert dict(baz='baz') == Bar.get_declared()
 
+
+def test_whitelist_dunder_weakref():
+
+    class Foo(object):
+        pass
+
+    Bar = declarative(str)(Foo)
+
+    assert Bar.__dict__ is not Foo.__dict__
+    assert Bar.__weakref__ is not Foo.__weakref__

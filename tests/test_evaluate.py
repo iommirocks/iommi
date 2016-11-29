@@ -99,7 +99,7 @@ def test_match_caching():
 
 def test_get_signature_description():
     assert 'a,b||' == get_signature(lambda a, b: None)
-    assert 'a,b|c,d|' == get_signature(lambda a, b, c=None, d=None: None)
+    assert 'a,b,c|d,e|' == get_signature(lambda a, b, c, d=None, e=None: None)
     assert 'c,d|a,b|' == get_signature(lambda d, c, b=None, a=None: None)
     assert 'a,b|c,d|*' == get_signature(lambda a, b, c=None, d=None, **_: None)
     assert 'c,d|a,b|*' == get_signature(lambda d, c, b=None, a=None, **_: None)
@@ -110,6 +110,7 @@ def test_match_optionals():
     assert matches("a,b", "a,b||")
     assert matches("a,b", "a,b|c|")
     assert matches("a,b,c", "a,b|c|")
+    assert matches("a,b,c", "a,b|c,d|")
     assert matches("a,b", "a,b|c|*")
     assert not matches("a,b,d", "a,b|c|")
     assert matches("a,b,d", "a,b|c|*")
