@@ -6,7 +6,7 @@ import itertools
 
 from tri.struct import Struct, Frozen
 
-__version__ = '0.29.0'
+__version__ = '0.29.0'  # pragma: no mutate
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -43,8 +43,6 @@ def get_meta(cls):
     for class_ in reversed(cls.mro()):
         if hasattr(class_, 'Meta'):
             for key, value in class_.Meta.__dict__.items():
-                if key.startswith('__'):  # Skip internal attributes
-                    continue
                 merged_attributes[key] = value
     return merged_attributes
 
@@ -69,7 +67,7 @@ def creation_ordered(class_to_decorate):
 
     # noinspection PyProtectedMember
     def __lt__(self, other):
-        return self._index < other._index
+        return self._index < other._index  # pragma: no mutate
 
     setattr(class_to_decorate, '__lt__', __lt__)
 
@@ -112,7 +110,7 @@ def declarative(member_class, parameter='members', add_init_kwargs=True, sort_ke
                 if isinstance(obj, member_class) and not name.startswith('__'):
                     yield name, obj
                 if type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
-                    raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)
+                    raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)  # pragma: no mutate
 
         bindings = generate_member_bindings()
         try:
@@ -221,7 +219,7 @@ def inject_args(args, kwargs, extra_args, pos_arg_names):
     new_kwargs = dict(extra_args)
     if pos_arg_names:
         if len(args) > len(pos_arg_names):
-            raise TypeError('Too many positional argument')
+            raise TypeError('Too many positional arguments')
         new_kwargs.update((k, v) for k, v in zip(pos_arg_names, args))
         new_args = []
     else:
@@ -299,7 +297,7 @@ _matches_cache = {}
 
 
 def matches(caller_parameters, callee_parameters):
-    cache_key = ';'.join((caller_parameters, callee_parameters))
+    cache_key = ';'.join((caller_parameters, callee_parameters))  # pragma: no mutate
     cached_value = _matches_cache.get(cache_key, None)
     if cached_value is not None:
         return cached_value
@@ -335,7 +333,7 @@ def evaluate(func_or_value, signature=None, **kwargs):
 
 
 def evaluate_recursive(func_or_value, signature=None, **kwargs):
-    if signature is None:
+    if signature is None:  # pragma: no mutate
         signature = signature_from_kwargs(kwargs)
 
     if isinstance(func_or_value, dict):
@@ -418,7 +416,7 @@ def collect_namespaces(values):
     namespaces = {}
     result = dict(values)
     for key, value in values.items():
-        parts = key.split('__', 1)
+        parts = key.split('__', 1)  # pragma: no mutate
         if len(parts) == 2:
             prefix, name = parts
             if prefix not in namespaces:
@@ -607,10 +605,10 @@ def sort_after(l):
             if y.name == x.after:
                 result.insert(i + 1, x)
                 del to_be_moved_by_name[-1]
-                break
+                break  # pragma: no mutate
 
     if to_be_moved_by_name:
-        raise KeyError('Tried to order after %s but %s does not exist' % (', '.join([x.after for x in to_be_moved_by_name]), 'those keys' if len(to_be_moved_by_name) > 1 else 'that key'))
+        raise KeyError('Tried to order after %s but %s not exist' % (', '.join([x.after for x in sorted(to_be_moved_by_name)]), 'that key does' if len(to_be_moved_by_name) == 1 else 'those keys do'))
 
     for x in reversed(to_be_moved_by_index):
         result.insert(x.after, x)

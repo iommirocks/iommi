@@ -275,16 +275,25 @@ def test_sort_after_chaining():
 
 
 def test_sort_after_points_to_nothing():
-    objects = [
-        Struct(name='quux'),
-        Struct(name='foo'),
-        Struct(name='quux6', after='does-not-exist'),
-    ]
-
     with pytest.raises(KeyError) as e:
-        sort_after(objects)
+        sort_after([
+            Struct(name='quux'),
+            Struct(name='foo'),
+            Struct(name='quux6', after='does-not-exist'),
+        ])
 
-    assert 'Tried to order after does-not-exist but that key does not exist' in str(e)
+    assert "'Tried to order after does-not-exist but that key does not exist'" == str(e.value)
+
+
+def test_sort_after_points_to_nothing_plural():
+    with pytest.raises(KeyError) as e:
+        sort_after([
+            Struct(name='quux'),
+            Struct(name='foo', after='does-not-exist2'),
+            Struct(name='quux6', after='does-not-exist'),
+        ])
+
+    assert "'Tried to order after does-not-exist, does-not-exist2 but those keys do not exist'" == str(e.value)
 
 
 def test_assert_kwargs_empty():
@@ -293,7 +302,7 @@ def test_assert_kwargs_empty():
     with pytest.raises(TypeError) as e:
         assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
 
-    assert "assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" in str(e.value)
+    assert "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" == str(e.value)
 
 
 def test_dispatch():

@@ -150,9 +150,10 @@ def test_args_override_by_name():
             foo = 'foo'
 
         def __init__(self, foo):
-            assert 'bar' == foo
+            self.foo = foo
 
-    Test(foo='bar')
+    t = Test(foo='bar')
+    assert t.foo == 'bar'
 
 
 def test_too_many_args_check():
@@ -165,8 +166,10 @@ def test_too_many_args_check():
         def __init__(self, foo):
             pass
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError) as e:
         Test('foo', 'bar')
+
+    assert 'Too many positional arguments' == str(e.value)
 
 
 def test_add_init_kwargs():

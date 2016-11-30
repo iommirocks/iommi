@@ -391,6 +391,17 @@ def test_getter_and_setter_interface():
     assert dict(baz='baz') == Bar.get_declared()
 
 
+def test_init_hook():
+    @declarative(str, sort_key=lambda x: x, add_init_kwargs=False)
+    class Foo(object):
+        foo = "foo"
+
+        def __init__(self):
+            self.called_init = True
+
+    assert Foo().called_init
+
+
 def test_whitelist_dunder_weakref():
 
     class Foo(object):
@@ -399,4 +410,14 @@ def test_whitelist_dunder_weakref():
     Bar = declarative(str)(Foo)
 
     assert Bar.__dict__ is not Foo.__dict__
-    assert Bar.__weakref__ is not Foo.__weakref__
+    assert Bar.__weakref__ is None or Bar.__weakref__ is not Foo.__weakref__
+
+
+def test_require_ordering():
+
+    with pytest.raises(TypeError) as e:
+        @declarative(str)
+        class Foo(object):
+            foo = "foo"
+
+    assert 'Missing member ordering definition. Use @creation_ordered or specify sort_key' == str(e.value)
