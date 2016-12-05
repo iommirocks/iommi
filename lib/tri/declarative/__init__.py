@@ -608,7 +608,7 @@ def sort_after(l):
                 break  # pragma: no mutate
 
     if to_be_moved_by_name:
-        raise KeyError('Tried to order after %s but %s not exist' % (', '.join([x.after for x in sorted(to_be_moved_by_name)]), 'that key does' if len(to_be_moved_by_name) == 1 else 'those keys do'))
+        raise KeyError('Tried to order after %s but %s not exist' % (', '.join([x.after for x in sorted(to_be_moved_by_name, key=lambda x: repr(x))]), 'that key does' if len(to_be_moved_by_name) == 1 else 'those keys do'))
 
     for x in reversed(to_be_moved_by_index):
         result.insert(x.after, x)
