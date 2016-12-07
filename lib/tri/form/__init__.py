@@ -869,17 +869,24 @@ class Field(Frozen, FieldBase):
         return Field(**kwargs)
 
 
-if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
-    def get_fields(model):
-        # noinspection PyProtectedMember
-        for field in model._meta.get_fields():
-            yield field
-else:
+def __django_geq_180__get_fields(model):
+    # noinspection PyProtectedMember
+    for field in model._meta.get_fields():
+        yield field
+
+
+def __django_lt_180__get_fields(model):  # pragma: no cover
     # This is actually covered by tests, but only in a specific version of django :P
-    def get_fields(model):  # pragma: no cover
-        # noinspection PyProtectedMember
-        for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
-            yield field
+    # noinspection PyProtectedMember
+    for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
+        yield field
+
+
+def get_fields(model):
+    if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
+        return __django_geq_180__get_fields(model)
+    else:
+        return __django_lt_180__get_fields(model)
 
 
 def default_endpoint__field(form, key, value):
