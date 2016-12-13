@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.4.0 (2016-12-13)
+~~~~~~~~~~~~~~~~~~
+
+* Set instance on form just after save to be able to use newly created pk in a redirect
+
+
 4.3.1 (2016-12-08)
 ~~~~~~~~~~~~~~~~~~
 
