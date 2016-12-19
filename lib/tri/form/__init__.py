@@ -245,6 +245,10 @@ class FieldBase(NamedStruct):
 
     after = NamedStructField()
 
+    # raw_data/raw_data contains the strings grabbed directly from the request data
+    raw_data = NamedStructField()
+    raw_data_list = NamedStructField()
+
     is_valid = NamedStructField(default=lambda form, field, parsed_data: (True, ''))
     """ @type: (Form, Field, object) -> boolean """
     parse = NamedStructField(default=default_parse)
@@ -300,10 +304,6 @@ class BoundField(FieldBase):
 
     form = NamedStructField()
     errors = NamedStructField()
-
-    # raw_data/raw_data contains the strings grabbed directly from the request data
-    raw_data = NamedStructField()
-    raw_data_list = NamedStructField()
 
     # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
     parsed_data = NamedStructField()
@@ -973,6 +973,8 @@ class Form(object):
         if data:
             for field in self.fields:
                 if field.is_list:
+                    if field.raw_data_list is not None:
+                        continue
                     try:
                         # django and similar
                         # noinspection PyUnresolvedReferences
@@ -987,6 +989,8 @@ class Form(object):
                     if raw_data_list is not None:
                         field.raw_data_list = raw_data_list
                 else:
+                    if field.raw_data is not None:
+                        continue
                     field.raw_data = data.get(field.name)
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
