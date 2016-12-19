@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.5.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Add `raw_data` and `raw_data_list` attributes to `Field` definition to enable custom handling on django file download
+
+
 4.4.0 (2016-12-13)
 ~~~~~~~~~~~~~~~~~~
 

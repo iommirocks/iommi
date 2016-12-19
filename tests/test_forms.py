@@ -71,6 +71,31 @@ def test_required_with_falsy_option():
     assert form.fields_by_name.foo.errors == set()
 
 
+def test_custom_raw_data():
+    def my_form_raw_data(form, field, **_):
+        return 'this is custom raw data'
+
+    class MyForm(Form):
+        foo = Field(raw_data=my_form_raw_data)
+
+    form = MyForm(request=RequestFactory().post('/', {'-': '-'}))
+    assert form.fields_by_name.foo.value == 'this is custom raw data'
+
+
+def test_custom_raw_data_list():
+    def my_form_raw_data_list(form, field, **_):
+        return ['this is custom raw data list']
+
+    class MyForm(Form):
+        foo = Field(
+            raw_data_list=my_form_raw_data_list,
+            is_list=True,
+        )
+
+    form = MyForm(request=RequestFactory().post('/', {'-': '-'}))
+    assert form.fields_by_name.foo.value_list == ['this is custom raw data list']
+
+
 def test_parse():
     # The spaces in the data are there to check that we strip input
     form = MyTestForm(
