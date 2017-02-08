@@ -243,17 +243,22 @@ def get_signature(func):
     except TypeError:
         return None
 
+    first_arg_index = 1 if inspect.ismethod(func) else 0  # Skip self argument on methods
+
     number_of_defaults = len(defaults) if defaults else 0
     if number_of_defaults > 0:
-        required = ','.join(sorted(names[:-number_of_defaults]))
+        required = ','.join(sorted(names[first_arg_index:-number_of_defaults]))
         optional = ','.join(sorted(names[-number_of_defaults:]))
     else:
-        required = ','.join(sorted(names))
+        required = ','.join(sorted(names[first_arg_index:]))
         optional = ''
     wildcard = '*' if varkw is not None else ''
 
     signature = '|'.join((required, optional, wildcard))
-    func.__tri_declarative_signature = signature
+    try:
+        func.__tri_declarative_signature = signature
+    except AttributeError:
+        pass
     return signature
 
 

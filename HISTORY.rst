@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.30.0 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* `evaluate` and `evaluate_recursive` also works for methods as well as for functions.
+
+
 0.29.0 (2016-09-12)
 ~~~~~~~~~~~~~~~~~~~
 
