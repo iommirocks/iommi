@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+4.6.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* `Field` class now inherits from `object`, making the implementation more pythonic.
+  (Attributes still possible to override in constructor call, see `NamespaceAwareObject`)
+
+* Added `Form.extra` namespace for custom data.
+
+
 4.5.0 (2016-12-19)
 ~~~~~~~~~~~~~~~~~~
 

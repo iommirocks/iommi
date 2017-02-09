@@ -1,3 +1,2 @@
-tri.declarative >=0.28.0
-tri.named_struct
-tri.struct
+tri.declarative >=0.30.0
+tri.struct >= 2.5.3

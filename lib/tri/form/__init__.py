@@ -1,26 +1,25 @@
 from __future__ import unicode_literals, absolute_import
 
 from collections import OrderedDict
+import copy
 from datetime import datetime
 from decimal import Decimal
 from distutils.version import StrictVersion
 from itertools import chain
+import re
 
 import django
-
-import re
 from django.core.exceptions import ValidationError
-from django.db.models.fields import FieldDoesNotExist
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
+from django.db.models.fields import FieldDoesNotExist
 from django.template import RequestContext
 from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
-from tri.named_struct import NamedStruct, NamedStructField
-from tri.struct import Struct, Frozen
-from tri.declarative import evaluate_recursive, should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY
+from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive
+from tri.struct import Struct
 
 from tri.form.render import render_attrs
 
@@ -127,27 +126,6 @@ def _django_field_defaults(model_field):
     return r
 
 
-def default_parse(form, field, string_value):
-    del form, field
-    return string_value
-
-
-def default_read_from_instance(field, instance):
-    return getattr_path(instance, field.attr)
-
-
-def default_write_to_instance(field, instance, value):
-    setattr_path(instance, field.attr, value)
-
-
-def default_endpoint_dispatch(field, key, **kwargs):
-    parts = key.split('__', 1)
-    prefix = parts.pop(0)
-    remaining_key = parts[0] if parts else ''
-    endpoint = field.endpoint.get(prefix, None)
-    if endpoint is not None:
-        return endpoint(field=field, key=remaining_key, **kwargs)
-
 MISSING = object()
 
 
@@ -161,7 +139,6 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
         return True
 
     members = []
-    # noinspection PyProtectedMember
     for field in get_fields(model):
         if should_include(field.name):
             subkeys = member_params_by_member_name.pop(field.name, {})
@@ -225,156 +202,6 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
     return [x for x in result if x is not None]
 
 
-def default_help_text(field, **_):
-    if field.model is None or field.attr is None:
-        return ''
-    try:
-        return field.model._meta.get_field(field.attr.rsplit('__', 1)[-1]).help_text or ''
-    except FieldDoesNotExist:  # pragma: no cover
-        return ''
-
-
-class FieldBase(NamedStruct):
-    name = NamedStructField()
-
-    show = NamedStructField(default=True)
-
-    attr = NamedStructField(default=MISSING)
-    id = NamedStructField(default=MISSING)
-    label = NamedStructField(default=MISSING)
-
-    after = NamedStructField()
-
-    # raw_data/raw_data contains the strings grabbed directly from the request data
-    raw_data = NamedStructField()
-    raw_data_list = NamedStructField()
-
-    is_valid = NamedStructField(default=lambda form, field, parsed_data: (True, ''))
-    """ @type: (Form, Field, object) -> boolean """
-    parse = NamedStructField(default=default_parse)
-    """ @type: (Form, Field, unicode) -> object """
-    parse_empty_string_as_none = NamedStructField(default=True)
-    initial = NamedStructField()
-    initial_list = NamedStructField()
-    template = NamedStructField(default='tri_form/{style}_form_row.html')
-    template_string = NamedStructField()
-    attrs = NamedStructField(default_factory=dict)
-    input_template = NamedStructField(default='tri_form/input.html')
-    label_template = NamedStructField(default='tri_form/label.html')
-    errors_template = NamedStructField(default='tri_form/errors.html')
-    required = NamedStructField(default=True)
-    container_css_classes = NamedStructField(default_factory=set)
-    label_container_css_classes = NamedStructField(default_factory=lambda: {'description_container'})
-    input_container_css_classes = NamedStructField(default_factory=set)
-    post_validation = NamedStructField(default=lambda form, field: None)
-    """ @type: (Form, Field) -> None """
-    render_value = NamedStructField(default=lambda form, field, value: "%s" % value)
-    """ @type: (Form, Field, object) -> unicode """
-    is_list = NamedStructField(default=False)
-    is_boolean = NamedStructField(default=False)
-    model = NamedStructField()
-    model_field = NamedStructField()
-
-    # grab help_text from model if applicable
-    # noinspection PyProtectedMember
-    help_text = NamedStructField(default=default_help_text)
-
-    editable = NamedStructField(default=True)
-    strip_input = NamedStructField(default=True)
-    input_type = NamedStructField(default='text')
-
-    extra = NamedStructField(default_factory=Struct)
-    choice_to_option = NamedStructField()
-    empty_label = NamedStructField()
-    empty_choice_tuple = NamedStructField()
-    choices = NamedStructField()
-
-    read_from_instance = NamedStructField(default=default_read_from_instance)
-    """ @type: (Field, object) -> None """
-    write_to_instance = NamedStructField(default=default_write_to_instance)
-    """ @type: (Field, object, object) -> None """
-
-    endpoint_dispatch = NamedStructField(default=default_endpoint_dispatch)
-    """ @type: (Form, Field, str) -> None """
-    endpoint = NamedStructField()
-    endpoint_path = NamedStructField(default=None)
-
-
-class BoundField(FieldBase):
-
-    form = NamedStructField()
-    errors = NamedStructField()
-
-    # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
-    parsed_data = NamedStructField()
-    parsed_data_list = NamedStructField()
-
-    # value/value_data_list is the final step that contains parsed and valid data
-    value = NamedStructField()
-    value_list = NamedStructField()
-
-    choice_tuples = NamedStructField()
-
-    """
-    An internal class that is used to handle the mutable data used during parsing and validation of a Field.
-
-    The life cycle of the data is:
-        1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
-        2. parsed_data/parsed_data_list: set if parsing is successful, which only happens if the previous step succeeded
-        3. value/value_list: set if validation is successful, which only happens if the previous step succeeded
-
-    The variables *_list should be used if the input is a list.
-    """
-
-    def __init__(self, field, form):
-        super(BoundField, self).__init__(**field)
-        if self.attr is MISSING:
-            self.attr = self.name
-        if self.id is MISSING:
-            self.id = 'id_%s' % self.name if self.name else ''
-        if self.label is MISSING:
-            # noinspection PyTypeChecker
-            self.label = capitalize(self.name).replace('_', ' ') if self.name else ''
-
-        self.form = form
-        self.errors = set()
-
-    def evaluate(self):
-        """
-        Evaluates callable/lambda members. After this function is called all members will be values.
-        """
-        members_to_evaluate = {k: v for k, v in self.items() if k != 'post_validation'}
-        for k, v in members_to_evaluate.items():
-            self[k] = evaluate_recursive(v, form=self.form, field=self)
-        if not self.editable:
-            # noinspection PyAttributeOutsideInit
-            self.input_template = 'tri_form/non_editable.html'
-
-    def rendered_value(self):
-        value = self.raw_data if self.errors else self.value
-        return self.render_value(form=self.form, field=self, value=value if value else '')
-
-    def render_attrs(self):
-        """
-        Render HTML attributes, or return '' if no attributes needs to be rendered.
-        """
-        return render_attrs(self.attrs)
-
-    def render_container_css_classes(self):
-        container_css_classes = set(self.container_css_classes)
-        if self.required and self.editable:
-            container_css_classes.add('required')
-        if self.form.style == 'compact':
-            container_css_classes.add('key-value')
-        return render_css_classes(container_css_classes)
-
-    def render_label_container_css_classes(self):
-        return render_css_classes(self.label_container_css_classes)
-
-    def render_input_container_css_classes(self):
-        return render_css_classes(self.input_container_css_classes)
-
-
 def render_css_classes(classes):
     """
     Render CSS classes, or return '' if no attributes needs to be rendered.
@@ -383,6 +210,7 @@ def render_css_classes(classes):
 
 
 def default_endpoint__config(field, key, value, **_):
+    # type: (Field, str, str) -> dict
     return dict(
         name=field.name,
     )
@@ -395,11 +223,17 @@ def default_endpoint__validate(field, key, value, **_):
     )
 
 
+class NamespaceAwareObject(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            getattr(self, k)  # Check existence
+            setattr(self, k, v)
+        super(NamespaceAwareObject, self).__init__()
+
+
 @creation_ordered
-class Field(Frozen, FieldBase):
-    """
-    Class that describes a field, i.e. what input controls to render, the label, etc.
-    """
+class Field(NamespaceAwareObject):
+
     @dispatch(
         extra=EMPTY,
         attrs__class=EMPTY,
@@ -445,7 +279,203 @@ class Field(Frozen, FieldBase):
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
+        self.name = None
+
+        self.show = True
+
+        self.attr = MISSING
+        self.id = MISSING
+        self.label = MISSING
+
+        self.after = None
+
+        # raw_data/raw_data contains the strings grabbed directly from the request data
+        self.raw_data = None
+        self.raw_data_list = None
+
+        self.parse_empty_string_as_none = True
+        self.initial = None
+        self.initial_list = None
+        self.template = 'tri_form/{style}_form_row.html'
+        self.template_string = None
+        self.attrs = None
+        self.input_template = 'tri_form/input.html'
+        self.label_template = 'tri_form/label.html'
+        self.errors_template = 'tri_form/errors.html'
+        self.required = True
+
+        self.is_list = False
+        self.is_boolean = False
+        self.model = None
+        self.model_field = None
+
+        self.editable = True
+        self.strip_input = True
+        self.input_type = 'text'
+
+        self.extra = None
+
+        self.choice_to_option = None
+        self.empty_label = None
+        self.empty_choice_tuple = None
+        self.choices = None
+        # (Form, Field, str) -> None
+
+        self.endpoint = None
+        self.endpoint_path = None
+
+        # Bound field data
+        self.form = None
+        self.field = None
+        self.errors = None
+
+        # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
+        self.parsed_data = None
+        self.parsed_data_list = None
+
+        # value/value_data_list is the final step that contains parsed and valid data
+        self.value = None
+        self.value_list = None
+
+        self.choice_tuples = None
+
         super(Field, self).__init__(**kwargs)
+
+    @staticmethod
+    def is_valid(form, field, parsed_data):
+        # type: (Form, Field, object) -> (bool, str)
+        return True, ''
+
+    @staticmethod
+    def parse(form, field, string_value, **_):
+        # type: (Form, Field, unicode) -> object
+        del form, field
+        return string_value
+
+    @staticmethod
+    def container_css_classes(form, field, **_):
+        # type: (Form, Field) -> set
+        return set()
+
+    @staticmethod
+    def label_container_css_classes(form, field, **_):
+        return {'description_container'}
+
+    @staticmethod
+    def input_container_css_classes(form, field, **_):
+        # type: (Form, Field) -> set
+        return set()
+
+    @staticmethod
+    def post_validation(form, field, **_):
+        # type: (Form, Field) -> None
+        pass
+
+    @staticmethod
+    def render_value(form, field, value):
+        # type: (Form, Field, object) -> unicode
+        return "%s" % value
+
+    # grab help_text from model if applicable
+    # noinspection PyProtectedMember
+    @staticmethod
+    def help_text(field, **_):
+        if field.model is None or field.attr is None:
+            return ''
+        try:
+            return field.model._meta.get_field(field.attr.rsplit('__', 1)[-1]).help_text or ''
+        except FieldDoesNotExist:  # pragma: no cover
+            return ''
+
+    @staticmethod
+    def read_from_instance(field, instance):
+        # type: (Field, object) -> None
+        return getattr_path(instance, field.attr)
+
+    @staticmethod
+    def write_to_instance(field, instance, value):
+        # type: (Field, object, object) -> None
+        setattr_path(instance, field.attr, value)
+
+    @staticmethod
+    def endpoint_dispatch(field, key, **kwargs):
+        parts = key.split('__', 1)
+        prefix = parts.pop(0)
+        remaining_key = parts[0] if parts else ''
+        endpoint = field.endpoint.get(prefix, None)
+        if endpoint is not None:
+            return endpoint(field=field, key=remaining_key, **kwargs)
+
+    """
+    An internal class that is used to handle the mutable data used during parsing and validation of a Field.
+
+    The life cycle of the data is:
+        1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
+        2. parsed_data/parsed_data_list: set if parsing is successful, which only happens if the previous step succeeded
+        3. value/value_list: set if validation is successful, which only happens if the previous step succeeded
+
+    The variables *_list should be used if the input is a list.
+    """
+    def _bind(self, form):
+        bound_field = copy.copy(self)  # type: Field
+
+        if bound_field.attr is MISSING:
+            bound_field.attr = bound_field.name
+        if bound_field.id is MISSING:
+            bound_field.id = 'id_%s' % bound_field.name if bound_field.name else ''
+        if bound_field.label is MISSING:
+            bound_field.label = capitalize(bound_field.name).replace('_', ' ') if bound_field.name else ''
+
+        bound_field.form = form
+        bound_field.field = self
+        bound_field.errors = set()
+
+        return bound_field
+
+    EVALUATED_ATTRIBUTES = {
+        'after', 'attr', 'attrs', 'choice_to_option', 'choice_tuples', 'choices', 'container_css_classes', 'editable', 'empty_choice_tuple', 'empty_label', 'endpoint', 'endpoint_dispatch', 'endpoint_path', 'errors_template', 'extra', 'help_text', 'id', 'initial', 'initial_list', 'input_container_css_classes', 'input_template', 'input_type', 'is_boolean', 'is_list', 'is_valid', 'label', 'label_container_css_classes', 'label_template', 'model', 'model_field', 'parse', 'parse_empty_string_as_none', 'raw_data', 'raw_data_list', 'render_value', 'required', 'show', 'strip_input', 'template', 'template_string'
+    }
+
+    def _evaluate(self):
+        """
+        Evaluates callable/lambda members. After this function is called all members will be values.
+        """
+        for k in Field.EVALUATED_ATTRIBUTES:
+            v = getattr(self, k)
+            new_value = evaluate_recursive(v, form=self.form, field=self)
+            if new_value is not v:
+                setattr(self, k, new_value)
+
+        if not self.editable:
+            self.input_template = 'tri_form/non_editable.html'
+
+    def rendered_value(self):
+        value = self.raw_data if self.errors else self.value
+        return self.render_value(form=self.form, field=self, value=value if value else '')
+
+    def render_attrs(self):
+        """
+        Render HTML attributes, or return '' if no attributes needs to be rendered.
+        """
+        return render_attrs(self.attrs)
+
+    def render_container_css_classes(self):
+        container_css_classes = set(self.container_css_classes)
+        if self.required and self.editable:
+            container_css_classes.add('required')
+        if self.form.style == 'compact':
+            container_css_classes.add('key-value')
+        return render_css_classes(container_css_classes)
+
+    def render_label_container_css_classes(self):
+        return render_css_classes(self.label_container_css_classes)
+
+    def render_input_container_css_classes(self):
+        return render_css_classes(self.input_container_css_classes)
+
+    """
+    Class that describes a field, i.e. what input controls to render, the label, etc.
+    """
 
     @staticmethod
     def hidden(**kwargs):
@@ -538,7 +568,7 @@ class Field(Frozen, FieldBase):
         )
 
         if not kwargs['required'] and not kwargs['is_list']:
-            original_parse = kwargs.get('parse', default_parse)
+            original_parse = kwargs.get('parse', Field.parse)
 
             def parse(form, field, string_value):
                 return original_parse(form=form, field=field, string_value=string_value)
@@ -741,7 +771,7 @@ class Field(Frozen, FieldBase):
     def file(**kwargs):
         def file_write_to_instance(field, instance, value):
             if value:
-                default_write_to_instance(field=field, instance=instance, value=value)
+                Field.write_to_instance(field=field, instance=instance, value=value)
 
         setdefaults_path(
             kwargs,
@@ -835,7 +865,7 @@ class Field(Frozen, FieldBase):
 
         :type parent_field: Field
         """
-        kwargs = dict(parent_field)
+        new_field = copy.copy(parent_field)
 
         def parse_comma_separated(form, field, string_value):
             errors = []
@@ -852,6 +882,7 @@ class Field(Frozen, FieldBase):
             if errors:
                 raise ValidationError(errors)
             return ', '.join(result)
+        new_field.parse = parse_comma_separated
 
         def is_valid_comma_separated(form, field, parsed_data):
             errors = set()
@@ -861,12 +892,9 @@ class Field(Frozen, FieldBase):
                 if not is_valid:
                     errors.add('Invalid value "%s": %s' % (x, error))
             return errors == set(), errors
+        new_field.is_valid = is_valid_comma_separated
 
-        kwargs.update(dict(
-            parse=parse_comma_separated,
-            is_valid=is_valid_comma_separated
-        ))
-        return Field(**kwargs)
+        return new_field
 
 
 def __django_geq_180__get_fields(model):
@@ -901,7 +929,7 @@ def default_endpoint__field(form, key, value):
 @python_2_unicode_compatible
 @declarative(Field, 'fields_dict')
 @with_meta
-class Form(object):
+class Form(NamespaceAwareObject):
     """
     Describe a Form. Example:
 
@@ -922,18 +950,31 @@ class Form(object):
     See tri.declarative docs for more on this dual style of declaration.
     """
     @dispatch(
-        endpoint_dispatch_prefix=None,
+        is_full_form=True,
+        model=None,
         endpoint__field=default_endpoint__field,
+        extra=EMPTY,
     )
-    def __init__(self, request=None, data=None, instance=None, fields=None, model=None, post_validation=None, fields_dict=None, endpoint_dispatch_prefix=None, is_full_form=True, endpoint=None):
+    def __init__(self, request=None, data=None, instance=None, fields=None, fields_dict=None, **kwargs):
         """
         :type fields: list of Field
         :type data: dict[basestring, any]
         :type model: django.db.models.Model
         """
-        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
-        self.is_full_form = is_full_form
+        self.is_full_form = None
+
+        self.model = None
+        """ :type: django.db.models.Model """
+        self.endpoint_dispatch_prefix = None
+        """ :type: str """
+        self.endpoint = None
+        """ :type: tri.declarative.Namespace """
+        self.extra = None
+        """ :type: tri.declarative.Namespace """
+        super(Form, self).__init__(**kwargs)
+
         self.request = request
+
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
 
@@ -945,10 +986,10 @@ class Form(object):
                 for field in fields:
                     yield field
             for name, field in fields_dict.items():
-                dict.__setitem__(field, 'name', name)
+                setattr(field, 'name', name)
                 yield field
-        self.fields = sort_after([BoundField(f, self) for f in unbound_fields()])
-        """ :type: list of BoundField"""
+        self.fields = sort_after([f._bind(self) for f in unbound_fields()])
+        """ :type: list of Field"""
 
         if instance is not None:
             for field in self.fields:
@@ -995,17 +1036,12 @@ class Form(object):
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
-        self.post_validation = post_validation if post_validation is not None else lambda form: None
         self.fields_by_name = None
-        """ :type: dict[str, BoundField] """
+        """ :type: dict[str, Field] """
         self.style = None
-        self.model = model
-        """ :type model: django.db.models.Model """
-        self._valid = None
         self.errors = set()
         """ :type: set of str """
-        self.endpoint = endpoint
-        """ :type: tri.declarative.Namespace """
+        self._valid = None
         self.evaluate()
         self.is_valid()
 
@@ -1024,7 +1060,7 @@ class Form(object):
     @dispatch(
         field=EMPTY,
     )
-    def from_model(data, model, field, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    def from_model(data, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -1041,7 +1077,7 @@ class Form(object):
 
         """
         fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
-        return Form(data=data, model=model, instance=instance, fields=fields, post_validation=post_validation, **kwargs)
+        return Form(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_valid(self):
         if self._valid is None:
@@ -1091,7 +1127,7 @@ class Form(object):
 
     def evaluate(self):
         for field in self.fields:
-            field.evaluate()
+            field._evaluate()
         self.fields = [field for field in self.fields if should_show(field)]
         self.fields_by_name = Struct({field.name: field for field in self.fields})
 
@@ -1126,6 +1162,10 @@ class Form(object):
             field.post_validation(form=self, field=field)
         self.post_validation(form=self)
         return self
+
+    @staticmethod
+    def post_validation(form):
+        pass
 
     def validate_field_parsed_data(self, field, value):
         is_valid, error = field.is_valid(
@@ -1177,7 +1217,6 @@ class Form(object):
             return mark_safe('\n'.join(r))
         else:
             if django.VERSION < (1, 8):
-                # noinspection PyArgumentList
                 return render_to_string(
                     context_instance=RequestContext(self.request, dict(form=self)),
                     template_name=template_name,
@@ -1222,5 +1261,10 @@ class Form(object):
         handler = self.endpoint.get(prefix, None)
         if handler is not None:
             return handler(form=self, key=remaining_key, value=value)
+
+
+# Backward compatibility
+default_read_from_instance = Field.read_from_instance
+default_write_to_instance = Field.write_to_instance
 
 setup_db_compat_django()
