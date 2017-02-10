@@ -6,7 +6,7 @@ import itertools
 
 from tri.struct import Struct, Frozen
 
-__version__ = '0.29.0'  # pragma: no mutate
+__version__ = '0.30.0'  # pragma: no mutate
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
