@@ -136,3 +136,19 @@ def test_get_signature_class():
         pass
 
     assert None is get_signature(Foo)
+
+
+def test_evaluate_on_methods():
+    class Foo(object):
+        def bar(self, x):
+            return x
+
+        @staticmethod
+        def baz(x):
+            return x
+
+    assert 17 == evaluate(Foo().bar, x=17)
+    assert 17 == evaluate(Foo().baz, x=17)
+
+    f = Foo().bar
+    assert f is evaluate(f, y=17)
