@@ -31,14 +31,13 @@ def setup_db_compat_django():
     from tri.table import Column, register_column_factory
     try:
         # noinspection PyUnresolvedReferences
-        from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel
+        from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel
         # from django.db.models.fields.reverse_related import ManyToManyRel as ManyToManyRel_Related
     except ImportError:
         pass
     else:
         # The order here is significant because of inheritance structure. More specific must be below less specific.
         register_column_factory(CharField, Column)
-        register_column_factory(URLField, Column.url)
         register_column_factory(TimeField, Column.time)
         register_column_factory(EmailField, Column.email)
         register_column_factory(DecimalField, Column.decimal)
