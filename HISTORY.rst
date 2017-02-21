@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+3.2.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* `Variable` class now inherits from `object`, making the implementation more pythonic.
+  (Attributes still possible to override in constructor call, see `NamespaceAwareObject`)
+
+
 3.1.0 (2016-09-19)
 ~~~~~~~~~~~~~~~~~~
 

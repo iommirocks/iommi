@@ -26,6 +26,8 @@ class MyTestQuery(Query):
 # F/Q expressions don't have a __repr__ which makes testing properly impossible, so let's just monkey patch that in
 def f_repr(self):
     return '<F: %s>' % self.name
+
+
 F.__repr__ = f_repr
 Q.__repr__ = lambda self: str(self)
 
