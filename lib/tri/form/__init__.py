@@ -233,10 +233,21 @@ class NamespaceAwareObject(object):
 
 @creation_ordered
 class Field(NamespaceAwareObject):
-
     @dispatch(
+        show=True,
         extra=EMPTY,
         attrs__class=EMPTY,
+        parse_empty_string_as_none=True,
+        required=True,
+        template='tri_form/{style}_form_row.html',
+        input_template='tri_form/input.html',
+        label_template='tri_form/label.html',
+        errors_template='tri_form/errors.html',
+        is_list=False,
+        is_boolean=False,
+        editable=True,
+        strip_input=True,
+        input_type='text',
         endpoint=EMPTY,
         endpoint__config=default_endpoint__config,
         endpoint__validate=default_endpoint__validate,
@@ -281,7 +292,7 @@ class Field(NamespaceAwareObject):
 
         self.name = None
 
-        self.show = True
+        self.show = None
 
         self.attr = MISSING
         self.id = MISSING
@@ -293,25 +304,25 @@ class Field(NamespaceAwareObject):
         self.raw_data = None
         self.raw_data_list = None
 
-        self.parse_empty_string_as_none = True
+        self.parse_empty_string_as_none = None
         self.initial = None
         self.initial_list = None
-        self.template = 'tri_form/{style}_form_row.html'
+        self.template = None
         self.template_string = None
         self.attrs = None
-        self.input_template = 'tri_form/input.html'
-        self.label_template = 'tri_form/label.html'
-        self.errors_template = 'tri_form/errors.html'
-        self.required = True
+        self.input_template = None
+        self.label_template = None
+        self.errors_template = None
+        self.required = None
 
-        self.is_list = False
-        self.is_boolean = False
+        self.is_list = None
+        self.is_boolean = None
         self.model = None
         self.model_field = None
 
-        self.editable = True
-        self.strip_input = True
-        self.input_type = 'text'
+        self.editable = None
+        self.strip_input = None
+        self.input_type = None
 
         self.extra = None
 
@@ -323,6 +334,8 @@ class Field(NamespaceAwareObject):
 
         self.endpoint = None
         self.endpoint_path = None
+
+        super(Field, self).__init__(**kwargs)
 
         # Bound field data
         self.form = None
@@ -338,8 +351,6 @@ class Field(NamespaceAwareObject):
         self.value_list = None
 
         self.choice_tuples = None
-
-        super(Field, self).__init__(**kwargs)
 
     @staticmethod
     def is_valid(form, field, parsed_data):
