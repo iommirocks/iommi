@@ -140,6 +140,10 @@ class Column(NamespaceAwareObject):
     """
 
     @dispatch(
+        show=True,
+        sort_default_desc=False,
+        sortable=True,
+        auto_rowspan=False,
         bulk__show=False,
         query__show=False,
         attrs=EMPTY,
@@ -182,11 +186,11 @@ class Column(NamespaceAwareObject):
         self.attrs = None
         self.url = None
         self.title = None
-        self.show = True
-        self.sort_default_desc = False
-        self.sortable = True
+        self.show = None
+        self.sort_default_desc = None
+        self.sortable = None
         self.group = None
-        self.auto_rowspan = False
+        self.auto_rowspan = None
         """ :type: bool """
         self.cell = None
         self.model = None
@@ -1239,7 +1243,7 @@ def render_table(request,
         template = template_name
 
     if isinstance(template, six.string_types):
-        return get_template(template_name).render(table.context)
+        return get_template(template).render(table.context)
     else:
         return template.render(table.context)
 
