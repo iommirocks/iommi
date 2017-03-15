@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.6.0 (----------)
+4.6.0 (2017-03-15)
 ~~~~~~~~~~~~~~~~~~
 
 * `Field` class now inherits from `object`, making the implementation more pythonic.
