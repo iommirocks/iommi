@@ -4,6 +4,7 @@ import re
 from datetime import date, time
 from datetime import datetime
 
+import copy
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import models
@@ -14,9 +15,9 @@ from django.test import RequestFactory
 from django.utils.encoding import smart_text
 
 from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, Bar
-from tri.declarative import getattr_path, setattr_path
+from tri.declarative import getattr_path, setattr_path, dispatch
 from tri.struct import Struct
-from tri.form import BoundField, AVOID_EMPTY_FORM, Form, Field, register_field_factory
+from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, NamespaceAwareObject
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -229,6 +230,7 @@ def test_non_editable_from_initial():
 
 
 def test_show():
+    assert list(Form(data={}, fields=[Field(name='foo', show=True)]).fields_by_name.keys()) == ['foo']
     assert list(Form(data={}, fields=[Field(name='foo', show=False)]).fields_by_name.keys()) == []
     assert list(Form(data={}, fields=[Field(name='foo', show=lambda form, field: False)]).fields_by_name.keys()) == []
 
@@ -320,12 +322,13 @@ def test_render_attrs_new_style():
 
 
 def test_bound_field_render_css_classes():
-    assert BoundField(
-        field=Struct(
-            container_css_classes={'a', 'b'},
-            required=True,
-        ),
-        form=Struct(style='compact')).render_container_css_classes() == ' class="a b key-value required"'
+    # noinspection PyProtectedMember
+    assert Field(
+        container_css_classes={'a', 'b'},
+        required=True,
+    )._bind(
+        form=Struct(style='compact')
+    ).render_container_css_classes() == ' class="a b key-value required"'
 
 
 def test_getattr_path():
@@ -881,3 +884,42 @@ def test_custom_endpoint():
 
     form = MyForm(data={})
     assert 'foobar' == form.endpoint_dispatch(key='foo', value='bar')
+
+
+def test_namespace_aware_object():
+
+    class MyClass(NamespaceAwareObject):
+        @dispatch(
+            foo__bar=17
+        )
+        def __init__(self, **kwargs):
+            super(MyClass, self).__init__(**kwargs)
+
+        foo = None
+
+    assert 17 == MyClass().foo.bar
+    assert 42 == MyClass(foo__bar=42).foo.bar
+
+    with pytest.raises(AttributeError):
+        MyClass(barf=17)
+
+
+def test_namespace_aware_object_binding():
+
+    class MyClass(NamespaceAwareObject):
+        foo = None
+        container = None
+
+        def bind(self, container):
+            new_object = copy.copy(self)
+            new_object.container = container
+            return new_object
+
+    container = object()
+    template = MyClass(foo=17)
+    bound_object = template.bind(container)
+    bound_object.foo = 42
+
+    assert 17 == template.foo
+    assert 42 == bound_object.foo
+    assert bound_object.container is container
