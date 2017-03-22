@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-3.2.0 (----------)
+3.2.0 (2017-03-22)
 ~~~~~~~~~~~~~~~~~~
 
 * `Variable` class now inherits from `object`, making the implementation more pythonic.
