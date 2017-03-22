@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 
+import copy
 from collections import OrderedDict
 from datetime import date
 from functools import reduce
@@ -8,9 +9,8 @@ from django.core.exceptions import ObjectDoesNotExist
 import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
-from tri.struct import Frozen, merged, Struct
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, setdefaults_path, sort_after, dispatch, EMPTY
-from tri.named_struct import NamedStruct, NamedStructField
+from tri.struct import merged
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, sort_after, dispatch, EMPTY, setattr_path, getattr_path
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
@@ -67,61 +67,31 @@ def value_to_query_string_value_string(variable, v):
     return '"%s"' % v
 
 
-def default_value_to_q(variable, op, value_string_or_f):
-    if variable.attr is None:
-        return Q()
-    negated = False
-    if op in ('!=', '!:'):
-        negated = True
-        op = op[1:]
-    if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
-        r = Q(**{variable.attr: None})
-    else:
-        r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
-    if negated:
-        return ~r
-    else:
-        return r
-
-
 MISSING = object()
 
 
-class VariableBase(NamedStruct):
-    name = NamedStructField()
-
-    after = NamedStructField()
-
-    show = NamedStructField(default=True)
-
-    attr = NamedStructField(default=MISSING)
-    gui = NamedStructField()
-
-    gui_op = NamedStructField(default='=')
-    op_to_q_op = NamedStructField(default=lambda op: Q_OP_BY_OP[op])
-    """ :type: (unicode) -> Q """
-    value_to_q = NamedStructField(default=default_value_to_q)
-    freetext = NamedStructField()
-
-    model = NamedStructField()
-    model_field = NamedStructField()
-
-    extra = NamedStructField()
-
-    choices = NamedStructField()
-    value_to_q_lookup = NamedStructField()
-
-
-class BoundVariable(VariableBase):
-    query = NamedStructField()
-    """ :type: Query """
+class NamespaceAwareObject(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            getattr_path(self, k)
+            setattr_path(self, k, v)
+        super(NamespaceAwareObject, self).__init__()
 
 
 @creation_ordered
-class Variable(Frozen, VariableBase):
+class Variable(NamespaceAwareObject):
     """
     Class that describes a variable that you can search for.
     """
+    @dispatch(
+        gui_op='=',
+        show=True,
+        attr=MISSING,
+        gui__show=False,
+        gui__class=Field,
+        gui__required=False,
+        extra=EMPTY,
+    )
     def __init__(self, **kwargs):
         """
         Parameters with the prefix "gui__" will be passed along downstream to the tri.form.Field instance if applicable. This can be used to tweak the basic style interface.
@@ -130,17 +100,62 @@ class Variable(Frozen, VariableBase):
         :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
 
-        new_kwargs = setdefaults_path(
-            Struct(),
-            kwargs,
-            dict(
-                gui__show=False,
-                gui__class=Field,
-                gui__required=False,
-                extra=Struct(),
-            ))
+        self.name = None
+        self.after = None
+        self.show = None
+        self.attr = None
+        self.gui = None
+        self.gui_op = None
+        self.freetext = None
+        self.model = None
+        self.model_field = None
+        self.extra = None
+        self.choices = None
+        self.value_to_q_lookup = None
 
-        super(Variable, self).__init__(**new_kwargs)
+        super(Variable, self).__init__(**kwargs)
+
+        self.query = None
+        """ :type: Query """
+
+    EVALUATED_ATTRIBUTES = ['after', 'attr', 'choices', 'extra', 'freetext', 'gui', 'gui_op', 'model', 'model_field', 'name', 'op_to_q_op', 'show', 'value_to_q', 'value_to_q_lookup']
+
+    def _bind(self, query):
+        bound_variable = copy.copy(self)
+
+        if bound_variable.attr is MISSING:
+            bound_variable.attr = bound_variable.name
+        bound_variable.query = query
+
+        for k in Variable.EVALUATED_ATTRIBUTES:
+            v = getattr(bound_variable, k)
+            new_value = evaluate_recursive(v, query=query, variable=self)
+            if new_value is not v:
+                setattr(bound_variable, k, new_value)
+
+        return bound_variable
+
+    @staticmethod
+    def op_to_q_op(op):
+        """ :type: (unicode) -> Q """
+        return Q_OP_BY_OP[op]
+
+    @staticmethod
+    def value_to_q(variable, op, value_string_or_f):
+        if variable.attr is None:
+            return Q()
+        negated = False
+        if op in ('!=', '!:'):
+            negated = True
+            op = op[1:]
+        if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
+            r = Q(**{variable.attr: None})
+        else:
+            r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
+        if negated:
+            return ~r
+        else:
+            return r
 
     @staticmethod
     def text(**kwargs):  # pragma: no cover
@@ -209,7 +224,7 @@ class Variable(Frozen, VariableBase):
         def boolean_value_to_q(variable, op, value_string_or_f):
             if isinstance(value_string_or_f, string_types):
                 value_string_or_f = bool_parse(value_string_or_f)
-            return default_value_to_q(variable, op, value_string_or_f)
+            return Variable.value_to_q(variable, op, value_string_or_f)
 
         setdefaults(kwargs, dict(
             gui__class=Field.boolean,
@@ -333,20 +348,12 @@ class Query(object):
                 for variable in variables:
                     yield variable
             for name, variable in variables_dict.items():
-                dict.__setitem__(variable, 'name', name)
+                variable.name = name
                 yield variable
         self.variables = sort_after(list(generate_variables()))
 
-        def generate_bound_variables():
-            for x in self.variables:
-                yield BoundVariable(**merged(
-                    Struct(x),
-                    query=self,
-                    attr=x.attr if x.attr is not MISSING else x.name
-                ))
-        bound_variables = list(generate_bound_variables())
+        bound_variables = [v._bind(self) for v in self.variables]
 
-        bound_variables = [evaluate_recursive(x, query=self, variable=x) for x in bound_variables]
         self.bound_variables = filter_show_recursive(bound_variables)
 
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
