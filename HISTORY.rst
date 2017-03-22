@@ -1,8 +1,9 @@
 Changelog
 ---------
 
-4.1.0 (----------)
+4.1.0 (2017-03-22)
 ~~~~~~~~~~~~~~~~~~
+
 * `Column` class now inherits from `object`, making the implementation more pythonic.
   (Attributes still possible to override in constructor call, see `NamespaceAwareObject`)
 
