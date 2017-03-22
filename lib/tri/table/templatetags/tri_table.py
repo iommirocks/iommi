@@ -38,4 +38,6 @@ def paginator(context, adjacent_pages=6):
         "show_hits": context["show_hits"],
         "hit_label": context["hit_label"],
     }
+
+
 register.inclusion_tag("tri_table/paginator.html", takes_context=True)(paginator)

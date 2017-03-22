@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import copy
 import json
 import warnings
 from collections import OrderedDict
@@ -20,10 +21,10 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace, setattr_path
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
 from tri.named_struct import NamedStructField, NamedStruct
-from tri.struct import Struct, Frozen
+from tri.struct import Struct
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
@@ -47,12 +48,12 @@ def prepare_headers(request, bound_columns):
         if column.sortable:
             params = request.GET.copy()
             order = request.GET.get('order', None)
-            start_sort_desc = column['sort_default_desc']
-            params['order'] = column['name'] if not start_sort_desc else '-' + column['name']
+            start_sort_desc = column.sort_default_desc
+            params['order'] = column.name if not start_sort_desc else '-' + column.name
             if order is not None:
                 is_desc = len(order) > 0 and order[0] == '-'
                 order_field = is_desc and order[1:] or order
-                if order_field == column['name']:
+                if order_field == column.name:
                     new_order = is_desc and order[1:] or "-%s" % order
                     params['order'] = new_order
             column.is_sorting = False if order is None else (column.name == order or ('-' + column.name) == order)
@@ -112,7 +113,7 @@ def register_cell_formatter(type_or_class, formatter):
 
 def default_cell_formatter(table, column, row, value, **_):
     """
-    :type column: tri.table.BoundColumn
+    :type column: tri.table.Column
     """
     formatter = _cell_formatters.get(type(value))
     if formatter:
@@ -124,40 +125,25 @@ def default_cell_formatter(table, column, row, value, **_):
     return conditional_escape(value)
 
 
-class ColumnBase(NamedStruct):
+class NamespaceAwareObject(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            getattr(self, k)  # Check existence
+            setattr(self, k, v)
+        super(NamespaceAwareObject, self).__init__()
+
+
+@creation_ordered
+class Column(NamespaceAwareObject):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
 
-    name = NamedStructField()
-    """ :type: unicode """
-    after = NamedStructField()
-    attrs = NamedStructField()
-    attr = NamedStructField(default=lambda table, column, **_: column.name)
-    css_class = NamedStructField(default=set())
-    url = NamedStructField()
-    title = NamedStructField()
-    show = NamedStructField(default=True)
-    sort_key = NamedStructField(lambda column: column.attr)
-    sort_default_desc = NamedStructField(default=False)
-    display_name = NamedStructField(default=lambda table, column, **_: force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize())
-    sortable = NamedStructField(default=True)
-    group = NamedStructField()
-    auto_rowspan = NamedStructField(default=False)
-    """ :type: bool """
-    cell = NamedStructField()
-    model = NamedStructField()
-    model_field = NamedStructField()
-    choices = NamedStructField()
-    bulk = NamedStructField()
-    query = NamedStructField()
-
-    extra = NamedStructField(default=Struct())
-
-
-@creation_ordered
-class Column(Frozen, ColumnBase):
     @dispatch(
+        show=True,
+        sort_default_desc=False,
+        sortable=True,
+        auto_rowspan=False,
         bulk__show=False,
         query__show=False,
         attrs=EMPTY,
@@ -168,6 +154,7 @@ class Column(Frozen, ColumnBase):
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
+        extra=EMPTY,
     )
     def __init__(self, **kwargs):
         """
@@ -191,8 +178,90 @@ class Column(Frozen, ColumnBase):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
 
-        setdefaults_path(kwargs, {'attrs__class__' + c: True for c in kwargs.get('css_class', {})})
+        setdefaults_path(kwargs, {'attrs__class__' + c: True for c in kwargs.pop('css_class', {})})
+
+        self.name = None
+        """ :type: unicode """
+        self.after = None
+        self.attrs = None
+        self.url = None
+        self.title = None
+        self.show = None
+        self.sort_default_desc = None
+        self.sortable = None
+        self.group = None
+        self.auto_rowspan = None
+        """ :type: bool """
+        self.cell = None
+        self.model = None
+        self.model_field = None
+        self.choices = None
+        self.bulk = None
+        self.query = None
+
+        self.extra = None
+
         super(Column, self).__init__(**kwargs)
+
+        self.table = None
+        """ :type: Table """
+        self.column = None
+        """ :type: Column """
+        self.index = None
+        """ :type: int """
+        self.is_sorting = None
+        """ :type: bool """
+
+    @staticmethod
+    def attr(table, column, **_):
+        return column.name
+
+    @staticmethod
+    def sort_key(table, column, **_):
+        return column.attr
+
+    @staticmethod
+    def display_name(table, column, **_):
+        return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
+
+    def _bind(self, table, index):
+        bound_column = copy.copy(self)
+
+        bound_column.index = index
+        self.bulk = setdefaults_path(
+            Struct(),
+            self.bulk,
+            attr=self.attr,
+        )
+        self.query = setdefaults_path(
+            Struct(),
+            self.query,
+            attr=self.attr,
+        )
+
+        for k, v in table.column.get(bound_column.name, {}).items():
+            setattr_path(bound_column, k, v)
+        bound_column.table = table
+        bound_column.column = self
+
+        return bound_column
+
+    EVALUATED_ATTRIBUTES = [
+        'after', 'attr', 'auto_rowspan', 'bulk', 'cell', 'choices', 'display_name', 'extra', 'group', 'model', 'model_field', 'query', 'show', 'sort_default_desc', 'sort_key', 'sortable', 'title', 'url'
+    ]
+
+    def _evaluate(self):
+        """
+        Evaluates callable/lambda members. After this function is called all members will be values.
+        """
+        for k in self.EVALUATED_ATTRIBUTES:
+            v = getattr(self, k)
+            new_value = evaluate_recursive(v, table=self.table, column=self)
+            if new_value is not v:
+                setattr(self, k, new_value)
+
+    def render_css_class(self):
+        return render_class(self.attrs['class'])
 
     @staticmethod
     def text(**kwargs):  # pragma: no cover
@@ -450,30 +519,6 @@ class Column(Frozen, ColumnBase):
             **kwargs)
 
 
-class BoundColumn(ColumnBase):
-
-    table = NamedStructField()
-    """ :type: Table """
-    column = NamedStructField()
-    """ :type: Column """
-    index = NamedStructField()
-    """ :type: int """
-    is_sorting = NamedStructField()
-    """ :type: bool """
-
-    def __init__(self, **kwargs):
-        new_kwargs = setdefaults_path(
-            Struct(),
-            kwargs,
-            bulk__attr=kwargs.get('attr'),
-            query__attr=kwargs.get('attr'),
-        )
-        super(BoundColumn, self).__init__(**new_kwargs)
-
-    def render_css_class(self):
-        return render_class(self.attrs['class'])
-
-
 class BoundRow(object):
     """
     Internal class used in row rendering
@@ -666,7 +711,7 @@ class Table(object):
             for column_ in columns if columns is not None else []:
                 yield column_
             for name, column_ in columns_dict.items():
-                dict.__setitem__(column_, 'name', name)
+                column_.name = name
                 yield column_
         columns = sort_after(list(generate_columns()))
 
@@ -704,11 +749,11 @@ class Table(object):
         self.bulk_form = None
         """ :type : tri.form.Form """
         self.bound_columns = None
-        """ :type : list of BoundColumn """
+        """ :type : list of Column """
         self.shown_bound_columns = None
-        """ :type : list of BoundColumn """
+        """ :type : list of Column """
         self.bound_column_by_name = None
-        """ :type: dict[str, BoundColumn] """
+        """ :type: dict[str, Column] """
         self._has_prepared = False
         """ :type: bool """
         self.header_levels = None
@@ -860,16 +905,9 @@ class Table(object):
 
         def bind_columns():
             for index, column in enumerate(self.columns):
-                values = evaluate_recursive(Struct(column), table=self, column=column)
-                values = setdefaults_path(
-                    Struct(),
-                    self.column.get(column.name, {}),
-                    values,
-                    column=column,
-                    table=self,
-                    index=index,
-                )
-                yield BoundColumn(**values)
+                bound_column = column._bind(self, index)
+                bound_column._evaluate()
+                yield bound_column
 
         self.bound_columns = list(bind_columns())
         self.bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self.bound_columns)
@@ -1205,7 +1243,7 @@ def render_table(request,
         template = template_name
 
     if isinstance(template, six.string_types):
-        return get_template(template_name).render(table.context)
+        return get_template(template).render(table.context)
     else:
         return template.render(table.context)
 
@@ -1218,5 +1256,6 @@ def render_table_to_response(*args, **kwargs):
     if isinstance(response, HttpResponse):  # pragma: no cover
         return response
     return HttpResponse(response)
+
 
 setup_db_compat()
