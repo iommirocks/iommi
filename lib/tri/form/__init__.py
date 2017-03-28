@@ -139,6 +139,14 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
         return True
 
     members = []
+
+    # Validate include/exclude parameters
+    field_names = {x.name for x in get_fields(model)}
+    if include:
+        assert all(x in field_names for x in include)
+    if exclude:
+        assert all(x in field_names for x in exclude)
+
     for field in get_fields(model):
         if should_include(field.name):
             subkeys = member_params_by_member_name.pop(field.name, {})
@@ -150,6 +158,7 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
                 members.extend(foo)
             else:
                 members.append(foo)
+    assert_kwargs_empty(member_params_by_member_name)
     return members + (extra if extra is not None else [])
 
 
