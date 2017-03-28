@@ -1031,7 +1031,7 @@ class Table(object):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        assert model or data, "model or data must be specified"
+        assert model is not None or data is not None, "model or data must be specified"
         if model is None and isinstance(data, QuerySet):
             model = data.model
         columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
