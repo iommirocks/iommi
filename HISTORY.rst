@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.6.1 (????-??-??)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed non-editable fields so that you can override the rendering
+
+
 4.6.0 (2017-03-15)
 ~~~~~~~~~~~~~~~~~~
 
