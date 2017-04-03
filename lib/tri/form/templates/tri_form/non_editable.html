@@ -1,1 +1,1 @@
-<span id="{{ field.id }}">{% if field.is_list %} {{ field.value_list | join:", " }} {% else %} {{ field.value }} {% endif %}</span>
+<span id="{{ field.id }}">{% if field.is_list %} {{ field.value_list | join:", " }} {% else %} {{ field.rendered_value }} {% endif %}</span>
