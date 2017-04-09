@@ -82,7 +82,9 @@ def test_ops():
 
 def test_freetext():
     query = MyTestQuery()
-    assert repr(query.parse('"asd"')) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
+    expected = repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
+    assert repr(query.parse('"asd"')) == expected
+    assert repr(MyTestQuery(request=RequestFactory().get('/', {'-': '-', 'term': 'asd'})).to_q()) == expected
 
 
 def test_or():
@@ -103,6 +105,22 @@ def test_negation():
 def test_precedence():
     query = MyTestQuery()
     assert repr(query.parse('foo_name="asd" and bar_name = 7 or baz_name = 11')) == repr((Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7})) | Q(**{'baz__iexact': 11}))
+    assert repr(query.parse('foo_name="asd" or bar_name = 7 and baz_name = 11')) == repr(Q(**{'foo__iexact': 'asd'}) | (Q(**{'bar__exact': 7})) & Q(**{'baz__iexact': 11}))
+
+
+@pytest.mark.parametrize('op,django_op', [
+    ('>', 'gt'),
+    ('=>', 'gte'),
+    ('>=', 'gte'),
+    ('<', 'lt'),
+    ('<=', 'lte'),
+    ('=<', 'lte'),
+    ('=', 'iexact'),
+    (':', 'icontains'),
+])
+def test_ops(op, django_op):
+    query = MyTestQuery()
+    assert repr(query.parse('foo_name%sbar' % op)) == repr(Q(**{'foo__%s' % django_op: 'bar'}))
 
 
 def test_parenthesis():
@@ -124,6 +142,10 @@ def test_request_to_q_simple():
     query2 = Query2(request=Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'})))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
 
+    # noinspection PyTypeChecker
+    query2 = Query2(request=Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'false'})))
+    assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 0}))
+
 
 def test_integer_request_to_q_simple():
     class Query2(Query):
@@ -132,6 +154,12 @@ def test_integer_request_to_q_simple():
     # noinspection PyTypeChecker
     query2 = Query2(request=Struct(method='GET', GET=Data(**{'bazaar': '11'})))
     assert repr(query2.to_q()) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
+
+
+def test_gui_is_not_required():
+    class Query2(Query):
+        foo = Variable()
+    assert Query2.foo.gui.required == False
 
 
 def test_invalid_value():

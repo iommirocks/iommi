@@ -15,7 +15,7 @@ from tri.form import Form, Field, bool_parse, member_from_model, expand_member, 
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '3.2.0'
+__version__ = '3.2.0'  # pragma: no mutate
 
 
 class QueryException(Exception):
@@ -23,9 +23,10 @@ class QueryException(Exception):
 
 
 PRECEDENCE = {
-    'and': 3,
-    'or': 2,
+    'and': 3,  # pragma: no mutate
+    'or': 2,  # pragma: no mutate
 }
+assert PRECEDENCE['and'] > PRECEDENCE['or']  # pragma: no mutate
 
 Q_OP_BY_OP = {
     '>': 'gt',
@@ -54,7 +55,7 @@ def request_data(request):
     elif request.method == 'GET':
         return request.GET
     else:
-        assert False, "unknown request method %s" % request.method  # pragma: no cover
+        assert False, "unknown request method %s" % request.method  # pragma: no cover # pragma: no mutate
 
 
 def value_to_query_string_value_string(variable, v):
