@@ -29,7 +29,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '4.1.0'
+__version__ = '4.1.0'  # pragma: no mutate
 
 LAST = LAST
 
@@ -87,7 +87,7 @@ def yes_no_formatter(value, **_):
         return 'No'
     if value is None:  # pragma: no cover
         return ''
-    assert False, "Unable to convert {} to Yes/No".format(value)   # pragma: no cover
+    assert False, "Unable to convert {} to Yes/No".format(value)   # pragma: no cover  # pragma: no mutate
 
 
 def list_formatter(value, **_):

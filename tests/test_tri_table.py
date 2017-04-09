@@ -16,7 +16,7 @@ from tri.query import Variable
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar
 
-from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter
+from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, yes_no_formatter
 
 
 def get_data():
@@ -1342,3 +1342,22 @@ def test_table_extra_namespace():
         foo = Column()
 
     assert 17 == TestTable(request=RequestFactory().get('/'), data=[]).extra.foo
+
+
+def test_defaults():
+    class TestTable(Table):
+        foo = Column()
+    assert not TestTable.foo.query.show
+    assert not TestTable.foo.bulk.show
+    assert not TestTable.foo.auto_rowspan
+    assert TestTable.foo.sortable
+    assert not TestTable.foo.sort_default_desc
+    assert TestTable.foo.show
+
+
+def test_yes_no_formatter():
+    assert yes_no_formatter(None) == ''
+    assert yes_no_formatter(True) == 'Yes'
+    assert yes_no_formatter(1) == 'Yes'
+    assert yes_no_formatter(False) == 'No'
+    assert yes_no_formatter(0) == 'No'

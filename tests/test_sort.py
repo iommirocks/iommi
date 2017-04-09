@@ -48,6 +48,38 @@ def test_sort_list():
       </table>
     """)
 
+    # now reversed
+    verify_table_html(table=TestTable(data=data),
+                      query=dict(order='-bar'),
+                      expected_html="""\
+      <table class="listview">
+        <thead>
+          <tr>
+            <th class="first_column subheader">
+              <a href="?order=foo"> Foo </a>
+            </th>
+            <th class="first_column sorted_column subheader">
+              <a href="?order=bar"> Bar </a>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row1">
+            <td> c </td>
+            <td class="rj"> 3 </td>
+          </tr>
+          <tr class="row2">
+            <td> b </td>
+            <td class="rj"> 2 </td>
+          </tr>
+          <tr class="row1">
+            <td> a </td>
+            <td class="rj"> 1 </td>
+          </tr>
+        </tbody>
+      </table>
+    """)
+
 
 def test_sort_list_bad_parameter():
 
