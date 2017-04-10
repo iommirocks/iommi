@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 import pytest
+from django.test import RequestFactory
 
 from tests.helpers import verify_table_html
 from tests.models import Foo
-from tri.table import Column, Table, Struct, order_by_on_list
+from tri.table import Column, Table, Struct, order_by_on_list, render_table
 
 
 def test_sort_list():
@@ -79,6 +80,18 @@ def test_sort_list():
         </tbody>
       </table>
     """)
+
+
+def test_sort_attrs_class_leak():
+    class TestTable(Table):
+        foo = Column(attrs__class=Struct(bar=True))
+
+    render_table(
+        request=RequestFactory().get('/', dict(order='foo')),
+        table=TestTable(data=[]),
+    )
+
+    assert dict(bar=True) == TestTable.foo.attrs['class']
 
 
 def test_sort_list_bad_parameter():
