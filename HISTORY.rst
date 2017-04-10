@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.1.1 (----------)
+4.1.1 (2017-04-10)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix missing copy of `attrs__class`
