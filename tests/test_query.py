@@ -74,12 +74,6 @@ def test_unknown_field():
     assert isinstance(e.value, QueryException)
 
 
-def test_ops():
-    query = MyTestQuery()
-    for op, cmd in Q_OP_BY_OP.items():
-        assert repr(query.parse('foo_name%s1' % op)) == repr(Q(**{'foo__%s' % cmd: 1}))
-
-
 def test_freetext():
     query = MyTestQuery()
     expected = repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
@@ -159,7 +153,7 @@ def test_integer_request_to_q_simple():
 def test_gui_is_not_required():
     class Query2(Query):
         foo = Variable()
-    assert Query2.foo.gui.required == False
+    assert Query2.foo.gui.required is False
 
 
 def test_invalid_value():
