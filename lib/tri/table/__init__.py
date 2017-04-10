@@ -226,14 +226,16 @@ class Column(NamespaceAwareObject):
 
     def _bind(self, table, index):
         bound_column = copy.copy(self)
+        bound_column.attrs = self.attrs.copy()
+        bound_column.attrs['class'] = bound_column.attrs['class'].copy()
 
         bound_column.index = index
-        self.bulk = setdefaults_path(
+        bound_column.bulk = setdefaults_path(
             Struct(),
             self.bulk,
             attr=self.attr,
         )
-        self.query = setdefaults_path(
+        bound_column.query = setdefaults_path(
             Struct(),
             self.query,
             attr=self.attr,
