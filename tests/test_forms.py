@@ -427,15 +427,17 @@ def test_help_text_from_model():
 
 
 @pytest.mark.django_db
-def test_choice_query():
+def test_choice_queryset():
     user = User.objects.create(username='foo')
     user2 = User.objects.create(username='foo2')
+    user3 = User.objects.create(username='foo3')
 
     class MyForm(Form):
-        foo = Field.multi_choice_queryset(attr=None, model=User, choices=User.objects.exclude(username=user2.username))
+        foo = Field.multi_choice_queryset(attr=None, model=User, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
     assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
+    assert MyForm(RequestFactory().get('/', {'foo': [smart_text(user2.pk), smart_text(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
 
 
 def test_field_from_model():

@@ -1,13 +1,10 @@
 from __future__ import unicode_literals, absolute_import
 
-import json
-
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from tri.form import Form
+from tri.form import Form, handle_dispatch
 from tri.declarative import extract_subkeys, setdefaults_path
 from tri.struct import Struct
 
@@ -79,19 +76,9 @@ def create_or_edit_object(
     p = kwargs.form
     form = p.pop('class')(**p)
 
-    for key, value in request.GET.items():
-        if key.startswith('__'):
-            remaining_key = key[2:]
-            expected_prefix = form.endpoint_dispatch_prefix
-            if expected_prefix is not None:
-                parts = remaining_key.split('__', 1)
-                prefix = parts.pop(0)
-                if prefix != expected_prefix:
-                    return
-                remaining_key = parts[0] if parts else None
-            data = form.endpoint_dispatch(key=remaining_key, value=value)
-            if data:
-                return HttpResponse(json.dumps(data), content_type='application/json')
+    should_return, dispatch_result = handle_dispatch(request=request, obj=form)
+    if should_return:
+        return dispatch_result
 
     # noinspection PyProtectedMember
     model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
@@ -129,8 +116,7 @@ def create_or_edit_object(
         'is_create': is_create,
         'object_name': model_verbose_name,
     }
-    c.update(kwargs.get('render_context', {}))
-    kwargs.pop('render_context', None)
+    c.update(kwargs.pop('render_context', {}))
 
     kwargs_for_render = extract_subkeys(kwargs, 'render', {
         'context_instance': RequestContext(request, c),

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 
+import json
 from collections import OrderedDict
 import copy
 from datetime import datetime
@@ -13,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
 from django.db.models.fields import FieldDoesNotExist
+from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.context import Context
 from django.template.loader import render_to_string
@@ -35,7 +37,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '4.6.1'
+__version__ = '4.6.1'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -51,6 +53,23 @@ AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'
 INITIALS_FROM_GET = 'initials_from_get'
+
+
+def handle_dispatch(request, obj):
+    for key, value in request.GET.items():
+        if key.startswith('__'):
+            remaining_key = key[2:]
+            expected_prefix = obj.endpoint_dispatch_prefix
+            if expected_prefix is not None:
+                parts = remaining_key.split('__', 1)
+                prefix = parts.pop(0)
+                if prefix != expected_prefix:
+                    return True, None
+                remaining_key = parts[0] if parts else None
+            data = obj.endpoint_dispatch(key=remaining_key, value=value)
+            if data:
+                return True, HttpResponse(json.dumps(data), content_type='application/json')
+    return False, None
 
 
 def bool_parse(string_value):
@@ -632,7 +651,7 @@ class Field(NamespaceAwareObject):
             return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
         def choice_queryset_endpoint__select2(field, value, **_):
-            limit = 10
+            limit = 10  # pragma: no mutate
             result = field.choices.filter(**{field.extra.endpoint_attr + '__icontains': value}).values_list(*['pk', field.extra.endpoint_attr])
             return [
                 dict(
