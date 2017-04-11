@@ -203,6 +203,7 @@ def test_parse_errors():
     assert_one_error_and_matches_reg_exp(form.fields_by_name['a_date'].errors, "time data u?'fooasd' does not match format u?'%Y-%m-%d'")
     assert form.fields_by_name['a_date'].parsed_data is None
     assert form.fields_by_name['a_date'].value is None
+    assert form.fields_by_name['a_date'].rendered_value() == form.fields_by_name['a_date'].raw_data
 
     assert form.fields_by_name['a_time'].raw_data == 'asdasd'
     assert_one_error_and_matches_reg_exp(form.fields_by_name['a_time'].errors, "time data u?'asdasd' does not match format u?'%H:%M:%S'")

@@ -1,10 +1,12 @@
 Changelog
 ---------
 
-4.6.1 (????-??-??)
+4.6.1 (2017-04-11)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixed non-editable fields so that you can override the rendering
+
+* Fixed bug where raw_data was sent to render_value when there was an error on the field
 
 
 4.6.0 (2017-03-15)

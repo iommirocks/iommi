@@ -35,7 +35,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '4.6.0'
+__version__ = '4.6.1'
 
 
 def capitalize(s):
@@ -470,8 +470,10 @@ class Field(NamespaceAwareObject):
             self.input_template = 'tri_form/non_editable.html'
 
     def rendered_value(self):
-        value = self.raw_data if self.errors else self.value
-        return self.render_value(form=self.form, field=self, value=value if value else '')
+        if self.errors:
+            return self.raw_data
+        else:
+            return self.render_value(form=self.form, field=self, value=self.value if self.value else '')
 
     def render_attrs(self):
         """
