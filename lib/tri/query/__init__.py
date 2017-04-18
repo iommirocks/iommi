@@ -423,7 +423,7 @@ class Query(object):
                         stack.pop()
                         result_q.append(t2)
                     else:  # pragma: no cover
-                        break
+                        break  # pragma: no mutate
                 stack.append((token, PRECEDENCE[token]))
         while stack:
             result_q.append(stack.pop()[0])
