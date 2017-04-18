@@ -259,6 +259,139 @@ class NamespaceAwareObject(object):
         super(NamespaceAwareObject, self).__init__()
 
 
+def float_parse(string_value, **_):
+    try:
+        return float(string_value)
+    except ValueError:
+        # Acrobatics so we get equal formatting in python 2/3
+        raise ValueError("could not convert string to float: %s" % string_value)
+
+
+def choice_is_valid(form, field, parsed_data):
+    del form
+    return parsed_data in field.choices, '%s not in available choices' % parsed_data
+
+
+def choice_post_validation(form, field):
+    def choice_tuples_lazy():
+        choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
+        if not field.required and not field.is_list:
+            choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
+        return choice_tuples
+    field.choice_tuples = choice_tuples_lazy
+
+
+def choice_choice_to_option(form, field, choice):
+    return choice, "%s" % choice, "%s" % choice, choice == field.value
+
+
+def choice_queryset_is_valid(field, parsed_data, **_):
+    return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
+
+
+def choice_queryset_endpoint__select2(field, value, **_):
+    limit = 10  # pragma: no mutate
+    result = field.choices.filter(**{field.extra.endpoint_attr + '__icontains': value}).values_list(*['pk', field.extra.endpoint_attr])
+    return [
+        dict(
+            id=row[0],
+            text=row[1],
+        )
+        for row in result[:limit]
+    ]
+
+
+def choice_queryset_parse(field, string_value, **_):
+    return field.model.objects.get(pk=string_value) if string_value else None
+
+
+def choice_queryset_choice_to_option(field, choice, **_):
+    return choice, choice.pk, "%s" % choice, choice == field.value
+
+
+def choice_queryset_endpoint_path(form, field):
+    return '__' + '__'.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
+
+
+datetime_iso_formats = [
+    '%Y-%m-%d %H:%M:%S',
+    '%Y-%m-%d %H:%M',
+    '%Y-%m-%d %H',
+]
+
+
+def datetime_parse(string_value, **_):
+    errors = []
+    for iso_format in datetime_iso_formats:
+        try:
+            return datetime.strptime(string_value, iso_format)
+        except ValueError as e:
+            errors.append('%s' % e)
+    assert errors
+    raise ValidationError('Time data "%s" does not match any of the formats %s' % (string_value, ', '.join('"%s"' % x for x in datetime_iso_formats)))
+
+
+def datetime_render_value(value, **_):
+    return value.strftime(datetime_iso_formats[0]) if value else ''
+
+
+date_iso_format = '%Y-%m-%d'
+
+
+def date_parse(string_value, **_):
+    try:
+        return datetime.strptime(string_value, date_iso_format).date()
+    except ValueError as e:
+        raise ValidationError(str(e))
+
+
+def date_render_value(value, **_):
+    return value.strftime(date_iso_format) if value else ''
+
+
+time_iso_format = '%H:%M:%S'
+
+
+def time_parse(string_value, **_):
+    try:
+        return datetime.strptime(string_value, time_iso_format).time()
+    except ValueError as e:
+        raise ValidationError(str(e))
+
+
+def time_render_value(value, **_):
+    return value.strftime(time_iso_format)
+
+
+def decimal_parse(string_value, **_):
+    return Decimal(string_value)
+
+
+def url_parse(string_value, **_):
+    return URLValidator(string_value) or string_value
+
+
+def file_write_to_instance(field, instance, value):
+    if value:
+        Field.write_to_instance(field=field, instance=instance, value=value)
+
+
+def email_parse(string_value, **_):
+    return validate_email(string_value) or string_value
+
+
+def phone_number_is_valid(parsed_data, **_):
+    return re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
+
+
+def multi_choice_choice_to_option(field, choice, **_):
+    return choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list
+
+
+def multi_choice_queryset_choice_to_option(field, choice, **_):
+    return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
+
+
 @creation_ordered
 class Field(NamespaceAwareObject):
     @dispatch(
@@ -555,13 +688,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def float(**kwargs):
-        def float_parse(string_value, **_):
-            try:
-                return float(string_value)
-            except ValueError:
-                # Acrobatics so we get equal formatting in python 2/3
-                raise ValueError("could not convert string to float: %s" % string_value)
-
         setdefaults_path(
             kwargs,
             parse=float_parse,
@@ -618,21 +744,6 @@ class Field(NamespaceAwareObject):
                 parse=parse
             )
 
-        def choice_is_valid(form, field, parsed_data):
-            del form
-            return parsed_data in field.choices, '%s not in available choices' % parsed_data
-
-        def choice_post_validation(form, field):
-            def choice_tuples_lazy():
-                choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
-                if not field.required and not field.is_list:
-                    choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
-                return choice_tuples
-            field.choice_tuples = choice_tuples_lazy
-
-        def choice_choice_to_option(form, field, choice):
-            return choice, "%s" % choice, "%s" % choice, choice == field.value
-
         setdefaults_path(
             kwargs,
             empty_choice_tuple=(None, '', kwargs['empty_label'], True),
@@ -646,30 +757,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def choice_queryset(**kwargs):
-
-        def choice_queryset_is_valid(field, parsed_data, **_):
-            return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
-
-        def choice_queryset_endpoint__select2(field, value, **_):
-            limit = 10  # pragma: no mutate
-            result = field.choices.filter(**{field.extra.endpoint_attr + '__icontains': value}).values_list(*['pk', field.extra.endpoint_attr])
-            return [
-                dict(
-                    id=row[0],
-                    text=row[1],
-                )
-                for row in result[:limit]
-            ]
-
-        def choice_queryset_parse(field, string_value, **_):
-            return field.model.objects.get(pk=string_value) if string_value else None
-
-        def choice_queryset_choice_to_option(field, choice, **_):
-            return choice, choice.pk, "%s" % choice, choice == field.value
-
-        def choice_queryset_endpoint_path(form, field):
-            return '__' + '__'.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
-
         kwargs = setdefaults_path(
             Struct(),
             kwargs,
@@ -685,9 +772,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def multi_choice(**kwargs):
-        def multi_choice_choice_to_option(field, choice, **_):
-            return choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list
-
         setdefaults_path(
             kwargs,
             attrs__multiple=True,
@@ -698,9 +782,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def multi_choice_queryset(**kwargs):
-        def multi_choice_queryset_choice_to_option(field, choice, **_):
-            return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
-
         setdefaults_path(
             kwargs,
             attrs__multiple=True,
@@ -719,25 +800,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def datetime(**kwargs):
-        iso_formats = [
-            '%Y-%m-%d %H:%M:%S',
-            '%Y-%m-%d %H:%M',
-            '%Y-%m-%d %H',
-        ]
-
-        def datetime_parse(string_value, **_):
-            errors = []
-            for iso_format in iso_formats:
-                try:
-                    return datetime.strptime(string_value, iso_format)
-                except ValueError as e:
-                    errors.append('%s' % e)
-            assert errors
-            raise ValidationError('Time data "%s" does not match any of the formats %s' % (string_value, ', '.join('"%s"' % x for x in iso_formats)))
-
-        def datetime_render_value(value, **_):
-            return value.strftime(iso_formats[0]) if value else ''
-
         setdefaults_path(
             kwargs,
             parse=datetime_parse,
@@ -747,17 +809,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def date(**kwargs):
-        iso_format = '%Y-%m-%d'
-
-        def date_parse(string_value, **_):
-            try:
-                return datetime.strptime(string_value, iso_format).date()
-            except ValueError as e:
-                raise ValidationError(str(e))
-
-        def date_render_value(value, **_):
-            return value.strftime(iso_format) if value else ''
-
         setdefaults_path(
             kwargs,
             parse=date_parse,
@@ -767,17 +818,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def time(**kwargs):
-        iso_format = '%H:%M:%S'
-
-        def time_parse(string_value, **_):
-            try:
-                return datetime.strptime(string_value, iso_format).time()
-            except ValueError as e:
-                raise ValidationError(str(e))
-
-        def time_render_value(value, **_):
-            return value.strftime(iso_format)
-
         setdefaults_path(
             kwargs,
             parse=time_parse,
@@ -787,9 +827,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def decimal(**kwargs):
-        def decimal_parse(string_value, **_):
-            return Decimal(string_value)
-
         setdefaults_path(
             kwargs,
             parse=decimal_parse,
@@ -798,9 +835,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def url(**kwargs):
-        def url_parse(string_value, **_):
-            return URLValidator(string_value) or string_value
-
         setdefaults_path(
             kwargs,
             input_type='url',
@@ -810,10 +844,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def file(**kwargs):
-        def file_write_to_instance(field, instance, value):
-            if value:
-                Field.write_to_instance(field=field, instance=instance, value=value)
-
         setdefaults_path(
             kwargs,
             input_type='file',
@@ -853,9 +883,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def email(**kwargs):
-        def email_parse(string_value, **_):
-            return validate_email(string_value) or string_value
-
         setdefaults_path(
             kwargs,
             input_type='email',
@@ -865,9 +892,6 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def phone_number(**kwargs):
-        def phone_number_is_valid(parsed_data, **_):
-            return re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
-
         setdefaults_path(
             kwargs,
             is_valid=phone_number_is_valid,
