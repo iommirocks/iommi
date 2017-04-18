@@ -17,7 +17,7 @@ def render_attrs(attrs):
                     if not value:
                         continue
                     value = render_class(value)
-                yield '%s="%s"' % (key, value)
+                yield '%s="%s"' % (key, ('%s' % value).replace('"', '&quot;'))
         return mark_safe(' %s' % ' '.join(parts()))
     return ''
 
