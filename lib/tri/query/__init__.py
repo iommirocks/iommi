@@ -79,6 +79,30 @@ class NamespaceAwareObject(object):
         super(NamespaceAwareObject, self).__init__()
 
 
+def case_sensitive_op_to_q_op(op):
+    return {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op]
+
+
+def choice_queryset_value_to_q(variable, op, value_string_or_f):
+    if op != '=':
+        raise QueryException('Invalid operator "%s" for variable "%s"' % (op, variable.name))
+    if variable.attr is None:
+        return Q()
+    if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
+        return Q(**{variable.attr: None})
+    try:
+        instance = variable.gui.choices.get(**{variable.value_to_q_lookup: text_type(value_string_or_f)})
+    except ObjectDoesNotExist:
+        return None
+    return Q(**{variable.attr + '__pk': instance.pk})
+
+
+def boolean_value_to_q(variable, op, value_string_or_f):
+    if isinstance(value_string_or_f, string_types):
+        value_string_or_f = bool_parse(value_string_or_f)
+    return Variable.value_to_q(variable, op, value_string_or_f)
+
+
 @creation_ordered
 class Variable(NamespaceAwareObject):
     """
@@ -167,7 +191,7 @@ class Variable(NamespaceAwareObject):
         """
         Case sensitive text field.
         """
-        return Variable(op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op], **kwargs)
+        return Variable(op_to_q_op=case_sensitive_op_to_q_op, **kwargs)
 
     @staticmethod
     def choice(**kwargs):  # pragma: no cover
@@ -187,19 +211,6 @@ class Variable(NamespaceAwareObject):
         Field that has one value out of a set.
         :type choices: django.db.models.QuerySet
         """
-        def choice_queryset_value_to_q(variable, op, value_string_or_f):
-            if op != '=':
-                raise QueryException('Invalid operator "%s" for variable "%s"' % (op, variable.name))
-            if variable.attr is None:
-                return Q()
-            if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
-                return Q(**{variable.attr: None})
-            try:
-                instance = kwargs['choices'].get(**{variable.value_to_q_lookup: text_type(value_string_or_f)})
-            except ObjectDoesNotExist:
-                return None
-            return Q(**{variable.attr + '__pk': instance.pk})
-
         setdefaults(kwargs, dict(
             gui__class=Field.choice_queryset,
             gui__choices=kwargs['choices'],
@@ -222,11 +233,6 @@ class Variable(NamespaceAwareObject):
         """
         Boolean field. Tries hard to parse a boolean value from its input.
         """
-        def boolean_value_to_q(variable, op, value_string_or_f):
-            if isinstance(value_string_or_f, string_types):
-                value_string_or_f = bool_parse(value_string_or_f)
-            return Variable.value_to_q(variable, op, value_string_or_f)
-
         setdefaults(kwargs, dict(
             gui__class=Field.boolean,
             value_to_q=boolean_value_to_q,
