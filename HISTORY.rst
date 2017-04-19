@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.6.2 (2017-04-18)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed `render_attrs` to escape quotation marks
+
+
 4.6.1 (2017-04-11)
 ~~~~~~~~~~~~~~~~~~
 
