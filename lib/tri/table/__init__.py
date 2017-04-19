@@ -1168,7 +1168,8 @@ def render_table(request,
                  context_processors=None,
                  paginator=None,
                  show_hits=False,
-                 hit_label='Items'):
+                 hit_label='Items',
+                 post_bulk_edit=lambda table, pks, queryset, updates: None):
     """
     Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
 
@@ -1213,13 +1214,20 @@ def render_table(request,
         pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
 
         if table.bulk_form.is_valid():
-            table.model.objects.all() \
+            updates = {
+                field.name: field.value
+                for field in table.bulk_form.fields
+                if field.value is not None and field.value is not ''
+            }
+            queryset = table.model.objects.all() \
                 .filter(pk__in=pks) \
                 .filter(**table.bulk_filter) \
-                .exclude(**table.bulk_exclude) \
-                .update(**{field.name: field.value for field in table.bulk_form.fields if field.value is not None and field.value is not ''})
+                .exclude(**table.bulk_exclude)
+            queryset.update(**updates)
 
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+            post_bulk_edit(table=table, pks=pks, queryset=queryset, updates=updates)
+
+            return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     table.context = table_context(
         request,

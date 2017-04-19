@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
+from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
 from django.test import RequestFactory
@@ -708,7 +709,13 @@ def test_bulk_edit():
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()))
+    def post_bulk_edit(table, pks, queryset, updates):
+        assert isinstance(table, TestTable)
+        assert isinstance(queryset, QuerySet)
+        assert set(pks) == {'1', '2'}
+        assert updates == dict(a=0, b='changed')
+
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()), post_bulk_edit=post_bulk_edit)
 
     assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
         (1, 0, u'changed'),
