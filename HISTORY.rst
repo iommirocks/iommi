@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.1.2 (2017-04-19)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed silly non-ascii characters in README.rst and also changed to survive silly non-ascii characters in that same file.
+
+
 4.1.1 (2017-04-10)
 ~~~~~~~~~~~~~~~~~~
 
