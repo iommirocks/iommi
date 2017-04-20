@@ -717,6 +717,15 @@ def test_bulk_edit():
         (4, 4, u''),
     ]
 
+    # Test that empty field means "no change"
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='', b='')), table=TestTable(data=Foo.objects.all()))
+    assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
+        (1, 0, u'changed'),
+        (2, 0, u'changed'),
+        (3, 3, u''),
+        (4, 4, u''),
+    ]
+
 
 @pytest.mark.django_db
 def test_query():
@@ -1361,3 +1370,7 @@ def test_yes_no_formatter():
     assert yes_no_formatter(1) == 'Yes'
     assert yes_no_formatter(False) == 'No'
     assert yes_no_formatter(0) == 'No'
+
+
+def test_blank_on_empty():
+    assert render_table(RequestFactory().get('/'), table=Table(data=[], columns=[Column(name='foo')]), blank_on_empty=True) == ''
