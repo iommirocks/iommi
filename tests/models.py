@@ -1,4 +1,5 @@
-from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField, FileField
+from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField, \
+    FileField, CASCADE
 
 saved_something = None
 
@@ -36,15 +37,15 @@ class Foo(Model):
 
 
 class Bar(Model):
-    foo = ForeignKey(Foo, related_name='bars')
+    foo = ForeignKey(Foo, related_name='bars', on_delete=CASCADE)
 
 
 class FieldFromModelForeignKeyTest(Model):
-    foo_fk = ForeignKey(Foo)
+    foo_fk = ForeignKey(Foo, on_delete=CASCADE)
 
 
 class FieldFromModelOneToOneTest(Model):
-    foo_one_to_one = OneToOneField(Foo)
+    foo_one_to_one = OneToOneField(Foo, on_delete=CASCADE)
 
 
 class FieldFromModelManyToManyTest(Model):

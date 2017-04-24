@@ -5,25 +5,24 @@ from collections import OrderedDict
 import copy
 from datetime import datetime
 from decimal import Decimal
-from distutils.version import StrictVersion
-from itertools import chain
+from itertools import chain, groupby
 import re
 
-import django
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
 from django.db.models.fields import FieldDoesNotExist
 from django.http import HttpResponse
 from django.template import RequestContext
-from django.template.context import Context
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive
 from tri.struct import Struct
-
 from tri.form.render import render_attrs
+import six
 
 try:
     from django.template.loader import get_template_from_string
@@ -37,7 +36,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '4.6.1'  # pragma: no mutate
+__version__ = '4.7.0'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -55,9 +54,12 @@ FULL_FORM_FROM_REQUEST = 'full_form_from_request'
 INITIALS_FROM_GET = 'initials_from_get'
 
 
+DISPATCH_PATH_SEPARATOR = '__'
+
+
 def handle_dispatch(request, obj):
     for key, value in request.GET.items():
-        if key.startswith('__'):
+        if key.startswith(DISPATCH_PATH_SEPARATOR):
             remaining_key = key[2:]
             expected_prefix = obj.endpoint_dispatch_prefix
             if expected_prefix is not None:
@@ -91,11 +93,15 @@ def foreign_key_factory(model_field, **kwargs):
     return Field.choice_queryset(model_field=model_field, **kwargs)
 
 
+def many_to_many_factory_read_from_instance(field, instance):
+    return getattr_path(instance, field.attr).all()
+
+
 def many_to_many_factory(model_field, **kwargs):
     setdefaults_path(
         kwargs,
         choices=model_field.rel.to.objects.all(),
-        read_from_instance=lambda field, instance: getattr_path(instance, field.attr).all(),
+        read_from_instance=many_to_many_factory_read_from_instance,
         extra__django_related_field=True,
     )
     kwargs['model'] = model_field.rel.to
@@ -310,7 +316,7 @@ def choice_queryset_choice_to_option(field, choice, **_):
 
 
 def choice_queryset_endpoint_path(form, field):
-    return '__' + '__'.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
+    return DISPATCH_PATH_SEPARATOR + DISPATCH_PATH_SEPARATOR.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
 
 
 datetime_iso_formats = [
@@ -390,6 +396,102 @@ def multi_choice_choice_to_option(field, choice, **_):
 
 def multi_choice_queryset_choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
+
+
+def render_template(request, template, context):
+    """
+    @type request: django.http.HttpRequest
+    @type template: str|django.template.Template|django.template.backends.django.Template
+    @type context: dict
+    """
+    from django.template import Template
+    if template is None:
+        return ''
+    elif isinstance(template, six.string_types):
+        # positional arguments here to get compatibility with django 1.8+
+        return render_to_string(template, context, request=request)
+    elif isinstance(template, Template):
+        return template.render(RequestContext(request, context))
+    else:
+        # template is type django.template.backends.django.Template here
+        return template.render(context, request)
+
+
+def evaluate_and_group_links(links, **kwargs):
+    grouped_links = {}
+    if links is not None:
+        links = evaluate_recursive(links, **kwargs)
+        links = [link for link in links if link.show]
+
+        grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)
+        grouped_links = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # list(lg) because django templates touches the generator and then I can't iterate it
+
+        links = [link for link in links if link.group is None]
+
+    return links, grouped_links
+
+
+@six.python_2_unicode_compatible
+class Link(NamespaceAwareObject):
+    @dispatch(
+        tag='a',
+        attrs=EMPTY,
+        show=True,
+        extra=EMPTY,
+    )
+    def __init__(self, title, **kwargs):
+        self.tag = None
+        self.attrs = None
+        self.group = None
+        self.show = None
+        self.template = None
+        self.extra = None
+        self.title = None
+        super(Link, self).__init__(title=title, **kwargs)
+
+    def render_attrs(self):
+        return render_attrs(self.attrs)
+
+    def render(self):
+        if self.template:
+            return render_to_string(self.template, dict(link=self))
+        else:
+            return format_html(u'<{tag}{attrs}>{title}</{tag}>', tag=self.tag, attrs=self.render_attrs(), title=self.title)
+
+    def __str__(self):
+        return self.render()
+
+    @staticmethod
+    @dispatch(
+        icon_classes=[],
+    )
+    def icon(icon, title, **kwargs):
+        icon_classes = kwargs.pop('icon_classes')
+        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes])
+        setdefaults_path(
+            kwargs,
+            title=mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)),
+        )
+        return Link(**kwargs)
+
+    @staticmethod
+    @dispatch(
+        tag='button',
+        attrs__class__button=True,
+    )
+    def button(**kwargs):
+        return Link(**kwargs)
+
+    @staticmethod
+    @dispatch(
+        tag='input',
+        attrs__type='submit',
+        attrs__value='Submit',
+        attrs__accesskey='s',
+        title='Submit',
+    )
+    def submit(**kwargs):
+        return Link.button(**kwargs)
 
 
 @creation_ordered
@@ -571,7 +673,7 @@ class Field(NamespaceAwareObject):
 
     @staticmethod
     def endpoint_dispatch(field, key, **kwargs):
-        parts = key.split('__', 1)
+        parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
         prefix = parts.pop(0)
         remaining_key = parts[0] if parts else ''
         endpoint = field.endpoint.get(prefix, None)
@@ -962,24 +1064,10 @@ class Field(NamespaceAwareObject):
         return new_field
 
 
-def __django_geq_180__get_fields(model):
+def get_fields(model):
     # noinspection PyProtectedMember
     for field in model._meta.get_fields():
         yield field
-
-
-def __django_lt_180__get_fields(model):  # pragma: no cover
-    # This is actually covered by tests, but only in a specific version of django :P
-    # noinspection PyProtectedMember
-    for field, _ in chain(model._meta.get_fields_with_model(), model._meta.get_m2m_with_model()):
-        yield field
-
-
-def get_fields(model):
-    if StrictVersion(django.get_version()) >= StrictVersion('1.8.0'):
-        return __django_geq_180__get_fields(model)
-    else:
-        return __django_lt_180__get_fields(model)
 
 
 def default_endpoint__field(form, key, value):
@@ -1019,6 +1107,11 @@ class Form(NamespaceAwareObject):
         model=None,
         endpoint__field=default_endpoint__field,
         extra=EMPTY,
+        attrs__class__newforms=True,
+        attrs__action='',
+        attrs__method='post',
+        links=[Link.submit()],
+        links_template='tri_form/links.html',
     )
     def __init__(self, request=None, data=None, instance=None, fields=None, fields_dict=None, **kwargs):
         """
@@ -1027,6 +1120,9 @@ class Form(NamespaceAwareObject):
         :type model: django.db.models.Model
         """
         self.is_full_form = None
+        self.links = None
+        self.links_template = None
+        self.attrs = None
 
         self.model = None
         """ :type: django.db.models.Model """
@@ -1109,6 +1205,16 @@ class Form(NamespaceAwareObject):
         self._valid = None
         self.evaluate()
         self.is_valid()
+
+    def render_attrs(self):
+        """
+        Render HTML attributes, or return '' if no attributes needs to be rendered.
+        """
+        return render_attrs(self.attrs)
+
+    def render_links(self):
+        links, grouped_links = evaluate_and_group_links(self.links)
+        return render_template(self.request, self.links_template, dict(links=links, grouped_links=grouped_links, form=self))
 
     @staticmethod
     @dispatch(
@@ -1272,7 +1378,7 @@ class Form(NamespaceAwareObject):
                 'field': field,
             }
             if field.template_string is not None:
-                r.append(get_template_from_string(field.template_string, origin='tri.form', name='Form.render').render(Context(context)))
+                r.append(get_template_from_string(field.template_string, origin='tri.form', name='Form.render').render(context, self.request))
             else:
                 r.append(render_to_string(field.template.format(style=style), context))
         if self.is_full_form:
@@ -1281,17 +1387,11 @@ class Form(NamespaceAwareObject):
         if template_name is None:
             return mark_safe('\n'.join(r))
         else:
-            if django.VERSION < (1, 8):
-                return render_to_string(
-                    context_instance=RequestContext(self.request, dict(form=self)),
-                    template_name=template_name,
-                )
-            else:
-                return render_to_string(
-                    template_name=template_name,
-                    context=dict(form=self),
-                    request=self.request
-                )
+            return render_to_string(
+                template_name=template_name,
+                context=dict(form=self),
+                request=self.request
+            )
 
     def apply(self, instance):
         """
@@ -1320,7 +1420,7 @@ class Form(NamespaceAwareObject):
         return r
 
     def endpoint_dispatch(self, key, value):
-        parts = key.split('__', 1)
+        parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
         prefix = parts.pop(0)
         remaining_key = parts[0] if parts else ''
         handler = self.endpoint.get(prefix, None)

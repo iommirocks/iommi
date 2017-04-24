@@ -395,13 +395,13 @@ def test_radio():
         'b',
         'c',
     ]
-    soup = BeautifulSoup(Form(data=dict(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).table())
+    soup = BeautifulSoup(Form(data=dict(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).table(), 'html.parser')
     assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
     assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
 
 
 def test_hidden():
-    soup = BeautifulSoup(Form(data=dict(foo='1'), fields=[Field.hidden(name='foo')]).table())
+    soup = BeautifulSoup(Form(data=dict(foo='1'), fields=[Field.hidden(name='foo')]).table(), 'html.parser')
     assert [(x.attrs['type'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', '1'), ('hidden', '-')]
 
 
@@ -418,7 +418,7 @@ def test_choice_not_required():
 
 
 def test_multi_choice():
-    soup = BeautifulSoup(Form(data=dict(foo=['0']), fields=[Field.multi_choice(name='foo', choices=['a'])]).table())
+    soup = BeautifulSoup(Form(data=dict(foo=['0']), fields=[Field.multi_choice(name='foo', choices=['a'])]).table(), 'html.parser')
     assert [x.attrs['multiple'] for x in soup.find_all('select')] == ['']
 
 
@@ -926,3 +926,57 @@ def test_namespace_aware_object_binding():
     assert 17 == template.foo
     assert 42 == bound_object.foo
     assert bound_object.container is container
+
+
+def reindent(s, before=" ", after="    "):
+
+    def reindent_line(line):
+        m = re.match(r'^((' + re.escape(before) + r')*)(.*)', line)
+        return after * (len(m.group(1)) // len(before)) + m.group(3)
+
+    return "\n".join(reindent_line(line) for line in s.splitlines())
+
+
+def remove_csrf(html_code):
+    csrf_regex = r'<input[^>]+csrfmiddlewaretoken[^>]+>'
+    return re.sub(csrf_regex, '', html_code)
+
+
+def test_render():
+    class MyForm(Form):
+        bar = Field()
+
+    expected_html = """
+        <form action="" class="newforms" method="post">
+            <div>
+                <tr class="required">
+                    <td class="description_container">
+                        <div class="formlabel">
+                            <label for="id_bar">
+                                Bar
+                            </label>
+                        </div>
+                        <div class="formdescr">
+                        </div>
+                    </td>
+                    <td>
+                        <input id="id_bar" name="bar" type="text" value="">
+                        </input>
+                    </td>
+                </tr>
+                <input name="-" type="hidden" value="-"/>
+            </div>
+            <div class="form_buttons clear">
+                <div class="links">
+                    <input accesskey="s" class="button" type="submit" value="Submit">
+                        Submit
+                    </input>
+                </div>
+            </div>
+        </form>
+    """
+
+    actual_html = remove_csrf(MyForm(request=RequestFactory().get('/')).render())
+    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
+    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
+    assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)

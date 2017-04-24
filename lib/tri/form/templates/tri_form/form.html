@@ -1,4 +1,4 @@
-<form action="" method="post">{% csrf_token %}
+<form{{ form.render_attrs }}>{% csrf_token %}
 
     {% for error in form.errors %}
     <div class="error">{{ error }}</div>
@@ -9,7 +9,7 @@
     </div>
 
     <div class="form_buttons clear">
-        <input type="submit" class="button" value="Submit" accesskey="s" />
+        {{ form.render_links }}
     </div>
 </form>
 

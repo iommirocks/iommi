@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+4.7.0 (2017-04-24)
+~~~~~~~~~~~~~~~~~~
+
+* Added `Link` class, and redefined the submit button on the form in terms of a `Link`
+
+* Fixed incorrect handling of template rendering and `RequestContext` between django before and after 1.10
+
+* Dropped official support of django 1.7
+
+* Added `attrs` member on `Form`, and added method `render_attrs` that you use to render the attributes into html
+
+* Added six as a dependency
+
+
 4.6.2 (2017-04-18)
 ~~~~~~~~~~~~~~~~~~
 
