@@ -81,12 +81,12 @@ def order_by_on_list(objects, order_field, is_desc=False):
 
 def yes_no_formatter(value, **_):
     """ Handle True/False from Django model and 1/0 from raw sql """
-    if value is True or value == 1:
-        return 'Yes'
-    if value is False or value == 0:
-        return 'No'
-    if value is None:  # pragma: no cover
+    if value is None:
         return ''
+    if value == 1:  # boolean True is equal to 1
+        return 'Yes'
+    if value == 0:  # boolean False is equal to 0
+        return 'No'
     assert False, "Unable to convert {} to Yes/No".format(value)   # pragma: no cover  # pragma: no mutate
 
 
@@ -874,7 +874,6 @@ class Table(object):
 
             group_columns.append(GroupColumn(
                 display_name=group_name,
-                sortable=False,
                 colspan=len(columns_in_group),
                 attrs__class__superheader=True,
             ))
@@ -1163,7 +1162,7 @@ def render_table(request,
                  template_name='tri_table/list.html',  # deprecated
                  template=None,
                  blank_on_empty=False,
-                 paginate_by=40,
+                 paginate_by=40,  # pragma: no mutate
                  page=None,
                  context_processors=None,
                  paginator=None,
@@ -1242,7 +1241,7 @@ def render_table(request,
         hit_label=hit_label,
     )
 
-    if not table.data and blank_on_empty:  # pragma: no cover
+    if not table.data and blank_on_empty:
         return ''
 
     if table.query_form and not table.query_form.is_valid():

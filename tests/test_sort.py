@@ -173,6 +173,38 @@ def test_sort_django_table():
     </table>
     """)
 
+    # now reversed
+    verify_table_html(table=TestTable(data=Foo.objects.all()),
+                      query=dict(order='-a'),
+                      expected_html="""\
+    <table class="listview">
+      <thead>
+        <tr>
+          <th class="first_column sorted_column subheader">
+            <a href="?order=a"> A </a>
+          </th>
+          <th class="first_column subheader">
+            <a href="?order=b"> B </a>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row1" data-pk="1">
+          <td class="rj"> 4711 </td>
+          <td> c </td>
+        </tr>
+        <tr class="row2" data-pk="3">
+          <td class="rj"> 42 </td>
+          <td> b </td>
+        </tr>
+        <tr class="row1" data-pk="2">
+          <td class="rj"> 17 </td>
+          <td> a </td>
+        </tr>
+      </tbody>
+    </table>
+    """)
+
 
 def test_order_by_on_list_nested():
     data = [Struct(foo=Struct(bar='c')),
