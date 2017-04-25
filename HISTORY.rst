@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.7.1 (2017-04-24)
+~~~~~~~~~~~~~~~~~~
+
+* Bugfix for endpoint dispatch: we must allow a result to be an empty list/dict
+
+
 4.7.0 (2017-04-24)
 ~~~~~~~~~~~~~~~~~~
 

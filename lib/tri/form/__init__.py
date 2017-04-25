@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '4.7.0'  # pragma: no mutate
+__version__ = '4.7.1'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -69,7 +69,7 @@ def handle_dispatch(request, obj):
                     return True, None
                 remaining_key = parts[0] if parts else None
             data = obj.endpoint_dispatch(key=remaining_key, value=value)
-            if data:
+            if data is not None:
                 return True, HttpResponse(json.dumps(data), content_type='application/json')
     return False, None
 
