@@ -3,8 +3,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import copy
-import json
-import warnings
 from collections import OrderedDict
 from itertools import groupby
 
@@ -13,18 +11,17 @@ from tri.form.render import render_attrs, render_class
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponse, Http404, HttpResponseRedirect
-from django.template import RequestContext
 from django.template.defaultfilters import slugify
-from django.template.loader import render_to_string, get_template
+from django.template.loader import render_to_string
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace, setattr_path
-from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model
+from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR
 from tri.named_struct import NamedStructField, NamedStruct
-from tri.struct import Struct
+from tri.struct import Struct, merged
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
@@ -542,12 +539,8 @@ class BoundRow(object):
 
     def render(self):
         if self.template:
-            context = RequestContext(self.table.request, dict(bound_row=self, row=self.row, table=self.table))
-            if isinstance(self.template, six.string_types):
-                # positional arguments here to get compatibility with both django 1.7 and 1.8+
-                return render_to_string(self.template, context)
-            else:
-                return self.template.render(context)
+            context = dict(bound_row=self, row=self.row, table=self.table)
+            return render_template(self.table.request, self.template, context)
 
         return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
@@ -607,11 +600,8 @@ class BoundCell(object):
     def render(self):
         cell__template = self.bound_column.cell.template
         if cell__template:
-            context = RequestContext(self.table.request, dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self))
-            if isinstance(cell__template, six.string_types):
-                return render_to_string(cell__template, context)
-            else:
-                return cell__template.render(context)
+            context = dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
+            return render_template(self.table.request, cell__template, context)
 
         return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
@@ -702,7 +692,6 @@ class Table(object):
         """
 
         if data is None:  # pragma: no cover
-            warnings.warn('deriving model from data queryset is deprecated, use Table.from_model', DeprecationWarning)
             assert model is not None
             data = model.objects.all()
 
@@ -764,18 +753,15 @@ class Table(object):
         """ :type: tri.declarative.Namespace """
 
     def render_links(self):
-        return self.render_template_config(self.links, self.context)
+        return render_template(self.request, self.links.template, self.context)
 
     def render_header(self):
-        return self.render_template_config(self.header, self.context)
+        return render_template(self.request, self.header.template, self.context)
 
     def render_filter(self):
         if not self.query_form:
             return ''
-        context = self.context
-        with context.push():
-            context['form'] = self.query_form
-            return self.render_template_config(self.filter, context)
+        return render_template(self.request, self.filter.template, merged(self.context, form=self.query_form))
 
     @staticmethod
     def render_template_config(template_config, context):
@@ -942,7 +928,7 @@ class Table(object):
             self.query = Query(
                 request=request,
                 variables=variables,
-                endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
+                endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
                 **flatten(self.query_args)
             )
             self.query_form = self.query.form() if self.query.variables else None
@@ -978,7 +964,7 @@ class Table(object):
             self.bulk_form = Form(
                 data=request.POST,
                 fields=bulk_fields,
-                endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
+                endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
                 **flatten(self.bulk)
             ) if bulk_fields else None
 
@@ -1039,7 +1025,7 @@ class Table(object):
         return Table(data=data, model=model, instance=instance, columns=columns, **kwargs)
 
     def endpoint_dispatch(self, key, value):
-        parts = key.split('__', 1)
+        parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
         prefix = parts.pop(0)
         remaining_key = parts[0] if parts else None
         for endpoint, handler in self.endpoint.items():
@@ -1068,7 +1054,6 @@ def table_context(request,
                   paginate_by=None,
                   page=None,
                   extra_context=None,
-                  context_processors=None,
                   paginator=None,
                   show_hits=False,
                   hit_label='Items'):
@@ -1141,7 +1126,7 @@ def table_context(request,
             'is_paginated': False})
 
     base_context.update(extra_context)
-    return RequestContext(request, base_context, context_processors)
+    return base_context
 
 
 def set_row_span(rowspan_by_row):
@@ -1164,7 +1149,6 @@ def render_table(request,
                  blank_on_empty=False,
                  paginate_by=40,  # pragma: no mutate
                  page=None,
-                 context_processors=None,
                  paginator=None,
                  show_hits=False,
                  hit_label='Items',
@@ -1191,19 +1175,9 @@ def render_table(request,
     table.prepare(request)
     assert isinstance(table, Table)
 
-    for key, value in request.GET.items():
-        if key.startswith('__'):
-            remaining_key = key[2:]
-            expected_prefix = table.endpoint_dispatch_prefix
-            if expected_prefix is not None:
-                parts = remaining_key.split('__', 1)
-                prefix = parts.pop(0)
-                if prefix != expected_prefix:
-                    return
-                remaining_key = parts[0] if parts else None
-            data = table.endpoint_dispatch(key=remaining_key, value=value)
-            if data is not None:
-                return HttpResponse(json.dumps(data), content_type='application/json')
+    should_return, dispatch_result = handle_dispatch(request=request, obj=table)
+    if should_return:
+        return dispatch_result
 
     context['bulk_form'] = table.bulk_form
     context['query_form'] = table.query_form
@@ -1235,7 +1209,6 @@ def render_table(request,
         paginate_by=paginate_by,
         page=page,
         extra_context=context,
-        context_processors=context_processors,
         paginator=paginator,
         show_hits=show_hits,
         hit_label=hit_label,
@@ -1251,10 +1224,7 @@ def render_table(request,
     if not template:
         template = template_name
 
-    if isinstance(template, six.string_types):
-        return get_template(template).render(table.context)
-    else:
-        return template.render(table.context)
+    return render_template(request, template, table.context)
 
 
 def render_table_to_response(*args, **kwargs):

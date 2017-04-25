@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+4.3.0 (2017-04-25)
+~~~~~~~~~~~~~~~~~~
+
+* Bugfix for Django 1.10 template handling
+
+* Updated to tri.form 4.7.1
+
+* Moved bulk button inside the table tag
+
+* Dropped support for Django 1.7
+
+
 4.2.0 (2017-04-21)
 ~~~~~~~~~~~~~~~~~~
 

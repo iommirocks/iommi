@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from django.db.models import CASCADE
 from django.utils.encoding import python_2_unicode_compatible
 
 
@@ -14,5 +15,5 @@ class Foo(models.Model):
 
 
 class Bar(models.Model):
-    foo = models.ForeignKey(Foo)
+    foo = models.ForeignKey(Foo, on_delete=CASCADE)
     c = models.BooleanField()

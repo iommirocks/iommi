@@ -5,11 +5,15 @@
     {% include "tri_table/table.html" %}
 
     {% if bulk_form %}
-        <table class="newforms">
+        <table {{ bulk_form.render_attrs }}>
             {{ bulk_form }}
-        </table>
 
-        <input type="submit" class="button" value="Bulk change"/>
+            <tr>
+                <td colspan="99">
+                    <input type="submit" class="button" value="Bulk change"/>
+                </td>
+            </tr>
+        </table>
     {% endif %}
 
     {{ table.render_links }}
