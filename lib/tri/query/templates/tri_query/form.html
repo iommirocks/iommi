@@ -15,12 +15,12 @@
                         <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.tri_query_advanced_value }}"/>
                     </div>
                 </td>
-                <td class="tri_query_toggle_help" style="display: none">
+                <td id="tri_query_toggle_help" style="display: none">
                     <span>Show help</span> <i class="fa fa-chevron-down"></i>
                 </td>
             </tr>
             <tr>
-                <td class="tri_query_help" style="display: none">
+                <td id="tri_query_help" style="display: none">
                     <div class="tri_query_available_fields">
                         <h3>Available fields</h3>
                         <ul>
@@ -63,11 +63,11 @@
                 vertical-align: top;
                 margin-right: 10px;
             }
-            .tri_query_toggle_help,
-            .tri_query_help {
+            #tri_query_toggle_help,
+            #tri_query_help {
                 margin-left: 3px;
             }
-            .tri_query_toggle_help {
+            #tri_query_toggle_help {
                 cursor: pointer;
                 width: 100px;
             }
@@ -84,29 +84,31 @@
 </div>
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         function toggle_simple_advanced() {
-            var toggle_simple_mode = $("#tri_query_toggle_simple_mode");
-            var simple = $("#tri_query_form_simple");
-            var adv = $(".tri_query_form_advanced");
-            var q = $('#id_query');
-            if (toggle_simple_mode.data('advanced_mode') === 'simple') {
-                q.val(q.data('query'));
-                toggle_simple_mode.data('advanced_mode', 'advanced');
-                adv.show();
-                simple.hide();
-                toggle_simple_mode.html('Switch to basic search');
-                $('.tri_query_toggle_help').show();
+            var toggle_simple_mode = document.getElementById("tri_query_toggle_simple_mode");
+            var simple = document.getElementById("tri_query_form_simple");
+            var adv = document.getElementsByClassName("tri_query_form_advanced");
+            var q = document.getElementById('id_query');
+            if (toggle_simple_mode.getAttribute('data-advanced_mode') === 'simple') {
+                q.value = q.getAttribute('data-query');
+                toggle_simple_mode.setAttribute('data-advanced_mode', 'advanced');
+                adv[0].style.display = '';
+                adv[1].style.display = '';
+                simple.style.display = 'none';
+                toggle_simple_mode.innerHTML = 'Switch to basic search';
+                document.getElementById('tri_query_toggle_help').style.display = '';
             }
             else {
-                q.data('query', q.val());
-                q.val('');
-                toggle_simple_mode.data('advanced_mode', 'simple');
-                adv.hide();
-                simple.show();
-                toggle_simple_mode.html('Switch to advanced search');
-                $('.tri_query_toggle_help').hide();
-                if ($('.tri_query_help').is(':visible')) {
+                q.setAttribute('data-query', q.value);
+                q.value = '';
+                toggle_simple_mode.setAttribute('data-advanced_mode', 'simple');
+                adv[0].style.display = 'none';
+                adv[1].style.display = 'none';
+                simple.style.display = '';
+                toggle_simple_mode.innerHTML = 'Switch to advanced search';
+                document.getElementById('tri_query_toggle_help').style.display = 'none';
+                if (document.getElementById('tri_query_help').style.display === '') {
                     toggle_help();
                 }
             }
@@ -114,25 +116,26 @@
         }
 
         function toggle_help() {
-            $('.tri_query_help').toggle();
-            var icon = $('.tri_query_toggle_help i');
-            if (icon.hasClass('fa-chevron-down')) {
-                icon.removeClass('fa-chevron-down');
-                icon.addClass('fa-chevron-up');
-                $('.tri_query_toggle_help span').text('Hide help');
+            var icon = document.getElementById('tri_query_toggle_help').querySelector('i');
+            if (icon.classList.contains('fa-chevron-down')) {
+                document.getElementById('tri_query_help').style.display = '';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                document.getElementById('tri_query_toggle_help').querySelector('span').innerText = 'Hide help';
             }
             else {
-                icon.removeClass('fa-chevron-up');
-                icon.addClass('fa-chevron-down');
-                $('.tri_query_toggle_help span').text('Show help');
+                document.getElementById('tri_query_help').style.display = 'none';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                document.getElementById('tri_query_toggle_help').querySelector('span').innerText = 'Show help';
             }
         }
 
-        if ($('#id_query').data('query') !== '') {
+        if (document.getElementById('id_query').getAttribute('data-query') !== '') {
             toggle_simple_advanced();
         }
 
-        $("#tri_query_toggle_simple_mode").click(toggle_simple_advanced);
-        $('.tri_query_toggle_help').click(toggle_help);
+        document.getElementById("tri_query_toggle_simple_mode").addEventListener('click', toggle_simple_advanced);
+        document.getElementById('tri_query_toggle_help').addEventListener('click', toggle_help);
     });
 </script>
