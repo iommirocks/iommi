@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-3.3.0 (2017-??-??)
+3.3.0 (2017-04-27)
 ~~~~~~~~~~~~~~~~~~
 
 * Move default behaviors out from the shortcuts so they can be used externally
