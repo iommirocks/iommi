@@ -8,6 +8,8 @@ Changelog
 
 * Removed jquery dependency for toggling simple/advanced filtering
 
+* Removed support for Django 1.7
+
 
 3.2.0 (2017-03-22)
 ~~~~~~~~~~~~~~~~~~
