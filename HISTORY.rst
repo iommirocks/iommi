@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+5.0.0 (2017-06-12)
+~~~~~~~~~~~~~~~~~~
+
+* Refactored to use new tri.declarative: using `RefinableObject`, `Shortcut`, and the new `call_target` parameter of `Namespace`
+
+* Changed dispatch separator from `__` to `/`
+
+* Changed `label` on `Field` to `display_name`. This is in line with tri.query and tri.table.
+
+* `Field.choice` incorrectly handles post_validation (fixes github issue #9)
+
+* `Form` now doesn't try to read initial data and form data from Fields that are show=False
+
+* `create_or_edit_object` doesn't take a parameter `render_context` anymore, use `render__context`
+
+* You no longer need to specify the `model` parameter to `choice_queryset` or `multi_choice_queryset` if you give it a `QuerySet` as `choices` (as opposed to giving a callable)
+
+* `Field.choice_queryset` and `Field.multi_choice_queryset` now reevaluates the QuerySet on each usage.
+
+
 4.10.1 (2017-06-20)
 ~~~~~~~~~~~~~~~~~~~
 

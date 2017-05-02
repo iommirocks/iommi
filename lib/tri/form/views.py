@@ -5,83 +5,75 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from tri.form import Form, handle_dispatch
-from tri.declarative import extract_subkeys, setdefaults_path
-from tri.struct import Struct
+from tri.declarative import setdefaults_path, dispatch, EMPTY
+from django import __version__ as django_version
+django_version = tuple([int(x) for x in django_version.split('.')])
 
 
 def edit_object(
         request,
         instance,
-        redirect_to=None,
-        on_save=lambda **kwargs: None,
-        render=render_to_response,
-        redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
         **kwargs):
-    assert 'is_create' not in kwargs
-    assert 'model' not in kwargs
+    assert 'is_create' not in kwargs  # pragma: no mutate
+    assert 'model' not in kwargs  # pragma: no mutate
     assert instance is not None
     model = instance.__class__
     return create_or_edit_object(
         request,
         model,
-        is_create=False,
+        is_create=False,  # pragma: no mutate
         instance=instance,
-        redirect_to=redirect_to,
-        on_save=on_save,
-        render=render,
-        redirect=redirect,
         **kwargs)
 
 
 def create_object(
         request,
         model,
-        redirect_to=None,
-        on_save=lambda **kwargs: None,
-        render=render_to_response,
-        redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
         **kwargs):
-    assert 'is_create' not in kwargs
+    assert 'is_create' not in kwargs  # pragma: no mutate
     return create_or_edit_object(
         request,
         model,
-        is_create=True,
-        redirect_to=redirect_to,
-        on_save=on_save,
-        render=render,
-        redirect=redirect,
+        is_create=True,  # pragma: no mutate
         **kwargs)
 
 
+@dispatch(
+    template_name='tri_form/create_or_edit_object_block.html',
+    form__call_target=Form.from_model,
+    form__data=None,
+    render__call_target=render_to_response,
+    render__context=EMPTY,
+    redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
+    on_save=lambda **kwargs: None,
+)
 def create_or_edit_object(
         request,
         model,
         is_create,
+        on_save,
+        render,
+        redirect,
+        form,
+        template_name,
         instance=None,
-        redirect_to=None,
-        on_save=lambda **kwargs: None,
-        render=render_to_response,
-        redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
-        **kwargs):
-    kwargs = setdefaults_path(
-        Struct(),
-        kwargs,
-        template_name='tri_form/create_or_edit_object_block.html',
-        form__class=Form.from_model,
-        form__request=request,
-        form__model=model,
-        form__instance=instance,
-        form__data=request.POST if request.method == 'POST' else None,
+        model_verbose_name=None,
+        redirect_to=None):
+    setdefaults_path(
+        form,
+        request=request,
+        model=model,
+        instance=instance,
     )
-    p = kwargs.form
-    form = p.pop('class')(**p)
+    form = form()
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=form)
     if should_return:
         return dispatch_result
 
     # noinspection PyProtectedMember
-    model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
+    if model_verbose_name is None:
+        model_verbose_name = model._meta.verbose_name.replace('_', ' ')
 
     if request.method == 'POST' and form.is_target() and form.is_valid():
 
@@ -106,24 +98,22 @@ def create_or_edit_object(
             instance.save()
             form.instance = instance
 
-            kwargs['form'] = form
-            kwargs['instance'] = instance
-            on_save(**kwargs)
+            on_save(form=form, instance=instance)
 
             return create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form)
 
-    c = {
-        'form': form,
-        'is_create': is_create,
-        'object_name': model_verbose_name,
-    }
-    c.update(kwargs.pop('render_context', {}))
+    setdefaults_path(
+        render,
+        template_name=template_name,
+        context__form=form,
+        context__is_create=is_create,
+        context__object_name=model_verbose_name,
+    )
 
-    kwargs_for_render = extract_subkeys(kwargs, 'render', {
-        'context_instance': RequestContext(request, c),
-        'template_name': kwargs['template_name'],
-    })
-    return render(**kwargs_for_render)
+    if django_version < (1, 10, 0):
+        render.context_instance = RequestContext(request, render.pop('context'))
+
+    return render()
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):

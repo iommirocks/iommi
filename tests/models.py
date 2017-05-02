@@ -9,15 +9,9 @@ def get_saved_something():
     return saved_something
 
 
-class CreateOrEditObjectTest(Model):
-    f_int = IntegerField()
-    f_float = FloatField()
-    f_bool = BooleanField()
-
-    # noinspection PyMethodOverriding
-    def save(self):
-        global saved_something
-        saved_something = self
+def reset_saved_something():
+    global saved_something
+    saved_something = False
 
 
 class FormFromModelTest(Model):
@@ -58,3 +52,51 @@ class FooField(IntegerField):
 
 class RegisterFieldFactoryTest(Model):
     foo = FooField()
+
+
+class UniqueConstraintTest(Model):
+    f_int = IntegerField()
+    f_float = FloatField()
+    f_bool = BooleanField()
+
+    class Meta:
+        unique_together = ('f_int', 'f_float', 'f_bool')
+
+    # noinspection PyMethodOverriding
+    def save(self, *_, **__):
+        super(UniqueConstraintTest, self).save(*_, **__)
+        global saved_something
+        saved_something = self
+
+
+class NamespaceFormsTest(Model):
+    f_int = IntegerField()
+    f_float = FloatField()
+    f_bool = BooleanField()
+
+    class Meta:
+        unique_together = ('f_int', 'f_float', 'f_bool')
+        verbose_name = 'foo_bar'
+
+    # noinspection PyMethodOverriding
+    def save(self, *_, **__):
+        super(NamespaceFormsTest, self).save(*_, **__)
+        global saved_something
+        saved_something = self
+
+
+class CreateOrEditObjectTest(Model):
+    f_int = IntegerField()
+    f_float = FloatField()
+    f_bool = BooleanField()
+    f_foreign_key = ForeignKey(Foo)
+    f_many_to_many = ManyToManyField(Foo)
+
+    class Meta:
+        verbose_name = 'foo_bar'
+
+    # noinspection PyMethodOverriding
+    def save(self, *_, **__):
+        super(CreateOrEditObjectTest, self).save(*_, **__)
+        global saved_something
+        saved_something = self

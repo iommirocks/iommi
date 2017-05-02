@@ -1,10 +1,10 @@
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-#
-# TEMPLATE_DIRS = [
-#     os.path.join(BASE_DIR, 'tests'),
-#     os.path.join(BASE_DIR, 'tri/form/templates'),
-# ]
+
+TEMPLATE_DIRS = [
+    os.path.join(BASE_DIR, 'tests'),
+    os.path.join(BASE_DIR, 'tri/form/templates'),
+]
 
 TEMPLATE_DEBUG = True
 
@@ -12,7 +12,7 @@ TEMPLATE_DEBUG = True
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': TEMPLATE_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
             'debug': TEMPLATE_DEBUG,

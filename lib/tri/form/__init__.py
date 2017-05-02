@@ -4,7 +4,7 @@ import json
 from collections import OrderedDict
 import copy
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from itertools import chain, groupby
 import re
 
@@ -19,7 +19,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
-from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive
+from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive, shortcut, Shortcut, Namespace, RefinableObject, Refinable, refinable
 from tri.struct import Struct
 from tri.form.render import render_attrs
 import six
@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover
         return engines['django'].from_string(template_code)
 
 
-__version__ = '4.10.1'  # pragma: no mutate
+__version__ = '5.0.0'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -50,20 +50,20 @@ def capitalize(s):
 # (at least) this key-value.
 AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
 
-FULL_FORM_FROM_REQUEST = 'full_form_from_request'
-INITIALS_FROM_GET = 'initials_from_get'
+FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
+INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
 
 
-DISPATCH_PATH_SEPARATOR = '__'
+DISPATCH_PATH_SEPARATOR = '/'
 
 
 def handle_dispatch(request, obj):
     for key, value in request.GET.items():
         if key.startswith(DISPATCH_PATH_SEPARATOR):
-            remaining_key = key[2:]
+            remaining_key = key[len(DISPATCH_PATH_SEPARATOR):]
             expected_prefix = obj.endpoint_dispatch_prefix
             if expected_prefix is not None:
-                parts = remaining_key.split('__', 1)
+                parts = remaining_key.split(DISPATCH_PATH_SEPARATOR, 1)
                 prefix = parts.pop(0)
                 if prefix != expected_prefix:
                     return True, None
@@ -84,12 +84,12 @@ def bool_parse(string_value):
         raise ValueError('%s is not a valid boolean value' % string_value)
 
 
-def foreign_key_factory(model_field, **kwargs):
+def foreign_key_factory(model_field, model, **kwargs):
+    del model
     setdefaults_path(
         kwargs,
         choices=model_field.foreign_related_fields[0].model.objects.all(),
     )
-    kwargs['model'] = model_field.foreign_related_fields[0].model
     return Field.choice_queryset(model_field=model_field, **kwargs)
 
 
@@ -140,7 +140,7 @@ def setup_db_compat_django():
 def _django_field_defaults(model_field):
     r = {}
     if hasattr(model_field, 'verbose_name'):
-        r['label'] = capitalize(model_field.verbose_name)
+        r['display_name'] = capitalize(model_field.verbose_name)
 
     if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
         r['required'] = not model_field.null and not model_field.blank
@@ -151,10 +151,10 @@ def _django_field_defaults(model_field):
     return r
 
 
-MISSING = object()
+MISSING = Struct(refinable=True)  # pragma: no mutate
 
 
-@dispatch
+@dispatch  # pragma: no mutate
 def create_members_from_model(default_factory, model, member_params_by_member_name, include=None, exclude=None, extra=None):
     def should_include(name):
         if exclude is not None and name in exclude:
@@ -174,9 +174,9 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
 
     for field in get_fields(model):
         if should_include(field.name):
-            subkeys = member_params_by_member_name.pop(field.name, {})
-            subkeys.setdefault('class', default_factory)
-            foo = subkeys.pop('class')(name=field.name, model=model, model_field=field, **subkeys)
+            subkeys = Namespace(**member_params_by_member_name.pop(field.name, {}))
+            subkeys.setdefault('call_target', default_factory)
+            foo = subkeys(name=field.name, model=model, model_field=field)
             if foo is None:
                 continue
             if isinstance(foo, list):
@@ -204,9 +204,9 @@ def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_re
         for django_field_type, func in reversed(factory_lookup.items()):
             if isinstance(model_field, django_field_type):
                 factory = func
-                break
+                break  # pragma: no mutate optimization
 
-    if factory is MISSING:  # pragma: no cover
+    if factory is MISSING:
         message = 'No factory for %s.' % type(model_field)
         if factory_lookup_register_function is not None:
             message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
@@ -215,7 +215,7 @@ def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_re
     return factory(model_field=model_field, model=model, **kwargs) if factory else None
 
 
-@dispatch(
+@dispatch(  # pragma: no mutate
     field=EMPTY,
 )
 def expand_member(model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
@@ -257,20 +257,16 @@ def default_endpoint__validate(field, key, value, **_):
     )
 
 
-class NamespaceAwareObject(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            getattr(self, k)  # Check existence
-            setattr(self, k, v)
-        super(NamespaceAwareObject, self).__init__()
-
-
 def float_parse(string_value, **_):
     try:
         return float(string_value)
     except ValueError:
         # Acrobatics so we get equal formatting in python 2/3
         raise ValueError("could not convert string to float: %s" % string_value)
+
+
+def int_parse(string_value, **_):
+    return int(string_value)
 
 
 def choice_is_valid(form, field, parsed_data):
@@ -288,6 +284,7 @@ def choice_post_validation(form, field):
 
 
 def choice_choice_to_option(form, field, choice):
+    del form
     return choice, "%s" % choice, "%s" % choice, choice == field.value
 
 
@@ -370,11 +367,14 @@ def time_render_value(value, **_):
 
 
 def decimal_parse(string_value, **_):
-    return Decimal(string_value)
+    try:
+        return Decimal(string_value)
+    except InvalidOperation:
+        raise ValidationError("Invalid literal for Decimal: '%s'" % string_value)
 
 
 def url_parse(string_value, **_):
-    return URLValidator(string_value) or string_value
+    return URLValidator()(string_value) or string_value
 
 
 def file_write_to_instance(field, instance, value):
@@ -413,7 +413,8 @@ def render_template(request, template, context):
     elif isinstance(template, Template):
         return template.render(RequestContext(request, context))
     else:
-        # template is type django.template.backends.django.Template here
+        from django.template.backends.django import Template as Template2
+        assert isinstance(template, Template2)
         return template.render(context, request)
 
 
@@ -432,7 +433,15 @@ def evaluate_and_group_links(links, **kwargs):
 
 
 @six.python_2_unicode_compatible
-class Link(NamespaceAwareObject):
+class Link(RefinableObject):
+    tag = Refinable()
+    attrs = Refinable()
+    group = Refinable()
+    show = Refinable()
+    template = Refinable()
+    extra = Refinable()
+    title = Refinable()
+
     @dispatch(
         tag='a',
         attrs=EMPTY,
@@ -440,13 +449,6 @@ class Link(NamespaceAwareObject):
         extra=EMPTY,
     )
     def __init__(self, title, **kwargs):
-        self.tag = None
-        self.attrs = None
-        self.group = None
-        self.show = None
-        self.template = None
-        self.extra = None
-        self.title = None
         super(Link, self).__init__(title=title, **kwargs)
 
     def render_attrs(self):
@@ -461,42 +463,97 @@ class Link(NamespaceAwareObject):
     def __str__(self):
         return self.render()
 
-    @staticmethod
-    @dispatch(
-        icon_classes=[],
-    )
-    def icon(icon, title, **kwargs):
-        icon_classes = kwargs.pop('icon_classes')
-        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes])
-        setdefaults_path(
-            kwargs,
-            title=mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)),
-        )
-        return Link(**kwargs)
 
-    @staticmethod
-    @dispatch(
-        tag='button',
-        attrs__class__button=True,
+@shortcut
+@dispatch(
+    call_target=Link,
+    icon_classes=[],
+)
+def link_shortcut_icon(icon, title, call_target, **kwargs):
+    icon_classes = kwargs.pop('icon_classes')
+    icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
+    setdefaults_path(
+        kwargs,
+        title=mark_safe('<i class="fa fa-%s%s"></i> %s' % (icon, icon_classes_str, title)),
     )
-    def button(**kwargs):
-        return Link(**kwargs)
+    return call_target(**kwargs)
 
-    @staticmethod
-    @dispatch(
-        tag='input',
-        attrs__type='submit',
-        attrs__value='Submit',
-        attrs__accesskey='s',
-        title='Submit',
-    )
-    def submit(**kwargs):
-        return Link.button(**kwargs)
+
+Link.icon = staticmethod(link_shortcut_icon)
+
+
+Link.button = Shortcut(
+    call_target=Link,
+    tag='button',
+    attrs__class__button=True,
+)
+
+Link.submit = Shortcut(
+    call_target=Link.button,
+    tag='input',
+    attrs__type='submit',
+    attrs__value='Submit',
+    attrs__accesskey='s',
+    title='Submit',
+)
 
 
 @creation_ordered
-class Field(NamespaceAwareObject):
+class Field(RefinableObject):
+    """
+    Class that describes a field, i.e. what input controls to render, the label, etc.
+    """
+
+    name = Refinable()
+
+    show = Refinable()
+
+    attr = Refinable()
+    id = Refinable()
+    display_name = Refinable()
+
+    after = Refinable()
+
+    # raw_data/raw_data contains the strings grabbed directly from the request data
+    raw_data = Refinable()
+    raw_data_list = Refinable()
+
+    parse_empty_string_as_none = Refinable()
+    initial = Refinable()
+    initial_list = Refinable()
+    template = Refinable()
+    template_string = Refinable()
+    attrs = Refinable()
+    input_template = Refinable()
+    label_template = Refinable()
+    errors_template = Refinable()
+    required = Refinable()
+
+    is_list = Refinable()
+    is_boolean = Refinable()
+    model = Refinable()
+    model_field = Refinable()
+
+    editable = Refinable()
+    strip_input = Refinable()
+    input_type = Refinable()
+
+    extra = Refinable()
+
+    choices = Refinable()  # type: (Form, Field, str) -> None
+    choice_to_option = Refinable()
+    choice_tuples = Refinable()
+
+    empty_label = Refinable()
+    empty_choice_tuple = Refinable()
+
+    endpoint = Refinable()
+    endpoint_path = Refinable()
+
     @dispatch(
+        attr=MISSING,
+        id=MISSING,
+        display_name=MISSING,
         show=True,
         extra=EMPTY,
         attrs__class=EMPTY,
@@ -553,51 +610,6 @@ class Field(NamespaceAwareObject):
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
-        self.name = None
-
-        self.show = None
-
-        self.attr = MISSING
-        self.id = MISSING
-        self.label = MISSING
-
-        self.after = None
-
-        # raw_data/raw_data contains the strings grabbed directly from the request data
-        self.raw_data = None
-        self.raw_data_list = None
-
-        self.parse_empty_string_as_none = None
-        self.initial = None
-        self.initial_list = None
-        self.template = None
-        self.template_string = None
-        self.attrs = None
-        self.input_template = None
-        self.label_template = None
-        self.errors_template = None
-        self.required = None
-
-        self.is_list = None
-        self.is_boolean = None
-        self.model = None
-        self.model_field = None
-
-        self.editable = None
-        self.strip_input = None
-        self.input_type = None
-
-        self.extra = None
-
-        self.choice_to_option = None
-        self.empty_label = None
-        self.empty_choice_tuple = None
-        self.choices = None
-        # (Form, Field, str) -> None
-
-        self.endpoint = None
-        self.endpoint_path = None
-
         super(Field, self).__init__(**kwargs)
 
         # Bound field data
@@ -616,36 +628,43 @@ class Field(NamespaceAwareObject):
         self.choice_tuples = None
 
     @staticmethod
+    @refinable
     def is_valid(form, field, parsed_data):
         # type: (Form, Field, object) -> (bool, str)
         return True, ''
 
     @staticmethod
+    @refinable
     def parse(form, field, string_value, **_):
         # type: (Form, Field, unicode) -> object
         del form, field
         return string_value
 
     @staticmethod
+    @refinable
     def container_css_classes(form, field, **_):
         # type: (Form, Field) -> set
         return set()
 
     @staticmethod
+    @refinable
     def label_container_css_classes(form, field, **_):
         return {'description_container'}
 
     @staticmethod
+    @refinable
     def input_container_css_classes(form, field, **_):
         # type: (Form, Field) -> set
         return set()
 
     @staticmethod
+    @refinable
     def post_validation(form, field, **_):
         # type: (Form, Field) -> None
         pass
 
     @staticmethod
+    @refinable
     def render_value(form, field, value):
         # type: (Form, Field, object) -> unicode
         return "%s" % value
@@ -653,6 +672,7 @@ class Field(NamespaceAwareObject):
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
     @staticmethod
+    @refinable
     def help_text(field, **_):
         if field.model is None or field.attr is None:
             return ''
@@ -662,16 +682,19 @@ class Field(NamespaceAwareObject):
             return ''
 
     @staticmethod
+    @refinable
     def read_from_instance(field, instance):
         # type: (Field, object) -> None
         return getattr_path(instance, field.attr)
 
     @staticmethod
+    @refinable
     def write_to_instance(field, instance, value):
         # type: (Field, object, object) -> None
         setattr_path(instance, field.attr, value)
 
     @staticmethod
+    @refinable
     def endpoint_dispatch(field, key, **kwargs):
         parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
         prefix = parts.pop(0)
@@ -697,8 +720,8 @@ class Field(NamespaceAwareObject):
             bound_field.attr = bound_field.name
         if bound_field.id is MISSING:
             bound_field.id = 'id_%s' % bound_field.name if bound_field.name else ''
-        if bound_field.label is MISSING:
-            bound_field.label = capitalize(bound_field.name).replace('_', ' ') if bound_field.name else ''
+        if bound_field.display_name is MISSING:
+            bound_field.display_name = capitalize(bound_field.name).replace('_', ' ') if bound_field.name else ''
 
         bound_field.form = form
         bound_field.field = self
@@ -709,15 +732,13 @@ class Field(NamespaceAwareObject):
 
         return bound_field
 
-    EVALUATED_ATTRIBUTES = {
-        'after', 'attr', 'attrs', 'choice_to_option', 'choice_tuples', 'choices', 'container_css_classes', 'editable', 'empty_choice_tuple', 'empty_label', 'endpoint', 'endpoint_dispatch', 'endpoint_path', 'errors_template', 'extra', 'help_text', 'id', 'initial', 'initial_list', 'input_container_css_classes', 'input_template', 'input_type', 'is_boolean', 'is_list', 'is_valid', 'label', 'label_container_css_classes', 'label_template', 'model', 'model_field', 'parse', 'parse_empty_string_as_none', 'raw_data', 'raw_data_list', 'render_value', 'required', 'show', 'strip_input', 'template', 'template_string'
-    }
-
     def _evaluate(self):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        for k in Field.EVALUATED_ATTRIBUTES:
+        not_evaluated_attributes = {'post_validation'}
+        evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
+        for k in evaluated_attributes:
             v = getattr(self, k)
             new_value = evaluate_recursive(v, form=self.form, field=self)
             if new_value is not v:
@@ -755,257 +776,6 @@ class Field(NamespaceAwareObject):
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
-    """
-    Class that describes a field, i.e. what input controls to render, the label, etc.
-    """
-
-    @staticmethod
-    def hidden(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_type='hidden',
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def text(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_type='text',
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def textarea(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_template='tri_form/text.html',
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def integer(**kwargs):
-        def int_parse(string_value, **_):
-            return int(string_value)
-
-        setdefaults_path(
-            kwargs,
-            parse=int_parse,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def float(**kwargs):
-        setdefaults_path(
-            kwargs,
-            parse=float_parse,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def password(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_type='password',
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def boolean(**kwargs):
-        """
-        Boolean field. Tries hard to parse a boolean value from its input.
-        """
-        setdefaults_path(
-            kwargs,
-            parse=lambda string_value, **_: bool_parse(string_value),
-            required=False,
-            template='tri_form/{style}_form_row_checkbox.html',
-            input_template='tri_form/checkbox.html',
-            is_boolean=True,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def choice(**kwargs):
-        """
-        Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
-        :param empty_label: default '---'
-        :param choices: list of objects
-        :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
-        """
-        assert 'choices' in kwargs
-
-        setdefaults_path(
-            kwargs,
-            required=True,
-            is_list=False,
-            empty_label='---',
-        )
-
-        if not kwargs['required'] and not kwargs['is_list']:
-            original_parse = kwargs.get('parse', Field.parse)
-
-            def parse(form, field, string_value):
-                return original_parse(form=form, field=field, string_value=string_value)
-
-            kwargs.update(
-                parse=parse
-            )
-
-        setdefaults_path(
-            kwargs,
-            empty_choice_tuple=(None, '', kwargs['empty_label'], True),
-            choice_to_option=choice_choice_to_option,
-            input_template='tri_form/choice.html',
-            is_valid=choice_is_valid,
-            post_validation=choice_post_validation,
-        )
-
-        return Field(**kwargs)
-
-    @staticmethod
-    def choice_queryset(**kwargs):
-        kwargs = setdefaults_path(
-            Struct(),
-            kwargs,
-            parse=choice_queryset_parse,
-            choice_to_option=choice_queryset_choice_to_option,
-            endpoint_path=choice_queryset_endpoint_path,
-            endpoint__=choice_queryset_endpoint__select2,  # Backwards compatible
-            endpoint__select2=choice_queryset_endpoint__select2,
-            extra__endpoint_attr='name',
-            is_valid=choice_queryset_is_valid,
-        )
-        return Field.choice(**kwargs)
-
-    @staticmethod
-    def multi_choice(**kwargs):
-        setdefaults_path(
-            kwargs,
-            attrs__multiple=True,
-            choice_to_option=multi_choice_choice_to_option,
-            is_list=True,
-        )
-        return Field.choice(**kwargs)
-
-    @staticmethod
-    def multi_choice_queryset(**kwargs):
-        setdefaults_path(
-            kwargs,
-            attrs__multiple=True,
-            choice_to_option=multi_choice_queryset_choice_to_option,
-            is_list=True,
-        )
-        return Field.choice_queryset(**kwargs)
-
-    @staticmethod
-    def radio(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_template='tri_form/radio.html',
-        )
-        return Field.choice(**kwargs)
-
-    @staticmethod
-    def datetime(**kwargs):
-        setdefaults_path(
-            kwargs,
-            parse=datetime_parse,
-            render_value=datetime_render_value,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def date(**kwargs):
-        setdefaults_path(
-            kwargs,
-            parse=date_parse,
-            render_value=date_render_value,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def time(**kwargs):
-        setdefaults_path(
-            kwargs,
-            parse=time_parse,
-            render_value=time_render_value,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def decimal(**kwargs):
-        setdefaults_path(
-            kwargs,
-            parse=decimal_parse,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def url(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_type='url',
-            parse=url_parse,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def file(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_type='file',
-            template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
-            write_to_instance=file_write_to_instance,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def heading(label, show=True, template='tri_form/heading.html', **kwargs):
-        """
-        Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
-        """
-        setdefaults_path(
-            kwargs,
-            label=label,
-            show=show,
-            template=template,
-            editable=False,
-            attr=None,
-            name='@@heading@@',
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def info(value, **kwargs):
-        """
-        Shortcut to create an info entry.
-        """
-        setdefaults_path(
-            kwargs,
-            initial=value,
-            editable=False,
-            attr=None,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def email(**kwargs):
-        setdefaults_path(
-            kwargs,
-            input_type='email',
-            parse=email_parse,
-        )
-        return Field(**kwargs)
-
-    @staticmethod
-    def phone_number(**kwargs):
-        setdefaults_path(
-            kwargs,
-            is_valid=phone_number_is_valid,
-        )
-        return Field(**kwargs)
-
     @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
@@ -1027,47 +797,272 @@ class Field(NamespaceAwareObject):
             model_field=model_field,
             **kwargs)
 
-    @staticmethod
-    def comma_separated(parent_field):
-        """
-        Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
 
-        .. code:: python
+Field.hidden = Shortcut(
+    call_target=Field,
+    input_type='hidden',
+)
 
-            Field.comma_separated(Field.email)
 
-        :type parent_field: Field
-        """
-        new_field = copy.copy(parent_field)
+Field.text = Shortcut(
+    call_target=Field,
+    input_type='text',
+)
 
-        def parse_comma_separated(form, field, string_value):
-            errors = []
-            result = []
-            for x in string_value.split(','):
-                x = x.strip()
-                try:
-                    result.append(parent_field.parse(form=form, field=field, string_value=x.strip()))
-                except ValueError as e:
-                    errors.append('Invalid value "%s": %s' % (x, e))
-                except ValidationError as e:
-                    for message in e.messages:
-                        errors.append('Invalid value "%s": %s' % (x, message))
-            if errors:
-                raise ValidationError(errors)
-            return ', '.join(result)
-        new_field.parse = parse_comma_separated
 
-        def is_valid_comma_separated(form, field, parsed_data):
-            errors = set()
-            for x in parsed_data.split(','):
-                x = x.strip()
-                is_valid, error = parent_field.is_valid(form=form, field=field, parsed_data=x)
-                if not is_valid:
-                    errors.add('Invalid value "%s": %s' % (x, error))
-            return errors == set(), errors
-        new_field.is_valid = is_valid_comma_separated
+Field.textarea = Shortcut(
+    call_target=Field,
+    input_template='tri_form/text.html',
+)
 
-        return new_field
+
+Field.integer = Shortcut(
+    call_target=Field,
+    parse=int_parse,
+)
+
+Field.float = Shortcut(
+    call_target=Field,
+    parse=float_parse,
+)
+
+Field.password = Shortcut(
+    call_target=Field,
+    input_type='password',
+)
+
+# Boolean field. Tries hard to parse a boolean value from its input.
+Field.boolean = Shortcut(
+    call_target=Field,
+    parse=lambda string_value, **_: bool_parse(string_value),
+    required=False,
+    template='tri_form/{style}_form_row_checkbox.html',
+    input_template='tri_form/checkbox.html',
+    is_boolean=True,
+)
+
+
+@shortcut
+@dispatch(
+    call_target=Field,
+    required=True,
+    is_list=False,
+    empty_label='---',
+    is_valid=choice_is_valid,
+    choice_to_option=choice_choice_to_option,
+    input_template='tri_form/choice.html',
+)
+def field_shortcut_choice(call_target, **kwargs):
+    """
+    Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
+    :param empty_label: default '---'
+    :param choices: list of objects
+    :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
+    """
+    assert 'choices' in kwargs
+
+    if not kwargs['required'] and not kwargs['is_list']:
+        original_parse = kwargs.get('parse', Field.parse)
+
+        def parse(form, field, string_value):
+            return original_parse(form=form, field=field, string_value=string_value)
+
+        kwargs.update(
+            parse=parse
+        )
+
+    original_post_validation = kwargs.get('post_validation')
+
+    def _choice_post_validation(form, field):
+        choice_post_validation(form=form, field=field)
+        if original_post_validation:
+            original_post_validation(form=form, field=field)
+
+    kwargs['post_validation'] = _choice_post_validation
+
+    setdefaults_path(
+        kwargs,
+        empty_choice_tuple=(None, '', kwargs['empty_label'], True),
+    )
+
+    return call_target(**kwargs)
+
+
+Field.choice = staticmethod(field_shortcut_choice)
+
+
+@shortcut
+@dispatch(
+    call_target=Field.choice,
+    parse=choice_queryset_parse,
+    choice_to_option=choice_queryset_choice_to_option,
+    endpoint_path=choice_queryset_endpoint_path,
+    endpoint__=choice_queryset_endpoint__select2,  # Backwards compatible
+    endpoint__select2=choice_queryset_endpoint__select2,
+    extra__endpoint_attr='name',
+    is_valid=choice_queryset_is_valid,
+)
+def field_choice_queryset(call_target, choices, **kwargs):
+
+    from django.db.models import QuerySet
+    if 'model' not in kwargs:
+        assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
+        kwargs['model'] = choices.model
+
+    setdefaults_path(
+        kwargs,
+        choices=(lambda form, **_: choices.all()) if isinstance(choices, QuerySet) else choices,  # clone the QuerySet if needed
+    )
+
+    return call_target(**kwargs)
+
+
+Field.choice_queryset = staticmethod(field_choice_queryset)
+
+
+Field.multi_choice = Shortcut(
+    call_target=Field.choice,
+    attrs__multiple=True,
+    choice_to_option=multi_choice_choice_to_option,
+    is_list=True,
+)
+
+Field.multi_choice_queryset = Shortcut(
+    call_target=Field.choice_queryset,
+    attrs__multiple=True,
+    choice_to_option=multi_choice_queryset_choice_to_option,
+    is_list=True,
+)
+
+Field.radio = Shortcut(
+    call_target=Field.choice,
+    input_template='tri_form/radio.html',
+)
+
+Field.datetime = Shortcut(
+    call_target=Field,
+    parse=datetime_parse,
+    render_value=datetime_render_value,
+)
+
+Field.date = Shortcut(
+    call_target=Field,
+    parse=date_parse,
+    render_value=date_render_value,
+)
+
+Field.time = Shortcut(
+    call_target=Field,
+    parse=time_parse,
+    render_value=time_render_value,
+)
+
+Field.decimal = Shortcut(
+    call_target=Field,
+    parse=decimal_parse,
+)
+
+Field.url = Shortcut(
+    call_target=Field,
+    input_type='url',
+    parse=url_parse,
+)
+
+Field.file = Shortcut(
+    call_target=Field,
+    input_type='file',
+    template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
+    write_to_instance=file_write_to_instance,
+)
+
+# Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
+Field.heading = Shortcut(
+    call_target=Field,
+    show=True,
+    template='tri_form/heading.html',
+    editable=False,
+    attr=None,
+    name='@@heading@@',
+)
+
+
+@shortcut
+@dispatch(
+    call_target=Field,
+    editable=False,
+    attr=None,
+)
+def field_shortcut_info(value, call_target, **kwargs):
+    """
+    Shortcut to create an info entry.
+    """
+    setdefaults_path(
+        kwargs,
+        initial=value,
+
+    )
+    return call_target(**kwargs)
+
+
+Field.info = staticmethod(field_shortcut_info)
+
+Field.email = Shortcut(
+    call_target=Field,
+    input_type='email',
+    parse=email_parse,
+)
+
+Field.phone_number = Shortcut(
+    call_target=Field,
+    is_valid=phone_number_is_valid,
+)
+
+
+@shortcut
+@dispatch
+def field_shortcut_comma_separated(parent_field):
+    """
+    Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
+
+    .. code:: python
+
+        Field.comma_separated(Field.email)
+
+    :type parent_field: Field
+    """
+    new_field = copy.copy(parent_field)
+
+    def parse_comma_separated(form, field, string_value):
+        errors = []
+        result = []
+        for x in string_value.split(','):
+            x = x.strip()
+            try:
+                result.append(parent_field.parse(form=form, field=field, string_value=x.strip()))
+            except ValueError as e:
+                errors.append('Invalid value "%s": %s' % (x, e))
+            except ValidationError as e:
+                for message in e.messages:
+                    errors.append('Invalid value "%s": %s' % (x, message))
+        if errors:
+            raise ValidationError(errors)
+        return ', '.join(result)
+    new_field.parse = parse_comma_separated
+
+    def is_valid_comma_separated(form, field, parsed_data):
+        errors = set()
+        for x in parsed_data.split(','):
+            x = x.strip()
+            is_valid, error = parent_field.is_valid(form=form, field=field, parsed_data=x)
+            if not is_valid:
+                errors.add('Invalid value "%s": %s' % (x, error))
+        return errors == set(), errors
+    new_field.is_valid = is_valid_comma_separated
+
+    return new_field
+
+
+Field.comma_separated = staticmethod(field_shortcut_comma_separated)
 
 
 def get_fields(model):
@@ -1077,7 +1072,7 @@ def get_fields(model):
 
 
 def default_endpoint__field(form, key, value):
-    parts = key.split('__', 1)
+    parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
     prefix = parts.pop(0)
     remaining_key = parts[0] if parts else ''
     field = form.fields_by_name.get(prefix, None)
@@ -1088,7 +1083,7 @@ def default_endpoint__field(form, key, value):
 @python_2_unicode_compatible
 @declarative(Field, 'fields_dict')
 @with_meta
-class Form(NamespaceAwareObject):
+class Form(RefinableObject):
     """
     Describe a Form. Example:
 
@@ -1107,7 +1102,23 @@ class Form(NamespaceAwareObject):
         form = MyForm(data={}, fields=[Field(name='a'), Field.email(name='b')])
 
     See tri.declarative docs for more on this dual style of declaration.
-    """
+"""
+    is_full_form = Refinable()
+    links = Refinable()
+    links_template = Refinable()
+    attrs = Refinable()
+    name = Refinable()
+    editable = Refinable()
+
+    model = Refinable()
+    """ :type: django.db.models.Model """
+    endpoint_dispatch_prefix = Refinable()
+    """ :type: str """
+    endpoint = Refinable()
+    """ :type: tri.declarative.Namespace """
+    extra = Refinable()
+    """ :type: tri.declarative.Namespace """
+
     @dispatch(
         is_full_form=True,
         model=None,
@@ -1163,6 +1174,21 @@ class Form(NamespaceAwareObject):
         self.fields = sort_after([f._bind(self) for f in unbound_fields()])
         """ :type: list of Field"""
 
+        self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
+        if request and request.method == 'POST' and self.is_target():
+            self.mode = FULL_FORM_FROM_REQUEST
+
+        if self.mode == INITIALS_FROM_GET and request and self.is_target():
+            assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
+
+        self.fields_by_name = None
+        """ :type: Struct[str, Field] """
+        self.style = None
+        self.errors = set()
+        """ :type: set of str """
+        self._valid = None
+        self.evaluate()
+
         if instance is not None:
             for field in self.fields:
                 if field.attr:
@@ -1175,13 +1201,6 @@ class Form(NamespaceAwareObject):
             self.instance = instance
         else:
             self.instance = None
-
-        self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
-        if request and request.method == 'POST' and self.is_target():
-            self.mode = FULL_FORM_FROM_REQUEST
-
-        if self.mode == INITIALS_FROM_GET and request and self.is_target():
-            assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
 
         if data:
             for field in self.fields:
@@ -1208,13 +1227,6 @@ class Form(NamespaceAwareObject):
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
-        self.fields_by_name = None
-        """ :type: dict[str, Field] """
-        self.style = None
-        self.errors = set()
-        """ :type: set of str """
-        self._valid = None
-        self.evaluate()
         self.is_valid()
 
     def render_attrs(self):
@@ -1351,6 +1363,7 @@ class Form(NamespaceAwareObject):
         return self
 
     @staticmethod
+    @refinable
     def post_validation(form):
         pass
 

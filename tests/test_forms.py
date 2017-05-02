@@ -4,20 +4,23 @@ import re
 from datetime import date, time
 from datetime import datetime
 
-import copy
+from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Field as DjangoField, Model
 from bs4 import BeautifulSoup
 import pytest
+from django.template import Template
 from django.test import RequestFactory
 from django.utils.encoding import smart_text
 
 from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, Bar
-from tri.declarative import getattr_path, setattr_path, dispatch
+from tri.declarative import getattr_path, setattr_path
 from tri.struct import Struct
-from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, NamespaceAwareObject
+from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link
+from django import __version__ as django_version
+django_version = tuple([int(x) for x in django_version.split('.')])
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -79,6 +82,8 @@ def test_required_with_falsy_option():
 
 def test_custom_raw_data():
     def my_form_raw_data(form, field, **_):
+        del form
+        del field
         return 'this is custom raw data'
 
     class MyForm(Form):
@@ -90,6 +95,8 @@ def test_custom_raw_data():
 
 def test_custom_raw_data_list():
     def my_form_raw_data_list(form, field, **_):
+        del form
+        del field
         return ['this is custom raw data list']
 
     class MyForm(Form):
@@ -341,6 +348,7 @@ def test_render_template():
 def test_render_attrs():
     assert Form(data=dict(foo='7'), fields=[Field(name='foo', attrs={'foo': '1'})]).fields[0].render_attrs() == ' foo="1"'
     assert Form(data=dict(foo='7'), fields=[Field(name='foo')]).fields[0].render_attrs() == ' '
+    assert render_attrs(dict(foo='"foo"')) == ' foo="&quot;foo&quot;"'
 
 
 def test_render_attrs_new_style():
@@ -388,7 +396,7 @@ def test_render_table():
             input_container_css_classes={'###5###'},
             label_container_css_classes={'$$$11$$$'},
             help_text='^^^13^^^',
-            label='***17***',
+            display_name='***17***',
             id='$$$$5$$$$$'
         )
 
@@ -406,7 +414,7 @@ def test_render_table():
 
 
 def test_heading():
-    assert '<th colspan="2">#foo#</th>' in Form(data={}, fields=[Field.heading(label='#foo#')]).table()
+    assert '<th colspan="2">#foo#</th>' in Form(data={}, fields=[Field.heading(display_name='#foo#')]).table()
 
 
 def test_info():
@@ -453,17 +461,56 @@ def test_help_text_from_model():
 
 
 @pytest.mark.django_db
-def test_choice_queryset():
+def test_multi_choice_queryset():
     user = User.objects.create(username='foo')
     user2 = User.objects.create(username='foo2')
     user3 = User.objects.create(username='foo3')
 
     class MyForm(Form):
-        foo = Field.multi_choice_queryset(attr=None, model=User, choices=User.objects.filter(username=user.username))
+        foo = Field.multi_choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
     assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
     assert MyForm(RequestFactory().get('/', {'foo': [smart_text(user2.pk), smart_text(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
+
+    form = MyForm(RequestFactory().get('/', {'foo': [smart_text(user.pk)]}))
+    assert form.fields[0].errors == set()
+    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" multiple="" name="foo">\n<option selected="selected" value="1">foo</option>\n</select>'
+
+
+@pytest.mark.django_db
+def test_choice_queryset():
+    user = User.objects.create(username='foo')
+    user2 = User.objects.create(username='foo2')
+    User.objects.create(username='foo3')
+
+    class MyForm(Form):
+        foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
+
+    assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
+    assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
+
+    form = MyForm(RequestFactory().get('/', {'foo': [smart_text(user.pk)]}))
+    assert form.fields[0].errors == set()
+    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option selected="selected" value="1">foo</option>\n</select>'
+
+
+@pytest.mark.django_db
+def test_choice_queryset_do_not_cache():
+    User.objects.create(username='foo')
+
+    class MyForm(Form):
+        foo = Field.choice_queryset(attr=None, choices=User.objects.all())
+
+    form = MyForm(RequestFactory().get('/'))
+    assert form.fields[0].errors == set()
+    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
+
+    User.objects.create(username='foo2')
+    form = MyForm(RequestFactory().get('/'))
+    assert form.fields[0].errors == set()
+    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
+
 
 
 def test_field_from_model():
@@ -475,6 +522,45 @@ def test_field_from_model():
 
     assert FooForm(data=dict(foo='1')).fields[0].value == 1
     assert not FooForm(data=dict(foo='asd')).is_valid()
+
+
+class CustomField(DjangoField):
+    pass
+
+
+def test_field_from_model_factory_error_message():
+
+    class FooModel(Model):
+        foo = CustomField()
+
+    with pytest.raises(AssertionError) as error:
+        Field.from_model(FooModel, 'foo')
+
+    assert 'No factory for <class \'tests.test_forms.CustomField\'>. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type' == str(error.value)
+
+
+def test_field_from_model_required():
+    from django.db.models import TextField, Model
+
+    class FooModel(Model):
+        a = TextField(blank=True, null=True)
+        b = TextField(blank=True, null=False)
+        c = TextField(blank=False, null=True)
+        d = TextField(blank=False, null=False)
+
+    assert not Field.from_model(FooModel, 'a').required
+    assert not Field.from_model(FooModel, 'b').required
+    assert not Field.from_model(FooModel, 'c').required
+    assert Field.from_model(FooModel, 'd').required
+
+
+def test_field_from_model_label():
+    from django.db.models import TextField, Model
+
+    class FooModel(Model):
+        a = TextField(verbose_name='FOOO bar FOO')
+
+    assert Field.from_model(FooModel, 'a').display_name == 'FOOO bar FOO'
 
 
 def test_form_from_model_valid_form():
@@ -545,7 +631,12 @@ def test_field_from_model_foreign_key():
     Foo.objects.create(foo=2)
     Foo.objects.create(foo=3)
     Foo.objects.create(foo=5)
-    choices = Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk').choices
+
+    class MyForm(Form):
+        c = Field.from_model(FieldFromModelForeignKeyTest, 'foo_fk')
+
+    form = MyForm(request=RequestFactory().get('/'))
+    choices = form.fields_by_name.c.choices
     assert isinstance(choices, QuerySet)
     assert set(choices) == set(Foo.objects.all())
 
@@ -553,11 +644,24 @@ def test_field_from_model_foreign_key():
 @pytest.mark.django_db
 def test_field_from_model_many_to_many():
     Foo.objects.create(foo=2)
-    Foo.objects.create(foo=3)
-    Foo.objects.create(foo=5)
-    choices = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many').choices
+    b = Foo.objects.create(foo=3)
+    c = Foo.objects.create(foo=5)
+
+    class MyForm(Form):
+        foo_many_to_many = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many')
+
+    form = MyForm(request=RequestFactory().get('/'))
+    field = form.fields_by_name.foo_many_to_many
+    choices = form.fields_by_name.foo_many_to_many.choices
+
     assert isinstance(choices, QuerySet)
     assert set(choices) == set(Foo.objects.all())
+    m2m = FieldFromModelManyToManyTest.objects.create()
+    assert set(Form(fields=[field], instance=m2m).fields_by_name.foo_many_to_many.initial_list) == set()
+    m2m.foo_many_to_many.add(b)
+    assert set(Form(fields=[field], instance=m2m).fields_by_name.foo_many_to_many.initial_list) == {b}
+    m2m.foo_many_to_many.add(c)
+    assert set(Form(fields=[field], instance=m2m).fields_by_name.foo_many_to_many.initial_list) == {b, c}
 
 
 @pytest.mark.django_db
@@ -565,12 +669,12 @@ def test_field_from_model_foreign_key2():
     form = Form.from_model(
         data={},
         model=FieldFromModelOneToOneTest,
-        field__foo_one_to_one__class=Field.from_model_expand,
-        field__foo_one_to_one__field__foo__label='blaha',
+        field__foo_one_to_one__call_target=Field.from_model_expand,
+        field__foo_one_to_one__field__foo__display_name='blaha',
         field__foo_one_to_one__field__foo__extra__stuff='blahada',
     )
     assert set(form.fields_by_name.keys()) == {'foo_one_to_one__foo'}
-    assert form.fields_by_name['foo_one_to_one__foo'].label == 'blaha'
+    assert form.fields_by_name['foo_one_to_one__foo'].display_name == 'blaha'
     assert form.fields_by_name['foo_one_to_one__foo'].extra.stuff == 'blahada'
 
 
@@ -579,7 +683,7 @@ def test_field_from_model_many_to_one_foreign_key():
     assert set(Form.from_model(
         data={},
         model=Bar,
-        field__foo__class=Field.from_model
+        field__foo__call_target=Field.from_model
     ).fields_by_name.keys()) == {'foo'}
 
 
@@ -853,9 +957,11 @@ def test_choice_queryset_ajax():
         username = Field.choice_queryset(choices=User.objects.all(), extra__endpoint_attr='username')
         not_returning_anything = Field.integer()
 
+    assert MyForm.username.extra.endpoint_attr == 'username'
+
     form = MyForm(request=RequestFactory().get('/'))
-    assert form.endpoint_dispatch(key='field__username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]
-    assert form.endpoint_dispatch(key='field__not_returning_anything', value='ar') is None
+    assert form.endpoint_dispatch(key='field/username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]
+    assert form.endpoint_dispatch(key='field/not_returning_anything', value='ar') is None
 
 
 def test_ajax_namespacing():
@@ -867,9 +973,9 @@ def test_ajax_namespacing():
         )
 
     form = MyForm(request=RequestFactory().get('/'))
-    assert 'default' == form.endpoint_dispatch(key='field__foo', value=None)
-    assert 'bar' == form.endpoint_dispatch(key='field__foo__bar', value=None)
-    assert 'baaz' == form.endpoint_dispatch(key='field__foo__baaz', value=None)
+    assert 'default' == form.endpoint_dispatch(key='field/foo', value=None)
+    assert 'bar' == form.endpoint_dispatch(key='field/foo/bar', value=None)
+    assert 'baaz' == form.endpoint_dispatch(key='field/foo/baaz', value=None)
 
 
 def test_ajax_config_and_validate():
@@ -880,17 +986,17 @@ def test_ajax_config_and_validate():
     form = MyForm(request=RequestFactory().get('/'))
     assert dict(
         name='foo',
-    ) == form.endpoint_dispatch(key='field__foo__config', value=None)
+    ) == form.endpoint_dispatch(key='field/foo/config', value=None)
 
     assert dict(
         valid=True,
         errors=[]
-    ) == form.endpoint_dispatch(key='field__foo__validate', value='new value')
+    ) == form.endpoint_dispatch(key='field/foo/validate', value='new value')
 
     assert dict(
         valid=False,
         errors=['FAIL']
-    ) == form.endpoint_dispatch(key='field__bar__validate', value='new value')
+    ) == form.endpoint_dispatch(key='field/bar/validate', value='new value')
 
 
 def test_is_empty_form_marker():
@@ -913,45 +1019,6 @@ def test_custom_endpoint():
 
     form = MyForm(data={})
     assert 'foobar' == form.endpoint_dispatch(key='foo', value='bar')
-
-
-def test_namespace_aware_object():
-
-    class MyClass(NamespaceAwareObject):
-        @dispatch(
-            foo__bar=17
-        )
-        def __init__(self, **kwargs):
-            super(MyClass, self).__init__(**kwargs)
-
-        foo = None
-
-    assert 17 == MyClass().foo.bar
-    assert 42 == MyClass(foo__bar=42).foo.bar
-
-    with pytest.raises(AttributeError):
-        MyClass(barf=17)
-
-
-def test_namespace_aware_object_binding():
-
-    class MyClass(NamespaceAwareObject):
-        foo = None
-        container = None
-
-        def bind(self, container):
-            new_object = copy.copy(self)
-            new_object.container = container
-            return new_object
-
-    container = object()
-    template = MyClass(foo=17)
-    bound_object = template.bind(container)
-    bound_object.foo = 42
-
-    assert 17 == template.foo
-    assert 42 == bound_object.foo
-    assert bound_object.container is container
 
 
 def reindent(s, before=" ", after="    "):
@@ -1005,3 +1072,82 @@ def test_render():
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
     assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
+
+
+def test_bool_parse():
+    for t in ['1', 'true', 't', 'yes', 'y', 'on']:
+        assert bool_parse(t) is True
+
+    for f in ['0', 'false', 'f', 'no', 'n', 'off']:
+        assert bool_parse(f) is False
+
+
+def test_decimal_parse():
+    assert decimal_parse(string_value='1') == Decimal(1)
+
+    with pytest.raises(ValidationError) as e:
+        decimal_parse(string_value='asdasd')
+
+    assert e.value.messages == ["Invalid literal for Decimal: u'asdasd'"] or e.value.messages == ["Invalid literal for Decimal: 'asdasd'"]
+
+
+def test_url_parse():
+    assert url_parse(string_value='https://foo.example') == 'https://foo.example'
+
+    with pytest.raises(ValidationError) as e:
+        url_parse(string_value='asdasd')
+
+    assert e.value.messages == ['Enter a valid URL.']
+
+
+def test_render_temlate_none():
+    # noinspection PyTypeChecker
+    assert render_template(request=None, template=None, context=None) == ''
+
+
+def test_render_template_template_object():
+    assert render_template(
+        request=RequestFactory().get('/'),
+        context=dict(a='1'),
+        template=Template(template_string='foo {{a}} bar')
+    ) == 'foo 1 bar'
+
+
+@pytest.mark.skipif(django_version >= (1, 9, 0), reason='Changed API in django 1.9+')
+def test_render_template_template_object2_newer_django():
+    from django.template.backends.django import Template as Template2
+    template = Template('foo {{a}} bar')
+    template2 = Template2(template)
+    assert render_template(
+        request=RequestFactory().get('/'),
+        context=dict(a='1'),
+        template=template2,
+    ) == 'foo 1 bar'
+
+
+@pytest.mark.skipif(django_version < (1, 9, 0), reason='Changed API in django 1.9+')
+def test_render_template_template_object2_older_django():
+    from django.template.backends.django import Template as Template2
+    template = Template('foo {{a}} bar')
+    # noinspection PyArgumentList
+    template2 = Template2(template, backend=Struct(engine=template.engine))
+    assert render_template(
+        request=RequestFactory().get('/'),
+        context=dict(a='1'),
+        template=template2,
+    ) == 'foo 1 bar'
+
+
+def test_link_render():
+    assert Link('Title', template='test_link_render.html').render() == 'tag=a title=Title'
+
+
+def test_link_shortcut_icon():
+    assert Link.icon(icon='foo', title='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
+
+
+def test_show_prevents_read_from_instance():
+    class MyForm(Form):
+        foo = Field(show=False)
+
+    MyForm(data=Struct(), instance=object())
