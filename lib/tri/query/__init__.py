@@ -11,7 +11,7 @@ from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, G
 from six import string_types, text_type, integer_types
 from tri.struct import merged
 from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, sort_after, dispatch, EMPTY, setattr_path, getattr_path
-from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
+from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, DISPATCH_PATH_SEPARATOR
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -541,7 +541,7 @@ class Query(object):
         form = Form(
             request=self.request,
             fields=fields,
-            endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
+            endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
             **self.gui_kwargs)
         form.tri_query = self
         form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
