@@ -18,7 +18,9 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace, setattr_path
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, \
+    getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace, setattr_path, \
+    NamespaceAwareObject, overridable, shortcut, Shortcut
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, merged
@@ -122,19 +124,30 @@ def default_cell_formatter(table, column, row, value, **_):
     return conditional_escape(value)
 
 
-class NamespaceAwareObject(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            getattr(self, k)  # Check existence
-            setattr(self, k, v)
-        super(NamespaceAwareObject, self).__init__()
-
 
 @creation_ordered
 class Column(NamespaceAwareObject):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
+    name = overridable
+    after = overridable
+    attrs = overridable
+    url = overridable
+    title = overridable
+    show = overridable
+    sort_default_desc = overridable
+    sortable = overridable
+    group = overridable
+    auto_rowspan = overridable
+    cell = overridable
+    model = overridable
+    model_field = overridable
+    choices = overridable
+    bulk = overridable
+    query = overridable
+    extra = overridable
+
 
     @dispatch(
         show=True,
@@ -177,27 +190,6 @@ class Column(NamespaceAwareObject):
 
         setdefaults_path(kwargs, {'attrs__class__' + c: True for c in kwargs.pop('css_class', {})})
 
-        self.name = None
-        """ :type: unicode """
-        self.after = None
-        self.attrs = None
-        self.url = None
-        self.title = None
-        self.show = None
-        self.sort_default_desc = None
-        self.sortable = None
-        self.group = None
-        self.auto_rowspan = None
-        """ :type: bool """
-        self.cell = None
-        self.model = None
-        self.model_field = None
-        self.choices = None
-        self.bulk = None
-        self.query = None
-
-        self.extra = None
-
         super(Column, self).__init__(**kwargs)
 
         self.table = None
@@ -210,14 +202,17 @@ class Column(NamespaceAwareObject):
         """ :type: bool """
 
     @staticmethod
+    @overridable
     def attr(table, column, **_):
         return column.name
 
     @staticmethod
+    @overridable
     def sort_key(table, column, **_):
         return column.attr
 
     @staticmethod
+    @overridable
     def display_name(table, column, **_):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
@@ -263,10 +258,7 @@ class Column(NamespaceAwareObject):
         return render_class(self.attrs['class'])
 
     @staticmethod
-    def text(**kwargs):  # pragma: no cover
-        return Column(**kwargs)
-
-    @staticmethod
+    @shortcut
     def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
         """
         Shortcut to create font awesome-style icons.
@@ -287,6 +279,7 @@ class Column(NamespaceAwareObject):
         return Column(**kwargs)
 
     @staticmethod
+    @shortcut
     def edit(is_report=False, **kwargs):
         """
         Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
@@ -298,6 +291,7 @@ class Column(NamespaceAwareObject):
         return Column.icon('pencil-square-o', is_report, 'Edit', **kwargs)
 
     @staticmethod
+    @shortcut
     def delete(is_report=False, **kwargs):
         """
         Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
@@ -309,6 +303,7 @@ class Column(NamespaceAwareObject):
         return Column.icon('trash-o', is_report, 'Delete', **kwargs)
 
     @staticmethod
+    @shortcut
     def download(is_report=False, **kwargs):
         """
         Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
@@ -320,6 +315,7 @@ class Column(NamespaceAwareObject):
         return Column.icon('download', is_report, 'Download', **kwargs)
 
     @staticmethod
+    @shortcut
     def run(is_report=False, show=True, **kwargs):
         """
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
@@ -336,6 +332,7 @@ class Column(NamespaceAwareObject):
         return Column(**kwargs)
 
     @staticmethod
+    @shortcut
     def select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, **kwargs):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
@@ -357,6 +354,7 @@ class Column(NamespaceAwareObject):
         return Column(**kwargs)
 
     @staticmethod
+    @shortcut
     def boolean(is_report=False, **kwargs):
         """
         Shortcut to render booleans as a check mark if true or blank if false.
@@ -375,47 +373,7 @@ class Column(NamespaceAwareObject):
         return Column(**kwargs)
 
     @staticmethod
-    def link(**kwargs):
-        """
-        Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
-        """
-        def url(table, column, row, value):
-            del table, value
-            r = getattr_path(row, column.attr)
-            return r.get_absolute_url() if r else ''
-
-        setdefaults(kwargs, dict(
-            cell__url=url,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def number(**kwargs):
-        """
-        Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
-        """
-        setdefaults(kwargs, dict(
-            cell__attrs__class__rj=True
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def float(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.float,
-            bulk__class=Field.float,
-        ))
-        return Column.number(**kwargs)
-
-    @staticmethod
-    def integer(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.integer,
-            bulk__class=Field.integer,
-        ))
-        return Column.number(**kwargs)
-
-    @staticmethod
+    @shortcut
     def choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
             bulk__class=Field.choice_queryset,
@@ -426,6 +384,7 @@ class Column(NamespaceAwareObject):
         return Column.choice(**kwargs)
 
     @staticmethod
+    @shortcut
     def multi_choice_queryset(**kwargs):
         setdefaults(kwargs, dict(
             bulk__class=Field.multi_choice_queryset,
@@ -437,6 +396,7 @@ class Column(NamespaceAwareObject):
         return Column.choice(**kwargs)
 
     @staticmethod
+    @shortcut
     def choice(**kwargs):
         choices = kwargs['choices']
         setdefaults(kwargs, dict(
@@ -444,56 +404,6 @@ class Column(NamespaceAwareObject):
             bulk__choices=choices,
             query__class=Variable.choice,
             query__choices=choices,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def substring(**kwargs):
-        setdefaults(kwargs, dict(
-            query__gui_op=':',
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def date(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.date,
-            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.date,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def datetime(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.datetime,
-            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.datetime,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def time(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.time,
-            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.time,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def email(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.email,
-            bulk__class=Field.email,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def decimal(**kwargs):
-        setdefaults(kwargs, dict(
-            bulk__class=Field.decimal,
-            query__class=Variable.decimal,
         ))
         return Column(**kwargs)
 
@@ -516,6 +426,78 @@ class Column(NamespaceAwareObject):
             field_name=field_name,
             model_field=model_field,
             **kwargs)
+
+Column.text = Shortcut(
+    call_target=Column,
+)
+
+
+# Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
+def link_cell_url(table, column, row, value):
+    del table, value
+    r = getattr_path(row, column.attr)
+    return r.get_absolute_url() if r else ''
+
+Column.link = Shortcut(
+    call_target=Column,
+    cell__url=link_cell_url,
+)
+
+# Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
+Column.number = Shortcut(
+    call_target=Column,
+    cell__attrs__class__rj=True,
+)
+
+Column.float = Shortcut(
+    call_target=Column.number,
+    query__class=Variable.float,
+    bulk__class=Field.float,
+)
+
+Column.integer = Shortcut(
+    call_target=Column.number,
+    query__class=Variable.integer,
+    bulk__class=Field.integer,
+)
+
+Column.substring = Shortcut(
+    call_target=Column,
+    query__gui_op=':',
+)
+
+Column.date = Shortcut(
+    call_target=Column,
+    query__class=Variable.date,
+    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+    bulk__class=Field.date,
+)
+
+Column.datetime = Shortcut(
+    call_target=Column,
+    query__class=Variable.datetime,
+    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+    bulk__class=Field.datetime,
+)
+
+Column.time = Shortcut(
+    call_target=Column,
+    query__class=Variable.time,
+    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+    bulk__class=Field.time,
+)
+
+Column.email = Shortcut(
+    call_target=Column,
+    query__class=Variable.email,
+    bulk__class=Field.email,
+)
+
+Column.decimal = Shortcut(
+    call_target=Column,
+    bulk__class=Field.decimal,
+    query__class=Variable.decimal,
+)
 
 
 class BoundRow(object):
@@ -850,7 +832,7 @@ class Table(object):
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         group_columns = []
 
-        class GroupColumn(Namespace):
+        class GroupColumn(Struct):
             def render_css_class(self):
                 return render_class(self.attrs['class'])
 
@@ -861,7 +843,7 @@ class Table(object):
             group_columns.append(GroupColumn(
                 display_name=group_name,
                 colspan=len(columns_in_group),
-                attrs__class__superheader=True,
+                attrs={'class': Struct(superheader=True)},
             ))
 
             for bound_column in columns_in_group:
