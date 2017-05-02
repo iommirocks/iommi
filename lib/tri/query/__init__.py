@@ -10,7 +10,8 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import merged
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, sort_after, dispatch, EMPTY, setattr_path, getattr_path
+from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, \
+    evaluate_recursive, sort_after, dispatch, EMPTY, NamespaceAwareObject, overridable, Shortcut, shortcut
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
@@ -71,14 +72,6 @@ def value_to_query_string_value_string(variable, v):
 MISSING = object()
 
 
-class NamespaceAwareObject(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            getattr_path(self, k)
-            setattr_path(self, k, v)
-        super(NamespaceAwareObject, self).__init__()
-
-
 def case_sensitive_op_to_q_op(op):
     return {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op]
 
@@ -108,6 +101,20 @@ class Variable(NamespaceAwareObject):
     """
     Class that describes a variable that you can search for.
     """
+
+    name = overridable
+    after = overridable
+    show = overridable
+    attr = overridable
+    gui = overridable
+    gui_op = overridable
+    freetext = overridable
+    model = overridable
+    model_field = overridable
+    extra = overridable
+    choices = overridable
+    value_to_q_lookup = overridable
+
     @dispatch(
         gui_op='=',
         show=True,
@@ -124,19 +131,6 @@ class Variable(NamespaceAwareObject):
         :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
         :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
-
-        self.name = None
-        self.after = None
-        self.show = None
-        self.attr = None
-        self.gui = None
-        self.gui_op = None
-        self.freetext = None
-        self.model = None
-        self.model_field = None
-        self.extra = None
-        self.choices = None
-        self.value_to_q_lookup = None
 
         super(Variable, self).__init__(**kwargs)
 
@@ -161,11 +155,13 @@ class Variable(NamespaceAwareObject):
         return bound_variable
 
     @staticmethod
+    @overridable
     def op_to_q_op(op):
         """ :type: (unicode) -> Q """
         return Q_OP_BY_OP[op]
 
     @staticmethod
+    @overridable
     def value_to_q(variable, op, value_string_or_f):
         if variable.attr is None:
             return Q()
@@ -183,17 +179,7 @@ class Variable(NamespaceAwareObject):
             return r
 
     @staticmethod
-    def text(**kwargs):  # pragma: no cover
-        return Variable(**kwargs)
-
-    @staticmethod
-    def case_sensitive(**kwargs):
-        """
-        Case sensitive text field.
-        """
-        return Variable(op_to_q_op=case_sensitive_op_to_q_op, **kwargs)
-
-    @staticmethod
+    @shortcut
     def choice(**kwargs):  # pragma: no cover
         """
         Field that has one value out of a set.
@@ -206,6 +192,7 @@ class Variable(NamespaceAwareObject):
         return Variable(**kwargs)
 
     @staticmethod
+    @shortcut
     def choice_queryset(**kwargs):
         """
         Field that has one value out of a set.
@@ -218,80 +205,6 @@ class Variable(NamespaceAwareObject):
             op_to_q_op=lambda op: 'exact',
             value_to_q_lookup='name',
             value_to_q=choice_queryset_value_to_q,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def multi_choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.multi_choice_queryset
-        ))
-        return Variable.choice_queryset(**kwargs)
-
-    @staticmethod
-    def boolean(**kwargs):  # pragma: no cover
-        """
-        Boolean field. Tries hard to parse a boolean value from its input.
-        """
-        setdefaults(kwargs, dict(
-            gui__class=Field.boolean,
-            value_to_q=boolean_value_to_q,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def integer(**kwargs):  # pragma: no cover
-        setdefaults(kwargs, dict(
-            gui__class=Field.integer,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def float(**kwargs):  # pragma: no cover
-        setdefaults(kwargs, dict(
-            gui__class=Field.float,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def url(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.url,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def time(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.time,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def datetime(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.datetime,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def date(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.date,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def email(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.email,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def decimal(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.decimal,
         ))
         return Variable(**kwargs)
 
@@ -313,6 +226,67 @@ class Variable(NamespaceAwareObject):
             field_name=field_name,
             model_field=model_field,
             **kwargs)
+
+
+Variable.text = Shortcut(
+    call_target=Variable,
+)
+
+Variable.case_sensitive = Shortcut(
+    call_target=Variable,
+    op_to_q_op=case_sensitive_op_to_q_op,
+)
+
+Variable.multi_choice_queryset = Shortcut(
+    call_target=Variable.choice_queryset,
+    gui__class=Field.multi_choice_queryset,
+)
+
+Variable.boolean = Shortcut(
+    call_target=Variable,
+    gui__class=Field.boolean,
+    value_to_q=boolean_value_to_q,
+)
+
+Variable.integer = Shortcut(
+    call_target=Variable,
+    gui__class=Field.integer,
+)
+
+Variable.float = Shortcut(
+    call_target=Variable,
+    gui__class=Field.float,
+)
+
+Variable.url = Shortcut(
+    call_target=Variable,
+    gui__class=Field.url,
+)
+
+Variable.time = Shortcut(
+    call_target=Variable,
+    gui__class=Field.time,
+)
+
+Variable.datetime = Shortcut(
+    call_target=Variable,
+    gui__class=Field.datetime,
+)
+
+Variable.date = Shortcut(
+    call_target=Variable,
+    gui__class=Field.date,
+)
+
+Variable.email = Shortcut(
+    call_target=Variable,
+    gui__class=Field.email,
+)
+
+Variable.decimal = Shortcut(
+    call_target=Variable,
+    gui__class=Field.decimal,
+)
 
 
 class StringValue(text_type):
