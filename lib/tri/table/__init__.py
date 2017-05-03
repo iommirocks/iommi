@@ -926,19 +926,16 @@ class Table(object):
             def generate_variables():
                 for column in self.bound_columns:
                     if column.query.show:
-                        query_kwargs = setdefaults_path(
-                            Struct(),
+                        query_namespace = setdefaults_path(
+                            Namespace(),
                             column.query,
-                            dict(
-                                name=column.name,
-                                gui__label=column.display_name,
-                                attr=column.attr,
-                                model=column.table.model,
-                            ), {
-                                'class': Variable,
-                            }
+                            call_target=Variable,
+                            name=column.name,
+                            gui__label=column.display_name,
+                            attr=column.attr,
+                            model=column.table.model,
                         )
-                        yield query_kwargs.pop('class')(**query_kwargs)
+                        yield query_namespace()
             variables = list(generate_variables())
 
             self.query = Query(
@@ -959,22 +956,19 @@ class Table(object):
             def generate_bulk_fields():
                 for column in self.bound_columns:
                     if column.bulk.show:
-                        bulk_kwargs = setdefaults_path(
-                            Struct(),
+                        bulk_namespace = setdefaults_path(
+                            Namespace(),
                             column.bulk,
-                            dict(
-                                name=column.name,
-                                attr=column.attr,
-                                required=False,
-                                empty_choice_tuple=(None, '', '---', True),
-                                model=self.model,
-                            ), {
-                                'class': Field.from_model,
-                            }
+                            call_target=Field.from_model,
+                            name=column.name,
+                            attr=column.attr,
+                            required=False,
+                            empty_choice_tuple=(None, '', '---', True),
+                            model=self.model,
                         )
-                        if bulk_kwargs['class'] == Field.from_model:
-                            bulk_kwargs['field_name'] = column.attr
-                        yield bulk_kwargs.pop('class')(**bulk_kwargs)
+                        if bulk_namespace['call_target'] == Field.from_model:
+                            bulk_namespace['field_name'] = column.attr
+                        yield bulk_namespace()
             bulk_fields = list(generate_bulk_fields())
 
             self.bulk_form = Form(
