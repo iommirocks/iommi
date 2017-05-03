@@ -48,9 +48,9 @@ def test_show():
 
 def test_namespace_merge():
     v = Variable(gui__show=True)
-    assert v.gui['class'] == Field
+    assert v.gui.call_target == Field
     v = Variable(gui=Struct(show=True))
-    assert v.gui['class'] == Field
+    assert v.gui.call_target == Field
 
 
 def test_request_data():

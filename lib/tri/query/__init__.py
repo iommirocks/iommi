@@ -10,8 +10,8 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import merged
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, \
-    evaluate_recursive, sort_after, dispatch, EMPTY, NamespaceAwareObject, overridable, Shortcut, shortcut
+from tri.declarative import declarative, creation_ordered, setdefaults, filter_show_recursive, \
+    evaluate_recursive, sort_after, dispatch, EMPTY, NamespaceAwareObject, overridable, Shortcut, shortcut, Namespace
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
@@ -119,9 +119,11 @@ class Variable(NamespaceAwareObject):
         gui_op='=',
         show=True,
         attr=MISSING,
-        gui__show=False,
-        gui__class=Field,
-        gui__required=False,
+        gui=Namespace(
+            call_target=Field,
+            show=False,
+            required=False,
+        ),
         extra=EMPTY,
     )
     def __init__(self, **kwargs):
@@ -129,7 +131,7 @@ class Variable(NamespaceAwareObject):
         Parameters with the prefix "gui__" will be passed along downstream to the tri.form.Field instance if applicable. This can be used to tweak the basic style interface.
 
         :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
-        :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
+        :param gui__call_target: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
 
         super(Variable, self).__init__(**kwargs)
@@ -324,7 +326,10 @@ class Query(object):
     """ :type: list of BoundVariable """
     bound_variable_by_name = {}
 
-    def __init__(self, request=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', **kwargs):  # variables=None to make pycharm tooling not confused
+    @dispatch(
+        gui=Namespace(call_target=Form),
+    )
+    def __init__(self, request=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', gui=None):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
@@ -348,7 +353,7 @@ class Query(object):
 
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
 
-        self.gui_kwargs = extract_subkeys(kwargs, 'gui')
+        self.gui = gui
 
     def parse(self, query_string):
         """
@@ -519,13 +524,13 @@ class Query(object):
                 assert variable.name is not MISSING
                 assert variable.attr is not MISSING
                 params = merged(variable.gui, name=variable.name, attr=variable.attr)
-                fields.append(params.pop('class')(**params))
+                fields.append(params.pop('call_target')(**params))
 
-        form = Form(
+        form = self.gui(
             request=self.request,
             fields=fields,
             endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
-            **self.gui_kwargs)
+        )
         form.tri_query = self
         form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
         self._form = form
