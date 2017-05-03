@@ -179,36 +179,6 @@ class Variable(NamespaceAwareObject):
             return r
 
     @staticmethod
-    @shortcut
-    def choice(**kwargs):  # pragma: no cover
-        """
-        Field that has one value out of a set.
-        :type choices: list
-        """
-        setdefaults(kwargs, dict(
-            gui__choices=kwargs.get('choices'),
-            gui__class=Field.choice,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def choice_queryset(**kwargs):
-        """
-        Field that has one value out of a set.
-        :type choices: django.db.models.QuerySet
-        """
-        setdefaults(kwargs, dict(
-            gui__class=Field.choice_queryset,
-            gui__choices=kwargs['choices'],
-            gui__model=kwargs['model'],
-            op_to_q_op=lambda op: 'exact',
-            value_to_q_lookup='name',
-            value_to_q=choice_queryset_value_to_q,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
             model=model,
@@ -237,55 +207,94 @@ Variable.case_sensitive = Shortcut(
     op_to_q_op=case_sensitive_op_to_q_op,
 )
 
+
+@shortcut
+@dispatch(
+    call_target=Variable,
+    gui__call_target=Field.choice,
+)
+def variable_shortcut_choice(call_target, **kwargs):  # pragma: no cover
+    """
+    Field that has one value out of a set.
+    :type choices: list
+    """
+    setdefaults(kwargs, dict(
+        gui__choices=kwargs.get('choices'),
+    ))
+    return call_target(**kwargs)
+Variable.choice = staticmethod(variable_shortcut_choice)
+
+
+@shortcut
+@dispatch(
+    call_target=Variable,
+    gui__call_target=Field.choice_queryset,
+    op_to_q_op=lambda op: 'exact',
+    value_to_q_lookup='name',
+    value_to_q=choice_queryset_value_to_q,
+)
+def variable_shortcut_choice_queryset(call_target, **kwargs):
+    """
+    Field that has one value out of a set.
+    :type choices: django.db.models.QuerySet
+    """
+    setdefaults(kwargs, dict(
+        gui__choices=kwargs['choices'],
+        gui__model=kwargs['model'],
+    ))
+    return call_target(**kwargs)
+Variable.choice_queryset = staticmethod(variable_shortcut_choice_queryset)
+
+
 Variable.multi_choice_queryset = Shortcut(
     call_target=Variable.choice_queryset,
-    gui__class=Field.multi_choice_queryset,
+    gui__call_target=Field.multi_choice_queryset,
 )
 
 Variable.boolean = Shortcut(
     call_target=Variable,
-    gui__class=Field.boolean,
+    gui__call_target=Field.boolean,
     value_to_q=boolean_value_to_q,
 )
 
 Variable.integer = Shortcut(
     call_target=Variable,
-    gui__class=Field.integer,
+    gui__call_target=Field.integer,
 )
 
 Variable.float = Shortcut(
     call_target=Variable,
-    gui__class=Field.float,
+    gui__call_target=Field.float,
 )
 
 Variable.url = Shortcut(
     call_target=Variable,
-    gui__class=Field.url,
+    gui__call_target=Field.url,
 )
 
 Variable.time = Shortcut(
     call_target=Variable,
-    gui__class=Field.time,
+    gui__call_target=Field.time,
 )
 
 Variable.datetime = Shortcut(
     call_target=Variable,
-    gui__class=Field.datetime,
+    gui__call_target=Field.datetime,
 )
 
 Variable.date = Shortcut(
     call_target=Variable,
-    gui__class=Field.date,
+    gui__call_target=Field.date,
 )
 
 Variable.email = Shortcut(
     call_target=Variable,
-    gui__class=Field.email,
+    gui__call_target=Field.email,
 )
 
 Variable.decimal = Shortcut(
     call_target=Variable,
-    gui__class=Field.decimal,
+    gui__call_target=Field.decimal,
 )
 
 
