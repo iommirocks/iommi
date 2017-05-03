@@ -258,156 +258,6 @@ class Column(NamespaceAwareObject):
         return render_class(self.attrs['class'])
 
     @staticmethod
-    @shortcut
-    def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
-        """
-        Shortcut to create font awesome-style icons.
-
-        :param icon: the font awesome name of the icon
-        """
-        setdefaults(kwargs, dict(
-            name='',
-            display_name='',
-            sortable=False,
-            attrs__class__thin=True,
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-            title=icon_title,
-            cell__value=lambda table, column, row, **_: True,
-            cell__attrs__class__cj=True,
-            cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def edit(is_report=False, **kwargs):
-        """
-        Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
-            display_name=''
-        ))
-        return Column.icon('pencil-square-o', is_report, 'Edit', **kwargs)
-
-    @staticmethod
-    @shortcut
-    def delete(is_report=False, **kwargs):
-        """
-        Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
-            display_name=''
-        ))
-        return Column.icon('trash-o', is_report, 'Delete', **kwargs)
-
-    @staticmethod
-    @shortcut
-    def download(is_report=False, **kwargs):
-        """
-        Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
-            cell__value=lambda row, **_: getattr(row, 'pk', False),
-        ))
-        return Column.icon('download', is_report, 'Download', **kwargs)
-
-    @staticmethod
-    @shortcut
-    def run(is_report=False, show=True, **kwargs):
-        """
-        Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            name='',
-            title='Run',
-            sortable=False,
-            css_class={'thin'},
-            cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
-            cell__value='Run',
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, **kwargs):
-        """
-        Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
-
-        :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
-        :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
-        """
-        setdefaults(kwargs, dict(
-            name='__select__',
-            title='Select all',
-            display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
-            sortable=False,
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-            attrs__class__thin=True,
-            attrs__class__nopad=True,
-            cell__attrs__class__cj=True,
-            cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def boolean(is_report=False, **kwargs):
-        """
-        Shortcut to render booleans as a check mark if true or blank if false.
-        """
-        def render_icon(value):
-            if callable(value):
-                value = value()
-            return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
-
-        setdefaults(kwargs, dict(
-            cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
-            cell__attrs__class__cj=True,
-            query__class=Variable.boolean,
-            bulk__class=Field.boolean,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
-            bulk__class=Field.choice_queryset,
-            bulk__model=kwargs.get('model'),
-            query__class=Variable.choice_queryset,
-            query__model=kwargs.get('model'),
-        ))
-        return Column.choice(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def multi_choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
-            bulk__class=Field.multi_choice_queryset,
-            bulk__model=kwargs.get('model'),
-            query__class=Variable.multi_choice_queryset,
-            query__model=kwargs.get('model'),
-            cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
-        ))
-        return Column.choice(**kwargs)
-
-    @staticmethod
-    @shortcut
-    def choice(**kwargs):
-        choices = kwargs['choices']
-        setdefaults(kwargs, dict(
-            bulk__class=Field.choice,
-            bulk__choices=choices,
-            query__class=Variable.choice,
-            query__choices=choices,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
             model=model,
@@ -426,6 +276,190 @@ class Column(NamespaceAwareObject):
             field_name=field_name,
             model_field=model_field,
             **kwargs)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    name='',
+    display_name='',
+    sortable=False,
+    attrs__class__thin=True,
+    cell__value=lambda table, column, row, **_: True,
+    cell__attrs__class__cj=True,
+)
+def column_shortcut_icon(icon, is_report=False, icon_title='', show=True, call_target=None, **kwargs):
+    """
+    Shortcut to create font awesome-style icons.
+
+    :param icon: the font awesome name of the icon
+    """
+    setdefaults(kwargs, dict(
+        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+        title=icon_title,
+        cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
+    ))
+    return call_target(**kwargs)
+Column.icon = staticmethod(column_shortcut_icon)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.icon,
+    cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
+    display_name=''
+)
+def column_shortcut_edit(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
+    """
+    return call_target('pencil-square-o', is_report, 'Edit', **kwargs)
+Column.edit = staticmethod(column_shortcut_edit)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.icon,
+    cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
+    display_name=''
+)
+def column_shortcut_delete(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
+    """
+    return call_target('trash-o', is_report, 'Delete', **kwargs)
+Column.delete = staticmethod(column_shortcut_delete)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.icon,
+    cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
+    cell__value=lambda row, **_: getattr(row, 'pk', False),
+)
+def column_shortcut_download(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
+    """
+    return call_target('download', is_report, 'Download', **kwargs)
+Column.download = staticmethod(column_shortcut_download)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    name='',
+    title='Run',
+    sortable=False,
+    css_class={'thin'},
+    cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
+    cell__value='Run',
+)
+def column_shortcut_run(is_report=False, show=True, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
+    """
+    setdefaults(kwargs, dict(
+        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+    ))
+    return call_target(**kwargs)
+Column.run = staticmethod(column_shortcut_run)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    name='__select__',
+    title='Select all',
+    display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
+    sortable=False,
+    attrs__class__thin=True,
+    attrs__class__nopad=True,
+    cell__attrs__class__cj=True,
+)
+def column_shortcut_select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
+    """
+    Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
+
+    :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
+    :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
+    """
+    setdefaults(kwargs, dict(
+        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+        cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
+    ))
+    return call_target(**kwargs)
+Column.select = staticmethod(column_shortcut_select)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    cell__attrs__class__cj=True,
+    query__class=Variable.boolean,
+    bulk__class=Field.boolean,
+)
+def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut to render booleans as a check mark if true or blank if false.
+    """
+    def render_icon(value):
+        if callable(value):
+            value = value()
+        return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
+
+    setdefaults(kwargs, dict(
+        cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
+    ))
+    return call_target(**kwargs)
+Column.boolean = staticmethod(column_shortcut_boolean)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    bulk__class=Field.choice,
+    query__class=Variable.choice,
+)
+def column_shortcut_choice(call_target, **kwargs):
+    choices = kwargs['choices']
+    setdefaults(kwargs, dict(
+        bulk__choices=choices,
+        query__choices=choices,
+    ))
+    return call_target(**kwargs)
+Column.choice = staticmethod(column_shortcut_choice)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.choice,
+    bulk__class=Field.choice_queryset,
+    query__class=Variable.choice_queryset,
+)
+def column_shortcut_choice_queryset(call_target, **kwargs):
+    setdefaults(kwargs, dict(
+        bulk__model=kwargs.get('model'),
+        query__model=kwargs.get('model'),
+    ))
+    return call_target(**kwargs)
+Column.choice_queryset = staticmethod(column_shortcut_choice_queryset)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.choice,
+    bulk__class=Field.multi_choice_queryset,
+    query__class=Variable.multi_choice_queryset,
+    cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
+)
+def column_shortcut_multi_choice_queryset(call_target, **kwargs):
+    setdefaults(kwargs, dict(
+        bulk__model=kwargs.get('model'),
+        query__model=kwargs.get('model'),
+    ))
+    return call_target(**kwargs)
+Column.multi_choice_queryset = staticmethod(column_shortcut_multi_choice_queryset)
 
 Column.text = Shortcut(
     call_target=Column,
