@@ -1176,32 +1176,32 @@ def test_query_namespace_inject():
 
 def test_float():
     x = Column.float()
-    assert getattr_path(x, 'query__class') == Variable.float
-    assert getattr_path(x, 'bulk__class') == Field.float
+    assert getattr_path(x, 'query__call_target') == Variable.float
+    assert getattr_path(x, 'bulk__call_target') == Field.float
 
 
 def test_integer():
     x = Column.integer()
-    assert getattr_path(x, 'query__class') == Variable.integer
-    assert getattr_path(x, 'bulk__class') == Field.integer
+    assert getattr_path(x, 'query__call_target') == Variable.integer
+    assert getattr_path(x, 'bulk__call_target') == Field.integer
 
 
 def test_date():
     x = Column.date()
-    assert getattr_path(x, 'query__class') == Variable.date
-    assert getattr_path(x, 'bulk__class') == Field.date
+    assert getattr_path(x, 'query__call_target') == Variable.date
+    assert getattr_path(x, 'bulk__call_target') == Field.date
 
 
 def test_datetime():
     x = Column.datetime()
-    assert getattr_path(x, 'query__class') == Variable.datetime
-    assert getattr_path(x, 'bulk__class') == Field.datetime
+    assert getattr_path(x, 'query__call_target') == Variable.datetime
+    assert getattr_path(x, 'bulk__call_target') == Field.datetime
 
 
 def test_email():
     x = Column.email()
-    assert getattr_path(x, 'query__class') == Variable.email
-    assert getattr_path(x, 'bulk__class') == Field.email
+    assert getattr_path(x, 'query__call_target') == Variable.email
+    assert getattr_path(x, 'bulk__call_target') == Field.email
 
 
 def test_extra():

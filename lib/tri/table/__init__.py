@@ -19,7 +19,7 @@ from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, \
-    getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace, setattr_path, \
+    getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, \
     NamespaceAwareObject, overridable, shortcut, Shortcut
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR
 from tri.named_struct import NamedStructField, NamedStruct
@@ -218,8 +218,8 @@ class Column(NamespaceAwareObject):
 
     def _bind(self, table, index):
         bound_column = copy.copy(self)
-        bound_column.attrs = self.attrs.copy()
-        bound_column.attrs['class'] = bound_column.attrs['class'].copy()
+        bound_column.attrs = Namespace(self.attrs.copy())
+        bound_column.attrs['class'] = Namespace(bound_column.attrs['class'].copy())
 
         bound_column.index = index
         bound_column.bulk = setdefaults_path(
@@ -396,8 +396,8 @@ Column.select = staticmethod(column_shortcut_select)
 @dispatch(
     call_target=Column,
     cell__attrs__class__cj=True,
-    query__class=Variable.boolean,
-    bulk__class=Field.boolean,
+    query__call_target=Variable.boolean,
+    bulk__call_target=Field.boolean,
 )
 def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
     """
@@ -418,8 +418,8 @@ Column.boolean = staticmethod(column_shortcut_boolean)
 @shortcut
 @dispatch(
     call_target=Column,
-    bulk__class=Field.choice,
-    query__class=Variable.choice,
+    bulk__call_target=Field.choice,
+    query__call_target=Variable.choice,
 )
 def column_shortcut_choice(call_target, **kwargs):
     choices = kwargs['choices']
@@ -434,8 +434,8 @@ Column.choice = staticmethod(column_shortcut_choice)
 @shortcut
 @dispatch(
     call_target=Column.choice,
-    bulk__class=Field.choice_queryset,
-    query__class=Variable.choice_queryset,
+    bulk__call_target=Field.choice_queryset,
+    query__call_target=Variable.choice_queryset,
 )
 def column_shortcut_choice_queryset(call_target, **kwargs):
     setdefaults(kwargs, dict(
@@ -449,8 +449,8 @@ Column.choice_queryset = staticmethod(column_shortcut_choice_queryset)
 @shortcut
 @dispatch(
     call_target=Column.choice,
-    bulk__class=Field.multi_choice_queryset,
-    query__class=Variable.multi_choice_queryset,
+    bulk__call_target=Field.multi_choice_queryset,
+    query__call_target=Variable.multi_choice_queryset,
     cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
 )
 def column_shortcut_multi_choice_queryset(call_target, **kwargs):
@@ -485,14 +485,14 @@ Column.number = Shortcut(
 
 Column.float = Shortcut(
     call_target=Column.number,
-    query__class=Variable.float,
-    bulk__class=Field.float,
+    query__call_target=Variable.float,
+    bulk__call_target=Field.float,
 )
 
 Column.integer = Shortcut(
     call_target=Column.number,
-    query__class=Variable.integer,
-    bulk__class=Field.integer,
+    query__call_target=Variable.integer,
+    bulk__call_target=Field.integer,
 )
 
 Column.substring = Shortcut(
@@ -502,35 +502,35 @@ Column.substring = Shortcut(
 
 Column.date = Shortcut(
     call_target=Column,
-    query__class=Variable.date,
+    query__call_target=Variable.date,
     query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-    bulk__class=Field.date,
+    bulk__call_target=Field.date,
 )
 
 Column.datetime = Shortcut(
     call_target=Column,
-    query__class=Variable.datetime,
+    query__call_target=Variable.datetime,
     query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-    bulk__class=Field.datetime,
+    bulk__call_target=Field.datetime,
 )
 
 Column.time = Shortcut(
     call_target=Column,
-    query__class=Variable.time,
+    query__call_target=Variable.time,
     query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-    bulk__class=Field.time,
+    bulk__call_target=Field.time,
 )
 
 Column.email = Shortcut(
     call_target=Column,
-    query__class=Variable.email,
-    bulk__class=Field.email,
+    query__call_target=Variable.email,
+    bulk__call_target=Field.email,
 )
 
 Column.decimal = Shortcut(
     call_target=Column,
-    bulk__class=Field.decimal,
-    query__class=Variable.decimal,
+    bulk__call_target=Field.decimal,
+    query__call_target=Variable.decimal,
 )
 
 
@@ -942,7 +942,7 @@ class Table(object):
                 request=request,
                 variables=variables,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
-                **flatten(self.query_args)
+                **self.query_args
             )
             self.query_form = self.query.form() if self.query.variables else None
 
@@ -975,7 +975,7 @@ class Table(object):
                 data=request.POST,
                 fields=bulk_fields,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
-                **flatten(self.bulk)
+                **self.bulk
             ) if bulk_fields else None
 
         self._prepare_auto_rowspan()
