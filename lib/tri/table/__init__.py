@@ -20,7 +20,7 @@ from django.db.models import QuerySet
 import six
 from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, \
     getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, \
-    NamespaceAwareObject, overridable, shortcut, Shortcut
+    RefinableObject, refinable, Refinable, shortcut, Shortcut
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, merged
@@ -28,7 +28,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '4.3.0'  # pragma: no mutate
+__version__ = '5.0.0'  # pragma: no mutate
 
 LAST = LAST
 
@@ -124,30 +124,28 @@ def default_cell_formatter(table, column, row, value, **_):
     return conditional_escape(value)
 
 
-
 @creation_ordered
-class Column(NamespaceAwareObject):
+class Column(RefinableObject):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
-    name = overridable
-    after = overridable
-    attrs = overridable
-    url = overridable
-    title = overridable
-    show = overridable
-    sort_default_desc = overridable
-    sortable = overridable
-    group = overridable
-    auto_rowspan = overridable
-    cell = overridable
-    model = overridable
-    model_field = overridable
-    choices = overridable
-    bulk = overridable
-    query = overridable
-    extra = overridable
-
+    name = Refinable()
+    after = Refinable()
+    attrs = Refinable()
+    url = Refinable()
+    title = Refinable()
+    show = Refinable()
+    sort_default_desc = Refinable()
+    sortable = Refinable()
+    group = Refinable()
+    auto_rowspan = Refinable()
+    cell = Refinable()
+    model = Refinable()
+    model_field = Refinable()
+    choices = Refinable()
+    bulk = Refinable()
+    query = Refinable()
+    extra = Refinable()
 
     @dispatch(
         show=True,
@@ -201,18 +199,21 @@ class Column(NamespaceAwareObject):
         self.is_sorting = None
         """ :type: bool """
 
+    def __repr__(self):
+        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
+
     @staticmethod
-    @overridable
+    @refinable
     def attr(table, column, **_):
         return column.name
 
     @staticmethod
-    @overridable
+    @refinable
     def sort_key(table, column, **_):
         return column.attr
 
     @staticmethod
-    @overridable
+    @refinable
     def display_name(table, column, **_):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
@@ -300,6 +301,8 @@ def column_shortcut_icon(icon, is_report=False, icon_title='', show=True, call_t
         cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
     ))
     return call_target(**kwargs)
+
+
 Column.icon = staticmethod(column_shortcut_icon)
 
 
@@ -314,6 +317,8 @@ def column_shortcut_edit(is_report=False, call_target=None, **kwargs):
     Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
     """
     return call_target('pencil-square-o', is_report, 'Edit', **kwargs)
+
+
 Column.edit = staticmethod(column_shortcut_edit)
 
 
@@ -328,6 +333,8 @@ def column_shortcut_delete(is_report=False, call_target=None, **kwargs):
     Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
     """
     return call_target('trash-o', is_report, 'Delete', **kwargs)
+
+
 Column.delete = staticmethod(column_shortcut_delete)
 
 
@@ -342,6 +349,8 @@ def column_shortcut_download(is_report=False, call_target=None, **kwargs):
     Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
     """
     return call_target('download', is_report, 'Download', **kwargs)
+
+
 Column.download = staticmethod(column_shortcut_download)
 
 
@@ -363,6 +372,8 @@ def column_shortcut_run(is_report=False, show=True, call_target=None, **kwargs):
         show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
     ))
     return call_target(**kwargs)
+
+
 Column.run = staticmethod(column_shortcut_run)
 
 
@@ -389,6 +400,8 @@ def column_shortcut_select(is_report=False, checkbox_name='pk', show=True, check
         cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
     ))
     return call_target(**kwargs)
+
+
 Column.select = staticmethod(column_shortcut_select)
 
 
@@ -412,6 +425,8 @@ def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
         cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
     ))
     return call_target(**kwargs)
+
+
 Column.boolean = staticmethod(column_shortcut_boolean)
 
 
@@ -428,6 +443,8 @@ def column_shortcut_choice(call_target, **kwargs):
         query__choices=choices,
     ))
     return call_target(**kwargs)
+
+
 Column.choice = staticmethod(column_shortcut_choice)
 
 
@@ -443,6 +460,8 @@ def column_shortcut_choice_queryset(call_target, **kwargs):
         query__model=kwargs.get('model'),
     ))
     return call_target(**kwargs)
+
+
 Column.choice_queryset = staticmethod(column_shortcut_choice_queryset)
 
 
@@ -459,6 +478,8 @@ def column_shortcut_multi_choice_queryset(call_target, **kwargs):
         query__model=kwargs.get('model'),
     ))
     return call_target(**kwargs)
+
+
 Column.multi_choice_queryset = staticmethod(column_shortcut_multi_choice_queryset)
 
 Column.text = Shortcut(
@@ -471,6 +492,7 @@ def link_cell_url(table, column, row, value):
     del table, value
     r = getattr_path(row, column.attr)
     return r.get_absolute_url() if r else ''
+
 
 Column.link = Shortcut(
     call_target=Column,
@@ -779,15 +801,6 @@ class Table(object):
             return ''
         return render_template(self.request, self.filter.template, merged(self.context, form=self.query_form))
 
-    @staticmethod
-    def render_template_config(template_config, context):
-        if template_config.template:
-            if isinstance(template_config.template, six.string_types):
-                return render_to_string(template_config.template, context)
-            else:
-                return template_config.template.render(context)
-        return ''
-
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
 
@@ -939,7 +952,7 @@ class Table(object):
                             column.query,
                             call_target=Variable,
                             name=column.name,
-                            gui__label=column.display_name,
+                            gui__display_name=column.display_name,
                             attr=column.attr,
                             model=column.table.model,
                         )
@@ -1154,8 +1167,7 @@ def render_table(request,
                  table,
                  links=None,
                  context=None,
-                 template_name='tri_table/list.html',  # deprecated
-                 template=None,
+                 template='tri_table/list.html',
                  blank_on_empty=False,
                  paginate_by=40,  # pragma: no mutate
                  page=None,
@@ -1182,8 +1194,8 @@ def render_table(request,
     if table is None or isinstance(table, Namespace):
         table = Table.from_model(**table)
 
-    table.prepare(request)
     assert isinstance(table, Table)
+    table.prepare(request)
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=table)
     if should_return:
@@ -1230,9 +1242,6 @@ def render_table(request,
     if table.query_form and not table.query_form.is_valid():
         table.data = None
         table.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
-
-    if not template:
-        template = template_name
 
     return render_template(request, template, table.context)
 
