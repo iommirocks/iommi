@@ -807,9 +807,17 @@ class Table(object):
                     else:
                         rowspan_by_row[id(prev_row)] += 1
 
-                column.cell.attrs['rowspan'] = set_row_span(rowspan_by_row)
-                assert 'style' not in column.cell.attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
-                column.cell.attrs['style'] = set_display_none(rowspan_by_row)
+                orig_style = column.cell.attrs.get('style')
+
+                def rowspan(row, **_):
+                    return rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
+
+                def style(row, **_):
+                    return 'display: none%s' % ('; ' + orig_style if orig_style else '') if id(row) not in rowspan_by_row else orig_style
+
+                assert 'rowspan' not in column.cell.attrs
+                dict.__setitem__(column.cell.attrs, 'rowspan', rowspan)
+                dict.__setitem__(column.cell.attrs, 'style', style)
 
     def _prepare_evaluate_members(self):
         self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
@@ -1137,14 +1145,6 @@ def table_context(request,
 
     base_context.update(extra_context)
     return base_context
-
-
-def set_row_span(rowspan_by_row):
-    return lambda row, **_: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
-
-
-def set_display_none(rowspan_by_row):
-    return lambda row, **_: 'display: none' if id(row) not in rowspan_by_row else None
 
 
 @dispatch(
