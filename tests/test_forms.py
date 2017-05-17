@@ -55,6 +55,11 @@ class MyTestForm(Form):
     # TODO: tests for all shortcuts with required=False
 
 
+def test_repr():
+    assert '<tri.form.Field foo>' == repr(Field(name='foo'))
+    assert '<tri.form.Field foo>' == str(Field(name='foo'))
+
+
 def test_required():
     form = MyTestForm(request=RequestFactory().post('/', {'-': '-'}))
     assert form.fields_by_name['a_date'].value is None
@@ -228,6 +233,11 @@ def test_non_editable_from_initial():
 
     assert ':bar:' in MyForm(request=RequestFactory().get('/')).render()
     assert ':bar:' in MyForm(request=RequestFactory().post('/', {'-': '-'})).render()
+
+
+def test_apply():
+    form = Form(fields=[Field(name='foo', initial=17, editable=False)])
+    assert Struct(foo=17) == form.apply(Struct())
 
 
 def test_show():

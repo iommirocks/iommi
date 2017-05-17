@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+4.8.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Added useful return value on `Form.apply(...)`
+
+* Improve repr on `Field`
+
+
 4.7.1 (2017-04-24)
 ~~~~~~~~~~~~~~~~~~
 
