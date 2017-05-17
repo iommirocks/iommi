@@ -8,6 +8,8 @@ Changelog
 
 * Improve repr on `Field`
 
+* Added `Form.editable` settings for setting all fields at once
+
 
 4.7.1 (2017-04-24)
 ~~~~~~~~~~~~~~~~~~

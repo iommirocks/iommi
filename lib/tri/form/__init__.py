@@ -704,6 +704,9 @@ class Field(NamespaceAwareObject):
         bound_field.field = self
         bound_field.errors = set()
 
+        if form.editable is False:
+            bound_field.editable = False
+
         return bound_field
 
     EVALUATED_ATTRIBUTES = {
@@ -1109,6 +1112,7 @@ class Form(NamespaceAwareObject):
         is_full_form=True,
         model=None,
         endpoint__field=default_endpoint__field,
+        editable=True,
         extra=EMPTY,
         attrs__class__newforms=True,
         attrs__action='',
@@ -1126,6 +1130,7 @@ class Form(NamespaceAwareObject):
         self.links = None
         self.links_template = None
         self.attrs = None
+        self.editable = None
 
         self.model = None
         """ :type: django.db.models.Model """
