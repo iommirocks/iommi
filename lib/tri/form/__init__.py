@@ -749,6 +749,9 @@ class Field(NamespaceAwareObject):
     def render_input_container_css_classes(self):
         return render_css_classes(self.input_container_css_classes)
 
+    def __repr__(self):
+        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
+
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
     """
@@ -1400,6 +1403,7 @@ class Form(NamespaceAwareObject):
         assert self.is_valid()
         for field in self.fields:
             self.apply_field(instance=instance, field=field)
+        return instance
 
     @staticmethod
     def apply_field(instance, field):
