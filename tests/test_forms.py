@@ -987,7 +987,6 @@ def test_render():
                     </td>
                     <td>
                         <input id="id_bar" name="bar" type="text" value="">
-                        </input>
                     </td>
                 </tr>
                 <input name="-" type="hidden" value="-"/>
