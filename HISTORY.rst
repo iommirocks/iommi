@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.8.0 (----------)
+4.8.0 (2017-05-23)
 ~~~~~~~~~~~~~~~~~~
 
 * Added useful return value on `Form.apply(...)`
