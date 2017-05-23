@@ -250,6 +250,22 @@ def test_non_editable():
     assert Form(data={}, fields=[Field(name='foo', editable=False)]).fields[0].input_template == 'tri_form/non_editable.html'
 
 
+def test_non_editable_form():
+    form = Form(
+        editable=False,
+        data=Struct(foo='1', bar='2'),
+        instance=Struct(foo=3, bar=4),
+        fields=[
+            Field.integer(name='foo'),
+            Field.integer(name='bar', editable=False),
+        ]
+    )
+    assert 3 == form.fields_by_name.foo.value
+    assert 4 == form.fields_by_name.bar.value
+    assert False is form.fields_by_name.foo.editable
+    assert False is form.fields_by_name.bar.editable
+
+
 def test_text_fields():
     assert '<input type="text" ' in Form(data={}, fields=[Field.text(name='foo')]).compact()
     assert '<textarea' in Form(data={}, fields=[Field.textarea(name='foo')]).compact()
@@ -338,7 +354,7 @@ def test_bound_field_render_css_classes():
         container_css_classes={'a', 'b'},
         required=True,
     )._bind(
-        form=Struct(style='compact')
+        form=Struct(style='compact', editable=True)
     ).render_container_css_classes() == ' class="a b key-value required"'
 
 
