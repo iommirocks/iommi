@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+4.9.0 (xxxx-xx-xx)
+~~~~~~~~~~~~~~~~~~
+* Added attribute 'name' to Form in order to namespace POSTs in cases where there are more than one form
+
+
 4.8.0 (2017-05-23)
 ~~~~~~~~~~~~~~~~~~
 
