@@ -1,11 +1,25 @@
 Changelog
 ---------
 
-1.0.0 (----------)
-~~~~~~~~~~~~~~~~~~
+0.31.0 (2017-06-15)
+~~~~~~~~~~~~~~~~~~~
 
 * Improve `sort_after` to allow more combinations of `after=...` specifications.
   e.g. by name of an entry also moved by spec.
+
+* Changed name of first parameter of `setdefaults_path` to `__target__` to avoid
+  collitions with namespace parameters.
+
+* Added `RefinableObject` base for reuse by classes wanting to be able to be configured
+  via constructor kwarg parameters in a declarative fashion. (The namespace of possible 
+  constructor overrides are declared with `Refinable()` for values and the decorator 
+  `@refinable` for methods.
+
+* Added first incarnation of crawling the definitions to recursively find available 
+  parameters on objects and their aggregates.
+
+* Added `Shortcut` abstraction to be able to find pre-defined set of overrides of 
+  `RefinableObject` classes.
 
 
 0.30.0 (2017-02-10)
