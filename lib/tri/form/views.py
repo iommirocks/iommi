@@ -83,7 +83,7 @@ def create_or_edit_object(
     # noinspection PyProtectedMember
     model_verbose_name = kwargs.get('model_verbose_name', model._meta.verbose_name.replace('_', ' '))
 
-    if request.method == 'POST' and form.is_valid():
+    if request.method == 'POST' and form.is_target() and form.is_valid():
 
         if is_create:
             assert instance is None

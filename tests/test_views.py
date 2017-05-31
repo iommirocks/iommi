@@ -101,3 +101,60 @@ def test_redirect_default_case():
     sentinel1, sentinel2, sentinel3, sentinel4 = object(), object(), object(), object()
     expected = dict(redirect_to=sentinel2, request=sentinel3, form=sentinel4)
     assert create_or_edit_object_redirect(**merged(expected, is_create=sentinel1, redirect=lambda **kwargs: kwargs)) == expected
+
+
+def test_namespace_forms():
+    # Create object
+    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request.POST = {
+        'f_int': '3',
+        'f_float': '5.1',
+        'f_bool': 'True',
+        '-': '-',
+    }
+    response = create_object(
+        request=request,
+        model=CreateOrEditObjectTest,
+        on_save=lambda instance, **_: instance,  # just to check that we get called with the instance as argument
+        render=lambda **kwargs: kwargs)
+    assert get_saved_something() is not None
+    assert response.status_code == 302
+
+    # Edit should NOT work when the form name does not match the POST
+    request.POST = {
+        'f_int': '7',
+        'f_float': '11.2',
+        'some_other_form': '',
+        '-': '-',
+    }
+    response = edit_object(
+        request=request,
+        instance=get_saved_something(),
+        form__name='create_or_edit_object_form',
+        render=lambda **kwargs: kwargs)
+    form = response['context_instance']['form']
+    assert form.get_errors() == {}
+    assert form.is_valid()
+    assert not form.is_target()
+    assert get_saved_something() is not None
+    assert get_saved_something().f_int == 3
+    assert get_saved_something().f_float == 5.1
+    assert get_saved_something().f_bool
+
+    # Edit should work when the form name is in the POST
+    del request.POST['some_other_form']
+    request.POST['create_or_edit_object_form'] = ''
+    response = edit_object(
+        request=request,
+        instance=get_saved_something(),
+        redirect=lambda form, **_: {'context_instance': {'form': form}},
+        form__name='create_or_edit_object_form',
+        render=lambda **kwargs: kwargs)
+    form = response['context_instance']['form']
+    assert form.get_errors() == {}
+    assert form.is_valid()
+    assert form.is_target()
+    assert get_saved_something() is not None
+    assert get_saved_something().f_int == 7
+    assert get_saved_something().f_float == 11.2
+    assert not get_saved_something().f_bool

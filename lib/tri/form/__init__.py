@@ -1131,6 +1131,7 @@ class Form(NamespaceAwareObject):
         self.links_template = None
         self.attrs = None
         self.editable = None
+        self.name = None
 
         self.model = None
         """ :type: django.db.models.Model """
@@ -1149,6 +1150,8 @@ class Form(NamespaceAwareObject):
 
         if data is None:
             data = {}
+
+        self.data = data
 
         def unbound_fields():
             if fields is not None:
@@ -1257,6 +1260,11 @@ class Form(NamespaceAwareObject):
         """
         fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
         return Form(data=data, model=model, instance=instance, fields=fields, **kwargs)
+
+    def is_target(self):
+        if not self.name:
+            return True
+        return self.name in self.data
 
     def is_valid(self):
         if self._valid is None:

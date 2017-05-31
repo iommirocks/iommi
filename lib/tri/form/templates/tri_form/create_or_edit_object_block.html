@@ -15,7 +15,7 @@
   </div>
 
   <div class="form_buttons clear">
-    <input type="submit" class="button" value="{% if is_create %}Create{% else %}Save{% endif %} {{ object_name }}" accesskey="s" />
+    <input type="submit" class="button"{% if form.name %} name="{{ form.name }}"{% endif %} value="{% if is_create %}Create{% else %}Save{% endif %} {{ object_name }}" accesskey="s" />
   </div>
 </form>
 
