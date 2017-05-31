@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.3.1 (2017-05-31)
+~~~~~~~~~~~~~~~~~~
+
+* Bugfix: sorting on reverse relations didn't work
+
+
 4.3.0 (2017-04-25)
 ~~~~~~~~~~~~~~~~~~
 
