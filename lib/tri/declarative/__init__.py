@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import copy
 import functools
 import inspect
@@ -590,35 +590,52 @@ LAST = object()
 
 
 def sort_after(l):
+    unmoved = []
     to_be_moved_by_index = []
-    to_be_moved_by_name = []
+    to_be_moved_by_name = defaultdict(list)
     to_be_moved_last = []
     result = []
     for x in l:
         after = getattr(x, 'after', None)
         if after is None:
-            result.append(x)
+            unmoved.append(x)
         elif after is LAST:
             to_be_moved_last.append(x)
         elif type(after) == int:
             to_be_moved_by_index.append(x)
         else:
-            to_be_moved_by_name.append(x)
+            to_be_moved_by_name[x.after].append(x)
 
-    for x in reversed(to_be_moved_by_name):
-        for i, y in enumerate(result):
-            if y.name == x.after:
-                result.insert(i + 1, x)
-                del to_be_moved_by_name[-1]
-                break  # pragma: no mutate
+    to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x.after)
+
+    def place(x):
+        yield x
+        for y in to_be_moved_by_name.pop(x.name, []):
+            for z in place(y):
+                yield z
+
+    def traverse():
+        count = 0
+        while unmoved or to_be_moved_by_index:
+            while to_be_moved_by_index and count >= to_be_moved_by_index[0].after:
+                objects_with_index_due = place(to_be_moved_by_index.pop(0))
+                for x in objects_with_index_due:
+                    yield x
+                    count += 1
+            if unmoved:
+                next_unmoved_and_its_children = place(unmoved.pop(0))
+                for x in next_unmoved_and_its_children:
+                    yield x
+                    count += 1
+
+        for x in to_be_moved_last:
+            for y in place(x):
+                yield y
+
+    result = list(traverse())
 
     if to_be_moved_by_name:
-        raise KeyError('Tried to order after %s but %s not exist' % (', '.join([x.after for x in sorted(to_be_moved_by_name, key=lambda x: repr(x))]), 'that key does' if len(to_be_moved_by_name) == 1 else 'those keys do'))
-
-    for x in reversed(to_be_moved_by_index):
-        result.insert(x.after, x)
-
-    result.extend(to_be_moved_last)
+        raise KeyError('Tried to order after %s but %s not exist' % (', '.join(sorted(to_be_moved_by_name.keys())), 'that key does' if len(to_be_moved_by_name) == 1 else 'those keys do'))
 
     return result
 

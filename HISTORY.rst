@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+1.0.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Improve `sort_after` to allow more combinations of `after=...` specifications.
+  e.g. by name of an entry also moved by spec.
+
+
 0.30.0 (2017-02-10)
 ~~~~~~~~~~~~~~~~~~~
 

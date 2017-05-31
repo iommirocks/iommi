@@ -239,8 +239,63 @@ def test_namespace_retain_empty():
     assert Namespace(a=Namespace(b=Namespace())).a.b == Namespace()
 
 
-def test_order_after():
-    objects = [
+def test_order_after_0():
+    sorts_right([
+        Struct(name='foo', expected_position=1),
+        Struct(name='bar', expected_position=2),
+        Struct(name='quux', after=0, expected_position=0),
+        Struct(name='baz', expected_position=3),
+    ])
+
+
+def test_order_after_LAST():
+    sorts_right([
+        Struct(name='foo', expected_position=0),
+        Struct(name='bar', expected_position=1),
+        Struct(name='quux', after=LAST, expected_position=3),
+        Struct(name='baz', expected_position=2),
+    ])
+
+
+def test_order_after_name():
+    sorts_right([
+        Struct(name='foo', expected_position=0),
+        Struct(name='bar', expected_position=2),
+        Struct(name='quux', after='foo', expected_position=1),
+        Struct(name='baz', expected_position=3),
+    ])
+
+
+def test_order_after_name_stable():
+    sorts_right([
+        Struct(name='foo', expected_position=0),
+        Struct(name='bar', expected_position=3),
+        Struct(name='quux', after='foo', expected_position=1),
+        Struct(name='qoox', after='foo', expected_position=2),
+        Struct(name='baz', expected_position=4),
+    ])
+
+
+def test_order_after_name_interleave():
+    sorts_right([
+        Struct(name='foo', expected_position=0),
+        Struct(name='bar', expected_position=3),
+        Struct(name='qoox', after=1, expected_position=2),
+        Struct(name='quux', after='foo', expected_position=1),
+    ])
+
+
+def test_order_after_name_last():
+    sorts_right([
+        Struct(name='foo', expected_position=0),
+        Struct(name='quux', after='qoox', expected_position=3),
+        Struct(name='qoox', after=LAST, expected_position=2),
+        Struct(name='bar', expected_position=1),
+    ])
+
+
+def test_order_after_complete():
+    sorts_right([
         # header1
         Struct(name='quux', expected_position=2),
         Struct(name='foo', expected_position=3),
@@ -258,20 +313,29 @@ def test_order_after():
         Struct(name='quux4', expected_position=11),
         Struct(name='quux5', after=LAST, expected_position=12),
         Struct(name='quux6', after=LAST, expected_position=13),
-    ]
-
-    expected_order = sorted(objects, key=lambda x: x.expected_position)
-    assert [y.expected_position for y in expected_order], 'check expected_order' == list(range(len(objects)))
-    assert [x.expected_position for x in expected_order] == [x.expected_position for x in sort_after(objects)]
+    ])
 
 
-@pytest.mark.skipif(True, reason="Not yet implemented")
 def test_sort_after_chaining():
-    objects = [
-        Struct(name='foo', after='bar'),
-        Struct(name='bar', after=0),
-    ]
-    assert ['bar', 'foo'] == [x.name for x in sort_after(objects)]
+    sorts_right([
+        Struct(name='foo', after='bar', expected_position=1),
+        Struct(name='bar', after=0, expected_position=0),
+    ])
+
+
+def test_sort_after_name_chaining():
+    sorts_right([
+        Struct(name='baz', after='foo', expected_position=2),
+        Struct(name='foo', after='bar', expected_position=1),
+        Struct(name='bar', after=0, expected_position=0),
+    ])
+
+
+def sorts_right(objects):
+    expected_order = sorted(objects, key=lambda x: x.expected_position)
+    assert [y.expected_position for y in expected_order] == list(range(len(objects))), "Borken test"
+    sorted_objects = sort_after(objects)
+    assert list(range(len(objects))) == [x.expected_position for x in sorted_objects], [x.name for x in objects]
 
 
 def test_sort_after_points_to_nothing():
