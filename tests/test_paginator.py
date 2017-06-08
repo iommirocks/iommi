@@ -7,7 +7,7 @@ expected_base = dict(extra='', page_numbers=[1, 2, 3], show_first=False, show_la
 
 @pytest.fixture
 def context():
-    return dict(page=0, pages=[1, 2, 3], results_per_page=3, hits=11, next=1, previous=None, has_next=True, has_previous=False, show_hits=True, hit_label='hits')
+    return dict(page=1, pages=4, results_per_page=3, hits=11, next=1, previous=None, has_next=True, has_previous=False, show_hits=True, hit_label='hits')
 
 
 def test_paginator_basic(context):

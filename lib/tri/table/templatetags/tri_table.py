@@ -10,6 +10,7 @@ def paginator(context, adjacent_pages=6):
     """Adds pagination context variables for first, adjacent and next page links
     in addition to those already populated by the object_list generic view."""
     page = context["page"]
+    assert page != 0  # pages are 1-indexed!
     if page <= adjacent_pages:
         page = adjacent_pages + 1
     elif page > context["pages"] - adjacent_pages:  # pragma: no cover
