@@ -1,12 +1,12 @@
 Changelog
 ---------
 
-4.10.0 (****-**-**)
+4.10.0 (2017-06-12)
 ~~~~~~~~~~~~~~~~~~
 * Fixed bug where namespaced form was not rendered when the other namespaced form had an error
 
 
-4.9.0 (1017-05-31)
+4.9.0 (2017-05-31)
 ~~~~~~~~~~~~~~~~~~
 * Added attribute 'name' to Form in order to namespace POSTs in cases where there are more than one form
 
