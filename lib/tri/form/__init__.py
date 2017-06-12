@@ -1177,10 +1177,10 @@ class Form(NamespaceAwareObject):
             self.instance = None
 
         self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
-        if request and request.method == 'POST':
+        if request and request.method == 'POST' and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
 
-        if self.mode == INITIALS_FROM_GET and request:
+        if self.mode == INITIALS_FROM_GET and request and self.is_target():
             assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
 
         if data:
