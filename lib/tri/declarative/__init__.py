@@ -278,26 +278,6 @@ def should_not_evaluate(f):
     wrapper.__tri_declarative_signature_underlying = get_signature(f)
     return wrapper
 
-
-# Bypass the should_not_evaluate flag
-def should_evaluate(f):
-    if not callable(f):
-        return f
-
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs)
-
-    # noinspection PyUnresolvedReferences
-    signature = get_signature(f)
-    wrapper.__tri_declarative_signature = signature if signature is not None else f.__tri_declarative_signature_underlying
-    return wrapper
-
-
-def force_evaluate(f, **kwargs):
-    return evaluate(should_evaluate(f), **kwargs)
-
-
 _matches_cache = {}
 
 
