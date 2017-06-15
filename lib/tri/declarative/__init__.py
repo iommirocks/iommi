@@ -266,19 +266,6 @@ def signature_from_kwargs(kwargs):
     return ','.join(sorted(kwargs.keys()))
 
 
-def should_not_evaluate(f):
-    if not callable(f):
-        return f
-
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs)
-
-    wrapper.__tri_declarative_signature = None
-    wrapper.__tri_declarative_signature_underlying = get_signature(f)
-    return wrapper
-
-
 _matches_cache = {}
 
 

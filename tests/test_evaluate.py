@@ -8,9 +8,10 @@ def test_evaluate_recursive():
         'foo': {'foo': lambda x: x * 2},
         'bar': [{'foo': lambda x: x * 2}],
         'baz': {lambda x: x * 2},
+        'boo': 17
     }
 
-    assert {'bar': [{'foo': 4}], 'foo': {'foo': 4}, 'baz': {4}} == evaluate_recursive(foo, x=2)
+    assert {'bar': [{'foo': 4}], 'foo': {'foo': 4}, 'baz': {4}, 'boo': 17} == evaluate_recursive(foo, x=2)
 
 
 def test_remove_and_filter_show_recursive():
