@@ -712,6 +712,6 @@ class RefinableObject(object):
                     setattr(self, k, kwargs.pop(k))
 
         if kwargs:
-            raise TypeError("'%s' object has no refinable attribute(s): %s" % (self.__class__.__name__, ', '.join(kwargs.keys())))
+            raise TypeError("'%s' object has no refinable attribute(s): %s" % (self.__class__.__name__, ', '.join(sorted(kwargs.keys()))))
 
         super(RefinableObject, self).__init__()
