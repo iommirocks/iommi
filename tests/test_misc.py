@@ -1,8 +1,9 @@
+import copy
 from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch, EMPTY, Namespace, flatten
+from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch, EMPTY, Namespace, flatten, full_function_name, RefinableObject, refinable, Refinable, Shortcut, shortcut, is_shortcut, get_shortcuts_by_name
 
 
 def test_extract_subkeys():
@@ -150,6 +151,18 @@ def test_namespace_funcal():
         assert {'a': 1, 'b__c': 2, 'b__d': 3} == kwargs
 
     f(**flatten(Namespace(a=1, b=Namespace(c=2, d=3))))
+
+
+def test_namespace_call_target():
+    subject = Namespace(x=17, call_target=lambda **kwargs: kwargs)
+    assert dict(x=17) == subject()
+
+
+def test_namespace_missing_call_target():
+    subject = Namespace(x=17)
+    with pytest.raises(TypeError) as e:
+        subject()
+    assert "TypeError: Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)" in str(e)
 
 
 def test_namespace_flatten_loop_detection():
@@ -369,7 +382,7 @@ def test_assert_kwargs_empty():
     assert "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" == str(e.value)
 
 
-def test_dispatch():
+def test_dispatch_legacy():
     @dispatch(bar__a='5', bar__quux__title='hi!')
     def foo(a, b, c, bar, baz):
         x = do_bar(**bar)
@@ -399,3 +412,267 @@ def test_dispatch_wraps():
         """test"""
         pass
     assert foo.__doc__ == 'test'
+
+
+def test_full_function_name():
+    assert full_function_name(setattr_path) == 'tri.declarative.setattr_path'
+
+
+def test_dispatch_with_target():
+    @dispatch
+    def quux(title):
+        # something...
+        return title
+
+    @dispatch(b='X', quux=Namespace(call_target=quux), )
+    def bar(a, b, quux):
+        return a + b + quux()
+
+    def baz(a, b, c):
+        # something...
+        return a + b + c
+
+    @dispatch(
+        bar=Namespace(call_target=bar),
+        bar__a='5',
+        bar__quux__title='hi!',
+        baz=Namespace(call_target=baz)
+    )
+    def foo(a, b, c, bar, baz):
+        x = bar()
+        y = baz()
+        # do something with the inputs a, b, c...
+        return a + b + c + x + y
+
+    assert foo('1', '2', '3', bar__quux__title='7', baz__a='A', baz__b='B', baz__c='C') == '1235X7ABC'
+
+
+def test_is_shortcut():
+    t = Namespace(x=1)
+    assert not is_shortcut(t)
+
+    s = Shortcut(x=1)
+    assert isinstance(s, Namespace)
+    assert is_shortcut(s)
+
+
+def test_is_shortcut_function():
+    def f():
+        pass
+    assert not is_shortcut(f)
+
+    @shortcut
+    def g():
+        pass
+
+    assert is_shortcut(g)
+
+    class Foo(object):
+        @staticmethod
+        @shortcut
+        def h():
+            pass
+
+    assert is_shortcut(Foo.h)
+
+
+def test_get_shortcuts_by_name():
+    class Foo(object):
+        a = Shortcut(x=1)
+
+        @staticmethod
+        @shortcut
+        def b(self):
+            pass
+
+    assert dict(a=Foo.a, b=Foo.b) == get_shortcuts_by_name(Foo)
+
+
+def test_refinable_object_complete_example():
+    def f(p=11):
+        return p
+
+    class Foo(RefinableObject):
+        a = Refinable()
+        b = Refinable()
+
+        @dispatch(
+            b='default_b',
+        )
+        def __init__(self, **kwargs):
+            self.non_refinable = 17
+            super(Foo, self).__init__(**kwargs)
+
+        @staticmethod
+        @dispatch(
+            f=Namespace(call_target=f)
+        )
+        @refinable
+        def c(f):
+            """
+            c docstring
+            """
+            return f()
+
+        @staticmethod
+        @shortcut
+        @dispatch(
+            call_target=f
+        )
+        def shortcut_to_f(call_target):
+            return call_target()
+
+    @shortcut
+    @dispatch(
+        call_target=Foo
+    )
+    def shortcut_to_foo(call_target):
+        return call_target()
+    Foo.shortcut_to_foo = staticmethod(shortcut_to_foo)
+
+    Foo.q = Shortcut(call_target=Foo, b='refined_by_shortcut_b')
+
+    with pytest.raises(TypeError):
+        Foo(non_refinable=1)
+
+    assert Foo().a is None
+    assert Foo(a=1).a == 1
+
+    # refinable function with dispatch
+    assert Foo().c() == 11
+    assert Foo().c(f__p=13) == 13
+    assert Foo(c=lambda p: 77).c(12321312312) == 77
+
+
+def test_refinable_object2():
+
+    class MyClass(RefinableObject):
+        @dispatch(
+            foo__bar=17
+        )
+        def __init__(self, **kwargs):
+            super(MyClass, self).__init__(**kwargs)
+
+        foo = Refinable()
+
+    assert 17 == MyClass().foo.bar
+    assert 42 == MyClass(foo__bar=42).foo.bar
+
+    with pytest.raises(TypeError):
+        MyClass(barf=17)
+
+
+def test_refinable_object_binding():
+
+    class MyClass(RefinableObject):
+        foo = Refinable()
+        container = Refinable()
+
+        def bind(self, container):
+            new_object = copy.copy(self)
+            new_object.container = container
+            return new_object
+
+    container = object()
+    template = MyClass(foo=17)
+    bound_object = template.bind(container)
+    bound_object.foo = 42
+
+    assert 17 == template.foo
+    assert 42 == bound_object.foo
+    assert bound_object.container is container
+
+
+def test_nested_namespace_overriding_and_calling():
+    @dispatch
+    def f(extra):
+        return extra.foo
+    foo = Shortcut(
+        call_target=f,
+        extra__foo='asd',
+    )
+    assert foo(extra__foo='qwe') == 'qwe'
+
+
+def test_retain_shortcut_type():
+    assert isinstance(Shortcut(foo=Shortcut()).foo, Shortcut)
+    assert isinstance(Shortcut(foo=Shortcut(bar=Shortcut())).foo.bar, Shortcut)
+
+    assert Shortcut(foo__bar__q=1, foo=Shortcut(bar=Shortcut())).foo.bar.q == 1
+
+
+def test_refinable_object3():
+    class MyClass(RefinableObject):
+        x = Refinable()
+        y = Refinable()
+
+        @dispatch(
+            x=None,
+            y=17,
+        )
+        def __init__(self, **kwargs):
+            super(MyClass, self).__init__(**kwargs)
+
+    m = MyClass(x=1, y=2)
+    assert 1 == m.x
+    assert 2 == m.y
+
+    m = MyClass(x=1)
+    assert 1 == m.x
+    assert 17 == m.y
+
+    with pytest.raises(TypeError) as e:
+        MyClass(z=42)
+
+    assert "'MyClass' object has no refinable attribute(s): z" == str(e.value)
+
+    with pytest.raises(TypeError) as e:
+        MyClass(z=42, w=99)
+
+    assert "'MyClass' object has no refinable attribute(s): z, w" == str(e.value)
+
+
+def test_refinable_no_constructor():
+    @dispatch(
+        x=None,
+        y=17,
+    )
+    class MyClass(RefinableObject):
+        x = Refinable()
+        y = Refinable()
+
+    m = MyClass(x=1)
+    assert 1 == m.x
+    assert 17 == m.y
+
+
+def test_refinable_no_dispatch():
+    class MyClass(RefinableObject):
+        x = Refinable()
+        y = Refinable()
+
+    m = MyClass(x=1)
+    assert 1 == m.x
+    assert None is m.y
+
+    m = MyClass(x__y=17)
+    assert hasattr(m, 'x')
+    assert 17 == m.x.y
+
+
+def test_refinable_object_with_dispatch():
+
+    class MyClass(RefinableObject):
+        x = Refinable()
+        y = Refinable()
+
+        @dispatch(
+            x=17,
+            y=EMPTY,
+        )
+        def __init__(self, **kwargs):
+            super(MyClass, self).__init__(**kwargs)
+
+    m = MyClass()
+    assert m.x == 17
+    assert m.y == {}

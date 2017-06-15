@@ -59,6 +59,7 @@ def creation_ordered(class_to_decorate):
 
     __init__orig = class_to_decorate.__init__
 
+    @functools.wraps(__init__orig, assigned=['__doc__'])
     def __init__(self, *args, **kwargs):
         object.__setattr__(self, '_index', next_index())
         __init__orig(self, *args, **kwargs)
@@ -81,23 +82,26 @@ def default_sort_key(x):
     return x._index
 
 
-def declarative(member_class, parameter='members', add_init_kwargs=True, sort_key=default_sort_key):
+def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key=default_sort_key, is_member=None):
     """
         Class decorator to enable classes to be defined in the style of django models.
         That is, @declarative classes will get an additional argument to constructor,
         containing an OrderedDict with all class members matching the specified type.
 
-        @param member_class: Class to decorate
+        @param member_class: Class(es) to collect
+        @param is_member: Function to determine if an object should be collected
         @param parameter: Name of constructor parameter to inject
         @param add_init_kwargs: If constructor parameter should be injected (Default: True)
         @param sort_key: Function to invoke on members to obtain ordering (Default is
         to use ordering from `@creation_ordered`)
 
         @type member_class: class
+        @type is_member: (object) -> bool
         @type parameter: str
         @type add_init_kwargs: bool
         @type sort_key: (object) -> object
     """
+    assert member_class or is_member, "....."
 
     def get_members(cls):
         members = OrderedDict()
@@ -106,10 +110,15 @@ def declarative(member_class, parameter='members', add_init_kwargs=True, sort_ke
             members.update(inherited_members)
 
         def generate_member_bindings():
-            for name, obj in cls.__dict__.items():
-                if isinstance(obj, member_class) and not name.startswith('__'):
+            for name in cls.__dict__:
+                if name.startswith('__'):
+                    continue
+                obj = getattr(cls, name)
+                if member_class is not None and isinstance(obj, member_class):
                     yield name, obj
-                if type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
+                elif is_member is not None and is_member(obj):
+                    yield name, obj
+                elif type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
                     raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)  # pragma: no mutate
 
         bindings = generate_member_bindings()
@@ -139,7 +148,16 @@ def declarative(member_class, parameter='members', add_init_kwargs=True, sort_ke
 
         def get_extra_args_function(self):
             members = get_declared(self, parameter)
-            copied_members = OrderedDict((k, copy(v)) for k, v in members.items())
+
+            def copy_members():
+                for k, v in members.items():
+                    try:
+                        v = copy(v)
+                    except TypeError:
+                        pass  # Not always possible to copy methods
+                    yield (k, v)
+
+            copied_members = OrderedDict(copy_members())
             self.__dict__.update(copied_members)
             return {parameter: copied_members}
 
@@ -191,6 +209,7 @@ def add_args_to_init_call(cls, get_extra_args_function):
             # We might fail on not being able to find the signature of builtin constructors
             pass
 
+    @functools.wraps(__init__orig, assigned=['__doc__'])
     def argument_injector_wrapper(self, *args, **kwargs):
         extra_kwargs = get_extra_args_function(self)
         new_args, new_kwargs = inject_args(args, kwargs, extra_kwargs, pos_arg_names)
@@ -211,6 +230,9 @@ def add_init_call_hook(cls, init_hook):
             super(cls, self).__init__(*args, **kwargs)
         else:
             __init__orig(self, *args, **kwargs)
+
+    if __init__orig is not None:
+        init_hook_wrapper = functools.wraps(__init__orig, assigned=['__doc__'])(init_hook_wrapper)
 
     setattr(cls, '__init__', init_hook_wrapper)
 
@@ -454,6 +476,29 @@ class Namespace(Struct):
     def __str__(self):
         return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
 
+    def __call__(self, *args, **kwargs):
+        params = setdefaults_path(Struct(), kwargs, **self)
+        try:
+            target = params.pop('call_target')
+        except KeyError:
+            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self)  # pragma: no mutate
+        return target(*args, **params)
+
+
+# This is just a marker class for declaring shortcuts, and later for collecting them
+class Shortcut(Namespace):
+    pass
+
+
+# decorator
+def shortcut(f):
+    f.shortcut = True
+    return f
+
+
+def is_shortcut(x):
+    return isinstance(x, Shortcut) or getattr(x, 'shortcut', False)
+
 
 def flatten(namespace):
     return dict(flatten_items(namespace))
@@ -484,10 +529,11 @@ class FrozenNamespace(Frozen, Namespace):
 EMPTY = FrozenNamespace()
 
 
-def setdefaults_path(target, *defaults, **kwargs):
+# The first argument has a funky name to avoid name clashes with stuff in kwargs
+def setdefaults_path(__target__, *defaults, **kwargs):
 
     def setdefault(path, value):
-        namespace = target
+        namespace = __target__
         parts = path.split('__')
         for part in parts[:-1]:
             current = namespace.get(part)
@@ -502,7 +548,7 @@ def setdefaults_path(target, *defaults, **kwargs):
 
     for mappings in list(defaults) + [kwargs]:
         for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
-            if not isinstance(value, Namespace):
+            if not type(value) == Namespace:
                 setdefault(path, value)
             else:
                 if value:
@@ -510,7 +556,7 @@ def setdefaults_path(target, *defaults, **kwargs):
                         setdefault('__'.join((path, path2)), value)
                 else:
                     setdefault(path, Namespace())
-    return target
+    return __target__
 
 
 def dispatch(*function, **defaults):
@@ -518,6 +564,7 @@ def dispatch(*function, **defaults):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             return f(*args, **setdefaults_path(Namespace(), kwargs, defaults))
+        wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
         return wrapper
 
     if function:
@@ -616,3 +663,55 @@ def assert_kwargs_empty(kwargs):
         import traceback
         function_name = traceback.extract_stack()[-2][2]
         raise TypeError('%s() got unexpected keyword arguments %s' % (function_name, ', '.join(["'%s'" % x for x in sorted(kwargs.keys())])))
+
+
+def full_function_name(f):
+    return '%s.%s' % (f.__module__, f.__name__)
+
+
+def get_shortcuts_by_name(class_):
+    def sorting_order_is_irrelevant(_):
+        return 0  # pragma: no mutate
+    decorated_class = declarative(member_class=Shortcut, is_member=is_shortcut, sort_key=sorting_order_is_irrelevant)(class_)
+    return dict(decorated_class.get_declared())
+
+
+@creation_ordered
+class Refinable(object):
+    pass
+
+
+# decorator
+def refinable(f):
+    f.refinable = True
+    # noinspection PyProtectedMember
+    f._index = Refinable()._index
+    return f
+
+
+def is_refinable_function(attr):
+    return getattr(attr, 'refinable', False)
+
+
+@declarative(
+    member_class=Refinable,
+    parameter='refinable_members',
+    is_member=is_refinable_function,
+    add_init_kwargs=False,
+)
+class RefinableObject(object):
+    # This constructor assumes that the class that inherits from RefinableObject
+    # has done any attribute assignments to self BEFORE calling super(...)
+    @dispatch()
+    def __init__(self, **kwargs):
+        for k, v in self.get_declared('refinable_members').items():
+            if isinstance(v, Refinable):
+                setattr(self, k, kwargs.pop(k, None))
+            else:
+                if k in kwargs:
+                    setattr(self, k, kwargs.pop(k))
+
+        if kwargs:
+            raise TypeError("'%s' object has no refinable attribute(s): %s" % (self.__class__.__name__, ', '.join(kwargs.keys())))
+
+        super(RefinableObject, self).__init__()

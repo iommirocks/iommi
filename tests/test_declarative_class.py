@@ -17,19 +17,47 @@ class Declarative(object):
 
 
 def test_constructor_noop():
-
     subject = Declarative(members={'foo': Member(foo='bar')})
-
     assert {'foo': Member(foo='bar')} == subject.members
 
 
 def test_find_members():
-
     class MyDeclarative(Declarative):
         foo = Member(foo='bar')
 
     subject = MyDeclarative()
     assert OrderedDict([('foo', Member(foo='bar'))]) == subject.members
+
+
+def test_find_members_by_check_function():
+    @declarative(
+        is_member=lambda x: x == "foo",
+        sort_key=lambda x: x,
+    )
+    class Declarative(object):
+        foo = "foo"
+        bar = "bar"
+
+        def __init__(self, members):
+            self.members = members
+
+    subject = Declarative()
+    assert dict(foo='foo') == subject.members
+
+
+def test_non_copyable_members():
+    @declarative(
+        is_member=lambda x: True,
+        sort_key=lambda x: x,
+    )
+    class Declarative(object):
+        x = object.__init__
+
+        def __init__(self, members):
+            self.members = members
+
+    subject = Declarative()
+    assert ['x'] == list(subject.members.keys())
 
 
 def test_find_member_fail_on_tuple():
@@ -45,6 +73,34 @@ def test_missing_ordering():
             x = "x"
 
         Fail()
+
+
+def test_constructor_injector_attribute_retention():
+    def my_wrapper(f):
+        f.my_attribute = 17
+        return f
+
+    @declarative(str, sort_key=lambda x: x)
+    class Declarative(object):
+        @my_wrapper
+        def __init__(self, members):
+            super(Declarative, self).__init__()
+
+    assert 17 == Declarative().__init__.my_attribute
+
+
+def test_constructor_init_hook_attribute_retention():
+    def my_wrapper(f):
+        f.my_attribute = 17
+        return f
+
+    @declarative(str, add_init_kwargs=False, sort_key=lambda x: x)
+    class Declarative(object):
+        @my_wrapper
+        def __init__(self):
+            super(Declarative, self).__init__()
+
+    assert 17 == Declarative().__init__.my_attribute
 
 
 def test_sort_key():
@@ -372,6 +428,20 @@ def test_creation_ordered():
     l = [Member() for _ in range(100)]
 
     assert l == sorted(reversed(l))
+
+
+def test_creation_ordered_attribute_retention():
+    def my_wrapper(f):
+        f.my_attribute = 17
+        return f
+
+    @creation_ordered
+    class Foo(object):
+        @my_wrapper
+        def __init__(self):
+            pass
+
+    assert 17 == Foo().__init__.my_attribute
 
 
 def test_getter_and_setter_interface():
