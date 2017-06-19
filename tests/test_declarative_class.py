@@ -45,6 +45,13 @@ def test_find_members_by_check_function():
     assert dict(foo='foo') == subject.members
 
 
+def test_required_parameter():
+    with pytest.raises(TypeError) as e:
+        declarative()
+
+    assert "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)" in str(e)
+
+
 def test_non_copyable_members():
     @declarative(
         is_member=lambda x: True,

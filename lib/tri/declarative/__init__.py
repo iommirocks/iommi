@@ -101,7 +101,8 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
         @type add_init_kwargs: bool
         @type sort_key: (object) -> object
     """
-    assert member_class or is_member, "....."
+    if member_class is None and is_member is None:
+        raise TypeError("The @declarative decorator needs either a member_class parameter or an is_member check function (or both)")
 
     def get_members(cls):
         members = OrderedDict()
