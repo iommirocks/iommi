@@ -1,13 +1,21 @@
 Changelog
 ---------
 
+4.10.1 (2017-06-20)
+~~~~~~~~~~~~~~~~~~~
+
+* Bugfix: `on_save` callback for `create_or_edit_object` was missing `form` parameter
+
+
 4.10.0 (2017-06-12)
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+
 * Fixed bug where namespaced form was not rendered when the other namespaced form had an error
 
 
 4.9.0 (2017-05-31)
 ~~~~~~~~~~~~~~~~~~
+
 * Added attribute 'name' to Form in order to namespace POSTs in cases where there are more than one form
 
 

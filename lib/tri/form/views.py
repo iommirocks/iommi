@@ -106,6 +106,7 @@ def create_or_edit_object(
             instance.save()
             form.instance = instance
 
+            kwargs['form'] = form
             kwargs['instance'] = instance
             on_save(**kwargs)
 
