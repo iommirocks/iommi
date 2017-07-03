@@ -49,7 +49,7 @@ def test_required_parameter():
     with pytest.raises(TypeError) as e:
         declarative()
 
-    assert "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)" in str(e)
+    assert "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)" == str(e.value)
 
 
 def test_non_copyable_members():
