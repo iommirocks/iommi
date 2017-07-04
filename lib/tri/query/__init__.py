@@ -10,13 +10,14 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import merged
-from tri.declarative import declarative, creation_ordered, setdefaults, filter_show_recursive, \
-    evaluate_recursive, sort_after, dispatch, EMPTY, NamespaceAwareObject, overridable, Shortcut, shortcut, Namespace
-from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model
+from tri.declarative import declarative, creation_ordered, setdefaults, filter_show_recursive, evaluate_recursive, \
+    sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable
+from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, \
+    DISPATCH_PATH_SEPARATOR
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '3.3.0'  # pragma: no mutate
+__version__ = '4.0.0'  # pragma: no mutate
 
 
 class QueryException(Exception):
@@ -97,23 +98,23 @@ def boolean_value_to_q(variable, op, value_string_or_f):
 
 
 @creation_ordered
-class Variable(NamespaceAwareObject):
+class Variable(RefinableObject):
     """
     Class that describes a variable that you can search for.
     """
 
-    name = overridable
-    after = overridable
-    show = overridable
-    attr = overridable
-    gui = overridable
-    gui_op = overridable
-    freetext = overridable
-    model = overridable
-    model_field = overridable
-    extra = overridable
-    choices = overridable
-    value_to_q_lookup = overridable
+    name = Refinable()
+    after = Refinable()
+    show = Refinable()
+    attr = Refinable()
+    gui = Refinable()
+    gui_op = Refinable()
+    freetext = Refinable()
+    model = Refinable()
+    model_field = Refinable()
+    extra = Refinable()
+    choices = Refinable()
+    value_to_q_lookup = Refinable()
 
     @dispatch(
         gui_op='=',
@@ -139,7 +140,8 @@ class Variable(NamespaceAwareObject):
         self.query = None
         """ :type: Query """
 
-    EVALUATED_ATTRIBUTES = ['after', 'attr', 'choices', 'extra', 'freetext', 'gui', 'gui_op', 'model', 'model_field', 'name', 'op_to_q_op', 'show', 'value_to_q', 'value_to_q_lookup']
+    def __repr__(self):
+        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
     def _bind(self, query):
         bound_variable = copy.copy(self)
@@ -148,7 +150,8 @@ class Variable(NamespaceAwareObject):
             bound_variable.attr = bound_variable.name
         bound_variable.query = query
 
-        for k in Variable.EVALUATED_ATTRIBUTES:
+        evaluated_attributes = self.get_declared('refinable_members').keys()
+        for k in evaluated_attributes:
             v = getattr(bound_variable, k)
             new_value = evaluate_recursive(v, query=query, variable=self)
             if new_value is not v:
@@ -157,13 +160,13 @@ class Variable(NamespaceAwareObject):
         return bound_variable
 
     @staticmethod
-    @overridable
+    @refinable
     def op_to_q_op(op):
         """ :type: (unicode) -> Q """
         return Q_OP_BY_OP[op]
 
     @staticmethod
-    @overridable
+    @refinable
     def value_to_q(variable, op, value_string_or_f):
         if variable.attr is None:
             return Q()
@@ -224,6 +227,8 @@ def variable_shortcut_choice(call_target, **kwargs):  # pragma: no cover
         gui__choices=kwargs.get('choices'),
     ))
     return call_target(**kwargs)
+
+
 Variable.choice = staticmethod(variable_shortcut_choice)
 
 
@@ -245,6 +250,8 @@ def variable_shortcut_choice_queryset(call_target, **kwargs):
         gui__model=kwargs['model'],
     ))
     return call_target(**kwargs)
+
+
 Variable.choice_queryset = staticmethod(variable_shortcut_choice_queryset)
 
 
@@ -329,13 +336,14 @@ class Query(object):
     @dispatch(
         gui=Namespace(call_target=Form),
     )
-    def __init__(self, request=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', gui=None):  # variables=None to make pycharm tooling not confused
+    def __init__(self, request=None, data=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', gui=None):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
         """
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
         self.request = request
+        self.data = data
         self._form = None
 
         def generate_variables():
@@ -516,20 +524,21 @@ class Query(object):
         fields = []
 
         if any(v.freetext for v in self.variables):
-            fields.append(Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
+            fields.append(Field(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
         for variable in self.bound_variables:
             if variable.gui is not None and variable.gui.show:
                 # pass gui__* parameters to the GUI component
                 assert variable.name is not MISSING
                 assert variable.attr is not MISSING
-                params = merged(variable.gui, name=variable.name, attr=variable.attr)
-                fields.append(params.pop('call_target')(**params))
+                params = merged(Namespace(), variable.gui, name=variable.name, attr=variable.attr)
+                fields.append(params())
 
         form = self.gui(
             request=self.request,
+            data=self.data,
             fields=fields,
-            endpoint_dispatch_prefix='__'.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
+            endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
         )
         form.tri_query = self
         form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
@@ -590,7 +599,7 @@ class Query(object):
     @dispatch(
         variable=EMPTY,
     )
-    def from_model(data, model, variable, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    def from_model(data, model, variable, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -607,11 +616,12 @@ class Query(object):
 
         """
         variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
-        return Query(data=data, model=model, instance=instance, variables=variables, post_validation=post_validation, **kwargs)
+        return Query(data=data, variables=variables, **kwargs)
 
     def endpoint_dispatch(self, key, value):
-        if key.startswith('gui__'):
-            return self.form().endpoint_dispatch(key=key[len('gui__'):], value=value)
+        prefix = 'gui' + DISPATCH_PATH_SEPARATOR
+        if key.startswith(prefix):
+            return self.form().endpoint_dispatch(key=key[len(prefix):], value=value)
 
 
 from .db_compat import setup_db_compat  # noqa

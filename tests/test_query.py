@@ -141,6 +141,14 @@ def test_request_to_q_simple():
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 0}))
 
 
+def test_boolean_parse():
+    class MyQuery(Query):
+        foo = Variable.boolean()
+
+    assert repr(MyQuery().parse('foo=false')) == repr(Q(**{'foo__iexact': False}))
+    assert repr(MyQuery().parse('foo=true')) == repr(Q(**{'foo__iexact': True}))
+
+
 def test_integer_request_to_q_simple():
     class Query2(Query):
         bazaar = Variable.integer(attr='quux__bar__bazaar', gui=Struct(show=True))
@@ -278,6 +286,9 @@ def test_choice_queryset():
         with pytest.raises(QueryException) as e:
             query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
+        
+    # test a string with the contents "null"
+    assert repr(query2.parse('foo="null"')) == repr(Q(foo=None))
 
 
 @pytest.mark.django_db
@@ -361,5 +372,5 @@ def test_endpoint_dispatch():
 
     query = MyQuery(RequestFactory().get('/'))
 
-    assert '__query__gui__field__foo' == query.form().fields_by_name.foo.endpoint_path
-    assert query.endpoint_dispatch(key='gui__field__foo', value='ar') == [{'id': x.pk, 'text': x.name}]
+    assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path
+    assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == [{'id': x.pk, 'text': x.name}]
