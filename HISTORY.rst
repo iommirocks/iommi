@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.32.0 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* Added promoting callable namespace members to `Namespace` with `call_target` in 
+  `setdefaults_path`.
+
+
 0.31.0 (2017-06-15)
 ~~~~~~~~~~~~~~~~~~~
 

@@ -4,9 +4,16 @@ import functools
 import inspect
 import itertools
 
+import sys
 from tri.struct import Struct, Frozen
 
 __version__ = '0.31.0'  # pragma: no mutate
+
+
+if sys.version_info < (3, 0):  # pragma: no mutate
+    string_types = (str, unicode)
+else:
+    string_types = str  # pragma: no coverage
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -541,7 +548,13 @@ def setdefaults_path(__target__, *defaults, **kwargs):
             if current is None:
                 namespace[part] = Namespace()
             elif not isinstance(current, dict):
-                namespace[part] = Namespace(**{current: True})
+                # Convert to Namespace
+                if callable(current):
+                    namespace[part] = Namespace(call_target=current)
+                elif isinstance(current, string_types):
+                    namespace[part] = Namespace(**{current: True})
+                else:
+                    raise TypeError("Unable to treat {} ({}) as a namespace".format(part, current))
             else:
                 namespace[part] = Namespace(current)
             namespace = namespace[part]
