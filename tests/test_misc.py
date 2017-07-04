@@ -81,6 +81,18 @@ def test_getattr_path_and_setattr_path():
     assert None is foo.bar
 
 
+def test_setdefaults_path_1():
+    assert dict(x=17) == setdefaults_path(dict(), x=17)
+
+
+def test_setdefaults_path_2():
+    assert dict(x=dict(y=17)) == setdefaults_path(dict(x=dict()), x__y=17)
+
+
+def test_setdefaults_path_3():
+    assert dict(x=dict(y=17)) == setdefaults_path(dict(), x__y=17)
+
+
 def test_setdefaults_path():
     actual = setdefaults_path(dict(
         x=1,
@@ -116,11 +128,19 @@ def test_setdefaults_namespace_merge():
     assert expected == actual
 
 
-def test_setdefaults_callable():
+def test_setdefaults_callable_forward():
     actual = setdefaults_path(Namespace(
         foo=lambda x: x,
         foo__x=17,
     ))
+    assert 17 == actual.foo()
+
+
+def test_setdefaults_callable_backward():
+    actual = setdefaults_path(
+        Namespace(foo__x=17),
+        foo=lambda x: x,
+    )
     assert 17 == actual.foo()
 
 

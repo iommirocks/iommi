@@ -540,12 +540,12 @@ EMPTY = FrozenNamespace()
 # The first argument has a funky name to avoid name clashes with stuff in kwargs
 def setdefaults_path(__target__, *defaults, **kwargs):
 
-    def setdefault(path, value):
+    def setdefault(path, value, missing=object()):
         namespace = __target__
         parts = path.split('__')
         for part in parts[:-1]:
-            current = namespace.get(part)
-            if current is None:
+            current = namespace.get(part, missing)
+            if current is missing:
                 namespace[part] = Namespace()
             elif not isinstance(current, dict):
                 # Convert to Namespace
@@ -558,7 +558,12 @@ def setdefaults_path(__target__, *defaults, **kwargs):
             else:
                 namespace[part] = Namespace(current)
             namespace = namespace[part]
-        namespace.setdefault(parts[-1], value)
+        existing = namespace.get(parts[-1], missing)
+        if existing is missing:
+            namespace[parts[-1]] = value
+        else:
+            if callable(value) and isinstance(existing, dict) and 'call_target' not in existing:
+                existing['call_target'] = value
 
     for mappings in list(defaults) + [kwargs]:
         for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
@@ -566,8 +571,8 @@ def setdefaults_path(__target__, *defaults, **kwargs):
                 setdefault(path, value)
             else:
                 if value:
-                    for path2, value in flatten(value).items():
-                        setdefault('__'.join((path, path2)), value)
+                    for path2, value2 in flatten(value).items():
+                        setdefault('__'.join((path, path2)), value2)
                 else:
                     setdefault(path, Namespace())
     return __target__
