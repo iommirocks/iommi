@@ -116,6 +116,31 @@ def test_setdefaults_namespace_merge():
     assert expected == actual
 
 
+def test_setdefaults_callable():
+    actual = setdefaults_path(Namespace(
+        foo=lambda x: x,
+        foo__x=17,
+    ))
+    assert 17 == actual.foo()
+
+
+def test_setdefault_string_value():
+    actual = setdefaults_path(
+        Struct(foo='bar'),
+        foo__baz=False
+    )
+    expected = dict(foo=dict(bar=True, baz=False))
+    assert expected == actual
+
+
+def test_setdefaults_broken_namespace():
+    with pytest.raises(TypeError) as e:
+        setdefaults_path(
+            Struct(x=17),
+            x__y=42)
+    assert "Unable to treat x (17) as a namespace" == str(e.value)
+
+
 def test_namespace_repr():
     actual = repr(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
     expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes since repr is called on values
