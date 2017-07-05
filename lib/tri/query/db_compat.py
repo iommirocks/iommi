@@ -15,7 +15,6 @@ def setup_db_compat_django():
         setdefaults(kwargs, dict(
             choices=model_field.foreign_related_fields[0].model.objects.all()
         ))
-        kwargs['model'] = model_field.foreign_related_fields[0].model
         return Variable.choice_queryset(**kwargs)
 
     # The order here is significant because of inheritance structure. More specific must be below less specific.

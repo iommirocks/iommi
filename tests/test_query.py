@@ -243,7 +243,6 @@ def test_choice_queryset():
 
     class Query2(Query):
         foo = Variable.choice_queryset(
-            model=Foo,
             choices=Foo.objects.all(),
             gui__show=True,
             value_to_q_lookup='value')
@@ -306,7 +305,6 @@ def test_multi_choice_queryset():
 
     class Query2(Query):
         foo = Variable.multi_choice_queryset(
-            model=Foo,
             choices=Foo.objects.all(),
             gui__show=True,
             value_to_q_lookup='value')
@@ -366,7 +364,6 @@ def test_endpoint_dispatch():
         foo = Variable.choice_queryset(
             gui__show=True,
             gui__attr='name',
-            model=Baz,
             choices=Baz.objects.all(),
         )
 

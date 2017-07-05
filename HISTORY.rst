@@ -8,6 +8,8 @@ Changelog
 
 * Note that `__class` to specify a constructor/callable is no longer a valid parameter, because of updated tri.form
 
+* You no longer need to specify the `model` parameter to `choice_queryset` or `multi_choice_queryset` if you give it a `QuerySet` as `choices` (as opposed to giving a callable)
+
 
 3.3.0 (2017-04-27)
 ~~~~~~~~~~~~~~~~~~

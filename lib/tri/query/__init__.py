@@ -240,13 +240,18 @@ Variable.choice = staticmethod(variable_shortcut_choice)
     value_to_q_lookup='name',
     value_to_q=choice_queryset_value_to_q,
 )
-def variable_shortcut_choice_queryset(call_target, **kwargs):
+def variable_shortcut_choice_queryset(call_target, choices, **kwargs):
     """
     Field that has one value out of a set.
     :type choices: django.db.models.QuerySet
     """
+    from django.db.models import QuerySet
+    if 'model' not in kwargs:
+        assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
+        kwargs['model'] = choices.model
+
     setdefaults(kwargs, dict(
-        gui__choices=kwargs['choices'],
+        gui__choices=choices,
         gui__model=kwargs['model'],
     ))
     return call_target(**kwargs)
