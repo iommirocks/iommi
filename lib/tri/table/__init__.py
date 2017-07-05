@@ -241,15 +241,12 @@ class Column(RefinableObject):
 
         return bound_column
 
-    EVALUATED_ATTRIBUTES = [
-        'after', 'attr', 'auto_rowspan', 'bulk', 'cell', 'choices', 'display_name', 'extra', 'group', 'model', 'model_field', 'query', 'show', 'sort_default_desc', 'sort_key', 'sortable', 'title', 'url'
-    ]
-
     def _evaluate(self):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        for k in self.EVALUATED_ATTRIBUTES:
+        evaluated_attributes = self.get_declared('refinable_members').keys()
+        for k in evaluated_attributes:
             v = getattr(self, k)
             new_value = evaluate_recursive(v, table=self.table, column=self)
             if new_value is not v:
