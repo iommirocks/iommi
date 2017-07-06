@@ -512,7 +512,6 @@ def test_choice_queryset_do_not_cache():
     assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
 
 
-
 def test_field_from_model():
     class FooForm(Form):
         foo = Field.from_model(Foo, 'foo')
@@ -520,6 +519,18 @@ def test_field_from_model():
         class Meta:
             model = Foo
 
+    assert FooForm(data=dict(foo='1')).fields[0].value == 1
+    assert not FooForm(data=dict(foo='asd')).is_valid()
+
+
+def test_form_default_fields_from_model():
+    class FooForm(Form):
+        class Meta:
+            model = Foo
+            fields = Form.fields_from_model
+            fields__extra = [Field.text(attr=None, name='bar')]
+
+    assert FooForm().fields_by_name.keys() == ['foo', 'bar']
     assert FooForm(data=dict(foo='1')).fields[0].value == 1
     assert not FooForm(data=dict(foo='asd')).is_valid()
 

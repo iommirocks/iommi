@@ -168,9 +168,11 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
     # Validate include/exclude parameters
     field_names = {x.name for x in get_fields(model)}
     if include:
-        assert all(x in field_names for x in include)
+        not_existing = {x for x in include if x not in field_names}
+        assert not not_existing, 'You can only include fields that exist on the model, %s specified but does not exist' % not_existing
     if exclude:
-        assert all(x in field_names for x in exclude)
+        not_existing = {x for x in exclude if x not in field_names}
+        assert not not_existing, 'You can only exclude fields that exist on the model, %s specified but does not exist' % not_existing
 
     for field in get_fields(model):
         if should_include(field.name):
@@ -1158,6 +1160,9 @@ class Form(RefinableObject):
 
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
+
+        if callable(fields):
+            fields = fields(model=self.model)
 
         if data is None:
             data = {}
