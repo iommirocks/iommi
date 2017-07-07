@@ -95,12 +95,21 @@ def create_or_edit_object(
                 instance.save()
 
             form.apply(instance)
-            instance.save()
-            form.instance = instance
 
-            on_save(form=form, instance=instance)
+            if not is_create:
+                try:
+                    instance.validate_unique()
+                except ValidationError as e:
+                    form.errors.update(set(e.messages))
+                    form._valid = False
 
-            return create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form)
+            if form.is_valid():
+                instance.save()
+                form.instance = instance
+
+                on_save(form=form, instance=instance)
+
+                return create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form)
 
     setdefaults_path(
         render,

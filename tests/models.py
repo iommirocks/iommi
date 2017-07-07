@@ -100,3 +100,11 @@ class CreateOrEditObjectTest(Model):
         super(CreateOrEditObjectTest, self).save(*_, **__)
         global saved_something
         saved_something = self
+
+
+class Baz(Model):
+    a = IntegerField()
+    b = IntegerField()
+
+    class Meta:
+        unique_together = ('a', 'b')
