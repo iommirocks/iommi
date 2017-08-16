@@ -1162,3 +1162,16 @@ def test_show_prevents_read_from_instance():
         foo = Field(show=False)
 
     MyForm(data=Struct(), instance=object())
+
+
+def test_choice_post_validation_not_overwritten():
+    def my_post_validation(field, **_):
+        raise Exception('foobar')
+
+    class MyForm(Form):
+        foo = Field.choice(post_validation=my_post_validation, choices=[1, 2, 3])
+
+    with pytest.raises(Exception) as e:
+        MyForm()
+
+    assert str(e.value) == 'foobar'
