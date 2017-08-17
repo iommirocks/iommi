@@ -523,6 +523,13 @@ def test_field_from_model():
     assert not FooForm(data=dict(foo='asd')).is_valid()
 
 
+def test_field_from_model_foreign_key_choices():
+    class FooForm(Form):
+        foo = Field.from_model(Bar, 'foo', choices=lambda form, field, **_: [])
+
+    FooForm()
+
+
 def test_form_default_fields_from_model():
     class FooForm(Form):
         class Meta:

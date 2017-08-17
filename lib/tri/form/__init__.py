@@ -908,8 +908,12 @@ def field_choice_queryset(call_target, choices, **kwargs):
 
     from django.db.models import QuerySet
     if 'model' not in kwargs:
-        assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
-        kwargs['model'] = choices.model
+        if isinstance(choices, QuerySet):
+            kwargs['model'] = choices.model
+        elif 'model_field' in kwargs:
+            kwargs['model'] = kwargs['model_field'].model
+        else:
+            assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 
     setdefaults_path(
         kwargs,
