@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-0.34.0 (----------)
+0.34.0 (2017-08-21)
 ~~~~~~~~~~~~~~~~~~~
 
 * Fix bug in 0.33.0 when promoting callable to `Namespace`.

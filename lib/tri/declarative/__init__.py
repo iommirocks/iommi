@@ -7,7 +7,7 @@ import itertools
 import sys
 from tri.struct import Struct, Frozen
 
-__version__ = '0.33.0'  # pragma: no mutate
+__version__ = '0.34.0'  # pragma: no mutate
 
 
 if sys.version_info < (3, 0):  # pragma: no mutate
