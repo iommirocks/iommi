@@ -1,7 +1,15 @@
 Changelog
 ---------
 
-0.32.0 (----------)
+0.33.0 (2017-08-21)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix bug when promoting callable to `Namespace`.
+
+* Fix handling of `EMPTY` marker.
+
+
+0.32.0 (2017-07-04)
 ~~~~~~~~~~~~~~~~~~~
 
 * Added promoting callable namespace members to `Namespace` with `call_target` in 
