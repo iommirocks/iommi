@@ -11,7 +11,7 @@ from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, G
 from six import string_types, text_type, integer_types
 from tri.struct import merged
 from tri.declarative import declarative, creation_ordered, setdefaults, filter_show_recursive, evaluate_recursive, \
-    sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable
+    sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable, with_meta
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, \
     DISPATCH_PATH_SEPARATOR
 
@@ -253,6 +253,7 @@ def variable_shortcut_choice_queryset(call_target, choices, **kwargs):
     setdefaults(kwargs, dict(
         gui__choices=choices,
         gui__model=kwargs['model'],
+        choices=choices,
     ))
     return call_target(**kwargs)
 
@@ -320,6 +321,7 @@ class StringValue(text_type):
 
 
 @declarative(Variable, 'variables_dict')
+@with_meta
 class Query(object):
     """
     Declare a query language. Example:

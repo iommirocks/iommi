@@ -1,6 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 from datetime import date
-from django.db.models import Q, F
+from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
 from tests.models import Foo, Bar, Baz
@@ -355,6 +355,16 @@ def test_from_model():
     assert [x.name for x in t.variables if x.show] == ['value']
 
 
+def test_from_model_foreign_key():
+    class MyQuery(Query):
+        class Meta:
+            variables = Query.variables_from_model(model=Bar)
+
+    t = MyQuery()
+    assert [x.name for x in t.variables] == ['id', 'foo']
+    assert isinstance(t.bound_variable_by_name['foo'].choices, QuerySet)
+
+
 @pytest.mark.django_db
 def test_endpoint_dispatch():
     Baz.objects.create(name='foo')
@@ -371,3 +381,7 @@ def test_endpoint_dispatch():
 
     assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path
     assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == [{'id': x.pk, 'text': x.name}]
+
+
+def test_variable_repr():
+    assert repr(Variable(name='foo')) == '<tri.query.Variable foo>'
