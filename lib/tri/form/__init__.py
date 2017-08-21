@@ -35,6 +35,9 @@ except ImportError:  # pragma: no cover
         del origin, name  # the origin and name parameters seems not to be implemented in django 1.8
         return engines['django'].from_string(template_code)
 
+# Prevent django templates from calling That Which Must Not Be Called
+Namespace.do_not_call_in_templates = True
+
 
 __version__ = '5.0.0'  # pragma: no mutate
 
