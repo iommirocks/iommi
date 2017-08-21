@@ -567,6 +567,8 @@ def setdefaults_path(__target__, *defaults, **kwargs):
 
     for mappings in list(defaults) + [kwargs]:
         for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
+            if value is EMPTY:
+                value = Namespace()
             if not type(value) == Namespace:
                 setdefault(path, value)
             else:
