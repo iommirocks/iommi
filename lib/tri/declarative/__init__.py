@@ -562,7 +562,7 @@ def setdefaults_path(__target__, *defaults, **kwargs):
         if existing is missing:
             namespace[parts[-1]] = value
         else:
-            if callable(value) and isinstance(existing, dict) and 'call_target' not in existing:
+            if callable(value) and not isinstance(value, Namespace) and isinstance(existing, dict) and 'call_target' not in existing:
                 existing['call_target'] = value
 
     for mappings in list(defaults) + [kwargs]:
