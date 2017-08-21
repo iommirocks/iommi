@@ -144,6 +144,15 @@ def test_setdefaults_callable_backward():
     assert 17 == actual.foo()
 
 
+def test_setdefaults_callable_backward_not_namespace():
+    actual = setdefaults_path(
+        Namespace(foo__x=17),
+        foo=EMPTY,
+    )
+    expected = Namespace(foo__x=17)
+    assert expected == actual
+
+
 def test_setdefault_string_value():
     actual = setdefaults_path(
         Struct(foo='bar'),
