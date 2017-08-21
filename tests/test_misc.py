@@ -243,6 +243,13 @@ def test_setdefaults_path_empty_marker():
     assert expected == actual
 
 
+def test_setdefaults_path_empty_marker_copy():
+    actual = setdefaults_path(Struct(), x=EMPTY)
+    expected = dict(x={})
+    assert expected == actual
+    assert actual.x is not EMPTY
+
+
 def test_setdefaults_path_empty_marker_no_side_effect():
     actual = setdefaults_path(Namespace(a__b=1, a__c=2),
                               a=Namespace(d=3),
