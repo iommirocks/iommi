@@ -537,7 +537,7 @@ def test_form_default_fields_from_model():
             fields = Form.fields_from_model
             fields__extra = [Field.text(attr=None, name='bar')]
 
-    assert FooForm().fields_by_name.keys() == ['foo', 'bar']
+    assert set(FooForm().fields_by_name.keys()) == {'foo', 'bar'}
     assert FooForm(data=dict(foo='1')).fields[0].value == 1
     assert not FooForm(data=dict(foo='asd')).is_valid()
 
