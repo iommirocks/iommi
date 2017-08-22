@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.0.0 (2017-06-12)
+5.0.0 (2017-08-22)
 ~~~~~~~~~~~~~~~~~~
 
 * Refactored to use new tri.declarative: using `RefinableObject`, `Shortcut`, and the new `call_target` parameter of `Namespace`
@@ -18,7 +18,7 @@ Changelog
 
 * You no longer need to specify the `model` parameter to `choice_queryset` or `multi_choice_queryset` if you give it a `QuerySet` as `choices` (as opposed to giving a callable)
 
-* `Field.choice_queryset` and `Field.multi_choice_queryset` now reevaluates the QuerySet on each usage.
+* `Field.choice_queryset` and `Field.multi_choice_queryset` now reevaluates the QuerySet on each usage (fixes tri.table github issue 16)
 
 
 4.10.1 (2017-06-20)
