@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+4.0.0 (2017-08-22)
+~~~~~~~~~~~~~~~~~~
+
+* Moved to tri.declarative 0.34 and tri.form 5.0
+
+* Note that `gui__class` to specify a constructor/callable is no longer a valid parameter, because of updated tri.form. Use `gui__call_target` or just `gui`.
+
+* You no longer need to specify the `model` parameter to `choice_queryset` or `multi_choice_queryset` if you give it a `QuerySet` as `choices` (as opposed to giving a callable)
+
+
 3.3.0 (2017-04-27)
 ~~~~~~~~~~~~~~~~~~
 

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 from datetime import date
-from django.db.models import Q, F
+from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
 from tests.models import Foo, Bar, Baz
@@ -48,9 +48,9 @@ def test_show():
 
 def test_namespace_merge():
     v = Variable(gui__show=True)
-    assert v.gui['class'] == Field
+    assert v.gui.call_target == Field
     v = Variable(gui=Struct(show=True))
-    assert v.gui['class'] == Field
+    assert v.gui.call_target == Field
 
 
 def test_request_data():
@@ -139,6 +139,14 @@ def test_request_to_q_simple():
     # noinspection PyTypeChecker
     query2 = Query2(request=Struct(method='GET', GET=Data(**{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'false'})))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 0}))
+
+
+def test_boolean_parse():
+    class MyQuery(Query):
+        foo = Variable.boolean()
+
+    assert repr(MyQuery().parse('foo=false')) == repr(Q(**{'foo__iexact': False}))
+    assert repr(MyQuery().parse('foo=true')) == repr(Q(**{'foo__iexact': True}))
 
 
 def test_integer_request_to_q_simple():
@@ -235,7 +243,6 @@ def test_choice_queryset():
 
     class Query2(Query):
         foo = Variable.choice_queryset(
-            model=Foo,
             choices=Foo.objects.all(),
             gui__show=True,
             value_to_q_lookup='value')
@@ -279,6 +286,9 @@ def test_choice_queryset():
             query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
 
+    # test a string with the contents "null"
+    assert repr(query2.parse('foo="null"')) == repr(Q(foo=None))
+
 
 @pytest.mark.django_db
 def test_multi_choice_queryset():
@@ -295,7 +305,6 @@ def test_multi_choice_queryset():
 
     class Query2(Query):
         foo = Variable.multi_choice_queryset(
-            model=Foo,
             choices=Foo.objects.all(),
             gui__show=True,
             value_to_q_lookup='value')
@@ -346,6 +355,16 @@ def test_from_model():
     assert [x.name for x in t.variables if x.show] == ['value']
 
 
+def test_from_model_foreign_key():
+    class MyQuery(Query):
+        class Meta:
+            variables = Query.variables_from_model(model=Bar)
+
+    t = MyQuery()
+    assert [x.name for x in t.variables] == ['id', 'foo']
+    assert isinstance(t.bound_variable_by_name['foo'].choices, QuerySet)
+
+
 @pytest.mark.django_db
 def test_endpoint_dispatch():
     Baz.objects.create(name='foo')
@@ -355,11 +374,14 @@ def test_endpoint_dispatch():
         foo = Variable.choice_queryset(
             gui__show=True,
             gui__attr='name',
-            model=Baz,
             choices=Baz.objects.all(),
         )
 
     query = MyQuery(RequestFactory().get('/'))
 
-    assert '__query__gui__field__foo' == query.form().fields_by_name.foo.endpoint_path
-    assert query.endpoint_dispatch(key='gui__field__foo', value='ar') == [{'id': x.pk, 'text': x.name}]
+    assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path
+    assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == [{'id': x.pk, 'text': x.name}]
+
+
+def test_variable_repr():
+    assert repr(Variable(name='foo')) == '<tri.query.Variable foo>'

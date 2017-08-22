@@ -10,12 +10,14 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import merged
-from tri.declarative import declarative, creation_ordered, extract_subkeys, setdefaults, filter_show_recursive, evaluate_recursive, sort_after, dispatch, EMPTY, setattr_path, getattr_path
-from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, DISPATCH_PATH_SEPARATOR
+from tri.declarative import declarative, creation_ordered, setdefaults, filter_show_recursive, evaluate_recursive, \
+    sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable, with_meta
+from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, \
+    DISPATCH_PATH_SEPARATOR
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '3.3.0'  # pragma: no mutate
+__version__ = '4.0.0'  # pragma: no mutate
 
 
 class QueryException(Exception):
@@ -71,14 +73,6 @@ def value_to_query_string_value_string(variable, v):
 MISSING = object()
 
 
-class NamespaceAwareObject(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            getattr_path(self, k)
-            setattr_path(self, k, v)
-        super(NamespaceAwareObject, self).__init__()
-
-
 def case_sensitive_op_to_q_op(op):
     return {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op]
 
@@ -104,17 +98,33 @@ def boolean_value_to_q(variable, op, value_string_or_f):
 
 
 @creation_ordered
-class Variable(NamespaceAwareObject):
+class Variable(RefinableObject):
     """
     Class that describes a variable that you can search for.
     """
+
+    name = Refinable()
+    after = Refinable()
+    show = Refinable()
+    attr = Refinable()
+    gui = Refinable()
+    gui_op = Refinable()
+    freetext = Refinable()
+    model = Refinable()
+    model_field = Refinable()
+    extra = Refinable()
+    choices = Refinable()
+    value_to_q_lookup = Refinable()
+
     @dispatch(
         gui_op='=',
         show=True,
         attr=MISSING,
-        gui__show=False,
-        gui__class=Field,
-        gui__required=False,
+        gui=Namespace(
+            call_target=Field,
+            show=False,
+            required=False,
+        ),
         extra=EMPTY,
     )
     def __init__(self, **kwargs):
@@ -122,28 +132,16 @@ class Variable(NamespaceAwareObject):
         Parameters with the prefix "gui__" will be passed along downstream to the tri.form.Field instance if applicable. This can be used to tweak the basic style interface.
 
         :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
-        :param gui__class: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
+        :param gui__call_target: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
         """
-
-        self.name = None
-        self.after = None
-        self.show = None
-        self.attr = None
-        self.gui = None
-        self.gui_op = None
-        self.freetext = None
-        self.model = None
-        self.model_field = None
-        self.extra = None
-        self.choices = None
-        self.value_to_q_lookup = None
 
         super(Variable, self).__init__(**kwargs)
 
         self.query = None
         """ :type: Query """
 
-    EVALUATED_ATTRIBUTES = ['after', 'attr', 'choices', 'extra', 'freetext', 'gui', 'gui_op', 'model', 'model_field', 'name', 'op_to_q_op', 'show', 'value_to_q', 'value_to_q_lookup']
+    def __repr__(self):
+        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
     def _bind(self, query):
         bound_variable = copy.copy(self)
@@ -152,7 +150,8 @@ class Variable(NamespaceAwareObject):
             bound_variable.attr = bound_variable.name
         bound_variable.query = query
 
-        for k in Variable.EVALUATED_ATTRIBUTES:
+        evaluated_attributes = self.get_declared('refinable_members').keys()
+        for k in evaluated_attributes:
             v = getattr(bound_variable, k)
             new_value = evaluate_recursive(v, query=query, variable=self)
             if new_value is not v:
@@ -161,11 +160,13 @@ class Variable(NamespaceAwareObject):
         return bound_variable
 
     @staticmethod
+    @refinable
     def op_to_q_op(op):
         """ :type: (unicode) -> Q """
         return Q_OP_BY_OP[op]
 
     @staticmethod
+    @refinable
     def value_to_q(variable, op, value_string_or_f):
         if variable.attr is None:
             return Q()
@@ -181,119 +182,6 @@ class Variable(NamespaceAwareObject):
             return ~r
         else:
             return r
-
-    @staticmethod
-    def text(**kwargs):  # pragma: no cover
-        return Variable(**kwargs)
-
-    @staticmethod
-    def case_sensitive(**kwargs):
-        """
-        Case sensitive text field.
-        """
-        return Variable(op_to_q_op=case_sensitive_op_to_q_op, **kwargs)
-
-    @staticmethod
-    def choice(**kwargs):  # pragma: no cover
-        """
-        Field that has one value out of a set.
-        :type choices: list
-        """
-        setdefaults(kwargs, dict(
-            gui__choices=kwargs.get('choices'),
-            gui__class=Field.choice,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def choice_queryset(**kwargs):
-        """
-        Field that has one value out of a set.
-        :type choices: django.db.models.QuerySet
-        """
-        setdefaults(kwargs, dict(
-            gui__class=Field.choice_queryset,
-            gui__choices=kwargs['choices'],
-            gui__model=kwargs['model'],
-            op_to_q_op=lambda op: 'exact',
-            value_to_q_lookup='name',
-            value_to_q=choice_queryset_value_to_q,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def multi_choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.multi_choice_queryset
-        ))
-        return Variable.choice_queryset(**kwargs)
-
-    @staticmethod
-    def boolean(**kwargs):  # pragma: no cover
-        """
-        Boolean field. Tries hard to parse a boolean value from its input.
-        """
-        setdefaults(kwargs, dict(
-            gui__class=Field.boolean,
-            value_to_q=boolean_value_to_q,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def integer(**kwargs):  # pragma: no cover
-        setdefaults(kwargs, dict(
-            gui__class=Field.integer,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def float(**kwargs):  # pragma: no cover
-        setdefaults(kwargs, dict(
-            gui__class=Field.float,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def url(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.url,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def time(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.time,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def datetime(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.datetime,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def date(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.date,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def email(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.email,
-        ))
-        return Variable(**kwargs)
-
-    @staticmethod
-    def decimal(**kwargs):
-        setdefaults(kwargs, dict(
-            gui__class=Field.decimal,
-        ))
-        return Variable(**kwargs)
 
     @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
@@ -315,6 +203,116 @@ class Variable(NamespaceAwareObject):
             **kwargs)
 
 
+Variable.text = Shortcut(
+    call_target=Variable,
+)
+
+Variable.case_sensitive = Shortcut(
+    call_target=Variable,
+    op_to_q_op=case_sensitive_op_to_q_op,
+)
+
+
+@shortcut
+@dispatch(
+    call_target=Variable,
+    gui__call_target=Field.choice,
+)
+def variable_shortcut_choice(call_target, **kwargs):  # pragma: no cover
+    """
+    Field that has one value out of a set.
+    :type choices: list
+    """
+    setdefaults(kwargs, dict(
+        gui__choices=kwargs.get('choices'),
+    ))
+    return call_target(**kwargs)
+
+
+Variable.choice = staticmethod(variable_shortcut_choice)
+
+
+@shortcut
+@dispatch(
+    call_target=Variable,
+    gui__call_target=Field.choice_queryset,
+    op_to_q_op=lambda op: 'exact',
+    value_to_q_lookup='name',
+    value_to_q=choice_queryset_value_to_q,
+)
+def variable_shortcut_choice_queryset(call_target, choices, **kwargs):
+    """
+    Field that has one value out of a set.
+    :type choices: django.db.models.QuerySet
+    """
+    from django.db.models import QuerySet
+    if 'model' not in kwargs:
+        assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
+        kwargs['model'] = choices.model
+
+    setdefaults(kwargs, dict(
+        gui__choices=choices,
+        gui__model=kwargs['model'],
+        choices=choices,
+    ))
+    return call_target(**kwargs)
+
+
+Variable.choice_queryset = staticmethod(variable_shortcut_choice_queryset)
+
+
+Variable.multi_choice_queryset = Shortcut(
+    call_target=Variable.choice_queryset,
+    gui__call_target=Field.multi_choice_queryset,
+)
+
+Variable.boolean = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.boolean,
+    value_to_q=boolean_value_to_q,
+)
+
+Variable.integer = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.integer,
+)
+
+Variable.float = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.float,
+)
+
+Variable.url = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.url,
+)
+
+Variable.time = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.time,
+)
+
+Variable.datetime = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.datetime,
+)
+
+Variable.date = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.date,
+)
+
+Variable.email = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.email,
+)
+
+Variable.decimal = Shortcut(
+    call_target=Variable,
+    gui__call_target=Field.decimal,
+)
+
+
 class StringValue(text_type):
     def __new__(cls, s):
         if s.startswith('"') and s.endswith('"'):
@@ -323,6 +321,7 @@ class StringValue(text_type):
 
 
 @declarative(Variable, 'variables_dict')
+@with_meta
 class Query(object):
     """
     Declare a query language. Example:
@@ -341,13 +340,17 @@ class Query(object):
     """ :type: list of BoundVariable """
     bound_variable_by_name = {}
 
-    def __init__(self, request=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', **kwargs):  # variables=None to make pycharm tooling not confused
+    @dispatch(
+        gui=Namespace(call_target=Form),
+    )
+    def __init__(self, request=None, data=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', gui=None):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
         """
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
         self.request = request
+        self.data = data
         self._form = None
 
         def generate_variables():
@@ -365,7 +368,7 @@ class Query(object):
 
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
 
-        self.gui_kwargs = extract_subkeys(kwargs, 'gui')
+        self.gui = gui
 
     def parse(self, query_string):
         """
@@ -528,21 +531,22 @@ class Query(object):
         fields = []
 
         if any(v.freetext for v in self.variables):
-            fields.append(Field(name=FREETEXT_SEARCH_NAME, label='Search', required=False))
+            fields.append(Field(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
         for variable in self.bound_variables:
             if variable.gui is not None and variable.gui.show:
                 # pass gui__* parameters to the GUI component
                 assert variable.name is not MISSING
                 assert variable.attr is not MISSING
-                params = merged(variable.gui, name=variable.name, attr=variable.attr)
-                fields.append(params.pop('class')(**params))
+                params = merged(Namespace(), variable.gui, name=variable.name, attr=variable.attr)
+                fields.append(params())
 
-        form = Form(
+        form = self.gui(
             request=self.request,
+            data=self.data,
             fields=fields,
             endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
-            **self.gui_kwargs)
+        )
         form.tri_query = self
         form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
         self._form = form
@@ -602,7 +606,7 @@ class Query(object):
     @dispatch(
         variable=EMPTY,
     )
-    def from_model(data, model, variable, instance=None, include=None, exclude=None, extra_fields=None, post_validation=None, **kwargs):
+    def from_model(data, model, variable, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -619,11 +623,12 @@ class Query(object):
 
         """
         variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
-        return Query(data=data, model=model, instance=instance, variables=variables, post_validation=post_validation, **kwargs)
+        return Query(data=data, variables=variables, **kwargs)
 
     def endpoint_dispatch(self, key, value):
-        if key.startswith('gui__'):
-            return self.form().endpoint_dispatch(key=key[len('gui__'):], value=value)
+        prefix = 'gui' + DISPATCH_PATH_SEPARATOR
+        if key.startswith(prefix):
+            return self.form().endpoint_dispatch(key=key[len(prefix):], value=value)
 
 
 from .db_compat import setup_db_compat  # noqa
