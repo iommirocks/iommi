@@ -1,0 +1,52 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="tri.table-docs.json"></script>
+
+<div id="mount"></div>
+
+<script>
+    function render_params(div, params) {
+        _.forEach(params, function(value, key) {
+            div.append(key + '<br />')
+        });
+    }
+
+    function render_defaults(div, defaults) {
+        _.forEach(defaults, function(value, key) {
+            div.append(key + ' = ' + value + '<br />')
+        });
+    }
+
+    function render_shortcuts(div, shortcuts) {
+        _.forEach(shortcuts, function(value, key) {
+            div.append(key + '<br />')
+        });
+    }
+
+    function render_class(value) {
+        var div = $('<div></div>');
+
+        div.append('<h1>' + value.class_ + '</h1>');
+
+        div.append('<h2>Params</h2>');
+        render_params(div, value.params);
+
+        div.append('<h2>Defaults</h2>');
+        render_defaults(div, value.defaults);
+
+        div.append('<h2>Shortcuts</h2>');
+        render_shortcuts(div, value.shortcuts);
+
+        $('#mount').append(div);
+    }
+
+    function render(value) {
+        if (value.type === 'class') {
+            render_class(value);
+        }
+    }
+
+    _.forEach(docs, function(value) {
+        render(value)
+    })
+</script>

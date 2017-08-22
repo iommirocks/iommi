@@ -12,13 +12,14 @@ from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template.defaultfilters import slugify
-from django.template.loader import render_to_string
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, flatten, Namespace, setattr_path
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, \
+    getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, \
+    RefinableObject, refinable, Refinable, shortcut, Shortcut
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, merged
@@ -26,7 +27,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '4.3.1'  # pragma: no mutate
+__version__ = '5.0.0'  # pragma: no mutate
 
 LAST = LAST
 
@@ -122,19 +123,28 @@ def default_cell_formatter(table, column, row, value, **_):
     return conditional_escape(value)
 
 
-class NamespaceAwareObject(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            getattr(self, k)  # Check existence
-            setattr(self, k, v)
-        super(NamespaceAwareObject, self).__init__()
-
-
 @creation_ordered
-class Column(NamespaceAwareObject):
+class Column(RefinableObject):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
+    name = Refinable()
+    after = Refinable()
+    attrs = Refinable()
+    url = Refinable()
+    title = Refinable()
+    show = Refinable()
+    sort_default_desc = Refinable()
+    sortable = Refinable()
+    group = Refinable()
+    auto_rowspan = Refinable()
+    cell = Refinable()
+    model = Refinable()
+    model_field = Refinable()
+    choices = Refinable()
+    bulk = Refinable()
+    query = Refinable()
+    extra = Refinable()
 
     @dispatch(
         show=True,
@@ -177,27 +187,6 @@ class Column(NamespaceAwareObject):
 
         setdefaults_path(kwargs, {'attrs__class__' + c: True for c in kwargs.pop('css_class', {})})
 
-        self.name = None
-        """ :type: unicode """
-        self.after = None
-        self.attrs = None
-        self.url = None
-        self.title = None
-        self.show = None
-        self.sort_default_desc = None
-        self.sortable = None
-        self.group = None
-        self.auto_rowspan = None
-        """ :type: bool """
-        self.cell = None
-        self.model = None
-        self.model_field = None
-        self.choices = None
-        self.bulk = None
-        self.query = None
-
-        self.extra = None
-
         super(Column, self).__init__(**kwargs)
 
         self.table = None
@@ -213,21 +202,24 @@ class Column(NamespaceAwareObject):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
     @staticmethod
+    @refinable
     def attr(table, column, **_):
         return column.name
 
     @staticmethod
+    @refinable
     def sort_key(table, column, **_):
         return column.attr
 
     @staticmethod
+    @refinable
     def display_name(table, column, **_):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def _bind(self, table, index):
         bound_column = copy.copy(self)
-        bound_column.attrs = self.attrs.copy()
-        bound_column.attrs['class'] = bound_column.attrs['class'].copy()
+        bound_column.attrs = Namespace(self.attrs.copy())
+        bound_column.attrs['class'] = Namespace(bound_column.attrs['class'].copy())
 
         bound_column.index = index
         bound_column.bulk = setdefaults_path(
@@ -248,15 +240,12 @@ class Column(NamespaceAwareObject):
 
         return bound_column
 
-    EVALUATED_ATTRIBUTES = [
-        'after', 'attr', 'auto_rowspan', 'bulk', 'cell', 'choices', 'display_name', 'extra', 'group', 'model', 'model_field', 'query', 'show', 'sort_default_desc', 'sort_key', 'sortable', 'title', 'url'
-    ]
-
     def _evaluate(self):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        for k in self.EVALUATED_ATTRIBUTES:
+        evaluated_attributes = self.get_declared('refinable_members').keys()
+        for k in evaluated_attributes:
             v = getattr(self, k)
             new_value = evaluate_recursive(v, table=self.table, column=self)
             if new_value is not v:
@@ -264,241 +253,6 @@ class Column(NamespaceAwareObject):
 
     def render_css_class(self):
         return render_class(self.attrs['class'])
-
-    @staticmethod
-    def text(**kwargs):  # pragma: no cover
-        return Column(**kwargs)
-
-    @staticmethod
-    def icon(icon, is_report=False, icon_title='', show=True, **kwargs):
-        """
-        Shortcut to create font awesome-style icons.
-
-        :param icon: the font awesome name of the icon
-        """
-        setdefaults(kwargs, dict(
-            name='',
-            display_name='',
-            sortable=False,
-            attrs__class__thin=True,
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-            title=icon_title,
-            cell__value=lambda table, column, row, **_: True,
-            cell__attrs__class__cj=True,
-            cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def edit(is_report=False, **kwargs):
-        """
-        Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
-            display_name=''
-        ))
-        return Column.icon('pencil-square-o', is_report, 'Edit', **kwargs)
-
-    @staticmethod
-    def delete(is_report=False, **kwargs):
-        """
-        Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
-            display_name=''
-        ))
-        return Column.icon('trash-o', is_report, 'Delete', **kwargs)
-
-    @staticmethod
-    def download(is_report=False, **kwargs):
-        """
-        Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
-            cell__value=lambda row, **_: getattr(row, 'pk', False),
-        ))
-        return Column.icon('download', is_report, 'Download', **kwargs)
-
-    @staticmethod
-    def run(is_report=False, show=True, **kwargs):
-        """
-        Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
-        """
-        setdefaults(kwargs, dict(
-            name='',
-            title='Run',
-            sortable=False,
-            css_class={'thin'},
-            cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
-            cell__value='Run',
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, **kwargs):
-        """
-        Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
-
-        :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
-        :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
-        """
-        setdefaults(kwargs, dict(
-            name='__select__',
-            title='Select all',
-            display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
-            sortable=False,
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-            attrs__class__thin=True,
-            attrs__class__nopad=True,
-            cell__attrs__class__cj=True,
-            cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def boolean(is_report=False, **kwargs):
-        """
-        Shortcut to render booleans as a check mark if true or blank if false.
-        """
-        def render_icon(value):
-            if callable(value):
-                value = value()
-            return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
-
-        setdefaults(kwargs, dict(
-            cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
-            cell__attrs__class__cj=True,
-            query__class=Variable.boolean,
-            bulk__class=Field.boolean,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def link(**kwargs):
-        """
-        Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
-        """
-        def url(table, column, row, value):
-            del table, value
-            r = getattr_path(row, column.attr)
-            return r.get_absolute_url() if r else ''
-
-        setdefaults(kwargs, dict(
-            cell__url=url,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def number(**kwargs):
-        """
-        Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
-        """
-        setdefaults(kwargs, dict(
-            cell__attrs__class__rj=True
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def float(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.float,
-            bulk__class=Field.float,
-        ))
-        return Column.number(**kwargs)
-
-    @staticmethod
-    def integer(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.integer,
-            bulk__class=Field.integer,
-        ))
-        return Column.number(**kwargs)
-
-    @staticmethod
-    def choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
-            bulk__class=Field.choice_queryset,
-            bulk__model=kwargs.get('model'),
-            query__class=Variable.choice_queryset,
-            query__model=kwargs.get('model'),
-        ))
-        return Column.choice(**kwargs)
-
-    @staticmethod
-    def multi_choice_queryset(**kwargs):
-        setdefaults(kwargs, dict(
-            bulk__class=Field.multi_choice_queryset,
-            bulk__model=kwargs.get('model'),
-            query__class=Variable.multi_choice_queryset,
-            query__model=kwargs.get('model'),
-            cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
-        ))
-        return Column.choice(**kwargs)
-
-    @staticmethod
-    def choice(**kwargs):
-        choices = kwargs['choices']
-        setdefaults(kwargs, dict(
-            bulk__class=Field.choice,
-            bulk__choices=choices,
-            query__class=Variable.choice,
-            query__choices=choices,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def substring(**kwargs):
-        setdefaults(kwargs, dict(
-            query__gui_op=':',
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def date(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.date,
-            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.date,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def datetime(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.datetime,
-            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.datetime,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def time(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.time,
-            query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-            bulk__class=Field.time,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def email(**kwargs):
-        setdefaults(kwargs, dict(
-            query__class=Variable.email,
-            bulk__class=Field.email,
-        ))
-        return Column(**kwargs)
-
-    @staticmethod
-    def decimal(**kwargs):
-        setdefaults(kwargs, dict(
-            bulk__class=Field.decimal,
-            query__class=Variable.decimal,
-        ))
-        return Column(**kwargs)
 
     @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
@@ -519,6 +273,283 @@ class Column(NamespaceAwareObject):
             field_name=field_name,
             model_field=model_field,
             **kwargs)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    name='',
+    display_name='',
+    sortable=False,
+    attrs__class__thin=True,
+    cell__value=lambda table, column, row, **_: True,
+    cell__attrs__class__cj=True,
+)
+def column_shortcut_icon(icon, is_report=False, icon_title='', show=True, call_target=None, **kwargs):
+    """
+    Shortcut to create font awesome-style icons.
+
+    :param icon: the font awesome name of the icon
+    """
+    setdefaults(kwargs, dict(
+        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+        title=icon_title,
+        cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
+    ))
+    return call_target(**kwargs)
+
+
+Column.icon = staticmethod(column_shortcut_icon)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.icon,
+    cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
+    display_name=''
+)
+def column_shortcut_edit(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
+    """
+    return call_target('pencil-square-o', is_report, 'Edit', **kwargs)
+
+
+Column.edit = staticmethod(column_shortcut_edit)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.icon,
+    cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
+    display_name=''
+)
+def column_shortcut_delete(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
+    """
+    return call_target('trash-o', is_report, 'Delete', **kwargs)
+
+
+Column.delete = staticmethod(column_shortcut_delete)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.icon,
+    cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
+    cell__value=lambda row, **_: getattr(row, 'pk', False),
+)
+def column_shortcut_download(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
+    """
+    return call_target('download', is_report, 'Download', **kwargs)
+
+
+Column.download = staticmethod(column_shortcut_download)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    name='',
+    title='Run',
+    sortable=False,
+    css_class={'thin'},
+    cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
+    cell__value='Run',
+)
+def column_shortcut_run(is_report=False, show=True, call_target=None, **kwargs):
+    """
+    Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
+    """
+    setdefaults(kwargs, dict(
+        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+    ))
+    return call_target(**kwargs)
+
+
+Column.run = staticmethod(column_shortcut_run)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    name='__select__',
+    title='Select all',
+    display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
+    sortable=False,
+    attrs__class__thin=True,
+    attrs__class__nopad=True,
+    cell__attrs__class__cj=True,
+)
+def column_shortcut_select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
+    """
+    Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
+
+    :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
+    :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
+    """
+    setdefaults(kwargs, dict(
+        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+        cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
+    ))
+    return call_target(**kwargs)
+
+
+Column.select = staticmethod(column_shortcut_select)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    cell__attrs__class__cj=True,
+    query__call_target=Variable.boolean,
+    bulk__call_target=Field.boolean,
+)
+def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
+    """
+    Shortcut to render booleans as a check mark if true or blank if false.
+    """
+    def render_icon(value):
+        if callable(value):
+            value = value()
+        return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
+
+    setdefaults(kwargs, dict(
+        cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
+    ))
+    return call_target(**kwargs)
+
+
+Column.boolean = staticmethod(column_shortcut_boolean)
+
+
+@shortcut
+@dispatch(
+    call_target=Column,
+    bulk__call_target=Field.choice,
+    query__call_target=Variable.choice,
+)
+def column_shortcut_choice(call_target, **kwargs):
+    choices = kwargs['choices']
+    setdefaults(kwargs, dict(
+        bulk__choices=choices,
+        query__choices=choices,
+    ))
+    return call_target(**kwargs)
+
+
+Column.choice = staticmethod(column_shortcut_choice)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.choice,
+    bulk__call_target=Field.choice_queryset,
+    query__call_target=Variable.choice_queryset,
+)
+def column_shortcut_choice_queryset(call_target, **kwargs):
+    setdefaults(kwargs, dict(
+        bulk__model=kwargs.get('model'),
+        query__model=kwargs.get('model'),
+    ))
+    return call_target(**kwargs)
+
+
+Column.choice_queryset = staticmethod(column_shortcut_choice_queryset)
+
+
+@shortcut
+@dispatch(
+    call_target=Column.choice,
+    bulk__call_target=Field.multi_choice_queryset,
+    query__call_target=Variable.multi_choice_queryset,
+    cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
+)
+def column_shortcut_multi_choice_queryset(call_target, **kwargs):
+    setdefaults(kwargs, dict(
+        bulk__model=kwargs.get('model'),
+        query__model=kwargs.get('model'),
+    ))
+    return call_target(**kwargs)
+
+
+Column.multi_choice_queryset = staticmethod(column_shortcut_multi_choice_queryset)
+
+Column.text = Shortcut(
+    call_target=Column,
+)
+
+
+# Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
+def link_cell_url(table, column, row, value):
+    del table, value
+    r = getattr_path(row, column.attr)
+    return r.get_absolute_url() if r else ''
+
+
+Column.link = Shortcut(
+    call_target=Column,
+    cell__url=link_cell_url,
+)
+
+# Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
+Column.number = Shortcut(
+    call_target=Column,
+    cell__attrs__class__rj=True,
+)
+
+Column.float = Shortcut(
+    call_target=Column.number,
+    query__call_target=Variable.float,
+    bulk__call_target=Field.float,
+)
+
+Column.integer = Shortcut(
+    call_target=Column.number,
+    query__call_target=Variable.integer,
+    bulk__call_target=Field.integer,
+)
+
+Column.substring = Shortcut(
+    call_target=Column,
+    query__gui_op=':',
+)
+
+Column.date = Shortcut(
+    call_target=Column,
+    query__call_target=Variable.date,
+    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+    bulk__call_target=Field.date,
+)
+
+Column.datetime = Shortcut(
+    call_target=Column,
+    query__call_target=Variable.datetime,
+    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+    bulk__call_target=Field.datetime,
+)
+
+Column.time = Shortcut(
+    call_target=Column,
+    query__call_target=Variable.time,
+    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+    bulk__call_target=Field.time,
+)
+
+Column.email = Shortcut(
+    call_target=Column,
+    query__call_target=Variable.email,
+    bulk__call_target=Field.email,
+)
+
+Column.decimal = Shortcut(
+    call_target=Column,
+    bulk__call_target=Field.decimal,
+    query__call_target=Variable.decimal,
+)
 
 
 class BoundRow(object):
@@ -766,15 +797,6 @@ class Table(object):
             return ''
         return render_template(self.request, self.filter.template, merged(self.context, form=self.query_form))
 
-    @staticmethod
-    def render_template_config(template_config, context):
-        if template_config.template:
-            if isinstance(template_config.template, six.string_types):
-                return render_to_string(template_config.template, context)
-            else:
-                return template_config.template.render(context)
-        return ''
-
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
 
@@ -794,9 +816,17 @@ class Table(object):
                     else:
                         rowspan_by_row[id(prev_row)] += 1
 
-                column.cell.attrs['rowspan'] = set_row_span(rowspan_by_row)
-                assert 'style' not in column.cell.attrs  # TODO: support both specifying style cell__attrs and auto_rowspan
-                column.cell.attrs['style'] = set_display_none(rowspan_by_row)
+                orig_style = column.cell.attrs.get('style')
+
+                def rowspan(row, **_):
+                    return rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
+
+                def style(row, **_):
+                    return 'display: none%s' % ('; ' + orig_style if orig_style else '') if id(row) not in rowspan_by_row else orig_style
+
+                assert 'rowspan' not in column.cell.attrs
+                dict.__setitem__(column.cell.attrs, 'rowspan', rowspan)
+                dict.__setitem__(column.cell.attrs, 'style', style)
 
     def _prepare_evaluate_members(self):
         self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
@@ -853,7 +883,7 @@ class Table(object):
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         group_columns = []
 
-        class GroupColumn(Namespace):
+        class GroupColumn(Struct):
             def render_css_class(self):
                 return render_class(self.attrs['class'])
 
@@ -864,7 +894,7 @@ class Table(object):
             group_columns.append(GroupColumn(
                 display_name=group_name,
                 colspan=len(columns_in_group),
-                attrs__class__superheader=True,
+                attrs={'class': Struct(superheader=True)},
             ))
 
             for bound_column in columns_in_group:
@@ -913,26 +943,23 @@ class Table(object):
             def generate_variables():
                 for column in self.bound_columns:
                     if column.query.show:
-                        query_kwargs = setdefaults_path(
-                            Struct(),
+                        query_namespace = setdefaults_path(
+                            Namespace(),
                             column.query,
-                            dict(
-                                name=column.name,
-                                gui__label=column.display_name,
-                                attr=column.attr,
-                                model=column.table.model,
-                            ), {
-                                'class': Variable,
-                            }
+                            call_target=Variable,
+                            name=column.name,
+                            gui__display_name=column.display_name,
+                            attr=column.attr,
+                            model=column.table.model,
                         )
-                        yield query_kwargs.pop('class')(**query_kwargs)
+                        yield query_namespace()
             variables = list(generate_variables())
 
             self.query = Query(
                 request=request,
                 variables=variables,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
-                **flatten(self.query_args)
+                **self.query_args
             )
             self.query_form = self.query.form() if self.query.variables else None
 
@@ -946,29 +973,26 @@ class Table(object):
             def generate_bulk_fields():
                 for column in self.bound_columns:
                     if column.bulk.show:
-                        bulk_kwargs = setdefaults_path(
-                            Struct(),
+                        bulk_namespace = setdefaults_path(
+                            Namespace(),
                             column.bulk,
-                            dict(
-                                name=column.name,
-                                attr=column.attr,
-                                required=False,
-                                empty_choice_tuple=(None, '', '---', True),
-                                model=self.model,
-                            ), {
-                                'class': Field.from_model,
-                            }
+                            call_target=Field.from_model,
+                            name=column.name,
+                            attr=column.attr,
+                            required=False,
+                            empty_choice_tuple=(None, '', '---', True),
+                            model=self.model,
                         )
-                        if bulk_kwargs['class'] == Field.from_model:
-                            bulk_kwargs['field_name'] = column.attr
-                        yield bulk_kwargs.pop('class')(**bulk_kwargs)
+                        if bulk_namespace['call_target'] == Field.from_model:
+                            bulk_namespace['field_name'] = column.attr
+                        yield bulk_namespace()
             bulk_fields = list(generate_bulk_fields())
 
             self.bulk_form = Form(
                 data=request.POST,
                 fields=bulk_fields,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
-                **flatten(self.bulk)
+                **self.bulk
             ) if bulk_fields else None
 
         self._prepare_auto_rowspan()
@@ -1132,14 +1156,6 @@ def table_context(request,
     return base_context
 
 
-def set_row_span(rowspan_by_row):
-    return lambda row, **_: rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
-
-
-def set_display_none(rowspan_by_row):
-    return lambda row, **_: 'display: none' if id(row) not in rowspan_by_row else None
-
-
 @dispatch(
     table=EMPTY,
 )
@@ -1147,8 +1163,7 @@ def render_table(request,
                  table,
                  links=None,
                  context=None,
-                 template_name='tri_table/list.html',  # deprecated
-                 template=None,
+                 template='tri_table/list.html',
                  blank_on_empty=False,
                  paginate_by=40,  # pragma: no mutate
                  page=None,
@@ -1175,8 +1190,8 @@ def render_table(request,
     if table is None or isinstance(table, Namespace):
         table = Table.from_model(**table)
 
-    table.prepare(request)
     assert isinstance(table, Table)
+    table.prepare(request)
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=table)
     if should_return:
@@ -1223,9 +1238,6 @@ def render_table(request,
     if table.query_form and not table.query_form.is_valid():
         table.data = None
         table.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
-
-    if not template:
-        template = template_name
 
     return render_template(request, template, table.context)
 

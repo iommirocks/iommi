@@ -1176,32 +1176,48 @@ def test_query_namespace_inject():
 
 def test_float():
     x = Column.float()
-    assert getattr_path(x, 'query__class') == Variable.float
-    assert getattr_path(x, 'bulk__class') == Field.float
+    assert getattr_path(x, 'query__call_target') == Variable.float
+    assert getattr_path(x, 'bulk__call_target') == Field.float
 
 
 def test_integer():
     x = Column.integer()
-    assert getattr_path(x, 'query__class') == Variable.integer
-    assert getattr_path(x, 'bulk__class') == Field.integer
+    assert getattr_path(x, 'query__call_target') == Variable.integer
+    assert getattr_path(x, 'bulk__call_target') == Field.integer
 
 
 def test_date():
     x = Column.date()
-    assert getattr_path(x, 'query__class') == Variable.date
-    assert getattr_path(x, 'bulk__class') == Field.date
+    assert getattr_path(x, 'query__call_target') == Variable.date
+    assert getattr_path(x, 'bulk__call_target') == Field.date
 
 
 def test_datetime():
     x = Column.datetime()
-    assert getattr_path(x, 'query__class') == Variable.datetime
-    assert getattr_path(x, 'bulk__class') == Field.datetime
+    assert getattr_path(x, 'query__call_target') == Variable.datetime
+    assert getattr_path(x, 'bulk__call_target') == Field.datetime
 
 
 def test_email():
     x = Column.email()
-    assert getattr_path(x, 'query__class') == Variable.email
-    assert getattr_path(x, 'bulk__class') == Field.email
+    assert getattr_path(x, 'query__call_target') == Variable.email
+    assert getattr_path(x, 'bulk__call_target') == Field.email
+
+
+def test_backwards_compatible_call_target():
+    def backwards_compatible_call_target(**kwargs):
+        del kwargs
+        raise Exception('Hello!')
+
+    class FooTable(Table):
+        foo = Column(query__show=True, query__gui__show=True, query__gui=backwards_compatible_call_target)
+
+    with pytest.raises(Exception) as e:
+        t = FooTable(data=[], model=Foo)
+        t.prepare(RequestFactory().get('/'))
+        t.query.form()
+
+    assert 'Hello!' == str(e.value)
 
 
 def test_extra():
@@ -1267,7 +1283,7 @@ def test_ajax_endpoint():
             bulk__show=True,
             query__gui__show=True)
 
-    result = render_table(request=RequestFactory().get("/", {'__query__gui__field__foo': 'hopp'}), table=TestTable(data=Bar.objects.all()))
+    result = render_table(request=RequestFactory().get("/", {'/query/gui/field/foo': 'hopp'}), table=TestTable(data=Bar.objects.all()))
     assert json.loads(result.content.decode('utf8')) == [{'id': 2, 'text': 'Hopp'}]
 
 
@@ -1279,7 +1295,7 @@ def test_ajax_endpoint_empty_response():
 
         bar = Column()
 
-    result = render_table(request=RequestFactory().get("/", {'__foo': ''}), table=TestTable(data=[]))
+    result = render_table(request=RequestFactory().get("/", {'/foo': ''}), table=TestTable(data=[]))
     assert [] == json.loads(result.content.decode('utf8'))
 
 
@@ -1297,7 +1313,7 @@ def test_ajax_data_endpoint():
         Struct(foo=3, bar=4),
     ])
 
-    result = render_table(request=RequestFactory().get("/", {'__data': ''}), table=table)
+    result = render_table(request=RequestFactory().get("/", {'/data': ''}), table=table)
     assert json.loads(result.content.decode('utf8')) == [dict(foo=1, bar=2), dict(foo=3, bar=4)]
 
 
@@ -1309,9 +1325,9 @@ def test_ajax_endpoint_namespacing():
 
         baz = Column()
 
-    result = render_table(request=RequestFactory().get("/", {'__not_foo__bar': ''}), table=TestTable(data=[]))
+    result = render_table(request=RequestFactory().get("/", {'/not_foo/bar': ''}), table=TestTable(data=[]))
     assert result is None
-    result = render_table(request=RequestFactory().get("/", {'__foo__bar': ''}), table=TestTable(data=[]))
+    result = render_table(request=RequestFactory().get("/", {'/foo/bar': ''}), table=TestTable(data=[]))
     assert 17 == json.loads(result.content.decode('utf8'))
 
 
@@ -1342,7 +1358,7 @@ def test_ajax_custom_endpoint():
             endpoint__foo = lambda table, key, value: dict(baz=value)
         spam = Column()
 
-    result = render_table(request=RequestFactory().get("/", {'__foo': 'bar'}), table=TestTable(data=[]))
+    result = render_table(request=RequestFactory().get("/", {'/foo': 'bar'}), table=TestTable(data=[]))
     assert json.loads(result.content.decode('utf8')) == dict(baz='bar')
 
 
@@ -1381,3 +1397,7 @@ def test_yes_no_formatter():
 
 def test_blank_on_empty():
     assert render_table(RequestFactory().get('/'), table=Table(data=[], columns=[Column(name='foo')]), blank_on_empty=True) == ''
+
+
+def test_repr():
+    assert repr(Column(name='foo')) == '<tri.table.Column foo>'

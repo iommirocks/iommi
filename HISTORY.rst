@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+5.0.0 (2017-08-22)
+~~~~~~~~~~~~~~~~~~
+
+* Moved to tri.declarative 0.35, tri.form 5.0 and tri.query 4.0. Check release notes for tri.form and tri.query for backwards incompatible changes
+
+* Removed deprecated `template_name` parameter to `render_table`
+
+* Note that `foo__class` to specify a constructor/callable is no longer a valid parameter, because of updated tri.form, use `foo__call_target` or just `foo`
+
+
 4.3.1 (2017-05-31)
 ~~~~~~~~~~~~~~~~~~
 
