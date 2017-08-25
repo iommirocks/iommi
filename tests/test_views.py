@@ -5,11 +5,11 @@ import json
 import pytest
 from bs4 import BeautifulSoup
 
-from tests.models import CreateOrEditObjectTest, get_saved_something, Bar, Foo, UniqueConstraintTest, reset_saved_something, NamespaceFormsTest
+from tests.models import CreateOrEditObjectTest, get_saved_something, Bar, Foo, UniqueConstraintTest, \
+    reset_saved_something, NamespaceFormsTest, Baz
 from tri.form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
-from tri.struct import Struct, merged
-
 from tri.form.views import create_object, edit_object, create_or_edit_object_redirect
+from tri.struct import Struct, merged
 
 
 def get_request_context(response):
@@ -257,3 +257,36 @@ def test_create_or_edit_object_default_template():
         </div>
     """
     assert BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify() == BeautifulSoup(expected, 'html.parser').prettify()
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_validate_unique():
+    request = Struct(
+        method='POST',
+        META={},
+        GET={},
+        POST={
+            'a': '1',
+            'b': '1',
+            '-': '-'
+        },
+        user=Struct(is_authenticated=lambda: True)
+    )
+
+    response = create_object(request=request, model=Baz)
+    assert response.status_code == 302
+    assert Baz.objects.filter(a=1, b=1).exists()
+
+    response = create_object(request=request, model=Baz)
+    assert response.status_code == 200
+    assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
+
+    request.POST['b'] = '2'
+    response = create_object(request=request, model=Baz)
+    assert response.status_code == 302
+    instance = Baz.objects.get(a=1, b=2)
+
+    request.POST['b'] = '1'
+    response = edit_object(request=request, instance=instance)
+    assert response.status_code == 200
+    assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
