@@ -162,14 +162,6 @@ def test_setdefault_string_value():
     assert expected == actual
 
 
-def test_setdefaults_broken_namespace():
-    with pytest.raises(TypeError) as e:
-        setdefaults_path(
-            Struct(x=17),
-            x__y=42)
-    assert "Unable to treat x (17) as a namespace" == str(e.value)
-
-
 def test_namespace_repr():
     actual = repr(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
     expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes since repr is called on values
@@ -244,6 +236,115 @@ def test_flatten_identity_on_namespace_should_not_trigger_loop_detection():
 #     n2 = Namespace()
 #     n2.buzz = n1
 #     assert "Namespace(buzz__bar='baz', buzz__foo=Namespace(...))" == repr(n2)
+
+def test_namespace_empty_initializer():
+    assert dict() == Namespace()
+
+
+def test_namespace_setitem_single_value():
+    x = Namespace()
+    x.setitem_path('x', 17)
+    assert dict(x=17) == x
+
+
+def test_namespace_setitem_singe_value_overwrite():
+    x = Namespace(x=17)
+    x.setitem_path('x', 42)
+    assert dict(x=42) == x
+
+
+def test_namespace_setitem_split_path():
+    x = Namespace()
+    x.setitem_path('x__y', 17)
+    assert dict(x=dict(y=17))
+
+
+def test_namespace_setitem_split_path_overwrite():
+    x = Namespace(x__y=17)
+    x.setitem_path('x__y', 42)
+    assert dict(x=dict(y=42)) == x
+
+
+def test_namespace_setitem_namespace_merge():
+    x = Namespace(x__y=17)
+    x.setitem_path('x__z', 42)
+    assert dict(x=dict(y=17, z=42)) == x
+
+
+def test_namespace_setitem_promote_string_to_namespace():
+    x = Namespace(x='y')
+    x.setitem_path('x__z', 17)
+    assert dict(x=dict(y=True, z=17)) == x
+
+
+def f():
+    pass
+
+
+def test_namespace_setitem_function():
+    x = Namespace(f=f)
+    x.setitem_path('f__x', 17)
+    assert dict(f=dict(call_target=f, x=17)) == x
+
+
+def test_namespace_setitem_function_backward():
+    x = Namespace(f__x=17)
+    x.setitem_path('f', f)
+    assert dict(f=dict(call_target=f, x=17)) == x
+
+
+def test_namespace_setitem_function_dict():
+    x = Namespace(f=f)
+    x.setitem_path('f', dict(x=17))
+    assert dict(f=dict(call_target=f, x=17)) == x
+
+
+def test_namespace_setitem_function_non_dict():
+    x = Namespace(f=f)
+    x.setitem_path('f', 17)
+    assert dict(f=17) == x
+
+
+def test_namespace_no_promote_overwrite():
+    x = Namespace(x=17)
+    x.setitem_path('x__z', 42)
+    assert Namespace(x__z=42) == x
+
+
+def test_namespace_no_promote_overwrite_backwards():
+    x = Namespace(x__z=42)
+    x.setitem_path('x', 17)
+    assert Namespace(x=17) == x
+
+
+def test_dispatch():
+    @dispatch(foo=EMPTY)
+    def f(**kwargs):
+        return kwargs
+
+    assert dict(foo={}) == f()
+
+
+@pytest.mark.parametrize('backward', [False, True], ids={False: '==>', True: '<=='}.get)
+@pytest.mark.parametrize('a, b, expected', [
+    (Namespace(), Namespace(), Namespace()),
+    (Namespace(a=1), Namespace(b=2), Namespace(a=1, b=2)),
+    (Namespace(a__b=1), Namespace(a__c=2), Namespace(a__b=1, a__c=2)),
+    (Namespace(x='foo'), Namespace(x__bar=True), Namespace(x__foo=True, x__bar=True)),
+    (Namespace(x=u'foo'), Namespace(x__bar=True), Namespace(x__foo=True, x__bar=True)),
+    (Namespace(x=f), Namespace(x__y=1), Namespace(x__call_target=f, x__y=1)),
+    (Namespace(x=dict(y=1)), Namespace(x__z=2), Namespace(x__y=1, x__z=2)),
+    (Namespace(x=Namespace(y__z=1)), Namespace(a=Namespace(b__c=2)), Namespace(x__y__z=1, a__b__c=2)),
+    (Namespace(y__z="foo"), Namespace(y__z__c=True), Namespace(y__z__foo=True, y__z__c=True)),
+    (Namespace(y__z=u"foo"), Namespace(y__z__c=True), Namespace(y__z__foo=True, y__z__c=True)),
+    (Namespace(bar__a=1), Namespace(bar__quux__title=2), Namespace(bar__a=1, bar__quux__title=2)),
+    (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
+], ids=str)
+def test_merge(a, b, expected, backward):
+    if backward:
+        a, b = b, a
+    actual = Namespace(flatten(a), flatten(b))
+    assert expected == actual
 
 
 def test_setdefaults_path_empty_marker():
@@ -480,6 +581,7 @@ def test_dispatch_wraps():
     def foo():
         """test"""
         pass
+
     assert foo.__doc__ == 'test'
 
 
@@ -490,6 +592,7 @@ def test_dispatch_store_arguments():
     )
     def foo():
         pass
+
     assert foo.dispatch == Namespace(foo=1, bar=2)
 
 
@@ -538,6 +641,7 @@ def test_is_shortcut():
 def test_is_shortcut_function():
     def f():
         pass
+
     assert not is_shortcut(f)
 
     @shortcut
@@ -607,6 +711,7 @@ def test_refinable_object_complete_example():
     )
     def shortcut_to_foo(call_target):
         return call_target()
+
     Foo.shortcut_to_foo = staticmethod(shortcut_to_foo)
 
     Foo.q = Shortcut(call_target=Foo, b='refined_by_shortcut_b')
@@ -624,7 +729,6 @@ def test_refinable_object_complete_example():
 
 
 def test_refinable_object2():
-
     class MyClass(RefinableObject):
         @dispatch(
             foo__bar=17
@@ -642,7 +746,6 @@ def test_refinable_object2():
 
 
 def test_refinable_object_binding():
-
     class MyClass(RefinableObject):
         foo = Refinable()
         container = Refinable()
@@ -666,6 +769,7 @@ def test_nested_namespace_overriding_and_calling():
     @dispatch
     def f(extra):
         return extra.foo
+
     foo = Shortcut(
         call_target=f,
         extra__foo='asd',
@@ -740,7 +844,6 @@ def test_refinable_no_dispatch():
 
 
 def test_refinable_object_with_dispatch():
-
     class MyClass(RefinableObject):
         x = Refinable()
         y = Refinable()
@@ -764,15 +867,17 @@ def test_no_call_target_overwrite():
     def b():
         pass
 
-    assert setdefaults_path(
+    x = setdefaults_path(
         dict(foo={}),
         foo=f,
-    ) == dict(foo=Namespace(call_target=f))
+    )
+    assert dict(foo=Namespace(call_target=f)) == x
 
-    assert setdefaults_path(setdefaults_path(
-        dict(foo={}),
-        foo=f,
-    ), foo=b) == dict(foo=Namespace(call_target=f))
+    y = setdefaults_path(
+        x,
+        foo=b,
+    )
+    assert dict(foo=Namespace(call_target=f)) == y
 
 
 def test_empty_marker_is_immutable():
