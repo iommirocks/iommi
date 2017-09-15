@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+5.0.1 (2017-09-15)
+~~~~~~~~~~~~~~~~~~
+
+* Correctly check unique constraints when editing object
+
+* Bug where `form.instance` was set too late in `Form` constructor, resulting in `AttributeError` in certain lambdas
+
+
 5.0.0 (2017-08-22)
 ~~~~~~~~~~~~~~~~~~
 

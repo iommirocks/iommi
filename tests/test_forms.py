@@ -1182,3 +1182,10 @@ def test_choice_post_validation_not_overwritten():
         MyForm()
 
     assert str(e.value) == 'foobar'
+
+
+def test_instance_set_earlier_than_evaluate_is_called():
+    class MyForm(Form):
+        foo = Field(initial=lambda form, **_: form.instance)
+
+    MyForm()

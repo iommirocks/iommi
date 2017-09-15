@@ -39,7 +39,7 @@ except ImportError:  # pragma: no cover
 Namespace.do_not_call_in_templates = True
 
 
-__version__ = '5.0.0'  # pragma: no mutate
+__version__ = '5.0.1'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -1199,6 +1199,7 @@ class Form(RefinableObject):
         self.errors = set()
         """ :type: set of str """
         self._valid = None
+        self.instance = instance
         self.evaluate()
 
         if instance is not None:
@@ -1209,10 +1210,6 @@ class Form(RefinableObject):
                         field.initial_list = initial
                     else:
                         field.initial = initial
-
-            self.instance = instance
-        else:
-            self.instance = None
 
         if data:
             for field in self.fields:
