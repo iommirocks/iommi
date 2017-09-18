@@ -177,6 +177,8 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
         not_existing = {x for x in exclude if x not in field_names}
         assert not not_existing, 'You can only exclude fields that exist on the model, %s specified but does not exist' % not_existing
 
+    extra_includes = [x for x in include if '__' in x] if include else []
+
     for field in get_fields(model):
         if should_include(field.name):
             subkeys = Namespace(**member_params_by_member_name.pop(field.name, {}))
@@ -189,13 +191,21 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
             else:
                 members.append(foo)
     assert_kwargs_empty(member_params_by_member_name)
-    return members + (extra if extra is not None else [])
+    return members + (extra if extra is not None else []) + [Field.from_model(model=model, field_name=x) for x in extra_includes]
 
 
 def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
     if model_field is None:
+        sub_field_name, _, field_path_rest = field_name.partition('__')
+
         # noinspection PyProtectedMember
-        model_field = model._meta.get_field(field_name)
+        model_field = model._meta.get_field(sub_field_name)
+
+        if field_path_rest:
+            result = member_from_model(model, factory_lookup=factory_lookup, defaults_factory=defaults_factory, factory_lookup_register_function=factory_lookup_register_function, field_name=sub_field_name, model_field=model_field, **kwargs)
+            result.name = field_name
+            result.attr = field_name
+            return result
 
     setdefaults_path(
         kwargs,
