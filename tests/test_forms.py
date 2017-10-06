@@ -523,11 +523,24 @@ def test_field_from_model():
     assert not FooForm(data=dict(foo='asd')).is_valid()
 
 
+@pytest.mark.django_db
 def test_field_from_model_foreign_key_choices():
-    class FooForm(Form):
-        foo = Field.from_model(Bar, 'foo', choices=lambda form, field, **_: [])
+    foo = Foo.objects.create(foo=1)
+    foo2 = Foo.objects.create(foo=2)
+    Bar.objects.create(foo=foo)
+    Bar.objects.create(foo=foo2)
 
-    FooForm()
+    class FooForm(Form):
+        # Choices is a lambda here to avoid Field.field_choice_queryset grabbing the model from the queryset object
+        foo = Field.from_model(Bar, 'foo', choices=lambda form, field, **_: Foo.objects.all())
+
+    assert list(FooForm().fields_by_name['foo'].choices) == list(Foo.objects.all())
+    form = FooForm(request=RequestFactory().post('/', data=dict(foo=foo2.pk)))
+    bar = Bar()
+    form.apply(bar)
+    bar.save()
+    assert bar.foo == foo2
+    assert Bar.objects.get(pk=bar.pk).foo == foo2
 
 
 def test_form_default_fields_from_model():
