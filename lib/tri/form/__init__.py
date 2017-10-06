@@ -914,7 +914,7 @@ def field_choice_queryset(call_target, choices, **kwargs):
         if isinstance(choices, QuerySet):
             kwargs['model'] = choices.model
         elif 'model_field' in kwargs:
-            kwargs['model'] = kwargs['model_field'].model
+            kwargs['model'] = kwargs['model_field'].rel.model
         else:
             assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 

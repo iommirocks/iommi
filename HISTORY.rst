@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.2 (2017-10-06)
+~~~~~~~~~~~~~~~~~~
+
+* `Field.from_model` produced incorrect parser for foreign keys.
+
+
 5.0.1 (2017-09-15)
 ~~~~~~~~~~~~~~~~~~
 
