@@ -642,9 +642,7 @@ def test_field_from_model_supports_all_types():
     from django.db.models import fields
     not_supported = []
     blacklist = {
-        'AutoField',
         'Field',
-        'BigAutoField',
         'BinaryField',
         'FilePathField',
         'GenericIPAddressField',
@@ -1221,6 +1219,15 @@ def test_instance_set_earlier_than_evaluate_is_called():
         foo = Field(initial=lambda form, **_: form.instance)
 
     MyForm()
+
+
+@pytest.mark.django_db
+def test_auto_field():
+    form = Form.from_model(data={}, model=Foo)
+    assert 'id' not in form.fields_by_name
+
+    form = Form.from_model(data={}, model=Foo, field__id__show=True)
+    assert 'id' in form.fields_by_name
 
 
 def test_initial_set_earlier_than_evaluate_is_called():

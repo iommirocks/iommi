@@ -119,7 +119,7 @@ def create_or_edit_object(
         context__object_name=model_verbose_name,
     )
 
-    if django_version < (1, 10, 0):
+    if django_version < (1, 10, 0):  # pragma: no mutate
         render.context_instance = RequestContext(request, render.pop('context'))
 
     return render()
