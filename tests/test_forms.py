@@ -5,6 +5,7 @@ from datetime import date, time
 from datetime import datetime
 
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import models
@@ -449,6 +450,24 @@ def test_choice_not_required():
 
     assert MyForm(request=RequestFactory().post('/', {'foo': 'bar', '-': '-'})).fields[0].value == 'bar'
     assert MyForm(request=RequestFactory().post('/', {'foo': '', '-': '-'})).fields[0].value is None
+
+
+def test_choice_default_parser():
+
+    class MyThing(object):
+        def __init__(self, name):
+            self.name = name
+
+        def __str__(self):
+            return self.name
+
+    a, b, c = MyThing('a'), MyThing('b'), MyThing('c')
+
+    class MyForm(Form):
+        foo = Field.choice(choices=[a, b, c])
+
+    assert MyForm(request=RequestFactory().post('/', {'foo': 'b', '-': '-'})).fields_by_name.foo.value is b
+    assert MyForm(request=RequestFactory().post('/', {'foo': 'fisk', '-': '-'})).fields_by_name.foo.errors == {'fisk not in available choices'}
 
 
 def test_multi_choice():

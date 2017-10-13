@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.3 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Improve default parser implementation on `Field.choice`. A reasonable implementation of `__str__` is enough for objects in `choices`.
+
+
 5.0.2 (2017-10-06)
 ~~~~~~~~~~~~~~~~~~
 
