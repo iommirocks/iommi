@@ -293,6 +293,14 @@ def choice_choice_to_option(form, field, choice):
     return choice, "%s" % choice, "%s" % choice, choice == field.value
 
 
+def choice_parse(form, field, string_value):
+    for c in field.choices:
+        option = field.choice_to_option(form=form, field=field, choice=c)
+        if option[1] == string_value:
+            return option[0]
+    return string_value
+
+
 def choice_queryset_is_valid(field, parsed_data, **_):
     return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
@@ -855,6 +863,7 @@ Field.boolean = Shortcut(
     empty_label='---',
     is_valid=choice_is_valid,
     choice_to_option=choice_choice_to_option,
+    parse=choice_parse,
     input_template='tri_form/choice.html',
 )
 def field_shortcut_choice(call_target, **kwargs):
@@ -865,16 +874,6 @@ def field_shortcut_choice(call_target, **kwargs):
     :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
     """
     assert 'choices' in kwargs
-
-    if not kwargs['required'] and not kwargs['is_list']:
-        original_parse = kwargs.get('parse', Field.parse)
-
-        def parse(form, field, string_value):
-            return original_parse(form=form, field=field, string_value=string_value)
-
-        kwargs.update(
-            parse=parse
-        )
 
     original_post_validation = kwargs.get('post_validation')
 
