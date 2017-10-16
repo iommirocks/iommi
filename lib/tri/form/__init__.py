@@ -293,12 +293,12 @@ def choice_choice_to_option(form, field, choice):
     return choice, "%s" % choice, "%s" % choice, choice == field.value
 
 
+# Not yet in use
 def choice_parse(form, field, string_value):
     for c in field.choices:
         option = field.choice_to_option(form=form, field=field, choice=c)
         if option[1] == string_value:
             return option[0]
-    return string_value
 
 
 def choice_queryset_is_valid(field, parsed_data, **_):
@@ -869,7 +869,7 @@ Field.boolean = Shortcut(
     empty_label='---',
     is_valid=choice_is_valid,
     choice_to_option=choice_choice_to_option,
-    parse=choice_parse,
+    # parse=choice_parse,
     input_template='tri_form/choice.html',
 )
 def field_shortcut_choice(call_target, **kwargs):
