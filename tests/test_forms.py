@@ -1221,3 +1221,12 @@ def test_instance_set_earlier_than_evaluate_is_called():
         foo = Field(initial=lambda form, **_: form.instance)
 
     MyForm()
+
+
+def test_initial_set_earlier_than_evaluate_is_called():
+    class MyForm(Form):
+        foo = Field(
+            extra__bar=lambda form, field, **_: field.initial
+        )
+
+    assert 17 == MyForm(instance=Struct(foo=17)).fields_by_name.foo.extra.bar

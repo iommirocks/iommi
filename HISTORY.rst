@@ -6,6 +6,8 @@ Changelog
 
 * Improve default parser implementation on `Field.choice`. A reasonable implementation of `__str__` is enough for objects in `choices`.
 
+* Fix evaluation order so that `Field.initial`/`Field.initial_list` is available when fields are evaluated. (`Field.show` is still invoked early)
+
 
 5.0.2 (2017-10-06)
 ~~~~~~~~~~~~~~~~~~
