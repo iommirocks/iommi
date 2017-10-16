@@ -39,7 +39,7 @@ except ImportError:  # pragma: no cover
 Namespace.do_not_call_in_templates = True
 
 
-__version__ = '5.0.2'  # pragma: no mutate
+__version__ = '5.0.3'  # pragma: no mutate
 
 
 def capitalize(s):
