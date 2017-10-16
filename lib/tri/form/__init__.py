@@ -745,17 +745,23 @@ class Field(RefinableObject):
 
         return bound_field
 
+    def _evaluate_attribute(self, key):
+        value = getattr(self, key)
+        new_value = evaluate_recursive(value, form=self.form, field=self)
+        if new_value is not value:
+            setattr(self, key, new_value)
+
+    def _evaluate_show(self):
+        self._evaluate_attribute('show')
+
     def _evaluate(self):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        not_evaluated_attributes = {'post_validation'}
+        not_evaluated_attributes = {'post_validation', 'show'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
-        for k in evaluated_attributes:
-            v = getattr(self, k)
-            new_value = evaluate_recursive(v, form=self.form, field=self)
-            if new_value is not v:
-                setattr(self, k, new_value)
+        for key in evaluated_attributes:
+            self._evaluate_attribute(key)
 
         if not self.editable:
             self.input_template = 'tri_form/non_editable.html'
@@ -1199,7 +1205,12 @@ class Form(RefinableObject):
         """ :type: set of str """
         self._valid = None
         self.instance = instance
-        self.evaluate()
+
+        for field in self.fields:
+            field._evaluate_show()
+
+        self.fields = [field for field in self.fields if should_show(field)]
+        self.fields_by_name = Struct({field.name: field for field in self.fields})
 
         if instance is not None:
             for field in self.fields:
@@ -1234,6 +1245,9 @@ class Form(RefinableObject):
                     field.raw_data = data.get(field.name)
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
+
+        for field in self.fields:
+            field._evaluate()
 
         self.is_valid()
 
@@ -1331,12 +1345,6 @@ class Form(RefinableObject):
                     field.parsed_data = self.parse_field_raw_value(field, field.raw_data)
                 else:
                     field.parsed_data = None
-
-    def evaluate(self):
-        for field in self.fields:
-            field._evaluate()
-        self.fields = [field for field in self.fields if should_show(field)]
-        self.fields_by_name = Struct({field.name: field for field in self.fields})
 
     def validate(self):
         self.parse()
