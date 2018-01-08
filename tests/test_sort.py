@@ -82,6 +82,52 @@ def test_sort_list():
     """)
 
 
+def test_sort_list_with_none_values():
+    class TestTable(Table):
+        foo = Column()
+        bar = Column.number(sort_key='bar')
+
+    data = [Struct(foo='c', bar=3),
+            Struct(foo='b', bar=2),
+            Struct(foo='a', bar=None),
+            Struct(foo='a', bar=None)]
+
+    verify_table_html(table=TestTable(data=data),
+                      query=dict(order='bar'),
+                      expected_html="""\
+      <table class="listview">
+        <thead>
+          <tr>
+            <th class="first_column subheader">
+              <a href="?order=foo"> Foo </a>
+            </th>
+            <th class="first_column sorted_column subheader">
+              <a href="?order=-bar"> Bar </a>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="row1">
+            <td> a </td>
+            <td class="rj">  </td>
+          </tr>
+          <tr class="row2">
+            <td> a </td>
+            <td class="rj">  </td>
+          </tr>
+          <tr class="row1">
+            <td> b </td>
+            <td class="rj"> 2 </td>
+          </tr>
+          <tr class="row2">
+            <td> c </td>
+            <td class="rj"> 3 </td>
+          </tr>
+        </tbody>
+      </table>
+    """)
+
+
 def test_sort_attrs_class_leak():
     class TestTable(Table):
         foo = Column(attrs__class=Struct(bar=True))

@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import copy
 from collections import OrderedDict
+from functools import total_ordering
 from itertools import groupby
 
 from tri.form.render import render_attrs, render_class
@@ -27,7 +28,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '5.0.0'  # pragma: no mutate
+__version__ = '5.1.0'  # pragma: no mutate
 
 LAST = LAST
 
@@ -61,6 +62,18 @@ def prepare_headers(request, bound_columns):
     return bound_columns
 
 
+@total_ordering
+class MinType(object):
+    def __le__(self, other):
+        return True
+
+    def __eq__(self, other):
+        return self is other
+
+
+MIN = MinType()
+
+
 def order_by_on_list(objects, order_field, is_desc=False):
     """
     Utility function to sort objects django-style even for non-query set collections
@@ -74,7 +87,13 @@ def order_by_on_list(objects, order_field, is_desc=False):
         objects.sort(key=order_field, reverse=is_desc)
         return
 
-    objects.sort(key=lambda x: getattr_path(x, order_field), reverse=is_desc)
+    def order_key(x):
+        v = getattr_path(x, order_field)
+        if v is None:
+            return MIN
+        return v
+
+    objects.sort(key=order_key, reverse=is_desc)
 
 
 def yes_no_formatter(value, **_):

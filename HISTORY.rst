@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.1.0 (2018-01-08)
+~~~~~~~~~~~~~~~~~~
+
+* Fix sorting of columns that contains None, this was not working in Python 3
+
+
 5.0.0 (2017-08-22)
 ~~~~~~~~~~~~~~~~~~
 
