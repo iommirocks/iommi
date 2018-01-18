@@ -27,7 +27,7 @@ def readme_example_1(request):
             self.c = (i, 1, 2, 3, 4)
 
     # and a list of them
-    foos = [Foo(i) for i in xrange(4)]
+    foos = [Foo(i) for i in range(4)]
 
     # I can declare a table:
     class FooTable(Table):
@@ -43,7 +43,7 @@ def readme_example_1(request):
 def fill_dummy_data():
     if not Bar.objects.all():
         # Fill in some dummy data if none exists
-        for i in xrange(200):
+        for i in range(200):
             f = Foo.objects.create(a=i, name='Foo: %s' % i)
             Bar.objects.create(b=f, c='foo%s' % (i % 3))
 
