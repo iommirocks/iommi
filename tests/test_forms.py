@@ -1107,9 +1107,7 @@ def test_render():
             </div>
             <div class="form_buttons clear">
                 <div class="links">
-                    <input accesskey="s" class="button" type="submit" value="Submit">
-                        Submit
-                    </input>
+                    <input accesskey="s" class="button" type="submit" value="Submit"></input>
                 </div>
             </div>
         </form>

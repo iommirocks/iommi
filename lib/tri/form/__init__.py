@@ -507,7 +507,7 @@ Link.submit = Shortcut(
     attrs__type='submit',
     attrs__value='Submit',
     attrs__accesskey='s',
-    title='Submit',
+    title='',
 )
 
 
