@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+1.0.0 (----------)
+
+* Cleanup deprecation warnings from inspect.getargspec
+
+
 0.34.0 (2017-08-21)
 ~~~~~~~~~~~~~~~~~~~
 
