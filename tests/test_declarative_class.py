@@ -432,9 +432,9 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
 
 
 def test_creation_ordered():
-    l = [Member() for _ in range(100)]
+    foo = [Member() for _ in range(100)]
 
-    assert l == sorted(reversed(l))
+    assert foo == sorted(reversed(foo))
 
 
 def test_creation_ordered_attribute_retention():

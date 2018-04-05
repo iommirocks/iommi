@@ -44,6 +44,7 @@ def test_get_signature():
         pass
 
     assert 'a,b||' == get_signature(f) == get_signature(f2) == get_signature(lambda a, b: None)
+    assert 'a,b||' == f.__tri_declarative_signature
 
 
 def test_get_signature_fails_on_native():

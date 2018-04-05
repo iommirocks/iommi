@@ -13,7 +13,7 @@ __version__ = '0.34.0'  # pragma: no mutate
 if sys.version_info < (3, 0):  # pragma: no mutate
     string_types = (str, unicode)
 else:
-    string_types = str  # pragma: no coverage
+    string_types = str  # pragma: no coverage, no mutate
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -301,7 +301,7 @@ _matches_cache = {}
 
 def matches(caller_parameters, callee_parameters):
     cache_key = ';'.join((caller_parameters, callee_parameters))  # pragma: no mutate
-    cached_value = _matches_cache.get(cache_key, None)
+    cached_value = _matches_cache.get(cache_key, None)  # pragma: no mutate (mutation changes this to cached_value = None, which just slows down the code)
     if cached_value is not None:
         return cached_value
 
@@ -320,7 +320,7 @@ def matches(caller_parameters, callee_parameters):
     else:
         result = caller >= required and required.union(optional) >= set(caller)
 
-    _matches_cache[cache_key] = result
+    _matches_cache[cache_key] = result  # pragma: no mutate (mutation changes result to None which just makes things slower)
     return result
 
 
@@ -641,7 +641,7 @@ def sort_after(l):
         else:
             to_be_moved_by_name[x.after].append(x)
 
-    to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x.after)
+    to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x.after)  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
 
     def place(x):
         yield x
