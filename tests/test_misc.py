@@ -405,6 +405,14 @@ def test_sort_after_name_chaining():
     ])
 
 
+def test_sort_after_indexes():
+    sorts_right([
+        Struct(name='baz', after=1, expected_position=2),
+        Struct(name='foo', after=0, expected_position=1),
+        Struct(name='bar', after=-1, expected_position=0),
+    ])
+
+
 def sorts_right(objects):
     expected_order = sorted(objects, key=lambda x: x.expected_position)
     assert [y.expected_position for y in expected_order] == list(range(len(objects))), "Borken test"
@@ -473,6 +481,16 @@ def test_dispatch_wraps():
         """test"""
         pass
     assert foo.__doc__ == 'test'
+
+
+def test_dispatch_store_arguments():
+    @dispatch(
+        foo=1,
+        bar=2,
+    )
+    def foo():
+        pass
+    assert foo.dispatch == Namespace(foo=1, bar=2)
 
 
 def test_full_function_name():
@@ -603,6 +621,8 @@ def test_refinable_object_complete_example():
     assert Foo().c() == 11
     assert Foo().c(f__p=13) == 13
     assert Foo(c=lambda p: 77).c(12321312312) == 77
+
+    assert Foo.c._index == 2
 
 
 def test_refinable_object2():
