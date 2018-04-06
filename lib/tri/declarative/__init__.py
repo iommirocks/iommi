@@ -7,7 +7,7 @@ import itertools
 import sys
 from tri.struct import Struct, Frozen
 
-__version__ = '0.34.0'  # pragma: no mutate
+__version__ = '1.0.0'  # pragma: no mutate
 
 
 if sys.version_info < (3, 0):  # pragma: no mutate
@@ -211,7 +211,10 @@ def add_args_to_init_call(cls, get_extra_args_function):
     pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
     if pos_arg_names is None:
         try:
-            pos_arg_names, _, _, _ = inspect.getargspec(__init__orig)
+            if sys.version_info[0] < 3:
+                pos_arg_names = inspect.getargspec(__init__orig)[0]
+            else:
+                pos_arg_names = inspect.getfullargspec(__init__orig)[0]
             pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
         except TypeError:
             # We might fail on not being able to find the signature of builtin constructors
@@ -269,7 +272,10 @@ def get_signature(func):
         pass
 
     try:
-        names, _, varkw, defaults = inspect.getargspec(func)
+        if sys.version_info[0] < 3:
+            names, _, varkw, defaults = inspect.getargspec(func)
+        else:
+            names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)
     except TypeError:
         return None
 
