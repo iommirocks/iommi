@@ -1,7 +1,8 @@
 Changelog
 ---------
 
-5.0.5 (----------)
+5.0.5 (2018-04-11)
+~~~~~~~~~~~~~~~~~~
 
 * Fix form submit link rendering.
 
