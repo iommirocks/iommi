@@ -28,7 +28,7 @@ from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '5.1.0'  # pragma: no mutate
+__version__ = '5.1.1'  # pragma: no mutate
 
 LAST = LAST
 
