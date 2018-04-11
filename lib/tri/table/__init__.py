@@ -630,7 +630,11 @@ class BoundCell(object):
         self.table = bound_row.table
         self.row = bound_row.row
 
-        self.value = evaluate(bound_column.cell.value, table=bound_row.table, column=bound_column.column, row=bound_row.row, bound_row=bound_row, bound_column=bound_column)
+    @property
+    def value(self):
+        if not hasattr(self, '_value'):
+            self._value = evaluate(self.bound_column.cell.value, table=self.bound_row.table, column=self.bound_column.column, row=self.bound_row.row, bound_row=self.bound_row, bound_column=self.bound_column)
+        return self._value
 
     @property
     def attrs(self):
