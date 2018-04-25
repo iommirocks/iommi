@@ -5,17 +5,12 @@ from datetime import date, time
 from datetime import datetime
 
 from decimal import Decimal
-from django.core.exceptions import ValidationError
-from django.contrib.auth.models import User
-from django.db import models
-from django.db.models import QuerySet, Field as DjangoField, Model
+from tri.form.compat import ValidationError
 from bs4 import BeautifulSoup
 import pytest
-from django.template import Template
-from django.test import RequestFactory
-from django.utils.encoding import smart_text
+from tri.form.compat import Template, RequestFactory
+from tri.form.compat import smart_text
 
-from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, FooField, RegisterFieldFactoryTest, FieldFromModelForeignKeyTest, FieldFromModelManyToManyTest, Bar
 from tri.declarative import getattr_path, setattr_path
 from tri.struct import Struct
 from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link
@@ -159,7 +154,9 @@ def test_parse():
     assert form.fields_by_name['multi_choice_field'].raw_data_list == ['a', 'b']
     assert form.fields_by_name['multi_choice_field'].parsed_data_list == ['a', 'b']
     assert form.fields_by_name['multi_choice_field'].value_list == ['a', 'b']
-    assert form.fields_by_name['multi_choice_field'].rendered_value() == 'a, b'
+    assert form.fields_by_name['multi_choice_field'].is_list
+    assert not form.fields_by_name['multi_choice_field'].errors
+    assert form.fields_by_name['multi_choice_field'].rendered_value == 'a, b'
 
     instance = Struct(contact=Struct())
     form.apply(instance)
@@ -223,7 +220,7 @@ def test_parse_errors():
     assert_one_error_and_matches_reg_exp(form.fields_by_name['a_date'].errors, "time data u?'fooasd' does not match format u?'%Y-%m-%d'")
     assert form.fields_by_name['a_date'].parsed_data is None
     assert form.fields_by_name['a_date'].value is None
-    assert form.fields_by_name['a_date'].rendered_value() == form.fields_by_name['a_date'].raw_data
+    assert form.fields_by_name['a_date'].rendered_value == form.fields_by_name['a_date'].raw_data
 
     assert form.fields_by_name['a_time'].raw_data == 'asdasd'
     assert_one_error_and_matches_reg_exp(form.fields_by_name['a_time'].errors, "time data u?'asdasd' does not match format u?'%H:%M:%S'")
@@ -442,6 +439,7 @@ def test_radio():
         'b',
         'c',
     ]
+    RequestFactory().get('/')
     soup = BeautifulSoup(Form(data=dict(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).table(), 'html.parser')
     assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
     assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
@@ -487,12 +485,16 @@ def test_multi_choice():
     assert [x.attrs['multiple'] for x in soup.find_all('select')] == ['']
 
 
+@pytest.mark.django
 def test_help_text_from_model():
+    from tests.models import Foo
+
     assert Form(data=dict(foo='1'), fields=[Field.from_model(model=Foo, field_name='foo')], model=Foo).fields[0].help_text == 'foo_help_text'
 
 
 @pytest.mark.django_db
 def test_help_text_from_model2():
+    from .models import Foo, Bar
     # simple integer field
     assert Form.from_model(data=dict(foo='1'), include=['foo'], model=Foo).fields[0].help_text == 'foo_help_text'
 
@@ -503,6 +505,8 @@ def test_help_text_from_model2():
 
 @pytest.mark.django_db
 def test_multi_choice_queryset():
+    from django.contrib.auth.models import User
+
     user = User.objects.create(username='foo')
     user2 = User.objects.create(username='foo2')
     user3 = User.objects.create(username='foo3')
@@ -521,6 +525,8 @@ def test_multi_choice_queryset():
 
 @pytest.mark.django_db
 def test_choice_queryset():
+    from django.contrib.auth.models import User
+
     user = User.objects.create(username='foo')
     user2 = User.objects.create(username='foo2')
     User.objects.create(username='foo3')
@@ -538,6 +544,8 @@ def test_choice_queryset():
 
 @pytest.mark.django_db
 def test_choice_queryset_do_not_cache():
+    from django.contrib.auth.models import User
+
     User.objects.create(username='foo')
 
     class MyForm(Form):
@@ -553,7 +561,10 @@ def test_choice_queryset_do_not_cache():
     assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
 
 
+@pytest.mark.django
 def test_field_from_model():
+    from tests.models import Foo
+
     class FooForm(Form):
         foo = Field.from_model(Foo, 'foo')
 
@@ -566,6 +577,8 @@ def test_field_from_model():
 
 @pytest.mark.django_db
 def test_field_from_model_foreign_key_choices():
+    from tests.models import Foo, Bar
+
     foo = Foo.objects.create(foo=1)
     foo2 = Foo.objects.create(foo=2)
     Bar.objects.create(foo=foo)
@@ -584,7 +597,10 @@ def test_field_from_model_foreign_key_choices():
     assert Bar.objects.get(pk=bar.pk).foo == foo2
 
 
+@pytest.mark.django
 def test_form_default_fields_from_model():
+    from tests.models import Foo
+
     class FooForm(Form):
         class Meta:
             model = Foo
@@ -596,11 +612,12 @@ def test_form_default_fields_from_model():
     assert not FooForm(data=dict(foo='asd')).is_valid()
 
 
-class CustomField(DjangoField):
-    pass
-
-
+@pytest.mark.django
 def test_field_from_model_factory_error_message():
+    from django.db.models import Field as DjangoField, Model
+
+    class CustomField(DjangoField):
+        pass
 
     class FooModel(Model):
         foo = CustomField()
@@ -608,9 +625,14 @@ def test_field_from_model_factory_error_message():
     with pytest.raises(AssertionError) as error:
         Field.from_model(FooModel, 'foo')
 
-    assert 'No factory for <class \'tests.test_forms.CustomField\'>. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type' == str(error.value)
+    acceptable_error_messages = [
+        "No factory for <class 'tests.test_forms.CustomField'>. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type",
+        "No factory for <class 'tests.test_forms.test_field_from_model_factory_error_message.<locals>.CustomField'>. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type",
+    ]
+    assert str(error.value) in acceptable_error_messages
 
 
+@pytest.mark.django
 def test_field_from_model_required():
     from django.db.models import TextField, Model
 
@@ -626,6 +648,7 @@ def test_field_from_model_required():
     assert Field.from_model(FooModel, 'd').required
 
 
+@pytest.mark.django
 def test_field_from_model_label():
     from django.db.models import TextField, Model
 
@@ -635,7 +658,10 @@ def test_field_from_model_label():
     assert Field.from_model(FooModel, 'a').display_name == 'FOOO bar FOO'
 
 
+@pytest.mark.django_db
 def test_form_from_model_valid_form():
+    from tests.models import FormFromModelTest
+
     assert [x.value for x in Form.from_model(
         model=FormFromModelTest,
         include=['f_int', 'f_float', 'f_bool'],
@@ -647,7 +673,10 @@ def test_form_from_model_valid_form():
     ]
 
 
+@pytest.mark.django
 def test_form_from_model_invalid_form():
+    from tests.models import FormFromModelTest
+
     actual_errors = [x.errors for x in Form.from_model(
         model=FormFromModelTest,
         exclude=['f_int_excluded'],
@@ -656,11 +685,14 @@ def test_form_from_model_invalid_form():
 
     assert len(actual_errors) == 4
     assert {'could not convert string to float: true'} in actual_errors
-    assert {u'asd not in available choices'} in actual_errors
+    assert {u'asd is not a valid boolean value'} in actual_errors
     assert {"invalid literal for int() with base 10: '1.1'"} in actual_errors or {"invalid literal for int() with base 10: u'1.1'"} in actual_errors
 
 
+@pytest.mark.django
 def test_field_from_model_supports_all_types():
+    from tests.models import Foo
+
     from django.db.models import fields
     not_supported = []
     blacklist = {
@@ -686,7 +718,10 @@ def test_field_from_model_supports_all_types():
     assert not_supported == []
 
 
+@pytest.mark.django
 def test_field_from_model_blank_handling():
+    from tests.models import Foo
+
     from django.db.models import CharField
 
     subject = Field.from_model(model=Foo, model_field=CharField(blank=False))
@@ -698,6 +733,9 @@ def test_field_from_model_blank_handling():
 
 @pytest.mark.django_db
 def test_field_from_model_foreign_key():
+    from django.db.models import QuerySet
+    from tests.models import Foo, FieldFromModelForeignKeyTest
+
     Foo.objects.create(foo=2)
     Foo.objects.create(foo=3)
     Foo.objects.create(foo=5)
@@ -713,6 +751,9 @@ def test_field_from_model_foreign_key():
 
 @pytest.mark.django_db
 def test_field_from_model_many_to_many():
+    from django.db.models import QuerySet
+    from tests.models import Foo, FieldFromModelManyToManyTest
+
     Foo.objects.create(foo=2)
     b = Foo.objects.create(foo=3)
     c = Foo.objects.create(foo=5)
@@ -736,6 +777,8 @@ def test_field_from_model_many_to_many():
 
 @pytest.mark.django_db
 def test_field_from_model_foreign_key2():
+    from tests.models import FieldFromModelOneToOneTest
+
     form = Form.from_model(
         data={},
         model=FieldFromModelOneToOneTest,
@@ -750,6 +793,8 @@ def test_field_from_model_foreign_key2():
 
 @pytest.mark.django_db
 def test_field_from_model_many_to_one_foreign_key():
+    from tests.models import Bar
+
     assert set(Form.from_model(
         data={},
         model=Bar,
@@ -757,7 +802,10 @@ def test_field_from_model_many_to_one_foreign_key():
     ).fields_by_name.keys()) == {'foo'}
 
 
+@pytest.mark.django
 def test_register_field_factory():
+    from tests.models import FooField, RegisterFieldFactoryTest
+
     register_field_factory(FooField, lambda **kwargs: 7)
 
     assert Field.from_model(RegisterFieldFactoryTest, 'foo') == 7
@@ -794,7 +842,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None):
                 assert initial == f.value_list
             else:
                 assert initial == f.value
-            assert raw == f.rendered_value(), 'Roundtrip failed'
+            assert raw == f.rendered_value, 'Roundtrip failed'
 
     def test_roundtrip_from_raw_string_to_initial():
         for raw, initial in raw_and_parsed_data_tuples:
@@ -815,7 +863,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None):
         for non_normalized, normalized in normalizing:
             form = Form(fields=[shortcut(required=True, name='foo')], data={'foo': non_normalized})
             assert not form.get_errors()
-            assert form.fields_by_name['foo'].rendered_value() == normalized
+            assert form.fields_by_name['foo'].rendered_value == normalized
 
     test_empty_string_data()
     test_empty_data()
@@ -932,6 +980,7 @@ def test_file():
     assert instance.foo == '1'
 
 
+@pytest.mark.django
 def test_file_no_roundtrip():
     class FooForm(Form):
         foo = Field.file(is_valid=lambda form, field, parsed_data: (False, 'invalid!'))
@@ -941,6 +990,7 @@ def test_file_no_roundtrip():
     assert 'binary_content_here' not in form.render()
 
 
+@pytest.mark.django
 def test_mode_full_form_from_request():
     class FooForm(Form):
         foo = Field(required=True)
@@ -1013,7 +1063,10 @@ def test_form_errors_function():
     assert MyForm(request=RequestFactory().post('/', {'-': '-', 'foo': 'asd'}), post_validation=post_validation).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
 
 
+@pytest.mark.django
 def test_null_field_factory():
+    from django.db import models
+
     class ShouldBeNullField(models.Field):
         pass
 
@@ -1029,6 +1082,8 @@ def test_null_field_factory():
 
 @pytest.mark.django_db
 def test_choice_queryset_ajax():
+    from django.contrib.auth.models import User
+
     User.objects.create(username='foo')
     user2 = User.objects.create(username='bar')
 
@@ -1190,19 +1245,15 @@ def test_render_template_template_object():
     ) == 'foo 1 bar'
 
 
-def test_render_template_template_object2_older_django():
-    from django.template.backends.django import Template as Template2
-    template = Template('foo {{a}} bar')
-    # noinspection PyArgumentList
-    template2 = Template2(template, backend=Struct(engine=template.engine))
-    assert render_template(
-        request=RequestFactory().get('/'),
-        context=dict(a='1'),
-        template=template2,
-    ) == 'foo 1 bar'
+@pytest.mark.django
+def test_link_render_django():
+    assert Link('Title', template='templates/test_link_render.html').render() == 'tag=a title=Title'
 
 
-def test_link_render():
+@pytest.mark.flask
+def test_link_render_flask():
+    import os
+    RequestFactory().method('GET', '/', params={}, root_path=os.path.dirname(__file__))
     assert Link('Title', template='test_link_render.html').render() == 'tag=a title=Title'
 
 
@@ -1215,6 +1266,7 @@ def test_link_shortcut_icon():
 
 
 def test_render_grouped_links():
+    RequestFactory().get('/')  # needed when running in flask mode to have an app present
     form = Form(links=[
         Link('a'),
         Link('b', show=lambda form: False),
@@ -1284,6 +1336,8 @@ def test_instance_set_earlier_than_evaluate_is_called():
 
 @pytest.mark.django_db
 def test_auto_field():
+    from tests.models import Foo
+
     form = Form.from_model(data={}, model=Foo)
     assert 'id' not in form.fields_by_name
 
@@ -1300,7 +1354,10 @@ def test_initial_set_earlier_than_evaluate_is_called():
     assert 17 == MyForm(instance=Struct(foo=17)).fields_by_name.foo.extra.bar
 
 
+@pytest.mark.django_db
 def test_field_from_model_path():
+    from .models import Bar
+
     class FooForm(Form):
         baz = Field.from_model(Bar, 'foo__foo')
 
@@ -1317,6 +1374,8 @@ def test_field_from_model_path():
 
 @pytest.mark.django_db
 def test_create_members_from_model_path():
+    from .models import Foo, Bar
+
     class BarForm(Form):
         class Meta:
             fields = Form.fields_from_model(model=Bar, include=['foo__foo'])

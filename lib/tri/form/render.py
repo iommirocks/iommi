@@ -1,4 +1,4 @@
-from django.utils.safestring import mark_safe
+from tri.form.compat import format_html
 
 
 def render_attrs(attrs):
@@ -18,7 +18,7 @@ def render_attrs(attrs):
                         continue
                     value = render_class(value)
                 yield '%s="%s"' % (key, ('%s' % value).replace('"', '&quot;'))
-        return mark_safe(' %s' % ' '.join(parts()))
+        return format_html(' {}'.format(' '.join(parts())))
     return ''
 
 

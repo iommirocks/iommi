@@ -8,31 +8,15 @@ from decimal import Decimal, InvalidOperation
 from itertools import chain, groupby
 import re
 
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email, URLValidator
-from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
-from django.http import HttpResponse
-from django.template import RequestContext
-from django.template.loader import render_to_string
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-from django.utils.text import slugify
 from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive, shortcut, Shortcut, Namespace, RefinableObject, Refinable, refinable
 from tri.struct import Struct
+
+from tri.form.compat import format_html, ValidationError, URLValidator, validate_email, slugify, render_to_string, \
+    field_defaults_factory, render_template, get_template_from_string, setup_db_compat
 from tri.form.render import render_attrs
 import six
 
-try:
-    from django.template.loader import get_template_from_string
-except ImportError:  # pragma: no cover
-    # Django 1.8+
-    # noinspection PyUnresolvedReferences
-    from django.template import engines
-
-    def get_template_from_string(template_code, origin=None, name=None):
-        del origin, name  # the origin and name parameters seems not to be implemented in django 1.8
-        return engines['django'].from_string(template_code)
+from .compat import HttpResponse
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -118,42 +102,6 @@ _field_factory_by_field_type = OrderedDict()
 
 def register_field_factory(field_class, factory):
     _field_factory_by_field_type[field_class] = factory
-
-
-def setup_db_compat_django():
-    # The order here is significant because of inheritance structure. More specific must be below less specific.
-    register_field_factory(CharField, Field)
-    register_field_factory(URLField, Field.url)
-    register_field_factory(TimeField, Field.time)
-    register_field_factory(EmailField, Field.email)
-    register_field_factory(DecimalField, Field.decimal)
-    register_field_factory(DateField, Field.date)
-    register_field_factory(DateTimeField, Field.datetime)
-    register_field_factory(CommaSeparatedIntegerField, lambda **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs)))
-    register_field_factory(BooleanField, lambda model_field, **kwargs: Field.boolean(model_field=model_field, **kwargs) if not model_field.null else Field.boolean_tristate(model_field=model_field, **kwargs))
-    register_field_factory(TextField, Field.text)
-    register_field_factory(FloatField, Field.float)
-    register_field_factory(IntegerField, Field.integer)
-    register_field_factory(AutoField, lambda **kwargs: Field.integer(**setdefaults_path(kwargs, show=False)))
-    register_field_factory(ManyToOneRel, None)
-    register_field_factory(ManyToManyRel, None)
-    register_field_factory(FileField, Field.file)
-    register_field_factory(ForeignKey, foreign_key_factory)
-    register_field_factory(ManyToManyField, many_to_many_factory)
-
-
-def _django_field_defaults(model_field):
-    r = {}
-    if hasattr(model_field, 'verbose_name'):
-        r['display_name'] = capitalize(model_field.verbose_name)
-
-    if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
-        r['required'] = not model_field.null and not model_field.blank
-
-    if hasattr(model_field, 'blank'):
-        r['parse_empty_string_as_none'] = not model_field.blank
-
-    return r
 
 
 MISSING = object()
@@ -245,7 +193,6 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
     if model_field is None:  # pragma: no cover
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
-    assert isinstance(model_field, OneToOneField)
 
     result = [member_from_model(model=model_field.remote_field.model,
                                 factory_lookup=factory_lookup,
@@ -263,7 +210,7 @@ def render_css_classes(classes):
     """
     Render CSS classes, or return '' if no attributes needs to be rendered.
     """
-    return '' if not classes else mark_safe(' class="%s"' % ' '.join(sorted(classes)))
+    return '' if not classes else format_html(' class="{}"', ' '.join(sorted(classes)))
 
 
 def default_endpoint__config(field, key, value, **_):
@@ -431,26 +378,6 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
 
 
-def render_template(request, template, context):
-    """
-    @type request: django.http.HttpRequest
-    @type template: str|django.template.Template|django.template.backends.django.Template
-    @type context: dict
-    """
-    from django.template import Template
-    if template is None:
-        return ''
-    elif isinstance(template, six.string_types):
-        # positional arguments here to get compatibility with django 1.8+
-        return render_to_string(template, context, request=request)
-    elif isinstance(template, Template):
-        return template.render(RequestContext(request, context))
-    else:
-        from django.template.backends.django import Template as Template2
-        assert isinstance(template, Template2)
-        return template.render(context, request)
-
-
 def evaluate_and_group_links(links, **kwargs):
     grouped_links = {}
     if links is not None:
@@ -502,7 +429,14 @@ class Link(RefinableObject):
         else:
             return format_html(u'<{tag}{attrs}>{title}</{tag}>', tag=self.tag, attrs=self.render_attrs(), title=self.title)
 
+    @property
+    def rendered(self):
+        return self.render()
+
     def __str__(self):
+        return self.render()
+
+    def __html__(self):
         return self.render()
 
     def __repr__(self):
@@ -519,7 +453,7 @@ def link_shortcut_icon(icon, title, call_target, **kwargs):
     icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
     setdefaults_path(
         kwargs,
-        title=mark_safe('<i class="fa fa-%s%s"></i> %s' % (icon, icon_classes_str, title)),
+        title=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, title),
     )
     return call_target(**kwargs)
 
@@ -722,6 +656,10 @@ class Field(RefinableObject):
         else:
             return ''
 
+    @property
+    def choice_tuples_property(self):
+        return self.choice_tuples()
+
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
     @staticmethod
@@ -804,6 +742,7 @@ class Field(RefinableObject):
         if not self.editable:
             self.input_template = 'tri_form/non_editable.html'
 
+    @property
     def rendered_value(self):
         if self.errors:
             return self.raw_data
@@ -818,6 +757,10 @@ class Field(RefinableObject):
         """
         return render_attrs(self.attrs)
 
+    @property
+    def rendered_attrs(self):
+        return self.render_attrs()
+
     def render_container_css_classes(self):
         container_css_classes = set(self.container_css_classes)
         if self.required and self.editable:
@@ -826,11 +769,23 @@ class Field(RefinableObject):
             container_css_classes.add('key-value')
         return render_css_classes(container_css_classes)
 
+    @property
+    def rendered_container_css_classes(self):
+        return self.render_container_css_classes()
+
     def render_label_container_css_classes(self):
         return render_css_classes(self.label_container_css_classes)
 
+    @property
+    def rendered_label_container_css_classes(self):
+        return self.render_label_container_css_classes()
+
     def render_input_container_css_classes(self):
         return render_css_classes(self.input_container_css_classes)
+
+    @property
+    def rendered_input_container_css_classes(self):
+        return self.render_input_container_css_classes()
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -841,7 +796,7 @@ class Field(RefinableObject):
             model=model,
             factory_lookup=_field_factory_by_field_type,
             factory_lookup_register_function=register_field_factory,
-            defaults_factory=_django_field_defaults,
+            defaults_factory=field_defaults_factory,
             field_name=field_name,
             model_field=model_field,
             **kwargs)
@@ -851,7 +806,7 @@ class Field(RefinableObject):
         return expand_member(
             model=model,
             factory_lookup=_field_factory_by_field_type,
-            defaults_factory=_django_field_defaults,
+            defaults_factory=field_defaults_factory,
             field_name=field_name,
             model_field=model_field,
             **kwargs)
@@ -1146,7 +1101,7 @@ def default_endpoint__field(form, key, value):
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
-@python_2_unicode_compatible
+@six.python_2_unicode_compatible
 @declarative(Field, 'fields_dict')
 @with_meta
 class Form(RefinableObject):
@@ -1315,9 +1270,17 @@ class Form(RefinableObject):
         """
         return render_attrs(self.attrs)
 
+    @property
+    def rendered_attrs(self):
+        return self.render_attrs()
+
     def render_links(self):
         links, grouped_links = evaluate_and_group_links(self.links, form=self)
         return render_template(self.request, self.links_template, dict(links=links, grouped_links=grouped_links, form=self))
+
+    @property
+    def rendered_links(self):
+        return format_html(self.render_links())
 
     @staticmethod
     @dispatch(
@@ -1462,11 +1425,18 @@ class Form(RefinableObject):
     def __str__(self):
         return self.table()
 
+    def __html__(self):
+        return self.table()
+
     def compact(self):
         return self.render(template_name=None)
 
     def table(self):
         return self.render(style='table', template_name=None)
+
+    @property
+    def table_property(self):
+        return self.table()
 
     def render(self, style='compact', template_name="tri_form/form.html"):
         """
@@ -1483,12 +1453,12 @@ class Form(RefinableObject):
             if field.template_string is not None:
                 r.append(get_template_from_string(field.template_string, origin='tri.form', name='Form.render').render(context, self.request))
             else:
-                r.append(render_to_string(field.template.format(style=style), context))
+                r.append(render_template(self.request, field.template.format(style=style), context))
         if self.is_full_form:
-            r.append(AVOID_EMPTY_FORM)
+            r.append(format_html(AVOID_EMPTY_FORM))
 
         if template_name is None:
-            return mark_safe('\n'.join(r))
+            return format_html('\n'.join(r))
         else:
             return render_to_string(
                 template_name=template_name,
@@ -1536,4 +1506,4 @@ class Form(RefinableObject):
 default_read_from_instance = Field.read_from_instance
 default_write_to_instance = Field.write_to_instance
 
-setup_db_compat_django()
+setup_db_compat()

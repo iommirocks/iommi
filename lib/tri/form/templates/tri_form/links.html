@@ -17,8 +17,13 @@
         {% endfor %}
 
         {% for link in links %}
-            {% if not forloop.first %} &nbsp; {% endif %}
-            {{ link }}
+            {% if foorloop %}
+                {% if not forloop.first %} &nbsp; {% endif %}
+            {% else %}
+                {% if not loop.first %} &nbsp; {% endif %}
+            {% endif %}
+
+            {{ link.rendered }}
         {% endfor %}
     </div>
 {% endif %}

@@ -1,4 +1,4 @@
-from django.test import RequestFactory
+from tri.form.compat import RequestFactory
 from tri.struct import Struct
 
 from tri.form import handle_dispatch, DISPATCH_PATH_SEPARATOR
