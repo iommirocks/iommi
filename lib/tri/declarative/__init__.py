@@ -324,7 +324,7 @@ def matches(caller_parameters, callee_parameters):
     if wildcard:
         result = caller >= required
     else:
-        result = caller >= required and required.union(optional) >= set(caller)
+        result = required <= caller <= required.union(optional)
 
     _matches_cache[cache_key] = result  # pragma: no mutate (mutation changes result to None which just makes things slower)
     return result
@@ -343,7 +343,7 @@ def evaluate(func_or_value, signature=None, **kwargs):
 
 def evaluate_recursive(func_or_value, signature=None, **kwargs):
     if signature is None:  # pragma: no mutate
-        signature = signature_from_kwargs(kwargs)
+        signature = signature_from_kwargs(kwargs)  # pragma: no mutate
 
     if isinstance(func_or_value, dict):
         # The type(item)(** stuff is to preserve the original type

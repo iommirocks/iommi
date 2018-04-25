@@ -757,3 +757,27 @@ def test_refinable_object_with_dispatch():
     m = MyClass()
     assert m.x == 17
     assert m.y == {}
+
+
+def test_no_call_target_overwrite():
+    def f():
+        pass
+
+    def b():
+        pass
+
+    assert setdefaults_path(
+        dict(foo={}),
+        foo=f,
+    ) == dict(foo=Namespace(call_target=f))
+
+    assert setdefaults_path(setdefaults_path(
+        dict(foo={}),
+        foo=f,
+    ), foo=b) == dict(foo=Namespace(call_target=f))
+
+
+def test_empty_marker_is_immutable():
+    assert isinstance(EMPTY, Namespace)
+    with pytest.raises(TypeError):
+        EMPTY['foo'] = 'bar'
