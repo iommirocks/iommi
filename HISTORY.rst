@@ -1,7 +1,8 @@
 Changelog
 ---------
 
-1.0.0 (----------)
+1.0.0 (2018-05-23)
+~~~~~~~~~~~~~~~~~~
 
 * Cleanup deprecation warnings from inspect.getargspec
 
