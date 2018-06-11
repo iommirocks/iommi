@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.6 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Fix non-editable mode on multi_choice fields.
+
+
 5.0.5 (2018-04-11)
 ~~~~~~~~~~~~~~~~~~
 

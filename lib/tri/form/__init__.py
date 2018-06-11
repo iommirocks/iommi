@@ -680,7 +680,16 @@ class Field(RefinableObject):
     @refinable
     def render_value(form, field, value):
         # type: (Form, Field, object) -> unicode
-        return "%s" % value
+        return "%s" % value if value is not None else ''
+
+    @staticmethod
+    @refinable
+    def render_value_list(form, field, value_list):
+        # type: (Form, Field, List[object]) -> unicode
+        if value_list:
+            return ', '.join(field.render_value(form=form, field=field, value=value) for value in value_list)
+        else:
+            return ''
 
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
@@ -769,8 +778,10 @@ class Field(RefinableObject):
     def rendered_value(self):
         if self.errors:
             return self.raw_data
+        if self.is_list:
+            return self.render_value_list(form=self.form, field=self, value_list=self.value_list)
         else:
-            return self.render_value(form=self.form, field=self, value=self.value if self.value else '')
+            return self.render_value(form=self.form, field=self, value=self.value)
 
     def render_attrs(self):
         """

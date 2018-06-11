@@ -13,16 +13,17 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Bar',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
                 ('c', models.CharField(max_length=255)),
             ],
         ),
         migrations.CreateModel(
             name='Foo',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
                 ('name', models.CharField(max_length=255)),
                 ('a', models.IntegerField()),
+                ('b', models.BooleanField()),
             ],
         ),
         migrations.AddField(
