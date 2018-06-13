@@ -1234,3 +1234,32 @@ def test_initial_set_earlier_than_evaluate_is_called():
         )
 
     assert 17 == MyForm(instance=Struct(foo=17)).fields_by_name.foo.extra.bar
+
+
+def test_field_from_model_path():
+    class FooForm(Form):
+        baz = Field.from_model(Foo, 'foo__foo')
+
+        class Meta:
+            model = Bar
+
+    assert FooForm(data=dict(baz='1')).fields[0].attr == 'foo__foo'
+    assert FooForm(data=dict(baz='1')).fields[0].name == 'baz'
+    assert FooForm(data=dict(baz='1')).fields[0].value == 1
+    assert not FooForm(data=dict(baz='asd')).is_valid()
+    fake = Struct(foo=Struct(foo='1'))
+    assert FooForm(instance=fake).fields[0].initial == '1'
+
+
+@pytest.mark.django_db
+def test_create_members_from_model_path():
+    class BarForm(Form):
+        class Meta:
+            fields = Form.fields_from_model(model=Bar, include=['foo__foo'])
+
+    bar = Bar.objects.create(foo=Foo.objects.create(foo=7))
+    form = BarForm(instance=bar)
+
+    assert len(form.fields) == 1
+    assert form.fields[0].name == 'foo__foo'
+    assert form.fields[0].help_text == 'foo_help_text'

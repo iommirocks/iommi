@@ -2,8 +2,9 @@ from __future__ import unicode_literals, absolute_import
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
+from django.template.context_processors import csrf
+
 from tri.form import Form, handle_dispatch
 from tri.declarative import setdefaults_path, dispatch, EMPTY
 from django import __version__ as django_version
@@ -42,7 +43,7 @@ def create_object(
     template_name='tri_form/create_or_edit_object_block.html',
     form__call_target=Form.from_model,
     form__data=None,
-    render__call_target=render_to_response,
+    render__call_target=render,
     render__context=EMPTY,
     redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
     on_save=lambda **kwargs: None,
@@ -119,10 +120,9 @@ def create_or_edit_object(
         context__object_name=model_verbose_name,
     )
 
-    if django_version < (1, 10, 0):  # pragma: no mutate
-        render.context_instance = RequestContext(request, render.pop('context'))
+    render.context.update(csrf(request))
 
-    return render()
+    return render(request=request)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):

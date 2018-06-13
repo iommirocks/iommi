@@ -4,6 +4,7 @@ import json
 
 import pytest
 from bs4 import BeautifulSoup
+from django.shortcuts import render
 
 from tests.models import CreateOrEditObjectTest, get_saved_something, Bar, Foo, UniqueConstraintTest, \
     reset_saved_something, NamespaceFormsTest, Baz
@@ -32,6 +33,7 @@ def test_create_or_edit_object():
         model_verbose_name='baz',
     )
     assert get_request_context(response)['object_name'] == 'baz'  # check explicit model_verbose_name parameter to create_object
+    assert get_request_context(response)['csrf_token']
 
     response = create_object(
         request=request,
@@ -47,6 +49,7 @@ def test_create_or_edit_object():
     assert get_request_context(response)['is_create'] is True
     form = get_request_context(response)['form']
     assert get_request_context(response)['foo'] == 'FOO'
+    assert get_request_context(response)['csrf_token']
     assert response['foobarbaz'] == 'render__foobarbaz'
     assert response['template_name'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
@@ -73,7 +76,7 @@ def test_create_or_edit_object():
         request=request,
         model=CreateOrEditObjectTest,
         on_save=lambda instance, **_: instance,  # just to check that we get called with the instance as argument
-        render__call_target=lambda **kwargs: kwargs,
+        render=lambda **kwargs: kwargs,
     )
     instance = get_saved_something()
     reset_saved_something()
@@ -96,6 +99,7 @@ def test_create_or_edit_object():
     assert form.fields_by_name['f_int'].value == 3
     assert form.fields_by_name['f_float'].value == 5.1
     assert form.fields_by_name['f_bool'].value is True
+    assert get_request_context(response)['csrf_token']
 
     # 4. Edit
     request.method = 'POST'
