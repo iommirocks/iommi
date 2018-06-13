@@ -4,7 +4,6 @@ import json
 
 import pytest
 from bs4 import BeautifulSoup
-from django.shortcuts import render
 
 from tests.models import CreateOrEditObjectTest, get_saved_something, Bar, Foo, UniqueConstraintTest, \
     reset_saved_something, NamespaceFormsTest, Baz
