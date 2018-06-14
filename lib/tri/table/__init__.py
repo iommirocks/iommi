@@ -719,6 +719,7 @@ class Table(object):
         bulk_filter={},
         bulk_exclude={},
         sortable=True,
+        default_sort_order=None,
         attrs=EMPTY,
         attrs__class__listview=True,
         row__attrs__class=EMPTY,
@@ -736,7 +737,7 @@ class Table(object):
 
         extra=EMPTY,
     )
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None, extra=None):
+    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None, extra=None, default_sort_order=None):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -779,6 +780,7 @@ class Table(object):
         self.row = RowConfig(**row)
         self.bulk_exclude = bulk_exclude
         self.sortable = sortable
+        self.default_sort_order = default_sort_order
         self.column = column
         self.bulk = bulk
         self.bulk_filter = bulk_filter
@@ -877,7 +879,7 @@ class Table(object):
 
     def _prepare_sorting(self):
         # sorting
-        order = self.request.GET.get('order', None)
+        order = self.request.GET.get('order', self.default_sort_order)
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order

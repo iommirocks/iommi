@@ -108,7 +108,7 @@ def test_bad_arg():
     assert 'foo' in str(e)
 
 
-def test_ordering():
+def test_column_ordering():
 
     class MyTable(Table):
         foo = Column(after='bar')
@@ -1401,3 +1401,26 @@ def test_blank_on_empty():
 
 def test_repr():
     assert repr(Column(name='foo')) == '<tri.table.Column foo>'
+
+
+@pytest.mark.django_db
+def test_ordering():
+    Foo.objects.create(a=1, b='d')
+    Foo.objects.create(a=2, b='c')
+    Foo.objects.create(a=3, b='b')
+    Foo.objects.create(a=4, b='a')
+
+    # no ordering
+    t = Table.from_model(model=Foo)
+    t.prepare(RequestFactory().get('/'))
+    assert not t.data.query.order_by
+
+    # ordering from GET parameter
+    t = Table.from_model(model=Foo)
+    t.prepare(RequestFactory().get('/', dict(order='a')))
+    assert list(t.data.query.order_by) == ['a']
+
+    # default ordering
+    t = Table.from_model(model=Foo, default_sort_order='b')
+    t.prepare(RequestFactory().get('/'))
+    assert list(t.data.query.order_by) == ['b']
