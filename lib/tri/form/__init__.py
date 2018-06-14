@@ -450,6 +450,10 @@ def evaluate_and_group_links(links, **kwargs):
         grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)
         grouped_links = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # list(lg) because django templates touches the generator and then I can't iterate it
 
+        for _, _, links in grouped_links:
+            for link in links:
+                link.attrs.role = 'menuitem'
+
         links = [link for link in links if link.group is None]
 
     return links, grouped_links
@@ -1279,7 +1283,7 @@ class Form(RefinableObject):
         return render_attrs(self.attrs)
 
     def render_links(self):
-        links, grouped_links = evaluate_and_group_links(self.links)
+        links, grouped_links = evaluate_and_group_links(self.links, form=self)
         return render_template(self.request, self.links_template, dict(links=links, grouped_links=grouped_links, form=self))
 
     @staticmethod

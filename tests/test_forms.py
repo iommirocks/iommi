@@ -1191,6 +1191,43 @@ def test_link_shortcut_icon():
     assert Link.icon(icon='foo', title='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
 
 
+def test_render_grouped_links():
+    form = Form(links=[
+        Link('a'),
+        Link('b', show=lambda form: False),
+        Link('c', group='a'),
+        Link('d', group='a'),
+        Link('f', group='a'),
+    ])
+    actual_html = form.render_links()
+    expected_html = """
+    <div class="links">
+             <div class="dropdown">
+                 <a id="id_dropdown_a" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
+                     a <i class="fa fa-lg fa-caret-down"></i>
+                 </a>
+
+                 <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_a">
+                         <li role="presentation">
+                             <a role="menuitem">c</a>
+                         </li>
+
+                         <li role="presentation">
+                             <a role="menuitem">d</a>
+                         </li>
+
+                         <li role="presentation">
+                             <a role="menuitem">f</a>
+                         </li>
+                 </ul>
+             </div>
+     </div>"""
+
+    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
+    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
+    assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
+
+
 def test_show_prevents_read_from_instance():
     class MyForm(Form):
         foo = Field(show=False)
