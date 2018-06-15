@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+5.2.0 (2018-04-09)
+~~~~~~~~~~~~~~~~~~
+
+* New feature: default sort ordering. Just pass `default_sort_order` to `Table`.
+
+* `Link` class is now just inherited from tri.form `Link`. Introduced a deprecation warning for the constructor argument `url`.
+
+* Simplified `prepare` handling for `Table`. You should no longer need to care about this for most operations. You will still need to call `prepare` to trigger the parsing of URL parameters for sorting etc.
+
+* Fixed many_to_many_factory
+
+
 5.1.1 (2018-04-09)
 ~~~~~~~~~~~~~~~~~~
 
