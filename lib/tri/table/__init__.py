@@ -42,6 +42,9 @@ def prepare_headers(request, bound_columns):
     """
     :type bound_columns: list of BoundColumn
     """
+    if request is None:
+        return
+
     for column in bound_columns:
         if column.sortable:
             params = request.GET.copy()
@@ -58,7 +61,6 @@ def prepare_headers(request, bound_columns):
             column.url = "?%s" % params.urlencode()
         else:
             column.is_sorting = False
-    return bound_columns
 
 
 @total_ordering
@@ -788,20 +790,20 @@ class Table(object):
         self.attrs = attrs
 
         self.query_args = query
-        self.query = None
+        self._query = None
         """ :type : tri.query.Query """
-        self.query_form = None
+        self._query_form = None
         """ :type : tri.form.Form """
-        self.query_error = None
+        self._query_error = None
         """ :type : list of str """
 
-        self.bulk_form = None
+        self._bulk_form = None
         """ :type : tri.form.Form """
-        self.bound_columns = None
+        self._bound_columns = None
         """ :type : list of Column """
-        self.shown_bound_columns = None
+        self._shown_bound_columns = None
         """ :type : list of Column """
-        self.bound_column_by_name = None
+        self._bound_column_by_name = None
         """ :type: dict[str, Column] """
         self._has_prepared = False
         """ :type: bool """
@@ -853,7 +855,7 @@ class Table(object):
                 dict.__setitem__(column.cell.attrs, 'style', style)
 
     def _prepare_evaluate_members(self):
-        self.shown_bound_columns = [bound_column for bound_column in self.bound_columns if bound_column.show]
+        self._shown_bound_columns = [bound_column for bound_column in self._bound_columns if bound_column.show]
 
         for attr in (
             'column',
@@ -866,23 +868,26 @@ class Table(object):
             'header',
             'links',
             'model',
-            'query',
+            '_query',
             'bulk',
             'endpoint',
         ):
             setattr(self, attr, evaluate_recursive(getattr(self, attr), table=self))
 
         if not self.sortable:
-            for bound_column in self.bound_columns:
+            for bound_column in self._bound_columns:
                 bound_column.sortable = False
 
     def _prepare_sorting(self):
-        # sorting
+        if self.request is None:
+            return
+
         order = self.request.GET.get('order', self.default_sort_order)
+
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            tmp = [x for x in self.shown_bound_columns if x.name == order_field]
+            tmp = [x for x in self._shown_bound_columns if x.name == order_field]
             if len(tmp) == 0:
                 return  # Unidentified sort column
             sort_column = tmp[0]
@@ -902,8 +907,7 @@ class Table(object):
                     self.data = self.data.order_by(*order_args)
 
     def _prepare_headers(self):
-        bound_columns = prepare_headers(self.request, self.shown_bound_columns)
-
+        prepare_headers(self.request, self.shown_bound_columns)
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         group_columns = []
 
@@ -911,7 +915,7 @@ class Table(object):
             def render_css_class(self):
                 return render_class(self.attrs['class'])
 
-        for group_name, group_iterator in groupby(bound_columns, key=lambda header: header.group or id(header)):
+        for group_name, group_iterator in groupby(self._shown_bound_columns, key=lambda header: header.group or id(header)):
 
             columns_in_group = list(group_iterator)
 
@@ -937,15 +941,54 @@ class Table(object):
         if all(c.display_name == '' for c in group_columns):
             group_columns = []
 
-        self.header_levels = [group_columns, bound_columns] if len(group_columns) > 1 else [bound_columns]
-        return bound_columns
+        self.header_levels = [group_columns, (self._shown_bound_columns)] if len(group_columns) > 1 else [(self._shown_bound_columns)]
+
+    @property
+    def query(self):
+        """ :rtype : tri.query.Query """
+        self.prepare()
+        return self._query
+
+    @property
+    def query_form(self):
+        """ :rtype : tri.form.Form """
+        self.prepare()
+        return self._query_form
+
+    @property
+    def query_error(self):
+        """ :rtype : list of str """
+        self.prepare()
+        return self._query_error
+
+    @property
+    def bulk_form(self):
+        """ :rtype : tri.form.Form """
+        self.prepare()
+        return self._bulk_form
+
+    @property
+    def bound_columns(self):
+        """ :rtype : list of Column """
+        self.prepare()
+        return self._bound_columns
+
+    @property
+    def shown_bound_columns(self):
+        """ :rtype : list of Column """
+        self.prepare()
+        return self._shown_bound_columns
+
+    @property
+    def bound_column_by_name(self):
+        """ :rtype: dict[str, Column] """
+        self.prepare()
+        return self._bound_column_by_name
 
     # noinspection PyProtectedMember
-    def prepare(self, request):
+    def prepare(self):
         if self._has_prepared:
             return
-
-        self.request = request
 
         def bind_columns():
             for index, column in enumerate(self.columns):
@@ -953,19 +996,19 @@ class Table(object):
                 bound_column._evaluate()
                 yield bound_column
 
-        self.bound_columns = list(bind_columns())
-        self.bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self.bound_columns)
+        self._bound_columns = list(bind_columns())
+        self._bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self._bound_columns)
 
         self._has_prepared = True
 
         self._prepare_evaluate_members()
         self._prepare_sorting()
-        headers = self._prepare_headers()
+        self._prepare_headers()
 
         if self.model:
 
             def generate_variables():
-                for column in self.bound_columns:
+                for column in self._bound_columns:
                     if column.query.show:
                         query_namespace = setdefaults_path(
                             Namespace(),
@@ -979,23 +1022,23 @@ class Table(object):
                         yield query_namespace()
             variables = list(generate_variables())
 
-            self.query = Query(
-                request=request,
+            self._query = Query(
+                request=self.request,
                 variables=variables,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
                 **self.query_args
             )
-            self.query_form = self.query.form() if self.query.variables else None
+            self._query_form = self._query.form() if self._query.variables else None
 
-            self.query_error = ''
-            if self.query_form:
+            self._query_error = ''
+            if self._query_form:
                 try:
                     self.data = self.data.filter(self.query.to_q())
                 except QueryException as e:
-                    self.query_error = str(e)
+                    self._query_error = str(e)
 
             def generate_bulk_fields():
-                for column in self.bound_columns:
+                for column in self._bound_columns:
                     if column.bulk.show:
                         bulk_namespace = setdefaults_path(
                             Namespace(),
@@ -1012,8 +1055,8 @@ class Table(object):
                         yield bulk_namespace()
             bulk_fields = list(generate_bulk_fields())
 
-            self.bulk_form = Form(
-                data=request.POST,
+            self._bulk_form = Form(
+                data=self.request.POST,
                 fields=bulk_fields,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
                 **self.bulk
@@ -1021,13 +1064,11 @@ class Table(object):
 
         self._prepare_auto_rowspan()
 
-        return headers, self.header_levels
-
     def bound_rows(self):
         return self
 
     def __iter__(self):
-        self.prepare(self.request)
+        self.prepare()
         for i, row in enumerate(self.data):
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
@@ -1211,7 +1252,7 @@ def render_table(request,
         table = Table.from_model(**table)
 
     assert isinstance(table, Table)
-    table.prepare(request)
+    table.request = request
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=table)
     if should_return:
