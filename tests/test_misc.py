@@ -622,8 +622,6 @@ def test_refinable_object_complete_example():
     assert Foo().c(f__p=13) == 13
     assert Foo(c=lambda p: 77).c(12321312312) == 77
 
-    assert Foo.c._index == 2
-
 
 def test_refinable_object2():
 

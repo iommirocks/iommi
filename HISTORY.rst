@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+1.0.1 (2018-06-15)
+~~~~~~~~~~~~~~~~~~
+
+* Support `RefinableObject` in `evaluate_recursive`.
+
+
 1.0.0 (2018-05-23)
 ~~~~~~~~~~~~~~~~~~
 
