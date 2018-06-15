@@ -98,7 +98,6 @@ def test_kwarg_column_config_injection():
         foo = Column()
 
     table = MyTable([], column__foo__extra__stuff="baz")
-    table.prepare()
     assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
 
 
@@ -132,8 +131,6 @@ def test_django_table():
         foo = Column.choice_queryset(model=Foo, choices=lambda table, column, **_: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
     t = TestTable(data=Bar.objects.all(), request=RequestFactory().get("/", ''))
-
-    t.prepare()
 
     assert list(t.bound_columns[-1].choices) == list(Foo.objects.all())
     assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())
@@ -1125,7 +1122,6 @@ def test_choice_queryset():
             model = Foo
 
     foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
-    foo_table.prepare()
 
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.filter(a=1))
@@ -1214,7 +1210,6 @@ def test_backwards_compatible_call_target():
 
     with pytest.raises(Exception) as e:
         t = FooTable(data=[], model=Foo)
-        t.prepare()
         t.query.form()
 
     assert 'Hello!' == str(e.value)
@@ -1261,7 +1256,6 @@ def test_from_model():
     )
     assert [x.name for x in t.columns] == ['id', 'a', 'b']
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
-    t.prepare()
     assert 'Some a' == t.bound_column_by_name['a'].display_name
     assert 'Some stuff' == t.bound_column_by_name['a'].extra.stuff
 
@@ -1411,16 +1405,16 @@ def test_ordering():
     Foo.objects.create(a=4, b='a')
 
     # no ordering
-    t = Table.from_model(model=Foo)
-    t.prepare(RequestFactory().get('/'))
+    t = Table.from_model(model=Foo, request=RequestFactory().get('/'))
+    t.prepare()
     assert not t.data.query.order_by
 
     # ordering from GET parameter
-    t = Table.from_model(model=Foo)
-    t.prepare(RequestFactory().get('/', dict(order='a')))
+    t = Table.from_model(model=Foo, request=RequestFactory().get('/', dict(order='a')))
+    t.prepare()
     assert list(t.data.query.order_by) == ['a']
 
     # default ordering
-    t = Table.from_model(model=Foo, default_sort_order='b')
-    t.prepare(RequestFactory().get('/'))
+    t = Table.from_model(model=Foo, default_sort_order='b', request=RequestFactory().get('/'))
+    t.prepare()
     assert list(t.data.query.order_by) == ['b']
