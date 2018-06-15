@@ -17,3 +17,7 @@ class Foo(models.Model):
 class Bar(models.Model):
     foo = models.ForeignKey(Foo, on_delete=CASCADE)
     c = models.BooleanField()
+
+
+class Baz(models.Model):
+    foo = models.ManyToManyField(Foo)
