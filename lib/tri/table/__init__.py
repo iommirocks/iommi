@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import copy
+import warnings
 from collections import OrderedDict
 from functools import total_ordering
 from itertools import groupby
@@ -12,19 +13,17 @@ from tri.form.render import render_attrs, render_class
 from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage
 from django.http import HttpResponse, Http404, HttpResponseRedirect
-from django.template.defaultfilters import slugify
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, \
-    getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, \
-    RefinableObject, refinable, Refinable, shortcut, Shortcut
-from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR
+from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, RefinableObject, refinable, Refinable, shortcut, Shortcut
+from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR, evaluate_and_group_links
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, merged
 from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
+from tri.form import Link as tri_form_Link
 
 from tri.table.db_compat import setup_db_compat
 
@@ -726,7 +725,7 @@ class Table(object):
         row__template=None,
         filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
         header__template='tri_table/table_header_rows.html',
-        links__template='tri_table/links.html',
+        links__template='tri_form/links.html',
         model=None,
         query=EMPTY,
         bulk=EMPTY,
@@ -1085,13 +1084,17 @@ class Table(object):
                 return handler(table=self, key=remaining_key, value=value)
 
 
-class Link(Struct):
+class Link(tri_form_Link):
     """
     Class that describes links to add underneath the table.
     """
-    # noinspection PyShadowingBuiltins
-    def __init__(self, title, url, show=True, group=None, id=None, **kwargs):
-        super(Link, self).__init__(title=title, url=url, show=show, group=group, id=id, **kwargs)
+
+    # backwards compatibility with old interface
+    def __init__(self, title, url=None, **kwargs):
+        if url:
+            warnings.warn('url parameter is deprecated, use attrs__href')
+
+        super(Link, self).__init__(title=title, attrs__href=url, **kwargs)
 
     @staticmethod
     def icon(icon, title, **kwargs):
@@ -1117,15 +1120,7 @@ def table_context(request,
 
     assert table.data is not None
 
-    grouped_links = {}
-    if links is not None:
-        links = evaluate_recursive(links, table=table)
-        links = [link for link in links if link.show and link.url]
-
-        grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)
-        grouped_links = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # because django templates are crap!
-
-        links = [link for link in links if link.group is None]
+    links, grouped_links = evaluate_and_group_links(links, table=table)
 
     base_context = {
         'links': links,
