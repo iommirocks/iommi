@@ -58,7 +58,7 @@ Changelog
 0.29.0 (2016-09-12)
 ~~~~~~~~~~~~~~~~~~~
 
-* Fixed loop detection in flatten for `Namespace`s. This resulted in data
+* Fixed loop detection in flatten for `Namespace`\ s. This resulted in data
   corruption.
 
 
