@@ -39,7 +39,7 @@ except ImportError:  # pragma: no cover
 Namespace.do_not_call_in_templates = True
 
 
-__version__ = '5.0.5'  # pragma: no mutate
+__version__ = '5.0.6'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -450,8 +450,8 @@ def evaluate_and_group_links(links, **kwargs):
         grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)
         grouped_links = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # list(lg) because django templates touches the generator and then I can't iterate it
 
-        for _, _, links in grouped_links:
-            for link in links:
+        for _, _, group_links in grouped_links:
+            for link in group_links:
                 link.attrs.role = 'menuitem'
 
         links = [link for link in links if link.group is None]
@@ -489,6 +489,9 @@ class Link(RefinableObject):
 
     def __str__(self):
         return self.render()
+
+    def __repr__(self):
+        return '<Link: %s>' % self.title
 
 
 @shortcut

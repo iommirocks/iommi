@@ -1195,33 +1195,37 @@ def test_render_grouped_links():
     form = Form(links=[
         Link('a'),
         Link('b', show=lambda form: False),
-        Link('c', group='a'),
-        Link('d', group='a'),
-        Link('f', group='a'),
+        Link('q', show=lambda form: True),
+        Link('c', group='group'),
+        Link('d', group='group'),
+        Link('f', group='group'),
     ])
     actual_html = form.render_links()
     expected_html = """
     <div class="links">
-             <div class="dropdown">
-                 <a id="id_dropdown_a" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
-                     a <i class="fa fa-lg fa-caret-down"></i>
-                 </a>
+         <div class="dropdown">
+             <a id="id_dropdown_group" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
+                 group <i class="fa fa-lg fa-caret-down"></i>
+             </a>
 
-                 <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_a">
-                         <li role="presentation">
-                             <a role="menuitem">c</a>
-                         </li>
+             <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_group">
+                 <li role="presentation">
+                     <a role="menuitem">c</a>
+                 </li>
 
-                         <li role="presentation">
-                             <a role="menuitem">d</a>
-                         </li>
+                 <li role="presentation">
+                     <a role="menuitem">d</a>
+                 </li>
 
-                         <li role="presentation">
-                             <a role="menuitem">f</a>
-                         </li>
-                 </ul>
-             </div>
-     </div>"""
+                 <li role="presentation">
+                     <a role="menuitem">f</a>
+                 </li>
+             </ul>
+         </div>
+
+         <a>a</a>
+         <a>q</a>
+    </div>"""
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()

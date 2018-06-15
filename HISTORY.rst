@@ -1,10 +1,14 @@
 Changelog
 ---------
 
-5.0.6 (----------)
+5.0.6 (2018-06-15)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix non-editable mode on multi_choice fields.
+
+* member_from_model support for __ paths.
+
+* Made `Link` attributes lazy on form parameter.
 
 
 5.0.5 (2018-04-11)
