@@ -98,7 +98,7 @@ def test_kwarg_column_config_injection():
         foo = Column()
 
     table = MyTable([], column__foo__extra__stuff="baz")
-    table.prepare(RequestFactory().get("/"))
+    table.prepare()
     assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
 
 
@@ -131,9 +131,9 @@ def test_django_table():
         foo__b = Column()
         foo = Column.choice_queryset(model=Foo, choices=lambda table, column, **_: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
-    t = TestTable(data=Bar.objects.all())
+    t = TestTable(data=Bar.objects.all(), request=RequestFactory().get("/", ''))
 
-    t.prepare(RequestFactory().get("/", ''))
+    t.prepare()
 
     assert list(t.bound_columns[-1].choices) == list(Foo.objects.all())
     assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())
@@ -1124,8 +1124,8 @@ def test_choice_queryset():
         class Meta:
             model = Foo
 
-    foo_table = FooTable(data=Foo.objects.all())
-    foo_table.prepare(RequestFactory().get("/"))
+    foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table.prepare()
 
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.filter(a=1))
@@ -1147,8 +1147,8 @@ def test_multi_choice_queryset():
         class Meta:
             model = Foo
 
-    foo_table = FooTable(data=Foo.objects.all())
-    foo_table.prepare(RequestFactory().get("/"))
+    foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table.prepare()
 
     assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
     assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
@@ -1171,7 +1171,7 @@ def test_query_namespace_inject():
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: None)),
             columns=[Column(name='foo', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
-        foo.prepare(foo.request)
+        foo.prepare()
 
 
 def test_float():
@@ -1214,7 +1214,7 @@ def test_backwards_compatible_call_target():
 
     with pytest.raises(Exception) as e:
         t = FooTable(data=[], model=Foo)
-        t.prepare(RequestFactory().get('/'))
+        t.prepare()
         t.query.form()
 
     assert 'Hello!' == str(e.value)
@@ -1261,7 +1261,7 @@ def test_from_model():
     )
     assert [x.name for x in t.columns] == ['id', 'a', 'b']
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
-    t.prepare(RequestFactory().get("/"))
+    t.prepare()
     assert 'Some a' == t.bound_column_by_name['a'].display_name
     assert 'Some stuff' == t.bound_column_by_name['a'].extra.stuff
 

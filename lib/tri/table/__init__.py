@@ -43,6 +43,9 @@ def prepare_headers(request, bound_columns):
     """
     :type bound_columns: list of BoundColumn
     """
+    if request is None:
+        return
+
     for column in bound_columns:
         if column.sortable:
             params = request.GET.copy()
@@ -59,7 +62,6 @@ def prepare_headers(request, bound_columns):
             column.url = "?%s" % params.urlencode()
         else:
             column.is_sorting = False
-    return bound_columns
 
 
 @total_ordering
@@ -878,8 +880,11 @@ class Table(object):
                 bound_column.sortable = False
 
     def _prepare_sorting(self):
-        # sorting
+        if self.request is None:
+            return
+
         order = self.request.GET.get('order', self.default_sort_order)
+
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
@@ -903,7 +908,8 @@ class Table(object):
                     self.data = self.data.order_by(*order_args)
 
     def _prepare_headers(self):
-        bound_columns = prepare_headers(self.request, self.shown_bound_columns)
+        prepare_headers(self.request, self.shown_bound_columns)
+        bound_columns = self.shown_bound_columns
 
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         group_columns = []
@@ -939,14 +945,11 @@ class Table(object):
             group_columns = []
 
         self.header_levels = [group_columns, bound_columns] if len(group_columns) > 1 else [bound_columns]
-        return bound_columns
 
     # noinspection PyProtectedMember
-    def prepare(self, request):
+    def prepare(self):
         if self._has_prepared:
             return
-
-        self.request = request
 
         def bind_columns():
             for index, column in enumerate(self.columns):
@@ -961,7 +964,7 @@ class Table(object):
 
         self._prepare_evaluate_members()
         self._prepare_sorting()
-        headers = self._prepare_headers()
+        self._prepare_headers()
 
         if self.model:
 
@@ -981,7 +984,7 @@ class Table(object):
             variables = list(generate_variables())
 
             self.query = Query(
-                request=request,
+                request=self.request,
                 variables=variables,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
                 **self.query_args
@@ -1014,7 +1017,7 @@ class Table(object):
             bulk_fields = list(generate_bulk_fields())
 
             self.bulk_form = Form(
-                data=request.POST,
+                data=self.request.POST,
                 fields=bulk_fields,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
                 **self.bulk
@@ -1022,13 +1025,11 @@ class Table(object):
 
         self._prepare_auto_rowspan()
 
-        return headers, self.header_levels
-
     def bound_rows(self):
         return self
 
     def __iter__(self):
-        self.prepare(self.request)
+        self.prepare()
         for i, row in enumerate(self.data):
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
@@ -1216,7 +1217,8 @@ def render_table(request,
         table = Table.from_model(**table)
 
     assert isinstance(table, Table)
-    table.prepare(request)
+    table.request = request
+    table.prepare()
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=table)
     if should_return:
