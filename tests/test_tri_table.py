@@ -15,7 +15,7 @@ from tri.form import Field
 from tri.query import Variable
 
 from tests.helpers import verify_table_html
-from tests.models import Foo, Bar
+from tests.models import Foo, Bar, Baz
 
 from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, yes_no_formatter
 
@@ -1418,3 +1418,36 @@ def test_ordering():
     t = Table.from_model(model=Foo, default_sort_order='b', request=RequestFactory().get('/'))
     t.prepare()
     assert list(t.data.query.order_by) == ['b']
+
+
+@pytest.mark.django_db
+def test_foreign_key():
+    f1 = Foo.objects.create(a=17, b="Hej")
+    f2 = Foo.objects.create(a=23, b="Hopp")
+
+    baz = Baz.objects.create()
+    f1.baz_set.add(baz)
+    f2.baz_set.add(baz)
+
+    expected_html = """
+<table class="listview">
+    <thead>
+        <tr>
+            <th class="first_column subheader">
+                <a href="?order=foo">
+                    Foo
+                </a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="row1" data-pk="1">
+            <td>
+                Foo(17, Hej), Foo(23, Hopp)
+            </td>
+        </tr>
+    </tbody>
+</table>
+"""
+
+    verify_table_html(expected_html=expected_html, table__model=Baz)

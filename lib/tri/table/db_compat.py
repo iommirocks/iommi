@@ -9,8 +9,8 @@ def setup_db_compat_django():
     def many_to_many_factory(model_field, **kwargs):
         setdefaults_path(
             kwargs,
-            choices=model_field.rel.to._default_manager.all(),
-            model=model_field.foreign_related_fields[0].model,
+            choices=model_field.related_model.objects.all(),
+            model=model_field.related_model,
         )
         return Column.multi_choice_queryset(model_field=model_field, **kwargs)
 
