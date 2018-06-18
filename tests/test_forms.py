@@ -1194,8 +1194,9 @@ def test_link_shortcut_icon():
 def test_render_grouped_links():
     form = Form(links=[
         Link('a'),
-        Link('b', show=lambda form: False),
-        Link('q', show=lambda form: True),
+        # Link('b', show=lambda form: False),
+        # Link('q', show=lambda form: True),
+        Link('q'),
         Link('c', group='group'),
         Link('d', group='group'),
         Link('f', group='group'),
