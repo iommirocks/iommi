@@ -7,7 +7,7 @@ import itertools
 import sys
 from tri.struct import Struct, Frozen
 
-__version__ = '1.0.1'  # pragma: no mutate
+__version__ = '1.0.2'  # pragma: no mutate
 
 
 if sys.version_info < (3, 0):  # pragma: no mutate
@@ -354,10 +354,6 @@ def evaluate_recursive(func_or_value, signature=None, **kwargs):
 
     if isinstance(func_or_value, set):
         return {evaluate_recursive(v, signature=signature, **kwargs) for v in func_or_value}
-
-    if isinstance(func_or_value, RefinableObject):
-        # The type(item)(** stuff is to preserve the original type
-        return type(func_or_value)(**{k: evaluate_recursive(getattr(func_or_value, k), signature=signature, **kwargs) for k in func_or_value.get_declared('refinable_members').keys()})
 
     return evaluate(func_or_value, signature=signature, **kwargs)
 

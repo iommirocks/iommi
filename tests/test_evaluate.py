@@ -1,6 +1,6 @@
 import sys
 from tri.declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, get_signature, \
-    matches, RefinableObject, Refinable
+    matches
 import pytest
 
 
@@ -128,11 +128,3 @@ def test_evaluate_on_methods():
 
     f = Foo().bar
     assert f is evaluate(f, y=17)
-
-
-def test_evaluate_on_refinable():
-    class Foo(RefinableObject):
-        foo = Refinable()
-
-    f = Foo(foo=lambda x: 7)
-    assert 7 == evaluate_recursive(f, x=5).foo
