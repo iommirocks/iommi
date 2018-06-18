@@ -27,7 +27,7 @@ from tri.form import Link as tri_form_Link
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '5.2.0'  # pragma: no mutate
+__version__ = '5.2.1'  # pragma: no mutate
 
 LAST = LAST
 
@@ -1134,8 +1134,9 @@ class Link(tri_form_Link):
     def __init__(self, title, url=None, **kwargs):
         if url:
             warnings.warn('url parameter is deprecated, use attrs__href')
+            kwargs['attrs__href'] = url
 
-        super(Link, self).__init__(title=title, attrs__href=url, **kwargs)
+        super(Link, self).__init__(title=title, **kwargs)
 
     @staticmethod
     def icon(icon, title, **kwargs):

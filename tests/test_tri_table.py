@@ -1451,3 +1451,8 @@ def test_foreign_key():
 """
 
     verify_table_html(expected_html=expected_html, table__model=Baz)
+
+
+def test_link_class_backwards_compatibility():
+    assert Link(title='foo', url='bar').render() == '<a href="bar">foo</a>'
+    assert Link(title='foo', attrs__href='bar').render() == '<a href="bar">foo</a>'
