@@ -1,7 +1,12 @@
 Changelog
 ---------
 
-5.0.7 (2018-06-18
+5.0.8 (2018-06-19)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed release functionality
+
+5.0.7 (2018-06-18)
 ~~~~~~~~~~~~~~~~~~
 
 * Stepped tri.declarative dependency.
