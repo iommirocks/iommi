@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.9 (2018-06-19)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed python3 compability for release check.
+* Fixed release check on shallow git clone
+
 5.0.8 (2018-06-19)
 ~~~~~~~~~~~~~~~~~~
 
