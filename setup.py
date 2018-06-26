@@ -49,14 +49,17 @@ class ReleaseCheck(Command):
         pass
 
     def run(self):
-        from subprocess import check_output
-        tag = check_output(['git', 'describe', '--all', '--exact-match', 'HEAD']).strip()
+        from subprocess import check_output, CalledProcessError
+        try:
+            tag = check_output(['git', 'describe', 'HEAD']).strip().decode('utf8')
+        except CalledProcessError:
+            tag = ''
         version = read_version()
         if tag != version:
             print('Missing %s tag on release' % version)
             raise SystemExit(1)
 
-        current_branch = check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
+        current_branch = check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode('utf8')
         if current_branch != 'master':
             print('Only release from master')
             raise SystemExit(1)
