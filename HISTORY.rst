@@ -1,7 +1,13 @@
 Changelog
 ---------
 
-5.2.1 (2018-06-18
+5.2.2 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Fix bad mark_safe invocation on custom cell format output.
+
+
+5.2.1 (2018-06-18)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixed bug with backwards compatibility for `Link`.

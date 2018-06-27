@@ -676,7 +676,7 @@ class BoundCell(object):
                                         format_html(' href="{}"', url),
                                         format_html(' title="{}"', url_title) if url_title else '',
                                         cell_contents)
-        return mark_safe(cell_contents)
+        return cell_contents
 
     def render_formatted(self):
         return evaluate(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
