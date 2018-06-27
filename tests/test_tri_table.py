@@ -10,6 +10,7 @@ from django.template import Template
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
 import pytest
+from django.utils.safestring import mark_safe
 from tri.declarative import getattr_path, Namespace
 from tri.form import Field
 from tri.query import Variable
@@ -839,6 +840,50 @@ def test_cell_template():
                 </tr>
             </tbody>
         </table>""")
+
+
+def test_cell_format_escape():
+
+    class TestTable(NoSortTable):
+        foo = Column(cell__format=lambda value, **_: '<foo>')
+
+    data = [Struct(foo="foo")]
+
+    verify_table_html(table=TestTable(data=data), expected_html="""
+            <table class="listview">
+                <thead>
+                    <tr><th class="first_column subheader"> Foo </th></tr>
+                </thead>
+                <tbody>
+                    <tr class="row1">
+                        <td>
+                            &lt;foo&gt;
+                        </td>
+                    </tr>
+                </tbody>
+            </table>""")
+
+
+def test_cell_format_no_escape():
+
+    class TestTable(NoSortTable):
+        foo = Column(cell__format=lambda value, **_: mark_safe('<foo/>'))
+
+    data = [Struct(foo="foo")]
+
+    verify_table_html(table=TestTable(data=data), expected_html="""
+            <table class="listview">
+                <thead>
+                    <tr><th class="first_column subheader"> Foo </th></tr>
+                </thead>
+                <tbody>
+                    <tr class="row1">
+                        <td>
+                            <foo/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>""")
 
 
 @pytest.mark.django_db
