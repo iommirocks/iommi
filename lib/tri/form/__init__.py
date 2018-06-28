@@ -38,7 +38,6 @@ except ImportError:  # pragma: no cover
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
 
-
 __version__ = '5.0.9'  # pragma: no mutate
 
 
@@ -55,7 +54,6 @@ AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
-
 
 DISPATCH_PATH_SEPARATOR = '/'
 
@@ -295,6 +293,7 @@ def choice_post_validation(form, field):
         if not field.required and not field.is_list:
             choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
         return choice_tuples
+
     field.choice_tuples = choice_tuples_lazy
 
 
@@ -444,7 +443,7 @@ def render_template(request, template, context):
 def evaluate_and_group_links(links, **kwargs):
     grouped_links = {}
     if links is not None:
-        links = evaluate_recursive(links, **kwargs)
+        links = [link.bind(**kwargs) for link in links]
         links = [link for link in links if link.show]
 
         grouped_links = groupby((link for link in links if link.group is not None), key=lambda l: l.group)
@@ -478,6 +477,11 @@ class Link(RefinableObject):
     def __init__(self, title, **kwargs):
         super(Link, self).__init__(title=title, **kwargs)
 
+    def bind(self, **kwargs):
+        kwargs = {k: evaluate_recursive(getattr(self, k), **kwargs)
+                  for k in self.get_declared('refinable_members')}
+        return type(self)(**kwargs)
+
     def render_attrs(self):
         return render_attrs(self.attrs)
 
@@ -510,7 +514,6 @@ def link_shortcut_icon(icon, title, call_target, **kwargs):
 
 
 Link.icon = staticmethod(link_shortcut_icon)
-
 
 Link.button = Shortcut(
     call_target=Link,
@@ -752,6 +755,7 @@ class Field(RefinableObject):
 
     The variables *_list should be used if the input is a list.
     """
+
     def _bind(self, form):
         bound_field = copy.copy(self)  # type: Field
 
@@ -850,18 +854,15 @@ Field.hidden = Shortcut(
     input_type='hidden',
 )
 
-
 Field.text = Shortcut(
     call_target=Field,
     input_type='text',
 )
 
-
 Field.textarea = Shortcut(
     call_target=Field,
     input_template='tri_form/text.html',
 )
-
 
 Field.integer = Shortcut(
     call_target=Field,
@@ -941,7 +942,6 @@ Field.choice = staticmethod(field_shortcut_choice)
     is_valid=choice_queryset_is_valid,
 )
 def field_choice_queryset(call_target, choices, **kwargs):
-
     from django.db.models import QuerySet
     if 'model' not in kwargs:
         if isinstance(choices, QuerySet):
@@ -960,7 +960,6 @@ def field_choice_queryset(call_target, choices, **kwargs):
 
 
 Field.choice_queryset = staticmethod(field_choice_queryset)
-
 
 Field.multi_choice = Shortcut(
     call_target=Field.choice,
@@ -1089,6 +1088,7 @@ def field_shortcut_comma_separated(parent_field):
         if errors:
             raise ValidationError(errors)
         return ', '.join(result)
+
     new_field.parse = parse_comma_separated
 
     def is_valid_comma_separated(form, field, parsed_data):
@@ -1099,6 +1099,7 @@ def field_shortcut_comma_separated(parent_field):
             if not is_valid:
                 errors.add('Invalid value "%s": %s' % (x, error))
         return errors == set(), errors
+
     new_field.is_valid = is_valid_comma_separated
 
     return new_field
@@ -1216,6 +1217,7 @@ class Form(RefinableObject):
             for name, field in fields_dict.items():
                 setattr(field, 'name', name)
                 yield field
+
         self.fields = sort_after([f._bind(self) for f in unbound_fields()])
         """ :type: list of Field"""
 
