@@ -38,7 +38,7 @@ except ImportError:  # pragma: no cover
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
 
-__version__ = '5.0.9'  # pragma: no mutate
+__version__ = '5.0.10'  # pragma: no mutate
 
 
 def capitalize(s):
