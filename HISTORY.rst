@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.2.2 (----------)
+5.2.2 (2018-06-29)
 ~~~~~~~~~~~~~~~~~~
 
 * Fix bad mark_safe invocation on custom cell format output.
