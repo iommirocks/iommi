@@ -99,6 +99,7 @@ def kitchen_sink(request):
         django_templates_for_cells = Column(sortable=False, cell__value=None, cell__template='kitchen_sink_cell_template.html')
 
         class Meta:
+            name = 'bar'
             model = Bar
 
     return render_table_to_response(request, table=BarTable(data=Bar.objects.all()), template='base.html', paginate_by=20)
