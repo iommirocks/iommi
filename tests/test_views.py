@@ -200,17 +200,18 @@ def test_namespace_forms():
     assert instance is not None
     assert response.status_code == 302
 
+    form_name = 'create_or_edit_object_form'
     # Edit should NOT work when the form name does not match the POST
     request.POST = {
-        'f_int': '7',
-        'f_float': '11.2',
+        form_name + DISPATCH_PATH_SEPARATOR + 'f_int': '7',
+        form_name + DISPATCH_PATH_SEPARATOR + 'f_float': '11.2',
         'some_other_form': '',
         '-': '-',
     }
     response = edit_object(
         request=request,
         instance=instance,
-        form__name='create_or_edit_object_form',
+        form__name=form_name,
         render__call_target=lambda **kwargs: kwargs)
     form = get_request_context(response)['form']
     assert form.get_errors() == {}
@@ -223,12 +224,12 @@ def test_namespace_forms():
 
     # Edit should work when the form name is in the POST
     del request.POST['some_other_form']
-    request.POST['create_or_edit_object_form'] = ''
+    request.POST[form_name] = ''
     response = edit_object(
         request=request,
         instance=instance,
         redirect=lambda form, **_: {'context_instance': {'form': form}},
-        form__name='create_or_edit_object_form',
+        form__name=form_name,
         render__call_target=lambda **kwargs: kwargs)
     form = get_request_context(response)['form']
     instance = get_saved_something()

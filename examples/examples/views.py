@@ -1,11 +1,12 @@
 from os.path import dirname, abspath, join
+from tri.struct import Struct
 
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
 from .models import Foo, Bar
-from tri_form import Form, Field, Link
+from tri_form import Form, Field, Link, choice_parse
 from tri_form.views import create_object, edit_object
 
 for i in range(100 - Foo.objects.count()):
@@ -20,6 +21,7 @@ def index(request):
         <a href="example_3/">Example 3 edit</a><br/>
         <a href="example_4/">Example 4 custom buttons</a><br/>
         <a href="example_5/">Example 5 automatic AJAX endpoint</a><br/>
+        <a href="kitchen/">Kitchen sink</a><br/>
         </body></html>""")
 
 
@@ -28,7 +30,6 @@ def style(request):
 
 
 def example_1(request):
-
     class MyForm(Form):
         foo = Field()
         bar = Field()
@@ -88,3 +89,56 @@ def example_5(request):
             Link(title='Back to index', attrs__href='/'),
         ]
     )
+
+
+class KitchenForm(Form):
+    class Meta:
+        name = 'kitchen'
+
+    foo = Field()
+
+    fisk = Field.multi_choice(
+        choices=[1, 2, 3, 4],
+        parse=choice_parse,
+        initial_list=[1, 2],
+        editable=False
+    )
+
+
+class SinkForm(Form):
+    class Meta:
+        name = 'sink'
+
+    foo = Field()
+
+
+def kitchen(request):
+    kitchen_form = KitchenForm(request)
+    sink_form = SinkForm(request)
+    sink_form2 = SinkForm(request, name='sinkform2')
+
+    if request.method == 'POST':
+        if kitchen_form.is_target() and kitchen_form.is_valid():
+            values = kitchen_form.apply(Struct())
+            return HttpResponse(format_html("Kitchen values was {}", values))
+
+        if sink_form.is_target() and sink_form.is_valid():
+            values = sink_form.apply(Struct())
+            return HttpResponse(format_html("Sink values was {}", values))
+
+    return HttpResponse(format_html(
+        """\
+            <html>
+                <body>
+                    <h2>Kitchen</h2>
+                    {}
+                    <h2>Sink</h2>
+                    {}
+                    <h2>Sink</h2>
+                    {}
+                </body>
+            </html>
+        """,
+        kitchen_form.render(),
+        sink_form.render(),
+        sink_form2.render()))
