@@ -31,7 +31,7 @@ lint:
 	tox -e lint
 
 test:
-	tox
+	tox --skip-missing-interpreters
 
 coverage:
 	tox -e coverage
