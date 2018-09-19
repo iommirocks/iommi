@@ -737,8 +737,10 @@ class Table(object):
         endpoint__bulk=lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None,
 
         extra=EMPTY,
+
+        preprocess_row=lambda table, row, **_: None,
     )
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None, extra=None, default_sort_order=None):
+    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None, extra=None, default_sort_order=None, preprocess_row=None):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -788,6 +790,7 @@ class Table(object):
         self.endpoint = endpoint
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
         self.attrs = attrs
+        self.preprocess_row = preprocess_row
 
         self.query_args = query
         self._query = None
@@ -1070,6 +1073,7 @@ class Table(object):
     def __iter__(self):
         self.prepare()
         for i, row in enumerate(self.data):
+            self.preprocess_row(table=self, row=row)
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
     def render_attrs(self):

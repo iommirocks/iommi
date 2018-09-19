@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.3.0 (2018-08-19)
+~~~~~~~~~~~~~~~~~~
+
+* Added `preprocess_row` feature. You can use it to mutate a row in place before access.
+
+
 5.2.2 (2018-06-29)
 ~~~~~~~~~~~~~~~~~~
 
