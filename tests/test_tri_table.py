@@ -1501,3 +1501,42 @@ def test_foreign_key():
 def test_link_class_backwards_compatibility():
     assert Link(title='foo', url='bar').render() == '<a href="bar">foo</a>'
     assert Link(title='foo', attrs__href='bar').render() == '<a href="bar">foo</a>'
+
+
+@pytest.mark.django_db
+def test_preprocess_row():
+    Foo.objects.create(a=1, b='d')
+
+    def preprocess(table, row, **_):
+        del table
+        row.some_non_existent_property = 1
+
+    class PreprocessedTable(Table):
+        some_non_existent_property = Column()
+
+        class Meta:
+            preprocess_row = preprocess
+            model = Foo
+
+    expected_html = """
+    <table class="listview">
+        <thead>
+            <tr>
+                <th class="first_column subheader">
+                    <a href="?order=some_non_existent_property">
+                        Some non existent property
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="row1" data-pk="1">
+                <td>
+                    1
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    """
+
+    verify_table_html(expected_html=expected_html, table=PreprocessedTable())
