@@ -322,7 +322,7 @@ class StringValue(text_type):
 
 @declarative(Variable, 'variables_dict')
 @with_meta
-class Query(object):
+class Query(RefinableObject):
     """
     Declare a query language. Example:
 
@@ -334,24 +334,32 @@ class Query(object):
 
         query_set = Car.objects.filter(CarQuery(request=request).to_q())
     """
-    variables = []
-    """ :type: list of Variable """
-    bound_variables = []
-    """ :type: list of BoundVariable """
-    bound_variable_by_name = {}
+
+    gui = Refinable()
+    """ :type: tri.declarative.Namespace """
+    endpoint_dispatch_prefix = Refinable()
+    """ :type: str """
 
     @dispatch(
-        gui=Namespace(call_target=Form),
+        gui__call_target=Form,
+        endpoint_dispatch_prefix='query',
     )
-    def __init__(self, request=None, data=None, variables=None, variables_dict=None, endpoint_dispatch_prefix='query', gui=None):  # variables=None to make pycharm tooling not confused
+    def __init__(self, request=None, data=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
         """
-        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
+        self.variables = []
+        """ :type: list of Variable """
+        self.bound_variables = []
+        """ :type: list of BoundVariable """
+        self.bound_variable_by_name = {}
+
         self.request = request
         self.data = data
         self._form = None
+
+        super(Query, self).__init__(**kwargs)
 
         def generate_variables():
             if variables is not None:
@@ -367,8 +375,6 @@ class Query(object):
         self.bound_variables = filter_show_recursive(bound_variables)
 
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
-
-        self.gui = gui
 
     def parse(self, query_string):
         """
