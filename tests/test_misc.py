@@ -1,4 +1,5 @@
 import copy
+import warnings
 from collections import OrderedDict
 
 import pytest
@@ -160,6 +161,18 @@ def test_setdefault_string_value():
     )
     expected = dict(foo=dict(bar=True, baz=False))
     assert expected == actual
+
+
+def test_deprecated_string_value_promotion():
+    warnings.filterwarnings("default", category=DeprecationWarning)
+
+    with warnings.catch_warnings(record=True) as w:
+        assert Namespace(foo__bar=True, foo__baz=False) == Namespace(dict(foo='bar'), dict(foo__baz=False))
+        assert 'Deprecated promotion of previous string value "bar" to dict(bar=True)' in str(w.pop())
+
+    with warnings.catch_warnings(record=True) as w:
+        assert Namespace(foo__bar=True, foo__baz=False) == Namespace(dict(foo__baz=False), dict(foo='bar'))
+        assert 'Deprecated promotion of written string value "bar" to dict(bar=True)' in str(w.pop())
 
 
 def test_namespace_repr():

@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict, defaultdict
 from copy import copy
 import functools
@@ -480,9 +481,9 @@ def setdefaults(d, d2):
 
 
 class Namespace(Struct):
-    def __init__(self, *args, **kwargs):
-        if args or kwargs:
-            for mappings in list(args) + [kwargs]:
+    def __init__(self, *dicts, **kwargs):
+        if dicts or kwargs:
+            for mappings in list(dicts) + [kwargs]:
                 for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
                     self.setitem_path(path, value)
 
@@ -504,6 +505,7 @@ class Namespace(Struct):
                 self[key] = Namespace({rest_path: value})
             else:
                 if isinstance(existing, string_types):
+                    warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
                     self[key] = Namespace({existing: True}, {rest_path: value})
                 elif isinstance(existing, dict):
                     type_of_namespace = get_type_of_namespace(existing)
@@ -520,6 +522,7 @@ class Namespace(Struct):
                 if isinstance(existing, dict):
                     type_of_namespace = get_type_of_namespace(existing)
                     if isinstance(value, string_types):
+                        warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)
                         self[key] = type_of_namespace(existing, {value: True})
                     elif isinstance(value, dict):
                         self[key] = type_of_namespace(existing, value)
@@ -578,7 +581,7 @@ def flatten_items(namespace):
             if isinstance(value, Namespace):
                 if id(value) not in visited:
                     if value:
-                        for mapping in mappings(value, visited=visited + [id(value)], prefix=path + '__'):
+                        for mapping in mappings(value, visited=[id(value)] + visited, prefix=path + '__'):
                             yield mapping
                     else:
                         yield path, Namespace()
