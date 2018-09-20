@@ -700,7 +700,7 @@ class RowConfig(NamedStruct):
 
 @declarative(Column, 'columns_dict')
 @with_meta
-class Table(object):
+class Table(RefinableObject):
 
     """
     Describe a table. Example:
@@ -714,6 +714,28 @@ class Table(object):
             b = Column()
 
     """
+
+    bulk_filter = Refinable()
+    bulk_exclude = Refinable()
+    sortable = Refinable()
+    default_sort_order = Refinable()
+    attrs = Refinable()
+    row = Refinable()
+    filter = Refinable()
+    header = Refinable()
+    links = Refinable()
+    model = Refinable()
+    column = Refinable()
+    bulk = Refinable()
+    endpoint_dispatch_prefix = Refinable()
+    extra = Refinable()
+    """ :type: tri.declarative.Namespace """
+    endpoint = Refinable()
+
+    @staticmethod
+    @refinable
+    def preprocess_row(table, row, **_):
+        return None
 
     @dispatch(
         column=EMPTY,
@@ -737,10 +759,8 @@ class Table(object):
         endpoint__bulk=lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None,
 
         extra=EMPTY,
-
-        preprocess_row=lambda table, row, **_: None,
     )
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, bulk_exclude=None, sortable=None, links=None, column=None, bulk=None, header=None, bulk_filter=None, endpoint=None, attrs=None, query=None, endpoint_dispatch_prefix=None, row=None, instance=None, extra=None, default_sort_order=None, preprocess_row=None):
+    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, links=None, **kwargs):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -774,23 +794,18 @@ class Table(object):
         self.columns = columns
         """ :type : list of Column """
 
-        self.model = model
         self.instance = instance
 
-        self.filter = TemplateConfig(**filter)
-        self.links = TemplateConfig(**links)
-        self.header = TemplateConfig(**header)
-        self.row = RowConfig(**row)
-        self.bulk_exclude = bulk_exclude
-        self.sortable = sortable
-        self.default_sort_order = default_sort_order
-        self.column = column
-        self.bulk = bulk
-        self.bulk_filter = bulk_filter
-        self.endpoint = endpoint
-        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
-        self.attrs = attrs
-        self.preprocess_row = preprocess_row
+        super(Table, self).__init__(
+            model=model,
+            filter=TemplateConfig(**filter),
+            links=TemplateConfig(**links),
+            header=TemplateConfig(**header),
+            row=RowConfig(**row),
+            bulk=bulk,
+            column=column,
+            **kwargs
+        )
 
         self.query_args = query
         self._query = None
@@ -811,9 +826,6 @@ class Table(object):
         self._has_prepared = False
         """ :type: bool """
         self.header_levels = None
-
-        self.extra = extra
-        """ :type: tri.declarative.Namespace """
 
     def render_links(self):
         return render_template(self.request, self.links.template, self.context)
