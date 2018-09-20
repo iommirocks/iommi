@@ -335,7 +335,7 @@ Below is a more complete example of using @declarative:
     assert my_user.insert_statement() == "INSERT INTO User(username, password, age) VALUES ('Bruce_Wayne', 'Batman', 42)"
 
     # Fields are ordered by creation time (due to having used the @creation_ordered decorator)
-    assert my_user.get_meta().table_fields.keys() == ['username', 'password', 'age']
+    assert list(my_user.get_declared('table_fields').keys()) == ['username', 'password', 'age']
 
 
 @with_meta
