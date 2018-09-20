@@ -152,7 +152,7 @@ def _django_field_defaults(model_field):
     return r
 
 
-MISSING = Struct(refinable=True)  # pragma: no mutate
+MISSING = object()
 
 
 @dispatch  # pragma: no mutate
