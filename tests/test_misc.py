@@ -352,12 +352,17 @@ def test_dispatch():
     (Namespace(y__z=u"foo"), Namespace(y__z__c=True), Namespace(y__z__foo=True, y__z__c=True)),
     (Namespace(bar__a=1), Namespace(bar__quux__title=2), Namespace(bar__a=1, bar__quux__title=2)),
     (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
+    (Namespace(bar__='foo'), Namespace(bar__fisk="hi"), Namespace(bar__='foo', bar__fisk='hi')),
 ], ids=str)
 def test_merge(a, b, expected, backward):
     if backward:
         a, b = b, a
     actual = Namespace(flatten(a), flatten(b))
     assert expected == actual
+
+
+def test_backward_compatible_empty_key():
+    assert Namespace(foo__='hej') == Namespace(foo=Namespace({'': 'hej'}))
 
 
 def test_setdefaults_path_empty_marker():
