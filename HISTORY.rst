@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+1.0.4 (2018-09-21)
+------------------
+
+* Cleanup Namespace path logic and make sure it is symmetrical and tested.
+
+* Added deprecation warning on string to dict promotion on namespace merge.
+
 
 1.0.3 (2018-06-26)
 ~~~~~~~~~~~~~~~~~~
