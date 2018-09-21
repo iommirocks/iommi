@@ -490,7 +490,7 @@ class Namespace(Struct):
     def setitem_path(self, path, value):
         if value is EMPTY:
             value = Namespace()
-        key, _, rest_path = path.partition('__')
+        key, delimiter, rest_path = path.partition('__')
         missing = object()
 
         def get_type_of_namespace(dict_value):
@@ -500,7 +500,7 @@ class Namespace(Struct):
                 return Namespace
 
         existing = self.get(key, missing)
-        if rest_path:
+        if delimiter:
             if existing is missing:
                 self[key] = Namespace({rest_path: value})
             else:
