@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict, defaultdict
 from copy import copy
 import functools
@@ -480,9 +481,64 @@ def setdefaults(d, d2):
 
 
 class Namespace(Struct):
-    def __init__(self, *args, **kwargs):
-        if args or kwargs:
-            super(Namespace, self).__init__(setdefaults_path(Namespace(), *args, **kwargs))
+    def __init__(self, *dicts, **kwargs):
+        if dicts or kwargs:
+            for mappings in list(dicts) + [kwargs]:
+                for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
+                    self.setitem_path(path, value)
+
+    def setitem_path(self, path, value):
+        if value is EMPTY:
+            value = Namespace()
+        key, _, rest_path = path.partition('__')
+        missing = object()
+
+        def get_type_of_namespace(dict_value):
+            if isinstance(dict_value, Namespace):
+                return type(dict_value)
+            else:
+                return Namespace
+
+        existing = self.get(key, missing)
+        if rest_path:
+            if existing is missing:
+                self[key] = Namespace({rest_path: value})
+            else:
+                if isinstance(existing, string_types):
+                    warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
+                    self[key] = Namespace({existing: True}, {rest_path: value})
+                elif isinstance(existing, dict):
+                    type_of_namespace = get_type_of_namespace(existing)
+                    self[key] = type_of_namespace(existing, {rest_path: value})
+                elif callable(existing):
+                    self[key] = Namespace(dict(call_target=existing), {rest_path: value})
+                else:
+                    # Unable to promote to Namespace, just overwrite
+                    self[key] = Namespace({rest_path: value})
+        else:
+            if existing is missing:
+                self[key] = value
+            else:
+                if isinstance(existing, dict):
+                    type_of_namespace = get_type_of_namespace(existing)
+                    if isinstance(value, string_types):
+                        warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)
+                        self[key] = type_of_namespace(existing, {value: True})
+                    elif isinstance(value, dict):
+                        self[key] = type_of_namespace(existing, value)
+                    elif callable(value):
+                        self[key] = type_of_namespace(existing, call_target=value)
+                    else:
+                        # Unable to promote to Namespace, just overwrite
+                        self[key] = value
+                elif callable(existing):
+                    if isinstance(value, dict):
+                        type_of_namespace = get_type_of_namespace(value)
+                        self[key] = type_of_namespace(Namespace(call_target=existing), value)
+                    else:
+                        self[key] = value
+                else:
+                    self[key] = value
 
     def __repr__(self):
         return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
@@ -491,7 +547,7 @@ class Namespace(Struct):
         return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
 
     def __call__(self, *args, **kwargs):
-        params = setdefaults_path(Struct(), kwargs, **self)
+        params = Namespace(self, kwargs)
         try:
             target = params.pop('call_target')
         except KeyError:
@@ -519,21 +575,19 @@ def flatten(namespace):
 
 
 def flatten_items(namespace):
-    def mappings(n, visited=None, prefix=''):
+    def mappings(n, visited, prefix=''):
         for key, value in n.items():
             path = prefix + key
             if isinstance(value, Namespace):
-                visited = [] if visited is None else visited
                 if id(value) not in visited:
-                    visited.append(id(value))
                     if value:
-                        for mapping in mappings(value, visited=visited, prefix=path + '__'):
+                        for mapping in mappings(value, visited=[id(value)] + visited, prefix=path + '__'):
                             yield mapping
                     else:
                         yield path, Namespace()
             else:
                 yield path, value
-    return mappings(namespace)
+    return mappings(namespace, [])
 
 
 class FrozenNamespace(Frozen, Namespace):
@@ -545,44 +599,8 @@ EMPTY = FrozenNamespace()
 
 # The first argument has a funky name to avoid name clashes with stuff in kwargs
 def setdefaults_path(__target__, *defaults, **kwargs):
-
-    def setdefault(path, value, missing=object()):
-        namespace = __target__
-        parts = path.split('__')
-        for part in parts[:-1]:
-            current = namespace.get(part, missing)
-            if current is missing:
-                namespace[part] = Namespace()
-            elif not isinstance(current, dict):
-                # Convert to Namespace
-                if callable(current):
-                    namespace[part] = Namespace(call_target=current)
-                elif isinstance(current, string_types):
-                    namespace[part] = Namespace(**{current: True})
-                else:
-                    raise TypeError("Unable to treat {} ({}) as a namespace".format(part, current))
-            else:
-                namespace[part] = Namespace(current)
-            namespace = namespace[part]
-        existing = namespace.get(parts[-1], missing)
-        if existing is missing:
-            namespace[parts[-1]] = value
-        else:
-            if callable(value) and not isinstance(value, Namespace) and isinstance(existing, dict) and 'call_target' not in existing:
-                existing['call_target'] = value
-
-    for mappings in list(defaults) + [kwargs]:
-        for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
-            if value is EMPTY:
-                value = Namespace()
-            if not type(value) == Namespace:
-                setdefault(path, value)
-            else:
-                if value:
-                    for path2, value2 in flatten(value).items():
-                        setdefault('__'.join((path, path2)), value2)
-                else:
-                    setdefault(path, Namespace())
+    args = [kwargs] + list(reversed(defaults)) + [__target__]
+    __target__.update(Namespace(*args))
     return __target__
 
 
@@ -590,7 +608,7 @@ def dispatch(*function, **defaults):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            return f(*args, **setdefaults_path(Namespace(), kwargs, defaults))
+            return f(*args, **Namespace(defaults, kwargs))
         wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
         return wrapper
 

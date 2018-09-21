@@ -1,3 +1,5 @@
+from random import shuffle
+
 from collections import OrderedDict
 import pytest
 from tri.struct import Struct
@@ -432,9 +434,10 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
 
 
 def test_creation_ordered():
-    foo = [Member() for _ in range(100)]
-
-    assert foo == sorted(reversed(foo))
+    test_list = [Member() for _ in range(10)]
+    shuffled_list = test_list[:]
+    shuffle(shuffled_list)
+    assert test_list == sorted(shuffled_list)
 
 
 def test_creation_ordered_attribute_retention():
