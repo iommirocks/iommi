@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.0.5 (----------)
+1.0.5 (2018-09-21)
 ------------------
 
 * Fix broken handling of empty key
