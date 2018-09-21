@@ -6,6 +6,8 @@ Changelog
 
 * Added `preprocess_row` feature. You can use it to mutate a row in place before access.
 
+* Made `Table` a `RefinableObject`
+
 
 5.2.2 (2018-06-29)
 ~~~~~~~~~~~~~~~~~~
