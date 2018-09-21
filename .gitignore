@@ -5,6 +5,7 @@ table.css.map
 .idea
 .DS_Store
 .cache
+.pytest_cache/
 
 # C extensions
 *.so
@@ -46,3 +47,4 @@ docs/_build
 
 # tests
 results/
+testreport.xml
