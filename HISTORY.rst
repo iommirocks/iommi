@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.0.6 (----------)
+1.0.6 (2018-09-28)
 ------------------
 
 * `Shortcut` is now a special case when merging `Namespace` objects.
