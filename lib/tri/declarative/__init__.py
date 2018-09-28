@@ -519,7 +519,10 @@ class Namespace(Struct):
             if existing is missing:
                 self[key] = value
             else:
-                if isinstance(existing, dict):
+                if is_shortcut(existing):
+                    # Avoid merging Shortcuts
+                    self[key] = value
+                elif isinstance(existing, dict):
                     type_of_namespace = get_type_of_namespace(existing)
                     if isinstance(value, string_types):
                         warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)

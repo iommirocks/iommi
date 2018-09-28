@@ -187,6 +187,7 @@ def test_deprecated_string_value_promotion():
         assert 'Deprecated promotion of written string value "bar" to dict(bar=True)' in str(w.pop())
         warnings.resetwarnings()
 
+
 def test_namespace_repr():
     actual = repr(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
     expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes since repr is called on values
@@ -444,6 +445,24 @@ def test_setdefatults_path_retain_empty():
 
 def test_namespace_retain_empty():
     assert Namespace(a=Namespace(b=Namespace())).a.b == Namespace()
+
+
+def test_namespace_shortcut_overwrite():
+    actual = Namespace(
+        Namespace(x=Shortcut(y__z=1, y__zz=2)),
+        Namespace(x=Namespace(a__b=3))
+    )
+    expected = Namespace(x__a__b=3)
+    assert expected == actual
+
+
+def test_namespace_shortcut_overwrite_backward():
+    actual = Namespace(
+        Namespace(x=Namespace(y__z=1, y__zz=2)),
+        Namespace(x=Shortcut(a__b=3))
+    )
+    expected = Namespace(x__a__b=3, x__y__z=1, x__y__zz=2)
+    assert expected == actual
 
 
 def test_order_after_0():

@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+1.0.6 (----------)
+------------------
+
+* `Shortcut` is now a special case when merging `Namespace` objects.
+  When already in a Namespace, a Shortcut now get overwritten by `setitem_path()`, not merged into the written value.
+
+
 1.0.5 (2018-09-21)
 ------------------
 
