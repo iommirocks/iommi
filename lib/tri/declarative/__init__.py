@@ -136,7 +136,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
         except AttributeError:
             if sort_key is default_sort_key:
                 raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
-            else:  # pragma: no cover
+            else:  # pragma: no covererage
                 raise
         members.update(sorted_bindings)
 
@@ -215,7 +215,7 @@ def add_args_to_init_call(cls, get_extra_args_function):
             if sys.version_info[0] < 3:
                 pos_arg_names = inspect.getargspec(__init__orig)[0]
             else:
-                pos_arg_names = inspect.getfullargspec(__init__orig)[0]
+                pos_arg_names = inspect.getfullargspec(__init__orig)[0]  # pragma: no covererage
             pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
         except TypeError:
             # We might fail on not being able to find the signature of builtin constructors
@@ -276,7 +276,7 @@ def get_signature(func):
         if sys.version_info[0] < 3:
             names, _, varkw, defaults = inspect.getargspec(func)
         else:
-            names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)
+            names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)  # pragma: no covererage
     except TypeError:
         return None
 
