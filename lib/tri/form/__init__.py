@@ -126,7 +126,7 @@ def setup_db_compat_django():
     register_field_factory(DateField, Field.date)
     register_field_factory(DateTimeField, Field.datetime)
     register_field_factory(CommaSeparatedIntegerField, lambda **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs)))
-    register_field_factory(BooleanField, Field.boolean)
+    register_field_factory(BooleanField, lambda model_field, **kwargs: Field.boolean(model_field=model_field, **kwargs) if not model_field.null else Field.boolean_tristate(model_field=model_field, **kwargs))
     register_field_factory(TextField, Field.text)
     register_field_factory(FloatField, Field.float)
     register_field_factory(IntegerField, Field.integer)
@@ -308,6 +308,7 @@ def choice_parse(form, field, string_value):
         option = field.choice_to_option(form=form, field=field, choice=c)
         if option[1] == string_value:
             return option[0]
+    return string_value
 
 
 def choice_queryset_is_valid(field, parsed_data, **_):
@@ -928,6 +929,20 @@ def field_shortcut_choice(call_target, **kwargs):
 
 
 Field.choice = staticmethod(field_shortcut_choice)
+
+
+Field.boolean_tristate = Shortcut(
+    choices=[True, False],
+    parse=choice_parse,
+    choice_to_option=lambda form, field, choice, **_: (
+        choice,
+        'true' if choice else 'false',
+        'Yes' if choice else 'No',
+        choice == field.value,
+    ),
+    required=False,
+    call_target=Field.choice,
+)
 
 
 @shortcut

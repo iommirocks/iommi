@@ -17,7 +17,7 @@ def reset_saved_something():
 class FormFromModelTest(Model):
     f_int = IntegerField()
     f_float = FloatField()
-    f_bool = BooleanField()
+    f_bool = BooleanField(null=True)
     f_file = FileField()
 
     f_int_excluded = IntegerField()
