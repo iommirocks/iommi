@@ -444,6 +444,10 @@ def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
 
 
 Column.boolean = staticmethod(column_shortcut_boolean)
+Column.boolean_tristate = Shortcut(
+    query__call_target=Variable.boolean_tristate,
+    call_target=Column.boolean,
+)
 
 
 @shortcut
