@@ -272,6 +272,13 @@ Variable.boolean = Shortcut(
     value_to_q=boolean_value_to_q,
 )
 
+Variable.boolean_tristate = Shortcut(
+    gui__call_target=Field.boolean_tristate,
+    call_target=Variable,
+    value_to_q=boolean_value_to_q,
+)
+
+
 Variable.integer = Shortcut(
     call_target=Variable,
     gui__call_target=Field.integer,
