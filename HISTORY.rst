@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.12 (----------)
+~~~~~~~~~~~~~~~~~~~
+
+* Added `Field.boolean_tristate` for editing boolean fields with null value allowed
+
+
 5.0.11 (2018-09-21)
 ~~~~~~~~~~~~~~~~~~~
 

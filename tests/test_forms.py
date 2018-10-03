@@ -633,7 +633,7 @@ def test_form_from_model_invalid_form():
 
     assert len(actual_errors) == 4
     assert {'could not convert string to float: true'} in actual_errors
-    assert {u'asd is not a valid boolean value'} in actual_errors
+    assert {u'asd not in available choices'} in actual_errors
     assert {"invalid literal for int() with base 10: '1.1'"} in actual_errors or {"invalid literal for int() with base 10: u'1.1'"} in actual_errors
 
 
