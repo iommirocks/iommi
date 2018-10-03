@@ -1176,6 +1176,11 @@ class Form(RefinableObject):
     """ :type: tri.declarative.Namespace """
     extra = Refinable()
     """ :type: tri.declarative.Namespace """
+    base_template = Refinable()
+    """ :type: str """
+
+    class Meta:
+        base_template = 'tri_form/base.html'
 
     @dispatch(
         is_full_form=True,
