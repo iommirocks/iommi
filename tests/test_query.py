@@ -3,9 +3,9 @@ from datetime import date
 from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
-from tests.models import Foo, Bar, Baz
+from tests.models import Foo, Bar, Baz, NonStandardName
 from tri.form import Field
-from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME
+from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
 from tri.struct import Struct
 
 
@@ -385,3 +385,16 @@ def test_endpoint_dispatch():
 
 def test_variable_repr():
     assert repr(Variable(name='foo')) == '<tri.query.Variable foo>'
+
+
+@pytest.mark.django_db
+def test_nice_error_message():
+    with pytest.raises(AttributeError) as e:
+        value_to_query_string_value_string(Variable(value_to_q_lookup='name'), NonStandardName(non_standard_name='foo'))
+
+    assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument. Maybe one of ['non_standard_name']?"
+
+    with pytest.raises(AttributeError) as e:
+        value_to_query_string_value_string(Variable(value_to_q_lookup='name'), Foo(value=5))
+
+    assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument."
