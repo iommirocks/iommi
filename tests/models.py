@@ -14,3 +14,7 @@ class Bar(Model):
 
 class Baz(Model):
     name = CharField(max_length=255)
+
+
+class NonStandardName(Model):
+    non_standard_name = CharField(max_length=255)

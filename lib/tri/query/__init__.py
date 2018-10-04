@@ -66,7 +66,16 @@ def value_to_query_string_value_string(variable, v):
     if type(v) in integer_types or type(v) is float:
         return str(v)
     if isinstance(v, Model):
-        v = getattr(v, variable.value_to_q_lookup)
+        try:
+            v = getattr(v, variable.value_to_q_lookup)
+        except AttributeError:
+            name_ish_attributes = [x for x in dir(v) if 'name' in x and not x.startswith('_')]
+            raise AttributeError(
+                '{} object has no attribute {}. You can specify another name property with the value_to_q_lookup argument.{}'.format(
+                    type(v),
+                    variable.value_to_q_lookup,
+                    " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
+            )
     return '"%s"' % v
 
 

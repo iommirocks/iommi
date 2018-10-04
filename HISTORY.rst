@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+
+4.0.3 (????-??-??)
+~~~~~~~~~~~~~~~~~~
+
+* A more helpful error message if you didn't specify `value_to_q_lookup` but you need to.
+
+
+
 4.0.2 (2018-10-04)
 ~~~~~~~~~~~~~~~~~~
 
