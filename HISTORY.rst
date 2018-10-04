@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.0.2 (----------)
+4.0.2 (2018-10-04)
 ~~~~~~~~~~~~~~~~~~
 
 * Added `Variable.boolean_tristate` for editing boolean fields with null value allowed
