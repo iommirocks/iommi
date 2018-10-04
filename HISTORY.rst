@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.3.1 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Added `Column.boolean_tristate` for optionally filter boolean fields.
+
+
 5.3.0 (2018-08-19)
 ~~~~~~~~~~~~~~~~~~
 
