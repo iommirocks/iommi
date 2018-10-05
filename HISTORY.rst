@@ -6,6 +6,8 @@ Changelog
 
 * Added `Column.boolean_tristate` for optionally filter boolean fields.
 
+* Add support for setting namespace on tables to be able to reuse column names between two tables in the same view.
+
 
 5.3.0 (2018-08-19)
 ~~~~~~~~~~~~~~~~~~

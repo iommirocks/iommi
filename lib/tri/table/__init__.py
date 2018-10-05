@@ -38,25 +38,33 @@ def register_column_factory(field_class, factory):
     _column_factory_by_field_type[field_class] = factory
 
 
-def prepare_headers(request, bound_columns):
+def _with_path_prefix(table, name):
+    if table.name:
+        return DISPATCH_PATH_SEPARATOR.join([table.name, name])
+    else:
+        return name
+
+
+def prepare_headers(table, bound_columns):
     """
     :type bound_columns: list of BoundColumn
     """
-    if request is None:
+    if table.request is None:
         return
 
     for column in bound_columns:
         if column.sortable:
-            params = request.GET.copy()
-            order = request.GET.get('order', None)
+            params = table.request.GET.copy()
+            param_path = _with_path_prefix(table, 'order')
+            order = table.request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
-            params['order'] = column.name if not start_sort_desc else '-' + column.name
+            params[param_path] = column.name if not start_sort_desc else '-' + column.name
             if order is not None:
                 is_desc = len(order) > 0 and order[0] == '-'
                 order_field = is_desc and order[1:] or order
                 if order_field == column.name:
                     new_order = is_desc and order[1:] or "-%s" % order
-                    params['order'] = new_order
+                    params[param_path] = new_order
             column.is_sorting = False if order is None else (column.name == order or ('-' + column.name) == order)
             column.url = "?%s" % params.urlencode()
         else:
@@ -719,6 +727,7 @@ class Table(RefinableObject):
 
     """
 
+    name = Refinable()
     bulk_filter = Refinable()
     bulk_exclude = Refinable()
     sortable = Refinable()
@@ -901,8 +910,7 @@ class Table(RefinableObject):
         if self.request is None:
             return
 
-        order = self.request.GET.get('order', self.default_sort_order)
-
+        order = self.request.GET.get(_with_path_prefix(self, 'order'), self.default_sort_order)
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
@@ -926,7 +934,7 @@ class Table(RefinableObject):
                     self.data = self.data.order_by(*order_args)
 
     def _prepare_headers(self):
-        prepare_headers(self.request, self.shown_bound_columns)
+        prepare_headers(self, self.shown_bound_columns)
         # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
         group_columns = []
 
@@ -1042,6 +1050,7 @@ class Table(RefinableObject):
             variables = list(generate_variables())
 
             self._query = Query(
+                gui__name=self.name,
                 request=self.request,
                 variables=variables,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
@@ -1077,6 +1086,7 @@ class Table(RefinableObject):
             self._bulk_form = Form(
                 data=self.request.POST,
                 fields=bulk_fields,
+                name=self.name,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
                 **self.bulk
             ) if bulk_fields else None
