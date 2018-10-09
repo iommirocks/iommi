@@ -19,8 +19,6 @@ from tests.models import Foo, FieldFromModelOneToOneTest, FormFromModelTest, Foo
 from tri.declarative import getattr_path, setattr_path
 from tri.struct import Struct
 from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link
-from django import __version__ as django_version
-django_version = tuple([int(x) for x in django_version.split('.')])
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -281,7 +279,7 @@ def test_text_fields():
 def test_integer_field():
     assert Form(data=dict(foo=' 7  '), fields=[Field.integer(name='foo')]).fields[0].parsed_data == 7
     actual_errors = Form(data=dict(foo=' foo  '), fields=[Field.integer(name='foo')]).fields[0].errors
-    assert_one_error_and_matches_reg_exp(actual_errors, "invalid literal for int\(\) with base 10: u?'foo'")
+    assert_one_error_and_matches_reg_exp(actual_errors, r"invalid literal for int\(\) with base 10: u?'foo'")
 
 
 def test_float_field():
@@ -1158,19 +1156,6 @@ def test_render_template_template_object():
     ) == 'foo 1 bar'
 
 
-@pytest.mark.skipif(django_version >= (1, 9, 0), reason='Changed API in django 1.9+')
-def test_render_template_template_object2_newer_django():
-    from django.template.backends.django import Template as Template2
-    template = Template('foo {{a}} bar')
-    template2 = Template2(template)
-    assert render_template(
-        request=RequestFactory().get('/'),
-        context=dict(a='1'),
-        template=template2,
-    ) == 'foo 1 bar'
-
-
-@pytest.mark.skipif(django_version < (1, 9, 0), reason='Changed API in django 1.9+')
 def test_render_template_template_object2_older_django():
     from django.template.backends.django import Template as Template2
     template = Template('foo {{a}} bar')

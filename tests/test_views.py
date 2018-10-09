@@ -254,12 +254,15 @@ def test_create_or_edit_object_default_template():
     response = create_object(request=request, model=Foo)
     assert response.status_code == 200
 
-    expected = """
+    expected_html = """
         <div class="form_buttons clear">
             <input accesskey="s" class="button" type="submit" value="Create foo"/>
         </div>
     """
-    assert BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify() == BeautifulSoup(expected, 'html.parser').prettify()
+    actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
+    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
+    # This replace is here because django 2.0+ inserts an unterminated input tag for csrf, and this changes the prettied code
+    assert actual.replace('value="Create foo">\n </input>', 'value="Create foo"/>') == expected
 
 
 @pytest.mark.django_db
