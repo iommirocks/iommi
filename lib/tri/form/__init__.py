@@ -98,14 +98,19 @@ def many_to_many_factory_read_from_instance(field, instance):
     return getattr_path(instance, field.attr).all()
 
 
+def many_to_many_factory_write_to_instance(field, instance, value):
+    getattr_path(instance, field.attr).set(value)
+
+
 def many_to_many_factory(model_field, **kwargs):
     setdefaults_path(
         kwargs,
-        choices=model_field.rel.to.objects.all(),
+        choices=model_field.remote_field.model.objects.all(),
         read_from_instance=many_to_many_factory_read_from_instance,
+        write_to_instance=many_to_many_factory_write_to_instance,
         extra__django_related_field=True,
     )
-    kwargs['model'] = model_field.rel.to
+    kwargs['model'] = model_field.remote_field.model
     return Field.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
@@ -237,14 +242,14 @@ def expand_member(model, factory_lookup, defaults_factory, name, field, field_na
         model_field = model._meta.get_field(field_name)
     assert isinstance(model_field, OneToOneField)
 
-    result = [member_from_model(model=model_field.rel.to,
+    result = [member_from_model(model=model_field.remote_field.model,
                                 factory_lookup=factory_lookup,
                                 factory_lookup_register_function=register_field_factory,
                                 defaults_factory=defaults_factory,
                                 field_name=sub_model_field.name,
                                 name=name + '__' + sub_model_field.name,
                                 **field.pop(sub_model_field.name, {}))
-              for sub_model_field in get_fields(model=model_field.rel.to)]
+              for sub_model_field in get_fields(model=model_field.remote_field.model)]
     assert_kwargs_empty(field)
     return [x for x in result if x is not None]
 
@@ -962,7 +967,7 @@ def field_choice_queryset(call_target, choices, **kwargs):
         if isinstance(choices, QuerySet):
             kwargs['model'] = choices.model
         elif 'model_field' in kwargs:
-            kwargs['model'] = kwargs['model_field'].rel.model
+            kwargs['model'] = kwargs['model_field'].remote_field.model
         else:
             assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 

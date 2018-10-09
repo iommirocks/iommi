@@ -89,7 +89,7 @@ class CreateOrEditObjectTest(Model):
     f_int = IntegerField()
     f_float = FloatField()
     f_bool = BooleanField()
-    f_foreign_key = ForeignKey(Foo)
+    f_foreign_key = ForeignKey(Foo, on_delete=CASCADE)
     f_many_to_many = ManyToManyField(Foo)
 
     class Meta:

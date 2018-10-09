@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+5.1.0 (2018-10-09
+~~~~~~~~~~~~~~~~~~~
+
+* Dropped Django 1.8 support
+
+* Fixed deprecation warnings for Django 2.0
+
+
 5.0.12 (2018-10-03)
 ~~~~~~~~~~~~~~~~~~~
 
