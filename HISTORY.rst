@@ -1,12 +1,14 @@
 Changelog
 ---------
 
-5.3.1 (----------)
+5.3.1 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~
 
 * Added `Column.boolean_tristate` for optionally filter boolean fields.
 
 * Add support for setting namespace on tables to be able to reuse column names between two tables in the same view.
+
+* Removed buggy use of `setdefaults`. This could cause overriding of nested arguments to not take.
 
 
 5.3.0 (2018-08-19)
