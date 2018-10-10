@@ -18,7 +18,7 @@ from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
 import six
-from tri.declarative import declarative, creation_ordered, with_meta, setdefaults, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, RefinableObject, refinable, Refinable, shortcut, Shortcut
+from tri.declarative import declarative, creation_ordered, with_meta, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, RefinableObject, refinable, Refinable, shortcut, Shortcut
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR, evaluate_and_group_links
 from tri.named_struct import NamedStructField, NamedStruct
 from tri.struct import Struct, merged
@@ -319,7 +319,7 @@ def column_shortcut_icon(icon, is_report=False, icon_title='', show=True, call_t
 
     :param icon: the font awesome name of the icon
     """
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
         title=icon_title,
         cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
@@ -392,7 +392,7 @@ def column_shortcut_run(is_report=False, show=True, call_target=None, **kwargs):
     """
     Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
     """
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
     ))
     return call_target(**kwargs)
@@ -419,7 +419,7 @@ def column_shortcut_select(is_report=False, checkbox_name='pk', show=True, check
     :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
     :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
     """
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
         cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
     ))
@@ -445,7 +445,7 @@ def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
             value = value()
         return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
 
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
     ))
     return call_target(**kwargs)
@@ -466,7 +466,7 @@ Column.boolean_tristate = Shortcut(
 )
 def column_shortcut_choice(call_target, **kwargs):
     choices = kwargs['choices']
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         bulk__choices=choices,
         query__choices=choices,
     ))
@@ -483,7 +483,7 @@ Column.choice = staticmethod(column_shortcut_choice)
     query__call_target=Variable.choice_queryset,
 )
 def column_shortcut_choice_queryset(call_target, **kwargs):
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         bulk__model=kwargs.get('model'),
         query__model=kwargs.get('model'),
     ))
@@ -501,7 +501,7 @@ Column.choice_queryset = staticmethod(column_shortcut_choice_queryset)
     cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
 )
 def column_shortcut_multi_choice_queryset(call_target, **kwargs):
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         bulk__model=kwargs.get('model'),
         query__model=kwargs.get('model'),
     ))
