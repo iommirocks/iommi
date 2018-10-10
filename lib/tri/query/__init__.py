@@ -10,7 +10,7 @@ import operator
 from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
 from six import string_types, text_type, integer_types
 from tri.struct import merged
-from tri.declarative import declarative, creation_ordered, setdefaults, filter_show_recursive, evaluate_recursive, \
+from tri.declarative import declarative, creation_ordered, setdefaults_path, filter_show_recursive, evaluate_recursive, \
     sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable, with_meta
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, \
     DISPATCH_PATH_SEPARATOR
@@ -232,7 +232,7 @@ def variable_shortcut_choice(call_target, **kwargs):  # pragma: no cover
     Field that has one value out of a set.
     :type choices: list
     """
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         gui__choices=kwargs.get('choices'),
     ))
     return call_target(**kwargs)
@@ -259,7 +259,7 @@ def variable_shortcut_choice_queryset(call_target, choices, **kwargs):
         assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
         kwargs['model'] = choices.model
 
-    setdefaults(kwargs, dict(
+    setdefaults_path(kwargs, dict(
         gui__choices=choices,
         gui__model=kwargs['model'],
         choices=choices,
