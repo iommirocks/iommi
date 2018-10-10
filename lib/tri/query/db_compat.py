@@ -1,4 +1,4 @@
-from tri.declarative import setdefaults
+from tri.declarative import setdefaults_path
 
 from tri.query import register_variable_factory
 
@@ -12,7 +12,7 @@ def setup_db_compat_django():
     from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel
 
     def foreign_key_factory(model_field, **kwargs):
-        setdefaults(kwargs, dict(
+        setdefaults_path(kwargs, dict(
             choices=model_field.foreign_related_fields[0].model.objects.all()
         ))
         return Variable.choice_queryset(**kwargs)
@@ -31,8 +31,8 @@ def setup_db_compat_django():
     register_variable_factory(IntegerField, Variable.integer),
 
     register_variable_factory(CommaSeparatedIntegerField, lambda **kwargs: Variable.comma_separated(parent_field=Variable.integer(**kwargs))),
-    register_variable_factory(AutoField, lambda **kwargs: Variable.integer(**setdefaults(kwargs, dict(show=False)))),
-    register_variable_factory(ManyToManyField, lambda model_field, **kwargs: Variable.multi_choice_queryset(model_field=model_field, **setdefaults(kwargs, dict(choices=model_field.rel.to._default_manager.all())))),
+    register_variable_factory(AutoField, lambda **kwargs: Variable.integer(**setdefaults_path(kwargs, dict(show=False)))),
+    register_variable_factory(ManyToManyField, lambda model_field, **kwargs: Variable.multi_choice_queryset(model_field=model_field, **setdefaults_path(kwargs, dict(choices=model_field.rel.to._default_manager.all())))),
 
     register_variable_factory(ManyToOneRel, None),
     register_variable_factory(ManyToManyRel, None),
