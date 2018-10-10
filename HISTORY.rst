@@ -2,10 +2,12 @@ Changelog
 ---------
 
 
-4.0.3 (????-??-??)
+4.0.3 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~
 
 * A more helpful error message if you didn't specify `value_to_q_lookup` but you need to.
+
+* Removed buggy use of `setdefaults`. This could cause overriding of nested arguments to not take.
 
 
 
