@@ -694,10 +694,14 @@ def test_links():
 def test_bulk_edit():
     assert Foo.objects.all().count() == 0
 
-    Foo(a=1, b="").save()
-    Foo(a=2, b="").save()
-    Foo(a=3, b="").save()
-    Foo(a=4, b="").save()
+    foos = [
+        Foo.objects.create(a=1, b=""),
+        Foo.objects.create(a=2, b=""),
+        Foo.objects.create(a=3, b=""),
+        Foo.objects.create(a=4, b=""),
+    ]
+
+    assert [x.pk for x in foos] == [1, 2, 3, 4]
 
     class TestTable(Table):
         a = Column.number(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
@@ -707,10 +711,10 @@ def test_bulk_edit():
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
-    def post_bulk_edit(table, pks, queryset, updates):
+    def post_bulk_edit(table, queryset, updates, **_):
         assert isinstance(table, TestTable)
         assert isinstance(queryset, QuerySet)
-        assert set(pks) == {'1', '2'}
+        assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
     render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()), post_bulk_edit=post_bulk_edit)

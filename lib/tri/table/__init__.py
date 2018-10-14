@@ -729,7 +729,9 @@ class Table(RefinableObject):
 
     name = Refinable()
     bulk_filter = Refinable()
+    """ :type: tri.declarative.Namespace """
     bulk_exclude = Refinable()
+    """ :type: tri.declarative.Namespace """
     sortable = Refinable()
     default_sort_order = Refinable()
     attrs = Refinable()
@@ -1154,6 +1156,14 @@ class Table(RefinableObject):
             if prefix == endpoint:
                 return handler(table=self, key=remaining_key, value=value)
 
+    def bulk_queryset(self):
+        pks = [key[len('pk_'):] for key in self.request.POST if key.startswith('pk_')]
+
+        return self.model.objects.all() \
+            .filter(pk__in=pks) \
+            .filter(**self.bulk_filter) \
+            .exclude(**self.bulk_exclude)
+
 
 class Link(tri_form_Link):
     """
@@ -1262,7 +1272,7 @@ def render_table(request,
                  paginator=None,
                  show_hits=False,
                  hit_label='Items',
-                 post_bulk_edit=lambda table, pks, queryset, updates: None):
+                 post_bulk_edit=lambda table, queryset, updates: None):
     """
     Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
 
@@ -1294,21 +1304,17 @@ def render_table(request,
     context['tri_query_error'] = table.query_error
 
     if table.bulk_form and request.method == 'POST':
-        pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
-
         if table.bulk_form.is_valid():
+            queryset = table.bulk_queryset()
+
             updates = {
                 field.name: field.value
                 for field in table.bulk_form.fields
                 if field.value is not None and field.value is not ''
             }
-            queryset = table.model.objects.all() \
-                .filter(pk__in=pks) \
-                .filter(**table.bulk_filter) \
-                .exclude(**table.bulk_exclude)
             queryset.update(**updates)
 
-            post_bulk_edit(table=table, pks=pks, queryset=queryset, updates=updates)
+            post_bulk_edit(table=table, queryset=queryset, updates=updates)
 
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
