@@ -373,12 +373,12 @@ def filter_show_recursive(item):
     if isinstance(item, list):
         return [filter_show_recursive(v) for v in item if should_show(v)]
 
-    if isinstance(item, set):
-        return {filter_show_recursive(v) for v in item if should_show(v)}
-
     if isinstance(item, dict):
         # The type(item)(** stuff is to preserve the original type
         return type(item)(**{k: filter_show_recursive(v) for k, v in item.items() if should_show(v)})
+
+    if isinstance(item, set):
+        return {filter_show_recursive(v) for v in item if should_show(v)}
 
     return item
 
