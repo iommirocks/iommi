@@ -477,6 +477,16 @@ def test_help_text_from_model():
 
 
 @pytest.mark.django_db
+def test_help_text_from_model2():
+    # simple integer field
+    assert Form.from_model(data=dict(foo='1'), include=['foo'], model=Foo).fields[0].help_text == 'foo_help_text'
+
+    # foreign key field
+    Bar.objects.create(foo=Foo.objects.create(foo=1))
+    assert Form.from_model(data={}, include=['foo'], model=Bar).fields[0].help_text == 'bar_help_text'
+
+
+@pytest.mark.django_db
 def test_multi_choice_queryset():
     user = User.objects.create(username='foo')
     user2 = User.objects.create(username='foo2')
