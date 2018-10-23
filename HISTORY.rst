@@ -1,10 +1,12 @@
 Changelog
 ---------
 
-5.1.1 (????-??-??)
+5.1.1 (2018-10-23)
 ~~~~~~~~~~~~~~~~~~
 
 * File field tried to render the binary contents on form validation errors. This is a crash in Django 2.1
+
+* `from_model` was broken when traversing a foreign key relation with `__`
 
 
 5.1.0 (2018-10-09)
