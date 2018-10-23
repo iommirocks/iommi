@@ -398,3 +398,23 @@ def test_nice_error_message():
         value_to_query_string_value_string(Variable(value_to_q_lookup='name'), Foo(value=5))
 
     assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument."
+
+
+def test_escape_quote():
+    class MyQuery(Query):
+        foo = Variable(gui__show=True)
+
+    # noinspection PyTypeChecker
+    query = MyQuery(request=Struct(method='GET', GET={'foo': '"', '-': '-'}))
+    assert query.to_query_string() == 'foo="\\""'
+    assert repr(query.to_q()) == repr(Q(**{'foo__iexact': '"'}))
+
+
+def test_escape_quote_freetext():
+    class MyQuery(Query):
+        foo = Variable(freetext=True)
+
+    # noinspection PyTypeChecker
+    query = MyQuery(request=Struct(method='GET', GET={'term': '"', '-': '-'}))
+    assert query.to_query_string() == '(foo:"\\"")'
+    assert repr(query.to_q()) == repr(Q(**{'foo__icontains': '"'}))

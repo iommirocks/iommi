@@ -7,7 +7,8 @@ from functools import reduce
 from django.db.models import Q, F, Model
 from django.core.exceptions import ObjectDoesNotExist
 import operator
-from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException
+from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, \
+    oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException, QuotedString
 from six import string_types, text_type, integer_types
 from tri.struct import merged
 from tri.declarative import declarative, creation_ordered, setdefaults_path, filter_show_recursive, evaluate_recursive, \
@@ -60,6 +61,11 @@ def request_data(request):
         assert False, "unknown request method %s" % request.method  # pragma: no cover # pragma: no mutate
 
 
+def to_string_surrounded_by_quote(v):
+    str_v = '%s' % v
+    return '"%s"' % str_v.replace('"', '\\"')
+
+
 def value_to_query_string_value_string(variable, v):
     if type(v) == bool:
         return {True: '1', False: '0'}.get(v)
@@ -76,7 +82,7 @@ def value_to_query_string_value_string(variable, v):
                     variable.value_to_q_lookup,
                     " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
             )
-    return '"%s"' % v
+    return to_string_surrounded_by_quote(v)
 
 
 MISSING = object()
@@ -331,7 +337,7 @@ Variable.decimal = Shortcut(
 
 class StringValue(text_type):
     def __new__(cls, s):
-        if s.startswith('"') and s.endswith('"'):
+        if len(s) > 2 and s.startswith('"') and s.endswith('"'):
             s = s[1:-1]
         return super(StringValue, cls).__new__(cls, s)
 
@@ -480,7 +486,7 @@ class Query(RefinableObject):
         something < 10 AND other >= 2015-01-01 AND (foo < 1 OR bar > 1)
 
         """
-        quoted_string_excluding_quotes = quotedString.copy().setParseAction(lambda token: StringValue(token[0]))
+        quoted_string_excluding_quotes = QuotedString('"', escChar='\\').setParseAction(lambda token: StringValue(token[0]))
         and_ = Keyword('and', caseless=True)
         or_ = Keyword('or', caseless=True)
         exponential_marker = CaselessLiteral('E')
@@ -582,7 +588,6 @@ class Query(RefinableObject):
         if request_data(self.request).get(ADVANCED_QUERY_PARAM, '').strip():
             return request_data(self.request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
-            # TODO: handle escaping for cleaned_data, this will blow up if the value contains "
             def expr(field, is_list, value):
                 if is_list:
                     return ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list])
@@ -599,8 +604,7 @@ class Query(RefinableObject):
             if FREETEXT_SEARCH_NAME in form.fields_by_name:
                 freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
                 if freetext:
-                    # TODO: handle escaping for freetext, this will blow up if the value contains "
-                    result.append('(%s)' % ' or '.join(['%s:"%s"' % (variable.name, freetext)
+                    result.append('(%s)' % ' or '.join(['%s:%s' % (variable.name, to_string_surrounded_by_quote(freetext))
                                                         for variable in self.variables
                                                         if variable.freetext]))
             return ' and '.join(result)
