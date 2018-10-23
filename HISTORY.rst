@@ -1,8 +1,14 @@
 Changelog
 ---------
 
-5.1.0 (2018-10-09
-~~~~~~~~~~~~~~~~~~~
+5.1.1 (????-??-??)
+~~~~~~~~~~~~~~~~~~
+
+* File field tried to render the binary contents on form validation errors. This is a crash in Django 2.1
+
+
+5.1.0 (2018-10-09)
+~~~~~~~~~~~~~~~~~~
 
 * Dropped Django 1.8 support
 

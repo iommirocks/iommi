@@ -1033,6 +1033,7 @@ Field.file = Shortcut(
     call_target=Field,
     input_type='file',
     template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
+    input_template='tri_form/file.html',
     write_to_instance=file_write_to_instance,
 )
 
