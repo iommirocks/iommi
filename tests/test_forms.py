@@ -1283,7 +1283,7 @@ def test_initial_set_earlier_than_evaluate_is_called():
 
 def test_field_from_model_path():
     class FooForm(Form):
-        baz = Field.from_model(Foo, 'foo__foo')
+        baz = Field.from_model(Bar, 'foo__foo')
 
         class Meta:
             model = Bar
