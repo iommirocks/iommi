@@ -31,7 +31,7 @@ class Foo(Model):
 
 
 class Bar(Model):
-    foo = ForeignKey(Foo, related_name='bars', on_delete=CASCADE)
+    foo = ForeignKey(Foo, related_name='bars', on_delete=CASCADE, help_text='bar_help_text')
 
 
 class FieldFromModelForeignKeyTest(Model):

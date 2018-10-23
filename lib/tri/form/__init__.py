@@ -11,7 +11,6 @@ import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email, URLValidator
 from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, ForeignKey, OneToOneField, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
-from django.db.models.fields import FieldDoesNotExist
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.template.loader import render_to_string
@@ -722,12 +721,9 @@ class Field(RefinableObject):
     @staticmethod
     @refinable
     def help_text(field, **_):
-        if field.model is None or field.attr is None:
+        if field.model_field is None:
             return ''
-        try:
-            return field.model._meta.get_field(field.attr.rsplit('__', 1)[-1]).help_text or ''
-        except FieldDoesNotExist:  # pragma: no cover
-            return ''
+        return field.model_field.help_text or ''
 
     @staticmethod
     @refinable
