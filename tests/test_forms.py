@@ -917,6 +917,15 @@ def test_file():
     assert instance.foo == '1'
 
 
+def test_file_no_roundtrip():
+    class FooForm(Form):
+        foo = Field.file(is_valid=lambda form, field, parsed_data: (False, 'invalid!'))
+
+    form = FooForm(data=dict(foo=b'binary_content_here'))
+    assert not form.is_valid()
+    assert 'binary_content_here' not in form.render()
+
+
 def test_mode_full_form_from_request():
     class FooForm(Form):
         foo = Field(required=True)
