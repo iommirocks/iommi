@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.0.3 (2018-??-??)
+4.0.4 (2018-10-23)
 ~~~~~~~~~~~~~~~~~~
 
 * Support searching for quotation mark
