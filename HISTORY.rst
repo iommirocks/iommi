@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+6.0.0 (2018-??-??)
+~~~~~~~~~~~~~~~~~~
+
+* Removed argument `pks` to `post_bulk_edit`. This argument is incompatible with non-paginated bulk edit, and it's redundant with the `queryset` argument.
+
+* Added support for bulk editing of an entire queryset, not just the selected items on the current page.
+
+
 5.3.1 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~
 

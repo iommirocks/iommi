@@ -18,7 +18,7 @@ from tri.query import Variable
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar, Baz
 
-from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, yes_no_formatter
+from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, yes_no_formatter, SELECT_DISPLAY_NAME
 
 
 def get_data():
@@ -133,9 +133,9 @@ def test_django_table():
 
     t = TestTable(data=Bar.objects.all(), request=RequestFactory().get("/", ''))
 
-    assert list(t.bound_columns[-1].choices) == list(Foo.objects.all())
-    assert list(t.bulk_form.fields[-1].choices) == list(Foo.objects.all())
-    assert list(t.query_form.fields[-1].choices) == list(Foo.objects.all())
+    assert list(t.bound_column_by_name['foo'].choices) == list(Foo.objects.all())
+    assert list(t.bulk_form.fields_by_name['foo'].choices) == list(Foo.objects.all())
+    assert list(t.query_form.fields_by_name['foo'].choices) == list(Foo.objects.all())
 
     verify_table_html(table=t, expected_html="""
         <table class="listview">
@@ -595,7 +595,7 @@ def test_column_presets():
                     <th class="first_column subheader thin" title="Download" />
                     <th class="first_column subheader thin" title="Run"> Run </th>
                     <th class="first_column nopad subheader thin" title="Select all">
-                        <i class="fa fa-check-square-o" />
+                        {}
                     </th>
                     <th class="first_column subheader"> Boolean </th>
                     <th class="first_column subheader"> Link </th>
@@ -614,7 +614,7 @@ def test_column_presets():
                     <td class="rj"> 123 </td>
                 </tr>
             </tbody>
-        </table>""")
+        </table>""".format(SELECT_DISPLAY_NAME))
 
 
 @pytest.mark.django_db
@@ -694,10 +694,14 @@ def test_links():
 def test_bulk_edit():
     assert Foo.objects.all().count() == 0
 
-    Foo(a=1, b="").save()
-    Foo(a=2, b="").save()
-    Foo(a=3, b="").save()
-    Foo(a=4, b="").save()
+    foos = [
+        Foo.objects.create(a=1, b=""),
+        Foo.objects.create(a=2, b=""),
+        Foo.objects.create(a=3, b=""),
+        Foo.objects.create(a=4, b=""),
+    ]
+
+    assert [x.pk for x in foos] == [1, 2, 3, 4]
 
     class TestTable(Table):
         a = Column.number(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
@@ -707,10 +711,10 @@ def test_bulk_edit():
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
-    def post_bulk_edit(table, pks, queryset, updates):
+    def post_bulk_edit(table, queryset, updates, **_):
         assert isinstance(table, TestTable)
         assert isinstance(queryset, QuerySet)
-        assert set(pks) == {'1', '2'}
+        assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
     render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()), post_bulk_edit=post_bulk_edit)
@@ -729,6 +733,16 @@ def test_bulk_edit():
         (2, 0, u'changed'),
         (3, 3, u''),
         (4, 4, u''),
+    ]
+
+    # Test edit all feature
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(a='11', b='changed2', _all_pks_='1')), table=TestTable(data=Foo.objects.all()))
+
+    assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
+        (1, 11, u'changed2'),
+        (2, 11, u'changed2'),
+        (3, 11, u'changed2'),
+        (4, 11, u'changed2'),
     ]
 
 
@@ -914,7 +928,6 @@ def test_template_string():
 
     verify_table_html(
         table=TestTable(),
-        find=dict(),
         links=[
             Link('foo', 'bar'),
         ],
@@ -1168,9 +1181,9 @@ def test_choice_queryset():
 
     foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
 
-    assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(foo_table.query_form.fields[0].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(Foo.objects.filter(a=1))
 
 
 @pytest.mark.django_db
@@ -1191,9 +1204,9 @@ def test_multi_choice_queryset():
     foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
     foo_table.prepare()
 
-    assert repr(foo_table.bound_columns[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.bulk_form.fields[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.query_form.fields[0].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
 
 
 @pytest.mark.django_db

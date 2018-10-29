@@ -401,12 +401,15 @@ def column_shortcut_run(is_report=False, show=True, call_target=None, **kwargs):
 Column.run = staticmethod(column_shortcut_run)
 
 
+SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_select_all(this)"></i>'
+
+
 @shortcut
 @dispatch(
     call_target=Column,
     name='__select__',
     title='Select all',
-    display_name=mark_safe('<i class="fa fa-check-square-o"></i>'),
+    display_name=mark_safe(SELECT_DISPLAY_NAME),
     sortable=False,
     attrs__class__thin=True,
     attrs__class__nopad=True,
@@ -729,7 +732,9 @@ class Table(RefinableObject):
 
     name = Refinable()
     bulk_filter = Refinable()
+    """ :type: tri.declarative.Namespace """
     bulk_exclude = Refinable()
+    """ :type: tri.declarative.Namespace """
     sortable = Refinable()
     default_sort_order = Refinable()
     attrs = Refinable()
@@ -1082,14 +1087,18 @@ class Table(RefinableObject):
                             bulk_namespace['field_name'] = column.attr
                         yield bulk_namespace()
             bulk_fields = list(generate_bulk_fields())
+            if bulk_fields:
+                bulk_fields.append(Field.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='tri_form/input.html'))
 
-            self._bulk_form = Form(
-                data=self.request.POST,
-                fields=bulk_fields,
-                name=self.name,
-                endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
-                **self.bulk
-            ) if bulk_fields else None
+                self._bulk_form = Form(
+                    data=self.request.POST,
+                    fields=bulk_fields,
+                    name=self.name,
+                    endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
+                    **self.bulk
+                )
+            else:
+                self._bulk_form = None
 
         self._prepare_auto_rowspan()
 
@@ -1153,6 +1162,17 @@ class Table(RefinableObject):
         for endpoint, handler in self.endpoint.items():
             if prefix == endpoint:
                 return handler(table=self, key=remaining_key, value=value)
+
+    def bulk_queryset(self):
+        queryset = self.model.objects.all() \
+            .filter(**self.bulk_filter) \
+            .exclude(**self.bulk_exclude)
+
+        if self._bulk_form.fields_by_name._all_pks_.value == '1':
+            return queryset
+        else:
+            pks = [key[len('pk_'):] for key in self.request.POST if key.startswith('pk_')]
+            return queryset.filter(pk__in=pks)
 
 
 class Link(tri_form_Link):
@@ -1262,7 +1282,7 @@ def render_table(request,
                  paginator=None,
                  show_hits=False,
                  hit_label='Items',
-                 post_bulk_edit=lambda table, pks, queryset, updates: None):
+                 post_bulk_edit=lambda table, queryset, updates: None):
     """
     Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
 
@@ -1294,21 +1314,17 @@ def render_table(request,
     context['tri_query_error'] = table.query_error
 
     if table.bulk_form and request.method == 'POST':
-        pks = [key[len('pk_'):] for key in request.POST if key.startswith('pk_')]
-
         if table.bulk_form.is_valid():
+            queryset = table.bulk_queryset()
+
             updates = {
                 field.name: field.value
                 for field in table.bulk_form.fields
-                if field.value is not None and field.value is not ''
+                if field.value is not None and field.value is not '' and field.attr is not None
             }
-            queryset = table.model.objects.all() \
-                .filter(pk__in=pks) \
-                .filter(**table.bulk_filter) \
-                .exclude(**table.bulk_exclude)
             queryset.update(**updates)
 
-            post_bulk_edit(table=table, pks=pks, queryset=queryset, updates=updates)
+            post_bulk_edit(table=table, queryset=queryset, updates=updates)
 
             return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
