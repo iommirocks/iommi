@@ -8,6 +8,8 @@ Changelog
 
 * Added support for bulk editing of an entire queryset, not just the selected items on the current page.
 
+* Fixed bug where the template context was not carried over to the row rendering when using a custom row template.
+
 
 5.3.1 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~
