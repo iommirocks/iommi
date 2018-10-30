@@ -608,7 +608,7 @@ class BoundRow(object):
 
     def render(self):
         if self.template:
-            context = dict(bound_row=self, row=self.row, table=self.table)
+            context = dict(bound_row=self, row=self.row, **self.table.context)
             return render_template(self.table.request, self.template, context)
 
         return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
