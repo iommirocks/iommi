@@ -10,6 +10,8 @@ Changelog
 
 * Fixed bug where the template context was not carried over to the row rendering when using a custom row template.
 
+* Removed `paginator` template tag, moved the functionality into `Table.render_paginator`. This means it can be used from jinja2 and is generally easier to work with.
+
 
 5.3.1 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~
