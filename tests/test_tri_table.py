@@ -131,7 +131,7 @@ def test_django_table():
         foo__b = Column()
         foo = Column.choice_queryset(model=Foo, choices=lambda table, column, **_: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
-    t = TestTable(data=Bar.objects.all(), request=RequestFactory().get("/", ''))
+    t = TestTable(data=Bar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
 
     assert list(t.bound_column_by_name['foo'].choices) == list(Foo.objects.all())
     assert list(t.bulk_form.fields_by_name['foo'].choices) == list(Foo.objects.all())
@@ -190,10 +190,8 @@ def test_output():
     class TestTable(Table):
 
         class Meta:
-            attrs = {
-                'class': 'listview',
-                'id': 'table_id',
-            }
+            attrs__class__listview = True
+            attrs__id = 'table_id'
 
         foo = Column()
         bar = Column.number()
@@ -512,9 +510,9 @@ def test_attr():
 def test_attrs():
     class TestTable(NoSortTable):
         class Meta:
-            attrs__class = 'classy'
+            attrs__class__classy = True
             attrs__foo = lambda table: 'bar'
-            row__attrs__class = 'classier'
+            row__attrs__class__classier = True
             row__attrs__foo = lambda table, row, **_: "barier"
 
         yada = Column()
@@ -627,7 +625,7 @@ def test_django_table_pagination():
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
         b = Column(show=False)  # should still be able to filter on this though!
 
-    verify_table_html(table=TestTable(data=Foo.objects.all()),
+    verify_table_html(table=TestTable(data=Foo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
         <table class="listview">
@@ -654,13 +652,13 @@ def test_links():
     data = [Struct(foo="foo")]
 
     links = [
-        Link('Foo', url='/foo/', show=lambda table: table.data is not data),
-        Link('Bar', url='/bar/', show=lambda table: table.data is data),
-        Link('Baz', url='/bar/', group='Other'),
-        Link('Qux', url='/bar/', group='Other'),
-        Link.icon('icon_foo', title='Icon foo', url='/icon_foo/'),
-        Link.icon('icon_bar', icon_classes=['lg'], title='Icon bar', url='/icon_bar/'),
-        Link.icon('icon_baz', icon_classes=['one', 'two'], title='Icon baz', url='/icon_baz/'),
+        Link('Foo', attrs__href='/foo/', show=lambda table: table.data is not data),
+        Link('Bar', attrs__href='/bar/', show=lambda table: table.data is data),
+        Link('Baz', attrs__href='/bar/', group='Other'),
+        Link('Qux', attrs__href='/bar/', group='Other'),
+        Link.icon('icon_foo', title='Icon foo', attrs__href='/icon_foo/'),
+        Link.icon('icon_bar', icon_classes=['lg'], title='Icon bar', attrs__href='/icon_bar/'),
+        Link.icon('icon_baz', icon_classes=['one', 'two'], title='Icon baz', attrs__href='/icon_baz/'),
     ]
 
     verify_table_html(table=TestTable(data=data),
@@ -717,7 +715,7 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()), post_bulk_edit=post_bulk_edit)
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all().order_by('pk')), post_bulk_edit=post_bulk_edit)
 
     assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
         (1, 0, u'changed'),
@@ -762,9 +760,9 @@ def test_query():
         class Meta:
             sortable = False
 
-    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(data=Foo.objects.all()), find=dict(id='tri_query_error'), expected_html='<div id="tri_query_error">Invalid syntax for query</div>')
+    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(id='tri_query_error'), expected_html='<div id="tri_query_error">Invalid syntax for query</div>')
 
-    verify_table_html(query=dict(a='1'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(a='1'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="1">
             <td class="rj">
@@ -775,7 +773,7 @@ def test_query():
             </td>
         </tr>
     </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='bar'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="3">
             <td class="rj">
@@ -794,7 +792,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="3">
             <td class="rj">
@@ -813,7 +811,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(b='fo'), table=TestTable(data=Foo.objects.all()), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='fo'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr class="row1" data-pk="1">
             <td class="rj">
@@ -929,7 +927,7 @@ def test_template_string():
     verify_table_html(
         table=TestTable(),
         links=[
-            Link('foo', 'bar'),
+            Link('foo', attrs__href='bar'),
         ],
         expected_html="""
         What filters
@@ -1512,7 +1510,8 @@ def test_foreign_key():
 
 
 def test_link_class_backwards_compatibility():
-    assert Link(title='foo', url='bar').render() == '<a href="bar">foo</a>'
+    with pytest.deprecated_call():
+        assert Link(title='foo', url='bar').render() == '<a href="bar">foo</a>'
     assert Link(title='foo', attrs__href='bar').render() == '<a href="bar">foo</a>'
 
 
@@ -1529,7 +1528,7 @@ def test_preprocess_row():
 
         class Meta:
             preprocess_row = preprocess
-            model = Foo
+            data = Foo.objects.all().order_by('pk')
 
     expected_html = """
     <table class="listview">
