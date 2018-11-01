@@ -1118,6 +1118,35 @@ class Table(RefinableObject):
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.render() for bound_row in self.bound_rows()]))
 
+    def render_paginator(self, adjacent_pages=6):
+        context = self.context.copy()
+        page = context["page"]
+        assert page != 0  # pages are 1-indexed!
+        if page <= adjacent_pages:
+            page = adjacent_pages + 1
+        elif page > context["pages"] - adjacent_pages:
+            page = context["pages"] - adjacent_pages
+        page_numbers = [
+            n for n in
+            range(page - adjacent_pages, page + adjacent_pages + 1)
+            if 0 < n <= context["pages"]
+        ]
+
+        get = context['request'].GET.copy() if 'request' in context else {}
+        if 'page' in get:
+            del get['page']
+
+        context = merged(context, dict(
+            extra=get and (get.urlencode() + "&") or "",
+            page_numbers=page_numbers,
+            show_first=1 not in page_numbers,
+            show_last=context["pages"] not in page_numbers,
+            show_hits=context["show_hits"],
+            hit_label=context["hit_label"],
+        ))
+
+        return render_template(request=self.request, template='tri_table/paginator.html', context=context)
+
     @staticmethod
     @dispatch(
         column=EMPTY,
@@ -1183,7 +1212,7 @@ class Link(tri_form_Link):
     # backwards compatibility with old interface
     def __init__(self, title, url=None, **kwargs):
         if url:
-            warnings.warn('url parameter is deprecated, use attrs__href')
+            warnings.warn('url parameter is deprecated, use attrs__href', DeprecationWarning)
             kwargs['attrs__href'] = url
 
         super(Link, self).__init__(title=title, **kwargs)
