@@ -107,9 +107,11 @@ def test_constructor_init_hook_attribute_retention():
     class Declarative(object):
         @my_wrapper
         def __init__(self):
+            """foo"""
             super(Declarative, self).__init__()
 
     assert 17 == Declarative().__init__.my_attribute
+    assert Declarative.__init__.__doc__ == 'foo'
 
 
 def test_sort_key():
@@ -501,3 +503,21 @@ def test_require_ordering():
             foo = "foo"
 
     assert 'Missing member ordering definition. Use @creation_ordered or specify sort_key' == str(e.value)
+
+
+def test_wrap_creation_ordered_preserves_doc_string():
+    @creation_ordered
+    class Foo(Struct):
+        def __init__(self):
+            """foo"""
+
+    assert Foo.__init__.__doc__ == 'foo'
+
+
+def test_wrap_with_meta_preserves_doc_string():
+    @with_meta
+    class Foo(Struct):
+        def __init__(self):
+            """foo"""
+
+    assert Foo.__init__.__doc__ == 'foo'

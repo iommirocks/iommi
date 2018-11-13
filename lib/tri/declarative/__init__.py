@@ -12,9 +12,9 @@ __version__ = '1.0.6'  # pragma: no mutate
 
 
 if sys.version_info < (3, 0):  # pragma: no mutate
-    string_types = (str, unicode)
+    string_types = (str, unicode)   # pragma: no coverage, no mutate
 else:
-    string_types = str  # pragma: no coverage, no mutate
+    string_types = str
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -212,8 +212,8 @@ def add_args_to_init_call(cls, get_extra_args_function):
     pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
     if pos_arg_names is None:
         try:
-            if sys.version_info[0] < 3:
-                pos_arg_names = inspect.getargspec(__init__orig)[0]
+            if sys.version_info[0] < 3:  # pragma: no mutate
+                pos_arg_names = inspect.getargspec(__init__orig)[0]  # pragma: no mutate
             else:
                 pos_arg_names = inspect.getfullargspec(__init__orig)[0]  # pragma: no covererage
             pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
@@ -273,8 +273,8 @@ def get_signature(func):
         pass
 
     try:
-        if sys.version_info[0] < 3:
-            names, _, varkw, defaults = inspect.getargspec(func)
+        if sys.version_info[0] < 3:  # pragma: no mutate
+            names, _, varkw, defaults = inspect.getargspec(func)   # pragma: no mutate
         else:
             names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)  # pragma: no covererage
     except TypeError:
