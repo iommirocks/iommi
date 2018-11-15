@@ -484,6 +484,14 @@ def test_init_hook():
     assert Foo().called_init
 
 
+def test_init_hook2():
+    @declarative(str, sort_key=lambda x: x, add_init_kwargs=False)
+    class Foo(dict):
+        foo = "foo"
+
+    assert Foo(x=1)['x'] == 1
+
+
 def test_whitelist_dunder_weakref():
 
     class Foo(object):
