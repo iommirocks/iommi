@@ -491,7 +491,6 @@ class Namespace(Struct):
         if value is EMPTY:
             value = Namespace()
         key, delimiter, rest_path = path.partition('__')
-        missing = object()  # pragma: no mutate
 
         def get_type_of_namespace(dict_value):
             if isinstance(dict_value, Namespace):
@@ -499,49 +498,43 @@ class Namespace(Struct):
             else:
                 return Namespace
 
-        existing = self.get(key, missing)
+        existing = self.get(key)
         if delimiter:
-            if existing is missing:
-                self[key] = Namespace({rest_path: value})
+            if isinstance(existing, string_types):
+                warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
+                self[key] = Namespace({existing: True}, {rest_path: value})
+            elif isinstance(existing, dict):
+                type_of_namespace = get_type_of_namespace(existing)
+                self[key] = type_of_namespace(existing, {rest_path: value})
+            elif callable(existing):
+                self[key] = Namespace(dict(call_target=existing), {rest_path: value})
             else:
-                if isinstance(existing, string_types):
-                    warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
-                    self[key] = Namespace({existing: True}, {rest_path: value})
-                elif isinstance(existing, dict):
-                    type_of_namespace = get_type_of_namespace(existing)
-                    self[key] = type_of_namespace(existing, {rest_path: value})
-                elif callable(existing):
-                    self[key] = Namespace(dict(call_target=existing), {rest_path: value})
+                # Unable to promote to Namespace, just overwrite
+                self[key] = Namespace({rest_path: value})
+        else:
+            if is_shortcut(existing):
+                # Avoid merging Shortcuts
+                self[key] = value
+            elif isinstance(existing, dict):
+                type_of_namespace = get_type_of_namespace(existing)
+                if isinstance(value, string_types):
+                    warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)
+                    self[key] = type_of_namespace(existing, {value: True})
+                elif isinstance(value, dict):
+                    self[key] = type_of_namespace(existing, value)
+                elif callable(value):
+                    self[key] = type_of_namespace(existing, call_target=value)
                 else:
                     # Unable to promote to Namespace, just overwrite
-                    self[key] = Namespace({rest_path: value})
-        else:
-            if existing is missing:
-                self[key] = value
-            else:
-                if is_shortcut(existing):
-                    # Avoid merging Shortcuts
                     self[key] = value
-                elif isinstance(existing, dict):
-                    type_of_namespace = get_type_of_namespace(existing)
-                    if isinstance(value, string_types):
-                        warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)
-                        self[key] = type_of_namespace(existing, {value: True})
-                    elif isinstance(value, dict):
-                        self[key] = type_of_namespace(existing, value)
-                    elif callable(value):
-                        self[key] = type_of_namespace(existing, call_target=value)
-                    else:
-                        # Unable to promote to Namespace, just overwrite
-                        self[key] = value
-                elif callable(existing):
-                    if isinstance(value, dict):
-                        type_of_namespace = get_type_of_namespace(value)
-                        self[key] = type_of_namespace(Namespace(call_target=existing), value)
-                    else:
-                        self[key] = value
+            elif callable(existing):
+                if isinstance(value, dict):
+                    type_of_namespace = get_type_of_namespace(value)
+                    self[key] = type_of_namespace(Namespace(call_target=existing), value)
                 else:
                     self[key] = value
+            else:
+                self[key] = value
 
     def __repr__(self):
         return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
