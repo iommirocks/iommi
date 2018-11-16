@@ -491,7 +491,7 @@ class Namespace(Struct):
         if value is EMPTY:
             value = Namespace()
         key, delimiter, rest_path = path.partition('__')
-        missing = object()
+        missing = object()  # pragma: no mutate
 
         def get_type_of_namespace(dict_value):
             if isinstance(dict_value, Namespace):

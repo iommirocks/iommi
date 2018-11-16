@@ -829,19 +829,24 @@ def test_nested_namespace_overriding_and_calling():
 
 
 def test_deprecation_of_string_promotion():
-    @dispatch
-    def f(extra):
-        return extra.foo
-
+    foo = Namespace(foo='foo')
     with pytest.deprecated_call() as d:
-        foo = Namespace(
-            foo='foo',
-            foo__bar=True,
-        )
+        foo = Namespace(foo, foo__bar=True)
 
     assert str(d.list[0].message) == 'Deprecated promotion of previous string value "foo" to dict(foo=True)'
 
     assert foo == Namespace(foo__foo=True, foo__bar=True)
+
+
+def test_deprecation_of_string_promotion2():
+    foo = Namespace(foo__bar=True)
+    with pytest.deprecated_call() as d:
+        foo = Namespace(foo, foo='foo')
+
+    assert str(d.list[0].message) == 'Deprecated promotion of written string value "foo" to dict(foo=True)'
+
+    assert foo == Namespace(foo__foo=True, foo__bar=True)
+
 
 def test_retain_shortcut_type():
     assert isinstance(Shortcut(foo=Shortcut()).foo, Shortcut)
