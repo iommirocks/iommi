@@ -52,6 +52,7 @@ class MyTestForm(Form):
     admin = Field.boolean()
     manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
     not_editable = Field.text(initial='Some non-editable text', editable=False)
+    multi_choice_field = Field.multi_choice(choices=['a', 'b', 'c', 'd'], required=False)
 
     # TODO: tests for all shortcuts with required=False
 
@@ -119,6 +120,7 @@ def test_parse():
             'manages': ['DEF  ', 'KTH '],
             'a_date': '  2014-02-12  ',
             'a_time': '  01:02:03  ',
+            'multi_choice_field': ['a', 'b'],
             '-': '-',
         }))
 
@@ -154,6 +156,11 @@ def test_parse():
     assert form.fields_by_name['a_time'].parsed_data == time(1, 2, 3)
     assert form.fields_by_name['a_time'].value == time(1, 2, 3)
 
+    assert form.fields_by_name['multi_choice_field'].raw_data_list == ['a', 'b']
+    assert form.fields_by_name['multi_choice_field'].parsed_data_list == ['a', 'b']
+    assert form.fields_by_name['multi_choice_field'].value_list == ['a', 'b']
+    assert form.fields_by_name['multi_choice_field'].rendered_value() == 'a, b'
+
     instance = Struct(contact=Struct())
     form.apply(instance)
     assert instance == Struct(
@@ -165,7 +172,9 @@ def test_parse():
         manages=['DEF', 'KTH'],
         a_date=date(2014, 2, 12),
         a_time=time(1, 2, 3),
-        not_editable='Some non-editable text')
+        not_editable='Some non-editable text',
+        multi_choice_field=['a', 'b'],
+    )
 
 
 def test_parse_errors():
@@ -180,6 +189,7 @@ def test_parse_errors():
             admin='foo',
             a_date='fooasd',
             a_time='asdasd',
+            multi_choice_field=['q'],
             **{'-': ''}
         ),
         post_validation=post_validation)
@@ -219,6 +229,11 @@ def test_parse_errors():
     assert_one_error_and_matches_reg_exp(form.fields_by_name['a_time'].errors, "time data u?'asdasd' does not match format u?'%H:%M:%S'")
     assert form.fields_by_name['a_time'].parsed_data is None
     assert form.fields_by_name['a_time'].value is None
+
+    assert form.fields_by_name['multi_choice_field'].raw_data_list == ['q']
+    assert_one_error_and_matches_reg_exp(form.fields_by_name['multi_choice_field'].errors, "q not in available choices")
+    assert form.fields_by_name['multi_choice_field'].parsed_data_list == ['q']
+    assert form.fields_by_name['multi_choice_field'].value_list is None
 
     with pytest.raises(AssertionError):
         form.apply(Struct())
@@ -1189,6 +1204,10 @@ def test_render_template_template_object2_older_django():
 
 def test_link_render():
     assert Link('Title', template='test_link_render.html').render() == 'tag=a title=Title'
+
+
+def test_link_repr():
+    assert repr(Link('Title', template='test_link_render.html')) == '<Link: Title>'
 
 
 def test_link_shortcut_icon():
