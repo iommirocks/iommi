@@ -1066,7 +1066,9 @@ class Table(RefinableObject):
             self._query_error = ''
             if self._query_form:
                 try:
-                    self.data = self.data.filter(self.query.to_q())
+                    q = self.query.to_q()
+                    if q:
+                        self.data = self.data.filter(q)
                 except QueryException as e:
                     self._query_error = str(e)
 
