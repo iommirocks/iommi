@@ -8,7 +8,7 @@ import itertools
 import sys
 from tri.struct import Struct, Frozen
 
-__version__ = '1.0.6'  # pragma: no mutate
+__version__ = '1.1.0'  # pragma: no mutate
 
 
 if sys.version_info < (3, 0):  # pragma: no mutate
@@ -21,9 +21,10 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
     """
         Class decorator to enable a class (and it's sub-classes) to have a 'Meta' class attribute.
 
-        @type class_to_decorate: class
-        @type add_init_kwargs: bool
-        @return class
+        :type class_to_decorate: class
+        :param bool add_init_kwargs: Pass Meta class members to constructor
+
+        :rtype: class
     """
 
     if class_to_decorate is None:
@@ -44,8 +45,8 @@ def get_meta(cls):
         Collect all members of any contained :code:`Meta` class declarations from the given class or any of its base classes.
         (Sub class values take precedence.)
 
-        @type cls: class
-        @return Struct
+        :type cls: class
+        :rtype: Struct
     """
     merged_attributes = Struct()
     for class_ in reversed(cls.mro()):
@@ -59,8 +60,8 @@ def creation_ordered(class_to_decorate):
     """
         Class decorator that ensures that instances will be ordered after creation order when sorted.
 
-        @type class_to_decorate: class
-        @return class
+        :type class_to_decorate: class
+        :rtype: class
     """
 
     next_index = functools.partial(next, itertools.count())
@@ -96,18 +97,14 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
         That is, @declarative classes will get an additional argument to constructor,
         containing an OrderedDict with all class members matching the specified type.
 
-        @param member_class: Class(es) to collect
-        @param is_member: Function to determine if an object should be collected
-        @param parameter: Name of constructor parameter to inject
-        @param add_init_kwargs: If constructor parameter should be injected (Default: True)
-        @param sort_key: Function to invoke on members to obtain ordering (Default is
-        to use ordering from `@creation_ordered`)
+        :param class member_class: Class(es) to collect
+        :param is_member: Function to determine if an object should be collected
+        :param str parameter: Name of constructor parameter to inject
+        :param bool add_init_kwargs: If constructor parameter should be injected (Default: True)
+        :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
 
-        @type member_class: class
-        @type is_member: (object) -> bool
-        @type parameter: str
-        @type add_init_kwargs: bool
-        @type sort_key: (object) -> object
+        :type is_member: (object) -> bool
+        :type sort_key: (object) -> object
     """
     if member_class is None and is_member is None:
         raise TypeError("The @declarative decorator needs either a member_class parameter or an is_member check function (or both)")
@@ -185,9 +182,9 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
 
 def set_declared(cls, value, parameter='members'):
     """
-        @type cls: class
-        @type value: OrderedDict
-        @type parameter: str
+        :type cls: class
+        :type value: OrderedDict
+        :type parameter: str
     """
 
     setattr(cls, '_declarative_' + parameter, value)
@@ -198,9 +195,10 @@ def get_declared(cls, parameter='members'):
         Get the :code:`OrderedDict` value of the parameter collected by the :code:`@declarative` class decorator.
         This is the same value that would be submitted to the :code:`__init__` invocation in the :code:`members`
         argument (or another name if overridden by the :code:`parameter` specification)
-        @type cls: class
-        @type parameter: str
-        @return OrderedDict
+
+        :type cls: class
+        :type parameter: str
+        :rtype: OrderedDict
     """
 
     return getattr(cls, '_declarative_' + parameter, {})
@@ -215,7 +213,7 @@ def add_args_to_init_call(cls, get_extra_args_function):
             if sys.version_info[0] < 3:  # pragma: no mutate
                 pos_arg_names = inspect.getargspec(__init__orig)[0]  # pragma: no mutate
             else:
-                pos_arg_names = inspect.getfullargspec(__init__orig)[0]  # pragma: no covererage
+                pos_arg_names = inspect.getfullargspec(__init__orig)[0]  # pragma: no coverage
             pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
         except TypeError:
             # We might fail on not being able to find the signature of builtin constructors
@@ -264,8 +262,8 @@ def inject_args(args, kwargs, extra_args, pos_arg_names):
 
 def get_signature(func):
     """
-        @type func: Callable
-        @return str
+        :type func: Callable
+        :rtype: str
     """
     try:
         return func.__tri_declarative_signature
@@ -420,8 +418,8 @@ def collect_namespaces(values):
     ...     baz=6
     ... )
 
-    @type values: dict
-    @rtype: dict
+    :type values: dict
+    :rtype: dict
     """
     namespaces = {}
     result = dict(values)
@@ -457,8 +455,8 @@ def extract_subkeys(kwargs, prefix, defaults=None):
     ...     'quux': 4,
     ... }
 
-    @type kwargs: dict
-    @return dict
+    :type kwargs: dict
+    :rtype: dict
     """
 
     prefix += '__'
@@ -471,9 +469,9 @@ def extract_subkeys(kwargs, prefix, defaults=None):
 
 def setdefaults(d, d2):
     """
-    @type d: dict
-    @type d2: dict
-    @return dict
+    :type d: dict
+    :type d2: dict
+    :rtype: dict
     """
     for k, v in d2.items():
         d.setdefault(k, v)
@@ -756,3 +754,114 @@ class RefinableObject(object):
             raise TypeError("'%s' object has no refinable attribute(s): %s" % (self.__class__.__name__, ', '.join(sorted(kwargs.keys()))))
 
         super(RefinableObject, self).__init__()
+
+
+def generate_rst_docs(directory, classes, missing_objects=None):
+    """
+    Generate documentation for tri.declarative APIs
+
+    :param directory: directory to write the .rst files into
+    :param classes: list of classes to generate documentation for
+    :param missing_objects: tuple of objects to count as missing markers, if applicable
+    """
+    if missing_objects is None:
+        missing_objects = tuple()
+
+    import re
+    from inspect import isclass
+
+    def docstring_param_dict(obj):
+        doc = obj.__doc__
+        if doc is None:
+            return dict(text=None, params={})
+        return dict(
+            text=doc[:doc.find(':param')].strip(),
+            params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc))
+        )
+
+    def indent(levels, s):
+        lines = s.split('\n')
+        return '\n'.join([(' ' * levels * 4) + line.strip() for line in lines])
+
+    def get_namespace(hit):
+        assert hit is not None
+
+        if isinstance(hit, Shortcut):
+            return hit
+        elif isclass(hit):
+            return Namespace(
+                {k: hit.__init__.dispatch.get(k) for k, v in get_declared(hit, 'refinable_members').items()})
+        elif isinstance(hit, Namespace):
+            return hit
+        else:
+            assert isinstance(hit.dispatch, Namespace)
+            return hit.dispatch
+
+    for c in classes:
+        with open(directory + '/%s.rst' % c.__name__, 'w') as f:
+
+            def w(levels, s):
+                f.write(indent(levels, s))
+                f.write('\n')
+
+            def section(level, title):
+                underline = {
+                    0: '=',
+                    1: '-',
+                    2: '^',
+                }[level] * len(title)
+                w(0, title)
+                w(0, underline)
+                w(0, '')
+
+            section(0, c.__name__)
+
+            class_doc = docstring_param_dict(c)
+            constructor_doc = docstring_param_dict(c.__init__)
+
+            if class_doc['text']:
+                f.write(class_doc['text'])
+                w(0, '')
+
+            w(0, '')
+
+            section(1, 'Refinable members')
+            for refinable, value in sorted(get_namespace(c).items()):
+                w(0, '* ' + refinable)
+
+                if constructor_doc.get(refinable):
+                    w(1, constructor_doc[refinable])
+                    w(0, '')
+            w(0, '')
+
+            section(2, 'Defaults')
+            defaults = Namespace()
+            for refinable, value in sorted(get_namespace(c).items()):
+                if value not in (None, ) + missing_objects:
+                    defaults[refinable] = value
+
+            for k, v in flatten_items(defaults):
+                if v != {}:
+                    if '<lambda>' in repr(v):
+                        import inspect
+                        v = inspect.getsource(v)
+                        v = v[v.find('lambda'):]
+                        v = v.strip().strip(',')
+                    elif callable(v):
+                        v = v.__module__ + '.' + v.__name__
+
+                    w(0, '* %s' % k)
+                    w(1, '* %s' % v)
+            w(0, '')
+
+            shortcuts = get_shortcuts_by_name(c)
+            if shortcuts:
+                section(1, 'Shortcuts')
+
+                for name, shortcut in sorted(shortcuts.items()):
+                    section(2, name)
+
+                    if shortcut.__doc__:
+                        f.write(shortcut.__doc__.strip())
+                        w(0, '')
+                        w(0, '')
