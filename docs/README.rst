@@ -1,3 +1,6 @@
+tri.table
+==========
+
 .. image:: https://travis-ci.org/TriOptima/tri.table.svg?branch=master
     :target: https://travis-ci.org/TriOptima/tri.table
 
@@ -5,9 +8,6 @@
 .. image:: https://codecov.io/github/TriOptima/tri.table/coverage.svg?branch=master
     :target: https://codecov.io/github/TriOptima/tri.table?branch=master
 
-
-tri.table
-==========
 
 tri.table is a library to make full featured HTML tables easily:
 

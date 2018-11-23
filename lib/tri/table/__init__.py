@@ -723,10 +723,12 @@ class Table(RefinableObject):
     .. code:: python
 
         class FooTable(Table):
-            class Meta:
-                sortable = False
             a = Column()
             b = Column()
+
+            class Meta:
+                sortable = False
+                attrs__style = 'background: green'
 
     """
 

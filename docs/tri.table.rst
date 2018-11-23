@@ -1,12 +1,17 @@
 tri.table package
 =================
 
-Subpackages
------------
+Submodules
+----------
 
-.. toctree::
+tri.table.db\_compat module
+---------------------------
 
-    tri.table.templatetags
+.. automodule:: tri.table.db_compat
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

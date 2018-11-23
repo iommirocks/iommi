@@ -1,7 +1,13 @@
 API documentation
 =================
 
-.. automodule:: tri.table
-   :members:
-   :special-members:
-   :noindex:
+.. toctree::
+   :maxdepth: 2
+
+   Table
+   Column
+   Form
+   Field
+   Query
+   Variable
+   Link
