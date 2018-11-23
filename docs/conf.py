@@ -29,6 +29,11 @@ project_root = os.path.dirname(cwd)
 sys.path.insert(0, project_root)
 
 import tri.query
+import tri.form
+
+from tri.declarative import generate_rst_docs
+
+generate_rst_docs('.', [tri.query.Query, tri.query.Variable, tri.form.Form, tri.form.Field], (tri.form.MISSING, tri.query.MISSING))
 
 # -- General configuration -----------------------------------------------------
 
@@ -110,7 +115,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -118,8 +123,8 @@ html_theme = 'sphinx_rtd_theme'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-import sphinx_rtd_theme
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# import sphinx_rtd_theme
+# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

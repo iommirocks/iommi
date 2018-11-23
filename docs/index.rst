@@ -1,8 +1,5 @@
-Welcome to tri.query's documentation!
-======================================
-
 .. include:: ../README.rst
-    :start-line: 3
+    :start-line: 5
 
 Contents:
 =========

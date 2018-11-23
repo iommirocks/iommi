@@ -1,5 +1,10 @@
 API documentation
 =================
 
-.. automodule:: tri.query
-   :members:
+.. toctree::
+   :maxdepth: 2
+
+   Query
+   Variable
+   Form
+   Field
