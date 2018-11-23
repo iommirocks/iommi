@@ -1,6 +1,8 @@
 API documentation
 =================
 
-.. automodule:: tri.form
-   :members: Form, Field, register_field_factory
-   :undoc-members:
+.. toctree::
+   :maxdepth: 2
+
+   Form
+   Field
