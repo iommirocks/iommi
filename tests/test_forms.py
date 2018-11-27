@@ -11,7 +11,7 @@ import pytest
 from tri.form.compat import Template, RequestFactory
 from tri.form.compat import smart_text
 
-from tri.declarative import getattr_path, setattr_path
+from tri.declarative import getattr_path, setattr_path, Namespace
 from tri.struct import Struct
 from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link
 
@@ -353,6 +353,11 @@ def test_render_template_string():
 
 def test_render_template():
     assert '<form' in Form(request=RequestFactory().get('/'), data=dict(foo='7'), fields=[Field(name='foo')]).render()
+
+
+def test_render_on_dunder_html():
+    form = Form(request=RequestFactory().get('/'), data=dict(foo='7'), fields=[Field(name='foo')])
+    assert form.table() == form.__html__()  # used by jinja2
 
 
 def test_render_attrs():
@@ -811,16 +816,19 @@ def test_register_field_factory():
     assert Field.from_model(RegisterFieldFactoryTest, 'foo') == 7
 
 
-def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None):
-    SENTINEL = object()
+def shortcut_test(shortcut, raw_and_parsed_data_tuples=None, normalizing=None, is_list=False):
+    if raw_and_parsed_data_tuples is None:
+        raw_and_parsed_data_tuples = []
     if normalizing is None:
         normalizing = []
+
+    SENTINEL = object()
 
     def test_empty_string_data():
         f = Form(fields=[shortcut(required=False, name='foo')], data={'foo': ''})
         assert not f.get_errors()
         assert f.fields_by_name['foo'].value is None
-        assert f.fields_by_name['foo'].value_list is None
+        assert f.fields_by_name['foo'].value_list is None or f.fields_by_name['foo'].value_list == []
 
     def test_empty_data():
         f = Form(fields=[shortcut(required=False, name='foo')], data={})
@@ -831,18 +839,30 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None):
     def test_editable_false():
         f = Form(fields=[shortcut(required=False, name='foo', initial=SENTINEL, editable=False)], data={'foo': 'asdasasd'})
         assert not f.get_errors()
-        assert f.fields_by_name['foo'].value is SENTINEL or f.fields_by_name['foo'].value_list is SENTINEL
+        assert f.fields_by_name['foo'].value is SENTINEL
+
+    def test_editable_false_list():
+        f = Form(fields=[shortcut(required=False, name='foo', initial_list=[SENTINEL], editable=False)], data={'foo': 'asdasasd'})
+        assert not f.get_errors()
+        assert f.fields_by_name['foo'].value_list == [SENTINEL]
 
     def test_roundtrip_from_initial_to_raw_string():
         for raw, initial in raw_and_parsed_data_tuples:
             form = Form(fields=[shortcut(required=True, name='foo', initial=initial)], data={})
             assert not form.get_errors()
             f = form.fields_by_name['foo']
-            if f.is_list:
-                assert initial == f.value_list
-            else:
-                assert initial == f.value
+            assert not f.is_list
+            assert initial == f.value
             assert raw == f.rendered_value, 'Roundtrip failed'
+
+    def test_roundtrip_from_initial_to_raw_string_list():
+        for raw, initial_list in raw_and_parsed_data_tuples:
+            form = Form(fields=[shortcut(required=True, name='foo', initial_list=initial_list)], data={})
+            assert not form.get_errors()
+            f = form.fields_by_name['foo']
+            assert f.is_list
+            assert initial_list == f.value_list
+            assert ', '.join([str(x) for x in raw]) == f.rendered_value, 'Roundtrip failed'
 
     def test_roundtrip_from_raw_string_to_initial():
         for raw, initial in raw_and_parsed_data_tuples:
@@ -867,10 +887,16 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None):
 
     test_empty_string_data()
     test_empty_data()
-    test_roundtrip_from_initial_to_raw_string()
     test_roundtrip_from_raw_string_to_initial()
-    test_editable_false()
     test_normalizing()
+
+    if is_list:
+        test_roundtrip_from_initial_to_raw_string_list()
+        test_editable_false_list()
+    else:
+        test_roundtrip_from_initial_to_raw_string()
+        test_editable_false()
+
 
 
 def test_datetime():
@@ -930,6 +956,32 @@ def test_float():
             ('123', '123.0'),
             ('00123', '123.0'),
             ('00123.123', '123.123'),
+        ],
+    )
+
+
+def test_multi_choice_shortcut():
+    shortcut_test(
+        Namespace(
+            call_target=Field.multi_choice,
+            choices=['a', 'b', 'c'],
+        ),
+        is_list=True,
+        raw_and_parsed_data_tuples=[
+            (['b', 'c'], ['b', 'c']),
+            ([], []),
+        ],
+    )
+
+
+def test_choice_shortcut():
+    shortcut_test(
+        Namespace(
+            call_target=Field.choice,
+            choices=['a', 'b', 'c'],
+        ),
+        raw_and_parsed_data_tuples=[
+            ('b', 'b'),
         ],
     )
 
@@ -1245,16 +1297,12 @@ def test_render_template_template_object():
     ) == 'foo 1 bar'
 
 
-@pytest.mark.django
-def test_link_render_django():
-    assert Link('Title', template='templates/test_link_render.html').render() == 'tag=a title=Title'
-
-
-@pytest.mark.flask
-def test_link_render_flask():
+def test_link_render():
     import os
-    RequestFactory().method('GET', '/', params={}, root_path=os.path.dirname(__file__))
-    assert Link('Title', template='test_link_render.html').render() == 'tag=a title=Title'
+    RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
+    link = Link('Title', template='test_link_render.html')
+    assert link.render() == 'tag=a title=Title'
+    assert link.render() == link.__html__()  # used by jinja2
 
 
 def test_link_repr():

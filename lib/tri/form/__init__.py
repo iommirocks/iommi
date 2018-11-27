@@ -590,6 +590,11 @@ class Field(RefinableObject):
 
         super(Field, self).__init__(**kwargs)
 
+        if self.is_list:
+            assert self.initial is None, 'The parameter initial is only valid if is_list is False, otherwise use initial_list'
+        else:
+            assert self.initial_list is None, 'The parameter initial_list is only valid if is_list is True, otherwise use initial'
+
         # Bound field data
         self.form = None
         self.field = None
