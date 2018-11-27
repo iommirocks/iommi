@@ -1,12 +1,8 @@
-============
 Installation
 ============
 
-At the command line::
+Install from pypi:
 
-    $ pip install tri.form
+.. code-block:: console
 
-Or, if you have virtualenvwrapper installed::
-
-    $ mkvirtualenv tri.form
-    $ pip install tri.form
+    pip install tri.form

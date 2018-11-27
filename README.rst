@@ -8,11 +8,11 @@
 tri.form
 ==========
 
-tri.form is alternative forms library for Django. It is inspired by, and comes from a frustration with, the standard Django forms.
+tri.form is alternative forms library for Django and Flask. It is inspired by, and comes from a frustration with, the standard Django forms.
 
 Major features compared to Django forms:
 
-- Supports :code:`__` syntax for going across table boundaries, similar to how Django does with QuerySets.
+- Supports :code:`__` syntax for going across table/object boundaries, similar to how Django does with QuerySets.
 - Send in a callable that is late evaluated to determine if a field should be displayed (:code:`show`). This is very handy for showing a slightly different form to administrators for example.
 - Easy configuration without writing entire classes that are only used in one place anyway.
 
