@@ -12,6 +12,12 @@ Changelog
 
 * Removed `paginator` template tag, moved the functionality into `Table.render_paginator`. This means it can be used from jinja2 and is generally easier to work with.
 
+* Avoid filtering with tri.query if not needed. This means you can now take a slice of a queryset before you pass it to tri.table, if and only if you don't then have filters to apply.
+
+* New feature: refinable attribute `preprocess_data` on `Table`. This is useful if you want to for example display more than one row per result of a queryset or convert the paginated data into a list and do some batch mutation on the items.
+
+* `preprocess_row` returning None is now deprecated. You should now return the row. Just returning the object you were sent is probably what you want.
+
 
 5.3.1 (2018-10-10)
 ~~~~~~~~~~~~~~~~~~

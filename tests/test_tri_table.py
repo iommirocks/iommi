@@ -18,7 +18,8 @@ from tri.query import Variable
 from tests.helpers import verify_table_html
 from tests.models import Foo, Bar, Baz
 
-from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, yes_no_formatter, SELECT_DISPLAY_NAME
+from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, \
+    yes_no_formatter, SELECT_DISPLAY_NAME
 
 
 def get_data():
@@ -1552,3 +1553,24 @@ def test_preprocess_row():
     """
 
     verify_table_html(expected_html=expected_html, table=PreprocessedTable())
+
+
+@pytest.mark.django_db
+def test_yield_rows():
+    f = Foo.objects.create(a=3, b='d')
+
+    def my_preprocess_data(data, **kwargs):
+        for row in data:
+            yield row
+            yield Struct(a=row.a * 5)
+
+    class MyTable(Table):
+        a = Column()
+
+        class Meta:
+            preprocess_data = my_preprocess_data
+
+    results = list(MyTable(data=Foo.objects.all()))
+    assert len(results) == 2
+    assert results[0].row == f
+    assert results[1].row == Struct(a=15)

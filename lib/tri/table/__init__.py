@@ -754,8 +754,14 @@ class Table(RefinableObject):
 
     @staticmethod
     @refinable
+    def preprocess_data(data, **_):
+        return data
+
+    @staticmethod
+    @refinable
     def preprocess_row(table, row, **_):
-        return None
+        del table
+        return row
 
     @dispatch(
         column=EMPTY,
@@ -1111,8 +1117,13 @@ class Table(RefinableObject):
 
     def __iter__(self):
         self.prepare()
-        for i, row in enumerate(self.data):
-            self.preprocess_row(table=self, row=row)
+        for i, row in enumerate(self.preprocess_data(self.data)):
+            new_row = self.preprocess_row(table=self, row=row)
+            if new_row is None:
+                warnings.warn('preprocess_row must return the object that has been processed', DeprecationWarning)
+                new_row = row
+            row = new_row
+
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
     def render_attrs(self):
