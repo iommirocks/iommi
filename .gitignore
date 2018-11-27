@@ -1,6 +1,7 @@
 *.py[cod]
 examples/db.sqlite3
 venv
+venv3
 table.css.map
 .idea
 .cache
@@ -51,3 +52,4 @@ docs/Form.rst
 
 # tests
 results/
+.pytest_cache

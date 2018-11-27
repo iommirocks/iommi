@@ -4,12 +4,10 @@ import json
 
 import pytest
 from bs4 import BeautifulSoup
+from tri.struct import Struct, merged
 
-from tests.models import CreateOrEditObjectTest, get_saved_something, Bar, Foo, UniqueConstraintTest, \
-    reset_saved_something, NamespaceFormsTest, Baz
 from tri.form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
 from tri.form.views import create_object, edit_object, create_or_edit_object_redirect
-from tri.struct import Struct, merged
 
 
 def get_request_context(response):
@@ -20,6 +18,8 @@ def get_request_context(response):
 
 @pytest.mark.django_db
 def test_create_or_edit_object():
+    from tests.models import CreateOrEditObjectTest, get_saved_something, Foo, reset_saved_something
+
     reset_saved_something()
 
     # 1. View create form
@@ -143,6 +143,8 @@ def test_redirect_default_case():
 
 @pytest.mark.django_db
 def test_unique_constraint_violation():
+    from tests.models import UniqueConstraintTest
+
     request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
     request.POST = {
         'f_int': '3',
@@ -168,6 +170,8 @@ def test_unique_constraint_violation():
 
 @pytest.mark.django_db
 def test_namespace_forms():
+    from tests.models import get_saved_something, reset_saved_something, NamespaceFormsTest
+
     reset_saved_something()
 
     # Create object
@@ -232,6 +236,8 @@ def test_namespace_forms():
 
 @pytest.mark.django_db
 def test_create_or_edit_object_dispatch():
+    from tests.models import Bar, Foo
+
     Foo.objects.create(foo=1)
     Foo.objects.create(foo=2)
     request = Struct(method='GET', META={}, GET={DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''}, user=Struct(is_authenticated=lambda: True))
@@ -249,6 +255,8 @@ def test_create_or_edit_object_dispatch():
 
 @pytest.mark.django_db
 def test_create_or_edit_object_default_template():
+    from tests.models import Foo
+
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
 
     response = create_object(request=request, model=Foo)
@@ -267,6 +275,8 @@ def test_create_or_edit_object_default_template():
 
 @pytest.mark.django_db
 def test_create_or_edit_object_validate_unique():
+    from tests.models import Baz
+
     request = Struct(
         method='POST',
         META={},

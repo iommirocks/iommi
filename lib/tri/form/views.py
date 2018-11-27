@@ -1,14 +1,8 @@
 from __future__ import unicode_literals, absolute_import
 
-from django.core.exceptions import ValidationError
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.template.context_processors import csrf
-
+from tri.form.compat import ValidationError, HttpResponseRedirect, render, csrf
 from tri.form import Form, handle_dispatch
 from tri.declarative import setdefaults_path, dispatch, EMPTY
-from django import __version__ as django_version
-django_version = tuple([int(x) for x in django_version.split('.')])
 
 
 def edit_object(
