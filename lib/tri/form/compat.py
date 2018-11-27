@@ -12,8 +12,6 @@ try:
     from django.shortcuts import render
     from django.utils.encoding import smart_text
     from django.template.context_processors import csrf
-    from django import __version__ as django_version
-    django_version = tuple([int(x) for x in django_version.split('.')])
 
     try:
         from django.template.loader import get_template_from_string
@@ -95,7 +93,6 @@ except ImportError:
     from flask import Response as _Response
     from flask import Request as _Request
 
-    django_version = None
     csrf = None
 
     class HttpResponse:

@@ -5,6 +5,9 @@ from datetime import date, time
 from datetime import datetime
 
 from decimal import Decimal
+
+from django.template import RequestContext
+
 from tri.form.compat import ValidationError
 from bs4 import BeautifulSoup
 import pytest
@@ -1434,3 +1437,11 @@ def test_create_members_from_model_path():
     assert len(form.fields) == 1
     assert form.fields[0].name == 'foo__foo'
     assert form.fields[0].help_text == 'foo_help_text'
+
+
+@pytest.mark.django
+def test_namespaces_do_not_call_in_templates():
+    def raise_always():
+        assert False
+
+    assert Template('{{ foo }}').render(RequestContext(None, dict(foo=Namespace(call_target=raise_always))))
