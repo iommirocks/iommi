@@ -43,7 +43,11 @@ def test_field_defaults_factory():
 @pytest.mark.django
 def test_field_defaults_factory_boolean():
     from django.db import models
-    base = dict(parse_empty_string_as_none=True, display_name=None)
+
+    # Django 2.1 changes this value
+    django_blank_default = not models.BooleanField().blank
+
+    base = dict(parse_empty_string_as_none=django_blank_default, display_name=None)
 
     assert field_defaults_factory(models.BooleanField(verbose_name='foo')) == merged(base, dict(display_name='Foo'))
 

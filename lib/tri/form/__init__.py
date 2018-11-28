@@ -1168,21 +1168,6 @@ class Form(RefinableObject):
         :type data: dict[basestring, any]
         :type model: django.db.models.Model
         """
-        self.is_full_form = None
-        self.links = None
-        self.links_template = None
-        self.attrs = None
-        self.editable = None
-        self.name = None
-
-        self.model = None
-        """ :type: django.db.models.Model """
-        self.endpoint_dispatch_prefix = None
-        """ :type: str """
-        self.endpoint = None
-        """ :type: tri.declarative.Namespace """
-        self.extra = None
-        """ :type: tri.declarative.Namespace """
         super(Form, self).__init__(**kwargs)
 
         self.request = request
@@ -1230,10 +1215,10 @@ class Form(RefinableObject):
         self.fields = [field for field in self.fields if should_show(field)]
         self.fields_by_name = Struct({field.name: field for field in self.fields})
 
-        if instance is not None:
+        if self.instance is not None:
             for field in self.fields:
                 if field.attr:
-                    initial = field.read_from_instance(field, instance)
+                    initial = field.read_from_instance(field, self.instance)
                     if field.is_list:
                         field.initial_list = initial
                     else:

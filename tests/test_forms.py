@@ -6,8 +6,6 @@ from datetime import datetime
 
 from decimal import Decimal
 
-from django.template import RequestContext
-
 from tri.form.compat import ValidationError
 from bs4 import BeautifulSoup
 import pytest
@@ -123,7 +121,7 @@ def test_parse():
         }))
 
     assert [x.errors for x in form.fields] == [set() for _ in form.fields]
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert form.fields_by_name['party'].parsed_data == 'ABC'
     assert form.fields_by_name['party'].value == 'ABC'
 
@@ -194,7 +192,7 @@ def test_parse_errors():
         ),
         post_validation=post_validation)
 
-    assert not form.is_valid()
+    assert form.is_valid() is False
 
     assert form.errors == {'General snafu'}
 
@@ -437,7 +435,7 @@ def test_heading():
 
 def test_info():
     form = Form(data={}, fields=[Field.info(value='#foo#')])
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert '#foo#' in form.table()
 
 
@@ -1034,7 +1032,7 @@ def test_file():
         foo = Field.file(required=False)
     form = FooForm(data=dict(foo='1'))
     instance = Struct(foo=None)
-    assert form.is_valid()
+    assert form.is_valid() is True
     form.apply(instance)
     assert instance.foo == '1'
 
@@ -1056,7 +1054,7 @@ def test_file_no_roundtrip():
         foo = Field.file(is_valid=lambda form, field, parsed_data: (False, 'invalid!'))
 
     form = FooForm(data=dict(foo=b'binary_content_here'))
-    assert not form.is_valid()
+    assert form.is_valid() is False
     assert 'binary_content_here' not in form.render()
 
 
@@ -1069,7 +1067,7 @@ def test_mode_full_form_from_request():
 
     # empty POST
     form = FooForm(request=RequestFactory().post('/', {'-': '-'}))
-    assert not form.is_valid()
+    assert form.is_valid() is False
     assert form.errors == set()
     assert form.fields_by_name['foo'].errors == {'This field is required'}
     assert form.fields_by_name['bar'].errors == {'This field is required'}
@@ -1081,12 +1079,12 @@ def test_mode_full_form_from_request():
         'baz': 'false',
         '-': '-',
     }))
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert form.fields_by_name['baz'].value is False
 
     # all params in GET
     form = FooForm(request=RequestFactory().get('/', {'-': '-'}))
-    assert not form.is_valid()
+    assert form.is_valid() is False
     assert form.fields_by_name['foo'].errors == {'This field is required'}
     assert form.fields_by_name['bar'].errors == {'This field is required'}
     assert form.fields_by_name['baz'].errors == set()  # not present in POST request means false
@@ -1100,7 +1098,7 @@ def test_mode_full_form_from_request():
     assert not form.errors
     assert not form.fields[0].errors
 
-    assert form.is_valid()
+    assert form.is_valid() is True
 
 
 def test_mode_initials_from_get():
@@ -1111,11 +1109,11 @@ def test_mode_initials_from_get():
 
     # empty GET
     form = FooForm(request=RequestFactory().get('/'))
-    assert form.is_valid()
+    assert form.is_valid() is True
 
     # initials from GET
     form = FooForm(request=RequestFactory().get('/', {'foo': 'foo_initial'}))
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert form.fields_by_name['foo'].value == 'foo_initial'
 
     assert form.fields_by_name['foo'].errors == set()
@@ -1315,6 +1313,7 @@ def test_render_template_template_object():
     ) == 'foo 1 bar'
 
 
+@pytest.mark.django
 def test_link_render():
     import os
     RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
@@ -1471,12 +1470,15 @@ def test_create_members_from_model_path():
 
 @pytest.mark.django
 def test_namespaces_do_not_call_in_templates():
+    from django.template import RequestContext
+
     def raise_always():
         assert False
 
     assert Template('{{ foo }}').render(RequestContext(None, dict(foo=Namespace(call_target=raise_always))))
 
 
+@pytest.mark.django
 def test_choice_queryset_error_message_for_automatic_model_extraction():
     with pytest.raises(AssertionError) as e:
         field_choice_queryset(choices=[])
@@ -1491,4 +1493,5 @@ def test_datetime_parse():
     with pytest.raises(ValidationError) as e:
         datetime_parse(bad_date)
 
-    assert ['Time data "%s" does not match any of the formats %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))] == [str(x) for x in e.value]
+    expected = 'Time data "%s" does not match any of the formats %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))
+    assert expected == str(e.value) or [expected] == [str(x) for x in e.value]

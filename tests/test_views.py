@@ -120,7 +120,7 @@ def test_create_or_edit_object():
     reset_saved_something()
     form = get_request_context(response)['form']
     assert form.get_errors() == {}
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert instance is not None
     assert instance.f_int == 7
     assert instance.f_float == 11.2
@@ -163,7 +163,7 @@ def test_unique_constraint_violation():
         render__call_target=lambda **kwargs: kwargs)
 
     form = get_request_context(response)['form']
-    assert not form.is_valid()
+    assert form.is_valid() is False
     assert form.get_errors() == {'global': {'Unique constraint test with this F int, F float and F bool already exists.'}}
     assert UniqueConstraintTest.objects.all().count() == 1
 
@@ -206,7 +206,7 @@ def test_namespace_forms():
         render__call_target=lambda **kwargs: kwargs)
     form = get_request_context(response)['form']
     assert form.get_errors() == {}
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert not form.is_target()
     assert instance is not None
     assert instance.f_int == 3
@@ -226,7 +226,7 @@ def test_namespace_forms():
     instance = get_saved_something()
     reset_saved_something()
     assert form.get_errors() == {}
-    assert form.is_valid()
+    assert form.is_valid() is True
     assert form.is_target()
     assert instance is not None
     assert instance.f_int == 7
