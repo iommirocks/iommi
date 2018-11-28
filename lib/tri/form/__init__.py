@@ -122,10 +122,10 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
     field_names = {x.name for x in get_fields(model)}
     if include:
         not_existing = {x for x in include if x.partition('__')[0] not in field_names}
-        assert not not_existing, 'You can only include fields that exist on the model, %s specified but does not exist' % not_existing
+        assert not not_existing, 'You can only include fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
     if exclude:
         not_existing = {x for x in exclude if x not in field_names}
-        assert not not_existing, 'You can only exclude fields that exist on the model, %s specified but does not exist' % not_existing
+        assert not not_existing, 'You can only exclude fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
 
     extra_includes = [x for x in include if '__' in x] if include else []
 

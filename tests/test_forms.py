@@ -16,7 +16,7 @@ from tri.form.compat import smart_text
 
 from tri.declarative import getattr_path, setattr_path, Namespace
 from tri.struct import Struct
-from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link, field_choice_queryset
+from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link, field_choice_queryset, datetime_parse, datetime_iso_formats
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -681,6 +681,24 @@ def test_form_from_model_valid_form():
     ]
 
 
+@pytest.mark.django_db
+def test_form_from_model_error_message_include():
+    from tests.models import FormFromModelTest
+    with pytest.raises(AssertionError) as e:
+        Form.from_model(model=FormFromModelTest, include=['does_not_exist', 'another_non_existant__sub', 'f_float'], data=None)
+
+    assert 'You can only include fields that exist on the model: another_non_existant__sub, does_not_exist specified but does not exist' == str(e.value)
+
+
+@pytest.mark.django_db
+def test_form_from_model_error_message_exclude():
+    from tests.models import FormFromModelTest
+    with pytest.raises(AssertionError) as e:
+        Form.from_model(model=FormFromModelTest, exclude=['does_not_exist', 'f_float'], data=None)
+
+    assert 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist' == str(e.value)
+
+
 @pytest.mark.django
 def test_form_from_model_invalid_form():
     from tests.models import FormFromModelTest
@@ -819,9 +837,7 @@ def test_register_field_factory():
     assert Field.from_model(RegisterFieldFactoryTest, 'foo') == 7
 
 
-def shortcut_test(shortcut, raw_and_parsed_data_tuples=None, normalizing=None, is_list=False):
-    if raw_and_parsed_data_tuples is None:
-        raw_and_parsed_data_tuples = []
+def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_list=False):
     if normalizing is None:
         normalizing = []
 
@@ -899,7 +915,6 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples=None, normalizing=None, i
     else:
         test_roundtrip_from_initial_to_raw_string()
         test_editable_false()
-
 
 
 def test_datetime():
@@ -1467,3 +1482,13 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
         field_choice_queryset(choices=[])
 
     assert 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field' == str(e.value)
+
+
+def test_datetime_parse():
+    assert datetime_parse('2001-02-03 12') == datetime(2001, 2, 3, 12)
+
+    bad_date = '091223'
+    with pytest.raises(ValidationError) as e:
+        datetime_parse(bad_date)
+
+    assert ['Time data "%s" does not match any of the formats %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))] == [str(x) for x in e.value]
