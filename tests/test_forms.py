@@ -16,7 +16,7 @@ from tri.form.compat import smart_text
 
 from tri.declarative import getattr_path, setattr_path, Namespace
 from tri.struct import Struct
-from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link
+from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link, field_choice_queryset
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -1367,6 +1367,7 @@ def test_show_prevents_read_from_instance():
 
 def test_choice_post_validation_not_overwritten():
     def my_post_validation(field, **_):
+        del field
         raise Exception('foobar')
 
     class MyForm(Form):
@@ -1376,6 +1377,20 @@ def test_choice_post_validation_not_overwritten():
         MyForm()
 
     assert str(e.value) == 'foobar'
+
+
+def test_choice_post_validation_chains_empty_choice_when_required_false():
+    class MyForm(Form):
+        foo = Field.choice(required=False, choices=[1, 2, 3])
+
+    form = MyForm()
+
+    assert list(form.fields_by_name.foo.choice_tuples()) == [
+        form.fields_by_name.foo.empty_choice_tuple,
+        (1, '1', '1', False),
+        (2, '2', '2', False),
+        (3, '3', '3', False),
+    ]
 
 
 def test_instance_set_earlier_than_evaluate_is_called():
@@ -1445,3 +1460,10 @@ def test_namespaces_do_not_call_in_templates():
         assert False
 
     assert Template('{{ foo }}').render(RequestContext(None, dict(foo=Namespace(call_target=raise_always))))
+
+
+def test_choice_queryset_error_message_for_automatic_model_extraction():
+    with pytest.raises(AssertionError) as e:
+        field_choice_queryset(choices=[])
+
+    assert 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field' == str(e.value)
