@@ -122,10 +122,10 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
     field_names = {x.name for x in get_fields(model)}
     if include:
         not_existing = {x for x in include if x.partition('__')[0] not in field_names}
-        assert not not_existing, 'You can only include fields that exist on the model, %s specified but does not exist' % not_existing
+        assert not not_existing, 'You can only include fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
     if exclude:
         not_existing = {x for x in exclude if x not in field_names}
-        assert not not_existing, 'You can only exclude fields that exist on the model, %s specified but does not exist' % not_existing
+        assert not not_existing, 'You can only exclude fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
 
     extra_includes = [x for x in include if '__' in x] if include else []
 
@@ -1168,21 +1168,6 @@ class Form(RefinableObject):
         :type data: dict[basestring, any]
         :type model: django.db.models.Model
         """
-        self.is_full_form = None
-        self.links = None
-        self.links_template = None
-        self.attrs = None
-        self.editable = None
-        self.name = None
-
-        self.model = None
-        """ :type: django.db.models.Model """
-        self.endpoint_dispatch_prefix = None
-        """ :type: str """
-        self.endpoint = None
-        """ :type: tri.declarative.Namespace """
-        self.extra = None
-        """ :type: tri.declarative.Namespace """
         super(Form, self).__init__(**kwargs)
 
         self.request = request
@@ -1230,10 +1215,10 @@ class Form(RefinableObject):
         self.fields = [field for field in self.fields if should_show(field)]
         self.fields_by_name = Struct({field.name: field for field in self.fields})
 
-        if instance is not None:
+        if self.instance is not None:
             for field in self.fields:
                 if field.attr:
-                    initial = field.read_from_instance(field, instance)
+                    initial = field.read_from_instance(field, self.instance)
                     if field.is_list:
                         field.initial_list = initial
                     else:
