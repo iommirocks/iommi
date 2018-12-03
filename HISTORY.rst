@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-6.0.0 (2018-??-??)
+6.0.0 (2018-12-03)
 ~~~~~~~~~~~~~~~~~~
 
 * Removed argument `pks` to `post_bulk_edit`. This argument is incompatible with non-paginated bulk edit, and it's redundant with the `queryset` argument.
