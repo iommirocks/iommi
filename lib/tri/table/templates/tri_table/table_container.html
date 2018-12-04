@@ -5,9 +5,11 @@
             el.checked = !el.checked;
         });
 
-        tbody.querySelector('tr').insertAdjacentHTML('beforebegin',
-            '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="tri_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
-        )
+        if (tbody.querySelector('.select_all_pages_q') === null) {
+            tbody.querySelector('tr').insertAdjacentHTML('beforebegin',
+                '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="tri_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
+            )
+        }
     }
 
     function tri_table_js_select_all_pages(base) {

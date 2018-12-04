@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+
+6.0.1 (2018-12-04)
+~~~~~~~~~~~~~~~~~~
+
+* Bug fix: "Select all items" question should only be presented once.
+
+
 6.0.0 (2018-12-03)
 ~~~~~~~~~~~~~~~~~~
 
