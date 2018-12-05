@@ -1,7 +1,7 @@
 from __future__ import unicode_literals, absolute_import
 
 from tri.form.compat import ValidationError, HttpResponseRedirect, render, csrf
-from tri.form import Form, handle_dispatch
+from tri.form import Form, handle_dispatch, Link
 from tri.declarative import setdefaults_path, dispatch, EMPTY
 
 
@@ -54,21 +54,30 @@ def create_or_edit_object(
         instance=None,
         model_verbose_name=None,
         redirect_to=None):
+
+    # noinspection PyProtectedMember
+    if model_verbose_name is None:
+        model_verbose_name = model._meta.verbose_name.replace('_', ' ')
+
+    title = '%s %s' % ('Create' if is_create else 'Save', model_verbose_name)
+
     setdefaults_path(
         form,
         request=request,
         model=model,
         instance=instance,
+        links=[
+            Link.submit(
+                attrs__value=title,
+                attrs__name=form.get('name'),
+            ),
+        ],
     )
     form = form()
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=form)
     if should_return:
         return dispatch_result
-
-    # noinspection PyProtectedMember
-    if model_verbose_name is None:
-        model_verbose_name = model._meta.verbose_name.replace('_', ' ')
 
     if request.method == 'POST' and form.is_target() and form.is_valid():
 
@@ -112,6 +121,7 @@ def create_or_edit_object(
         context__form=form,
         context__is_create=is_create,
         context__object_name=model_verbose_name,
+        context__title=title,
     )
 
     render.context.update(csrf(request))
