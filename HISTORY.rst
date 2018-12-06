@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+6.0.2 (2018-12-06)
+~~~~~~~~~~~~~~~~~~
+
+* Bug fix: "Select all items" question hidden when select all clicked again.
+
+* Bug fix: only show "Select all item" question if a paginator is present.
+
 
 6.0.1 (2018-12-04)
 ~~~~~~~~~~~~~~~~~~

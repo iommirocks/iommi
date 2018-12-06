@@ -5,10 +5,18 @@
             el.checked = !el.checked;
         });
 
-        if (tbody.querySelector('.select_all_pages_q') === null) {
-            tbody.querySelector('tr').insertAdjacentHTML('beforebegin',
-                '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="tri_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
-            )
+        var has_paginator = tbody.parentNode.parentNode.querySelector('.paginator') !== null;
+
+        if (has_paginator) {
+            if (tbody.querySelector('.select_all_pages_q') === null) {
+                tbody.querySelector('tr').insertAdjacentHTML('beforebegin', '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="tri_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
+                )
+            }
+            else {
+                tbody.querySelector('.select_all_pages_q').parentNode.parentNode.removeChild(tbody.querySelector('.select_all_pages_q').parentNode);
+                var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
+                form.querySelector('#id__all_pks_').value = 0;
+            }
         }
     }
 
