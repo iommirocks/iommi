@@ -2,7 +2,7 @@
     function tri_table_js_select_all(base) {
         var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
         Array.prototype.forEach.call(tbody.querySelectorAll('.checkbox'), function(el, i) {
-            el.checked = !el.checked;
+            el.click();
         });
 
         var has_paginator = tbody.parentNode.parentNode.querySelector('.paginator') !== null;
