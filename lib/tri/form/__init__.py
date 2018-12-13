@@ -816,6 +816,16 @@ class Field(RefinableObject):
             model_field=model_field,
             **kwargs)
 
+    def render(self, style='compact'):
+        context = {
+            'form': self.form,
+            'field': self,
+        }
+        if self.template_string is not None:
+            return get_template_from_string(self.template_string, origin='tri.form', name='Form.render').render(context, self.form.request)
+        else:
+            return render_template(self.form.request, self.template.format(style=style), context)
+
 
 Field.hidden = Shortcut(
     call_target=Field,
@@ -1436,14 +1446,8 @@ class Form(RefinableObject):
         self.style = style
         r = []
         for field in self.fields:
-            context = {
-                'form': self,
-                'field': field,
-            }
-            if field.template_string is not None:
-                r.append(get_template_from_string(field.template_string, origin='tri.form', name='Form.render').render(context, self.request))
-            else:
-                r.append(render_template(self.request, field.template.format(style=style), context))
+            r.append(field.render(style=style))
+
         if self.is_full_form:
             r.append(format_html(AVOID_EMPTY_FORM))
 

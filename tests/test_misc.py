@@ -1,7 +1,6 @@
-from tri.form.compat import RequestFactory
 from tri.struct import Struct
-
 from tri.form import handle_dispatch, DISPATCH_PATH_SEPARATOR
+from .compat import RequestFactory
 
 
 def test_handle_dispatch_no_dispatch():

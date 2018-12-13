@@ -342,44 +342,31 @@ def test_create_or_edit_object_full_template():
 
     expected_html = """
 <html>
-<head>Create foo</head>
-<body>
-    
-<form action="" method="post" ><input type="hidden" name="csrfmiddlewaretoken" value="vt93bLZuhPhOAMvMFcyIOOXHYU3PCY0csFyUusDbb22FErp1uefHKD4JbMaa1SFr"/>
-  
-  <div class="tablewrapper">
-    <table class="formview" width="100%">
-      <tr class="required">
-    <td class="description_container">
-        <div class="formlabel"><label for="id_foo">Foo</label></div>
-        <div class="formdescr">foo_help_text</div>
-        
-    </td>
-    <td>
-        
-            <input type="text" value="" name="foo" id="id_foo" >
-            
-            
-        
-    </td>
-</tr>
-<input type="hidden" name="-" value="-" />
-    </table>
-  </div>
-  <div class="form_buttons clear">
-    
-    <div class="links">
-        
-        
-            
-                 &nbsp; 
-            
-            <input accesskey="s" class="button" type="submit" value="Create foo"></input>
-        
-    </div>
-  </div>
-</form>
-</body>
+    <head>Create foo</head>
+    <body>
+        <form action="" method="post"><input type="hidden" name="csrfmiddlewaretoken" value="vt93bLZuhPhOAMvMFcyIOOXHYU3PCY0csFyUusDbb22FErp1uefHKD4JbMaa1SFr"/>
+            <div class="tablewrapper">
+                <table class="formview" width="100%">
+                    <tr class="required">
+                        <td class="description_container">
+                            <div class="formlabel"><label for="id_foo">Foo</label></div>
+                            <div class="formdescr">foo_help_text</div>
+                        </td>
+                        <td>
+                            <input type="text" value="" name="foo" id="id_foo">
+                        </td>
+                    </tr>
+                    <input type="hidden" name="-" value="-"/>
+                </table>
+            </div>
+            <div class="form_buttons clear">
+                <div class="links">
+                    &nbsp;
+                    <input accesskey="s" class="button" type="submit" value="Create foo"></input>
+                </div>
+            </div>
+        </form>
+    </body>
 </html>
     """
     actual = remove_csrf(BeautifulSoup(response.content, 'html.parser').prettify())
