@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.2.0 (2018-12-12)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed crash in rendering fields in some cases. This was due to an incorrect use of `format_html`.
+
+
 5.2.0 (2018-11-27)
 ~~~~~~~~~~~~~~~~~~
 

@@ -1448,7 +1448,7 @@ class Form(RefinableObject):
             r.append(format_html(AVOID_EMPTY_FORM))
 
         if template_name is None:
-            return format_html('\n'.join(r))
+            return format_html('{}\n' * len(r), *r)
         else:
             return render_to_string(
                 template_name=template_name,
