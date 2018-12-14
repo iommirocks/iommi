@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
 from examples.models import Foo
-from tri.form import Form, Field
+from tri.form import Form, Field, Link
 from tri.form.views import create_object, edit_object
 
 
@@ -15,6 +15,7 @@ def index(request):
         <a href="example_1/">Example 1</a><br/>
         <a href="example_2/">Example 2 create</a><br/>
         <a href="example_3/">Example 3 edit</a><br/>
+        <a href="example_4/">Example 4 custom buttons</a><br/>
         </body></html>""")
 
 
@@ -57,3 +58,15 @@ def example_2(request):
 
 def example_3(request):
     return edit_object(request, instance=Foo.objects.all().first())
+
+
+def example_4(request):
+    return edit_object(
+        request,
+        instance=Foo.objects.all().first(),
+        form__links=[
+            Link.submit(attrs__value='Foo'),
+            Link.submit(attrs__value='Bar'),
+            Link(title='Back to index', attrs__href='/'),
+        ]
+    )

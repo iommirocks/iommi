@@ -1,27 +1,65 @@
 import pytest
 from tri.struct import merged
 
-from tri.form.compat import render_to_string, RequestFactory, format_html, field_defaults_factory
+from tri.form import Field, Form
+from tri.form.compat import render_to_string, format_html, field_defaults_factory, render_template, Template
+from .compat import RequestFactory, SafeText
 
 
-@pytest.mark.flask
 def test_render_to_string():
-    from jinja2 import Markup
-
     assert render_to_string(
         template_name='tri_form/non_editable.html',
         request=RequestFactory().get('/'),
         context=dict(
             field=dict(
-                id=Markup('<a b c><d><e>'),
-                rendered_value=Markup('<a b c><d><e>'),
+                id=SafeText('<a b c><d><e>'),
+                rendered_value=SafeText('<a b c><d><e>'),
             ),
         )
-    ) == '<span id="<a b c><d><e>"><a b c><d><e></span>'
+    ).strip() == '<span id="<a b c><d><e>"><a b c><d><e></span>'
 
 
 def test_format_html():
     assert format_html('<{a}>{b}{c}', a='a', b=format_html('<b>'), c='<c>') == '<a><b>&lt;c&gt;'
+
+
+def test_format_html2():
+    assert render_template(RequestFactory().get('/'), Template('{{foo}}'), dict(foo=format_html('<a href="foo">foo</a>'))) == '<a href="foo">foo</a>'
+
+
+def test_format_html3():
+    assert render_template(RequestFactory().get('/'), Template('{{foo}}'), dict(foo=format_html('{}', format_html('<a href="foo">foo</a>')))) == '<a href="foo">foo</a>'
+
+
+def test_format_html4():
+    actual = render_template(
+        RequestFactory().get('/'),
+        Template('{{foo}}'),
+        dict(
+            foo=Form(fields=[Field(name='foo')]),
+        )
+    )
+    print(actual)
+    assert '<input type="text" value="" name="foo" id="id_foo"' in actual
+
+
+def test_format_html5():
+    actual = Form(fields=[Field(name='foo')], request=RequestFactory().get('/')).render()
+    print(actual)
+    assert type(actual) == SafeText
+
+
+def test_format_html6():
+    form = Form(fields=[Field(name='foo')], request=RequestFactory().get('/'))
+    actual = form.fields_by_name.foo.render()
+    print(actual)
+    assert type(actual) == SafeText
+
+
+def test_render_template():
+    actual = render_template(RequestFactory().get('/'), Template('{{foo}}'), dict(foo=1))
+    print(actual)
+    assert type(actual) == SafeText
 
 
 @pytest.mark.django

@@ -8,5 +8,5 @@ class Foo(models.Model):
 
 
 class Bar(models.Model):
-    b = models.ForeignKey(Foo)
+    b = models.ForeignKey(Foo, on_delete=models.CASCADE)
     c = models.CharField(max_length=255)

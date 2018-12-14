@@ -9,12 +9,13 @@ from decimal import Decimal
 from tri.form.compat import ValidationError
 from bs4 import BeautifulSoup
 import pytest
-from tri.form.compat import Template, RequestFactory
-from tri.form.compat import smart_text
+from tri.form.compat import Template, smart_text
 
 from tri.declarative import getattr_path, setattr_path, Namespace
 from tri.struct import Struct
 from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link, field_choice_queryset, datetime_parse, datetime_iso_formats
+
+from .compat import RequestFactory
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -349,7 +350,7 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    assert Form(data=dict(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).compact() == '7 compact\n' + AVOID_EMPTY_FORM
+    assert Form(data=dict(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).compact() == '7 compact\n' + AVOID_EMPTY_FORM + '\n'
 
 
 def test_render_template():

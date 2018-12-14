@@ -6,6 +6,7 @@ import pytest
 from bs4 import BeautifulSoup
 from tri.struct import Struct, merged
 
+from tests.test_forms import remove_csrf
 from tri.form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
 from tri.form.views import create_object, edit_object, create_or_edit_object_redirect
 
@@ -264,13 +265,35 @@ def test_create_or_edit_object_default_template():
 
     expected_html = """
         <div class="form_buttons clear">
-            <input accesskey="s" class="button" type="submit" value="Create foo"/>
+            <div class="links">
+                <input accesskey="s" class="button" type="submit" value="Create foo"/>
+            </div>
         </div>
     """
     actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
     expected = BeautifulSoup(expected_html, 'html.parser').prettify()
-    # This replace is here because django 2.0+ inserts an unterminated input tag for csrf, and this changes the prettied code
-    assert actual.replace('value="Create foo">\n </input>', 'value="Create foo"/>') == expected
+    assert actual == expected
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_default_template_with_name():
+    from tests.models import Foo
+
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+
+    response = create_object(request=request, model=Foo, form__name='form_name')
+    assert response.status_code == 200
+
+    expected_html = """
+        <div class="form_buttons clear">
+            <div class="links">
+                <input accesskey="s" class="button" name="form_name" type="submit" value="Create foo"/>
+            </div>
+        </div>
+    """
+    actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
+    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
+    assert actual == expected
 
 
 @pytest.mark.django_db
@@ -306,3 +329,46 @@ def test_create_or_edit_object_validate_unique():
     response = edit_object(request=request, instance=instance)
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_full_template():
+    from tests.models import Foo
+
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+
+    response = create_object(request=request, model=Foo)
+    assert response.status_code == 200
+
+    expected_html = """
+<html>
+    <head>Create foo</head>
+    <body>
+        <form action="" method="post"><input type="hidden" name="csrfmiddlewaretoken" value="vt93bLZuhPhOAMvMFcyIOOXHYU3PCY0csFyUusDbb22FErp1uefHKD4JbMaa1SFr"/>
+            <div class="tablewrapper">
+                <table class="formview" width="100%">
+                    <tr class="required">
+                        <td class="description_container">
+                            <div class="formlabel"><label for="id_foo">Foo</label></div>
+                            <div class="formdescr">foo_help_text</div>
+                        </td>
+                        <td>
+                            <input type="text" value="" name="foo" id="id_foo">
+                        </td>
+                    </tr>
+                    <input type="hidden" name="-" value="-"/>
+                </table>
+            </div>
+            <div class="form_buttons clear">
+                <div class="links">
+                    &nbsp;
+                    <input accesskey="s" class="button" type="submit" value="Create foo"></input>
+                </div>
+            </div>
+        </form>
+    </body>
+</html>
+    """
+    actual = remove_csrf(BeautifulSoup(response.content, 'html.parser').prettify())
+    expected = remove_csrf(BeautifulSoup(expected_html, 'html.parser').prettify())
+    assert actual == expected

@@ -1,8 +1,12 @@
 Changelog
 ---------
 
-5.2.0 (2018-11-27)
+5.2.0 (2018-12-12)
 ~~~~~~~~~~~~~~~~~~
+
+* Rendering of submit button is now a `Link` and you can now supply your own buttons and links here.
+
+* Fixed crash in rendering fields in some cases. This was due to an incorrect use of `format_html`.
 
 * Flask and Jinja2 support
 

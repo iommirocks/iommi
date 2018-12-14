@@ -6,7 +6,6 @@ try:
     from django.template.loader import render_to_string
     from django.utils.html import format_html
     from django.utils.text import slugify
-    from django.test import RequestFactory
     from django.http import HttpResponseRedirect
     from django.template import Template
     from django.shortcuts import render
@@ -127,22 +126,6 @@ except ImportError:
     def format_html(format_string, *args, **kwargs):
         return Markup(format_string).format(*args, **kwargs)
 
-    class RequestFactory:
-        def method(self, method, url, params, body=None, root_path=None):
-            from flask.ctx import AppContext
-            from flask import Flask
-            import os
-            app = AppContext(Flask('tri_form', root_path=root_path or os.path.dirname(__file__)))
-            app.push()
-            from werkzeug.test import create_environ
-            return HttpRequest(create_environ(path=url, query_string=params, method=method, data=body))
-
-        def get(self, url, params=None):
-            return self.method('GET', url, params=params)
-
-        def post(self, url, params=None):
-            return self.method('POST', url, params={}, body=params)
-
     class ValidationError(Exception):
         def __init__(self, messages):
             if isinstance(messages, list):
@@ -162,9 +145,9 @@ except ImportError:
             return ''
 
         if isinstance(template, str):
-            return render(template, **(context or {}))
+            return Markup(render(template, **(context or {})))
         else:
-            return template.render(context=context, request=request)
+            return Markup(template.render(context=context, request=request))
 
     def validate_email(s):
         if '@' not in s:
