@@ -12,6 +12,7 @@ Contents:
 
    installation
    usage
+   architecture_overview
    api
    history
    authors
