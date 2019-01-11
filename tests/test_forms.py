@@ -13,7 +13,8 @@ from tri.form.compat import Template, smart_text
 
 from tri.declarative import getattr_path, setattr_path, Namespace
 from tri.struct import Struct
-from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, url_parse, render_template, Link, field_choice_queryset, datetime_parse, datetime_iso_formats
+from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, \
+    url_parse, render_template, Link, field_choice_queryset, datetime_parse, datetime_iso_formats, int_parse
 
 from .compat import RequestFactory
 
@@ -693,9 +694,9 @@ def test_form_from_model_error_message_include():
 def test_form_from_model_error_message_exclude():
     from tests.models import FormFromModelTest
     with pytest.raises(AssertionError) as e:
-        Form.from_model(model=FormFromModelTest, exclude=['does_not_exist', 'f_float'], data=None)
+        Form.from_model(model=FormFromModelTest, exclude=['does_not_exist', 'does_not_exist_2', 'f_float'], data=None)
 
-    assert 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist' == str(e.value)
+    assert 'You can only exclude fields that exist on the model: does_not_exist, does_not_exist_2 specified but does not exist' == str(e.value)
 
 
 @pytest.mark.django
@@ -1440,7 +1441,7 @@ def test_field_from_model_path():
     from .models import Bar
 
     class FooForm(Form):
-        baz = Field.from_model(Bar, 'foo__foo')
+        baz = Field.from_model(Bar, 'foo__foo', help_text='another help text')
 
         class Meta:
             model = Bar
@@ -1448,9 +1449,26 @@ def test_field_from_model_path():
     assert FooForm(data=dict(baz='1')).fields[0].attr == 'foo__foo'
     assert FooForm(data=dict(baz='1')).fields[0].name == 'baz'
     assert FooForm(data=dict(baz='1')).fields[0].value == 1
+    assert FooForm(data=dict(baz='1')).fields[0].help_text == 'another help text'
     assert not FooForm(data=dict(baz='asd')).is_valid()
     fake = Struct(foo=Struct(foo='1'))
     assert FooForm(instance=fake).fields[0].initial == '1'
+    assert FooForm(instance=fake).fields[0].parse is int_parse
+
+
+@pytest.mark.django_db
+def test_field_from_model_subtype():
+    from django.db import models
+
+    class Foo(models.IntegerField):
+        pass
+
+    class FromModelSubtype(models.Model):
+        foo = Foo()
+
+    result = Field.from_model(model=FromModelSubtype, field_name='foo')
+
+    assert result.parse is int_parse
 
 
 @pytest.mark.django_db

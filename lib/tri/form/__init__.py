@@ -41,17 +41,22 @@ INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just 
 DISPATCH_PATH_SEPARATOR = '/'
 
 
+def dispatch_prefix_and_remaining_from_key(key):
+    prefix, _, remaining_key = key.partition(DISPATCH_PATH_SEPARATOR)
+    return prefix, remaining_key
+
+
 def handle_dispatch(request, obj):
     for key, value in request.GET.items():
         if key.startswith(DISPATCH_PATH_SEPARATOR):
             remaining_key = key[len(DISPATCH_PATH_SEPARATOR):]
             expected_prefix = obj.endpoint_dispatch_prefix
             if expected_prefix is not None:
-                parts = remaining_key.split(DISPATCH_PATH_SEPARATOR, 1)
-                prefix = parts.pop(0)
+                prefix, remaining_key = dispatch_prefix_and_remaining_from_key(remaining_key)
                 if prefix != expected_prefix:
                     return True, None
-                remaining_key = parts[0] if parts else None
+                if remaining_key == '':
+                    remaining_key = None
             data = obj.endpoint_dispatch(key=remaining_key, value=value)
             if data is not None:
                 return True, HttpResponse(json.dumps(data), content_type='application/json')
@@ -186,11 +191,11 @@ def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_re
     return factory(model_field=model_field, model=model, **kwargs) if factory else None
 
 
-@dispatch(  # pragma: no mutate
+@dispatch(
     field=EMPTY,
 )
 def expand_member(model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
-    if model_field is None:  # pragma: no cover
+    if model_field is None:
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
 
@@ -689,9 +694,8 @@ class Field(RefinableObject):
     @staticmethod
     @refinable
     def endpoint_dispatch(field, key, **kwargs):
-        parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
-        prefix = parts.pop(0)
-        remaining_key = parts[0] if parts else ''
+        prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
+
         endpoint = field.endpoint.get(prefix, None)
         if endpoint is not None:
             return endpoint(field=field, key=remaining_key, **kwargs)
@@ -1108,9 +1112,7 @@ def get_fields(model):
 
 
 def default_endpoint__field(form, key, value):
-    parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
-    prefix = parts.pop(0)
-    remaining_key = parts[0] if parts else ''
+    prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
     field = form.fields_by_name.get(prefix, None)
     if field is not None:
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
@@ -1488,9 +1490,7 @@ class Form(RefinableObject):
         return r
 
     def endpoint_dispatch(self, key, value):
-        parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
-        prefix = parts.pop(0)
-        remaining_key = parts[0] if parts else ''
+        prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
         handler = self.endpoint.get(prefix, None)
         if handler is not None:
             return handler(form=self, key=remaining_key, value=value)
