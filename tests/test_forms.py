@@ -412,8 +412,8 @@ def test_render_table():
             data = dict(foo='!!!7!!!')
 
         foo = Field(
-            input_container__attrs__class={'###5###'},
-            label_container__attrs__class={'$$$11$$$'},
+            input_container__attrs__class=dict(**{'###5###': True}),
+            label_container__attrs__class=dict(**{'$$$11$$$': True}),
             help_text='^^^13^^^',
             display_name='***17***',
             id='$$$$5$$$$$'
