@@ -374,14 +374,15 @@ def test_render_attrs_new_style():
     assert Form(data=dict(foo='7'), fields=[Field(name='foo')]).fields[0].render_attrs() == ' '
 
 
-def test_bound_field_render_css_classes():
+def test_deprecated_bound_field_render_css_classes():
     # noinspection PyProtectedMember
-    assert Field(
-        container_css_classes={'a', 'b'},
-        required=True,
-    )._bind(
-        form=Struct(style='compact', editable=True)
-    ).render_container_css_classes() == ' class="a b key-value required"'
+    with pytest.warns(DeprecationWarning):
+        assert Field(
+            container_css_classes={'a', 'b'},
+            required=True,
+        )._bind(
+            form=Struct(style='compact', editable=True)
+        ).render_container_css_classes() == ' class="a b key-value required"'
 
 
 def test_getattr_path():
@@ -411,8 +412,8 @@ def test_render_table():
             data = dict(foo='!!!7!!!')
 
         foo = Field(
-            input_container_css_classes={'###5###'},
-            label_container_css_classes={'$$$11$$$'},
+            input_container__attrs__class={'###5###'},
+            label_container__attrs__class={'$$$11$$$'},
             help_text='^^^13^^^',
             display_name='***17***',
             id='$$$$5$$$$$'

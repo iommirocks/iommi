@@ -1,7 +1,7 @@
-<div{{ field.rendered_container_css_classes }}>
-    <div{{ field.rendered_label_container_css_classes }}>{% block label %}{% include field.label_template %}{% endblock %}</div>
+<div{{ field.rendered_container_attrs }}>
+    <div{{ field.rendered_label_container_attrs }}>{% block label %}{% include field.label_template %}{% endblock %}</div>
 
-    <span{{ field.rendered_input_container_css_classes }}>{% block input %}{% include field.input_template %}{% endblock %}</span>
+    <span{{ field.rendered_input_container_attrs }}>{% block input %}{% include field.input_template %}{% endblock %}</span>
 
     {% block errors %}{% include field.errors_template %}{% endblock %}
 </div>
