@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import json
+import warnings
 from collections import OrderedDict
 import copy
 from datetime import datetime
@@ -8,7 +9,9 @@ from decimal import Decimal, InvalidOperation
 from itertools import chain, groupby
 import re
 
-from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive, shortcut, Shortcut, Namespace, RefinableObject, Refinable, refinable
+from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, \
+    setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive, shortcut, Shortcut, \
+    Namespace, RefinableObject, Refinable, refinable, flatten
 from tri.struct import Struct
 
 from tri.form.compat import format_html, ValidationError, URLValidator, validate_email, slugify, render_to_string, \
@@ -512,6 +515,10 @@ class Field(RefinableObject):
     errors_template = Refinable()
     required = Refinable()
 
+    container = Refinable()
+    label_container = Refinable()
+    input_container = Refinable()
+
     is_list = Refinable()
     is_boolean = Refinable()
     model = Refinable()
@@ -554,6 +561,9 @@ class Field(RefinableObject):
         endpoint=EMPTY,
         endpoint__config=default_endpoint__config,
         endpoint__validate=default_endpoint__validate,
+        container__attrs=EMPTY,
+        label_container__attrs__class__description_container=True,
+        input_container__attrs=EMPTY,
     )
     def __init__(self, **kwargs):
         """
@@ -579,9 +589,7 @@ class Field(RefinableObject):
         :param label_template: django template filename for the template for just the label tab. Default: 'tri_form/label.html'
         :param errors_template: django template filename for the template for just the errors output. Default: 'tri_form/errors.html'
         :param required: if the field is a required field. Default: True
-        :param container_css_classes: extra CSS classes to set on the container (i.e. row if rendering as a table). Default: set()
-        :param label_container_css_classes: default: {'description_container'}
-        :param input_container_css_classes: default: set()
+        :param container__attrs: extra html attributes to set on the container (i.e. row if rendering as a table). Default: set()
         :param help_text: The help text will be grabbed from the django model if specified and available. Default: lambda form, field: '' if form.model is None else form.model._meta.get_field_by_name(field.name)[0].help_text or ''
 
         :param editable: default: True
@@ -592,6 +600,18 @@ class Field(RefinableObject):
         :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
+
+        if 'container_css_classes' in kwargs:
+            warnings.warn('container_css_classes is deprecated, use container__attrs__class instead', DeprecationWarning)
+            kwargs['container']['attrs']['class'] = {k: True for k in kwargs.pop('container_css_classes')}
+
+        if 'label_container_css_classes' in kwargs:
+            warnings.warn('label_container_css_classes is deprecated, use label_container__attrs__class instead', DeprecationWarning)
+            kwargs['label_container']['attrs']['class'] = {k: True for k in kwargs.pop('label_container_css_classes')}
+
+        if 'input_container_css_classes' in kwargs:
+            warnings.warn('input_container_css_classes is deprecated, use input_container__attrs__class instead', DeprecationWarning)
+            kwargs['input_container']['attrs']['class'] = {k: True for k in kwargs.pop('input_container_css_classes')}
 
         super(Field, self).__init__(**kwargs)
 
@@ -627,23 +647,6 @@ class Field(RefinableObject):
         # type: (Form, Field, unicode) -> object
         del form, field
         return string_value
-
-    @staticmethod
-    @refinable
-    def container_css_classes(form, field, **_):
-        # type: (Form, Field) -> set
-        return set()
-
-    @staticmethod
-    @refinable
-    def label_container_css_classes(form, field, **_):
-        return {'description_container'}
-
-    @staticmethod
-    @refinable
-    def input_container_css_classes(form, field, **_):
-        # type: (Form, Field) -> set
-        return set()
 
     @staticmethod
     @refinable
@@ -770,31 +773,41 @@ class Field(RefinableObject):
     def rendered_attrs(self):
         return self.render_attrs()
 
-    def render_container_css_classes(self):
-        container_css_classes = set(self.container_css_classes)
+    def get_container_attrs(self):
+        container_attrs = Namespace(flatten(self.container.attrs))
         if self.required and self.editable:
-            container_css_classes.add('required')
+            container_attrs.setdefault('class', dict())['required'] = True
         if self.form.style == 'compact':
-            container_css_classes.add('key-value')
-        return render_css_classes(container_css_classes)
+            container_attrs.setdefault('class', dict())['key-value'] = True
+        return container_attrs
 
     @property
-    def rendered_container_css_classes(self):
-        return self.render_container_css_classes()
+    def rendered_container_attrs(self):
+        return render_attrs(self.get_container_attrs())
+
+    def render_container_css_classes(self):
+        warnings.warn('render_container_css_classes is deprecated, use rendered_container_attrs instead', DeprecationWarning)
+        return render_css_classes(self.get_container_attrs().get('class', {}))
 
     def render_label_container_css_classes(self):
-        return render_css_classes(self.label_container_css_classes)
+        warnings.warn('render_label_container_css_classes is deprecated, use rendered_container_attrs instead', DeprecationWarning)
+        return render_css_classes(self.label_container_attrs.get('class', {}))
 
     @property
-    def rendered_label_container_css_classes(self):
-        return self.render_label_container_css_classes()
+    def rendered_label_container_attrs(self):
+        return render_attrs(self.label_container.attrs)
 
     def render_input_container_css_classes(self):
-        return render_css_classes(self.input_container_css_classes)
+        warnings.warn('render_input_container_css_classes is deprecated, use rendered_input_attrs instead', DeprecationWarning)
+        return render_css_classes(self.label_container_attrs.get('class', {}))
 
     @property
     def rendered_input_container_css_classes(self):
         return self.render_input_container_css_classes()
+
+    @property
+    def rendered_input_container_attrs(self):
+        return render_attrs(self.input_container.attrs)
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
