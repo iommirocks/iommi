@@ -13,10 +13,14 @@ def render_attrs(attrs):
                 if value is True:
                     yield '%s' % (key, )
                     continue
-                if isinstance(value, dict):
+                if key == 'class' and isinstance(value, dict):
                     if not value:
                         continue
                     value = render_class(value)
+                if key == 'style' and isinstance(value, dict):
+                    if not value:
+                        continue
+                    value = render_style(value)
                 yield '%s="%s"' % (key, ('%s' % value).replace('"', '&quot;'))
         return format_html(' {}'.format(' '.join(parts())))
     return ''
@@ -24,3 +28,7 @@ def render_attrs(attrs):
 
 def render_class(class_dict):
     return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
+
+
+def render_style(class_dict):
+    return '; '.join(sorted(('%s: %s' % (k, v)) for k, v in class_dict.items()))
