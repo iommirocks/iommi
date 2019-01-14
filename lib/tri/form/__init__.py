@@ -847,6 +847,7 @@ class Field(RefinableObject):
 Field.hidden = Shortcut(
     call_target=Field,
     input_type='hidden',
+    container__attrs__style__display='none',
 )
 
 Field.text = Shortcut(
