@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.2.0 (2018-12-12)
+5.2.0 (2019-01-16)
 ~~~~~~~~~~~~~~~~~~
 
 * Rendering of submit button is now a `Link` and you can now supply your own buttons and links here.
@@ -9,6 +9,12 @@ Changelog
 * Fixed crash in rendering fields in some cases. This was due to an incorrect use of `format_html`.
 
 * Flask and Jinja2 support
+
+* Updated examples for modern django, and added an example
+
+* Modernize attrs rendering on Field (this introduces a few deprecations)
+
+* render_attrs support for style attributes. This means you can now do `Link(attrs__style__display='none')` for example.
 
 
 5.1.1 (2018-10-23)
