@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.2.1 (2019-01-16)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed coverage build (this also broke the travis build and as a consequence the pypi release process)
+
+
 5.2.0 (2019-01-16)
 ~~~~~~~~~~~~~~~~~~
 
