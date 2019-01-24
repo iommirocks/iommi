@@ -81,8 +81,6 @@ try:
         elif isinstance(template, Template):
             return template.render(RequestContext(request, context))
         else:
-            from django.template.backends.django import Template as Template2
-            assert isinstance(template, Template2)
             return template.render(context, request)
 
 except ImportError:
