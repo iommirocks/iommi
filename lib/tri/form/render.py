@@ -1,4 +1,4 @@
-from tri.form.compat import format_html
+from tri.form.compat import mark_safe
 
 
 def render_attrs(attrs):
@@ -22,7 +22,7 @@ def render_attrs(attrs):
                         continue
                     value = render_style(value)
                 yield '%s="%s"' % (key, ('%s' % value).replace('"', '&quot;'))
-        return format_html(' {}'.format(' '.join(parts())))
+        return mark_safe(' %s' % ' '.join(parts()))
     return ''
 
 

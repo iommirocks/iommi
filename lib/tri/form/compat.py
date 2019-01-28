@@ -11,6 +11,7 @@ try:
     from django.shortcuts import render
     from django.utils.encoding import smart_text
     from django.template.context_processors import csrf
+    from django.utils.safestring import mark_safe
 
     try:
         from django.template.loader import get_template_from_string
@@ -179,3 +180,6 @@ except ImportError:
 
     def field_defaults_factory(model_field):
         raise NotImplementedError()
+
+    def mark_safe(s):
+        return Markup(s)

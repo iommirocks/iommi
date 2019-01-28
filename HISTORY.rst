@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.2.2 (2019-01-28)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed escaping bug introduced in 5.2.0: You could get a KeyError crash if you had `{` and `}` in attributes.
+
+
 5.2.1 (2019-01-16)
 ~~~~~~~~~~~~~~~~~~
 

@@ -374,6 +374,10 @@ def test_render_attrs_new_style():
     assert Form(data=dict(foo='7'), fields=[Field(name='foo')]).fields[0].render_attrs() == ' '
 
 
+def test_render_attrs_bug_with_curly_brace():
+    assert render_attrs(dict(foo='{foo}')) == ' foo="{foo}"'
+
+
 def test_deprecated_bound_field_render_css_classes():
     # noinspection PyProtectedMember
     with pytest.warns(DeprecationWarning):
