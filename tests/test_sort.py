@@ -1,11 +1,10 @@
 from __future__ import unicode_literals
 
 import pytest
-from django.test import RequestFactory
 
 from tests.helpers import verify_table_html
 from tests.models import Foo
-from tri.table import Column, Table, Struct, order_by_on_list, render_table
+from tri.table import Column, Table, Struct, order_by_on_list
 
 
 def test_sort_list():
@@ -27,21 +26,21 @@ def test_sort_list():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="first_column sorted_column subheader">
+            <th class="ascending first_column sorted_column subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr class="row1">
+          <tr>
             <td> a </td>
             <td class="rj"> 1 </td>
           </tr>
-          <tr class="row2">
+          <tr>
             <td> b </td>
             <td class="rj"> 2 </td>
           </tr>
-          <tr class="row1">
+          <tr>
             <td> c </td>
             <td class="rj"> 3 </td>
           </tr>
@@ -59,21 +58,21 @@ def test_sort_list():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="first_column sorted_column subheader">
+            <th class="descending first_column sorted_column subheader">
               <a href="?order=bar"> Bar </a>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr class="row1">
+          <tr>
             <td> c </td>
             <td class="rj"> 3 </td>
           </tr>
-          <tr class="row2">
+          <tr>
             <td> b </td>
             <td class="rj"> 2 </td>
           </tr>
-          <tr class="row1">
+          <tr>
             <td> a </td>
             <td class="rj"> 1 </td>
           </tr>
@@ -104,21 +103,21 @@ def test_sort_with_name():
             <th class="first_column subheader">
               <a href="?my_table%2Forder=foo"> Foo </a>
             </th>
-            <th class="first_column sorted_column subheader">
+            <th class="ascending first_column sorted_column subheader">
               <a href="?my_table%2Forder=-bar"> Bar </a>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr class="row1">
+          <tr>
             <td> a </td>
             <td class="rj"> 1 </td>
           </tr>
-          <tr class="row2">
+          <tr>
             <td> b </td>
             <td class="rj"> 2 </td>
           </tr>
-          <tr class="row1">
+          <tr>
             <td> c </td>
             <td class="rj"> 3 </td>
           </tr>
@@ -146,43 +145,31 @@ def test_sort_list_with_none_values():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="first_column sorted_column subheader">
+            <th class="ascending first_column sorted_column subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr class="row1">
+          <tr>
             <td> a </td>
             <td class="rj">  </td>
           </tr>
-          <tr class="row2">
+          <tr>
             <td> a </td>
             <td class="rj">  </td>
           </tr>
-          <tr class="row1">
+          <tr>
             <td> b </td>
             <td class="rj"> 2 </td>
           </tr>
-          <tr class="row2">
+          <tr>
             <td> c </td>
             <td class="rj"> 3 </td>
           </tr>
         </tbody>
       </table>
     """)
-
-
-def test_sort_attrs_class_leak():
-    class TestTable(Table):
-        foo = Column(attrs__class=Struct(bar=True))
-
-    render_table(
-        request=RequestFactory().get('/', dict(order='foo')),
-        table=TestTable(data=[]),
-    )
-
-    assert dict(bar=True) == TestTable.foo.attrs['class']
 
 
 def test_sort_list_bad_parameter():
@@ -209,11 +196,11 @@ def test_sort_list_bad_parameter():
           </tr>
         </thead>
         <tbody>
-          <tr class="row1">
+          <tr>
             <td> b </td>
             <td class="rj"> 2 </td>
           </tr>
-          <tr class="row2">
+          <tr>
             <td> a </td>
             <td class="rj"> 1 </td>
           </tr>
@@ -239,7 +226,7 @@ def test_sort_django_table():
     <table class="listview">
       <thead>
         <tr>
-          <th class="first_column sorted_column subheader">
+          <th class="ascending first_column sorted_column subheader">
             <a href="?order=-a"> A </a>
           </th>
           <th class="first_column subheader">
@@ -248,15 +235,15 @@ def test_sort_django_table():
         </tr>
       </thead>
       <tbody>
-        <tr class="row1" data-pk="2">
+        <tr data-pk="2">
           <td class="rj"> 17 </td>
           <td> a </td>
         </tr>
-        <tr class="row2" data-pk="3">
+        <tr data-pk="3">
           <td class="rj"> 42 </td>
           <td> b </td>
         </tr>
-        <tr class="row1" data-pk="1">
+        <tr data-pk="1">
           <td class="rj"> 4711 </td>
           <td> c </td>
         </tr>
@@ -271,7 +258,7 @@ def test_sort_django_table():
     <table class="listview">
       <thead>
         <tr>
-          <th class="first_column sorted_column subheader">
+          <th class="descending first_column sorted_column subheader">
             <a href="?order=a"> A </a>
           </th>
           <th class="first_column subheader">
@@ -280,15 +267,15 @@ def test_sort_django_table():
         </tr>
       </thead>
       <tbody>
-        <tr class="row1" data-pk="1">
+        <tr data-pk="1">
           <td class="rj"> 4711 </td>
           <td> c </td>
         </tr>
-        <tr class="row2" data-pk="3">
+        <tr data-pk="3">
           <td class="rj"> 42 </td>
           <td> b </td>
         </tr>
-        <tr class="row1" data-pk="2">
+        <tr data-pk="2">
           <td class="rj"> 17 </td>
           <td> a </td>
         </tr>
@@ -344,7 +331,7 @@ def test_sort_default_desc_other_col_sorted():
                       expected_html="""\
         <thead>
           <tr>
-            <th class="first_column sorted_column subheader">
+            <th class="ascending first_column sorted_column subheader">
               <a href="?order=-foo"> Foo </a>
             </th>
             <th class="first_column subheader">
@@ -369,7 +356,7 @@ def test_sort_default_desc_already_sorted():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="first_column sorted_column subheader">
+            <th class="ascending first_column sorted_column subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
         </thead>
@@ -389,7 +376,7 @@ def test_sort_django_table_from_model():
     <table class="listview">
       <thead>
         <tr>
-          <th class="first_column sorted_column subheader">
+          <th class="ascending first_column sorted_column subheader">
             <a href="?order=-a"> A </a>
           </th>
           <th class="first_column subheader">
@@ -398,15 +385,15 @@ def test_sort_django_table_from_model():
         </tr>
       </thead>
       <tbody>
-        <tr class="row1" data-pk="2">
+        <tr data-pk="2">
           <td class="rj"> 17 </td>
           <td> a </td>
         </tr>
-        <tr class="row2" data-pk="3">
+        <tr data-pk="3">
           <td class="rj"> 42 </td>
           <td> b </td>
         </tr>
-        <tr class="row1" data-pk="1">
+        <tr data-pk="1">
           <td class="rj"> 4711 </td>
           <td> c </td>
         </tr>

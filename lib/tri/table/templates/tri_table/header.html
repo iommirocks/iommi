@@ -1,0 +1,9 @@
+<th{{ header.rendered_attrs }}>
+    {% if header.url %}
+        <a href="{{ header.url }}">
+    {% endif %}
+    {{ header.display_name }}
+    {% if header.url %}
+        </a>
+    {% endif %}
+</th>
