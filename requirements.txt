@@ -3,4 +3,3 @@ tri.named_struct
 tri.form >= 5.0.12, < 6.0.0
 tri.struct
 tri.query >= 4.0.2, < 5.0.0
-six

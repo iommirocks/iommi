@@ -1,6 +1,23 @@
 Changelog
 ---------
 
+6.1.0 (2019-01-29)
+~~~~~~~~~~~~~~~~~~
+
+* Deprecated `Column` argument `attrs` in favor of `header__attrs`
+
+* Added CSS classes `ascending`/`descending` on headers
+
+* Added ability to customize superheaders via `Column.superheader`
+
+* Added ability to customize `Column` header template via `header__template`
+
+* Deprecated `title` parameter to `Column`
+
+* Deprecated `css_class` parameter to `Column`
+
+* Removed class='row{1,2}' from <tr> tags. This is better accomplished with CSS.
+
 
 6.0.3 (2018-12-06)
 ~~~~~~~~~~~~~~~~~~

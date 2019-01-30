@@ -72,11 +72,11 @@ def test_render_impl(table):
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td> Hello </td>
                     <td class="rj"> 17 </td>
                 </tr>
-                <tr class="row2">
+                <tr>
                     <td> &lt;evil/&gt; &amp; </td>
                     <td class="rj"> 42 </td>
                 </tr>
@@ -154,13 +154,13 @@ def test_django_table():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1" data-pk="1">
+                <tr data-pk="1">
                     <td class="rj"> 17 </td>
                     <td> Hej </td>
                     <td> Foo(17, Hej) </td>
 
                 </tr>
-                <tr class="row2" data-pk="2">
+                <tr data-pk="2">
                     <td class="rj"> 42 </td>
                     <td> Hopp </td>
                     <td> Foo(42, Hopp) </td>
@@ -210,7 +210,7 @@ def test_output():
         <table class="listview" id="table_id">
             <thead>
                 <tr>
-                    <th class="first_column superheader" colspan="1"> </th>
+                    <th class="superheader" colspan="1"> </th>
                     <th class="superheader" colspan="1"> </th>
                     <th class="superheader" colspan="2"> group </th>
                     <th class="superheader" colspan="1"> </th>
@@ -228,7 +228,7 @@ def test_output():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
                     <td class="rj"> 17 </td>
                     <td class="cj"> <i class="fa fa-lg fa-history"> </i> </td>
@@ -254,7 +254,7 @@ def test_name_traversal():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td> bar </td>
                 </tr>
             </tbody>
@@ -283,7 +283,7 @@ def test_name_traversal():
 #                 </tr>
 #             </thead>
 #             <tbody>
-#                 <tr class="row1">
+#                 <tr>
 #                     <td> a </td>
 #                     <td> b </td>
 #                     <td> c </td>
@@ -312,7 +312,7 @@ def test_name_traversal():
 #                  </tr>
 #              </thead>
 #              <tbody>
-#                  <tr class="row1">
+#                  <tr>
 #                      <td> a </td>
 #                      <td> b </td>
 #                      <td> c </td>
@@ -340,7 +340,7 @@ def test_display_name():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td> foo </td>
                 </tr>
             </tbody>
@@ -363,7 +363,7 @@ def test_link():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td> <a href="https://whereever" title="whatever"> foo </a> </td>
                     <td> <a href="/get/absolute/url/result" title="url_title_goes_here"> bar </a> </td>
                 </tr>
@@ -371,29 +371,54 @@ def test_link():
         </table>""")
 
 
+def test_deprecated_css_class():
+    with pytest.warns(DeprecationWarning):
+        class TestTable(NoSortTable):
+            foo = Column(attrs__class__some_class=True)
+            legacy_foo = Column(css_class={"some_other_class"})
+            legacy_bar = Column(cell__attrs={'class': 'foo'},
+                                cell__attrs__class__bar=True)
+
+        data = [Struct(foo="foo", legacy_foo="foo", legacy_bar="bar")]
+
+        verify_table_html(table=TestTable(data=data), expected_html="""
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="first_column some_class subheader"> Foo </th>
+                    <th class="first_column some_other_class subheader"> Legacy foo </th>
+                    <th class="first_column subheader"> Legacy bar </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td> foo </td>
+                    <td> foo </td>
+                    <td class="bar foo"> bar </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+
 def test_css_class():
     class TestTable(NoSortTable):
-        foo = Column(attrs__class__some_class=True)
-        legacy_foo = Column(css_class={"some_other_class"})
-        legacy_bar = Column(cell__attrs={'class': 'foo'},
-                            cell__attrs__class__bar=True)
+        foo = Column(
+            header__attrs__class__some_class=True,
+            cell__attrs__class__bar=True
+        )
 
-    data = [Struct(foo="foo", legacy_foo="foo", legacy_bar="bar")]
+    data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
     <table class="listview">
         <thead>
             <tr>
                 <th class="first_column some_class subheader"> Foo </th>
-                <th class="first_column some_other_class subheader"> Legacy foo </th>
-                <th class="first_column subheader"> Legacy bar </th>
             </tr>
         </thead>
         <tbody>
-            <tr class="row1">
-                <td> foo </td>
-                <td> foo </td>
-                <td class="bar foo"> bar </td>
+            <tr>
+                <td class="bar"> foo </td>
             </tr>
         </tbody>
     </table>""")
@@ -413,7 +438,7 @@ def test_header_url():
             </th></tr>
         </thead>
         <tbody>
-            <tr class="row1">
+            <tr>
                 <td> foo </td>
             </tr>
         </tbody>
@@ -421,22 +446,23 @@ def test_header_url():
 
 
 def test_title():
-    class TestTable(NoSortTable):
-        foo = Column(title="Some title")
+    with pytest.warns(DeprecationWarning):
+        class TestTable(NoSortTable):
+            foo = Column(title="Some title")
 
-    data = [Struct(foo="foo")]
+        data = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data), expected_html="""
-    <table class="listview">
-        <thead>
-            <tr><th class="first_column subheader" title="Some title"> Foo </th></tr>
-        </thead>\
-        <tbody>
-            <tr class="row1">
-                <td> foo </td>
-            </tr>
-        </tbody>
-    </table>""")
+        verify_table_html(table=TestTable(data), expected_html="""
+        <table class="listview">
+            <thead>
+                <tr><th class="first_column subheader" title="Some title"> Foo </th></tr>
+            </thead>\
+            <tbody>
+                <tr>
+                    <td> foo </td>
+                </tr>
+            </tbody>
+        </table>""")
 
 
 def test_show():
@@ -452,7 +478,7 @@ def test_show():
             <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
         <tbody>
-            <tr class="row1">
+            <tr>
                 <td> foo </td>
             </tr>
         </tbody>
@@ -477,7 +503,7 @@ def test_show_lambda():
             <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
         <tbody>
-            <tr class="row1">
+            <tr>
                 <td> foo </td>
             </tr>
         </tbody>
@@ -500,7 +526,7 @@ def test_attr():
             </tr>
         </thead>
         <tbody>
-            <tr class="row1">
+            <tr>
                 <td> foo </td>
                 <td> foo </td>
             </tr>
@@ -526,10 +552,10 @@ def test_attrs():
                 </tr>
             </thead>
             <tbody>
-                <tr class="classier row1" foo="barier">
+                <tr class="classier" foo="barier">
                     <td> 1 </td>
                 </tr>
-                <tr class="classier row2" foo="barier">
+                <tr class="classier" foo="barier">
                     <td> 2 </td>
                 </tr>
             </tbody>
@@ -555,10 +581,10 @@ def test_attrs_new_syntax():
                 </tr>
             </thead>
             <tbody>
-                <tr class="classier row1" foo="barier">
+                <tr class="classier" foo="barier">
                     <td> 1 </td>
                 </tr>
-                <tr class="classier row2" foo="barier">
+                <tr class="classier" foo="barier">
                     <td> 2 </td>
                 </tr>
             </tbody>
@@ -602,7 +628,7 @@ def test_column_presets():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1" data-pk="123">
+                <tr data-pk="123">
                     <td class="cj"> <i class="fa fa-lg fa-False" /> </td>
                     <td class="cj"> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
                     <td class="cj"> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
@@ -636,10 +662,10 @@ def test_django_table_pagination():
                 </tr>
             </thead>
             <tbody>
-                <tr class="row1" data-pk="3">
+                <tr data-pk="3">
                     <td class="rj"> 2 </td>
                 </tr>
-                <tr class="row2" data-pk="4">
+                <tr data-pk="4">
                     <td class="rj"> 3 </td>
                 </tr>
             </tbody>
@@ -648,7 +674,7 @@ def test_django_table_pagination():
 
 def test_links():
     class TestTable(NoSortTable):
-        foo = Column(title="Some title")
+        foo = Column(header__attrs__title="Some title")
 
     data = [Struct(foo="foo")]
 
@@ -765,7 +791,7 @@ def test_query():
 
     verify_table_html(query=dict(a='1'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
-        <tr class="row1" data-pk="1">
+        <tr data-pk="1">
             <td class="rj">
                 1
             </td>
@@ -776,7 +802,7 @@ def test_query():
     </table>""")
     verify_table_html(query=dict(b='bar'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
-        <tr class="row1" data-pk="3">
+        <tr data-pk="3">
             <td class="rj">
                 3
             </td>
@@ -784,7 +810,7 @@ def test_query():
                 bar
             </td>
         </tr>
-        <tr class="row2" data-pk="4">
+        <tr data-pk="4">
             <td class="rj">
                 4
             </td>
@@ -795,7 +821,7 @@ def test_query():
     </tbody>""")
     verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
-        <tr class="row1" data-pk="3">
+        <tr data-pk="3">
             <td class="rj">
                 3
             </td>
@@ -803,7 +829,7 @@ def test_query():
                 bar
             </td>
         </tr>
-        <tr class="row2" data-pk="4">
+        <tr data-pk="4">
             <td class="rj">
                 4
             </td>
@@ -814,7 +840,7 @@ def test_query():
     </tbody>""")
     verify_table_html(query=dict(b='fo'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
-        <tr class="row1" data-pk="1">
+        <tr data-pk="1">
             <td class="rj">
                 1
             </td>
@@ -822,7 +848,7 @@ def test_query():
                 foo
             </td>
         </tr>
-        <tr class="row2" data-pk="2">
+        <tr data-pk="2">
             <td class="rj">
                 2
             </td>
@@ -848,7 +874,7 @@ def test_cell_template():
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     Custom rendered: sentinel
                 </tr>
             </tbody>
@@ -868,7 +894,7 @@ def test_cell_format_escape():
                     <tr><th class="first_column subheader"> Foo </th></tr>
                 </thead>
                 <tbody>
-                    <tr class="row1">
+                    <tr>
                         <td>
                             &lt;foo&gt;
                         </td>
@@ -890,7 +916,7 @@ def test_cell_format_no_escape():
                     <tr><th class="first_column subheader"> Foo </th></tr>
                 </thead>
                 <tbody>
-                    <tr class="row1">
+                    <tr>
                         <td>
                             <foo/>
                         </td>
@@ -965,7 +991,7 @@ def test_cell_template_string():
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     Custom renderedXXXX: sentinel
                 </tr>
             </tbody>
@@ -984,7 +1010,7 @@ def test_no_header_template():
     verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td>
                         bar
                     </td>
@@ -1037,7 +1063,7 @@ def test_cell_lambda():
                 <tr><th class="first_column subheader"> Sentinel2 </th></tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td>
                         sentinel1 sentinel2 sentinel3
                     </td>
@@ -1063,16 +1089,16 @@ def test_auto_rowspan_and_render_twice():
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td rowspan="2"> 1 </td>
                 </tr>
-                <tr class="row2">
+                <tr>
                     <td style="display: none"> 1 </td>
                 </tr>
-                <tr class="row1">
+                <tr>
                     <td rowspan="2"> 2 </td>
                 </tr>
-                <tr class="row2">
+                <tr>
                     <td style="display: none"> 2 </td>
                 </tr>
             </tbody>
@@ -1127,37 +1153,37 @@ def test_default_formatters():
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
             <tbody>
-                <tr class="row1">
+                <tr>
                     <td>
                         1
                     </td>
                 </tr>
-                <tr class="row2">
+                <tr>
                     <td>
                         Yes
                     </td>
                 </tr>
-                <tr class="row1">
+                <tr>
                     <td>
                         No
                     </td>
                 </tr>
-                <tr class="row2">
+                <tr>
                     <td>
                         1, 2, 3
                     </td>
                 </tr>
-                <tr class="row1">
+                <tr>
                     <td>
                         sentinel
                     </td>
                 </tr>
-                <tr class="row2">
+                <tr>
                     <td>
                         Foo(1, 3), Foo(2, 5)
                     </td>
                 </tr>
-                <tr class="row1">
+                <tr>
                     <td>
                     </td>
                 </tr>
@@ -1221,7 +1247,7 @@ def test_query_namespace_inject():
         foo = Table(
             data=[],
             model=Foo,
-            request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: None)),
+            request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
             columns=[Column(name='foo', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
         foo.prepare()
@@ -1498,7 +1524,7 @@ def test_foreign_key():
         </tr>
     </thead>
     <tbody>
-        <tr class="row1" data-pk="1">
+        <tr data-pk="1">
             <td>
                 Foo(17, Hej), Foo(23, Hopp)
             </td>
@@ -1517,12 +1543,53 @@ def test_link_class_backwards_compatibility():
 
 
 @pytest.mark.django_db
+def test_preprocess_row_deprecated():
+    with pytest.warns(DeprecationWarning):
+        Foo.objects.create(a=1, b='d')
+
+        def preprocess(table, row, **_):
+            del table
+            row.some_non_existent_property = 1
+
+        class PreprocessedTable(Table):
+            some_non_existent_property = Column()
+
+            class Meta:
+                preprocess_row = preprocess
+                data = Foo.objects.all().order_by('pk')
+
+        expected_html = """
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="first_column subheader">
+                        <a href="?order=some_non_existent_property">
+                            Some non existent property
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-pk="1">
+                    <td>
+                        1
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        """
+
+        verify_table_html(expected_html=expected_html, table=PreprocessedTable())
+
+
+@pytest.mark.django_db
 def test_preprocess_row():
     Foo.objects.create(a=1, b='d')
 
     def preprocess(table, row, **_):
         del table
         row.some_non_existent_property = 1
+        return row
 
     class PreprocessedTable(Table):
         some_non_existent_property = Column()
@@ -1543,7 +1610,7 @@ def test_preprocess_row():
             </tr>
         </thead>
         <tbody>
-            <tr class="row1" data-pk="1">
+            <tr data-pk="1">
                 <td>
                     1
                 </td>

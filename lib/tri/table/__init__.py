@@ -17,7 +17,6 @@ from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
 from django.db.models import QuerySet
-import six
 from tri.declarative import declarative, creation_ordered, with_meta, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, RefinableObject, refinable, Refinable, shortcut, Shortcut
 from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR, evaluate_and_group_links
 from tri.named_struct import NamedStructField, NamedStruct
@@ -45,6 +44,15 @@ def _with_path_prefix(table, name):
         return name
 
 
+def evaluate_members(obj, attrs, **kwargs):
+    for attr in attrs:
+        setattr(obj, attr, evaluate_recursive(getattr(obj, attr), **kwargs))
+
+
+DESCENDING = 'descending'
+ASCENDING = 'ascending'
+
+
 def prepare_headers(table, bound_columns):
     """
     :type bound_columns: list of BoundColumn
@@ -59,14 +67,17 @@ def prepare_headers(table, bound_columns):
             order = table.request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
             params[param_path] = column.name if not start_sort_desc else '-' + column.name
+            column.is_sorting = False
             if order is not None:
-                is_desc = len(order) > 0 and order[0] == '-'
-                order_field = is_desc and order[1:] or order
+                is_desc = order.startswith('-')
+                order_field = order if not is_desc else order[1:]
                 if order_field == column.name:
-                    new_order = is_desc and order[1:] or "-%s" % order
+                    new_order = order_field if is_desc else ('-' + order_field)
                     params[param_path] = new_order
-            column.is_sorting = False if order is None else (column.name == order or ('-' + column.name) == order)
-            column.url = "?%s" % params.urlencode()
+                    column.sort_direction = DESCENDING if is_desc else ASCENDING
+                    column.is_sorting = True
+
+            column.url = "?" + params.urlencode()
         else:
             column.is_sorting = False
 
@@ -158,9 +169,7 @@ class Column(RefinableObject):
     """
     name = Refinable()
     after = Refinable()
-    attrs = Refinable()
     url = Refinable()
-    title = Refinable()
     show = Refinable()
     sort_default_desc = Refinable()
     sortable = Refinable()
@@ -173,6 +182,8 @@ class Column(RefinableObject):
     bulk = Refinable()
     query = Refinable()
     extra = Refinable()
+    superheader = Refinable()
+    header = Refinable()
 
     @dispatch(
         show=True,
@@ -190,15 +201,19 @@ class Column(RefinableObject):
         cell__url=None,
         cell__url_title=None,
         extra=EMPTY,
+        header__attrs__class__sorted_column=lambda bound_column, **_: bound_column.is_sorting,
+        header__attrs__class__descending=lambda bound_column, **_: bound_column.sort_direction == DESCENDING,
+        header__attrs__class__ascending=lambda bound_column, **_: bound_column.sort_direction == ASCENDING,
+        header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
+        header__attrs__class__subheader=True,
+        header__template='tri_table/header.html',
     )
     def __init__(self, **kwargs):
         """
         :param name: the name of the column
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
         :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
-        :param css_class: CSS class of the header
         :param url: URL of the header. This should only be used if "sorting" is off.
-        :param title: title/tool tip of header
         :param show: set this to False to hide the column
         :param sortable: set this to False to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
@@ -213,7 +228,25 @@ class Column(RefinableObject):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
 
-        setdefaults_path(kwargs, {'attrs__class__' + c: True for c in kwargs.pop('css_class', {})})
+        if 'title' in kwargs:
+            warnings.warn('title argument to Column is deprecated, use the header__attrs__title instead', DeprecationWarning)
+            title = kwargs.pop('title')
+            if title:
+                kwargs['header__attrs__title'] = title
+
+        if 'attrs' in kwargs:
+            if not kwargs['attrs']['class']:
+                del kwargs['attrs']['class']
+
+            if not kwargs['attrs']:
+                kwargs.pop('attrs')
+            else:
+                warnings.warn('attrs argument to Column is deprecated, use the header__attrs instead', DeprecationWarning)
+                kwargs['header__attrs'] = kwargs.pop('attrs')
+
+        if 'css_class' in kwargs:
+            warnings.warn('css_class argument to Column is deprecated, use the header__attrs__class__foo=True syntax instead', DeprecationWarning)
+            setdefaults_path(kwargs, {'header__attrs__class__' + c: True for c in kwargs.pop('css_class', {})})
 
         super(Column, self).__init__(**kwargs)
 
@@ -225,6 +258,8 @@ class Column(RefinableObject):
         """ :type: int """
         self.is_sorting = None
         """ :type: bool """
+        self.sort_direction = None
+        """ :type: str """
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -246,8 +281,8 @@ class Column(RefinableObject):
 
     def _bind(self, table, index):
         bound_column = copy.copy(self)
-        bound_column.attrs = Namespace(self.attrs.copy())
-        bound_column.attrs['class'] = Namespace(bound_column.attrs['class'].copy())
+        bound_column.header.attrs = Namespace(self.header.attrs.copy())
+        bound_column.header.attrs['class'] = Namespace(bound_column.header.attrs['class'].copy())
 
         bound_column.index = index
         bound_column.bulk = setdefaults_path(
@@ -280,7 +315,11 @@ class Column(RefinableObject):
                 setattr(self, k, new_value)
 
     def render_css_class(self):
+        warnings.warn('Column.render_css_class is deprecated, use Column.render_attrs', DeprecationWarning)
         return render_class(self.attrs['class'])
+
+    def render_attrs(self):
+        return render_attrs(self.attrs)
 
     @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
@@ -309,11 +348,11 @@ class Column(RefinableObject):
     name='',
     display_name='',
     sortable=False,
-    attrs__class__thin=True,
+    header__attrs__class__thin=True,
     cell__value=lambda table, column, row, **_: True,
     cell__attrs__class__cj=True,
 )
-def column_shortcut_icon(icon, is_report=False, icon_title='', show=True, call_target=None, **kwargs):
+def column_shortcut_icon(icon, is_report=False, icon_title=None, show=True, call_target=None, **kwargs):
     """
     Shortcut to create font awesome-style icons.
 
@@ -321,7 +360,7 @@ def column_shortcut_icon(icon, is_report=False, icon_title='', show=True, call_t
     """
     setdefaults_path(kwargs, dict(
         show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-        title=icon_title,
+        header__attrs__title=icon_title,
         cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
     ))
     return call_target(**kwargs)
@@ -382,9 +421,9 @@ Column.download = staticmethod(column_shortcut_download)
 @dispatch(
     call_target=Column,
     name='',
-    title='Run',
+    header__attrs__title='Run',
     sortable=False,
-    css_class={'thin'},
+    header__attrs__class__thin=True,
     cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
     cell__value='Run',
 )
@@ -408,11 +447,11 @@ SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_sel
 @dispatch(
     call_target=Column,
     name='__select__',
-    title='Select all',
+    header__attrs__title='Select all',
     display_name=mark_safe(SELECT_DISPLAY_NAME),
     sortable=False,
-    attrs__class__thin=True,
-    attrs__class__nopad=True,
+    header__attrs__class__thin=True,
+    header__attrs__class__nopad=True,
     cell__attrs__class__cj=True,
 )
 def column_shortcut_select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
@@ -616,7 +655,6 @@ class BoundRow(object):
     def render_attrs(self):
         attrs = self.attrs.copy()
         attrs['class'] = attrs['class'].copy() if isinstance(attrs['class'], dict) else {k: True for k in attrs['class'].split(' ')}
-        attrs['class'].setdefault('row%s' % (self.row_index % 2 + 1), True)
         pk = getattr(self.row, 'pk', None)
         if pk is not None:
             attrs['data-pk'] = pk
@@ -707,10 +745,43 @@ class TemplateConfig(NamedStruct):
     template = NamedStructField()
 
 
+class HeaderConfig(NamedStruct):
+    attrs = NamedStructField()
+    template = NamedStructField()
+    extra = NamedStructField()
+
+
 class RowConfig(NamedStruct):
     attrs = NamedStructField()
     template = NamedStructField()
     extra = NamedStructField()
+
+
+class Header(object):
+    @dispatch(
+        attrs=EMPTY,
+    )
+    def __init__(self, display_name, attrs, template, table, url=None, bound_column=None, number_of_columns_in_group=None, index_in_group=None):
+        self.table = table
+        self.display_name = mark_safe(display_name)
+        self.template = template
+        self.url = url
+        self.bound_column = bound_column
+        self.number_of_columns_in_group = number_of_columns_in_group
+        self.index_in_group = index_in_group
+        self.attrs = attrs
+        evaluate_members(self, ['attrs'], header=self, table=table, bound_column=bound_column)
+
+    @property
+    def rendered(self):
+        return render_template(self.table.request, self.template, dict(header=self))
+
+    @property
+    def rendered_attrs(self):
+        return render_attrs(self.attrs)
+
+    def __repr__(self):
+        return '<Header: %s>' % ('superheader' if self.bound_column is None else self.bound_column.name)
 
 
 @declarative(Column, 'columns_dict')
@@ -751,6 +822,7 @@ class Table(RefinableObject):
     extra = Refinable()
     """ :type: tri.declarative.Namespace """
     endpoint = Refinable()
+    superheader = Refinable()
 
     @staticmethod
     @refinable
@@ -785,6 +857,9 @@ class Table(RefinableObject):
         endpoint__bulk=lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None,
 
         extra=EMPTY,
+
+        superheader__attrs__class__superheader=True,
+        superheader__template='tri_table/header.html',
     )
     def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, links=None, **kwargs):
         """
@@ -826,7 +901,7 @@ class Table(RefinableObject):
             model=model,
             filter=TemplateConfig(**filter),
             links=TemplateConfig(**links),
-            header=TemplateConfig(**header),
+            header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
             column=column,
@@ -895,30 +970,6 @@ class Table(RefinableObject):
                 dict.__setitem__(column.cell.attrs, 'rowspan', rowspan)
                 dict.__setitem__(column.cell.attrs, 'style', style)
 
-    def _prepare_evaluate_members(self):
-        self._shown_bound_columns = [bound_column for bound_column in self._bound_columns if bound_column.show]
-
-        for attr in (
-            'column',
-            'bulk_filter',
-            'bulk_exclude',
-            'sortable',
-            'attrs',
-            'row',
-            'filter',
-            'header',
-            'links',
-            'model',
-            '_query',
-            'bulk',
-            'endpoint',
-        ):
-            setattr(self, attr, evaluate_recursive(getattr(self, attr), table=self))
-
-        if not self.sortable:
-            for bound_column in self._bound_columns:
-                bound_column.sortable = False
-
     def _prepare_sorting(self):
         if self.request is None:
             return
@@ -948,40 +999,58 @@ class Table(RefinableObject):
 
     def _prepare_headers(self):
         prepare_headers(self, self.shown_bound_columns)
-        # The id(header) and the type(x.display_name) stuff is to make None not be equal to None in the grouping
-        group_columns = []
 
-        class GroupColumn(Struct):
-            def render_css_class(self):
-                return render_class(self.attrs['class'])
+        for bound_column in self._bound_columns:
+            evaluate_members(
+                bound_column,
+                [
+                    'superheader',
+                    'header',
+                ],
+                table=self,
+                column=bound_column.column,
+                bound_column=bound_column,
+            )
 
-        for group_name, group_iterator in groupby(self._shown_bound_columns, key=lambda header: header.group or id(header)):
+        superheaders = []
+        subheaders = []
 
+        # The id(header) and stuff is to make None not be equal to None in the grouping
+        for _, group_iterator in groupby(self._shown_bound_columns, key=lambda header: header.group or id(header)):
             columns_in_group = list(group_iterator)
+            group_name = columns_in_group[0].group
 
-            group_columns.append(GroupColumn(
-                display_name=group_name,
-                colspan=len(columns_in_group),
-                attrs={'class': Struct(superheader=True)},
+            number_of_columns_in_group = len(columns_in_group)
+
+            superheaders.append(Header(
+                display_name=group_name or '',
+                table=self,
+                attrs=self.superheader.attrs,
+                attrs__colspan=number_of_columns_in_group,
+                template=self.superheader.template,
             ))
 
-            for bound_column in columns_in_group:
-                bound_column.attrs['class'].subheader = True
-                if bound_column.is_sorting:
-                    bound_column.attrs['class'].sorted_column = True
+            for i, bound_column in enumerate(columns_in_group):
+                subheaders.append(
+                    Header(
+                        display_name=bound_column.display_name,
+                        table=self,
+                        attrs=bound_column.header.attrs,
+                        template=bound_column.header.template,
+                        url=bound_column.url,
+                        bound_column=bound_column,
+                        number_of_columns_in_group=number_of_columns_in_group,
+                        index_in_group=i,
+                    )
+                )
 
-            columns_in_group[0].attrs['class'].first_column = True
+        if all(c.display_name == '' for c in superheaders):
+            superheaders = None
 
-        if group_columns:
-            group_columns[0].attrs['class'].first_column = True
-
-        for group_column in group_columns:
-            if not isinstance(group_column.display_name, six.string_types):
-                group_column.display_name = ''
-        if all(c.display_name == '' for c in group_columns):
-            group_columns = []
-
-        self.header_levels = [group_columns, (self._shown_bound_columns)] if len(group_columns) > 1 else [(self._shown_bound_columns)]
+        if superheaders is None:
+            self.header_levels = [subheaders]
+        else:
+            self.header_levels = [superheaders, subheaders]
 
     @property
     def query(self):
@@ -1041,9 +1110,34 @@ class Table(RefinableObject):
 
         self._has_prepared = True
 
-        self._prepare_evaluate_members()
+        self._shown_bound_columns = [bound_column for bound_column in self._bound_columns if bound_column.show]
+
+        evaluate_members(self, ['sortable'], table=self)  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
+
+        for bound_column in self._shown_bound_columns:
+            # special case for entire table not sortable
+            if not self.sortable:
+                bound_column.sortable = False
+
         self._prepare_headers()
+        evaluate_members(
+            self,
+            [
+                'column',
+                'bulk_filter',
+                'bulk_exclude',
+                'attrs',
+                'row',
+                'filter',
+                'links',
+                'model',
+                '_query',
+                'bulk',
+                'endpoint',
+            ],
+            table=self,
+        )
 
         if self.model:
 
@@ -1364,7 +1458,7 @@ def render_table(request,
             updates = {
                 field.name: field.value
                 for field in table.bulk_form.fields
-                if field.value is not None and field.value is not '' and field.attr is not None
+                if field.value is not None and field.value != '' and field.attr is not None
             }
             queryset.update(**updates)
 
