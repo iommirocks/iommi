@@ -315,11 +315,8 @@ class Column(RefinableObject):
                 setattr(self, k, new_value)
 
     def render_css_class(self):
-        warnings.warn('Column.render_css_class is deprecated, use Column.render_attrs', DeprecationWarning)
+        warnings.warn('Column.render_css_class is deprecated, use Header.rendered_attrs', DeprecationWarning)
         return render_class(self.attrs['class'])
-
-    def render_attrs(self):
-        return render_attrs(self.attrs)
 
     @staticmethod
     def from_model(model, field_name=None, model_field=None, **kwargs):
