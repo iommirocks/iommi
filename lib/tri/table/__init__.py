@@ -26,7 +26,7 @@ from tri.form import Link as tri_form_Link
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '6.0.3'  # pragma: no mutate
+__version__ = '6.1.0'  # pragma: no mutate
 
 LAST = LAST
 
