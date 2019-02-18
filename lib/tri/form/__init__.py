@@ -1172,9 +1172,11 @@ class Form(RefinableObject):
     """ :type: tri.declarative.Namespace """
     base_template = Refinable()
     """ :type: str """
+    field_class = Refinable()
 
     class Meta:
         base_template = 'tri_form/base.html'
+        field_class = Field
 
     @dispatch(
         is_full_form=True,
@@ -1298,22 +1300,22 @@ class Form(RefinableObject):
     def rendered_links(self):
         return format_html(self.render_links())
 
-    @staticmethod
+    @classmethod
     @dispatch(
         field=EMPTY,
     )
-    def fields_from_model(field, **kwargs):
+    def fields_from_model(cls, field, **kwargs):
         return create_members_from_model(
             member_params_by_member_name=field,
-            default_factory=Field.from_model,
+            default_factory=cls.get_meta().field_class.from_model,
             **kwargs
         )
 
-    @staticmethod
+    @classmethod
     @dispatch(
         field=EMPTY,
     )
-    def from_model(data, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, data, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -1329,8 +1331,8 @@ class Form(RefinableObject):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        fields = Form.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
-        return Form(data=data, model=model, instance=instance, fields=fields, **kwargs)
+        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
+        return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_target(self):
         if not self.name:
@@ -1508,6 +1510,15 @@ class Form(RefinableObject):
         handler = self.endpoint.get(prefix, None)
         if handler is not None:
             return handler(form=self, key=remaining_key, value=value)
+
+    @classmethod
+    def create_or_edit_object(cls, *args, **kwargs):
+        from .views import create_or_edit_object
+        setdefaults_path(
+            kwargs,
+            form__call_target=cls.from_model,
+        )
+        return create_or_edit_object(*args, **kwargs)
 
 
 # Backward compatibility
