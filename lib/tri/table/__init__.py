@@ -649,6 +649,10 @@ class BoundRow(object):
 
         return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
+    @property
+    def rendered_attrs(self):
+        return self.render_attrs()
+
     def render_attrs(self):
         attrs = self.attrs.copy()
         attrs['class'] = attrs['class'].copy() if isinstance(attrs['class'], dict) else {k: True for k in attrs['class'].split(' ')}
@@ -820,6 +824,8 @@ class Table(RefinableObject):
     """ :type: tri.declarative.Namespace """
     endpoint = Refinable()
     superheader = Refinable()
+    paginator = Refinable()
+    """ :type: tri.declarative.Namespace """
 
     @staticmethod
     @refinable
@@ -845,6 +851,7 @@ class Table(RefinableObject):
         filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
         header__template='tri_table/table_header_rows.html',
         links__template='tri_form/links.html',
+        paginator__template='tri_table/paginator.html',
         model=None,
         query=EMPTY,
         bulk=EMPTY,
@@ -928,13 +935,25 @@ class Table(RefinableObject):
     def render_links(self):
         return render_template(self.request, self.links.template, self.context)
 
+    @property
+    def rendered_links(self):
+        return self.render_links()
+
     def render_header(self):
         return render_template(self.request, self.header.template, self.context)
+
+    @property
+    def rendered_header(self):
+        return self.render_header()
 
     def render_filter(self):
         if not self.query_form:
             return ''
         return render_template(self.request, self.filter.template, merged(self.context, form=self.query_form))
+
+    @property
+    def rendered_filter(self):
+        return self.render_filter()
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -1208,7 +1227,7 @@ class Table(RefinableObject):
 
     def __iter__(self):
         self.prepare()
-        for i, row in enumerate(self.preprocess_data(self.data)):
+        for i, row in enumerate(self.preprocess_data(data=self.data, table=self)):
             new_row = self.preprocess_row(table=self, row=row)
             if new_row is None:
                 warnings.warn('preprocess_row must return the object that has been processed', DeprecationWarning)
@@ -1221,10 +1240,18 @@ class Table(RefinableObject):
         attrs = self.attrs.copy()
         return render_attrs(attrs)
 
+    @property
+    def rendered_attrs(self):
+        return self.render_attrs()
+
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.render() for bound_row in self.bound_rows()]))
 
-    def render_paginator(self, adjacent_pages=6):
+    @property
+    def rendered_tbody(self):
+        return self.render_tbody()
+
+    def paginator_context(self, adjacent_pages=6):
         context = self.context.copy()
         page = context["page"]
         assert page != 0  # pages are 1-indexed!
@@ -1242,7 +1269,7 @@ class Table(RefinableObject):
         if 'page' in get:
             del get['page']
 
-        context = merged(context, dict(
+        return merged(context, dict(
             extra=get and (get.urlencode() + "&") or "",
             page_numbers=page_numbers,
             show_first=1 not in page_numbers,
@@ -1251,7 +1278,12 @@ class Table(RefinableObject):
             hit_label=context["hit_label"],
         ))
 
-        return render_template(request=self.request, template='tri_table/paginator.html', context=context)
+    def render_paginator(self, adjacent_pages=6):
+        return render_template(request=self.request, template=self.paginator.template, context=self.paginator_context(adjacent_pages=adjacent_pages))
+
+    @property
+    def rendered_paginator(self):
+        return self.render_paginator()
 
     @staticmethod
     @dispatch(

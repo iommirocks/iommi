@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+6.1.0 (2019-02-18)
+~~~~~~~~~~~~~~~~~~
+
+* Fixes for jinja2 compatibility (still not fully working)
+
+* `preprocess_data` now takes a new keyword argument `table`
+
+* You can now get the paginator context itself via `Table.paginator_context`
+
+* Paginator template is configurable
+
+
 6.1.0 (2019-01-29)
 ~~~~~~~~~~~~~~~~~~
 
