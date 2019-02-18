@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+5.3.0 (2019-02-18)
+~~~~~~~~~~~~~~~~~~
+
+* If you subclass Form this custom class is now used properly in the `from_model` code paths
+
+* `Form` now has a refinable attribute `field_class` which you should use to point to your `Field` subclass if you have one. This is best accomplished in the `Meta` class on the class inheriting from `Form`.
+
+* Added `Form.create_or_edit_object` that will respect your subclass if you have one.
+
+
 5.2.2 (2019-01-28)
 ~~~~~~~~~~~~~~~~~~
 
