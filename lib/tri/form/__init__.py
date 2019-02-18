@@ -644,26 +644,25 @@ class Field(RefinableObject):
     @staticmethod
     @refinable
     def parse(form, field, string_value, **_):
-        # type: (Form, Field, unicode) -> object
+        # type: (Form, Field, str, **_) -> object
         del form, field
         return string_value
 
     @staticmethod
     @refinable
     def post_validation(form, field, **_):
-        # type: (Form, Field) -> None
+        # type: (Form, Field, **_) -> None
         pass
 
     @staticmethod
     @refinable
     def render_value(form, field, value):
-        # type: (Form, Field, object) -> unicode
+        # type: (Form, Field, object) -> str
         return "%s" % value if value is not None else ''
 
     @staticmethod
     @refinable
     def render_value_list(form, field, value_list):
-        # type: (Form, Field, List[object]) -> unicode
         if value_list:
             return ', '.join(field.render_value(form=form, field=field, value=value) for value in value_list)
         else:
