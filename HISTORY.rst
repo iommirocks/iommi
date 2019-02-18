@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.1.0 (2019-02-18)
+~~~~~~~~~~~~~~~~~~
+
+* http endpoint for query validation errors: `query/errors`
+
+
 4.0.4 (2018-10-23)
 ~~~~~~~~~~~~~~~~~~
 
