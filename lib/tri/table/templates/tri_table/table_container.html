@@ -28,12 +28,12 @@
     }
 </script>
 
-<form method="post" action=".">{% csrf_token %}
+<form method="post" action="."><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
     {% include "tri_table/table.html" %}
 
     {% if bulk_form %}
-        <table {{ bulk_form.render_attrs }}>
+        <table {{ bulk_form.rendered_attrs }}>
             {{ bulk_form }}
 
             <tr>
@@ -44,6 +44,6 @@
         </table>
     {% endif %}
 
-    {{ table.render_links }}
+    {{ table.rendered_links }}
 
 </form>
