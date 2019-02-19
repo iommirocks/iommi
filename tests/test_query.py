@@ -383,6 +383,19 @@ def test_endpoint_dispatch():
     assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == [{'id': x.pk, 'text': x.name}]
 
 
+def test_endpoint_dispatch_errors():
+    class MyQuery(Query):
+        foo = Variable.choice(
+            gui__show=True,
+            gui__attr='name',
+            choices=('a', 'b'),
+        )
+
+    assert MyQuery(RequestFactory().get('/', {ADVANCED_QUERY_PARAM: 'foo=!'})).endpoint_dispatch(key='errors', value='') == {'global': ['Invalid syntax for query']}
+    assert MyQuery(RequestFactory().get('/', {ADVANCED_QUERY_PARAM: 'foo=a'})).endpoint_dispatch(key='errors', value='') == {}
+    assert MyQuery(RequestFactory().get('/', {'foo': 'q'})).endpoint_dispatch(key='errors', value='') == {'fields': {'foo': ['q not in available choices']}}
+
+
 def test_variable_repr():
     assert repr(Variable(name='foo')) == '<tri.query.Variable foo>'
 

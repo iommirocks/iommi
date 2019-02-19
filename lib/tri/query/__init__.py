@@ -14,7 +14,7 @@ from tri.struct import merged
 from tri.declarative import declarative, creation_ordered, setdefaults_path, filter_show_recursive, evaluate_recursive, \
     sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable, with_meta
 from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, \
-    DISPATCH_PATH_SEPARATOR
+    DISPATCH_PATH_SEPARATOR, dispatch_prefix_and_remaining_from_key
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -342,6 +342,25 @@ class StringValue(text_type):
         return super(StringValue, cls).__new__(cls, s)
 
 
+def default_endpoint__gui(query, key, value):
+    return query.form().endpoint_dispatch(key=key, value=value)
+
+
+def default_endpoint__errors(query, key, value):
+    del key, value
+    try:
+        query.to_q()
+        errors = query.form().get_errors()
+        # These dicts contains sets that we don't want in the JSON response, so convert to list
+        if 'fields' in errors:
+            errors['fields'] = {x: list(y) for x, y in errors['fields'].items()}
+        if 'global' in errors:
+            errors['global'] = list(errors['global'])
+        return errors
+    except QueryException as e:
+        return {'global': [str(e)]}
+
+
 @declarative(Variable, 'variables_dict')
 @with_meta
 class Query(RefinableObject):
@@ -361,10 +380,14 @@ class Query(RefinableObject):
     """ :type: tri.declarative.Namespace """
     endpoint_dispatch_prefix = Refinable()
     """ :type: str """
+    endpoint = Refinable()
+    """ :type: tri.declarative.Namespace """
 
     @dispatch(
         gui__call_target=Form,
         endpoint_dispatch_prefix='query',
+        endpoint__gui=default_endpoint__gui,
+        endpoint__errors=default_endpoint__errors,
     )
     def __init__(self, request=None, data=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
         """
@@ -652,9 +675,10 @@ class Query(RefinableObject):
         return Query(data=data, variables=variables, **kwargs)
 
     def endpoint_dispatch(self, key, value):
-        prefix = 'gui' + DISPATCH_PATH_SEPARATOR
-        if key.startswith(prefix):
-            return self.form().endpoint_dispatch(key=key[len(prefix):], value=value)
+        prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
+        handler = self.endpoint.get(prefix, None)
+        if handler is not None:
+            return handler(query=self, key=remaining_key, value=value)
 
 
 from .db_compat import setup_db_compat  # noqa
