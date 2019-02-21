@@ -118,6 +118,17 @@ def test_column_ordering():
     assert ['bar', 'foo'] == [column.name for column in MyTable([]).columns]
 
 
+def test_column_with_meta():
+    class MyColumn(Column):
+        class Meta:
+            sortable = False
+
+    class MyTable(Table):
+        foo = MyColumn()
+
+    assert not MyTable([]).columns[0].sortable
+
+
 @pytest.mark.django_db
 def test_django_table():
 

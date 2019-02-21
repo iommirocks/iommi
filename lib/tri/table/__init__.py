@@ -162,6 +162,7 @@ def default_cell_formatter(table, column, row, value, **_):
     return conditional_escape(value)
 
 
+@with_meta
 @creation_ordered
 class Column(RefinableObject):
     """
