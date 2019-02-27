@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+6.3.0 (----------)
+~~~~~~~~~~~~~~~~~~
+* Make Column shortcuts compatible with subclassing
+
+
 6.2.1 (2019-03-05)
 ~~~~~~~~~~~~~~~~~~
 

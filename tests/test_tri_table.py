@@ -126,8 +126,10 @@ def test_column_with_meta():
 
     class MyTable(Table):
         foo = MyColumn()
+        bar = MyColumn.icon('history')
 
-    assert not MyTable([]).columns[0].sortable
+    assert not MyTable([]).bound_column_by_name['foo'].sortable
+    assert not MyTable([]).bound_column_by_name['bar'].sortable
 
 
 @pytest.mark.django_db
