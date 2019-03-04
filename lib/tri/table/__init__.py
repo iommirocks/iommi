@@ -1361,15 +1361,16 @@ class Link(tri_form_Link):
         return Link(mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)), **kwargs)
 
 
-def table_context(request,
-                  table,
-                  links=None,
-                  paginate_by=None,
-                  page=None,
-                  extra_context=None,
-                  paginator=None,
-                  show_hits=False,
-                  hit_label='Items'):
+def django_pre_2_0_table_context(
+        request,
+        table,
+        links=None,
+        paginate_by=None,
+        page=None,
+        extra_context=None,
+        paginator=None,
+        show_hits=False,
+        hit_label='Items'):
     """
     :type table: Table
     """
@@ -1426,6 +1427,78 @@ def table_context(request,
             'hits': paginator.count,
             'show_hits': show_hits,
             'hit_label': hit_label})
+    else:  # pragma: no cover
+        base_context.update({
+            'is_paginated': False})
+
+    base_context.update(extra_context)
+    return base_context
+
+
+def table_context(request,
+                  table,
+                  links=None,
+                  paginate_by=None,
+                  page=None,
+                  extra_context=None,
+                  paginator=None,
+                  show_hits=False,
+                  hit_label='Items'):
+    """
+    :type table: Table
+    """
+    from django import __version__ as django_version
+    django_version = tuple([int(x) for x in django_version.split('.')])
+
+    if django_version < (2, 0):
+        return django_pre_2_0_table_context(request, table, links=links, paginate_by=paginate_by, extra_context=extra_context, paginator=paginator, show_hits=show_hits, hit_label=hit_label)
+
+    if extra_context is None:  # pragma: no cover
+        extra_context = {}
+
+    assert table.data is not None
+
+    links, grouped_links = evaluate_and_group_links(links, table=table)
+
+    base_context = {
+        'links': links,
+        'grouped_links': grouped_links,
+        'table': table,
+    }
+
+    if paginate_by:
+        try:
+            paginate_by = int(request.GET.get('page_size', paginate_by))
+        except ValueError:  # pragma: no cover
+            pass
+        if paginator is None:
+            paginator = Paginator(table.data, paginate_by)
+            object_list = None
+        else:  # pragma: no cover
+            object_list = table.data
+        if not page:
+            page = request.GET.get('page')  # None is translated to the default page in paginator.get_page
+        try:
+            page_obj = paginator.get_page(page)
+            if object_list is None:
+                table.data = page_obj.object_list
+        except (InvalidPage, ValueError):  # pragma: no cover
+            raise Http404
+
+        base_context.update({
+            'request': request,
+            'is_paginated': paginator.num_pages > 1,
+            'results_per_page': paginate_by,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+            'next': page_obj.next_page_number() if page_obj.has_next() else None,
+            'previous': page_obj.previous_page_number() if page_obj.has_previous() else None,
+            'page': page_obj.number,
+            'pages': paginator.num_pages,
+            'hits': paginator.count,
+            'show_hits': show_hits,
+            'hit_label': hit_label,
+        })
     else:  # pragma: no cover
         base_context.update({
             'is_paginated': False})
