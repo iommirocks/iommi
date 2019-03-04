@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-6.1.0 (2019-02-18)
+6.2.0 (2019-02-18)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixes for jinja2 compatibility (still not fully working)
@@ -11,6 +11,10 @@ Changelog
 * You can now get the paginator context itself via `Table.paginator_context`
 
 * Paginator template is configurable
+
+* Fixed a bug where we triggered our own deprecation warning for `Column`
+
+* Use the new paginator API for django 2.0+
 
 
 6.1.0 (2019-01-29)
