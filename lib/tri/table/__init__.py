@@ -193,8 +193,6 @@ class Column(RefinableObject):
         auto_rowspan=False,
         bulk__show=False,
         query__show=False,
-        attrs=EMPTY,
-        attrs__class=EMPTY,
         cell__template=None,
         cell__attrs=EMPTY,
         cell__value=lambda table, column, row, **_: getattr_path(row, evaluate(column.attr, table=table, column=column)),
