@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
+import django
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
@@ -666,6 +667,49 @@ def test_django_table_pagination():
     verify_table_html(table=TestTable(data=Foo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
+        <table class="listview">
+            <thead>
+                <tr>
+                    <th class="first_column subheader"> A </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-pk="3">
+                    <td class="rj"> 2 </td>
+                </tr>
+                <tr data-pk="4">
+                    <td class="rj"> 3 </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+
+@pytest.mark.skipif(django.VERSION[0] < 2, reason='This requires the new paginator API in django 2.0+')
+@pytest.mark.django_db
+def test_django_table_pagination_custom_paginator():
+
+    for x in range(30):
+        Foo(a=x, b="foo").save()
+
+    class TestTable(Table):
+        a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
+        b = Column(show=False)  # should still be able to filter on this though!
+
+    from django.core.paginator import Paginator
+
+    class CustomPaginator(Paginator):
+        def __init__(self, object_list):
+            super(CustomPaginator, self).__init__(object_list=object_list, per_page=2)
+
+        def get_page(self, number):
+            del number
+            return self.page(2)
+
+    data = Foo.objects.all().order_by('pk')
+    verify_table_html(
+        table=TestTable(data=data),
+        paginator=CustomPaginator(data),
+        expected_html="""
         <table class="listview">
             <thead>
                 <tr>

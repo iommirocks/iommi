@@ -26,7 +26,7 @@ from tri.form import Link as tri_form_Link
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '6.2.0'  # pragma: no mutate
+__version__ = '6.2.1'  # pragma: no mutate
 
 LAST = LAST
 
@@ -1473,15 +1473,11 @@ def table_context(request,
             pass
         if paginator is None:
             paginator = Paginator(table.data, paginate_by)
-            object_list = None
-        else:  # pragma: no cover
-            object_list = table.data
         if not page:
             page = request.GET.get('page')  # None is translated to the default page in paginator.get_page
         try:
             page_obj = paginator.get_page(page)
-            if object_list is None:
-                table.data = page_obj.object_list
+            table.data = page_obj.object_list
         except (InvalidPage, ValueError):  # pragma: no cover
             raise Http404
 

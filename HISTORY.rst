@@ -1,7 +1,13 @@
 Changelog
 ---------
 
-6.2.0 (2019-02-18)
+6.2.1 (2019-03-05)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed a crash when you used a custom paginator in django 2.0+
+
+
+6.2.0 (2019-03-04)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixes for jinja2 compatibility (still not fully working)
