@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+1.2.0 (----------)
+------------------
+
+* Add get_members function to enable reuse of @declarative attribute collection
+
+* Add @class_shortcut decorator to enable @with_meta aware class shortcuts
+
+
 1.1.0 (2018-11-22)
 ------------------
 

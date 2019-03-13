@@ -1,18 +1,23 @@
 import warnings
-from collections import OrderedDict, defaultdict
+from collections import (
+    OrderedDict,
+    defaultdict,
+)
 from copy import copy
 import functools
 import inspect
 import itertools
 
 import sys
-from tri.struct import Struct, Frozen
+from tri.struct import (
+    Struct,
+    Frozen,
+)
 
 __version__ = '1.1.0'  # pragma: no mutate
 
-
 if sys.version_info < (3, 0):  # pragma: no mutate
-    string_types = (str, unicode)   # pragma: no coverage, no mutate, # noqa
+    string_types = (str, unicode)  # pragma: no coverage, no mutate, # noqa
 else:
     string_types = str
 
@@ -33,6 +38,7 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
     if add_init_kwargs:
         def get_extra_args_function(self):
             return {k: v for k, v in self.get_meta().items() if not k.startswith('_')}
+
         add_args_to_init_call(class_to_decorate, get_extra_args_function)
 
     setattr(class_to_decorate, 'get_meta', classmethod(get_meta))
@@ -91,6 +97,58 @@ def default_sort_key(x):
     return x._index
 
 
+def get_members(cls, member_class=None, is_member=None, sort_key=None, _parameter=None):
+    """
+        Collect all class level attributes matching the given criteria.
+
+        :param class member_class: Class(es) to collect
+        :param is_member: Function to determine if an object should be collected
+        :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
+
+        :type is_member: (object) -> bool
+        :type sort_key: (object) -> object
+    """
+    if member_class is None and is_member is None:
+        raise TypeError("get_members either needs a member_class parameter or an is_member check function (or both)")
+
+    members = OrderedDict()
+    for base in cls.__bases__:
+        if _parameter is None:
+            inherited_members = get_members(base, member_class=member_class, is_member=is_member, sort_key=sort_key)
+        else:
+            # When user by @declarative, only traverse up the class inheritance to the decorated class.
+            inherited_members = get_declared(base, _parameter)
+        members.update(inherited_members)
+
+    def generate_member_bindings():
+        for name in cls.__dict__:
+            if name.startswith('__'):
+                continue
+            obj = getattr(cls, name)
+            if member_class is not None and isinstance(obj, member_class):
+                yield name, obj
+            elif is_member is not None and is_member(obj):
+                yield name, obj
+            elif type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
+                raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)  # pragma: no mutate
+
+    bindings = generate_member_bindings()
+
+    if sort_key is not None:
+        try:
+            sorted_bindings = sorted(bindings, key=lambda x: sort_key(x[1]))
+        except AttributeError:
+            if sort_key is default_sort_key:
+                raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
+            else:  # pragma: no covererage
+                raise
+        members.update(sorted_bindings)
+    else:
+        members.update(bindings)
+
+    return members
+
+
 def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key=default_sort_key, is_member=None):
     """
         Class decorator to enable classes to be defined in the style of django models.
@@ -109,42 +167,11 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
     if member_class is None and is_member is None:
         raise TypeError("The @declarative decorator needs either a member_class parameter or an is_member check function (or both)")
 
-    def get_members(cls):
-        members = OrderedDict()
-        for base in cls.__bases__:
-            inherited_members = get_declared(base, parameter)
-            members.update(inherited_members)
-
-        def generate_member_bindings():
-            for name in cls.__dict__:
-                if name.startswith('__'):
-                    continue
-                obj = getattr(cls, name)
-                if member_class is not None and isinstance(obj, member_class):
-                    yield name, obj
-                elif is_member is not None and is_member(obj):
-                    yield name, obj
-                elif type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
-                    raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)  # pragma: no mutate
-
-        bindings = generate_member_bindings()
-        try:
-            sorted_bindings = sorted(bindings, key=lambda x: sort_key(x[1]))
-        except AttributeError:
-            if sort_key is default_sort_key:
-                raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
-            else:  # pragma: no covererage
-                raise
-        members.update(sorted_bindings)
-
-        return members
-
     def decorator(class_to_decorate):
-
         class DeclarativeMeta(class_to_decorate.__class__):
             # noinspection PyTypeChecker
             def __init__(cls, name, bases, dict):
-                members = get_members(cls)
+                members = get_members(cls, member_class=member_class, is_member=is_member, sort_key=sort_key, _parameter=parameter)
                 set_declared(cls, members, parameter)
                 super(DeclarativeMeta, cls).__init__(name, bases, dict)
 
@@ -153,17 +180,17 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
                                     {k: v for k, v in class_to_decorate.__dict__.items() if k not in ['__dict__', '__weakref__']})
 
         def get_extra_args_function(self):
-            members = get_declared(self, parameter)
+            declared = get_declared(self, parameter)
 
-            def copy_members():
-                for k, v in members.items():
+            def copy_declared():
+                for k, v in declared.items():
                     try:
                         v = copy(v)
                     except TypeError:
                         pass  # Not always possible to copy methods
                     yield (k, v)
 
-            copied_members = OrderedDict(copy_members())
+            copied_members = OrderedDict(copy_declared())
             self.__dict__.update(copied_members)
             return {parameter: copied_members}
 
@@ -272,7 +299,7 @@ def get_signature(func):
 
     try:
         if sys.version_info[0] < 3:  # pragma: no mutate
-            names, _, varkw, defaults = inspect.getargspec(func)   # pragma: no mutate
+            names, _, varkw, defaults = inspect.getargspec(func)  # pragma: no mutate
         else:
             names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)  # pragma: no covererage
     except TypeError:
@@ -564,6 +591,30 @@ def is_shortcut(x):
     return isinstance(x, Shortcut) or getattr(x, 'shortcut', False)
 
 
+def class_shortcut(*args, **defaults):
+    def decorator(__target__):
+        @shortcut
+        @dispatch(
+            **defaults
+        )
+        def class_shortcut_wrapper(cls, *args, **kwargs):
+            def call_target(*call_target_args, **call_target_kwargs):
+                class_call_target = call_target_kwargs.pop('class_call_target', None)
+                if class_call_target:
+                    return getattr(cls, class_call_target)(*call_target_args, **call_target_kwargs)
+                else:
+                    return cls(*call_target_args, **call_target_kwargs)
+
+            return __target__(cls, *args, call_target=call_target, **kwargs)
+
+        return class_shortcut_wrapper
+
+    if args and len(args) == 1 and not defaults:
+        return decorator(args[0])
+
+    return decorator
+
+
 def flatten(namespace):
     return dict(flatten_items(namespace))
 
@@ -581,6 +632,7 @@ def flatten_items(namespace):
                         yield path, Namespace()
             else:
                 yield path, value
+
     return mappings(namespace, [])
 
 
@@ -603,6 +655,7 @@ def dispatch(*function, **defaults):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             return f(*args, **Namespace(defaults, kwargs))
+
         wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
         return wrapper
 
@@ -709,10 +762,7 @@ def full_function_name(f):
 
 
 def get_shortcuts_by_name(class_):
-    def sorting_order_is_irrelevant(_):
-        return 0  # pragma: no mutate
-    decorated_class = declarative(member_class=Shortcut, is_member=is_shortcut, sort_key=sorting_order_is_irrelevant)(class_)
-    return dict(decorated_class.get_declared())
+    return dict(get_members(class_, member_class=Shortcut, is_member=is_shortcut))
 
 
 @creation_ordered
@@ -837,7 +887,7 @@ def generate_rst_docs(directory, classes, missing_objects=None):
             section(2, 'Defaults')
             defaults = Namespace()
             for refinable, value in sorted(get_namespace(c).items()):
-                if value not in (None, ) + missing_objects:
+                if value not in (None,) + missing_objects:
                     defaults[refinable] = value
 
             for k, v in flatten_items(defaults):
