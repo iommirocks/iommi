@@ -1,3 +1,4 @@
+import sys
 from random import shuffle
 
 from collections import OrderedDict
@@ -230,8 +231,7 @@ def test_declarative_and_meta():
     Foo()
 
 
-# Not yet working...
-@pytest.mark.skipif(True, reason="Not yet working")
+@pytest.mark.skipif(sys.version_info < (3, 0), reason='Python 3 has saner class resolution')
 def test_declarative_and_meta_subclass_no_constructor():
     @declarative(str, sort_key=lambda x: x)
     class Foo(object):
