@@ -4,7 +4,30 @@ from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
-from tri.declarative import extract_subkeys, getattr_path, setattr_path, sort_after, LAST, collect_namespaces, assert_kwargs_empty, setdefaults_path, dispatch, EMPTY, Namespace, flatten, full_function_name, RefinableObject, refinable, Refinable, Shortcut, shortcut, is_shortcut, get_shortcuts_by_name
+from tri.declarative import (
+    extract_subkeys,
+    getattr_path,
+    setattr_path,
+    sort_after,
+    LAST,
+    collect_namespaces,
+    assert_kwargs_empty,
+    setdefaults_path,
+    dispatch,
+    EMPTY,
+    Namespace,
+    flatten,
+    full_function_name,
+    RefinableObject,
+    refinable,
+    Refinable,
+    Shortcut,
+    shortcut,
+    is_shortcut,
+    get_shortcuts_by_name,
+    class_shortcut,
+    with_meta,
+)
 
 
 @pytest.fixture
@@ -174,7 +197,6 @@ def test_setdefault_string_value():
 
 
 def test_deprecated_string_value_promotion():
-
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings("default", category=DeprecationWarning)
         assert Namespace(foo__bar=True, foo__baz=False) == Namespace(dict(foo='bar'), dict(foo__baz=False))
@@ -707,19 +729,53 @@ def test_is_shortcut_function():
         def h():
             pass
 
+        @classmethod
+        @class_shortcut
+        def i(cls):
+            pass
+
     assert is_shortcut(Foo.h)
+    assert is_shortcut(Foo.i)
 
 
 def test_get_shortcuts_by_name():
     class Foo(object):
         a = Shortcut(x=1)
 
+    class Bar(Foo):
         @staticmethod
         @shortcut
         def b(self):
             pass
 
-    assert dict(a=Foo.a, b=Foo.b) == get_shortcuts_by_name(Foo)
+        @classmethod
+        @class_shortcut
+        def c(cls):
+            pass
+
+    assert dict(a=Bar.a, b=Bar.b, c=Bar.c) == get_shortcuts_by_name(Bar)
+
+
+def test_class_shortcut():
+    @with_meta
+    class Foo(object):
+        @dispatch(
+            bar=17
+        )
+        def __init__(self, bar, **kwargs):
+            self.bar = bar
+
+        @classmethod
+        @class_shortcut
+        def shortcut(cls, **args):
+            return cls(**args)
+
+    class MyFoo(Foo):
+        class Meta:
+            bar = 42
+
+    assert 17 == Foo.shortcut().bar
+    assert 42 == MyFoo.shortcut().bar
 
 
 def test_refinable_object_complete_example():
