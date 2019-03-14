@@ -232,7 +232,10 @@ def get_declared(cls, parameter='members'):
 
 
 def add_args_to_init_call(cls, get_extra_args_function):
-    __init__orig = object.__getattribute__(cls, '__init__')  # Use object.__getattribute__ to not have the original implementation bind to the class
+    if sys.version_info[0] < 3:
+        __init__orig = object.__getattribute__(cls, '__init__')  # Use object.__getattribute__ to not have the original implementation bind to the class
+    else:
+        __init__orig = getattr(cls, '__init__')
 
     pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
     if pos_arg_names is None:
@@ -259,7 +262,10 @@ def add_args_to_init_call(cls, get_extra_args_function):
 def add_init_call_hook(cls, init_hook):
     # Use object.__getattribute__ to not have the original implementation bind to the class
     # Extra acrobatics to get None if no __init__ is defined
-    __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)
+    if sys.version_info[0] < 3:
+        __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)
+    else:
+        __init__orig = getattr(cls, '__init__', None)
 
     def init_hook_wrapper(self, *args, **kwargs):
         init_hook(self)
