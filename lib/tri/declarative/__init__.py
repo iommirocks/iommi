@@ -14,7 +14,7 @@ from tri.struct import (
     Frozen,
 )
 
-__version__ = '1.1.0'  # pragma: no mutate
+__version__ = '1.2.0'  # pragma: no mutate
 
 if sys.version_info < (3, 0):  # pragma: no mutate
     string_types = (str, unicode)  # pragma: no coverage, no mutate, # noqa

@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-1.2.0 (----------)
+1.2.0 (2019-13-14)
 ------------------
 
 * Add get_members function to enable reuse of @declarative attribute collection
