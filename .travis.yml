@@ -1,6 +1,5 @@
 language: python
 
-
 stages:
   - lint
   - test
@@ -20,10 +19,9 @@ jobs:
       python: "3.6"
       before_install:
         - pip install flake8
-      before_script: skip
-      after_script: skip
       script:
         - flake8 lib/tri tests setup.py
+
     - stage: test
       python: "2.7"
     - python: pypy
@@ -37,7 +35,6 @@ jobs:
       script: python -m pytest --cov
       after_success: codecov
       dist: xenial
-
 
     - stage: deploy
       script: python setup.py sdist
