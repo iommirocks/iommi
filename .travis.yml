@@ -23,10 +23,19 @@ jobs:
         - flake8 lib/tri tests setup.py
 
     - stage: test
+      before_install: pip install tox
       python: "2.7"
+      script: tox -e $(tox -l | grep py27 | tr '\n' ',')
+
     - python: pypy
+      script: tox -e $(tox -l | grep py27 | tr '\n' ',')
+
     - python: "3.6"
+      script: tox -e $(tox -l | grep py27 | tr '\n' ',')
+
     - python: "3.7"
+      script: tox -e $(tox -l | grep py27 | tr '\n' ',')
+
       dist: xenial
 
     - stage: coverage
