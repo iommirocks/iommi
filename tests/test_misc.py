@@ -602,7 +602,7 @@ def test_sort_after_points_to_nothing():
             Struct(name='quux6', after='does-not-exist'),
         ])
 
-    assert "'Tried to order after does-not-exist but that key does not exist'" == str(e.value)
+    assert "'Tried to order after does-not-exist but that key does not exist'" == str(e.value).replace("u'", "'")
 
 
 def test_sort_after_points_to_nothing_plural():
@@ -613,7 +613,7 @@ def test_sort_after_points_to_nothing_plural():
             Struct(name='quux6', after='does-not-exist'),
         ])
 
-    assert "'Tried to order after does-not-exist, does-not-exist2 but those keys do not exist'" == str(e.value)
+    assert "'Tried to order after does-not-exist, does-not-exist2 but those keys do not exist'" == str(e.value).replace("u'", "'")
 
 
 def test_assert_kwargs_empty():

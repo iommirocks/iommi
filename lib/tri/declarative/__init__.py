@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import warnings
 from collections import (
     OrderedDict,
@@ -617,7 +619,7 @@ def class_shortcut(*args, **defaults):
         class_shortcut_wrapper.__doc__ = __target__.__doc__
         return class_shortcut_wrapper
 
-    assert len(args) in (0, 1), "There are no (explicit) positional arguments to class_shortcut"
+    assert len(args) in (0, 1), "There are no (explicit) positional arguments to class_shortcut"  # pragma: no mutate
 
     if len(args) == 1:
         return decorator(args[0])
@@ -840,6 +842,8 @@ def _generate_rst_docs(classes, missing_objects=None):
 
     def docstring_param_dict(obj):
         doc = obj.__doc__
+        if doc is not None and sys.version_info[0] < 3:  # pragma: no mutate
+            doc = doc.decode('utf8')  # pragma: no mutate
         if doc is None:
             return dict(text=None, params={})
         return dict(
@@ -917,7 +921,7 @@ def _generate_rst_docs(classes, missing_objects=None):
         if defaults:
             section(2, 'Defaults')
 
-            for k, v in flatten_items(defaults):
+            for k, v in sorted(flatten_items(defaults)):
                 if v != {}:
                     if '<lambda>' in repr(v):
                         import inspect
@@ -939,7 +943,10 @@ def _generate_rst_docs(classes, missing_objects=None):
                 section(2, name)
 
                 if shortcut.__doc__:
-                    f.write(shortcut.__doc__.strip())
+                    doc = shortcut.__doc__
+                    if doc is not None and sys.version_info[0] < 3:  # pragma: no mutate
+                        doc = doc.decode('utf8')  # pragma: no mutate
+                    f.write(doc.strip())
                     w(0, '')
                     w(0, '')
 
