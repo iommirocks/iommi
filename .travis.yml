@@ -38,6 +38,9 @@ jobs:
       dist: xenial
 
     - stage: deploy
+      script:
+        - python setup.py sdist
+      after_success: skip
       deploy:
         provider: pypi
         user: j_lubcke
