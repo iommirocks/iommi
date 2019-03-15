@@ -1,6 +1,8 @@
 # coding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 
 import copy
 import warnings
@@ -8,21 +10,75 @@ from collections import OrderedDict
 from functools import total_ordering
 from itertools import groupby
 
-from tri.form.render import render_attrs, render_class
-
 from django.conf import settings
-from django.core.paginator import Paginator, InvalidPage
-from django.http import HttpResponse, Http404, HttpResponseRedirect
-from django.utils.encoding import force_text, python_2_unicode_compatible
-from django.utils.html import conditional_escape, format_html
-from django.utils.safestring import mark_safe
+from django.core.paginator import (
+    InvalidPage,
+    Paginator,
+)
 from django.db.models import QuerySet
-from tri.declarative import declarative, creation_ordered, with_meta, evaluate_recursive, evaluate, getattr_path, sort_after, LAST, setdefaults_path, dispatch, EMPTY, Namespace, setattr_path, RefinableObject, refinable, Refinable, shortcut, Shortcut
-from tri.form import Field, Form, member_from_model, expand_member, create_members_from_model, render_template, handle_dispatch, DISPATCH_PATH_SEPARATOR, evaluate_and_group_links
-from tri.named_struct import NamedStructField, NamedStruct
-from tri.struct import Struct, merged
-from tri.query import Query, Variable, QueryException, Q_OP_BY_OP
-from tri.form import Link as tri_form_Link
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+)
+from django.utils.encoding import (
+    force_text,
+    python_2_unicode_compatible,
+)
+from django.utils.html import (
+    conditional_escape,
+    format_html,
+)
+from django.utils.safestring import mark_safe
+from tri.declarative import (
+    class_shortcut,
+    creation_ordered,
+    declarative,
+    dispatch,
+    EMPTY,
+    evaluate,
+    evaluate_recursive,
+    getattr_path,
+    LAST,
+    Namespace,
+    refinable,
+    Refinable,
+    RefinableObject,
+    setattr_path,
+    setdefaults_path,
+    sort_after,
+    with_meta,
+)
+from tri.form import (
+    create_members_from_model,
+    DISPATCH_PATH_SEPARATOR,
+    evaluate_and_group_links,
+    expand_member,
+    Field,
+    Form,
+    handle_dispatch,
+    Link as tri_form_Link,
+    member_from_model,
+    render_template,
+)
+from tri.form.render import (
+    render_attrs,
+    render_class,
+)
+from tri.named_struct import (
+    NamedStruct,
+    NamedStructField,
+)
+from tri.query import (
+    Q_OP_BY_OP,
+    Query,
+    QueryException,
+    Variable,
+)
+from tri.struct import (
+    merged,
+    Struct,
+)
 
 from tri.table.db_compat import setup_db_compat
 
@@ -124,7 +180,7 @@ def yes_no_formatter(value, **_):
         return 'Yes'
     if value == 0:  # boolean False is equal to 0
         return 'No'
-    assert False, "Unable to convert {} to Yes/No".format(value)   # pragma: no cover  # pragma: no mutate
+    assert False, "Unable to convert {} to Yes/No".format(value)  # pragma: no cover  # pragma: no mutate
 
 
 def list_formatter(value, **_):
@@ -160,6 +216,9 @@ def default_cell_formatter(table, column, row, value, **_):
         return ''
 
     return conditional_escape(value)
+
+
+SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_select_all(this)"></i>'
 
 
 @with_meta
@@ -337,289 +396,269 @@ class Column(RefinableObject):
             model_field=model_field,
             **kwargs)
 
+    @classmethod
+    @class_shortcut(
+        name='',
+        display_name='',
+        sortable=False,
+        header__attrs__class__thin=True,
+        cell__value=lambda table, column, row, **_: True,
+        cell__attrs__class__cj=True,
+    )
+    def icon(cls, icon, is_report=False, icon_title=None, show=True, call_target=None, **kwargs):
+        """
+        Shortcut to create font awesome-style icons.
 
-@shortcut
-@dispatch(
-    call_target=Column,
-    name='',
-    display_name='',
-    sortable=False,
-    header__attrs__class__thin=True,
-    cell__value=lambda table, column, row, **_: True,
-    cell__attrs__class__cj=True,
-)
-def column_shortcut_icon(icon, is_report=False, icon_title=None, show=True, call_target=None, **kwargs):
-    """
-    Shortcut to create font awesome-style icons.
+        :param icon: the font awesome name of the icon
+        """
+        setdefaults_path(kwargs, dict(
+            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+            header__attrs__title=icon_title,
+            cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
+        ))
+        return call_target(**kwargs)
 
-    :param icon: the font awesome name of the icon
-    """
-    setdefaults_path(kwargs, dict(
-        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-        header__attrs__title=icon_title,
-        cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
-    ))
-    return call_target(**kwargs)
+    @classmethod
+    @class_shortcut(
+        class_call_target='icon',
+        cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
+        display_name=''
+    )
+    def edit(cls, is_report=False, call_target=None, **kwargs):
+        """
+        Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
+        """
+        return call_target('pencil-square-o', is_report, 'Edit', **kwargs)
 
+    @classmethod
+    @class_shortcut(
+        class_call_target='icon',
+        cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
+        display_name=''
+    )
+    def delete(cls, is_report=False, call_target=None, **kwargs):
+        """
+        Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
+        """
+        return call_target('trash-o', is_report, 'Delete', **kwargs)
 
-Column.icon = staticmethod(column_shortcut_icon)
+    @classmethod
+    @class_shortcut(
+        class_call_target='icon',
+        cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
+        cell__value=lambda row, **_: getattr(row, 'pk', False),
+    )
+    def download(cls, is_report=False, call_target=None, **kwargs):
+        """
+        Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
+        """
+        return call_target('download', is_report, 'Download', **kwargs)
 
+    @classmethod
+    @class_shortcut(
+        name='',
+        header__attrs__title='Run',
+        sortable=False,
+        header__attrs__class__thin=True,
+        cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
+        cell__value='Run',
+    )
+    def run(cls, is_report=False, show=True, call_target=None, **kwargs):
+        """
+        Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
+        """
+        setdefaults_path(kwargs, dict(
+            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+        ))
+        return call_target(**kwargs)
 
-@shortcut
-@dispatch(
-    call_target=Column.icon,
-    cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
-    display_name=''
-)
-def column_shortcut_edit(is_report=False, call_target=None, **kwargs):
-    """
-    Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
-    """
-    return call_target('pencil-square-o', is_report, 'Edit', **kwargs)
+    @classmethod
+    @class_shortcut(
+        name='__select__',
+        header__attrs__title='Select all',
+        display_name=mark_safe(SELECT_DISPLAY_NAME),
+        sortable=False,
+        header__attrs__class__thin=True,
+        header__attrs__class__nopad=True,
+        cell__attrs__class__cj=True,
+    )
+    def select(cls, is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
+        """
+        Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
+        :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
+        :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
+        """
+        setdefaults_path(kwargs, dict(
+            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+            cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
+        ))
+        return call_target(**kwargs)
 
-Column.edit = staticmethod(column_shortcut_edit)
+    @classmethod
+    @class_shortcut(
+        cell__attrs__class__cj=True,
+        query__call_target=Variable.boolean,
+        bulk__call_target=Field.boolean,
+    )
+    def boolean(cls, is_report=False, call_target=None, **kwargs):
+        """
+        Shortcut to render booleans as a check mark if true or blank if false.
+        """
 
+        def render_icon(value):
+            if callable(value):
+                value = value()
+            return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
 
-@shortcut
-@dispatch(
-    call_target=Column.icon,
-    cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
-    display_name=''
-)
-def column_shortcut_delete(is_report=False, call_target=None, **kwargs):
-    """
-    Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
-    """
-    return call_target('trash-o', is_report, 'Delete', **kwargs)
+        setdefaults_path(kwargs, dict(
+            cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
+        ))
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        class_call_target='boolean',
+        query__call_target=Variable.boolean_tristate,
+    )
+    def boolean_tristate(cls, *args, **kwargs):
+        call_target = kwargs.pop('call_target', cls)
+        return call_target(*args, **kwargs)
 
-Column.delete = staticmethod(column_shortcut_delete)
+    @classmethod
+    @class_shortcut(
+        bulk__call_target=Field.choice,
+        query__call_target=Variable.choice,
+    )
+    def choice(cls, call_target=None, **kwargs):
+        choices = kwargs['choices']
+        setdefaults_path(kwargs, dict(
+            bulk__choices=choices,
+            query__choices=choices,
+        ))
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        class_call_target='choice',
+        bulk__call_target=Field.choice_queryset,
+        query__call_target=Variable.choice_queryset,
+    )
+    def choice_queryset(cls, call_target=None, **kwargs):
+        setdefaults_path(kwargs, dict(
+            bulk__model=kwargs.get('model'),
+            query__model=kwargs.get('model'),
+        ))
+        return call_target(**kwargs)
 
-@shortcut
-@dispatch(
-    call_target=Column.icon,
-    cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
-    cell__value=lambda row, **_: getattr(row, 'pk', False),
-)
-def column_shortcut_download(is_report=False, call_target=None, **kwargs):
-    """
-    Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
-    """
-    return call_target('download', is_report, 'Download', **kwargs)
+    @classmethod
+    @class_shortcut(
+        class_call_target='choice',
+        bulk__call_target=Field.multi_choice_queryset,
+        query__call_target=Variable.multi_choice_queryset,
+        cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
+    )
+    def multi_choice_queryset(cls, call_target, **kwargs):
+        setdefaults_path(kwargs, dict(
+            bulk__model=kwargs.get('model'),
+            query__model=kwargs.get('model'),
+        ))
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut
+    def text(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-Column.download = staticmethod(column_shortcut_download)
+    @classmethod
+    @class_shortcut
+    def link(cls, call_target, **kwargs):
+        # Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
+        def link_cell_url(table, column, row, value):
+            del table, value
+            r = getattr_path(row, column.attr)
+            return r.get_absolute_url() if r else ''
 
+        setdefaults_path(kwargs, dict(
+            cell__url=link_cell_url,
+        ))
+        return call_target(**kwargs)
 
-@shortcut
-@dispatch(
-    call_target=Column,
-    name='',
-    header__attrs__title='Run',
-    sortable=False,
-    header__attrs__class__thin=True,
-    cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
-    cell__value='Run',
-)
-def column_shortcut_run(is_report=False, show=True, call_target=None, **kwargs):
-    """
-    Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
-    """
-    setdefaults_path(kwargs, dict(
-        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-    ))
-    return call_target(**kwargs)
+    @classmethod
+    @class_shortcut(
+        cell__attrs__class__rj=True,
+    )
+    def number(cls, call_target, **kwargs):
+        # Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        class_call_target='number',
+        query__call_target=Variable.float,
+        bulk__call_target=Field.float,
+    )
+    def float(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-Column.run = staticmethod(column_shortcut_run)
+    @classmethod
+    @class_shortcut(
+        class_call_target='number',
+        query__call_target=Variable.integer,
+        bulk__call_target=Field.integer,
+    )
+    def integer(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        query__gui_op=':',
+    )
+    def substring(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_select_all(this)"></i>'
+    @classmethod
+    @class_shortcut(
+        query__call_target=Variable.date,
+        query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+        bulk__call_target=Field.date,
+    )
+    def date(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        query__call_target=Variable.datetime,
+        query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+        bulk__call_target=Field.datetime,
+    )
+    def datetime(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-@shortcut
-@dispatch(
-    call_target=Column,
-    name='__select__',
-    header__attrs__title='Select all',
-    display_name=mark_safe(SELECT_DISPLAY_NAME),
-    sortable=False,
-    header__attrs__class__thin=True,
-    header__attrs__class__nopad=True,
-    cell__attrs__class__cj=True,
-)
-def column_shortcut_select(is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
-    """
-    Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
+    @classmethod
+    @class_shortcut(
+        query__call_target=Variable.time,
+        query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+        bulk__call_target=Field.time,
+    )
+    def time(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-    :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
-    :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
-    """
-    setdefaults_path(kwargs, dict(
-        show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
-        cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
-    ))
-    return call_target(**kwargs)
+    @classmethod
+    @class_shortcut(
+        query__call_target=Variable.email,
+        bulk__call_target=Field.email,
+    )
+    def email(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-
-Column.select = staticmethod(column_shortcut_select)
-
-
-@shortcut
-@dispatch(
-    call_target=Column,
-    cell__attrs__class__cj=True,
-    query__call_target=Variable.boolean,
-    bulk__call_target=Field.boolean,
-)
-def column_shortcut_boolean(is_report=False, call_target=None, **kwargs):
-    """
-    Shortcut to render booleans as a check mark if true or blank if false.
-    """
-    def render_icon(value):
-        if callable(value):
-            value = value()
-        return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
-
-    setdefaults_path(kwargs, dict(
-        cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
-    ))
-    return call_target(**kwargs)
-
-
-Column.boolean = staticmethod(column_shortcut_boolean)
-Column.boolean_tristate = Shortcut(
-    query__call_target=Variable.boolean_tristate,
-    call_target=Column.boolean,
-)
-
-
-@shortcut
-@dispatch(
-    call_target=Column,
-    bulk__call_target=Field.choice,
-    query__call_target=Variable.choice,
-)
-def column_shortcut_choice(call_target, **kwargs):
-    choices = kwargs['choices']
-    setdefaults_path(kwargs, dict(
-        bulk__choices=choices,
-        query__choices=choices,
-    ))
-    return call_target(**kwargs)
-
-
-Column.choice = staticmethod(column_shortcut_choice)
-
-
-@shortcut
-@dispatch(
-    call_target=Column.choice,
-    bulk__call_target=Field.choice_queryset,
-    query__call_target=Variable.choice_queryset,
-)
-def column_shortcut_choice_queryset(call_target, **kwargs):
-    setdefaults_path(kwargs, dict(
-        bulk__model=kwargs.get('model'),
-        query__model=kwargs.get('model'),
-    ))
-    return call_target(**kwargs)
-
-
-Column.choice_queryset = staticmethod(column_shortcut_choice_queryset)
-
-
-@shortcut
-@dispatch(
-    call_target=Column.choice,
-    bulk__call_target=Field.multi_choice_queryset,
-    query__call_target=Variable.multi_choice_queryset,
-    cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
-)
-def column_shortcut_multi_choice_queryset(call_target, **kwargs):
-    setdefaults_path(kwargs, dict(
-        bulk__model=kwargs.get('model'),
-        query__model=kwargs.get('model'),
-    ))
-    return call_target(**kwargs)
-
-
-Column.multi_choice_queryset = staticmethod(column_shortcut_multi_choice_queryset)
-
-Column.text = Shortcut(
-    call_target=Column,
-)
-
-
-# Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
-def link_cell_url(table, column, row, value):
-    del table, value
-    r = getattr_path(row, column.attr)
-    return r.get_absolute_url() if r else ''
-
-
-Column.link = Shortcut(
-    call_target=Column,
-    cell__url=link_cell_url,
-)
-
-# Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
-Column.number = Shortcut(
-    call_target=Column,
-    cell__attrs__class__rj=True,
-)
-
-Column.float = Shortcut(
-    call_target=Column.number,
-    query__call_target=Variable.float,
-    bulk__call_target=Field.float,
-)
-
-Column.integer = Shortcut(
-    call_target=Column.number,
-    query__call_target=Variable.integer,
-    bulk__call_target=Field.integer,
-)
-
-Column.substring = Shortcut(
-    call_target=Column,
-    query__gui_op=':',
-)
-
-Column.date = Shortcut(
-    call_target=Column,
-    query__call_target=Variable.date,
-    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-    bulk__call_target=Field.date,
-)
-
-Column.datetime = Shortcut(
-    call_target=Column,
-    query__call_target=Variable.datetime,
-    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-    bulk__call_target=Field.datetime,
-)
-
-Column.time = Shortcut(
-    call_target=Column,
-    query__call_target=Variable.time,
-    query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-    bulk__call_target=Field.time,
-)
-
-Column.email = Shortcut(
-    call_target=Column,
-    query__call_target=Variable.email,
-    bulk__call_target=Field.email,
-)
-
-Column.decimal = Shortcut(
-    call_target=Column,
-    bulk__call_target=Field.decimal,
-    query__call_target=Variable.decimal,
-)
+    @classmethod
+    @class_shortcut(
+        bulk__call_target=Field.decimal,
+        query__call_target=Variable.decimal,
+    )
+    def decimal(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
 
 class BoundRow(object):
@@ -787,7 +826,6 @@ class Header(object):
 @declarative(Column, 'columns_dict')
 @with_meta
 class Table(RefinableObject):
-
     """
     Describe a table. Example:
 
@@ -889,6 +927,7 @@ class Table(RefinableObject):
             for name, column_ in columns_dict.items():
                 column_.name = name
                 yield column_
+
         columns = sort_after(list(generate_columns()))
 
         assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
@@ -1169,6 +1208,7 @@ class Table(RefinableObject):
                             model=column.table.model,
                         )
                         yield query_namespace()
+
             variables = list(generate_variables())
 
             self._query = Query(
@@ -1205,6 +1245,7 @@ class Table(RefinableObject):
                         if bulk_namespace['call_target'] == Field.from_model:
                             bulk_namespace['field_name'] = column.attr
                         yield bulk_namespace()
+
             bulk_fields = list(generate_bulk_fields())
             if bulk_fields:
                 bulk_fields.append(Field.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='tri_form/input.html'))
