@@ -7,18 +7,11 @@ stages:
   - build
   - deploy
 
-before_install:
-  - pip install codecov
-
 install:
   - pip install -r test_requirements.txt
   - pip install .
 
-script:
-  - python -m pytest
-
-after_success:
-  - codecov
+script: python -m pytest
 
 jobs:
   include:
@@ -37,10 +30,16 @@ jobs:
     - python: "3.7"
       dist: xenial
 
+    - stage: coverage
+      python: "3.7"
+      before_install: python -m pip install codecov pytest-cov
+      script: python -m pytest --cov
+      after_success: codecov
+      dist: xenial
+
+
     - stage: deploy
-      script:
-        - python setup.py sdist
-      after_success: skip
+      script: python setup.py sdist
       deploy:
         provider: pypi
         user: j_lubcke
