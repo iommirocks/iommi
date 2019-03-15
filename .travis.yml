@@ -25,16 +25,16 @@ jobs:
     - stage: test
       before_install: pip install tox
       python: "2.7"
-      script: "tox -e $(tox -l | grep py27 | tr '\n' ',')"
+      script: tox -e $(tox -l | grep py27 | tr '\\n' ',')
 
     - python: pypy
-      script: "tox -e $(tox -l | grep pypy | tr '\n' ',')"
+      script: tox -e $(tox -l | grep pypy | tr '\\n' ',')
 
     - python: "3.6"
-      script: "tox -e $(tox -l | grep py36 | tr '\n' ',')"
+      script: tox -e $(tox -l | grep py36 | tr '\\n' ',')
 
     - python: "3.7"
-      script: "tox -e $(tox -l | grep py37 | tr '\n' ',')"
+      script: tox -e $(tox -l | grep py37 | tr '\\n' ',')
 
       dist: xenial
 
