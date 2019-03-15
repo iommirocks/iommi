@@ -232,8 +232,9 @@ def get_declared(cls, parameter='members'):
 
 
 def add_args_to_init_call(cls, get_extra_args_function):
-    if sys.version_info[0] < 3:
-        __init__orig = object.__getattribute__(cls, '__init__')  # Use object.__getattribute__ to not have the original implementation bind to the class
+    if sys.version_info[0] < 3:  # pragma: no mutate
+        # Use object.__getattribute__ to not have the original implementation bind to the class
+        __init__orig = object.__getattribute__(cls, '__init__')  # pragma: no mutate
     else:
         __init__orig = getattr(cls, '__init__')
 
@@ -262,8 +263,8 @@ def add_args_to_init_call(cls, get_extra_args_function):
 def add_init_call_hook(cls, init_hook):
     # Use object.__getattribute__ to not have the original implementation bind to the class
     # Extra acrobatics to get None if no __init__ is defined
-    if sys.version_info[0] < 3:
-        __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)
+    if sys.version_info[0] < 3:  # pragma: no mutate
+        __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)  # pragma: no mutate
     else:
         __init__orig = getattr(cls, '__init__', None)
 
@@ -613,9 +614,12 @@ def class_shortcut(*args, **defaults):
 
             return __target__(cls, *args, call_target=call_target, **kwargs)
 
+        class_shortcut_wrapper.__doc__ = __target__.__doc__
         return class_shortcut_wrapper
 
-    if args and len(args) == 1 and not defaults:
+    assert len(args) in (0, 1), "There are no (explicit) positional arguments to class_shortcut"
+
+    if len(args) == 1:
         return decorator(args[0])
 
     return decorator
@@ -820,6 +824,14 @@ def generate_rst_docs(directory, classes, missing_objects=None):
     :param classes: list of classes to generate documentation for
     :param missing_objects: tuple of objects to count as missing markers, if applicable
     """
+
+    doc_by_filename = _generate_rst_docs(classes=classes, missing_objects=missing_objects)  # pragma: no mutate
+    for filename, doc in doc_by_filename:  # pragma: no mutate
+        with open(directory + filename, 'w') as f2:  # pragma: no mutate
+            f2.write(doc)  # pragma: no mutate
+
+
+def _generate_rst_docs(classes, missing_objects=None):
     if missing_objects is None:
         missing_objects = tuple()
 
@@ -831,13 +843,12 @@ def generate_rst_docs(directory, classes, missing_objects=None):
         if doc is None:
             return dict(text=None, params={})
         return dict(
-            text=doc[:doc.find(':param')].strip(),
+            text=doc[:doc.find(':param')].strip() if ':param' in doc else doc.strip(),
             params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc))
         )
 
     def indent(levels, s):
-        lines = s.split('\n')
-        return '\n'.join([(' ' * levels * 4) + line.strip() for line in lines])
+        return (' ' * levels * 4) + s.strip()
 
     def get_namespace(hit):
         assert hit is not None
@@ -854,47 +865,57 @@ def generate_rst_docs(directory, classes, missing_objects=None):
             return hit.dispatch
 
     for c in classes:
-        with open(directory + '/%s.rst' % c.__name__, 'w') as f:
+        from io import StringIO
+        f = StringIO()
 
-            def w(levels, s):
-                f.write(indent(levels, s))
-                f.write('\n')
+        def w(levels, s):
+            f.write(indent(levels, s))
+            f.write('\n')
 
-            def section(level, title):
-                underline = {
-                    0: '=',
-                    1: '-',
-                    2: '^',
-                }[level] * len(title)
-                w(0, title)
-                w(0, underline)
-                w(0, '')
+        def section(level, title):
+            underline = {
+                0: '=',
+                1: '-',
+                2: '^',
+            }[level] * len(title)
+            w(0, title)
+            w(0, underline)
+            w(0, '')
 
-            section(0, c.__name__)
+        section(0, c.__name__)
 
-            class_doc = docstring_param_dict(c)
-            constructor_doc = docstring_param_dict(c.__init__)
+        class_doc = docstring_param_dict(c)
+        constructor_doc = docstring_param_dict(c.__init__)
 
+        if class_doc['text']:
+            f.write(class_doc['text'])
+            w(0, '')
+
+        if constructor_doc['text']:
             if class_doc['text']:
-                f.write(class_doc['text'])
                 w(0, '')
 
+            f.write(constructor_doc['text'])
             w(0, '')
 
-            section(1, 'Refinable members')
-            for refinable, value in sorted(get_namespace(c).items()):
-                w(0, '* ' + refinable)
+        w(0, '')
 
-                if constructor_doc.get(refinable):
-                    w(1, constructor_doc[refinable])
-                    w(0, '')
-            w(0, '')
+        section(1, 'Refinable members')
+        for refinable, value in sorted(get_namespace(c).items()):
+            w(0, '* ' + refinable)
 
+            if constructor_doc['params'].get(refinable):
+                w(1, constructor_doc['params'][refinable])
+                w(0, '')
+        w(0, '')
+
+        defaults = Namespace()
+        for refinable, value in sorted(get_namespace(c).items()):
+            if value not in (None,) + missing_objects:
+                defaults[refinable] = value
+
+        if defaults:
             section(2, 'Defaults')
-            defaults = Namespace()
-            for refinable, value in sorted(get_namespace(c).items()):
-                if value not in (None,) + missing_objects:
-                    defaults[refinable] = value
 
             for k, v in flatten_items(defaults):
                 if v != {}:
@@ -910,14 +931,16 @@ def generate_rst_docs(directory, classes, missing_objects=None):
                     w(1, '* %s' % v)
             w(0, '')
 
-            shortcuts = get_shortcuts_by_name(c)
-            if shortcuts:
-                section(1, 'Shortcuts')
+        shortcuts = get_shortcuts_by_name(c)
+        if shortcuts:
+            section(1, 'Shortcuts')
 
-                for name, shortcut in sorted(shortcuts.items()):
-                    section(2, name)
+            for name, shortcut in sorted(shortcuts.items()):
+                section(2, name)
 
-                    if shortcut.__doc__:
-                        f.write(shortcut.__doc__.strip())
-                        w(0, '')
-                        w(0, '')
+                if shortcut.__doc__:
+                    f.write(shortcut.__doc__.strip())
+                    w(0, '')
+                    w(0, '')
+
+        yield '/%s.rst' % c.__name__, f.getvalue()

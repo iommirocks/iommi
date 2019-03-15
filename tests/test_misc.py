@@ -27,7 +27,7 @@ from tri.declarative import (
     get_shortcuts_by_name,
     class_shortcut,
     with_meta,
-)
+    get_members)
 
 
 @pytest.fixture
@@ -770,12 +770,53 @@ def test_class_shortcut():
         def shortcut(cls, **args):
             return cls(**args)
 
+        @classmethod
+        @class_shortcut(
+            foo=7
+        )
+        def shortcut2(cls, call_target, foo):
+            del call_target
+            return foo
+
     class MyFoo(Foo):
         class Meta:
             bar = 42
 
     assert 17 == Foo.shortcut().bar
     assert 42 == MyFoo.shortcut().bar
+    assert 7 == MyFoo.shortcut2()
+
+
+def test_class_shortcut_class_call_target():
+    @with_meta
+    class Foo(object):
+        @classmethod
+        @class_shortcut(
+            foo=7
+        )
+        def shortcut(cls, call_target, foo):
+            del call_target
+            return foo
+
+    class MyFoo(Foo):
+        @classmethod
+        @class_shortcut(
+            foo=5
+        )
+        def shortcut(cls, call_target, foo):
+            del call_target
+            return foo
+
+        @classmethod
+        @class_shortcut(
+            class_call_target='shortcut'
+        )
+        def shortcut2(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    assert 7 == Foo.shortcut()
+    assert 5 == MyFoo.shortcut()
+    assert 5 == MyFoo.shortcut2()
 
 
 def test_refinable_object_complete_example():
@@ -1011,3 +1052,10 @@ def test_empty_marker_is_immutable():
     assert isinstance(EMPTY, Namespace)
     with pytest.raises(TypeError):
         EMPTY['foo'] = 'bar'
+
+
+def test_get_members_error_message():
+    with pytest.raises(TypeError) as e:
+        get_members(None, None, None)
+
+    assert str(e.value) == "get_members either needs a member_class parameter or an is_member check function (or both)"
