@@ -1,16 +1,48 @@
 language: python
-python:
-- '3.6'
-install: pip install tox codecov
-script:
-  - tox
-  - make coverage
-after_success: codecov
-deploy:
-  provider: pypi
-  user: j_lubcke
-  password:
-    secure: GP/vGk9q++12p0v6hXpEfHJzADApvtPwf60DUf2U8SNWaZ+ErhaOnwyZkVyxFZ+YpFB+9uTUUcFzOhV4UCIVYCMq21gMkwnP2Dagsg2Yox8YuyzyWc0WVOYm9kZm+8fgpHcFkl33jTMB0BLAJ2xBCM/3PWsly1HKz1Hf/WBugpzEk/sWAOAnF0EZWHBH8YPaMhXze2m9mU0NdlumD/7Ia76jSLgHzIjvGvdECxnWs+pQHJTTpFgVcvg8hVcoIBuvu8apqewBtGQa3DAA+d5bNqinN/IHLQfNQ7HX02pHcO+n8EOaWlQ+dAQugOFHJXJ+fm4v4l616V360+MB2J/iekQIduRB4ZIw+Ouixl4NullqWeBqpIOkukQHpDAJHIPwCgIzzeYcSB045/E55c0CgHS4y45wiPBNLZW+7wmmZ2t51rOLqrNXgRqEfzL34VNqgJNgyKKjilSJtgAx70PJBOZiD+5UHF4EPihXQmTonAW4halmuS0KVz7NpyYZdAKzcyvaJAUbbRXDKeseyio6iW5sjOjYzZ6mt8PXJU7R8TzqLJ/MwTZ4khH03VleGZWWGJaauexUitr5o+AUNpnyO0hzBS+K9M0eS2ijN2F2BCM/zgOZ9h3FpU/WZXDH2ihZpWNzWi9nfrwqkUtIVhN2wZSUvD6fxrLMNvb9n1iRa1U=
-  on:
-    tags: true
-    repo: TriOptima/tri.form
+
+stages:
+  - lint
+  - test
+  - build
+  - coverage
+  - deploy
+
+install:
+  - pip install -r test_requirements.txt
+  - pip install .
+
+script: python -m pytest
+
+jobs:
+  include:
+    - stage: lint
+      python: "3.6"
+      before_install:
+        - pip install flake8
+      script:
+        - flake8 lib/tri tests setup.py
+
+    - stage: test
+      python: "2.7"
+    - python: pypy
+    - python: "3.6"
+    - python: "3.7"
+      dist: xenial
+
+    - stage: coverage
+      python: "3.7"
+      before_install: python -m pip install codecov pytest-cov
+      script: python -m pytest --cov
+      after_success: codecov
+      dist: xenial
+
+    - stage: deploy
+      script: python setup.py sdist
+      deploy:
+        provider: pypi
+        user: j_lubcke
+        password:
+          secure: GP/vGk9q++12p0v6hXpEfHJzADApvtPwf60DUf2U8SNWaZ+ErhaOnwyZkVyxFZ+YpFB+9uTUUcFzOhV4UCIVYCMq21gMkwnP2Dagsg2Yox8YuyzyWc0WVOYm9kZm+8fgpHcFkl33jTMB0BLAJ2xBCM/3PWsly1HKz1Hf/WBugpzEk/sWAOAnF0EZWHBH8YPaMhXze2m9mU0NdlumD/7Ia76jSLgHzIjvGvdECxnWs+pQHJTTpFgVcvg8hVcoIBuvu8apqewBtGQa3DAA+d5bNqinN/IHLQfNQ7HX02pHcO+n8EOaWlQ+dAQugOFHJXJ+fm4v4l616V360+MB2J/iekQIduRB4ZIw+Ouixl4NullqWeBqpIOkukQHpDAJHIPwCgIzzeYcSB045/E55c0CgHS4y45wiPBNLZW+7wmmZ2t51rOLqrNXgRqEfzL34VNqgJNgyKKjilSJtgAx70PJBOZiD+5UHF4EPihXQmTonAW4halmuS0KVz7NpyYZdAKzcyvaJAUbbRXDKeseyio6iW5sjOjYzZ6mt8PXJU7R8TzqLJ/MwTZ4khH03VleGZWWGJaauexUitr5o+AUNpnyO0hzBS+K9M0eS2ijN2F2BCM/zgOZ9h3FpU/WZXDH2ihZpWNzWi9nfrwqkUtIVhN2wZSUvD6fxrLMNvb9n1iRa1U=
+        on:
+          tags: true
+          repo: TriOptima/tri.form
