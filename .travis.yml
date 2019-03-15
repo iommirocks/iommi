@@ -47,6 +47,5 @@ jobs:
         password:
           secure: BXP9jkm4Ac/eOqkrvN2fETeFM1+RjUV/b4iOYRndt77YgRETsLhhNfJl+uPuqfnxWKA44tdxEhyfebyTD4CQ5nwwqvMGn/2Ox/TcDV59EZ1wfIgXt5voVy+7OD/75KnVaWmWt7hobaBELkiMxf3EhSups265maELRuIaIVPSLN9l7AD+MUp3YAWDWW3dT3hel2lXjab+SnNW15sxsUBVbySJKS/h9txztF7ehw8ZYXvZDuncvTAASaP9PUhgoXqjLCvadeJThxqw6GHlaORiDq82pKkqfROf5hONQoblK4ZwEdgj+d5FKVNpD5n7muDV7LbM2s/HYPHa08HQjhyCnCz2HQTH9RPS3ch1L4FzzFHnCIOl+tyIthHfR+oY2bvJD83JZy0qrRd7PacYbtoTLvelljkGGbhr2AKKZEjhGR8O7HVlQOGCvMUNj0YdjuUxih8g7haeqxaJhgeQsGxbeugf4p4gBCcZfwmo5oVWDUdzPaZaLmeU0BWmFMEO9Vt5TU/jLCsADIAKG8obh2vG+qBHg6bpOhmww33eKb1l4qzrUKAQrR3jcADw3BfgkCjC7DypflfOmodr9Imtxe9C3fNM+i/PXYSl6ke5+PKvFdqAcS2tXqF/QiD0JnyjzLyu94i63JtBwD4CvHcyMC5xoe9dxZCO9r/TIIzmT+OVulo=
         on:
-          python: 3.6
           tags: true
           repo: TriOptima/tri.declarative
