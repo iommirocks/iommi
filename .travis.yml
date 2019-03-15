@@ -5,6 +5,7 @@ stages:
   - lint
   - test
   - build
+  - coverage
   - deploy
 
 install:
