@@ -1,4 +1,4 @@
-from django.db.models import Model, IntegerField, ForeignKey, CharField
+from django.db.models import Model, IntegerField, ForeignKey, CharField, CASCADE
 
 
 class Foo(Model):
@@ -9,7 +9,7 @@ class Foo(Model):
 
 
 class Bar(Model):
-    foo = ForeignKey(Foo)
+    foo = ForeignKey(Foo, on_delete=CASCADE)
 
 
 class Baz(Model):
