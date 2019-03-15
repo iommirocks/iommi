@@ -1,4 +1,4 @@
-tri.declarative >= 1.2.0
+tri.declarative >= 1.2.1
 tri.named_struct
 tri.form >= 5.0.12, < 6.0.0
 tri.struct

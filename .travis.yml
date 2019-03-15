@@ -1,17 +1,48 @@
 language: python
-python:
-- '2.7'
-- '3.6'
-- 'pypy'
-install: pip install tox codecov
-script: make coverage
-after_success: codecov
-deploy:
-  provider: pypi
-  user: j_lubcke
-  password:
-    secure: avY6WD95XBnoH+wUc6MVhpTia3cf7NXdfDlJapUGnYoSJLB4ISb6ZPG0JUoQ76kcOquKCo09d250H1FcRCsYPkhgFiWTk9L1qGi3tVx65345cwy4sPJn2HDzX/XUkXOT3G+litf7h4P/Z6BcbEy6Wu0kIy9UzCwfHkkTMuC/ZiwyIfbRpX1MJzLzZeuVHVtHLKAweq24rl9VEKxjOM0gd2h82LDMT9IE90s4qwq6iUqUAnU6FA2hy5QC6tAWcl5Rrrhax0y0EeyFnFS4OxsdBP1gFmMvfSLfD1mhqKNNBElf5RSkRcv5NE0jXVi73/UVkbwWibA3nJoYYJPDV+om3moUy/j39w/ERGQL9uBoOQuRO+K/7Ph7G6Xk63dVSRJvbICEc2sUL9j4tjwc+ZiiG3rU5GFvuf4gnPC/hJ/fd0QTaJXQe/f0hwdwovo7SCWP9TmoKsp7b1BnARS3IAb/NMjzzmNg6Xa2Csf1mdgGVPQXckG41syotjowq8Q2IW5IVL4HvHy8QicJUYtlmXfH4s8r+urZWXkX5UbfqaF+6EsR6rw1p0NcHqcO1fbofE/X7EUHgaBub9RGhG1K+nDAPa5oZYmqb9ovU7YnlgEGcKqMW4ifJs/qkiIGNOR8GGHIHeZDNxHdox9TQNSA0YNkUezR8tZxTeM+foD9QhC34RY=
-  on:
-    python: 3.6
-    tags: true
-    repo: TriOptima/tri.table
+
+stages:
+  - lint
+  - test
+  - build
+  - coverage
+  - deploy
+
+install:
+  - pip install -r test_requirements.txt
+  - pip install .
+
+script: python -m pytest
+
+jobs:
+  include:
+    - stage: lint
+      python: "3.6"
+      before_install:
+        - pip install flake8
+      script:
+        - flake8 lib/tri tests setup.py
+
+    - stage: test
+      python: "2.7"
+    - python: pypy
+    - python: "3.6"
+    - python: "3.7"
+      dist: xenial
+
+    - stage: coverage
+      python: "3.7"
+      before_install: python -m pip install codecov pytest-cov
+      script: python -m pytest --cov
+      after_success: codecov
+      dist: xenial
+
+    - stage: deploy
+      script: python setup.py sdist
+      deploy:
+        provider: pypi
+        user: j_lubcke
+        password:
+          secure: avY6WD95XBnoH+wUc6MVhpTia3cf7NXdfDlJapUGnYoSJLB4ISb6ZPG0JUoQ76kcOquKCo09d250H1FcRCsYPkhgFiWTk9L1qGi3tVx65345cwy4sPJn2HDzX/XUkXOT3G+litf7h4P/Z6BcbEy6Wu0kIy9UzCwfHkkTMuC/ZiwyIfbRpX1MJzLzZeuVHVtHLKAweq24rl9VEKxjOM0gd2h82LDMT9IE90s4qwq6iUqUAnU6FA2hy5QC6tAWcl5Rrrhax0y0EeyFnFS4OxsdBP1gFmMvfSLfD1mhqKNNBElf5RSkRcv5NE0jXVi73/UVkbwWibA3nJoYYJPDV+om3moUy/j39w/ERGQL9uBoOQuRO+K/7Ph7G6Xk63dVSRJvbICEc2sUL9j4tjwc+ZiiG3rU5GFvuf4gnPC/hJ/fd0QTaJXQe/f0hwdwovo7SCWP9TmoKsp7b1BnARS3IAb/NMjzzmNg6Xa2Csf1mdgGVPQXckG41syotjowq8Q2IW5IVL4HvHy8QicJUYtlmXfH4s8r+urZWXkX5UbfqaF+6EsR6rw1p0NcHqcO1fbofE/X7EUHgaBub9RGhG1K+nDAPa5oZYmqb9ovU7YnlgEGcKqMW4ifJs/qkiIGNOR8GGHIHeZDNxHdox9TQNSA0YNkUezR8tZxTeM+foD9QhC34RY=
+        on:
+          tags: true
+          repo: TriOptima/tri.table
