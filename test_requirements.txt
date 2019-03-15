@@ -1,4 +1,4 @@
-beautifulsoup4 >= 4.3.2
-pytest >= 2.9.1
-pytest-django
+beautifulsoup4==4.7.1
+pytest==4.3.1
+pytest-django==3.4.8
 -rrequirements.txt
