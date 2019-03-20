@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.3.1 (2019-03-20)
+~~~~~~~~~~~~~~~~~~
+
+* Fix that Django's DoesNotExist events don't leak out of the field-validation code
+
+
 5.3.0 (2019-02-18)
 ~~~~~~~~~~~~~~~~~~
 

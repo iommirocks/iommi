@@ -24,7 +24,7 @@ from .compat import HttpResponse
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
 
-__version__ = '5.2.2'  # pragma: no mutate
+__version__ = '5.3.1'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -293,7 +293,10 @@ def choice_queryset_endpoint__select2(field, value, **_):
 
 
 def choice_queryset_parse(field, string_value, **_):
-    return field.model.objects.get(pk=string_value) if string_value else None
+    try:
+        return field.model.objects.get(pk=string_value) if string_value else None
+    except field.model.DoesNotExist as e:
+        raise ValidationError(str(e))
 
 
 def choice_queryset_choice_to_option(field, choice, **_):

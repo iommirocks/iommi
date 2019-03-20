@@ -610,6 +610,22 @@ def test_field_from_model_foreign_key_choices():
     assert Bar.objects.get(pk=bar.pk).foo == foo2
 
 
+@pytest.mark.django_db
+def test_field_validate_foreign_key_does_not_exist():
+    from tests.models import Foo, FieldFromModelForeignKeyTest
+
+    foo = Foo.objects.create(foo=17)
+    assert Foo.objects.count() == 1
+
+    class MyForm(Form):
+        class Meta:
+            model = FieldFromModelForeignKeyTest
+            fields = Form.fields_from_model
+
+    assert MyForm(request=RequestFactory().post('/', data=dict(foo_fk=foo.pk))).is_valid() is True
+    assert MyForm(request=RequestFactory().post('/', data=dict(foo_fk=foo.pk + 1))).is_valid() is False
+
+
 @pytest.mark.django
 def test_form_default_fields_from_model():
     from tests.models import Foo
