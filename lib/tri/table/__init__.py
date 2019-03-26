@@ -1375,7 +1375,7 @@ class Table(RefinableObject):
             .filter(**self.bulk_filter) \
             .exclude(**self.bulk_exclude)
 
-        if self._bulk_form.fields_by_name._all_pks_.value == '1':
+        if self.request.POST.get('_all_pks_') == '1':
             return queryset
         else:
             pks = [key[len('pk_'):] for key in self.request.POST if key.startswith('pk_')]
