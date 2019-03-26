@@ -1,20 +1,70 @@
-from __future__ import unicode_literals, absolute_import
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 
 import copy
+import operator
 from collections import OrderedDict
 from datetime import date
-from functools import reduce
-from django.db.models import Q, F, Model
 from django.core.exceptions import ObjectDoesNotExist
-import operator
-from pyparsing import CaselessLiteral, Word, delimitedList, Optional, Combine, Group, alphas, nums, alphanums, Forward, \
-    oneOf, quotedString, ZeroOrMore, Keyword, ParseResults, ParseException, QuotedString
-from six import string_types, text_type, integer_types
+from django.db.models import (
+    F,
+    Model,
+    Q,
+)
+from functools import reduce
+from pyparsing import (
+    alphanums,
+    alphas,
+    CaselessLiteral,
+    Combine,
+    delimitedList,
+    Forward,
+    Group,
+    Keyword,
+    nums,
+    oneOf,
+    Optional,
+    ParseException,
+    ParseResults,
+    quotedString,
+    QuotedString,
+    Word,
+    ZeroOrMore,
+)
+from six import (
+    integer_types,
+    string_types,
+    text_type,
+)
+from tri.declarative import (
+    class_shortcut,
+    creation_ordered,
+    declarative,
+    dispatch,
+    EMPTY,
+    evaluate_recursive,
+    filter_show_recursive,
+    Namespace,
+    Refinable,
+    refinable,
+    RefinableObject,
+    setdefaults_path,
+    sort_after,
+    with_meta,
+)
+from tri.form import (
+    bool_parse,
+    create_members_from_model,
+    DISPATCH_PATH_SEPARATOR,
+    dispatch_prefix_and_remaining_from_key,
+    expand_member,
+    Field,
+    Form,
+    member_from_model,
+)
 from tri.struct import merged
-from tri.declarative import declarative, creation_ordered, setdefaults_path, filter_show_recursive, evaluate_recursive, \
-    sort_after, dispatch, EMPTY, RefinableObject, Refinable, Shortcut, shortcut, Namespace, refinable, with_meta
-from tri.form import Form, Field, bool_parse, member_from_model, expand_member, create_members_from_model, \
-    DISPATCH_PATH_SEPARATOR, dispatch_prefix_and_remaining_from_key
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -217,122 +267,135 @@ class Variable(RefinableObject):
             model_field=model_field,
             **kwargs)
 
+    @classmethod
+    @class_shortcut
+    def text(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.text = Shortcut(
-    call_target=Variable,
-)
+    @classmethod
+    @class_shortcut(
+        op_to_q_op=case_sensitive_op_to_q_op,
+    )
+    def case_sensitive(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.case_sensitive = Shortcut(
-    call_target=Variable,
-    op_to_q_op=case_sensitive_op_to_q_op,
-)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.choice,
+    )
+    def choice(cls, call_target=None, **kwargs):  # pragma: no cover
+        """
+        Field that has one value out of a set.
+        :type choices: list
+        """
+        setdefaults_path(kwargs, dict(
+            gui__choices=kwargs.get('choices'),
+        ))
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.choice_queryset,
+        op_to_q_op=lambda op: 'exact',
+        value_to_q_lookup='name',
+        value_to_q=choice_queryset_value_to_q,
+    )
+    def choice_queryset(cls, choices, call_target=None, **kwargs):
+        """
+        Field that has one value out of a set.
+        :type choices: django.db.models.QuerySet
+        """
+        from django.db.models import QuerySet
+        if 'model' not in kwargs:
+            assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
+            kwargs['model'] = choices.model
 
-@shortcut
-@dispatch(
-    call_target=Variable,
-    gui__call_target=Field.choice,
-)
-def variable_shortcut_choice(call_target, **kwargs):  # pragma: no cover
-    """
-    Field that has one value out of a set.
-    :type choices: list
-    """
-    setdefaults_path(kwargs, dict(
-        gui__choices=kwargs.get('choices'),
-    ))
-    return call_target(**kwargs)
+        setdefaults_path(kwargs, dict(
+            gui__choices=choices,
+            gui__model=kwargs['model'],
+            choices=choices,
+        ))
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        class_call_target="choice_queryset",
+        gui__call_target=Field.multi_choice_queryset,
+    )
+    def multi_choice_queryset(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.choice = staticmethod(variable_shortcut_choice)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.boolean,
+        value_to_q=boolean_value_to_q,
+    )
+    def boolean(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.boolean_tristate,
+        value_to_q=boolean_value_to_q,
+    )
+    def boolean_tristate(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-@shortcut
-@dispatch(
-    call_target=Variable,
-    gui__call_target=Field.choice_queryset,
-    op_to_q_op=lambda op: 'exact',
-    value_to_q_lookup='name',
-    value_to_q=choice_queryset_value_to_q,
-)
-def variable_shortcut_choice_queryset(call_target, choices, **kwargs):
-    """
-    Field that has one value out of a set.
-    :type choices: django.db.models.QuerySet
-    """
-    from django.db.models import QuerySet
-    if 'model' not in kwargs:
-        assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
-        kwargs['model'] = choices.model
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.integer,
+    )
+    def integer(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-    setdefaults_path(kwargs, dict(
-        gui__choices=choices,
-        gui__model=kwargs['model'],
-        choices=choices,
-    ))
-    return call_target(**kwargs)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.float,
+    )
+    def float(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.url,
+    )
+    def url(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.choice_queryset = staticmethod(variable_shortcut_choice_queryset)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.time,
+    )
+    def time(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.datetime,
+    )
+    def datetime(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.multi_choice_queryset = Shortcut(
-    call_target=Variable.choice_queryset,
-    gui__call_target=Field.multi_choice_queryset,
-)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.date,
+    )
+    def date(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.boolean = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.boolean,
-    value_to_q=boolean_value_to_q,
-)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.email,
+    )
+    def email(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Variable.boolean_tristate = Shortcut(
-    gui__call_target=Field.boolean_tristate,
-    call_target=Variable,
-    value_to_q=boolean_value_to_q,
-)
-
-
-Variable.integer = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.integer,
-)
-
-Variable.float = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.float,
-)
-
-Variable.url = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.url,
-)
-
-Variable.time = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.time,
-)
-
-Variable.datetime = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.datetime,
-)
-
-Variable.date = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.date,
-)
-
-Variable.email = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.email,
-)
-
-Variable.decimal = Shortcut(
-    call_target=Variable,
-    gui__call_target=Field.decimal,
-)
+    @classmethod
+    @class_shortcut(
+        gui__call_target=Field.decimal,
+    )
+    def decimal(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
 
 class StringValue(text_type):
@@ -413,6 +476,7 @@ class Query(RefinableObject):
             for name, variable in variables_dict.items():
                 variable.name = name
                 yield variable
+
         self.variables = sort_after(list(generate_variables()))
 
         bound_variables = [v._bind(self) for v in self.variables]
@@ -527,6 +591,7 @@ class Query(RefinableObject):
             except ValueError:
                 raise QueryException('Date %s-%s-%s is out of range' % (y, m, d))
             return date_object
+
         date_str = (integer('year') + '-' + integer('month') + '-' + integer('day')).setParseAction(parse_date_str)
 
         # define query tokens

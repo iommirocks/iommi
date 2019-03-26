@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.2.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Make Variable shortcuts compatible with subclassing
+
+
 4.1.0 (2019-02-18)
 ~~~~~~~~~~~~~~~~~~
 
