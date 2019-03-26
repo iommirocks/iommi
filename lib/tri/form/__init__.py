@@ -1,24 +1,60 @@
-from __future__ import unicode_literals, absolute_import
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 
+import copy
 import json
+import re
+import six
 import warnings
 from collections import OrderedDict
-import copy
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
-from itertools import chain, groupby
-import re
-
-from tri.declarative import should_show, creation_ordered, declarative, getattr_path, sort_after, with_meta, \
-    setdefaults_path, dispatch, setattr_path, assert_kwargs_empty, EMPTY, evaluate_recursive, shortcut, Shortcut, \
-    Namespace, RefinableObject, Refinable, refinable, flatten
+from decimal import (
+    Decimal,
+    InvalidOperation,
+)
+from itertools import (
+    chain,
+    groupby,
+)
+from tri.declarative import (
+    assert_kwargs_empty,
+    class_shortcut,
+    creation_ordered,
+    declarative,
+    dispatch,
+    EMPTY,
+    evaluate_recursive,
+    flatten,
+    getattr_path,
+    Namespace,
+    Refinable,
+    refinable,
+    RefinableObject,
+    setattr_path,
+    setdefaults_path,
+    shortcut,
+    Shortcut,
+    should_show,
+    sort_after,
+    with_meta,
+)
 from tri.struct import Struct
 
-from tri.form.compat import format_html, ValidationError, URLValidator, validate_email, slugify, render_to_string, \
-    field_defaults_factory, render_template, get_template_from_string, setup_db_compat
+from tri.form.compat import (
+    field_defaults_factory,
+    format_html,
+    get_template_from_string,
+    render_template,
+    render_to_string,
+    setup_db_compat,
+    slugify,
+    URLValidator,
+    validate_email,
+    ValidationError,
+)
 from tri.form.render import render_attrs
-import six
-
 from .compat import HttpResponse
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -845,280 +881,305 @@ class Field(RefinableObject):
         else:
             return render_template(self.form.request, self.template.format(style=style), context)
 
-
-Field.hidden = Shortcut(
-    call_target=Field,
-    input_type='hidden',
-    container__attrs__style__display='none',
-)
-
-Field.text = Shortcut(
-    call_target=Field,
-    input_type='text',
-)
-
-Field.textarea = Shortcut(
-    call_target=Field,
-    input_template='tri_form/text.html',
-)
-
-Field.integer = Shortcut(
-    call_target=Field,
-    parse=int_parse,
-)
-
-Field.float = Shortcut(
-    call_target=Field,
-    parse=float_parse,
-)
-
-Field.password = Shortcut(
-    call_target=Field,
-    input_type='password',
-)
-
-# Boolean field. Tries hard to parse a boolean value from its input.
-Field.boolean = Shortcut(
-    call_target=Field,
-    parse=lambda string_value, **_: bool_parse(string_value),
-    required=False,
-    template='tri_form/{style}_form_row_checkbox.html',
-    input_template='tri_form/checkbox.html',
-    is_boolean=True,
-)
-
-
-@shortcut
-@dispatch(
-    call_target=Field,
-    required=True,
-    is_list=False,
-    empty_label='---',
-    is_valid=choice_is_valid,
-    choice_to_option=choice_choice_to_option,
-    # parse=choice_parse,
-    input_template='tri_form/choice.html',
-)
-def field_shortcut_choice(call_target, **kwargs):
-    """
-    Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
-    :param empty_label: default '---'
-    :param choices: list of objects
-    :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
-    """
-    assert 'choices' in kwargs
-
-    original_post_validation = kwargs.get('post_validation')
-
-    def _choice_post_validation(form, field):
-        choice_post_validation(form=form, field=field)
-        if original_post_validation:
-            original_post_validation(form=form, field=field)
-
-    kwargs['post_validation'] = _choice_post_validation
-
-    setdefaults_path(
-        kwargs,
-        empty_choice_tuple=(None, '', kwargs['empty_label'], True),
+    @classmethod
+    @class_shortcut(
+        input_type='hidden',
+        container__attrs__style__display='none',
     )
+    def hidden(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-    return call_target(**kwargs)
-
-
-Field.choice = staticmethod(field_shortcut_choice)
-
-
-Field.boolean_tristate = Shortcut(
-    choices=[True, False],
-    parse=choice_parse,
-    choice_to_option=lambda form, field, choice, **_: (
-        choice,
-        'true' if choice else 'false',
-        'Yes' if choice else 'No',
-        choice == field.value,
-    ),
-    required=False,
-    call_target=Field.choice,
-)
-
-
-@shortcut
-@dispatch(
-    call_target=Field.choice,
-    parse=choice_queryset_parse,
-    choice_to_option=choice_queryset_choice_to_option,
-    endpoint_path=choice_queryset_endpoint_path,
-    endpoint__=choice_queryset_endpoint__select2,  # Backwards compatible
-    endpoint__select2=choice_queryset_endpoint__select2,
-    extra__endpoint_attr='name',
-    is_valid=choice_queryset_is_valid,
-)
-def field_choice_queryset(call_target, choices, **kwargs):
-    from django.db.models import QuerySet
-    if 'model' not in kwargs:
-        if isinstance(choices, QuerySet):
-            kwargs['model'] = choices.model
-        elif 'model_field' in kwargs:
-            kwargs['model'] = kwargs['model_field'].remote_field.model
-        else:
-            assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
-
-    setdefaults_path(
-        kwargs,
-        choices=(lambda form, **_: choices.all()) if isinstance(choices, QuerySet) else choices,  # clone the QuerySet if needed
+    @classmethod
+    @class_shortcut(
+        input_type='text',
     )
+    def text(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-    return call_target(**kwargs)
-
-
-Field.choice_queryset = staticmethod(field_choice_queryset)
-
-Field.multi_choice = Shortcut(
-    call_target=Field.choice,
-    attrs__multiple=True,
-    choice_to_option=multi_choice_choice_to_option,
-    is_list=True,
-)
-
-Field.multi_choice_queryset = Shortcut(
-    call_target=Field.choice_queryset,
-    attrs__multiple=True,
-    choice_to_option=multi_choice_queryset_choice_to_option,
-    is_list=True,
-)
-
-Field.radio = Shortcut(
-    call_target=Field.choice,
-    input_template='tri_form/radio.html',
-)
-
-Field.datetime = Shortcut(
-    call_target=Field,
-    parse=datetime_parse,
-    render_value=datetime_render_value,
-)
-
-Field.date = Shortcut(
-    call_target=Field,
-    parse=date_parse,
-    render_value=date_render_value,
-)
-
-Field.time = Shortcut(
-    call_target=Field,
-    parse=time_parse,
-    render_value=time_render_value,
-)
-
-Field.decimal = Shortcut(
-    call_target=Field,
-    parse=decimal_parse,
-)
-
-Field.url = Shortcut(
-    call_target=Field,
-    input_type='url',
-    parse=url_parse,
-)
-
-Field.file = Shortcut(
-    call_target=Field,
-    input_type='file',
-    template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
-    input_template='tri_form/file.html',
-    write_to_instance=file_write_to_instance,
-)
-
-# Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
-Field.heading = Shortcut(
-    call_target=Field,
-    show=True,
-    template='tri_form/heading.html',
-    editable=False,
-    attr=None,
-    name='@@heading@@',
-)
-
-
-@shortcut
-@dispatch(
-    call_target=Field,
-    editable=False,
-    attr=None,
-)
-def field_shortcut_info(value, call_target, **kwargs):
-    """
-    Shortcut to create an info entry.
-    """
-    setdefaults_path(
-        kwargs,
-        initial=value,
-
+    @classmethod
+    @class_shortcut(
+        input_template='tri_form/text.html',
     )
-    return call_target(**kwargs)
+    def textarea(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        parse=int_parse,
+    )
+    def integer(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Field.info = staticmethod(field_shortcut_info)
+    @classmethod
+    @class_shortcut(
+        parse=float_parse,
+    )
+    def float(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Field.email = Shortcut(
-    call_target=Field,
-    input_type='email',
-    parse=email_parse,
-)
+    @classmethod
+    @class_shortcut(
+        input_type='password',
+    )
+    def password(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Field.phone_number = Shortcut(
-    call_target=Field,
-    is_valid=phone_number_is_valid,
-)
+    # Boolean field. Tries hard to parse a boolean value from its input.
+    @classmethod
+    @class_shortcut(
+        parse=lambda string_value, **_: bool_parse(string_value),
+        required=False,
+        template='tri_form/{style}_form_row_checkbox.html',
+        input_template='tri_form/checkbox.html',
+        is_boolean=True,
+    )
+    def boolean(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        required=True,
+        is_list=False,
+        empty_label='---',
+        is_valid=choice_is_valid,
+        choice_to_option=choice_choice_to_option,
+        # parse=choice_parse,
+        input_template='tri_form/choice.html',
+    )
+    def choice(cls, call_target=None, **kwargs):
+        """
+        Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
+        :param empty_label: default '---'
+        :param choices: list of objects
+        :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
+        """
+        assert 'choices' in kwargs
 
-@shortcut
-@dispatch
-def field_shortcut_comma_separated(parent_field):
-    """
-    Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
+        original_post_validation = kwargs.get('post_validation')
 
-    .. code:: python
+        def _choice_post_validation(form, field):
+            choice_post_validation(form=form, field=field)
+            if original_post_validation:
+                original_post_validation(form=form, field=field)
 
-        Field.comma_separated(Field.email)
+        kwargs['post_validation'] = _choice_post_validation
 
-    :type parent_field: Field
-    """
-    new_field = copy.copy(parent_field)
+        setdefaults_path(
+            kwargs,
+            empty_choice_tuple=(None, '', kwargs['empty_label'], True),
+        )
 
-    def parse_comma_separated(form, field, string_value):
-        errors = []
-        result = []
-        for x in string_value.split(','):
-            x = x.strip()
-            try:
-                result.append(parent_field.parse(form=form, field=field, string_value=x.strip()))
-            except ValueError as e:
-                errors.append('Invalid value "%s": %s' % (x, e))
-            except ValidationError as e:
-                for message in e.messages:
-                    errors.append('Invalid value "%s": %s' % (x, message))
-        if errors:
-            raise ValidationError(errors)
-        return ', '.join(result)
+        return call_target(**kwargs)
 
-    new_field.parse = parse_comma_separated
+    @classmethod
+    @class_shortcut(
+        class_call_target="choice",
+        choices=[True, False],
+        parse=choice_parse,
+        choice_to_option=lambda form, field, choice, **_: (
+            choice,
+            'true' if choice else 'false',
+            'Yes' if choice else 'No',
+            choice == field.value,
+        ),
+        required=False,
+    )
+    def boolean_tristate(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-    def is_valid_comma_separated(form, field, parsed_data):
-        errors = set()
-        for x in parsed_data.split(','):
-            x = x.strip()
-            is_valid, error = parent_field.is_valid(form=form, field=field, parsed_data=x)
-            if not is_valid:
-                errors.add('Invalid value "%s": %s' % (x, error))
-        return errors == set(), errors
+    @classmethod
+    @class_shortcut(
+        class_call_target="choice",
+        parse=choice_queryset_parse,
+        choice_to_option=choice_queryset_choice_to_option,
+        endpoint_path=choice_queryset_endpoint_path,
+        endpoint__=choice_queryset_endpoint__select2,  # Backwards compatible
+        endpoint__select2=choice_queryset_endpoint__select2,
+        extra__endpoint_attr='name',
+        is_valid=choice_queryset_is_valid,
+    )
+    def choice_queryset(cls, choices, call_target=None, **kwargs):
+        from django.db.models import QuerySet
+        if 'model' not in kwargs:
+            if isinstance(choices, QuerySet):
+                kwargs['model'] = choices.model
+            elif 'model_field' in kwargs:
+                kwargs['model'] = kwargs['model_field'].remote_field.model
+            else:
+                assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 
-    new_field.is_valid = is_valid_comma_separated
+        setdefaults_path(
+            kwargs,
+            choices=(lambda form, **_: choices.all()) if isinstance(choices, QuerySet) else choices,  # clone the QuerySet if needed
+        )
 
-    return new_field
+        return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        class_call_target="choice",
+        attrs__multiple=True,
+        choice_to_option=multi_choice_choice_to_option,
+        is_list=True,
+    )
+    def multi_choice(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
-Field.comma_separated = staticmethod(field_shortcut_comma_separated)
+    @classmethod
+    @class_shortcut(
+        class_call_target="choice_queryset",
+        attrs__multiple=True,
+        choice_to_option=multi_choice_queryset_choice_to_option,
+        is_list=True,
+    )
+    def multi_choice_queryset(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        class_call_target="choice",
+        input_template='tri_form/radio.html',
+    )
+    def radio(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        parse=datetime_parse,
+        render_value=datetime_render_value,
+    )
+    def datetime(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        parse=date_parse,
+        render_value=date_render_value,
+    )
+    def date(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        parse=time_parse,
+        render_value=time_render_value,
+    )
+    def time(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        parse=decimal_parse,
+    )
+    def decimal(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        input_type='url',
+        parse=url_parse,
+    )
+    def url(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        input_type='file',
+        template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
+        input_template='tri_form/file.html',
+        write_to_instance=file_write_to_instance,
+    )
+    def file(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
+    @classmethod
+    @class_shortcut(
+        show=True,
+        template='tri_form/heading.html',
+        editable=False,
+        attr=None,
+        name='@@heading@@',
+    )
+    def heading(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        editable=False,
+        attr=None,
+    )
+    def info(cls, value, call_target=None, **kwargs):
+        """
+        Shortcut to create an info entry.
+        """
+        setdefaults_path(
+            kwargs,
+            initial=value,
+
+        )
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        input_type='email',
+        parse=email_parse,
+    )
+    def email(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        is_valid=phone_number_is_valid,
+    )
+    def phone_number(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @staticmethod
+    @shortcut
+    @dispatch
+    def comma_separated(parent_field):
+        """
+        Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
+
+        .. code:: python
+
+            Field.comma_separated(Field.email)
+
+        :type parent_field: Field
+        """
+        new_field = copy.copy(parent_field)
+
+        def parse_comma_separated(form, field, string_value):
+            errors = []
+            result = []
+            for x in string_value.split(','):
+                x = x.strip()
+                try:
+                    result.append(parent_field.parse(form=form, field=field, string_value=x.strip()))
+                except ValueError as e:
+                    errors.append('Invalid value "%s": %s' % (x, e))
+                except ValidationError as e:
+                    for message in e.messages:
+                        errors.append('Invalid value "%s": %s' % (x, message))
+            if errors:
+                raise ValidationError(errors)
+            return ', '.join(result)
+
+        new_field.parse = parse_comma_separated
+
+        def is_valid_comma_separated(form, field, parsed_data):
+            errors = set()
+            for x in parsed_data.split(','):
+                x = x.strip()
+                is_valid, error = parent_field.is_valid(form=form, field=field, parsed_data=x)
+                if not is_valid:
+                    errors.add('Invalid value "%s": %s' % (x, error))
+            return errors == set(), errors
+
+        new_field.is_valid = is_valid_comma_separated
+
+        return new_field
 
 
 def get_fields(model):
