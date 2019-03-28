@@ -14,7 +14,7 @@ from tri.form.compat import Template, smart_text
 from tri.declarative import getattr_path, setattr_path, Namespace
 from tri.struct import Struct
 from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, \
-    url_parse, render_template, Link, field_choice_queryset, datetime_parse, datetime_iso_formats, int_parse
+    url_parse, render_template, Link, datetime_parse, datetime_iso_formats, int_parse
 
 from .compat import RequestFactory
 
@@ -1521,7 +1521,7 @@ def test_namespaces_do_not_call_in_templates():
 @pytest.mark.django
 def test_choice_queryset_error_message_for_automatic_model_extraction():
     with pytest.raises(AssertionError) as e:
-        field_choice_queryset(choices=[])
+        Field.choice_queryset(choices=[])
 
     assert 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field' == str(e.value)
 
