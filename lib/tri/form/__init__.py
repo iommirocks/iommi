@@ -39,7 +39,7 @@ from tri.declarative import (
     should_show,
     sort_after,
     with_meta,
-)
+    evaluate)
 from tri.struct import Struct
 
 from tri.form.compat import (
@@ -112,33 +112,12 @@ def bool_parse(string_value):
         raise ValueError('%s is not a valid boolean value' % string_value)
 
 
-def foreign_key_factory(model_field, model, **kwargs):
-    del model
-    setdefaults_path(
-        kwargs,
-        choices=model_field.foreign_related_fields[0].model.objects.all(),
-    )
-    return Field.choice_queryset(model_field=model_field, **kwargs)
-
-
 def many_to_many_factory_read_from_instance(field, instance):
     return getattr_path(instance, field.attr).all()
 
 
 def many_to_many_factory_write_to_instance(field, instance, value):
     getattr_path(instance, field.attr).set(value)
-
-
-def many_to_many_factory(model_field, **kwargs):
-    setdefaults_path(
-        kwargs,
-        choices=model_field.remote_field.model.objects.all(),
-        read_from_instance=many_to_many_factory_read_from_instance,
-        write_to_instance=many_to_many_factory_write_to_instance,
-        extra__django_related_field=True,
-    )
-    kwargs['model'] = model_field.remote_field.model
-    return Field.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
 _field_factory_by_field_type = OrderedDict()
@@ -188,7 +167,7 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
     return members + (extra if extra is not None else []) + [Field.from_model(model=model, field_name=x) for x in extra_includes]
 
 
-def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
+def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
     if model_field is None:
         sub_field_name, _, field_path_rest = field_name.partition('__')
 
@@ -197,6 +176,7 @@ def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_re
 
         if field_path_rest:
             result = member_from_model(
+                cls=cls,
                 model=model_field.remote_field.model,
                 factory_lookup=factory_lookup,
                 defaults_factory=defaults_factory,
@@ -216,9 +196,9 @@ def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_re
     factory = factory_lookup.get(type(model_field), MISSING)
 
     if factory is MISSING:
-        for django_field_type, func in reversed(factory_lookup.items()):
+        for django_field_type, foo in reversed(factory_lookup.items()):
             if isinstance(model_field, django_field_type):
-                factory = func
+                factory = foo
                 break  # pragma: no mutate optimization
 
     if factory is MISSING:
@@ -227,25 +207,39 @@ def member_from_model(model, factory_lookup, defaults_factory, factory_lookup_re
             message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
         raise AssertionError(message)
 
-    return factory(model_field=model_field, model=model, **kwargs) if factory else None
+    def call_target(*call_target_args, **call_target_kwargs):
+        class_call_target = call_target_kwargs.pop('class_call_target', None)
+        if class_call_target:
+            return getattr(cls, class_call_target)(*call_target_args, **call_target_kwargs)
+        else:
+            return cls(*call_target_args, **call_target_kwargs)
+
+    if factory:
+        factory = evaluate(factory, model_field=model_field, field_name=field_name)
+    return factory(call_target=call_target, model_field=model_field, model=model, **kwargs) if factory else None
 
 
 @dispatch(
     field=EMPTY,
 )
-def expand_member(model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
+def expand_member(cls, model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
     if model_field is None:
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
 
-    result = [member_from_model(model=model_field.remote_field.model,
-                                factory_lookup=factory_lookup,
-                                factory_lookup_register_function=register_field_factory,
-                                defaults_factory=defaults_factory,
-                                field_name=sub_model_field.name,
-                                name=name + '__' + sub_model_field.name,
-                                **field.pop(sub_model_field.name, {}))
-              for sub_model_field in get_fields(model=model_field.remote_field.model)]
+    result = [
+        member_from_model(
+            cls=cls,
+            model=model_field.remote_field.model,
+            factory_lookup=factory_lookup,
+            factory_lookup_register_function=register_field_factory,
+            defaults_factory=defaults_factory,
+            field_name=sub_model_field.name,
+            name=name + '__' + sub_model_field.name,
+            **field.pop(sub_model_field.name, {})
+        )
+        for sub_model_field in get_fields(model=model_field.remote_field.model)
+    ]
     assert_kwargs_empty(field)
     return [x for x in result if x is not None]
 
@@ -351,13 +345,11 @@ datetime_iso_formats = [
 
 
 def datetime_parse(string_value, **_):
-    errors = []
     for iso_format in datetime_iso_formats:
         try:
             return datetime.strptime(string_value, iso_format)
-        except ValueError as e:
-            errors.append('%s' % e)
-    assert errors
+        except ValueError:
+            pass
     raise ValidationError('Time data "%s" does not match any of the formats %s' % (string_value, ', '.join('"%s"' % x for x in datetime_iso_formats)))
 
 
@@ -850,9 +842,10 @@ class Field(RefinableObject):
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
-    @staticmethod
-    def from_model(model, field_name=None, model_field=None, **kwargs):
+    @classmethod
+    def from_model(cls, model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
+            cls=cls,
             model=model,
             factory_lookup=_field_factory_by_field_type,
             factory_lookup_register_function=register_field_factory,
@@ -861,9 +854,10 @@ class Field(RefinableObject):
             model_field=model_field,
             **kwargs)
 
-    @staticmethod
-    def from_model_expand(model, field_name=None, model_field=None, **kwargs):
+    @classmethod
+    def from_model_expand(cls, model, field_name=None, model_field=None, **kwargs):
         return expand_member(
+            cls=cls,
             model=model,
             factory_lookup=_field_factory_by_field_type,
             defaults_factory=field_defaults_factory,
@@ -1135,20 +1129,49 @@ class Field(RefinableObject):
     def phone_number(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
-    @staticmethod
-    @shortcut
-    @dispatch
-    def comma_separated(parent_field):
+    @classmethod
+    @class_shortcut(
+        class_call_target='choice_queryset',
+    )
+    def foreign_key(cls, model_field, model, call_target, **kwargs):
+        del model
+        setdefaults_path(
+            kwargs,
+            choices=model_field.foreign_related_fields[0].model.objects.all(),
+        )
+        return call_target(model_field=model_field, **kwargs)
+
+    @classmethod
+    @class_shortcut(
+        class_call_target='multi_choice_queryset',
+    )
+    def many_to_many(cls, call_target, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=model_field.remote_field.model.objects.all(),
+            read_from_instance=many_to_many_factory_read_from_instance,
+            write_to_instance=many_to_many_factory_write_to_instance,
+            extra__django_related_field=True,
+        )
+        kwargs['model'] = model_field.remote_field.model
+        return call_target(model_field=model_field, **kwargs)
+
+    @classmethod
+    @class_shortcut(
+        nested=EMPTY,
+    )
+    def comma_separated(cls, call_target, nested, **kwargs):
         """
         Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
 
         .. code:: python
 
-            Field.comma_separated(Field.email)
-
-        :type parent_field: Field
+            Field.comma_separated(nested=Field.email)
         """
-        new_field = copy.copy(parent_field)
+        if 'call_target' in nested:
+            nested = nested()
+        else:
+            nested = nested(class_call_target_class=cls)
 
         def parse_comma_separated(form, field, string_value):
             errors = []
@@ -1156,7 +1179,7 @@ class Field(RefinableObject):
             for x in string_value.split(','):
                 x = x.strip()
                 try:
-                    result.append(parent_field.parse(form=form, field=field, string_value=x.strip()))
+                    result.append(nested.parse(form=form, field=field, string_value=x.strip()))
                 except ValueError as e:
                     errors.append('Invalid value "%s": %s' % (x, e))
                 except ValidationError as e:
@@ -1166,20 +1189,16 @@ class Field(RefinableObject):
                 raise ValidationError(errors)
             return ', '.join(result)
 
-        new_field.parse = parse_comma_separated
-
         def is_valid_comma_separated(form, field, parsed_data):
             errors = set()
             for x in parsed_data.split(','):
                 x = x.strip()
-                is_valid, error = parent_field.is_valid(form=form, field=field, parsed_data=x)
+                is_valid, error = nested.is_valid(form=form, field=field, parsed_data=x)
                 if not is_valid:
                     errors.add('Invalid value "%s": %s' % (x, error))
             return errors == set(), errors
 
-        new_field.is_valid = is_valid_comma_separated
-
-        return new_field
+        return call_target(is_valid=is_valid_comma_separated, parse=parse_comma_separated, **kwargs)
 
 
 def get_fields(model):
@@ -1235,11 +1254,11 @@ class Form(RefinableObject):
     """ :type: tri.declarative.Namespace """
     base_template = Refinable()
     """ :type: str """
-    field_class = Refinable()
+    member_class = Refinable()
 
     class Meta:
         base_template = 'tri_form/base.html'
-        field_class = Field
+        member_class = Field
 
     @dispatch(
         is_full_form=True,
@@ -1370,7 +1389,7 @@ class Form(RefinableObject):
     def fields_from_model(cls, field, **kwargs):
         return create_members_from_model(
             member_params_by_member_name=field,
-            default_factory=cls.get_meta().field_class.from_model,
+            default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 

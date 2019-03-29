@@ -1,3 +1,5 @@
+from tri.declarative import Shortcut
+
 try:
     from django.core.exceptions import ValidationError
     from django.core.validators import validate_email, URLValidator
@@ -25,31 +27,40 @@ try:
             return engines['django'].from_string(template_code)
 
     def setup_db_compat():
-        from tri.form import register_field_factory, Field, foreign_key_factory, many_to_many_factory
-        from tri.declarative import setdefaults_path
+        from tri.form import register_field_factory
         from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, \
             CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, \
             ForeignKey, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
 
         # The order here is significant because of inheritance structure. More specific must be below less specific.
-        register_field_factory(CharField, Field)
-        register_field_factory(URLField, Field.url)
-        register_field_factory(TimeField, Field.time)
-        register_field_factory(EmailField, Field.email)
-        register_field_factory(DecimalField, Field.decimal)
-        register_field_factory(DateField, Field.date)
-        register_field_factory(DateTimeField, Field.datetime)
-        register_field_factory(CommaSeparatedIntegerField, lambda **kwargs: Field.comma_separated(parent_field=Field.integer(**kwargs)))
-        register_field_factory(BooleanField, lambda model_field, **kwargs: Field.boolean(model_field=model_field, **kwargs) if not model_field.null else Field.boolean_tristate(model_field=model_field, **kwargs))
-        register_field_factory(TextField, Field.text)
-        register_field_factory(FloatField, Field.float)
-        register_field_factory(IntegerField, Field.integer)
-        register_field_factory(AutoField, lambda **kwargs: Field.integer(**setdefaults_path(kwargs, show=False)))
+        register_field_factory(CharField, Shortcut(class_call_target=''))
+        register_field_factory(URLField, Shortcut(class_call_target='url'))
+        register_field_factory(TimeField, Shortcut(class_call_target='time'))
+        register_field_factory(EmailField, Shortcut(class_call_target='email'))
+        register_field_factory(DecimalField, Shortcut(class_call_target='decimal'))
+        register_field_factory(DateField, Shortcut(class_call_target='date'))
+        register_field_factory(DateTimeField, Shortcut(class_call_target='datetime'))
+        register_field_factory(
+            CommaSeparatedIntegerField,
+            Shortcut(class_call_target='comma_separated', nested=Shortcut(class_call_target='integer')),
+        )
+        register_field_factory(
+            BooleanField,
+            lambda model_field, **kwargs: (
+                Shortcut(class_call_target='boolean')
+                if not model_field.null
+                else Shortcut(class_call_target='boolean_tristate')
+            )
+        )
+        register_field_factory(TextField, Shortcut(class_call_target='text'))
+        register_field_factory(FloatField, Shortcut(class_call_target='float'))
+        register_field_factory(IntegerField, Shortcut(class_call_target='integer'))
+        register_field_factory(AutoField, Shortcut(class_call_target='integer', show=False))
         register_field_factory(ManyToOneRel, None)
         register_field_factory(ManyToManyRel, None)
-        register_field_factory(FileField, Field.file)
-        register_field_factory(ForeignKey, foreign_key_factory)
-        register_field_factory(ManyToManyField, many_to_many_factory)
+        register_field_factory(FileField, Shortcut(class_call_target='file'))
+        register_field_factory(ForeignKey, Shortcut(class_call_target='foreign_key'))
+        register_field_factory(ManyToManyField, Shortcut(class_call_target='many_to_many'))
 
     def field_defaults_factory(model_field):
         from tri.form import capitalize

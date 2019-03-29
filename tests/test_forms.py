@@ -308,7 +308,7 @@ def test_email_field():
 
 
 def test_multi_email():
-    assert Form(data=dict(foo='foo@example.com, foo@example.com'), fields=[Field.comma_separated(Field.email(name='foo'))]).is_valid()
+    assert Form(data=dict(foo='foo@example.com, foo@example.com'), fields=[Field.comma_separated(nested=Field.email, name='foo')]).is_valid()
 
 
 def test_comma_separated_errors_on_parse():
@@ -320,14 +320,14 @@ def test_comma_separated_errors_on_parse():
 
     assert Form(
         data=dict(foo='5, 7'),
-        fields=[Field.comma_separated(Field(name='foo', parse=raise_always_value_error))]).fields[0].errors == {
+        fields=[Field.comma_separated(name='foo', nested__parse=raise_always_value_error)]).fields[0].errors == {
             u'Invalid value "5": foo 5!',
             u'Invalid value "7": foo 7!',
     }
 
     assert Form(
         data=dict(foo='5, 7'),
-        fields=[Field.comma_separated(Field(name='foo', parse=raise_always_validation_error))]).fields[0].errors == {
+        fields=[Field.comma_separated(name='foo', nested__parse=raise_always_validation_error)]).fields[0].errors == {
             u'Invalid value "5": foo 5!',
             u'Invalid value "5": bar 5!',
             u'Invalid value "7": foo 7!',
@@ -338,7 +338,7 @@ def test_comma_separated_errors_on_parse():
 def test_comma_separated_errors_on_validation():
     assert Form(
         data=dict(foo='5, 7'),
-        fields=[Field.comma_separated(Field(name='foo', is_valid=lambda parsed_data, **_: (False, 'foo %s!' % parsed_data)))]).fields[0].errors == {
+        fields=[Field.comma_separated(name='foo', nested__is_valid=lambda parsed_data, **_: (False, 'foo %s!' % parsed_data))]).fields[0].errors == {
             u'Invalid value "5": foo 5!',
             u'Invalid value "7": foo 7!',
     }
@@ -1165,7 +1165,7 @@ def test_null_field_factory():
         should_be_null = ShouldBeNullField()
         foo = models.IntegerField()
 
-    register_field_factory(ShouldBeNullField, lambda **_: None)
+    register_field_factory(ShouldBeNullField, None)
 
     form = Form.from_model(data=None, model=FooModel)
     assert list(form.fields_by_name.keys()) == ['foo']
