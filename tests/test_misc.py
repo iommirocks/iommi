@@ -4,34 +4,37 @@ from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
+
 from tri.declarative import (
-    extract_subkeys,
-    getattr_path,
-    setattr_path,
-    sort_after,
-    LAST,
-    collect_namespaces,
-    assert_kwargs_empty,
-    setdefaults_path,
-    dispatch,
     EMPTY,
+    LAST,
     Namespace,
+    Refinable,
+    RefinableObject,
+    Shortcut,
+    assert_kwargs_empty,
+    class_shortcut,
+    collect_namespaces,
+    dispatch,
+    extract_subkeys,
     flatten,
     full_function_name,
-    RefinableObject,
-    refinable,
-    Refinable,
-    Shortcut,
-    shortcut,
-    is_shortcut,
+    get_members,
     get_shortcuts_by_name,
-    class_shortcut,
+    get_signature,
+    getattr_path,
+    is_shortcut,
+    refinable,
+    setattr_path,
+    setdefaults_path,
+    shortcut,
+    sort_after,
     with_meta,
-    get_members)
+)
 
 
 @pytest.fixture
-def supress_deprecation_warnings():
+def suppress_deprecation_warnings():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         yield
@@ -1059,3 +1062,9 @@ def test_get_members_error_message():
         get_members(None, None, None)
 
     assert str(e.value) == "get_members either needs a member_class parameter or an is_member check function (or both)"
+
+
+def test_get_signature_on_namespace_does_not_modify_its_contents():
+    foo = Namespace()
+    get_signature(foo)
+    assert str(foo) == 'Namespace()'
