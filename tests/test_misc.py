@@ -259,7 +259,7 @@ def test_namespace_missing_call_target():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
-    assert "TypeError: Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)" in str(e)
+    assert "TypeError: Namespace was used as a function, but no call_target or class_call_target_class was specified. The namespace is: Namespace(x=17)" in str(e)
 
 
 def test_namespace_flatten_loop_detection():
@@ -953,6 +953,23 @@ def test_retain_shortcut_type():
     assert isinstance(Shortcut(foo=Shortcut(bar=Shortcut())).foo.bar, Shortcut)
 
     assert Shortcut(foo__bar__q=1, foo=Shortcut(bar=Shortcut())).foo.bar.q == 1
+
+
+def test_shortcut_class_target():
+    class Foo(object):
+        @classmethod
+        def foo(cls):
+            return cls
+
+    assert Shortcut(class_call_target='foo', class_call_target_class=Foo)() is Foo
+
+
+def test_shortcut_class_target_invalid_call():
+
+    with pytest.raises(TypeError) as e:
+        Shortcut(class_target='foo', class_call_target_class='foo')
+
+    assert "You can only have call_target OR class_call_target_class, not both" == str(e.value)
 
 
 def test_refinable_object3():
