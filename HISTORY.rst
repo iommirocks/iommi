@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.4.0 (----------)
+5.4.0 (2019-04-01)
 ~~~~~~~~~~~~~~~~~~
 
 * Make Field shortcuts compatible with subclassing
