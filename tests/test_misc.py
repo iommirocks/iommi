@@ -146,7 +146,7 @@ def test_setdefaults_path():
     assert expected == actual
 
 
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_setdefaults_namespace_merge():
     actual = setdefaults_path(dict(
         x=1,
@@ -189,7 +189,7 @@ def test_setdefaults_callable_backward_not_namespace():
     assert expected == actual
 
 
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_setdefault_string_value():
     actual = setdefaults_path(
         Struct(foo='barf'),
@@ -322,7 +322,7 @@ def test_namespace_setitem_namespace_merge():
     assert dict(x=dict(y=17, z=42)) == x
 
 
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_namespace_setitem_promote_string_to_namespace():
     x = Namespace(x='y')
     x.setitem_path('x__z', 17)
@@ -393,7 +393,7 @@ def test_dispatch():
     (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
     (Namespace(bar__='foo'), Namespace(bar__fisk="hi"), Namespace(bar__='foo', bar__fisk='hi')),
 ], ids=str)
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_merge(a, b, expected, backward):
     if backward:
         a, b = b, a
@@ -967,7 +967,7 @@ def test_shortcut_class_target():
 def test_shortcut_class_target_invalid_call():
 
     with pytest.raises(TypeError) as e:
-        Shortcut(class_target='foo', class_call_target_class='foo')
+        Shortcut(call_target='foo', class_call_target_class='foo')()
 
     assert "You can only have call_target OR class_call_target_class, not both" == str(e.value)
 
