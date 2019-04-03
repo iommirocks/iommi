@@ -302,7 +302,7 @@ def get_signature(func):
         :rtype: str
     """
     try:
-        return func.__tri_declarative_signature
+        return object.__getattribute__(func, '__tri_declarative_signature')
     except AttributeError:
         pass
 
@@ -327,7 +327,10 @@ def get_signature(func):
 
     signature = '|'.join((required, optional, wildcard))
     try:
-        func.__tri_declarative_signature = signature
+        object.__setattr__(func, '__tri_declarative_signature', signature)
+    except TypeError:
+        # For classes
+        type.__setattr__(func, '__tri_declarative_signature', signature)
     except AttributeError:
         pass
     return signature
@@ -578,10 +581,23 @@ class Namespace(Struct):
 
     def __call__(self, *args, **kwargs):
         params = Namespace(self, kwargs)
+
+        if 'call_target' in params and 'class_call_target_class' in params:
+            raise TypeError('You can only have call_target OR class_call_target_class, not both')
+
         try:
             target = params.pop('call_target')
         except KeyError:
-            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self)  # pragma: no mutate
+
+            try:
+                class_call_target = params.pop('class_call_target', None)
+                cls = params.pop('class_call_target_class')
+                if class_call_target:
+                    target = getattr(cls, class_call_target)
+                else:
+                    target = cls
+            except KeyError:
+                raise TypeError('Namespace was used as a function, but no call_target or class_call_target_class was specified. The namespace is: %s' % self)
         return target(*args, **params)
 
 

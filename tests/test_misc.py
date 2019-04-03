@@ -4,34 +4,37 @@ from collections import OrderedDict
 
 import pytest
 from tri.struct import Struct
+
 from tri.declarative import (
-    extract_subkeys,
-    getattr_path,
-    setattr_path,
-    sort_after,
-    LAST,
-    collect_namespaces,
-    assert_kwargs_empty,
-    setdefaults_path,
-    dispatch,
     EMPTY,
+    LAST,
     Namespace,
+    Refinable,
+    RefinableObject,
+    Shortcut,
+    assert_kwargs_empty,
+    class_shortcut,
+    collect_namespaces,
+    dispatch,
+    extract_subkeys,
     flatten,
     full_function_name,
-    RefinableObject,
-    refinable,
-    Refinable,
-    Shortcut,
-    shortcut,
-    is_shortcut,
+    get_members,
     get_shortcuts_by_name,
-    class_shortcut,
+    get_signature,
+    getattr_path,
+    is_shortcut,
+    refinable,
+    setattr_path,
+    setdefaults_path,
+    shortcut,
+    sort_after,
     with_meta,
-    get_members)
+)
 
 
 @pytest.fixture
-def supress_deprecation_warnings():
+def suppress_deprecation_warnings():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         yield
@@ -143,7 +146,7 @@ def test_setdefaults_path():
     assert expected == actual
 
 
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_setdefaults_namespace_merge():
     actual = setdefaults_path(dict(
         x=1,
@@ -186,7 +189,7 @@ def test_setdefaults_callable_backward_not_namespace():
     assert expected == actual
 
 
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_setdefault_string_value():
     actual = setdefaults_path(
         Struct(foo='barf'),
@@ -256,7 +259,7 @@ def test_namespace_missing_call_target():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
-    assert "TypeError: Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)" in str(e)
+    assert "TypeError: Namespace was used as a function, but no call_target or class_call_target_class was specified. The namespace is: Namespace(x=17)" in str(e)
 
 
 def test_namespace_flatten_loop_detection():
@@ -319,7 +322,7 @@ def test_namespace_setitem_namespace_merge():
     assert dict(x=dict(y=17, z=42)) == x
 
 
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_namespace_setitem_promote_string_to_namespace():
     x = Namespace(x='y')
     x.setitem_path('x__z', 17)
@@ -390,7 +393,7 @@ def test_dispatch():
     (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
     (Namespace(bar__='foo'), Namespace(bar__fisk="hi"), Namespace(bar__='foo', bar__fisk='hi')),
 ], ids=str)
-@pytest.mark.usefixtures('supress_deprecation_warnings')
+@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_merge(a, b, expected, backward):
     if backward:
         a, b = b, a
@@ -952,6 +955,23 @@ def test_retain_shortcut_type():
     assert Shortcut(foo__bar__q=1, foo=Shortcut(bar=Shortcut())).foo.bar.q == 1
 
 
+def test_shortcut_class_target():
+    class Foo(object):
+        @classmethod
+        def foo(cls):
+            return cls
+
+    assert Shortcut(class_call_target='foo', class_call_target_class=Foo)() is Foo
+
+
+def test_shortcut_class_target_invalid_call():
+
+    with pytest.raises(TypeError) as e:
+        Shortcut(call_target='foo', class_call_target_class='foo')()
+
+    assert "You can only have call_target OR class_call_target_class, not both" == str(e.value)
+
+
 def test_refinable_object3():
     class MyClass(RefinableObject):
         x = Refinable()
@@ -1059,3 +1079,9 @@ def test_get_members_error_message():
         get_members(None, None, None)
 
     assert str(e.value) == "get_members either needs a member_class parameter or an is_member check function (or both)"
+
+
+def test_get_signature_on_namespace_does_not_modify_its_contents():
+    foo = Namespace()
+    get_signature(foo)
+    assert str(foo) == 'Namespace()'
