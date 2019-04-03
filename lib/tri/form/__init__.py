@@ -164,7 +164,7 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
             else:
                 members.append(foo)
     assert_kwargs_empty(member_params_by_member_name)
-    return members + (extra if extra is not None else []) + [Field.from_model(model=model, field_name=x) for x in extra_includes]
+    return members + (extra if extra is not None else []) + [default_factory(model=model, field_name=x) for x in extra_includes]
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
