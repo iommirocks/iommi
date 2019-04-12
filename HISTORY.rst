@@ -1,10 +1,21 @@
 Changelog
 ---------
 
+6.0.0 (2019-04-12)
+~~~~~~~~~~~~~~~~~~
+
+* Make `Field` shortcuts compatible with subclassing. Previous fix didn't work all the way.
+
+* Use the new major tri.declarative, and update to follow the new style of class member shortcuts
+
+* Major fixes to how `from_model` works. Subclassing `Form` and `Field` now works like you'd expect. This is a breaking change.
+
+* Removed `Field.comma_separated` shortcut. This was never used, and poorly tested.
+
 5.4.0 (2019-04-01)
 ~~~~~~~~~~~~~~~~~~
 
-* Make Field shortcuts compatible with subclassing
+* Make `Field` shortcuts compatible with subclassing
 
 
 5.3.1 (2019-03-20)
