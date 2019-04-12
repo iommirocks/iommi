@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+5.0.0 (2019-04-12)
+~~~~~~~~~~~~~~~~~~
+
+* Make `Variable` shortcuts compatible with subclassing
+
+* Use the new major tri.declarative, and update to follow the new style of class member shortcuts
+
+* Added missing `Variable.multi_choice` shortcut
+
+
 4.2.0 (2019-04-01)
 ~~~~~~~~~~~~~~~~~~
 

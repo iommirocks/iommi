@@ -186,7 +186,7 @@ class Variable(RefinableObject):
         show=True,
         attr=MISSING,
         gui=Namespace(
-            call_target=Field,
+            call_target__cls=Field,
             show=False,
             required=False,
         ),
@@ -248,9 +248,10 @@ class Variable(RefinableObject):
         else:
             return r
 
-    @staticmethod
-    def from_model(model, field_name=None, model_field=None, **kwargs):
+    @classmethod
+    def from_model(cls, model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
+            cls=cls,
             model=model,
             factory_lookup=_variable_factory_by_django_field_type,
             field_name=field_name,
@@ -258,9 +259,10 @@ class Variable(RefinableObject):
             defaults_factory=lambda model_field: {},
             **kwargs)
 
-    @staticmethod
-    def expand_member(model, field_name=None, model_field=None, **kwargs):
+    @classmethod
+    def expand_member(cls, model, field_name=None, model_field=None, **kwargs):
         return expand_member(
+            cls=cls,
             model=model,
             factory_lookup=_variable_factory_by_django_field_type,
             field_name=field_name,
@@ -281,7 +283,7 @@ class Variable(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.choice,
+        gui__call_target__attribute='choice',
     )
     def choice(cls, call_target=None, **kwargs):  # pragma: no cover
         """
@@ -295,7 +297,21 @@ class Variable(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.choice_queryset,
+        gui__call_target__attribute='multi_choice',
+    )
+    def multi_choice(cls, call_target=None, **kwargs):  # pragma: no cover
+        """
+        Field that has one value out of a set.
+        :type choices: list
+        """
+        setdefaults_path(kwargs, dict(
+            gui__choices=kwargs.get('choices'),
+        ))
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        gui__call_target__attribute='choice_queryset',
         op_to_q_op=lambda op: 'exact',
         value_to_q_lookup='name',
         value_to_q=choice_queryset_value_to_q,
@@ -319,15 +335,15 @@ class Variable(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target="choice_queryset",
-        gui__call_target=Field.multi_choice_queryset,
+        call_target__attribute="choice_queryset",
+        gui__call_target__attribute='multi_choice_queryset',
     )
     def multi_choice_queryset(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.boolean,
+        gui__call_target__attribute='boolean',
         value_to_q=boolean_value_to_q,
     )
     def boolean(cls, call_target=None, **kwargs):
@@ -335,7 +351,7 @@ class Variable(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.boolean_tristate,
+        gui__call_target__attribute='boolean_tristate',
         value_to_q=boolean_value_to_q,
     )
     def boolean_tristate(cls, call_target=None, **kwargs):
@@ -343,59 +359,84 @@ class Variable(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.integer,
+        gui__call_target__attribute='integer',
     )
     def integer(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.float,
+        gui__call_target__attribute='float',
     )
     def float(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.url,
+        gui__call_target__attribute='url',
     )
     def url(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.time,
+        gui__call_target__attribute='time',
     )
     def time(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.datetime,
+        gui__call_target__attribute='datetime',
     )
     def datetime(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.date,
+        gui__call_target__attribute='date',
     )
     def date(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.email,
+        gui__call_target__attribute='email',
     )
     def email(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target=Field.decimal,
+        gui__call_target__attribute='decimal',
     )
     def decimal(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='choice_queryset',
+    )
+    def foreign_key(cls, model_field, model, call_target, **kwargs):
+        del model
+        setdefaults_path(
+            kwargs,
+            choices=model_field.foreign_related_fields[0].model.objects.all(),
+        )
+        return call_target(model_field=model_field, **kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='multi_choice_queryset',
+    )
+    def many_to_many(cls, call_target, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=model_field.remote_field.model.objects.all(),
+            extra__django_related_field=True,
+        )
+        kwargs['model'] = model_field.remote_field.model
+        return call_target(model_field=model_field, **kwargs)
 
 
 class StringValue(text_type):
@@ -445,6 +486,13 @@ class Query(RefinableObject):
     """ :type: str """
     endpoint = Refinable()
     """ :type: tri.declarative.Namespace """
+
+    member_class = Refinable()
+    form_class = Refinable()
+
+    class Meta:
+        member_class = Variable
+        form_class = Form
 
     @dispatch(
         gui__call_target=Form,
