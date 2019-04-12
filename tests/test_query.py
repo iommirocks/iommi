@@ -46,13 +46,6 @@ def test_show():
     assert [x.name for x in ShowQuery(request=Struct(GET=Data(foo='show'))).bound_variables] == ['foo', 'bar']
 
 
-def test_namespace_merge():
-    v = Variable(gui__show=True)
-    assert v.gui.call_target == Field
-    v = Variable(gui=Struct(show=True))
-    assert v.gui.call_target == Field
-
-
 def test_request_data():
     r = Struct(method='POST', POST='POST', GET='GET')
     assert request_data(r) == 'POST'
