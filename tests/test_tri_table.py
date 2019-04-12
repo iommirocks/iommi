@@ -1,26 +1,42 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 
 import json
 
 import django
+import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
-import pytest
 from django.utils.safestring import mark_safe
-from tri.declarative import getattr_path, Namespace
-from tri.form import Field
-from tri.query import Variable
+from tri.declarative import (
+    getattr_path,
+    Namespace,
+)
 
 from tests.helpers import verify_table_html
-from tests.models import Foo, Bar, Baz
-
-from tri.table import Struct, Table, Column, Link, render_table, render_table_to_response, register_cell_formatter, \
-    yes_no_formatter, SELECT_DISPLAY_NAME
+from tests.models import (
+    Bar,
+    Baz,
+    Foo,
+)
+from tri.table import (
+    Column,
+    Link,
+    register_cell_formatter,
+    render_table,
+    render_table_to_response,
+    SELECT_DISPLAY_NAME,
+    Struct,
+    Table,
+    yes_no_formatter,
+)
 
 
 def get_data():
