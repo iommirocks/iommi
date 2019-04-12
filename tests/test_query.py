@@ -4,7 +4,6 @@ from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
 from tests.models import Foo, Bar, Baz, NonStandardName
-from tri.form import Field
 from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
 from tri.struct import Struct
 
