@@ -265,6 +265,8 @@ class Column(RefinableObject):
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
         header__attrs__class__subheader=True,
         header__template='tri_table/header.html',
+        query__call_target__cls=Variable,
+        bulk__call_target__cls=Field,
     )
     def __init__(self, **kwargs):
         """
@@ -376,9 +378,10 @@ class Column(RefinableObject):
         warnings.warn('Column.render_css_class is deprecated, use Header.rendered_attrs', DeprecationWarning)
         return render_class(self.attrs['class'])
 
-    @staticmethod
-    def from_model(model, field_name=None, model_field=None, **kwargs):
+    @classmethod
+    def from_model(cls, model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
+            cls=cls,
             model=model,
             factory_lookup=_column_factory_by_field_type,
             factory_lookup_register_function=register_column_factory,
@@ -387,9 +390,10 @@ class Column(RefinableObject):
             defaults_factory=lambda model_field: {},
             **kwargs)
 
-    @staticmethod
-    def expand_member(model, field_name=None, model_field=None, **kwargs):
+    @classmethod
+    def expand_member(cls, model, field_name=None, model_field=None, **kwargs):
         return expand_member(
+            cls=cls,
             model=model,
             factory_lookup=_column_factory_by_field_type,
             field_name=field_name,
@@ -420,7 +424,7 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='icon',
+        call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
         display_name=''
     )
@@ -432,7 +436,7 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='icon',
+        call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
         display_name=''
     )
@@ -444,7 +448,7 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='icon',
+        call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
         cell__value=lambda row, **_: getattr(row, 'pk', False),
     )
@@ -498,8 +502,8 @@ class Column(RefinableObject):
     @classmethod
     @class_shortcut(
         cell__attrs__class__cj=True,
-        query__call_target=Variable.boolean,
-        bulk__call_target=Field.boolean,
+        query__call_target__attribute='boolean',
+        bulk__call_target__attribute='boolean',
     )
     def boolean(cls, is_report=False, call_target=None, **kwargs):
         """
@@ -518,8 +522,8 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='boolean',
-        query__call_target=Variable.boolean_tristate,
+        call_target__attribute='boolean',
+        query__call_target__attribute='boolean_tristate',
     )
     def boolean_tristate(cls, *args, **kwargs):
         call_target = kwargs.pop('call_target', cls)
@@ -527,8 +531,8 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        bulk__call_target=Field.choice,
-        query__call_target=Variable.choice,
+        bulk__call_target__attribute='choice',
+        query__call_target__attribute='choice',
     )
     def choice(cls, call_target=None, **kwargs):
         choices = kwargs['choices']
@@ -540,9 +544,9 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='choice',
-        bulk__call_target=Field.choice_queryset,
-        query__call_target=Variable.choice_queryset,
+        call_target__attribute='choice',
+        bulk__call_target__attribute='choice_queryset',
+        query__call_target__attribute='choice_queryset',
     )
     def choice_queryset(cls, call_target=None, **kwargs):
         setdefaults_path(kwargs, dict(
@@ -553,9 +557,9 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='choice',
-        bulk__call_target=Field.multi_choice_queryset,
-        query__call_target=Variable.multi_choice_queryset,
+        call_target__attribute='choice',
+        bulk__call_target__attribute='multi_choice_queryset',
+        query__call_target__attribute='multi_choice_queryset',
         cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
     )
     def multi_choice_queryset(cls, call_target, **kwargs):
@@ -594,18 +598,18 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='number',
-        query__call_target=Variable.float,
-        bulk__call_target=Field.float,
+        call_target__attribute='number',
+        query__call_target__attribute='float',
+        bulk__call_target__attribute='float',
     )
     def float(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        class_call_target='number',
-        query__call_target=Variable.integer,
-        bulk__call_target=Field.integer,
+        call_target__attribute='number',
+        query__call_target__attribute='integer',
+        bulk__call_target__attribute='integer',
     )
     def integer(cls, call_target, **kwargs):
         return call_target(**kwargs)
@@ -619,45 +623,72 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        query__call_target=Variable.date,
+        query__call_target__attribute='date',
         query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-        bulk__call_target=Field.date,
+        bulk__call_target__attribute='date',
     )
     def date(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        query__call_target=Variable.datetime,
+        query__call_target__attribute='datetime',
         query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-        bulk__call_target=Field.datetime,
+        bulk__call_target__attribute='datetime',
     )
     def datetime(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        query__call_target=Variable.time,
+        query__call_target__attribute='time',
         query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
-        bulk__call_target=Field.time,
+        bulk__call_target__attribute='time',
     )
     def time(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        query__call_target=Variable.email,
-        bulk__call_target=Field.email,
+        query__call_target__attribute='email',
+        bulk__call_target__attribute='email',
     )
     def email(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        bulk__call_target=Field.decimal,
-        query__call_target=Variable.decimal,
+        bulk__call_target__attribute='decimal',
+        query__call_target__attribute='decimal',
     )
     def decimal(cls, call_target, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='multi_choice_queryset',
+    )
+    def many_to_many(cls, call_target, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=model_field.remote_field.model.objects.all(),
+            bulk__call_target__attribute='many_to_many',
+            query__call_target__attribute='many_to_many',
+            extra__django_related_field=True,
+        )
+        kwargs['model'] = model_field.remote_field.model
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='choice_queryset',
+    )
+    def foreign_key(cls, call_target, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=model_field.foreign_related_fields[0].model.objects.all(),
+            model=model_field.foreign_related_fields[0].model,
+        )
         return call_target(**kwargs)
 
 
@@ -863,6 +894,14 @@ class Table(RefinableObject):
     superheader = Refinable()
     paginator = Refinable()
     """ :type: tri.declarative.Namespace """
+    member_class = Refinable()
+    form_class = Refinable()
+    query_class = Refinable()
+
+    class Meta:
+        member_class = Column
+        form_class = Form
+        query_class = Query
 
     @staticmethod
     @refinable
@@ -1201,17 +1240,21 @@ class Table(RefinableObject):
                         query_namespace = setdefaults_path(
                             Namespace(),
                             column.query,
-                            call_target=Variable,
+                            call_target__attribute='from_model',
+                            call_target__cls=self.get_meta().query_class.get_meta().member_class,
+                            model=self.model,
                             name=column.name,
-                            gui__display_name=column.display_name,
                             attr=column.attr,
-                            model=column.table.model,
+                            gui__display_name=column.display_name,
                         )
+                        if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
+                                'attribute') == 'from_model':
+                            query_namespace['field_name'] = column.attr
                         yield query_namespace()
 
             variables = list(generate_variables())
 
-            self._query = Query(
+            self._query = self.get_meta().query_class(
                 gui__name=self.name,
                 request=self.request,
                 variables=variables,
@@ -1235,14 +1278,16 @@ class Table(RefinableObject):
                         bulk_namespace = setdefaults_path(
                             Namespace(),
                             column.bulk,
-                            call_target=Field.from_model,
+                            call_target__attribute='from_model',
+                            call_target__cls=self.get_meta().form_class.get_meta().member_class,
+                            model=self.model,
                             name=column.name,
                             attr=column.attr,
+                            display_name=column.display_name,
                             required=False,
                             empty_choice_tuple=(None, '', '---', True),
-                            model=self.model,
                         )
-                        if bulk_namespace['call_target'] == Field.from_model:
+                        if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
                             bulk_namespace['field_name'] = column.attr
                         yield bulk_namespace()
 
@@ -1250,7 +1295,7 @@ class Table(RefinableObject):
             if bulk_fields:
                 bulk_fields.append(Field.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='tri_form/input.html'))
 
-                self._bulk_form = Form(
+                self._bulk_form = self.get_meta().form_class(
                     data=self.request.POST,
                     fields=bulk_fields,
                     name=self.name,
@@ -1325,22 +1370,22 @@ class Table(RefinableObject):
     def rendered_paginator(self):
         return self.render_paginator()
 
-    @staticmethod
+    @classmethod
     @dispatch(
         column=EMPTY,
     )
-    def columns_from_model(column, **kwargs):
+    def columns_from_model(cls, column, **kwargs):
         return create_members_from_model(
             member_params_by_member_name=column,
-            default_factory=Column.from_model,
+            default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
-    @staticmethod
+    @classmethod
     @dispatch(
         column=EMPTY,
     )
-    def from_model(data=None, model=None, column=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, data=None, model=None, column=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -1359,8 +1404,8 @@ class Table(RefinableObject):
         assert model is not None or data is not None, "model or data must be specified"
         if model is None and isinstance(data, QuerySet):
             model = data.model
-        columns = Table.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
-        return Table(data=data, model=model, instance=instance, columns=columns, **kwargs)
+        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
+        return cls(data=data, model=model, instance=instance, columns=columns, **kwargs)
 
     def endpoint_dispatch(self, key, value):
         parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
@@ -1545,7 +1590,7 @@ def table_context(request,
 
 
 @dispatch(
-    table=EMPTY,
+    table__call_target=Table.from_model,
 )
 def render_table(request,
                  table,
@@ -1575,10 +1620,10 @@ def render_table(request,
     if not context:
         context = {}
 
-    if table is None or isinstance(table, Namespace):
-        table = Table.from_model(**table)
+    if isinstance(table, Namespace):
+        table = table()
 
-    assert isinstance(table, Table)
+    assert isinstance(table, Table), table
     table.request = request
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=table)
