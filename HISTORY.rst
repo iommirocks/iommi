@@ -1,6 +1,21 @@
 Changelog
 ---------
 
+7.0.0 (2019-04-12)
+~~~~~~~~~~~~~~~~~~
+
+* Make `Column` shortcuts compatible with subclassing. The previous fix didn't work all the way.
+
+* Use the new major tri.declarative, and update to follow the new style of class member shortcuts
+
+* Removed support for django 1.8
+
+* `bulk_queryset` is now usable to create your own bulk actions without using `Table.bulk_form`
+
+* Bulk form now auto creates via `Form.from_model` correctly
+
+* Query is now auto created via `Query.from_model` correctly
+
 6.3.0 (2019-03-15)
 ~~~~~~~~~~~~~~~~~~
 

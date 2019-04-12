@@ -1305,39 +1305,39 @@ def test_query_namespace_inject():
             data=[],
             model=Foo,
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
-            columns=[Column(name='foo', query__show=True, query__gui__show=True)],
+            columns=[Column(name='a', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
         foo.prepare()
 
 
 def test_float():
     x = Column.float()
-    assert getattr_path(x, 'query__call_target') == Variable.float
-    assert getattr_path(x, 'bulk__call_target') == Field.float
+    assert getattr_path(x, 'query__call_target__attribute') == 'float'
+    assert getattr_path(x, 'bulk__call_target__attribute') == 'float'
 
 
 def test_integer():
     x = Column.integer()
-    assert getattr_path(x, 'query__call_target') == Variable.integer
-    assert getattr_path(x, 'bulk__call_target') == Field.integer
+    assert getattr_path(x, 'query__call_target__attribute') == 'integer'
+    assert getattr_path(x, 'bulk__call_target__attribute') == 'integer'
 
 
 def test_date():
     x = Column.date()
-    assert getattr_path(x, 'query__call_target') == Variable.date
-    assert getattr_path(x, 'bulk__call_target') == Field.date
+    assert getattr_path(x, 'query__call_target__attribute') == 'date'
+    assert getattr_path(x, 'bulk__call_target__attribute') == 'date'
 
 
 def test_datetime():
     x = Column.datetime()
-    assert getattr_path(x, 'query__call_target') == Variable.datetime
-    assert getattr_path(x, 'bulk__call_target') == Field.datetime
+    assert getattr_path(x, 'query__call_target__attribute') == 'datetime'
+    assert getattr_path(x, 'bulk__call_target__attribute') == 'datetime'
 
 
 def test_email():
     x = Column.email()
-    assert getattr_path(x, 'query__call_target') == Variable.email
-    assert getattr_path(x, 'bulk__call_target') == Field.email
+    assert getattr_path(x, 'query__call_target__attribute') == 'email'
+    assert getattr_path(x, 'bulk__call_target__attribute') == 'email'
 
 
 def test_backwards_compatible_call_target():
@@ -1346,7 +1346,7 @@ def test_backwards_compatible_call_target():
         raise Exception('Hello!')
 
     class FooTable(Table):
-        foo = Column(query__show=True, query__gui__show=True, query__gui=backwards_compatible_call_target)
+        a = Column(query__show=True, query__gui__show=True, query__gui=backwards_compatible_call_target)
 
     with pytest.raises(Exception) as e:
         t = FooTable(data=[], model=Foo)
@@ -1398,6 +1398,14 @@ def test_from_model():
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
     assert 'Some a' == t.bound_column_by_name['a'].display_name
     assert 'Some stuff' == t.bound_column_by_name['a'].extra.stuff
+
+
+def test_from_model_foreign_key():
+    t = Table.from_model(
+        model=Bar,
+    )
+    assert [x.name for x in t.columns] == ['id', 'foo', 'c']
+    assert [x.name for x in t.columns if x.show] == ['foo', 'c']
 
 
 @pytest.mark.django_db
