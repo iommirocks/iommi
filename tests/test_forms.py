@@ -307,43 +307,6 @@ def test_email_field():
     assert Form(data=dict(foo='foo@example.com'), fields=[Field.email(name='foo')]).is_valid()
 
 
-def test_multi_email():
-    assert Form(data=dict(foo='foo@example.com, foo@example.com'), fields=[Field.comma_separated(nested=Field.email, name='foo')]).is_valid()
-
-
-def test_comma_separated_errors_on_parse():
-    def raise_always_value_error(string_value, **_):
-        raise ValueError('foo %s!' % string_value)
-
-    def raise_always_validation_error(string_value, **_):
-        raise ValidationError(['foo %s!' % string_value, 'bar %s!' % string_value])
-
-    assert Form(
-        data=dict(foo='5, 7'),
-        fields=[Field.comma_separated(name='foo', nested__parse=raise_always_value_error)]).fields[0].errors == {
-            u'Invalid value "5": foo 5!',
-            u'Invalid value "7": foo 7!',
-    }
-
-    assert Form(
-        data=dict(foo='5, 7'),
-        fields=[Field.comma_separated(name='foo', nested__parse=raise_always_validation_error)]).fields[0].errors == {
-            u'Invalid value "5": foo 5!',
-            u'Invalid value "5": bar 5!',
-            u'Invalid value "7": foo 7!',
-            u'Invalid value "7": bar 7!',
-    }
-
-
-def test_comma_separated_errors_on_validation():
-    assert Form(
-        data=dict(foo='5, 7'),
-        fields=[Field.comma_separated(name='foo', nested__is_valid=lambda parsed_data, **_: (False, 'foo %s!' % parsed_data))]).fields[0].errors == {
-            u'Invalid value "5": foo 5!',
-            u'Invalid value "7": foo 7!',
-    }
-
-
 def test_phone_field():
     assert Form(data=dict(foo=' asdasd  '), fields=[Field.phone_number(name='foo')]).fields[0].errors == {u'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'}
     assert Form(data=dict(foo='+1 (212) 123 4567'), fields=[Field.phone_number(name='foo')]).is_valid()

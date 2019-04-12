@@ -29,38 +29,34 @@ try:
     def setup_db_compat():
         from tri.form import register_field_factory
         from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, \
-            CommaSeparatedIntegerField, DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, \
+            DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, \
             ForeignKey, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
 
         # The order here is significant because of inheritance structure. More specific must be below less specific.
-        register_field_factory(CharField, Shortcut(class_call_target=''))
-        register_field_factory(URLField, Shortcut(class_call_target='url'))
-        register_field_factory(TimeField, Shortcut(class_call_target='time'))
-        register_field_factory(EmailField, Shortcut(class_call_target='email'))
-        register_field_factory(DecimalField, Shortcut(class_call_target='decimal'))
-        register_field_factory(DateField, Shortcut(class_call_target='date'))
-        register_field_factory(DateTimeField, Shortcut(class_call_target='datetime'))
-        register_field_factory(
-            CommaSeparatedIntegerField,
-            Shortcut(class_call_target='comma_separated', nested=Shortcut(class_call_target='integer')),
-        )
+        register_field_factory(CharField, Shortcut())
+        register_field_factory(URLField, Shortcut(call_target__attribute='url'))
+        register_field_factory(TimeField, Shortcut(call_target__attribute='time'))
+        register_field_factory(EmailField, Shortcut(call_target__attribute='email'))
+        register_field_factory(DecimalField, Shortcut(call_target__attribute='decimal'))
+        register_field_factory(DateField, Shortcut(call_target__attribute='date'))
+        register_field_factory(DateTimeField, Shortcut(call_target__attribute='datetime'))
         register_field_factory(
             BooleanField,
             lambda model_field, **kwargs: (
-                Shortcut(class_call_target='boolean')
+                Shortcut(call_target__attribute='boolean')
                 if not model_field.null
-                else Shortcut(class_call_target='boolean_tristate')
+                else Shortcut(call_target__attribute='boolean_tristate')
             )
         )
-        register_field_factory(TextField, Shortcut(class_call_target='text'))
-        register_field_factory(FloatField, Shortcut(class_call_target='float'))
-        register_field_factory(IntegerField, Shortcut(class_call_target='integer'))
-        register_field_factory(AutoField, Shortcut(class_call_target='integer', show=False))
+        register_field_factory(TextField, Shortcut(call_target__attribute='text'))
+        register_field_factory(FloatField, Shortcut(call_target__attribute='float'))
+        register_field_factory(IntegerField, Shortcut(call_target__attribute='integer'))
+        register_field_factory(AutoField, Shortcut(call_target__attribute='integer', show=False))
         register_field_factory(ManyToOneRel, None)
         register_field_factory(ManyToManyRel, None)
-        register_field_factory(FileField, Shortcut(class_call_target='file'))
-        register_field_factory(ForeignKey, Shortcut(class_call_target='foreign_key'))
-        register_field_factory(ManyToManyField, Shortcut(class_call_target='many_to_many'))
+        register_field_factory(FileField, Shortcut(call_target__attribute='file'))
+        register_field_factory(ForeignKey, Shortcut(call_target__attribute='foreign_key'))
+        register_field_factory(ManyToManyField, Shortcut(call_target__attribute='many_to_many'))
 
     def field_defaults_factory(model_field):
         from tri.form import capitalize

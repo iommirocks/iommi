@@ -181,7 +181,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 factory_lookup=factory_lookup,
                 defaults_factory=defaults_factory,
                 factory_lookup_register_function=factory_lookup_register_function,
-                field_name=sub_field_name,
+                field_name=field_path_rest,
                 **kwargs)
             result.name = field_name
             result.attr = field_name
@@ -191,6 +191,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
         kwargs,
         defaults_factory(model_field),
         name=field_name,
+        call_target__cls=cls,
     )
 
     factory = factory_lookup.get(type(model_field), MISSING)
@@ -207,16 +208,9 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
             message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
         raise AssertionError(message)
 
-    def call_target(*call_target_args, **call_target_kwargs):
-        class_call_target = call_target_kwargs.pop('class_call_target', None)
-        if class_call_target:
-            return getattr(cls, class_call_target)(*call_target_args, **call_target_kwargs)
-        else:
-            return cls(*call_target_args, **call_target_kwargs)
-
     if factory:
         factory = evaluate(factory, model_field=model_field, field_name=field_name)
-    return factory(call_target=call_target, model_field=model_field, model=model, **kwargs) if factory else None
+    return factory(model_field=model_field, model=model, **kwargs) if factory is not None else None
 
 
 @dispatch(
@@ -967,7 +961,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target="choice",
+        call_target__attribute="choice",
         choices=[True, False],
         parse=choice_parse,
         choice_to_option=lambda form, field, choice, **_: (
@@ -983,7 +977,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target="choice",
+        call_target__attribute="choice",
         parse=choice_queryset_parse,
         choice_to_option=choice_queryset_choice_to_option,
         endpoint_path=choice_queryset_endpoint_path,
@@ -1011,7 +1005,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target="choice",
+        call_target__attribute="choice",
         attrs__multiple=True,
         choice_to_option=multi_choice_choice_to_option,
         is_list=True,
@@ -1021,7 +1015,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target="choice_queryset",
+        call_target__attribute="choice_queryset",
         attrs__multiple=True,
         choice_to_option=multi_choice_queryset_choice_to_option,
         is_list=True,
@@ -1031,7 +1025,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target="choice",
+        call_target__attribute="choice",
         input_template='tri_form/radio.html',
     )
     def radio(cls, call_target=None, **kwargs):
@@ -1131,7 +1125,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='choice_queryset',
+        call_target__attribute='choice_queryset',
     )
     def foreign_key(cls, model_field, model, call_target, **kwargs):
         del model
@@ -1143,7 +1137,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        class_call_target='multi_choice_queryset',
+        call_target__attribute='multi_choice_queryset',
     )
     def many_to_many(cls, call_target, model_field, **kwargs):
         setdefaults_path(
@@ -1155,50 +1149,6 @@ class Field(RefinableObject):
         )
         kwargs['model'] = model_field.remote_field.model
         return call_target(model_field=model_field, **kwargs)
-
-    @classmethod
-    @class_shortcut(
-        nested=EMPTY,
-    )
-    def comma_separated(cls, call_target, nested, **kwargs):
-        """
-        Shortcut to create a comma separated list of something. You can use this to create a comma separated text input that gives nice validation errors easily. Example:
-
-        .. code:: python
-
-            Field.comma_separated(nested=Field.email)
-        """
-        if 'call_target' in nested:
-            nested = nested()
-        else:
-            nested = nested(class_call_target_class=cls)
-
-        def parse_comma_separated(form, field, string_value):
-            errors = []
-            result = []
-            for x in string_value.split(','):
-                x = x.strip()
-                try:
-                    result.append(nested.parse(form=form, field=field, string_value=x.strip()))
-                except ValueError as e:
-                    errors.append('Invalid value "%s": %s' % (x, e))
-                except ValidationError as e:
-                    for message in e.messages:
-                        errors.append('Invalid value "%s": %s' % (x, message))
-            if errors:
-                raise ValidationError(errors)
-            return ', '.join(result)
-
-        def is_valid_comma_separated(form, field, parsed_data):
-            errors = set()
-            for x in parsed_data.split(','):
-                x = x.strip()
-                is_valid, error = nested.is_valid(form=form, field=field, parsed_data=x)
-                if not is_valid:
-                    errors.add('Invalid value "%s": %s' % (x, error))
-            return errors == set(), errors
-
-        return call_target(is_valid=is_valid_comma_separated, parse=parse_comma_separated, **kwargs)
 
 
 def get_fields(model):
