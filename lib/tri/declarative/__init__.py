@@ -582,23 +582,24 @@ class Namespace(Struct):
     def __call__(self, *args, **kwargs):
         params = Namespace(self, kwargs)
 
-        if 'call_target' in params and 'class_call_target_class' in params:
-            raise TypeError('You can only have call_target OR class_call_target_class, not both')
-
         try:
-            target = params.pop('call_target')
+            call_target = params.pop('call_target')
         except KeyError:
+            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self)
 
-            try:
-                class_call_target = params.pop('class_call_target', None)
-                cls = params.pop('class_call_target_class')
-                if class_call_target:
-                    target = getattr(cls, class_call_target)
+        if isinstance(call_target, Namespace):
+            if 'call_target' in call_target:
+                # Override of the default
+                call_target.pop('attribute', None)
+                call_target.pop('cls', None)
+            else:
+                # The default
+                if 'attribute' in call_target:
+                    call_target = getattr(call_target.cls, call_target.attribute)
                 else:
-                    target = cls
-            except KeyError:
-                raise TypeError('Namespace was used as a function, but no call_target or class_call_target_class was specified. The namespace is: %s' % self)
-        return target(*args, **params)
+                    call_target = call_target.cls
+
+        return call_target(*args, **params)
 
 
 # This is just a marker class for declaring shortcuts, and later for collecting them
@@ -623,14 +624,20 @@ def class_shortcut(*args, **defaults):
             **defaults
         )
         def class_shortcut_wrapper(cls, *args, **kwargs):
-            def call_target(*call_target_args, **call_target_kwargs):
-                class_call_target = call_target_kwargs.pop('class_call_target', None)
-                if class_call_target:
-                    return getattr(cls, class_call_target)(*call_target_args, **call_target_kwargs)
-                else:
-                    return cls(*call_target_args, **call_target_kwargs)
+            call_target = kwargs.pop('call_target', None)
+            if call_target is None:
+                setdefaults_path(
+                    kwargs,
+                    call_target__call_target__cls=cls,
+                )
+            else:
+                setdefaults_path(
+                    kwargs,
+                    call_target__call_target=call_target,
+                    call_target__call_target__cls=cls,
+                )
 
-            return __target__(cls, *args, call_target=call_target, **kwargs)
+            return __target__(cls, *args, **kwargs)
 
         class_shortcut_wrapper.__doc__ = __target__.__doc__
         return class_shortcut_wrapper

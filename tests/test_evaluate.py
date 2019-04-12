@@ -128,3 +128,21 @@ def test_evaluate_on_methods():
 
     f = Foo().bar
     assert f is evaluate(f, y=17)
+
+
+def test_early_return_from_get_signature():
+    def foo(a, b, c):
+        pass
+
+    object.__setattr__(foo, '__tri_declarative_signature', 'foobar')
+    assert get_signature(foo) == 'foobar'
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason='Does not work on python 2')
+def test_get_signature_for_classes():
+    class Foo(object):
+        def __init__(self, a, b, c):
+            pass
+
+    assert get_signature(Foo) == 'a,b,c,self||'
+    assert getattr(Foo, '__tri_declarative_signature') == 'a,b,c,self||'
