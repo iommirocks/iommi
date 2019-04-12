@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2.0.0 (2019-04-12)
+------------------
+
+* Fixed `get_signature` cache to not pollute struct-like dicts
+
+* New call_target semantics for class method shortcuts, this is a potential breaking change
+
+
 1.2.1 (2019-13-15)
 ------------------
 

@@ -259,7 +259,7 @@ def test_namespace_missing_call_target():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
-    assert "TypeError: Namespace was used as a function, but no call_target or class_call_target_class was specified. The namespace is: Namespace(x=17)" in str(e)
+    assert "TypeError: Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)" in str(e)
 
 
 def test_namespace_flatten_loop_detection():
@@ -812,14 +812,22 @@ def test_class_shortcut_class_call_target():
 
         @classmethod
         @class_shortcut(
-            class_call_target='shortcut'
+            call_target__attribute='shortcut'
         )
         def shortcut2(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            call_target=Foo.shortcut
+        )
+        def shortcut3(cls, call_target, **kwargs):
             return call_target(**kwargs)
 
     assert 7 == Foo.shortcut()
     assert 5 == MyFoo.shortcut()
     assert 5 == MyFoo.shortcut2()
+    assert 7 == MyFoo.shortcut3()
 
 
 def test_refinable_object_complete_example():
@@ -955,21 +963,14 @@ def test_retain_shortcut_type():
     assert Shortcut(foo__bar__q=1, foo=Shortcut(bar=Shortcut())).foo.bar.q == 1
 
 
-def test_shortcut_class_target():
+def test_shortcut_call_target_attribute():
     class Foo(object):
         @classmethod
         def foo(cls):
             return cls
 
-    assert Shortcut(class_call_target='foo', class_call_target_class=Foo)() is Foo
-
-
-def test_shortcut_class_target_invalid_call():
-
-    with pytest.raises(TypeError) as e:
-        Shortcut(call_target='foo', class_call_target_class='foo')()
-
-    assert "You can only have call_target OR class_call_target_class, not both" == str(e.value)
+    assert Shortcut(call_target__attribute='foo', call_target__cls=Foo)() is Foo
+    assert isinstance(Shortcut(call_target__cls=Foo)(), Foo)
 
 
 def test_refinable_object3():
@@ -1085,3 +1086,23 @@ def test_get_signature_on_namespace_does_not_modify_its_contents():
     foo = Namespace()
     get_signature(foo)
     assert str(foo) == 'Namespace()'
+
+
+def test_shortcut_chaining():
+    def endpoint(**kwargs):
+        return kwargs
+
+    foo = Shortcut(
+        call_target=endpoint,
+        tag='foo',
+    )
+    bar = Shortcut(
+        call_target=foo,
+        bar=1,
+
+        # these two will get popped off by Namespace.__call__, let's make sure they are!
+        call_target__cls='randomcrap',
+        call_target__attribute='randomcrap',
+    )
+
+    assert bar() == dict(tag='foo', bar=1)
