@@ -726,7 +726,7 @@ class Query(RefinableObject):
         elif form.is_valid():
             def expr(field, is_list, value):
                 if is_list:
-                    return ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list])
+                    return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list]) + ')'
                 return ''.join([
                     field.name,
                     self.bound_variable_by_name[field.name].gui_op,
