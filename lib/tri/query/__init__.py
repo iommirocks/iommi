@@ -68,7 +68,7 @@ from tri.struct import merged
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '4.2.0'  # pragma: no mutate
+__version__ = '4.2.1'  # pragma: no mutate
 
 
 class QueryException(Exception):
@@ -678,7 +678,7 @@ class Query(RefinableObject):
         elif form.is_valid():
             def expr(field, is_list, value):
                 if is_list:
-                    return ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list])
+                    return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list]) + ')'
                 return ''.join([
                     field.name,
                     self.bound_variable_by_name[field.name].gui_op,

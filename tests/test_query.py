@@ -431,3 +431,15 @@ def test_escape_quote_freetext():
     query = MyQuery(request=Struct(method='GET', GET={'term': '"', '-': '-'}))
     assert query.to_query_string() == '(foo:"\\"")'
     assert repr(query.to_q()) == repr(Q(**{'foo__icontains': '"'}))
+
+
+def test_freetext_combined_with_other_stuff():
+    class MyTestQuery(Query):
+        foo_name = Variable(attr='foo', freetext=True, gui__show=True)
+        bar_name = Variable.case_sensitive(attr='bar', freetext=True, gui__show=True)
+
+        baz_name = Variable(attr='baz', gui__show=True)
+
+    expected = repr(Q(baz__iexact='123') & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
+
+    assert repr(MyTestQuery(request=RequestFactory().get('/', {'-': '-', 'term': 'asd', 'baz_name': '123'})).to_q()) == expected

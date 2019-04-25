@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.2.1 (2019-04-25)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed `multi_choice_queryset` when selecting multiple items and also filtering on some other field at the same time.
+
+
 4.2.0 (2019-04-01)
 ~~~~~~~~~~~~~~~~~~
 
