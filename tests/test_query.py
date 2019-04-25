@@ -432,6 +432,6 @@ def test_freetext_combined_with_other_stuff():
 
         baz_name = Variable(attr='baz', gui__show=True)
 
-    expected = repr(Q(baz__iexact='123') & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
+    expected = repr(Q(**{'baz__iexact': '123'}) & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
 
     assert repr(MyTestQuery(request=RequestFactory().get('/', {'-': '-', 'term': 'asd', 'baz_name': '123'})).to_q()) == expected
