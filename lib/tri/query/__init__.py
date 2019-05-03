@@ -60,11 +60,9 @@ from tri.form import (
     DISPATCH_PATH_SEPARATOR,
     dispatch_prefix_and_remaining_from_key,
     expand_member,
-    Field,
     Form,
     member_from_model,
 )
-from tri.struct import merged
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -186,7 +184,6 @@ class Variable(RefinableObject):
         show=True,
         attr=MISSING,
         gui=Namespace(
-            call_target__cls=Field,
             show=False,
             required=False,
         ),
@@ -495,7 +492,6 @@ class Query(RefinableObject):
         form_class = Form
 
     @dispatch(
-        gui__call_target=Form,
         endpoint_dispatch_prefix='query',
         endpoint__gui=default_endpoint__gui,
         endpoint__errors=default_endpoint__errors,
@@ -505,6 +501,11 @@ class Query(RefinableObject):
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest
         """
+        setdefaults_path(
+            kwargs,
+            gui__call_target=self.get_meta().form_class,
+        )
+
         self.variables = []
         """ :type: list of Variable """
         self.bound_variables = []
@@ -695,14 +696,20 @@ class Query(RefinableObject):
         fields = []
 
         if any(v.freetext for v in self.variables):
-            fields.append(Field(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
+            fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
         for variable in self.bound_variables:
             if variable.gui is not None and variable.gui.show:
                 # pass gui__* parameters to the GUI component
                 assert variable.name is not MISSING
                 assert variable.attr is not MISSING
-                params = merged(Namespace(), variable.gui, name=variable.name, attr=variable.attr)
+                params = setdefaults_path(
+                    Namespace(),
+                    variable.gui,
+                    name=variable.name,
+                    attr=variable.attr,
+                    call_target__cls=self.get_meta().form_class.get_meta().member_class
+                )
                 fields.append(params())
 
         form = self.gui(
@@ -753,22 +760,22 @@ class Query(RefinableObject):
         """
         return self.parse(self.to_query_string())
 
-    @staticmethod
+    @classmethod
     @dispatch(
         variable=EMPTY,
     )
-    def variables_from_model(variable, **kwargs):
+    def variables_from_model(cls, variable, **kwargs):
         return create_members_from_model(
             member_params_by_member_name=variable,
-            default_factory=Variable.from_model,
+            default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
-    @staticmethod
+    @classmethod
     @dispatch(
         variable=EMPTY,
     )
-    def from_model(data, model, variable, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, data, model, variable, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -784,8 +791,8 @@ class Query(RefinableObject):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        variables = Query.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
-        return Query(data=data, variables=variables, **kwargs)
+        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
+        return cls(data=data, variables=variables, **kwargs)
 
     def endpoint_dispatch(self, key, value):
         prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)

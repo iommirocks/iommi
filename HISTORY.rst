@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.2 (2019-05-03)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed cases where from_model lost the type when inheriting
+
+
 5.0.1 (2019-04-25)
 ~~~~~~~~~~~~~~~~~~
 

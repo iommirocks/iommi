@@ -1,4 +1,11 @@
-from django.db.models import Model, IntegerField, ForeignKey, CharField, CASCADE
+from django.db.models import (
+    Model,
+    IntegerField,
+    ForeignKey,
+    CharField,
+    CASCADE,
+    FloatField,
+)
 
 
 class Foo(Model):
@@ -18,3 +25,7 @@ class Baz(Model):
 
 class NonStandardName(Model):
     non_standard_name = CharField(max_length=255)
+
+
+class FromModelWithInheritanceTest(Model):
+    value = FloatField()

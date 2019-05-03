@@ -1,9 +1,23 @@
 from __future__ import unicode_literals, absolute_import
+
+from collections import defaultdict
 from datetime import date
 from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
-from tests.models import Foo, Bar, Baz, NonStandardName
+from tri.declarative import class_shortcut
+from tri.form import (
+    Form,
+    Field,
+)
+
+from tests.models import (
+    Foo,
+    Bar,
+    Baz,
+    NonStandardName,
+    FromModelWithInheritanceTest,
+)
 from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
 from tri.struct import Struct
 
@@ -435,3 +449,45 @@ def test_freetext_combined_with_other_stuff():
     expected = repr(Q(**{'baz__iexact': '123'}) & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
 
     assert repr(MyTestQuery(request=RequestFactory().get('/', {'-': '-', 'term': 'asd', 'baz_name': '123'})).to_q()) == expected
+
+
+@pytest.mark.django_db
+def test_from_model_with_inheritance():
+    was_called = defaultdict(int)
+
+    class MyField(Field):
+        @classmethod
+        @class_shortcut
+        def float(cls, call_target=None, **kwargs):
+            was_called['MyField.float'] += 1
+            return call_target(**kwargs)
+
+    class MyForm(Form):
+        class Meta:
+            member_class = MyField
+
+    class MyVariable(Variable):
+        @classmethod
+        @class_shortcut(
+            gui__call_target__attribute='float',
+        )
+        def float(cls, call_target=None, **kwargs):
+            was_called['MyVariable.float'] += 1
+            return call_target(**kwargs)
+
+    class MyQuery(Query):
+        class Meta:
+            member_class = MyVariable
+            form_class = MyForm
+
+    MyQuery.from_model(
+        data=FromModelWithInheritanceTest.objects.all(),
+        model=FromModelWithInheritanceTest,
+        request=RequestFactory().get('/'),
+        variable__value__gui__show=True,
+    ).form()
+
+    assert was_called == {
+        'MyField.float': 1,
+        'MyVariable.float': 1,
+    }
