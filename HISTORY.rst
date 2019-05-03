@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.0.1 (2019-05-03)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed a bug where columns that had query or bulk but attr=None would crash
+
+
 7.0.0 (2019-04-12)
 ~~~~~~~~~~~~~~~~~~
 

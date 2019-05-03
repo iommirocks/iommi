@@ -82,7 +82,7 @@ from tri.struct import (
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '7.0.0'  # pragma: no mutate
+__version__ = '7.0.1'  # pragma: no mutate
 
 LAST = LAST
 
@@ -379,6 +379,10 @@ class Column(RefinableObject):
         return render_class(self.attrs['class'])
 
     @classmethod
+    @dispatch(
+        query__call_target__attribute='from_model',
+        bulk__call_target__attribute='from_model',
+    )
     def from_model(cls, model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
@@ -1240,7 +1244,6 @@ class Table(RefinableObject):
                         query_namespace = setdefaults_path(
                             Namespace(),
                             column.query,
-                            call_target__attribute='from_model',
                             call_target__cls=self.get_meta().query_class.get_meta().member_class,
                             model=self.model,
                             name=column.name,
@@ -1278,7 +1281,6 @@ class Table(RefinableObject):
                         bulk_namespace = setdefaults_path(
                             Namespace(),
                             column.bulk,
-                            call_target__attribute='from_model',
                             call_target__cls=self.get_meta().form_class.get_meta().member_class,
                             model=self.model,
                             name=column.name,

@@ -802,7 +802,7 @@ def test_bulk_edit():
     assert [x.pk for x in foos] == [1, 2, 3, 4]
 
     class TestTable(Table):
-        a = Column.number(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
+        a = Column.integer(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
         b = Column(bulk__show=True)
 
     result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()))
@@ -1722,3 +1722,15 @@ def test_yield_rows():
     assert len(results) == 2
     assert results[0].row == f
     assert results[1].row == Struct(a=15)
+
+
+@pytest.mark.django_db
+def test_non_model_based_column_should_not_explore_in_query_object_creation():
+    class MyTable(Table):
+        c = Column(attr=None, query__show=True, query__gui__show=True)
+
+        class Meta:
+            model = Foo
+
+    table = MyTable(request=RequestFactory().get("/", ''))
+    table.prepare()
