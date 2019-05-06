@@ -7,7 +7,6 @@ from datetime import datetime
 
 from decimal import Decimal
 
-from tests.models import FromModelWithInheritanceTest
 from tri.form.compat import ValidationError
 from bs4 import BeautifulSoup
 import pytest
@@ -1509,6 +1508,7 @@ def test_datetime_parse():
 
 @pytest.mark.django_db
 def test_from_model_with_inheritance():
+    from tests.models import FromModelWithInheritanceTest
     was_called = defaultdict(int)
 
     class MyField(Field):
