@@ -108,3 +108,7 @@ class Baz(Model):
 
     class Meta:
         unique_together = ('a', 'b')
+
+
+class FromModelWithInheritanceTest(Model):
+    value = FloatField()

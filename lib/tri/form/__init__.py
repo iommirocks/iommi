@@ -60,7 +60,7 @@ from .compat import HttpResponse
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
 
-__version__ = '6.0.0'  # pragma: no mutate
+__version__ = '6.0.1'  # pragma: no mutate
 
 
 def capitalize(s):
@@ -169,6 +169,8 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
     if model_field is None:
+        assert field_name is not None, "Field can't be automatically created from model, you must specify it manually"
+
         sub_field_name, _, field_path_rest = field_name.partition('__')
 
         # noinspection PyProtectedMember

@@ -1,17 +1,24 @@
 from __future__ import unicode_literals, absolute_import
 
 import re
+from collections import defaultdict
 from datetime import date, time
 from datetime import datetime
 
 from decimal import Decimal
 
+from tests.models import FromModelWithInheritanceTest
 from tri.form.compat import ValidationError
 from bs4 import BeautifulSoup
 import pytest
 from tri.form.compat import Template, smart_text
 
-from tri.declarative import getattr_path, setattr_path, Namespace
+from tri.declarative import (
+    getattr_path,
+    setattr_path,
+    Namespace,
+    class_shortcut,
+)
 from tri.struct import Struct
 from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, \
     url_parse, render_template, Link, datetime_parse, datetime_iso_formats, int_parse
@@ -1498,3 +1505,29 @@ def test_datetime_parse():
 
     expected = 'Time data "%s" does not match any of the formats %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))
     assert expected == str(e.value) or [expected] == [str(x) for x in e.value]
+
+
+@pytest.mark.django_db
+def test_from_model_with_inheritance():
+    was_called = defaultdict(int)
+
+    class MyField(Field):
+        @classmethod
+        @class_shortcut
+        def float(cls, call_target=None, **kwargs):
+            was_called['MyField.float'] += 1
+            return call_target(**kwargs)
+
+    class MyForm(Form):
+        class Meta:
+            member_class = MyField
+
+    MyForm.from_model(
+        data=FromModelWithInheritanceTest.objects.all(),
+        model=FromModelWithInheritanceTest,
+        request=RequestFactory().get('/'),
+    )
+
+    assert was_called == {
+        'MyField.float': 1,
+    }
