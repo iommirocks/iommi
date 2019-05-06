@@ -6,6 +6,7 @@ from __future__ import (
 )
 
 import json
+from collections import defaultdict
 
 import django
 import pytest
@@ -18,6 +19,15 @@ from django.utils.safestring import mark_safe
 from tri.declarative import (
     getattr_path,
     Namespace,
+    class_shortcut,
+)
+from tri.form import (
+    Field,
+    Form,
+)
+from tri.query import (
+    Variable,
+    Query,
 )
 
 from tests.helpers import verify_table_html
@@ -25,6 +35,7 @@ from tests.models import (
     Bar,
     Baz,
     Foo,
+    FromModelWithInheritanceTest,
 )
 from tri.table import (
     Column,
@@ -1734,3 +1745,66 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
 
     table = MyTable(request=RequestFactory().get("/", ''))
     table.prepare()
+
+
+@pytest.mark.django_db
+def test_from_model_with_inheritance():
+    was_called = defaultdict(int)
+
+    class MyField(Field):
+        @classmethod
+        @class_shortcut
+        def float(cls, call_target=None, **kwargs):
+            was_called['MyField.float'] += 1
+            return call_target(**kwargs)
+
+    class MyForm(Form):
+        class Meta:
+            member_class = MyField
+
+    class MyVariable(Variable):
+        @classmethod
+        @class_shortcut(
+            gui__call_target__attribute='float',
+        )
+        def float(cls, call_target=None, **kwargs):
+            was_called['MyVariable.float'] += 1
+            return call_target(**kwargs)
+
+    class MyQuery(Query):
+        class Meta:
+            member_class = MyVariable
+            form_class = MyForm
+
+    class MyColumn(Column):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='number',
+            query__call_target__attribute='float',
+            bulk__call_target__attribute='float',
+        )
+        def float(cls, call_target, **kwargs):
+            was_called['MyColumn.float'] += 1
+            return call_target(**kwargs)
+
+    class MyTable(Table):
+        class Meta:
+            member_class = MyColumn
+            form_class = MyForm
+            query_class = MyQuery
+
+    t = MyTable.from_model(
+        data=FromModelWithInheritanceTest.objects.all(),
+        model=FromModelWithInheritanceTest,
+        request=RequestFactory().get('/'),
+        column__value__query__show=True,
+        column__value__query__gui__show=True,
+        column__value__bulk__show=True,
+    )
+    t.prepare()
+
+    assert was_called == {
+        'MyField.float': 2,
+        'MyVariable.float': 1,
+        'MyColumn.float': 1,
+    }

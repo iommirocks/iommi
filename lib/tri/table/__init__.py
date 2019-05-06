@@ -54,7 +54,6 @@ from tri.form import (
     DISPATCH_PATH_SEPARATOR,
     evaluate_and_group_links,
     expand_member,
-    Field,
     Form,
     handle_dispatch,
     Link as tri_form_Link,
@@ -73,7 +72,6 @@ from tri.query import (
     Q_OP_BY_OP,
     Query,
     QueryException,
-    Variable,
 )
 from tri.struct import (
     merged,
@@ -82,7 +80,7 @@ from tri.struct import (
 
 from tri.table.db_compat import setup_db_compat
 
-__version__ = '7.0.1'  # pragma: no mutate
+__version__ = '7.0.2'  # pragma: no mutate
 
 LAST = LAST
 
@@ -265,8 +263,6 @@ class Column(RefinableObject):
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
         header__attrs__class__subheader=True,
         header__template='tri_table/header.html',
-        query__call_target__cls=Variable,
-        bulk__call_target__cls=Field,
     )
     def __init__(self, **kwargs):
         """
@@ -1249,6 +1245,7 @@ class Table(RefinableObject):
                             name=column.name,
                             attr=column.attr,
                             gui__display_name=column.display_name,
+                            gui__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
                         )
                         if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
                                 'attribute') == 'from_model':
@@ -1295,7 +1292,7 @@ class Table(RefinableObject):
 
             bulk_fields = list(generate_bulk_fields())
             if bulk_fields:
-                bulk_fields.append(Field.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='tri_form/input.html'))
+                bulk_fields.append(self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='tri_form/input.html'))
 
                 self._bulk_form = self.get_meta().form_class(
                     data=self.request.POST,

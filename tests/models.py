@@ -30,3 +30,7 @@ class Baz(models.Model):
 
     class Meta:
         ordering = ('pk',)
+
+
+class FromModelWithInheritanceTest(models.Model):
+    value = models.FloatField()
