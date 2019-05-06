@@ -66,7 +66,7 @@ from tri.form import (
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '5.0.1'  # pragma: no mutate
+__version__ = '5.0.2'  # pragma: no mutate
 
 
 class QueryException(Exception):
