@@ -248,7 +248,8 @@ def render_css_classes(classes):
     """
     Render CSS classes, or return '' if no attributes needs to be rendered.
     """
-    return '' if not classes else format_html(' class="{}"', ' '.join(sorted(classes)))
+    warnings.warn('render_css_classes is deprecated, use tri.form.render.render_attrs instead', DeprecationWarning)
+    return '' if not classes else format_html(' class="{}"', ' '.join(sorted(classes)))  # pragma: no mutate, we'll delete this function anyway
 
 
 def default_endpoint__config(field, key, value, **_):

@@ -1586,3 +1586,25 @@ def test_expand_member_test_2():
     )
     assert set(form.fields_by_name.keys()) == {'some_thing__f_int', 'some_thing__f_float', 'some_thing__f_bool'}
     assert {x.attr for x in form.fields_by_name.values()} == {'link__f_int', 'link__f_float', 'link__f_bool'}
+
+
+@pytest.mark.django_db
+def test_expand_member_test_error():
+    from tests.models import ExpandModelTestB
+
+    with pytest.raises(TypeError):
+        Form.from_model(
+            data={},
+            model=ExpandModelTestB,
+            field__doesnotexist__call_target=Field.from_model_expand,
+        )
+
+
+@pytest.mark.django_db
+def test_expand_member_test_error_2():
+    from tests.models import ExpandModelTestB
+
+    with pytest.raises(TypeError):
+        class MyForm(Form):
+            class Meta:
+                fields = Field.from_model_expand(ExpandModelTestB, name='some_thing', field_name='link', field__doesnotexist=1)
