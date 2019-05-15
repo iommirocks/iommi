@@ -852,6 +852,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
         assert not f.get_errors()
         assert f.fields_by_name['foo'].value is None
         assert f.fields_by_name['foo'].value_list is None or f.fields_by_name['foo'].value_list == []
+        assert f.fields_by_name['foo'].rendered_value == ''
 
     def test_empty_data():
         f = Form(fields=[shortcut(required=False, name='foo')], data={})

@@ -378,7 +378,7 @@ def time_parse(string_value, **_):
 
 
 def time_render_value(value, **_):
-    return value.strftime(time_iso_format)
+    return value.strftime(time_iso_format) if value else ''
 
 
 def decimal_parse(string_value, **_):
