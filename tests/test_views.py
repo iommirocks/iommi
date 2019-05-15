@@ -72,10 +72,17 @@ def test_create_or_edit_object():
         'f_many_to_many': [str(foo.pk)],
         '-': '-',
     }
+
+    def on_save(form, instance, **_):
+        # validate  that the arguments are what we expect
+        assert form.instance is instance
+        assert isinstance(instance, CreateOrEditObjectTest)
+        assert instance.pk is not None
+
     response = create_object(
         request=request,
         model=CreateOrEditObjectTest,
-        on_save=lambda instance, **_: instance,  # just to check that we get called with the instance as argument
+        on_save=on_save,  # just to check that we get called with the instance as argument
         render=lambda **kwargs: kwargs,
     )
     instance = get_saved_something()
@@ -255,7 +262,7 @@ def test_create_or_edit_object_dispatch():
 
 
 @pytest.mark.django_db
-def test_create_or_edit_object_default_template():
+def test_create_object_default_template():
     from tests.models import Foo
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
@@ -267,6 +274,27 @@ def test_create_or_edit_object_default_template():
         <div class="form_buttons clear">
             <div class="links">
                 <input accesskey="s" class="button" type="submit" value="Create foo"/>
+            </div>
+        </div>
+    """
+    actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
+    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
+    assert actual == expected
+
+
+@pytest.mark.django_db
+def test_edit_object_default_template():
+    from tests.models import Foo
+
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+
+    response = edit_object(request=request, instance=Foo.objects.create(foo=1))
+    assert response.status_code == 200
+
+    expected_html = """
+        <div class="form_buttons clear">
+            <div class="links">
+                <input accesskey="s" class="button" type="submit" value="Save foo"/>
             </div>
         </div>
     """

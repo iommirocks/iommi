@@ -26,8 +26,19 @@ def test_handle_dispatch_two_levels():
 
     # hit
     def endpoint_dispatch(key, value):
+        assert value == 'payload'
         assert key == 'bar' + DISPATCH_PATH_SEPARATOR + 'baz'
         return "dispatch_result"
 
     should_return, response = handle_dispatch(request, Struct(endpoint_dispatch_prefix='foo', endpoint_dispatch=endpoint_dispatch))
     assert (should_return, response.content) == (True, b'"dispatch_result"')
+
+
+def test_handle_dispatch_remaining_key_is_none():
+    request = RequestFactory().get('/', {DISPATCH_PATH_SEPARATOR + 'foo': 'payload'})
+
+    def endpoint_dispatch(key, value):
+        assert key is None
+        assert value == 'payload'
+
+    handle_dispatch(request, Struct(endpoint_dispatch_prefix='foo', endpoint_dispatch=endpoint_dispatch))

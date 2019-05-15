@@ -40,7 +40,7 @@ def create_object(
     render__call_target=render,
     render__context=EMPTY,
     redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
-    on_save=lambda **kwargs: None,
+    on_save=lambda **kwargs: None,  # pragma: no mutate
 )
 def create_or_edit_object(
         request,
@@ -92,7 +92,7 @@ def create_or_edit_object(
             instance.validate_unique()
         except ValidationError as e:
             form.errors.update(set(e.messages))
-            form._valid = False
+            form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
         if form.is_valid():
             if is_create:  # two phase save for creation in django...
@@ -105,7 +105,7 @@ def create_or_edit_object(
                     instance.validate_unique()
                 except ValidationError as e:
                     form.errors.update(set(e.messages))
-                    form._valid = False
+                    form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
             if form.is_valid():
                 instance.save()

@@ -13,14 +13,21 @@ def render_attrs(attrs):
                 if value is True:
                     yield '%s' % (key, )
                     continue
-                if key == 'class' and isinstance(value, dict):
-                    if not value:
-                        continue
-                    value = render_class(value)
-                if key == 'style' and isinstance(value, dict):
-                    if not value:
-                        continue
-                    value = render_style(value)
+                if isinstance(value, dict):
+                    if key == 'class':
+                        if not value:
+                            continue
+                        value = render_class(value)
+                    elif key == 'style':
+                        if not value:
+                            continue
+                        value = render_style(value)
+                    else:
+                        raise TypeError('Only the class and style attributes can be dicts, you sent %s' % value)
+                elif isinstance(value, (list, tuple)):
+                    raise TypeError("Attributes can't be of type %s, you sent %s" % (type(value).__name__, value))
+                elif callable(value):
+                    raise TypeError("Attributes can't be callable, you sent %s" % value)
                 yield '%s="%s"' % (key, ('%s' % value).replace('"', '&quot;'))
         return mark_safe(' %s' % ' '.join(parts()))
     return ''

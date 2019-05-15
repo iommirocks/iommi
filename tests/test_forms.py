@@ -19,8 +19,22 @@ from tri.declarative import (
     class_shortcut,
 )
 from tri.struct import Struct
-from tri.form import AVOID_EMPTY_FORM, Form, Field, register_field_factory, bool_parse, render_attrs, decimal_parse, \
-    url_parse, render_template, Link, datetime_parse, datetime_iso_formats, int_parse
+from tri.form import (
+    AVOID_EMPTY_FORM,
+    Form,
+    Field,
+    register_field_factory,
+    bool_parse,
+    render_attrs,
+    decimal_parse,
+    url_parse,
+    render_template,
+    Link,
+    datetime_parse,
+    datetime_iso_formats,
+    int_parse,
+    create_members_from_model,
+)
 
 from .compat import RequestFactory
 
@@ -1475,6 +1489,13 @@ def test_create_members_from_model_path():
     assert len(form.fields) == 1
     assert form.fields[0].name == 'foo__foo'
     assert form.fields[0].help_text == 'foo_help_text'
+
+
+@pytest.mark.django_db
+def test_create_members_from_model_reject_extra_arguments_to_member_params_by_member_name():
+    from .models import Foo
+    with pytest.raises(TypeError):
+        create_members_from_model(default_factory=None, model=Foo, member_params_by_member_name=dict(foo=1), include=[])
 
 
 @pytest.mark.django
