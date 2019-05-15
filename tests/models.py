@@ -42,6 +42,16 @@ class FieldFromModelOneToOneTest(Model):
     foo_one_to_one = OneToOneField(Foo, on_delete=CASCADE)
 
 
+class ExpandModelTestA(Model):
+    f_int = IntegerField()
+    f_float = FloatField()
+    f_bool = BooleanField()
+
+
+class ExpandModelTestB(Model):
+    link = OneToOneField(ExpandModelTestA, on_delete=CASCADE)
+
+
 class FieldFromModelManyToManyTest(Model):
     foo_many_to_many = ManyToManyField(Foo)
 

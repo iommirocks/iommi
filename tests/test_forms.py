@@ -1553,3 +1553,36 @@ def test_from_model_with_inheritance():
     assert was_called == {
         'MyField.float': 1,
     }
+
+
+def test_rendered_property():
+    link = Link('foo')
+
+    assert link.render() == link.rendered
+
+
+@pytest.mark.django_db
+def test_expand_member_test():
+    from tests.models import ExpandModelTestB
+
+    form = Form.from_model(
+        data={},
+        model=ExpandModelTestB,
+        field__link__call_target=Field.from_model_expand,
+    )
+    assert set(form.fields_by_name.keys()) == {'link__f_int', 'link__f_float', 'link__f_bool'}
+
+
+@pytest.mark.django_db
+def test_expand_member_test_2():
+    from tests.models import ExpandModelTestB
+
+    class MyForm(Form):
+        class Meta:
+            fields = Field.from_model_expand(ExpandModelTestB, name='some_thing', field_name='link')
+
+    form = MyForm(
+        data={},
+    )
+    assert set(form.fields_by_name.keys()) == {'some_thing__f_int', 'some_thing__f_float', 'some_thing__f_bool'}
+    assert {x.attr for x in form.fields_by_name.values()} == {'link__f_int', 'link__f_float', 'link__f_bool'}

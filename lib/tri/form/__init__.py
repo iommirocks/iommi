@@ -219,6 +219,9 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     field=EMPTY,
 )
 def expand_member(cls, model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
+    if field_name is None:
+        field_name = name
+
     if model_field is None:
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(field_name)
@@ -232,6 +235,7 @@ def expand_member(cls, model, factory_lookup, defaults_factory, name, field, fie
             defaults_factory=defaults_factory,
             field_name=sub_model_field.name,
             name=name + '__' + sub_model_field.name,
+            attr=field_name + '__' + sub_model_field.name,
             **field.pop(sub_model_field.name, {})
         )
         for sub_model_field in get_fields(model=model_field.remote_field.model)
