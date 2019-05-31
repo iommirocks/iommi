@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+6.0.2 (2019-05-31)
+~~~~~~~~~~~~~~~~~~
+
+* Changed the default value for `parse_emtpy_string_as_none` to be based on the model fields `null` property.
+
+* `from_model` should not overwrite defaults too early
+
+* `Field.choice` now has a sane default parser using `choice_to_option`
+
+
 6.0.1 (2019-05-06)
 ~~~~~~~~~~~~~~~~~~
 

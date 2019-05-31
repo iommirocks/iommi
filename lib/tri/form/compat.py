@@ -68,8 +68,8 @@ try:
         if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
             r['required'] = not model_field.null and not model_field.blank
 
-        if hasattr(model_field, 'blank'):
-            r['parse_empty_string_as_none'] = not model_field.blank
+        if hasattr(model_field, 'null'):
+            r['parse_empty_string_as_none'] = model_field.null
 
         return r
 

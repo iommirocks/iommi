@@ -66,4 +66,4 @@ def test_render_attrs_raises_for_some_common_pitfall_types():
             foo=lambda foo: foo
         ))
 
-    assert re.match("Attributes can't be callable, you sent <function test_.*>", str(e.value))
+    assert re.match("Attributes can't be callable, you sent <function .*>", str(e.value))

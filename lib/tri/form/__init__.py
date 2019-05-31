@@ -189,13 +189,6 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
             result.attr = field_name
             return result
 
-    setdefaults_path(
-        kwargs,
-        defaults_factory(model_field),
-        name=field_name,
-        call_target__cls=cls,
-    )
-
     factory = factory_lookup.get(type(model_field), MISSING)
 
     if factory is MISSING:
@@ -210,9 +203,28 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
             message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
         raise AssertionError(message)
 
-    if factory:
-        factory = evaluate(factory, model_field=model_field, field_name=field_name)
-    return factory(model_field=model_field, model=model, **kwargs) if factory is not None else None
+    if factory is None:
+        return None
+
+    factory = evaluate(factory, model_field=model_field, field_name=field_name)
+
+    setdefaults_path(
+        kwargs,
+        name=field_name,
+        call_target__cls=cls,
+    )
+
+    defaults = defaults_factory(model_field)
+    if isinstance(factory, Namespace):
+        factory = setdefaults_path(
+            Namespace(),
+            factory,
+            defaults,
+        )
+    else:
+        kwargs.update(**defaults)
+
+    return factory(model_field=model_field, model=model, **kwargs)
 
 
 @dispatch(
@@ -298,12 +310,15 @@ def choice_choice_to_option(form, field, choice):
     return choice, "%s" % choice, "%s" % choice, choice == field.value
 
 
-# Not yet in use
 def choice_parse(form, field, string_value):
     for c in field.choices:
         option = field.choice_to_option(form=form, field=field, choice=c)
         if option[1] == string_value:
             return option[0]
+
+    if string_value in [None, '']:
+        return None
+
     return string_value
 
 
@@ -938,7 +953,7 @@ class Field(RefinableObject):
         empty_label='---',
         is_valid=choice_is_valid,
         choice_to_option=choice_choice_to_option,
-        # parse=choice_parse,
+        parse=choice_parse,
         input_template='tri_form/choice.html',
     )
     def choice(cls, call_target=None, **kwargs):
