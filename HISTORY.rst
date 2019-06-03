@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-6.0.2 (2019-05-31)
+6.0.2 (2019-06-03)
 ~~~~~~~~~~~~~~~~~~
 
 * Changed the default value for `parse_emtpy_string_as_none` to be based on the model fields `null` property.
@@ -9,6 +9,14 @@ Changelog
 * `from_model` should not overwrite defaults too early
 
 * `Field.choice` now has a sane default parser using `choice_to_option`
+
+* Changed render_attrs to stop you from making some common mistakes
+
+* Fixed `time_render_value()`
+
+* Fixes and improved tests for from_model_expand
+
+* Fixed `from_model` for Django `TextField`. Should be `Field.textarea`, not `Field.text`
 
 
 6.0.1 (2019-05-06)
