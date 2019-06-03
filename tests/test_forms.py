@@ -7,7 +7,10 @@ from datetime import datetime
 
 from decimal import Decimal
 
-from tri.form.compat import ValidationError
+from tri.form.compat import (
+    ValidationError,
+    field_defaults_factory,
+)
 from bs4 import BeautifulSoup
 import pytest
 from tri.form.compat import Template, smart_text
@@ -17,6 +20,7 @@ from tri.declarative import (
     setattr_path,
     Namespace,
     class_shortcut,
+    Shortcut,
 )
 from tri.struct import Struct
 from tri.form import (
@@ -34,6 +38,7 @@ from tri.form import (
     datetime_iso_formats,
     int_parse,
     create_members_from_model,
+    member_from_model,
 )
 
 from .compat import RequestFactory
@@ -78,6 +83,22 @@ class MyTestForm(Form):
 def test_repr():
     assert '<tri.form.Field foo>' == repr(Field(name='foo'))
     assert '<tri.form.Field foo>' == str(Field(name='foo'))
+
+
+def test_required_choice():
+    class Required(Form):
+        c = Field.choice(choices=[1, 2, 3])
+
+    form = Required(request=RequestFactory().post('/', {'-': '-'}))
+    assert form.is_valid() is False
+    assert form.fields_by_name['c'].errors == {'This field is required'}
+
+    class NotRequired(Form):
+        c = Field.choice(choices=[1, 2, 3], required=False)
+
+    form = NotRequired(request=RequestFactory().post('/', {'-': '-', 'c': ''}))
+    assert form.is_valid()
+    assert form.fields_by_name['c'].errors == set()
 
 
 def test_required():
@@ -754,11 +775,34 @@ def test_field_from_model_blank_handling():
 
     from django.db.models import CharField
 
-    subject = Field.from_model(model=Foo, model_field=CharField(blank=False))
+    subject = Field.from_model(model=Foo, model_field=CharField(null=True, blank=False))
     assert True is subject.parse_empty_string_as_none
 
-    subject = Field.from_model(model=Foo, model_field=CharField(blank=True))
+    subject = Field.from_model(model=Foo, model_field=CharField(null=False, blank=True))
     assert False is subject.parse_empty_string_as_none
+
+
+@pytest.mark.django
+def test_overriding_parse_empty_string_as_none_in_shortcut():
+    from tests.models import Foo
+
+    from django.db.models import CharField
+
+    s = Shortcut(
+        call_target=Field.text,
+        parse_empty_string_as_none='foo',
+    )
+    # test overriding parse_empty_string_as_none
+    x = member_from_model(
+        cls=Field,
+        model=Foo,
+        model_field=CharField(blank=True),
+        factory_lookup={CharField: s},
+        factory_lookup_register_function=register_field_factory,
+        defaults_factory=field_defaults_factory,
+    )
+
+    assert 'foo' == x.parse_empty_string_as_none
 
 
 @pytest.mark.django_db
