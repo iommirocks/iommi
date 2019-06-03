@@ -48,7 +48,7 @@ try:
                 else Shortcut(call_target__attribute='boolean_tristate')
             )
         )
-        register_field_factory(TextField, Shortcut(call_target__attribute='text'))
+        register_field_factory(TextField, Shortcut(call_target__attribute='textarea'))
         register_field_factory(FloatField, Shortcut(call_target__attribute='float'))
         register_field_factory(IntegerField, Shortcut(call_target__attribute='integer'))
         register_field_factory(AutoField, Shortcut(call_target__attribute='integer', show=False))
