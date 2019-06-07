@@ -5,7 +5,7 @@ from collections import OrderedDict
 import pytest
 from tri.struct import Struct
 
-from tri.declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
+from tri_declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
 
 
 @creation_ordered

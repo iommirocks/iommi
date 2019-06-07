@@ -1,5 +1,5 @@
 import sys
-from tri.declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, get_signature, \
+from tri_declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, get_signature, \
     matches
 import pytest
 

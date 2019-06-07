@@ -168,7 +168,7 @@ collected and sent as :code:`members` constructor keyword argument.
 
 .. code-block:: python
 
-    from tri.declarative import declarative
+    from tri_declarative import declarative
 
     @declarative(str)
     class Foo(object):
@@ -187,7 +187,7 @@ The value of the :code:`members` argument will also be collected from sub-classe
 
 .. code-block:: python
 
-    from tri.declarative import declarative
+    from tri_declarative import declarative
 
     @declarative(str)
     class Foo(object):
@@ -210,7 +210,7 @@ The :code:`members` argument can be given another name (:code:`things` in the ex
 
 .. code-block:: python
 
-    from tri.declarative.declarative import declarative
+    from tri_declarative.declarative import declarative
 
     @declarative(str, 'things')
     class Foo(object):
@@ -232,7 +232,7 @@ argument of the same type.
 
 .. code-block:: python
 
-    from tri.declarative import declarative
+    from tri_declarative import declarative
 
     @declarative(str)
     class Foo(object):
@@ -268,7 +268,7 @@ This is useful for classes intended to be used as members of a :code:`@declarati
 
 .. code-block:: python
 
-    from tri.declarative import creation_ordered
+    from tri_declarative import creation_ordered
 
     @creation_ordered
     class Thing(object):
@@ -288,7 +288,7 @@ Below is a more complete example of using @declarative:
 
 .. code-block:: python
 
-    from tri.declarative import declarative, creation_ordered
+    from tri_declarative import declarative, creation_ordered
 
 
     @creation_ordered
@@ -347,7 +347,7 @@ The members of the Meta class will be injected as arguments to constructor calls
 
 .. code-block:: python
 
-    from tri.declarative import with_meta
+    from tri_declarative import with_meta
 
     @with_meta
     class Foo(object):
@@ -373,7 +373,7 @@ It can be disabled by passing :code:`add_init_kwargs=False` to the decorator.
 
 .. code-block:: python
 
-    from tri.declarative import with_meta
+    from tri_declarative import with_meta
 
     @with_meta(add_init_kwargs=False)
     class Foo(object):
@@ -388,7 +388,7 @@ Another example:
 
 .. code-block:: python
 
-    from tri.declarative import with_meta
+    from tri_declarative import with_meta
 
     class Foo(object):
 

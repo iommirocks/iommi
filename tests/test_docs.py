@@ -1,4 +1,4 @@
-from tri.declarative import creation_ordered, RefinableObject, Refinable, dispatch, refinable, Shortcut, class_shortcut, \
+from tri_declarative import creation_ordered, RefinableObject, Refinable, dispatch, refinable, Shortcut, class_shortcut, \
     _generate_rst_docs
 
 

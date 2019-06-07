@@ -1,6 +1,6 @@
 API documentation
 =================
 
-.. automodule:: tri.declarative
+.. automodule:: tri_declarative
    :members:
    :special-members:

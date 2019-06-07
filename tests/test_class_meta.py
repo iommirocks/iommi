@@ -1,5 +1,5 @@
 import pytest
-from tri.declarative import with_meta
+from tri_declarative import with_meta
 
 
 def test_empty():
