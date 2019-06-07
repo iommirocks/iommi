@@ -28,9 +28,9 @@ project_root = os.path.dirname(cwd)
 # version is used.
 sys.path.insert(0, project_root)
 
-import tri.form
+import tri_form
 
-from tri.declarative import generate_rst_docs
+from tri_declarative import generate_rst_docs
 
 generate_rst_docs('.', [tri.form.Form, tri.form.Field], (tri.form.MISSING,))
 

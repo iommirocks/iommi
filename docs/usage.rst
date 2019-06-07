@@ -19,12 +19,12 @@ like this:
 
 .. code-block:: python
 
-    import tri.form
+    import tri_form
 
 
-    class Form(tri.form.Form):
+    class Form(tri_form.Form):
         pass
 
 
-    class Field(tri.form.Field):
+    class Field(tri_form.Field):
         pass

@@ -5,8 +5,8 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
 from examples.models import Foo
-from tri.form import Form, Field, Link
-from tri.form.views import create_object, edit_object
+from tri_form import Form, Field, Link
+from tri_form.views import create_object, edit_object
 
 
 def index(request):

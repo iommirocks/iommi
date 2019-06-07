@@ -15,7 +15,7 @@ except ImportError:
             app = AppContext(Flask('tri_form', root_path=root_path))
             app.push()
             from werkzeug.test import create_environ
-            from tri.form.compat import HttpRequest
+            from tri_form.compat import HttpRequest
             return HttpRequest(create_environ(path=url, query_string=params, method=method, data=body))
 
         def get(self, url, params=None):

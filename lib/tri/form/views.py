@@ -1,8 +1,8 @@
 from __future__ import unicode_literals, absolute_import
 
-from tri.form.compat import ValidationError, HttpResponseRedirect, render, csrf
-from tri.form import Form, handle_dispatch, Link
-from tri.declarative import setdefaults_path, dispatch, EMPTY
+from tri_form.compat import ValidationError, HttpResponseRedirect, render, csrf
+from tri_form import Form, handle_dispatch, Link
+from tri_declarative import setdefaults_path, dispatch, EMPTY
 
 
 def edit_object(

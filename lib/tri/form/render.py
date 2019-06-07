@@ -1,4 +1,4 @@
-from tri.form.compat import mark_safe
+from tri_form.compat import mark_safe
 
 
 def render_attrs(attrs):
