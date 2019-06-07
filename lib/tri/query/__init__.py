@@ -38,7 +38,7 @@ from six import (
     string_types,
     text_type,
 )
-from tri.declarative import (
+from tri_declarative import (
     class_shortcut,
     creation_ordered,
     declarative,
@@ -54,7 +54,7 @@ from tri.declarative import (
     sort_after,
     with_meta,
 )
-from tri.form import (
+from tri_form import (
     bool_parse,
     create_members_from_model,
     DISPATCH_PATH_SEPARATOR,

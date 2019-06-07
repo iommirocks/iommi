@@ -1,6 +1,6 @@
-from tri.declarative import Shortcut
+from tri_declarative import Shortcut
 
-from tri.query import register_variable_factory
+from tri_query import register_variable_factory
 
 
 def setup_db_compat():
