@@ -205,7 +205,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'tri.struct.tex', u'tri.struct Documentation',
+  ('index', 'tri.declarative.tex', u'tri.declarative Documentation',
    u'Anders Hovmöller', 'manual'),
 ]
 
@@ -235,7 +235,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'tri.struct', u'tri.struct Documentation',
+    ('index', 'tri.declarative', u'tri.declarative Documentation',
      [u'Anders Hovmöller'], 1)
 ]
 
@@ -249,8 +249,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'tri.struct', u'tri.struct Documentation',
-   u'Anders Hovmöller', 'tri.struct', 'One line description of project.',
+  ('index', 'tri.declarative', u'tri.declarative Documentation',
+   u'Anders Hovmöller', 'tri.declarative', 'One line description of project.',
    'Miscellaneous'),
 ]
 

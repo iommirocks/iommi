@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ pip install tri.struct
+    $ pip install tri_declarative
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv tri.struct
-    $ pip install tri.struct
+    $ mkvirtualenv tri_declarative
+    $ pip install tri_declarative
