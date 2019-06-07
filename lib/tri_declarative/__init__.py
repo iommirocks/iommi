@@ -11,7 +11,7 @@ import inspect
 import itertools
 
 import sys
-from tri.struct import (
+from tri_struct import (
     Struct,
     Frozen,
 )

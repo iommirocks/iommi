@@ -1,1 +1,1 @@
-tri.struct
+tri_struct

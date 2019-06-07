@@ -3,7 +3,7 @@ import warnings
 from collections import OrderedDict
 
 import pytest
-from tri.struct import Struct
+from tri_struct import Struct
 
 from tri_declarative import (
     EMPTY,

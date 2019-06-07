@@ -3,7 +3,7 @@ from random import shuffle
 
 from collections import OrderedDict
 import pytest
-from tri.struct import Struct
+from tri_struct import Struct
 
 from tri_declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
 
