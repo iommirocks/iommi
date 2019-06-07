@@ -14,7 +14,7 @@ def read_reqs(name):
 
 
 def read_version():
-    with open(os.path.join('lib', 'tri/form', '__init__.py')) as f:
+    with open(os.path.join('lib', 'tri_form', '__init__.py')) as f:
         m = re.search(r'''__version__\s*=\s*['"]([^'"]*)['"]''', f.read())
         if m:
             return m.group(1)

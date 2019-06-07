@@ -3,7 +3,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, 'tests'),
-    os.path.join(BASE_DIR, 'tri/form/templates'),
+    os.path.join(BASE_DIR, 'tri_form/templates'),
 ]
 
 TEMPLATE_DEBUG = True
