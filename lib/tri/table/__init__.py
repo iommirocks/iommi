@@ -30,7 +30,7 @@ from django.utils.html import (
     format_html,
 )
 from django.utils.safestring import mark_safe
-from tri.declarative import (
+from tri_declarative import (
     class_shortcut,
     creation_ordered,
     declarative,
@@ -49,7 +49,7 @@ from tri.declarative import (
     sort_after,
     with_meta,
 )
-from tri.form import (
+from tri_form import (
     create_members_from_model,
     DISPATCH_PATH_SEPARATOR,
     evaluate_and_group_links,
@@ -60,25 +60,25 @@ from tri.form import (
     member_from_model,
     render_template,
 )
-from tri.form.render import (
+from tri_form.render import (
     render_attrs,
     render_class,
 )
-from tri.named_struct import (
+from tri_named_struct import (
     NamedStruct,
     NamedStructField,
 )
-from tri.query import (
+from tri_query import (
     Q_OP_BY_OP,
     Query,
     QueryException,
 )
-from tri.struct import (
+from tri_struct import (
     merged,
     Struct,
 )
 
-from tri.table.db_compat import setup_db_compat
+from tri_table.db_compat import setup_db_compat
 
 __version__ = '7.0.2'  # pragma: no mutate
 

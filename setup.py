@@ -15,7 +15,7 @@ def read_reqs(name):
 
 
 def read_version():
-    with open(os.path.join('lib', 'tri/table', '__init__.py'), encoding='utf8') as f:
+    with open(os.path.join('lib', 'tri_table', '__init__.py'), encoding='utf8') as f:
         m = re.search(r'''__version__\s*=\s*['"]([^'"]*)['"]''', f.read())
         if m:
             return m.group(1)

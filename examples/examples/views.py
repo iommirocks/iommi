@@ -1,8 +1,8 @@
 from .models import Bar, Foo
 from os.path import dirname, abspath, join
 from django.http import HttpResponse
-from tri.table import Table, render_table_to_response
-from tri.table import Column
+from tri_table import Table, render_table_to_response
+from tri_table import Column
 
 
 def index(request):

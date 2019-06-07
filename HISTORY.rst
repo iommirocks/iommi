@@ -147,7 +147,7 @@ Changelog
 
 * New feature: default sort ordering. Just pass `default_sort_order` to `Table`.
 
-* `Link` class is now just inherited from tri.form `Link`. Introduced a deprecation warning for the constructor argument `url`.
+* `Link` class is now just inherited from tri_form `Link`. Introduced a deprecation warning for the constructor argument `url`.
 
 * Simplified `prepare` handling for `Table`. You should no longer need to care about this for most operations. You will still need to call `prepare` to trigger the parsing of URL parameters for sorting etc.
 

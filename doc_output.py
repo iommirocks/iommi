@@ -1,7 +1,7 @@
-from tri.declarative import *
-from tri.table import *
-from tri.query import *
-from tri.query import MISSING as q_MISSING
+from tri_declarative import *
+from tri_table import *
+from tri_query import *
+from tri_query import MISSING as q_MISSING
 
 documentation = {
     'Table': documentation_tree(Table),

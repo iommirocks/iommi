@@ -11,7 +11,7 @@ Declarative/programmatic hybrid API
 -----------------------------------
 
 The ``@declarative``, ``@with_meta`` and ``@creation_ordered``
-decorators from tri.declarative enables us to very easily write an API
+decorators from tri_declarative enables us to very easily write an API
 that can look both like a normal simple python API:
 
 .. code:: python
@@ -59,7 +59,7 @@ Namespace dispatching
 
 I've already hinted at this above in the example where we do
 ``column__foo__show=False``. This is an example of the powerful
-namespace dispatch mechanism from tri.declarative. It's inspired by the
+namespace dispatch mechanism from tri_declarative. It's inspired by the
 query syntax of Django where you use ``__`` to jump namespace. (If
 you're not familiar with Django, here's the gist of it: you can do
 ``Table.objects.filter(foreign_key__column='foo')``
@@ -69,7 +69,7 @@ still keeping the code simple. Here's a contrived example:
 
 .. code:: python
 
-    from tri.declarative import dispatch, EMPTY
+    from tri_declarative import dispatch, EMPTY
 
 
     @dispatch(
