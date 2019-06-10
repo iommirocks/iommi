@@ -204,7 +204,7 @@ def register_cell_formatter(type_or_class, formatter):
 
 def default_cell_formatter(table, column, row, value, **_):
     """
-    :type column: tri.table.Column
+    :type column: tri_table.Column
     """
     formatter = _cell_formatters.get(type(value))
     if formatter:
@@ -991,14 +991,14 @@ class Table(RefinableObject):
 
         self.query_args = query
         self._query = None
-        """ :type : tri.query.Query """
+        """ :type : tri_query.Query """
         self._query_form = None
-        """ :type : tri.form.Form """
+        """ :type : tri_form.Form """
         self._query_error = None
         """ :type : list of str """
 
         self._bulk_form = None
-        """ :type : tri.form.Form """
+        """ :type : tri_form.Form """
         self._bound_columns = None
         """ :type : list of Column """
         self._shown_bound_columns = None
@@ -1147,13 +1147,13 @@ class Table(RefinableObject):
 
     @property
     def query(self):
-        """ :rtype : tri.query.Query """
+        """ :rtype : tri_query.Query """
         self.prepare()
         return self._query
 
     @property
     def query_form(self):
-        """ :rtype : tri.form.Form """
+        """ :rtype : tri_form.Form """
         self.prepare()
         return self._query_form
 
@@ -1165,7 +1165,7 @@ class Table(RefinableObject):
 
     @property
     def bulk_form(self):
-        """ :rtype : tri.form.Form """
+        """ :rtype : tri_form.Form """
         self.prepare()
         return self._bulk_form
 

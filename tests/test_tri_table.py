@@ -1569,7 +1569,7 @@ def test_blank_on_empty():
 
 
 def test_repr():
-    assert repr(Column(name='foo')) == '<tri.table.Column foo>'
+    assert repr(Column(name='foo')) == '<tri_table.Column foo>'
 
 
 @pytest.mark.django_db
