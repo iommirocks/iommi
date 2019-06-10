@@ -3,9 +3,9 @@ import warnings
 from collections import OrderedDict
 
 import pytest
-from tri.struct import Struct
+from tri_struct import Struct
 
-from tri.declarative import (
+from tri_declarative import (
     EMPTY,
     LAST,
     Namespace,
@@ -673,7 +673,7 @@ def test_dispatch_store_arguments():
 
 
 def test_full_function_name():
-    assert full_function_name(setattr_path) == 'tri.declarative.setattr_path'
+    assert full_function_name(setattr_path) == 'tri_declarative.setattr_path'
 
 
 def test_dispatch_with_target():

@@ -23,9 +23,8 @@ jobs:
         - flake8 lib/tri tests setup.py
 
     - stage: test
-      python: "2.7"
+      python: "3.6"
     - python: pypy
-    - python: "3.6"
     - python: "3.7"
       dist: xenial
 

@@ -1,1 +1,1 @@
-tri.struct
+tri.struct>=3.0.0,<4.0.0

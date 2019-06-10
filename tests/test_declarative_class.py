@@ -1,11 +1,10 @@
-import sys
 from random import shuffle
 
 from collections import OrderedDict
 import pytest
-from tri.struct import Struct
+from tri_struct import Struct
 
-from tri.declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
+from tri_declarative import creation_ordered, declarative, with_meta, add_args_to_init_call
 
 
 @creation_ordered
@@ -229,23 +228,6 @@ def test_declarative_and_meta():
             assert 'bar' == bar
 
     Foo()
-
-
-@pytest.mark.skipif(sys.version_info < (3, 0), reason='Python 3 has saner class resolution')
-def test_declarative_and_meta_subclass_no_constructor():
-    @declarative(str, sort_key=lambda x: x)
-    class Foo(object):
-
-        def __init__(self, members, bar):
-            assert OrderedDict() == members
-            assert 'bar' == bar
-
-    @with_meta
-    class Bar(Foo):
-        class Meta:
-            bar = 'bar'
-
-    Bar()
 
 
 def test_declarative_and_meta_subclass_no_constructor_hack_workaround():

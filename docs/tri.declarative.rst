@@ -1,10 +1,10 @@
-tri.struct package
+tri_declarative package
 ==================
 
 Module contents
 ---------------
 
-.. automodule:: tri.struct
+.. automodule:: tri_declarative
     :members:
     :undoc-members:
     :show-inheritance:
