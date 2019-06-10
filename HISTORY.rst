@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+3.0.0 (2019-06-10)
+------------------
+
+* Renamed module from `tri.declarative` to `tri_declarative`. This is a breaking change
+
+* Dropped support for python2
+
+
 2.0.0 (2019-04-12)
 ------------------
 

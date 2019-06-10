@@ -1,7 +1,11 @@
-import sys
-from tri_declarative import filter_show_recursive, evaluate_recursive, remove_show_recursive, evaluate, get_signature, \
-    matches
-import pytest
+from tri_declarative import (
+    evaluate,
+    evaluate_recursive,
+    filter_show_recursive,
+    get_signature,
+    matches,
+    remove_show_recursive,
+)
 
 
 def test_evaluate_recursive():
@@ -106,14 +110,6 @@ def test_evaluate_extra_kwargs_with_defaults():
     assert 17 == evaluate(f, x=17)
 
 
-@pytest.mark.skipif(sys.version_info > (3, 0), reason='Python 3 DOES support classes as callables')
-def test_get_signature_class():
-    class Foo(object):
-        pass
-
-    assert None is get_signature(Foo)
-
-
 def test_evaluate_on_methods():
     class Foo(object):
         def bar(self, x):
@@ -136,13 +132,3 @@ def test_early_return_from_get_signature():
 
     object.__setattr__(foo, '__tri_declarative_signature', 'foobar')
     assert get_signature(foo) == 'foobar'
-
-
-@pytest.mark.skipif(sys.version_info < (3, 0), reason='Does not work on python 2')
-def test_get_signature_for_classes():
-    class Foo(object):
-        def __init__(self, a, b, c):
-            pass
-
-    assert get_signature(Foo) == 'a,b,c,self||'
-    assert getattr(Foo, '__tri_declarative_signature') == 'a,b,c,self||'

@@ -5,6 +5,7 @@ table.css.map
 .idea
 .cache
 .mutmut-cache
+.DS_Store
 
 # C extensions
 *.so
