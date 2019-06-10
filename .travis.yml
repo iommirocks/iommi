@@ -24,11 +24,7 @@ jobs:
 
     - stage: test
 
-      python: "2.7"
-      before_install: pip install tox
-      script: tox -e $(tox -l | grep py27 | xargs | tr ' ' ',')
-
-    - python: "3.6"
+      python: "3.6"
       before_install: pip install tox
       script: tox -e $(tox -l | grep py36 | xargs | tr ' ' ',')
 
