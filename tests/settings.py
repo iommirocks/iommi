@@ -24,7 +24,7 @@ SECRET_KEY = "foobar"
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'tri.form',
+    'tri_form',
     'tests'
 ]
 

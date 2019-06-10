@@ -81,8 +81,8 @@ class MyTestForm(Form):
 
 
 def test_repr():
-    assert '<tri.form.Field foo>' == repr(Field(name='foo'))
-    assert '<tri.form.Field foo>' == str(Field(name='foo'))
+    assert '<tri_form.Field foo>' == repr(Field(name='foo'))
+    assert '<tri_form.Field foo>' == str(Field(name='foo'))
 
 
 def test_required_choice():
