@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+7.0.0 (2019-06-10)
+~~~~~~~~~~~~~~~~~~
+
+* Renamed package from `tri.form` to `tri_form`. This is a breaking change
+
+* Dropped python2 support
+
+* Dropped Django < 2.0 support
+
+
 6.0.2 (2019-06-03)
 ~~~~~~~~~~~~~~~~~~
 

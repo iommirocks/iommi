@@ -1,5 +1,5 @@
-from tri.struct import Struct
-from tri.form import handle_dispatch, DISPATCH_PATH_SEPARATOR
+from tri_struct import Struct
+from tri_form import handle_dispatch, DISPATCH_PATH_SEPARATOR
 from .compat import RequestFactory
 
 

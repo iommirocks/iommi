@@ -7,23 +7,23 @@ from datetime import datetime
 
 from decimal import Decimal
 
-from tri.form.compat import (
+from tri_form.compat import (
     ValidationError,
     field_defaults_factory,
 )
 from bs4 import BeautifulSoup
 import pytest
-from tri.form.compat import Template, smart_text
+from tri_form.compat import Template, smart_text
 
-from tri.declarative import (
+from tri_declarative import (
     getattr_path,
     setattr_path,
     Namespace,
     class_shortcut,
     Shortcut,
 )
-from tri.struct import Struct
-from tri.form import (
+from tri_struct import Struct
+from tri_form import (
     AVOID_EMPTY_FORM,
     Form,
     Field,
@@ -81,8 +81,8 @@ class MyTestForm(Form):
 
 
 def test_repr():
-    assert '<tri.form.Field foo>' == repr(Field(name='foo'))
-    assert '<tri.form.Field foo>' == str(Field(name='foo'))
+    assert '<tri_form.Field foo>' == repr(Field(name='foo'))
+    assert '<tri_form.Field foo>' == str(Field(name='foo'))
 
 
 def test_required_choice():

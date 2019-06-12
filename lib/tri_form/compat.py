@@ -1,4 +1,4 @@
-from tri.declarative import Shortcut
+from tri_declarative import Shortcut
 
 try:
     from django.core.exceptions import ValidationError
@@ -27,7 +27,7 @@ try:
             return engines['django'].from_string(template_code)
 
     def setup_db_compat():
-        from tri.form import register_field_factory
+        from tri_form import register_field_factory
         from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, \
             DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, \
             ForeignKey, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
@@ -59,7 +59,7 @@ try:
         register_field_factory(ManyToManyField, Shortcut(call_target__attribute='many_to_many'))
 
     def field_defaults_factory(model_field):
-        from tri.form import capitalize
+        from tri_form import capitalize
         from django.db.models import BooleanField
         r = {}
         if hasattr(model_field, 'verbose_name'):
@@ -80,7 +80,7 @@ try:
         @type context: dict
         """
         import six
-        from tri.form.compat import Template
+        from tri_form.compat import Template
         if template is None:
             return ''
         elif isinstance(template, six.string_types):

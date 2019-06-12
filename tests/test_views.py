@@ -4,11 +4,11 @@ import json
 
 import pytest
 from bs4 import BeautifulSoup
-from tri.struct import Struct, merged
+from tri_struct import Struct, merged
 
 from tests.test_forms import remove_csrf
-from tri.form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
-from tri.form.views import create_object, edit_object, create_or_edit_object_redirect
+from tri_form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
+from tri_form.views import create_object, edit_object, create_or_edit_object_redirect
 
 
 def get_request_context(response):

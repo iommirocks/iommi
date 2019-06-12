@@ -1,8 +1,8 @@
 import pytest
-from tri.struct import merged
+from tri_struct import merged
 
-from tri.form import Field, Form
-from tri.form.compat import render_to_string, format_html, field_defaults_factory, render_template, Template
+from tri_form import Field, Form
+from tri_form.compat import render_to_string, format_html, field_defaults_factory, render_template, Template
 from .compat import RequestFactory, SafeText
 
 

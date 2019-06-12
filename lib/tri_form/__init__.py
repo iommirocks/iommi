@@ -18,7 +18,7 @@ from itertools import (
     chain,
     groupby,
 )
-from tri.declarative import (
+from tri_declarative import (
     assert_kwargs_empty,
     class_shortcut,
     creation_ordered,
@@ -40,9 +40,9 @@ from tri.declarative import (
     sort_after,
     with_meta,
     evaluate)
-from tri.struct import Struct
+from tri_struct import Struct
 
-from tri.form.compat import (
+from tri_form.compat import (
     field_defaults_factory,
     format_html,
     get_template_from_string,
@@ -54,13 +54,13 @@ from tri.form.compat import (
     validate_email,
     ValidationError,
 )
-from tri.form.render import render_attrs
+from tri_form.render import render_attrs
 from .compat import HttpResponse
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
 
-__version__ = '6.0.2'  # pragma: no mutate
+__version__ = '7.0.0'  # pragma: no mutate
 
 
 def capitalize(s):

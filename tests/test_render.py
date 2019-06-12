@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from tri.form.render import render_attrs
+from tri_form.render import render_attrs
 
 
 def test_render_attrs():

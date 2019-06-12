@@ -11,11 +11,11 @@ except ImportError:
             from flask import Flask
             import os
             if not root_path:
-                root_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib/tri/form/', )
+                root_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib/tri_form/', )
             app = AppContext(Flask('tri_form', root_path=root_path))
             app.push()
             from werkzeug.test import create_environ
-            from tri.form.compat import HttpRequest
+            from tri_form.compat import HttpRequest
             return HttpRequest(create_environ(path=url, query_string=params, method=method, data=body))
 
         def get(self, url, params=None):
