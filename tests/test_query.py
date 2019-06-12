@@ -403,7 +403,7 @@ def test_endpoint_dispatch_errors():
 
 
 def test_variable_repr():
-    assert repr(Variable(name='foo')) == '<tri.query.Variable foo>'
+    assert repr(Variable(name='foo')) == '<tri_query.Variable foo>'
 
 
 @pytest.mark.django_db

@@ -27,14 +27,10 @@ jobs:
       python: "3.6"
       before_install: pip install tox
       script: tox -e $(tox -l | grep py36 | xargs | tr ' ' ',')
-
-    - python: "3.7"
-      before_install: pip install tox
-      script: tox -e $(tox -l | grep py37 | xargs | tr ' ' ',')
       dist: xenial
 
     - stage: coverage
-      python: "3.7"
+      python: "3.6"
       before_install: python -m pip install codecov pytest-cov
       script: python -m pytest --cov
       after_success: codecov
