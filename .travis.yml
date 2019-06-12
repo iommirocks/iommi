@@ -23,22 +23,13 @@ jobs:
         - flake8 lib/tri tests setup.py
 
     - stage: test
-      python: "2.7"
+      python: "3.6"
       before_install: pip install tox
-      script: tox -e $(tox -l | grep py27 | xargs | tr ' ' ',')
-
-    - python: "3.6"
-      before_install: pip install tox
-      script: tox -e $(tox -l | grep py36 | xargs | tr ' ' ',')
-
-    - python: "3.7"
-      before_install: pip install tox
-      script: tox -e $(tox -l | grep py37 | xargs | tr ' ' ',')
+      script: tox
       dist: xenial
 
-
     - stage: coverage
-      python: "3.7"
+      python: "3.6"
       before_install: python -m pip install codecov pytest-cov django pytest-django
       script: python -m pytest --cov
       after_success: codecov
