@@ -5,8 +5,8 @@ from datetime import date
 from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
-from tri.declarative import class_shortcut
-from tri.form import (
+from tri_declarative import class_shortcut
+from tri_form import (
     Form,
     Field,
 )
@@ -18,8 +18,8 @@ from tests.models import (
     NonStandardName,
     FromModelWithInheritanceTest,
 )
-from tri.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
-from tri.struct import Struct
+from tri_query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
+from tri_struct import Struct
 
 
 class Data(Struct):
@@ -403,7 +403,7 @@ def test_endpoint_dispatch_errors():
 
 
 def test_variable_repr():
-    assert repr(Variable(name='foo')) == '<tri.query.Variable foo>'
+    assert repr(Variable(name='foo')) == '<tri_query.Variable foo>'
 
 
 @pytest.mark.django_db

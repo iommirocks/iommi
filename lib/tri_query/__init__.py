@@ -33,12 +33,7 @@ from pyparsing import (
     Word,
     ZeroOrMore,
 )
-from six import (
-    integer_types,
-    string_types,
-    text_type,
-)
-from tri.declarative import (
+from tri_declarative import (
     class_shortcut,
     creation_ordered,
     declarative,
@@ -54,7 +49,7 @@ from tri.declarative import (
     sort_after,
     with_meta,
 )
-from tri.form import (
+from tri_form import (
     bool_parse,
     create_members_from_model,
     DISPATCH_PATH_SEPARATOR,
@@ -117,7 +112,7 @@ def to_string_surrounded_by_quote(v):
 def value_to_query_string_value_string(variable, v):
     if type(v) == bool:
         return {True: '1', False: '0'}.get(v)
-    if type(v) in integer_types or type(v) is float:
+    if type(v) in (int, float):
         return str(v)
     if isinstance(v, Model):
         try:
@@ -145,17 +140,17 @@ def choice_queryset_value_to_q(variable, op, value_string_or_f):
         raise QueryException('Invalid operator "%s" for variable "%s"' % (op, variable.name))
     if variable.attr is None:
         return Q()
-    if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
+    if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{variable.attr: None})
     try:
-        instance = variable.gui.choices.get(**{variable.value_to_q_lookup: text_type(value_string_or_f)})
+        instance = variable.gui.choices.get(**{variable.value_to_q_lookup: str(value_string_or_f)})
     except ObjectDoesNotExist:
         return None
     return Q(**{variable.attr + '__pk': instance.pk})
 
 
 def boolean_value_to_q(variable, op, value_string_or_f):
-    if isinstance(value_string_or_f, string_types):
+    if isinstance(value_string_or_f, str):
         value_string_or_f = bool_parse(value_string_or_f)
     return Variable.value_to_q(variable, op, value_string_or_f)
 
@@ -236,7 +231,7 @@ class Variable(RefinableObject):
         if op in ('!=', '!:'):
             negated = True
             op = op[1:]
-        if isinstance(value_string_or_f, string_types) and value_string_or_f.lower() == 'null':
+        if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
             r = Q(**{variable.attr: None})
         else:
             r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
@@ -436,7 +431,7 @@ class Variable(RefinableObject):
         return call_target(model_field=model_field, **kwargs)
 
 
-class StringValue(text_type):
+class StringValue(str):
     def __new__(cls, s):
         if len(s) > 2 and s.startswith('"') and s.endswith('"'):
             s = s[1:-1]
@@ -668,7 +663,7 @@ class Query(RefinableObject):
         variable_name, op, value_string_or_variable_name = token
         variable = self.bound_variable_by_name.get(variable_name.lower())
         if variable:
-            if isinstance(value_string_or_variable_name, string_types) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.bound_variable_by_name:
+            if isinstance(value_string_or_variable_name, str) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.bound_variable_by_name:
                 value_string_or_f = F(self.bound_variable_by_name[value_string_or_variable_name.lower()].attr)
             else:
                 value_string_or_f = value_string_or_variable_name
