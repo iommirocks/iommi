@@ -31,8 +31,8 @@ jobs:
 
     - stage: coverage
       python: "3.6"
-      before_install: python -m pip install codecov pytest-cov
-      script: python -m pytest --cov
+      before_install: python -m pip install codecov pytest-cov tox
+      script: tox -e coverage
       after_success: codecov
       dist: xenial
 

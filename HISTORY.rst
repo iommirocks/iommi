@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+6.0.0 (2019-06-14)
+~~~~~~~~~~~~~~~~~~
+
+* Renamed module from `tri.query` to `tri_query`
+
+* Dropped support for python 2 and django < 2.0
+
+
 5.0.2 (2019-05-03)
 ~~~~~~~~~~~~~~~~~~
 
