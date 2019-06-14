@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+8.0.0 (2019-06-14)
+~~~~~~~~~~~~~~~~~~
+
+* Renamed module from `tri.table` to `tri_table`
+
+* Dropped support for python2 and Django < 2.0
+
+
 7.0.2 (2019-05-06)
 ~~~~~~~~~~~~~~~~~~
 
