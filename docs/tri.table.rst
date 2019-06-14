@@ -7,7 +7,7 @@ Submodules
 tri.table.db\_compat module
 ---------------------------
 
-.. automodule:: tri.table.db_compat
+.. automodule:: tri_table.db_compat
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ tri.table.db\_compat module
 Module contents
 ---------------
 
-.. automodule:: tri.table
+.. automodule:: tri_table
     :members:
     :undoc-members:
     :show-inheritance:

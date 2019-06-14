@@ -1,5 +1,5 @@
-tri.declarative >=2.0.0,<3.0.0
-tri.named_struct
-tri.form >= 6.0.1, < 7.0.0
-tri.struct
-tri.query >= 5.0.2, < 6.0.0
+tri.declarative>=3.0.0,<4.0.0
+tri.struct>=3.0.0,<4.0.0
+tri.named_struct>=1.0.0,<2.0.0
+tri.form >= 7.0.0, < 8.0.0
+tri.query >= 6.0.0, < 7.0.0

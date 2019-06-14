@@ -16,16 +16,16 @@ from django.template import Template
 from django.test import RequestFactory
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
-from tri.declarative import (
+from tri_declarative import (
     getattr_path,
     Namespace,
     class_shortcut,
 )
-from tri.form import (
+from tri_form import (
     Field,
     Form,
 )
-from tri.query import (
+from tri_query import (
     Variable,
     Query,
 )
@@ -37,7 +37,7 @@ from tests.models import (
     Foo,
     FromModelWithInheritanceTest,
 )
-from tri.table import (
+from tri_table import (
     Column,
     Link,
     register_cell_formatter,
@@ -1569,7 +1569,7 @@ def test_blank_on_empty():
 
 
 def test_repr():
-    assert repr(Column(name='foo')) == '<tri.table.Column foo>'
+    assert repr(Column(name='foo')) == '<tri_table.Column foo>'
 
 
 @pytest.mark.django_db

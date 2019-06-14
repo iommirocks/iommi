@@ -1,4 +1,4 @@
-from tri.declarative import Shortcut
+from tri_declarative import Shortcut
 
 
 def setup_db_compat():
@@ -6,7 +6,7 @@ def setup_db_compat():
 
 
 def setup_db_compat_django():
-    from tri.table import register_column_factory
+    from tri_table import register_column_factory
     try:
         # noinspection PyUnresolvedReferences
         from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, DateField, DateTimeField, DecimalField, EmailField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel

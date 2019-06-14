@@ -5,6 +5,6 @@ include LICENSE
 include README.rst
 include requirements.txt
 include test_requirements.txt
-recursive-include lib/tri/table/templates *
+recursive-include lib/tri_table/templates *
 include table.scss
 include table.css

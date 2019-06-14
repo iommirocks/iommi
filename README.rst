@@ -103,7 +103,7 @@ Read the full documentation for more.
 Usage
 -----
 
-Add tri.form, tri.query, tri.table to INSTALLED_APPS.
+Add tri_form, tri_query, tri_table to INSTALLED_APPS.
 
 Motivation
 ----------

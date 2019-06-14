@@ -4,7 +4,7 @@ import pytest
 
 from tests.helpers import verify_table_html
 from tests.models import Foo
-from tri.table import Column, Table, Struct, order_by_on_list
+from tri_table import Column, Table, Struct, order_by_on_list
 
 
 def test_sort_list():
