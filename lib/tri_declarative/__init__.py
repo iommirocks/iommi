@@ -366,7 +366,7 @@ def evaluate_recursive(func_or_value, signature=None, **kwargs):
 
     if isinstance(func_or_value, dict):
         # The type(item)(** stuff is to preserve the original type
-        return type(func_or_value)(**{k: evaluate_recursive(v, signature=signature, **kwargs) for k, v in func_or_value.items()})
+        return type(func_or_value)(**{k: evaluate_recursive(v, signature=signature, **kwargs) for k, v in dict.items(func_or_value)})
 
     if isinstance(func_or_value, list):
         return [evaluate_recursive(v, signature=signature, **kwargs) for v in func_or_value]
@@ -393,7 +393,7 @@ def filter_show_recursive(item):
 
     if isinstance(item, dict):
         # The type(item)(** stuff is to preserve the original type
-        return type(item)(**{k: filter_show_recursive(v) for k, v in item.items() if should_show(v)})
+        return type(item)(**{k: filter_show_recursive(v) for k, v in dict.items(item) if should_show(v)})
 
     if isinstance(item, set):
         return {filter_show_recursive(v) for v in item if should_show(v)}
@@ -409,7 +409,7 @@ def remove_keys_recursive(item, keys_to_remove):
         return {remove_keys_recursive(v, keys_to_remove) for v in item}
 
     if isinstance(item, dict):
-        return {k: remove_keys_recursive(v, keys_to_remove) for k, v in item.items() if k not in keys_to_remove}
+        return {k: remove_keys_recursive(v, keys_to_remove) for k, v in dict.items(item) if k not in keys_to_remove}
 
     return item
 
@@ -502,7 +502,7 @@ class Namespace(Struct):
     def __init__(self, *dicts, **kwargs):
         if dicts or kwargs:
             for mappings in list(dicts) + [kwargs]:
-                for path, value in sorted(mappings.items(), key=lambda x: len(x[0])):
+                for path, value in sorted(dict.items(mappings), key=lambda x: len(x[0])):
                     self.setitem_path(path, value)
 
     def setitem_path(self, path, value):
@@ -516,7 +516,7 @@ class Namespace(Struct):
             else:
                 return Namespace
 
-        existing = self.get(key)
+        existing = Struct.get(self, key)
         if delimiter:
             if isinstance(existing, str):
                 warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
@@ -637,7 +637,7 @@ def flatten(namespace):
 
 def flatten_items(namespace):
     def mappings(n, visited, prefix=''):
-        for key, value in n.items():
+        for key, value in dict.items(n):
             path = prefix + key
             if isinstance(value, Namespace):
                 if id(value) not in visited:
@@ -662,7 +662,7 @@ EMPTY = FrozenNamespace()
 # The first argument has a funky name to avoid name clashes with stuff in kwargs
 def setdefaults_path(__target__, *defaults, **kwargs):
     args = [kwargs] + list(reversed(defaults)) + [__target__]
-    __target__.update(Namespace(*args))
+    dict.update(__target__, Namespace(*args))
     return __target__
 
 
@@ -907,7 +907,7 @@ def _generate_rst_docs(classes, missing_objects=None):
         w(0, '')
 
         section(1, 'Refinable members')
-        for refinable, value in sorted(get_namespace(c).items()):
+        for refinable, value in sorted(dict.items(get_namespace(c))):
             w(0, '* ' + refinable)
 
             if constructor_doc['params'].get(refinable):
