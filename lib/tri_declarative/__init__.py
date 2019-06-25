@@ -422,7 +422,7 @@ class Namespace(Struct):
     def __init__(self, *dicts, **kwargs):
         if dicts or kwargs:
             for mappings in list(dicts) + [kwargs]:
-                for path, value in sorted(dict.items(mappings), key=lambda x: len(x[0])):
+                for path, value in dict.items(mappings):
                     self.setitem_path(path, value)
 
     def setitem_path(self, path, value):
