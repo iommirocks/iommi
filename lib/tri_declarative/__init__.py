@@ -10,18 +10,12 @@ import functools
 import inspect
 import itertools
 
-import sys
 from tri_struct import (
     Struct,
     Frozen,
 )
 
 __version__ = '3.0.0'  # pragma: no mutate
-
-if sys.version_info < (3, 0):  # pragma: no mutate
-    string_types = (str, unicode)  # pragma: no coverage, no mutate, # noqa
-else:
-    string_types = str
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
@@ -234,19 +228,12 @@ def get_declared(cls, parameter='members'):
 
 
 def add_args_to_init_call(cls, get_extra_args_function):
-    if sys.version_info[0] < 3:  # pragma: no mutate
-        # Use object.__getattribute__ to not have the original implementation bind to the class
-        __init__orig = object.__getattribute__(cls, '__init__')  # pragma: no mutate
-    else:
-        __init__orig = getattr(cls, '__init__')
+    __init__orig = getattr(cls, '__init__')
 
     pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
     if pos_arg_names is None:
         try:
-            if sys.version_info[0] < 3:  # pragma: no mutate
-                pos_arg_names = inspect.getargspec(__init__orig)[0]  # pragma: no mutate
-            else:
-                pos_arg_names = inspect.getfullargspec(__init__orig)[0]  # pragma: no coverage
+            pos_arg_names = inspect.getfullargspec(__init__orig)[0]
             pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
         except TypeError:
             # We might fail on not being able to find the signature of builtin constructors
@@ -265,10 +252,7 @@ def add_args_to_init_call(cls, get_extra_args_function):
 def add_init_call_hook(cls, init_hook):
     # Use object.__getattribute__ to not have the original implementation bind to the class
     # Extra acrobatics to get None if no __init__ is defined
-    if sys.version_info[0] < 3:  # pragma: no mutate
-        __init__orig = object.__getattribute__(cls, '__dict__').get('__init__', None)  # pragma: no mutate
-    else:
-        __init__orig = getattr(cls, '__init__', None)
+    __init__orig = getattr(cls, '__init__', None)
 
     def init_hook_wrapper(self, *args, **kwargs):
         init_hook(self)
@@ -307,10 +291,7 @@ def get_signature(func):
         pass
 
     try:
-        if sys.version_info[0] < 3:  # pragma: no mutate
-            names, _, varkw, defaults = inspect.getargspec(func)  # pragma: no mutate
-        else:
-            names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)  # pragma: no covererage
+        names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)
     except TypeError:
         return None
 
@@ -537,7 +518,7 @@ class Namespace(Struct):
 
         existing = self.get(key)
         if delimiter:
-            if isinstance(existing, string_types):
+            if isinstance(existing, str):
                 warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
                 self[key] = Namespace({existing: True}, {rest_path: value})
             elif isinstance(existing, dict):
@@ -554,7 +535,7 @@ class Namespace(Struct):
                 self[key] = value
             elif isinstance(existing, dict):
                 type_of_namespace = get_type_of_namespace(existing)
-                if isinstance(value, string_types):
+                if isinstance(value, str):
                     warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)
                     self[key] = type_of_namespace(existing, {value: True})
                 elif isinstance(value, dict):
@@ -865,8 +846,6 @@ def _generate_rst_docs(classes, missing_objects=None):
 
     def docstring_param_dict(obj):
         doc = obj.__doc__
-        if doc is not None and sys.version_info[0] < 3:  # pragma: no mutate
-            doc = doc.decode('utf8')  # pragma: no mutate
         if doc is None:
             return dict(text=None, params={})
         return dict(
@@ -967,8 +946,6 @@ def _generate_rst_docs(classes, missing_objects=None):
 
                 if shortcut.__doc__:
                     doc = shortcut.__doc__
-                    if doc is not None and sys.version_info[0] < 3:  # pragma: no mutate
-                        doc = doc.decode('utf8')  # pragma: no mutate
                     f.write(doc.strip())
                     w(0, '')
                     w(0, '')
