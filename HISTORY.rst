@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+3.1.0 (2019-06-28)
+------------------
+
+* Fixed issues when Namespace contained a key called any of items, values, keys, or get
+
+* Removed sorting on Namespace kwargs that isn't needed in python 3 anymore. The sorting also destroys the given order which can be surprising
+
+* Removed old obsolete functions collect_namespaces, extract_subkeys, and setdefaults
+
+
 3.0.0 (2019-06-10)
 ------------------
 

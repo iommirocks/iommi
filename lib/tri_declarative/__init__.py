@@ -15,7 +15,7 @@ from tri_struct import (
     Frozen,
 )
 
-__version__ = '3.0.0'  # pragma: no mutate
+__version__ = '3.1.0'  # pragma: no mutate
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
