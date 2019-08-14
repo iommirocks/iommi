@@ -557,10 +557,9 @@ class Column(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='choice',
+        call_target__attribute='choice_queryset',
         bulk__call_target__attribute='multi_choice_queryset',
         query__call_target__attribute='multi_choice_queryset',
-        cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
     )
     def multi_choice_queryset(cls, call_target, **kwargs):
         setdefaults_path(kwargs, dict(
