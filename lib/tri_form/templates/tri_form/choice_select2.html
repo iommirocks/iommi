@@ -1,19 +1,19 @@
-<input type="hidden" name="{{ field.name }}" id="{{ field.id }}"{{ field.rendered_attrs }} style="width: 176px;"/>
+<select type="hidden" name="{{ field.name }}" id="{{ field.id }}"{{ field.rendered_attrs }} style="width: 176px;"></select>
 
 
 <script type="text/javascript">
     var id_field = "#{{ field.id }}";
     $(id_field).select2({
         ajax: {
-            url: "",
+            url: ".",
             dataType: "json",
-            data: function (term, page) {
+            data: function (params) {
                 return {
-                    '{{ field.endpoint_path }}': term, // search term
-                    page: page
+                    '{{ field.endpoint_path }}': params.term, // search term
+                    page: params.page
                 };
             },
-            results: function (data) {
+            processResults: function (data) {
                 return {results: data};
             },
             cache: true
@@ -25,6 +25,7 @@
             callback(data);
         }
     });
+
 
     {% if field.value %}
         $(id_field).select2("val", "{{ field.value }}", true);
