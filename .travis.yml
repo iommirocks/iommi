@@ -20,7 +20,7 @@ jobs:
       before_install:
         - pip install flake8
       script:
-        - flake8 lib/tri tests setup.py
+        - flake8 lib/ tests setup.py
 
     - stage: test
       python: "3.6"
