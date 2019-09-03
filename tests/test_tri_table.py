@@ -1596,7 +1596,7 @@ def test_ordering():
 
 
 @pytest.mark.django_db
-def test_foreign_key():
+def test_many_to_many():
     f1 = Foo.objects.create(a=17, b="Hej")
     f2 = Foo.objects.create(a=23, b="Hopp")
 

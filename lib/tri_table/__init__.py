@@ -666,6 +666,7 @@ class Column(RefinableObject):
     @classmethod
     @class_shortcut(
         call_target__attribute='multi_choice_queryset',
+        cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
     )
     def many_to_many(cls, call_target, model_field, **kwargs):
         setdefaults_path(
