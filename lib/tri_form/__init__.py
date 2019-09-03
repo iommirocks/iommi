@@ -7,7 +7,6 @@ import copy
 import json
 import re
 import six
-import warnings
 from collections import OrderedDict
 from datetime import datetime
 from decimal import (
