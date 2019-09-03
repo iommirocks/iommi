@@ -1043,10 +1043,10 @@ def test_choice_shortcut():
     shortcut_test(
         Namespace(
             call_target=Field.choice,
-            choices=['a', 'b', 'c'],
+            choices=[1, 2, 3],
         ),
         raw_and_parsed_data_tuples=[
-            ('b', 'b'),
+            ('1', 1),
         ],
     )
 
