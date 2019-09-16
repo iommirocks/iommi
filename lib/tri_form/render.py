@@ -6,6 +6,9 @@ def render_attrs(attrs):
     Render HTML attributes, or return '' if no attributes needs to be rendered.
     """
     if attrs is not None:
+        if not attrs:
+            return ' '
+
         def parts():
             for key, value in sorted(attrs.items()):
                 if value is None:
