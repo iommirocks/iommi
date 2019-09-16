@@ -307,6 +307,15 @@ def test_show():
     assert list(Form(data={}, fields=[Field(name='foo', show=lambda form, field: False)]).fields_by_name.keys()) == []
 
 
+def test_declared_fields():
+    form = Form(data={}, fields=[
+        Field(name='foo', show=True),
+        Field(name='bar', show=False),
+    ])
+    assert [f.name for f in form.declared_fields] == ['foo', 'bar']
+    assert [f.name for f in form.fields] == ['foo']
+
+
 def test_non_editable():
     assert Form(data={}, fields=[Field(name='foo', editable=False)]).fields[0].input_template == 'tri_form/non_editable.html'
 

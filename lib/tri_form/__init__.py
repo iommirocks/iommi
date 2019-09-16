@@ -1273,7 +1273,7 @@ class Form(RefinableObject):
                 setattr(field, 'name', name)
                 yield field
 
-        self.fields = sort_after([f._bind(self) for f in unbound_fields()])
+        self.declared_fields = sort_after([f._bind(self) for f in unbound_fields()])
         """ :type: list of Field"""
 
         self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
@@ -1291,10 +1291,10 @@ class Form(RefinableObject):
         self._valid = None
         self.instance = instance
 
-        for field in self.fields:
+        for field in self.declared_fields:
             field._evaluate_show()
 
-        self.fields = [field for field in self.fields if should_show(field)]
+        self.fields = [field for field in self.declared_fields if should_show(field)]
         self.fields_by_name = Struct({field.name: field for field in self.fields})
 
         if self.instance is not None:
