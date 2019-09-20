@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-7.0.1 (-)
+7.1.0 (2019-09-20)
 ~~~~~~~~~~~~~~~~~~
 
 * Added declared_fields to `Form`.
