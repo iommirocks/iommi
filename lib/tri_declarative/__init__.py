@@ -1,18 +1,17 @@
 from __future__ import unicode_literals
 
+import functools
+import inspect
 import warnings
 from collections import (
     OrderedDict,
     defaultdict,
 )
 from copy import copy
-import functools
-import inspect
-import itertools
 
 from tri_struct import (
-    Struct,
     Frozen,
+    Struct,
 )
 
 __version__ = '3.1.0'  # pragma: no mutate
@@ -569,7 +568,7 @@ def flatten_items(namespace):
             else:
                 yield path, value
 
-    return mappings(namespace, [])
+    return mappings(namespace, visited=[])
 
 
 class FrozenNamespace(Frozen, Namespace):
@@ -702,7 +701,7 @@ def get_shortcuts_by_name(class_):
 
 
 @creation_ordered
-class Refinable(object):
+class Refinable:
     pass
 
 
@@ -724,7 +723,7 @@ def is_refinable_function(attr):
     is_member=is_refinable_function,
     add_init_kwargs=False,
 )
-class RefinableObject(object):
+class RefinableObject:
     # This constructor assumes that the class that inherits from RefinableObject
     # has done any attribute assignments to self BEFORE calling super(...)
     @dispatch()

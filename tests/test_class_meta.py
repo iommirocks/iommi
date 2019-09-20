@@ -4,7 +4,7 @@ from tri_declarative import with_meta
 
 def test_empty():
     @with_meta
-    class Test(object):
+    class Test:
 
         def __init__(self, foo):
             assert foo == 'bar'
@@ -14,7 +14,7 @@ def test_empty():
 
 def test_constructor():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'bar'
 
@@ -26,7 +26,7 @@ def test_constructor():
 
 def test_override():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'bar'
 
@@ -38,7 +38,7 @@ def test_override():
 
 def test_inheritance():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'bar'
 
@@ -52,7 +52,7 @@ def test_inheritance():
 
 def test_inheritance_base():
     @with_meta
-    class Test(object):
+    class Test:
         def __init__(self, foo):
             assert 'bar' == foo
 
@@ -65,7 +65,7 @@ def test_inheritance_base():
 
 def test_inheritance_with_override():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'bar'
 
@@ -82,7 +82,7 @@ def test_inheritance_with_override():
 
 def test_pos_arg_override():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'foo'
             bar = 'bar'
@@ -98,7 +98,7 @@ def test_pos_arg_override():
 
 def test_args_get_by_pos():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'foo'
 
@@ -110,7 +110,7 @@ def test_args_get_by_pos():
 
 def test_args_get_by_name():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'foo'
 
@@ -122,7 +122,7 @@ def test_args_get_by_name():
 
 def test_args_override_by_pos():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'foo'
 
@@ -134,7 +134,7 @@ def test_args_override_by_pos():
 
 def test_args_override_by_name():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'foo'
 
@@ -147,7 +147,7 @@ def test_args_override_by_name():
 
 def test_too_many_args_check():
     @with_meta
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'foo'
 
@@ -162,7 +162,7 @@ def test_too_many_args_check():
 
 def test_add_init_kwargs():
     @with_meta(add_init_kwargs=True)
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'bar'
             _bar = 'baz'
@@ -175,7 +175,7 @@ def test_add_init_kwargs():
 
 def test_not_add_init_kwargs():
     @with_meta(add_init_kwargs=False)
-    class Test(object):
+    class Test:
         class Meta:
             foo = 'bar'
 

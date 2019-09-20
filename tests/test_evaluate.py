@@ -25,7 +25,7 @@ def test_evaluate_recursive():
 
 
 def test_remove_and_filter_show_recursive():
-    class Foo(object):
+    class Foo:
         show = False
 
     assert remove_show_recursive(filter_show_recursive({
@@ -129,7 +129,7 @@ def test_evaluate_extra_kwargs_with_defaults():
 
 
 def test_evaluate_on_methods():
-    class Foo(object):
+    class Foo:
         def bar(self, x):
             return x
 

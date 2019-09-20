@@ -1,7 +1,6 @@
 from tri_declarative import (
     _generate_rst_docs,
     class_shortcut,
-    creation_ordered,
     dispatch,
     Refinable,
     refinable,

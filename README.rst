@@ -118,15 +118,15 @@ Get/set attribute given a path string
 
 .. code-block:: python
 
-    class Foo(object):
+    class Foo:
         def __init__(a):
             self.a = a
 
-    class Bar(object):
+    class Bar:
         def __init__(b):
             self.b = b
 
-    class Baz(object):
+    class Baz:
         def __init__(c):
             self.c = c
 
@@ -171,7 +171,7 @@ collected and sent as :code:`members` constructor keyword argument.
     from tri_declarative import declarative
 
     @declarative(str)
-    class Foo(object):
+    class Foo:
         bar = 'barbar'
         baz = 'bazbaz'
         boink = 17
@@ -190,7 +190,7 @@ The value of the :code:`members` argument will also be collected from sub-classe
     from tri_declarative import declarative
 
     @declarative(str)
-    class Foo(object):
+    class Foo:
 
         def __init__(self, members):
             assert members['bar'] == 'barbar'
@@ -213,7 +213,7 @@ The :code:`members` argument can be given another name (:code:`things` in the ex
     from tri_declarative.declarative import declarative
 
     @declarative(str, 'things')
-    class Foo(object):
+    class Foo:
 
         bar = 'barbar'
 
@@ -235,7 +235,7 @@ argument of the same type.
     from tri_declarative import declarative
 
     @declarative(str)
-    class Foo(object):
+    class Foo:
         charlie = '3'
         alice = '1'
 
@@ -271,7 +271,7 @@ This is useful for classes intended to be used as members of a :code:`@declarati
     from tri_declarative import creation_ordered
 
     @creation_ordered
-    class Thing(object):
+    class Thing:
         pass
 
     t1 = Thing()
@@ -292,7 +292,7 @@ Below is a more complete example of using @declarative:
 
 
     @creation_ordered
-    class Field(object):
+    class Field:
         pass
 
 
@@ -307,7 +307,7 @@ Below is a more complete example of using @declarative:
 
 
     @declarative(Field, 'table_fields')
-    class SimpleSQLModel(object):
+    class SimpleSQLModel:
 
         def __init__(self, **kwargs):
             self.table_fields = kwargs.pop('table_fields')
@@ -350,7 +350,7 @@ The members of the Meta class will be injected as arguments to constructor calls
     from tri_declarative import with_meta
 
     @with_meta
-    class Foo(object):
+    class Foo:
 
         class Meta:
             foo = 'bar'
@@ -376,7 +376,7 @@ It can be disabled by passing :code:`add_init_kwargs=False` to the decorator.
     from tri_declarative import with_meta
 
     @with_meta(add_init_kwargs=False)
-    class Foo(object):
+    class Foo:
         class Meta:
             foo = 'bar'
 
@@ -390,7 +390,7 @@ Another example:
 
     from tri_declarative import with_meta
 
-    class Foo(object):
+    class Foo:
 
         class Meta:
             foo = 'bar'

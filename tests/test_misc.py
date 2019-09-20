@@ -1,6 +1,5 @@
 import copy
 import warnings
-from collections import OrderedDict
 
 import pytest
 from tri_declarative import (
@@ -39,15 +38,15 @@ def suppress_deprecation_warnings():
 
 
 def test_getattr_path_and_setattr_path():
-    class Baz(object):
+    class Baz:
         def __init__(self):
             self.quux = 3
 
-    class Bar(object):
+    class Bar:
         def __init__(self):
             self.baz = Baz()
 
-    class Foo(object):
+    class Foo:
         def __init__(self):
             self.bar = Bar()
 
@@ -420,20 +419,20 @@ def test_setdefaults_path_ordering():
 
     actual_foo = setdefaults_path(
         Struct(),
-        OrderedDict([
-            ('x', {'z': 42}),
-            ('x__y', 17),
-        ]),
+        dict(
+            x={'z': 42},
+            x__y=17,
+        ),
     )
 
     assert actual_foo == expected
 
     actual_bar = setdefaults_path(
         Struct(),
-        OrderedDict([
-            ('x__y', 17),
-            ('x', {'z': 42}),
-        ]),
+        dict(
+            x__y=17,
+            x={'z': 42},
+        ),
     )
     assert actual_bar == expected
 
@@ -719,7 +718,7 @@ def test_is_shortcut_function():
 
     assert is_shortcut(g)
 
-    class Foo(object):
+    class Foo:
         @staticmethod
         @shortcut
         def h():
@@ -735,7 +734,7 @@ def test_is_shortcut_function():
 
 
 def test_get_shortcuts_by_name():
-    class Foo(object):
+    class Foo:
         a = Shortcut(x=1)
 
     class Bar(Foo):
@@ -754,7 +753,7 @@ def test_get_shortcuts_by_name():
 
 def test_class_shortcut():
     @with_meta
-    class Foo(object):
+    class Foo:
         @dispatch(
             bar=17
         )
@@ -785,7 +784,7 @@ def test_class_shortcut():
 
 def test_class_shortcut_class_call_target():
     @with_meta
-    class Foo(object):
+    class Foo:
         @classmethod
         @class_shortcut(
             foo=7
@@ -957,7 +956,7 @@ def test_retain_shortcut_type():
 
 
 def test_shortcut_call_target_attribute():
-    class Foo(object):
+    class Foo:
         @classmethod
         def foo(cls):
             return cls
