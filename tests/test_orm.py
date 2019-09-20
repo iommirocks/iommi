@@ -4,7 +4,6 @@ from tri_declarative import (
 )
 
 
-@creation_ordered
 class Field:
     def __init__(self, mandatory=False):
         self.mandatory = mandatory

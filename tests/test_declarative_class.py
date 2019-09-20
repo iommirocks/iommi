@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from random import shuffle
+import warnings
 
 import pytest
 from tri_declarative import (
@@ -11,7 +10,6 @@ from tri_declarative import (
 from tri_struct import Struct
 
 
-@creation_ordered
 class Member(Struct):
     pass
 
@@ -32,7 +30,7 @@ def test_find_members():
         foo = Member(foo='bar')
 
     subject = MyDeclarative()
-    assert subject.members == OrderedDict([('foo', Member(foo='bar'))])
+    assert subject.members == dict(foo=Member(foo='bar'))
 
 
 def test_find_members_by_check_function():
@@ -139,9 +137,7 @@ def test_find_members_not_shadowed_by_meta():
             pass
 
     subject = MyDeclarative()
-    assert subject.members == OrderedDict([
-        ('foo', Member(foo='bar')),
-    ])
+    assert subject.members == dict(foo=Member(foo='bar'))
 
 
 def test_find_members_inherited():
@@ -152,10 +148,10 @@ def test_find_members_inherited():
         bar = Member(foo='baz')
 
     subject = MyDeclarativeSubclass()
-    assert subject.members == OrderedDict([
+    assert list(subject.members.items()) == [
         ('foo', Member(foo='bar')),
         ('bar', Member(foo='baz')),
-    ])
+    ]
 
 
 def test_isolated_inheritance():
@@ -169,9 +165,9 @@ def test_isolated_inheritance():
     class Bar(Base):
         c = 3
 
-    assert Base.get_declared() == OrderedDict([('a', 1)])
-    assert Foo.get_declared() == OrderedDict([('a', 1), ('b', 2)])
-    assert Bar.get_declared() == OrderedDict([('a', 1), ('c', 3)])
+    assert list(Base.get_declared().items()) == [('a', 1)]
+    assert list(Foo.get_declared().items()) == [('a', 1), ('b', 2)]
+    assert list(Bar.get_declared().items()) == [('a', 1), ('c', 3)]
 
 
 def test_find_members_from_base():
@@ -182,10 +178,10 @@ def test_find_members_from_base():
     class Sub(Base):
         bar = Member(bar='bar')
 
-    assert Sub._declarative_members == OrderedDict([
+    assert list(Sub._declarative_members.items()) == [
         ('foo', Member(foo='foo')),
         ('bar', Member(bar='bar')),
-    ])
+    ]
 
 
 def test_find_members_shadow():
@@ -196,7 +192,7 @@ def test_find_members_shadow():
     class Sub(Base):
         foo = Member(bar='baz')
 
-    assert Sub._declarative_members == OrderedDict([('foo', Member(bar='baz'))])
+    assert Sub._declarative_members == dict(foo=Member(bar='baz'))
 
 
 def test_member_attribute_naming():
@@ -209,7 +205,7 @@ def test_member_attribute_naming():
         bar = Member(baz='buzz')
 
     subject = MyDeclarative()
-    assert subject.foo == OrderedDict([('bar', Member(baz='buzz'))])
+    assert subject.foo == dict(bar=Member(baz='buzz'))
 
 
 def test_string_members():
@@ -217,7 +213,7 @@ def test_string_members():
     class Declarative:
         foo = 'bar'
 
-    assert Declarative.get_declared() == OrderedDict([('foo', 'bar')])
+    assert Declarative.get_declared() == dict(foo='bar')
 
 
 def test_declarative_and_meta():
@@ -230,8 +226,8 @@ def test_declarative_and_meta():
             bar = 'bar'
 
         def __init__(self, members, bar):
-            assert OrderedDict([('foo', 'foo')]) == members
-            assert 'bar' == bar
+            assert members == dict(foo='foo')
+            assert bar == 'bar'
 
     Foo()
 
@@ -241,8 +237,8 @@ def test_declarative_and_meta_subclass_no_constructor_hack_workaround():
     class Foo:
 
         def __init__(self, members, bar):
-            assert OrderedDict() == members
-            assert 'bar' == bar
+            assert members == dict()
+            assert bar == 'bar'
 
     @with_meta
     class Bar(Foo):
@@ -266,7 +262,7 @@ def test_declarative_and_meta_other_order():
             bar = 'bar'
 
         def __init__(self, members, bar):
-            assert members == OrderedDict([('foo', 'foo')])
+            assert members == dict(foo='foo')
             assert bar == 'bar'
 
     Foo()
@@ -280,8 +276,8 @@ def test_multiple_types():
         b = "b"
 
         def __init__(self, ints, strs):
-            assert ints == OrderedDict([('a', 1)])
-            assert strs == OrderedDict([('b', 'b')])
+            assert ints == dict(a=1)
+            assert strs == dict(b='b')
 
     Foo()
 
@@ -293,7 +289,7 @@ def test_multiple_types_inheritance():
         a = 'a'
 
         def __init__(self, ints):
-            assert ints == OrderedDict([('i', 1), ('j', 2), ('k', 3)])
+            assert list(ints.items()) == [('i', 1), ('j', 2), ('k', 3)]
             super(Foo, self).__init__()
 
     @declarative(str, 'strs', sort_key=lambda x: x)
@@ -302,7 +298,7 @@ def test_multiple_types_inheritance():
         b = "b"
 
         def __init__(self, strs):
-            assert strs == OrderedDict([('b', 'b'), ('c', 'c')])
+            assert list(strs.items()) == [('b', 'b'), ('c', 'c')]
             super(Bar, self).__init__()
 
     class Baz(Bar):
@@ -414,11 +410,16 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
         D()
 
 
-def test_creation_ordered():
-    test_list = [Member() for _ in range(10)]
-    shuffled_list = test_list[:]
-    shuffle(shuffled_list)
-    assert sorted(shuffled_list) == test_list
+def test_creation_ordered_deprecated():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings("default", category=DeprecationWarning)
+
+        @creation_ordered
+        class Foo:
+            pass
+
+        assert '@creation_ordered no longer needed' in str(w.pop())
+        warnings.resetwarnings()
 
 
 def test_creation_ordered_attribute_retention():
@@ -426,7 +427,6 @@ def test_creation_ordered_attribute_retention():
         f.my_attribute = 17
         return f
 
-    @creation_ordered
     class Foo:
         @my_wrapper
         def __init__(self):
@@ -479,25 +479,6 @@ def test_whitelist_dunder_weakref():
 
     assert Bar.__dict__ is not Foo.__dict__
     assert Bar.__weakref__ is None or Bar.__weakref__ is not Foo.__weakref__
-
-
-def test_require_ordering():
-    with pytest.raises(TypeError) as e:
-        @declarative(str)
-        class Foo:
-            foo = "foo"
-
-    assert str(e.value) == 'Missing member ordering definition. ' \
-                           'Use @creation_ordered or specify sort_key'
-
-
-def test_wrap_creation_ordered_preserves_doc_string():
-    @creation_ordered
-    class Foo(Struct):
-        def __init__(self):
-            """foo"""
-
-    assert Foo.__init__.__doc__ == 'foo'
 
 
 def test_wrap_with_meta_preserves_doc_string():

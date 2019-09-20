@@ -4,7 +4,6 @@ import functools
 import inspect
 import warnings
 from collections import (
-    OrderedDict,
     defaultdict,
 )
 from copy import copy
@@ -58,38 +57,8 @@ def get_meta(cls):
 
 
 def creation_ordered(class_to_decorate):
-    """
-        Class decorator that ensures that instances will be ordered after creation order when sorted.
-
-        :type class_to_decorate: class
-        :rtype: class
-    """
-
-    next_index = functools.partial(next, itertools.count())
-
-    __init__orig = class_to_decorate.__init__
-
-    @functools.wraps(__init__orig, assigned=['__doc__'])
-    def __init__(self, *args, **kwargs):
-        object.__setattr__(self, '_index', next_index())
-        __init__orig(self, *args, **kwargs)
-
-    setattr(class_to_decorate, '__init__', __init__)
-
-    # noinspection PyProtectedMember
-    def __lt__(self, other):
-        return self._index < other._index  # pragma: no mutate
-
-    setattr(class_to_decorate, '__lt__', __lt__)
-
-    class_to_decorate = functools.total_ordering(class_to_decorate)
-
+    warnings.warn('@creation_ordered no longer needed', DeprecationWarning)
     return class_to_decorate
-
-
-def default_sort_key(x):
-    # noinspection PyProtectedMember
-    return x._index
 
 
 def get_members(cls, member_class=None, is_member=None, sort_key=None, _parameter=None):
@@ -106,7 +75,7 @@ def get_members(cls, member_class=None, is_member=None, sort_key=None, _paramete
     if member_class is None and is_member is None:
         raise TypeError("get_members either needs a member_class parameter or an is_member check function (or both)")
 
-    members = OrderedDict()
+    members = {}
     for base in cls.__bases__:
         if _parameter is None:
             inherited_members = get_members(base, member_class=member_class, is_member=is_member, sort_key=sort_key)
@@ -130,13 +99,7 @@ def get_members(cls, member_class=None, is_member=None, sort_key=None, _paramete
     bindings = generate_member_bindings()
 
     if sort_key is not None:
-        try:
-            sorted_bindings = sorted(bindings, key=lambda x: sort_key(x[1]))
-        except AttributeError:
-            if sort_key is default_sort_key:
-                raise TypeError('Missing member ordering definition. Use @creation_ordered or specify sort_key')
-            else:  # pragma: no covererage
-                raise
+        sorted_bindings = sorted(bindings, key=lambda x: sort_key(x[1]))
         members.update(sorted_bindings)
     else:
         members.update(bindings)
@@ -144,11 +107,11 @@ def get_members(cls, member_class=None, is_member=None, sort_key=None, _paramete
     return members
 
 
-def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key=default_sort_key, is_member=None):
+def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key=None, is_member=None):
     """
         Class decorator to enable classes to be defined in the style of django models.
         That is, @declarative classes will get an additional argument to constructor,
-        containing an OrderedDict with all class members matching the specified type.
+        containing a dict with all class members matching the specified type.
 
         :param class member_class: Class(es) to collect
         :param is_member: Function to determine if an object should be collected
@@ -185,7 +148,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
                         pass  # Not always possible to copy methods
                     yield (k, v)
 
-            copied_members = OrderedDict(copy_declared())
+            copied_members = dict(copy_declared())
             self.__dict__.update(copied_members)
             return {parameter: copied_members}
 
@@ -205,7 +168,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
 def set_declared(cls, value, parameter='members'):
     """
         :type cls: class
-        :type value: OrderedDict
+        :type value: dict
         :type parameter: str
     """
 
@@ -214,13 +177,13 @@ def set_declared(cls, value, parameter='members'):
 
 def get_declared(cls, parameter='members'):
     """
-        Get the :code:`OrderedDict` value of the parameter collected by the :code:`@declarative` class decorator.
+        Get the :code:`dict` value of the parameter collected by the :code:`@declarative` class decorator.
         This is the same value that would be submitted to the :code:`__init__` invocation in the :code:`members`
         argument (or another name if overridden by the :code:`parameter` specification)
 
         :type cls: class
         :type parameter: str
-        :rtype: OrderedDict
+        :rtype: dict
     """
 
     return getattr(cls, '_declarative_' + parameter, {})
@@ -700,7 +663,6 @@ def get_shortcuts_by_name(class_):
     return dict(get_members(class_, member_class=Shortcut, is_member=is_shortcut))
 
 
-@creation_ordered
 class Refinable:
     pass
 
@@ -708,8 +670,6 @@ class Refinable:
 # decorator
 def refinable(f):
     f.refinable = True
-    # noinspection PyProtectedMember
-    f._index = Refinable()._index
     return f
 
 

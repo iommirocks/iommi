@@ -13,7 +13,6 @@ def test_generate_docs():
     def some_callable():
         pass
 
-    @creation_ordered
     class Foo(RefinableObject):
         """docstring for Foo"""
 
@@ -125,7 +124,6 @@ shortcut4
 
 
 def test_generate_docs_empty_docstring():
-    @creation_ordered
     class Foo(RefinableObject):
         name = Refinable()
 
@@ -149,7 +147,6 @@ Refinable members
 
 
 def test_generate_docs_description_and_params_in_constructor():
-    @creation_ordered
     class Foo(RefinableObject):
         """
         First description
@@ -189,7 +186,6 @@ Refinable members
 
 
 def test_generate_docs_kill_obscure_mutant():
-    @creation_ordered
     class Foo(RefinableObject):
         name = Refinable()
 
