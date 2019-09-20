@@ -1,9 +1,16 @@
-from tri_declarative import creation_ordered, RefinableObject, Refinable, dispatch, refinable, Shortcut, class_shortcut, \
-    _generate_rst_docs
+from tri_declarative import (
+    _generate_rst_docs,
+    class_shortcut,
+    creation_ordered,
+    dispatch,
+    Refinable,
+    refinable,
+    RefinableObject,
+    Shortcut,
+)
 
 
 def test_generate_docs():
-
     def some_callable():
         pass
 
@@ -46,7 +53,8 @@ def test_generate_docs():
 
         @classmethod
         @class_shortcut(
-            description=lambda foo: 'qwe'  # TODO: This is currently not shown in the documentation output, but it should be!
+            description=lambda foo: 'qwe'
+            # TODO: This is currently not shown in the documentation output, but it should be!
         )
         def shortcut3(cls, call_target):
             """
@@ -118,7 +126,6 @@ shortcut4
 
 
 def test_generate_docs_empty_docstring():
-
     @creation_ordered
     class Foo(RefinableObject):
         name = Refinable()
@@ -143,7 +150,6 @@ Refinable members
 
 
 def test_generate_docs_description_and_params_in_constructor():
-
     @creation_ordered
     class Foo(RefinableObject):
         """
@@ -184,7 +190,6 @@ Refinable members
 
 
 def test_generate_docs_kill_obscure_mutant():
-
     @creation_ordered
     class Foo(RefinableObject):
         name = Refinable()

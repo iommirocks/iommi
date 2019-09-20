@@ -1,6 +1,8 @@
 import pytest
-
-from tri_declarative import declarative, creation_ordered
+from tri_declarative import (
+    creation_ordered,
+    declarative,
+)
 
 
 @creation_ordered

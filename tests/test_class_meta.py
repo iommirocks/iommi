@@ -3,44 +3,40 @@ from tri_declarative import with_meta
 
 
 def test_empty():
-
     @with_meta
     class Test(object):
 
         def __init__(self, foo):
-            assert 'bar' == foo
+            assert foo == 'bar'
 
     Test('bar')
 
 
 def test_constructor():
-
     @with_meta
     class Test(object):
         class Meta:
             foo = 'bar'
 
         def __init__(self, foo):
-            assert 'bar' == foo
+            assert foo == 'bar'
 
     Test()
 
 
 def test_override():
-
     @with_meta
     class Test(object):
         class Meta:
             foo = 'bar'
 
         def __init__(self, foo):
-            assert 'baz' == foo
+            assert foo == 'baz'
 
     Test(foo='baz')
 
 
 def test_inheritance():
-
     @with_meta
     class Test(object):
         class Meta:
@@ -49,13 +45,12 @@ def test_inheritance():
     @with_meta
     class TestSubclass(Test):
         def __init__(self, foo):
-            assert 'bar' == foo
+            assert foo == 'bar'
 
     TestSubclass()
 
 
 def test_inheritance_base():
-
     @with_meta
     class Test(object):
         def __init__(self, foo):
@@ -69,7 +64,6 @@ def test_inheritance_base():
 
 
 def test_inheritance_with_override():
-
     @with_meta
     class Test(object):
         class Meta:
@@ -81,13 +75,12 @@ def test_inheritance_with_override():
             foo = 'baz'
 
         def __init__(self, foo):
-            assert 'baz' == foo
+            assert foo == 'baz'
 
     TestSubclass()
 
 
 def test_pos_arg_override():
-
     @with_meta
     class Test(object):
         class Meta:
@@ -95,55 +88,51 @@ def test_pos_arg_override():
             bar = 'bar'
 
         def __init__(self, apa, foo, gapa, **kwargs):
-            assert 'apa' == apa
-            assert 'foo' == foo
-            assert 'gapa' == gapa
+            assert apa == 'apa'
+            assert foo == 'foo'
+            assert gapa == 'gapa'
             assert 'bar' in kwargs
 
     Test('apa', gapa='gapa')
 
 
 def test_args_get_by_pos():
-
     @with_meta
     class Test(object):
         class Meta:
             foo = 'foo'
 
         def __init__(self, foo):
-            assert 'foo' == foo
+            assert foo == 'foo'
 
     Test()
 
 
 def test_args_get_by_name():
-
     @with_meta
     class Test(object):
         class Meta:
             foo = 'foo'
 
         def __init__(self, foo=None):
-            assert 'foo' == foo
+            assert foo == 'foo'
 
     Test()
 
 
 def test_args_override_by_pos():
-
     @with_meta
     class Test(object):
         class Meta:
             foo = 'foo'
 
         def __init__(self, foo):
-            assert 'bar' == foo
+            assert foo == 'bar'
 
     Test('bar')
 
 
 def test_args_override_by_name():
-
     @with_meta
     class Test(object):
         class Meta:
@@ -157,7 +146,6 @@ def test_args_override_by_name():
 
 
 def test_too_many_args_check():
-
     @with_meta
     class Test(object):
         class Meta:
@@ -192,6 +180,6 @@ def test_not_add_init_kwargs():
             foo = 'bar'
 
         def __init__(self):
-            assert 'bar' == self.get_meta().foo
+            assert self.get_meta().foo == 'bar'
 
     Test()
