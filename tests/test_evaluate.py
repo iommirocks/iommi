@@ -58,6 +58,15 @@ def test_get_signature_fails_on_native():
     assert None is get_signature(f)
 
 
+def test_get_signature_on_class():
+    class Foo:
+        def __init__(self, a, b):
+            pass
+
+    assert 'a,b,self||' == get_signature(Foo)
+    assert 'a,b,self||' == Foo.__tri_declarative_signature
+
+
 def test_get_signature_varargs():
     assert "a,b||*" == get_signature(lambda a, b, **c: None)
 
