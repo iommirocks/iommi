@@ -224,7 +224,7 @@ The :code:`members` argument can be given another name (:code:`things` in the ex
     f = Foo()
 
 
-Note that the collected dict is an :code:`OrderedDict` and will be ordered by class inheritance and by using
+Note that the collected dict is ordered by class inheritance and by using
 :code:`sorted` of the values within each class. (In the 'str' example, :code:`sorted` yields in alphabetical order).
 
 Also note that the collection of *class* members based on their class does *not* interfere with *instance* constructor
@@ -240,9 +240,9 @@ argument of the same type.
         alice = '1'
 
         def __init__(self, members):
-            assert members == OrderedDict([('alice', '1'), ('charlie', '3'),
-                                           ('bob', '2'), ('dave', '4'),
-                                           ('eric', '5')])
+            assert list(members.items()) == [('alice', '1'), ('charlie', '3'),
+                                             ('bob', '2'), ('dave', '4'),
+                                             ('eric', '5')])
             assert 'animal' not in members
 
 
@@ -257,28 +257,6 @@ argument of the same type.
             assert animal == 'elephant'
 
     f = MyOtherFoo('elephant')
-
-
-@creation_ordered
------------------
-
-Class decorator that ensures that instances will be ordered after creation order when sorted.
-
-This is useful for classes intended to be used as members of a :code:`@declarative` class when member order matters.
-
-.. code-block:: python
-
-    from tri_declarative import creation_ordered
-
-    @creation_ordered
-    class Thing:
-        pass
-
-    t1 = Thing()
-    t2 = Thing()
-    t3 = Thing()
-
-    assert sorted([t2, t3, t1]) == [t1, t2, t3]
 
 
 Real world use-case
