@@ -742,7 +742,7 @@ class RefinableObject(object):
         super(RefinableObject, self).__init__()
 
 
-def generate_rst_docs(directory, classes, missing_objects=None):
+def generate_rst_docs(directory, classes, missing_objects=None):  # pragma: no coverage
     """
     Generate documentation for tri.declarative APIs
 
@@ -762,7 +762,6 @@ def _generate_rst_docs(classes, missing_objects=None):
         missing_objects = tuple()
 
     import re
-    from inspect import isclass
 
     def docstring_param_dict(obj):
         doc = obj.__doc__
@@ -776,19 +775,9 @@ def _generate_rst_docs(classes, missing_objects=None):
     def indent(levels, s):
         return (' ' * levels * 4) + s.strip()
 
-    def get_namespace(hit):
-        assert hit is not None
-
-        if isinstance(hit, Shortcut):
-            return hit
-        elif isclass(hit):
-            return Namespace(
-                {k: hit.__init__.dispatch.get(k) for k, v in get_declared(hit, 'refinable_members').items()})
-        elif isinstance(hit, Namespace):
-            return hit
-        else:
-            assert isinstance(hit.dispatch, Namespace)
-            return hit.dispatch
+    def get_namespace(c):
+        return Namespace(
+            {k: c.__init__.dispatch.get(k) for k, v in get_declared(c, 'refinable_members').items()})
 
     for c in classes:
         from io import StringIO
