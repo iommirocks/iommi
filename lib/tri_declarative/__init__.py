@@ -140,16 +140,7 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
 
         def get_extra_args_function(self):
             declared = get_declared(self, parameter)
-
-            def copy_declared():
-                for k, v in declared.items():
-                    try:
-                        v = copy(v)
-                    except TypeError:
-                        pass  # Not always possible to copy methods
-                    yield (k, v)
-
-            copied_members = dict(copy_declared())
+            copied_members = {k: copy(v) for k, v in declared.items()}
             self.__dict__.update(copied_members)
             return {parameter: copied_members}
 
@@ -195,12 +186,8 @@ def add_args_to_init_call(cls, get_extra_args_function):
 
     pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
     if pos_arg_names is None:
-        try:
-            pos_arg_names = inspect.getfullargspec(__init__orig)[0]
-            pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
-        except TypeError:
-            # We might fail on not being able to find the signature of builtin constructors
-            pass
+        pos_arg_names = inspect.getfullargspec(__init__orig)[0]
+        pos_arg_names = list(pos_arg_names)[1:]  # Skip 'self'
 
     @functools.wraps(__init__orig, assigned=['__doc__'])
     def argument_injector_wrapper(self, *args, **kwargs):
@@ -213,19 +200,13 @@ def add_args_to_init_call(cls, get_extra_args_function):
 
 
 def add_init_call_hook(cls, init_hook):
-    # Use object.__getattribute__ to not have the original implementation bind to the class
-    # Extra acrobatics to get None if no __init__ is defined
-    __init__orig = getattr(cls, '__init__', None)
+    __init__orig = getattr(cls, '__init__')
 
     def init_hook_wrapper(self, *args, **kwargs):
         init_hook(self)
-        if __init__orig is None:
-            super(cls, self).__init__(*args, **kwargs)
-        else:
-            __init__orig(self, *args, **kwargs)
+        __init__orig(self, *args, **kwargs)
 
-    if __init__orig is not None:
-        init_hook_wrapper = functools.wraps(__init__orig, assigned=['__doc__'])(init_hook_wrapper)
+    init_hook_wrapper = functools.wraps(__init__orig, assigned=['__doc__'])(init_hook_wrapper)
 
     setattr(cls, '__init__', init_hook_wrapper)
 
