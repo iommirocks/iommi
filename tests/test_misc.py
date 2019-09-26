@@ -1,20 +1,12 @@
 import copy
 import warnings
-from collections import OrderedDict
 
 import pytest
-from tri_struct import Struct
-
 from tri_declarative import (
-    EMPTY,
-    LAST,
-    Namespace,
-    Refinable,
-    RefinableObject,
-    Shortcut,
     assert_kwargs_empty,
     class_shortcut,
     dispatch,
+    EMPTY,
     flatten,
     full_function_name,
     get_members,
@@ -22,13 +14,19 @@ from tri_declarative import (
     get_signature,
     getattr_path,
     is_shortcut,
+    LAST,
+    Namespace,
+    Refinable,
     refinable,
+    RefinableObject,
     setattr_path,
     setdefaults_path,
+    Shortcut,
     shortcut,
     sort_after,
     with_meta,
 )
+from tri_struct import Struct
 
 
 @pytest.fixture
@@ -40,42 +38,42 @@ def suppress_deprecation_warnings():
 
 
 def test_getattr_path_and_setattr_path():
-    class Baz(object):
+    class Baz:
         def __init__(self):
             self.quux = 3
 
-    class Bar(object):
+    class Bar:
         def __init__(self):
             self.baz = Baz()
 
-    class Foo(object):
+    class Foo:
         def __init__(self):
             self.bar = Bar()
 
     foo = Foo()
-    assert 3 == getattr_path(foo, 'bar__baz__quux')
+    assert getattr_path(foo, 'bar__baz__quux') == 3
 
     setattr_path(foo, 'bar__baz__quux', 7)
 
-    assert 7 == getattr_path(foo, 'bar__baz__quux')
+    assert getattr_path(foo, 'bar__baz__quux') == 7
 
     setattr_path(foo, 'bar__baz', None)
-    assert None is getattr_path(foo, 'bar__baz__quux')
+    assert getattr_path(foo, 'bar__baz__quux') is None
 
     setattr_path(foo, 'bar', None)
-    assert None is foo.bar
+    assert foo.bar is None
 
 
 def test_setdefaults_path_1():
-    assert dict(x=17) == setdefaults_path(dict(), x=17)
+    assert setdefaults_path(dict(), x=17) == dict(x=17)
 
 
 def test_setdefaults_path_2():
-    assert dict(x=dict(y=17)) == setdefaults_path(dict(x=dict()), x__y=17)
+    assert setdefaults_path(dict(x=dict()), x__y=17) == dict(x=dict(y=17))
 
 
 def test_setdefaults_path_3():
-    assert dict(x=dict(y=17)) == setdefaults_path(dict(), x__y=17)
+    assert setdefaults_path(dict(), x__y=17) == dict(x=dict(y=17))
 
 
 def test_setdefaults_path():
@@ -93,7 +91,7 @@ def test_setdefaults_path():
         a=3,
         y=dict(z=2, b=5)
     )
-    assert expected == actual
+    assert actual == expected
 
 
 @pytest.mark.usefixtures('suppress_deprecation_warnings')
@@ -111,7 +109,7 @@ def test_setdefaults_namespace_merge():
                  z=Struct(foo=True,
                           c=True))
     )
-    assert expected == actual
+    assert actual == expected
 
 
 def test_setdefaults_callable_forward():
@@ -119,7 +117,7 @@ def test_setdefaults_callable_forward():
         foo=lambda x: x,
         foo__x=17,
     ))
-    assert 17 == actual.foo()
+    assert actual.foo() == 17
 
 
 def test_setdefaults_callable_backward():
@@ -127,7 +125,7 @@ def test_setdefaults_callable_backward():
         Namespace(foo__x=17),
         foo=lambda x: x,
     )
-    assert 17 == actual.foo()
+    assert actual.foo() == 17
 
 
 def test_setdefaults_callable_backward_not_namespace():
@@ -136,7 +134,7 @@ def test_setdefaults_callable_backward_not_namespace():
         foo=EMPTY,
     )
     expected = Namespace(foo__x=17)
-    assert expected == actual
+    assert actual == expected
 
 
 @pytest.mark.usefixtures('suppress_deprecation_warnings')
@@ -146,19 +144,31 @@ def test_setdefault_string_value():
         foo__baz=False
     )
     expected = dict(foo=dict(barf=True, baz=False))
-    assert expected == actual
+    assert actual == expected
 
 
 def test_deprecated_string_value_promotion():
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings("default", category=DeprecationWarning)
-        assert Namespace(foo__bar=True, foo__baz=False) == Namespace(dict(foo='bar'), dict(foo__baz=False))
+        assert Namespace(
+            dict(foo='bar'),
+            dict(foo__baz=False),
+        ) == Namespace(
+            foo__bar=True,
+            foo__baz=False,
+        )
         assert 'Deprecated promotion of previous string value "bar" to dict(bar=True)' in str(w.pop())
         warnings.resetwarnings()
 
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings("default", category=DeprecationWarning)
-        assert Namespace(foo__bar=True, foo__baz=False) == Namespace(dict(foo__baz=False), dict(foo='bar'))
+        assert Namespace(
+            dict(foo__baz=False),
+            dict(foo='bar'),
+        ) == Namespace(
+            foo__bar=True,
+            foo__baz=False,
+        )
         assert 'Deprecated promotion of written string value "bar" to dict(bar=True)' in str(w.pop())
         warnings.resetwarnings()
 
@@ -166,19 +176,19 @@ def test_deprecated_string_value_promotion():
 def test_namespace_repr():
     actual = repr(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
     expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes since repr is called on values
-    assert expected == actual
+    assert actual == expected
 
 
 def test_namespace_str():
     actual = str(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
     expected = "Namespace(a=4, b=3, c__d=2, c__e__f=1)"  # No quotes on '1' since str is used on values
-    assert expected == actual
+    assert actual == expected
 
 
 def test_namespace_repr_empty_members():
     actual = repr(Namespace(a=Namespace(b=Namespace())))
     expected = "Namespace(a__b=Namespace())"
-    assert expected == actual
+    assert actual == expected
 
 
 def test_namespace_get_set():
@@ -202,14 +212,15 @@ def test_namespace_funcal():
 
 def test_namespace_call_target():
     subject = Namespace(x=17, call_target=lambda **kwargs: kwargs)
-    assert dict(x=17) == subject()
+    assert subject() == dict(x=17)
 
 
 def test_namespace_missing_call_target():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
-    assert "TypeError: Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)" in str(e)
+    assert "TypeError: Namespace was used as a function, but no call_target was specified. " \
+           "The namespace is: Namespace(x=17)" in str(e)
 
 
 def test_namespace_flatten_loop_detection():
@@ -218,16 +229,28 @@ def test_namespace_flatten_loop_detection():
     n1.bar = 'baz'
     n2 = Namespace()
     n2.buzz = n1
-    assert {'buzz__bar': 'baz'} == flatten(n2)
+    assert flatten(n2) == {'buzz__bar': 'baz'}
 
 
 def test_flatten_broken():
-    assert dict(party1_labels__show=True, party2_labels__show=True) == flatten(Namespace(party1_labels=Namespace(show=True), party2_labels=Namespace(show=True)))
+    assert flatten(Namespace(
+        party1_labels=Namespace(show=True),
+        party2_labels=Namespace(show=True),
+    )) == dict(
+        party1_labels__show=True,
+        party2_labels__show=True,
+    )
 
 
 def test_flatten_identity_on_namespace_should_not_trigger_loop_detection():
     foo = Namespace(show=True)
-    assert dict(party1_labels__show=True, party2_labels__show=True) == flatten(Namespace(party1_labels=foo, party2_labels=foo))
+    assert flatten(Namespace(
+        party1_labels=foo,
+        party2_labels=foo,
+    )) == dict(
+        party1_labels__show=True,
+        party2_labels__show=True,
+    )
 
 
 # def test_namespace_repr_loop_detection():
@@ -236,47 +259,48 @@ def test_flatten_identity_on_namespace_should_not_trigger_loop_detection():
 #     n1.bar = 'baz'
 #     n2 = Namespace()
 #     n2.buzz = n1
-#     assert "Namespace(buzz__bar='baz', buzz__foo=Namespace(...))" == repr(n2)
+#     assert repr(n2) == "Namespace(buzz__bar='baz', buzz__foo=Namespace(...))"
+
 
 def test_namespace_empty_initializer():
-    assert dict() == Namespace()
+    assert Namespace() == dict()
 
 
 def test_namespace_setitem_single_value():
     x = Namespace()
     x.setitem_path('x', 17)
-    assert dict(x=17) == x
+    assert x == dict(x=17)
 
 
 def test_namespace_setitem_singe_value_overwrite():
     x = Namespace(x=17)
     x.setitem_path('x', 42)
-    assert dict(x=42) == x
+    assert x == dict(x=42)
 
 
 def test_namespace_setitem_split_path():
     x = Namespace()
     x.setitem_path('x__y', 17)
-    assert dict(x=dict(y=17))
+    assert x == dict(x=dict(y=17))
 
 
 def test_namespace_setitem_split_path_overwrite():
     x = Namespace(x__y=17)
     x.setitem_path('x__y', 42)
-    assert dict(x=dict(y=42)) == x
+    assert x == dict(x=dict(y=42))
 
 
 def test_namespace_setitem_namespace_merge():
     x = Namespace(x__y=17)
     x.setitem_path('x__z', 42)
-    assert dict(x=dict(y=17, z=42)) == x
+    assert x == dict(x=dict(y=17, z=42))
 
 
 @pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_namespace_setitem_promote_string_to_namespace():
     x = Namespace(x='y')
     x.setitem_path('x__z', 17)
-    assert dict(x=dict(y=True, z=17)) == x
+    assert x == dict(x=dict(y=True, z=17))
 
 
 def f():
@@ -286,37 +310,37 @@ def f():
 def test_namespace_setitem_function():
     x = Namespace(f=f)
     x.setitem_path('f__x', 17)
-    assert dict(f=dict(call_target=f, x=17)) == x
+    assert x == dict(f=dict(call_target=f, x=17))
 
 
 def test_namespace_setitem_function_backward():
     x = Namespace(f__x=17)
     x.setitem_path('f', f)
-    assert dict(f=dict(call_target=f, x=17)) == x
+    assert x == dict(f=dict(call_target=f, x=17))
 
 
 def test_namespace_setitem_function_dict():
     x = Namespace(f=f)
     x.setitem_path('f', dict(x=17))
-    assert dict(f=dict(call_target=f, x=17)) == x
+    assert x == dict(f=dict(call_target=f, x=17))
 
 
 def test_namespace_setitem_function_non_dict():
     x = Namespace(f=f)
     x.setitem_path('f', 17)
-    assert dict(f=17) == x
+    assert x == dict(f=17)
 
 
 def test_namespace_no_promote_overwrite():
     x = Namespace(x=17)
     x.setitem_path('x__z', 42)
-    assert Namespace(x__z=42) == x
+    assert x == Namespace(x__z=42)
 
 
 def test_namespace_no_promote_overwrite_backwards():
     x = Namespace(x__z=42)
     x.setitem_path('x', 17)
-    assert Namespace(x=17) == x
+    assert x == Namespace(x=17)
 
 
 def test_dispatch():
@@ -324,7 +348,7 @@ def test_dispatch():
     def f(**kwargs):
         return kwargs
 
-    assert dict(foo={}) == f()
+    assert f() == dict(foo={})
 
 
 @pytest.mark.parametrize('backward', [False, True], ids={False: '==>', True: '<=='}.get)
@@ -347,75 +371,86 @@ def test_dispatch():
 def test_merge(a, b, expected, backward):
     if backward:
         a, b = b, a
-    actual = Namespace(flatten(a), flatten(b))
-    assert expected == actual
+    assert Namespace(flatten(a), flatten(b)) == expected
 
 
 def test_backward_compatible_empty_key():
-    assert Namespace(foo__='hej') == Namespace(foo=Namespace({'': 'hej'}))
+    assert Namespace(foo=Namespace({'': 'hej'})) == Namespace(foo__='hej')
 
 
 def test_setdefaults_path_empty_marker():
-    actual = setdefaults_path(Struct(), foo=EMPTY, bar__boink=EMPTY)
-    expected = dict(foo={}, bar=dict(boink={}))
-    assert expected == actual
+    assert setdefaults_path(Struct(), foo=EMPTY, bar__boink=EMPTY) == dict(foo={}, bar=dict(boink={}))
 
 
 def test_setdefaults_path_empty_marker_copy():
     actual = setdefaults_path(Struct(), x=EMPTY)
     expected = dict(x={})
-    assert expected == actual
+    assert actual == expected
     assert actual.x is not EMPTY
 
 
 def test_setdefaults_path_empty_marker_no_side_effect():
-    actual = setdefaults_path(Namespace(a__b=1, a__c=2),
-                              a=Namespace(d=3),
-                              a__e=4)
-    expected = Namespace(a__b=1, a__c=2, a__d=3, a__e=4)
-    assert expected == actual
+    assert setdefaults_path(
+        Namespace(a__b=1, a__c=2),
+        a=Namespace(d=3),
+        a__e=4,
+    ) == Namespace(
+        a__b=1,
+        a__c=2,
+        a__d=3,
+        a__e=4,
+    )
 
 
 def test_setdefaults_kwargs():
-    actual = setdefaults_path({}, x__y=17)
-    expected = dict(x=dict(y=17))
-    assert expected == actual
+    assert setdefaults_path({}, x__y=17) == dict(x=dict(y=17))
 
 
 def test_setdefaults_path_multiple_defaults():
-    actual = setdefaults_path(Struct(),
-                              Struct(a=17, b=42),
-                              Struct(a=19, c=4711))
-    expected = dict(a=17, b=42, c=4711)
-    assert expected == actual
+    assert setdefaults_path(
+        Struct(),
+        Struct(a=17, b=42),
+        Struct(a=19, c=4711),
+    ) == dict(a=17, b=42, c=4711)
 
 
 def test_setdefaults_path_ordering():
     expected = Struct(x=Struct(y=17, z=42))
 
-    actual_foo = setdefaults_path(Struct(),
-                                  OrderedDict([
-                                      ('x', {'z': 42}),
-                                      ('x__y', 17),
-                                  ]))
+    actual_foo = setdefaults_path(
+        Struct(),
+        dict(
+            x={'z': 42},
+            x__y=17,
+        ),
+    )
+
     assert actual_foo == expected
 
-    actual_bar = setdefaults_path(Struct(),
-                                  OrderedDict([
-                                      ('x__y', 17),
-                                      ('x', {'z': 42}),
-                                  ]))
+    actual_bar = setdefaults_path(
+        Struct(),
+        dict(
+            x__y=17,
+            x={'z': 42},
+        ),
+    )
     assert actual_bar == expected
 
 
 def test_setdefatults_path_retain_empty():
-    actual = setdefaults_path(Namespace(a=Namespace()), a__b=Namespace())
-    expected = Namespace(a__b=Namespace())
-    assert expected == actual
+    assert setdefaults_path(Namespace(
+        a=Namespace()),
+        a__b=Namespace()
+    ) == Namespace(
+        a__b=Namespace(),
+    )
 
-    actual = setdefaults_path(Namespace(), attrs__class=Namespace())
-    expected = Namespace(attrs__class=Namespace())
-    assert expected == actual
+    assert setdefaults_path(
+        Namespace(),
+        attrs__class=Namespace(),
+    ) == Namespace(
+        attrs__class=Namespace(),
+    )
 
 
 def test_namespace_retain_empty():
@@ -423,21 +458,27 @@ def test_namespace_retain_empty():
 
 
 def test_namespace_shortcut_overwrite():
-    actual = Namespace(
-        Namespace(x=Shortcut(y__z=1, y__zz=2)),
-        Namespace(x=Namespace(a__b=3))
+    assert Namespace(
+        Namespace(
+            x=Shortcut(y__z=1, y__zz=2),
+        ),
+        Namespace(
+            x=Namespace(a__b=3),
+        ),
+    ) == Namespace(
+        x__a__b=3,
     )
-    expected = Namespace(x__a__b=3)
-    assert expected == actual
 
 
 def test_namespace_shortcut_overwrite_backward():
-    actual = Namespace(
+    assert Namespace(
         Namespace(x=Namespace(y__z=1, y__zz=2)),
-        Namespace(x=Shortcut(a__b=3))
+        Namespace(x=Shortcut(a__b=3)),
+    ) == Namespace(
+        x__a__b=3,
+        x__y__z=1,
+        x__y__zz=2,
     )
-    expected = Namespace(x__a__b=3, x__y__z=1, x__y__zz=2)
-    assert expected == actual
 
 
 def test_order_after_0():
@@ -555,7 +596,7 @@ def test_sort_after_points_to_nothing():
             Struct(name='quux6', after='does-not-exist'),
         ])
 
-    assert "'Tried to order after does-not-exist but that key does not exist'" == str(e.value).replace("u'", "'")
+    assert str(e.value).replace("u'", "'") == "'Tried to order after does-not-exist but that key does not exist'"
 
 
 def test_sort_after_points_to_nothing_plural():
@@ -566,7 +607,8 @@ def test_sort_after_points_to_nothing_plural():
             Struct(name='quux6', after='does-not-exist'),
         ])
 
-    assert "'Tried to order after does-not-exist, does-not-exist2 but those keys do not exist'" == str(e.value).replace("u'", "'")
+    assert str(e.value).replace("u'", "'") == "'Tried to order after does-not-exist, does-not-exist2 " \
+                                              "but those keys do not exist'"
 
 
 def test_assert_kwargs_empty():
@@ -575,7 +617,7 @@ def test_assert_kwargs_empty():
     with pytest.raises(TypeError) as e:
         assert_kwargs_empty(dict(foo=1, bar=2, baz=3))
 
-    assert "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'" == str(e.value)
+    assert str(e.value) == "test_assert_kwargs_empty() got unexpected keyword arguments 'bar', 'baz', 'foo'"
 
 
 def test_dispatch_legacy():
@@ -676,7 +718,7 @@ def test_is_shortcut_function():
 
     assert is_shortcut(g)
 
-    class Foo(object):
+    class Foo:
         @staticmethod
         @shortcut
         def h():
@@ -692,7 +734,7 @@ def test_is_shortcut_function():
 
 
 def test_get_shortcuts_by_name():
-    class Foo(object):
+    class Foo:
         a = Shortcut(x=1)
 
     class Bar(Foo):
@@ -706,12 +748,12 @@ def test_get_shortcuts_by_name():
         def c(cls):
             pass
 
-    assert dict(a=Bar.a, b=Bar.b, c=Bar.c) == get_shortcuts_by_name(Bar)
+    assert get_shortcuts_by_name(Bar) == dict(a=Bar.a, b=Bar.b, c=Bar.c)
 
 
 def test_class_shortcut():
     @with_meta
-    class Foo(object):
+    class Foo:
         @dispatch(
             bar=17
         )
@@ -735,14 +777,14 @@ def test_class_shortcut():
         class Meta:
             bar = 42
 
-    assert 17 == Foo.shortcut().bar
-    assert 42 == MyFoo.shortcut().bar
-    assert 7 == MyFoo.shortcut2()
+    assert Foo.shortcut().bar == 17
+    assert MyFoo.shortcut().bar == 42
+    assert MyFoo.shortcut2() == 7
 
 
 def test_class_shortcut_class_call_target():
     @with_meta
-    class Foo(object):
+    class Foo:
         @classmethod
         @class_shortcut(
             foo=7
@@ -774,10 +816,10 @@ def test_class_shortcut_class_call_target():
         def shortcut3(cls, call_target, **kwargs):
             return call_target(**kwargs)
 
-    assert 7 == Foo.shortcut()
-    assert 5 == MyFoo.shortcut()
-    assert 5 == MyFoo.shortcut2()
-    assert 7 == MyFoo.shortcut3()
+    assert Foo.shortcut() == 7
+    assert MyFoo.shortcut() == 5
+    assert MyFoo.shortcut2() == 5
+    assert MyFoo.shortcut3() == 7
 
 
 def test_refinable_object_complete_example():
@@ -847,8 +889,8 @@ def test_refinable_object2():
 
         foo = Refinable()
 
-    assert 17 == MyClass().foo.bar
-    assert 42 == MyClass(foo__bar=42).foo.bar
+    assert MyClass().foo.bar == 17
+    assert MyClass(foo__bar=42).foo.bar == 42
 
     with pytest.raises(TypeError):
         MyClass(barf=17)
@@ -869,8 +911,8 @@ def test_refinable_object_binding():
     bound_object = template.bind(container)
     bound_object.foo = 42
 
-    assert 17 == template.foo
-    assert 42 == bound_object.foo
+    assert template.foo == 17
+    assert bound_object.foo == 42
     assert bound_object.container is container
 
 
@@ -914,7 +956,7 @@ def test_retain_shortcut_type():
 
 
 def test_shortcut_call_target_attribute():
-    class Foo(object):
+    class Foo:
         @classmethod
         def foo(cls):
             return cls
@@ -936,22 +978,22 @@ def test_refinable_object3():
             super(MyClass, self).__init__(**kwargs)
 
     m = MyClass(x=1, y=2)
-    assert 1 == m.x
-    assert 2 == m.y
+    assert m.x == 1
+    assert m.y == 2
 
     m = MyClass(x=1)
-    assert 1 == m.x
-    assert 17 == m.y
+    assert m.x == 1
+    assert m.y == 17
 
     with pytest.raises(TypeError) as e:
         MyClass(z=42)
 
-    assert "'MyClass' object has no refinable attribute(s): z" == str(e.value)
+    assert str(e.value) == "'MyClass' object has no refinable attribute(s): z"
 
     with pytest.raises(TypeError) as e:
         MyClass(z=42, w=99)
 
-    assert "'MyClass' object has no refinable attribute(s): w, z" == str(e.value)
+    assert str(e.value) == "'MyClass' object has no refinable attribute(s): w, z"
 
 
 def test_refinable_no_constructor():
@@ -964,8 +1006,8 @@ def test_refinable_no_constructor():
         y = Refinable()
 
     m = MyClass(x=1)
-    assert 1 == m.x
-    assert 17 == m.y
+    assert m.x == 1
+    assert m.y == 17
 
 
 def test_refinable_no_dispatch():
@@ -974,12 +1016,12 @@ def test_refinable_no_dispatch():
         y = Refinable()
 
     m = MyClass(x=1)
-    assert 1 == m.x
-    assert None is m.y
+    assert m.x == 1
+    assert m.y is None
 
     m = MyClass(x__y=17)
     assert hasattr(m, 'x')
-    assert 17 == m.x.y
+    assert m.x.y == 17
 
 
 def test_refinable_object_with_dispatch():
@@ -1010,13 +1052,13 @@ def test_no_call_target_overwrite():
         dict(foo={}),
         foo=f,
     )
-    assert dict(foo=Namespace(call_target=f)) == x
+    assert x == dict(foo=dict(call_target=f))
 
     y = setdefaults_path(
         x,
         foo=b,
     )
-    assert dict(foo=Namespace(call_target=f)) == y
+    assert dict(foo=dict(call_target=f)) == y
 
 
 def test_empty_marker_is_immutable():

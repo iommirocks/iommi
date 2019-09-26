@@ -1,10 +1,10 @@
 import pytest
+from tri_declarative import (
+    declarative,
+)
 
-from tri_declarative import declarative, creation_ordered
 
-
-@creation_ordered
-class Field(object):
+class Field:
     def __init__(self, mandatory=False):
         self.mandatory = mandatory
 
@@ -20,7 +20,7 @@ class StringField(Field):
 
 
 @declarative(Field, 'table_fields')
-class SimpleSQLModel(object):
+class SimpleSQLModel:
 
     def __init__(self, **kwargs):
         self.table_fields = kwargs.pop('table_fields')
