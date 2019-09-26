@@ -398,7 +398,7 @@ def test_deprecated_bound_field_render_css_classes():
             container_css_classes={'a', 'b'},
             required=True,
         )._bind(
-            form=Struct(style='compact', editable=True)
+            form=Struct(style='compact', editable=True, name=None)
         ).render_container_css_classes() == ' class="a b key-value required"'
 
 
@@ -1216,6 +1216,8 @@ def test_choice_queryset_ajax():
     user2 = User.objects.create(username='bar')
 
     class MyForm(Form):
+        class Meta:
+            name = 'form_name'
         username = Field.choice_queryset(choices=User.objects.all(), extra__endpoint_attr='username')
         not_returning_anything = Field.integer()
 
