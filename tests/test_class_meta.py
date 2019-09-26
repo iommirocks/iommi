@@ -1,5 +1,5 @@
 import pytest
-from tri_declarative import with_meta
+from tri_declarative import with_meta, Namespace
 
 
 def test_empty():
@@ -183,3 +183,19 @@ def test_not_add_init_kwargs():
             assert self.get_meta().foo == 'bar'
 
     Test()
+
+
+def test_namespaciness():
+    @with_meta(add_init_kwargs=False)
+    class Foo:
+        class Meta:
+            foo = {'bar': 17}
+
+    class Bar(Foo):
+        class Meta:
+            foo = {'baz': 42}
+
+    assert Bar().get_meta() == Namespace(
+        foo__bar=17,
+        foo__baz=42,
+    )

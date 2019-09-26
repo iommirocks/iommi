@@ -48,11 +48,12 @@ def get_meta(cls):
         :type cls: class
         :rtype: Struct
     """
-    merged_attributes = Struct()
+    merged_attributes = Namespace()
     for class_ in reversed(cls.mro()):
         if hasattr(class_, 'Meta'):
             for key, value in class_.Meta.__dict__.items():
-                merged_attributes[key] = value
+                if not key.startswith('__'):
+                    merged_attributes.setitem_path(key, value)
     return merged_attributes
 
 
