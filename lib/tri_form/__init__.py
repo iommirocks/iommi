@@ -7,7 +7,6 @@ import copy
 import json
 import re
 import six
-import warnings
 from collections import OrderedDict
 from datetime import datetime
 from decimal import (
@@ -254,14 +253,6 @@ def expand_member(cls, model, factory_lookup, defaults_factory, name, field, fie
     ]
     assert_kwargs_empty(field)
     return [x for x in result if x is not None]
-
-
-def render_css_classes(classes):
-    """
-    Render CSS classes, or return '' if no attributes needs to be rendered.
-    """
-    warnings.warn('render_css_classes is deprecated, use tri.form.render.render_attrs instead', DeprecationWarning)
-    return '' if not classes else format_html(' class="{}"', ' '.join(sorted(classes)))  # pragma: no mutate, we'll delete this function anyway
 
 
 def default_endpoint__config(field, key, value, **_):
@@ -648,18 +639,6 @@ class Field(RefinableObject):
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
 
-        if 'container_css_classes' in kwargs:
-            warnings.warn('container_css_classes is deprecated, use container__attrs__class instead', DeprecationWarning)
-            kwargs['container']['attrs']['class'] = {k: True for k in kwargs.pop('container_css_classes')}
-
-        if 'label_container_css_classes' in kwargs:
-            warnings.warn('label_container_css_classes is deprecated, use label_container__attrs__class instead', DeprecationWarning)
-            kwargs['label_container']['attrs']['class'] = {k: True for k in kwargs.pop('label_container_css_classes')}
-
-        if 'input_container_css_classes' in kwargs:
-            warnings.warn('input_container_css_classes is deprecated, use input_container__attrs__class instead', DeprecationWarning)
-            kwargs['input_container']['attrs']['class'] = {k: True for k in kwargs.pop('input_container_css_classes')}
-
         super(Field, self).__init__(**kwargs)
 
         if self.is_list:
@@ -832,21 +811,9 @@ class Field(RefinableObject):
     def rendered_container_attrs(self):
         return render_attrs(self.get_container_attrs())
 
-    def render_container_css_classes(self):
-        warnings.warn('render_container_css_classes is deprecated, use rendered_container_attrs instead', DeprecationWarning)
-        return render_css_classes(self.get_container_attrs().get('class', {}))
-
-    def render_label_container_css_classes(self):
-        warnings.warn('render_label_container_css_classes is deprecated, use rendered_container_attrs instead', DeprecationWarning)
-        return render_css_classes(self.label_container_attrs.get('class', {}))
-
     @property
     def rendered_label_container_attrs(self):
         return render_attrs(self.label_container.attrs)
-
-    def render_input_container_css_classes(self):
-        warnings.warn('render_input_container_css_classes is deprecated, use rendered_input_attrs instead', DeprecationWarning)
-        return render_css_classes(self.label_container_attrs.get('class', {}))
 
     @property
     def rendered_input_container_css_classes(self):

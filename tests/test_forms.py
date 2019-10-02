@@ -391,17 +391,6 @@ def test_render_attrs_bug_with_curly_brace():
     assert render_attrs(dict(foo='{foo}')) == ' foo="{foo}"'
 
 
-def test_deprecated_bound_field_render_css_classes():
-    # noinspection PyProtectedMember
-    with pytest.warns(DeprecationWarning):
-        assert Field(
-            container_css_classes={'a', 'b'},
-            required=True,
-        )._bind(
-            form=Struct(style='compact', editable=True, name=None)
-        ).render_container_css_classes() == ' class="a b key-value required"'
-
-
 def test_getattr_path():
     assert getattr_path(Struct(a=1), 'a') == 1
     assert getattr_path(Struct(a=Struct(b=2)), 'a__b') == 2
@@ -1054,10 +1043,10 @@ def test_choice_shortcut():
     shortcut_test(
         Namespace(
             call_target=Field.choice,
-            choices=['a', 'b', 'c'],
+            choices=[1, 2, 3],
         ),
         raw_and_parsed_data_tuples=[
-            ('b', 'b'),
+            ('1', 1),
         ],
     )
 
