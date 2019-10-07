@@ -1245,8 +1245,11 @@ class Form(RefinableObject):
         """ :type: list of Field"""
 
         self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
-        if request and request.method == 'POST' and self.is_target():
-            self.mode = FULL_FORM_FROM_REQUEST
+        if request and request.method == 'POST':
+            if self.is_target():
+                self.mode = FULL_FORM_FROM_REQUEST
+            else:
+                self.mode = INITIALS_FROM_GET
 
         if self.mode == INITIALS_FROM_GET and request and self.is_target():
             assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
