@@ -1,7 +1,13 @@
 from __future__ import unicode_literals, absolute_import
 
+import warnings
+
 from tri_form.compat import ValidationError, HttpResponseRedirect, render, csrf
-from tri_form import Form, handle_dispatch, Link
+from tri_form import (
+    Form,
+    handle_dispatch,
+    Action,
+)
 from tri_declarative import setdefaults_path, dispatch, EMPTY
 
 
@@ -93,8 +99,9 @@ def create_or_edit_object(
         on_valid,
         instance=None,
         model_verbose_name=None,
-        redirect_to=None):
-
+        redirect_to=None,
+        links=None,
+):
     if model is None and instance is not None:
         model = type(instance)
 
@@ -109,13 +116,24 @@ def create_or_edit_object(
         request=request,
         model=model,
         instance=instance,
-        links=[
-            Link.submit(
+    )
+
+    if links:
+        warnings.warn('the links argument to create_or_edit_object is deprecated: use actions instead')
+        setdefaults_path(
+            form,
+            links=links,
+        )
+    else:
+        setdefaults_path(
+            form,
+            actions__submit=dict(
+                call_target=Action.submit,
                 attrs__value=title,
                 attrs__name=form.get('name'),
             ),
-        ],
-    )
+        )
+
     form = form()
 
     should_return, dispatch_result = handle_dispatch(request=request, obj=form)

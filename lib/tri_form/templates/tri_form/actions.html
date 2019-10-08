@@ -1,0 +1,29 @@
+{% if actions or grouped_actions %}
+    <div class="links">
+        {% for category, category_id, actions in grouped_actions %}
+            <div class="dropdown">
+                <a id="id_dropdown_{{ category_id }}" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
+                    {{ category }} <i class="fa fa-lg fa-caret-down"></i>
+                </a>
+
+                <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_{{ category }}">
+                    {% for action in actions %}
+                        <li role="presentation">
+                            {{ action }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+
+        {% for action in actions %}
+            {% if foorloop %}
+                {% if not forloop.first %} &nbsp; {% endif %}
+            {% else %}
+                {% if not loop.first %} &nbsp; {% endif %}
+            {% endif %}
+
+            {{ action.rendered }}
+        {% endfor %}
+    </div>
+{% endif %}

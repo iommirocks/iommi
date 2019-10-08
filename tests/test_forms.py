@@ -39,6 +39,7 @@ from tri_form import (
     int_parse,
     create_members_from_model,
     member_from_model,
+    Action,
 )
 
 from .compat import RequestFactory
@@ -1373,15 +1374,19 @@ def test_link_render():
     assert link.render() == link.__html__()  # used by jinja2
 
 
-def test_link_repr():
-    assert repr(Link('Title', template='test_link_render.html')) == '<Link: Title>'
+def test_action_repr():
+    assert repr(Action(display_name='Title', template='test_link_render.html')) == '<Action: Title>'
 
 
-def test_link_shortcut_icon():
-    assert Link.icon(icon='foo', title='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
+def test_deprecated_link_shortcut_icon():
+    assert Link.icon('foo', title='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
 
 
-def test_render_grouped_links():
+def test_action_shortcut_icon():
+    assert Action.icon('foo', display_name='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
+
+
+def test_deprecated_render_grouped_links():
     RequestFactory().get('/')  # needed when running in flask mode to have an app present
     form = Form(links=[
         Link('a'),
@@ -1392,6 +1397,49 @@ def test_render_grouped_links():
         Link('f', group='group'),
     ])
     actual_html = form.render_links()
+    expected_html = """
+    <div class="links">
+         <div class="dropdown">
+             <a id="id_dropdown_group" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
+                 group <i class="fa fa-lg fa-caret-down"></i>
+             </a>
+
+             <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_group">
+                 <li role="presentation">
+                     <a role="menuitem">c</a>
+                 </li>
+
+                 <li role="presentation">
+                     <a role="menuitem">d</a>
+                 </li>
+
+                 <li role="presentation">
+                     <a role="menuitem">f</a>
+                 </li>
+             </ul>
+         </div>
+
+         <a>a</a>
+         <a>q</a>
+    </div>"""
+
+    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
+    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
+    assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
+
+
+def test_render_grouped_actions():
+    RequestFactory().get('/')  # needed when running in flask mode to have an app present
+    form = Form(actions=dict(
+        a=Action(display_name='a'),
+        b=Action(display_name='b', show=lambda form, **_: False),
+        q=Action(display_name='q', show=lambda form, **_: True),
+        c=Action(display_name='c', group='group'),
+        d=Action(display_name='d', group='group'),
+        f=Action(display_name='f', group='group'),
+        submit__show=False,
+    ))
+    actual_html = form.render_actions()
     expected_html = """
     <div class="links">
          <div class="dropdown">
