@@ -9,6 +9,14 @@ Changelog
 
 * Removed deprecated `render_css_classes`, `render_container_css_classes`, `render_label_container_css_classes` and `render_input_container_css_classes`
 
+* Fixed various issues with the namespacing necessary to have multiple forms on one page.
+
+* Introduced `actions`/`Action` that will replace `links`/`Link`.
+
+* Deprecated `links`/`Link`.
+
+* `create_or_edit_object` now has an overridable parameter `on_valid_post`.
+
 
 7.1.0 (2019-09-20)
 ~~~~~~~~~~~~~~~~~~
