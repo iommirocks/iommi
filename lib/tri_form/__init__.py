@@ -77,17 +77,17 @@ def capitalize(s):
     return s[0].upper() + s[1:] if s else s
 
 
+FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
+INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
+
+DISPATCH_PATH_SEPARATOR = '/'
+
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
 # parameters in the request. More specifically, the problem occurs when the checkbox is checked by default,
 # as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
 # is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
 # (at least) this key-value.
-AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
-
-FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
-INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
-
-DISPATCH_PATH_SEPARATOR = '/'
+AVOID_EMPTY_FORM = f'<input type="hidden" name="{DISPATCH_PATH_SEPARATOR}-" value="" />'
 
 
 def dispatch_prefix_and_remaining_from_key(key):
@@ -1370,10 +1370,7 @@ class Form(RefinableObject):
         attrs__class__newforms=True,
         attrs__action='',
         attrs__method='post',
-        actions__submit=Namespace(
-            call_target=Action.submit,
-            attrs__name=lambda form, **_: form.name
-        ),
+        actions__submit__call_target=Action.submit,
         actions_template='tri_form/actions.html',
         links_template='tri_form/links.html',
     )
@@ -1421,15 +1418,14 @@ class Form(RefinableObject):
         self.declared_fields = sort_after([f._bind(self) for f in unbound_fields()])
         """ :type: list of Field"""
 
-        self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
-        if request and request.method == 'POST':
-            if self.is_target():
-                self.mode = FULL_FORM_FROM_REQUEST
-            else:
-                self.mode = INITIALS_FROM_GET
-
-        if self.mode == INITIALS_FROM_GET and request and self.is_target():
-            assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
+        self.mode = INITIALS_FROM_GET
+        if request:
+            if request.method == 'POST':
+                if self.is_target():
+                    self.mode = FULL_FORM_FROM_REQUEST
+            elif request.method == 'GET':
+                if self.is_target():
+                    self.mode = FULL_FORM_FROM_REQUEST
 
         self.fields_by_name = None
         """ :type: Struct[str, Field] """
@@ -1554,8 +1550,12 @@ class Form(RefinableObject):
 
     def is_target(self):
         if not self.name:
-            return True
-        return self.name in self.data
+            return (DISPATCH_PATH_SEPARATOR + '-') in self.data
+        return self.target_name in self.data
+
+    @property
+    def target_name(self):
+        return DISPATCH_PATH_SEPARATOR + (self.name or '-')
 
     def is_valid(self):
         if self._valid is None:
@@ -1684,8 +1684,20 @@ class Form(RefinableObject):
         for field in self.fields:
             r.append(field.render(style=style))
 
-        if self.is_full_form:
+        if self.is_full_form and not self.name:
             r.append(format_html(AVOID_EMPTY_FORM))
+
+        if self.name:
+            r.append(format_html('<input type="hidden" name="{}" value="" />', self.target_name))
+
+        if self.request:
+            # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
+            own_field_paths = {f.path for f in self.fields}
+            for k, v in self.request.GET.items():
+                if k == self.target_name:
+                    continue
+                if k not in own_field_paths and k != '-':
+                    r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
         if template_name is None:
             return format_html('{}\n' * len(r), *r)

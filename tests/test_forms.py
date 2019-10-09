@@ -90,20 +90,20 @@ def test_required_choice():
     class Required(Form):
         c = Field.choice(choices=[1, 2, 3])
 
-    form = Required(request=RequestFactory().post('/', {'-': '-'}))
+    form = Required(request=RequestFactory().post('/', {'/-': ''}))
     assert form.is_valid() is False
     assert form.fields_by_name['c'].errors == {'This field is required'}
 
     class NotRequired(Form):
         c = Field.choice(choices=[1, 2, 3], required=False)
 
-    form = NotRequired(request=RequestFactory().post('/', {'-': '-', 'c': ''}))
+    form = NotRequired(request=RequestFactory().post('/', {'/-': '', 'c': ''}))
     assert form.is_valid()
     assert form.fields_by_name['c'].errors == set()
 
 
 def test_required():
-    form = MyTestForm(request=RequestFactory().post('/', {'-': '-'}))
+    form = MyTestForm(request=RequestFactory().post('/', {'/-': ''}))
     assert form.fields_by_name['a_date'].value is None
     assert form.fields_by_name['a_date'].errors == {'This field is required'}
 
@@ -114,7 +114,7 @@ def test_required_with_falsy_option():
             choices=[0, 1],
             parse=lambda string_value, **_: int(string_value)
         )
-    form = MyForm(request=RequestFactory().post('/', {'foo': '0', '-': '-'}))
+    form = MyForm(request=RequestFactory().post('/', {'foo': '0', '/-': ''}))
     assert form.fields_by_name.foo.value == 0
     assert form.fields_by_name.foo.errors == set()
 
@@ -128,7 +128,7 @@ def test_custom_raw_data():
     class MyForm(Form):
         foo = Field(raw_data=my_form_raw_data)
 
-    form = MyForm(request=RequestFactory().post('/', {'-': '-'}))
+    form = MyForm(request=RequestFactory().post('/', {'/-': ''}))
     assert form.fields_by_name.foo.value == 'this is custom raw data'
 
 
@@ -144,7 +144,7 @@ def test_custom_raw_data_list():
             is_list=True,
         )
 
-    form = MyForm(request=RequestFactory().post('/', {'-': '-'}))
+    form = MyForm(request=RequestFactory().post('/', {'/-': ''}))
     assert form.fields_by_name.foo.value_list == ['this is custom raw data list']
 
 
@@ -161,7 +161,7 @@ def test_parse():
             'a_date': '  2014-02-12  ',
             'a_time': '  01:02:03  ',
             'multi_choice_field': ['a', 'b'],
-            '-': '-',
+            '/-': '',
         }))
 
     assert [x.errors for x in form.fields] == [set() for _ in form.fields]
@@ -294,7 +294,7 @@ def test_non_editable_from_initial():
         foo = Field(editable=False, initial=':bar:')
 
     assert ':bar:' in MyForm(request=RequestFactory().get('/')).render()
-    assert ':bar:' in MyForm(request=RequestFactory().post('/', {'-': '-'})).render()
+    assert ':bar:' in MyForm(request=RequestFactory().post('/', {'/-': ''})).render()
 
 
 def test_apply():
@@ -463,7 +463,7 @@ def test_radio():
 
 def test_hidden():
     soup = BeautifulSoup(Form(data=dict(foo='1'), fields=[Field.hidden(name='foo')]).table(), 'html.parser')
-    assert [(x.attrs['type'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', '1'), ('hidden', '-')]
+    assert [(x.attrs['type'], x.attrs['name'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', 'foo', '1'), ('hidden', '/-', '')]
 
 
 def test_password():
@@ -474,8 +474,8 @@ def test_choice_not_required():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=['bar'])
 
-    assert MyForm(request=RequestFactory().post('/', {'foo': 'bar', '-': '-'})).fields[0].value == 'bar'
-    assert MyForm(request=RequestFactory().post('/', {'foo': '', '-': '-'})).fields[0].value is None
+    assert MyForm(request=RequestFactory().post('/', {'foo': 'bar', '/-': ''})).fields[0].value == 'bar'
+    assert MyForm(request=RequestFactory().post('/', {'foo': '', '/-': ''})).fields[0].value is None
 
 
 # def test_choice_default_parser():
@@ -492,8 +492,8 @@ def test_choice_not_required():
 #     class MyForm(Form):
 #         foo = Field.choice(choices=[a, b, c])
 #
-#     assert MyForm(request=RequestFactory().post('/', {'foo': 'b', '-': '-'})).fields_by_name.foo.value is b
-#     assert MyForm(request=RequestFactory().post('/', {'foo': 'fisk', '-': '-'})).fields_by_name.foo.errors == {'fisk not in available choices'}
+#     assert MyForm(request=RequestFactory().post('/', {'foo': 'b', '/-': ''})).fields_by_name.foo.value is b
+#     assert MyForm(request=RequestFactory().post('/', {'foo': 'fisk', '/-': ''})).fields_by_name.foo.errors == {'fisk not in available choices'}
 
 
 def test_multi_choice():
@@ -1065,15 +1065,15 @@ def test_render_custom():
 def test_boolean_initial_true():
     fields = [Field.boolean(name='foo', initial=True), Field(name='bar', required=False)]
 
-    form = Form(data={}, fields=fields)
+    form = Form(request=RequestFactory().get('/'), fields=fields)
     assert form.fields_by_name['foo'].value is True
 
     # If there are arguments, but not for key foo it means checkbox for foo has been unchecked.
     # Field foo should therefore be false.
-    form = Form(data=dict(bar='baz', **{'-': '-'}), fields=fields)
+    form = Form(request=RequestFactory().get('/', dict(bar='baz', **{'/-': ''})), fields=fields)
     assert form.fields_by_name['foo'].value is False
 
-    form = Form(data=dict(foo='on', bar='baz', **{'-': '-'}), fields=fields)
+    form = Form(request=RequestFactory().get('/', dict(foo='on', bar='baz', **{'/-': ''})), fields=fields)
     assert form.fields_by_name['foo'].value is True
 
 
@@ -1116,7 +1116,7 @@ def test_mode_full_form_from_request():
         baz = Field.boolean(initial=True)
 
     # empty POST
-    form = FooForm(request=RequestFactory().post('/', {'-': '-'}))
+    form = FooForm(request=RequestFactory().post('/', {'/-': ''}))
     assert form.is_valid() is False
     assert form.errors == set()
     assert form.fields_by_name['foo'].errors == {'This field is required'}
@@ -1127,13 +1127,13 @@ def test_mode_full_form_from_request():
         'foo': 'x',
         'bar': 'y',
         'baz': 'false',
-        '-': '-',
+        '/-': '',
     }))
     assert form.is_valid() is True
     assert form.fields_by_name['baz'].value is False
 
     # all params in GET
-    form = FooForm(request=RequestFactory().get('/', {'-': '-'}))
+    form = FooForm(request=RequestFactory().get('/', {'/-': ''}))
     assert form.is_valid() is False
     assert form.fields_by_name['foo'].errors == {'This field is required'}
     assert form.fields_by_name['bar'].errors == {'This field is required'}
@@ -1143,7 +1143,7 @@ def test_mode_full_form_from_request():
         'foo': 'x',
         'bar': 'y',
         'baz': 'on',
-        '-': '-',
+        '/-': '',
     }))
     assert not form.errors
     assert not form.fields[0].errors
@@ -1178,7 +1178,7 @@ def test_form_errors_function():
     def post_validation(form):
         form.add_error('global error')
 
-    assert MyForm(request=RequestFactory().post('/', {'-': '-', 'foo': 'asd'}), post_validation=post_validation).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
+    assert MyForm(request=RequestFactory().post('/', {'/-': '', 'foo': 'asd'}), post_validation=post_validation).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
 
 
 @pytest.mark.django
@@ -1310,7 +1310,7 @@ def test_render():
                         <input id="id_bar" name="bar" type="text" value="">
                     </td>
                 </tr>
-                <input name="-" type="hidden" value="-"/>
+                <input name="/-" type="hidden" value=""/>
             </div>
             <div class="form_buttons clear">
                 <div class="links">
