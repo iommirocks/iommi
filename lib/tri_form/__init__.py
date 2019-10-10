@@ -6,6 +6,16 @@ from __future__ import (
 import copy
 import json
 import re
+import warnings
+from typing import (
+    Union,
+    Dict,
+    List,
+    Tuple,
+    Callable,
+    Any,
+)
+
 import six
 from collections import OrderedDict
 from datetime import datetime
@@ -38,7 +48,8 @@ from tri_declarative import (
     should_show,
     sort_after,
     with_meta,
-    evaluate)
+    evaluate,
+)
 from tri_struct import Struct
 
 from tri_form.compat import (
@@ -52,6 +63,7 @@ from tri_form.compat import (
     URLValidator,
     validate_email,
     ValidationError,
+    Template,
 )
 from tri_form.render import render_attrs
 from .compat import HttpResponse
@@ -66,17 +78,17 @@ def capitalize(s):
     return s[0].upper() + s[1:] if s else s
 
 
+FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
+INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
+
+DISPATCH_PATH_SEPARATOR = '/'
+
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
 # parameters in the request. More specifically, the problem occurs when the checkbox is checked by default,
 # as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
 # is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
 # (at least) this key-value.
-AVOID_EMPTY_FORM = '<input type="hidden" name="-" value="-" />'
-
-FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
-INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
-
-DISPATCH_PATH_SEPARATOR = '/'
+AVOID_EMPTY_FORM = f'<input type="hidden" name="{DISPATCH_PATH_SEPARATOR}" value="" />'
 
 
 def dispatch_prefix_and_remaining_from_key(key):
@@ -425,6 +437,7 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
 
 
 def evaluate_and_group_links(links, **kwargs):
+    warnings.warn('evaluate_and_group_links is deprecated, use evaluate_and_group_links instead. Note that it takes a dict as first argument, not a list!')
     grouped_links = {}
     if links is not None:
         links = [link.bind(**kwargs) for link in links]
@@ -440,6 +453,129 @@ def evaluate_and_group_links(links, **kwargs):
         links = [link for link in links if link.group is None]
 
     return links, grouped_links
+
+
+@six.python_2_unicode_compatible
+class Action(RefinableObject):
+    tag = Refinable()
+    attrs = Refinable()
+    group = Refinable()
+    show = Refinable()
+    template = Refinable()
+    extra = Refinable()
+    display_name = Refinable()
+    name = Refinable()
+
+    @dispatch(
+        tag='a',
+        attrs=EMPTY,
+        show=True,
+        extra=EMPTY,
+        name=None,
+    )
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def bind(self, **kwargs):
+        warnings.warn('Link.bind() is deprecated: use Action._bind()')
+        kwargs = {k: evaluate_recursive(getattr(self, k), **kwargs)
+                  for k in self.get_declared('refinable_members')}
+        return type(self)(**kwargs)
+
+    def render_attrs(self):
+        return render_attrs(self.attrs)
+
+    def render(self):
+        if self.template:
+            return render_to_string(self.template, dict(action=self, link=self))  # TODO: remove deprecated link param
+        else:
+            return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.render_attrs(), display_name=self.display_name)
+
+    @property
+    def rendered(self):
+        return self.render()
+
+    def __str__(self):
+        return self.render()
+
+    def __html__(self):
+        return self.render()
+
+    def __repr__(self):
+        return f'<Action: {self.display_name}>'
+
+    @classmethod
+    @class_shortcut(
+        tag='button',
+        attrs__class__button=True,
+    )
+    def button(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='button',
+        tag='input',
+        attrs__type='submit',
+        attrs__value='Submit',
+        attrs__accesskey='s',
+        display_name='',
+    )
+    def submit(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        icon_classes=[],
+    )
+    def icon(cls, icon, title=None, *, display_name=None, call_target=None, icon_classes=None, **kwargs):
+        if title:
+            warnings.warn('Action.title is deprecated, use Action.display_name instead')
+            display_name = title
+        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
+        setdefaults_path(
+            kwargs,
+            display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
+        )
+        return call_target(**kwargs)
+
+    def _bind(self, form):
+        bound_action: Action = copy.copy(self)
+        bound_action.form = form
+        return bound_action
+
+    def _evaluate_attribute(self, key):
+        value = getattr(self, key)
+        new_value = evaluate_recursive(value, form=self.form, action=self)
+        if new_value is not value:
+            setattr(self, key, new_value)
+
+    def _evaluate_show(self):
+        self._evaluate_attribute('show')
+
+    def _evaluate(self):
+        """
+        Evaluates callable/lambda members. After this function is called all members will be values.
+        """
+        not_evaluated_attributes = {'show'}
+        evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
+        for key in evaluated_attributes:
+            self._evaluate_attribute(key)
+
+
+def group_actions(actions: Dict[str, Action]):
+    grouped_links = {}
+    if actions is not None:
+        grouped_links = groupby((action for action in actions.values() if action.group is not None), key=lambda l: l.group)
+        grouped_links: Dict[str, Tuple[str, str, List[Action]]] = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # list(lg) because django templates touches the generator and then I can't iterate it
+
+        for _, _, group_links in grouped_links:
+            for link in group_links:
+                link.attrs.role = 'menuitem'
+
+        actions = [action for action in actions.values() if action.group is None]
+
+    return actions, grouped_links
 
 
 @six.python_2_unicode_compatible
@@ -460,6 +596,7 @@ class Link(RefinableObject):
     )
     def __init__(self, title, **kwargs):
         super(Link, self).__init__(title=title, **kwargs)
+        self.name = None
 
     def bind(self, **kwargs):
         kwargs = {k: evaluate_recursive(getattr(self, k), **kwargs)
@@ -487,6 +624,9 @@ class Link(RefinableObject):
 
     def __repr__(self):
         return '<Link: %s>' % self.title
+
+    def _bind(self, form):
+        return self.bind(form=form)
 
 
 @shortcut
@@ -568,7 +708,7 @@ class Field(RefinableObject):
 
     extra = Refinable()
 
-    choices = Refinable()  # type: (Form, Field, str) -> None
+    choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
     choice_to_option = Refinable()
     choice_tuples = Refinable()
 
@@ -1154,6 +1294,26 @@ def default_endpoint__field(form, key, value):
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
+def collect_and_initialize_members(*, items, bind_to):
+    def unbound_items():
+        for name, action in items.items():
+            if isinstance(action, Namespace):
+                action = action()
+            setattr(action, 'name', name)
+            yield action
+
+    declared_items = sort_after([x._bind(bind_to) for x in unbound_items()])
+    for item in declared_items:
+        item._evaluate_show()
+
+    items = Struct({action.name: action for action in declared_items if should_show(action)})
+
+    for item in items.values():
+        item._evaluate()
+
+    return declared_items, items
+
+
 @six.python_2_unicode_compatible
 @declarative(Field, 'fields_dict')
 @with_meta
@@ -1178,8 +1338,10 @@ class Form(RefinableObject):
     See tri.declarative docs for more on this dual style of declaration.
 """
     is_full_form = Refinable()
-    links = Refinable()
-    links_template = Refinable()
+    actions = Refinable()
+    actions_template: Union[str, Template] = Refinable()
+    links = Refinable()  # deprecated
+    links_template = Refinable()  # deprecated
     attrs = Refinable()
     name = Refinable()
     editable = Refinable()
@@ -1209,18 +1371,26 @@ class Form(RefinableObject):
         attrs__class__newforms=True,
         attrs__action='',
         attrs__method='post',
-        links=[Link.submit(attrs__name=lambda form, **_: form.name)],
+        actions__submit__call_target=Action.submit,
+        actions_template='tri_form/actions.html',
         links_template='tri_form/links.html',
     )
-    def __init__(self, request=None, data=None, instance=None, fields=None, fields_dict=None, **kwargs):
+    def __init__(self, request=None, *, data=None, instance=None, fields=None, fields_dict=None, actions=None, **kwargs):
         """
         :type fields: list of Field
         :type data: dict[basestring, any]
         :type model: django.db.models.Model
         """
-        super(Form, self).__init__(**kwargs)
-
         self.request = request
+
+        if 'links' in kwargs:
+            warnings.warn('links is deprecated in favor of actions', DeprecationWarning)
+            setdefaults_path(
+                actions,
+                submit__show=False,
+            )
+
+        super(Form, self).__init__(**kwargs)
 
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
@@ -1233,6 +1403,11 @@ class Form(RefinableObject):
 
         self.data = data
 
+        if 'links_template' in kwargs:
+            warnings.warn('links is deprecated in favor of actions: use actions_template', DeprecationWarning)
+
+        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, bind_to=self)
+
         def unbound_fields():
             if fields is not None:
                 for field in fields:
@@ -1244,12 +1419,14 @@ class Form(RefinableObject):
         self.declared_fields = sort_after([f._bind(self) for f in unbound_fields()])
         """ :type: list of Field"""
 
-        self.mode = FULL_FORM_FROM_REQUEST if '-' in data else INITIALS_FROM_GET
-        if request and request.method == 'POST' and self.is_target():
-            self.mode = FULL_FORM_FROM_REQUEST
-
-        if self.mode == INITIALS_FROM_GET and request and self.is_target():
-            assert request.method == 'GET', 'Seems to be a POST but parameter "-" is not present'
+        self.mode = INITIALS_FROM_GET
+        if request:
+            if request.method == 'POST':
+                if self.is_target():
+                    self.mode = FULL_FORM_FROM_REQUEST
+            elif request.method == 'GET':
+                if self.is_target():
+                    self.mode = FULL_FORM_FROM_REQUEST
 
         self.fields_by_name = None
         """ :type: Struct[str, Field] """
@@ -1314,7 +1491,23 @@ class Form(RefinableObject):
     def rendered_attrs(self):
         return self.render_attrs()
 
+    @property
+    def rendered_actions(self):
+        return self.render_actions()
+
+    def render_actions(self):
+        actions, grouped_actions = group_actions(self.actions)
+        return render_template(
+            self.request,
+            self.actions_template,
+            dict(
+                actions=actions,
+                grouped_actions=grouped_actions,
+                form=self,
+            ))
+
     def render_links(self):
+        warnings.warn('render_links is deprecated: use render_actions')
         links, grouped_links = evaluate_and_group_links(self.links, form=self)
         return render_template(self.request, self.links_template, dict(links=links, grouped_links=grouped_links, form=self))
 
@@ -1357,9 +1550,11 @@ class Form(RefinableObject):
         return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_target(self):
-        if not self.name:
-            return True
-        return self.name in self.data
+        return self.target_name in self.data
+
+    @property
+    def target_name(self):
+        return DISPATCH_PATH_SEPARATOR + (self.name or '')
 
     def is_valid(self):
         if self._valid is None:
@@ -1488,8 +1683,20 @@ class Form(RefinableObject):
         for field in self.fields:
             r.append(field.render(style=style))
 
-        if self.is_full_form:
+        if self.is_full_form and not self.name:
             r.append(format_html(AVOID_EMPTY_FORM))
+
+        if self.name:
+            r.append(format_html('<input type="hidden" name="{}" value="" />', self.target_name))
+
+        if self.request:
+            # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
+            own_field_paths = {f.path for f in self.fields}
+            for k, v in self.request.GET.items():
+                if k == self.target_name:
+                    continue
+                if k not in own_field_paths and k != '-':
+                    r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
         if template_name is None:
             return format_html('{}\n' * len(r), *r)
