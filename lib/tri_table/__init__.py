@@ -9,6 +9,10 @@ import warnings
 from collections import OrderedDict
 from functools import total_ordering
 from itertools import groupby
+from typing import (
+    List,
+    Dict,
+)
 
 from django.conf import settings
 from django.core.paginator import (
@@ -108,9 +112,6 @@ ASCENDING = 'ascending'
 
 
 def prepare_headers(table, bound_columns):
-    """
-    :type bound_columns: list of BoundColumn
-    """
     if table.request is None:
         return
 
@@ -202,10 +203,7 @@ def register_cell_formatter(type_or_class, formatter):
     _cell_formatters[type_or_class] = formatter
 
 
-def default_cell_formatter(table, column, row, value, **_):
-    """
-    :type column: tri_table.Column
-    """
+def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
     formatter = _cell_formatters.get(type(value))
     if formatter:
         value = formatter(table=table, column=column, row=row, value=value)
@@ -306,16 +304,11 @@ class Column(RefinableObject):
 
         super(Column, self).__init__(**kwargs)
 
-        self.table = None
-        """ :type: Table """
-        self.column = None
-        """ :type: Column """
-        self.index = None
-        """ :type: int """
-        self.is_sorting = None
-        """ :type: bool """
-        self.sort_direction = None
-        """ :type: str """
+        self.table: Table = None
+        self.column: Column = None
+        self.index: int = None
+        self.is_sorting: bool = None
+        self.sort_direction: str = None
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -873,10 +866,8 @@ class Table(RefinableObject):
     """
 
     name = Refinable()
-    bulk_filter = Refinable()
-    """ :type: tri.declarative.Namespace """
-    bulk_exclude = Refinable()
-    """ :type: tri.declarative.Namespace """
+    bulk_filter: Namespace = Refinable()
+    bulk_exclude: Namespace = Refinable()
     sortable = Refinable()
     default_sort_order = Refinable()
     attrs = Refinable()
@@ -888,12 +879,10 @@ class Table(RefinableObject):
     column = Refinable()
     bulk = Refinable()
     endpoint_dispatch_prefix = Refinable()
-    extra = Refinable()
-    """ :type: tri.declarative.Namespace """
+    extra: Namespace = Refinable()
     endpoint = Refinable()
     superheader = Refinable()
-    paginator = Refinable()
-    """ :type: tri.declarative.Namespace """
+    paginator: Namespace = Refinable()
     member_class = Refinable()
     form_class = Refinable()
     query_class = Refinable()
@@ -990,23 +979,15 @@ class Table(RefinableObject):
         )
 
         self.query_args = query
-        self._query = None
-        """ :type : tri_query.Query """
-        self._query_form = None
-        """ :type : tri_form.Form """
-        self._query_error = None
-        """ :type : list of str """
+        self._query: Query = None
+        self._query_form: Form = None
+        self._query_error: List[str] = None
 
-        self._bulk_form = None
-        """ :type : tri_form.Form """
-        self._bound_columns = None
-        """ :type : list of Column """
-        self._shown_bound_columns = None
-        """ :type : list of Column """
-        self._bound_column_by_name = None
-        """ :type: dict[str, Column] """
-        self._has_prepared = False
-        """ :type: bool """
+        self._bulk_form: Form = None
+        self._bound_columns: List[Column] = None
+        self._shown_bound_columns: List[Column] = None
+        self._bound_column_by_name: Dict[str, Column] = None
+        self._has_prepared: bool = False
         self.header_levels = None
 
     def render_links(self):
@@ -1446,85 +1427,9 @@ class Link(tri_form_Link):
         return Link(mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)), **kwargs)
 
 
-def django_pre_2_0_table_context(
-        request,
-        table,
-        links=None,
-        paginate_by=None,
-        page=None,
-        extra_context=None,
-        paginator=None,
-        show_hits=False,
-        hit_label='Items'):
-    """
-    :type table: Table
-    """
-    if extra_context is None:  # pragma: no cover
-        extra_context = {}
-
-    assert table.data is not None
-
-    links, grouped_links = evaluate_and_group_links(links, table=table)
-
-    base_context = {
-        'links': links,
-        'grouped_links': grouped_links,
-        'table': table,
-    }
-
-    if paginate_by:
-        try:
-            new_paginate_by = int(request.GET.get('page_size', paginate_by))
-            if paginate_by <= 0:
-                new_paginate_by = paginate_by
-            paginate_by = new_paginate_by
-        except ValueError:  # pragma: no cover
-            pass
-        if paginator is None:
-            paginator = Paginator(table.data, paginate_by)
-            object_list = None
-        else:  # pragma: no cover
-            object_list = table.data
-        if not page:
-            page = request.GET.get('page', 1)
-        try:
-            page = int(page)
-            if page < 1:  # pragma: no cover
-                page = 1
-            if page > paginator.num_pages:  # pragma: no cover
-                page = paginator.num_pages
-            if object_list is None:
-                table.data = paginator.page(page).object_list
-        except (InvalidPage, ValueError):  # pragma: no cover
-            if page == 1:
-                table.data = []
-            else:
-                raise Http404
-
-        base_context.update({
-            'request': request,
-            'is_paginated': paginator.num_pages > 1,
-            'results_per_page': paginate_by,
-            'has_next': paginator.num_pages > page,
-            'has_previous': page > 1,
-            'page_size': paginate_by,
-            'page': page,
-            'next': page + 1,
-            'previous': page - 1,
-            'pages': paginator.num_pages,
-            'hits': paginator.count,
-            'show_hits': show_hits,
-            'hit_label': hit_label})
-    else:  # pragma: no cover
-        base_context.update({
-            'is_paginated': False})
-
-    base_context.update(extra_context)
-    return base_context
-
-
 def table_context(request,
-                  table,
+                  *,
+                  table: Table,
                   links=None,
                   paginate_by=None,
                   page=None,
@@ -1532,15 +1437,6 @@ def table_context(request,
                   paginator=None,
                   show_hits=False,
                   hit_label='Items'):
-    """
-    :type table: Table
-    """
-    from django import __version__ as django_version
-    django_version = tuple([int(x) for x in django_version.split('.')])
-
-    if django_version < (2, 0):
-        return django_pre_2_0_table_context(request, table, links=links, paginate_by=paginate_by, extra_context=extra_context, paginator=paginator, show_hits=show_hits, hit_label=hit_label)
-
     if extra_context is None:  # pragma: no cover
         extra_context = {}
 
