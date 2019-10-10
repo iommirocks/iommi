@@ -2,8 +2,8 @@ Changelog
 ---------
 
 
-7.2.0 (----------)
-~~~~~~~~~~~~~~~~~~~
+7.2.0 (2019-10-10)
+~~~~~~~~~~~~~~~~~~
 
 * Add support for setting name on forms to be able to reuse field names between two forms in the same view
 
