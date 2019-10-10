@@ -70,7 +70,7 @@ def test_create_or_edit_object():
         'f_bool': 'True',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        f'{DISPATCH_PATH_SEPARATOR}-': '',
+        f'{DISPATCH_PATH_SEPARATOR}': '',
     }
 
     def on_save(form, instance, **_):
@@ -115,7 +115,7 @@ def test_create_or_edit_object():
         'f_float': '11.2',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        f'{DISPATCH_PATH_SEPARATOR}-': '',
+        f'{DISPATCH_PATH_SEPARATOR}': '',
         # Not sending a parameter in a POST is the same thing as false
     }
     response = edit_object(
@@ -158,7 +158,7 @@ def test_unique_constraint_violation():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        f'{DISPATCH_PATH_SEPARATOR}-': '',
+        f'{DISPATCH_PATH_SEPARATOR}': '',
     }
     create_object(
         request=request,
@@ -188,7 +188,7 @@ def test_namespace_forms():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        f'{DISPATCH_PATH_SEPARATOR}-': '',
+        f'{DISPATCH_PATH_SEPARATOR}': '',
     }
     response = create_object(
         request=request,
@@ -335,7 +335,7 @@ def test_create_or_edit_object_validate_unique():
         POST={
             'a': '1',
             'b': '1',
-            f'{DISPATCH_PATH_SEPARATOR}-': '',
+            f'{DISPATCH_PATH_SEPARATOR}': '',
         },
         user=Struct(is_authenticated=lambda: True)
     )
@@ -384,7 +384,7 @@ def test_create_or_edit_object_full_template():
                             <input type="text" value="" name="foo" id="id_foo">
                         </td>
                     </tr>
-                    <input type="hidden" name="/-" value=""/>
+                    <input type="hidden" name="/" value=""/>
                 </table>
             </div>
             <div class="form_buttons clear">

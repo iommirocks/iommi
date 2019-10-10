@@ -13,6 +13,7 @@ from typing import (
     List,
     Tuple,
     Callable,
+    Any,
 )
 
 import six
@@ -87,7 +88,7 @@ DISPATCH_PATH_SEPARATOR = '/'
 # as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
 # is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
 # (at least) this key-value.
-AVOID_EMPTY_FORM = f'<input type="hidden" name="{DISPATCH_PATH_SEPARATOR}-" value="" />'
+AVOID_EMPTY_FORM = f'<input type="hidden" name="{DISPATCH_PATH_SEPARATOR}" value="" />'
 
 
 def dispatch_prefix_and_remaining_from_key(key):
@@ -707,7 +708,7 @@ class Field(RefinableObject):
 
     extra = Refinable()
 
-    choices: Callable[['Form', 'Field', str], None] = Refinable()
+    choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
     choice_to_option = Refinable()
     choice_tuples = Refinable()
 
@@ -1293,7 +1294,7 @@ def default_endpoint__field(form, key, value):
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
-def setup_items(*, items, bind_to):
+def collect_and_initialize_members(*, items, bind_to):
     def unbound_items():
         for name, action in items.items():
             if isinstance(action, Namespace):
@@ -1405,7 +1406,7 @@ class Form(RefinableObject):
         if 'links_template' in kwargs:
             warnings.warn('links is deprecated in favor of actions: use actions_template', DeprecationWarning)
 
-        self.declared_actions, self.actions = setup_items(items=actions, bind_to=self)
+        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, bind_to=self)
 
         def unbound_fields():
             if fields is not None:
@@ -1549,13 +1550,11 @@ class Form(RefinableObject):
         return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_target(self):
-        if not self.name:
-            return (DISPATCH_PATH_SEPARATOR + '-') in self.data
         return self.target_name in self.data
 
     @property
     def target_name(self):
-        return DISPATCH_PATH_SEPARATOR + (self.name or '-')
+        return DISPATCH_PATH_SEPARATOR + (self.name or '')
 
     def is_valid(self):
         if self._valid is None:
