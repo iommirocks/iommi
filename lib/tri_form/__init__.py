@@ -1550,6 +1550,14 @@ class Form(RefinableObject):
         return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_target(self):
+        if (not self.name
+            and self.request
+            and self.request.method == 'POST'
+            and not any(x.startswith(DISPATCH_PATH_SEPARATOR) for x in self.data.keys())
+        ):
+            # We are the target if there's a POST and we're nameless and there is no other named form present
+            return True
+
         return self.target_name in self.data
 
     @property

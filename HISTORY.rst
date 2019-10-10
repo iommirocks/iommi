@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+7.2.1 (2019-10-10)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed a bug where non-named forms did not perform validation because they didn't find the `/` POST key. They shoulnd't need that!
+
 
 7.2.0 (2019-10-10)
 ~~~~~~~~~~~~~~~~~~
