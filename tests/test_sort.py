@@ -325,7 +325,7 @@ def test_sort_default_desc_other_col_sorted():
         foo = Column()
         bar = Column(sort_default_desc=True)
 
-    verify_table_html(table=TestTable([]),
+    verify_table_html(table=TestTable(data=[]),
                       query=dict(order='foo'),
                       find=dict(name='thead'),
                       expected_html="""\
@@ -347,7 +347,7 @@ def test_sort_default_desc_already_sorted():
         foo = Column()
         bar = Column(sort_default_desc=True)
 
-    verify_table_html(table=TestTable([]),
+    verify_table_html(table=TestTable(data=[]),
                       query=dict(order='bar'),
                       find=dict(name='thead'),
                       expected_html="""\

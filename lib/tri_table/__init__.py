@@ -1,4 +1,3 @@
-# coding: utf-8
 from __future__ import (
     absolute_import,
     unicode_literals,
@@ -10,8 +9,9 @@ from collections import OrderedDict
 from functools import total_ordering
 from itertools import groupby
 from typing import (
-    List,
     Dict,
+    List,
+    Union,
 )
 
 from django.conf import settings
@@ -35,38 +35,43 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from tri_declarative import (
+    EMPTY,
+    LAST,
+    Namespace,
+    Refinable,
+    RefinableObject,
     class_shortcut,
     creation_ordered,
     declarative,
     dispatch,
-    EMPTY,
     evaluate,
     evaluate_recursive,
     getattr_path,
-    LAST,
-    Namespace,
     refinable,
-    Refinable,
-    RefinableObject,
     setattr_path,
     setdefaults_path,
     sort_after,
     with_meta,
 )
 from tri_form import (
-    create_members_from_model,
     DISPATCH_PATH_SEPARATOR,
+    Form,
+    Link as tri_form_Link,
+    collect_and_initialize_members,
+    create_members_from_model,
     evaluate_and_group_links,
     expand_member,
-    Form,
+    group_actions,
     handle_dispatch,
-    Link as tri_form_Link,
     member_from_model,
-    render_template,
 )
 from tri_form.render import (
     render_attrs,
     render_class,
+)
+from tri_form.compat import (
+    Template,
+    render_template,
 )
 from tri_named_struct import (
     NamedStruct,
@@ -78,8 +83,8 @@ from tri_query import (
     QueryException,
 )
 from tri_struct import (
-    merged,
     Struct,
+    merged,
 )
 
 from tri_table.db_compat import setup_db_compat
@@ -883,6 +888,8 @@ class Table(RefinableObject):
     endpoint = Refinable()
     superheader = Refinable()
     paginator: Namespace = Refinable()
+    actions = Refinable()
+    actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
     form_class = Refinable()
     query_class = Refinable()
@@ -915,8 +922,9 @@ class Table(RefinableObject):
         row__template=None,
         filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
         header__template='tri_table/table_header_rows.html',
-        links__template='tri_form/links.html',
         paginator__template='tri_table/paginator.html',
+        actions=EMPTY,
+        actions_template='tri_form/actions.html',
         model=None,
         query=EMPTY,
         bulk=EMPTY,
@@ -930,7 +938,7 @@ class Table(RefinableObject):
         superheader__attrs__class__superheader=True,
         superheader__template='tri_table/header.html',
     )
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, links=None, **kwargs):
+    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions, **kwargs):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -941,6 +949,14 @@ class Table(RefinableObject):
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
         """
+
+        if 'links' in kwargs:
+            warnings.warn('Table.links__template is deprecated: use actions_template')
+
+        setdefaults_path(
+            kwargs,
+            links__template='tri_form/links.html',
+        )
 
         if data is None:  # pragma: no cover
             assert model is not None
@@ -970,13 +986,15 @@ class Table(RefinableObject):
         super(Table, self).__init__(
             model=model,
             filter=TemplateConfig(**filter),
-            links=TemplateConfig(**links),
+            links=TemplateConfig(**kwargs.pop('links')),
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
             column=column,
             **kwargs
         )
+
+        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, table=self)
 
         self.query_args = query
         self._query: Query = None
@@ -991,7 +1009,23 @@ class Table(RefinableObject):
         self.header_levels = None
 
     def render_links(self):
+        warnings.warn('render_links is deprecated: use render_actions')
         return render_template(self.request, self.links.template, self.context)
+
+    @property
+    def rendered_actions(self):
+        return self.render_actions()
+
+    def render_actions(self):
+        actions, grouped_actions = group_actions(self.actions)
+        return render_template(
+            self.request,
+            self.actions_template,
+            dict(
+                actions=actions,
+                grouped_actions=grouped_actions,
+                table=self,
+            ))
 
     @property
     def rendered_links(self):
@@ -1414,6 +1448,7 @@ class Link(tri_form_Link):
 
     # backwards compatibility with old interface
     def __init__(self, title, url=None, **kwargs):
+        warnings.warn('tri_table.Link is deprecated: use tri_form.Action', DeprecationWarning)
         if url:
             warnings.warn('url parameter is deprecated, use attrs__href', DeprecationWarning)
             kwargs['attrs__href'] = url
@@ -1442,6 +1477,8 @@ def table_context(request,
 
     assert table.data is not None
 
+    if links:
+        warnings.warn('links is deprecated: use actions', DeprecationWarning)
     links, grouped_links = evaluate_and_group_links(links, table=table)
 
     base_context = {
@@ -1515,6 +1552,9 @@ def render_table(request,
     :param hit_label: Label for the show_hits display.
     :return: a string with the rendered HTML table
     """
+    if links:
+        warnings.warn('the links argument to render_table is deprecated: use Table.actions')
+
     if not context:
         context = {}
 

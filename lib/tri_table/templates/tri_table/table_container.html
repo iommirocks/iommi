@@ -44,6 +44,10 @@
         </table>
     {% endif %}
 
-    {{ table.rendered_links }}
+    {% if table.links %}
+        {{ table.rendered_links }}
+    {% endif %}
+    {{ table.rendered_actions }}
+
 
 </form>

@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+8.1.0 (2019-10-??)
+~~~~~~~~~~~~~~~~~~
+
+* Implemented `Table.actions` as a replacement for `render_table`s argument `links`.
+
+* `Column.multi_choice_queryset` was broken.
+
+* Fixed `many_to_many` shortcut.
+
 8.0.0 (2019-06-14)
 ~~~~~~~~~~~~~~~~~~
 

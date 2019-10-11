@@ -24,6 +24,7 @@ from tri_declarative import (
 from tri_form import (
     Field,
     Form,
+    Action,
 )
 from tri_query import (
     Variable,
@@ -120,21 +121,21 @@ def test_declaration_merge():
 
         bar = Column()
 
-    assert {'foo', 'bar'} == {column.name for column in MyTable([]).columns}
+    assert {'foo', 'bar'} == {column.name for column in MyTable(data=[]).columns}
 
 
 def test_kwarg_column_config_injection():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable([], column__foo__extra__stuff="baz")
+    table = MyTable(data=[], column__foo__extra__stuff="baz")
     assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
 
 
 def test_bad_arg():
     with pytest.raises(TypeError) as e:
         Table(data=[], columns=[Column()], foo=None)
-    assert 'foo' in str(e)
+    assert 'foo' in str(e.value)
 
 
 def test_column_ordering():
@@ -143,7 +144,7 @@ def test_column_ordering():
         foo = Column(after='bar')
         bar = Column()
 
-    assert ['bar', 'foo'] == [column.name for column in MyTable([]).columns]
+    assert ['bar', 'foo'] == [column.name for column in MyTable(data=[]).columns]
 
 
 def test_column_with_meta():
@@ -155,8 +156,8 @@ def test_column_with_meta():
         foo = MyColumn()
         bar = MyColumn.icon('history')
 
-    assert not MyTable([]).bound_column_by_name['foo'].sortable
-    assert not MyTable([]).bound_column_by_name['bar'].sortable
+    assert not MyTable(data=[]).bound_column_by_name['foo'].sortable
+    assert not MyTable(data=[]).bound_column_by_name['bar'].sortable
 
 
 @pytest.mark.django_db
@@ -493,7 +494,7 @@ def test_title():
 
         data = [Struct(foo="foo")]
 
-        verify_table_html(table=TestTable(data), expected_html="""
+        verify_table_html(table=TestTable(data=data), expected_html="""
         <table class="listview">
             <thead>
                 <tr><th class="first_column subheader" title="Some title"> Foo </th></tr>
@@ -756,7 +757,7 @@ def test_django_table_pagination_custom_paginator():
         </table>""")
 
 
-def test_links():
+def test_deprecated_links():
     class TestTable(NoSortTable):
         foo = Column(header__attrs__title="Some title")
 
@@ -775,6 +776,49 @@ def test_links():
     verify_table_html(table=TestTable(data=data),
                       find=dict(class_='links'),
                       links=links,
+                      expected_html="""
+        <div class="links">
+            <div class="dropdown">
+                <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
+                    Other <i class="fa fa-lg fa-caret-down" />
+                </a>
+                <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
+                    <li role="presentation">
+                        <a href="/bar/" role="menuitem"> Baz </a>
+                    </li>
+                    <li role="presentation">
+                        <a href="/bar/" role="menuitem"> Qux </a>
+                    </li>
+                </ul>
+            </div>
+
+            <a href="/bar/"> Bar </a>
+
+            <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
+            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
+            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
+        </div>""")
+
+
+def test_actions():
+    class TestTable(NoSortTable):
+        foo = Column(header__attrs__title="Some title")
+
+        class Meta:
+            actions = dict(
+                a=Action(display_name='Foo', attrs__href='/foo/', show=lambda table, **_: table.data is not data),
+                b=Action(display_name='Bar', attrs__href='/bar/', show=lambda table, **_: table.data is data),
+                c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
+                d=Action(display_name='Qux', attrs__href='/bar/', group='Other'),
+                e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
+                f=Action.icon('icon_bar', icon_classes=['lg'], display_name='Icon bar', attrs__href='/icon_bar/'),
+                g=Action.icon('icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'),
+            )
+
+    data = [Struct(foo="foo")]
+
+    verify_table_html(table=TestTable(data=data),
+                      find=dict(class_='links'),
                       expected_html="""
         <div class="links">
             <div class="dropdown">
@@ -1036,10 +1080,9 @@ def test_template_string():
         )
 
     verify_table_html(
-        table=TestTable(),
-        links=[
-            Link('foo', attrs__href='bar'),
-        ],
+        table=TestTable(
+            actions__foo=Action(display_name='foo', attrs__href='bar'),
+        ),
         expected_html="""
         What filters
         <div class="table-container">
