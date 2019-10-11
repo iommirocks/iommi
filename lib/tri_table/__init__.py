@@ -1474,7 +1474,10 @@ def django_pre_2_0_table_context(
 
     if paginate_by:
         try:
-            paginate_by = int(request.GET.get('page_size', paginate_by))
+            new_paginate_by = int(request.GET.get('page_size', paginate_by))
+            if paginate_by <= 0:
+                new_paginate_by = paginate_by
+            paginate_by = new_paginate_by
         except ValueError:  # pragma: no cover
             pass
         if paginator is None:
