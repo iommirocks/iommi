@@ -1,10 +1,18 @@
 Changelog
 ---------
 
+7.2.2 (2019-10-11)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed a bug where `Action` was functionally bound to `Form`, but it should be generally useful (e.g. for tri.table).
+
+* Fixed a bug with `Field.icon` where there was a missing space when using the `icon_classes` argument, causing garbled css classes.
+
+
 7.2.1 (2019-10-10)
 ~~~~~~~~~~~~~~~~~~
 
-* Fixed a bug where non-named forms did not perform validation because they didn't find the `/` POST key. They shoulnd't need that!
+* Fixed a bug where non-named forms did not perform validation because they didn't find the `/` POST key. They shouldn't need that!
 
 
 7.2.0 (2019-10-10)
