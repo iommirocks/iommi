@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-4.0.0 (----------)
+4.0.0 (2019-10-11)
 ------------------
 
 * `get_meta()` now collects extra arguments in a `Namespace` to get consistent override behaviour.

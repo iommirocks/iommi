@@ -13,7 +13,7 @@ from tri_struct import (
     Struct,
 )
 
-__version__ = '3.1.0'  # pragma: no mutate
+__version__ = '4.0.0'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
