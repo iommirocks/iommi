@@ -57,21 +57,6 @@ def test_required_parameter():
         e.value) == "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)"
 
 
-def test_non_copyable_members():
-    @declarative(
-        is_member=lambda x: True,
-        sort_key=lambda x: x,
-    )
-    class Declarative:
-        x = object.__init__
-
-        def __init__(self, members):
-            self.members = members
-
-    subject = Declarative()
-    assert list(subject.members.keys()) == ['x']
-
-
 def test_find_member_fail_on_tuple():
     with pytest.raises(TypeError):
         class MyDeclarative(Declarative):
