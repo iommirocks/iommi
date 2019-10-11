@@ -35,6 +35,7 @@ from tri_declarative import (
     dispatch,
     EMPTY,
     evaluate_recursive,
+    evaluate_recursive_strict,
     flatten,
     getattr_path,
     Namespace,
@@ -544,23 +545,25 @@ class Action(RefinableObject):
     def _bind(self) -> 'Action':
         return copy.copy(self)
 
-    def _evaluate_attribute(self, key, strict=False, **kwargs):
+    def _evaluate_attribute(self, key, **kwargs):
         value = getattr(self, key)
-        new_value = evaluate_recursive(value, action=self, strict=strict, **kwargs)
+        new_value = evaluate_recursive_strict(value, action=self, **kwargs)
         if new_value is not value:
             setattr(self, key, new_value)
 
     def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', strict=True, **kwargs)
+        self._evaluate_attribute('show', **kwargs)
 
     def _evaluate(self, **kwargs):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        not_evaluated_attributes = {'show'}
+        not_evaluated_attributes = {'show', 'extra'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
         for key in evaluated_attributes:
             self._evaluate_attribute(key, **kwargs)
+
+        self.extra = evaluate_recursive(self.extra, action=self, **kwargs)
 
         for k, v in kwargs.items():
             setattr(self, k, v)
