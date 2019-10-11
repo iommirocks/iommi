@@ -533,34 +533,37 @@ class Action(RefinableObject):
             warnings.warn('Action.title is deprecated, use Action.display_name instead')
             display_name = title
         icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
+        if icon_classes_str:
+            icon_classes_str = ' ' + icon_classes_str
         setdefaults_path(
             kwargs,
             display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
         )
         return call_target(**kwargs)
 
-    def _bind(self, form):
-        bound_action: Action = copy.copy(self)
-        bound_action.form = form
-        return bound_action
+    def _bind(self) -> 'Action':
+        return copy.copy(self)
 
-    def _evaluate_attribute(self, key):
+    def _evaluate_attribute(self, key, strict=False, **kwargs):
         value = getattr(self, key)
-        new_value = evaluate_recursive(value, form=self.form, action=self)
+        new_value = evaluate_recursive(value, action=self, strict=strict, **kwargs)
         if new_value is not value:
             setattr(self, key, new_value)
 
-    def _evaluate_show(self):
-        self._evaluate_attribute('show')
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', strict=True, **kwargs)
 
-    def _evaluate(self):
+    def _evaluate(self, **kwargs):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
         not_evaluated_attributes = {'show'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
         for key in evaluated_attributes:
-            self._evaluate_attribute(key)
+            self._evaluate_attribute(key, **kwargs)
+
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 def group_actions(actions: Dict[str, Action]):
@@ -1294,7 +1297,7 @@ def default_endpoint__field(form, key, value):
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
-def collect_and_initialize_members(*, items, bind_to):
+def collect_and_initialize_members(*, items, **kwargs):
     def unbound_items():
         for name, action in items.items():
             if isinstance(action, Namespace):
@@ -1302,14 +1305,14 @@ def collect_and_initialize_members(*, items, bind_to):
             setattr(action, 'name', name)
             yield action
 
-    declared_items = sort_after([x._bind(bind_to) for x in unbound_items()])
+    declared_items = sort_after([x._bind() for x in unbound_items()])
     for item in declared_items:
-        item._evaluate_show()
+        item._evaluate_show(**kwargs)
 
     items = Struct({action.name: action for action in declared_items if should_show(action)})
 
     for item in items.values():
-        item._evaluate()
+        item._evaluate(**kwargs)
 
     return declared_items, items
 
@@ -1406,7 +1409,7 @@ class Form(RefinableObject):
         if 'links_template' in kwargs:
             warnings.warn('links is deprecated in favor of actions: use actions_template', DeprecationWarning)
 
-        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, bind_to=self)
+        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, form=self)
 
         def unbound_fields():
             if fields is not None:
