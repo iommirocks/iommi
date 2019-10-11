@@ -1553,7 +1553,8 @@ class Form(RefinableObject):
         return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_target(self):
-        if (not self.name
+        if (
+            not self.name
             and self.request
             and self.request.method == 'POST'
             and not any(x.startswith(DISPATCH_PATH_SEPARATOR) for x in self.data.keys())
