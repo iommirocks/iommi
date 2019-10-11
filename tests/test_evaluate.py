@@ -1,3 +1,5 @@
+import pytest
+
 from tri_declarative import (
     evaluate,
     evaluate_recursive,
@@ -5,6 +7,10 @@ from tri_declarative import (
     get_signature,
     matches,
     remove_show_recursive,
+    evaluate_strict,
+    evaluate_recursive_strict,
+    should_show,
+    get_callable_description,
 )
 
 
@@ -40,6 +46,22 @@ def test_remove_and_filter_show_recursive():
         'asd': {'bar'},
         'qwe': {},
     })
+
+
+def test_should_show():
+    class Foo:
+        show = False
+
+    assert should_show(Foo()) is False
+    assert should_show(Foo) is False
+    assert should_show(dict(show=False)) is False
+    assert should_show(dict(show=True)) is True
+    assert should_show(dict(show=[])) == []
+
+    with pytest.raises(AssertionError) as e:
+        assert should_show(dict(show=lambda: True))
+
+    assert str(e.value) == '`show` was a callable. You probably forgot to evaluate it. The callable was: lambda found at: `assert should_show(dict(show=lambda: True))`'
 
 
 def test_no_evaluate_kwargs_mismatch():
@@ -150,3 +172,35 @@ def test_early_return_from_get_signature():
 
     object.__setattr__(foo, '__tri_declarative_signature', 'foobar')
     assert get_signature(foo) == 'foobar'
+
+
+def test_evaluate_strict():
+    with pytest.raises(AssertionError) as e:
+        evaluate_strict(lambda foo: 1, bar=2, baz=4)
+
+    assert str(e.value) == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a function but strict mode was active, the signature doesn't match the given parameters. Note that you must match at least one keyword argument. We had these arguments: bar, baz"
+
+
+def test_evaluate_recursive_strict():
+    with pytest.raises(AssertionError) as e:
+        evaluate_recursive_strict(dict(foo=lambda foo: 1), bar=2, baz=4)
+
+    assert str(e.value) == "Evaluating lambda found at: `evaluate_recursive_strict(dict(foo=lambda foo: 1), bar=2, baz=4)` didn't resolve it into a function but strict mode was active, the signature doesn't match the given parameters. Note that you must match at least one keyword argument. We had these arguments: bar, baz"
+
+
+def test_non_strict_evaluate():
+    def foo(bar):
+        return bar
+
+    assert evaluate(foo, bar=True) is True  # first the evaluated case
+    assert evaluate(foo, quuz=True) is foo  # now we missed the signature, so we get the function unevaluated back
+
+
+def test_get_callable_description():
+    # noinspection PyUnusedLocal
+    def foo(a, b, c, *, bar, **kwargs):
+        pass
+
+    description = get_callable_description(foo)
+    assert description.startswith('`<function test_get_callable_description.<locals>.foo at')
+    assert description.endswith('`')
