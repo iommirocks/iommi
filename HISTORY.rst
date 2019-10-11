@@ -6,6 +6,10 @@ Changelog
 
 * `get_meta()` now collects extra arguments in a `Namespace` to get consistent override behaviour.
 
+* `should_show` no longer accepts a callable as a valid return value. It will assert on this, because it's always a mistake.
+
+* Added `evaluate_strict` and `evaluate_recursive_strict` that will not accept callables left over after the evaluation. If possible prefer these methods because they will stop the user of your library from making the mistake of not matching the given signature and ending up with an unevaluated callable in the output.
+
 
 3.1.0 (2019-06-28)
 ------------------

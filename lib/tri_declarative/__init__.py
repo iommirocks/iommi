@@ -293,42 +293,72 @@ def matches(caller_parameters, callee_parameters):
     return result
 
 
-def evaluate(func_or_value, signature=None, **kwargs):
+def get_callable_description(c):
+    description = str(c)
+    if '<lambda>' in description:
+        import inspect
+        try:
+            return 'lambda found at: `{}`'.format(inspect.getsource(c).strip())
+        except OSError:
+            pass
+
+    return '`{}`'.format(description)
+
+
+def evaluate(func_or_value, __signature=None, __strict=False, **kwargs):
     if callable(func_or_value):
-        if signature is None:
-            signature = signature_from_kwargs(kwargs)
+        if __signature is None:
+            __signature = signature_from_kwargs(kwargs)
 
         callee_parameters = get_signature(func_or_value)
-        if callee_parameters is not None and matches(signature, callee_parameters):
+        if callee_parameters is not None and matches(__signature, callee_parameters):
             return func_or_value(**kwargs)
+    if __strict:
+        assert not callable(func_or_value), "Evaluating {} didn't resolve it into a function but strict mode was active, the signature doesn't match the given parameters. Note that you must match at least one keyword argument. We had these arguments: {}".format(get_callable_description(func_or_value), ', '.join(kwargs.keys()))
     return func_or_value
 
 
-def evaluate_recursive(func_or_value, signature=None, **kwargs):
-    if signature is None:  # pragma: no mutate
-        signature = signature_from_kwargs(kwargs)  # pragma: no mutate
+def evaluate_strict(func_or_value, __signature=None, **kwargs):
+    return evaluate(func_or_value, __signature=None, __strict=True, **kwargs)
+
+
+def evaluate_recursive(func_or_value, __signature=None, __strict=False, **kwargs):
+    if __signature is None:
+        __signature = signature_from_kwargs(kwargs)  # pragma: no mutate
 
     if isinstance(func_or_value, dict):
         # The type(item)(** stuff is to preserve the original type
-        return type(func_or_value)(**{k: evaluate_recursive(v, signature=signature, **kwargs) for k, v in dict.items(func_or_value)})
+        return type(func_or_value)(**{k: evaluate_recursive(v, __signature=__signature, __strict=__strict, **kwargs) for k, v in dict.items(func_or_value)})
 
     if isinstance(func_or_value, list):
-        return [evaluate_recursive(v, signature=signature, **kwargs) for v in func_or_value]
+        return [evaluate_recursive(v, __signature=__signature, __strict=__strict, **kwargs) for v in func_or_value]
 
     if isinstance(func_or_value, set):
-        return {evaluate_recursive(v, signature=signature, **kwargs) for v in func_or_value}
+        return {evaluate_recursive(v, __signature=__signature, __strict=__strict, **kwargs) for v in func_or_value}
 
-    return evaluate(func_or_value, signature=signature, **kwargs)
+    return evaluate(func_or_value, __signature=__signature, __strict=__strict, **kwargs)
+
+
+def evaluate_recursive_strict(func_or_value, __signature=None, **kwargs):
+    """
+    Like `evaluate_recursive` but won't allow un-evaluated callables to slip through.
+    """
+    return evaluate_recursive(func_or_value, __signature=None, __strict=True, **kwargs)
 
 
 def should_show(item):
     try:
-        return item.show
+        r = item.show
     except AttributeError:
         try:
-            return item['show']
+            r = item['show']
         except (TypeError, KeyError):
             return True
+
+    if callable(r):
+        assert False, "`show` was a callable. You probably forgot to evaluate it. The callable was: {}".format(get_callable_description(r))
+
+    return r
 
 
 def filter_show_recursive(item):
