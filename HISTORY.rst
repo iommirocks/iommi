@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+6.1.0 (2019-10-14)
+~~~~~~~~~~~~~~~~~~
+
+* Bumped dependency for tri.declarative
+
+* Bumped dependency for tri.form
+
+
 6.0.0 (2019-06-14)
 ~~~~~~~~~~~~~~~~~~
 
