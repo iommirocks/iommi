@@ -30,7 +30,6 @@ from itertools import (
 from tri_declarative import (
     assert_kwargs_empty,
     class_shortcut,
-    creation_ordered,
     declarative,
     dispatch,
     EMPTY,
@@ -668,7 +667,6 @@ Link.submit = Shortcut(
 )
 
 
-@creation_ordered
 class Field(RefinableObject):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
