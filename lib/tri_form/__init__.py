@@ -1407,7 +1407,7 @@ class Form(RefinableObject):
 
         self.data = data
 
-        if 'links_template' in kwargs:
+        if kwargs.get('links_template') != 'tri_form/links.html':
             warnings.warn('links is deprecated in favor of actions: use actions_template', DeprecationWarning)
 
         self.declared_actions, self.actions = collect_and_initialize_members(items=actions, form=self)
