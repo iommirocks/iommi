@@ -81,7 +81,8 @@ setup(
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
     include_package_data=True,
-    install_requires=['Django >= 1.8'] + read_reqs('requirements.txt'),
+    # This is here because pip gets confused by "double requirements" in tox otherwise
+    install_requires=['Django >= 2.0'] + read_reqs('requirements.txt'),
     license="BSD",
     zip_safe=False,
     keywords='tri.table',

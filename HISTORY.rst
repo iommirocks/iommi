@@ -1,6 +1,27 @@
 Changelog
 ---------
 
+8.1.0 (2019-10-??)
+~~~~~~~~~~~~~~~~~~
+
+* Implemented `Table.actions` as a replacement for `render_table`s argument `links`.
+
+* `Column.multi_choice_queryset` was broken.
+
+* Fixed `many_to_many` shortcut.
+
+* Deprecated the following parameters to `render_table`:
+    * `template`: replaced by `Table.template`
+    * `paginate_by`: replaced by `Table.page_size`
+    * `show_hits`: no replacement
+    * `hit_label`: no replacement
+    * `page`: no replacement
+    * `blank_on_empty`: no replacement
+    * `links`: replaced by `Table.actions`
+
+* Bumped dependency tri.declarative to 4.x
+
+
 8.0.0 (2019-06-14)
 ~~~~~~~~~~~~~~~~~~
 

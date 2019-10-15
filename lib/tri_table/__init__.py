@@ -1,4 +1,3 @@
-# coding: utf-8
 from __future__ import (
     absolute_import,
     unicode_literals,
@@ -9,6 +8,11 @@ import warnings
 from collections import OrderedDict
 from functools import total_ordering
 from itertools import groupby
+from typing import (
+    Dict,
+    List,
+    Union,
+)
 
 from django.conf import settings
 from django.core.paginator import (
@@ -31,38 +35,43 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from tri_declarative import (
+    EMPTY,
+    LAST,
+    Namespace,
+    Refinable,
+    RefinableObject,
     class_shortcut,
     creation_ordered,
     declarative,
     dispatch,
-    EMPTY,
     evaluate,
     evaluate_recursive,
     getattr_path,
-    LAST,
-    Namespace,
     refinable,
-    Refinable,
-    RefinableObject,
     setattr_path,
     setdefaults_path,
     sort_after,
     with_meta,
 )
 from tri_form import (
-    create_members_from_model,
     DISPATCH_PATH_SEPARATOR,
+    Form,
+    Link as tri_form_Link,
+    collect_and_initialize_members,
+    create_members_from_model,
     evaluate_and_group_links,
     expand_member,
-    Form,
+    group_actions,
     handle_dispatch,
-    Link as tri_form_Link,
     member_from_model,
-    render_template,
 )
 from tri_form.render import (
     render_attrs,
     render_class,
+)
+from tri_form.compat import (
+    Template,
+    render_template,
 )
 from tri_named_struct import (
     NamedStruct,
@@ -74,8 +83,8 @@ from tri_query import (
     QueryException,
 )
 from tri_struct import (
-    merged,
     Struct,
+    merged,
 )
 
 from tri_table.db_compat import setup_db_compat
@@ -106,11 +115,10 @@ def evaluate_members(obj, attrs, **kwargs):
 DESCENDING = 'descending'
 ASCENDING = 'ascending'
 
+DEFAULT_PAGE_SIZE = 40
+
 
 def prepare_headers(table, bound_columns):
-    """
-    :type bound_columns: list of BoundColumn
-    """
     if table.request is None:
         return
 
@@ -202,10 +210,7 @@ def register_cell_formatter(type_or_class, formatter):
     _cell_formatters[type_or_class] = formatter
 
 
-def default_cell_formatter(table, column, row, value, **_):
-    """
-    :type column: tri_table.Column
-    """
+def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
     formatter = _cell_formatters.get(type(value))
     if formatter:
         value = formatter(table=table, column=column, row=row, value=value)
@@ -306,16 +311,11 @@ class Column(RefinableObject):
 
         super(Column, self).__init__(**kwargs)
 
-        self.table = None
-        """ :type: Table """
-        self.column = None
-        """ :type: Column """
-        self.index = None
-        """ :type: int """
-        self.is_sorting = None
-        """ :type: bool """
-        self.sort_direction = None
-        """ :type: str """
+        self.table: Table = None
+        self.column: Column = None
+        self.index: int = None
+        self.is_sorting: bool = None
+        self.sort_direction: str = None
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -873,13 +873,12 @@ class Table(RefinableObject):
     """
 
     name = Refinable()
-    bulk_filter = Refinable()
-    """ :type: tri.declarative.Namespace """
-    bulk_exclude = Refinable()
-    """ :type: tri.declarative.Namespace """
+    bulk_filter: Namespace = Refinable()
+    bulk_exclude: Namespace = Refinable()
     sortable = Refinable()
     default_sort_order = Refinable()
     attrs = Refinable()
+    template: Union[str, Template] = Refinable()
     row = Refinable()
     filter = Refinable()
     header = Refinable()
@@ -888,12 +887,13 @@ class Table(RefinableObject):
     column = Refinable()
     bulk = Refinable()
     endpoint_dispatch_prefix = Refinable()
-    extra = Refinable()
-    """ :type: tri.declarative.Namespace """
+    extra: Namespace = Refinable()
     endpoint = Refinable()
     superheader = Refinable()
-    paginator = Refinable()
-    """ :type: tri.declarative.Namespace """
+    paginator: Namespace = Refinable()
+    page_size = DEFAULT_PAGE_SIZE
+    actions = Refinable()
+    actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
     form_class = Refinable()
     query_class = Refinable()
@@ -922,12 +922,14 @@ class Table(RefinableObject):
         default_sort_order=None,
         attrs=EMPTY,
         attrs__class__listview=True,
+        template='tri_table/list.html',
         row__attrs__class=EMPTY,
         row__template=None,
         filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
         header__template='tri_table/table_header_rows.html',
-        links__template='tri_form/links.html',
         paginator__template='tri_table/paginator.html',
+        actions=EMPTY,
+        actions_template='tri_form/actions.html',
         model=None,
         query=EMPTY,
         bulk=EMPTY,
@@ -941,7 +943,7 @@ class Table(RefinableObject):
         superheader__attrs__class__superheader=True,
         superheader__template='tri_table/header.html',
     )
-    def __init__(self, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, links=None, **kwargs):
+    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions, **kwargs):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -952,6 +954,14 @@ class Table(RefinableObject):
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
         """
+
+        if 'links' in kwargs:
+            warnings.warn('Table.links__template is deprecated: use actions_template', DeprecationWarning)
+
+        setdefaults_path(
+            kwargs,
+            links__template='tri_form/links.html',
+        )
 
         if data is None:  # pragma: no cover
             assert model is not None
@@ -981,7 +991,7 @@ class Table(RefinableObject):
         super(Table, self).__init__(
             model=model,
             filter=TemplateConfig(**filter),
-            links=TemplateConfig(**links),
+            links=TemplateConfig(**kwargs.pop('links')),
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
@@ -989,28 +999,38 @@ class Table(RefinableObject):
             **kwargs
         )
 
-        self.query_args = query
-        self._query = None
-        """ :type : tri_query.Query """
-        self._query_form = None
-        """ :type : tri_form.Form """
-        self._query_error = None
-        """ :type : list of str """
+        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, table=self)
 
-        self._bulk_form = None
-        """ :type : tri_form.Form """
-        self._bound_columns = None
-        """ :type : list of Column """
-        self._shown_bound_columns = None
-        """ :type : list of Column """
-        self._bound_column_by_name = None
-        """ :type: dict[str, Column] """
-        self._has_prepared = False
-        """ :type: bool """
+        self.query_args = query
+        self._query: Query = None
+        self._query_form: Form = None
+        self._query_error: List[str] = None
+
+        self._bulk_form: Form = None
+        self._bound_columns: List[Column] = None
+        self._shown_bound_columns: List[Column] = None
+        self._bound_column_by_name: Dict[str, Column] = None
+        self._has_prepared: bool = False
         self.header_levels = None
 
     def render_links(self):
+        warnings.warn('render_links is deprecated: use render_actions', DeprecationWarning)
         return render_template(self.request, self.links.template, self.context)
+
+    @property
+    def rendered_actions(self):
+        return self.render_actions()
+
+    def render_actions(self):
+        actions, grouped_actions = group_actions(self.actions)
+        return render_template(
+            self.request,
+            self.actions_template,
+            dict(
+                actions=actions,
+                grouped_actions=grouped_actions,
+                table=self,
+            ))
 
     @property
     def rendered_links(self):
@@ -1433,6 +1453,7 @@ class Link(tri_form_Link):
 
     # backwards compatibility with old interface
     def __init__(self, title, url=None, **kwargs):
+        warnings.warn('tri_table.Link is deprecated: use tri_form.Action', DeprecationWarning)
         if url:
             warnings.warn('url parameter is deprecated, use attrs__href', DeprecationWarning)
             kwargs['attrs__href'] = url
@@ -1446,85 +1467,9 @@ class Link(tri_form_Link):
         return Link(mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)), **kwargs)
 
 
-def django_pre_2_0_table_context(
-        request,
-        table,
-        links=None,
-        paginate_by=None,
-        page=None,
-        extra_context=None,
-        paginator=None,
-        show_hits=False,
-        hit_label='Items'):
-    """
-    :type table: Table
-    """
-    if extra_context is None:  # pragma: no cover
-        extra_context = {}
-
-    assert table.data is not None
-
-    links, grouped_links = evaluate_and_group_links(links, table=table)
-
-    base_context = {
-        'links': links,
-        'grouped_links': grouped_links,
-        'table': table,
-    }
-
-    if paginate_by:
-        try:
-            new_paginate_by = int(request.GET.get('page_size', paginate_by))
-            if paginate_by <= 0:
-                new_paginate_by = paginate_by
-            paginate_by = new_paginate_by
-        except ValueError:  # pragma: no cover
-            pass
-        if paginator is None:
-            paginator = Paginator(table.data, paginate_by)
-            object_list = None
-        else:  # pragma: no cover
-            object_list = table.data
-        if not page:
-            page = request.GET.get('page', 1)
-        try:
-            page = int(page)
-            if page < 1:  # pragma: no cover
-                page = 1
-            if page > paginator.num_pages:  # pragma: no cover
-                page = paginator.num_pages
-            if object_list is None:
-                table.data = paginator.page(page).object_list
-        except (InvalidPage, ValueError):  # pragma: no cover
-            if page == 1:
-                table.data = []
-            else:
-                raise Http404
-
-        base_context.update({
-            'request': request,
-            'is_paginated': paginator.num_pages > 1,
-            'results_per_page': paginate_by,
-            'has_next': paginator.num_pages > page,
-            'has_previous': page > 1,
-            'page_size': paginate_by,
-            'page': page,
-            'next': page + 1,
-            'previous': page - 1,
-            'pages': paginator.num_pages,
-            'hits': paginator.count,
-            'show_hits': show_hits,
-            'hit_label': hit_label})
-    else:  # pragma: no cover
-        base_context.update({
-            'is_paginated': False})
-
-    base_context.update(extra_context)
-    return base_context
-
-
 def table_context(request,
-                  table,
+                  *,
+                  table: Table,
                   links=None,
                   paginate_by=None,
                   page=None,
@@ -1532,21 +1477,16 @@ def table_context(request,
                   paginator=None,
                   show_hits=False,
                   hit_label='Items'):
-    """
-    :type table: Table
-    """
-    from django import __version__ as django_version
-    django_version = tuple([int(x) for x in django_version.split('.')])
-
-    if django_version < (2, 0):
-        return django_pre_2_0_table_context(request, table, links=links, paginate_by=paginate_by, extra_context=extra_context, paginator=paginator, show_hits=show_hits, hit_label=hit_label)
-
     if extra_context is None:  # pragma: no cover
         extra_context = {}
 
     assert table.data is not None
 
-    links, grouped_links = evaluate_and_group_links(links, table=table)
+    if links:
+        warnings.warn('links is deprecated: use actions', DeprecationWarning)
+        links, grouped_links = evaluate_and_group_links(links, table=table)
+    else:
+        links, grouped_links = None, None
 
     base_context = {
         'links': links,
@@ -1598,8 +1538,8 @@ def render_table(request,
                  table,
                  links=None,
                  context=None,
-                 template='tri_table/list.html',
-                 blank_on_empty=False,
+                 template=None,
+                 blank_on_empty=None,
                  paginate_by=40,  # pragma: no mutate
                  page=None,
                  paginator=None,
@@ -1619,11 +1559,35 @@ def render_table(request,
     :param hit_label: Label for the show_hits display.
     :return: a string with the rendered HTML table
     """
+    if links:
+        warnings.warn('the links argument to render_table is deprecated: use Table.actions', DeprecationWarning)
+
     if not context:
         context = {}
 
     if isinstance(table, Namespace):
         table = table()
+
+    if template:
+        warnings.warn('the template parameter render_table is deprecated: use Table.template', DeprecationWarning)
+        table.template = template
+        del template
+
+    if paginate_by != DEFAULT_PAGE_SIZE:
+        warnings.warn('the paginate_by parameter render_table is deprecated: use Table.page_size', DeprecationWarning)
+        table.page_size = paginate_by
+
+    if show_hits:
+        warnings.warn('the show_hits parameter is deprecated, there is no replacement feature', DeprecationWarning)
+
+    if hit_label != 'Items':
+        warnings.warn('the hit_label parameter is deprecated, there is no replacement feature', DeprecationWarning)
+
+    if page is not None:
+        warnings.warn('the page parameter is deprecated, there is no replacement feature', DeprecationWarning)
+
+    if blank_on_empty is not None:
+        warnings.warn('the blank_on_empty parameter is deprecated, there is no replacement feature', DeprecationWarning)
 
     assert isinstance(table, Table), table
     table.request = request
@@ -1670,7 +1634,7 @@ def render_table(request,
         table.data = None
         table.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-    return render_template(request, template, table.context)
+    return render_template(request, table.template, table.context)
 
 
 def render_table_to_response(*args, **kwargs):
