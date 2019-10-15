@@ -1415,22 +1415,22 @@ def test_deprecated_render_grouped_links():
                  <a id="id_dropdown_group" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
                      group <i class="fa fa-lg fa-caret-down"></i>
                  </a>
-    
+
                  <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_group">
                      <li role="presentation">
                          <a role="menuitem">c</a>
                      </li>
-    
+
                      <li role="presentation">
                          <a role="menuitem">d</a>
                      </li>
-    
+
                      <li role="presentation">
                          <a role="menuitem">f</a>
                      </li>
                  </ul>
              </div>
-    
+
              <a>a</a>
              <a>q</a>
         </div>"""
