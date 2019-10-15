@@ -35,7 +35,6 @@ from pyparsing import (
 )
 from tri_declarative import (
     class_shortcut,
-    creation_ordered,
     declarative,
     dispatch,
     EMPTY,
