@@ -600,6 +600,7 @@ class Link(RefinableObject):
         extra=EMPTY,
     )
     def __init__(self, title, **kwargs):
+        warnings.warn('Link is deprecated: use Action', DeprecationWarning)
         super(Link, self).__init__(title=title, **kwargs)
         self.name = None
 
