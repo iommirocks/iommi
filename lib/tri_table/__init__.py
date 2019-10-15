@@ -89,7 +89,7 @@ from tri_struct import (
 
 from tri_table.db_compat import setup_db_compat
 
-__version__ = '8.0.0'  # pragma: no mutate
+__version__ = '8.1.0'
 
 LAST = LAST
 
