@@ -115,6 +115,8 @@ def evaluate_members(obj, attrs, **kwargs):
 DESCENDING = 'descending'
 ASCENDING = 'ascending'
 
+DEFAULT_PAGE_SIZE = 40
+
 
 def prepare_headers(table, bound_columns):
     if table.request is None:
@@ -876,6 +878,7 @@ class Table(RefinableObject):
     sortable = Refinable()
     default_sort_order = Refinable()
     attrs = Refinable()
+    template: Union[str, Template] = Refinable()
     row = Refinable()
     filter = Refinable()
     header = Refinable()
@@ -888,6 +891,7 @@ class Table(RefinableObject):
     endpoint = Refinable()
     superheader = Refinable()
     paginator: Namespace = Refinable()
+    page_size = DEFAULT_PAGE_SIZE
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
@@ -918,6 +922,7 @@ class Table(RefinableObject):
         default_sort_order=None,
         attrs=EMPTY,
         attrs__class__listview=True,
+        template='tri_table/list.html',
         row__attrs__class=EMPTY,
         row__template=None,
         filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
@@ -951,7 +956,7 @@ class Table(RefinableObject):
         """
 
         if 'links' in kwargs:
-            warnings.warn('Table.links__template is deprecated: use actions_template')
+            warnings.warn('Table.links__template is deprecated: use actions_template', DeprecationWarning)
 
         setdefaults_path(
             kwargs,
@@ -1009,7 +1014,7 @@ class Table(RefinableObject):
         self.header_levels = None
 
     def render_links(self):
-        warnings.warn('render_links is deprecated: use render_actions')
+        warnings.warn('render_links is deprecated: use render_actions', DeprecationWarning)
         return render_template(self.request, self.links.template, self.context)
 
     @property
@@ -1479,7 +1484,9 @@ def table_context(request,
 
     if links:
         warnings.warn('links is deprecated: use actions', DeprecationWarning)
-    links, grouped_links = evaluate_and_group_links(links, table=table)
+        links, grouped_links = evaluate_and_group_links(links, table=table)
+    else:
+        links, grouped_links = None, None
 
     base_context = {
         'links': links,
@@ -1531,8 +1538,8 @@ def render_table(request,
                  table,
                  links=None,
                  context=None,
-                 template='tri_table/list.html',
-                 blank_on_empty=False,
+                 template=None,
+                 blank_on_empty=None,
                  paginate_by=40,  # pragma: no mutate
                  page=None,
                  paginator=None,
@@ -1553,13 +1560,34 @@ def render_table(request,
     :return: a string with the rendered HTML table
     """
     if links:
-        warnings.warn('the links argument to render_table is deprecated: use Table.actions')
+        warnings.warn('the links argument to render_table is deprecated: use Table.actions', DeprecationWarning)
 
     if not context:
         context = {}
 
     if isinstance(table, Namespace):
         table = table()
+
+    if template:
+        warnings.warn('the template parameter render_table is deprecated: use Table.template', DeprecationWarning)
+        table.template = template
+        del template
+
+    if paginate_by != DEFAULT_PAGE_SIZE:
+        warnings.warn('the paginate_by parameter render_table is deprecated: use Table.page_size', DeprecationWarning)
+        table.page_size = paginate_by
+
+    if show_hits:
+        warnings.warn('the show_hits parameter is deprecated, there is no replacement feature', DeprecationWarning)
+
+    if hit_label != 'Items':
+        warnings.warn('the hit_label parameter is deprecated, there is no replacement feature', DeprecationWarning)
+
+    if page is not None:
+        warnings.warn('the page parameter is deprecated, there is no replacement feature', DeprecationWarning)
+
+    if blank_on_empty is not None:
+        warnings.warn('the blank_on_empty parameter is deprecated, there is no replacement feature', DeprecationWarning)
 
     assert isinstance(table, Table), table
     table.request = request
@@ -1606,7 +1634,7 @@ def render_table(request,
         table.data = None
         table.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-    return render_template(request, template, table.context)
+    return render_template(request, table.template, table.context)
 
 
 def render_table_to_response(*args, **kwargs):

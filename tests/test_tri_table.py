@@ -758,46 +758,47 @@ def test_django_table_pagination_custom_paginator():
 
 
 def test_deprecated_links():
-    class TestTable(NoSortTable):
-        foo = Column(header__attrs__title="Some title")
+    with pytest.deprecated_call():
+        class TestTable(NoSortTable):
+            foo = Column(header__attrs__title="Some title")
 
-    data = [Struct(foo="foo")]
+        data = [Struct(foo="foo")]
 
-    links = [
-        Link('Foo', attrs__href='/foo/', show=lambda table: table.data is not data),
-        Link('Bar', attrs__href='/bar/', show=lambda table: table.data is data),
-        Link('Baz', attrs__href='/bar/', group='Other'),
-        Link('Qux', attrs__href='/bar/', group='Other'),
-        Link.icon('icon_foo', title='Icon foo', attrs__href='/icon_foo/'),
-        Link.icon('icon_bar', icon_classes=['lg'], title='Icon bar', attrs__href='/icon_bar/'),
-        Link.icon('icon_baz', icon_classes=['one', 'two'], title='Icon baz', attrs__href='/icon_baz/'),
-    ]
+        links = [
+            Link('Foo', attrs__href='/foo/', show=lambda table: table.data is not data),
+            Link('Bar', attrs__href='/bar/', show=lambda table: table.data is data),
+            Link('Baz', attrs__href='/bar/', group='Other'),
+            Link('Qux', attrs__href='/bar/', group='Other'),
+            Link.icon('icon_foo', title='Icon foo', attrs__href='/icon_foo/'),
+            Link.icon('icon_bar', icon_classes=['lg'], title='Icon bar', attrs__href='/icon_bar/'),
+            Link.icon('icon_baz', icon_classes=['one', 'two'], title='Icon baz', attrs__href='/icon_baz/'),
+        ]
 
-    verify_table_html(table=TestTable(data=data),
-                      find=dict(class_='links'),
-                      links=links,
-                      expected_html="""
-        <div class="links">
-            <div class="dropdown">
-                <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
-                    Other <i class="fa fa-lg fa-caret-down" />
-                </a>
-                <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
-                    <li role="presentation">
-                        <a href="/bar/" role="menuitem"> Baz </a>
-                    </li>
-                    <li role="presentation">
-                        <a href="/bar/" role="menuitem"> Qux </a>
-                    </li>
-                </ul>
-            </div>
+        verify_table_html(table=TestTable(data=data),
+                          find=dict(class_='links'),
+                          links=links,
+                          expected_html="""
+            <div class="links">
+                <div class="dropdown">
+                    <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
+                        Other <i class="fa fa-lg fa-caret-down" />
+                    </a>
+                    <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
+                        <li role="presentation">
+                            <a href="/bar/" role="menuitem"> Baz </a>
+                        </li>
+                        <li role="presentation">
+                            <a href="/bar/" role="menuitem"> Qux </a>
+                        </li>
+                    </ul>
+                </div>
 
-            <a href="/bar/"> Bar </a>
+                <a href="/bar/"> Bar </a>
 
-            <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
-            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
-            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
-        </div>""")
+                <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
+                <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
+                <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
+            </div>""")
 
 
 def test_actions():
@@ -1064,7 +1065,7 @@ def test_template_string():
     class TestTable(NoSortTable):
         class Meta:
             model = Foo
-            links__template = Template('What links')
+            actions_template = Template('What links')
             header__template = Template('What headers')
             filter__template = Template('What filters')
 
@@ -1607,8 +1608,9 @@ def test_yes_no_formatter():
     assert yes_no_formatter(0) == 'No'
 
 
-def test_blank_on_empty():
-    assert render_table(RequestFactory().get('/'), table=Table(data=[], columns=[Column(name='foo')]), blank_on_empty=True) == ''
+def test_deprecated_blank_on_empty():
+    with pytest.deprecated_call():
+        assert render_table(RequestFactory().get('/'), table=Table(data=[], columns=[Column(name='foo')]), blank_on_empty=True) == ''
 
 
 def test_repr():
@@ -1674,7 +1676,7 @@ def test_many_to_many():
 def test_link_class_backwards_compatibility():
     with pytest.deprecated_call():
         assert Link(title='foo', url='bar').render() == '<a href="bar">foo</a>'
-    assert Link(title='foo', attrs__href='bar').render() == '<a href="bar">foo</a>'
+        assert Link(title='foo', attrs__href='bar').render() == '<a href="bar">foo</a>'
 
 
 @pytest.mark.django_db
