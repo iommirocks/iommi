@@ -225,7 +225,6 @@ SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_sel
 
 
 @with_meta
-@creation_ordered
 class Column(RefinableObject):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
