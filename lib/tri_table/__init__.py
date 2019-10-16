@@ -998,7 +998,7 @@ class Table(RefinableObject):
             **kwargs
         )
 
-        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, table=self)
+        self._actions = actions
 
         self.query_args = query
         self._query: Query = None
@@ -1210,6 +1210,8 @@ class Table(RefinableObject):
     def prepare(self):
         if self._has_prepared:
             return
+
+        self.declared_actions, self.actions = collect_and_initialize_members(items=self._actions, table=self)
 
         def bind_columns():
             for index, column in enumerate(self.columns):
@@ -1470,7 +1472,6 @@ def table_context(request,
                   *,
                   table: Table,
                   links=None,
-                  paginate_by=None,
                   page=None,
                   extra_context=None,
                   paginator=None,
@@ -1493,15 +1494,15 @@ def table_context(request,
         'table': table,
     }
 
-    if paginate_by:
+    if table.page_size:
         try:
-            paginate_by = int(request.GET.get('page_size', paginate_by))
+            paginate_by = int(request.GET.get('page_size', table.page_size)) if request else table.page_size
         except ValueError:  # pragma: no cover
             pass
         if paginator is None:
-            paginator = Paginator(table.data, paginate_by)
+            paginator = Paginator(table.data, table.page_size)
         if not page:
-            page = request.GET.get('page')  # None is translated to the default page in paginator.get_page
+            page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
         try:
             page_obj = paginator.get_page(page)
             table.data = page_obj.object_list
@@ -1618,7 +1619,6 @@ def render_table(request,
         request,
         table=table,
         links=links,
-        paginate_by=paginate_by,
         page=page,
         extra_context=context,
         paginator=paginator,
