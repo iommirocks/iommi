@@ -1299,19 +1299,24 @@ def default_endpoint__field(form, key, value):
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
-def collect_and_initialize_members(*, items, **kwargs):
+def collect_and_initialize_members(*, items, cls, **kwargs):
     def unbound_items():
-        for name, action in items.items():
-            if isinstance(action, Namespace):
-                action = action()
-            setattr(action, 'name', name)
-            yield action
+        for name, item in items.items():
+            if isinstance(item, dict):
+                item = setdefaults_path(
+                    Namespace(),
+                    item,
+                    call__target=cls,
+                )
+                item = item()
+            setattr(item, 'name', name)
+            yield item
 
     declared_items = sort_after([x._bind() for x in unbound_items()])
     for item in declared_items:
         item._evaluate_show(**kwargs)
 
-    items = Struct({action.name: action for action in declared_items if should_show(action)})
+    items = Struct({item.name: item for item in declared_items if should_show(item)})
 
     for item in items.values():
         item._evaluate(**kwargs)
@@ -1411,7 +1416,7 @@ class Form(RefinableObject):
         if kwargs.get('links_template') != 'tri_form/links.html':
             warnings.warn('links is deprecated in favor of actions: use actions_template', DeprecationWarning)
 
-        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, form=self)
+        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, cls=Action, form=self)
 
         def unbound_fields():
             if fields is not None:
