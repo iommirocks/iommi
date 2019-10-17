@@ -54,6 +54,7 @@ from tri_declarative import (
     with_meta,
 )
 from tri_form import (
+    Action,
     DISPATCH_PATH_SEPARATOR,
     Form,
     Link as tri_form_Link,
@@ -1211,7 +1212,7 @@ class Table(RefinableObject):
         if self._has_prepared:
             return
 
-        self.declared_actions, self.actions = collect_and_initialize_members(items=self._actions, table=self)
+        self.declared_actions, self.actions = collect_and_initialize_members(items=self._actions, cls=Action, table=self)
 
         def bind_columns():
             for index, column in enumerate(self.columns):
