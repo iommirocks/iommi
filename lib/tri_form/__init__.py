@@ -1306,7 +1306,7 @@ def collect_and_initialize_members(*, items, cls, **kwargs):
                 item = setdefaults_path(
                     Namespace(),
                     item,
-                    call__target=cls,
+                    call_target=cls,
                 )
                 item = item()
             setattr(item, 'name', name)
