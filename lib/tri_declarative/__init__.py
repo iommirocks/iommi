@@ -314,7 +314,7 @@ def evaluate(func_or_value, __signature=None, __strict=False, **kwargs):
         if callee_parameters is not None and matches(__signature, callee_parameters):
             return func_or_value(**kwargs)
     if __strict:
-        assert not callable(func_or_value), "Evaluating {} didn't resolve it into a function but strict mode was active, the signature doesn't match the given parameters. Note that you must match at least one keyword argument. We had these arguments: {}".format(get_callable_description(func_or_value), ', '.join(kwargs.keys()))
+        assert (isinstance(func_or_value, Namespace) and 'call_target' not in func_or_value) or not callable(func_or_value), "Evaluating {} didn't resolve it into a function but strict mode was active, the signature doesn't match the given parameters. Note that you must match at least one keyword argument. We had these arguments: {}".format(get_callable_description(func_or_value), ', '.join(kwargs.keys()))
     return func_or_value
 
 
