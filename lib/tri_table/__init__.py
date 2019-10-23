@@ -41,7 +41,6 @@ from tri_declarative import (
     Refinable,
     RefinableObject,
     class_shortcut,
-    creation_ordered,
     declarative,
     dispatch,
     evaluate,
