@@ -1497,7 +1497,7 @@ def table_context(request,
 
     if table.page_size:
         try:
-            paginate_by = int(request.GET.get('page_size', table.page_size)) if request else table.page_size
+            table.page_size = int(request.GET.get('page_size', table.page_size)) if request else table.page_size
         except ValueError:  # pragma: no cover
             pass
         if paginator is None:
@@ -1513,7 +1513,7 @@ def table_context(request,
         base_context.update({
             'request': request,
             'is_paginated': paginator.num_pages > 1,
-            'results_per_page': paginate_by,
+            'results_per_page': table.page_size,
             'has_next': page_obj.has_next(),
             'has_previous': page_obj.has_previous(),
             'next': page_obj.next_page_number() if page_obj.has_next() else None,
