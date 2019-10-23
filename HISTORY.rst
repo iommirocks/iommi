@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.0.1 (2019-10-23)
+------------------
+
+* Bugfix to correctly handle Namespace as callable/not callable depending on content
+
+
 4.0.0 (2019-10-11)
 ------------------
 
