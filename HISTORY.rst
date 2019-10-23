@@ -1,7 +1,17 @@
 Changelog
 ---------
 
-8.1.0 (2019-10-??)
+8.1.1 (2019-10-23)
+~~~~~~~~~~~~~~~~~~
+
+* Upped dependency on tri.form due to a bug fix there, and the use of that bug fix in tri.table
+
+* Handle late binding of `request` member of `Table`
+
+* Removed deprecated use of `@creation_ordered`
+
+
+8.1.0 (2019-10-15)
 ~~~~~~~~~~~~~~~~~~
 
 * Implemented `Table.actions` as a replacement for `render_table`s argument `links`.
