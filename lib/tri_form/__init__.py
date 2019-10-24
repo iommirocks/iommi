@@ -668,6 +668,7 @@ Link.submit = Shortcut(
 )
 
 
+@with_meta
 class Field(RefinableObject):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
