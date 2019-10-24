@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<form action="" method="post" {% if not is_create %}class="show_changes"{% endif %}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+<form{{ form.rendered_attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 
   {% for error in form.errors %}
     <div class="error">{{ error }}</div>

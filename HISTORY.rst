@@ -6,6 +6,8 @@ Changelog
 
 * `Field` was missing the `@with_meta` decorator
 
+* `newforms` class on `Form` removed. It was turned on by mistake due to some heritage from the code base tri.form was extracted from.
+
 
 7.2.4 (2019-10-23)
 ~~~~~~~~~~~~~~~~~~

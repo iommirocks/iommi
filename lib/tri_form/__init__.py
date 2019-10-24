@@ -1379,7 +1379,6 @@ class Form(RefinableObject):
         endpoint__field=default_endpoint__field,
         editable=True,
         extra=EMPTY,
-        attrs__class__newforms=True,
         attrs__action='',
         attrs__method='post',
         actions__submit__call_target=Action.submit,

@@ -21,10 +21,14 @@ def render_attrs(attrs):
                         if not value:
                             continue
                         value = render_class(value)
+                        if not value:
+                            continue
                     elif key == 'style':
                         if not value:
                             continue
                         value = render_style(value)
+                        if not value:
+                            continue
                     else:
                         raise TypeError('Only the class and style attributes can be dicts, you sent %s' % value)
                 elif isinstance(value, (list, tuple)):
