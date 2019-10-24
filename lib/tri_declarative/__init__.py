@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 import functools
 import inspect
-import warnings
 from collections import (
     defaultdict,
 )
@@ -55,11 +54,6 @@ def get_meta(cls):
                 if not key.startswith('__'):
                     merged_attributes.setitem_path(key, value)
     return merged_attributes
-
-
-def creation_ordered(class_to_decorate):
-    warnings.warn('@creation_ordered no longer needed', DeprecationWarning)
-    return class_to_decorate
 
 
 def get_members(cls, member_class=None, is_member=None, sort_key=None, _parameter=None):
@@ -421,10 +415,7 @@ class Namespace(Struct):
 
         existing = Struct.get(self, key)
         if delimiter:
-            if isinstance(existing, str):
-                warnings.warn('Deprecated promotion of previous string value "{0}" to dict({0}=True)'.format(existing), DeprecationWarning)
-                self[key] = Namespace({existing: True}, {rest_path: value})
-            elif isinstance(existing, dict):
+            if isinstance(existing, dict):
                 type_of_namespace = get_type_of_namespace(existing)
                 self[key] = type_of_namespace(existing, {rest_path: value})
             elif callable(existing):
@@ -438,10 +429,7 @@ class Namespace(Struct):
                 self[key] = value
             elif isinstance(existing, dict):
                 type_of_namespace = get_type_of_namespace(existing)
-                if isinstance(value, str):
-                    warnings.warn('Deprecated promotion of written string value "{0}" to dict({0}=True)'.format(value), DeprecationWarning)
-                    self[key] = type_of_namespace(existing, {value: True})
-                elif isinstance(value, dict):
+                if isinstance(value, dict):
                     self[key] = type_of_namespace(existing, value)
                 elif callable(value):
                     self[key] = type_of_namespace(existing, call_target=value)

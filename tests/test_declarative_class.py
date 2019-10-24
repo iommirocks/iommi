@@ -1,9 +1,6 @@
-import warnings
-
 import pytest
 from tri_declarative import (
     add_args_to_init_call,
-    creation_ordered,
     declarative,
     with_meta,
 )
@@ -393,31 +390,6 @@ def test_copy_of_attributes_no_kwargs_injection_with_no_init_shadow_base():
 
     with pytest.raises(MyException):
         D()
-
-
-def test_creation_ordered_deprecated():
-    with warnings.catch_warnings(record=True) as w:
-        warnings.filterwarnings("default", category=DeprecationWarning)
-
-        @creation_ordered
-        class Foo:
-            pass
-
-        assert '@creation_ordered no longer needed' in str(w.pop())
-        warnings.resetwarnings()
-
-
-def test_creation_ordered_attribute_retention():
-    def my_wrapper(f):
-        f.my_attribute = 17
-        return f
-
-    class Foo:
-        @my_wrapper
-        def __init__(self):
-            pass
-
-    assert Foo().__init__.my_attribute == 17
 
 
 def test_getter_and_setter_interface():

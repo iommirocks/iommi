@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+5.0.0 (2019-10-24)
+------------------
+
+* Removed all deprecated APIs/behaviors:
+    * `creation_ordered`
+    * The promotion of string values to keys in `Namespace`
+
+
 4.0.1 (2019-10-23)
 ------------------
 
