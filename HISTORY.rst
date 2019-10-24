@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+6.1.1 (????-??-??)
+~~~~~~~~~~~~~~~~~~
+
+* `Variable` was missing the `@with_meta` decorator
+
+
 6.1.0 (2019-10-14)
 ~~~~~~~~~~~~~~~~~~
 

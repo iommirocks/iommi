@@ -154,6 +154,7 @@ def boolean_value_to_q(variable, op, value_string_or_f):
     return Variable.value_to_q(variable, op, value_string_or_f)
 
 
+@with_meta
 class Variable(RefinableObject):
     """
     Class that describes a variable that you can search for.
