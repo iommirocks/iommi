@@ -1294,7 +1294,7 @@ def test_render():
         bar = Field()
 
     expected_html = """
-        <form action="" class="newforms" method="post">
+        <form action="" method="post">
             <div>
                 <tr class="required">
                     <td class="description_container">

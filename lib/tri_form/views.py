@@ -79,6 +79,8 @@ def create_or_edit_object__on_valid_post(*, is_create, instance, form, on_save, 
     template_name='tri_form/create_or_edit_object_block.html',
     form__call_target=Form.from_model,
     form__data=None,
+    form__attrs__action='',
+    form__attrs__method='post',
     render__call_target=render,
     render__context=EMPTY,
     redirect=lambda request, redirect_to, form: HttpResponseRedirect(redirect_to),
@@ -116,6 +118,7 @@ def create_or_edit_object(
         request=request,
         model=model,
         instance=instance,
+        attrs__class__show_changes=not is_create,
     )
 
     if links:
