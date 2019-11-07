@@ -243,11 +243,12 @@ def test_namespace_forms():
 
 
 @pytest.mark.django_db
+@pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results with an unordered")
 def test_create_or_edit_object_dispatch():
     from tests.models import Bar, Foo
 
-    Foo.objects.create(foo=1)
-    Foo.objects.create(foo=2)
+    f1 = Foo.objects.create(foo=1)
+    f2 = Foo.objects.create(foo=2)
     request = Struct(method='GET', META={}, GET={DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''}, user=Struct(is_authenticated=lambda: True))
 
     response = create_object(
@@ -258,7 +259,14 @@ def test_create_or_edit_object_dispatch():
         render=lambda **kwargs: kwargs,
         render__context={'foo': 'FOO'},
     )
-    assert json.loads(response.content) == [{"text": 1, "id": 1}, {"text": 2, "id": 2}]
+    assert json.loads(response.content) == dict(
+        results=[
+            {"text": str(f1), "id": f1.pk},
+            {"text": str(f2), "id": f2.pk},
+        ],
+        more=False,
+        page=1,
+    )
 
 
 @pytest.mark.django_db

@@ -1,5 +1,4 @@
-<select type="hidden" name="{{ field.path }}" id="{{ field.id }}"{{ field.rendered_attrs }} style="width: 176px;"></select>
-
+<input type="hidden" name="{{ field.path }}" id="{{ field.id }}"{{ field.rendered_attrs }}>
 
 <script type="text/javascript">
     var id_field = "#{{ field.id }}";
@@ -7,21 +6,35 @@
         ajax: {
             url: ".",
             dataType: "json",
-            data: function (params) {
+            data: function (term, page) {
+                let params;
+
+                if (typeof page === 'undefined') {
+                    // We are running in Select2 4.x
+                    params = term;
+                }
+                else {
+                    // We are running in Select2 3.x
+                    params = {term: term, page: page};
+                }
                 return {
                     '{{ field.endpoint_path }}': params.term, // search term
                     page: params.page
                 };
             },
+            results: function (data) {
+                return data;
+            },
             processResults: function (data) {
-                return {results: data};
+                return data;
             },
             cache: true
         },
         allowClear: true,
+        multiple: {% if field.attrs.multiple %}true{% else %}false{% endif %},
         minimumInputLength: 2,
-        initSelection : function (element, callback) {
-            var data = {id: "{{ field.value.pk }}", text: "{{ field.value }}"};
+        initSelection: function (element, callback) {
+            var data = {{ field.extra.current_selection_json }};
             callback(data);
         }
     });

@@ -41,6 +41,7 @@ from tri_form import (
     member_from_model,
     Action,
     float_parse,
+    get_name_field,
 )
 
 from .compat import RequestFactory
@@ -539,7 +540,9 @@ def test_multi_choice_queryset():
 
     form = MyForm(RequestFactory().get('/', {'foo': [smart_text(user.pk)]}))
     assert form.fields[0].errors == set()
-    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" multiple="" name="foo">\n<option selected="selected" value="1">foo</option>\n</select>'
+    result = form.render()
+    assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" multiple="" name="foo" type="hidden"/>'
+    assert f'var data = [{{"id": {user.pk}, "text": "{user}"}}];' in result
 
 
 @pytest.mark.django_db
@@ -558,7 +561,9 @@ def test_choice_queryset():
 
     form = MyForm(RequestFactory().get('/', {'foo': [smart_text(user.pk)]}))
     assert form.fields[0].errors == set()
-    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option selected="selected" value="1">foo</option>\n</select>'
+    result = form.render()
+    assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" name="foo" type="hidden"/>'
+    assert f'var data = {{"id": {user.pk}, "text": "{user}"}};' in result
 
 
 @pytest.mark.django_db
@@ -568,12 +573,14 @@ def test_choice_queryset_do_not_cache():
     User.objects.create(username='foo')
 
     class MyForm(Form):
-        foo = Field.choice_queryset(attr=None, choices=User.objects.all())
+        foo = Field.choice_queryset(attr=None, choices=User.objects.all(), template='tri_form/choice.html')
 
+    # There is just one user, check that we get it
     form = MyForm(RequestFactory().get('/'))
     assert form.fields[0].errors == set()
     assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
+    # Now create a new queryset, check that we get two!
     User.objects.create(username='foo2')
     form = MyForm(RequestFactory().get('/'))
     assert form.fields[0].errors == set()
@@ -648,6 +655,7 @@ def test_form_default_fields_from_model():
 
 
 @pytest.mark.django
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_factory_error_message():
     from django.db.models import Field as DjangoField, Model
 
@@ -668,6 +676,7 @@ def test_field_from_model_factory_error_message():
 
 
 @pytest.mark.django
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_required():
     from django.db.models import TextField, Model
 
@@ -684,6 +693,7 @@ def test_field_from_model_required():
 
 
 @pytest.mark.django
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_label():
     from django.db.models import TextField, Model
 
@@ -1185,6 +1195,7 @@ def test_form_errors_function():
 
 
 @pytest.mark.django
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_null_field_factory():
     from django.db import models
 
@@ -1202,7 +1213,15 @@ def test_null_field_factory():
 
 
 @pytest.mark.django_db
-def test_choice_queryset_ajax():
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
+@pytest.mark.parametrize(
+    'kwargs', [
+        dict(extra__endpoint_attrs=['username']),
+        dict(extra__endpoint_attr='username'),
+        dict(),
+    ]
+)
+def test_choice_queryset_ajax_attrs_direct(kwargs):
     from django.contrib.auth.models import User
 
     User.objects.create(username='foo')
@@ -1211,14 +1230,37 @@ def test_choice_queryset_ajax():
     class MyForm(Form):
         class Meta:
             name = 'form_name'
-        username = Field.choice_queryset(choices=User.objects.all(), extra__endpoint_attr='username')
+        username = Field.choice_queryset(choices=User.objects.all().order_by('username'), **kwargs)
         not_returning_anything = Field.integer()
 
-    assert MyForm.username.extra.endpoint_attr == 'username'
-
     form = MyForm(request=RequestFactory().get('/'))
-    assert form.endpoint_dispatch(key='field/username', value='ar') == [{'id': user2.pk, 'text': smart_text(user2)}]
+    assert form.endpoint_dispatch(key='field/username', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_text(user2)}], more=False, page=1)
     assert form.endpoint_dispatch(key='field/not_returning_anything', value='ar') is None
+
+
+@pytest.mark.django_db
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
+@pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results")
+@pytest.mark.parametrize(
+    'kwargs', [
+        dict(),
+        dict(field__user__extra__endpoint_attrs=['username']),
+        dict(field__user__extra__endpoint_attr='username'),
+    ]
+)
+def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
+    from django.contrib.auth.models import User
+    from django.db import models
+
+    class FooModel(models.Model):
+        user = models.ForeignKey(User, on_delete=None)
+
+    User.objects.create(username='foo')
+    user2 = User.objects.create(username='bar')
+
+    form = Form.from_model(model=FooModel, data={}, **kwargs)
+    form.request = RequestFactory().get('/')
+    assert form.endpoint_dispatch(key='field/user', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_text(user2)}], more=False, page=1)
 
 
 def test_ajax_namespacing():
@@ -1729,3 +1771,62 @@ def test_from_model_override_field():
     from tests.models import FormFromModelTest
     form = Form.from_model(data={}, model=FormFromModelTest, field__f_float=Field(name='f_float'))
     assert form.fields_by_name.f_float.parse is not float_parse
+
+
+@pytest.mark.django_db
+def test_get_name_field():
+    from django.db.models import (
+        Model,
+        IntegerField,
+        CharField,
+        ForeignKey,
+    )
+
+    class Foo1(Model):
+        a = IntegerField()
+        name = CharField(max_length=255)
+
+    class Bar1(Model):
+        foo = ForeignKey(Foo1, on_delete=None)
+
+    class Foo2(Model):
+        a = IntegerField()
+        fooname = CharField(max_length=255)
+        name = CharField(max_length=255)
+
+    class Bar2(Model):
+        foo = ForeignKey(Foo2, on_delete=None)
+
+    class Foo3(Model):
+        name = IntegerField()
+        fooname = CharField(max_length=255)
+
+    class Bar3(Model):
+        foo = ForeignKey(Foo3, on_delete=None)
+
+    class Foo4(Model):
+        fooname = CharField(max_length=255)
+        barname = CharField(max_length=255)
+
+    class Bar4(Model):
+        foo = ForeignKey(Foo4, on_delete=None)
+
+    class Foo5(Model):
+        blabla = CharField(max_length=255)
+
+    class Bar5(Model):
+        foo = ForeignKey(Foo5, on_delete=None)
+
+    class Foo6(Model):
+        a = IntegerField()
+
+    class Bar6(Model):
+        foo = ForeignKey(Foo6, on_delete=None)
+
+    assert get_name_field(Form.from_model(model=Bar1, data={}).fields_by_name.foo) == 'name'
+    assert get_name_field(Form.from_model(model=Bar2, data={}).fields_by_name.foo) == 'name'
+    assert get_name_field(Form.from_model(model=Bar3, data={}).fields_by_name.foo) == 'fooname'
+    assert get_name_field(Form.from_model(model=Bar4, data={}).fields_by_name.foo) == 'fooname'
+    assert get_name_field(Form.from_model(model=Bar5, data={}).fields_by_name.foo) == 'blabla'
+    with pytest.raises(AssertionError):
+        get_name_field(Form.from_model(model=Bar6, data={}).fields_by_name.foo)
