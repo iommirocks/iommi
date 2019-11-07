@@ -9,13 +9,14 @@ def setup_db_compat_django():
     from tri_table import register_column_factory
     try:
         # noinspection PyUnresolvedReferences
-        from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, DateField, DateTimeField, DecimalField, EmailField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel
+        from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, DateField, DateTimeField, DecimalField, EmailField, TimeField, ForeignKey, ManyToOneRel, ManyToManyField, ManyToManyRel, UUIDField
     except ImportError:
         pass
     else:
         # The order here is significant because of inheritance structure. More specific must be below less specific.
 
         register_column_factory(CharField, Shortcut(call_target__attribute='text'))
+        register_column_factory(UUIDField, Shortcut(call_target__attribute='text'))
         register_column_factory(TimeField, Shortcut(call_target__attribute='time'))
         register_column_factory(EmailField, Shortcut(call_target__attribute='email'))
         register_column_factory(DecimalField, Shortcut(call_target__attribute='decimal'))
