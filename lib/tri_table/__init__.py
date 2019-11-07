@@ -6,6 +6,10 @@ from __future__ import (
 import copy
 import warnings
 from collections import OrderedDict
+from enum import (
+    Enum,
+    auto,
+)
 from functools import total_ordering
 from itertools import groupby
 from typing import (
@@ -224,6 +228,12 @@ def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
 SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_select_all(this)"></i>'
 
 
+class DataRetrievalMethods(Enum):
+    attribute_access = auto()
+    prefetch = auto()
+    select = auto()
+
+
 @with_meta
 class Column(RefinableObject):
     """
@@ -246,6 +256,7 @@ class Column(RefinableObject):
     extra = Refinable()
     superheader = Refinable()
     header = Refinable()
+    data_retrieval_method = Refinable()
 
     @dispatch(
         show=True,
@@ -254,6 +265,7 @@ class Column(RefinableObject):
         auto_rowspan=False,
         bulk__show=False,
         query__show=False,
+        data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
         cell__value=lambda table, column, row, **_: getattr_path(row, evaluate(column.attr, table=table, column=column)),
@@ -666,6 +678,7 @@ class Column(RefinableObject):
     @class_shortcut(
         call_target__attribute='multi_choice_queryset',
         cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
+        data_retrieval_method=DataRetrievalMethods.prefetch,
     )
     def many_to_many(cls, call_target, model_field, **kwargs):
         setdefaults_path(
@@ -681,6 +694,7 @@ class Column(RefinableObject):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
+        data_retrieval_method=DataRetrievalMethods.select,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
         setdefaults_path(
@@ -1325,6 +1339,14 @@ class Table(RefinableObject):
                 )
             else:
                 self._bulk_form = None
+
+        if isinstance(self.data, QuerySet):
+            prefetch = [x.attr for x in self.shown_bound_columns if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
+            select = [x.attr for x in self.shown_bound_columns if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
+            if prefetch:
+                self.data = self.data.prefetch_related(*prefetch)
+            if select:
+                self.data = self.data.select_related(*select)
 
         self._prepare_auto_rowspan()
 
