@@ -580,6 +580,19 @@ class Column(RefinableObject):
         return call_target(**kwargs)
 
     @classmethod
+    @class_shortcut(
+        call_target__attribute='choice',
+        bulk__call_target__attribute='multi_choice',
+        query__call_target__attribute='multi_choice',
+    )
+    def multi_choice(cls, call_target, **kwargs):
+        setdefaults_path(kwargs, dict(
+            bulk__model=kwargs.get('model'),
+            query__model=kwargs.get('model'),
+        ))
+        return call_target(**kwargs)
+
+    @classmethod
     @class_shortcut
     def text(cls, call_target, **kwargs):
         return call_target(**kwargs)
