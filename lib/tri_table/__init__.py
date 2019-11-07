@@ -890,7 +890,7 @@ class Table(RefinableObject):
     endpoint = Refinable()
     superheader = Refinable()
     paginator: Namespace = Refinable()
-    page_size = DEFAULT_PAGE_SIZE
+    page_size = Refinable()
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
@@ -932,6 +932,7 @@ class Table(RefinableObject):
         model=None,
         query=EMPTY,
         bulk=EMPTY,
+        page_size=DEFAULT_PAGE_SIZE,
 
         endpoint_dispatch_prefix=None,
         endpoint__query=lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None,
