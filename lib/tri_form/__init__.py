@@ -165,14 +165,18 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
 
     for field in get_fields(model):
         if should_include(field.name):
-            subkeys = Namespace(**member_params_by_member_name.pop(field.name, {}))
-            subkeys.setdefault('call_target', default_factory)
-            foo = subkeys(name=field.name, model=model, model_field=field)
+            foo = member_params_by_member_name.pop(field.name, {})
+            if isinstance(foo, dict):
+                subkeys = Namespace(**foo)
+                subkeys.setdefault('call_target', default_factory)
+                foo = subkeys(name=field.name, model=model, model_field=field)
             if foo is None:
                 continue
             if isinstance(foo, list):
                 members.extend(foo)
             else:
+                assert foo.name, "Fields must have a name attribute"
+                assert foo.name == field.name, f"Field {foo.name} has a name that doesn't match the model field it belongs to: {field.name}"
                 members.append(foo)
     assert_kwargs_empty(member_params_by_member_name)
     return members + (extra if extra is not None else []) + [default_factory(model=model, field_name=x) for x in extra_includes]

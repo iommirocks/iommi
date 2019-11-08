@@ -40,6 +40,7 @@ from tri_form import (
     create_members_from_model,
     member_from_model,
     Action,
+    float_parse,
 )
 
 from .compat import RequestFactory
@@ -516,7 +517,9 @@ def test_help_text_from_model2():
 
     # foreign key field
     Bar.objects.create(foo=Foo.objects.create(foo=1))
-    assert Form.from_model(data={}, include=['foo'], model=Bar).fields[0].help_text == 'bar_help_text'
+    form = Form.from_model(data={}, include=['foo'], model=Bar)
+    assert form.fields[0].help_text == 'bar_help_text'
+    assert form.fields_by_name.foo.model is Foo
 
 
 @pytest.mark.django_db
@@ -1719,3 +1722,10 @@ def test_expand_member_test_error_2():
         class MyForm(Form):
             class Meta:
                 fields = Field.from_model_expand(ExpandModelTestB, name='some_thing', field_name='link', field__doesnotexist=1)
+
+
+@pytest.mark.django_db
+def test_from_model_override_field():
+    from tests.models import FormFromModelTest
+    form = Form.from_model(data={}, model=FormFromModelTest, field__f_float=Field(name='f_float'))
+    assert form.fields_by_name.f_float.parse is not float_parse
