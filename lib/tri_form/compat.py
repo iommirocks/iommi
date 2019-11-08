@@ -30,10 +30,11 @@ try:
         from tri_form import register_field_factory
         from django.db.models import IntegerField, FloatField, TextField, BooleanField, AutoField, CharField, \
             DateField, DateTimeField, DecimalField, EmailField, URLField, TimeField, \
-            ForeignKey, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel
+            ForeignKey, ManyToManyField, FileField, ManyToOneRel, ManyToManyRel, UUIDField
 
         # The order here is significant because of inheritance structure. More specific must be below less specific.
         register_field_factory(CharField, Shortcut())
+        register_field_factory(UUIDField, Shortcut())
         register_field_factory(URLField, Shortcut(call_target__attribute='url'))
         register_field_factory(TimeField, Shortcut(call_target__attribute='time'))
         register_field_factory(EmailField, Shortcut(call_target__attribute='email'))

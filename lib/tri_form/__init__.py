@@ -64,6 +64,7 @@ from tri_form.compat import (
     validate_email,
     ValidationError,
     Template,
+    mark_safe,
 )
 from tri_form.render import render_attrs
 from .compat import HttpResponse
@@ -329,36 +330,103 @@ def choice_parse(form, field, string_value):
     return string_value
 
 
-def choice_queryset_is_valid(field, parsed_data, **_):
+def choice_queryset__is_valid(field, parsed_data, **_):
     return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
 
-def choice_queryset_endpoint__select2(field, value, **_):
-    limit = 10  # pragma: no mutate
-    result = field.choices.filter(**{field.extra.endpoint_attr + '__icontains': value}).values_list(*['pk', field.extra.endpoint_attr])
-    return [
-        dict(
-            id=row[0],
-            text=row[1],
+def choice_queryset__endpoint_dispatch(form, field, key, value):
+    from django.core.paginator import (EmptyPage, Paginator)
+
+    page_size = 10
+    page = int(form.request.GET.get('page', 1))
+    choices = field.extra.filter_and_sort(form=form, field=field, value=value)
+    try:
+        paginator = Paginator(choices, page_size)
+        result = paginator.page(page)
+        has_more = result.has_next()
+
+        return dict(
+            results=field.extra.model_from_choices(form, field, result),
+            page=page,
+            more=has_more,
         )
-        for row in result[:limit]
-    ]
+    except EmptyPage:
+        return dict(result=[])
 
 
-def choice_queryset_parse(field, string_value, **_):
+def choice_queryset__extra__current_selection_json(form, field, **_):
+    # Return a function here to make r callable from the template and not be evaluated here
+    def result():
+        if field.value is None and field.value_list is None:
+            return 'null'
+        if field.is_list:
+            r = choice_queryset__extra__model_from_choices(form, field, field.value_list)
+        else:
+            r = choice_queryset__extra__model_from_choices(form, field, [field.value])[0]
+
+        return mark_safe(json.dumps(r))
+        
+    return result
+
+
+def choice_queryset__extra__model_from_choices(form, field, choices):
+    def traverse():
+        for choice in choices:
+            option = field.choice_to_option(form=form, field=field, choice=choice)
+            yield Struct(
+                id=option[1],
+                text=option[2],
+            )
+
+    return list(traverse())
+
+
+def get_name_field(field):
+    from django.db import models
+    fields = [x.attname for x in get_fields(field.model_field.target_field.model) if isinstance(x, models.CharField)]
+    if 'name' in fields:
+        return 'name'
+    else:
+        name_fields = [x for x in fields if 'name' in x]
+        if name_fields:
+            return name_fields[0]
+
+    assert fields, "Searching for a field requires it to have a character field we can use for searching. I couldn't find one to use as a guess you you must specify how to perform the search explicitly via `extra__endpoint_attrs`"
+    return fields[0]
+
+
+def choice_queryset__extra__filter_and_sort(field, value, **_):
+    if 'endpoint_attrs' not in field.extra and 'endpoint_attr' in field.extra:
+        attrs = [field.extra.endpoint_attr]
+    elif 'endpoint_attrs' in field.extra:
+        attrs = field.extra.endpoint_attrs
+    elif field.model_field:
+        attrs = [get_name_field(field)]
+    else:
+        attrs = [field.attr]
+
+    from django.db.models import Q
+    qs = Q()
+    for attr in attrs:
+        qs |= Q((attr + '__icontains', value))
+    return field.choices.filter(qs)
+
+
+def choice_queryset__parse(field, string_value, **_):
     try:
         return field.model.objects.get(pk=string_value) if string_value else None
     except field.model.DoesNotExist as e:
         raise ValidationError(str(e))
 
 
-def choice_queryset_choice_to_option(field, choice, **_):
+def choice_queryset__choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, choice == field.value
 
 
-def choice_queryset_endpoint_path(form, field):
+def choice_queryset__endpoint_path(form, field):
     return DISPATCH_PATH_SEPARATOR + DISPATCH_PATH_SEPARATOR.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
 
+choice_queryset_endpoint_path = choice_queryset__endpoint_path  # backwards compatibility
 
 datetime_iso_formats = [
     '%Y-%m-%d %H:%M:%S',
@@ -1118,13 +1186,15 @@ class Field(RefinableObject):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice",
-        parse=choice_queryset_parse,
-        choice_to_option=choice_queryset_choice_to_option,
-        endpoint_path=choice_queryset_endpoint_path,
-        endpoint__=choice_queryset_endpoint__select2,  # Backwards compatible
-        endpoint__select2=choice_queryset_endpoint__select2,
-        extra__endpoint_attr='name',
-        is_valid=choice_queryset_is_valid,
+        input_template='tri_form/choice_select2.html',
+        parse=choice_queryset__parse,
+        choice_to_option=choice_queryset__choice_to_option,
+        endpoint_path=choice_queryset__endpoint_path,
+        endpoint_dispatch=choice_queryset__endpoint_dispatch,  # Backwards compatible
+        is_valid=choice_queryset__is_valid,
+        extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
+        extra__model_from_choices=choice_queryset__extra__model_from_choices,
+        extra__current_selection_json=choice_queryset__extra__current_selection_json,
     )
     def choice_queryset(cls, choices, call_target=None, **kwargs):
         from django.db.models import QuerySet
