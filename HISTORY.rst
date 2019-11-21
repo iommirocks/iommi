@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+8.2.0 (2019-11-21)
+~~~~~~~~~~~~~~~~~~
+
+* Introduced `data_retrivial_method`, and turned it on by default for `foreign_key` and `many_to_many`. This means that by default tables are now efficient instead of requiring you to use `prefetch_related` or `select_related` manually.
+
+* Added missing `UUIDField` factory
+
+* Added missing `Column.multi_choice`
+
+* `page_size` wasn't refinable
+
+
 8.1.1 (2019-10-23)
 ~~~~~~~~~~~~~~~~~~
 
