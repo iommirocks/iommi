@@ -970,7 +970,7 @@ class Table(RefinableObject):
         superheader__attrs__class__superheader=True,
         superheader__template='tri_table/header.html',
     )
-    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions, **kwargs):
+    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, **kwargs):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -998,11 +998,20 @@ class Table(RefinableObject):
             model = data.model
 
         def generate_columns():
-            for column_ in columns if columns is not None else []:
-                yield column_
+            if columns is not None:
+                for column_ in columns:
+                    yield column_
             for name, column_ in columns_dict.items():
                 column_.name = name
                 yield column_
+            for name, column_spec in column.items():
+                column_spec = setdefaults_path(
+                    Namespace(),
+                    column_spec,
+                    call_target=self.get_meta().member_class,
+                    name=name,
+                )
+                yield column_spec()
 
         columns = sort_after(list(generate_columns()))
 
