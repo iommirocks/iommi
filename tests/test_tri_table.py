@@ -1853,3 +1853,27 @@ def test_from_model_with_inheritance():
         'MyVariable.float': 1,
         'MyColumn.float': 1,
     }
+
+
+def test_column_merge():
+    table = Table(
+        column__foo={},
+        data=[
+            Struct(foo=1),
+        ]
+    )
+    assert len(table.columns) == 1
+    assert table.columns[0].name == 'foo'
+    for row in table:
+        assert row['foo'].value == 1
+
+
+def test_override_doesnt_stick():
+    class MyTable(Table):
+        foo = Column()
+
+    table = MyTable(column__foo__show=False, data=[])
+    assert len(table.shown_bound_columns) == 0
+
+    table2 = MyTable(data=[])
+    assert len(table2.shown_bound_columns) == 1
