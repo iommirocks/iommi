@@ -967,6 +967,8 @@ class Field(RefinableObject):
         if bound_field.display_name is MISSING:
             bound_field.display_name = capitalize(bound_field.name).replace('_', ' ') if bound_field.name else ''
 
+        for k, v in form.field.get(bound_field.name, {}).items():
+            setattr_path(bound_field, k, v)
         bound_field.form = form
         bound_field.path = bound_field.name if not form.name else (form.name + DISPATCH_PATH_SEPARATOR + bound_field.name)
         bound_field.field = self
@@ -1430,6 +1432,7 @@ class Form(RefinableObject):
     attrs = Refinable()
     name = Refinable()
     editable = Refinable()
+    field = Refinable()
 
     model = Refinable()
     """ :type: django.db.models.Model """
@@ -1452,6 +1455,7 @@ class Form(RefinableObject):
         model=None,
         endpoint__field=default_endpoint__field,
         editable=True,
+        field=EMPTY,
         extra=EMPTY,
         attrs__action='',
         attrs__method='post',
@@ -1459,7 +1463,7 @@ class Form(RefinableObject):
         actions_template='tri_form/actions.html',
         links_template='tri_form/links.html',
     )
-    def __init__(self, request=None, *, data=None, instance=None, fields=None, fields_dict=None, actions=None, **kwargs):
+    def __init__(self, request=None, *, data=None, instance=None, fields=None, fields_dict=None, actions=None, field, **kwargs):
         """
         :type fields: list of Field
         :type data: dict[basestring, any]
@@ -1474,7 +1478,7 @@ class Form(RefinableObject):
                 submit__show=False,
             )
 
-        super(Form, self).__init__(**kwargs)
+        super(Form, self).__init__(field=field, **kwargs)
 
         if data is None and request:
             data = request.POST if request.method == 'POST' else request.GET
@@ -1494,11 +1498,19 @@ class Form(RefinableObject):
 
         def unbound_fields():
             if fields is not None:
-                for field in fields:
-                    yield field
-            for name, field in fields_dict.items():
-                setattr(field, 'name', name)
-                yield field
+                for field_ in fields:
+                    yield field_
+            for name, field_ in fields_dict.items():
+                field_.name = name
+                yield field_
+            for name, field_spec in field.items():
+                field_spec = setdefaults_path(
+                    Namespace(),
+                    field_spec,
+                    call_target=self.get_meta().member_class,
+                    name=name,
+                )
+                yield field_spec()
 
         self.declared_fields = sort_after([f._bind(self) for f in unbound_fields()])
         """ :type: list of Field"""

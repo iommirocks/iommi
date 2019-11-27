@@ -1830,3 +1830,24 @@ def test_get_name_field():
     assert get_name_field(Form.from_model(model=Bar5, data={}).fields_by_name.foo) == 'blabla'
     with pytest.raises(AssertionError):
         get_name_field(Form.from_model(model=Bar6, data={}).fields_by_name.foo)
+
+
+def test_field_merge():
+    form = Form(
+        field__foo={},
+        instance=Struct(foo=1)
+    )
+    assert len(form.fields) == 1
+    assert form.fields[0].name == 'foo'
+    assert form.fields_by_name.foo.value == 1
+
+
+def test_override_doesnt_stick():
+    class MyForm(Form):
+        foo = Field()
+
+    form = MyForm(field__foo__show=False)
+    assert len(form.fields_by_name) == 0
+
+    form2 = MyForm()
+    assert len(form2.fields_by_name) == 1
