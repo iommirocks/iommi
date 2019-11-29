@@ -822,6 +822,28 @@ def test_class_shortcut_class_call_target():
     assert MyFoo.shortcut3() == 7
 
 
+def test_class_shortcut_shortcut():
+    class Foo:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        @classmethod
+        @class_shortcut(
+            x=17
+        )
+        def shortcut1(self, call_target=None, **kwargs):
+            return call_target(**kwargs)
+
+    Foo.shortcut2 = Shortcut(
+        y=42,
+        call_target__cls=Foo,
+        call_target__attribute='shortcut1',
+    )
+
+    assert Foo.shortcut1().kwargs == {'x': 17}
+    assert Foo.shortcut2().kwargs == {'x': 17, 'y': 42}
+
+
 def test_refinable_object_complete_example():
     def f(p=11):
         return p
