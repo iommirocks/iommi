@@ -9,7 +9,7 @@ def test_handle_dispatch_no_dispatch():
 
 
 def test_handle_dispatch_one_level():
-    request = RequestFactory().get('/', {DISPATCH_PATH_SEPARATOR + 'foo' + DISPATCH_PATH_SEPARATOR + 'bar': 'payload'})
+    request = RequestFactory().get('/', {DISPATCH_PATH_SEPARATOR + 'foo' + DISPATCH_PATH_SEPARATOR + 'bar': 'payload'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
     # miss
     assert handle_dispatch(request, Struct(endpoint_dispatch_prefix='bar')) == (True, None)
 
@@ -20,7 +20,7 @@ def test_handle_dispatch_one_level():
 
 
 def test_handle_dispatch_two_levels():
-    request = RequestFactory().get('/', {DISPATCH_PATH_SEPARATOR + 'foo' + DISPATCH_PATH_SEPARATOR + 'bar' + DISPATCH_PATH_SEPARATOR + 'baz': 'payload'})
+    request = RequestFactory().get('/', {DISPATCH_PATH_SEPARATOR + 'foo' + DISPATCH_PATH_SEPARATOR + 'bar' + DISPATCH_PATH_SEPARATOR + 'baz': 'payload'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
     # miss
     assert handle_dispatch(request, Struct(endpoint_dispatch_prefix='bar')) == (True, None)
 

@@ -367,7 +367,7 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    assert Form(data=dict(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).compact() == '7 compact\n' + AVOID_EMPTY_FORM + '\n'
+    assert Form(data=dict(foo='7'), fields=[Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')]).compact() == '7 compact\n' + AVOID_EMPTY_FORM.format('') + '\n'
 
 
 def test_render_template():
@@ -465,7 +465,12 @@ def test_radio():
 
 def test_hidden():
     soup = BeautifulSoup(Form(data=dict(foo='1'), fields=[Field.hidden(name='foo')]).table(), 'html.parser')
-    assert [(x.attrs['type'], x.attrs['name'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', 'foo', '1'), ('hidden', '/', '')]
+    assert [(x.attrs['type'], x.attrs['name'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', 'foo', '1'), ('hidden', '-', '')]
+
+
+def test_hidden_with_name():
+    soup = BeautifulSoup(Form(name='baz', endpoint_dispatch_prefix='baz', data={'baz/foo': '1'}, fields=[Field.hidden(name='foo')]).table(), 'html.parser')
+    assert [(x.attrs['type'], x.attrs['name'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', 'baz/foo', '1'), ('hidden', '-baz', '')]
 
 
 def test_password():
@@ -1300,8 +1305,8 @@ def test_ajax_config_and_validate():
 
 def test_is_empty_form_marker():
     request = RequestFactory().get('/')
-    assert AVOID_EMPTY_FORM in Form(request=request).render()
-    assert AVOID_EMPTY_FORM not in Form(request=request, is_full_form=False).render()
+    assert AVOID_EMPTY_FORM.format('') in Form(request=request).render()
+    assert AVOID_EMPTY_FORM.format('') not in Form(request=request, is_full_form=False).render()
 
 
 def test_json_parsing():
@@ -1355,7 +1360,7 @@ def test_render():
                         <input id="id_bar" name="bar" type="text" value="">
                     </td>
                 </tr>
-                <input name="/" type="hidden" value=""/>
+                <input name="-" type="hidden" value=""/>
             </div>
             <div class="form_buttons clear">
                 <div class="links">
