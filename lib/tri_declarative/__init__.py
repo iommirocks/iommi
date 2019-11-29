@@ -552,11 +552,11 @@ def setdefaults_path(__target__, *defaults, **kwargs):
 def dispatch(*function, **defaults):
     def decorator(f):
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def dispatch_defaults_wrapper(*args, **kwargs):
             return f(*args, **Namespace(defaults, kwargs))
 
-        wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
-        return wrapper
+        dispatch_defaults_wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
+        return dispatch_defaults_wrapper
 
     if function:
         assert len(function) == 1
