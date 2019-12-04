@@ -89,7 +89,7 @@ DISPATCH_PATH_SEPARATOR = '/'
 # as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
 # is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
 # (at least) this key-value.
-AVOID_EMPTY_FORM = f'<input type="hidden" name="{DISPATCH_PATH_SEPARATOR}" value="" />'
+AVOID_EMPTY_FORM = '<input type="hidden" name="-{}" value="" />'
 
 
 def dispatch_prefix_and_remaining_from_key(key):
@@ -98,6 +98,9 @@ def dispatch_prefix_and_remaining_from_key(key):
 
 
 def handle_dispatch(request, obj):
+    if not request.is_ajax():
+        return False, None
+
     for key, value in request.GET.items():
         if key.startswith(DISPATCH_PATH_SEPARATOR):
             remaining_key = key[len(DISPATCH_PATH_SEPARATOR):]
@@ -107,7 +110,8 @@ def handle_dispatch(request, obj):
                 if prefix != expected_prefix:
                     return True, None
                 if remaining_key == '':
-                    remaining_key = None
+                    # This key is the "I have submitted the form" key, ignore it!
+                    continue
             data = obj.endpoint_dispatch(key=remaining_key, value=value)
             if data is not None:
                 return True, HttpResponse(json.dumps(data), content_type='application/json')
@@ -1430,7 +1434,7 @@ class Form(RefinableObject):
     links = Refinable()  # deprecated
     links_template = Refinable()  # deprecated
     attrs = Refinable()
-    name = Refinable()
+    name: str = Refinable()
     editable = Refinable()
     field = Refinable()
 
@@ -1783,16 +1787,19 @@ class Form(RefinableObject):
         :type style: str| unicode
         :type template_name: str | unicode | None
         """
+        assert (
+            (self.endpoint_dispatch_prefix and self.name is None)  # it's ok to set name to None and also set endpoint_dispatch_prefix to something
+            or (self.name is None and self.endpoint_dispatch_prefix is None)
+            or (self.name and self.endpoint_dispatch_prefix and self.endpoint_dispatch_prefix.endswith(self.name))
+        ), f'Out of sync name and endpoint_dispatch_prefix. name={self.name}, endpoint_dispatch_prefix={self.endpoint_dispatch_prefix}'
+
         self.style = style
         r = []
         for field in self.fields:
             r.append(field.render(style=style))
 
-        if self.is_full_form and not self.name:
-            r.append(format_html(AVOID_EMPTY_FORM))
-
-        if self.name:
-            r.append(format_html('<input type="hidden" name="{}" value="" />', self.target_name))
+        if self.is_full_form:
+            r.append(format_html(AVOID_EMPTY_FORM, self.endpoint_dispatch_prefix or ''))
 
         if self.request:
             # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering

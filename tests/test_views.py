@@ -24,7 +24,7 @@ def test_create_or_edit_object():
     reset_saved_something()
 
     # 1. View create form
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
     response = create_object(
         request=request,
@@ -153,7 +153,7 @@ def test_redirect_default_case():
 def test_unique_constraint_violation():
     from tests.models import UniqueConstraintTest
 
-    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
     request.POST = {
         'f_int': '3',
         'f_float': '5.1',
@@ -183,7 +183,7 @@ def test_namespace_forms():
     reset_saved_something()
 
     # Create object
-    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
     request.POST = {
         'f_int': '3',
         'f_float': '5.1',
@@ -249,7 +249,7 @@ def test_create_or_edit_object_dispatch():
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
-    request = Struct(method='GET', META={}, GET={DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='GET', META={}, GET={DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: True)
 
     response = create_object(
         request=request,
@@ -273,7 +273,7 @@ def test_create_or_edit_object_dispatch():
 def test_create_object_default_template():
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
     response = create_object(request=request, model=Foo)
     assert response.status_code == 200
@@ -294,7 +294,7 @@ def test_create_object_default_template():
 def test_edit_object_default_template():
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
     response = edit_object(request=request, instance=Foo.objects.create(foo=1))
     assert response.status_code == 200
@@ -315,9 +315,9 @@ def test_edit_object_default_template():
 def test_create_or_edit_object_default_template_with_name():
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = create_object(request=request, model=Foo, form__name='form_name')
+    response = create_object(request=request, model=Foo, form__name='form_name', form__endpoint_dispatch_prefix='form_name')
     assert response.status_code == 200
 
     expected_html = """
@@ -345,7 +345,8 @@ def test_create_or_edit_object_validate_unique():
             'b': '1',
             f'{DISPATCH_PATH_SEPARATOR}': '',
         },
-        user=Struct(is_authenticated=lambda: True)
+        user=Struct(is_authenticated=lambda: True),
+        is_ajax=lambda: False,
     )
 
     response = create_object(request=request, model=Baz)
@@ -368,15 +369,19 @@ def test_create_or_edit_object_validate_unique():
 
 
 @pytest.mark.django_db
-def test_create_or_edit_object_full_template():
+@pytest.mark.parametrize('name', [None, 'baz'])
+def test_create_or_edit_object_full_template(name):
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True))
+    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = create_object(request=request, model=Foo)
+    response = create_object(request=request, model=Foo, form__name=name, form__endpoint_dispatch_prefix=name)
     assert response.status_code == 200
 
-    expected_html = """
+    prefix = '' if not name else name + '/'
+    name_attr = '' if not name else f'name="{name}" '
+
+    expected_html = f"""
 <html>
     <head>Create foo</head>
     <body>
@@ -389,16 +394,16 @@ def test_create_or_edit_object_full_template():
                             <div class="formdescr">foo_help_text</div>
                         </td>
                         <td>
-                            <input type="text" value="" name="foo" id="id_foo">
+                            <input type="text" value="" name="{prefix}foo" id="id_foo">
                         </td>
                     </tr>
-                    <input type="hidden" name="/" value=""/>
+                    <input type="hidden" name="-{name or ''}" value=""/>
                 </table>
             </div>
             <div class="form_buttons clear">
                 <div class="links">
                     &nbsp;
-                    <input accesskey="s" class="button" type="submit" value="Create foo"></input>
+                    <input accesskey="s" class="button" {name_attr}type="submit" value="Create foo"></input>
                 </div>
             </div>
         </form>
