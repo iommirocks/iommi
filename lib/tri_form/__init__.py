@@ -369,7 +369,7 @@ def choice_queryset__extra__current_selection_json(form, field, **_):
             r = choice_queryset__extra__model_from_choices(form, field, [field.value])[0]
 
         return mark_safe(json.dumps(r))
-        
+
     return result
 
 
@@ -429,6 +429,7 @@ def choice_queryset__choice_to_option(field, choice, **_):
 
 def choice_queryset__endpoint_path(form, field):
     return DISPATCH_PATH_SEPARATOR + DISPATCH_PATH_SEPARATOR.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
+
 
 choice_queryset_endpoint_path = choice_queryset__endpoint_path  # backwards compatibility
 
