@@ -1,12 +1,22 @@
 Changelog
 ---------
 
-7.2.5 (????-??-??)
+7.3.0 (2019-12-06)
 ~~~~~~~~~~~~~~~~~~
 
 * `Field` was missing the `@with_meta` decorator
 
 * `newforms` class on `Form` removed. It was turned on by mistake due to some heritage from the code base tri.form was extracted from.
+
+* Fixed an issue where overriding a Field didn't work when creating a form from a model
+
+* Use select2 by default for `choice_queryset`
+
+* Missing `UUIDField` factory
+
+* You can now override field properties like this: `MyForm(field__foo__query__show=True)`
+
+* Fix ajax dispatch, and namespacing when multiple forms are present on the page
 
 
 7.2.4 (2019-10-23)

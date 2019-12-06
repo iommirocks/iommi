@@ -72,7 +72,7 @@ from .compat import HttpResponse
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
 
-__version__ = '7.2.4'
+__version__ = '7.3.0'
 
 
 def capitalize(s):

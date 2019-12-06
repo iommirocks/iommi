@@ -6,7 +6,7 @@ except ImportError:
     from jinja2 import Markup as SafeText  # noqa
 
     class RequestFactory:
-        def method(self, method, url, params, body=None, root_path=None):
+        def method(self, method, url, params, body=None, root_path=None, **headers):
             from flask.ctx import AppContext
             from flask import Flask
             import os
@@ -16,10 +16,18 @@ except ImportError:
             app.push()
             from werkzeug.test import create_environ
             from tri_form.compat import HttpRequest
-            return HttpRequest(create_environ(path=url, query_string=params, method=method, data=body))
 
-        def get(self, url, params=None):
-            return self.method('GET', url, params=params)
+            # We use the django style where headers are HTTP_
+            for k, v in headers.items():
+                assert k.startswith('HTTP_')
 
-        def post(self, url, params=None):
-            return self.method('POST', url, params={}, body=params)
+            # ...but flask adds HTTP_ itself, so we have to cut them off here
+            headers = {k[len('HTTP_'):]: v for k, v in headers.items()}
+
+            return HttpRequest(create_environ(path=url, query_string=params, method=method, data=body, headers=headers))
+
+        def get(self, url, params=None, **headers):
+            return self.method('GET', url, params=params, **headers)
+
+        def post(self, url, params=None, **headers):
+            return self.method('POST', url, params={}, body=params, **headers)
