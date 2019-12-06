@@ -11,7 +11,7 @@ try:
     from django.http import HttpResponseRedirect
     from django.template import Template
     from django.shortcuts import render
-    from django.utils.encoding import smart_text
+    from django.utils.encoding import smart_str
     from django.template.context_processors import csrf
     from django.utils.safestring import mark_safe
 
@@ -151,7 +151,7 @@ except ImportError:
         from flask import redirect
         return redirect(url, code=code)
 
-    def smart_text(s):
+    def smart_str(s):
         return str(s)
 
     def render_template(request, template, context):
@@ -198,3 +198,6 @@ except ImportError:
 
     def mark_safe(s):
         return Markup(s)
+
+
+smart_text = smart_str

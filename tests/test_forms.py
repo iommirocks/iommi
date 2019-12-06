@@ -13,7 +13,7 @@ from tri_form.compat import (
 )
 from bs4 import BeautifulSoup
 import pytest
-from tri_form.compat import Template, smart_text
+from tri_form.compat import Template, smart_str
 
 from tri_declarative import (
     getattr_path,
@@ -540,10 +540,10 @@ def test_multi_choice_queryset():
         foo = Field.multi_choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
-    assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
-    assert MyForm(RequestFactory().get('/', {'foo': [smart_text(user2.pk), smart_text(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
+    assert MyForm(RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
+    assert MyForm(RequestFactory().get('/', {'foo': [smart_str(user2.pk), smart_str(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
 
-    form = MyForm(RequestFactory().get('/', {'foo': [smart_text(user.pk)]}))
+    form = MyForm(RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
     assert form.fields[0].errors == set()
     result = form.render()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" multiple="" name="foo" type="hidden"/>'
@@ -562,9 +562,9 @@ def test_choice_queryset():
         foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
-    assert MyForm(RequestFactory().get('/', {'foo': smart_text(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
+    assert MyForm(RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
 
-    form = MyForm(RequestFactory().get('/', {'foo': [smart_text(user.pk)]}))
+    form = MyForm(RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
     assert form.fields[0].errors == set()
     result = form.render()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" name="foo" type="hidden"/>'
@@ -1239,7 +1239,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         not_returning_anything = Field.integer()
 
     form = MyForm(request=RequestFactory().get('/'))
-    assert form.endpoint_dispatch(key='field/username', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_text(user2)}], more=False, page=1)
+    assert form.endpoint_dispatch(key='field/username', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
     assert form.endpoint_dispatch(key='field/not_returning_anything', value='ar') is None
 
 
@@ -1256,16 +1256,17 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
 def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     from django.contrib.auth.models import User
     from django.db import models
+    from django.db.models import CASCADE
 
     class FooModel(models.Model):
-        user = models.ForeignKey(User, on_delete=None)
+        user = models.ForeignKey(User, on_delete=CASCADE)
 
     User.objects.create(username='foo')
     user2 = User.objects.create(username='bar')
 
     form = Form.from_model(model=FooModel, data={}, **kwargs)
     form.request = RequestFactory().get('/')
-    assert form.endpoint_dispatch(key='field/user', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_text(user2)}], more=False, page=1)
+    assert form.endpoint_dispatch(key='field/user', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
 
 
 def test_ajax_namespacing():
@@ -1785,6 +1786,7 @@ def test_get_name_field():
         IntegerField,
         CharField,
         ForeignKey,
+        CASCADE,
     )
 
     class Foo1(Model):
@@ -1792,7 +1794,7 @@ def test_get_name_field():
         name = CharField(max_length=255)
 
     class Bar1(Model):
-        foo = ForeignKey(Foo1, on_delete=None)
+        foo = ForeignKey(Foo1, on_delete=CASCADE)
 
     class Foo2(Model):
         a = IntegerField()
@@ -1800,33 +1802,33 @@ def test_get_name_field():
         name = CharField(max_length=255)
 
     class Bar2(Model):
-        foo = ForeignKey(Foo2, on_delete=None)
+        foo = ForeignKey(Foo2, on_delete=CASCADE)
 
     class Foo3(Model):
         name = IntegerField()
         fooname = CharField(max_length=255)
 
     class Bar3(Model):
-        foo = ForeignKey(Foo3, on_delete=None)
+        foo = ForeignKey(Foo3, on_delete=CASCADE)
 
     class Foo4(Model):
         fooname = CharField(max_length=255)
         barname = CharField(max_length=255)
 
     class Bar4(Model):
-        foo = ForeignKey(Foo4, on_delete=None)
+        foo = ForeignKey(Foo4, on_delete=CASCADE)
 
     class Foo5(Model):
         blabla = CharField(max_length=255)
 
     class Bar5(Model):
-        foo = ForeignKey(Foo5, on_delete=None)
+        foo = ForeignKey(Foo5, on_delete=CASCADE)
 
     class Foo6(Model):
         a = IntegerField()
 
     class Bar6(Model):
-        foo = ForeignKey(Foo6, on_delete=None)
+        foo = ForeignKey(Foo6, on_delete=CASCADE)
 
     assert get_name_field(Form.from_model(model=Bar1, data={}).fields_by_name.foo) == 'name'
     assert get_name_field(Form.from_model(model=Bar2, data={}).fields_by_name.foo) == 'name'
