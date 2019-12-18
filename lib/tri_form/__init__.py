@@ -341,7 +341,7 @@ def choice_queryset__is_valid(field, parsed_data, **_):
 def choice_queryset__endpoint_dispatch(form, field, key, value):
     from django.core.paginator import (EmptyPage, Paginator)
 
-    page_size = 10
+    page_size = field.extra.get('endpoint_page_size', 40)
     page = int(form.request.GET.get('page', 1))
     choices = field.extra.filter_and_sort(form=form, field=field, value=value)
     try:

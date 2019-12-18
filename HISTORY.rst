@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+7.3.1 (2019-12-18)
+~~~~~~~~~~~~~~~~~~
+
+* You can now customize the ajax dispatch page size by setting `extra__endpoint_page_size` on a field
+
+
 7.3.0 (2019-12-06)
 ~~~~~~~~~~~~~~~~~~
 
