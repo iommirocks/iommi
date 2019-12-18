@@ -1788,11 +1788,6 @@ class Form(RefinableObject):
         :type style: str| unicode
         :type template_name: str | unicode | None
         """
-        assert (
-            (self.endpoint_dispatch_prefix and self.name is None)  # it's ok to set name to None and also set endpoint_dispatch_prefix to something
-            or (self.name is None and self.endpoint_dispatch_prefix is None)
-            or (self.name and self.endpoint_dispatch_prefix and self.endpoint_dispatch_prefix.endswith(self.name))
-        ), f'Out of sync name and endpoint_dispatch_prefix. name={self.name}, endpoint_dispatch_prefix={self.endpoint_dispatch_prefix}'
 
         self.style = style
         r = []

@@ -6,6 +6,7 @@ Changelog
 
 * You can now customize the ajax dispatch page size by setting `extra__endpoint_page_size` on a field
 
+* Removed validation on `endpoint_dispatch_prefix` because in some cases we do want them to be out of sync (tri.table does this for example)
 
 7.3.0 (2019-12-06)
 ~~~~~~~~~~~~~~~~~~
