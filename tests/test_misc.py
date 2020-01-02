@@ -1,5 +1,4 @@
 import copy
-import warnings
 
 import pytest
 from tri_declarative import (
@@ -27,14 +26,6 @@ from tri_declarative import (
     with_meta,
 )
 from tri_struct import Struct
-
-
-@pytest.fixture
-def suppress_deprecation_warnings():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        yield
-        warnings.resetwarnings()
 
 
 def test_getattr_path_and_setattr_path():
@@ -94,11 +85,10 @@ def test_setdefaults_path():
     assert actual == expected
 
 
-@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_setdefaults_namespace_merge():
     actual = setdefaults_path(dict(
         x=1,
-        y=Struct(z="foo")
+        y=Struct(z=Struct(foo=True))
     ), dict(
         y__a__b=17,
         y__z__c=True
@@ -135,42 +125,6 @@ def test_setdefaults_callable_backward_not_namespace():
     )
     expected = Namespace(foo__x=17)
     assert actual == expected
-
-
-@pytest.mark.usefixtures('suppress_deprecation_warnings')
-def test_setdefault_string_value():
-    actual = setdefaults_path(
-        Struct(foo='barf'),
-        foo__baz=False
-    )
-    expected = dict(foo=dict(barf=True, baz=False))
-    assert actual == expected
-
-
-def test_deprecated_string_value_promotion():
-    with warnings.catch_warnings(record=True) as w:
-        warnings.filterwarnings("default", category=DeprecationWarning)
-        assert Namespace(
-            dict(foo='bar'),
-            dict(foo__baz=False),
-        ) == Namespace(
-            foo__bar=True,
-            foo__baz=False,
-        )
-        assert 'Deprecated promotion of previous string value "bar" to dict(bar=True)' in str(w.pop())
-        warnings.resetwarnings()
-
-    with warnings.catch_warnings(record=True) as w:
-        warnings.filterwarnings("default", category=DeprecationWarning)
-        assert Namespace(
-            dict(foo__baz=False),
-            dict(foo='bar'),
-        ) == Namespace(
-            foo__bar=True,
-            foo__baz=False,
-        )
-        assert 'Deprecated promotion of written string value "bar" to dict(bar=True)' in str(w.pop())
-        warnings.resetwarnings()
 
 
 def test_namespace_repr():
@@ -296,13 +250,6 @@ def test_namespace_setitem_namespace_merge():
     assert x == dict(x=dict(y=17, z=42))
 
 
-@pytest.mark.usefixtures('suppress_deprecation_warnings')
-def test_namespace_setitem_promote_string_to_namespace():
-    x = Namespace(x='y')
-    x.setitem_path('x__z', 17)
-    assert x == dict(x=dict(y=True, z=17))
-
-
 def f():
     pass
 
@@ -356,18 +303,13 @@ def test_dispatch():
     (Namespace(), Namespace(), Namespace()),
     (Namespace(a=1), Namespace(b=2), Namespace(a=1, b=2)),
     (Namespace(a__b=1), Namespace(a__c=2), Namespace(a__b=1, a__c=2)),
-    (Namespace(x='foo'), Namespace(x__bar=True), Namespace(x__foo=True, x__bar=True)),
-    (Namespace(x=u'foo'), Namespace(x__bar=True), Namespace(x__foo=True, x__bar=True)),
     (Namespace(x=f), Namespace(x__y=1), Namespace(x__call_target=f, x__y=1)),
     (Namespace(x=dict(y=1)), Namespace(x__z=2), Namespace(x__y=1, x__z=2)),
     (Namespace(x=Namespace(y__z=1)), Namespace(a=Namespace(b__c=2)), Namespace(x__y__z=1, a__b__c=2)),
-    (Namespace(y__z="foo"), Namespace(y__z__c=True), Namespace(y__z__foo=True, y__z__c=True)),
-    (Namespace(y__z=u"foo"), Namespace(y__z__c=True), Namespace(y__z__foo=True, y__z__c=True)),
     (Namespace(bar__a=1), Namespace(bar__quux__title=2), Namespace(bar__a=1, bar__quux__title=2)),
     (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
     (Namespace(bar__='foo'), Namespace(bar__fisk="hi"), Namespace(bar__='foo', bar__fisk='hi')),
 ], ids=str)
-@pytest.mark.usefixtures('suppress_deprecation_warnings')
 def test_merge(a, b, expected, backward):
     if backward:
         a, b = b, a
@@ -948,26 +890,6 @@ def test_nested_namespace_overriding_and_calling():
         extra__foo='asd',
     )
     assert foo(extra__foo='qwe') == 'qwe'
-
-
-def test_deprecation_of_string_promotion():
-    foo = Namespace(foo='foo')
-    with pytest.deprecated_call() as d:
-        foo = Namespace(foo, foo__bar=True)
-
-    assert str(d.list[0].message) == 'Deprecated promotion of previous string value "foo" to dict(foo=True)'
-
-    assert foo == Namespace(foo__foo=True, foo__bar=True)
-
-
-def test_deprecation_of_string_promotion2():
-    foo = Namespace(foo__bar=True)
-    with pytest.deprecated_call() as d:
-        foo = Namespace(foo, foo='foo')
-
-    assert str(d.list[0].message) == 'Deprecated promotion of written string value "foo" to dict(foo=True)'
-
-    assert foo == Namespace(foo__foo=True, foo__bar=True)
 
 
 def test_retain_shortcut_type():
