@@ -14,7 +14,6 @@ from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
 from django.test import RequestFactory
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 from tri_declarative import (
     getattr_path,
@@ -1253,7 +1252,6 @@ def test_default_formatters():
     class TestTable(NoSortTable):
         foo = Column()
 
-    @python_2_unicode_compatible
     class SomeType(object):
         def __str__(self):
             return 'this should not end up in the table'

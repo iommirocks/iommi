@@ -31,7 +31,6 @@ from django.http import (
 )
 from django.utils.encoding import (
     force_text,
-    python_2_unicode_compatible,
 )
 from django.utils.html import (
     conditional_escape,
@@ -768,7 +767,6 @@ class BoundRow(object):
         return BoundCell(bound_row=self, bound_column=bound_column)
 
 
-@python_2_unicode_compatible
 class BoundCell(object):
 
     def __init__(self, bound_row, bound_column):
