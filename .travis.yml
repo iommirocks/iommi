@@ -16,14 +16,14 @@ script: python -m pytest
 jobs:
   include:
     - stage: lint
-      python: "3.6"
+      python: "3.7"
       before_install:
         - pip install flake8
       script:
         - flake8 lib/ tests setup.py
 
     - stage: test
-      python: "3.6"
+      python: "3.7"
       before_install: pip install tox
       script: tox -e $(tox -l | grep py36 | xargs | tr ' ' ',')
       dist: xenial
@@ -34,7 +34,7 @@ jobs:
       dist: xenial
 
     - stage: coverage
-      python: "3.6"
+      python: "3.7"
       before_install: python -m pip install codecov pytest-cov
       script: python -m pytest --cov
       after_success: codecov
