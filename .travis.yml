@@ -26,7 +26,7 @@ jobs:
 
       python: "3.7"
       before_install: pip install tox
-      script: tox -e $(tox -l | grep py36 | xargs | tr ' ' ',')
+      script: tox -e $(tox -l | grep py37 | xargs | tr ' ' ',')
       dist: xenial
 
     - stage: coverage
