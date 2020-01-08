@@ -389,7 +389,7 @@ def test_endpoint_dispatch():
     assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == {
         'more': False,
         'page': 1,
-        'results': [Struct(id=2, text='Baz object (2)')],
+        'results': [{'id': x.pk, 'text': str(x)}],
     }
 
 
