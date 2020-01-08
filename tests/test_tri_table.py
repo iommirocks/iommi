@@ -1479,6 +1479,11 @@ def test_from_model_foreign_key():
     assert [x.name for x in t.columns if x.show] == ['foo', 'c']
 
 
+class AjaxRequestFactory(RequestFactory):
+    def __init__(self, *args, **kwargs):
+        super(AjaxRequestFactory, self).__init__(*args, HTTP_X_REQUESTED_WITH='XMLHttpRequest', **kwargs)
+
+
 @pytest.mark.django_db
 def test_ajax_endpoint():
     f1 = Foo.objects.create(a=17, b="Hej")
@@ -1496,8 +1501,15 @@ def test_ajax_endpoint():
             bulk__show=True,
             query__gui__show=True)
 
-    result = render_table(request=RequestFactory().get("/", {'/query/gui/field/foo': 'hopp'}), table=TestTable(data=Bar.objects.all()))
-    assert json.loads(result.content.decode('utf8')) == [{'id': 2, 'text': 'Hopp'}]
+    result = render_table(
+        request=AjaxRequestFactory().get("/", {'/query/gui/field/foo': 'hopp'}),
+        table=TestTable(data=Bar.objects.all()),
+    )
+    assert json.loads(result.content.decode('utf8')) == {
+        'more': False,
+        'page': 1,
+        'results': [{'id': 2, 'text': 'Foo(42, Hopp)'}]
+    }
 
 
 @pytest.mark.django_db
@@ -1508,7 +1520,7 @@ def test_ajax_endpoint_empty_response():
 
         bar = Column()
 
-    result = render_table(request=RequestFactory().get("/", {'/foo': ''}), table=TestTable(data=[]))
+    result = render_table(request=AjaxRequestFactory().get("/", {'/foo': ''}), table=TestTable(data=[]))
     assert [] == json.loads(result.content.decode('utf8'))
 
 
@@ -1526,7 +1538,7 @@ def test_ajax_data_endpoint():
         Struct(foo=3, bar=4),
     ])
 
-    result = render_table(request=RequestFactory().get("/", {'/data': ''}), table=table)
+    result = render_table(request=AjaxRequestFactory().get("/", {'/data': ''}), table=table)
     assert json.loads(result.content.decode('utf8')) == [dict(foo=1, bar=2), dict(foo=3, bar=4)]
 
 
@@ -1538,9 +1550,9 @@ def test_ajax_endpoint_namespacing():
 
         baz = Column()
 
-    result = render_table(request=RequestFactory().get("/", {'/not_foo/bar': ''}), table=TestTable(data=[]))
+    result = render_table(request=AjaxRequestFactory().get("/", {'/not_foo/bar': ''}), table=TestTable(data=[]))
     assert result is None
-    result = render_table(request=RequestFactory().get("/", {'/foo/bar': ''}), table=TestTable(data=[]))
+    result = render_table(request=AjaxRequestFactory().get("/", {'/foo/bar': ''}), table=TestTable(data=[]))
     assert 17 == json.loads(result.content.decode('utf8'))
 
 
@@ -1571,7 +1583,7 @@ def test_ajax_custom_endpoint():
             endpoint__foo = lambda table, key, value: dict(baz=value)
         spam = Column()
 
-    result = render_table(request=RequestFactory().get("/", {'/foo': 'bar'}), table=TestTable(data=[]))
+    result = render_table(request=AjaxRequestFactory().get("/", {'/foo': 'bar'}), table=TestTable(data=[]))
     assert json.loads(result.content.decode('utf8')) == dict(baz='bar')
 
 
