@@ -386,7 +386,11 @@ def test_endpoint_dispatch():
     query = MyQuery(RequestFactory().get('/'))
 
     assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path
-    assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == [{'id': x.pk, 'text': x.name}]
+    assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == {
+        'more': False,
+        'page': 1,
+        'results': [Struct(id=2, text='Baz object (2)')],
+    }
 
 
 def test_endpoint_dispatch_errors():
