@@ -12,10 +12,10 @@ Iommi is a django-based framework for even higher abstraction and faster develop
 Major features:
 
 - a system to project django model definitions into more high level definitions
-- :doc:`forms <docs/forms>`: view models, data validation, and parsing
-- :doc:`queries <docs/queries>`: filtering lists/query sets
-- :doc:`tables <docs/tables>`: view models for lists/query sets, html tables, and CSV reports
-- :doc:`pages <docs/pages>`: compose pages from parts like forms, tables and html fragments
+- :doc:`forms <forms>`: view models, data validation, and parsing
+- :doc:`queries <queries>`: filtering lists/query sets
+- :doc:`tables <tables>`: view models for lists/query sets, html tables, and CSV reports
+- :doc:`pages <pages>`: compose pages from parts like forms, tables and html fragments
 
 All the components are written with the same philosophy of:
 

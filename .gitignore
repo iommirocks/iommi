@@ -45,15 +45,15 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+docs/tri_*.rst
 docs/Table.rst
 docs/Column.rst
 docs/Query.rst
 docs/Variable.rst
 docs/Form.rst
 docs/Field.rst
+docs/Action.rst
 docs/Link.rst
-docs/Field.rst
-docs/Form.rst
 
 # tests
 results/

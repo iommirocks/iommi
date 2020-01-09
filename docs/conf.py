@@ -34,7 +34,7 @@ import tri_form
 
 from tri_declarative import generate_rst_docs
 
-generate_rst_docs('.', [tri_table.Table, tri_table.Column, tri_query.Query, tri_query.Variable, tri_form.Form, tri_form.Field, tri_form.Link], (tri_form.MISSING, tri_query.MISSING))
+generate_rst_docs('.', [tri_table.Table, tri_table.Column, tri_query.Query, tri_query.Variable, tri_form.Form, tri_form.Field, tri_form.Action], (tri_form.MISSING, tri_query.MISSING))
 
 # -- General configuration -----------------------------------------------------
 
@@ -62,8 +62,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'tri_table'
-copyright = u'2015, Anders Hovmöller'
+project = u'iommi'
+copyright = u'2020, Anders Hovmöller'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

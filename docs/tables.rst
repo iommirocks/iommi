@@ -1,15 +1,7 @@
-tri.table
-==========
+Tables
+======
 
-.. image:: https://travis-ci.org/TriOptima/tri.table.svg?branch=master
-    :target: https://travis-ci.org/TriOptima/tri.table
-
-
-.. image:: https://codecov.io/github/TriOptima/tri.table/coverage.svg?branch=master
-    :target: https://codecov.io/github/TriOptima/tri.table?branch=master
-
-
-tri.table is a library to make full featured HTML tables easily:
+Iommi tables makes it easy to create full featured HTML tables easily:
 
 * generates header, rows and cells
 * grouping of headers
@@ -25,47 +17,103 @@ All these examples and a bigger example using many more features can be found in
 
 Read the full documentation for more.
 
+.. contents::
+
 Simple example
 --------------
 
-.. literalinclude:: ../examples/examples/views.py
-   :pyobject: readme_example_1
+.. code:: python
+
+    def readme_example_1(request):
+        # Say I have a class...
+        class Foo(object):
+            def __init__(self, i):
+                self.a = i
+                self.b = 'foo %s' % (i % 3)
+                self.c = (i, 1, 2, 3, 4)
+
+        # and a list of them
+        foos = [Foo(i) for i in xrange(4)]
+
+        # I can declare a table:
+        class FooTable(Table):
+            # This is a shortcut that results in the css
+            # class "rj" (for right justified) being added
+            # to the header and cell
+            a = Column.number()
+
+            b = Column()
+
+            # Display the last value of the tuple
+            c = Column(
+                cell__format=lambda value, **_: value[-1],
+            )
+
+            # Calculate a value not present in Foo
+            sum_c = Column(
+                cell__value=lambda row, **_: sum(row.c),
+                sortable=False,
+            )
+
+        # now to get an HTML table:
+        return render_table_to_response(
+            request,
+            table=FooTable(data=foos),
+            template='base.html',
+        )
 
 And this is what you get:
 
 .. image:: table_example_1.png
-
-
-Downloading tri.table and running examples
-------------------------------------------
-
-.. code-block:: bash
-
-    git clone https://github.com/TriOptima/tri.table.git
-    cd tri.table/examples
-    virtualenv venv
-    source venv/bin/activate
-    pip install "django>=1.8,<1.9"
-    pip install tri.table
-    python manage.py migrate
-    python manage.py runserver localhost:8000
-    # Now point your browser to localhost:8000 in order to view the examples.
-
 
 Fancy django features
 ---------------------
 
 Say I have some models:
 
-.. literalinclude:: ../examples/examples/models.py
-   :pyobject: Foo
-.. literalinclude:: ../examples/examples/models.py
-   :pyobject: Bar
+.. code:: python
+
+    class Foo(models.Model):
+        a = models.IntegerField()
+
+        def __unicode__(self):
+            return 'Foo: %s' % self.a
+.. code:: python
+
+    class Bar(models.Model):
+        b = models.ForeignKey(Foo)
+        c = models.CharField(max_length=255)
 
 Now I can display a list of Bars in a table like this:
 
-.. literalinclude:: ../examples/examples/views.py
-   :pyobject: readme_example_2
+.. code:: python
+
+    def readme_example_2(request):
+        fill_dummy_data()
+
+        class BarTable(Table):
+            # Shortcut for creating checkboxes to select rows
+            select = Column.select()
+
+            # Show "a" from "b". This works for plain old objects too.
+            b__a = Column.number(
+                # put this field into the query language
+                query__show=True,
+
+                # put this field into the simple filtering GUI
+                query__gui__show=True)
+            c = Column(
+                # Enable bulk editing for this field
+                bulk=True,
+                query_show=True,
+                query__gui__show=True)
+
+        return render_table_to_response(
+            request,
+            table=BarTable(data=Bar.objects.all()),
+            template='base.html',
+            paginate_by=20,
+        )
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 
@@ -74,21 +122,17 @@ All these examples and a bigger example using many more features can be found in
 Read the full documentation for more.
 
 
+Motivation
+----------
 
+Iommi tables grew out of a frustration with how tables were created at TriOptima. We have a *lot* of tables and the code to produce them included long HTML templates and often the code to extract and massage the data in some trivial way ended up as methods on the model classes or template tags, even though it was only used by one view.
 
-Running tests
--------------
+This code was also error prone to change since we often have columns that we show or hide based on the permissions of the user, which meant the `thead` and `tbody` had to be in sync. When you have a lot of columns and more and more complex logic for when to show/hide columns this can become harder than it sounds!
 
-You need tox installed then just `make test`.
+We also saw that almost always the names of the columns (aka the headers) could be derived from the name of the field they should display data for, so we opted for defaults to make this case easier.
 
+It was very important for us to have customization available at many levels. Many table libraries have really nice and short code for the default case but when you have to customize some tiny thing you have to rewrite huge swaths of the library's code. We didn't want to do that since we made this library in order to refactor out exactly this thing from our existing code base. We ended up with the powerful pattern of being able to supply callables for the points of customization, leading to small tweaks moving into the table definition instead of being scattered in model or template tag code. We also have many levels or customization so that the path from "just display columns x, y and z somehow" to heavy customization is smooth and gradual.
 
-License
--------
+We chose to mimic how django forms and models are declared because we really like that kind of declarative style, but you can also use it in a more functional style if you want. The latter is useful when you want to create a list of the columns to display programmatically for example.
 
-BSD
-
-
-Documentation
--------------
-
-http://tritable.readthedocs.org.
+This library has been a big win for us. The time to create a page with a table on it has been drastically reduced without sacrificing any flexibility when we later want to tweak the view.

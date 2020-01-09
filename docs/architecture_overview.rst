@@ -1,17 +1,11 @@
 Architecture overview
 =====================
 
-tri.table is built on top of tri.form (a form library) and tri.query (a
-query/search/filter library). Both tri.form and tri.query are written in
-the same API style as tri.table, which enables great integration and
-cohesion. All three libraries are built on top of tri.declarative. This
-has some nice consequences that I'll try to explain here.
-
 Declarative/programmatic hybrid API
 -----------------------------------
 
 The ``@declarative``, ``@with_meta`` and ``@creation_ordered``
-decorators from tri_declarative enables us to very easily write an API
+decorators from tri.declarative enables us to very easily write an API
 that can look both like a normal simple python API:
 
 .. code:: python
@@ -31,10 +25,10 @@ that we can do the exact same thing with a declarative style:
     class MyTable(Table):
         foo = Column()
         bar = Column()
-        
+
         class Meta:
             sortable = False
-            
+
     my_table = MyTable()
 
 This style can be much more readable. There's a subtle different though
@@ -59,7 +53,7 @@ Namespace dispatching
 
 I've already hinted at this above in the example where we do
 ``column__foo__show=False``. This is an example of the powerful
-namespace dispatch mechanism from tri_declarative. It's inspired by the
+namespace dispatch mechanism from tri.declarative. It's inspired by the
 query syntax of Django where you use ``__`` to jump namespace. (If
 you're not familiar with Django, here's the gist of it: you can do
 ``Table.objects.filter(foreign_key__column='foo')``
@@ -116,8 +110,8 @@ still keeping the code simple. Here's a contrived example:
     # z: 5
     # y: 2
 
-This is really useful in tri.table as it means we can expose the full
-feature set of the underling tri.query and tri.form libraries by just
+This is really useful for the Table class as it means we can expose the full
+feature set of the underling Query and Form classes by just
 dispatching keyword arguments downstream. It also enables us to bundle
 commonly used features in what we call "shortcuts", which are pre
 packaged sets of defaults.

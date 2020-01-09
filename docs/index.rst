@@ -1,5 +1,5 @@
-tri.table
-=========
+iommi
+=====
 
 .. include:: README.rst
     :start-line: 3
@@ -13,6 +13,11 @@ Contents:
    installation
    usage
    architecture_overview
+   pages
+   tables
+   queries
+   forms
+   tables_faq
    api
    history
    authors
