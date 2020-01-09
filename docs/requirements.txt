@@ -1,0 +1,4 @@
+sphinx
+alabaster
+-r../requirements.txt
+django
