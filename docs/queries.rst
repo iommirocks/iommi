@@ -1,7 +1,7 @@
 Queries
 =======
 
-Iommi queries makes it easy to implement searching and filtering in your Django app.
+iommi queries makes it easy to implement searching and filtering in your Django app.
 
 Major features:
 

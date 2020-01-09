@@ -7,7 +7,7 @@ iommi
     :target: http://codecov.io/github/TriOptima/iommi.svg?branch=master
 
 
-Iommi is a django-based framework for even higher abstraction and faster development than django itself.
+iommi is a django-based framework for even higher abstraction and faster development than django itself.
 
 Major features:
 

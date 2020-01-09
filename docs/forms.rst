@@ -1,7 +1,7 @@
 Forms
 =====
 
-Iommi forms is alternative forms system for Django. It is inspired by, and comes from a frustration with, the standard Django forms.
+iommi forms is alternative forms system for Django. It is inspired by, and comes from a frustration with, the standard Django forms.
 
 Major features compared to Django forms:
 

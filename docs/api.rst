@@ -10,4 +10,4 @@ API documentation
    Field
    Query
    Variable
-   Link
+   Action

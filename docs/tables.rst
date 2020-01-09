@@ -1,7 +1,7 @@
 Tables
 ======
 
-Iommi tables makes it easy to create full featured HTML tables easily:
+iommi tables makes it easy to create full featured HTML tables easily:
 
 * generates header, rows and cells
 * grouping of headers
@@ -125,7 +125,7 @@ Read the full documentation for more.
 Motivation
 ----------
 
-Iommi tables grew out of a frustration with how tables were created at TriOptima. We have a *lot* of tables and the code to produce them included long HTML templates and often the code to extract and massage the data in some trivial way ended up as methods on the model classes or template tags, even though it was only used by one view.
+iommi tables grew out of a frustration with how tables were created at TriOptima. We have a *lot* of tables and the code to produce them included long HTML templates and often the code to extract and massage the data in some trivial way ended up as methods on the model classes or template tags, even though it was only used by one view.
 
 This code was also error prone to change since we often have columns that we show or hide based on the permissions of the user, which meant the `thead` and `tbody` had to be in sync. When you have a lot of columns and more and more complex logic for when to show/hide columns this can become harder than it sounds!
 
