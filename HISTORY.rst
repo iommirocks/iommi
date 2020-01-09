@@ -1,10 +1,12 @@
 Changelog
 ---------
 
-6.1.1 (????-??-??)
+6.2.0 (2020-01-09)
 ~~~~~~~~~~~~~~~~~~
 
 * `Variable` was missing the `@with_meta` decorator
+
+* Change python version to 3.7
 
 
 6.1.0 (2019-10-14)

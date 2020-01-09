@@ -60,7 +60,7 @@ from tri_form import (
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
-__version__ = '6.1.0'
+__version__ = '6.2.0'
 
 
 class QueryException(Exception):
