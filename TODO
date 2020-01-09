@@ -1,0 +1,12 @@
+- Column(attr='...') should work even with filter, sort and bulk
+- When leaving out "filter=False" on a field that can't be filtered by django the error message is not helpful
+- How do we handle a bulk edit that should append rather than replace text?
+- we should document our standard practice of defining your own Column with added shortcuts, this is a handy thing to do
+- scss/css in egg
+- i18n for the text (basically should just be the titles of the filter and bulk edit buttons)
+- Column.number doesn't set rj on header
+- Column.icon should have an option to not set fa-lg, it's currently hard coded
+- Column.select should have an extra css class: "select_all"
+- We need to ship some javascript for select_all to work!
+- Make is possible to have two Column.select. Maybe set the name of the column as a css class? Then do something smart in the select_all js to make sure we only check all the checkboxes for the chosen column.
+- The select all command for the header should ask if we want to select all objects on other pages too. Set some hidden input field on the bulk form? Need to handle that server side too

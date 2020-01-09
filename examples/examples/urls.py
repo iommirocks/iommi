@@ -10,4 +10,8 @@ urlpatterns = [
     url(r'^example_5/$', views.example_5, name='example_5'),
     url(r'^kitchen/$', views.kitchen),
     url(r'^style.css$', views.style, name='style'),
+
+    url(r'^readme_example_1/$', views.readme_example_1, name='readme_example_1'),
+    url(r'^readme_example_2/$', views.readme_example_2, name='readme_example_2'),
+    url(r'^kitchen_sink/$', views.kitchen_sink, name='kitchen_sink'),
 ]

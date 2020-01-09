@@ -1,0 +1,20 @@
+{% if not table.data and invalid_form_message %}
+    {{ invalid_form_message }}
+{% elif not table.data and empty_message %}
+    {{ empty_message }}
+{% else %}
+
+        <table{{ table.rendered_attrs }}>
+
+            {{ table.rendered_header }}
+
+            <tbody>
+               {{ table.rendered_tbody }}
+            </tbody>
+        </table>
+
+        {% if is_paginated %}
+          <div class="paginator">{{ table.rendered_paginator }}</div>
+        {% endif %}
+
+{% endif %}

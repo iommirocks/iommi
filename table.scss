@@ -1,0 +1,227 @@
+$table_border_color: #e9e9e9;
+$header_font_size: 10px;
+$alternate_text_color: #535353;
+$inactive_color: #d7d7d7;
+$row_hover_color: #d8ecee;
+$button_disabled_color: #d7d7d7;
+
+// This is just to make the example look nice
+body {
+    background-color: rgb(247, 247, 247);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+// Here starts the useful styling
+.cj {
+    text-align: center;
+}
+
+.rj {
+    text-align: right;
+}
+
+// Needs to be above listview styling, as the .row1 styling overrides the hover styling otherwise
+tr.row2,
+.trade_browser tr.row1,
+.listview tr.paginaterow,
+.formview tr.row1 {
+    background-color: #f1f1f1;
+}
+
+.listview {
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 10px;
+
+    position: relative;
+    thead {
+        border: 1px solid $table_border_color;
+        border-bottom: 2px solid $table_border_color;
+
+        .superheader {
+            border-bottom: none;
+            font-size: $header_font_size;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: normal;
+            color: #9e9e9e;
+            padding: 5px 2px;
+        }
+        .subheader {
+            border: 0;
+        }
+        .first_column {
+            border-left: 1px solid $table_border_color;
+        }
+    }
+
+    td {
+        font-size: 10px;
+        border: 1px solid $table_border_color;
+        padding: 4px 3px;
+        vertical-align: middle;
+        white-space: nowrap;
+
+        &.pre {
+            white-space: pre-wrap;
+        }
+
+        span, a, div { font-size: 10px; } // IE7 does not support font-size: inherit (IE8+ does)
+
+        a.fa-lg { //use font-awesome size for icons
+            font-size: 1.33333333em;
+        }
+      
+        label { line-height: 18px; }
+    }
+
+    td.wrap {
+        white-space: normal;
+    }
+
+    th {
+        background-color: white;
+        font-weight: bold;
+        font-size: $header_font_size;
+        color: $alternate_text_color;
+        padding: 4px 3px;
+        padding-bottom: 3px;
+        border: 1px solid $table_border_color;
+
+        &.sorted_column {
+            background-color: $inactive_color;
+        }
+
+        a {
+            display: inline-block;
+            width: 100%;
+            white-space: nowrap;
+            color: $alternate_text_color;
+        }
+        &.thin {
+            width: 10px;
+        }
+    }
+    tr {
+        &.spacer td {
+            border: none;
+        }
+        &.row1.highlight_row { background-color: #dfe0ce; }
+        &.row0.highlight_row { background-color: #feffef; }
+        &.marked { background-color: #feffef; }
+
+        &:hover,
+        &.row1:hover,
+        &.row0:hover {
+            background-color: $row_hover_color;
+        }
+        &.spacer:hover { background-color: transparent }
+    }
+    input {
+        margin: 0;
+        padding: 0 2px;
+    }
+  
+    .numeric, .percent {
+        text-align: right;
+    }
+
+    .string, .date, .time {
+        text-align: left;
+    }
+  
+    .paginaterow td {
+        text-align: right;
+        padding-right: 4px;
+    }
+}
+
+tr.row0,
+tr.row1,
+.listview td.col0,
+.listview td.coln,
+.formview tr.row2,
+.formview tr.row0 {
+    background-color: #fdfdfd;
+}
+
+
+// Paginator
+.paginator {
+    font-size: 12px;
+    background-color: white;
+    display: inline-block;
+    vertical-align: middle;
+    margin-top: 14px;
+    margin-bottom: 14px;
+
+    .paginate-link,
+    .paginate-current,
+    .paginate-next,
+    .paginate-previous,
+    .paginate-first,
+    .paginate-last {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        display: inline-block;
+        height: 33px;
+        width: 33px;
+        line-height: 33px;
+        border-left: 1px solid rgb(247, 247, 247);
+        cursor: pointer;
+
+        &:hover {
+            background-color: $inactive_color;
+        }
+    }
+
+    .paginate-current {
+        cursor: default;
+
+    }
+
+    .paginator span {
+        &:hover {
+            text-decoration: none;
+        }
+    }
+
+    .paginate-current {
+        color: black;
+        background-color: $button_disabled_color;
+    }
+
+    .paginate-hits,
+    .paginate-pages {
+        color: #888;
+        font-weight: normal;
+        padding: 11px;
+    }
+
+    .paginate-pages {
+        &:hover {
+            cursor: pointer;
+            background-color: $inactive_color;
+        }
+    }
+}
+
+// Filter form
+.compact {
+    input[type="text"]{
+        width: 132px;
+    }
+    .key-value {
+        margin-right: 10px;
+        display: inline-block;
+        padding: 0;
+        vertical-align: top;
+    }
+    .submit {
+        display: inline-block;
+        vertical-align: bottom;
+    }
+
+    clear: both;
+}

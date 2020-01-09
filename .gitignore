@@ -1,7 +1,6 @@
 *.py[cod]
 examples/db.sqlite3
 venv
-venv3
 table.css.map
 .idea
 .cache
@@ -46,6 +45,13 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+docs/Table.rst
+docs/Column.rst
+docs/Query.rst
+docs/Variable.rst
+docs/Form.rst
+docs/Field.rst
+docs/Link.rst
 docs/tri*.rst
 docs/Field.rst
 docs/Form.rst

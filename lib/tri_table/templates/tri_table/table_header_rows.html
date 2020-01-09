@@ -1,0 +1,9 @@
+<thead>
+    {% for headers in table.header_levels %}
+        <tr>
+            {% for header in headers %}
+                {{ header.rendered }}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</thead>
