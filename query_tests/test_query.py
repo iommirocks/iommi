@@ -11,7 +11,7 @@ from tri_form import (
     Field,
 )
 
-from tests.models import (
+from query_tests.models import (
     Foo,
     Bar,
     Baz,

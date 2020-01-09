@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import pytest
 
 from tests.helpers import verify_table_html
-from tests.models import Foo
+from table_tests.models import Foo
 from tri_table import Column, Table, Struct, order_by_on_list
 
 

@@ -27,7 +27,9 @@ INSTALLED_APPS = [
     'tri_form',
     'tri_query',
     'tri_table',
-    'tests'
+    'form_tests',
+    'query_tests',
+    'table_tests',
 ]
 
 DATABASES = {

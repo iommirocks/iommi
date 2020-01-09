@@ -31,7 +31,7 @@ from tri_query import (
 )
 
 from tests.helpers import verify_table_html
-from tests.models import (
+from table_tests.models import (
     Bar,
     Baz,
     Foo,

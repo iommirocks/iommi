@@ -25,7 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'tri_form',
-    'tests'
+    'form_tests',
+    'query_tests',
+    'table_tests',
 ]
 
 DATABASES = {
