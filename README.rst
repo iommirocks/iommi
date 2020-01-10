@@ -1,4 +1,5 @@
 iommi
+=====
 
 .. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
     :target: https://travis-ci.org/TriOptima/iommi.svg
@@ -47,7 +48,6 @@ Usage
 ------
 
 See :doc:`usage`.
-
 
 
 Running tests
