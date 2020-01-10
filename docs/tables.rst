@@ -15,7 +15,7 @@ iommi tables makes it easy to create full featured HTML tables easily:
 
 All these examples and a bigger example using many more features can be found in the examples django project.
 
-Read the full documentation for more.
+Read the full documentation and the :doc:`tables_faq` for more.
 
 .. contents::
 
@@ -56,11 +56,7 @@ Simple example
             )
 
         # now to get an HTML table:
-        return render_table_to_response(
-            request,
-            table=FooTable(data=foos),
-            template='base.html',
-        )
+        return FooTable(data=foos)
 
 And this is what you get:
 
@@ -78,7 +74,6 @@ Say I have some models:
 
         def __unicode__(self):
             return 'Foo: %s' % self.a
-.. code:: python
 
     class Bar(models.Model):
         b = models.ForeignKey(Foo)
@@ -108,12 +103,7 @@ Now I can display a list of Bars in a table like this:
                 query_show=True,
                 query__gui__show=True)
 
-        return render_table_to_response(
-            request,
-            table=BarTable(data=Bar.objects.all()),
-            template='base.html',
-            paginate_by=20,
-        )
+        return BarTable(data=Bar.objects.all())
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 

@@ -74,8 +74,8 @@ is equivalent to:
 
     def edit_user_view(request, username):
         form = Form.from_model(
-            request.POST,
-            User,
+            data=request.POST,
+            model=User,
             # the field 'name' is generated automatically and we are fine with the defaults
             username__is_valid=lambda form, field, parsed_data: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
@@ -83,20 +83,18 @@ is equivalent to:
 
         # rest of view function...
 
-or even better: use :code:`iommi.views.create_or_edit_object`:
+or even better: use :code:`Form.as_edit_page`:
 
 .. code:: python
 
     def edit_user_view(request, username):
-        return create_or_edit_object(
-            request,
+        return Form.as_edit_page(
             model=User,
-            is_create=False,
             instance=User.objects.get(username=username),
 
-            form__username__is_valid=lambda form, field, parsed_data: parsed_data.startswith('demo_'),
-            form__is_admin__label_template='tweak_label_tag.html',
-            form__is_admin__show=lambda form, field: form.request.user.is_staff) # show only for staff
+            username__is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'),
+            is_admin__label_template='tweak_label_tag.html',
+            is_admin__show=lambda form, **_: form.request.user.is_staff) # show only for staff
         # no html template! iommi has a nice default for you :P
 
 iommi pre-packages sets of defaults for common field types as 'shortcuts'. Some examples include :code:`Field.boolean`,

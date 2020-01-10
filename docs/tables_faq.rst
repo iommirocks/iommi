@@ -5,10 +5,10 @@ Tables FAQ
 How do I customize the rendering of a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Table rendering can be customized on multiple levels. You pass a template with the `template` argument, which
-is either a template name or a `Template` object.
+Table rendering can be customized on multiple levels. You pass a template with the :code:`template` argument, which
+is either a template name or a :code:`Template` object.
 
-Customize the HTML attributes of the table tag via the `attrs` argument. See attrs_.
+Customize the HTML attributes of the table tag via the :code:`attrs` argument. See attrs_.
 
 To customize the row, see `How do I customize the rendering of a row?`_
 
@@ -18,7 +18,7 @@ To customize the cell, see `How do I customize the rendering of a cell?`_
 How do you turn off pagination?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Specify `paginate_by=None`:
+Specify :code:`paginate_by=None`:
 
 .. code:: python
 
@@ -78,7 +78,7 @@ This only affects the formatting when we render the cell value. Which might make
 How do I get tri.table to understand my Django ModelField subclasses?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You use the `tri_table.db_compat.register_column_factory` function to register your own factory. We can look at the pre-registered factories to understand how to make your own:
+You use the :code:`iommi.db_compat.register_column_factory` function to register your own factory. We can look at the pre-registered factories to understand how to make your own:
 
 .. code:: python
 
@@ -87,12 +87,12 @@ You use the `tri_table.db_compat.register_column_factory` function to register y
         Shortcut(call_target__attribute='time')
     )
 
-This registers the a factory that, when it sees a django `TimeField` will call the `Column.time` shortcut to create a column.
+This registers the a factory that, when it sees a django :code:`TimeField` will call the :code:`Column.time` shortcut to create a column.
 
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
+By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the :code:`after` argument. Let's start with a simple model:
 
 .. code:: python
 
@@ -101,7 +101,7 @@ By default the columns come in the order defined so if you have an explicit tabl
         b = models.IntegerField()
         c = models.IntegerField()
 
-If we just do `Table.from_model(model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value -1:
+If we just do :code:`Table.from_model(model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the :code:`after` value -1:
 
 .. code:: python
 
@@ -118,7 +118,7 @@ this will put the columns in the order a, c, b.
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass the value `query__show=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass `query__gui__show=True`:
+Pass the value :code:`query__show=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass :code:`query__gui__show=True`:
 
 .. code:: python
 
@@ -133,7 +133,7 @@ Pass the value `query__show=True` to the column, to enable searching in the adva
 How do I customize HTML attributes, CSS classes or CSS style specifications?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `attrs` namespace has special handling to make it easy to customize. There are three main cases:
+The :code:`attrs` namespace has special handling to make it easy to customize. There are three main cases:
 
 First the straight forward case where a key/value pair is rendered in the output:
 
@@ -151,14 +151,14 @@ Then there's a special handling for CSS classes:
 
 Note that the class names are sorted alphabetically on render.
 
-Lastly there is the special handling of `style`:
+Lastly there is the special handling of :code:`style`:
 
 .. code:: python
 
     >>> render_attrs(Namespace(style__font='Arial'))
     ' style="font: Arial"'
 
-If you need to add a style with `-` in the name you have to do this:
+If you need to add a style with :code:`-` in the name you have to do this:
 
 
 .. code:: python
@@ -187,32 +187,32 @@ How do I customize the rendering of a cell?
 
 You can customize the row rendering in two ways:
 
-- You can modify the html attributes via `cell__attrs`. See the question on attrs_
+- You can modify the html attributes via :code:`cell__attrs`. See the question on attrs_
 
-- Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
+- Use :code:`cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object.
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can customize the row rendering in two ways:
 
-- You can modify the html attributes via `row__attrs`. See the question on attrs_
+- You can modify the html attributes via :code:`row__attrs`. See the question on attrs_
 
-- Use `row__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
+- Use :code:`row__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object.
 
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can customize headers in two ways:
 
-- You can modify the html attributes via `header__attrs`. See the question on attrs_
+- You can modify the html attributes via :code:`header__attrs`. See the question on attrs_
 
-- Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `tri_table/table_header_rows.html`.
+- Use :code:`header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object. The default is :code:`tri_table/table_header_rows.html`.
 
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set `header_template` to `None`.
+Set :code:`header_template` to :code:`None`.
 
 How do I add fields to a table that is generated from a model?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,7 +222,7 @@ See the question `How do I create a column based on computed data?`_
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Just pass `show=False` to hide the column or `show=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
+Just pass :code:`show=False` to hide the column or :code:`show=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
 
 .. code:: python
 
@@ -231,7 +231,7 @@ Just pass `show=False` to hide the column or `show=True` to show it. By default 
         column__a__show=lambda table, **_: table.request.GET.get('some_parameter') == 'hello!',
     )
 
-This will show the column `a` only if the GET parameter `some_parameter` is set to `hello!`.
+This will show the column :code:`a` only if the GET parameter :code:`some_parameter` is set to `hello!`.
 
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,7 +248,7 @@ Here's a simple example that prints a table to stdout:
 How do I make a link in a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters:
+This is such a common case that there's a special case for it: pass the :code:`url` and :code:`url_title` parameters:
 
 .. code:: python
 
@@ -272,7 +272,7 @@ Let's say we have two models:
         b = models.IntegerField()
         c = models.ForeignKey(Foo)
 
-we can build a table of `Bar` that shows the data of `a` like this:
+we can build a table of :code:`Bar` that shows the data of `a` like this:
 
 .. code:: python
 
@@ -286,7 +286,7 @@ we can build a table of `Bar` that shows the data of `a` like this:
 How do I turn off sorting? (on a column or table wide)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
+To turn off column on a column pass it :code:`sortable=False` (you can also use a lambda here!):
 
 .. code:: python
 
@@ -307,7 +307,7 @@ and to turn it off on the entire table:
 How do I specify the title of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `display_name` property of a column is displayed in the header.
+The :code:`display_name` property of a column is displayed in the header.
 
 .. code:: python
 
@@ -344,7 +344,7 @@ The grouping only works if the columns are next to each other, otherwise you'll 
 How do I get rowspan on a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
+You can manually set the rowspan attribute via :code:`row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: :code:`auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
 
 .. code:: python
 
@@ -366,11 +366,11 @@ If you want to filter based on a freetext query on one or more columns we've got
         column__b__query__freetext=True,
     )
 
-(You don't need to enable querying with `column__b__query__show=True` first)
+(You don't need to enable querying with :code:`column__b__query__show=True` first)
 
 What is the difference between `attr` and `name`?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`attr` is the attribute path of the value tri.table reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: `attr='foo__bar'` is functionally equivalent to `cell__value=lambda row, **_: row.foo.bar`. Set `attr` to None to not read any attribute from the row.
+:code:`attr` is the attribute path of the value tri.table reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to None to not read any attribute from the row.
 
-`name` is the name used internally. By default `attr` is set to the value of `name`. This name is used when accessing the column from `Table.column_by_name` and it's the name used in the GET parameter to sort by that column. This is a required field.
+:code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.column_by_name` and it's the name used in the GET parameter to sort by that column. This is a required field.
