@@ -1,5 +1,5 @@
-Welcome to tri.table's documentation!
-======================================
+iommi
+=====
 
 .. include:: ../README.rst
     :start-line: 3

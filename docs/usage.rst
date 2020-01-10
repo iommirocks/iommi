@@ -8,7 +8,7 @@ Add this to settings.py:
     # NOTE: if your base template is called "base.html" then you don't need this!
     IOMMI_BASE_TEMPLATE = 'my_base.html'
 
-The base template is the one containing your `<html>` tag and has `{% block content %}`.
+The base template is the one containing your :code:`<html>` tag and has :code:`{% block content %}`.
 
 
 Add `iommi` to installed apps:
@@ -30,7 +30,7 @@ Add iommi's page middleware:
     ]
 
 
-You can start by importing `Table` from `iommi` to try it out when
+You can start by importing `:code:Table` from :code:`iommi` to try it out when
 you're just trying it out, but if you want to use iommi
 long term you should put this boilerplate in some module and use these classes.
 This is so you have a central place to override or add functionality.
@@ -104,7 +104,7 @@ Or create a table the declarative and explicit way:
 and then you can render it in your template:
 
 
-TODO: this part doesn't currently work!! Rendering needs to be done my_table.something I think
+.. TODO: this part doesn't currently work!! Rendering needs to be done my_table.something I think
 
 .. code:: html
 

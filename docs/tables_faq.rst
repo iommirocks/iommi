@@ -75,8 +75,8 @@ or we could do:
 
 This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
 
-How do I get tri.table to understand my Django ModelField subclasses?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+How do I get iommi tables to understand my Django ModelField subclasses?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You use the :code:`iommi.db_compat.register_column_factory` function to register your own factory. We can look at the pre-registered factories to understand how to make your own:
 
@@ -371,6 +371,6 @@ If you want to filter based on a freetext query on one or more columns we've got
 What is the difference between `attr` and `name`?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:code:`attr` is the attribute path of the value tri.table reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to None to not read any attribute from the row.
+:code:`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to None to not read any attribute from the row.
 
 :code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.column_by_name` and it's the name used in the GET parameter to sort by that column. This is a required field.

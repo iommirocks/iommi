@@ -41,7 +41,7 @@ Example:
 
         return MyPage()
 
-This creates a page with two tables, one for the model `Foo` and one for the model `Bar`.
+This creates a page with two tables, one for the model :code:`Foo` and one for the model :code:`Bar`.
 
 
 Usage
@@ -53,7 +53,7 @@ See :doc:`usage`.
 Running tests
 -------------
 
-You need tox installed then just `make test`.
+You need tox installed then just :code:`make test`.
 
 
 License
