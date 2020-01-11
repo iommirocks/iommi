@@ -15,7 +15,7 @@ def read_reqs(name):
 
 
 def read_version():
-    with open(os.path.join('lib', 'tri_form', '__init__.py'), encoding='utf8') as f:
+    with open(os.path.join('lib', 'iommi', '__init__.py'), encoding='utf8') as f:
         m = re.search(r'''__version__\s*=\s*['"]([^'"]*)['"]''', f.read())
         if m:
             return m.group(1)
@@ -71,20 +71,20 @@ class ReleaseCheck(Command):
 # NB: _don't_ add namespace_packages to setup(), it'll break
 #     everything using imp.find_module
 setup(
-    name='tri.form',
+    name='iommi',
     version=read_version(),
-    description='tri.form is a form library',
+    description='iommi is a high level framework built on django',
     long_description=readme + '\n\n' + history,
     author='Anders Hovmöller',
     author_email='anders.hovmoller@trioptima.com',
-    url='https://github.com/TriOptima/tri.form',
+    url='https://github.com/TriOptima/iommi',
     packages=find_packages('lib'),
     package_dir={'': 'lib'},
     include_package_data=True,
     install_requires=read_reqs('requirements.txt'),
     license="BSD",
     zip_safe=False,
-    keywords='tri.form',
+    keywords='iommi',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
