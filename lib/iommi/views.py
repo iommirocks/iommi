@@ -72,7 +72,7 @@ def create_or_edit_object__on_valid_post(*, is_create, instance, form, on_save, 
 
 
 @dispatch(
-    template_name='tri_form/create_or_edit_object_block.html',
+    template_name='iommi/form/create_or_edit_object_block.html',
     form__call_target=Form.from_model,
     form__data=None,
     form__attrs__action='',

@@ -52,9 +52,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tri_table',
-    'tri_form',
-    'tri_query',
+    'iommi',
     'examples',
 )
 

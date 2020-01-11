@@ -43,13 +43,15 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi._web_compat import (
+from iommi._db_compat import (
     field_defaults_factory,
+    setup_db_compat,
+)
+from iommi._web_compat import (
     format_html,
     get_template_from_string,
     render_template,
     render_to_string,
-    setup_db_compat,
     slugify,
     URLValidator,
     validate_email,
@@ -685,10 +687,10 @@ class Field(RefinableObject):
         attrs__class=EMPTY,
         parse_empty_string_as_none=True,
         required=True,
-        template='tri_form/{style}_form_row.html',
-        input_template='tri_form/input.html',
-        label_template='tri_form/label.html',
-        errors_template='tri_form/errors.html',
+        template='iommi/form/{style}_form_row.html',
+        input_template='iommi/form/input.html',
+        label_template='iommi/form/label.html',
+        errors_template='iommi/form/errors.html',
         is_list=False,
         is_boolean=False,
         editable=True,
@@ -719,11 +721,11 @@ class Field(RefinableObject):
         :param attrs: a dict containing any custom html attributes to be sent to the input_template.
         :param id: the HTML id attribute. Default: 'id_%s' % name
         :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
-        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'tri_form/{style}_form_row.html'
+        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'iommi/form/{style}_form_row.html'
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
-        :param input_template: django template filename for the template for just the input control. Default: 'tri_form/input.html'
-        :param label_template: django template filename for the template for just the label tab. Default: 'tri_form/label.html'
-        :param errors_template: django template filename for the template for just the errors output. Default: 'tri_form/errors.html'
+        :param input_template: django template filename for the template for just the input control. Default: 'iommi/form/input.html'
+        :param label_template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
+        :param errors_template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
         :param required: if the field is a required field. Default: True
         :param container__attrs: extra html attributes to set on the container (i.e. row if rendering as a table). Default: set()
         :param help_text: The help text will be grabbed from the django model if specified and available. Default: lambda form, field: '' if form.model is None else form.model._meta.get_field_by_name(field.name)[0].help_text or ''
@@ -878,7 +880,7 @@ class Field(RefinableObject):
             self._evaluate_attribute(key)
 
         if not self.editable:
-            self.input_template = 'tri_form/non_editable.html'
+            self.input_template = 'iommi/form/non_editable.html'
 
     @property
     def rendered_value(self):
@@ -976,7 +978,7 @@ class Field(RefinableObject):
 
     @classmethod
     @class_shortcut(
-        input_template='tri_form/text.html',
+        input_template='iommi/form/text.html',
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1007,8 +1009,8 @@ class Field(RefinableObject):
     @class_shortcut(
         parse=lambda string_value, **_: bool_parse(string_value),
         required=False,
-        template='tri_form/{style}_form_row_checkbox.html',
-        input_template='tri_form/checkbox.html',
+        template='iommi/form/{style}_form_row_checkbox.html',
+        input_template='iommi/form/checkbox.html',
         is_boolean=True,
     )
     def boolean(cls, call_target=None, **kwargs):
@@ -1022,7 +1024,7 @@ class Field(RefinableObject):
         is_valid=choice_is_valid,
         choice_to_option=choice_choice_to_option,
         parse=choice_parse,
-        input_template='tri_form/choice.html',
+        input_template='iommi/form/choice.html',
     )
     def choice(cls, call_target=None, **kwargs):
         """
@@ -1068,7 +1070,7 @@ class Field(RefinableObject):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice",
-        input_template='tri_form/choice_select2.html',
+        input_template='iommi/form/choice_select2.html',
         parse=choice_queryset__parse,
         choice_to_option=choice_queryset__choice_to_option,
         endpoint_path=choice_queryset__endpoint_path,
@@ -1118,7 +1120,7 @@ class Field(RefinableObject):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice",
-        input_template='tri_form/radio.html',
+        input_template='iommi/form/radio.html',
     )
     def radio(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1165,8 +1167,8 @@ class Field(RefinableObject):
     @classmethod
     @class_shortcut(
         input_type='file',
-        template_string='{% extends "tri_form/table_form_row.html" %}{% block extra_content %}{{ field.value }}{% endblock %}',
-        input_template='tri_form/file.html',
+        template_string="{% extends 'iommi/form/table_form_row.html' %}{% block extra_content %}{{ field.value }}{% endblock %}",
+        input_template='iommi/form/file.html',
         write_to_instance=file_write_to_instance,
     )
     def file(cls, call_target=None, **kwargs):
@@ -1176,7 +1178,7 @@ class Field(RefinableObject):
     @classmethod
     @class_shortcut(
         show=True,
-        template='tri_form/heading.html',
+        template='iommi/form/heading.html',
         editable=False,
         attr=None,
         name='@@heading@@',
@@ -1324,7 +1326,7 @@ class Form(RefinableObject):
     member_class = Refinable()
 
     class Meta:
-        base_template = 'tri_form/base.html'
+        base_template = 'iommi/form/base.html'
         member_class = Field
 
     @dispatch(
@@ -1337,7 +1339,7 @@ class Form(RefinableObject):
         attrs__action='',
         attrs__method='post',
         actions__submit__call_target=Action.submit,
-        actions_template='tri_form/actions.html',
+        actions_template='iommi/form/actions.html',
     )
     def __init__(self, request=None, *, data=None, instance=None, fields=None, fields_dict=None, actions=None, field, **kwargs):
         """
@@ -1639,7 +1641,7 @@ class Form(RefinableObject):
     def table_property(self):
         return self.table()
 
-    def render(self, style='compact', template_name="tri_form/form.html"):
+    def render(self, style='compact', template_name='iommi/form/form.html'):
         """
         :type style: str| unicode
         :type template_name: str | unicode | None
@@ -1717,5 +1719,3 @@ class Form(RefinableObject):
 # Backward compatibility
 default_read_from_instance = Field.read_from_instance
 default_write_to_instance = Field.write_to_instance
-
-setup_db_compat()

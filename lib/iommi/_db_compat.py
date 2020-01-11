@@ -1,7 +1,4 @@
 from tri_declarative import Shortcut
-from iommi.form import register_field_factory
-from iommi.query import register_variable_factory
-from iommi.table import register_column_factory
 
 
 def setup_db_compat():
@@ -9,6 +6,10 @@ def setup_db_compat():
 
 
 def setup_db_compat_django():
+    from iommi.form import register_field_factory
+    from iommi.query import register_variable_factory
+    from iommi.table import register_column_factory
+
     from django.db.models import (
         AutoField,
         BooleanField,

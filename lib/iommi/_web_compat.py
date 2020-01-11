@@ -1,5 +1,3 @@
-from tri_declarative import Shortcut
-
 try:
     from django.core.exceptions import ValidationError
     from django.core.validators import validate_email, URLValidator
@@ -141,12 +139,6 @@ except ImportError:
 
     def slugify(s):
         return s.lower().replace(' ', '-')
-
-    def setup_db_compat():
-        pass
-
-    def field_defaults_factory(model_field):
-        raise NotImplementedError()
 
     def mark_safe(s):
         return Markup(s)

@@ -43,8 +43,8 @@ from tri_declarative import (
     sort_after,
     with_meta,
 )
-from iommi import Form
 from iommi.form import (
+    Form,
     bool_parse,
     create_members_from_model,
     DISPATCH_PATH_SEPARATOR,
@@ -786,8 +786,3 @@ class Query(RefinableObject):
         handler = self.endpoint.get(prefix, None)
         if handler is not None:
             return handler(query=self, key=remaining_key, value=value)
-
-
-from .db_compat import setup_db_compat  # noqa
-
-setup_db_compat()

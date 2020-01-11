@@ -15,7 +15,7 @@ except ImportError:
             app = AppContext(Flask('tri_form', root_path=root_path))
             app.push()
             from werkzeug.test import create_environ
-            from tri_form.compat import HttpRequest
+            from iommi._web_compat import HttpRequest
 
             # We use the django style where headers are HTTP_
             for k, v in headers.items():

@@ -1,14 +1,15 @@
 import pytest
 from tri_struct import merged
 
-from tri_form import Field, Form
-from tri_form.compat import render_to_string, format_html, field_defaults_factory, render_template, Template
+from iommi.form import Field, Form
+from iommi._db_compat import field_defaults_factory
+from iommi._web_compat import render_to_string, format_html, render_template, Template
 from .compat import RequestFactory, SafeText
 
 
 def test_render_to_string():
     assert render_to_string(
-        template_name='tri_form/non_editable.html',
+        template_name='iommi/form/non_editable.html',
         request=RequestFactory().get('/'),
         context=dict(
             field=dict(

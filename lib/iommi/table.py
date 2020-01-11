@@ -267,7 +267,7 @@ class Column(RefinableObject):
         header__attrs__class__ascending=lambda bound_column, **_: bound_column.sort_direction == ASCENDING,
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
         header__attrs__class__subheader=True,
-        header__template='tri_table/header.html',
+        header__template='iommi/table/header.html',
     )
     def __init__(self, **kwargs):
         """
@@ -918,14 +918,14 @@ class Table(RefinableObject):
         default_sort_order=None,
         attrs=EMPTY,
         attrs__class__listview=True,
-        template='tri_table/list.html',
+        template='iommi/table/list.html',
         row__attrs__class=EMPTY,
         row__template=None,
-        filter__template='tri_query/form.html',  # tri.query dependency, see render_filter() below.
-        header__template='tri_table/table_header_rows.html',
-        paginator__template='tri_table/paginator.html',
+        filter__template='iommi/query/form.html',  # tri.query dependency, see render_filter() below.
+        header__template='iommi/table/table_header_rows.html',
+        paginator__template='iommi/table/paginator.html',
         actions=EMPTY,
-        actions_template='tri_form/actions.html',
+        actions_template='iommi/form/actions.html',
         model=None,
         query=EMPTY,
         bulk=EMPTY,
@@ -938,7 +938,7 @@ class Table(RefinableObject):
         extra=EMPTY,
 
         superheader__attrs__class__superheader=True,
-        superheader__template='tri_table/header.html',
+        superheader__template='iommi/table/header.html',
     )
     def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, **kwargs):
         """
@@ -1306,7 +1306,7 @@ class Table(RefinableObject):
 
             bulk_fields = list(generate_bulk_fields())
             if bulk_fields:
-                bulk_fields.append(self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='tri_form/input.html'))
+                bulk_fields.append(self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html'))
 
                 self._bulk_form = self.get_meta().form_class(
                     data=self.request.POST,
@@ -1576,6 +1576,3 @@ def render_table_to_response(*args, **kwargs):
     if isinstance(response, HttpResponse):  # pragma: no cover
         return response
     return HttpResponse(response)
-
-
-setup_db_compat()

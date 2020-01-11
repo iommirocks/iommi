@@ -1538,7 +1538,7 @@ def test_yes_no_formatter():
 
 
 def test_repr():
-    assert repr(Column(name='foo')) == '<tri_table.Column foo>'
+    assert repr(Column(name='foo')) == '<iommi.table.Column foo>'
 
 
 @pytest.mark.django_db

@@ -19,7 +19,7 @@ def remove_csrf(html_code):
     return re.sub(csrf_regex, '', html_code)
 
 
-def verify_table_html(expected_html, query=None, find=None, links=None, **kwargs):
+def verify_table_html(expected_html, query=None, find=None, **kwargs):
     """
     Verify that the table renders to the expected markup, modulo formatting
     """
@@ -30,7 +30,7 @@ def verify_table_html(expected_html, query=None, find=None, links=None, **kwargs
 
     request = RequestFactory().get("/", query)
     request.user = AnonymousUser()
-    actual_html = remove_csrf(render_table(request=request, links=links, **kwargs))
+    actual_html = remove_csrf(render_table(request=request, **kwargs))
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').find(**find).prettify()).strip()

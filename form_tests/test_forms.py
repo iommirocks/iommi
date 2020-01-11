@@ -5,13 +5,11 @@ from datetime import datetime
 
 from decimal import Decimal
 
-from tri_form.compat import (
-    ValidationError,
-    field_defaults_factory,
-)
+from iommi._web_compat import ValidationError
+from iommi._db_compat import field_defaults_factory
 from bs4 import BeautifulSoup
 import pytest
-from tri_form.compat import Template, smart_str
+from iommi._web_compat import Template, smart_str
 
 from tri_declarative import (
     getattr_path,
@@ -21,7 +19,7 @@ from tri_declarative import (
     Shortcut,
 )
 from tri_struct import Struct
-from tri_form import (
+from iommi.form import (
     AVOID_EMPTY_FORM,
     Form,
     Field,
@@ -31,7 +29,6 @@ from tri_form import (
     decimal_parse,
     url_parse,
     render_template,
-    Link,
     datetime_parse,
     datetime_iso_formats,
     int_parse,
@@ -82,8 +79,8 @@ class MyTestForm(Form):
 
 
 def test_repr():
-    assert '<tri_form.Field foo>' == repr(Field(name='foo'))
-    assert '<tri_form.Field foo>' == str(Field(name='foo'))
+    assert '<iommi.form.Field foo>' == repr(Field(name='foo'))
+    assert '<iommi.form.Field foo>' == str(Field(name='foo'))
 
 
 def test_required_choice():
@@ -318,7 +315,7 @@ def test_declared_fields():
 
 
 def test_non_editable():
-    assert Form(data={}, fields=[Field(name='foo', editable=False)]).fields[0].input_template == 'tri_form/non_editable.html'
+    assert Form(data={}, fields=[Field(name='foo', editable=False)]).fields[0].input_template == 'iommi/form/non_editable.html'
 
 
 def test_non_editable_form():
@@ -576,7 +573,7 @@ def test_choice_queryset_do_not_cache():
     User.objects.create(username='foo')
 
     class MyForm(Form):
-        foo = Field.choice_queryset(attr=None, choices=User.objects.all(), template='tri_form/choice.html')
+        foo = Field.choice_queryset(attr=None, choices=User.objects.all(), template='iommi/form/choice.html')
 
     # There is just one user, check that we get it
     form = MyForm(RequestFactory().get('/'))

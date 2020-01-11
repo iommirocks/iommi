@@ -1,13 +1,14 @@
 from os.path import dirname, abspath, join
-from tri.struct import Struct
+from tri_struct import Struct
 
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
 from .models import Foo, Bar
-from tri_form import Form, Field, Link, choice_parse
-from tri_form.views import create_object, edit_object
+from iommi.form import Form, Field, choice_parse
+from iommi.views import create_object, edit_object
+from iommi import Action
 
 for i in range(100 - Foo.objects.count()):
     Foo.objects.create(name=f'X{i}', a=i, b=True)
@@ -69,11 +70,11 @@ def example_4(request):
     return edit_object(
         request,
         instance=Foo.objects.all().first(),
-        form__links=[
-            Link.submit(attrs__value='Foo'),
-            Link.submit(attrs__value='Bar'),
-            Link(title='Back to index', attrs__href='/'),
-        ]
+        form__actions=dict(
+            foo=Action.submit(attrs__value='Foo'),
+            bar=Action.submit(attrs__value='Bar'),
+            back=Action(title='Back to index', attrs__href='/'),
+        )
     )
 
 
@@ -81,13 +82,13 @@ def example_5(request):
     return create_object(
         request,
         model=Bar,
-        form__base_template='tri_form/base_select2.html',
-        form__field__b__input_template='tri_form/choice_select2.html',
-        form__links=[
-            Link.submit(attrs__value='Foo'),
-            Link.submit(attrs__value='Bar'),
-            Link(title='Back to index', attrs__href='/'),
-        ]
+        form__base_template='iommi/form/base_select2.html',
+        form__field__b__input_template='iommi/form/choice_select2.html',
+        form__actions=dict(
+            foo=Action.submit(attrs__value='Foo'),
+            bar=Action.submit(attrs__value='Bar'),
+            back=Action(title='Back to index', attrs__href='/'),
+        )
     )
 
 
@@ -145,10 +146,7 @@ def kitchen(request):
 
 
 from .models import Bar, Foo
-from os.path import dirname, abspath, join
-from django.http import HttpResponse
-from tri_table import Table, render_table_to_response
-from tri_table import Column
+from iommi.table import Table, render_table_to_response, Column
 
 
 def index(request):
