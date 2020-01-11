@@ -3,6 +3,14 @@
     display: none;
 }
 
+div.document {
+    width: 1040px;
+}
+
+pre {
+    padding: 7px 15px;
+}
+
 @media
 (-webkit-min-device-pixel-ratio: 2),
 (min-resolution: 192dpi) {

@@ -19,9 +19,11 @@ You can either create a subclass of :code:`Form`...
 
     class UserForm(Form):
         name = Field.text()
-        username = Field.text(is_valid=lambda form, field, parsed_data: parsed_data.startswith('demo_'))
+        username = Field.text(
+            is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'))
         is_admin = Field.boolean(
-            show=lambda form, field: form.request.user.is_staff, # show only for staff
+            # show only for staff
+            show=lambda form, **_: form.request.user.is_staff,
             label_template='tweak_label_tag.html')
 
     def edit_user_view(request, username):
@@ -57,12 +59,16 @@ or just instantiate a :code:`Form` with a :code:`Field` list and use it directly
         form = Form(fields=[
             Field.text(
                 name='name',
-                is_valid=lambda form, field, parsed_data: parsed_data.startswith('demo_')),
+                is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'),
+            ),
             Field.text(name='username'),
             Field.boolean(
                 name='is_admin',
-                show=lambda form, field: form.request.user.is_staff, # show only for staff
-                label_template='tweak_label_tag.html',)])
+                # show only for staff
+                show=lambda form, **_: form.request.user.is_staff,
+                label_template='tweak_label_tag.html',
+            ),
+        ])
 
         # rest of view function...
 
@@ -76,10 +82,14 @@ is equivalent to:
         form = Form.from_model(
             data=request.POST,
             model=User,
-            # the field 'name' is generated automatically and we are fine with the defaults
-            username__is_valid=lambda form, field, parsed_data: parsed_data.startswith('demo_'),
+            # the field 'name' is generated automatically and
+            # we are fine with the defaults
+            username__is_valid=
+                lambda parsed_data, **_: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
-            is_admin__show=lambda form, field: form.request.user.is_staff) # show only for staff
+            # show only for staff
+            is_admin__show=lambda form, **_: form.request.user.is_staff,
+        )
 
         # rest of view function...
 
@@ -91,10 +101,12 @@ or even better: use :code:`Form.as_edit_page`:
         return Form.as_edit_page(
             model=User,
             instance=User.objects.get(username=username),
-
-            username__is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'),
+            username__is_valid=
+                lambda parsed_data, **_: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
-            is_admin__show=lambda form, **_: form.request.user.is_staff) # show only for staff
+            # show only for staff
+            is_admin__show=lambda form, **_: form.request.user.is_staff,
+        )
         # no html template! iommi has a nice default for you :P
 
 iommi pre-packages sets of defaults for common field types as 'shortcuts'. Some examples include :code:`Field.boolean`,

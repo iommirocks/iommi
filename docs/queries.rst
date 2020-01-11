@@ -6,14 +6,13 @@ iommi queries makes it easy to implement searching and filtering in your Django 
 Major features:
 
 - Generate simple filtering GUIs
-- Supply your views with advanced query languages
+- Supply your views with an advanced query language
 - Query language can be used stand alone without the GUI parts
-- Highly customizable GUI based iommi :doc:`forms`
+- Highly customizable GUI based on iommi :doc:`forms`
 
 
 Example
 -------
-
 
 Simple view that allows the user to search for a car by choosing the make from a drop down, and search
 for specific model in the advanced mode:
@@ -32,7 +31,11 @@ for specific model in the advanced mode:
         form = query.form()
         return render(
             template_name='cars.html',
-            context_instance=RequestContext(request, {'query_form': form, 'cars': cars_query_set}))
+            context={
+                'query_form': form,
+                'cars': cars_query_set,
+            },
+        )
 
 
 .. code:: html
