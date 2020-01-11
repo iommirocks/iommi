@@ -1,10 +1,8 @@
-from __future__ import division
-from __future__ import unicode_literals
 import re
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
-from tri_table import render_table
+from iommi.table import render_table
 
 
 def reindent(s, before=" ", after="    "):

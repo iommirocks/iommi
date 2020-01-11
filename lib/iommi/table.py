@@ -1,8 +1,3 @@
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
-
 import copy
 import warnings
 from collections import OrderedDict
@@ -55,24 +50,21 @@ from tri_declarative import (
     sort_after,
     with_meta,
 )
-from tri_form import (
+from iommi.form import (
     Action,
     DISPATCH_PATH_SEPARATOR,
     Form,
-    Link as tri_form_Link,
     collect_and_initialize_members,
     create_members_from_model,
-    evaluate_and_group_links,
     expand_member,
     group_actions,
     handle_dispatch,
     member_from_model,
 )
-from tri_form.render import (
+from iommi.render import (
     render_attrs,
-    render_class,
 )
-from tri_form.compat import (
+from iommi._web_compat import (
     Template,
     render_template,
 )
@@ -80,7 +72,7 @@ from tri_named_struct import (
     NamedStruct,
     NamedStructField,
 )
-from tri_query import (
+from iommi.query import (
     Q_OP_BY_OP,
     Query,
     QueryException,
@@ -90,9 +82,7 @@ from tri_struct import (
     merged,
 )
 
-from tri_table.db_compat import setup_db_compat
-
-__version__ = '8.3.0'
+from iommi._db_compat import setup_db_compat
 
 LAST = LAST
 
@@ -299,25 +289,12 @@ class Column(RefinableObject):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
 
-        if 'title' in kwargs:
-            warnings.warn('title argument to Column is deprecated, use the header__attrs__title instead', DeprecationWarning)
-            title = kwargs.pop('title')
-            if title:
-                kwargs['header__attrs__title'] = title
-
         if 'attrs' in kwargs:
             if not kwargs['attrs']['class']:
                 del kwargs['attrs']['class']
 
             if not kwargs['attrs']:
                 kwargs.pop('attrs')
-            else:
-                warnings.warn('attrs argument to Column is deprecated, use the header__attrs instead', DeprecationWarning)
-                kwargs['header__attrs'] = kwargs.pop('attrs')
-
-        if 'css_class' in kwargs:
-            warnings.warn('css_class argument to Column is deprecated, use the header__attrs__class__foo=True syntax instead', DeprecationWarning)
-            setdefaults_path(kwargs, {'header__attrs__class__' + c: True for c in kwargs.pop('css_class', {})})
 
         super(Column, self).__init__(**kwargs)
 
@@ -379,10 +356,6 @@ class Column(RefinableObject):
             new_value = evaluate_recursive(v, table=self.table, column=self)
             if new_value is not v:
                 setattr(self, k, new_value)
-
-    def render_css_class(self):
-        warnings.warn('Column.render_css_class is deprecated, use Header.rendered_attrs', DeprecationWarning)
-        return render_class(self.attrs['class'])
 
     @classmethod
     @dispatch(
@@ -906,7 +879,6 @@ class Table(RefinableObject):
     row = Refinable()
     filter = Refinable()
     header = Refinable()
-    links = Refinable()
     model = Refinable()
     column = Refinable()
     bulk = Refinable()
@@ -980,14 +952,6 @@ class Table(RefinableObject):
         :param sortable: set this to false to turn off sorting for all columns
         """
 
-        if 'links' in kwargs:
-            warnings.warn('Table.links__template is deprecated: use actions_template', DeprecationWarning)
-
-        setdefaults_path(
-            kwargs,
-            links__template='tri_form/links.html',
-        )
-
         if data is None:  # pragma: no cover
             assert model is not None
             data = model.objects.all()
@@ -1025,7 +989,6 @@ class Table(RefinableObject):
         super(Table, self).__init__(
             model=model,
             filter=TemplateConfig(**filter),
-            links=TemplateConfig(**kwargs.pop('links')),
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
@@ -1046,10 +1009,6 @@ class Table(RefinableObject):
         self._bound_column_by_name: Dict[str, Column] = None
         self._has_prepared: bool = False
         self.header_levels = None
-
-    def render_links(self):
-        warnings.warn('render_links is deprecated: use render_actions', DeprecationWarning)
-        return render_template(self.request, self.links.template, self.context)
 
     @property
     def rendered_actions(self):
@@ -1279,7 +1238,6 @@ class Table(RefinableObject):
                 'attrs',
                 'row',
                 'filter',
-                'links',
                 'model',
                 '_query',
                 'bulk',
@@ -1490,31 +1448,9 @@ class Table(RefinableObject):
             return queryset.filter(pk__in=pks)
 
 
-class Link(tri_form_Link):
-    """
-    Class that describes links to add underneath the table.
-    """
-
-    # backwards compatibility with old interface
-    def __init__(self, title, url=None, **kwargs):
-        warnings.warn('tri_table.Link is deprecated: use tri_form.Action', DeprecationWarning)
-        if url:
-            warnings.warn('url parameter is deprecated, use attrs__href', DeprecationWarning)
-            kwargs['attrs__href'] = url
-
-        super(Link, self).__init__(title=title, **kwargs)
-
-    @staticmethod
-    def icon(icon, title, **kwargs):
-        icon_classes = kwargs.pop('icon_classes', [])
-        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes])
-        return Link(mark_safe('<i class="fa fa-%s %s"></i> %s' % (icon, icon_classes_str, title)), **kwargs)
-
-
 def table_context(request,
                   *,
                   table: Table,
-                  links=None,
                   page=None,
                   extra_context=None,
                   paginator=None,
@@ -1525,15 +1461,7 @@ def table_context(request,
 
     assert table.data is not None
 
-    if links:
-        warnings.warn('links is deprecated: use actions', DeprecationWarning)
-        links, grouped_links = evaluate_and_group_links(links, table=table)
-    else:
-        links, grouped_links = None, None
-
     base_context = {
-        'links': links,
-        'grouped_links': grouped_links,
         'table': table,
     }
 
@@ -1579,22 +1507,14 @@ def table_context(request,
 )
 def render_table(request,
                  table,
-                 links=None,
                  context=None,
-                 template=None,
-                 blank_on_empty=None,
-                 paginate_by=40,  # pragma: no mutate
-                 page=None,
                  paginator=None,
-                 show_hits=False,
-                 hit_label='Items',
                  post_bulk_edit=lambda table, queryset, updates: None):
     """
     Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
 
     :param request: the request object. This is set on the table object so that it is available for lambda expressions.
     :param table: an instance of Table
-    :param links: a list of instances of Link
     :param context: dict of extra context parameters
     :param template: if you need to render the table differently you can override this parameter with either a name of a template to load or a `Template` instance.
     :param blank_on_empty: turn off the displaying of `{{ empty_message }}` in the template when the list is empty
@@ -1602,35 +1522,11 @@ def render_table(request,
     :param hit_label: Label for the show_hits display.
     :return: a string with the rendered HTML table
     """
-    if links:
-        warnings.warn('the links argument to render_table is deprecated: use Table.actions', DeprecationWarning)
-
     if not context:
         context = {}
 
     if isinstance(table, Namespace):
         table = table()
-
-    if template:
-        warnings.warn('the template parameter render_table is deprecated: use Table.template', DeprecationWarning)
-        table.template = template
-        del template
-
-    if paginate_by != DEFAULT_PAGE_SIZE:
-        warnings.warn('the paginate_by parameter render_table is deprecated: use Table.page_size', DeprecationWarning)
-        table.page_size = paginate_by
-
-    if show_hits:
-        warnings.warn('the show_hits parameter is deprecated, there is no replacement feature', DeprecationWarning)
-
-    if hit_label != 'Items':
-        warnings.warn('the hit_label parameter is deprecated, there is no replacement feature', DeprecationWarning)
-
-    if page is not None:
-        warnings.warn('the page parameter is deprecated, there is no replacement feature', DeprecationWarning)
-
-    if blank_on_empty is not None:
-        warnings.warn('the blank_on_empty parameter is deprecated, there is no replacement feature', DeprecationWarning)
 
     assert isinstance(table, Table), table
     table.request = request
@@ -1661,16 +1557,9 @@ def render_table(request,
     table.context = table_context(
         request,
         table=table,
-        links=links,
-        page=page,
         extra_context=context,
         paginator=paginator,
-        show_hits=show_hits,
-        hit_label=hit_label,
     )
-
-    if not table.data and blank_on_empty:
-        return ''
 
     if table.query_form and not table.query_form.is_valid():
         table.data = None

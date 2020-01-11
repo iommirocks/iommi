@@ -1,9 +1,5 @@
-from __future__ import unicode_literals, absolute_import
-
-import warnings
-
-from tri_form.compat import ValidationError, HttpResponseRedirect, render, csrf
-from tri_form import (
+from iommi._web_compat import ValidationError, HttpResponseRedirect, render, csrf
+from iommi.form import (
     Form,
     handle_dispatch,
     Action,
@@ -102,7 +98,6 @@ def create_or_edit_object(
         instance=None,
         model_verbose_name=None,
         redirect_to=None,
-        links=None,
 ):
     if model is None and instance is not None:
         model = type(instance)
@@ -121,21 +116,14 @@ def create_or_edit_object(
         attrs__class__show_changes=not is_create,
     )
 
-    if links:
-        warnings.warn('the links argument to create_or_edit_object is deprecated: use actions instead')
-        setdefaults_path(
-            form,
-            links=links,
-        )
-    else:
-        setdefaults_path(
-            form,
-            actions__submit=dict(
-                call_target=Action.submit,
-                attrs__value=title,
-                attrs__name=form.get('name'),
-            ),
-        )
+    setdefaults_path(
+        form,
+        actions__submit=dict(
+            call_target=Action.submit,
+            attrs__value=title,
+            attrs__name=form.get('name'),
+        ),
+    )
 
     form = form()
 

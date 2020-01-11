@@ -1,5 +1,3 @@
-from __future__ import unicode_literals, absolute_import
-
 import re
 from collections import defaultdict
 from datetime import date, time
@@ -1417,16 +1415,6 @@ def test_render_template_template_object():
 
 
 @pytest.mark.django
-def test_link_render():
-    with pytest.deprecated_call():
-        import os
-        RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
-        link = Link('Title', template='test_link_render.html')
-        assert link.render() == 'tag=a title=Title'
-        assert link.render() == link.__html__()  # used by jinja2
-
-
-@pytest.mark.django
 def test_action_render():
     import os
     RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
@@ -1439,56 +1427,8 @@ def test_action_repr():
     assert repr(Action(display_name='Title', template='test_link_render.html')) == '<Action: Title>'
 
 
-def test_deprecated_link_shortcut_icon():
-    with pytest.deprecated_call():
-        assert Link.icon('foo', title='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
-
-
 def test_action_shortcut_icon():
     assert Action.icon('foo', display_name='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
-
-
-def test_deprecated_render_grouped_links():
-    with pytest.deprecated_call():
-        RequestFactory().get('/')  # needed when running in flask mode to have an app present
-        form = Form(links=[
-            Link('a'),
-            Link('b', show=lambda form: False),
-            Link('q', show=lambda form: True),
-            Link('c', group='group'),
-            Link('d', group='group'),
-            Link('f', group='group'),
-        ])
-        actual_html = form.render_links()
-        expected_html = """
-        <div class="links">
-             <div class="dropdown">
-                 <a id="id_dropdown_group" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
-                     group <i class="fa fa-lg fa-caret-down"></i>
-                 </a>
-
-                 <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_group">
-                     <li role="presentation">
-                         <a role="menuitem">c</a>
-                     </li>
-
-                     <li role="presentation">
-                         <a role="menuitem">d</a>
-                     </li>
-
-                     <li role="presentation">
-                         <a role="menuitem">f</a>
-                     </li>
-                 </ul>
-             </div>
-
-             <a>a</a>
-             <a>q</a>
-        </div>"""
-
-        prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
-        prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
-        assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
 
 
 def test_render_grouped_actions():
@@ -1708,13 +1648,6 @@ def test_from_model_with_inheritance():
     assert was_called == {
         'MyField.float': 1,
     }
-
-
-def test_deprecated_rendered_property():
-    with pytest.deprecated_call():
-        link = Link('foo')
-
-        assert link.render() == link.rendered
 
 
 def test_rendered_property():

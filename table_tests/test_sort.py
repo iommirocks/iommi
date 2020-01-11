@@ -1,10 +1,8 @@
-from __future__ import unicode_literals
-
 import pytest
 
 from tests.helpers import verify_table_html
 from table_tests.models import Foo
-from tri_table import Column, Table, Struct, order_by_on_list
+from iommi.table import Column, Table, Struct, order_by_on_list
 
 
 def test_sort_list():

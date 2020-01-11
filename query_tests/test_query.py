@@ -1,12 +1,10 @@
-from __future__ import unicode_literals, absolute_import
-
 from collections import defaultdict
 from datetime import date
 from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
 from tri_declarative import class_shortcut
-from tri_form import (
+from iommi.form import (
     Form,
     Field,
 )
@@ -18,7 +16,7 @@ from query_tests.models import (
     NonStandardName,
     FromModelWithInheritanceTest,
 )
-from tri_query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
+from iommi.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
 from tri_struct import Struct
 
 

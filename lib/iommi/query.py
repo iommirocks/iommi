@@ -1,8 +1,3 @@
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
-
 import copy
 import operator
 from collections import OrderedDict
@@ -59,8 +54,6 @@ from iommi.form import (
 )
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
-
-__version__ = '6.2.0'
 
 
 class QueryException(Exception):

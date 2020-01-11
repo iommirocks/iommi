@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
-
 import json
 from collections import defaultdict
 
@@ -20,12 +13,12 @@ from tri_declarative import (
     Namespace,
     class_shortcut,
 )
-from tri_form import (
+from iommi.form import (
     Field,
     Form,
     Action,
 )
-from tri_query import (
+from iommi.query import (
     Variable,
     Query,
 )
@@ -37,9 +30,8 @@ from table_tests.models import (
     Foo,
     FromModelWithInheritanceTest,
 )
-from tri_table import (
+from iommi.table import (
     Column,
-    Link,
     register_cell_formatter,
     render_table,
     render_table_to_response,
@@ -412,35 +404,6 @@ def test_link():
         </table>""")
 
 
-def test_deprecated_css_class():
-    with pytest.warns(DeprecationWarning):
-        class TestTable(NoSortTable):
-            foo = Column(attrs__class__some_class=True)
-            legacy_foo = Column(css_class={"some_other_class"})
-            legacy_bar = Column(cell__attrs={'class': 'foo'},
-                                cell__attrs__class__bar=True)
-
-        data = [Struct(foo="foo", legacy_foo="foo", legacy_bar="bar")]
-
-        verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
-            <thead>
-                <tr>
-                    <th class="first_column some_class subheader"> Foo </th>
-                    <th class="first_column some_other_class subheader"> Legacy foo </th>
-                    <th class="first_column subheader"> Legacy bar </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td> foo </td>
-                    <td> foo </td>
-                    <td class="bar foo"> bar </td>
-                </tr>
-            </tbody>
-        </table>""")
-
-
 def test_css_class():
     class TestTable(NoSortTable):
         foo = Column(
@@ -754,50 +717,6 @@ def test_django_table_pagination_custom_paginator():
                 </tr>
             </tbody>
         </table>""")
-
-
-def test_deprecated_links():
-    with pytest.deprecated_call():
-        class TestTable(NoSortTable):
-            foo = Column(header__attrs__title="Some title")
-
-        data = [Struct(foo="foo")]
-
-        links = [
-            Link('Foo', attrs__href='/foo/', show=lambda table: table.data is not data),
-            Link('Bar', attrs__href='/bar/', show=lambda table: table.data is data),
-            Link('Baz', attrs__href='/bar/', group='Other'),
-            Link('Qux', attrs__href='/bar/', group='Other'),
-            Link.icon('icon_foo', title='Icon foo', attrs__href='/icon_foo/'),
-            Link.icon('icon_bar', icon_classes=['lg'], title='Icon bar', attrs__href='/icon_bar/'),
-            Link.icon('icon_baz', icon_classes=['one', 'two'], title='Icon baz', attrs__href='/icon_baz/'),
-        ]
-
-        verify_table_html(table=TestTable(data=data),
-                          find=dict(class_='links'),
-                          links=links,
-                          expected_html="""
-            <div class="links">
-                <div class="dropdown">
-                    <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
-                        Other <i class="fa fa-lg fa-caret-down" />
-                    </a>
-                    <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
-                        <li role="presentation">
-                            <a href="/bar/" role="menuitem"> Baz </a>
-                        </li>
-                        <li role="presentation">
-                            <a href="/bar/" role="menuitem"> Qux </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <a href="/bar/"> Bar </a>
-
-                <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
-                <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
-                <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
-            </div>""")
 
 
 def test_actions():
@@ -1618,11 +1537,6 @@ def test_yes_no_formatter():
     assert yes_no_formatter(0) == 'No'
 
 
-def test_deprecated_blank_on_empty():
-    with pytest.deprecated_call():
-        assert render_table(RequestFactory().get('/'), table=Table(data=[], columns=[Column(name='foo')]), blank_on_empty=True) == ''
-
-
 def test_repr():
     assert repr(Column(name='foo')) == '<tri_table.Column foo>'
 
@@ -1681,52 +1595,6 @@ def test_many_to_many():
 """
 
     verify_table_html(expected_html=expected_html, table__model=Baz)
-
-
-def test_link_class_backwards_compatibility():
-    with pytest.deprecated_call():
-        assert Link(title='foo', url='bar').render() == '<a href="bar">foo</a>'
-        assert Link(title='foo', attrs__href='bar').render() == '<a href="bar">foo</a>'
-
-
-@pytest.mark.django_db
-def test_preprocess_row_deprecated():
-    with pytest.warns(DeprecationWarning):
-        Foo.objects.create(a=1, b='d')
-
-        def preprocess(table, row, **_):
-            del table
-            row.some_non_existent_property = 1
-
-        class PreprocessedTable(Table):
-            some_non_existent_property = Column()
-
-            class Meta:
-                preprocess_row = preprocess
-                data = Foo.objects.all().order_by('pk')
-
-        expected_html = """
-        <table class="listview">
-            <thead>
-                <tr>
-                    <th class="first_column subheader">
-                        <a href="?order=some_non_existent_property">
-                            Some non existent property
-                        </a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr data-pk="1">
-                    <td>
-                        1
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        """
-
-        verify_table_html(expected_html=expected_html, table=PreprocessedTable())
 
 
 @pytest.mark.django_db
