@@ -1,5 +1,5 @@
 from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField, \
-    FileField, CASCADE
+    FileField, CASCADE, CharField
 
 saved_something = None
 
@@ -122,3 +122,38 @@ class Baz(Model):
 
 class FromModelWithInheritanceTest(Model):
     value = FloatField()
+
+
+class EndPointDispatchModel(Model):
+    name = CharField(max_length=255)
+
+
+class NonStandardName(Model):
+    non_standard_name = CharField(max_length=255)
+
+
+class TFoo(Model):
+    a = IntegerField()
+    b = CharField(max_length=255)
+
+    def __str__(self):
+        return 'Foo(%s, %s)' % (self.a, self.b)
+
+    class Meta:
+        ordering = ('pk',)
+
+
+class TBar(Model):
+    foo = ForeignKey(TFoo, on_delete=CASCADE)
+    c = BooleanField()
+
+    class Meta:
+        ordering = ('pk',)
+
+
+class TBaz(Model):
+    foo = ManyToManyField(TFoo)
+
+    class Meta:
+        ordering = ('pk',)
+

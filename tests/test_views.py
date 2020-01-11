@@ -4,7 +4,7 @@ import pytest
 from bs4 import BeautifulSoup
 from tri_struct import Struct, merged
 
-from form_tests.test_forms import remove_csrf
+from tests.test_forms import remove_csrf
 from iommi.form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
 from iommi.views import create_object, edit_object, create_or_edit_object_redirect
 
@@ -17,7 +17,7 @@ def get_request_context(response):
 
 @pytest.mark.django_db
 def test_create_or_edit_object():
-    from form_tests.models import CreateOrEditObjectTest, get_saved_something, Foo, reset_saved_something
+    from tests.models import CreateOrEditObjectTest, get_saved_something, Foo, reset_saved_something
 
     reset_saved_something()
 
@@ -149,7 +149,7 @@ def test_redirect_default_case():
 
 @pytest.mark.django_db
 def test_unique_constraint_violation():
-    from form_tests.models import UniqueConstraintTest
+    from tests.models import UniqueConstraintTest
 
     request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
     request.POST = {
@@ -176,7 +176,7 @@ def test_unique_constraint_violation():
 
 @pytest.mark.django_db
 def test_namespace_forms():
-    from form_tests.models import get_saved_something, reset_saved_something, NamespaceFormsTest
+    from tests.models import get_saved_something, reset_saved_something, NamespaceFormsTest
 
     reset_saved_something()
 
@@ -243,7 +243,7 @@ def test_namespace_forms():
 @pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results with an unordered")
 def test_create_or_edit_object_dispatch():
-    from form_tests.models import Bar, Foo
+    from tests.models import Bar, Foo
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
@@ -269,7 +269,7 @@ def test_create_or_edit_object_dispatch():
 
 @pytest.mark.django_db
 def test_create_object_default_template():
-    from form_tests.models import Foo
+    from tests.models import Foo
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
@@ -290,7 +290,7 @@ def test_create_object_default_template():
 
 @pytest.mark.django_db
 def test_edit_object_default_template():
-    from form_tests.models import Foo
+    from tests.models import Foo
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
@@ -311,7 +311,7 @@ def test_edit_object_default_template():
 
 @pytest.mark.django_db
 def test_create_or_edit_object_default_template_with_name():
-    from form_tests.models import Foo
+    from tests.models import Foo
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
@@ -332,7 +332,7 @@ def test_create_or_edit_object_default_template_with_name():
 
 @pytest.mark.django_db
 def test_create_or_edit_object_validate_unique():
-    from form_tests.models import Baz
+    from tests.models import Baz
 
     request = Struct(
         method='POST',
@@ -369,7 +369,7 @@ def test_create_or_edit_object_validate_unique():
 @pytest.mark.django_db
 @pytest.mark.parametrize('name', [None, 'baz'])
 def test_create_or_edit_object_full_template(name):
-    from form_tests.models import Foo
+    from tests.models import Foo
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 

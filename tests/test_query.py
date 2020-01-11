@@ -9,10 +9,10 @@ from iommi.form import (
     Field,
 )
 
-from query_tests.models import (
+from tests.models import (
     Foo,
     Bar,
-    Baz,
+    EndPointDispatchModel,
     NonStandardName,
     FromModelWithInheritanceTest,
 )
@@ -237,7 +237,7 @@ def test_invalid_syntax():
 
 @pytest.mark.django_db
 def test_choice_queryset():
-    foos = [Foo.objects.create(value=5), Foo.objects.create(value=7)]
+    foos = [Foo.objects.create(foo=5), Foo.objects.create(foo=7)]
 
     # make sure we get either 1 or 3 objects later when we choose a random pk
     Bar.objects.create(foo=foos[0])
@@ -249,7 +249,7 @@ def test_choice_queryset():
         foo = Variable.choice_queryset(
             choices=Foo.objects.all(),
             gui__show=True,
-            value_to_q_lookup='value')
+            value_to_q_lookup='foo')
         baz = Variable.choice_queryset(
             model=Foo,
             attr=None,
@@ -269,7 +269,7 @@ def test_choice_queryset():
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
 
     # test query
-    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)}))
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}))
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
@@ -277,7 +277,7 @@ def test_choice_queryset():
     # test searching for something that does not exist
     query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s' % str(11)}))
     value_that_does_not_exist = 11
-    assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
+    assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
         query2.to_q()
     assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
@@ -285,7 +285,7 @@ def test_choice_queryset():
     # test invalid ops
     valid_ops = ['=']
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
-        query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.value))}))
+        query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
@@ -296,7 +296,7 @@ def test_choice_queryset():
 
 @pytest.mark.django_db
 def test_multi_choice_queryset():
-    foos = [Foo.objects.create(value=5), Foo.objects.create(value=7)]
+    foos = [Foo.objects.create(foo=5), Foo.objects.create(foo=7)]
 
     # make sure we get either 1 or 3 objects later when we choose a random pk
     Bar.objects.create(foo=foos[0])
@@ -311,7 +311,7 @@ def test_multi_choice_queryset():
         foo = Variable.multi_choice_queryset(
             choices=Foo.objects.all(),
             gui__show=True,
-            value_to_q_lookup='value')
+            value_to_q_lookup='foo')
         baz = Variable.multi_choice_queryset(
             model=Foo,
             attr=None,
@@ -331,7 +331,7 @@ def test_multi_choice_queryset():
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk__in=[random_valid_obj.pk, random_valid_obj2.pk]))
 
     # test query
-    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.value)}))
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}))
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
@@ -339,7 +339,7 @@ def test_multi_choice_queryset():
     # test searching for something that does not exist
     query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo=%s' % str(11)}))
     value_that_does_not_exist = 11
-    assert Foo.objects.filter(value=value_that_does_not_exist).count() == 0
+    assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
         query2.to_q()
     assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
@@ -347,7 +347,7 @@ def test_multi_choice_queryset():
     # test invalid ops
     valid_ops = ['=']
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
-        query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.value))}))
+        query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
@@ -355,8 +355,8 @@ def test_multi_choice_queryset():
 
 def test_from_model():
     t = Query.from_model(data=Foo.objects.all(), model=Foo)
-    assert [x.name for x in t.variables] == ['id', 'value']
-    assert [x.name for x in t.variables if x.show] == ['value']
+    assert [x.name for x in t.variables] == ['id', 'foo']
+    assert [x.name for x in t.variables if x.show] == ['foo']
 
 
 def test_from_model_foreign_key():
@@ -371,14 +371,14 @@ def test_from_model_foreign_key():
 
 @pytest.mark.django_db
 def test_endpoint_dispatch():
-    Baz.objects.create(name='foo')
-    x = Baz.objects.create(name='bar')
+    EndPointDispatchModel.objects.create(name='foo')
+    x = EndPointDispatchModel.objects.create(name='bar')
 
     class MyQuery(Query):
         foo = Variable.choice_queryset(
             gui__show=True,
             gui__attr='name',
-            choices=Baz.objects.all(),
+            choices=EndPointDispatchModel.objects.all().order_by('id'),
         )
 
     query = MyQuery(RequestFactory().get('/'))
@@ -416,7 +416,7 @@ def test_nice_error_message():
     assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument. Maybe one of ['non_standard_name']?"
 
     with pytest.raises(AttributeError) as e:
-        value_to_query_string_value_string(Variable(value_to_q_lookup='name'), Foo(value=5))
+        value_to_query_string_value_string(Variable(value_to_q_lookup='name'), Foo(foo=5))
 
     assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument."
 

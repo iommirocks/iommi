@@ -1,7 +1,7 @@
 import pytest
 
 from tests.helpers import verify_table_html
-from table_tests.models import Foo
+from tests.models import TFoo
 from iommi.table import Column, Table, Struct, order_by_on_list
 
 
@@ -210,15 +210,15 @@ def test_sort_list_bad_parameter():
 @pytest.mark.django_db
 def test_sort_django_table():
 
-    Foo(a=4711, b="c").save()
-    Foo(a=17, b="a").save()
-    Foo(a=42, b="b").save()
+    TFoo(a=4711, b="c").save()
+    TFoo(a=17, b="a").save()
+    TFoo(a=42, b="b").save()
 
     class TestTable(Table):
         a = Column.number()
         b = Column()
 
-    verify_table_html(table=TestTable(data=Foo.objects.all()),
+    verify_table_html(table=TestTable(data=TFoo.objects.all()),
                       query=dict(order='a'),
                       expected_html="""\
     <table class="listview">
@@ -250,7 +250,7 @@ def test_sort_django_table():
     """)
 
     # now reversed
-    verify_table_html(table=TestTable(data=Foo.objects.all()),
+    verify_table_html(table=TestTable(data=TFoo.objects.all()),
                       query=dict(order='-a'),
                       expected_html="""\
     <table class="listview">
@@ -364,11 +364,11 @@ def test_sort_default_desc_already_sorted():
 @pytest.mark.django_db
 def test_sort_django_table_from_model():
 
-    Foo(a=4711, b="c").save()
-    Foo(a=17, b="a").save()
-    Foo(a=42, b="b").save()
+    TFoo(a=4711, b="c").save()
+    TFoo(a=17, b="a").save()
+    TFoo(a=42, b="b").save()
 
-    verify_table_html(table__data=Foo.objects.all(),
+    verify_table_html(table__data=TFoo.objects.all(),
                       query=dict(order='a'),
                       expected_html="""\
     <table class="listview">

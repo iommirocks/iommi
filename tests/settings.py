@@ -4,11 +4,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, 'tests'),
     os.path.join(BASE_DIR, 'iommi/form/templates'),
+    os.path.join(BASE_DIR, 'iommi/query/templates'),
+    os.path.join(BASE_DIR, 'iommi/django/templates'),
 ]
 
 TEMPLATE_DEBUG = True
 
-# Django >=1.9
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -25,9 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'iommi',
-    'form_tests',
-    'query_tests',
-    'table_tests',
+    'tests',
 ]
 
 DATABASES = {

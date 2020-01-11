@@ -24,10 +24,10 @@ from iommi.query import (
 )
 
 from tests.helpers import verify_table_html
-from table_tests.models import (
-    Bar,
-    Baz,
-    Foo,
+from tests.models import (
+    TBar,
+    TBaz,
+    TFoo,
     FromModelWithInheritanceTest,
 )
 from iommi.table import (
@@ -154,22 +154,22 @@ def test_column_with_meta():
 @pytest.mark.django_db
 def test_django_table():
 
-    f1 = Foo.objects.create(a=17, b="Hej")
-    f2 = Foo.objects.create(a=42, b="Hopp")
+    f1 = TFoo.objects.create(a=17, b="Hej")
+    f2 = TFoo.objects.create(a=42, b="Hopp")
 
-    Bar(foo=f1, c=True).save()
-    Bar(foo=f2, c=False).save()
+    TBar(foo=f1, c=True).save()
+    TBar(foo=f2, c=False).save()
 
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=Foo, choices=lambda table, column, **_: Foo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
+        foo = Column.choice_queryset(model=TFoo, choices=lambda table, column, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
-    t = TestTable(data=Bar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
+    t = TestTable(data=TBar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
 
-    assert list(t.bound_column_by_name['foo'].choices) == list(Foo.objects.all())
-    assert list(t.bulk_form.fields_by_name['foo'].choices) == list(Foo.objects.all())
-    assert list(t.query_form.fields_by_name['foo'].choices) == list(Foo.objects.all())
+    assert list(t.bound_column_by_name['foo'].choices) == list(TFoo.objects.all())
+    assert list(t.bulk_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
+    assert list(t.query_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
 
     verify_table_html(table=t, expected_html="""
         <table class="listview">
@@ -449,26 +449,6 @@ def test_header_url():
     </table>""")
 
 
-def test_title():
-    with pytest.warns(DeprecationWarning):
-        class TestTable(NoSortTable):
-            foo = Column(title="Some title")
-
-        data = [Struct(foo="foo")]
-
-        verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
-            <thead>
-                <tr><th class="first_column subheader" title="Some title"> Foo </th></tr>
-            </thead>\
-            <tbody>
-                <tr>
-                    <td> foo </td>
-                </tr>
-            </tbody>
-        </table>""")
-
-
 def test_show():
     class TestTable(NoSortTable):
         foo = Column()
@@ -650,13 +630,13 @@ def test_column_presets():
 def test_django_table_pagination():
 
     for x in range(30):
-        Foo(a=x, b="foo").save()
+        TFoo(a=x, b="foo").save()
 
     class TestTable(Table):
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
         b = Column(show=False)  # should still be able to filter on this though!
 
-    verify_table_html(table=TestTable(data=Foo.objects.all().order_by('pk')),
+    verify_table_html(table=TestTable(data=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
         <table class="listview">
@@ -681,7 +661,7 @@ def test_django_table_pagination():
 def test_django_table_pagination_custom_paginator():
 
     for x in range(30):
-        Foo(a=x, b="foo").save()
+        TFoo(a=x, b="foo").save()
 
     class TestTable(Table):
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
@@ -697,7 +677,7 @@ def test_django_table_pagination_custom_paginator():
             del number
             return self.page(2)
 
-    data = Foo.objects.all().order_by('pk')
+    data = TFoo.objects.all().order_by('pk')
     verify_table_html(
         table=TestTable(data=data),
         paginator=CustomPaginator(data),
@@ -764,13 +744,13 @@ def test_actions():
 
 @pytest.mark.django_db
 def test_bulk_edit():
-    assert Foo.objects.all().count() == 0
+    assert TFoo.objects.all().count() == 0
 
     foos = [
-        Foo.objects.create(a=1, b=""),
-        Foo.objects.create(a=2, b=""),
-        Foo.objects.create(a=3, b=""),
-        Foo.objects.create(a=4, b=""),
+        TFoo.objects.create(a=1, b=""),
+        TFoo.objects.create(a=2, b=""),
+        TFoo.objects.create(a=3, b=""),
+        TFoo.objects.create(a=4, b=""),
     ]
 
     assert [x.pk for x in foos] == [1, 2, 3, 4]
@@ -779,7 +759,7 @@ def test_bulk_edit():
         a = Column.integer(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
         b = Column(bulk__show=True)
 
-    result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all()))
+    result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=TFoo.objects.all()))
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
@@ -789,9 +769,9 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=Foo.objects.all().order_by('pk')), post_bulk_edit=post_bulk_edit)
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=TFoo.objects.all().order_by('pk')), post_bulk_edit=post_bulk_edit)
 
-    assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
+    assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
         (3, 3, u''),
@@ -799,8 +779,8 @@ def test_bulk_edit():
     ]
 
     # Test that empty field means "no change"
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='', b='')), table=TestTable(data=Foo.objects.all()))
-    assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='', b='')), table=TestTable(data=TFoo.objects.all()))
+    assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
         (3, 3, u''),
@@ -808,9 +788,9 @@ def test_bulk_edit():
     ]
 
     # Test edit all feature
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(a='11', b='changed2', _all_pks_='1')), table=TestTable(data=Foo.objects.all()))
+    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(a='11', b='changed2', _all_pks_='1')), table=TestTable(data=TFoo.objects.all()))
 
-    assert [(x.pk, x.a, x.b) for x in Foo.objects.all()] == [
+    assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 11, u'changed2'),
         (2, 11, u'changed2'),
         (3, 11, u'changed2'),
@@ -820,12 +800,12 @@ def test_bulk_edit():
 
 @pytest.mark.django_db
 def test_query():
-    assert Foo.objects.all().count() == 0
+    assert TFoo.objects.all().count() == 0
 
-    Foo(a=1, b="foo").save()
-    Foo(a=2, b="foo").save()
-    Foo(a=3, b="bar").save()
-    Foo(a=4, b="bar").save()
+    TFoo(a=1, b="foo").save()
+    TFoo(a=2, b="foo").save()
+    TFoo(a=3, b="bar").save()
+    TFoo(a=4, b="bar").save()
 
     class TestTable(Table):
         a = Column.number(sortable=False, query__show=True, query__gui__show=True)  # turn off sorting to not get the link with random query params
@@ -834,9 +814,9 @@ def test_query():
         class Meta:
             sortable = False
 
-    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(id='tri_query_error'), expected_html='<div id="tri_query_error">Invalid syntax for query</div>')
+    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(id='tri_query_error'), expected_html='<div id="tri_query_error">Invalid syntax for query</div>')
 
-    verify_table_html(query=dict(a='1'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(a='1'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -847,7 +827,7 @@ def test_query():
             </td>
         </tr>
     </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='bar'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -866,7 +846,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -885,7 +865,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(b='fo'), table=TestTable(data=Foo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='fo'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -975,14 +955,14 @@ def test_cell_format_no_escape():
 @pytest.mark.django_db
 def test_template_string():
 
-    Foo.objects.create(a=1)
+    TFoo.objects.create(a=1)
 
     def explode(**_):
         assert False
 
     class TestTable(NoSortTable):
         class Meta:
-            model = Foo
+            model = TFoo
             actions_template = Template('What links')
             header__template = Template('What headers')
             filter__template = Template('What filters')
@@ -1157,7 +1137,7 @@ def test_auto_rowspan_and_render_twice():
 
 def test_render_table_to_response():
     class TestTable(NoSortTable):
-        foo = Column(display_name="Bar")
+        foo = Column(display_name="TBar")
 
     data = [Struct(foo="foo")]
 
@@ -1177,10 +1157,10 @@ def test_default_formatters():
 
     register_cell_formatter(SomeType, lambda value, **_: 'sentinel')
 
-    assert Foo.objects.all().count() == 0
+    assert TFoo.objects.all().count() == 0
 
-    Foo(a=1, b="3").save()
-    Foo(a=2, b="5").save()
+    TFoo(a=1, b="3").save()
+    TFoo(a=2, b="5").save()
 
     data = [
         Struct(foo=1),
@@ -1188,7 +1168,7 @@ def test_default_formatters():
         Struct(foo=False),
         Struct(foo=[1, 2, 3]),
         Struct(foo=SomeType()),
-        Struct(foo=Foo.objects.all()),
+        Struct(foo=TFoo.objects.all()),
         Struct(foo=None),
     ]
 
@@ -1238,45 +1218,45 @@ def test_default_formatters():
 
 @pytest.mark.django_db
 def test_choice_queryset():
-    assert Foo.objects.all().count() == 0
+    assert TFoo.objects.all().count() == 0
 
-    Foo.objects.create(a=1)
-    Foo.objects.create(a=2)
+    TFoo.objects.create(a=1)
+    TFoo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: Foo.objects.filter(a=1))
+        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: TFoo.objects.filter(a=1))
 
         class Meta:
-            model = Foo
+            model = TFoo
 
-    foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table = FooTable(data=TFoo.objects.all(), request=RequestFactory().get("/", ''))
 
-    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(Foo.objects.filter(a=1))
-    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(Foo.objects.filter(a=1))
+    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
 
 
 @pytest.mark.django_db
 def test_multi_choice_queryset():
-    assert Foo.objects.all().count() == 0
+    assert TFoo.objects.all().count() == 0
 
-    Foo.objects.create(a=1)
-    Foo.objects.create(a=2)
-    Foo.objects.create(a=3)
-    Foo.objects.create(a=4)
+    TFoo.objects.create(a=1)
+    TFoo.objects.create(a=2)
+    TFoo.objects.create(a=3)
+    TFoo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: Foo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: TFoo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
-            model = Foo
+            model = TFoo
 
-    foo_table = FooTable(data=Foo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table = FooTable(data=TFoo.objects.all(), request=RequestFactory().get("/", ''))
     foo_table.prepare()
 
-    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(Foo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
 
 
 @pytest.mark.django_db
@@ -1291,7 +1271,7 @@ def test_query_namespace_inject():
     with pytest.raises(FooException):
         foo = Table(
             data=[],
-            model=Foo,
+            model=TFoo,
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
             columns=[Column(name='a', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
@@ -1337,7 +1317,7 @@ def test_backwards_compatible_call_target():
         a = Column(query__show=True, query__gui__show=True, query__gui=backwards_compatible_call_target)
 
     with pytest.raises(Exception) as e:
-        t = FooTable(data=[], model=Foo)
+        t = FooTable(data=[], model=TFoo)
         t.query.form()
 
     assert 'Hello!' == str(e.value)
@@ -1377,8 +1357,8 @@ def test_row_extra_struct():
 
 def test_from_model():
     t = Table.from_model(
-        model=Foo,
-        data=Foo.objects.all(),
+        model=TFoo,
+        data=TFoo.objects.all(),
         column__a__display_name='Some a',
         column__a__extra__stuff='Some stuff',
     )
@@ -1390,7 +1370,7 @@ def test_from_model():
 
 def test_from_model_foreign_key():
     t = Table.from_model(
-        model=Bar,
+        model=TBar,
     )
     assert [x.name for x in t.columns] == ['id', 'foo', 'c']
     assert [x.name for x in t.columns if x.show] == ['foo', 'c']
@@ -1403,16 +1383,16 @@ class AjaxRequestFactory(RequestFactory):
 
 @pytest.mark.django_db
 def test_ajax_endpoint():
-    f1 = Foo.objects.create(a=17, b="Hej")
-    f2 = Foo.objects.create(a=42, b="Hopp")
+    f1 = TFoo.objects.create(a=17, b="Hej")
+    f2 = TFoo.objects.create(a=42, b="Hopp")
 
-    Bar(foo=f1, c=True).save()
-    Bar(foo=f2, c=False).save()
+    TBar(foo=f1, c=True).save()
+    TBar(foo=f2, c=False).save()
 
     class TestTable(Table):
         foo = Column.choice_queryset(
-            model=Foo,
-            choices=lambda table, column, **_: Foo.objects.all(),
+            model=TFoo,
+            choices=lambda table, column, **_: TFoo.objects.all(),
             query__gui__extra__endpoint_attr='b',
             query__show=True,
             bulk__show=True,
@@ -1420,7 +1400,7 @@ def test_ajax_endpoint():
 
     result = render_table(
         request=AjaxRequestFactory().get("/", {'/query/gui/field/foo': 'hopp'}),
-        table=TestTable(data=Bar.objects.all()),
+        table=TestTable(data=TBar.objects.all()),
     )
     assert json.loads(result.content.decode('utf8')) == {
         'more': False,
@@ -1543,35 +1523,35 @@ def test_repr():
 
 @pytest.mark.django_db
 def test_ordering():
-    Foo.objects.create(a=1, b='d')
-    Foo.objects.create(a=2, b='c')
-    Foo.objects.create(a=3, b='b')
-    Foo.objects.create(a=4, b='a')
+    TFoo.objects.create(a=1, b='d')
+    TFoo.objects.create(a=2, b='c')
+    TFoo.objects.create(a=3, b='b')
+    TFoo.objects.create(a=4, b='a')
 
     # no ordering
-    t = Table.from_model(model=Foo, request=RequestFactory().get('/'))
+    t = Table.from_model(model=TFoo, request=RequestFactory().get('/'))
     t.prepare()
     assert not t.data.query.order_by
 
     # ordering from GET parameter
-    t = Table.from_model(model=Foo, request=RequestFactory().get('/', dict(order='a')))
+    t = Table.from_model(model=TFoo, request=RequestFactory().get('/', dict(order='a')))
     t.prepare()
     assert list(t.data.query.order_by) == ['a']
 
     # default ordering
-    t = Table.from_model(model=Foo, default_sort_order='b', request=RequestFactory().get('/'))
+    t = Table.from_model(model=TFoo, default_sort_order='b', request=RequestFactory().get('/'))
     t.prepare()
     assert list(t.data.query.order_by) == ['b']
 
 
 @pytest.mark.django_db
 def test_many_to_many():
-    f1 = Foo.objects.create(a=17, b="Hej")
-    f2 = Foo.objects.create(a=23, b="Hopp")
+    f1 = TFoo.objects.create(a=17, b="Hej")
+    f2 = TFoo.objects.create(a=23, b="Hopp")
 
-    baz = Baz.objects.create()
-    f1.baz_set.add(baz)
-    f2.baz_set.add(baz)
+    baz = TBaz.objects.create()
+    f1.tbaz_set.add(baz)
+    f2.tbaz_set.add(baz)
 
     expected_html = """
 <table class="listview">
@@ -1594,12 +1574,12 @@ def test_many_to_many():
 </table>
 """
 
-    verify_table_html(expected_html=expected_html, table__model=Baz)
+    verify_table_html(expected_html=expected_html, table__model=TBaz)
 
 
 @pytest.mark.django_db
 def test_preprocess_row():
-    Foo.objects.create(a=1, b='d')
+    TFoo.objects.create(a=1, b='d')
 
     def preprocess(table, row, **_):
         del table
@@ -1611,7 +1591,7 @@ def test_preprocess_row():
 
         class Meta:
             preprocess_row = preprocess
-            data = Foo.objects.all().order_by('pk')
+            data = TFoo.objects.all().order_by('pk')
 
     expected_html = """
     <table class="listview">
@@ -1639,7 +1619,7 @@ def test_preprocess_row():
 
 @pytest.mark.django_db
 def test_yield_rows():
-    f = Foo.objects.create(a=3, b='d')
+    f = TFoo.objects.create(a=3, b='d')
 
     def my_preprocess_data(data, **kwargs):
         for row in data:
@@ -1652,7 +1632,7 @@ def test_yield_rows():
         class Meta:
             preprocess_data = my_preprocess_data
 
-    results = list(MyTable(data=Foo.objects.all()))
+    results = list(MyTable(data=TFoo.objects.all()))
     assert len(results) == 2
     assert results[0].row == f
     assert results[1].row == Struct(a=15)
@@ -1664,7 +1644,7 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
         c = Column(attr=None, query__show=True, query__gui__show=True)
 
         class Meta:
-            model = Foo
+            model = TFoo
 
     table = MyTable(request=RequestFactory().get("/", ''))
     table.prepare()
