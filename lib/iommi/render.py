@@ -1,4 +1,4 @@
-from tri_form.compat import mark_safe
+from iommi._web_compat import mark_safe
 
 
 def render_attrs(attrs):

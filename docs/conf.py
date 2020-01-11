@@ -28,13 +28,22 @@ project_root = os.path.dirname(cwd)
 # version is used.
 sys.path.insert(0, project_root)
 
-import tri_table
-import tri_query
-import tri_form
+import iommi
 
 from tri_declarative import generate_rst_docs
 
-generate_rst_docs('.', [tri_table.Table, tri_table.Column, tri_query.Query, tri_query.Variable, tri_form.Form, tri_form.Field, tri_form.Action], (tri_form.MISSING, tri_query.MISSING))
+generate_rst_docs(
+    '.',
+    [
+        iommi.Table,
+        iommi.Column,
+        iommi.Query,
+        iommi.Variable,
+        iommi.Form,
+        iommi.Field,
+        iommi.Action,
+    ],
+    (iommi.MISSING, ))
 
 # -- General configuration -----------------------------------------------------
 

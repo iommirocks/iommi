@@ -52,7 +52,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from tri_form.compat import (
+from iommi._web_compat import (
     field_defaults_factory,
     format_html,
     get_template_from_string,
@@ -65,9 +65,9 @@ from tri_form.compat import (
     ValidationError,
     Template,
     mark_safe,
+    HttpResponse,
 )
-from tri_form.render import render_attrs
-from .compat import HttpResponse
+from iommi.render import render_attrs
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True

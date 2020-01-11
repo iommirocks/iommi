@@ -48,13 +48,13 @@ from tri_declarative import (
     sort_after,
     with_meta,
 )
-from tri_form import (
+from iommi import Form
+from iommi.form import (
     bool_parse,
     create_members_from_model,
     DISPATCH_PATH_SEPARATOR,
     dispatch_prefix_and_remaining_from_key,
     expand_member,
-    Form,
     member_from_model,
 )
 

@@ -33,7 +33,7 @@ try:
         @type context: dict
         """
         import six
-        from tri_form.compat import Template
+        from iommi._web_compat import Template
         if template is None:
             return ''
         elif isinstance(template, six.string_types):
