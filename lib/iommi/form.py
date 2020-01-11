@@ -43,10 +43,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi._db_compat import (
-    field_defaults_factory,
-    setup_db_compat,
-)
+from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
     format_html,
     get_template_from_string,

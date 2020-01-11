@@ -82,7 +82,6 @@ from tri_struct import (
     merged,
 )
 
-from iommi._db_compat import setup_db_compat
 
 LAST = LAST
 

@@ -8,5 +8,6 @@ from iommi.query import Variable
 from iommi.form import Form
 from iommi.form import Field
 from iommi.form import Action
+from iommi.form import MISSING
 
 setup_db_compat()

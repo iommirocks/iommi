@@ -51,7 +51,7 @@ from iommi.form import (
     dispatch_prefix_and_remaining_from_key,
     expand_member,
     member_from_model,
-)
+    MISSING)
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -118,9 +118,6 @@ def value_to_query_string_value_string(variable, v):
                     " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
             )
     return to_string_surrounded_by_quote(v)
-
-
-MISSING = object()
 
 
 def case_sensitive_op_to_q_op(op):

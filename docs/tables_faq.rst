@@ -24,7 +24,7 @@ Specify :code:`paginate_by=None`:
 
     Table.from_model(
         model=Foo,
-        paginate_by=None,
+        page_size=None,
     )
 
 .. code:: python
@@ -33,13 +33,13 @@ Specify :code:`paginate_by=None`:
         a = Column()
 
         class Meta:
-            paginate_by = None
+            page_size = None
 
 
 .. _How do I create a column based on computed data?:
 
-How do I create a column based on computed data (aka a column not based on an attribute of the row)?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's say we have a model like this:
 
@@ -101,13 +101,13 @@ By default the columns come in the order defined so if you have an explicit tabl
         b = models.IntegerField()
         c = models.IntegerField()
 
-If we just do :code:`Table.from_model(model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the :code:`after` value -1:
+If we just do :code:`Table.from_model(model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the :code:`after` value :code:`-1`:
 
 .. code:: python
 
     Table.from_model(model=Foo, column__c__after=-1)
 
--1 means the first, other numbers mean index. We can also put columns after another named column like so:
+:code:`-1` means the first, other numbers mean index. We can also put columns after another named column like so:
 
 .. code:: python
 
@@ -371,6 +371,6 @@ If you want to filter based on a freetext query on one or more columns we've got
 What is the difference between `attr` and `name`?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:code:`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to None to not read any attribute from the row.
+:code:`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use :code:`__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to :code:`None` to not read any attribute from the row.
 
 :code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.column_by_name` and it's the name used in the GET parameter to sort by that column. This is a required field.
