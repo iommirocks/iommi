@@ -1,6 +1,39 @@
 Architecture overview
 =====================
 
+iommi follows a design philosophy that adds a few rules on top of the Zen of python.
+
+* Things that are similar should look similar, things that are different should look different
+* Things that are connected should be close, things that are separate should be apart.
+* Layers should be layered.
+* Everything needs a name, so we can reference it for customization.
+* Traversing a namespace is done with :code:`__` when :code:`.` can't be used in normal python syntax.
+* Every place you can place a value, you should be able to place a lambda.
+* Late evaluation is preferred. Sometimes we can avoid work, and sometimes it enables better customization.
+* You should be able to use a declarative or a programmatic style as fits the need.
+* Strong and reasonable defaults, but full ability to customize those defaults.
+
+
+Design goal
+-----------
+
+We want it to be possible always to create higher abstractions where you can use those
+abstractions but tweaked *without having to change the abstraction to enable this*. If
+you have code that create a complex page with tables, forms, and help text fragments in
+several places, then you should be able to reuse that but with a single line of code
+change to change a single small detail of that page.
+
+In standard APIs you often have to
+copy paste the entire page and make a small change. This hides the difference between
+the two pages because you spend 99% of the code to say the same thing. Or alternatively
+you have to pollute the definition of the first page with some super specific option
+that makes that code worse. We want to avoid both these scenarios.
+
+In short we want to be able to have code that reads like:
+
+    It's like that one, but different like this.
+
+
 Declarative/programmatic hybrid API
 -----------------------------------
 
