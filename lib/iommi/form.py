@@ -8,7 +8,7 @@ from typing import (
     Tuple,
     Callable,
     Any,
-)
+    Optional, Set)
 
 from collections import OrderedDict
 from datetime import datetime
@@ -264,21 +264,20 @@ def expand_member(cls, model, factory_lookup, defaults_factory, name, field, fie
     return [x for x in result if x is not None]
 
 
-def default_endpoint__config(field, key, value, **_):
-    # type: (Field, str, str) -> dict
+def default_endpoint__config(field: 'Field', key: str, value: str, **_) -> dict:
     return dict(
         name=field.name,
     )
 
 
-def default_endpoint__validate(field, key, value, **_):
+def default_endpoint__validate(field: 'Field', key: str, value, **_) -> dict:
     return dict(
         valid=not bool(field.errors),
         errors=list(field.errors),
     )
 
 
-def float_parse(string_value, **_):
+def float_parse(string_value: str, **_):
     try:
         return float(string_value)
     except ValueError:
@@ -623,6 +622,13 @@ def group_actions(actions: Dict[str, Action]):
 class Field(RefinableObject):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
+
+    The life cycle of the data is:
+        1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
+        2. parsed_data/parsed_data_list: set if parsing is successful, which only happens if the previous step succeeded
+        3. value/value_list: set if validation is successful, which only happens if the previous step succeeded
+
+    The variables *_list should be used if the input is a list.
     """
 
     name = Refinable()
@@ -760,27 +766,23 @@ class Field(RefinableObject):
 
     @staticmethod
     @refinable
-    def is_valid(form, field, parsed_data):
-        # type: (Form, Field, object) -> (bool, str)
+    def is_valid(form: 'Form', field: 'Field', parsed_data: Any) -> Tuple[bool, str]:
         return True, ''
 
     @staticmethod
     @refinable
-    def parse(form, field, string_value, **_):
-        # type: (Form, Field, str, **_) -> object
+    def parse(form: 'Form', field: 'Field', string_value: str, **_) -> Any:
         del form, field
         return string_value
 
     @staticmethod
     @refinable
-    def post_validation(form, field, **_):
-        # type: (Form, Field, **_) -> None
+    def post_validation(form: 'Form', field: 'Field', **_) -> None:
         pass
 
     @staticmethod
     @refinable
-    def render_value(form, field, value):
-        # type: (Form, Field, object) -> str
+    def render_value(form: 'Form', field: 'Field', value: Any) -> str:
         return "%s" % value if value is not None else ''
 
     @staticmethod
@@ -806,38 +808,25 @@ class Field(RefinableObject):
 
     @staticmethod
     @refinable
-    def read_from_instance(field, instance):
-        # type: (Field, object) -> None
+    def read_from_instance(field: 'Field', instance: Any) -> Any:
         return getattr_path(instance, field.attr)
 
     @staticmethod
     @refinable
-    def write_to_instance(field, instance, value):
-        # type: (Field, object, object) -> None
+    def write_to_instance(field: 'Field', instance: Any, value: Any) -> None:
         setattr_path(instance, field.attr, value)
 
     @staticmethod
     @refinable
-    def endpoint_dispatch(field, key, **kwargs):
+    def endpoint_dispatch(field: 'Field', key: str, **kwargs):
         prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
 
         endpoint = field.endpoint.get(prefix, None)
         if endpoint is not None:
             return endpoint(field=field, key=remaining_key, **kwargs)
 
-    """
-    An internal class that is used to handle the mutable data used during parsing and validation of a Field.
-
-    The life cycle of the data is:
-        1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
-        2. parsed_data/parsed_data_list: set if parsing is successful, which only happens if the previous step succeeded
-        3. value/value_list: set if validation is successful, which only happens if the previous step succeeded
-
-    The variables *_list should be used if the input is a list.
-    """
-
     def _bind(self, form):
-        bound_field = copy.copy(self)  # type: Field
+        bound_field: Field = copy.copy(self)
 
         if bound_field.attr is MISSING:
             bound_field.attr = bound_field.name
@@ -1312,14 +1301,10 @@ class Form(RefinableObject):
 
     model = Refinable()
     """ :type: django.db.models.Model """
-    endpoint_dispatch_prefix = Refinable()
-    """ :type: str """
-    endpoint = Refinable()
-    """ :type: tri.declarative.Namespace """
-    extra = Refinable()
-    """ :type: tri.declarative.Namespace """
-    base_template = Refinable()
-    """ :type: str """
+    endpoint_dispatch_prefix: str = Refinable()
+    endpoint: Namespace = Refinable()
+    extra: Namespace = Refinable()
+    base_template: str = Refinable()
     member_class = Refinable()
 
     class Meta:
@@ -1338,12 +1323,7 @@ class Form(RefinableObject):
         actions__submit__call_target=Action.submit,
         actions_template='iommi/form/actions.html',
     )
-    def __init__(self, request=None, *, data=None, instance=None, fields=None, fields_dict=None, actions=None, field, **kwargs):
-        """
-        :type fields: list of Field
-        :type data: dict[basestring, any]
-        :type model: django.db.models.Model
-        """
+    def __init__(self, request=None, *, data: Dict[str, Any] = None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
         self.request = request
 
         super(Form, self).__init__(field=field, **kwargs)
@@ -1377,8 +1357,7 @@ class Form(RefinableObject):
                 )
                 yield field_spec()
 
-        self.declared_fields = sort_after([f._bind(self) for f in unbound_fields()])
-        """ :type: list of Field"""
+        self.declared_fields: List[Field] = sort_after([f._bind(self) for f in unbound_fields()])
 
         self.mode = INITIALS_FROM_GET
         if request:
@@ -1392,8 +1371,7 @@ class Form(RefinableObject):
         self.fields_by_name = None
         """ :type: Struct[str, Field] """
         self.style = None
-        self.errors = set()
-        """ :type: set of str """
+        self.errors: Set[str] = set()
         self._valid = None
         self.instance = instance
 
@@ -1638,12 +1616,7 @@ class Form(RefinableObject):
     def table_property(self):
         return self.table()
 
-    def render(self, style='compact', template_name='iommi/form/form.html'):
-        """
-        :type style: str| unicode
-        :type template_name: str | unicode | None
-        """
-
+    def render(self, style: str = 'compact', template_name: Optional[str] = 'iommi/form/form.html'):
         self.style = style
         r = []
         for field in self.fields:

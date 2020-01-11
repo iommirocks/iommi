@@ -11,7 +11,8 @@ from typing import (
     Dict,
     List,
     Union,
-)
+    Any,
+    Optional, Iterable, Type)
 
 from django.conf import settings
 from django.core.paginator import (
@@ -227,23 +228,23 @@ class Column(RefinableObject):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
-    name = Refinable()
-    after = Refinable()
-    url = Refinable()
-    show = Refinable()
-    sort_default_desc = Refinable()
-    sortable = Refinable()
-    group = Refinable()
-    auto_rowspan = Refinable()
-    cell = Refinable()
+    name: str = Refinable()
+    after: Union[int, str] = Refinable()
+    url: str = Refinable()
+    show: bool = Refinable()
+    sort_default_desc: bool = Refinable()
+    sortable: bool = Refinable()
+    group: Optional[str] = Refinable()
+    auto_rowspan: bool = Refinable()
+    cell: Namespace = Refinable()
     model = Refinable()
     model_field = Refinable()
-    choices = Refinable()
-    bulk = Refinable()
-    query = Refinable()
-    extra = Refinable()
+    choices: Iterable = Refinable()
+    bulk: Namespace = Refinable()
+    query: Namespace = Refinable()
+    extra: Namespace = Refinable()
     superheader = Refinable()
-    header = Refinable()
+    header: Namespace = Refinable()
     data_retrieval_method = Refinable()
 
     @dispatch(
@@ -699,10 +700,8 @@ class BoundRow(object):
         extra=EMPTY,
     )
     def __init__(self, table, row, row_index, template, attrs, extra):
-        self.table = table
-        """ :type : Table """
-        self.row = row
-        """ :type : object """
+        self.table: Table = table
+        self.row: Any = row
         self.row_index = row_index
         self.template = template
         self.attrs = attrs
@@ -876,17 +875,17 @@ class Table(RefinableObject):
     attrs = Refinable()
     template: Union[str, Template] = Refinable()
     row = Refinable()
-    filter = Refinable()
+    filter: Namespace = Refinable()
     header = Refinable()
-    model = Refinable()
+    model: Type['django.db.models.Model'] = Refinable()
     column = Refinable()
-    bulk = Refinable()
+    bulk: Namespace = Refinable()
     endpoint_dispatch_prefix = Refinable()
     extra: Namespace = Refinable()
     endpoint = Refinable()
-    superheader = Refinable()
+    superheader: Namespace = Refinable()
     paginator: Namespace = Refinable()
-    page_size = Refinable()
+    page_size: int = Refinable()
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
@@ -980,8 +979,7 @@ class Table(RefinableObject):
 
         self.data = data
         self.request = request
-        self.columns = columns
-        """ :type : list of Column """
+        self.columns: List[Column] = columns
 
         self.instance = instance
 
@@ -1168,8 +1166,7 @@ class Table(RefinableObject):
         return self._query_form
 
     @property
-    def query_error(self):
-        """ :rtype : list of str """
+    def query_error(self) -> List[str]:
         self.prepare()
         return self._query_error
 
@@ -1179,20 +1176,17 @@ class Table(RefinableObject):
         return self._bulk_form
 
     @property
-    def bound_columns(self):
-        """ :rtype : list of Column """
+    def bound_columns(self) -> List[Column]:
         self.prepare()
         return self._bound_columns
 
     @property
-    def shown_bound_columns(self):
-        """ :rtype : list of Column """
+    def shown_bound_columns(self) -> List[Column]:
         self.prepare()
         return self._shown_bound_columns
 
     @property
-    def bound_column_by_name(self):
-        """ :rtype: dict[str, Column] """
+    def bound_column_by_name(self) -> Dict[str, Column]:
         self.prepare()
         return self._bound_column_by_name
 
@@ -1512,10 +1506,6 @@ def render_table(request,
     :param request: the request object. This is set on the table object so that it is available for lambda expressions.
     :param table: an instance of Table
     :param context: dict of extra context parameters
-    :param template: if you need to render the table differently you can override this parameter with either a name of a template to load or a `Template` instance.
-    :param blank_on_empty: turn off the displaying of `{{ empty_message }}` in the template when the list is empty
-    :param show_hits: Display how many items there are total in the paginator.
-    :param hit_label: Label for the show_hits display.
     :return: a string with the rendered HTML table
     """
     if not context:

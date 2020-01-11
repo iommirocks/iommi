@@ -2,6 +2,8 @@ import copy
 import operator
 from collections import OrderedDict
 from datetime import date
+from typing import List, Dict
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import (
     F,
@@ -183,8 +185,7 @@ class Variable(RefinableObject):
 
         super(Variable, self).__init__(**kwargs)
 
-        self.query = None
-        """ :type: Query """
+        self.query: Query = None
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -207,8 +208,7 @@ class Variable(RefinableObject):
 
     @staticmethod
     @refinable
-    def op_to_q_op(op):
-        """ :type: (unicode) -> Q """
+    def op_to_q_op(op: str) -> Q:
         return Q_OP_BY_OP[op]
 
     @staticmethod
@@ -461,12 +461,9 @@ class Query(RefinableObject):
         query_set = Car.objects.filter(CarQuery(request=request).to_q())
     """
 
-    gui = Refinable()
-    """ :type: tri.declarative.Namespace """
-    endpoint_dispatch_prefix = Refinable()
-    """ :type: str """
-    endpoint = Refinable()
-    """ :type: tri.declarative.Namespace """
+    gui: Namespace = Refinable()
+    endpoint_dispatch_prefix: str = Refinable()
+    endpoint: Namespace = Refinable()
 
     member_class = Refinable()
     form_class = Refinable()
@@ -490,11 +487,9 @@ class Query(RefinableObject):
             gui__call_target=self.get_meta().form_class,
         )
 
-        self.variables = []
-        """ :type: list of Variable """
-        self.bound_variables = []
-        """ :type: list of BoundVariable """
-        self.bound_variable_by_name = {}
+        self.variables: List[Variable] = []
+        self.bound_variables: List[Variable] = []
+        self.bound_variable_by_name: Dict[str, Variable] = {}
 
         self.request = request
         self.data = data
@@ -518,11 +513,7 @@ class Query(RefinableObject):
 
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
 
-    def parse(self, query_string):
-        """
-        :type query_string: str | unicode
-        :rtype: Q
-        """
+    def parse(self, query_string: str) -> Q:
         query_string = query_string.strip()
         if not query_string:
             return Q()
@@ -533,10 +524,7 @@ class Query(RefinableObject):
             raise QueryException('Invalid syntax for query')
         return self.compile(tokens)
 
-    def compile(self, tokens):
-        """
-        :rtype: Q
-        """
+    def compile(self, tokens) -> Q:
         items = []
         for token in tokens:
             if isinstance(token, ParseResults):
