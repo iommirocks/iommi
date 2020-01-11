@@ -5,16 +5,27 @@ from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 
-from .models import Foo, Bar
 from iommi.form import Form, Field, choice_parse
 from iommi.views import create_object, edit_object
 from iommi import Action
+from iommi.table import Table, render_table_to_response, Column
+from .models import Bar, Foo, TFoo, TBar
 
-for i in range(100 - Foo.objects.count()):
-    Foo.objects.create(name=f'X{i}', a=i, b=True)
+
+def ensure_objects():
+    for i in range(100 - Foo.objects.count()):
+        Foo.objects.create(name=f'X{i}', a=i, b=True)
 
 
 def index(request):
+    return HttpResponse(
+        """<html><body>
+        <a href="form/">form examples</a><br/>
+        <a href="table/">table examples</a><br/>
+        </body></html>""")
+
+
+def form_index(request):
     return HttpResponse(
         """<html><body>
         <a href="example_1/">Example 1</a><br/>
@@ -26,11 +37,11 @@ def index(request):
         </body></html>""")
 
 
-def style(request):
+def form_style(request):
     return HttpResponse(open(join(dirname(dirname(dirname(abspath(__file__)))), 'form.css')).read())
 
 
-def example_1(request):
+def form_example_1(request):
     class MyForm(Form):
         foo = Field()
         bar = Field()
@@ -58,27 +69,31 @@ def example_1(request):
         message))
 
 
-def example_2(request):
+def form_example_2(request):
+    ensure_objects()
     return create_object(request, model=Foo)
 
 
-def example_3(request):
+def form_example_3(request):
+    ensure_objects()
     return edit_object(request, instance=Foo.objects.all().first())
 
 
-def example_4(request):
+def form_example_4(request):
+    ensure_objects()
     return edit_object(
         request,
         instance=Foo.objects.all().first(),
         form__actions=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
-            back=Action(title='Back to index', attrs__href='/'),
+            back=Action(display_name='Back to index', attrs__href='/'),
         )
     )
 
 
-def example_5(request):
+def form_example_5(request):
+    ensure_objects()
     return create_object(
         request,
         model=Bar,
@@ -87,7 +102,7 @@ def example_5(request):
         form__actions=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
-            back=Action(title='Back to index', attrs__href='/'),
+            back=Action(display_name='Back to index', attrs__href='/'),
         )
     )
 
@@ -113,7 +128,8 @@ class SinkForm(Form):
     foo = Field()
 
 
-def kitchen(request):
+def form_kitchen(request):
+    ensure_objects()
     kitchen_form = KitchenForm(request)
     sink_form = SinkForm(request)
     sink_form2 = SinkForm(request, name='sinkform2')
@@ -145,11 +161,7 @@ def kitchen(request):
         sink_form2.render()))
 
 
-from .models import Bar, Foo
-from iommi.table import Table, render_table_to_response, Column
-
-
-def index(request):
+def table_index(request):
     return HttpResponse(
         """<html><body>
         <a href="readme_example_1/">Example 1 from the README</a><br/>
@@ -158,11 +170,11 @@ def index(request):
         </body></html>""")
 
 
-def style(request):
+def table_style(request):
     return HttpResponse(open(join(dirname(dirname(dirname(abspath(__file__)))), 'table.css')).read())
 
 
-def readme_example_1(request):
+def table_readme_example_1(request):
     # Say I have a class...
     class Foo(object):
         def __init__(self, i):
@@ -180,19 +192,22 @@ def readme_example_1(request):
         c = Column(cell__format=lambda table, column, row, value, **_: value[-1])  # Display the last value of the tuple
         sum_c = Column(cell__value=lambda table, column, row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
+        class Meta:
+            template = 'base.html'
+
     # now to get an HTML table:
-    return render_table_to_response(request, table=FooTable(data=foos), template='base.html')
+    return render_table_to_response(request, table=FooTable(data=foos))
 
 
 def fill_dummy_data():
     if not Bar.objects.all():
         # Fill in some dummy data if none exists
         for i in range(200):
-            f = Foo.objects.create(a=i, name='Foo: %s' % i)
-            Bar.objects.create(b=f, c='foo%s' % (i % 3))
+            f = TFoo.objects.create(a=i, name='Foo: %s' % i)
+            TBar.objects.create(b=f, c='foo%s' % (i % 3))
 
 
-def readme_example_2(request):
+def table_readme_example_2(request):
     fill_dummy_data()
 
     class BarTable(Table):
@@ -208,7 +223,7 @@ def readme_example_2(request):
     return render_table_to_response(request, table=BarTable(data=Bar.objects.all()), template='base.html', paginate_by=20)
 
 
-def kitchen_sink(request):
+def table_kitchen_sink(request):
     fill_dummy_data()
 
     class BarTable(Table):
@@ -216,8 +231,8 @@ def kitchen_sink(request):
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
         b = Column.choice_queryset(
             show=False,
-            choices=Foo.objects.all(),
-            model=Foo,
+            choices=TFoo.objects.all(),
+            model=TFoo,
             bulk__show=True,
             query__show=True,
             query__gui__show=True,
@@ -225,9 +240,8 @@ def kitchen_sink(request):
         c = Column(bulk__show=True)  # The form is created automatically
 
         d = Column(display_name='Display name',
-                   css_class={'css_class'},
+                   attr__class__css_class=True,
                    url='url',
-                   title='title',
                    sortable=False,
                    group='Foo',
                    auto_rowspan=True,
@@ -245,5 +259,7 @@ def kitchen_sink(request):
         class Meta:
             name = 'bar'
             model = Bar
+            template = 'base.html'
+            page_size = 20
 
-    return render_table_to_response(request, table=BarTable(data=Bar.objects.all()), template='base.html', paginate_by=20)
+    return render_table_to_response(request, table=BarTable(data=Bar.objects.all()))

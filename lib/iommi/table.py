@@ -214,7 +214,7 @@ def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
     return conditional_escape(value)
 
 
-SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="tri_table_js_select_all(this)"></i>'
+SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this)"></i>'
 
 
 class DataRetrievalMethods(Enum):
@@ -1159,14 +1159,12 @@ class Table(RefinableObject):
             self.header_levels = [superheaders, subheaders]
 
     @property
-    def query(self):
-        """ :rtype : tri_query.Query """
+    def query(self) -> Query:
         self.prepare()
         return self._query
 
     @property
-    def query_form(self):
-        """ :rtype : tri_form.Form """
+    def query_form(self) -> Form:
         self.prepare()
         return self._query_form
 
@@ -1177,8 +1175,7 @@ class Table(RefinableObject):
         return self._query_error
 
     @property
-    def bulk_form(self):
-        """ :rtype : tri_form.Form """
+    def bulk_form(self) -> Form:
         self.prepare()
         return self._bulk_form
 
@@ -1537,7 +1534,7 @@ def render_table(request,
 
     context['bulk_form'] = table.bulk_form
     context['query_form'] = table.query_form
-    context['tri_query_error'] = table.query_error
+    context['iommi_query_error'] = table.query_error
 
     if table.bulk_form and request.method == 'POST':
         if table.bulk_form.is_valid():

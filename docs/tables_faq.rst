@@ -207,7 +207,7 @@ You can customize headers in two ways:
 
 - You can modify the html attributes via :code:`header__attrs`. See the question on attrs_
 
-- Use :code:`header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object. The default is :code:`tri_table/table_header_rows.html`.
+- Use :code:`header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object. The default is :code:`iommi/table/table_header_rows.html`.
 
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

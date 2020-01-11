@@ -705,8 +705,8 @@ class Query(RefinableObject):
             fields=fields,
             endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
         )
-        form.tri_query = self
-        form.tri_query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
+        form.query = self
+        form.query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
         self._form = form
         return form
 

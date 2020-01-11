@@ -1,35 +1,35 @@
 <div>
-    <a href="#" id="tri_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
+    <a href="#" id="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
 
-    <form id="tri_query_form" class="compact">
+    <form id="iommi_query_form" class="compact">
         <table style="width: 100%">
-            <tr class="tri_query_form_advanced" style="display: none">
+            <tr class="iommi_query_form_advanced" style="display: none">
                 <td><label for="id_query">Search query:</label></td>
             </tr>
             <tr>
                 <td>
-                    <div id="tri_query_form_simple">
+                    <div id="iommi_query_form_simple">
                         {{ form.compact }}
                     </div>
-                    <div class="tri_query_form_advanced" style="display: none">
-                        <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.tri_query_advanced_value }}"/>
+                    <div class="iommi_query_form_advanced" style="display: none">
+                        <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.iommi_query_advanced_value }}"/>
                     </div>
                 </td>
-                <td id="tri_query_toggle_help" style="display: none">
+                <td id="iommi_query_toggle_help" style="display: none">
                     <span>Show help</span> <i class="fa fa-chevron-down"></i>
                 </td>
             </tr>
             <tr>
-                <td id="tri_query_help" style="display: none">
-                    <div class="tri_query_available_fields">
+                <td id="iommi_query_help" style="display: none">
+                    <div class="iommi_query_available_fields">
                         <h3>Available fields</h3>
                         <ul>
-                            {% for variable in form.tri_query.variables %}
+                            {% for variable in form.query.variables %}
                                 <li>{{ variable.name }}</li>
                             {% endfor %}
                         </ul>
                     </div>
-                    <div class="tri_query_available_query_commands">
+                    <div class="iommi_query_available_query_commands">
                         <h3>Queries</h3>
                         <ul>
                             <li>Search for an exact value: field_name=value</li>
@@ -50,31 +50,31 @@
           </ul>
         {% endif %}
 
-        {% if tri_query_error %}
-          <div id="tri_query_error">
-              {{ tri_query_error }}
+        {% if iommi_query_error %}
+          <div id="iommi_query_error">
+              {{ iommi_query_error }}
           </div>
         {% endif %}
 
         <style type="text/css" scoped>
-            .tri_query_available_fields,
-            .tri_query_available_query_commands {
+            .iommi_query_available_fields,
+            .iommi_query_available_query_commands {
                 display: inline-block;
                 vertical-align: top;
                 margin-right: 10px;
             }
-            #tri_query_toggle_help,
-            #tri_query_help {
+            #iommi_query_toggle_help,
+            #iommi_query_help {
                 margin-left: 3px;
             }
-            #tri_query_toggle_help {
+            #iommi_query_toggle_help {
                 cursor: pointer;
                 width: 100px;
             }
-            #tri_query_toggle_simple_mode {
+            #iommi_query_toggle_simple_mode {
                 float: right;
             }
-            #tri_query_error {
+            #iommi_query_error {
                 color: red;
             }
         </style>
@@ -86,9 +86,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         function toggle_simple_advanced() {
-            var toggle_simple_mode = document.getElementById("tri_query_toggle_simple_mode");
-            var simple = document.getElementById("tri_query_form_simple");
-            var adv = document.getElementsByClassName("tri_query_form_advanced");
+            var toggle_simple_mode = document.getElementById("iommi_query_toggle_simple_mode");
+            var simple = document.getElementById("iommi_query_form_simple");
+            var adv = document.getElementsByClassName("iommi_query_form_advanced");
             var q = document.getElementById('id_query');
             if (toggle_simple_mode.getAttribute('data-advanced_mode') === 'simple') {
                 q.value = q.getAttribute('data-query');
@@ -97,7 +97,7 @@
                 adv[1].style.display = '';
                 simple.style.display = 'none';
                 toggle_simple_mode.innerHTML = 'Switch to basic search';
-                document.getElementById('tri_query_toggle_help').style.display = '';
+                document.getElementById('iommi_query_toggle_help').style.display = '';
             }
             else {
                 q.setAttribute('data-query', q.value);
@@ -107,8 +107,8 @@
                 adv[1].style.display = 'none';
                 simple.style.display = '';
                 toggle_simple_mode.innerHTML = 'Switch to advanced search';
-                document.getElementById('tri_query_toggle_help').style.display = 'none';
-                if (document.getElementById('tri_query_help').style.display === '') {
+                document.getElementById('iommi_query_toggle_help').style.display = 'none';
+                if (document.getElementById('iommi_query_help').style.display === '') {
                     toggle_help();
                 }
             }
@@ -116,18 +116,18 @@
         }
 
         function toggle_help() {
-            var icon = document.getElementById('tri_query_toggle_help').querySelector('i');
+            var icon = document.getElementById('iommi_query_toggle_help').querySelector('i');
             if (icon.classList.contains('fa-chevron-down')) {
-                document.getElementById('tri_query_help').style.display = '';
+                document.getElementById('iommi_query_help').style.display = '';
                 icon.classList.remove('fa-chevron-down');
                 icon.classList.add('fa-chevron-up');
-                document.getElementById('tri_query_toggle_help').querySelector('span').innerText = 'Hide help';
+                document.getElementById('iommi_query_toggle_help').querySelector('span').innerText = 'Hide help';
             }
             else {
-                document.getElementById('tri_query_help').style.display = 'none';
+                document.getElementById('iommi_query_help').style.display = 'none';
                 icon.classList.remove('fa-chevron-up');
                 icon.classList.add('fa-chevron-down');
-                document.getElementById('tri_query_toggle_help').querySelector('span').innerText = 'Show help';
+                document.getElementById('iommi_query_toggle_help').querySelector('span').innerText = 'Show help';
             }
         }
 
@@ -135,7 +135,7 @@
             toggle_simple_advanced();
         }
 
-        document.getElementById("tri_query_toggle_simple_mode").addEventListener('click', toggle_simple_advanced);
-        document.getElementById('tri_query_toggle_help').addEventListener('click', toggle_help);
+        document.getElementById("iommi_query_toggle_simple_mode").addEventListener('click', toggle_simple_advanced);
+        document.getElementById('iommi_query_toggle_help').addEventListener('click', toggle_help);
     });
 </script>
