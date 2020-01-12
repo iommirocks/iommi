@@ -26,7 +26,7 @@ Add iommi's page middleware:
 
     MIDDLEWARE = [
         ...
-        'iommi.page_middleware',
+        'iommi.page.middleware',
     ]
 
 

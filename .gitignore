@@ -58,3 +58,4 @@ docs/Link.rst
 # tests
 results/
 .pytest_cache
+coverage.xml

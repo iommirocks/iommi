@@ -80,7 +80,7 @@ def declarative_table():
 def test_render_impl(table):
 
     verify_table_html(table=table, expected_html="""
-        <table class="another_class listview" id="table_id">
+        <table class="another_class listview" data-endpoint="/tbody" id="table_id">
             <thead>
                 <tr>
                     <th class="first_column subheader">
@@ -172,7 +172,7 @@ def test_django_table():
     assert list(t.query_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
 
     verify_table_html(table=t, expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader">
@@ -240,7 +240,7 @@ def test_output():
     ]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview" id="table_id">
+        <table class="listview" data-endpoint="/tbody" id="table_id">
             <thead>
                 <tr>
                     <th class="superheader" colspan="1"> </th>
@@ -280,7 +280,7 @@ def test_name_traversal():
     data = [Struct(foo=Struct(bar="bar"))]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Bar </th>
@@ -307,7 +307,7 @@ def test_name_traversal():
 #     data = [('a', 'b', 'c')]
 #
 #     verify_table_html(TestTable(data=data), """
-#         <table class="listview">
+#         <table class="listview" data-endpoint="/tbody">
 #             <thead>
 #                 <tr>
 #                     <th class="first_column subheader"> A </th>
@@ -336,7 +336,7 @@ def test_name_traversal():
 #     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 #
 #     verify_table_html(TestTable(data=data), """
-#         <table class="listview">
+#         <table class="listview" data-endpoint="/tbody">
 #              <thead>
 #                  <tr>
 #                      <th class="first_column subheader"> A </th>
@@ -366,7 +366,7 @@ def test_display_name():
     data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Bar </th>
@@ -388,7 +388,7 @@ def test_link():
     data = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Foo </th>
@@ -414,7 +414,7 @@ def test_css_class():
     data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-    <table class="listview">
+    <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr>
                 <th class="first_column some_class subheader"> Foo </th>
@@ -435,7 +435,7 @@ def test_header_url():
     data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-    <table class="listview">
+    <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr><th class="first_column subheader">
                 <a href="/some/url"> Foo </a>
@@ -457,7 +457,7 @@ def test_show():
     data = [Struct(foo="foo", bar="bar")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-    <table class="listview">
+    <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
@@ -482,7 +482,7 @@ def test_show_lambda():
     data = [Struct(foo="foo", bar="bar")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-    <table class="listview">
+    <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
@@ -502,7 +502,7 @@ def test_attr():
     data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-    <table class="listview">
+    <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr>
                 <th class="first_column subheader"> Foo </th>
@@ -529,7 +529,7 @@ def test_attrs():
         yada = Column()
 
     verify_table_html(table=TestTable(data=[Struct(yada=1), Struct(yada=2)]), expected_html="""
-        <table class="classy listview" foo="bar">
+        <table class="classy listview" data-endpoint="/tbody" foo="bar">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Yada </th>
@@ -558,7 +558,7 @@ def test_attrs_new_syntax():
         yada = Column()
 
     verify_table_html(table=TestTable(data=[Struct(yada=1), Struct(yada=2)]), expected_html="""
-        <table class="classy listview" foo="bar">
+        <table class="classy listview" data-endpoint="/tbody" foo="bar">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Yada </th>
@@ -595,7 +595,7 @@ def test_column_presets():
                    link=Struct(get_absolute_url=lambda: "http://yadahada/"),
                    number=123)]
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader thin" />
@@ -639,7 +639,7 @@ def test_django_table_pagination():
     verify_table_html(table=TestTable(data=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader"> A </th>
@@ -682,7 +682,7 @@ def test_django_table_pagination_custom_paginator():
         table=TestTable(data=data),
         paginator=CustomPaginator(data),
         expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                     <th class="first_column subheader"> A </th>
@@ -896,7 +896,7 @@ def test_cell_template():
     data = [Struct(foo="sentinel")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -916,7 +916,7 @@ def test_cell_format_escape():
     data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-            <table class="listview">
+            <table class="listview" data-endpoint="/tbody">
                 <thead>
                     <tr><th class="first_column subheader"> Foo </th></tr>
                 </thead>
@@ -938,7 +938,7 @@ def test_cell_format_no_escape():
     data = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-            <table class="listview">
+            <table class="listview" data-endpoint="/tbody">
                 <thead>
                     <tr><th class="first_column subheader"> Foo </th></tr>
                 </thead>
@@ -986,7 +986,7 @@ def test_template_string():
         What filters
         <div class="table-container">
             <form action="." method="post">
-                <table class="listview">
+                <table class="listview" data-endpoint="/tbody">
                     What headers
                     <tbody>
                         Oh, rows: Custom cell: 1
@@ -1012,7 +1012,7 @@ def test_cell_template_string():
     data = [Struct(foo="sentinel")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1034,7 +1034,7 @@ def test_no_header_template():
     data = [Struct(foo="bar")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <tbody>
                 <tr>
                     <td>
@@ -1056,7 +1056,7 @@ def test_row_template():
     data = [Struct(foo="sentinel", bar="schmentinel")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Foo </th>
@@ -1084,7 +1084,7 @@ def test_cell_lambda():
     data = [Struct(sentinel3="sentinel3")]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Sentinel2 </th></tr>
             </thead>
@@ -1110,7 +1110,7 @@ def test_auto_rowspan_and_render_twice():
     ]
 
     expected = """
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1173,7 +1173,7 @@ def test_default_formatters():
     ]
 
     verify_table_html(table=TestTable(data=data), expected_html="""
-        <table class="listview">
+        <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1554,7 +1554,7 @@ def test_many_to_many():
     f2.tbaz_set.add(baz)
 
     expected_html = """
-<table class="listview">
+<table class="listview" data-endpoint="/tbody">
     <thead>
         <tr>
             <th class="first_column subheader">
@@ -1594,7 +1594,7 @@ def test_preprocess_row():
             data = TFoo.objects.all().order_by('pk')
 
     expected_html = """
-    <table class="listview">
+    <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr>
                 <th class="first_column subheader">

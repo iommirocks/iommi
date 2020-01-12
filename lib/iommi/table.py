@@ -53,7 +53,6 @@ from tri_declarative import (
 )
 from iommi.form import (
     Action,
-    DISPATCH_PATH_SEPARATOR,
     Form,
     collect_and_initialize_members,
     create_members_from_model,
@@ -62,6 +61,7 @@ from iommi.form import (
     handle_dispatch,
     member_from_model,
 )
+from iommi.base import DISPATCH_PATH_SEPARATOR, PagePart, group_paths_by_children, path_join
 from iommi.render import (
     render_attrs,
 )
@@ -851,7 +851,7 @@ class Header(object):
 
 @declarative(Column, 'columns_dict')
 @with_meta
-class Table(RefinableObject):
+class Table(RefinableObject, PagePart):
     """
     Describe a table. Example:
 
@@ -881,6 +881,7 @@ class Table(RefinableObject):
     column = Refinable()
     bulk: Namespace = Refinable()
     endpoint_dispatch_prefix = Refinable()
+    default_child = Refinable()
     extra: Namespace = Refinable()
     endpoint = Refinable()
     superheader: Namespace = Refinable()
@@ -896,6 +897,18 @@ class Table(RefinableObject):
         member_class = Column
         form_class = Form
         query_class = Query
+        endpoint__tbody = (lambda table, key, value: {'html': table.render(template='tri_table/table_container.html')})
+        attrs = {'data-endpoint': lambda table, **_: DISPATCH_PATH_SEPARATOR + path_join(table.endpoint_dispatch_prefix, 'tbody')}
+        query__default_child = True
+        query__gui__default_child = True
+
+    @property
+    def children(self):
+        return Struct(
+            query=self.query,
+            bulk=self.bulk,
+            columns=self.bound_column_by_name,  # TODO: should be a PagePart
+        )
 
     @staticmethod
     @refinable
@@ -1436,6 +1449,110 @@ class Table(RefinableObject):
         else:
             pks = [key[len('pk_'):] for key in self.request.POST if key.startswith('pk_')]
             return queryset.filter(pk__in=pks)
+
+    @dispatch(
+        render=render_template,
+        context=EMPTY,
+    )
+    def render_or_respond(self, *, request, context=None, render=None):
+        if not context:
+            context = {}
+
+        table = self
+
+        self.request = request
+
+
+        foo = group_paths_by_children(children=self.children, data=self.request.GET)
+
+
+        should_return, dispatch_result = handle_dispatch(request=request, obj=table)
+        if should_return:
+            return dispatch_result
+
+        context['bulk_form'] = table.bulk_form
+        context['query_form'] = table.query_form
+        context['tri_query_error'] = table.query_error
+
+        if table.bulk_form and request.method == 'POST':
+            if table.bulk_form.is_valid():
+                queryset = table.bulk_queryset()
+
+                updates = {
+                    field.name: field.value
+                    for field in table.bulk_form.fields
+                    if field.value is not None and field.value != '' and field.attr is not None
+                }
+                queryset.update(**updates)
+
+                # TODO: reimplement... make refinable? ugh
+                # post_bulk_edit(table=table, queryset=queryset, updates=updates)
+
+                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+        table.context = table_context(
+            request,
+            table=table,
+            extra_context=context,
+        )
+
+        return render(request=request, template=table.template, context=table.context)
+
+    @classmethod
+    @class_shortcut(
+        part=EMPTY,
+        call_target__attribute='from_model',
+        extra__model_verbose_name=None,
+        extra__title=None,
+    )
+    def as_page(cls, *, call_target=None, model=None, part=None, extra=None, data=None, **kwargs):
+        if model is None and isinstance(data, QuerySet):
+            model = data.model
+
+        if model and extra.model_verbose_name is None:
+            # noinspection PyProtectedMember
+            extra.model_verbose_name = model._meta.verbose_name_plural.replace('_', ' ').capitalize()
+
+        if extra.title is None:
+            extra.title = extra.model_verbose_name
+
+        from iommi.page import (
+            Page,
+            html,
+        )
+        return Page(
+            part__title=html.h1(extra.title, **part.pop('title', {})),
+            part__table=call_target(extra=extra, model=model, **kwargs),
+            part=part
+        )
+
+    def render(self,
+               template=None,
+               context=None,
+               page=None,
+               paginator=None,
+               ):
+
+        if not context:
+            context = {}
+
+        context['bulk_form'] = self.bulk_form
+        context['query_form'] = self.query_form
+        context['tri_query_error'] = self.query_error
+
+        self.context = table_context(
+            self.request,
+            table=self,
+            page=page,
+            extra_context=context,
+            paginator=paginator,
+        )
+
+        if self.query_form and not self.query_form.is_valid():
+            self.data = None
+            self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
+
+        return render_template(self.request, template if template is not None else self.template, self.context)
 
 
 def table_context(request,

@@ -1,5 +1,6 @@
 from tri_struct import Struct
-from iommi.form import handle_dispatch, DISPATCH_PATH_SEPARATOR
+from iommi.form import handle_dispatch
+from iommi.base import DISPATCH_PATH_SEPARATOR
 from .compat import RequestFactory
 
 

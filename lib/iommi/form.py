@@ -20,6 +20,10 @@ from itertools import (
     chain,
     groupby,
 )
+
+from django.http import HttpResponseRedirect
+from django.template.context_processors import csrf
+from iommi.base import MISSING, render_template_name
 from tri_declarative import (
     assert_kwargs_empty,
     class_shortcut,
@@ -58,6 +62,7 @@ from iommi._web_compat import (
     HttpResponse,
 )
 from iommi.render import render_attrs
+from iommi.base import PagePart, DISPATCH_PATH_SEPARATOR
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -69,8 +74,6 @@ def capitalize(s):
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
-
-DISPATCH_PATH_SEPARATOR = '/'
 
 # This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
 # parameters in the request. More specifically, the problem occurs when the checkbox is checked by default,
@@ -129,9 +132,6 @@ _field_factory_by_field_type = OrderedDict()
 
 def register_field_factory(field_class, factory):
     _field_factory_by_field_type[field_class] = factory
-
-
-MISSING = object()
 
 
 @dispatch  # pragma: no mutate
@@ -262,6 +262,42 @@ def expand_member(cls, model, factory_lookup, defaults_factory, name, field, fie
     ]
     assert_kwargs_empty(field)
     return [x for x in result if x is not None]
+
+
+def create_or_edit_object__on_valid_post(*, form):
+    if form.extra.is_create:
+        assert form.instance is None
+        form.instance = form.model()
+        for field in form.fields:  # two phase save for creation in django, have to save main object before related stuff
+            if not field.extra.get('django_related_field', False):
+                form.apply_field(field=field, instance=form.instance)
+
+    try:
+        form.instance.validate_unique()
+    except ValidationError as e:
+        form.errors.update(set(e.messages))
+        form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
+
+    if form.is_valid():
+        if form.extra.is_create:  # two phase save for creation in django...
+            form.instance.save()
+
+        form.apply(form.instance)
+
+        if not form.extra.is_create:
+            try:
+                form.instance.validate_unique()
+            except ValidationError as e:
+                form.errors.update(set(e.messages))
+                form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
+
+        if form.is_valid():
+            form.instance.save()
+
+            form.extra.on_save(form=form, instance=form.instance)
+
+            from iommi.views import create_or_edit_object_redirect
+            return create_or_edit_object_redirect(form.extra.is_create, form.extra.redirect_to, form.request, form.extra.redirect, form)
 
 
 def default_endpoint__config(field: 'Field', key: str, value: str, **_) -> dict:
@@ -1271,7 +1307,7 @@ def collect_and_initialize_members(*, items, cls, **kwargs):
 
 @declarative(Field, 'fields_dict')
 @with_meta
-class Form(RefinableObject):
+class Form(RefinableObject, PagePart):
     """
     Describe a Form. Example:
 
@@ -1306,9 +1342,12 @@ class Form(RefinableObject):
     extra: Namespace = Refinable()
     base_template: str = Refinable()
     member_class = Refinable()
+    default_child = Refinable()
+    template_name = Refinable()
 
     class Meta:
         base_template = 'iommi/form/base.html'
+        template_name = 'iommi/form/form.html'
         member_class = Field
 
     @dispatch(
@@ -1685,7 +1724,92 @@ class Form(RefinableObject):
         )
         return create_or_edit_object(*args, **kwargs)
 
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='from_model',
+        data=None,  # TODO: this is really a bug in tri.form, should not be required
+        extra__model_verbose_name=None,
+        on_valid_post=create_or_edit_object__on_valid_post,
+        on_save=lambda **kwargs: None,  # pragma: no mutate
+        redirect=lambda request, redirect_to, form: HttpResponseRedirect(form.extra.redirect_to),
+        redirect_to=None,
+        part=EMPTY,
+        extra__title=None,
+    )
+    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_valid_post=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
+        if model is None and instance is not None:
+            model = type(instance)
 
-# Backward compatibility
-default_read_from_instance = Field.read_from_instance
-default_write_to_instance = Field.write_to_instance
+        if extra.model_verbose_name is None:
+            assert model, 'If there is no model, you must specify extra__model_verbose_name, so we can create the title; or specify title.'
+            # noinspection PyProtectedMember
+            extra.model_verbose_name = model._meta.verbose_name.replace('_', ' ')
+
+        if extra.title is None:
+            extra.title = '%s %s' % ('Create' if extra.is_create else 'Save', extra.model_verbose_name)
+        extra.on_valid_post = on_valid_post
+        extra.on_save = on_save
+        extra.redirect = redirect
+        extra.redirect_to = redirect_to
+
+        setdefaults_path(
+            kwargs,
+            actions__submit=dict(
+                call_target=Action.submit,
+                attrs__value=extra.title,
+                attrs__name=kwargs['name'],
+            ),
+        )
+
+        from iommi.page import Page
+        from iommi.page import html
+        return Page(
+            part__title=html.h1(extra.title, **part.pop('title', {})),
+            part__form=call_target(extra=extra, model=model, instance=instance, **kwargs),
+            part=part
+        )
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='as_create_or_edit_page',
+        name='create',
+        extra__is_create=True,
+    )
+    def as_create_page(cls, *, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='as_create_or_edit_page',
+        name='edit',
+        extra__is_create=False,
+    )
+    def as_edit_page(cls, *, call_target=None, instance, **kwargs):
+        return call_target(instance=instance, **kwargs)
+
+    @dispatch(
+        render__call_target=render_template_name,
+        context=EMPTY,
+    )
+    def render_or_respond(self, *, request, context=None, render=None):
+        self.set_request_or_data(request=request)
+
+        should_return, dispatch_result = handle_dispatch(request=request, obj=self)
+        if should_return:
+            return dispatch_result
+
+        if self.is_target() and self.is_valid():
+            r = self.extra.on_valid_post(form=self)
+            if r is not None:
+                return r
+
+        setdefaults_path(
+            render,
+            context=context,
+            template_name=self.template_name,
+        )
+
+        render.context.update(csrf(request))
+        render.context['form'] = self
+
+        return render(request=request)

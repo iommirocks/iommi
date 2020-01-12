@@ -49,13 +49,15 @@ from iommi.form import (
     Form,
     bool_parse,
     create_members_from_model,
-    DISPATCH_PATH_SEPARATOR,
     dispatch_prefix_and_remaining_from_key,
     expand_member,
-    member_from_model,
-    MISSING)
+    member_from_model)
+from iommi.base import MISSING
+from iommi.base import DISPATCH_PATH_SEPARATOR
+
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
+from tri_struct import Struct
 
 
 class QueryException(Exception):
@@ -464,6 +466,7 @@ class Query(RefinableObject):
     gui: Namespace = Refinable()
     endpoint_dispatch_prefix: str = Refinable()
     endpoint: Namespace = Refinable()
+    default_child = Refinable()
 
     member_class = Refinable()
     form_class = Refinable()
@@ -471,6 +474,12 @@ class Query(RefinableObject):
     class Meta:
         member_class = Variable
         form_class = Form
+
+    @property
+    def children(self):
+        return Struct(
+            gui=self.gui,
+        )
 
     @dispatch(
         endpoint_dispatch_prefix='query',

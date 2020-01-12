@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup
 from tri_struct import Struct, merged
 
 from tests.test_forms import remove_csrf
-from iommi.form import INITIALS_FROM_GET, DISPATCH_PATH_SEPARATOR
+from iommi.form import INITIALS_FROM_GET
+from iommi.base import DISPATCH_PATH_SEPARATOR
 from iommi.views import create_object, edit_object, create_or_edit_object_redirect
 
 
