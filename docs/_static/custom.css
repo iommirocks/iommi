@@ -10,16 +10,3 @@ div.document {
 pre {
     padding: 7px 15px;
 }
-
-@media
-(-webkit-min-device-pixel-ratio: 2),
-(min-resolution: 192dpi) {
-    .sphinxsidebar p.logo {
-        background: url('../logo2x.png') no-repeat top left;
-        background-size: 200px;
-    }
-
-    .sphinxsidebar img.logo {
-        opacity: 0;
-    }
-}
