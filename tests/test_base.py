@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from bs4 import BeautifulSoup
 from django.db import models
@@ -11,7 +13,7 @@ from iommi.page import (
     Page,
 )
 from iommi.table import Table
-from iommi.base import group_paths_by_children, GroupPathsByChildrenError
+from iommi.base import group_paths_by_children, GroupPathsByChildrenError, find_target, InvalidEndpointPathException
 from tri_struct import Struct
 
 pytestmark = pytest.mark.django_db
@@ -77,7 +79,7 @@ def test_happy_path():
         't2/bar': '4',
     }
 
-    assert group_paths_by_children(children=my_page.children, data=data) == {
+    assert group_paths_by_children(children=my_page.children(), data=data) == {
         't1': {
             'query/gui/foo': '1',
             'bar': '3',
@@ -89,7 +91,7 @@ def test_happy_path():
     }
 
     assert group_paths_by_children(
-        children=my_page.children.t1.children,
+        children=my_page.children().t1.children(),
         data={
             'query/gui/foo': '1',
             'bar': '3',
@@ -102,7 +104,7 @@ def test_happy_path():
     }
 
     assert group_paths_by_children(
-        children=my_page.children.t1.children.query.children,
+        children=my_page.children().t1.children().query.children(),
         data={
             'gui/foo': '1',
             'bar': '3',
@@ -126,18 +128,100 @@ def test_error_message():
     }
 
     with pytest.raises(GroupPathsByChildrenError):
-        group_paths_by_children(children=my_page.children, data=data)
+        group_paths_by_children(children=my_page.children(), data=data)
 
 
 def test_error_message_to_client():
-    my_page = MyPage()
-    my_page.render_or_respond(request=RequestFactory().get('/', data={'/qwe': ''}))
-    # TODO: parse response json, check that it contains an error message
-    assert False
+    from iommi.page import middleware
+
+    def get_response(request):
+        del request
+        return MyPage()
+
+    m = middleware(get_response)
+    done, response = m(request=RequestFactory().get('/', data={'/qwe': ''}))
+    assert done
+    data = json.loads(response.content)
+    assert data == dict(error='Invalid endpoint path')
 
 
 def test_correct_new_style_dispatch():
     assert False
+
+
+def test_find_target():
+    bar = 'bar'
+    foo = Struct(
+        children=lambda: Struct(
+            bar=bar,
+        ),
+    )
+    root = Struct(
+        children=lambda: Struct(
+            foo=foo
+        ),
+    )
+
+    target, parents = find_target(path='/foo/bar', root=root)
+    assert target is bar
+    assert parents == [root, foo]
+
+
+def test_find_target_with_default_child_present():
+    baz = 'baz'
+    bar = Struct(
+        children=lambda: Struct(
+            baz=baz,
+        ),
+        default_child=True,
+    )
+    foo = Struct(
+        children=lambda: Struct(
+            bar=bar,
+        ),
+        default_child=True,
+    )
+    root = Struct(
+        children=lambda: Struct(
+            foo=foo
+        ),
+    )
+
+    # First check the canonical path
+    target, parents = find_target(path='/foo/bar/baz', root=root)
+    assert target is baz
+    assert parents == [root, foo, bar]
+
+    # Then we check the short path using the default_child property
+    target, parents = find_target(path='/baz', root=root)
+    assert target is baz
+    assert parents == [root, foo, bar]
+
+
+def test_find_target_with_invalid_path():
+    bar = 'bar'
+
+    class Foo:
+        def children(self):
+            return Struct(bar=bar)
+
+        def __repr__(self):
+            return 'Foo'
+
+    class Root:
+        def children(self):
+            return Struct(foo=Foo())
+
+        def __repr__(self):
+            return 'Root'
+
+    with pytest.raises(InvalidEndpointPathException) as e:
+        find_target(path='/foo/bar/baz', root=Root())
+
+    assert str(e.value) == """Invalid path /foo/bar/baz.
+bar (of type <class 'str'> has no attribute children so can't be traversed.
+Parents so far: [Root, Foo, 'bar'].
+Path left: baz"""
 
 
 def test_page_constructor():

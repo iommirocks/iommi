@@ -6,35 +6,31 @@ from typing import (
     Optional,
 )
 
-from django.db.models import QuerySet
+from django.conf import settings
 from django.http.response import (
     HttpResponse,
-    HttpResponseRedirect,
-)
-from django.template.context_processors import csrf
+    Http404)
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-from iommi.base import render_template_name, PartType, render_or_respond_part, path_join, NO_ENDPOINT_PREFIX, DISPATCH_PATH_SEPARATOR, PagePart
-from iommi.table import table_context
+from iommi._web_compat import (
+    Template,
+)
+from iommi.base import (
+    PartType,
+    render_or_respond_part,
+    path_join,
+    NO_ENDPOINT_PREFIX,
+    DISPATCH_PATH_SEPARATOR,
+    PagePart,
+    find_target, InvalidEndpointPathException, set_parents)
+from iommi.render import render_attrs
 from tri_declarative import (
     dispatch,
     EMPTY,
     declarative,
     sort_after,
     should_show,
-    setdefaults_path,
     Namespace,
-    class_shortcut,
-    Refinable,
 )
-from iommi.render import render_attrs
-
-from iommi._web_compat import (
-    Template,
-    render_template,
-    ValidationError,
-)
-from iommi.views import create_or_edit_object_redirect
 from tri_struct import Struct
 
 
@@ -87,9 +83,14 @@ class Page(PagePart):
 
         self.parts = Struct({name: p for name, p in parts.items() if should_show(p)})
 
-    @property
+    def __repr__(self):
+        return f'<Page with parts: {list(self.parts.keys())}>'
+
     def children(self):
         return self.parts
+
+    def endpoint_kwargs(self):
+        return dict(page=self)
 
     @dispatch(
         context=EMPTY,
@@ -131,27 +132,27 @@ class Fragment(PagePart):
         self.tag = tag
         self.name = name
         self.show = show
-        self.children = []
+        self._children = []  # TODO: _children to avoid colliding with PageParts children() API. Not nice. We should do something nicer here.
         if child is not None:
-            self.children.append(child)
+            self._children.append(child)
 
-        self.children.extend(children or [])
+        self._children.extend(children or [])
         self.attrs = attrs
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
 
     def render_text_or_children(self, request, context):
         return format_html(
-            '{}' * len(self.children),
+            '{}' * len(self._children),
             *[
                 render_or_respond_part(part=x, request=request, context=context)
-                for x in self.children
+                for x in self._children
             ])
 
     def __getitem__(self, item):
         if isinstance(item, tuple):
-            self.children.extend(item)
+            self._children.extend(item)
         else:
-            self.children.append(item)
+            self._children.append(item)
         return self
 
     def __repr__(self):
@@ -224,14 +225,25 @@ def middleware(get_response):
         response = get_response(request)
         if isinstance(response, Page):
             page = response
+            set_parents(root=page)
+
             dispatch_commands = {key: value for key, value in request.GET.items() if key.startswith(DISPATCH_PATH_SEPARATOR)}
             assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
             if dispatch_commands:
                 dispatch_target, value = next(iter(dispatch_commands.items()))
-                key, obj, kwargs = find_target(path=dispatch_target, root=page)
-                assert parents[''] is page
-                assert parents['t1/query/gui/foo'] is ...
-                data = obj.endpoint_dispatch(key=key, value=value, **kwargs)
+                try:
+                    target, parents = find_target(path=dispatch_target, root=page)
+                except InvalidEndpointPathException:
+                    if not settings.DEBUG:
+                        return True, HttpResponse(json.dumps(dict(error='Invalid endpoint path')), content_type='application/json')
+                    else:
+                        raise
+
+                # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
+                kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
+
+                # TODO: this API should be endpoint(), fix Table.children when this is fixed
+                data = target.endpoint_handler(request=request, value=value, **kwargs)
                 if data is not None:
                     return True, HttpResponse(json.dumps(data), content_type='application/json')
 

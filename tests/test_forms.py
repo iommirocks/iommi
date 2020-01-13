@@ -1421,7 +1421,7 @@ def test_action_render():
 
 
 def test_action_repr():
-    assert repr(Action(display_name='Title', template='test_link_render.html')) == '<Action: Title>'
+    assert repr(Action(name='name', template='test_link_render.html')) == '<Action: name>'
 
 
 def test_action_shortcut_icon():

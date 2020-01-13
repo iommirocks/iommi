@@ -463,6 +463,7 @@ class Query(RefinableObject):
         query_set = Car.objects.filter(CarQuery(request=request).to_q())
     """
 
+    name: str = Refinable()
     gui: Namespace = Refinable()
     endpoint_dispatch_prefix: str = Refinable()
     endpoint: Namespace = Refinable()
@@ -475,13 +476,16 @@ class Query(RefinableObject):
         member_class = Variable
         form_class = Form
 
-    @property
     def children(self):
         return Struct(
-            gui=self.gui,
+            gui=self.form(),
         )
 
+    def endpoint_kwargs(self):
+        return dict(query=self)
+
     @dispatch(
+        name='query',
         endpoint_dispatch_prefix='query',
         endpoint__gui=default_endpoint__gui,
         endpoint__errors=default_endpoint__errors,
@@ -494,6 +498,7 @@ class Query(RefinableObject):
         setdefaults_path(
             kwargs,
             gui__call_target=self.get_meta().form_class,
+            gui__name='gui',
         )
 
         self.variables: List[Variable] = []
@@ -689,6 +694,7 @@ class Query(RefinableObject):
                     variable.gui,
                     name=variable.name,
                     attr=variable.attr,
+                    model_field=variable.model_field,
                     call_target__cls=self.get_meta().form_class.get_meta().member_class
                 )
                 fields.append(params())
@@ -699,8 +705,9 @@ class Query(RefinableObject):
             fields=fields,
             endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
         )
+        form._parent = self
         form.query = self
-        form.query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '')
+        form.query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
         self._form = form
         return form
 
@@ -709,6 +716,10 @@ class Query(RefinableObject):
         Based on the data in the request, return the equivalent query string that you can use with parse() to create a query set.
         """
         form = self.form()
+
+        if self.request is None:
+            return ''
+
         if request_data(self.request).get(ADVANCED_QUERY_PARAM, '').strip():
             return request_data(self.request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():

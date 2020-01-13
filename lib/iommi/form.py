@@ -381,6 +381,27 @@ def choice_queryset__endpoint_dispatch(form, field, key, value):
         return dict(result=[])
 
 
+def choice_queryset__endpoint_handler(*, form, field, value, request, **_):
+    from django.core.paginator import EmptyPage, Paginator
+    form.request = request
+
+    page_size = field.extra.get('endpoint_page_size', 40)
+    page = int(form.request.GET.get('page', 1))
+    choices = field.extra.filter_and_sort(form=form, field=field, value=value)
+    try:
+        paginator = Paginator(choices, page_size)
+        result = paginator.page(page)
+        has_more = result.has_next()
+
+        return dict(
+            results=field.extra.model_from_choices(form, field, result),
+            page=page,
+            more=has_more,
+        )
+    except EmptyPage:
+        return dict(result=[])
+
+
 def choice_queryset__extra__current_selection_json(form, field, **_):
     # Return a function here to make r callable from the template and not be evaluated here
     def result():
@@ -423,6 +444,7 @@ def get_name_field(field):
 
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
+    # TODO: too magical AND wrong. There should be a name registration system for this.
     if 'endpoint_attrs' not in field.extra and 'endpoint_attr' in field.extra:
         attrs = [field.extra.endpoint_attr]
     elif 'endpoint_attrs' in field.extra:
@@ -576,7 +598,7 @@ class Action(RefinableObject):
         return self.render()
 
     def __repr__(self):
-        return f'<Action: {self.display_name}>'
+        return f'<Action: {self.name}>'
 
     @classmethod
     @class_shortcut(
@@ -715,7 +737,8 @@ class Field(RefinableObject):
     empty_choice_tuple = Refinable()
 
     endpoint = Refinable()
-    endpoint_path = Refinable()
+    endpoint_path = Refinable()  # TODO: remove
+    endpoint_handler = Refinable()
 
     @dispatch(
         attr=MISSING,
@@ -799,6 +822,9 @@ class Field(RefinableObject):
         self.value_list = None
 
         self.choice_tuples = None
+
+    def endpoint_kwargs(self):
+        return dict(field=self)
 
     @staticmethod
     @refinable
@@ -1097,6 +1123,7 @@ class Field(RefinableObject):
         choice_to_option=choice_queryset__choice_to_option,
         endpoint_path=choice_queryset__endpoint_path,
         endpoint_dispatch=choice_queryset__endpoint_dispatch,  # Backwards compatible
+        endpoint_handler=choice_queryset__endpoint_handler,
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
@@ -1350,6 +1377,24 @@ class Form(RefinableObject, PagePart):
         template_name = 'iommi/form/form.html'
         member_class = Field
 
+    def children(self):
+        return Struct(
+            field=Struct(
+                name='field',
+                children=lambda: self.fields_by_name,
+                default_child=True,
+                endpoint_kwargs=lambda: dict(form=self),
+            ),
+            actions=Struct(
+                name='actions',
+                children=lambda: self.actions,
+                endpoint_kwargs=lambda: dict(form=self),
+            )
+        )
+
+    def endpoint_kwargs(self):
+        return dict(form=self)
+
     @dispatch(
         is_full_form=True,
         model=None,
@@ -1419,6 +1464,8 @@ class Form(RefinableObject, PagePart):
 
         self.fields = [field for field in self.declared_fields if should_show(field)]
         self.fields_by_name = Struct({field.name: field for field in self.fields})
+        for field in self.fields:
+            field._parent = self
 
         if self.instance is not None:
             for field in self.fields:

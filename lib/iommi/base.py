@@ -32,6 +32,61 @@ def group_paths_by_children(*, children, data):
     return results
 
 
+def set_parents(root):
+    def _set_parents(obj, parent):
+        assert hasattr(obj, 'name') or parent is None
+        obj._parent = parent
+        if hasattr(obj, 'children'):
+            for child in obj.children().values():
+                if child:
+                    _set_parents(child, obj)
+
+    _set_parents(root, parent=None)
+
+
+def endpoint_path(obj):
+
+    def _endpoint_path(obj):
+        # TODO: handle default_child
+        if obj._parent is None:
+            return ''
+        return path_join(_endpoint_path(obj._parent), obj.name)
+
+    return '/' + _endpoint_path(obj)
+
+
+class InvalidEndpointPathException(Exception):
+    pass
+
+
+def find_target(*, path, root):
+    assert path.startswith(DISPATCH_PATH_SEPARATOR)
+    p = path[1:]
+    sentinel = object()
+    next_node = root
+    parents = [root]
+
+    while True:
+        data = {p: sentinel}
+        try:
+            next_node.children
+        except AttributeError:
+            raise InvalidEndpointPathException(f"Invalid path {path}.\n{next_node} (of type {type(next_node)} has no attribute children so can't be traversed.\nParents so far: {parents}.\nPath left: {p}")
+        children = next_node.children()
+        try:
+            foo = group_paths_by_children(children=children, data=data)
+        except GroupPathsByChildrenError:
+            raise InvalidEndpointPathException(f"Invalid path {path}.\nchildren does not contain what we're looking for, these are the keys available: {list(children.keys())}.\nParents so far: {parents}.\nPath left: {p}")
+
+        assert len(foo) == 1
+        name, rest = foo.popitem()
+        p, _ = rest.popitem()
+        next_node = children[name]
+        if not p:
+            return next_node, parents
+        parents.append(next_node)
+
+
 def is_response(obj):
     return isinstance(obj, HttpResponseBase)
 

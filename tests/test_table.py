@@ -6,8 +6,9 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.utils.safestring import mark_safe
+from iommi.base import find_target, endpoint_path, set_parents
 from tri_declarative import (
     getattr_path,
     Namespace,
@@ -1735,3 +1736,37 @@ def test_override_doesnt_stick():
 
     table2 = MyTable(data=[])
     assert len(table2.shown_bound_columns) == 1
+
+
+@pytest.mark.django_db
+def test_new_style_ajax_dispatch():
+    TFoo.objects.create(a=1, b='A')
+    TFoo.objects.create(a=2, b='B')
+    TFoo.objects.create(a=3, b='C')
+
+    def get_response(request):
+        del request
+        return Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
+
+    from iommi.page import middleware
+    m = middleware(get_response)
+    done, response = m(request=RequestFactory().get('/', data={'/table/query/gui/field/foo': ''}))
+
+    assert done
+    assert json.loads(response.content) == {
+        'results': [
+            {'id': 1, 'text': 'Foo(1, A)'},
+            {'id': 2, 'text': 'Foo(2, B)'},
+            {'id': 3, 'text': 'Foo(3, C)'},
+        ],
+        'page': 1,
+        'more': False,
+    }
+
+
+def test_endpoint_path_of_nested_part():
+    table = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
+    set_parents(root=table)
+    target, parents = find_target(path='/table/query/gui/field/foo', root=table)
+    # TODO: this is actually wrong.. I think... the endpoint_path should be '/foo' or at least that's the name we want to use in the GET parameters
+    assert endpoint_path(target) == '/table/query/gui/field/foo'

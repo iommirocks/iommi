@@ -883,7 +883,7 @@ class Table(RefinableObject, PagePart):
     endpoint_dispatch_prefix = Refinable()
     default_child = Refinable()
     extra: Namespace = Refinable()
-    endpoint = Refinable()
+    endpoint: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Namespace = Refinable()
     page_size: int = Refinable()
@@ -902,13 +902,21 @@ class Table(RefinableObject, PagePart):
         query__default_child = True
         query__gui__default_child = True
 
-    @property
     def children(self):
         return Struct(
             query=self.query,
             bulk=self.bulk,
-            columns=self.bound_column_by_name,  # TODO: should be a PagePart
+
+            # TODO: should be a PagePart?
+            columns=Struct(
+                name='columns',
+                children=lambda: self.bound_column_by_name,
+            )
+            # **self.endpoint,  # TODO: right now this is incompatible
         )
+
+    def endpoint_kwargs(self):
+        return dict(table=self)
 
     @staticmethod
     @refinable
@@ -1272,7 +1280,6 @@ class Table(RefinableObject, PagePart):
             variables = list(generate_variables())
 
             self._query = self.get_meta().query_class(
-                gui__name=self.name,
                 request=self.request,
                 variables=variables,
                 endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
