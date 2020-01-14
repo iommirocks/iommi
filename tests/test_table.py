@@ -6,9 +6,9 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
-from django.test import RequestFactory, override_settings
+from django.test import RequestFactory
 from django.utils.safestring import mark_safe
-from iommi.base import find_target, endpoint_path, set_parents
+from iommi.base import find_target, endpoint_path
 from tri_declarative import (
     getattr_path,
     Namespace,
@@ -1766,7 +1766,7 @@ def test_new_style_ajax_dispatch():
 
 def test_endpoint_path_of_nested_part():
     table = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
-    set_parents(root=table)
+    table.bind(parent=None)
     target, parents = find_target(path='/table/query/gui/field/foo', root=table)
     # TODO: this is actually wrong.. I think... the endpoint_path should be '/foo' or at least that's the name we want to use in the GET parameters
     assert endpoint_path(target) == '/table/query/gui/field/foo'

@@ -52,7 +52,10 @@ from iommi.form import (
     dispatch_prefix_and_remaining_from_key,
     expand_member,
     member_from_model)
-from iommi.base import MISSING
+from iommi.base import (
+    MISSING,
+    PagePart,
+)
 from iommi.base import DISPATCH_PATH_SEPARATOR
 
 
@@ -149,7 +152,7 @@ def boolean_value_to_q(variable, op, value_string_or_f):
 
 
 @with_meta
-class Variable(RefinableObject):
+class Variable(RefinableObject, PagePart):
     """
     Class that describes a variable that you can search for.
     """
@@ -187,17 +190,19 @@ class Variable(RefinableObject):
 
         super(Variable, self).__init__(**kwargs)
 
-        self.query: Query = None
-
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
-    def _bind(self, query):
+    @property
+    def query(self):
+        return self.parent
+
+    def on_bind(self):
+        query = self.parent
         bound_variable = copy.copy(self)
 
         if bound_variable.attr is MISSING:
             bound_variable.attr = bound_variable.name
-        bound_variable.query = query
 
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
@@ -450,7 +455,7 @@ def default_endpoint__errors(query, key, value):
 
 @declarative(Variable, 'variables_dict')
 @with_meta
-class Query(RefinableObject):
+class Query(RefinableObject, PagePart):
     """
     Declare a query language. Example:
 
@@ -485,7 +490,6 @@ class Query(RefinableObject):
         return dict(query=self)
 
     @dispatch(
-        name='query',
         endpoint_dispatch_prefix='query',
         endpoint__gui=default_endpoint__gui,
         endpoint__errors=default_endpoint__errors,
@@ -505,7 +509,6 @@ class Query(RefinableObject):
         self.bound_variables: List[Variable] = []
         self.bound_variable_by_name: Dict[str, Variable] = {}
 
-        self.request = request
         self.data = data
         self._form = None
 
@@ -519,12 +522,16 @@ class Query(RefinableObject):
                 variable.name = name
                 yield variable
 
+        # TODO: use collect_members and bind_members
         self.variables = sort_after(list(generate_variables()))
 
-        bound_variables = [v._bind(self) for v in self.variables]
+        if request is not None:
+            self.request = request
+            self.bind(parent=None)
 
+    def on_bind(self):
+        bound_variables = [v.bind(parent=self) for v in self.variables]
         self.bound_variables = filter_show_recursive(bound_variables)
-
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
 
     def parse(self, query_string: str) -> Q:
@@ -699,15 +706,19 @@ class Query(RefinableObject):
                 )
                 fields.append(params())
 
-        form = self.gui(
-            request=self.request,
+        form: Form = self.gui(
             data=self.data,
             fields=fields,
             endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
+            default_child=True,
         )
-        form._parent = self
+        form.bind(parent=self)
+        # TODO: this seems weird
         form.query = self
+        # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
         form.query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
+
+        # TODO: what is this good for?
         self._form = form
         return form
 

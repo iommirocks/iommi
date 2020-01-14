@@ -54,12 +54,13 @@ from tri_declarative import (
 from iommi.form import (
     Action,
     Form,
-    collect_and_initialize_members,
     create_members_from_model,
     expand_member,
     group_actions,
     handle_dispatch,
     member_from_model,
+    collect_members,
+    bind_members,
 )
 from iommi.base import DISPATCH_PATH_SEPARATOR, PagePart, group_paths_by_children, path_join
 from iommi.render import (
@@ -224,7 +225,7 @@ class DataRetrievalMethods(Enum):
 
 
 @with_meta
-class Column(RefinableObject):
+class Column(RefinableObject, PagePart):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
@@ -298,14 +299,17 @@ class Column(RefinableObject):
 
         super(Column, self).__init__(**kwargs)
 
-        self.table: Table = None
+        # TODO: this seems weird.. why do we need this?
         self.column: Column = None
-        self.index: int = None
         self.is_sorting: bool = None
         self.sort_direction: str = None
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
+
+    @property
+    def table(self):
+        return self.parent
 
     @staticmethod
     @refinable
@@ -322,12 +326,12 @@ class Column(RefinableObject):
     def display_name(table, column, **_):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
-    def _bind(self, table, index):
+    def on_bind(self):
+        table = self.parent
         bound_column = copy.copy(self)
         bound_column.header.attrs = Namespace(self.header.attrs.copy())
         bound_column.header.attrs['class'] = Namespace(bound_column.header.attrs['class'].copy())
 
-        bound_column.index = index
         bound_column.bulk = setdefaults_path(
             Struct(),
             self.bulk,
@@ -341,7 +345,6 @@ class Column(RefinableObject):
 
         for k, v in table.column.get(bound_column.name, {}).items():
             setattr_path(bound_column, k, v)
-        bound_column.table = table
         bound_column.column = self
 
         return bound_column
@@ -994,6 +997,7 @@ class Table(RefinableObject, PagePart):
                 )
                 yield column_spec()
 
+        # TODO: use collect_members and bind_members
         columns = sort_after(list(generate_columns()))
 
         assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
@@ -1216,11 +1220,12 @@ class Table(RefinableObject, PagePart):
         if self._has_prepared:
             return
 
-        self.declared_actions, self.actions = collect_and_initialize_members(items=self._actions, cls=Action, table=self)
+        self.declared_actions = collect_members(items=self._actions, cls=Action)
+        self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
 
         def bind_columns():
-            for index, column in enumerate(self.columns):
-                bound_column = column._bind(self, index)
+            for column in self.columns:
+                bound_column = column.bind(parent=self)
                 bound_column._evaluate()
                 yield bound_column
 

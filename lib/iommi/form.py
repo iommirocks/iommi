@@ -558,7 +558,7 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
 
 
-class Action(RefinableObject):
+class Action(RefinableObject, PagePart):
     tag = Refinable()
     attrs = Refinable()
     group = Refinable()
@@ -634,7 +634,7 @@ class Action(RefinableObject):
         )
         return call_target(**kwargs)
 
-    def _bind(self) -> 'Action':
+    def on_bind(self) -> 'Action':
         return copy.copy(self)
 
     def _evaluate_attribute(self, key, **kwargs):
@@ -677,7 +677,7 @@ def group_actions(actions: Dict[str, Action]):
 
 
 @with_meta
-class Field(RefinableObject):
+class Field(RefinableObject, PagePart):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
 
@@ -809,7 +809,6 @@ class Field(RefinableObject):
             assert self.initial_list is None, 'The parameter initial_list is only valid if is_list is True, otherwise use initial'
 
         # Bound field data
-        self.form = None
         self.field = None
         self.errors = None
 
@@ -825,6 +824,10 @@ class Field(RefinableObject):
 
     def endpoint_kwargs(self):
         return dict(field=self)
+
+    @property
+    def form(self):
+        return self.parent
 
     @staticmethod
     @refinable
@@ -887,7 +890,8 @@ class Field(RefinableObject):
         if endpoint is not None:
             return endpoint(field=field, key=remaining_key, **kwargs)
 
-    def _bind(self, form):
+    def on_bind(self):
+        form = self.parent
         bound_field: Field = copy.copy(self)
 
         if bound_field.attr is MISSING:
@@ -899,8 +903,7 @@ class Field(RefinableObject):
 
         for k, v in form.field.get(bound_field.name, {}).items():
             setattr_path(bound_field, k, v)
-        bound_field.form = form
-        bound_field.path = bound_field.name if not form.name else (form.name + DISPATCH_PATH_SEPARATOR + bound_field.name)
+
         bound_field.field = self
         bound_field.errors = set()
 
@@ -1307,7 +1310,7 @@ def default_endpoint__field(form, key, value):
         return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
 
 
-def collect_and_initialize_members(*, items, cls, **kwargs):
+def collect_members(*, items, cls):
     def unbound_items():
         for name, item in items.items():
             if isinstance(item, dict):
@@ -1320,16 +1323,21 @@ def collect_and_initialize_members(*, items, cls, **kwargs):
             setattr(item, 'name', name)
             yield item
 
-    declared_items = sort_after([x._bind() for x in unbound_items()])
-    for item in declared_items:
+    return list(unbound_items())
+
+
+def bind_members(*, unbound_items, parent, **kwargs):
+    bound_items = sort_after([x.bind(parent=parent) for x in unbound_items])
+
+    for item in bound_items:
         item._evaluate_show(**kwargs)
 
-    items = Struct({item.name: item for item in declared_items if should_show(item)})
+    items = Struct({item.name: item for item in bound_items if should_show(item)})
 
     for item in items.values():
         item._evaluate(**kwargs)
 
-    return declared_items, items
+    return items
 
 
 @declarative(Field, 'fields_dict')
@@ -1418,12 +1426,16 @@ class Form(RefinableObject, PagePart):
         if callable(fields):
             fields = fields(model=self.model)
 
-        if data is None:
-            data = {}
+        self.data = {}
+        self.fields_by_name = None
+        """ :type: Struct[str, Field] """
+        self.style = None
+        self.errors: Set[str] = set()
+        self._valid = None
+        self.instance = instance
+        self.mode = INITIALS_FROM_GET
 
-        self.data = data
-
-        self.declared_actions, self.actions = collect_and_initialize_members(items=actions, cls=Action, form=self)
+        self._actions = actions
 
         def unbound_fields():
             if fields is not None:
@@ -1441,31 +1453,37 @@ class Form(RefinableObject, PagePart):
                 )
                 yield field_spec()
 
-        self.declared_fields: List[Field] = sort_after([f._bind(self) for f in unbound_fields()])
+        # TODO: use collect_members and bind_members
+        self._fields: List[Field] = sort_after([f.bind(parent=self) for f in unbound_fields()])
 
-        self.mode = INITIALS_FROM_GET
+        if request is not None or data is not None:
+            self.request = request
+            self.bind(parent=None)
+
+    def on_bind(self):
+        self._valid = None
+        request = self.request
         if request:
             if request.method == 'POST':
                 if self.is_target():
                     self.mode = FULL_FORM_FROM_REQUEST
+                self.data = request.POST
             elif request.method == 'GET':
                 if self.is_target():
                     self.mode = FULL_FORM_FROM_REQUEST
+                self.data = request.GET
 
-        self.fields_by_name = None
-        """ :type: Struct[str, Field] """
-        self.style = None
-        self.errors: Set[str] = set()
-        self._valid = None
-        self.instance = instance
+        if self.data is None:
+            self.data = {}
 
-        for field in self.declared_fields:
+        self.declared_actions = collect_members(items=self._actions, cls=Action)
+        self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
+
+        for field in self._fields:
             field._evaluate_show()
 
-        self.fields = [field for field in self.declared_fields if should_show(field)]
+        self.fields = [field for field in self._fields if should_show(field)]
         self.fields_by_name = Struct({field.name: field for field in self.fields})
-        for field in self.fields:
-            field._parent = self
 
         if self.instance is not None:
             for field in self.fields:
@@ -1476,7 +1494,7 @@ class Form(RefinableObject, PagePart):
                     else:
                         field.initial = initial
 
-        if data:
+        if self.data:
             for field in self.fields:
                 if field.is_list:
                     if field.raw_data_list is not None:
@@ -1484,10 +1502,10 @@ class Form(RefinableObject, PagePart):
                     try:
                         # django and similar
                         # noinspection PyUnresolvedReferences
-                        raw_data_list = data.getlist(field.path)
+                        raw_data_list = self.data.getlist(field.path())
                     except AttributeError:  # pragma: no cover
                         # werkzeug and similar
-                        raw_data_list = data.get(field.path)
+                        raw_data_list = self.data.get(field.path())
 
                     if raw_data_list and field.strip_input:
                         raw_data_list = [x.strip() for x in raw_data_list]
@@ -1497,7 +1515,7 @@ class Form(RefinableObject, PagePart):
                 else:
                     if field.raw_data is not None:
                         continue
-                    field.raw_data = data.get(field.path)
+                    field.raw_data = self.data.get(field.path())
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
@@ -1570,16 +1588,7 @@ class Form(RefinableObject, PagePart):
         return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
     def is_target(self):
-        if (
-            not self.name
-            and self.request
-            and self.request.method == 'POST'
-            and not any(x.startswith(DISPATCH_PATH_SEPARATOR) for x in self.data.keys())
-        ):
-            # We are the target if there's a POST and we're nameless and there is no other named form present
-            return True
-
-        return self.target_name in self.data
+        return f'-{self.path()}' in self.data
 
     @property
     def target_name(self):
@@ -1703,17 +1712,20 @@ class Form(RefinableObject, PagePart):
         return self.table()
 
     def render(self, style: str = 'compact', template_name: Optional[str] = 'iommi/form/form.html'):
+        if not self._is_bound:
+            self.bind(parent=self.parent)
+
         self.style = style
         r = []
         for field in self.fields:
             r.append(field.render(style=style))
 
         if self.is_full_form:
-            r.append(format_html(AVOID_EMPTY_FORM, self.endpoint_dispatch_prefix or ''))
+            r.append(format_html(AVOID_EMPTY_FORM, self.path()))
 
         if self.request:
             # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
-            own_field_paths = {f.path for f in self.fields}
+            own_field_paths = {f.path() for f in self.fields}
             for k, v in self.request.GET.items():
                 if k == self.target_name:
                     continue
@@ -1839,7 +1851,8 @@ class Form(RefinableObject, PagePart):
         context=EMPTY,
     )
     def render_or_respond(self, *, request, context=None, render=None):
-        self.set_request_or_data(request=request)
+        # TODO: ?? isn't request already set by bind?!?
+        self.request = request
 
         should_return, dispatch_result = handle_dispatch(request=request, obj=self)
         if should_return:

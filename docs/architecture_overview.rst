@@ -148,3 +148,28 @@ feature set of the underling Query and Form classes by just
 dispatching keyword arguments downstream. It also enables us to bundle
 commonly used features in what we call "shortcuts", which are pre
 packaged sets of defaults.
+
+
+Execution phases
+----------------
+
+Page parts have this life cycles:
+
+1. Definition
+2. Construction
+3. Bind
+4. Traversal (e.g. render to html, respond to ajax, custom report creation)
+
+
+At definition time we can have just a bunch of dicts. This is really a stacking and merging of namespaces.
+
+At construction time we take the definition namespaces and materialize them into proper :code:`Table`, :code:`Column`, :code:`Form` etc objects.
+
+At bind time we:
+
+- set request object if applicable
+- register parents
+- evaluate callables into real values
+- invoke any user defined :code:`on_bind` handlers
+
+At traversal time we are good to go and can now invoke the final methods of all objects. We can now render html, respond to ajax, etc.

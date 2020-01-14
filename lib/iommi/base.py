@@ -1,6 +1,9 @@
 from collections import defaultdict
 from functools import wraps
-from typing import Union
+from typing import (
+    Union,
+    Any,
+)
 
 from django.conf import settings
 from django.http.response import HttpResponseBase, HttpResponse
@@ -32,25 +35,13 @@ def group_paths_by_children(*, children, data):
     return results
 
 
-def set_parents(root):
-    def _set_parents(obj, parent):
-        assert hasattr(obj, 'name') or parent is None
-        obj._parent = parent
-        if hasattr(obj, 'children'):
-            for child in obj.children().values():
-                if child:
-                    _set_parents(child, obj)
-
-    _set_parents(root, parent=None)
-
-
 def endpoint_path(obj):
 
     def _endpoint_path(obj):
         # TODO: handle default_child
-        if obj._parent is None:
+        if obj.parent is None:
             return ''
-        return path_join(_endpoint_path(obj._parent), obj.name)
+        return path_join(_endpoint_path(obj.parent), obj.name)
 
     return '/' + _endpoint_path(obj)
 
@@ -115,6 +106,12 @@ def catch_response(view_function):
 
 
 class PagePart:
+    request = None
+    parent = None
+    name = None
+    default_child = False
+    _is_bound = False
+
     @dispatch(
         context=EMPTY,
     )
@@ -139,6 +136,37 @@ class PagePart:
 
         template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
         return HttpResponse(get_template_from_string(template_string).render(context=context, request=request))
+
+    def bind(self, *, parent):
+        if parent is None:
+            if self.name is None:
+                self.name = 'root'
+            self.default_child = True
+
+        if parent is not None:
+            self.request = parent.request
+        self.parent = parent
+        result = self.on_bind()
+        if result is None:
+            return self
+        self._is_bound = True
+        return result
+
+    def on_bind(self) -> Any:
+        pass
+
+    def path(self):
+        if self.default_child:
+            if self.parent is not None:
+                return self.parent.path()
+            else:
+                return ''
+
+        if self.parent is not None:
+            return path_join(self.parent.path(), self.name)
+        else:
+            assert self.name, f'{self} is missing a name, but it was asked about its path'
+            return self.name
 
 
 def render_template_name(template_name, **kwargs):

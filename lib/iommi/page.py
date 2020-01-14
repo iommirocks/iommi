@@ -9,7 +9,7 @@ from typing import (
 from django.conf import settings
 from django.http.response import (
     HttpResponse,
-    Http404)
+)
 from django.utils.html import format_html
 from iommi._web_compat import (
     Template,
@@ -21,7 +21,8 @@ from iommi.base import (
     NO_ENDPOINT_PREFIX,
     DISPATCH_PATH_SEPARATOR,
     PagePart,
-    find_target, InvalidEndpointPathException, set_parents)
+    find_target, InvalidEndpointPathException,
+)
 from iommi.render import render_attrs
 from tri_declarative import (
     dispatch,
@@ -72,11 +73,12 @@ class Page(PagePart):
                     kwargs = dict(endpoint_dispatch_prefix=path_join(self.endpoint_dispatch_prefix, name)) if self.endpoint_dispatch_prefix else {}
                     yield Fragment(part_, name=name, **kwargs)
 
+        # TODO: use collect_members and bind_members
         self.declared_parts = {x.name: x for x in sort_after(list(generate_parts()))}
 
         def bind_part(p):
             if hasattr(p, 'bind'):
-                return p.bind()
+                return p.bind(parent=self)
             return p
 
         parts = {name: bind_part(p) for name, p in self.declared_parts.items()}
@@ -97,6 +99,9 @@ class Page(PagePart):
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
     def render_or_respond(self, *, request, context=None, render=None):
+        self.request = request
+        self.bind(parent=self.parent)
+
         rendered = {}
         for part in self.parts.values():
             assert part.name not in context
@@ -225,7 +230,8 @@ def middleware(get_response):
         response = get_response(request)
         if isinstance(response, Page):
             page = response
-            set_parents(root=page)
+            page.request = request
+            page.bind(parent=None)
 
             dispatch_commands = {key: value for key, value in request.GET.items() if key.startswith(DISPATCH_PATH_SEPARATOR)}
             assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'

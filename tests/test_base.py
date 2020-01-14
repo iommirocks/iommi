@@ -145,10 +145,6 @@ def test_error_message_to_client():
     assert data == dict(error='Invalid endpoint path')
 
 
-def test_correct_new_style_dispatch():
-    assert False
-
-
 def test_find_target():
     bar = 'bar'
     foo = Struct(

@@ -3,7 +3,6 @@ from datetime import date
 from django.db.models import Q, F, QuerySet
 import pytest
 from django.test import RequestFactory
-from iommi.base import set_parents
 from tri_declarative import class_shortcut
 from iommi.form import (
     Form,
@@ -85,7 +84,6 @@ def test_freetext():
     assert repr(query.parse('"asd"')) == expected
 
     query2 = MyTestQuery(request=RequestFactory().get('/', {'-': '-', 'term': 'asd'}))
-    set_parents(query2)
     assert repr(query2.to_q()) == expected
 
 

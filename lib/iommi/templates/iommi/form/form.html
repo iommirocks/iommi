@@ -1,4 +1,4 @@
-<form{{ form.rendered_attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+<form{{ form.rendered_attrs }}>{% if form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
 
     {% for error in form.errors %}
     <div class="error">{{ error }}</div>
