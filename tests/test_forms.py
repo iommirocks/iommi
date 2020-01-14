@@ -39,7 +39,7 @@ from iommi.form import (
     Action,
     float_parse,
     get_name_field,
-)
+    FULL_FORM_FROM_REQUEST)
 
 from .compat import RequestFactory
 
@@ -93,6 +93,10 @@ def test_required_choice():
         c = Field.choice(choices=[1, 2, 3])
 
     form = Required(request=RequestFactory().post('/', {'-': ''}))
+
+    # TODO: we assume this type of mode check without asserting in a lot of tests.. should fix this
+    assert form.mode == FULL_FORM_FROM_REQUEST
+
     assert form.is_target()
     assert form.is_valid() is False
     assert form.fields_by_name['c'].errors == {'This field is required'}
@@ -288,11 +292,12 @@ def test_parse_errors():
 
 
 def test_initial_from_instance():
-    assert Form(instance=Struct(a=Struct(b=7)), fields=[Field(name='a__b')]).fields[0].initial == 7
+    # TODO: change this .fields[0] API to be by name
+    assert Form(instance=Struct(a=Struct(b=7)), fields=[Field(name='a__b')], data={}).fields[0].initial == 7
 
 
 def test_initial_list_from_instance():
-    assert Form(instance=Struct(a=Struct(b=[7])), fields=[Field(name='a__b', is_list=True)]).fields[0].initial_list == [7]
+    assert Form(instance=Struct(a=Struct(b=[7])), fields=[Field(name='a__b', is_list=True)], data={}).fields[0].initial_list == [7]
 
 
 def test_non_editable_from_initial():
@@ -304,7 +309,7 @@ def test_non_editable_from_initial():
 
 
 def test_apply():
-    form = Form(fields=[Field(name='foo', initial=17, editable=False)])
+    form = Form(fields=[Field(name='foo', initial=17, editable=False)], data={})
     assert Struct(foo=17) == form.apply(Struct())
 
 

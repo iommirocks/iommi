@@ -155,7 +155,7 @@ class PagePart:
     def on_bind(self) -> Any:
         pass
 
-    def path(self):
+    def path(self) -> str:
         if self.default_child:
             if self.parent is not None:
                 return self.parent.path()
@@ -198,7 +198,7 @@ def render_or_respond_part(*, part: PartType, request, context):
         return raise_on_response(part.render_or_respond(request=request, context=context))
 
 
-def path_join(prefix, name):
+def path_join(prefix, name) -> str:
     if not prefix:
         return name
     else:

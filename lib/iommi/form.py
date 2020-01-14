@@ -925,6 +925,7 @@ class Field(RefinableObject, PagePart):
         if not self.editable:
             self.input_template = 'iommi/form/non_editable.html'
 
+    @property
     def rendered_value(self):
         if self.errors:
             return self.raw_data
@@ -1448,13 +1449,12 @@ class Form(RefinableObject, PagePart):
         request = self.request
         if request:
             if request.method == 'POST':
-                if self.is_target():
-                    self.mode = FULL_FORM_FROM_REQUEST
                 self.data = request.POST
             elif request.method == 'GET':
-                if self.is_target():
-                    self.mode = FULL_FORM_FROM_REQUEST
                 self.data = request.GET
+
+            if self.is_target():
+                self.mode = FULL_FORM_FROM_REQUEST
 
         if self.data is None:
             self.data = {}
