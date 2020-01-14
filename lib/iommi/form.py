@@ -587,10 +587,6 @@ class Action(RefinableObject, PagePart):
         else:
             return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.render_attrs(), display_name=self.display_name)
 
-    @property
-    def rendered(self):
-        return self.render()
-
     def __str__(self):
         return self.render()
 
@@ -858,10 +854,6 @@ class Field(RefinableObject, PagePart):
         else:
             return ''
 
-    @property
-    def choice_tuples_property(self):
-        return self.choice_tuples()
-
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
     @staticmethod
@@ -914,7 +906,7 @@ class Field(RefinableObject, PagePart):
 
     def _evaluate_attribute(self, key):
         value = getattr(self, key)
-        new_value = evaluate_recursive(value, form=self.form, field=self)
+        new_value = evaluate_recursive(value, form=self.parent, field=self)
         if new_value is not value:
             setattr(self, key, new_value)
 
@@ -933,7 +925,6 @@ class Field(RefinableObject, PagePart):
         if not self.editable:
             self.input_template = 'iommi/form/non_editable.html'
 
-    @property
     def rendered_value(self):
         if self.errors:
             return self.raw_data
@@ -948,10 +939,6 @@ class Field(RefinableObject, PagePart):
         """
         return render_attrs(self.attrs)
 
-    @property
-    def rendered_attrs(self):
-        return self.render_attrs()
-
     def get_container_attrs(self):
         container_attrs = Namespace(flatten(self.container.attrs))
         if self.required and self.editable:
@@ -960,20 +947,16 @@ class Field(RefinableObject, PagePart):
             container_attrs.setdefault('class', dict())['key-value'] = True
         return container_attrs
 
-    @property
-    def rendered_container_attrs(self):
+    def render_container_attrs(self):
         return render_attrs(self.get_container_attrs())
 
-    @property
-    def rendered_label_container_attrs(self):
+    def render_label_container_attrs(self):
         return render_attrs(self.label_container.attrs)
 
-    @property
-    def rendered_input_container_css_classes(self):
+    def render_input_container_css_classes(self):
         return self.render_input_container_css_classes()
 
-    @property
-    def rendered_input_container_attrs(self):
+    def render_input_container_attrs(self):
         return render_attrs(self.input_container.attrs)
 
     def __repr__(self):
@@ -1530,14 +1513,6 @@ class Form(RefinableObject, PagePart):
         """
         return render_attrs(self.attrs)
 
-    @property
-    def rendered_attrs(self):
-        return self.render_attrs()
-
-    @property
-    def rendered_actions(self):
-        return self.render_actions()
-
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
@@ -1548,10 +1523,6 @@ class Form(RefinableObject, PagePart):
                 grouped_actions=grouped_actions,
                 form=self,
             ))
-
-    @property
-    def rendered_links(self):
-        return format_html(self.render_links())
 
     @classmethod
     @dispatch(
@@ -1589,10 +1560,6 @@ class Form(RefinableObject, PagePart):
 
     def is_target(self):
         return f'-{self.path()}' in self.data
-
-    @property
-    def target_name(self):
-        return DISPATCH_PATH_SEPARATOR + (self.name or '')
 
     def is_valid(self):
         if self._valid is None:
@@ -1706,10 +1673,6 @@ class Form(RefinableObject, PagePart):
 
     def table(self):
         return self.render(style='table', template_name=None)
-
-    @property
-    def table_property(self):
-        return self.table()
 
     def render(self, style: str = 'compact', template_name: Optional[str] = 'iommi/form/form.html'):
         if not self._is_bound:

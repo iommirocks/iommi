@@ -108,6 +108,8 @@ def test_required_choice():
 
 def test_required():
     form = MyTestForm(request=RequestFactory().post('/', {'-': ''}))
+    assert form.is_target()
+    assert form.is_valid() is False
     assert form.fields_by_name['a_date'].value is None
     assert form.fields_by_name['a_date'].errors == {'This field is required'}
 

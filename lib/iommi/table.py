@@ -1047,10 +1047,6 @@ class Table(RefinableObject, PagePart):
                 table=self,
             ))
 
-    @property
-    def rendered_links(self):
-        return self.render_links()
-
     def render_header(self):
         return render_template(self.request, self.header.template, self.context)
 
