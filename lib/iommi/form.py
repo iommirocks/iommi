@@ -1778,8 +1778,8 @@ class Form(RefinableObject, PagePart):
         context=EMPTY,
     )
     def render_or_respond(self, *, request, context=None, render=None):
-        # TODO: ?? isn't request already set by bind?!?
         self.request = request
+        self.bind(parent=self.parent)
 
         # TODO: handle dispatch here? Right now this is only handled by the middleware.
 

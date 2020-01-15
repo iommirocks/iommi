@@ -6,7 +6,10 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
-from django.test import RequestFactory
+from django.test import (
+    RequestFactory,
+    override_settings,
+)
 from django.utils.safestring import mark_safe
 from iommi.base import find_target
 from tri_declarative import (
@@ -147,8 +150,10 @@ def test_column_with_meta():
         foo = MyColumn()
         bar = MyColumn.icon('history')
 
-    assert not MyTable(data=[]).bound_column_by_name['foo'].sortable
-    assert not MyTable(data=[]).bound_column_by_name['bar'].sortable
+    table = MyTable(data=[])
+    table.bind(parent=None)
+    assert not table.bound_column_by_name['foo'].sortable
+    assert not table.bound_column_by_name['bar'].sortable
 
 
 @pytest.mark.django_db
@@ -166,6 +171,7 @@ def test_django_table():
         foo = Column.choice_queryset(model=TFoo, choices=lambda table, column, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
     t = TestTable(data=TBar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
+    t.bind(parent=None)
 
     assert list(t.bound_column_by_name['foo'].choices) == list(TFoo.objects.all())
     assert list(t.bulk_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
@@ -679,8 +685,10 @@ def test_django_table_pagination_custom_paginator():
 
     data = TFoo.objects.all().order_by('pk')
     verify_table_html(
-        table=TestTable(data=data),
-        paginator=CustomPaginator(data),
+        table=TestTable(
+            data=data,
+            paginator=CustomPaginator(data),
+        ),
         expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
@@ -1141,7 +1149,7 @@ def test_render_table():
 
     data = [Struct(foo="foo")]
 
-    response = TestTable(data=data).render_or_respond(request=RequestFactory().get('/'))
+    response = TestTable(data=data).render_to_response(request=RequestFactory().get('/'))
     assert isinstance(response, HttpResponse)
     assert b'<table' in response.content
 
@@ -1362,6 +1370,7 @@ def test_from_model():
         column__a__display_name='Some a',
         column__a__extra__stuff='Some stuff',
     )
+    t.bind(parent=None)
     assert [x.name for x in t.columns] == ['id', 'a', 'b']
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
     assert 'Some a' == t.bound_column_by_name['a'].display_name
@@ -1631,7 +1640,9 @@ def test_yield_rows():
         class Meta:
             preprocess_data = my_preprocess_data
 
-    results = list(MyTable(data=TFoo.objects.all()))
+    table = MyTable(data=TFoo.objects.all())
+    table.bind(parent=None)
+    results = list(table)
     assert len(results) == 2
     assert results[0].row == f
     assert results[1].row == Struct(a=15)
@@ -1719,6 +1730,7 @@ def test_column_merge():
             Struct(foo=1),
         ]
     )
+    table.bind(parent=None)
     assert len(table.columns) == 1
     assert table.columns[0].name == 'foo'
     for row in table:
@@ -1730,9 +1742,11 @@ def test_override_doesnt_stick():
         foo = Column()
 
     table = MyTable(column__foo__show=False, data=[])
+    table.bind(parent=None)
     assert len(table.shown_bound_columns) == 0
 
     table2 = MyTable(data=[])
+    table2.bind(parent=None)
     assert len(table2.shown_bound_columns) == 1
 
 
@@ -1762,9 +1776,10 @@ def test_new_style_ajax_dispatch():
     }
 
 
+@override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    table = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
-    table.bind(parent=None)
-    target, parents = find_target(path='/table/query/gui/field/foo', root=table)
-    # TODO: this is actually wrong.. I think... the endpoint_path should be '/foo' or at least that's the name we want to use in the GET parameters
-    assert target.endpoint_path() == '/table/query/gui/field/foo'
+    page = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
+    assert page.children().table.default_child
+    page.bind(parent=None)
+    target, parents = find_target(path='/table/query/gui/field/foo', root=page)
+    assert target.endpoint_path() == '/foo'

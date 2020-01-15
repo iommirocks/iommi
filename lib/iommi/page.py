@@ -164,6 +164,8 @@ class Fragment(PagePart):
         render=fragment__render,
     )
     def render_or_respond(self, *, request, context=None, render=None):
+        self.request = request
+        self.bind(parent=self.parent)
         return render(fragment=self, request=request, context=context)
 
 

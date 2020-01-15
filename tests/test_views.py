@@ -316,7 +316,7 @@ def test_create_or_edit_object_default_template_with_name():
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = create_object(request=request, model=Foo, form__name='form_name', form__endpoint_dispatch_prefix='form_name')
+    response = create_object(request=request, model=Foo, form__name='form_name')
     assert response.status_code == 200
 
     expected_html = """
@@ -374,7 +374,7 @@ def test_create_or_edit_object_full_template(name):
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = create_object(request=request, model=Foo, form__name=name, form__endpoint_dispatch_prefix=name)
+    response = create_object(request=request, model=Foo, form__name=name)
     assert response.status_code == 200
 
     prefix = '' if not name else name + '/'

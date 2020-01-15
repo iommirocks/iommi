@@ -40,7 +40,6 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    DISPATCH_PATH_SEPARATOR,
     PagePart,
     path_join,
     setup_endpoint_proxies,
@@ -100,13 +99,6 @@ def register_column_factory(field_class, factory):
     _column_factory_by_field_type[field_class] = factory
 
 
-def _with_path_prefix(table, name):
-    if table.name:
-        return DISPATCH_PATH_SEPARATOR.join([table.name, name])
-    else:
-        return name
-
-
 def evaluate_members(obj, attrs, **kwargs):
     for attr in attrs:
         setattr(obj, attr, evaluate_recursive(getattr(obj, attr), **kwargs))
@@ -125,7 +117,7 @@ def prepare_headers(table, bound_columns):
     for column in bound_columns:
         if column.sortable:
             params = table.request.GET.copy()
-            param_path = _with_path_prefix(table, 'order')
+            param_path = path_join(table.path(), 'order')
             order = table.request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
             params[param_path] = column.name if not start_sort_desc else '-' + column.name
@@ -1034,6 +1026,9 @@ class Table(RefinableObject, PagePart):
         self._has_prepared: bool = False
         self.header_levels = None
 
+        if request:
+            self.bind(parent=None)
+
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
@@ -1088,7 +1083,7 @@ class Table(RefinableObject, PagePart):
         if self.request is None:
             return
 
-        order = self.request.GET.get(_with_path_prefix(self, 'order'), self.default_sort_order)
+        order = self.request.GET.get(path_join(self.path(), 'order'), self.default_sort_order)
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
@@ -1193,12 +1188,12 @@ class Table(RefinableObject, PagePart):
 
     @property
     def shown_bound_columns(self) -> List[Column]:
-        self.prepare()
+        assert self._is_bound
         return self._shown_bound_columns
 
     @property
     def bound_column_by_name(self) -> Dict[str, Column]:
-        self.prepare()
+        assert self._is_bound
         return self._bound_column_by_name
 
     def on_bind(self) -> Any:
@@ -1223,6 +1218,7 @@ class Table(RefinableObject, PagePart):
         self._bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self._bound_columns)
 
         self._has_prepared = True
+        self._is_bound = True
 
         self._shown_bound_columns = [bound_column for bound_column in self._bound_columns if bound_column.show]
 
@@ -1278,6 +1274,8 @@ class Table(RefinableObject, PagePart):
                 variables=variables,
                 **self.query_args
             )
+            self._query.request = self.request
+            self._query.bind(parent=self)
             self._query_form = self._query.form() if self._query.variables else None
 
             self._query_error = ''
@@ -1434,12 +1432,13 @@ class Table(RefinableObject, PagePart):
         context=EMPTY,
     )
     def render_or_respond(self, *, request, context=None, render=None):
+        self.request = request
+        self.bind(parent=self.parent)
+
         if not context:
             context = {}
 
         table = self
-
-        self.request = request
 
         # foo = group_paths_by_children(children=self.children(), data=self.request.GET)
         # TODO: implement dispatch? here? right now this is handled by the middleware only, is this ok?
@@ -1478,6 +1477,7 @@ class Table(RefinableObject, PagePart):
         call_target__attribute='from_model',
         extra__model_verbose_name=None,
         extra__title=None,
+        default_child=True,
     )
     def as_page(cls, *, call_target=None, model=None, part=None, extra=None, data=None, **kwargs):
         if model is None and isinstance(data, QuerySet):
@@ -1490,6 +1490,7 @@ class Table(RefinableObject, PagePart):
         if extra.title is None:
             extra.title = extra.model_verbose_name
 
+        # TODO: move import?
         from iommi.page import (
             Page,
             html,
@@ -1497,7 +1498,7 @@ class Table(RefinableObject, PagePart):
         return Page(
             part__title=html.h1(extra.title, **part.pop('title', {})),
             part__table=call_target(extra=extra, model=model, **kwargs),
-            part=part
+            part=part,
         )
 
     def render(self,

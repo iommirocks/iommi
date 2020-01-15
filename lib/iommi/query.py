@@ -502,9 +502,9 @@ class Query(RefinableObject, PagePart):
             gui__name='gui',
         )
 
-        self.variables: List[Variable] = []
-        self.bound_variables: List[Variable] = []
-        self.bound_variable_by_name: Dict[str, Variable] = {}
+        self.variables: List[Variable] = None
+        self.bound_variables: List[Variable] = None
+        self.bound_variable_by_name: Dict[str, Variable] = None
 
         self.data = data
         self._form = None
@@ -712,8 +712,9 @@ class Query(RefinableObject, PagePart):
             fields=fields,
             default_child=True,
         )
+        form.request = self.request
         form.bind(parent=self)
-        # TODO: this seems weird
+        # TODO: this seems weird. parent should be enough
         form.query = self
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
         form.query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
