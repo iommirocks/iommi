@@ -12,6 +12,7 @@ from django.test import (
 )
 from django.utils.safestring import mark_safe
 from iommi.base import find_target
+from iommi.page import perform_ajax_dispatch
 from tri_declarative import (
     getattr_path,
     Namespace,
@@ -27,7 +28,10 @@ from iommi.query import (
     Query,
 )
 
-from tests.helpers import verify_table_html
+from tests.helpers import (
+    verify_table_html,
+    request_with_middleware,
+)
 from tests.models import (
     TBar,
     TBaz,
@@ -767,7 +771,9 @@ def test_bulk_edit():
         a = Column.integer(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
         b = Column(bulk__show=True)
 
-    result = render_table(request=RequestFactory(HTTP_REFERER='/').get("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=TFoo.objects.all()))
+    request_factory = RequestFactory(HTTP_REFERER='/')
+
+    result = TestTable(data=TFoo.objects.all()).render_or_respond(request=request_factory.get("/", dict(pk_1='', pk_2='', a='0', b='changed')))
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
@@ -777,7 +783,7 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='0', b='changed')), table=TestTable(data=TFoo.objects.all().order_by('pk')), post_bulk_edit=post_bulk_edit)
+    TestTable(data=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='0', b='changed')))
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
@@ -787,7 +793,7 @@ def test_bulk_edit():
     ]
 
     # Test that empty field means "no change"
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(pk_1='', pk_2='', a='', b='')), table=TestTable(data=TFoo.objects.all()))
+    TestTable(data=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='', b='')))
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
@@ -796,7 +802,7 @@ def test_bulk_edit():
     ]
 
     # Test edit all feature
-    render_table(request=RequestFactory(HTTP_REFERER='/').post("/", dict(a='11', b='changed2', _all_pks_='1')), table=TestTable(data=TFoo.objects.all()))
+    TestTable(data=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(a='11', b='changed2', _all_pks_='1')))
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 11, u'changed2'),
@@ -1386,10 +1392,12 @@ def test_from_model_foreign_key():
 
 
 class AjaxRequestFactory(RequestFactory):
+    # TODO: Delete this thing? we don't require the ajax header right?
     def __init__(self, *args, **kwargs):
         super(AjaxRequestFactory, self).__init__(*args, HTTP_X_REQUESTED_WITH='XMLHttpRequest', **kwargs)
 
 
+@override_settings(DEBUG=True)
 @pytest.mark.django_db
 def test_ajax_endpoint():
     f1 = TFoo.objects.create(a=17, b="Hej")
@@ -1407,11 +1415,9 @@ def test_ajax_endpoint():
             bulk__show=True,
             query__gui__show=True)
 
-    result = render_table(
-        request=AjaxRequestFactory().get("/", {'/query/gui/field/foo': 'hopp'}),
-        table=TestTable(data=TBar.objects.all()),
-    )
-    assert json.loads(result.content.decode('utf8')) == {
+    # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
+    result = request_with_middleware(response=TestTable.as_page(data=TBar.objects.all()), data={'/table/query/gui/field/foo': 'hopp'})
+    assert json.loads(result.content) == {
         'more': False,
         'page': 1,
         'results': [{'id': 2, 'text': 'Foo(42, Hopp)'}]
@@ -1426,15 +1432,15 @@ def test_ajax_endpoint_empty_response():
 
         bar = Column()
 
-    result = render_table(request=AjaxRequestFactory().get("/", {'/foo': ''}), table=TestTable(data=[]))
-    assert [] == json.loads(result.content.decode('utf8'))
+    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo', value='', request=RequestFactory().get('/'))
+    assert actual == []
 
 
 def test_ajax_data_endpoint():
 
     class TestTable(Table):
         class Meta:
-            endpoint__data = lambda table, key, value: [{cell.bound_column.name: cell.value for cell in row} for row in table]
+            endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in row} for row in table]
 
         foo = Column()
         bar = Column()
@@ -1443,22 +1449,25 @@ def test_ajax_data_endpoint():
         Struct(foo=1, bar=2),
         Struct(foo=3, bar=4),
     ])
+    table.bind(parent=None)
 
-    result = render_table(request=AjaxRequestFactory().get("/", {'/data': ''}), table=table)
-    assert json.loads(result.content.decode('utf8')) == [dict(foo=1, bar=2), dict(foo=3, bar=4)]
+    actual = perform_ajax_dispatch(root=TestTable(data=table), path='/data', value='', request=RequestFactory().get('/'))
+    expected = [dict(foo=1, bar=2), dict(foo=3, bar=4)]
+    assert actual == expected
 
 
 def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
             endpoint__bar = lambda **_: 17
+            name = 'foo'
 
         baz = Column()
 
-    result = render_table(request=AjaxRequestFactory().get("/", {'/not_foo/bar': ''}), table=TestTable(data=[]))
-    assert result is None
-    result = render_table(request=AjaxRequestFactory().get("/", {'/foo/bar': ''}), table=TestTable(data=[]))
-    assert 17 == json.loads(result.content.decode('utf8'))
+    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo/bar', value='', request=RequestFactory().get('/'))
+    assert actual == {'error': 'Invalid endpoint path'}
+    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo/bar', value='', request=RequestFactory().get('/'))
+    assert 17 == actual
 
 
 def test_table_iteration():
@@ -1485,14 +1494,15 @@ def test_table_iteration():
 def test_ajax_custom_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoint__foo = lambda table, key, value: dict(baz=value)
+            endpoint__foo = lambda value, **_: dict(baz=value)
         spam = Column()
 
-    result = render_table(request=AjaxRequestFactory().get("/", {'/foo': 'bar'}), table=TestTable(data=[]))
-    assert json.loads(result.content.decode('utf8')) == dict(baz='bar')
+    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo', value='bar', request=RequestFactory().get('/'))
+    assert actual == dict(baz='bar')
 
 
 def test_row_level_additions():
+    # TODO: empty test? what was this?
     pass
 
 

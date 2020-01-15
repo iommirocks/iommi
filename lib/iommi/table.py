@@ -15,6 +15,7 @@ from typing import (
     Optional,
     Type,
     Union,
+    Callable,
 )
 
 from django.conf import settings
@@ -931,6 +932,11 @@ class Table(RefinableObject, PagePart):
         del table
         return row
 
+    @staticmethod
+    @refinable
+    def post_bulk_edit(table, queryset, updates):
+        pass
+
     @dispatch(
         column=EMPTY,
         bulk_filter={},
@@ -1460,8 +1466,7 @@ class Table(RefinableObject, PagePart):
                 }
                 queryset.update(**updates)
 
-                # TODO: reimplement... make refinable? ugh
-                # post_bulk_edit(table=table, queryset=queryset, updates=updates)
+                self.post_bulk_edit(table=table, queryset=queryset, updates=updates)
 
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
