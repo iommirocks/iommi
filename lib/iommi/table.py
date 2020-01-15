@@ -1032,10 +1032,6 @@ class Table(RefinableObject, PagePart):
         self._has_prepared: bool = False
         self.header_levels = None
 
-    @property
-    def rendered_actions(self):
-        return self.render_actions()
-
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
@@ -1050,18 +1046,10 @@ class Table(RefinableObject, PagePart):
     def render_header(self):
         return render_template(self.request, self.header.template, self.context)
 
-    @property
-    def rendered_header(self):
-        return self.render_header()
-
     def render_filter(self):
         if not self.query_form:
             return ''
         return render_template(self.request, self.filter.template, merged(self.context, form=self.query_form))
-
-    @property
-    def rendered_filter(self):
-        return self.render_filter()
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -1357,16 +1345,8 @@ class Table(RefinableObject, PagePart):
         attrs = self.attrs.copy()
         return render_attrs(attrs)
 
-    @property
-    def rendered_attrs(self):
-        return self.render_attrs()
-
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.render() for bound_row in self.bound_rows()]))
-
-    @property
-    def rendered_tbody(self):
-        return self.render_tbody()
 
     def paginator_context(self, adjacent_pages=6):
         context = self.context.copy()
@@ -1397,10 +1377,6 @@ class Table(RefinableObject, PagePart):
 
     def render_paginator(self, adjacent_pages=6):
         return render_template(request=self.request, template=self.paginator.template, context=self.paginator_context(adjacent_pages=adjacent_pages))
-
-    @property
-    def rendered_paginator(self):
-        return self.render_paginator()
 
     @classmethod
     @dispatch(

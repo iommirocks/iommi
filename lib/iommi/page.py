@@ -52,6 +52,8 @@ class Page(PagePart):
         part: dict,
         endpoint_dispatch_prefix=NO_ENDPOINT_PREFIX,
     ):
+        self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
+
         self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
 
         def generate_parts():

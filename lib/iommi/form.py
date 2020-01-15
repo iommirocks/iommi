@@ -954,9 +954,6 @@ class Field(RefinableObject, PagePart):
     def render_label_container_attrs(self):
         return render_attrs(self.label_container.attrs)
 
-    def render_input_container_css_classes(self):
-        return self.render_input_container_css_classes()
-
     def render_input_container_attrs(self):
         return render_attrs(self.input_container.attrs)
 
@@ -1453,10 +1450,7 @@ class Form(RefinableObject, PagePart):
             elif request.method == 'GET':
                 self.data = request.GET
 
-        if self.data is None:
-            self.data = {}
-
-        if self.is_target():
+        if self.data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
 
         if self.data is None:
@@ -1561,8 +1555,11 @@ class Form(RefinableObject, PagePart):
         fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
         return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
 
+    def own_target_marker(self):
+        return f'-{self.path()}'
+
     def is_target(self):
-        return f'-{self.path()}' in self.data
+        return self.own_target_marker() in self.data
 
     def is_valid(self):
         if self._valid is None:
@@ -1693,7 +1690,7 @@ class Form(RefinableObject, PagePart):
             # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
             own_field_paths = {f.path() for f in self.fields}
             for k, v in self.request.GET.items():
-                if k == self.target_name:
+                if k == self.own_target_marker():
                     continue
                 if k not in own_field_paths and k != '-':
                     r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))

@@ -600,6 +600,7 @@ def test_choice_queryset():
     form = MyForm(RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
     assert form.fields[0].errors == set()
     result = form.render()
+    print(result)
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" name="foo" type="hidden"/>'
     assert f'var data = {{"id": {user.pk}, "text": "{user}"}};' in result
 
@@ -1246,7 +1247,7 @@ def test_null_field_factory():
 
     register_field_factory(ShouldBeNullField, None)
 
-    form = Form.from_model(data=None, model=FooModel)
+    form = Form.from_model(data={}, model=FooModel)
     assert list(form.fields_by_name.keys()) == ['foo']
 
 

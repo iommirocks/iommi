@@ -33,7 +33,7 @@
     {% include 'iommi/table/table.html' %}
 
     {% if bulk_form %}
-        <table {{ bulk_form.rendered_attrs }}>
+        <table {{ bulk_form.render_attrs }}>
             {{ bulk_form }}
 
             <tr>
@@ -45,9 +45,9 @@
     {% endif %}
 
     {% if links %}
-        {{ table.rendered_links }}
+        {{ table.render_links }}
     {% endif %}
-    {{ table.rendered_actions }}
+    {{ table.render_actions }}
 
 
 </form>

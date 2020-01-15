@@ -14,7 +14,7 @@ def test_render_to_string():
         context=dict(
             field=dict(
                 id=SafeText('<a b c><d><e>'),
-                rendered_value=SafeText('<a b c><d><e>'),
+                render_value=lambda: SafeText('<a b c><d><e>'),
             ),
         )
     ).strip() == '<span id="<a b c><d><e>"><a b c><d><e></span>'

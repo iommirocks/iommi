@@ -4,17 +4,17 @@
     {{ empty_message }}
 {% else %}
 
-        <table{{ table.rendered_attrs }}>
+        <table{{ table.render_attrs }}>
 
-            {{ table.rendered_header }}
+            {{ table.render_header }}
 
             <tbody>
-               {{ table.rendered_tbody }}
+               {{ table.render_tbody }}
             </tbody>
         </table>
 
         {% if is_paginated %}
-          <div class="paginator">{{ table.rendered_paginator }}</div>
+          <div class="paginator">{{ table.render_paginator }}</div>
         {% endif %}
 
 {% endif %}

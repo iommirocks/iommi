@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<form{{ form.rendered_attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+<form{{ form.render_attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 
   {% for error in form.errors %}
     <div class="error">{{ error }}</div>
@@ -18,9 +18,9 @@
 
   <div class="form_buttons clear">
       {% if form.links %}
-          {{ form.rendered_links }}
+          {{ form.render_links }}
       {% endif %}
-      {{ form.rendered_actions }}
+      {{ form.render_actions }}
   </div>
 </form>
 
