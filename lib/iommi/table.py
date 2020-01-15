@@ -885,6 +885,7 @@ class Table(RefinableObject, PagePart):
     endpoint: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Namespace = Refinable()
+    paginator_template: str = Refinable()
     page_size: int = Refinable()
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
@@ -943,7 +944,8 @@ class Table(RefinableObject, PagePart):
         row__template=None,
         filter__template='iommi/query/form.html',  # tri.query dependency, see render_filter() below.
         header__template='iommi/table/table_header_rows.html',
-        paginator__template='iommi/table/paginator.html',
+        paginator_template='iommi/table/paginator.html',
+        paginator__call_target=Paginator,
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
         model=None,
@@ -1377,7 +1379,7 @@ class Table(RefinableObject, PagePart):
         ))
 
     def render_paginator(self, adjacent_pages=6):
-        return render_template(request=self.request, template=self.paginator.template, context=self.paginator_context(adjacent_pages=adjacent_pages))
+        return render_template(request=self.request, template=self.paginator_template, context=self.paginator_context(adjacent_pages=adjacent_pages))
 
     @classmethod
     @dispatch(
@@ -1467,6 +1469,7 @@ class Table(RefinableObject, PagePart):
             request,
             table=table,
             extra_context=context,
+            paginator=self.paginator,
         )
 
         return render(request=request, template=table.template, context=table.context)
@@ -1529,14 +1532,7 @@ class Table(RefinableObject, PagePart):
         return render_template(self.request, template if template is not None else self.template, self.context)
 
 
-def table_context(request,
-                  *,
-                  table: Table,
-                  page=None,
-                  extra_context=None,
-                  paginator=None,
-                  show_hits=False,
-                  hit_label='Items'):
+def table_context(request, *, table: Table, extra_context, paginator: Namespace):
     if extra_context is None:  # pragma: no cover
         extra_context = {}
 
@@ -1551,10 +1547,8 @@ def table_context(request,
             table.page_size = int(request.GET.get('page_size', table.page_size)) if request else table.page_size
         except ValueError:  # pragma: no cover
             pass
-        if paginator is None:
-            paginator = Paginator(table.data, table.page_size)
-        if not page:
-            page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
+        paginator = paginator(table.data, table.page_size)
+        page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
         try:
             page_obj = paginator.get_page(page)
             table.data = page_obj.object_list
@@ -1572,8 +1566,10 @@ def table_context(request,
             'page': page_obj.number,
             'pages': paginator.num_pages,
             'hits': paginator.count,
-            'show_hits': show_hits,
-            'hit_label': hit_label,
+
+            # TODO: remove these, remember the template
+            'show_hits': False,
+            'hit_label': 'Items',
         })
     else:  # pragma: no cover
         base_context.update({

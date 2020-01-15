@@ -676,7 +676,7 @@ def test_django_table_pagination_custom_paginator():
     from django.core.paginator import Paginator
 
     class CustomPaginator(Paginator):
-        def __init__(self, object_list):
+        def __init__(self, object_list, *_, **__):
             super(CustomPaginator, self).__init__(object_list=object_list, per_page=2)
 
         def get_page(self, number):
@@ -687,7 +687,7 @@ def test_django_table_pagination_custom_paginator():
     verify_table_html(
         table=TestTable(
             data=data,
-            paginator=CustomPaginator(data),
+            paginator=CustomPaginator,
         ),
         expected_html="""
         <table class="listview" data-endpoint="/tbody">

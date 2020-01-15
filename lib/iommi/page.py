@@ -80,6 +80,12 @@ class Page(PagePart):
 
         self.parts = Struct({name: p for name, p in parts.items() if should_show(p)})
 
+        # TODO: this is a fun idea.. but is it a GOOD idea?
+        if len(self.parts) == 1:
+            for the_only_part in parts.values():
+                if the_only_part.default_child is None:
+                    the_only_part.default_child = True
+
     def __repr__(self):
         return f'<Page with parts: {list(self.parts.keys())}>'
 
