@@ -39,7 +39,7 @@ from iommi.form import (
     Action,
     float_parse,
     get_name_field,
-    FULL_FORM_FROM_REQUEST)
+    FULL_FORM_FROM_REQUEST, INITIALS_FROM_GET)
 
 from .compat import RequestFactory
 
@@ -468,7 +468,8 @@ def test_radio():
         'c',
     ]
     RequestFactory().get('/')
-    soup = BeautifulSoup(Form(data=dict(foo='a'), fields=[Field.radio(name='foo', choices=choices)]).table(), 'html.parser')
+    form = Form(data=dict(foo='a'), fields=[Field.radio(name='foo', choices=choices)])
+    soup = BeautifulSoup(form.table(), 'html.parser')
     assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
     assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
 
@@ -492,6 +493,8 @@ def test_hidden_with_name():
 
     assert page.default_child
     assert not page.children().baz.default_child
+    assert page.children().baz._is_bound
+    assert page.children().baz.mode == INITIALS_FROM_GET
 
     soup = BeautifulSoup(rendered_page, 'html.parser')
     actual = [
@@ -1469,15 +1472,18 @@ def test_action_shortcut_icon():
 
 def test_render_grouped_actions():
     RequestFactory().get('/')  # needed when running in flask mode to have an app present
-    form = Form(actions=dict(
-        a=Action(display_name='a'),
-        b=Action(display_name='b', show=lambda form, **_: False),
-        q=Action(display_name='q', show=lambda form, **_: True),
-        c=Action(display_name='c', group='group'),
-        d=Action(display_name='d', group='group'),
-        f=Action(display_name='f', group='group'),
-        submit__show=False,
-    ))
+    form = Form(
+        actions=dict(
+            a=Action(display_name='a'),
+            b=Action(display_name='b', show=lambda form, **_: False),
+            q=Action(display_name='q', show=lambda form, **_: True),
+            c=Action(display_name='c', group='group'),
+            d=Action(display_name='d', group='group'),
+            f=Action(display_name='f', group='group'),
+            submit__show=False,
+        ),
+        data={},
+    )
     actual_html = form.render_actions()
     expected_html = """
     <div class="links">

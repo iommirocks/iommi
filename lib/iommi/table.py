@@ -844,8 +844,7 @@ class Header(object):
     def rendered(self):
         return render_template(self.table.request, self.template, dict(header=self))
 
-    @property
-    def rendered_attrs(self):
+    def render_attrs(self):
         return render_attrs(self.attrs)
 
     def __repr__(self):
@@ -1205,7 +1204,7 @@ class Table(RefinableObject, PagePart):
             return
 
         self.declared_actions = collect_members(items=self._actions, cls=Action)
-        self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
+        self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, table=self)
 
         def bind_columns():
             for column in self.columns:

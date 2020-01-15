@@ -4,7 +4,7 @@ from typing import (
     Dict,
     List,
     Optional,
-)
+    Any)
 
 from django.conf import settings
 from django.http.response import (
@@ -78,6 +78,7 @@ class Page(PagePart):
         # TODO: use collect_members and bind_members
         self.declared_parts = {x.name: x for x in sort_after(list(generate_parts()))}
 
+    def on_bind(self) -> Any:
         def bind_part(p):
             if hasattr(p, 'bind'):
                 return p.bind(parent=self)
@@ -91,6 +92,8 @@ class Page(PagePart):
         return f'<Page with parts: {list(self.parts.keys())}>'
 
     def children(self):
+        if not self._is_bound:
+            self.bind(parent=None)
         return self.parts
 
     def endpoint_kwargs(self):

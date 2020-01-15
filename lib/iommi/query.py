@@ -525,7 +525,7 @@ class Query(RefinableObject, PagePart):
         # TODO: use collect_members and bind_members
         self.variables = sort_after(list(generate_variables()))
 
-        if request is not None:
+        if request is not None or data is not None:
             self.request = request
             self.bind(parent=None)
 
@@ -535,6 +535,9 @@ class Query(RefinableObject, PagePart):
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
 
     def parse(self, query_string: str) -> Q:
+        if not self._is_bound:
+            # TODO: should we do implicit bind? seems error prone, but it's convenient for the tests for now...
+            self.bind(parent=None)
         query_string = query_string.strip()
         if not query_string:
             return Q()
@@ -658,6 +661,7 @@ class Query(RefinableObject, PagePart):
         """
         Convert a parsed token of variable_name OPERATOR variable_name into a Q object
         """
+        assert self._is_bound
         variable_name, op, value_string_or_variable_name = token
         variable = self.bound_variable_by_name.get(variable_name.lower())
         if variable:
@@ -669,7 +673,7 @@ class Query(RefinableObject, PagePart):
             if result is None:
                 raise QueryException('Unknown value "%s" for variable "%s"' % (value_string_or_f, variable.name))
             return result
-        raise QueryException('Unknown variable "%s"' % variable_name)
+        raise QueryException(f'Unknown variable "{variable_name}", available variables: {list(self.bound_variable_by_name.keys())}')
 
     def freetext_as_q(self, token):
         assert any(v.freetext for v in self.variables)

@@ -11,7 +11,7 @@ def get_saved_something():
 
 def reset_saved_something():
     global saved_something
-    saved_something = False
+    saved_something = None
 
 
 class FormFromModelTest(Model):

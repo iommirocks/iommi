@@ -1,5 +1,5 @@
 <select name="{{ field.path }}" id="{{ field.id }}"{{ field.render_attrs }}>
-    {% for choice in field.choice_tuples_property %}
+    {% for choice in field.choice_tuples %}
         <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %}>{{ choice.2 }}</option>
     {% endfor %}
 </select>

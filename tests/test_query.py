@@ -366,7 +366,7 @@ def test_from_model_foreign_key():
         class Meta:
             variables = Query.variables_from_model(model=Bar)
 
-    t = MyQuery()
+    t = MyQuery(data={})
     assert [x.name for x in t.variables] == ['id', 'foo']
     assert isinstance(t.bound_variable_by_name['foo'].choices, QuerySet)
 

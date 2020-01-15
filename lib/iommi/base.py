@@ -147,9 +147,9 @@ class PagePart:
             self.request = parent.request
         self.parent = parent
         result = self.on_bind()
+        self._is_bound = True
         if result is None:
             return self
-        self._is_bound = True
         return result
 
     def on_bind(self) -> Any:

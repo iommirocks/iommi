@@ -1511,6 +1511,7 @@ class Form(RefinableObject, PagePart):
         return render_attrs(self.attrs)
 
     def render_actions(self):
+        assert self._is_bound, 'The form has not been bound. You need to call bind() either explicitly, or pass data/request to the constructor to cause an indirect bind()'
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
             self.request,

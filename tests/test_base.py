@@ -229,6 +229,9 @@ def test_page_constructor():
         part__bar=html.div()
     )
 
+    # TODO: should this be necessary?
+    my_page.bind(parent=None)
+
     assert len(my_page.parts) == 3
     assert ['foo', 'h1', 'bar'] == list(my_page.parts.keys())
 

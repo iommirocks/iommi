@@ -1,4 +1,4 @@
-{% for choice in field.choice_tuples_property %}
+{% for choice in field.choice_tuples %}
     <input type="radio" value="{{ choice.1 }}" name="{{ field.path }}" id="{{ field.id }}_{% if forloop %}{{ forloop.counter }}{% else %}{{ loop.counter }}{% endif %}" {{ field.render_attrs }} {% if choice.3 %}checked{% endif %}/>
     <label for="{{ field.id }}_{% if forloop %}{{ forloop.counter }}{% else %}{{ loop.counter }}{% endif %}">{{ choice.2 }}</label>
     {% if forloop and not forloop.last or not loop.last %}<br>{% endif %}
