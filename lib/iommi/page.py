@@ -221,16 +221,24 @@ def portal_page(left=None, center=None, **kwargs):
 
 
 def perform_ajax_dispatch(*, root, path, value, request):
+    if not root._is_bound:
+        # This is mostly useful for tests
+        root.request = request
+        root.bind(parent=None)
+
     try:
         target, parents = find_target(path=path, root=root)
     except InvalidEndpointPathException:
         if not settings.DEBUG:
-            return HttpResponse(json.dumps(dict(error='Invalid endpoint path')), content_type='application/json')
+            return dict(error=f'Invalid endpoint path')
         else:
             raise
 
     # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
     kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
+
+    if target.endpoint_handler is None:
+        raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
 
     # TODO: this API should be endpoint(), fix Table.children when this is fixed
     return target.endpoint_handler(request=request, value=value, **kwargs)
@@ -250,8 +258,6 @@ def middleware(get_response):
             if dispatch_commands:
                 dispatch_target, value = next(iter(dispatch_commands.items()))
                 data = perform_ajax_dispatch(root=page, path=dispatch_target, value=value, request=request)
-                if isinstance(data, HttpResponse):
-                    return True, data
 
                 if data is not None:
                     return True, HttpResponse(json.dumps(data), content_type='application/json')

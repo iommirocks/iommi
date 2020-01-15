@@ -3,12 +3,17 @@ from functools import wraps
 from typing import (
     Union,
     Any,
+    Dict,
 )
 
 from django.conf import settings
 from django.http.response import HttpResponseBase, HttpResponse
 from django.template import Template
-from tri_declarative import dispatch, EMPTY
+from tri_declarative import (
+    dispatch,
+    EMPTY,
+    Namespace,
+)
 from iommi._web_compat import get_template_from_string, render_template
 
 
@@ -37,6 +42,25 @@ def group_paths_by_children(*, children, data):
 
 class InvalidEndpointPathException(Exception):
     pass
+
+
+class EndPointHandlerProxy:
+    def __init__(self, func):
+        self.func = func
+        assert callable(func)
+
+    def endpoint_handler(self, request, value, **kwargs):
+        return self.func(request=request, value=value, **kwargs)
+
+    def endpoint_kwargs(self):
+        return {}
+
+
+def setup_endpoint_proxies(endpoint: Namespace) -> Dict[str, EndPointHandlerProxy]:
+    return Namespace({
+        k: EndPointHandlerProxy(v)
+        for k, v in endpoint.items()
+    })
 
 
 def find_target(*, path, root):
@@ -137,15 +161,17 @@ class PagePart:
             self.request = parent.request
         self.parent = parent
         result = self.on_bind()
-        self._is_bound = True
         if result is None:
-            return self
+            result = self
+        result._is_bound = True
         return result
 
     def on_bind(self) -> Any:
         pass
 
     def path(self) -> str:
+        # TODO: this assert seems like a good idea, but it fires in Table.prepare... not sure what to do about that right now
+        # assert self._is_bound
         if self.default_child:
             if self.parent is not None:
                 return self.parent.path()
@@ -159,7 +185,7 @@ class PagePart:
             return self.name
 
     def endpoint_path(self):
-        return '/' + self.path()
+        return DISPATCH_PREFIX + self.path()
 
 
 def render_template_name(template_name, **kwargs):
@@ -199,4 +225,5 @@ def path_join(prefix, name) -> str:
 
 
 DISPATCH_PATH_SEPARATOR = '/'
+DISPATCH_PREFIX = DISPATCH_PATH_SEPARATOR
 MISSING = object()

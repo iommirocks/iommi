@@ -38,6 +38,8 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     if isinstance(table, Namespace):
         table = table()
 
+    table.bind(parent=None)
+
     request = RequestFactory().get("/", query)
     request.user = AnonymousUser()
     actual_html = remove_csrf(table.render_or_respond(request=request, **kwargs))

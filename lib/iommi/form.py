@@ -64,6 +64,7 @@ from iommi.base import (
     MISSING,
     PagePart,
     render_template_name,
+    setup_endpoint_proxies,
 )
 from iommi.render import render_attrs
 
@@ -283,13 +284,13 @@ def create_or_edit_object__on_valid_post(*, form):
             return create_or_edit_object_redirect(form.extra.is_create, form.extra.redirect_to, form.request, form.extra.redirect, form)
 
 
-def default_endpoint__config(field: 'Field', key: str, value: str, **_) -> dict:
+def default_endpoint__config(field: 'Field', **_) -> dict:
     return dict(
         name=field.name,
     )
 
 
-def default_endpoint__validate(field: 'Field', key: str, value, **_) -> dict:
+def default_endpoint__validate(field: 'Field', **_) -> dict:
     return dict(
         valid=not bool(field.errors),
         errors=list(field.errors),
@@ -623,7 +624,7 @@ class Action(RefinableObject, PagePart):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        not_evaluated_attributes = {'show', 'extra'}
+        not_evaluated_attributes = {'show', 'extra', 'endpoint'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
         for key in evaluated_attributes:
             self._evaluate_attribute(key, **kwargs)
@@ -710,8 +711,8 @@ class Field(RefinableObject, PagePart):
     empty_choice_tuple = Refinable()
 
     # TODO: are these two redundant?
-    endpoint = Refinable()
-    endpoint_handler = Refinable()
+    endpoint: Namespace = Refinable()
+    endpoint_handler: Callable = Refinable()
 
     @dispatch(
         attr=MISSING,
@@ -797,6 +798,10 @@ class Field(RefinableObject, PagePart):
 
     def endpoint_kwargs(self):
         return dict(field=self)
+
+    def children(self):
+        assert self._is_bound
+        return setup_endpoint_proxies(self.endpoint)
 
     @property
     def form(self):
@@ -885,7 +890,7 @@ class Field(RefinableObject, PagePart):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        not_evaluated_attributes = {'post_validation', 'show'}
+        not_evaluated_attributes = {'post_validation', 'show', 'endpoint'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
@@ -1325,6 +1330,7 @@ class Form(RefinableObject, PagePart):
         member_class = Field
 
     def children(self):
+        assert self._is_bound
         return Struct(
             field=Struct(
                 name='field',
@@ -1336,7 +1342,9 @@ class Form(RefinableObject, PagePart):
                 name='actions',
                 children=lambda: self.actions,
                 endpoint_kwargs=lambda: dict(form=self),
-            )
+            ),
+            # TODO: this is a potential name conflict with field and actions above
+            **setup_endpoint_proxies(self.endpoint)
         )
 
     def endpoint_kwargs(self):
@@ -1350,10 +1358,11 @@ class Form(RefinableObject, PagePart):
         extra=EMPTY,
         attrs__action='',
         attrs__method='post',
+        endpoint=EMPTY,
         actions__submit__call_target=Action.submit,
         actions_template='iommi/form/actions.html',
     )
-    def __init__(self, request=None, *, data: Dict[str, Any] = None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
+    def __init__(self, *, request=None, data: Dict[str, Any] = None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
         self.request = request
 
         super(Form, self).__init__(field=field, **kwargs)
@@ -1375,7 +1384,7 @@ class Form(RefinableObject, PagePart):
 
         self._actions = actions
 
-        def unbound_fields():
+        def generate_fields():
             if fields is not None:
                 for field_ in fields:
                     yield field_
@@ -1392,7 +1401,7 @@ class Form(RefinableObject, PagePart):
                 yield field_spec()
 
         # TODO: use collect_members and bind_members
-        self._fields: List[Field] = sort_after([f.bind(parent=self) for f in unbound_fields()])
+        self.declared_fields = {x.name: x for x in sort_after(list(generate_fields()))}
 
         if request is not None or data is not None:
             self.request = request
@@ -1415,6 +1424,9 @@ class Form(RefinableObject, PagePart):
 
         self.declared_actions = collect_members(items=self._actions, cls=Action)
         self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
+
+        # TODO: Clean up _fields, fields, declared_fields, fields_by_name mess
+        self._fields: List[Field] = [f.bind(parent=self) for f in self.declared_fields.values()]
 
         for field in self._fields:
             field._evaluate_show()

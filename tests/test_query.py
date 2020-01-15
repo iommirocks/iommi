@@ -8,6 +8,7 @@ from django.db.models import (
     QuerySet,
 )
 from django.test import RequestFactory
+from iommi.page import perform_ajax_dispatch
 from tri_declarative import class_shortcut
 from tri_struct import Struct
 from iommi.form import (
@@ -275,9 +276,9 @@ def test_choice_queryset():
     random_valid_obj = Foo.objects.all().order_by('?')[0]
 
     # test GUI
-    form = Query2(RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
+    form = Query2(request=RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
     assert not form.is_valid()
-    query2 = Query2(RequestFactory().post('/', {'-': '-', 'foo': str(random_valid_obj.pk)}))
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'foo': str(random_valid_obj.pk)}))
     form = query2.form()
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
@@ -337,9 +338,9 @@ def test_multi_choice_queryset():
     random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
 
     # test GUI
-    form = Query2(RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
+    form = Query2(request=RequestFactory().post('/', {'-': '-', 'foo': 'asdasdasdasd'})).form()
     assert not form.is_valid()
-    query2 = Query2(RequestFactory().post('/', {'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
+    query2 = Query2(request=RequestFactory().post('/', {'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
     form = query2.form()
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
@@ -397,14 +398,17 @@ def test_endpoint_dispatch():
             choices=EndPointDispatchModel.objects.all().order_by('id'),
         )
 
-    query = MyQuery(RequestFactory().get('/'))
+    request = RequestFactory().get('/')
+    query = MyQuery(request=request)
 
-    assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path()
-    assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == {
+    assert '/foo' == query.form().fields_by_name.foo.endpoint_path()
+    expected = {
         'more': False,
         'page': 1,
         'results': [{'id': x.pk, 'text': str(x)}],
     }
+    assert perform_ajax_dispatch(root=query, path='/gui/field/foo', value='ar', request=request) == expected
+    assert perform_ajax_dispatch(root=query, path='/foo', value='ar', request=request) == expected
 
 
 def test_endpoint_dispatch_errors():
@@ -415,9 +419,9 @@ def test_endpoint_dispatch_errors():
             choices=('a', 'b'),
         )
 
-    assert MyQuery(RequestFactory().get('/', {ADVANCED_QUERY_PARAM: 'foo=!'})).endpoint_dispatch(key='errors', value='') == {'global': ['Invalid syntax for query']}
-    assert MyQuery(RequestFactory().get('/', {ADVANCED_QUERY_PARAM: 'foo=a'})).endpoint_dispatch(key='errors', value='') == {}
-    assert MyQuery(RequestFactory().get('/', {'foo': 'q'})).endpoint_dispatch(key='errors', value='') == {'fields': {'foo': ['q not in available choices']}}
+    assert perform_ajax_dispatch(root=MyQuery(), path='/errors', value='', request=RequestFactory().get('/', {ADVANCED_QUERY_PARAM: 'foo=!'})) == {'global': ['Invalid syntax for query']}
+    assert perform_ajax_dispatch(root=MyQuery(), path='/errors', value='', request=RequestFactory().get('/', {ADVANCED_QUERY_PARAM: 'foo=a'})) == {}
+    assert perform_ajax_dispatch(root=MyQuery(), path='/errors', value='', request=RequestFactory().get('/', {'foo': 'q'})) == {'fields': {'foo': ['q not in available choices']}}
 
 
 def test_variable_repr():

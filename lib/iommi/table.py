@@ -43,6 +43,8 @@ from iommi.base import (
     DISPATCH_PATH_SEPARATOR,
     PagePart,
     path_join,
+    setup_endpoint_proxies,
+    DISPATCH_PREFIX,
 )
 from iommi.form import (
     Action,
@@ -904,7 +906,7 @@ class Table(RefinableObject, PagePart):
         query_class = Query
         endpoint__tbody = (lambda table, key, value: {'html': table.render(template='tri_table/table_container.html')})
 
-        attrs = {'data-endpoint': lambda table, **_: path_join(table.endpoint_path(), 'tbody')}
+        attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
         query__default_child = True
         query__gui__default_child = True
 
@@ -917,8 +919,9 @@ class Table(RefinableObject, PagePart):
             columns=Struct(
                 name='columns',
                 children=lambda: self.bound_column_by_name,
-            )
-            # **self.endpoint,  # TODO: right now this is incompatible
+            ),
+            # TODO: this can have name collisions with the keys above
+            **setup_endpoint_proxies(self.endpoint)
         )
 
     def endpoint_kwargs(self):
@@ -1198,6 +1201,10 @@ class Table(RefinableObject, PagePart):
         self.prepare()
         return self._bound_column_by_name
 
+    def on_bind(self) -> Any:
+        # TODO: seems like prepare() is exactly bind()! we should unify this
+        self.prepare()
+
     # noinspection PyProtectedMember
     def prepare(self):
         if self._has_prepared:
@@ -1240,7 +1247,6 @@ class Table(RefinableObject, PagePart):
                 'model',
                 '_query',
                 'bulk',
-                'endpoint',
             ],
             table=self,
         )

@@ -2,7 +2,11 @@ import copy
 import operator
 from collections import OrderedDict
 from datetime import date
-from typing import List, Dict
+from functools import reduce
+from typing import (
+    Dict,
+    List,
+)
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import (
@@ -10,58 +14,56 @@ from django.db.models import (
     Model,
     Q,
 )
-from functools import reduce
+
 from pyparsing import (
-    alphanums,
-    alphas,
     CaselessLiteral,
     Combine,
-    delimitedList,
     Forward,
     Group,
     Keyword,
-    nums,
-    oneOf,
     Optional,
     ParseException,
     ParseResults,
-    quotedString,
     QuotedString,
     Word,
     ZeroOrMore,
+    alphanums,
+    alphas,
+    delimitedList,
+    nums,
+    oneOf,
+    quotedString,
 )
 from tri_declarative import (
+    EMPTY,
+    Namespace,
+    Refinable,
+    RefinableObject,
     class_shortcut,
     declarative,
     dispatch,
-    EMPTY,
     evaluate_recursive,
     filter_show_recursive,
-    Namespace,
-    Refinable,
     refinable,
-    RefinableObject,
     setdefaults_path,
     sort_after,
     with_meta,
+)
+from tri_struct import Struct
+from iommi.base import (
+    MISSING,
+    PagePart,
+    setup_endpoint_proxies,
 )
 from iommi.form import (
     Form,
     bool_parse,
     create_members_from_model,
-    dispatch_prefix_and_remaining_from_key,
     expand_member,
-    member_from_model)
-from iommi.base import (
-    MISSING,
-    PagePart,
+    member_from_model,
 )
-from iommi.base import DISPATCH_PATH_SEPARATOR
-
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
-from tri_struct import Struct
-
 
 class QueryException(Exception):
     pass
@@ -434,8 +436,7 @@ class StringValue(str):
         return super(StringValue, cls).__new__(cls, s)
 
 
-def default_endpoint__errors(query, key, value):
-    del key, value
+def default_endpoint__errors(query, **_):
     try:
         query.to_q()
         errors = query.form().get_errors()
@@ -479,6 +480,8 @@ class Query(RefinableObject, PagePart):
     def children(self):
         return Struct(
             gui=self.form(),
+            # TODO: this is a potential namespace conflict with gui above. Care or not care?
+            **setup_endpoint_proxies(self.endpoint)
         )
 
     def endpoint_kwargs(self):
@@ -488,7 +491,7 @@ class Query(RefinableObject, PagePart):
         # TODO: convert to an item in self.children()?
         endpoint__errors=default_endpoint__errors,
     )
-    def __init__(self, request=None, data=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, *, request=None, data=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
         """
         :type variables: list of Variable
         :type request: django.http.request.HttpRequest

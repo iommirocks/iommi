@@ -119,6 +119,7 @@ def test_kwarg_column_config_injection():
         foo = Column()
 
     table = MyTable(data=[], column__foo__extra__stuff="baz")
+    table.bind(parent=None)
     assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
 
 
@@ -1251,7 +1252,7 @@ def test_multi_choice_queryset():
             model = TFoo
 
     foo_table = FooTable(data=TFoo.objects.all(), request=RequestFactory().get("/", ''))
-    foo_table.prepare()
+    foo_table.bind(parent=None)
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
     assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
@@ -1274,7 +1275,7 @@ def test_query_namespace_inject():
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
             columns=[Column(name='a', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
-        foo.prepare()
+        foo.bind(parent=None)
 
 
 def test_float():
@@ -1528,17 +1529,17 @@ def test_ordering():
 
     # no ordering
     t = Table.from_model(model=TFoo, request=RequestFactory().get('/'))
-    t.prepare()
+    t.bind(parent=None)
     assert not t.data.query.order_by
 
     # ordering from GET parameter
     t = Table.from_model(model=TFoo, request=RequestFactory().get('/', dict(order='a')))
-    t.prepare()
+    t.bind(parent=None)
     assert list(t.data.query.order_by) == ['a']
 
     # default ordering
     t = Table.from_model(model=TFoo, default_sort_order='b', request=RequestFactory().get('/'))
-    t.prepare()
+    t.bind(parent=None)
     assert list(t.data.query.order_by) == ['b']
 
 
@@ -1645,7 +1646,7 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
             model = TFoo
 
     table = MyTable(request=RequestFactory().get("/", ''))
-    table.prepare()
+    table.bind(parent=None)
 
 
 @pytest.mark.django_db
@@ -1702,7 +1703,7 @@ def test_from_model_with_inheritance():
         column__value__query__gui__show=True,
         column__value__bulk__show=True,
     )
-    t.prepare()
+    t.bind(parent=None)
 
     assert was_called == {
         'MyField.float': 2,

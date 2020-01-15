@@ -12,7 +12,10 @@ from iommi._db_compat import field_defaults_factory
 from bs4 import BeautifulSoup
 import pytest
 from iommi._web_compat import Template, smart_str
-from iommi.base import PagePart
+from iommi.base import (
+    PagePart,
+    InvalidEndpointPathException,
+)
 from iommi.page import (
     Page,
     perform_ajax_dispatch,
@@ -1283,10 +1286,11 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         not_returning_anything = Field.integer()
 
     form = MyForm()
-    response = perform_ajax_dispatch(root=form, path='/field/username', value='ar', request=RequestFactory().get('/'))
-    actual = json.loads(response.content)
+    actual = perform_ajax_dispatch(root=form, path='/field/username', value='ar', request=RequestFactory().get('/'))
     assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
-    assert form.endpoint_dispatch(key='field/not_returning_anything', value='ar') is None
+
+    with pytest.raises(InvalidEndpointPathException) as e:
+        perform_ajax_dispatch(root=form, path='/field/not_returning_anything', value='ar', request=RequestFactory().get('/'))
 
 
 @pytest.mark.django_db
@@ -1311,43 +1315,48 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     user2 = User.objects.create(username='bar')
 
     form = Form.from_model(model=FooModel, data={}, **kwargs)
-    form.request = RequestFactory().get('/')
-    assert form.endpoint_dispatch(key='field/user', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
+    actual = perform_ajax_dispatch(root=form, path='/field/user', value='ar', request=RequestFactory().get('/'))
+
+    assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
 
 
+@override_settings(DEBUG=True)
 def test_ajax_namespacing():
     class MyForm(Form):
         foo = Field(
-            endpoint__=lambda **_: 'default',
+            endpoint_handler=lambda **_: 'default',
             endpoint__bar=lambda **_: 'bar',
             endpoint__baaz=lambda **_: 'baaz',
         )
 
-    form = MyForm(request=RequestFactory().get('/'))
-    assert 'default' == form.endpoint_dispatch(key='field/foo', value=None)
-    assert 'bar' == form.endpoint_dispatch(key='field/foo/bar', value=None)
-    assert 'baaz' == form.endpoint_dispatch(key='field/foo/baaz', value=None)
+    request = RequestFactory().get('/')
+    form = MyForm()
+    assert 'default' == perform_ajax_dispatch(root=form, path='/field/foo', value='ar', request=request)
+    assert 'bar' == perform_ajax_dispatch(root=form, path='/field/foo/bar', value='ar', request=request)
+    assert 'baaz' == perform_ajax_dispatch(root=form, path='/field/foo/baaz', value='ar', request=request)
 
 
+@override_settings(DEBUG=True)
 def test_ajax_config_and_validate():
     class MyForm(Form):
         foo = Field()
         bar = Field(post_validation=lambda field, **_: field.errors.add('FAIL'))
 
-    form = MyForm(request=RequestFactory().get('/'))
+    request = RequestFactory().get('/')
+    form = MyForm()
     assert dict(
         name='foo',
-    ) == form.endpoint_dispatch(key='field/foo/config', value=None)
+    ) == perform_ajax_dispatch(root=form, path='/field/foo/config', value=None, request=request)
 
     assert dict(
         valid=True,
         errors=[]
-    ) == form.endpoint_dispatch(key='field/foo/validate', value='new value')
+    ) == perform_ajax_dispatch(root=form, path='/field/foo/validate', value='new value', request=request)
 
     assert dict(
         valid=False,
         errors=['FAIL']
-    ) == form.endpoint_dispatch(key='field/bar/validate', value='new value')
+    ) == perform_ajax_dispatch(root=form, path='/field/bar/validate', value='new value', request=request)
 
 
 def test_is_empty_form_marker():
@@ -1363,13 +1372,14 @@ def test_json_parsing():
     assert f.fields_by_name['foo'].value == 1
 
 
+@override_settings(DEBUG=True)
 def test_custom_endpoint():
     class MyForm(Form):
         class Meta:
-            endpoint__foo = lambda key, value, **_: 'foo' + value
+            endpoint__foo = lambda value, **_: 'foo' + value
 
-    form = MyForm(data={})
-    assert 'foobar' == form.endpoint_dispatch(key='foo', value='bar')
+    form = MyForm()
+    assert 'foobar' == perform_ajax_dispatch(root=form, path='/foo', value='bar', request=RequestFactory().get('/'))
 
 
 def remove_csrf(html_code):
