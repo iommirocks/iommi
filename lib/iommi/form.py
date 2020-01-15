@@ -1335,7 +1335,7 @@ class Form(RefinableObject, PagePart):
             field=Struct(
                 name='field',
                 children=lambda: self.fields_by_name,
-                default_child=True,
+                default_child=True,  # TODO: unsure about this
                 endpoint_kwargs=lambda: dict(form=self),
             ),
             actions=Struct(

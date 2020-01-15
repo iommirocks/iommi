@@ -25,7 +25,7 @@ def group_paths_by_children(*, children, data):
     results = defaultdict(dict)
 
     default_child = [k for k, v in children.items() if getattr(v, 'default_child', False)]
-    assert len(default_child) in (0, 1), 'There can only be one default_child per level'
+    assert len(default_child) in (0, 1), f'There can only be one default_child per level: found {default_child}'
     default_child = default_child[0] if default_child else None
 
     for path, value in data.items():
@@ -155,7 +155,8 @@ class PagePart:
         if parent is None:
             if self.name is None:
                 self.name = 'root'
-            self.default_child = True
+            if self.default_child is None:
+                self.default_child = True
 
         if parent is not None:
             self.request = parent.request

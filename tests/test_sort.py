@@ -88,14 +88,18 @@ def test_sort_with_name():
         foo = Column()
         bar = Column.number(sort_key='bar')
 
-    data = [Struct(foo='c', bar=3),
-            Struct(foo='b', bar=2),
-            Struct(foo='a', bar=1)]
+    data = [
+        Struct(foo='c', bar=3),
+        Struct(foo='b', bar=2),
+        Struct(foo='a', bar=1),
+    ]
 
-    verify_table_html(table=(TestTable(data=data)),
-                      query={'my_table/order': 'bar'},
-                      expected_html="""\
-      <table class="listview" data-endpoint="/tbody">
+    table = TestTable(data=data, default_child=False)
+    verify_table_html(
+        table=table,
+        query={'my_table/order': 'bar'},
+        expected_html="""\
+      <table class="listview" data-endpoint="/my_table/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">

@@ -1477,7 +1477,6 @@ class Table(RefinableObject, PagePart):
         call_target__attribute='from_model',
         extra__model_verbose_name=None,
         extra__title=None,
-        default_child=True,
     )
     def as_page(cls, *, call_target=None, model=None, part=None, extra=None, data=None, **kwargs):
         if model is None and isinstance(data, QuerySet):

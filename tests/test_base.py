@@ -44,7 +44,6 @@ request = RequestFactory().get('/')  # TODO: we shouldn't need this, but tri.que
 
 class MyPage(Page):
     t1 = Table.from_model(
-        request=request,
         model=T1,
         column__foo=dict(
             query__show=True,
@@ -58,7 +57,6 @@ class MyPage(Page):
     )
 
     t2 = Table.from_model(
-        request=request,
         model=T2,
         column__foo=dict(
             query__show=True,
@@ -69,9 +67,10 @@ class MyPage(Page):
             query__gui__show=True,
         ),
     )
+    assert not t2.default_child
 
 
-def test_happy_path():
+def test_group_paths_by_children_happy_path():
     my_page = MyPage()
 
     data = {
@@ -119,7 +118,7 @@ def test_happy_path():
     }
 
 
-def test_error_message():
+def test_group_paths_by_children_error_message():
     class NoDefaultChildPage(Page):
         foo = html.h1('asd')
 
@@ -133,7 +132,7 @@ def test_error_message():
         group_paths_by_children(children=my_page.children(), data=data)
 
 
-def test_error_message_to_client():
+def test_dispatch_error_message_to_client():
     response = request_with_middleware(response=MyPage(), data={'/qwe': ''})
     data = json.loads(response.content)
     assert data == dict(error='Invalid endpoint path')

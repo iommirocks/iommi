@@ -585,10 +585,10 @@ def test_multi_choice_queryset():
         foo = Field.multi_choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm(data={}).fields[0].choices] == [user.pk]
-    assert MyForm(RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
-    assert MyForm(RequestFactory().get('/', {'foo': [smart_str(user2.pk), smart_str(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
+    assert MyForm(request=RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
+    assert MyForm(request=RequestFactory().get('/', {'foo': [smart_str(user2.pk), smart_str(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
 
-    form = MyForm(RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
+    form = MyForm(request=RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
     assert form.fields[0].errors == set()
     result = form.render()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" multiple="" name="foo" type="hidden"/>'
@@ -607,9 +607,9 @@ def test_choice_queryset():
         foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm(data={}).fields[0].choices] == [user.pk]
-    assert MyForm(RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
+    assert MyForm(request=RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
 
-    form = MyForm(RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
+    form = MyForm(request=RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
     assert form.fields[0].errors == set()
     result = form.render()
     print(result)
@@ -627,13 +627,13 @@ def test_choice_queryset_do_not_cache():
         foo = Field.choice_queryset(attr=None, choices=User.objects.all(), template='iommi/form/choice.html')
 
     # There is just one user, check that we get it
-    form = MyForm(RequestFactory().get('/'))
+    form = MyForm(request=RequestFactory().get('/'))
     assert form.fields[0].errors == set()
     assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
     # Now create a new queryset, check that we get two!
     User.objects.create(username='foo2')
-    form = MyForm(RequestFactory().get('/'))
+    form = MyForm(request=RequestFactory().get('/'))
     assert form.fields[0].errors == set()
     assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
 
