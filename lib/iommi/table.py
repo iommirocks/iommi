@@ -2,17 +2,20 @@ import copy
 import warnings
 from collections import OrderedDict
 from enum import (
-    Enum,
     auto,
+    Enum,
 )
 from functools import total_ordering
 from itertools import groupby
 from typing import (
-    Dict,
-    List,
-    Union,
     Any,
-    Optional, Iterable, Type)
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Type,
+    Union,
+)
 
 from django.conf import settings
 from django.core.paginator import (
@@ -22,7 +25,6 @@ from django.core.paginator import (
 from django.db.models import QuerySet
 from django.http import (
     Http404,
-    HttpResponse,
     HttpResponseRedirect,
 )
 from django.utils.encoding import (
@@ -33,57 +35,59 @@ from django.utils.html import (
     format_html,
 )
 from django.utils.safestring import mark_safe
-from tri_declarative import (
-    EMPTY,
-    LAST,
-    Namespace,
-    Refinable,
-    RefinableObject,
-    class_shortcut,
-    declarative,
-    dispatch,
-    evaluate,
-    evaluate_recursive,
-    getattr_path,
-    refinable,
-    setattr_path,
-    setdefaults_path,
-    sort_after,
-    with_meta,
+from iommi._web_compat import (
+    render_template,
+    Template,
+)
+from iommi.base import (
+    DISPATCH_PATH_SEPARATOR,
+    PagePart,
+    path_join,
 )
 from iommi.form import (
     Action,
-    Form,
+    bind_members,
+    collect_members,
     create_members_from_model,
     expand_member,
+    Form,
     group_actions,
-    handle_dispatch,
     member_from_model,
-    collect_members,
-    bind_members,
-)
-from iommi.base import DISPATCH_PATH_SEPARATOR, PagePart, group_paths_by_children, path_join
-from iommi.render import (
-    render_attrs,
-)
-from iommi._web_compat import (
-    Template,
-    render_template,
-)
-from tri_named_struct import (
-    NamedStruct,
-    NamedStructField,
 )
 from iommi.query import (
     Q_OP_BY_OP,
     Query,
     QueryException,
 )
-from tri_struct import (
-    Struct,
-    merged,
+from iommi.render import (
+    render_attrs,
 )
-
+from tri_declarative import (
+    class_shortcut,
+    declarative,
+    dispatch,
+    EMPTY,
+    evaluate,
+    evaluate_recursive,
+    getattr_path,
+    LAST,
+    Namespace,
+    Refinable,
+    refinable,
+    RefinableObject,
+    setattr_path,
+    setdefaults_path,
+    sort_after,
+    with_meta,
+)
+from tri_named_struct import (
+    NamedStruct,
+    NamedStructField,
+)
+from tri_struct import (
+    merged,
+    Struct,
+)
 
 LAST = LAST
 
@@ -882,7 +886,6 @@ class Table(RefinableObject, PagePart):
     model: Type['django.db.models.Model'] = Refinable()
     column = Refinable()
     bulk: Namespace = Refinable()
-    endpoint_dispatch_prefix = Refinable()
     default_child = Refinable()
     extra: Namespace = Refinable()
     endpoint: Namespace = Refinable()
@@ -900,7 +903,8 @@ class Table(RefinableObject, PagePart):
         form_class = Form
         query_class = Query
         endpoint__tbody = (lambda table, key, value: {'html': table.render(template='tri_table/table_container.html')})
-        attrs = {'data-endpoint': lambda table, **_: DISPATCH_PATH_SEPARATOR + path_join(table.endpoint_dispatch_prefix, 'tbody')}
+
+        attrs = {'data-endpoint': lambda table, **_: path_join(table.endpoint_path(), 'tbody')}
         query__default_child = True
         query__gui__default_child = True
 
@@ -951,10 +955,6 @@ class Table(RefinableObject, PagePart):
         query=EMPTY,
         bulk=EMPTY,
         page_size=DEFAULT_PAGE_SIZE,
-
-        endpoint_dispatch_prefix=None,
-        endpoint__query=lambda table, key, value: table.query.endpoint_dispatch(key=key, value=value) if table.query is not None else None,
-        endpoint__bulk=lambda table, key, value: table.bulk_form.endpoint_dispatch(key=key, value=value) if table.bulk is not None else None,
 
         extra=EMPTY,
 
@@ -1270,7 +1270,6 @@ class Table(RefinableObject, PagePart):
             self._query = self.get_meta().query_class(
                 request=self.request,
                 variables=variables,
-                endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'query'] if part is not None),
                 **self.query_args
             )
             self._query_form = self._query.form() if self._query.variables else None
@@ -1310,7 +1309,6 @@ class Table(RefinableObject, PagePart):
                     data=self.request.POST,
                     fields=bulk_fields,
                     name=self.name,
-                    endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'bulk'] if part is not None),
                     **self.bulk
                 )
             else:
@@ -1414,14 +1412,6 @@ class Table(RefinableObject, PagePart):
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
         return cls(data=data, model=model, instance=instance, columns=columns, **kwargs)
 
-    def endpoint_dispatch(self, key, value):
-        parts = key.split(DISPATCH_PATH_SEPARATOR, 1)
-        prefix = parts.pop(0)
-        remaining_key = parts[0] if parts else None
-        for endpoint, handler in self.endpoint.items():
-            if prefix == endpoint:
-                return handler(table=self, key=remaining_key, value=value)
-
     def bulk_queryset(self):
         queryset = self.model.objects.all() \
             .filter(**self.bulk_filter) \
@@ -1445,13 +1435,8 @@ class Table(RefinableObject, PagePart):
 
         self.request = request
 
-
-        foo = group_paths_by_children(children=self.children, data=self.request.GET)
-
-
-        should_return, dispatch_result = handle_dispatch(request=request, obj=table)
-        if should_return:
-            return dispatch_result
+        # foo = group_paths_by_children(children=self.children(), data=self.request.GET)
+        # TODO: implement dispatch? here? right now this is handled by the middleware only, is this ok?
 
         context['bulk_form'] = table.bulk_form
         context['query_form'] = table.query_form
@@ -1590,75 +1575,3 @@ def table_context(request,
 
     base_context.update(extra_context)
     return base_context
-
-
-@dispatch(
-    table__call_target=Table.from_model,
-)
-def render_table(request,
-                 table,
-                 context=None,
-                 paginator=None,
-                 post_bulk_edit=lambda table, queryset, updates: None):
-    """
-    Render a table. This automatically handles pagination, sorting, filtering and bulk operations.
-
-    :param request: the request object. This is set on the table object so that it is available for lambda expressions.
-    :param table: an instance of Table
-    :param context: dict of extra context parameters
-    :return: a string with the rendered HTML table
-    """
-    if not context:
-        context = {}
-
-    if isinstance(table, Namespace):
-        table = table()
-
-    assert isinstance(table, Table), table
-    table.request = request
-
-    should_return, dispatch_result = handle_dispatch(request=request, obj=table)
-    if should_return:
-        return dispatch_result
-
-    context['bulk_form'] = table.bulk_form
-    context['query_form'] = table.query_form
-    context['iommi_query_error'] = table.query_error
-
-    if table.bulk_form and request.method == 'POST':
-        if table.bulk_form.is_valid():
-            queryset = table.bulk_queryset()
-
-            updates = {
-                field.name: field.value
-                for field in table.bulk_form.fields
-                if field.value is not None and field.value != '' and field.attr is not None
-            }
-            queryset.update(**updates)
-
-            post_bulk_edit(table=table, queryset=queryset, updates=updates)
-
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
-
-    table.context = table_context(
-        request,
-        table=table,
-        extra_context=context,
-        paginator=paginator,
-    )
-
-    if table.query_form and not table.query_form.is_valid():
-        table.data = None
-        table.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
-
-    return render_template(request, table.template, table.context)
-
-
-def render_table_to_response(*args, **kwargs):
-    """
-    Shortcut for `HttpResponse(render_table(*args, **kwargs))`
-    """
-    response = render_table(*args, **kwargs)
-    if isinstance(response, HttpResponse):  # pragma: no cover
-        return response
-    return HttpResponse(response)

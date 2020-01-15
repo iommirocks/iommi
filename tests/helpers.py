@@ -2,7 +2,11 @@ import re
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
-from iommi.table import render_table
+from iommi import Table
+from tri_declarative import (
+    dispatch,
+    Namespace,
+)
 
 
 def reindent(s, before=" ", after="    "):
@@ -19,7 +23,10 @@ def remove_csrf(html_code):
     return re.sub(csrf_regex, '', html_code)
 
 
-def verify_table_html(expected_html, query=None, find=None, **kwargs):
+@dispatch(
+    table__call_target=Table.from_model,
+)
+def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     """
     Verify that the table renders to the expected markup, modulo formatting
     """
@@ -28,11 +35,27 @@ def verify_table_html(expected_html, query=None, find=None, **kwargs):
         if not expected_html.strip():
             expected_html = "<table/>"
 
+    if isinstance(table, Namespace):
+        table = table()
+
     request = RequestFactory().get("/", query)
     request.user = AnonymousUser()
-    actual_html = remove_csrf(render_table(request=request, **kwargs))
+    actual_html = remove_csrf(table.render_or_respond(request=request, **kwargs))
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').find(**find).prettify()).strip()
 
     assert prettified_actual == prettified_expected
+
+
+def request_with_middleware(*, response, data):
+    from iommi.page import middleware
+
+    def get_response(request):
+        del request
+        return response
+
+    m = middleware(get_response)
+    done, response = m(request=RequestFactory().get('/', data=data))
+    assert done
+    return response

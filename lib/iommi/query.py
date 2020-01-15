@@ -434,10 +434,6 @@ class StringValue(str):
         return super(StringValue, cls).__new__(cls, s)
 
 
-def default_endpoint__gui(query, key, value):
-    return query.form().endpoint_dispatch(key=key, value=value)
-
-
 def default_endpoint__errors(query, key, value):
     del key, value
     try:
@@ -470,7 +466,6 @@ class Query(RefinableObject, PagePart):
 
     name: str = Refinable()
     gui: Namespace = Refinable()
-    endpoint_dispatch_prefix: str = Refinable()
     endpoint: Namespace = Refinable()
     default_child = Refinable()
 
@@ -490,8 +485,7 @@ class Query(RefinableObject, PagePart):
         return dict(query=self)
 
     @dispatch(
-        endpoint_dispatch_prefix='query',
-        endpoint__gui=default_endpoint__gui,
+        # TODO: convert to an item in self.children()?
         endpoint__errors=default_endpoint__errors,
     )
     def __init__(self, request=None, data=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
@@ -713,7 +707,6 @@ class Query(RefinableObject, PagePart):
         form: Form = self.gui(
             data=self.data,
             fields=fields,
-            endpoint_dispatch_prefix=DISPATCH_PATH_SEPARATOR.join(part for part in [self.endpoint_dispatch_prefix, 'gui'] if part is not None),
             default_child=True,
         )
         form.bind(parent=self)
@@ -800,9 +793,3 @@ class Query(RefinableObject, PagePart):
         """
         variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
         return cls(data=data, variables=variables, **kwargs)
-
-    def endpoint_dispatch(self, key, value):
-        prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
-        handler = self.endpoint.get(prefix, None)
-        if handler is not None:
-            return handler(query=self, key=remaining_key, value=value)

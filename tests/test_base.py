@@ -16,6 +16,8 @@ from iommi.table import Table
 from iommi.base import group_paths_by_children, GroupPathsByChildrenError, find_target, InvalidEndpointPathException
 from tri_struct import Struct
 
+from tests.helpers import request_with_middleware
+
 pytestmark = pytest.mark.django_db
 
 # assert first in children, f'Found invalid path {k}. {first} not a member of {children.keys()}'
@@ -132,15 +134,7 @@ def test_error_message():
 
 
 def test_error_message_to_client():
-    from iommi.page import middleware
-
-    def get_response(request):
-        del request
-        return MyPage()
-
-    m = middleware(get_response)
-    done, response = m(request=RequestFactory().get('/', data={'/qwe': ''}))
-    assert done
+    response = request_with_middleware(response=MyPage(), data={'/qwe': ''})
     data = json.loads(response.content)
     assert data == dict(error='Invalid endpoint path')
 

@@ -17,8 +17,6 @@ from iommi._web_compat import (
 from iommi.base import (
     PartType,
     render_or_respond_part,
-    path_join,
-    NO_ENDPOINT_PREFIX,
     DISPATCH_PATH_SEPARATOR,
     PagePart,
     find_target, InvalidEndpointPathException,
@@ -50,11 +48,8 @@ class Page(PagePart):
         parts: List[PartType] = None,
         parts_dict: Dict[str, PartType] = None,
         part: dict,
-        endpoint_dispatch_prefix=NO_ENDPOINT_PREFIX,
     ):
         self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
-
-        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
 
         def generate_parts():
             if parts is not None:
@@ -68,12 +63,9 @@ class Page(PagePart):
                     yield Namespace(part_)(name=name)
                 elif isinstance(part_, PagePart):
                     part_.name = name
-                    if self.endpoint_dispatch_prefix:
-                        part_.endpoint_dispatch_prefix = path_join(self.endpoint_dispatch_prefix, name)
                     yield part_
                 else:
-                    kwargs = dict(endpoint_dispatch_prefix=path_join(self.endpoint_dispatch_prefix, name)) if self.endpoint_dispatch_prefix else {}
-                    yield Fragment(part_, name=name, **kwargs)
+                    yield Fragment(part_, name=name)
 
         # TODO: use collect_members and bind_members
         self.declared_parts = {x.name: x for x in sort_after(list(generate_parts()))}
@@ -137,7 +129,7 @@ class Fragment(PagePart):
         attrs=EMPTY,
         show=True,
     )
-    def __init__(self, child: PartType = None, *, name: str = None, tag: str = None, children: Optional[List[PartType]] = None, attrs=None, show, endpoint_dispatch_prefix=NO_ENDPOINT_PREFIX):
+    def __init__(self, child: PartType = None, *, name: str = None, tag: str = None, children: Optional[List[PartType]] = None, attrs=None, show):
         self.name = name
         self.tag = tag
         self.name = name
@@ -148,7 +140,6 @@ class Fragment(PagePart):
 
         self._children.extend(children or [])
         self.attrs = attrs
-        self.endpoint_dispatch_prefix = endpoint_dispatch_prefix
 
     def render_text_or_children(self, request, context):
         return format_html(
@@ -210,23 +201,39 @@ def portal_page(left=None, center=None, **kwargs):
     )
 
 
-def page(*function, **render_kwargs):
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapper(request, *args, **kwargs):
-            result = f(request, *args, **kwargs)
-            if isinstance(result, Page):
-                return result.render_to_response(request=request, **render_kwargs)
-            else:
-                return result
+# def page(*function, **render_kwargs):
+#     def decorator(f):
+#         @functools.wraps(f)
+#         def wrapper(request, *args, **kwargs):
+#             result = f(request, *args, **kwargs)
+#             if isinstance(result, Page):
+#                 return result.render_to_response(request=request, **render_kwargs)
+#             else:
+#                 return result
+#
+#         return wrapper
+#
+#     if function:
+#         assert len(function) == 1
+#         return decorator(function[0])
+#
+#     return decorator
 
-        return wrapper
 
-    if function:
-        assert len(function) == 1
-        return decorator(function[0])
+def perform_ajax_dispatch(*, root, path, value, request):
+    try:
+        target, parents = find_target(path=path, root=root)
+    except InvalidEndpointPathException:
+        if not settings.DEBUG:
+            return HttpResponse(json.dumps(dict(error='Invalid endpoint path')), content_type='application/json')
+        else:
+            raise
 
-    return decorator
+    # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
+    kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
+
+    # TODO: this API should be endpoint(), fix Table.children when this is fixed
+    return target.endpoint_handler(request=request, value=value, **kwargs)
 
 
 def middleware(get_response):
@@ -242,21 +249,14 @@ def middleware(get_response):
             assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
             if dispatch_commands:
                 dispatch_target, value = next(iter(dispatch_commands.items()))
-                try:
-                    target, parents = find_target(path=dispatch_target, root=page)
-                except InvalidEndpointPathException:
-                    if not settings.DEBUG:
-                        return True, HttpResponse(json.dumps(dict(error='Invalid endpoint path')), content_type='application/json')
-                    else:
-                        raise
+                data = perform_ajax_dispatch(root=page, path=dispatch_target, value=value, request=request)
+                if isinstance(data, HttpResponse):
+                    return True, data
 
-                # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
-                kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
-
-                # TODO: this API should be endpoint(), fix Table.children when this is fixed
-                data = target.endpoint_handler(request=request, value=value, **kwargs)
                 if data is not None:
                     return True, HttpResponse(json.dumps(data), content_type='application/json')
+                else:
+                    return True, HttpResponse(content_type='application/json')
 
             return page.render_to_response(request=request)
         else:

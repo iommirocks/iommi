@@ -1,15 +1,6 @@
 import copy
 import json
 import re
-from typing import (
-    Union,
-    Dict,
-    List,
-    Tuple,
-    Callable,
-    Any,
-    Optional, Set)
-
 from collections import OrderedDict
 from datetime import datetime
 from decimal import (
@@ -20,16 +11,26 @@ from itertools import (
     chain,
     groupby,
 )
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 from django.http import HttpResponseRedirect
 from django.template.context_processors import csrf
-from iommi.base import MISSING, render_template_name
 from tri_declarative import (
     assert_kwargs_empty,
     class_shortcut,
     declarative,
     dispatch,
     EMPTY,
+    evaluate,
     evaluate_recursive,
     evaluate_recursive_strict,
     flatten,
@@ -43,26 +44,29 @@ from tri_declarative import (
     should_show,
     sort_after,
     with_meta,
-    evaluate,
 )
 from tri_struct import Struct
-
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
     format_html,
     get_template_from_string,
+    mark_safe,
     render_template,
     render_to_string,
     slugify,
+    Template,
     URLValidator,
     validate_email,
     ValidationError,
-    Template,
-    mark_safe,
-    HttpResponse,
+)
+from iommi.base import (
+    DISPATCH_PATH_SEPARATOR,
+    MISSING,
+    PagePart,
+    render_template_name,
 )
 from iommi.render import render_attrs
-from iommi.base import PagePart, DISPATCH_PATH_SEPARATOR
+
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -86,27 +90,6 @@ AVOID_EMPTY_FORM = '<input type="hidden" name="-{}" value="" />'
 def dispatch_prefix_and_remaining_from_key(key):
     prefix, _, remaining_key = key.partition(DISPATCH_PATH_SEPARATOR)
     return prefix, remaining_key
-
-
-def handle_dispatch(request, obj):
-    if not request.is_ajax():
-        return False, None
-
-    for key, value in request.GET.items():
-        if key.startswith(DISPATCH_PATH_SEPARATOR):
-            remaining_key = key[len(DISPATCH_PATH_SEPARATOR):]
-            expected_prefix = obj.endpoint_dispatch_prefix
-            if expected_prefix is not None:
-                prefix, remaining_key = dispatch_prefix_and_remaining_from_key(remaining_key)
-                if prefix != expected_prefix:
-                    return True, None
-                if remaining_key == '':
-                    # This key is the "I have submitted the form" key, ignore it!
-                    continue
-            data = obj.endpoint_dispatch(key=remaining_key, value=value)
-            if data is not None:
-                return True, HttpResponse(json.dumps(data), content_type='application/json')
-    return False, None
 
 
 def bool_parse(string_value):
@@ -472,12 +455,6 @@ def choice_queryset__choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, choice == field.value
 
 
-def choice_queryset__endpoint_path(form, field):
-    return DISPATCH_PATH_SEPARATOR + DISPATCH_PATH_SEPARATOR.join(part for part in [form.endpoint_dispatch_prefix, 'field', field.name] if part is not None)
-
-
-choice_queryset_endpoint_path = choice_queryset__endpoint_path  # backwards compatibility
-
 datetime_iso_formats = [
     '%Y-%m-%d %H:%M:%S',
     '%Y-%m-%d %H:%M',
@@ -732,8 +709,8 @@ class Field(RefinableObject, PagePart):
     empty_label = Refinable()
     empty_choice_tuple = Refinable()
 
+    # TODO: are these two redundant?
     endpoint = Refinable()
-    endpoint_path = Refinable()  # TODO: remove
     endpoint_handler = Refinable()
 
     @dispatch(
@@ -872,15 +849,6 @@ class Field(RefinableObject, PagePart):
     @refinable
     def write_to_instance(field: 'Field', instance: Any, value: Any) -> None:
         setattr_path(instance, field.attr, value)
-
-    @staticmethod
-    @refinable
-    def endpoint_dispatch(field: 'Field', key: str, **kwargs):
-        prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
-
-        endpoint = field.endpoint.get(prefix, None)
-        if endpoint is not None:
-            return endpoint(field=field, key=remaining_key, **kwargs)
 
     def on_bind(self):
         form = self.parent
@@ -1105,8 +1073,6 @@ class Field(RefinableObject, PagePart):
         input_template='iommi/form/choice_select2.html',
         parse=choice_queryset__parse,
         choice_to_option=choice_queryset__choice_to_option,
-        endpoint_path=choice_queryset__endpoint_path,
-        endpoint_dispatch=choice_queryset__endpoint_dispatch,  # Backwards compatible
         endpoint_handler=choice_queryset__endpoint_handler,
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
@@ -1284,13 +1250,6 @@ def get_fields(model):
         yield field
 
 
-def default_endpoint__field(form, key, value):
-    prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
-    field = form.fields_by_name.get(prefix, None)
-    if field is not None:
-        return field.endpoint_dispatch(form=form, field=field, key=remaining_key, value=value)
-
-
 def collect_members(*, items, cls):
     def unbound_items():
         for name, item in items.items():
@@ -1353,7 +1312,6 @@ class Form(RefinableObject, PagePart):
 
     model = Refinable()
     """ :type: django.db.models.Model """
-    endpoint_dispatch_prefix: str = Refinable()
     endpoint: Namespace = Refinable()
     extra: Namespace = Refinable()
     base_template: str = Refinable()
@@ -1387,7 +1345,6 @@ class Form(RefinableObject, PagePart):
     @dispatch(
         is_full_form=True,
         model=None,
-        endpoint__field=default_endpoint__field,
         editable=True,
         field=EMPTY,
         extra=EMPTY,
@@ -1732,12 +1689,6 @@ class Form(RefinableObject, PagePart):
             r['fields'] = field_errors
         return r
 
-    def endpoint_dispatch(self, key, value):
-        prefix, remaining_key = dispatch_prefix_and_remaining_from_key(key)
-        handler = self.endpoint.get(prefix, None)
-        if handler is not None:
-            return handler(form=self, key=remaining_key, value=value)
-
     @classmethod
     def create_or_edit_object(cls, *args, **kwargs):
         from .views import create_or_edit_object
@@ -1818,9 +1769,7 @@ class Form(RefinableObject, PagePart):
         # TODO: ?? isn't request already set by bind?!?
         self.request = request
 
-        should_return, dispatch_result = handle_dispatch(request=request, obj=self)
-        if should_return:
-            return dispatch_result
+        # TODO: handle dispatch here? Right now this is only handled by the middleware.
 
         if self.is_target() and self.is_valid():
             r = self.extra.on_valid_post(form=self)

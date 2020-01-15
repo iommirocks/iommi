@@ -35,17 +35,6 @@ def group_paths_by_children(*, children, data):
     return results
 
 
-def endpoint_path(obj):
-
-    def _endpoint_path(obj):
-        # TODO: handle default_child
-        if obj.parent is None:
-            return ''
-        return path_join(_endpoint_path(obj.parent), obj.name)
-
-    return '/' + _endpoint_path(obj)
-
-
 class InvalidEndpointPathException(Exception):
     pass
 
@@ -64,6 +53,7 @@ def find_target(*, path, root):
         except AttributeError:
             raise InvalidEndpointPathException(f"Invalid path {path}.\n{next_node} (of type {type(next_node)} has no attribute children so can't be traversed.\nParents so far: {parents}.\nPath left: {p}")
         children = next_node.children()
+        assert children is not None
         try:
             foo = group_paths_by_children(children=children, data=data)
         except GroupPathsByChildrenError:
@@ -168,6 +158,9 @@ class PagePart:
             assert self.name, f'{self} is missing a name, but it was asked about its path'
             return self.name
 
+    def endpoint_path(self):
+        return '/' + self.path()
+
 
 def render_template_name(template_name, **kwargs):
     return render_template(template=template_name, **kwargs)
@@ -205,6 +198,5 @@ def path_join(prefix, name) -> str:
         return prefix + DISPATCH_PATH_SEPARATOR + name
 
 
-NO_ENDPOINT_PREFIX = ''
 DISPATCH_PATH_SEPARATOR = '/'
 MISSING = object()

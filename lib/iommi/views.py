@@ -1,10 +1,18 @@
-from iommi._web_compat import ValidationError, HttpResponseRedirect, render, csrf
-from iommi.form import (
-    Form,
-    handle_dispatch,
-    Action,
+from iommi._web_compat import (
+    csrf,
+    HttpResponseRedirect,
+    render,
+    ValidationError,
 )
-from tri_declarative import setdefaults_path, dispatch, EMPTY
+from iommi.form import (
+    Action,
+    Form,
+)
+from tri_declarative import (
+    dispatch,
+    EMPTY,
+    setdefaults_path,
+)
 
 
 def edit_object(
@@ -127,9 +135,7 @@ def create_or_edit_object(
 
     form = form()
 
-    should_return, dispatch_result = handle_dispatch(request=request, obj=form)
-    if should_return:
-        return dispatch_result
+    # TODO: handle dispatch here? right now it's only handled by the middleware
 
     if request.method == 'POST' and form.is_target() and form.is_valid():
         r = on_valid(

@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.template import Template
 from django.test import RequestFactory
 from django.utils.safestring import mark_safe
-from iommi.base import find_target, endpoint_path
+from iommi.base import find_target
 from tri_declarative import (
     getattr_path,
     Namespace,
@@ -34,8 +34,6 @@ from tests.models import (
 from iommi.table import (
     Column,
     register_cell_formatter,
-    render_table,
-    render_table_to_response,
     SELECT_DISPLAY_NAME,
     Struct,
     Table,
@@ -1136,13 +1134,13 @@ def test_auto_rowspan_and_render_twice():
     verify_table_html(table=t, expected_html=expected)
 
 
-def test_render_table_to_response():
+def test_render_table():
     class TestTable(NoSortTable):
         foo = Column(display_name="TBar")
 
     data = [Struct(foo="foo")]
 
-    response = render_table_to_response(RequestFactory().get('/'), table=TestTable(data=data))
+    response = TestTable(data=data).render_or_respond(request=RequestFactory().get('/'))
     assert isinstance(response, HttpResponse)
     assert b'<table' in response.content
 
@@ -1443,7 +1441,6 @@ def test_ajax_data_endpoint():
 def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
-            endpoint_dispatch_prefix = 'foo'
             endpoint__bar = lambda **_: 17
 
         baz = Column()
@@ -1769,4 +1766,4 @@ def test_endpoint_path_of_nested_part():
     table.bind(parent=None)
     target, parents = find_target(path='/table/query/gui/field/foo', root=table)
     # TODO: this is actually wrong.. I think... the endpoint_path should be '/foo' or at least that's the name we want to use in the GET parameters
-    assert endpoint_path(target) == '/table/query/gui/field/foo'
+    assert target.endpoint_path() == '/table/query/gui/field/foo'

@@ -1,23 +1,37 @@
 from collections import defaultdict
 from datetime import date
-from django.db.models import Q, F, QuerySet
+
 import pytest
+from django.db.models import (
+    F,
+    Q,
+    QuerySet,
+)
 from django.test import RequestFactory
 from tri_declarative import class_shortcut
+from tri_struct import Struct
 from iommi.form import (
-    Form,
     Field,
+    Form,
+)
+from iommi.query import (
+    ADVANCED_QUERY_PARAM,
+    FREETEXT_SEARCH_NAME,
+    Q_OP_BY_OP,
+    Query,
+    QueryException,
+    request_data,
+    value_to_query_string_value_string,
+    Variable,
 )
 
 from tests.models import (
-    Foo,
     Bar,
     EndPointDispatchModel,
-    NonStandardName,
+    Foo,
     FromModelWithInheritanceTest,
+    NonStandardName,
 )
-from iommi.query import Variable, Query, Q_OP_BY_OP, request_data, QueryException, ADVANCED_QUERY_PARAM, FREETEXT_SEARCH_NAME, value_to_query_string_value_string
-from tri_struct import Struct
 
 
 class Data(Struct):
@@ -385,7 +399,7 @@ def test_endpoint_dispatch():
 
     query = MyQuery(RequestFactory().get('/'))
 
-    assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path
+    assert '/query/gui/field/foo' == query.form().fields_by_name.foo.endpoint_path()
     assert query.endpoint_dispatch(key='gui/field/foo', value='ar') == {
         'more': False,
         'page': 1,

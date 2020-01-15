@@ -1,3 +1,4 @@
+import json
 import re
 from collections import defaultdict
 from datetime import date, time
@@ -5,13 +6,17 @@ from datetime import datetime
 
 from decimal import Decimal
 
+from django.test import override_settings
 from iommi._web_compat import ValidationError
 from iommi._db_compat import field_defaults_factory
 from bs4 import BeautifulSoup
 import pytest
 from iommi._web_compat import Template, smart_str
 from iommi.base import PagePart
-from iommi.page import Page
+from iommi.page import (
+    Page,
+    perform_ajax_dispatch,
+)
 
 from tri_declarative import (
     getattr_path,
@@ -42,6 +47,7 @@ from iommi.form import (
     FULL_FORM_FROM_REQUEST, INITIALS_FROM_GET)
 
 from .compat import RequestFactory
+from .helpers import reindent
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -1254,6 +1260,7 @@ def test_null_field_factory():
     assert list(form.fields_by_name.keys()) == ['foo']
 
 
+@override_settings(DEBUG=True)
 @pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 @pytest.mark.parametrize(
@@ -1275,8 +1282,10 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         username = Field.choice_queryset(choices=User.objects.all().order_by('username'), **kwargs)
         not_returning_anything = Field.integer()
 
-    form = MyForm(request=RequestFactory().get('/'))
-    assert form.endpoint_dispatch(key='field/username', value='ar') == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
+    form = MyForm()
+    response = perform_ajax_dispatch(root=form, path='/field/username', value='ar', request=RequestFactory().get('/'))
+    actual = json.loads(response.content)
+    assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
     assert form.endpoint_dispatch(key='field/not_returning_anything', value='ar') is None
 
 
@@ -1361,15 +1370,6 @@ def test_custom_endpoint():
 
     form = MyForm(data={})
     assert 'foobar' == form.endpoint_dispatch(key='foo', value='bar')
-
-
-def reindent(s, before=" ", after="    "):
-
-    def reindent_line(line):
-        m = re.match(r'^((' + re.escape(before) + r')*)(.*)', line)
-        return after * (len(m.group(1)) // len(before)) + m.group(3)
-
-    return "\n".join(reindent_line(line) for line in s.splitlines())
 
 
 def remove_csrf(html_code):
