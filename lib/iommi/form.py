@@ -1410,7 +1410,7 @@ class Form(RefinableObject, PagePart):
         if callable(fields):
             fields = fields(model=self.model)
 
-        self.data = {}
+        self.data = data
         self.fields_by_name = None
         """ :type: Struct[str, Field] """
         self.style = None
@@ -1453,8 +1453,11 @@ class Form(RefinableObject, PagePart):
             elif request.method == 'GET':
                 self.data = request.GET
 
-            if self.is_target():
-                self.mode = FULL_FORM_FROM_REQUEST
+        if self.data is None:
+            self.data = {}
+
+        if self.is_target():
+            self.mode = FULL_FORM_FROM_REQUEST
 
         if self.data is None:
             self.data = {}

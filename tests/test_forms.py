@@ -246,6 +246,7 @@ def test_parse_errors():
         ),
         post_validation=post_validation)
 
+    assert form.mode == FULL_FORM_FROM_REQUEST
     assert form.is_valid() is False
 
     assert form.errors == {'General snafu'}
@@ -571,7 +572,7 @@ def test_multi_choice_queryset():
     class MyForm(Form):
         foo = Field.multi_choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
-    assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
+    assert [x.pk for x in MyForm(data={}).fields[0].choices] == [user.pk]
     assert MyForm(RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
     assert MyForm(RequestFactory().get('/', {'foo': [smart_str(user2.pk), smart_str(user3.pk)]})).fields[0].errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
 
@@ -593,7 +594,7 @@ def test_choice_queryset():
     class MyForm(Form):
         foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
-    assert [x.pk for x in MyForm().fields[0].choices] == [user.pk]
+    assert [x.pk for x in MyForm(data={}).fields[0].choices] == [user.pk]
     assert MyForm(RequestFactory().get('/', {'foo': smart_str(user2.pk)})).fields[0].errors == {'%s not in available choices' % user2.pk}
 
     form = MyForm(RequestFactory().get('/', {'foo': [smart_str(user.pk)]}))
@@ -651,7 +652,7 @@ def test_field_from_model_foreign_key_choices():
         # Choices is a lambda here to avoid Field.field_choice_queryset grabbing the model from the queryset object
         foo = Field.from_model(Bar, 'foo', choices=lambda form, field, **_: Foo.objects.all())
 
-    assert list(FooForm().fields_by_name['foo'].choices) == list(Foo.objects.all())
+    assert list(FooForm(data={}).fields_by_name['foo'].choices) == list(Foo.objects.all())
     form = FooForm(request=RequestFactory().post('/', data=dict(foo=foo2.pk)))
     bar = Bar()
     form.apply(bar)
@@ -686,7 +687,7 @@ def test_form_default_fields_from_model():
             fields = Form.fields_from_model
             fields__extra = [Field.text(attr=None, name='bar')]
 
-    assert set(FooForm().fields_by_name.keys()) == {'foo', 'bar'}
+    assert set(FooForm(data={}).fields_by_name.keys()) == {'foo', 'bar'}
     assert FooForm(data=dict(foo='1')).fields[0].value == 1
     assert not FooForm(data=dict(foo='asd')).is_valid()
 
@@ -891,11 +892,11 @@ def test_field_from_model_many_to_many():
     assert isinstance(choices, QuerySet)
     assert set(choices) == set(Foo.objects.all())
     m2m = FieldFromModelManyToManyTest.objects.create()
-    assert set(Form(fields=[field], instance=m2m).fields_by_name.foo_many_to_many.initial_list) == set()
+    assert set(Form(fields=[field], instance=m2m, data={}).fields_by_name.foo_many_to_many.initial_list) == set()
     m2m.foo_many_to_many.add(b)
-    assert set(Form(fields=[field], instance=m2m).fields_by_name.foo_many_to_many.initial_list) == {b}
+    assert set(Form(fields=[field], instance=m2m, data={}).fields_by_name.foo_many_to_many.initial_list) == {b}
     m2m.foo_many_to_many.add(c)
-    assert set(Form(fields=[field], instance=m2m).fields_by_name.foo_many_to_many.initial_list) == {b, c}
+    assert set(Form(fields=[field], instance=m2m, data={}).fields_by_name.foo_many_to_many.initial_list) == {b, c}
 
 
 @pytest.mark.django_db
@@ -1524,7 +1525,7 @@ def test_choice_post_validation_not_overwritten():
         foo = Field.choice(post_validation=my_post_validation, choices=[1, 2, 3])
 
     with pytest.raises(Exception) as e:
-        MyForm()
+        MyForm(data={})
 
     assert str(e.value) == 'foobar'
 
@@ -1533,7 +1534,7 @@ def test_choice_post_validation_chains_empty_choice_when_required_false():
     class MyForm(Form):
         foo = Field.choice(required=False, choices=[1, 2, 3])
 
-    form = MyForm()
+    form = MyForm(data={})
 
     assert list(form.fields_by_name.foo.choice_tuples()) == [
         form.fields_by_name.foo.empty_choice_tuple,
@@ -1567,7 +1568,7 @@ def test_initial_set_earlier_than_evaluate_is_called():
             extra__bar=lambda form, field, **_: field.initial
         )
 
-    assert 17 == MyForm(instance=Struct(foo=17)).fields_by_name.foo.extra.bar
+    assert 17 == MyForm(instance=Struct(foo=17), data={}).fields_by_name.foo.extra.bar
 
 
 @pytest.mark.django_db
@@ -1586,8 +1587,8 @@ def test_field_from_model_path():
     assert FooForm(data=dict(baz='1')).fields[0].help_text == 'another help text'
     assert not FooForm(data=dict(baz='asd')).is_valid()
     fake = Struct(foo=Struct(foo='1'))
-    assert FooForm(instance=fake).fields[0].initial == '1'
-    assert FooForm(instance=fake).fields[0].parse is int_parse
+    assert FooForm(instance=fake, data={}).fields[0].initial == '1'
+    assert FooForm(instance=fake, data={}).fields[0].parse is int_parse
 
 
 @pytest.mark.django_db
@@ -1614,7 +1615,7 @@ def test_create_members_from_model_path():
             fields = Form.fields_from_model(model=Bar, include=['foo__foo'])
 
     bar = Bar.objects.create(foo=Foo.objects.create(foo=7))
-    form = BarForm(instance=bar)
+    form = BarForm(instance=bar, data={})
 
     assert len(form.fields) == 1
     assert form.fields[0].name == 'foo__foo'
@@ -1682,12 +1683,6 @@ def test_from_model_with_inheritance():
     assert was_called == {
         'MyField.float': 1,
     }
-
-
-def test_rendered_property():
-    action = Action(display_name='foo')
-
-    assert action.render() == action.rendered
 
 
 @pytest.mark.django_db
@@ -1809,7 +1804,8 @@ def test_get_name_field():
 def test_field_merge():
     form = Form(
         field__foo={},
-        instance=Struct(foo=1)
+        instance=Struct(foo=1),
+        data={},
     )
     assert len(form.fields) == 1
     assert form.fields[0].name == 'foo'
@@ -1820,8 +1816,8 @@ def test_override_doesnt_stick():
     class MyForm(Form):
         foo = Field()
 
-    form = MyForm(field__foo__show=False)
+    form = MyForm(field__foo__show=False, data={})
     assert len(form.fields_by_name) == 0
 
-    form2 = MyForm()
+    form2 = MyForm(data={})
     assert len(form2.fields_by_name) == 1
