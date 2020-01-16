@@ -362,8 +362,16 @@ def test_multi_choice_queryset():
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
 
 
-def test_from_model():
-    t = Query.from_model(data=Foo.objects.all(), model=Foo)
+@pytest.mark.django_db
+def test_from_model_with_model_class():
+    t = Query.from_model(model=Foo)
+    assert [x.name for x in t.variables] == ['id', 'foo']
+    assert [x.name for x in t.variables if x.show] == ['foo']
+
+
+@pytest.mark.django_db
+def test_from_model_with_queryset():
+    t = Query.from_model(rows=Foo.objects.all())
     assert [x.name for x in t.variables] == ['id', 'foo']
     assert [x.name for x in t.variables if x.show] == ['foo']
 
@@ -373,7 +381,7 @@ def test_from_model_foreign_key():
         class Meta:
             variables = Query.variables_from_model(model=Bar)
 
-    t = MyQuery(data={})
+    t = MyQuery(request=req('get'))
     assert [x.name for x in t.variables] == ['id', 'foo']
     assert isinstance(t.bound_variable_by_name['foo'].choices, QuerySet)
 
@@ -495,7 +503,7 @@ def test_from_model_with_inheritance():
             form_class = MyForm
 
     MyQuery.from_model(
-        data=FromModelWithInheritanceTest.objects.all(),
+        rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
         request=req('get'),
         variable__value__gui__show=True,

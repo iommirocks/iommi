@@ -7,6 +7,7 @@ from typing import (
 )
 
 from django.conf import settings
+from django.db.models import QuerySet
 from django.http.response import HttpResponseBase, HttpResponse
 from django.template import Template
 from tri_declarative import (
@@ -240,3 +241,13 @@ def path_join(prefix, name) -> str:
 DISPATCH_PATH_SEPARATOR = '/'
 DISPATCH_PREFIX = DISPATCH_PATH_SEPARATOR
 MISSING = object()
+
+
+def model_and_rows(model, rows):
+    if rows is None and model is not None:
+        rows = model.objects.all()
+
+    if model is None and isinstance(rows, QuerySet):
+        model = rows.model
+
+    return model, rows

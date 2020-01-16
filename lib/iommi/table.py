@@ -45,6 +45,7 @@ from iommi.base import (
     path_join,
     setup_endpoint_proxies,
     DISPATCH_PREFIX,
+    model_and_rows,
 )
 from iommi.form import (
     Action,
@@ -893,6 +894,7 @@ class Table(RefinableObject, PagePart):
     filter: Namespace = Refinable()
     header = Refinable()
     model: Type['django.db.models.Model'] = Refinable()
+    rows = Refinable()
     column = Refinable()
     bulk: Namespace = Refinable()
     default_child = Refinable()
@@ -968,7 +970,6 @@ class Table(RefinableObject, PagePart):
         paginator__call_target=Paginator,
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
-        model=None,
         query=EMPTY,
         bulk=EMPTY,
         page_size=DEFAULT_PAGE_SIZE,
@@ -978,7 +979,7 @@ class Table(RefinableObject, PagePart):
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, rows=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, default_child=None, **kwargs):
+    def __init__(self, *, request=None, columns=None, columns_dict=None, model=None, rows=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, default_child=None, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -990,14 +991,7 @@ class Table(RefinableObject, PagePart):
         :param sortable: set this to false to turn off sorting for all columns
         """
 
-        if rows is None:
-            assert model is not None
-            rows = model.objects.all()
-
-        assert not isinstance(rows, Table)
-
-        if isinstance(rows, QuerySet):
-            model = rows.model
+        model, rows = model_and_rows(model, rows)
 
         def generate_columns():
             if columns is not None:
@@ -1020,7 +1014,6 @@ class Table(RefinableObject, PagePart):
 
         assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
-        self.rows = rows
         self.request = request
         self.columns: List[Column] = columns
 
@@ -1028,6 +1021,7 @@ class Table(RefinableObject, PagePart):
 
         super(Table, self).__init__(
             model=model,
+            rows=rows,
             filter=TemplateConfig(**filter),
             header=HeaderConfig(**header),
             row=RowConfig(**row),
@@ -1431,9 +1425,8 @@ class Table(RefinableObject, PagePart):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
+        model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        if model is None and isinstance(rows, QuerySet):
-            model = rows.model
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
         return cls(rows=rows, model=model, instance=instance, columns=columns, **kwargs)
 

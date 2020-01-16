@@ -6,6 +6,7 @@ from functools import reduce
 from typing import (
     Dict,
     List,
+    Type,
 )
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +14,7 @@ from django.db.models import (
     F,
     Model,
     Q,
+    QuerySet,
 )
 
 from pyparsing import (
@@ -54,6 +56,7 @@ from iommi.base import (
     MISSING,
     PagePart,
     setup_endpoint_proxies,
+    model_and_rows,
 )
 from iommi.form import (
     Form,
@@ -470,6 +473,8 @@ class Query(RefinableObject, PagePart):
     gui: Namespace = Refinable()
     endpoint: Namespace = Refinable()
     default_child = Refinable()
+    model: Type['django.db.models.Model'] = Refinable()
+    rows = Refinable()
 
     member_class = Refinable()
     form_class = Refinable()
@@ -492,11 +497,9 @@ class Query(RefinableObject, PagePart):
         # TODO: convert to an item in self.children()?
         endpoint__errors=default_endpoint__errors,
     )
-    def __init__(self, *, request=None, data=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
-        """
-        :type variables: list of Variable
-        :type request: django.http.request.HttpRequest
-        """
+    def __init__(self, *, request=None, model=None, rows=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
+        model, rows = model_and_rows(model, rows)
+
         setdefaults_path(
             kwargs,
             gui__call_target=self.get_meta().form_class,
@@ -507,10 +510,13 @@ class Query(RefinableObject, PagePart):
         self.bound_variables: List[Variable] = None
         self.bound_variable_by_name: Dict[str, Variable] = None
 
-        self.data = data
         self._form = None
 
-        super(Query, self).__init__(**kwargs)
+        super(Query, self).__init__(
+            model=model,
+            rows=rows,
+            **kwargs
+        )
 
         def generate_variables():
             if variables is not None:
@@ -523,7 +529,7 @@ class Query(RefinableObject, PagePart):
         # TODO: use collect_members and bind_members
         self.variables = sort_after(list(generate_variables()))
 
-        if request is not None or data is not None:
+        if request is not None:
             self.request = request
             self.bind(parent=None)
 
@@ -709,7 +715,6 @@ class Query(RefinableObject, PagePart):
                 fields.append(params())
 
         form: Form = self.gui(
-            data=self.data,
             fields=fields,
             default_child=True,
         )
@@ -780,7 +785,7 @@ class Query(RefinableObject, PagePart):
     @dispatch(
         variable=EMPTY,
     )
-    def from_model(cls, data, model, variable, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, *, rows=None, model=None, variable, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -796,5 +801,7 @@ class Query(RefinableObject, PagePart):
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
+        model, rows = model_and_rows(model, rows)
+        assert model is not None or rows is not None, "model or rows must be specified"
         variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
-        return cls(data=data, variables=variables, **kwargs)
+        return cls(rows=rows, model=model, variables=variables, **kwargs)
