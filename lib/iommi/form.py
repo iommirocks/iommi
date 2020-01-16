@@ -1297,13 +1297,13 @@ class Form(RefinableObject, PagePart):
             a = Field()
             b = Field.email()
 
-        form = MyForm(data={})
+        form = MyForm(request=request)
 
     You can also create an instance of a form with this syntax if it's more convenient:
 
     .. code:: python
 
-        form = MyForm(data={}, fields=[Field(name='a'), Field.email(name='b')])
+        form = MyForm(request=request, fields=[Field(name='a'), Field.email(name='b')])
 
     See tri.declarative docs for more on this dual style of declaration.
 """
@@ -1512,7 +1512,7 @@ class Form(RefinableObject, PagePart):
             class Foo(Model):
                 foo = IntegerField()
 
-            Form.from_model(data=request.GET, model=Foo, field__foo__help_text='Overridden help text')
+            Form.from_model(request=request, model=Foo, field__foo__help_text='Overridden help text')
 
         :param include: fields to include. Defaults to all
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
@@ -1658,6 +1658,7 @@ class Form(RefinableObject, PagePart):
             for k, v in self.request.GET.items():
                 if k == self.own_target_marker():
                     continue
+                # TODO: why is there a special case for '-' here?
                 if k not in own_field_paths and k != '-':
                     r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
@@ -1700,7 +1701,6 @@ class Form(RefinableObject, PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='from_model',
-        data=None,  # TODO: this is really a bug in tri.form, should not be required
         extra__model_verbose_name=None,
         on_valid_post=create_or_edit_object__on_valid_post,
         on_save=lambda **kwargs: None,  # pragma: no mutate
@@ -1708,6 +1708,7 @@ class Form(RefinableObject, PagePart):
         redirect_to=None,
         part=EMPTY,
         extra__title=None,
+        default_child=True,
     )
     def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_valid_post=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
         if model is None and instance is not None:

@@ -1,6 +1,6 @@
 {% extends form.base_template %}
 
-{% block title %}{% if is_create %}Create{% else %}Edit{% endif %} {{ object_name }}{% endblock %}
+{% block title %}{% if form.extra.is_create %}Create{% else %}Edit{% endif %} {{ form.extra.model_verbose_name }}{% endblock %}
 
 {% block content %}
 
