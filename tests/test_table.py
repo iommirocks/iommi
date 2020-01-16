@@ -51,7 +51,7 @@ from iommi.table import (
 )
 
 
-def get_data():
+def get_rows():
     return [
         Struct(foo="Hello", bar=17),
         Struct(foo="<evil/> &", bar=42)
@@ -65,7 +65,7 @@ def explicit_table():
         Column.number(name="bar"),
     ]
 
-    return Table(data=get_data(), columns=columns, attrs__class__another_class=True, attrs__id='table_id')
+    return Table(rows=get_rows(), columns=columns, attrs__class__another_class=True, attrs__id='table_id')
 
 
 def declarative_table():
@@ -79,7 +79,7 @@ def declarative_table():
         foo = Column()
         bar = Column.number()
 
-    return TestTable(data=get_data())
+    return TestTable(rows=get_rows())
 
 
 @pytest.mark.parametrize('table', [
@@ -121,21 +121,21 @@ def test_declaration_merge():
 
         bar = Column()
 
-    assert {'foo', 'bar'} == {column.name for column in MyTable(data=[]).columns}
+    assert {'foo', 'bar'} == {column.name for column in MyTable(rows=[]).columns}
 
 
 def test_kwarg_column_config_injection():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(data=[], column__foo__extra__stuff="baz")
+    table = MyTable(rows=[], column__foo__extra__stuff="baz")
     table.bind(parent=None)
     assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
 
 
 def test_bad_arg():
     with pytest.raises(TypeError) as e:
-        Table(data=[], columns=[Column()], foo=None)
+        Table(rows=[], columns=[Column()], foo=None)
     assert 'foo' in str(e.value)
 
 
@@ -145,7 +145,7 @@ def test_column_ordering():
         foo = Column(after='bar')
         bar = Column()
 
-    assert ['bar', 'foo'] == [column.name for column in MyTable(data=[]).columns]
+    assert ['bar', 'foo'] == [column.name for column in MyTable(rows=[]).columns]
 
 
 def test_column_with_meta():
@@ -157,7 +157,7 @@ def test_column_with_meta():
         foo = MyColumn()
         bar = MyColumn.icon('history')
 
-    table = MyTable(data=[])
+    table = MyTable(rows=[])
     table.bind(parent=None)
     assert not table.bound_column_by_name['foo'].sortable
     assert not table.bound_column_by_name['bar'].sortable
@@ -177,7 +177,7 @@ def test_django_table():
         foo__b = Column()
         foo = Column.choice_queryset(model=TFoo, choices=lambda table, column, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
-    t = TestTable(data=TBar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
+    t = TestTable(rows=TBar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
     t.bind(parent=None)
 
     assert list(t.bound_column_by_name['foo'].choices) == list(TFoo.objects.all())
@@ -226,7 +226,7 @@ def test_inheritance():
     class TestTable(FooTable, BarTable):
         another = Column()
 
-    t = TestTable(data=[])
+    t = TestTable(rows=[])
     assert [c.name for c in t.columns] == ['foo', 'bar', 'another']
 
 
@@ -246,13 +246,13 @@ def test_output():
         edit = Column.edit(is_report, group="group")
         delete = Column.delete(is_report)
 
-    data = [
+    rows = [
         Struct(foo="Hello räksmörgås ><&>",
                bar=17,
                get_absolute_url=lambda: '/somewhere/'),
     ]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody" id="table_id">
             <thead>
                 <tr>
@@ -290,9 +290,9 @@ def test_name_traversal():
     class TestTable(Table):
         foo__bar = Column(sortable=False)
 
-    data = [Struct(foo=Struct(bar="bar"))]
+    rows = [Struct(foo=Struct(bar="bar"))]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
@@ -317,9 +317,9 @@ def test_name_traversal():
 #         b = Column()
 #         c = Column()
 #
-#     data = [('a', 'b', 'c')]
+#     rows = [('a', 'b', 'c')]
 #
-#     verify_table_html(TestTable(data=data), """
+#     verify_table_html(TestTable(rows=rows), """
 #         <table class="listview" data-endpoint="/tbody">
 #             <thead>
 #                 <tr>
@@ -346,9 +346,9 @@ def test_name_traversal():
 #         b = Column()
 #         c = Column()
 #
-#     data = [{'a': 'a', 'b': 'b', 'c': 'c'}]
+#     rows = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 #
-#     verify_table_html(TestTable(data=data), """
+#     verify_table_html(TestTable(rows=rows), """
 #         <table class="listview" data-endpoint="/tbody">
 #              <thead>
 #                  <tr>
@@ -376,9 +376,9 @@ def test_display_name():
     class TestTable(NoSortTable):
         foo = Column(display_name="Bar")
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
@@ -398,9 +398,9 @@ def test_link():
         foo = Column.link(cell__url='https://whereever', cell__url_title="whatever")
         bar = Column.link(cell__value='bar', cell__url_title=lambda **_: "url_title_goes_here")
 
-    data = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
+    rows = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
@@ -424,9 +424,9 @@ def test_css_class():
             cell__attrs__class__bar=True
         )
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
     <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr>
@@ -445,9 +445,9 @@ def test_header_url():
     class TestTable(NoSortTable):
         foo = Column(url="/some/url")
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
     <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr><th class="first_column subheader">
@@ -467,9 +467,9 @@ def test_show():
         foo = Column()
         bar = Column(show=False)
 
-    data = [Struct(foo="foo", bar="bar")]
+    rows = [Struct(foo="foo", bar="bar")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
     <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
@@ -492,9 +492,9 @@ def test_show_lambda():
         foo = Column()
         bar = Column.icon('foo', show=show_callable)
 
-    data = [Struct(foo="foo", bar="bar")]
+    rows = [Struct(foo="foo", bar="bar")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
     <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
@@ -512,9 +512,9 @@ def test_attr():
         foo = Column()
         bar = Column(attr='foo')
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
     <table class="listview" data-endpoint="/tbody">
         <thead>
             <tr>
@@ -541,7 +541,7 @@ def test_attrs():
 
         yada = Column()
 
-    verify_table_html(table=TestTable(data=[Struct(yada=1), Struct(yada=2)]), expected_html="""
+    verify_table_html(table=TestTable(rows=[Struct(yada=1), Struct(yada=2)]), expected_html="""
         <table class="classy listview" data-endpoint="/tbody" foo="bar">
             <thead>
                 <tr>
@@ -570,7 +570,7 @@ def test_attrs_new_syntax():
 
         yada = Column()
 
-    verify_table_html(table=TestTable(data=[Struct(yada=1), Struct(yada=2)]), expected_html="""
+    verify_table_html(table=TestTable(rows=[Struct(yada=1), Struct(yada=2)]), expected_html="""
         <table class="classy listview" data-endpoint="/tbody" foo="bar">
             <thead>
                 <tr>
@@ -602,12 +602,16 @@ def test_column_presets():
         link = Column.link(cell__format="Yadahada name")
         number = Column.number()
 
-    data = [Struct(pk=123,
-                   get_absolute_url=lambda: "http://yada/",
-                   boolean=lambda: True,
-                   link=Struct(get_absolute_url=lambda: "http://yadahada/"),
-                   number=123)]
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    rows = [
+        Struct(
+            pk=123,
+            get_absolute_url=lambda: "http://yada/",
+            boolean=lambda: True,
+            link=Struct(get_absolute_url=lambda: "http://yadahada/"),
+            number=123
+        )
+    ]
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
@@ -649,7 +653,7 @@ def test_django_table_pagination():
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
         b = Column(show=False)  # should still be able to filter on this though!
 
-    verify_table_html(table=TestTable(data=TFoo.objects.all().order_by('pk')),
+    verify_table_html(table=TestTable(rows=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
         <table class="listview" data-endpoint="/tbody">
@@ -690,10 +694,10 @@ def test_django_table_pagination_custom_paginator():
             del number
             return self.page(2)
 
-    data = TFoo.objects.all().order_by('pk')
+    rows = TFoo.objects.all().order_by('pk')
     verify_table_html(
         table=TestTable(
-            data=data,
+            rows=rows,
             paginator=CustomPaginator,
         ),
         expected_html="""
@@ -720,8 +724,8 @@ def test_actions():
 
         class Meta:
             actions = dict(
-                a=Action(display_name='Foo', attrs__href='/foo/', show=lambda table, **_: table.data is not data),
-                b=Action(display_name='Bar', attrs__href='/bar/', show=lambda table, **_: table.data is data),
+                a=Action(display_name='Foo', attrs__href='/foo/', show=lambda table, **_: table.rows is not rows),
+                b=Action(display_name='Bar', attrs__href='/bar/', show=lambda table, **_: table.rows is rows),
                 c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
                 d=Action(display_name='Qux', attrs__href='/bar/', group='Other'),
                 e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
@@ -729,9 +733,9 @@ def test_actions():
                 g=Action.icon('icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'),
             )
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data),
+    verify_table_html(table=TestTable(rows=rows),
                       find=dict(class_='links'),
                       expected_html="""
         <div class="links">
@@ -776,7 +780,7 @@ def test_bulk_edit():
 
     request_factory = RequestFactory(HTTP_REFERER='/')
 
-    result = TestTable(data=TFoo.objects.all()).render_or_respond(request=request_factory.get("/", dict(pk_1='', pk_2='', a='0', b='changed')))
+    result = TestTable(rows=TFoo.objects.all()).render_or_respond(request=request_factory.get("/", dict(pk_1='', pk_2='', a='0', b='changed')))
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
@@ -786,7 +790,7 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
-    TestTable(data=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='0', b='changed')))
+    TestTable(rows=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='0', b='changed')))
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
@@ -796,7 +800,7 @@ def test_bulk_edit():
     ]
 
     # Test that empty field means "no change"
-    TestTable(data=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='', b='')))
+    TestTable(rows=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='', b='')))
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
@@ -805,7 +809,7 @@ def test_bulk_edit():
     ]
 
     # Test edit all feature
-    TestTable(data=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(a='11', b='changed2', _all_pks_='1')))
+    TestTable(rows=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(a='11', b='changed2', _all_pks_='1')))
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 11, u'changed2'),
@@ -831,9 +835,9 @@ def test_query():
         class Meta:
             sortable = False
 
-    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(id='iommi_query_error'), expected_html='<div id="iommi_query_error">Invalid syntax for query</div>')
+    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(id='iommi_query_error'), expected_html='<div id="iommi_query_error">Invalid syntax for query</div>')
 
-    verify_table_html(query=dict(a='1'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(a='1'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -844,7 +848,7 @@ def test_query():
             </td>
         </tr>
     </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='bar'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -863,7 +867,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(query='b="bar"'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(query='b="bar"'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -882,7 +886,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(b='fo'), table=TestTable(data=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='fo'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -910,9 +914,9 @@ def test_cell_template():
     class TestTable(NoSortTable):
         foo = Column(cell__template='test_cell_template.html', cell__format=explode, cell__url=explode, cell__url_title=explode)
 
-    data = [Struct(foo="sentinel")]
+    rows = [Struct(foo="sentinel")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
@@ -930,9 +934,9 @@ def test_cell_format_escape():
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: '<foo>')
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
             <table class="listview" data-endpoint="/tbody">
                 <thead>
                     <tr><th class="first_column subheader"> Foo </th></tr>
@@ -952,9 +956,9 @@ def test_cell_format_no_escape():
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: mark_safe('<foo/>'))
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
             <table class="listview" data-endpoint="/tbody">
                 <thead>
                     <tr><th class="first_column subheader"> Foo </th></tr>
@@ -1026,9 +1030,9 @@ def test_cell_template_string():
             cell__url_title=explode,
         )
 
-    data = [Struct(foo="sentinel")]
+    rows = [Struct(foo="sentinel")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
@@ -1048,9 +1052,9 @@ def test_no_header_template():
 
         foo = Column()
 
-    data = [Struct(foo="bar")]
+    rows = [Struct(foo="bar")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <tbody>
                 <tr>
@@ -1070,9 +1074,9 @@ def test_row_template():
         class Meta:
             row__template = lambda table: 'test_table_row.html'
 
-    data = [Struct(foo="sentinel", bar="schmentinel")]
+    rows = [Struct(foo="sentinel", bar="schmentinel")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr>
@@ -1098,9 +1102,9 @@ def test_cell_lambda():
 
         sentinel2 = Column(cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
 
-    data = [Struct(sentinel3="sentinel3")]
+    rows = [Struct(sentinel3="sentinel3")]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Sentinel2 </th></tr>
@@ -1119,7 +1123,7 @@ def test_auto_rowspan_and_render_twice():
     class TestTable(NoSortTable):
         foo = Column(auto_rowspan=True)
 
-    data = [
+    rows = [
         Struct(foo=1),
         Struct(foo=1),
         Struct(foo=2),
@@ -1147,7 +1151,7 @@ def test_auto_rowspan_and_render_twice():
             </tbody>
         </table>"""
 
-    t = TestTable(data=data)
+    t = TestTable(rows=rows)
     verify_table_html(table=t, expected_html=expected)
     verify_table_html(table=t, expected_html=expected)
 
@@ -1156,9 +1160,9 @@ def test_render_table():
     class TestTable(NoSortTable):
         foo = Column(display_name="TBar")
 
-    data = [Struct(foo="foo")]
+    rows = [Struct(foo="foo")]
 
-    response = TestTable(data=data).render_to_response(request=RequestFactory().get('/'))
+    response = TestTable(rows=rows).render_to_response(request=RequestFactory().get('/'))
     assert isinstance(response, HttpResponse)
     assert b'<table' in response.content
 
@@ -1179,7 +1183,7 @@ def test_default_formatters():
     TFoo(a=1, b="3").save()
     TFoo(a=2, b="5").save()
 
-    data = [
+    rows = [
         Struct(foo=1),
         Struct(foo=True),
         Struct(foo=False),
@@ -1189,7 +1193,7 @@ def test_default_formatters():
         Struct(foo=None),
     ]
 
-    verify_table_html(table=TestTable(data=data), expected_html="""
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
         <table class="listview" data-endpoint="/tbody">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
@@ -1246,7 +1250,7 @@ def test_choice_queryset():
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(data=TFoo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table = FooTable(rows=TFoo.objects.all(), request=RequestFactory().get("/", ''))
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
@@ -1268,7 +1272,7 @@ def test_multi_choice_queryset():
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(data=TFoo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table = FooTable(rows=TFoo.objects.all(), request=RequestFactory().get("/", ''))
     foo_table.bind(parent=None)
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
@@ -1287,7 +1291,7 @@ def test_query_namespace_inject():
 
     with pytest.raises(FooException):
         foo = Table(
-            data=[],
+            rows=[],
             model=TFoo,
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
             columns=[Column(name='a', query__show=True, query__gui__show=True)],
@@ -1329,8 +1333,8 @@ def test_extra():
     class TestTable(Table):
         foo = Column(extra__foo=1, extra__bar=2)
 
-    assert TestTable(data=[]).columns[0].extra.foo == 1
-    assert TestTable(data=[]).columns[0].extra.bar == 2
+    assert TestTable(rows=[]).columns[0].extra.foo == 1
+    assert TestTable(rows=[]).columns[0].extra.bar == 2
 
 
 def test_row_extra():
@@ -1340,7 +1344,7 @@ def test_row_extra():
         class Meta:
             row__extra__foo = lambda table, row, **_: row.a + row.b
 
-    bound_row = list(TestTable(request=RequestFactory().get(path='/'), data=[Struct(a=5, b=7)]))[0]
+    bound_row = list(TestTable(request=RequestFactory().get(path='/'), rows=[Struct(a=5, b=7)]))[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1352,7 +1356,7 @@ def test_row_extra_struct():
         class Meta:
             row__extra = lambda table, row, **_: Namespace(foo=row.a + row.b)
 
-    bound_row = list(TestTable(request=RequestFactory().get(path='/'), data=[Struct(a=5, b=7)]))[0]
+    bound_row = list(TestTable(request=RequestFactory().get(path='/'), rows=[Struct(a=5, b=7)]))[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1360,7 +1364,7 @@ def test_row_extra_struct():
 def test_from_model():
     t = Table.from_model(
         model=TFoo,
-        data=TFoo.objects.all(),
+        rows=TFoo.objects.all(),
         column__a__display_name='Some a',
         column__a__extra__stuff='Some stuff',
     )
@@ -1404,7 +1408,7 @@ def test_ajax_endpoint():
             query__gui__show=True)
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable.as_page(data=TBar.objects.all()), data={'/table/query/gui/field/foo': 'hopp'})
+    result = request_with_middleware(response=TestTable.as_page(rows=TBar.objects.all()), data={'/table/query/gui/field/foo': 'hopp'})
     assert json.loads(result.content) == {
         'more': False,
         'page': 1,
@@ -1420,7 +1424,7 @@ def test_ajax_endpoint_empty_response():
 
         bar = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo', value='', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='', request=RequestFactory().get('/'))
     assert actual == []
 
 
@@ -1434,7 +1438,7 @@ def test_ajax_data_endpoint():
         bar = Column()
 
 
-    table = TestTable(data = [
+    table = TestTable(rows=[
         Struct(foo=1, bar=2),
         Struct(foo=3, bar=4),
     ])
@@ -1453,9 +1457,9 @@ def test_ajax_endpoint_namespacing():
         baz = Column()
 
     with pytest.raises(InvalidEndpointPathException):
-        perform_ajax_dispatch(root=TestTable(data=[]), path='/baz', value='', request=RequestFactory().get('/'))
+        perform_ajax_dispatch(root=TestTable(rows=[]), path='/baz', value='', request=RequestFactory().get('/'))
 
-    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/bar', value='', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/bar', value='', request=RequestFactory().get('/'))
     assert 17 == actual
 
 
@@ -1463,7 +1467,7 @@ def test_table_iteration():
 
     class TestTable(Table):
         class Meta:
-            data = [
+            rows = [
                 Struct(foo='a', bar=1),
                 Struct(foo='b', bar=2)
             ]
@@ -1486,7 +1490,7 @@ def test_ajax_custom_endpoint():
             endpoint__foo = lambda value, **_: dict(baz=value)
         spam = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo', value='bar', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='bar', request=RequestFactory().get('/'))
     assert actual == dict(baz='bar')
 
 
@@ -1502,7 +1506,7 @@ def test_table_extra_namespace():
 
         foo = Column()
 
-    assert 17 == TestTable(request=RequestFactory().get('/'), data=[]).extra.foo
+    assert 17 == TestTable(request=RequestFactory().get('/'), rows=[]).extra.foo
 
 
 def test_defaults():
@@ -1538,17 +1542,17 @@ def test_ordering():
     # no ordering
     t = Table.from_model(model=TFoo, request=RequestFactory().get('/'))
     t.bind(parent=None)
-    assert not t.data.query.order_by
+    assert not t.rows.query.order_by
 
     # ordering from GET parameter
     t = Table.from_model(model=TFoo, request=RequestFactory().get('/', dict(order='a')))
     t.bind(parent=None)
-    assert list(t.data.query.order_by) == ['a']
+    assert list(t.rows.query.order_by) == ['a']
 
     # default ordering
     t = Table.from_model(model=TFoo, default_sort_order='b', request=RequestFactory().get('/'))
     t.bind(parent=None)
-    assert list(t.data.query.order_by) == ['b']
+    assert list(t.rows.query.order_by) == ['b']
 
 
 @pytest.mark.django_db
@@ -1598,7 +1602,7 @@ def test_preprocess_row():
 
         class Meta:
             preprocess_row = preprocess
-            data = TFoo.objects.all().order_by('pk')
+            rows = TFoo.objects.all().order_by('pk')
 
     expected_html = """
     <table class="listview" data-endpoint="/tbody">
@@ -1628,8 +1632,8 @@ def test_preprocess_row():
 def test_yield_rows():
     f = TFoo.objects.create(a=3, b='d')
 
-    def my_preprocess_data(data, **kwargs):
-        for row in data:
+    def my_preprocess_rows(rows, **kwargs):
+        for row in rows:
             yield row
             yield Struct(a=row.a * 5)
 
@@ -1637,9 +1641,9 @@ def test_yield_rows():
         a = Column()
 
         class Meta:
-            preprocess_data = my_preprocess_data
+            preprocess_rows = my_preprocess_rows
 
-    table = MyTable(data=TFoo.objects.all())
+    table = MyTable(rows=TFoo.objects.all())
     table.bind(parent=None)
     results = list(table)
     assert len(results) == 2
@@ -1706,7 +1710,7 @@ def test_from_model_with_inheritance():
             query_class = MyQuery
 
     t = MyTable.from_model(
-        data=FromModelWithInheritanceTest.objects.all(),
+        rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
         request=RequestFactory().get('/'),
         column__value__query__show=True,
@@ -1725,7 +1729,7 @@ def test_from_model_with_inheritance():
 def test_column_merge():
     table = Table(
         column__foo={},
-        data=[
+        rows=[
             Struct(foo=1),
         ]
     )
@@ -1740,11 +1744,11 @@ def test_override_doesnt_stick():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(column__foo__show=False, data=[])
+    table = MyTable(column__foo__show=False, rows=[])
     table.bind(parent=None)
     assert len(table.shown_bound_columns) == 0
 
-    table2 = MyTable(data=[])
+    table2 = MyTable(rows=[])
     table2.bind(parent=None)
     assert len(table2.shown_bound_columns) == 1
 

@@ -60,7 +60,7 @@ except ImportError:
 
         @property
         def content(self):
-            return self.r.get_data()
+            return self.r.get_rows()
 
         @property
         def _headers(self):

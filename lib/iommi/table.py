@@ -179,7 +179,7 @@ def yes_no_formatter(value, **_):
         return 'Yes'
     if value == 0:  # boolean False is equal to 0
         return 'No'
-    assert False, "Unable to convert {} to Yes/No".format(value)  # pragma: no cover  # pragma: no mutate
+    assert False, f"Unable to convert {value} to Yes/No"
 
 
 def list_formatter(value, **_):
@@ -937,8 +937,8 @@ class Table(RefinableObject, PagePart):
 
     @staticmethod
     @refinable
-    def preprocess_data(data, **_):
-        return data
+    def preprocess_rows(rows, **_):
+        return rows
 
     @staticmethod
     @refinable
@@ -978,9 +978,9 @@ class Table(RefinableObject, PagePart):
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, default_child=None, **kwargs):
+    def __init__(self, *, rows=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, default_child=None, **kwargs):
         """
-        :param data: a list or QuerySet of objects
+        :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
         :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
         :param row__attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
@@ -990,14 +990,14 @@ class Table(RefinableObject, PagePart):
         :param sortable: set this to false to turn off sorting for all columns
         """
 
-        if data is None:  # pragma: no cover
+        if rows is None:
             assert model is not None
-            data = model.objects.all()
+            rows = model.objects.all()
 
-        assert not isinstance(data, Table)
+        assert not isinstance(rows, Table)
 
-        if isinstance(data, QuerySet):
-            model = data.model
+        if isinstance(rows, QuerySet):
+            model = rows.model
 
         def generate_columns():
             if columns is not None:
@@ -1020,7 +1020,7 @@ class Table(RefinableObject, PagePart):
 
         assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
-        self.data = data
+        self.rows = rows
         self.request = request
         self.columns: List[Column] = columns
 
@@ -1078,7 +1078,7 @@ class Table(RefinableObject, PagePart):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
 
         if auto_rowspan_columns:
-            self.data = list(self.data)
+            self.rows = list(self.rows)
             no_value_set = object()
             for column in auto_rowspan_columns:
                 rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
@@ -1121,8 +1121,8 @@ class Table(RefinableObject, PagePart):
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
             if sort_column.sortable:
-                if isinstance(self.data, list):
-                    order_by_on_list(self.data, order_args[0], is_desc)
+                if isinstance(self.rows, list):
+                    order_by_on_list(self.rows, order_args[0], is_desc)
                 else:
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in DEV, but just ignore in PROD
@@ -1130,7 +1130,7 @@ class Table(RefinableObject, PagePart):
                         valid_sort_fields = {x.name for x in self.model._meta.get_fields()}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
-                    self.data = self.data.order_by(*order_args)
+                    self.rows = self.rows.order_by(*order_args)
 
     def _prepare_headers(self):
         prepare_headers(self, self.shown_bound_columns)
@@ -1309,7 +1309,7 @@ class Table(RefinableObject, PagePart):
                 try:
                     q = self.query.to_q()
                     if q:
-                        self.data = self.data.filter(q)
+                        self.rows = self.rows.filter(q)
                 except QueryException as e:
                     self._query_error = str(e)
 
@@ -1336,7 +1336,7 @@ class Table(RefinableObject, PagePart):
                 bulk_fields.append(self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html'))
 
                 self._bulk_form = self.get_meta().form_class(
-                    data=self.request.POST,
+                    request=self.request,
                     fields=bulk_fields,
                     name=self.name,
                     **self.bulk
@@ -1344,13 +1344,13 @@ class Table(RefinableObject, PagePart):
             else:
                 self._bulk_form = None
 
-        if isinstance(self.data, QuerySet):
+        if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in self.shown_bound_columns if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
             select = [x.attr for x in self.shown_bound_columns if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
             if prefetch:
-                self.data = self.data.prefetch_related(*prefetch)
+                self.rows = self.rows.prefetch_related(*prefetch)
             if select:
-                self.data = self.data.select_related(*select)
+                self.rows = self.rows.select_related(*select)
 
         self._prepare_auto_rowspan()
 
@@ -1359,7 +1359,7 @@ class Table(RefinableObject, PagePart):
 
     def __iter__(self):
         self.prepare()
-        for i, row in enumerate(self.preprocess_data(data=self.data, table=self)):
+        for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
@@ -1415,7 +1415,7 @@ class Table(RefinableObject, PagePart):
     @dispatch(
         column=EMPTY,
     )
-    def from_model(cls, data=None, model=None, column=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, rows=None, model=None, column=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -1425,17 +1425,17 @@ class Table(RefinableObject, PagePart):
             class Foo(Model):
                 foo = IntegerField()
 
-            Table.from_model(data=request.GET, model=Foo, field__foo__help_text='Overridden help text')
+            Table.from_model(request=request, model=Foo, field__foo__help_text='Overridden help text')
 
         :param include: fields to include. Defaults to all
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        assert model is not None or data is not None, "model or data must be specified"
-        if model is None and isinstance(data, QuerySet):
-            model = data.model
+        assert model is not None or rows is not None, "model or rows must be specified"
+        if model is None and isinstance(rows, QuerySet):
+            model = rows.model
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
-        return cls(data=data, model=model, instance=instance, columns=columns, **kwargs)
+        return cls(rows=rows, model=model, instance=instance, columns=columns, **kwargs)
 
     def bulk_queryset(self):
         queryset = self.model.objects.all() \
@@ -1499,9 +1499,9 @@ class Table(RefinableObject, PagePart):
         extra__model_verbose_name=None,
         extra__title=None,
     )
-    def as_page(cls, *, call_target=None, model=None, part=None, extra=None, data=None, **kwargs):
-        if model is None and isinstance(data, QuerySet):
-            model = data.model
+    def as_page(cls, *, call_target=None, model=None, part=None, extra=None, rows=None, **kwargs):
+        if model is None and isinstance(rows, QuerySet):
+            model = rows.model
 
         if model and extra.model_verbose_name is None:
             # noinspection PyProtectedMember
@@ -1545,17 +1545,17 @@ class Table(RefinableObject, PagePart):
         )
 
         if self.query_form and not self.query_form.is_valid():
-            self.data = None
+            self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
         return render_template(self.request, template if template is not None else self.template, self.context)
 
 
 def table_context(request, *, table: Table, extra_context, paginator: Namespace):
-    if extra_context is None:  # pragma: no cover
+    if extra_context is None:
         extra_context = {}
 
-    assert table.data is not None
+    assert table.rows is not None
 
     base_context = {
         'table': table,
@@ -1564,14 +1564,14 @@ def table_context(request, *, table: Table, extra_context, paginator: Namespace)
     if table.page_size:
         try:
             table.page_size = int(request.GET.get('page_size', table.page_size)) if request else table.page_size
-        except ValueError:  # pragma: no cover
+        except ValueError:
             pass
-        paginator = paginator(table.data, table.page_size)
+        paginator = paginator(table.rows, table.page_size)
         page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
         try:
             page_obj = paginator.get_page(page)
-            table.data = page_obj.object_list
-        except (InvalidPage, ValueError):  # pragma: no cover
+            table.rows = page_obj.object_list
+        except (InvalidPage, ValueError):
             raise Http404
 
         base_context.update({
@@ -1590,9 +1590,10 @@ def table_context(request, *, table: Table, extra_context, paginator: Namespace)
             'show_hits': False,
             'hit_label': 'Items',
         })
-    else:  # pragma: no cover
+    else:
         base_context.update({
-            'is_paginated': False})
+            'is_paginated': False,
+        })
 
     base_context.update(extra_context)
     return base_context

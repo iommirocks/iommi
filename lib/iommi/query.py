@@ -102,7 +102,8 @@ def request_data(request):
     elif request.method == 'GET':
         return request.GET
     else:
-        assert False, "unknown request method %s" % request.method  # pragma: no cover # pragma: no mutate
+        assert False, f'unsupported request method {request.method}'
+    # TODO: support more verbs here. OPTIONS seems reasonable for example
 
 
 def to_string_surrounded_by_quote(v):
@@ -275,7 +276,7 @@ class Variable(RefinableObject, PagePart):
     @class_shortcut(
         gui__call_target__attribute='choice',
     )
-    def choice(cls, call_target=None, **kwargs):  # pragma: no cover
+    def choice(cls, call_target=None, **kwargs):
         """
         Field that has one value out of a set.
         :type choices: list
@@ -289,7 +290,7 @@ class Variable(RefinableObject, PagePart):
     @class_shortcut(
         gui__call_target__attribute='multi_choice',
     )
-    def multi_choice(cls, call_target=None, **kwargs):  # pragma: no cover
+    def multi_choice(cls, call_target=None, **kwargs):
         """
         Field that has one value out of a set.
         :type choices: list

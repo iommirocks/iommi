@@ -11,13 +11,16 @@ def test_sort_list():
         foo = Column()
         bar = Column.number(sort_key='bar')
 
-    data = [Struct(foo='c', bar=3),
-            Struct(foo='b', bar=2),
-            Struct(foo='a', bar=1)]
+    rows = [
+        Struct(foo='c', bar=3),
+        Struct(foo='b', bar=2),
+        Struct(foo='a', bar=1),
+    ]
 
-    verify_table_html(table=TestTable(data=data),
-                      query=dict(order='bar'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=rows),
+        query=dict(order='bar'),
+        expected_html="""\
       <table class="listview" data-endpoint="/tbody">
         <thead>
           <tr>
@@ -47,9 +50,10 @@ def test_sort_list():
     """)
 
     # now reversed
-    verify_table_html(table=TestTable(data=data),
-                      query=dict(order='-bar'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=rows),
+        query=dict(order='-bar'),
+        expected_html="""\
       <table class="listview" data-endpoint="/tbody">
         <thead>
           <tr>
@@ -88,13 +92,13 @@ def test_sort_with_name():
         foo = Column()
         bar = Column.number(sort_key='bar')
 
-    data = [
+    rows = [
         Struct(foo='c', bar=3),
         Struct(foo='b', bar=2),
         Struct(foo='a', bar=1),
     ]
 
-    table = TestTable(data=data, default_child=False)
+    table = TestTable(rows=rows, default_child=False)
     verify_table_html(
         table=table,
         query={'my_table/order': 'bar'},
@@ -133,14 +137,17 @@ def test_sort_list_with_none_values():
         foo = Column()
         bar = Column.number(sort_key='bar')
 
-    data = [Struct(foo='c', bar=3),
-            Struct(foo='b', bar=2),
-            Struct(foo='a', bar=None),
-            Struct(foo='a', bar=None)]
+    rows = [
+        Struct(foo='c', bar=3),
+        Struct(foo='b', bar=2),
+        Struct(foo='a', bar=None),
+        Struct(foo='a', bar=None),
+    ]
 
-    verify_table_html(table=TestTable(data=data),
-                      query=dict(order='bar'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=rows),
+        query=dict(order='bar'),
+        expected_html="""\
       <table class="listview" data-endpoint="/tbody">
         <thead>
           <tr>
@@ -180,10 +187,12 @@ def test_sort_list_bad_parameter():
         foo = Column()
         bar = Column.number(sort_key='bar')
 
-    data = [Struct(foo='b', bar=2),
-            Struct(foo='a', bar=1)]
+    rows = [
+        Struct(foo='b', bar=2),
+        Struct(foo='a', bar=1),
+    ]
 
-    verify_table_html(table=TestTable(data=data),
+    verify_table_html(table=TestTable(rows=rows),
                       query=dict(order='barfology'),
                       expected_html="""\
       <table class="listview" data-endpoint="/tbody">
@@ -222,9 +231,10 @@ def test_sort_django_table():
         a = Column.number()
         b = Column()
 
-    verify_table_html(table=TestTable(data=TFoo.objects.all()),
-                      query=dict(order='a'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=TFoo.objects.all()),
+        query=dict(order='a'),
+        expected_html="""\
     <table class="listview" data-endpoint="/tbody">
       <thead>
         <tr>
@@ -254,9 +264,10 @@ def test_sort_django_table():
     """)
 
     # now reversed
-    verify_table_html(table=TestTable(data=TFoo.objects.all()),
-                      query=dict(order='-a'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=TFoo.objects.all()),
+        query=dict(order='-a'),
+        expected_html="""\
     <table class="listview" data-endpoint="/tbody">
       <thead>
         <tr>
@@ -287,16 +298,18 @@ def test_sort_django_table():
 
 
 def test_order_by_on_list_nested():
-    data = [Struct(foo=Struct(bar='c')),
-            Struct(foo=Struct(bar='b')),
-            Struct(foo=Struct(bar='a'))]
+    rows = [
+        Struct(foo=Struct(bar='c')),
+        Struct(foo=Struct(bar='b')),
+        Struct(foo=Struct(bar='a')),
+    ]
 
-    sorted_data = data[:]
-    order_by_on_list(sorted_data, 'foo__bar')
-    assert sorted_data == list(reversed(data))
+    sorted_rows = rows[:]
+    order_by_on_list(sorted_rows, 'foo__bar')
+    assert sorted_rows == list(reversed(rows))
 
-    order_by_on_list(sorted_data, lambda x: x.foo.bar)
-    assert sorted_data == list(reversed(data))
+    order_by_on_list(sorted_rows, lambda x: x.foo.bar)
+    assert sorted_rows == list(reversed(rows))
 
 
 def test_sort_default_desc_no_sort():
@@ -305,10 +318,11 @@ def test_sort_default_desc_no_sort():
         foo = Column()
         bar = Column(sort_default_desc=True)
 
-    verify_table_html(table=TestTable(data=[]),
-                      query=dict(),
-                      find=dict(name='thead'),
-                      expected_html="""\
+    verify_table_html\
+        (table=TestTable(rows=[]),
+        query=dict(),
+        find=dict(name='thead'),
+        expected_html="""\
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -327,10 +341,11 @@ def test_sort_default_desc_other_col_sorted():
         foo = Column()
         bar = Column(sort_default_desc=True)
 
-    verify_table_html(table=TestTable(data=[]),
-                      query=dict(order='foo'),
-                      find=dict(name='thead'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=[]),
+        query=dict(order='foo'),
+        find=dict(name='thead'),
+        expected_html="""\
         <thead>
           <tr>
             <th class="ascending first_column sorted_column subheader">
@@ -349,10 +364,11 @@ def test_sort_default_desc_already_sorted():
         foo = Column()
         bar = Column(sort_default_desc=True)
 
-    verify_table_html(table=TestTable(data=[]),
-                      query=dict(order='bar'),
-                      find=dict(name='thead'),
-                      expected_html="""\
+    verify_table_html(
+        table=TestTable(rows=[]),
+        query=dict(order='bar'),
+        find=dict(name='thead'),
+        expected_html="""\
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -372,9 +388,10 @@ def test_sort_django_table_from_model():
     TFoo(a=17, b="a").save()
     TFoo(a=42, b="b").save()
 
-    verify_table_html(table__data=TFoo.objects.all(),
-                      query=dict(order='a'),
-                      expected_html="""\
+    verify_table_html(
+        table__rows=TFoo.objects.all(),
+        query=dict(order='a'),
+        expected_html="""\
     <table class="listview" data-endpoint="/tbody">
       <thead>
         <tr>
