@@ -14,7 +14,6 @@ from django.db.models import (
     F,
     Model,
     Q,
-    QuerySet,
 )
 
 from pyparsing import (
@@ -57,6 +56,7 @@ from iommi.base import (
     PagePart,
     setup_endpoint_proxies,
     model_and_rows,
+    request_data,
 )
 from iommi.form import (
     Form,
@@ -97,16 +97,6 @@ _variable_factory_by_django_field_type = OrderedDict()
 
 def register_variable_factory(field_class, factory):
     _variable_factory_by_django_field_type[field_class] = factory
-
-
-def request_data(request):
-    if request.method == 'POST':
-        return request.POST
-    elif request.method == 'GET':
-        return request.GET
-    else:
-        assert False, f'unsupported request method {request.method}'
-    # TODO: support more verbs here. OPTIONS seems reasonable for example
 
 
 def to_string_surrounded_by_quote(v):

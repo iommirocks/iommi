@@ -65,6 +65,7 @@ from iommi.base import (
     PagePart,
     render_template_name,
     setup_endpoint_proxies,
+    request_data,
 )
 from iommi.render import render_attrs
 
@@ -280,7 +281,6 @@ def create_or_edit_object__on_valid_post(*, form):
 
             form.extra.on_save(form=form, instance=form.instance)
 
-            from iommi.views import create_or_edit_object_redirect
             return create_or_edit_object_redirect(form.extra.is_create, form.extra.redirect_to, form.request, form.extra.redirect, form)
 
 
@@ -1103,7 +1103,7 @@ class Field(RefinableObject, PagePart):
 
     @classmethod
     @class_shortcut(
-        call_target__attribute="choice",
+        call_target__attribute='choice',
         attrs__multiple=True,
         choice_to_option=multi_choice_choice_to_option,
         is_list=True,
@@ -1113,7 +1113,7 @@ class Field(RefinableObject, PagePart):
 
     @classmethod
     @class_shortcut(
-        call_target__attribute="choice_queryset",
+        call_target__attribute='choice_queryset',
         attrs__multiple=True,
         choice_to_option=multi_choice_queryset_choice_to_option,
         is_list=True,
@@ -1123,7 +1123,7 @@ class Field(RefinableObject, PagePart):
 
     @classmethod
     @class_shortcut(
-        call_target__attribute="choice",
+        call_target__attribute='choice',
         input_template='iommi/form/radio.html',
     )
     def radio(cls, call_target=None, **kwargs):
@@ -1362,18 +1362,17 @@ class Form(RefinableObject, PagePart):
         actions__submit__call_target=Action.submit,
         actions_template='iommi/form/actions.html',
     )
-    def __init__(self, *, request=None, data: Dict[str, Any] = None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
+    def __init__(self, *, request=None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
         self.request = request
 
         super(Form, self).__init__(field=field, **kwargs)
 
-        if data is None and request:
-            data = request.POST if request.method == 'POST' else request.GET
+        # TODO: this seems redundant with the bind() at the end
+        self._request_data = request_data(request) if request else None
 
         if callable(fields):
             fields = fields(model=self.model)
 
-        self.data = data
         self.fields_by_name = None
         """ :type: Struct[str, Field] """
         self.style = None
@@ -1403,24 +1402,21 @@ class Form(RefinableObject, PagePart):
         # TODO: use collect_members and bind_members
         self.declared_fields = {x.name: x for x in sort_after(list(generate_fields()))}
 
-        if request is not None or data is not None:
+        if request is not None:
             self.request = request
             self.bind(parent=None)
 
     def on_bind(self):
         self._valid = None
         request = self.request
-        if request:
-            if request.method == 'POST':
-                self.data = request.POST
-            elif request.method == 'GET':
-                self.data = request.GET
+        self._request_data = request_data(request) if request else None
 
-        if self.data is not None and self.is_target():
+        if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
 
-        if self.data is None:
-            self.data = {}
+        # TODO: seems a bit convoluted to do this and the None check above
+        if self._request_data is None:
+            self._request_data = {}
 
         self.declared_actions = collect_members(items=self._actions, cls=Action)
         self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
@@ -1443,7 +1439,7 @@ class Form(RefinableObject, PagePart):
                     else:
                         field.initial = initial
 
-        if self.data:
+        if self._request_data is not None:
             for field in self.fields:
                 if field.is_list:
                     if field.raw_data_list is not None:
@@ -1451,10 +1447,10 @@ class Form(RefinableObject, PagePart):
                     try:
                         # django and similar
                         # noinspection PyUnresolvedReferences
-                        raw_data_list = self.data.getlist(field.path())
+                        raw_data_list = self._request_data.getlist(field.path())
                     except AttributeError:  # pragma: no cover
                         # werkzeug and similar
-                        raw_data_list = self.data.get(field.path())
+                        raw_data_list = self._request_data.get(field.path())
 
                     if raw_data_list and field.strip_input:
                         raw_data_list = [x.strip() for x in raw_data_list]
@@ -1464,7 +1460,7 @@ class Form(RefinableObject, PagePart):
                 else:
                     if field.raw_data is not None:
                         continue
-                    field.raw_data = self.data.get(field.path())
+                    field.raw_data = self._request_data.get(field.path())
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
@@ -1506,7 +1502,7 @@ class Form(RefinableObject, PagePart):
     @dispatch(
         field=EMPTY,
     )
-    def from_model(cls, data, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, *, request=None, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -1523,13 +1519,13 @@ class Form(RefinableObject, PagePart):
 
         """
         fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
-        return cls(data=data, model=model, instance=instance, fields=fields, **kwargs)
+        return cls(request=request, model=model, instance=instance, fields=fields, **kwargs)
 
     def own_target_marker(self):
         return f'-{self.path()}'
 
     def is_target(self):
-        return self.own_target_marker() in self.data
+        return self.own_target_marker() in self._request_data
 
     def is_valid(self):
         if self._valid is None:
@@ -1702,15 +1698,6 @@ class Form(RefinableObject, PagePart):
         return r
 
     @classmethod
-    def create_or_edit_object(cls, *args, **kwargs):
-        from .views import create_or_edit_object
-        setdefaults_path(
-            kwargs,
-            form__call_target=cls.from_model,
-        )
-        return create_or_edit_object(*args, **kwargs)
-
-    @classmethod
     @class_shortcut(
         call_target__attribute='from_model',
         data=None,  # TODO: this is really a bug in tri.form, should not be required
@@ -1798,3 +1785,12 @@ class Form(RefinableObject, PagePart):
         render.context['form'] = self
 
         return render(request=request)
+
+
+def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
+    if redirect_to is None:
+        if is_create:
+            redirect_to = "../"
+        else:
+            redirect_to = "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
+    return redirect(request=request, redirect_to=redirect_to, form=form)

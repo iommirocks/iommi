@@ -20,10 +20,10 @@ from iommi.query import (
     Q_OP_BY_OP,
     Query,
     QueryException,
-    request_data,
     value_to_query_string_value_string,
     Variable,
 )
+from iommi.base import request_data
 
 from tests.helpers import req
 from tests.models import (

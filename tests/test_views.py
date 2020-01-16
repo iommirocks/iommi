@@ -4,10 +4,14 @@ import pytest
 from bs4 import BeautifulSoup
 from tri_struct import Struct, merged
 
+from tests.helpers import req
 from tests.test_forms import remove_csrf
-from iommi.form import INITIALS_FROM_GET
+from iommi.form import (
+    INITIALS_FROM_GET,
+    create_or_edit_object_redirect,
+)
 from iommi.base import DISPATCH_PATH_SEPARATOR
-from iommi.views import create_object, edit_object, create_or_edit_object_redirect
+from iommi.views import create_object, edit_object
 
 
 def get_request_context(response):
@@ -23,7 +27,8 @@ def test_create_or_edit_object():
     reset_saved_something()
 
     # 1. View create form
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
+    request = req('get')
+    req.user = Struct(is_authenticated=lambda: True)
 
     response = create_object(
         request=request,

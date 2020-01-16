@@ -251,3 +251,13 @@ def model_and_rows(model, rows):
         model = rows.model
 
     return model, rows
+
+
+def request_data(request):
+    if request.method == 'POST':
+        return request.POST
+    elif request.method == 'GET':
+        return request.GET
+    else:
+        assert False, f'unsupported request method {request.method}'
+    # TODO: support more verbs here. OPTIONS seems reasonable for example
