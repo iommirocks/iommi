@@ -29,10 +29,12 @@ from tri_declarative import (
     sort_after,
     should_show,
     Namespace,
+    with_meta,
 )
 from tri_struct import Struct
 
 
+@with_meta
 @declarative(
     parameter='parts_dict',
     is_member=lambda obj: isinstance(obj, (PagePart, str, Template)),
@@ -48,6 +50,7 @@ class Page(PagePart):
         parts: List[PartType] = None,
         parts_dict: Dict[str, PartType] = None,
         part: dict,
+        default_child=None,
     ):
         self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
 
@@ -70,21 +73,12 @@ class Page(PagePart):
         # TODO: use collect_members and bind_members
         self.declared_parts = {x.name: x for x in sort_after(list(generate_parts()))}
 
-    def on_bind(self) -> Any:
-        def bind_part(p):
-            if hasattr(p, 'bind'):
-                return p.bind(parent=self)
-            return p
+        self.default_child = default_child
 
-        parts = {name: bind_part(p) for name, p in self.declared_parts.items()}
+    def on_bind(self) -> Any:
+        parts = {name: p.bind(parent=self) for name, p in self.declared_parts.items()}
 
         self.parts = Struct({name: p for name, p in parts.items() if should_show(p)})
-
-        # TODO: this is a fun idea.. but is it a GOOD idea?
-        if len(self.parts) == 1:
-            for the_only_part in parts.values():
-                if the_only_part.default_child is None:
-                    the_only_part.default_child = True
 
     def __repr__(self):
         return f'<Page with parts: {list(self.parts.keys())}>'
@@ -135,7 +129,7 @@ class Fragment(PagePart):
         attrs=EMPTY,
         show=True,
     )
-    def __init__(self, child: PartType = None, *, name: str = None, tag: str = None, children: Optional[List[PartType]] = None, attrs=None, show):
+    def __init__(self, child: PartType = None, *, name: str = None, tag: str = None, children: Optional[List[PartType]] = None, attrs=None, show, default_child=None):
         self.name = name
         self.tag = tag
         self.name = name
@@ -146,6 +140,7 @@ class Fragment(PagePart):
 
         self._children.extend(children or [])
         self.attrs = attrs
+        self.default_child = default_child
 
     def render_text_or_children(self, request, context):
         return format_html(
@@ -234,13 +229,7 @@ def perform_ajax_dispatch(*, root, path, value, request):
         root.request = request
         root.bind(parent=None)
 
-    try:
-        target, parents = find_target(path=path, root=root)
-    except InvalidEndpointPathException:
-        if not settings.DEBUG:
-            return dict(error=f'Invalid endpoint path')
-        else:
-            raise
+    target, parents = find_target(path=path, root=root)
 
     # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
     kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
@@ -265,7 +254,10 @@ def middleware(get_response):
             assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
             if dispatch_commands:
                 dispatch_target, value = next(iter(dispatch_commands.items()))
-                data = perform_ajax_dispatch(root=page, path=dispatch_target, value=value, request=request)
+                try:
+                    data = perform_ajax_dispatch(root=page, path=dispatch_target, value=value, request=request)
+                except InvalidEndpointPathException:
+                    data = dict(error=f'Invalid endpoint path')
 
                 if data is not None:
                     return True, HttpResponse(json.dumps(data), content_type='application/json')

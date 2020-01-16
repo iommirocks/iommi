@@ -10,8 +10,11 @@ try:
     from django.template import Template
     from django.shortcuts import render
     from django.utils.encoding import smart_str
-    from django.template.context_processors import csrf
+    from django.template.context_processors import csrf as csrf_
     from django.utils.safestring import mark_safe
+
+    def csrf(request):
+        return {} if request is None else csrf_(request)
 
     try:
         from django.template.loader import get_template_from_string

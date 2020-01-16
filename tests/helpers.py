@@ -46,7 +46,10 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     actual_html = remove_csrf(table.render_or_respond(request=request, **kwargs))
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
-    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').find(**find).prettify()).strip()
+    actual_soup = BeautifulSoup(actual_html, 'html.parser')
+    hit = actual_soup.find(**find)
+    assert hit, actual_soup
+    prettified_actual = reindent(hit.prettify()).strip()
 
     assert prettified_actual == prettified_expected
 
@@ -62,3 +65,7 @@ def request_with_middleware(*, response, data):
     done, response = m(request=RequestFactory().get('/', data=data))
     assert done
     return response
+
+
+def req(method, **data):
+    return getattr(RequestFactory(), method.lower())('/', data=data)

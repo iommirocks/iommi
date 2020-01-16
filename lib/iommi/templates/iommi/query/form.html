@@ -1,6 +1,8 @@
 <div>
+    <!-- TODO: iommi_query_toggle_simple_mode should be namespaced -->
     <a href="#" id="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
 
+    <!-- TODO: iommi_query_form should be namespaced -->
     <form id="iommi_query_form" class="compact">
         <table style="width: 100%">
             <tr class="iommi_query_form_advanced" style="display: none">
@@ -8,18 +10,21 @@
             </tr>
             <tr>
                 <td>
+                    <!-- TODO: iommi_query_form_simple should be namespaced -->
                     <div id="iommi_query_form_simple">
                         {{ form.compact }}
                     </div>
                     <div class="iommi_query_form_advanced" style="display: none">
-                        <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.iommi_query_advanced_value }}"/>
+                        <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.query_advanced_value }}"/>
                     </div>
                 </td>
+                <!-- TODO: iommi_query_toggle_help should be namespaced -->
                 <td id="iommi_query_toggle_help" style="display: none">
                     <span>Show help</span> <i class="fa fa-chevron-down"></i>
                 </td>
             </tr>
             <tr>
+                <!-- TODO: iommi_query_help should be namespaced -->
                 <td id="iommi_query_help" style="display: none">
                     <div class="iommi_query_available_fields">
                         <h3>Available fields</h3>
@@ -51,6 +56,7 @@
         {% endif %}
 
         {% if iommi_query_error %}
+          <!-- TODO: iommi_query_error should be namespaced -->
           <div id="iommi_query_error">
               {{ iommi_query_error }}
           </div>

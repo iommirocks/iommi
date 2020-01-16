@@ -704,6 +704,7 @@ class BoundRow(object):
     def __init__(self, table, row, row_index, template, attrs, extra):
         self.table: Table = table
         self.row: Any = row
+        assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
         self.template = template
         self.attrs = attrs
@@ -754,12 +755,25 @@ class BoundCell(object):
     @property
     def value(self):
         if not hasattr(self, '_value'):
-            self._value = evaluate(self.bound_column.cell.value, table=self.bound_row.table, column=self.bound_column.column, row=self.bound_row.row, bound_row=self.bound_row, bound_column=self.bound_column)
+            self._value = evaluate(
+                self.bound_column.cell.value,
+                table=self.bound_row.table,
+                column=self.bound_column.column,
+                row=self.bound_row.row,
+                bound_row=self.bound_row,
+                bound_column=self.bound_column,
+            )
         return self._value
 
     @property
     def attrs(self):
-        return evaluate_recursive(self.bound_column.cell.attrs, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return evaluate_recursive(
+            self.bound_column.cell.attrs,
+            table=self.table,
+            column=self.bound_column,
+            row=self.row,
+            value=self.value,
+        )
 
     @property
     def url(self):
@@ -964,7 +978,7 @@ class Table(RefinableObject, PagePart):
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, **kwargs):
+    def __init__(self, *, data=None, request=None, columns=None, columns_dict=None, model=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, default_child=None, **kwargs):
         """
         :param data: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -979,6 +993,8 @@ class Table(RefinableObject, PagePart):
         if data is None:  # pragma: no cover
             assert model is not None
             data = model.objects.all()
+
+        assert not isinstance(data, Table)
 
         if isinstance(data, QuerySet):
             model = data.model
@@ -1019,6 +1035,8 @@ class Table(RefinableObject, PagePart):
             column=column,
             **kwargs
         )
+
+        self.default_child = default_child
 
         self._actions = actions
 
@@ -1342,12 +1360,7 @@ class Table(RefinableObject, PagePart):
     def __iter__(self):
         self.prepare()
         for i, row in enumerate(self.preprocess_data(data=self.data, table=self)):
-            new_row = self.preprocess_row(table=self, row=row)
-            if new_row is None:
-                warnings.warn('preprocess_row must return the object that has been processed', DeprecationWarning)
-                new_row = row
-            row = new_row
-
+            row = self.preprocess_row(table=self, row=row)
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
 
     def render_attrs(self):
@@ -1453,7 +1466,7 @@ class Table(RefinableObject, PagePart):
 
         context['bulk_form'] = table.bulk_form
         context['query_form'] = table.query_form
-        context['tri_query_error'] = table.query_error
+        context['iommi_query_error'] = table.query_error
 
         if table.bulk_form and request.method == 'POST':
             if table.bulk_form.is_valid():
@@ -1504,8 +1517,9 @@ class Table(RefinableObject, PagePart):
         )
         return Page(
             part__title=html.h1(extra.title, **part.pop('title', {})),
-            part__table=call_target(extra=extra, model=model, **kwargs),
+            part__table=call_target(extra=extra, model=model, default_child=True, **kwargs),
             part=part,
+            default_child=True,
         )
 
     def render(self,
@@ -1520,7 +1534,7 @@ class Table(RefinableObject, PagePart):
 
         context['bulk_form'] = self.bulk_form
         context['query_form'] = self.query_form
-        context['tri_query_error'] = self.query_error
+        context['iommi_query_error'] = self.query_error
 
         self.context = table_context(
             self.request,

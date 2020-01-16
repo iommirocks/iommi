@@ -35,3 +35,14 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+
+class HighlightBrokenVariable:
+    def __contains__(self, item):
+        return True
+
+    def __mod__(self, other):
+        raise Exception(f'Tried to render non-existent variable {other}')
+
+
+TEMPLATES[0]['OPTIONS']['string_if_invalid'] = HighlightBrokenVariable()

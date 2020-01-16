@@ -494,6 +494,7 @@ def test_hidden_with_name():
             name='baz',
             fields=[Field.hidden(name='foo')],
             attrs__method='get',
+            default_child=False,
         )
 
     page = MyPage()
@@ -1167,7 +1168,7 @@ def test_file_no_roundtrip():
     class FooForm(Form):
         foo = Field.file(is_valid=lambda form, field, parsed_data: (False, 'invalid!'))
 
-    form = FooForm(data=dict(foo=b'binary_content_here'))
+    form = FooForm(request=RequestFactory().post('/', data=dict(foo=b'binary_content_here')))
     assert form.is_valid() is False
     assert 'binary_content_here' not in form.render()
 

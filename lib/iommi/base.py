@@ -15,6 +15,7 @@ from tri_declarative import (
     Namespace,
 )
 from iommi._web_compat import get_template_from_string, render_template
+from tri_struct import Struct
 
 
 class GroupPathsByChildrenError(Exception):
@@ -123,7 +124,7 @@ class PagePart:
     request = None
     parent = None
     name = None
-    default_child = False
+    default_child = None
     _is_bound = False
 
     @dispatch(
@@ -165,10 +166,21 @@ class PagePart:
         if result is None:
             result = self
         result._is_bound = True
+
+        if len(result.children()) == 1:
+            for the_only_part in result.children().values():
+                if the_only_part.default_child is None:
+                    the_only_part.default_child = True
+
         return result
 
     def on_bind(self) -> Any:
         pass
+
+    def children(self):
+        assert self._is_bound
+
+        return Struct()
 
     def path(self) -> str:
         # TODO: this assert seems like a good idea, but it fires in Table.prepare... not sure what to do about that right now

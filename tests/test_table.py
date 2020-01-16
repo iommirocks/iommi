@@ -11,7 +11,10 @@ from django.test import (
     override_settings,
 )
 from django.utils.safestring import mark_safe
-from iommi.base import find_target
+from iommi.base import (
+    find_target,
+    InvalidEndpointPathException,
+)
 from iommi.page import perform_ajax_dispatch
 from tri_declarative import (
     getattr_path,
@@ -1322,21 +1325,6 @@ def test_email():
     assert getattr_path(x, 'bulk__call_target__attribute') == 'email'
 
 
-def test_backwards_compatible_call_target():
-    def backwards_compatible_call_target(**kwargs):
-        del kwargs
-        raise Exception('Hello!')
-
-    class FooTable(Table):
-        a = Column(query__show=True, query__gui__show=True, query__gui=backwards_compatible_call_target)
-
-    with pytest.raises(Exception) as e:
-        t = FooTable(data=[], model=TFoo)
-        t.query.form()
-
-    assert 'Hello!' == str(e.value)
-
-
 def test_extra():
     class TestTable(Table):
         foo = Column(extra__foo=1, extra__bar=2)
@@ -1440,18 +1428,19 @@ def test_ajax_data_endpoint():
 
     class TestTable(Table):
         class Meta:
-            endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in row} for row in table]
+            endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in bound_row} for bound_row in table]
 
         foo = Column()
         bar = Column()
 
-    table = TestTable(data=[
+
+    table = TestTable(data = [
         Struct(foo=1, bar=2),
         Struct(foo=3, bar=4),
     ])
     table.bind(parent=None)
 
-    actual = perform_ajax_dispatch(root=TestTable(data=table), path='/data', value='', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=table, path='/data', value='', request=RequestFactory().get('/'))
     expected = [dict(foo=1, bar=2), dict(foo=3, bar=4)]
     assert actual == expected
 
@@ -1460,13 +1449,13 @@ def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
             endpoint__bar = lambda **_: 17
-            name = 'foo'
 
         baz = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo/bar', value='', request=RequestFactory().get('/'))
-    assert actual == {'error': 'Invalid endpoint path'}
-    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/foo/bar', value='', request=RequestFactory().get('/'))
+    with pytest.raises(InvalidEndpointPathException):
+        perform_ajax_dispatch(root=TestTable(data=[]), path='/baz', value='', request=RequestFactory().get('/'))
+
+    actual = perform_ajax_dispatch(root=TestTable(data=[]), path='/bar', value='', request=RequestFactory().get('/'))
     assert 17 == actual
 
 
@@ -1789,6 +1778,7 @@ def test_new_style_ajax_dispatch():
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
     page = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
+    page.bind(parent=None)
     assert page.children().table.default_child
     page.bind(parent=None)
     target, parents = find_target(path='/table/query/gui/field/foo', root=page)

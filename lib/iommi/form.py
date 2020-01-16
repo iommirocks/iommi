@@ -23,7 +23,6 @@ from typing import (
 )
 
 from django.http import HttpResponseRedirect
-from django.template.context_processors import csrf
 from tri_declarative import (
     assert_kwargs_empty,
     class_shortcut,
@@ -48,6 +47,7 @@ from tri_declarative import (
 from tri_struct import Struct
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
+    csrf,
     format_html,
     get_template_from_string,
     mark_safe,
@@ -1670,7 +1670,7 @@ class Form(RefinableObject, PagePart):
         else:
             return render_to_string(
                 template_name=template_name,
-                context=dict(form=self),
+                context=dict(form=self, **csrf(self.request)),
                 request=self.request
             )
 

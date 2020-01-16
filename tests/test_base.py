@@ -18,8 +18,6 @@ from tri_struct import Struct
 
 from tests.helpers import request_with_middleware
 
-pytestmark = pytest.mark.django_db
-
 # assert first in children, f'Found invalid path {k}. {first} not a member of {children.keys()}'
 
 
@@ -72,6 +70,7 @@ class MyPage(Page):
 
 def test_group_paths_by_children_happy_path():
     my_page = MyPage()
+    my_page.bind(parent=None)
 
     data = {
         't1/query/gui/foo': '1',
@@ -120,9 +119,13 @@ def test_group_paths_by_children_happy_path():
 
 def test_group_paths_by_children_error_message():
     class NoDefaultChildPage(Page):
-        foo = html.h1('asd')
+        foo = html.h1('asd', default_child=False)
+
+        class Meta:
+            default_child = False
 
     my_page = NoDefaultChildPage()
+    my_page.bind(parent=None)
 
     data = {
         'unknown': '5',
