@@ -68,4 +68,4 @@ def request_with_middleware(*, response, data):
 
 
 def req(method, **data):
-    return getattr(RequestFactory(), method.lower())('/', data=data)
+    return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())('/', data=data)

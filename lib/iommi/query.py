@@ -49,6 +49,7 @@ from tri_declarative import (
     setdefaults_path,
     sort_after,
     with_meta,
+    setattr_path,
 )
 from tri_struct import Struct
 from iommi.base import (
@@ -197,6 +198,9 @@ class Variable(RefinableObject, PagePart):
         return self.parent
 
     def on_bind(self) -> None:
+        for k, v in self.parent._variable.get(self.name, {}).items():
+            setattr_path(self, k, v)
+
         query = self.parent
 
         if self.attr is MISSING:
@@ -490,8 +494,9 @@ class Query(RefinableObject, PagePart):
     @dispatch(
         # TODO: convert to an item in self.children()?
         endpoint__errors=default_endpoint__errors,
+        variable=EMPTY,
     )
-    def __init__(self, *, request=None, model=None, rows=None, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, *, request=None, model=None, rows=None, variable, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
         model, rows = model_and_rows(model, rows)
 
         setdefaults_path(
@@ -504,7 +509,7 @@ class Query(RefinableObject, PagePart):
         self.bound_variables: List[Variable] = None
         self.bound_variable_by_name: Dict[str, Variable] = None
         self.form = None
-
+        self._variable = {}
         self._form = None
 
         super(Query, self).__init__(
@@ -515,11 +520,21 @@ class Query(RefinableObject, PagePart):
 
         def generate_variables():
             if variables is not None:
-                for variable in variables:
-                    yield variable
-            for name, variable in variables_dict.items():
-                variable.name = name
-                yield variable
+                for variable_ in variables:
+                    self._variable[variable_.name] = variable.get(variable_.name, {})
+                    yield variable_
+            for name, variable_ in variables_dict.items():
+                variable_.name = name
+                self._variable[variable_.name] = variable.get(variable_.name, {})
+                yield variable_
+            for name, variable_spec in variable.items():
+                variable_spec = setdefaults_path(
+                    Namespace(),
+                    variable_spec,
+                    call_target=self.get_meta().member_class,
+                    name=name,
+                )
+                yield variable_spec()
 
         # TODO: use collect_members and bind_members
         self.variables = sort_after(list(generate_variables()))

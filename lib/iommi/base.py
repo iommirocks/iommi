@@ -15,9 +15,14 @@ from tri_declarative import (
     dispatch,
     EMPTY,
     Namespace,
+    setattr_path,
+    setdefaults_path,
+    sort_after,
+    should_show,
 )
 from iommi._web_compat import get_template_from_string, render_template
 from tri_struct import Struct
+from tri_struct._cstruct import _Struct
 
 
 class GroupPathsByChildrenError(Exception):
@@ -136,11 +141,12 @@ class PagePart:
     def render(self, *, context=None, render=None):
         pass
 
+    # TODO: ick
     @dispatch(
         template_name=getattr(settings, 'TRI_BASE_TEMPLATE', 'base.html'),
         content_block_name=getattr(settings, 'TRI_CONTENT_BLOCK', 'content'),
     )
-    def render(self, *, template_name, content_block_name, context=None):
+    def render_root(self, *, template_name, content_block_name, context=None):
         if context is None:
             context = {}
 
@@ -152,9 +158,10 @@ class PagePart:
         template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
         return get_template_from_string(template_string).render(context=context, request=self.request())
 
+    # TODO: ick
     @dispatch
-    def render_to_response(self):
-        return HttpResponse(self.render())
+    def render_to_response(self, **kwargs):
+        return HttpResponse(self.render_root(**kwargs))
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
@@ -175,6 +182,7 @@ class PagePart:
 
         result.parent = parent
         result._is_bound = True
+
         result.on_bind()
 
         if len(result.children()) == 1:
@@ -279,3 +287,33 @@ def request_data(request):
 def no_copy_on_bind(cls):
     cls._no_copy_on_bind = True
     return cls
+
+
+def collect_members(*, items, cls):
+    def unbound_items():
+        for name, item in items.items():
+            if isinstance(item, dict):
+                item = setdefaults_path(
+                    Namespace(),
+                    item,
+                    call_target=cls,
+                )
+                item = item()
+            setattr(item, 'name', name)
+            yield item
+
+    return list(unbound_items())
+
+
+def bind_members(*, unbound_items, parent, **kwargs):
+    bound_items = sort_after([x.bind(parent=parent) for x in unbound_items])
+
+    for item in bound_items:
+        item._evaluate_show(**kwargs)
+
+    items = Struct({item.name: item for item in bound_items if should_show(item)})
+
+    for item in items.values():
+        item._evaluate(**kwargs)
+
+    return items

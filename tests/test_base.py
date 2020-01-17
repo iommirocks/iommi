@@ -41,7 +41,7 @@ class T2(models.Model):
         ordering = ('id',)
 
 
-request = RequestFactory().get('/')  # TODO: we shouldn't need this, but tri.query eagerly tries to read request parameters. We should fix that.
+request = req('get')  # TODO: we shouldn't need this, but tri.query eagerly tries to read request parameters. We should fix that.
 
 
 class MyPage(Page):
@@ -245,9 +245,9 @@ def test_page_render():
         body = html.div('bar bar')
 
     my_page = MyPage()
-
-    request = RequestFactory().get('/')
+    request = req('get')
     request.user = Struct()
+    my_page.bind(request=request)
 
     # TODO: template_name??
     response = my_page.render_to_response(template_name='iommi/form/base.html')

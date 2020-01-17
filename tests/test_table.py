@@ -6,49 +6,46 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
-from django.test import (
-    RequestFactory,
-    override_settings,
-)
+from django.test import override_settings
 from django.utils.safestring import mark_safe
 from iommi.base import (
-    find_target,
     InvalidEndpointPathException,
-)
-from iommi.page import perform_ajax_dispatch
-from tri_declarative import (
-    getattr_path,
-    Namespace,
-    class_shortcut,
+    find_target,
 )
 from iommi.form import (
+    Action,
     Field,
     Form,
-    Action,
 )
+from iommi.page import perform_ajax_dispatch
 from iommi.query import (
-    Variable,
     Query,
-)
-
-from tests.helpers import (
-    verify_table_html,
-    request_with_middleware,
-    req,
-)
-from tests.models import (
-    TBar,
-    TBaz,
-    TFoo,
-    FromModelWithInheritanceTest,
+    Variable,
 )
 from iommi.table import (
     Column,
-    register_cell_formatter,
     SELECT_DISPLAY_NAME,
     Struct,
     Table,
+    register_cell_formatter,
     yes_no_formatter,
+)
+from tri_declarative import (
+    Namespace,
+    class_shortcut,
+    getattr_path,
+)
+
+from tests.helpers import (
+    req,
+    request_with_middleware,
+    verify_table_html,
+)
+from tests.models import (
+    FromModelWithInheritanceTest,
+    TBar,
+    TBaz,
+    TFoo,
 )
 
 
@@ -783,9 +780,10 @@ def test_bulk_edit():
         a = Column.integer(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
         b = Column(bulk__show=True)
 
-    request_factory = RequestFactory(HTTP_REFERER='/')
-
-    result = TestTable(rows=TFoo.objects.all(), request=request_factory.get("/", dict(pk_1='', pk_2='', a='0', b='changed'))).render()
+    result = TestTable(
+        rows=TFoo.objects.all(),
+        request=req('get', pk_1='', pk_2='', a='0', b='changed'),
+    ).render()
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
@@ -795,7 +793,14 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
-    TestTable(rows=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit, request=request_factory.post("/", dict(pk_1='', pk_2='', a='0', b='changed'))).render()
+    t = TestTable(
+        rows=TFoo.objects.all().order_by('pk'),
+        post_bulk_edit=post_bulk_edit,
+        request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed'}),
+    )
+    assert t._is_bound
+    assert t.bulk_form.name == 'bulk'
+    t.render()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
@@ -805,7 +810,11 @@ def test_bulk_edit():
     ]
 
     # Test that empty field means "no change"
-    TestTable(rows=TFoo.objects.all()).bind(request=request_factory.post("/", dict(pk_1='', pk_2='', a='', b=''))).render()
+    TestTable(
+        rows=TFoo.objects.all()
+    ).bind(
+        request=req('post', pk_1='', pk_2='', **{'bulk/a': '', 'bulk/b': ''}),
+    ).render()
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
@@ -814,7 +823,11 @@ def test_bulk_edit():
     ]
 
     # Test edit all feature
-    TestTable(rows=TFoo.objects.all()).bind(request=request_factory.post("/", dict(a='11', b='changed2', _all_pks_='1'))).render()
+    TestTable(
+        rows=TFoo.objects.all()
+    ).bind(
+        request=req('post', _all_pks_='1', **{'bulk/a': '11', 'bulk/b': 'changed2'}),
+    ).render()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 11, u'changed2'),
@@ -1388,12 +1401,6 @@ def test_from_model_foreign_key():
     assert [x.name for x in t.columns if x.show] == ['foo', 'c']
 
 
-class AjaxRequestFactory(RequestFactory):
-    # TODO: Delete this thing? we don't require the ajax header right?
-    def __init__(self, *args, **kwargs):
-        super(AjaxRequestFactory, self).__init__(*args, HTTP_X_REQUESTED_WITH='XMLHttpRequest', **kwargs)
-
-
 @override_settings(DEBUG=True)
 @pytest.mark.django_db
 def test_ajax_endpoint():
@@ -1551,12 +1558,12 @@ def test_ordering():
 
     # ordering from GET parameter
     t = Table.from_model(model=TFoo)
-    t.bind(request=req('get'))
+    t.bind(request=req('get', order='a'))
     assert list(t.rows.query.order_by) == ['a']
 
     # default ordering
     t = Table.from_model(model=TFoo, default_sort_order='b')
-    t.bind(request=req('get'))
+    t.bind(request=req('get', order='b'))
     assert list(t.rows.query.order_by) == ['b']
 
 
@@ -1744,6 +1751,15 @@ def test_column_merge():
         assert row['foo'].value == 1
 
 
+def test_hide_named_column():
+    class MyTable(Table):
+        foo = Column()
+
+    table = MyTable(column__foo__show=False, rows=[])
+    table.bind(request=None)
+    assert len(table.shown_bound_columns) == 0
+
+
 def test_override_doesnt_stick():
     class MyTable(Table):
         foo = Column()
@@ -1769,7 +1785,7 @@ def test_new_style_ajax_dispatch():
 
     from iommi.page import middleware
     m = middleware(get_response)
-    done, response = m(request=RequestFactory().get('/', data={'/table/query/gui/field/foo': ''}))
+    done, response = m(request=req('get', **{'/table/query/gui/field/foo': ''}))
 
     assert done
     assert json.loads(response.content) == {

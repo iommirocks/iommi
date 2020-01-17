@@ -47,11 +47,11 @@ from iommi.base import (
     DISPATCH_PREFIX,
     model_and_rows,
     no_copy_on_bind,
+    collect_members,
+    bind_members,
 )
 from iommi.form import (
     Action,
-    bind_members,
-    collect_members,
     create_members_from_model,
     expand_member,
     Form,
@@ -330,6 +330,9 @@ class Column(RefinableObject, PagePart):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
+        for k, v in self.parent._column.get(self.name, {}).items():
+            setattr_path(self, k, v)
+
         self.header.attrs = Namespace(self.header.attrs.copy())
         self.header.attrs['class'] = Namespace(self.header.attrs['class'].copy())
 
@@ -965,6 +968,8 @@ class Table(RefinableObject, PagePart):
         header__template='iommi/table/table_header_rows.html',
         paginator_template='iommi/table/paginator.html',
         paginator__call_target=Paginator,
+
+        # TODO: actions should be action
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
         query=EMPTY,
@@ -990,12 +995,16 @@ class Table(RefinableObject, PagePart):
 
         model, rows = model_and_rows(model, rows)
 
+        self._column = {}
+
         def generate_columns():
             if columns is not None:
                 for column_ in columns:
+                    self._column[column_.name] = column.get(column_.name, {})
                     yield column_
             for name, column_ in columns_dict.items():
                 column_.name = name
+                self._column[column_.name] = column.get(column_.name, {})
                 yield column_
             for name, column_spec in column.items():
                 column_spec = setdefaults_path(
@@ -1322,7 +1331,7 @@ class Table(RefinableObject, PagePart):
 
                 self._bulk_form = self.get_meta().form_class(
                     fields=bulk_fields,
-                    name=self.name,
+                    name='bulk',
                     **self.bulk
                 )
                 self._bulk_form.bind(parent=self)
@@ -1400,25 +1409,25 @@ class Table(RefinableObject, PagePart):
     @dispatch(
         column=EMPTY,
     )
-    def from_model(cls, rows=None, model=None, column=None, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, rows=None, model=None, column=None, instance=None, include=None, exclude=None, extra_columns=None, **kwargs):
         """
-        Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
-        of "the_name_of_the_field__param". For example:
+        Create an entire form based on the columns of a model. To override a column parameter send keyword arguments in the form
+        of "the_name_of_the_column__param". For example:
 
         .. code:: python
 
             class Foo(Model):
                 foo = IntegerField()
 
-            Table.from_model(request=request, model=Foo, field__foo__help_text='Overridden help text')
+            Table.from_model(request=request, model=Foo, column__foo__help_text='Overridden help text')
 
-        :param include: fields to include. Defaults to all
-        :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
+        :param include: columns to include. Defaults to all
+        :param exclude: columns to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, column=column)
+        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_columns, column=column)
         return cls(rows=rows, model=model, instance=instance, columns=columns, **kwargs)
 
     def bulk_queryset(self):
@@ -1442,31 +1451,29 @@ class Table(RefinableObject, PagePart):
         if not context:
             context = {}
 
-        table = self
-
-        context['bulk_form'] = table.bulk_form
-        context['query_form'] = table.query_form
-        context['iommi_query_error'] = table.query_error
+        context['bulk_form'] = self.bulk_form
+        context['query_form'] = self.query_form
+        context['iommi_query_error'] = self.query_error
 
         request = self.request()
-        if table.bulk_form and request.method == 'POST':
-            if table.bulk_form.is_valid():
-                queryset = table.bulk_queryset()
+        if self.bulk_form and request.method == 'POST':
+            if self.bulk_form.is_valid():
+                queryset = self.bulk_queryset()
 
                 updates = {
                     field.name: field.value
-                    for field in table.bulk_form.fields
+                    for field in self.bulk_form.fields
                     if field.value is not None and field.value != '' and field.attr is not None
                 }
                 queryset.update(**updates)
 
-                self.post_bulk_edit(table=table, queryset=queryset, updates=updates)
+                self.post_bulk_edit(table=self, queryset=queryset, updates=updates)
 
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-        table.context = table_context(
+        self.context = table_context(
             request,
-            table=table,
+            table=self,
             extra_context=context,
             paginator=self.paginator,
         )
@@ -1474,7 +1481,7 @@ class Table(RefinableObject, PagePart):
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-        return render(request=request, template=table.template, context=table.context)
+        return render(request=request, template=self.template, context=self.context)
 
     @classmethod
     @class_shortcut(
@@ -1505,7 +1512,6 @@ class Table(RefinableObject, PagePart):
             part=part,
             default_child=True,
         )
-
 
 
 def table_context(request, *, table: Table, extra_context, paginator: Namespace):

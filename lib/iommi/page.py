@@ -140,7 +140,7 @@ class Fragment(PagePart):
         self.attrs = attrs
         self.default_child = default_child
 
-    def render_text_or_children(self, request, context):
+    def render_text_or_children(self, context):
         return format_html(
             '{}' * len(self._children),
             *[

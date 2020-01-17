@@ -1,4 +1,3 @@
-import copy
 import json
 import re
 from collections import OrderedDict
@@ -67,6 +66,8 @@ from iommi.base import (
     setup_endpoint_proxies,
     request_data,
     no_copy_on_bind,
+    collect_members,
+    bind_members,
 )
 from iommi.render import render_attrs
 
@@ -840,6 +841,9 @@ class Field(RefinableObject, PagePart):
         setattr_path(instance, field.attr, value)
 
     def on_bind(self) -> None:
+        for k, v in self.parent._field.get(self.name, {}).items():
+            setattr_path(self, k, v)
+
         form = self.parent
         if self.attr is MISSING:
             self.attr = self.name
@@ -1237,36 +1241,6 @@ def get_fields(model):
         yield field
 
 
-def collect_members(*, items, cls):
-    def unbound_items():
-        for name, item in items.items():
-            if isinstance(item, dict):
-                item = setdefaults_path(
-                    Namespace(),
-                    item,
-                    call_target=cls,
-                )
-                item = item()
-            setattr(item, 'name', name)
-            yield item
-
-    return list(unbound_items())
-
-
-def bind_members(*, unbound_items, parent, **kwargs):
-    bound_items = sort_after([x.bind(parent=parent) for x in unbound_items])
-
-    for item in bound_items:
-        item._evaluate_show(**kwargs)
-
-    items = Struct({item.name: item for item in bound_items if should_show(item)})
-
-    for item in items.values():
-        item._evaluate(**kwargs)
-
-    return items
-
-
 @no_copy_on_bind
 @declarative(Field, 'fields_dict')
 @with_meta
@@ -1367,15 +1341,18 @@ class Form(RefinableObject, PagePart):
         self._valid = None
         self.instance = instance
         self.mode = INITIALS_FROM_GET
-
+        # self._field = field if fields or fields_dict else {}
+        self._field = {}
         self._actions = actions
 
         def generate_fields():
             if fields is not None:
                 for field_ in fields:
+                    self._field[field_.name] = field.get(field_.name, {})
                     yield field_
             for name, field_ in fields_dict.items():
                 field_.name = name
+                self._field[name] = field.get(name, {})
                 yield field_
             for name, field_spec in field.items():
                 field_spec = setdefaults_path(
