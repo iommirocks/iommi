@@ -57,6 +57,7 @@ from iommi.base import (
     setup_endpoint_proxies,
     model_and_rows,
     request_data,
+    no_copy_on_bind,
 )
 from iommi.form import (
     Form,
@@ -186,6 +187,8 @@ class Variable(RefinableObject, PagePart):
 
         super(Variable, self).__init__(**kwargs)
 
+        self.declared_variable = None
+
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
@@ -193,21 +196,21 @@ class Variable(RefinableObject, PagePart):
     def query(self):
         return self.parent
 
-    def on_bind(self):
+    def on_bind(self) -> None:
         query = self.parent
-        bound_variable = copy.copy(self)
 
-        if bound_variable.attr is MISSING:
-            bound_variable.attr = bound_variable.name
+        if self.attr is MISSING:
+            self.attr = self.name
 
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
-            v = getattr(bound_variable, k)
+            v = getattr(self, k)
             new_value = evaluate_recursive(v, query=query, variable=self)
             if new_value is not v:
-                setattr(bound_variable, k, new_value)
+                setattr(self, k, new_value)
 
-        return bound_variable
+        # TOOD: should we just have "declared"?
+        self.declared_variable = self._declared
 
     @staticmethod
     @refinable
@@ -444,6 +447,7 @@ def default_endpoint__errors(query, **_):
         return {'global': [str(e)]}
 
 
+@no_copy_on_bind
 @declarative(Variable, 'variables_dict')
 @with_meta
 class Query(RefinableObject, PagePart):
@@ -522,7 +526,7 @@ class Query(RefinableObject, PagePart):
         if request is not None:
             self.bind(request=request)
 
-    def on_bind(self):
+    def on_bind(self) -> None:
         bound_variables = [v.bind(parent=self) for v in self.variables]
         self.bound_variables = filter_show_recursive(bound_variables)
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}

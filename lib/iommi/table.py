@@ -46,6 +46,7 @@ from iommi.base import (
     setup_endpoint_proxies,
     DISPATCH_PREFIX,
     model_and_rows,
+    no_copy_on_bind,
 )
 from iommi.form import (
     Action,
@@ -82,6 +83,7 @@ from tri_declarative import (
     setdefaults_path,
     sort_after,
     with_meta,
+    evaluate_strict,
 )
 from tri_named_struct import (
     NamedStruct,
@@ -259,7 +261,7 @@ class Column(RefinableObject, PagePart):
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
-        cell__value=lambda table, column, row, **_: getattr_path(row, evaluate(column.attr, table=table, column=column)),
+        cell__value=lambda table, bound_column, row, **_: getattr_path(row, evaluate_strict(bound_column.attr, table=table, bound_column=bound_column)),
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
@@ -301,7 +303,7 @@ class Column(RefinableObject, PagePart):
         super(Column, self).__init__(**kwargs)
 
         # TODO: this seems weird.. why do we need this?
-        self.column: Column = None
+        self.declared_column: Column = None
         self.is_sorting: bool = None
         self.sort_direction: str = None
 
@@ -327,28 +329,21 @@ class Column(RefinableObject, PagePart):
     def display_name(table, column, **_):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
-    def on_bind(self):
-        table = self.parent
-        bound_column = copy.copy(self)
-        bound_column.header.attrs = Namespace(self.header.attrs.copy())
-        bound_column.header.attrs['class'] = Namespace(bound_column.header.attrs['class'].copy())
+    def on_bind(self) -> None:
+        self.header.attrs = Namespace(self.header.attrs.copy())
+        self.header.attrs['class'] = Namespace(self.header.attrs['class'].copy())
 
-        bound_column.bulk = setdefaults_path(
+        self.bulk = setdefaults_path(
             Struct(),
             self.bulk,
             attr=self.attr,
         )
-        bound_column.query = setdefaults_path(
+        self.query = setdefaults_path(
             Struct(),
             self.query,
             attr=self.attr,
         )
-
-        for k, v in table.column.get(bound_column.name, {}).items():
-            setattr_path(bound_column, k, v)
-        bound_column.column = self
-
-        return bound_column
+        self.declared_column = self._declared
 
     def _evaluate(self):
         """
@@ -757,10 +752,10 @@ class BoundCell(object):
     @property
     def value(self):
         if not hasattr(self, '_value'):
-            self._value = evaluate(
+            self._value = evaluate_strict(
                 self.bound_column.cell.value,
                 table=self.bound_row.table,
-                column=self.bound_column.column,
+                declared_column=self.bound_column.declared_column,
                 row=self.bound_row.row,
                 bound_row=self.bound_row,
                 bound_column=self.bound_column,
@@ -821,7 +816,7 @@ class BoundCell(object):
         return self.render()
 
     def __repr__(self):
-        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.column, self.bound_row.row)  # pragma: no cover
+        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.declared_column, self.bound_row.row)  # pragma: no cover
 
 
 class TemplateConfig(NamedStruct):
@@ -866,6 +861,7 @@ class Header(object):
         return '<Header: %s>' % ('superheader' if self.bound_column is None else self.bound_column.name)
 
 
+@no_copy_on_bind
 @declarative(Column, 'columns_dict')
 @with_meta
 class Table(RefinableObject, PagePart):
@@ -1138,7 +1134,7 @@ class Table(RefinableObject, PagePart):
                     'header',
                 ],
                 table=self,
-                column=bound_column.column,
+                column=bound_column.declared_column,
                 bound_column=bound_column,
             )
 
@@ -1217,7 +1213,7 @@ class Table(RefinableObject, PagePart):
         assert self._is_bound
         return self._bound_column_by_name
 
-    def on_bind(self) -> Any:
+    def on_bind(self) -> None:
         # TODO: seems like prepare() is exactly bind()! we should unify this
         self.prepare()
 
@@ -1291,7 +1287,6 @@ class Table(RefinableObject, PagePart):
             variables = list(generate_variables())
 
             self._query = self.get_meta().query_class(
-                request=self.request(),
                 variables=variables,
                 **self.query_args
             )
@@ -1330,7 +1325,6 @@ class Table(RefinableObject, PagePart):
                 bulk_fields.append(self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html'))
 
                 self._bulk_form = self.get_meta().form_class(
-                    request=self.request,
                     fields=bulk_fields,
                     name=self.name,
                     **self.bulk
@@ -1445,21 +1439,19 @@ class Table(RefinableObject, PagePart):
         render=render_template,
         context=EMPTY,
     )
-    def render_or_respond(self, *, request, context=None, render=None):
-        self.bind(request=request)
+    def render(self, *, context=None, render=None):
+        assert self._is_bound
 
         if not context:
             context = {}
 
         table = self
 
-        # foo = group_paths_by_children(children=self.children(), data=self.request().GET)
-        # TODO: implement dispatch? here? right now this is handled by the middleware only, is this ok?
-
         context['bulk_form'] = table.bulk_form
         context['query_form'] = table.query_form
         context['iommi_query_error'] = table.query_error
 
+        request = self.request()
         if table.bulk_form and request.method == 'POST':
             if table.bulk_form.is_valid():
                 queryset = table.bulk_queryset()
@@ -1481,6 +1473,9 @@ class Table(RefinableObject, PagePart):
             extra_context=context,
             paginator=self.paginator,
         )
+        if self.query_form and not self.query_form.is_valid():
+            self.rows = None
+            self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
         return render(request=request, template=table.template, context=table.context)
 
@@ -1514,33 +1509,6 @@ class Table(RefinableObject, PagePart):
             default_child=True,
         )
 
-    def render(self,
-               template=None,
-               context=None,
-               page=None,
-               paginator=None,
-               ):
-
-        if not context:
-            context = {}
-
-        context['bulk_form'] = self.bulk_form
-        context['query_form'] = self.query_form
-        context['iommi_query_error'] = self.query_error
-
-        self.context = table_context(
-            self.request(),
-            table=self,
-            page=page,
-            extra_context=context,
-            paginator=paginator,
-        )
-
-        if self.query_form and not self.query_form.is_valid():
-            self.rows = None
-            self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
-
-        return render_template(self.request(), template if template is not None else self.template, self.context)
 
 
 def table_context(request, *, table: Table, extra_context, paginator: Namespace):

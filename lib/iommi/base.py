@@ -1,3 +1,4 @@
+import copy
 from collections import defaultdict
 from functools import wraps
 from typing import (
@@ -110,6 +111,7 @@ def raise_on_response(result_or_response):
         return result_or_response
 
 
+# TODO: is catch_response obsolete now?
 def catch_response(view_function):
     @wraps(view_function)
     def catch_response_view(*args, **kwargs):
@@ -121,6 +123,7 @@ def catch_response(view_function):
     return catch_response_view
 
 
+# TODO: abc?
 class PagePart:
     parent = None
     name = None
@@ -130,7 +133,7 @@ class PagePart:
     @dispatch(
         context=EMPTY,
     )
-    def render_or_respond(self, *, request, context=None, render=None):
+    def render(self, *, context=None, render=None):
         pass
 
     @dispatch(
@@ -138,21 +141,22 @@ class PagePart:
         content_block_name=getattr(settings, 'TRI_CONTENT_BLOCK', 'content'),
     )
     @catch_response
-    def render_to_response(self, *, request, template_name, content_block_name, context=None):
+    def render(self, *, template_name, content_block_name, context=None):
         if context is None:
             context = {}
 
-        content = raise_on_response(
-            self.render_or_respond(request=request, context=context)
-        )
+        content = self.render(context=context)
 
         assert 'content' not in context
         context['content'] = content
 
         template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
-        return HttpResponse(get_template_from_string(template_string).render(context=context, request=request))
+        return HttpResponse(get_template_from_string(template_string).render(context=context, request=self.request()))
 
     def bind(self, *, parent=None, request=None):
+        assert parent is None or parent._is_bound
+        assert not self._is_bound
+
         if parent is None:
             self._request = request
             if self.name is None:
@@ -160,13 +164,15 @@ class PagePart:
             if self.default_child is None:
                 self.default_child = True
 
-        # TODO: rebinding seems weird!
-        assert self.parent is None
-        self.parent = parent
-        result = self.on_bind()
-        if result is None:
+        if hasattr(self, '_no_copy_on_bind'):
             result = self
+        else:
+            result = copy.copy(self)
+            result._declared = self
+
+        result.parent = parent
         result._is_bound = True
+        result.on_bind()
 
         if len(result.children()) == 1:
             for the_only_part in result.children().values():
@@ -175,7 +181,7 @@ class PagePart:
 
         return result
 
-    def on_bind(self) -> Any:
+    def on_bind(self) -> None:
         pass
 
     def children(self):
@@ -222,19 +228,13 @@ def is_responding(request):
     return False
 
 
-def render_or_respond_part(*, part: PartType, request, context):
+def render_part(*, part: PartType, context):
     if isinstance(part, str):
         return part
     elif isinstance(part, Template):
-        return part.render(context)
+        return part.render(context=context)
     else:
-        if callable(part):
-            if is_responding(request):
-                return None
-
-            # compatibility with simple views, like admin_menu
-            return part(request=request)
-        return raise_on_response(part.render_or_respond(request=request, context=context))
+        return part.render(context=context)
 
 
 def path_join(prefix, name) -> str:
@@ -271,3 +271,8 @@ def request_data(request):
     else:
         assert False, f'unsupported request method {request.method}'
     # TODO: support more verbs here. OPTIONS seems reasonable for example
+
+
+def no_copy_on_bind(cls):
+    cls._no_copy_on_bind = True
+    return cls

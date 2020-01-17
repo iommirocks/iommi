@@ -74,7 +74,7 @@ def test_declaration_merge():
         bar = Field()
 
     form = MyForm()
-    p.bind(request=None)
+    form.bind(request=None)
 
     assert {'foo', 'bar'} == set(form.fields_by_name.keys())
 
@@ -501,8 +501,8 @@ def test_hidden_with_name():
         )
 
     page = MyPage()
-
-    rendered_page = page.render_or_respond(request=req('get', **{'baz/foo': '1'}))
+    page.bind(request=req('get', **{'baz/foo': '1'}))
+    rendered_page = page.render()
 
     assert page.default_child
     assert not page.children().baz.default_child
@@ -903,17 +903,16 @@ def test_field_from_model_many_to_many():
         foo_many_to_many = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many')
 
     form = MyForm(request=req('get'))
-    field = form.fields_by_name.foo_many_to_many
     choices = form.fields_by_name.foo_many_to_many.choices
 
     assert isinstance(choices, QuerySet)
     assert set(choices) == set(Foo.objects.all())
     m2m = FieldFromModelManyToManyTest.objects.create()
-    assert set(Form(fields=[field], instance=m2m, request=req('get')).fields_by_name.foo_many_to_many.initial_list) == set()
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields_by_name.foo_many_to_many.initial_list) == set()
     m2m.foo_many_to_many.add(b)
-    assert set(Form(fields=[field], instance=m2m, request=req('get')).fields_by_name.foo_many_to_many.initial_list) == {b}
+    assert set(MyForm(instance=m2m, request=req('get')).fields_by_name.foo_many_to_many.initial_list) == {b}
     m2m.foo_many_to_many.add(c)
-    assert set(Form(fields=[field], instance=m2m, request=req('get')).fields_by_name.foo_many_to_many.initial_list) == {b, c}
+    assert set(MyForm(instance=m2m, request=req('get')).fields_by_name.foo_many_to_many.initial_list) == {b, c}
 
 
 @pytest.mark.django_db

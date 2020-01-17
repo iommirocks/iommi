@@ -42,7 +42,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     table.bind(request=request)
 
     request.user = AnonymousUser()
-    actual_html = remove_csrf(table.render_or_respond(request=request, **kwargs))
+    actual_html = remove_csrf(table.render(**kwargs))
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
     actual_soup = BeautifulSoup(actual_html, 'html.parser')

@@ -780,7 +780,7 @@ def test_bulk_edit():
 
     request_factory = RequestFactory(HTTP_REFERER='/')
 
-    result = TestTable(rows=TFoo.objects.all()).render_or_respond(request=request_factory.get("/", dict(pk_1='', pk_2='', a='0', b='changed')))
+    result = TestTable(rows=TFoo.objects.all(), request=request_factory.get("/", dict(pk_1='', pk_2='', a='0', b='changed'))).render()
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
@@ -790,7 +790,7 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
-    TestTable(rows=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='0', b='changed')))
+    TestTable(rows=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit, request=request_factory.post("/", dict(pk_1='', pk_2='', a='0', b='changed'))).render()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
@@ -800,7 +800,7 @@ def test_bulk_edit():
     ]
 
     # Test that empty field means "no change"
-    TestTable(rows=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(pk_1='', pk_2='', a='', b='')))
+    TestTable(rows=TFoo.objects.all()).bind(request=request_factory.post("/", dict(pk_1='', pk_2='', a='', b=''))).render()
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
@@ -809,7 +809,7 @@ def test_bulk_edit():
     ]
 
     # Test edit all feature
-    TestTable(rows=TFoo.objects.all()).render_or_respond(request=request_factory.post("/", dict(a='11', b='changed2', _all_pks_='1')))
+    TestTable(rows=TFoo.objects.all()).bind(request=request_factory.post("/", dict(a='11', b='changed2', _all_pks_='1'))).render()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 11, u'changed2'),

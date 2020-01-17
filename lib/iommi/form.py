@@ -66,6 +66,7 @@ from iommi.base import (
     render_template_name,
     setup_endpoint_proxies,
     request_data,
+    no_copy_on_bind,
 )
 from iommi.render import render_attrs
 
@@ -515,6 +516,7 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
 
 
+# TODO: move this class.. maybe lots of other stuff from here
 class Action(RefinableObject, PagePart):
     tag = Refinable()
     attrs = Refinable()
@@ -534,6 +536,7 @@ class Action(RefinableObject, PagePart):
     )
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.declared_action = None
 
     def render_attrs(self):
         return render_attrs(self.attrs)
@@ -587,8 +590,8 @@ class Action(RefinableObject, PagePart):
         )
         return call_target(**kwargs)
 
-    def on_bind(self) -> 'Action':
-        return copy.copy(self)
+    def on_bind(self) -> None:
+        self.declared_action = self._declared
 
     def _evaluate_attribute(self, key, **kwargs):
         value = getattr(self, key)
@@ -775,6 +778,8 @@ class Field(RefinableObject, PagePart):
 
         self.choice_tuples = None
 
+        self.declared_field = None
+
     def endpoint_kwargs(self):
         return dict(field=self)
 
@@ -834,27 +839,25 @@ class Field(RefinableObject, PagePart):
     def write_to_instance(field: 'Field', instance: Any, value: Any) -> None:
         setattr_path(instance, field.attr, value)
 
-    def on_bind(self):
+    def on_bind(self) -> None:
         form = self.parent
-        bound_field: Field = copy.copy(self)
+        if self.attr is MISSING:
+            self.attr = self.name
+        if self.id is MISSING:
+            self.id = 'id_%s' % self.name if self.name else ''
+        if self.display_name is MISSING:
+            self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
 
-        if bound_field.attr is MISSING:
-            bound_field.attr = bound_field.name
-        if bound_field.id is MISSING:
-            bound_field.id = 'id_%s' % bound_field.name if bound_field.name else ''
-        if bound_field.display_name is MISSING:
-            bound_field.display_name = capitalize(bound_field.name).replace('_', ' ') if bound_field.name else ''
+        for k, v in form.field.get(self.name, {}).items():
+            setattr_path(self, k, v)
 
-        for k, v in form.field.get(bound_field.name, {}).items():
-            setattr_path(bound_field, k, v)
-
-        bound_field.field = self
-        bound_field.errors = set()
+        self.field = self
+        self.errors = set()
 
         if form.editable is False:
-            bound_field.editable = False
+            self.editable = False
 
-        return bound_field
+        self.declared_field = self._declared
 
     def _evaluate_attribute(self, key):
         value = getattr(self, key)
@@ -1264,6 +1267,7 @@ def bind_members(*, unbound_items, parent, **kwargs):
     return items
 
 
+@no_copy_on_bind
 @declarative(Field, 'fields_dict')
 @with_meta
 class Form(RefinableObject, PagePart):
@@ -1329,6 +1333,11 @@ class Form(RefinableObject, PagePart):
     def endpoint_kwargs(self):
         return dict(form=self)
 
+    @staticmethod
+    @refinable
+    def on_valid_post(form, **_):
+        return None
+
     @dispatch(
         is_full_form=True,
         model=None,
@@ -1383,7 +1392,7 @@ class Form(RefinableObject, PagePart):
         if request is not None:
             self.bind(request=request)
 
-    def on_bind(self):
+    def on_bind(self) -> None:
         self._valid = None
         request = self.request()
         self._request_data = request_data(request) if request else None
@@ -1612,12 +1621,12 @@ class Form(RefinableObject, PagePart):
         return self.table()
 
     def compact(self):
-        return self.render(template_name=None)
+        return self.render_with_style(template_name=None)
 
     def table(self):
-        return self.render(style='table', template_name=None)
+        return self.render_with_style(style='table', template_name=None)
 
-    def render(self, style: str = 'compact', template_name: Optional[str] = 'iommi/form/form.html'):
+    def render_with_style(self, style: str = 'compact', template_name: Optional[str] = 'iommi/form/form.html'):
         if not self._is_bound:
             self.bind(parent=self.parent)
 
@@ -1648,6 +1657,28 @@ class Form(RefinableObject, PagePart):
                 context=dict(form=self, **csrf(request)),
                 request=request
             )
+
+    @dispatch(
+        render__call_target=render_template_name,
+        context=EMPTY,
+    )
+    def render(self, *, context=None, render=None):
+        if self.is_target() and self.is_valid():
+            r = self.on_valid_post(form=self)
+            if r is not None:
+                return r
+
+        setdefaults_path(
+            render,
+            context=context,
+            template_name=self.template_name,
+        )
+
+        request = (self.request())
+        render.context.update(csrf(request))
+        render.context['form'] = self
+
+        return render(request=request)
 
     def apply(self, instance):
         """
@@ -1680,7 +1711,6 @@ class Form(RefinableObject, PagePart):
     @class_shortcut(
         call_target__attribute='from_model',
         extra__model_verbose_name=None,
-        on_valid_post=create_or_edit_object__on_valid_post,
         on_save=lambda **kwargs: None,  # pragma: no mutate
         redirect=lambda request, redirect_to, form: HttpResponseRedirect(form.extra.redirect_to),
         redirect_to=None,
@@ -1688,7 +1718,7 @@ class Form(RefinableObject, PagePart):
         extra__title=None,
         default_child=True,
     )
-    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_valid_post=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
+    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
         if model is None and instance is not None:
             model = type(instance)
 
@@ -1699,7 +1729,6 @@ class Form(RefinableObject, PagePart):
 
         if extra.title is None:
             extra.title = '%s %s' % ('Create' if extra.is_create else 'Save', extra.model_verbose_name)
-        extra.on_valid_post = on_valid_post
         extra.on_save = on_save
         extra.redirect = redirect
         extra.redirect_to = redirect_to
@@ -1738,31 +1767,6 @@ class Form(RefinableObject, PagePart):
     )
     def as_edit_page(cls, *, call_target=None, instance, **kwargs):
         return call_target(instance=instance, **kwargs)
-
-    @dispatch(
-        render__call_target=render_template_name,
-        context=EMPTY,
-    )
-    def render_or_respond(self, *, request, context=None, render=None):
-        self.bind(request=request)
-
-        # TODO: handle dispatch here? Right now this is only handled by the middleware.
-
-        if self.is_target() and self.is_valid():
-            r = self.extra.on_valid_post(form=self)
-            if r is not None:
-                return r
-
-        setdefaults_path(
-            render,
-            context=context,
-            template_name=self.template_name,
-        )
-
-        render.context.update(csrf(request))
-        render.context['form'] = self
-
-        return render(request=request)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):

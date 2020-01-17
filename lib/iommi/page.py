@@ -1,12 +1,10 @@
-import functools
 import json
 from typing import (
     Dict,
     List,
     Optional,
-    Any)
+)
 
-from django.conf import settings
 from django.http.response import (
     HttpResponse,
 )
@@ -15,25 +13,28 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    PartType,
-    render_or_respond_part,
     DISPATCH_PATH_SEPARATOR,
+    InvalidEndpointPathException,
     PagePart,
-    find_target, InvalidEndpointPathException,
+    PartType,
+    find_target,
+    no_copy_on_bind,
+    render_part,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
-    dispatch,
     EMPTY,
-    declarative,
-    sort_after,
-    should_show,
     Namespace,
+    declarative,
+    dispatch,
+    should_show,
+    sort_after,
     with_meta,
 )
 from tri_struct import Struct
 
 
+@no_copy_on_bind
 @with_meta
 @declarative(
     parameter='parts_dict',
@@ -75,9 +76,8 @@ class Page(PagePart):
 
         self.default_child = default_child
 
-    def on_bind(self) -> Any:
+    def on_bind(self) -> None:
         parts = {name: p.bind(parent=self) for name, p in self.declared_parts.items()}
-
         self.parts = Struct({name: p for name, p in parts.items() if should_show(p)})
 
     def __repr__(self):
@@ -96,30 +96,28 @@ class Page(PagePart):
         context=EMPTY,
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
-    def render_or_respond(self, *, request, context=None, render=None):
-        self.bind(request=request)
-
+    def render(self, *, context=None, render=None):
         rendered = {}
         for part in self.parts.values():
             assert part.name not in context
-            rendered[part.name] = render_or_respond_part(part=part, request=request, context=context)
+            rendered[part.name] = render_part(part=part, context=context)
 
         return render(rendered)
 
 
-def fragment__render(fragment, request, context):
+def fragment__render(fragment, context):
     if fragment.tag:
         return format_html(
             '<{}{}>{}</{}>',
             fragment.tag,
             render_attrs(fragment.attrs),
-            fragment.render_text_or_children(request=request, context=context),
+            fragment.render_text_or_children(context=context),
             fragment.tag,
         )
     else:
         return format_html(
             '{}',
-            fragment.render_text_or_children(request=request, context=context),
+            fragment.render_text_or_children(context=context),
         )
 
 
@@ -146,7 +144,7 @@ class Fragment(PagePart):
         return format_html(
             '{}' * len(self._children),
             *[
-                render_or_respond_part(part=x, request=request, context=context)
+                render_part(part=x, context=context)
                 for x in self._children
             ])
 
@@ -164,9 +162,8 @@ class Fragment(PagePart):
         context=EMPTY,
         render=fragment__render,
     )
-    def render_or_respond(self, *, request, context=None, render=None):
-        self.bind(request=request)
-        return render(fragment=self, request=request, context=context)
+    def render(self, *, context=None, render=None):
+        return render(fragment=self, context=context)
 
 
 class Html:

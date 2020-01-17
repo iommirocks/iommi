@@ -35,7 +35,7 @@ def test_create_or_edit_object():
     )
     p.bind(request=request)
     assert p.parts.form.default_child
-    response = p.parts.form.render_or_respond(request=request, render__call_target=lambda **kwargs: kwargs)
+    response = p.parts.form.render(render__call_target=lambda **kwargs: kwargs)
     form = get_request_context(response)['form']
     assert form.extra.model_verbose_name == 'baz'  # check explicit model_verbose_name parameter to Form.as_create_page
     assert get_request_context(response)['csrf_token']
@@ -47,8 +47,7 @@ def test_create_or_edit_object():
         template_name='<template name>',
     )
     p.bind(request=request)
-    response = p.parts.form.render_or_respond(
-        request=request,
+    response = p.parts.form.render(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
         render__call_target=lambda **kwargs: kwargs,
@@ -92,8 +91,7 @@ def test_create_or_edit_object():
         on_save=on_save,  # just to check that we get called with the instance as argument
     )
     p.bind(request=request)
-    response = p.parts.form.render_or_respond(
-        request=request,
+    response = p.parts.form.render(
         render=lambda **kwargs: kwargs,
     )
     assert p.parts.form._request_data
@@ -114,8 +112,7 @@ def test_create_or_edit_object():
         instance=instance,
     )
     p.bind(request=request)
-    response = p.parts.form.render_or_respond(
-        request=request,
+    response = p.parts.form.render(
         render=lambda **kwargs: kwargs,
     )
     form = get_request_context(response)['form']
@@ -141,8 +138,7 @@ def test_create_or_edit_object():
         redirect=lambda form, **_: {'context_instance': {'form': form}},
     )
     p.bind(request=request)
-    response = p.parts.form.render_or_respond(
-        request=request,
+    response = p.parts.form.render(
         render=lambda **kwargs: kwargs,
     )
     instance = get_saved_something()
@@ -161,9 +157,7 @@ def test_create_or_edit_object():
         instance=instance,
     )
     p.bind(request=request)
-    response = p.parts.form.render_or_respond(
-        request=request,
-    )
+    response = p.parts.form.render()
     assert response.status_code == 302
     assert response['Location'] == '../../'
 

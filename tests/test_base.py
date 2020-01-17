@@ -16,7 +16,11 @@ from iommi.table import Table
 from iommi.base import group_paths_by_children, GroupPathsByChildrenError, find_target, InvalidEndpointPathException
 from tri_struct import Struct
 
-from tests.helpers import request_with_middleware
+from tests.helpers import (
+    request_with_middleware,
+    req,
+)
+
 
 # assert first in children, f'Found invalid path {k}. {first} not a member of {children.keys()}'
 
