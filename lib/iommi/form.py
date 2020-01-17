@@ -1696,6 +1696,7 @@ class Form(RefinableObject, PagePart):
         post_handler=create_or_edit_object__post_handler,
     )
     def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
+        assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
         if model is None and instance is not None:
             model = type(instance)
 

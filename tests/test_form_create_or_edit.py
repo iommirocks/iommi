@@ -2,6 +2,7 @@ import json
 
 import pytest
 from bs4 import BeautifulSoup
+from iommi.base import DISPATCH_PATH_SEPARATOR
 from tri_struct import Struct, merged
 
 from iommi.form import (
@@ -261,13 +262,12 @@ def test_create_or_edit_object_dispatch():
     request = Struct(method='GET', META={}, GET={DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: True)
 
     response = Form.as_create_page(
-        request=request,
         model=Bar,
         form__field__foo__extra__endpoint_attr='foo',
         template_name='<template name>',
         render=lambda **kwargs: kwargs,
         render__context={'foo': 'FOO'},
-    )
+    ).bind(request=request).render_to_response()
     assert json.loads(response.content) == dict(
         results=[
             {"text": str(f1), "id": f1.pk},
@@ -284,13 +284,13 @@ def test_create_object_default_template():
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = Form.as_create_page(request=request, model=Foo)
+    response = Form.as_create_page(model=Foo).bind(request=request).render_to_response()
     assert response.status_code == 200
 
     expected_html = """
         <div class="form_buttons clear">
             <div class="links">
-                <input accesskey="s" class="button" type="submit" value="Create foo"/>
+                <input accesskey="s" class="button" name="create" type="submit" value="Create foo"/>
             </div>
         </div>
     """
@@ -305,13 +305,13 @@ def test_edit_object_default_template():
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = Form.as_edit_page(request=request, instance=Foo.objects.create(foo=1))
+    response = Form.as_edit_page(instance=Foo.objects.create(foo=1)).bind(request=request).render_to_response()
     assert response.status_code == 200
 
     expected_html = """
         <div class="form_buttons clear">
             <div class="links">
-                <input accesskey="s" class="button" type="submit" value="Save foo"/>
+                <input accesskey="s" class="button" name="edit" type="submit" value="Save foo"/>
             </div>
         </div>
     """
@@ -326,7 +326,7 @@ def test_create_or_edit_object_default_template_with_name():
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = Form.as_create_page(request=request, model=Foo, form__name='form_name')
+    response = Form.as_create_page(model=Foo, name='form_name').bind(request=request).render_to_response()
     assert response.status_code == 200
 
     expected_html = """
@@ -384,7 +384,7 @@ def test_create_or_edit_object_full_template(name):
 
     request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
 
-    response = Form.as_create_page(request=request, model=Foo, form__name=name)
+    response = Form.as_create_page(model=Foo, name=name).bind(request=request).render_to_response()
     assert response.status_code == 200
 
     prefix = '' if not name else name + '/'
