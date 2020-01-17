@@ -91,9 +91,7 @@ def test_create_or_edit_object():
         on_save=on_save,  # just to check that we get called with the instance as argument
     )
     p.bind(request=request)
-    response = p.parts.form.render(
-        render=lambda **kwargs: kwargs,
-    )
+    response = p.render_to_response()
     assert p.parts.form._request_data
     instance = get_saved_something()
     reset_saved_something()

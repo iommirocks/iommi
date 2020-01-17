@@ -137,20 +137,22 @@ class PagePart:
 
     @dispatch(
         context=EMPTY,
+        render=EMPTY,
     )
     def render(self, *, context=None, render=None):
-        pass
+        assert False, 'Not implemented'
 
     # TODO: ick
     @dispatch(
         template_name=getattr(settings, 'TRI_BASE_TEMPLATE', 'base.html'),
         content_block_name=getattr(settings, 'TRI_CONTENT_BLOCK', 'content'),
+        render=EMPTY,
     )
-    def render_root(self, *, template_name, content_block_name, context=None):
+    def render_root(self, *, template_name, content_block_name, context=None, **render):
         if context is None:
             context = {}
 
-        content = self.render(context=context)
+        content = self.render(context=context, **render)
 
         assert 'content' not in context
         context['content'] = content

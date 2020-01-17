@@ -1286,6 +1286,9 @@ class Form(RefinableObject, PagePart):
         template_name = 'iommi/form/form.html'
         member_class = Field
 
+    def __repr__(self):
+        return f'<Form: {self.name} at path {self.path()}>'
+
     def children(self):
         assert self._is_bound
         return Struct(
@@ -1695,6 +1698,7 @@ class Form(RefinableObject, PagePart):
         part=EMPTY,
         extra__title=None,
         default_child=True,
+        on_valid_post=create_or_edit_object__on_valid_post,
     )
     def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
         if model is None and instance is not None:
