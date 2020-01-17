@@ -17,7 +17,7 @@ from iommi.form import (
     Field,
     Form,
 )
-from iommi.page import perform_ajax_dispatch
+from iommi.base import perform_ajax_dispatch
 from iommi.query import (
     Query,
     Variable,

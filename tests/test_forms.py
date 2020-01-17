@@ -24,7 +24,10 @@ from iommi._web_compat import (
     smart_str,
 )
 from iommi._web_compat import ValidationError
-from iommi.base import InvalidEndpointPathException
+from iommi.base import (
+    InvalidEndpointPathException,
+    perform_ajax_dispatch,
+)
 from iommi.form import (
     AVOID_EMPTY_FORM,
     Action,
@@ -48,7 +51,6 @@ from iommi.form import (
 )
 from iommi.page import (
     Page,
-    perform_ajax_dispatch,
 )
 
 

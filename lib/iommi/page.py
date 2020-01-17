@@ -219,48 +219,14 @@ def portal_page(left=None, center=None, **kwargs):
 #
 #     return decorator
 
-
-def perform_ajax_dispatch(*, root, path, value, request):
-    if not root._is_bound:
-        # This is mostly useful for tests
-        root.bind(request=request)
-
-    target, parents = find_target(path=path, root=root)
-
-    # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
-    kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
-
-    if target.endpoint_handler is None:
-        raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
-
-    # TODO: this API should be endpoint(), fix Table.children when this is fixed
-    return target.endpoint_handler(request=request, value=value, **kwargs)
-
-
+# TODO: this should be iommi.middleware I think
 def middleware(get_response):
     def _middleware(request):
 
         response = get_response(request)
-        if isinstance(response, Page):
-            page = response
-            page.bind(request=request)
-
-            dispatch_commands = {key: value for key, value in request.GET.items() if key.startswith(DISPATCH_PATH_SEPARATOR)}
-            assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
-            if dispatch_commands:
-                dispatch_target, value = next(iter(dispatch_commands.items()))
-                try:
-                    data = perform_ajax_dispatch(root=page, path=dispatch_target, value=value, request=request)
-                except InvalidEndpointPathException:
-                    data = dict(error=f'Invalid endpoint path')
-
-                if data is not None:
-                    return True, HttpResponse(json.dumps(data), content_type='application/json')
-                else:
-                    return True, HttpResponse(content_type='application/json')
-
-            return page.render_to_response()
+        if isinstance(response, PagePart):
+            return True, response.bind(request=request).render_to_response()
         else:
-            return response
+            return True, response
 
     return _middleware

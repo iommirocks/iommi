@@ -1,18 +1,6 @@
 from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField, \
     FileField, CASCADE, CharField
 
-saved_something = None
-
-
-def get_saved_something():
-    global saved_something
-    return saved_something
-
-
-def reset_saved_something():
-    global saved_something
-    saved_something = None
-
 
 class FormFromModelTest(Model):
     f_int = IntegerField()
@@ -72,12 +60,6 @@ class UniqueConstraintTest(Model):
     class Meta:
         unique_together = ('f_int', 'f_float', 'f_bool')
 
-    # noinspection PyMethodOverriding
-    def save(self, *_, **__):
-        super(UniqueConstraintTest, self).save(*_, **__)
-        global saved_something
-        saved_something = self
-
 
 class NamespaceFormsTest(Model):
     f_int = IntegerField()
@@ -87,12 +69,6 @@ class NamespaceFormsTest(Model):
     class Meta:
         unique_together = ('f_int', 'f_float', 'f_bool')
         verbose_name = 'foo_bar'
-
-    # noinspection PyMethodOverriding
-    def save(self, *_, **__):
-        super(NamespaceFormsTest, self).save(*_, **__)
-        global saved_something
-        saved_something = self
 
 
 class CreateOrEditObjectTest(Model):
@@ -104,12 +80,6 @@ class CreateOrEditObjectTest(Model):
 
     class Meta:
         verbose_name = 'foo_bar'
-
-    # noinspection PyMethodOverriding
-    def save(self, *_, **__):
-        super(CreateOrEditObjectTest, self).save(*_, **__)
-        global saved_something
-        saved_something = self
 
 
 class Baz(Model):

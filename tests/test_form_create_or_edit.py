@@ -20,10 +20,10 @@ def get_request_context(response):
 
 
 @pytest.mark.django_db
-def test_create_or_edit_object():
-    from tests.models import CreateOrEditObjectTest, get_saved_something, Foo, reset_saved_something
+def test_create_and_edit_object():
+    from tests.models import CreateOrEditObjectTest, Foo
 
-    reset_saved_something()
+    assert CreateOrEditObjectTest.objects.all().count() == 0
 
     # 1. View create form
     request = req('get')
@@ -93,8 +93,7 @@ def test_create_or_edit_object():
     p.bind(request=request)
     response = p.render_to_response()
     assert p.parts.form._request_data
-    instance = get_saved_something()
-    reset_saved_something()
+    instance = CreateOrEditObjectTest.objects.get()
     assert instance is not None
     assert instance.f_int == 3
     assert instance.f_float == 5.1
@@ -103,10 +102,8 @@ def test_create_or_edit_object():
     assert response['Location'] == '../'
 
     # 3. View edit form
-    request.method = 'GET'
-    del request.POST
+    request = req('get')
     p = Form.as_edit_page(
-        request=request,
         instance=instance,
     )
     p.bind(request=request)
@@ -121,29 +118,25 @@ def test_create_or_edit_object():
     assert get_request_context(response)['csrf_token']
 
     # 4. Edit
-    request.method = 'POST'
-    request.POST = {
+    request = req('POST', **{
         'f_int': '7',
         'f_float': '11.2',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        f'-': '',
+        '-': '',
         # Not sending a parameter in a POST is the same thing as false
-    }
+    })
     p = Form.as_edit_page(
-        request=request,
         instance=instance,
-        redirect=lambda form, **_: {'context_instance': {'form': form}},
     )
     p.bind(request=request)
-    response = p.parts.form.render(
-        render=lambda **kwargs: kwargs,
-    )
-    instance = get_saved_something()
-    reset_saved_something()
-    form = get_request_context(response)['form']
-    assert form.get_errors() == {}
-    assert form.is_valid() is True
+    response = p.render_to_response()
+    assert response.status_code == 302
+
+    # TODO: really?
+    assert response['Location'] == '../../'
+
+    instance.refresh_from_db()
     assert instance is not None
     assert instance.f_int == 7
     assert instance.f_float == 11.2
@@ -151,11 +144,10 @@ def test_create_or_edit_object():
 
     # edit again, to check redirect
     p = Form.as_edit_page(
-        request=request,
         instance=instance,
     )
     p.bind(request=request)
-    response = p.parts.form.render()
+    response = p.render_to_response()
     assert response.status_code == 302
     assert response['Location'] == '../../'
 

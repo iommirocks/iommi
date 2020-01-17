@@ -7,6 +7,8 @@ Add this to settings.py:
 
     # NOTE: if your base template is called "base.html" then you don't need this!
     IOMMI_BASE_TEMPLATE = 'my_base.html'
+    # NOTE: if your base template has a content block called "content" then you don't need this!
+    IOMMI_CONTENT_BLOCK = 'content'
 
 The base template is the one containing your :code:`<html>` tag and has :code:`{% block content %}`.
 
@@ -121,3 +123,46 @@ Or you can compose a page with two tables:
             bars = Table.from_model(model=Bar)
 
         return MyPage()
+
+
+Under the hood
+--------------
+
+You can also use the parts of iommi by themselves, without using the middleware. With middleware it looks like this:
+
+
+.. code:: python
+
+    def my_page(request):
+        class MyPage(Page):
+            title = html.h1('Hello')
+            div = html.div('Some text')
+
+        return MyPage()
+
+And without the middleware it looks like:
+
+.. code:: python
+
+    def my_page(request):
+        class MyPage(Page):
+            title = html.h1('Hello')
+            div = html.div('Some text')
+
+        return render_or_respond(request=request, MyPage())
+
+or even more low level:
+
+.. code:: python
+
+    def my_page(request):
+        class MyPage(Page):
+            title = html.h1('Hello')
+            div = html.div('Some text')
+
+        page = MyPage()
+        page.bind(request=request)
+        dispatch = do_dispatch(page)
+        if dispatch:
+            return dispatch
+        return page.render_to_response()

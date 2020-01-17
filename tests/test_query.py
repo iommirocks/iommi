@@ -7,7 +7,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from iommi.page import perform_ajax_dispatch
+from iommi.base import perform_ajax_dispatch
 from tri_declarative import class_shortcut
 from tri_struct import Struct
 from iommi.form import (

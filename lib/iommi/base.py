@@ -1,4 +1,5 @@
 import copy
+import json
 from collections import defaultdict
 from functools import wraps
 from typing import (
@@ -128,6 +129,40 @@ def catch_response(view_function):
     return catch_response_view
 
 
+def perform_ajax_dispatch(*, root, path, value, request):
+    if not root._is_bound:
+        # This is mostly useful for tests
+        root.bind(request=request)
+
+    target, parents = find_target(path=path, root=root)
+
+    # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
+    kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
+
+    if target.endpoint_handler is None:
+        raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
+
+    # TODO: this API should be endpoint(), fix Table.children when this is fixed
+    return target.endpoint_handler(request=request, value=value, **kwargs)
+
+
+def perform_post_dispatch(*, root, path, value, request):
+    if not root._is_bound:
+        # This is mostly useful for tests
+        root.bind(request=request)
+
+    path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
+    target, parents = find_target(path=path, root=root)
+
+    # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
+    kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
+
+    if target.post_handler is None:
+        raise InvalidEndpointPathException(f'Target {target} has no registered post_handler')
+
+    return target.post_handler(request=request, value=value, **kwargs)
+
+
 # TODO: abc?
 class PagePart:
     parent = None
@@ -144,8 +179,8 @@ class PagePart:
 
     # TODO: ick
     @dispatch(
-        template_name=getattr(settings, 'TRI_BASE_TEMPLATE', 'base.html'),
-        content_block_name=getattr(settings, 'TRI_CONTENT_BLOCK', 'content'),
+        template_name=getattr(settings, 'IOMMI_BASE_TEMPLATE', 'base.html'),
+        content_block_name=getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content'),
         render=EMPTY,
     )
     def render_root(self, *, template_name, content_block_name, context=None, **render):
@@ -163,6 +198,40 @@ class PagePart:
     # TODO: ick
     @dispatch
     def render_to_response(self, **kwargs):
+        request = self.request()
+        req_data = request_data(request)
+
+        if request.method == 'GET':
+            dispatch_prefix = DISPATCH_PATH_SEPARATOR
+            dispatcher = perform_ajax_dispatch
+            dispatch_error = 'Invalid endpoint path'
+
+            def dispatch_response_handler(r):
+                return HttpResponse(json.dumps(r), content_type='application/json')
+
+        elif request.method == 'POST':
+            dispatch_prefix = '-'
+            dispatcher = perform_post_dispatch
+            dispatch_error = 'Invalid post path'
+
+            def dispatch_response_handler(r):
+                return r
+
+        else:
+            assert False  # This has already been checked in request_data()
+
+        dispatch_commands = {key: value for key, value in req_data.items() if key.startswith(dispatch_prefix)}
+        assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
+        if dispatch_commands:
+            dispatch_target, value = next(iter(dispatch_commands.items()))
+            try:
+                result = dispatcher(root=self, path=dispatch_target, value=value, request=request)
+            except InvalidEndpointPathException:
+                result = dict(error=dispatch_error)
+
+            if result is not None:
+                return dispatch_response_handler(result)
+
         return HttpResponse(self.render_root(**kwargs))
 
     def bind(self, *, parent=None, request=None):
@@ -232,13 +301,6 @@ def render_template_name(template_name, **kwargs):
 
 
 PartType = Union[PagePart, str, Template]
-
-
-def is_responding(request):
-    if request.method == 'GET':
-        return any(x.startswith(DISPATCH_PATH_SEPARATOR) for x in request.GET.keys())
-
-    return False
 
 
 def render_part(*, part: PartType, context):

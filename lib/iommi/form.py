@@ -251,7 +251,7 @@ def expand_member(cls, model, factory_lookup, defaults_factory, name, field, fie
     return [x for x in result if x is not None]
 
 
-def create_or_edit_object__on_valid_post(*, form):
+def create_or_edit_object__post_handler(*, form, **_):
     if form.extra.is_create:
         assert form.instance is None
         form.instance = form.model()
@@ -1312,7 +1312,7 @@ class Form(RefinableObject, PagePart):
 
     @staticmethod
     @refinable
-    def on_valid_post(form, **_):
+    def post_handler(form, **_):
         return None
 
     @dispatch(
@@ -1644,11 +1644,6 @@ class Form(RefinableObject, PagePart):
         context=EMPTY,
     )
     def render(self, *, context=None, render=None):
-        if self.is_target() and self.is_valid():
-            r = self.on_valid_post(form=self)
-            if r is not None:
-                return r
-
         setdefaults_path(
             render,
             context=context,
@@ -1693,12 +1688,12 @@ class Form(RefinableObject, PagePart):
         call_target__attribute='from_model',
         extra__model_verbose_name=None,
         on_save=lambda **kwargs: None,  # pragma: no mutate
-        redirect=lambda request, redirect_to, form: HttpResponseRedirect(form.extra.redirect_to),
+        redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         redirect_to=None,
         part=EMPTY,
         extra__title=None,
         default_child=True,
-        on_valid_post=create_or_edit_object__on_valid_post,
+        post_handler=create_or_edit_object__post_handler,
     )
     def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
         if model is None and instance is not None:
