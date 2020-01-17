@@ -281,7 +281,7 @@ def create_or_edit_object__on_valid_post(*, form):
 
             form.extra.on_save(form=form, instance=form.instance)
 
-            return create_or_edit_object_redirect(form.extra.is_create, form.extra.redirect_to, form.request, form.extra.redirect, form)
+            return create_or_edit_object_redirect(form.extra.is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
 
 
 def default_endpoint__config(field: 'Field', **_) -> dict:
@@ -345,32 +345,11 @@ def choice_queryset__is_valid(field, parsed_data, **_):
     return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
 
 
-def choice_queryset__endpoint_dispatch(form, field, key, value):
-    from django.core.paginator import (EmptyPage, Paginator)
-
-    page_size = field.extra.get('endpoint_page_size', 40)
-    page = int(form.request.GET.get('page', 1))
-    choices = field.extra.filter_and_sort(form=form, field=field, value=value)
-    try:
-        paginator = Paginator(choices, page_size)
-        result = paginator.page(page)
-        has_more = result.has_next()
-
-        return dict(
-            results=field.extra.model_from_choices(form, field, result),
-            page=page,
-            more=has_more,
-        )
-    except EmptyPage:
-        return dict(result=[])
-
-
-def choice_queryset__endpoint_handler(*, form, field, value, request, **_):
+def choice_queryset__endpoint_handler(*, form, field, value, **_):
     from django.core.paginator import EmptyPage, Paginator
-    form.request = request
 
     page_size = field.extra.get('endpoint_page_size', 40)
-    page = int(form.request.GET.get('page', 1))
+    page = int(form.request().GET.get('page', 1))
     choices = field.extra.filter_and_sort(form=form, field=field, value=value)
     try:
         paginator = Paginator(choices, page_size)
@@ -962,9 +941,9 @@ class Field(RefinableObject, PagePart):
             'field': self,
         }
         if self.template_string is not None:
-            return get_template_from_string(self.template_string, origin='tri.form', name='Form.render').render(context, self.form.request)
+            return get_template_from_string(self.template_string, origin='tri.form', name='Form.render').render(context, self.request())
         else:
-            return render_template(self.form.request, self.template.format(style=style), context)
+            return render_template(self.request(), self.template.format(style=style), context)
 
     @classmethod
     @class_shortcut(
@@ -1363,7 +1342,6 @@ class Form(RefinableObject, PagePart):
         actions_template='iommi/form/actions.html',
     )
     def __init__(self, *, request=None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
-        self.request = request
 
         super(Form, self).__init__(field=field, **kwargs)
 
@@ -1403,12 +1381,11 @@ class Form(RefinableObject, PagePart):
         self.declared_fields = {x.name: x for x in sort_after(list(generate_fields()))}
 
         if request is not None:
-            self.request = request
-            self.bind(parent=None)
+            self.bind(request=request)
 
     def on_bind(self):
         self._valid = None
-        request = self.request
+        request = self.request()
         self._request_data = request_data(request) if request else None
 
         if self._request_data is not None and self.is_target():
@@ -1479,7 +1456,7 @@ class Form(RefinableObject, PagePart):
         assert self._is_bound, 'The form has not been bound. You need to call bind() either explicitly, or pass data/request to the constructor to cause an indirect bind()'
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
-            self.request,
+            self.request(),
             self.actions_template,
             dict(
                 actions=actions,
@@ -1652,10 +1629,11 @@ class Form(RefinableObject, PagePart):
         if self.is_full_form:
             r.append(format_html(AVOID_EMPTY_FORM, self.path()))
 
-        if self.request:
+        request = self.request()
+        if request:
             # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
             own_field_paths = {f.path() for f in self.fields}
-            for k, v in self.request.GET.items():
+            for k, v in request.GET.items():
                 if k == self.own_target_marker():
                     continue
                 # TODO: why is there a special case for '-' here?
@@ -1667,8 +1645,8 @@ class Form(RefinableObject, PagePart):
         else:
             return render_to_string(
                 template_name=template_name,
-                context=dict(form=self, **csrf(self.request)),
-                request=self.request
+                context=dict(form=self, **csrf(request)),
+                request=request
             )
 
     def apply(self, instance):
@@ -1766,8 +1744,7 @@ class Form(RefinableObject, PagePart):
         context=EMPTY,
     )
     def render_or_respond(self, *, request, context=None, render=None):
-        self.request = request
-        self.bind(parent=self.parent)
+        self.bind(request=request)
 
         # TODO: handle dispatch here? Right now this is only handled by the middleware.
 

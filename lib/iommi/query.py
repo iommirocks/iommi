@@ -520,8 +520,7 @@ class Query(RefinableObject, PagePart):
         self.variables = sort_after(list(generate_variables()))
 
         if request is not None:
-            self.request = request
-            self.bind(parent=None)
+            self.bind(request=request)
 
     def on_bind(self):
         bound_variables = [v.bind(parent=self) for v in self.variables]
@@ -531,7 +530,7 @@ class Query(RefinableObject, PagePart):
     def parse(self, query_string: str) -> Q:
         if not self._is_bound:
             # TODO: should we do implicit bind? seems error prone, but it's convenient for the tests for now...
-            self.bind(parent=None)
+            self.bind(request=None)
         query_string = query_string.strip()
         if not query_string:
             return Q()
@@ -708,12 +707,11 @@ class Query(RefinableObject, PagePart):
             fields=fields,
             default_child=True,
         )
-        form.request = self.request
         form.bind(parent=self)
         # TODO: this seems weird. parent should be enough
         form.query = self
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
-        form.query_advanced_value = request_data(self.request).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
+        form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
 
         # TODO: what is this good for?
         self._form = form
@@ -725,11 +723,12 @@ class Query(RefinableObject, PagePart):
         """
         form = self.form()
 
-        if self.request is None:
+        if self.request() is None:
             return ''
 
-        if request_data(self.request).get(ADVANCED_QUERY_PARAM, '').strip():
-            return request_data(self.request).get(ADVANCED_QUERY_PARAM)
+        request = self.request()
+        if request_data(request).get(ADVANCED_QUERY_PARAM, '').strip():
+            return request_data(request).get(ADVANCED_QUERY_PARAM)
         elif form.is_valid():
             def expr(field, is_list, value):
                 if is_list:

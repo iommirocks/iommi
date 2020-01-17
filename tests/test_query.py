@@ -54,7 +54,7 @@ def test_show():
     class ShowQuery(Query):
         foo = Variable()
         bar = Variable(
-            show=lambda query, variable: query.request.GET['foo'] == 'show' and variable.extra.foo == 'show2',
+            show=lambda query, variable: query.request().GET['foo'] == 'show' and variable.extra.foo == 'show2',
             extra__foo='show2')
 
     # noinspection PyTypeChecker

@@ -33,7 +33,7 @@ def test_create_or_edit_object():
         model=CreateOrEditObjectTest,
         extra__model_verbose_name='baz',
     )
-    p.bind(parent=None)
+    p.bind(request=request)
     assert p.parts.form.default_child
     response = p.parts.form.render_or_respond(request=request, render__call_target=lambda **kwargs: kwargs)
     form = get_request_context(response)['form']
@@ -46,7 +46,7 @@ def test_create_or_edit_object():
         field__f_float__initial=lambda form, field: 2,
         template_name='<template name>',
     )
-    p.bind(parent=None)
+    p.bind(request=request)
     response = p.parts.form.render_or_respond(
         request=request,
         render__context={'foo': 'FOO'},
@@ -91,7 +91,7 @@ def test_create_or_edit_object():
         model=CreateOrEditObjectTest,
         on_save=on_save,  # just to check that we get called with the instance as argument
     )
-    p.bind(parent=None)
+    p.bind(request=request)
     response = p.parts.form.render_or_respond(
         request=request,
         render=lambda **kwargs: kwargs,
@@ -113,7 +113,7 @@ def test_create_or_edit_object():
         request=request,
         instance=instance,
     )
-    p.bind(parent=None)
+    p.bind(request=request)
     response = p.parts.form.render_or_respond(
         request=request,
         render=lambda **kwargs: kwargs,
@@ -140,7 +140,7 @@ def test_create_or_edit_object():
         instance=instance,
         redirect=lambda form, **_: {'context_instance': {'form': form}},
     )
-    p.bind(parent=None)
+    p.bind(request=request)
     response = p.parts.form.render_or_respond(
         request=request,
         render=lambda **kwargs: kwargs,
@@ -160,7 +160,7 @@ def test_create_or_edit_object():
         request=request,
         instance=instance,
     )
-    p.bind(parent=None)
+    p.bind(request=request)
     response = p.parts.form.render_or_respond(
         request=request,
     )

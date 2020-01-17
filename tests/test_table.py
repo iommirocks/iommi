@@ -129,7 +129,7 @@ def test_kwarg_column_config_injection():
         foo = Column()
 
     table = MyTable(rows=[], column__foo__extra__stuff="baz")
-    table.bind(parent=None)
+    table.bind(request=None)
     assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
 
 
@@ -158,7 +158,7 @@ def test_column_with_meta():
         bar = MyColumn.icon('history')
 
     table = MyTable(rows=[])
-    table.bind(parent=None)
+    table.bind(request=None)
     assert not table.bound_column_by_name['foo'].sortable
     assert not table.bound_column_by_name['bar'].sortable
 
@@ -178,7 +178,7 @@ def test_django_table():
         foo = Column.choice_queryset(model=TFoo, choices=lambda table, column, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
     t = TestTable(rows=TBar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
-    t.bind(parent=None)
+    t.bind(request=None)
 
     assert list(t.bound_column_by_name['foo'].choices) == list(TFoo.objects.all())
     assert list(t.bulk_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
@@ -1273,7 +1273,7 @@ def test_multi_choice_queryset():
             model = TFoo
 
     foo_table = FooTable(rows=TFoo.objects.all(), request=RequestFactory().get("/", ''))
-    foo_table.bind(parent=None)
+    foo_table.bind(request=None)
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
     assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
@@ -1296,7 +1296,7 @@ def test_query_namespace_inject():
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
             columns=[Column(name='a', query__show=True, query__gui__show=True)],
             query__gui__post_validation=post_validation)
-        foo.bind(parent=None)
+        foo.bind(request=None)
 
 
 def test_float():
@@ -1368,7 +1368,7 @@ def test_from_model():
         column__a__display_name='Some a',
         column__a__extra__stuff='Some stuff',
     )
-    t.bind(parent=None)
+    t.bind(request=None)
     assert [x.name for x in t.columns] == ['id', 'a', 'b']
     assert [x.name for x in t.columns if x.show] == ['a', 'b']
     assert 'Some a' == t.bound_column_by_name['a'].display_name
@@ -1442,7 +1442,7 @@ def test_ajax_data_endpoint():
         Struct(foo=1, bar=2),
         Struct(foo=3, bar=4),
     ])
-    table.bind(parent=None)
+    table.bind(request=None)
 
     actual = perform_ajax_dispatch(root=table, path='/data', value='', request=RequestFactory().get('/'))
     expected = [dict(foo=1, bar=2), dict(foo=3, bar=4)]
@@ -1541,17 +1541,17 @@ def test_ordering():
 
     # no ordering
     t = Table.from_model(model=TFoo, request=RequestFactory().get('/'))
-    t.bind(parent=None)
+    t.bind(request=None)
     assert not t.rows.query.order_by
 
     # ordering from GET parameter
     t = Table.from_model(model=TFoo, request=RequestFactory().get('/', dict(order='a')))
-    t.bind(parent=None)
+    t.bind(request=None)
     assert list(t.rows.query.order_by) == ['a']
 
     # default ordering
     t = Table.from_model(model=TFoo, default_sort_order='b', request=RequestFactory().get('/'))
-    t.bind(parent=None)
+    t.bind(request=None)
     assert list(t.rows.query.order_by) == ['b']
 
 
@@ -1644,7 +1644,7 @@ def test_yield_rows():
             preprocess_rows = my_preprocess_rows
 
     table = MyTable(rows=TFoo.objects.all())
-    table.bind(parent=None)
+    table.bind(request=None)
     results = list(table)
     assert len(results) == 2
     assert results[0].row == f
@@ -1660,7 +1660,7 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
             model = TFoo
 
     table = MyTable(request=RequestFactory().get("/", ''))
-    table.bind(parent=None)
+    table.bind(request=None)
 
 
 @pytest.mark.django_db
@@ -1717,7 +1717,7 @@ def test_from_model_with_inheritance():
         column__value__query__gui__show=True,
         column__value__bulk__show=True,
     )
-    t.bind(parent=None)
+    t.bind(request=None)
 
     assert was_called == {
         'MyField.float': 2,
@@ -1733,7 +1733,7 @@ def test_column_merge():
             Struct(foo=1),
         ]
     )
-    table.bind(parent=None)
+    table.bind(request=None)
     assert len(table.columns) == 1
     assert table.columns[0].name == 'foo'
     for row in table:
@@ -1745,11 +1745,11 @@ def test_override_doesnt_stick():
         foo = Column()
 
     table = MyTable(column__foo__show=False, rows=[])
-    table.bind(parent=None)
+    table.bind(request=None)
     assert len(table.shown_bound_columns) == 0
 
     table2 = MyTable(rows=[])
-    table2.bind(parent=None)
+    table2.bind(request=None)
     assert len(table2.shown_bound_columns) == 1
 
 
@@ -1782,8 +1782,8 @@ def test_new_style_ajax_dispatch():
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
     page = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
-    page.bind(parent=None)
+    page.bind(request=None)
     assert page.children().table.default_child
-    page.bind(parent=None)
+    page.bind(request=None)
     target, parents = find_target(path='/table/query/gui/field/foo', root=page)
     assert target.endpoint_path() == '/foo'

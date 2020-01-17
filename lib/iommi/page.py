@@ -85,7 +85,8 @@ class Page(PagePart):
 
     def children(self):
         if not self._is_bound:
-            self.bind(parent=None)
+            # TODO: hmm...
+            self.bind(request=None)
         return self.parts
 
     def endpoint_kwargs(self):
@@ -96,8 +97,7 @@ class Page(PagePart):
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
     def render_or_respond(self, *, request, context=None, render=None):
-        self.request = request
-        self.bind(parent=self.parent)
+        self.bind(request=request)
 
         rendered = {}
         for part in self.parts.values():
@@ -165,8 +165,7 @@ class Fragment(PagePart):
         render=fragment__render,
     )
     def render_or_respond(self, *, request, context=None, render=None):
-        self.request = request
-        self.bind(parent=self.parent)
+        self.bind(request=request)
         return render(fragment=self, request=request, context=context)
 
 
@@ -226,8 +225,7 @@ def portal_page(left=None, center=None, **kwargs):
 def perform_ajax_dispatch(*, root, path, value, request):
     if not root._is_bound:
         # This is mostly useful for tests
-        root.request = request
-        root.bind(parent=None)
+        root.bind(request=request)
 
     target, parents = find_target(path=path, root=root)
 
@@ -247,8 +245,7 @@ def middleware(get_response):
         response = get_response(request)
         if isinstance(response, Page):
             page = response
-            page.request = request
-            page.bind(parent=None)
+            page.bind(request=request)
 
             dispatch_commands = {key: value for key, value in request.GET.items() if key.startswith(DISPATCH_PATH_SEPARATOR)}
             assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'

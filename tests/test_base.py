@@ -70,7 +70,7 @@ class MyPage(Page):
 
 def test_group_paths_by_children_happy_path():
     my_page = MyPage()
-    my_page.bind(parent=None)
+    my_page.bind(request=None)
 
     data = {
         't1/query/gui/foo': '1',
@@ -125,7 +125,7 @@ def test_group_paths_by_children_error_message():
             default_child = False
 
     my_page = NoDefaultChildPage()
-    my_page.bind(parent=None)
+    my_page.bind(request=None)
 
     data = {
         'unknown': '5',
@@ -226,7 +226,7 @@ def test_page_constructor():
     )
 
     # TODO: should this be necessary?
-    my_page.bind(parent=None)
+    my_page.bind(request=None)
 
     assert len(my_page.parts) == 3
     assert ['foo', 'h1', 'bar'] == list(my_page.parts.keys())

@@ -113,14 +113,15 @@ DEFAULT_PAGE_SIZE = 40
 
 
 def prepare_headers(table, bound_columns):
-    if table.request is None:
+    request = table.request()
+    if request is None:
         return
 
     for column in bound_columns:
         if column.sortable:
-            params = table.request.GET.copy()
+            params = request.GET.copy()
             param_path = path_join(table.path(), 'order')
-            order = table.request.GET.get(param_path, None)
+            order = request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
             params[param_path] = column.name if not start_sort_desc else '-' + column.name
             column.is_sorting = False
@@ -714,7 +715,7 @@ class BoundRow(object):
     def render(self):
         if self.template:
             context = dict(bound_row=self, row=self.row, **self.table.context)
-            return render_template(self.table.request, self.template, context)
+            return render_template(self.table.request(), self.template, context)
 
         return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
 
@@ -794,7 +795,7 @@ class BoundCell(object):
         cell__template = self.bound_column.cell.template
         if cell__template:
             context = dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
-            return render_template(self.table.request, cell__template, context)
+            return render_template(self.table.request(), cell__template, context)
 
         return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
 
@@ -856,7 +857,7 @@ class Header(object):
 
     @property
     def rendered(self):
-        return render_template(self.table.request, self.template, dict(header=self))
+        return render_template(self.table.request(), self.template, dict(header=self))
 
     def render_attrs(self):
         return render_attrs(self.attrs)
@@ -1014,7 +1015,6 @@ class Table(RefinableObject, PagePart):
 
         assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
-        self.request = request
         self.columns: List[Column] = columns
 
         self.instance = instance
@@ -1047,12 +1047,12 @@ class Table(RefinableObject, PagePart):
         self.header_levels = None
 
         if request:
-            self.bind(parent=None)
+            self.bind(request=request)
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
-            self.request,
+            self.request(),
             self.actions_template,
             dict(
                 actions=actions,
@@ -1061,12 +1061,12 @@ class Table(RefinableObject, PagePart):
             ))
 
     def render_header(self):
-        return render_template(self.request, self.header.template, self.context)
+        return render_template(self.request(), self.header.template, self.context)
 
     def render_filter(self):
         if not self.query_form:
             return ''
-        return render_template(self.request, self.filter.template, merged(self.context, form=self.query_form))
+        return render_template(self.request(), self.filter.template, merged(self.context, form=self.query_form))
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
@@ -1100,10 +1100,11 @@ class Table(RefinableObject, PagePart):
                 dict.__setitem__(column.cell.attrs, 'style', style)
 
     def _prepare_sorting(self):
-        if self.request is None:
+        request = self.request()
+        if request is None:
             return
 
-        order = self.request.GET.get(path_join(self.path(), 'order'), self.default_sort_order)
+        order = request.GET.get(path_join(self.path(), 'order'), self.default_sort_order)
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
@@ -1290,11 +1291,10 @@ class Table(RefinableObject, PagePart):
             variables = list(generate_variables())
 
             self._query = self.get_meta().query_class(
-                request=self.request,
+                request=self.request(),
                 variables=variables,
                 **self.query_args
             )
-            self._query.request = self.request
             self._query.bind(parent=self)
             self._query_form = self._query.form() if self._query.variables else None
 
@@ -1392,7 +1392,7 @@ class Table(RefinableObject, PagePart):
         ))
 
     def render_paginator(self, adjacent_pages=6):
-        return render_template(request=self.request, template=self.paginator_template, context=self.paginator_context(adjacent_pages=adjacent_pages))
+        return render_template(request=self.request(), template=self.paginator_template, context=self.paginator_context(adjacent_pages=adjacent_pages))
 
     @classmethod
     @dispatch(
@@ -1435,10 +1435,10 @@ class Table(RefinableObject, PagePart):
             .filter(**self.bulk_filter) \
             .exclude(**self.bulk_exclude)
 
-        if self.request.POST.get('_all_pks_') == '1':
+        if self.request().POST.get('_all_pks_') == '1':
             return queryset
         else:
-            pks = [key[len('pk_'):] for key in self.request.POST if key.startswith('pk_')]
+            pks = [key[len('pk_'):] for key in self.request().POST if key.startswith('pk_')]
             return queryset.filter(pk__in=pks)
 
     @dispatch(
@@ -1446,15 +1446,14 @@ class Table(RefinableObject, PagePart):
         context=EMPTY,
     )
     def render_or_respond(self, *, request, context=None, render=None):
-        self.request = request
-        self.bind(parent=self.parent)
+        self.bind(request=request)
 
         if not context:
             context = {}
 
         table = self
 
-        # foo = group_paths_by_children(children=self.children(), data=self.request.GET)
+        # foo = group_paths_by_children(children=self.children(), data=self.request().GET)
         # TODO: implement dispatch? here? right now this is handled by the middleware only, is this ok?
 
         context['bulk_form'] = table.bulk_form
@@ -1530,7 +1529,7 @@ class Table(RefinableObject, PagePart):
         context['iommi_query_error'] = self.query_error
 
         self.context = table_context(
-            self.request,
+            self.request(),
             table=self,
             page=page,
             extra_context=context,
@@ -1541,7 +1540,7 @@ class Table(RefinableObject, PagePart):
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-        return render_template(self.request, template if template is not None else self.template, self.context)
+        return render_template(self.request(), template if template is not None else self.template, self.context)
 
 
 def table_context(request, *, table: Table, extra_context, paginator: Namespace):

@@ -122,7 +122,6 @@ def catch_response(view_function):
 
 
 class PagePart:
-    request = None
     parent = None
     name = None
     default_child = None
@@ -153,15 +152,16 @@ class PagePart:
         template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
         return HttpResponse(get_template_from_string(template_string).render(context=context, request=request))
 
-    def bind(self, *, parent):
+    def bind(self, *, parent=None, request=None):
         if parent is None:
+            self._request = request
             if self.name is None:
                 self.name = 'root'
             if self.default_child is None:
                 self.default_child = True
 
-        if parent is not None:
-            self.request = parent.request
+        # TODO: rebinding seems weird!
+        assert self.parent is None
         self.parent = parent
         result = self.on_bind()
         if result is None:
@@ -182,6 +182,12 @@ class PagePart:
         assert self._is_bound
 
         return Struct()
+
+    def request(self):
+        if self.parent is None:
+            return self._request
+        else:
+            return self.parent.request()
 
     def path(self) -> str:
         # TODO: this assert seems like a good idea, but it fires in Table.prepare... not sure what to do about that right now
@@ -254,6 +260,10 @@ def model_and_rows(model, rows):
 
 
 def request_data(request):
+    # TODO: this seems wrong. should at least be a QueryDictThingie
+    if request is None:
+        return {}
+
     if request.method == 'POST':
         return request.POST
     elif request.method == 'GET':

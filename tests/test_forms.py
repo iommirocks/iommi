@@ -74,7 +74,7 @@ def test_declaration_merge():
         bar = Field()
 
     form = MyForm()
-    form.bind(parent=None)
+    p.bind(request=None)
 
     assert {'foo', 'bar'} == set(form.fields_by_name.keys())
 

@@ -65,7 +65,7 @@ or just instantiate a :code:`Form` with a :code:`Field` list and use it directly
             Field.boolean(
                 name='is_admin',
                 # show only for staff
-                show=lambda form, **_: form.request.user.is_staff,
+                show=lambda form, **_: form.request().user.is_staff,
                 label_template='tweak_label_tag.html',
             ),
         ])
@@ -88,7 +88,7 @@ is equivalent to:
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
             # show only for staff
-            is_admin__show=lambda form, **_: form.request.user.is_staff,
+            is_admin__show=lambda form, **_: form.request().user.is_staff,
         )
 
         # rest of view function...
@@ -105,7 +105,7 @@ or even better: use :code:`Form.as_edit_page`:
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
             # show only for staff
-            is_admin__show=lambda form, **_: form.request.user.is_staff,
+            is_admin__show=lambda form, **_: form.request().user.is_staff,
         )
         # no html template! iommi has a nice default for you :P
 

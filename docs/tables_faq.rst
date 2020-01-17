@@ -228,7 +228,7 @@ Just pass :code:`show=False` to hide the column or :code:`show=True` to show it.
 
     Table.from_model(
         model=Foo,
-        column__a__show=lambda table, **_: table.request.GET.get('some_parameter') == 'hello!',
+        column__a__show=lambda table, **_: table.request().GET.get('some_parameter') == 'hello!',
     )
 
 This will show the column :code:`a` only if the GET parameter :code:`some_parameter` is set to `hello!`.
