@@ -34,6 +34,7 @@ from iommi.query import (
 from tests.helpers import (
     verify_table_html,
     request_with_middleware,
+    req,
 )
 from tests.models import (
     TBar,
@@ -175,13 +176,17 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=TFoo, choices=lambda table, column, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
+        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
 
-    t = TestTable(rows=TBar.objects.all().order_by('pk'), request=RequestFactory().get("/", ''))
-    t.bind(request=None)
+    t = TestTable(rows=TBar.objects.all().order_by('pk'))
+    t.bind(request=req('get'))
 
     assert list(t.bound_column_by_name['foo'].choices) == list(TFoo.objects.all())
+
+    assert t.bulk_form._is_bound
     assert list(t.bulk_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
+
+    assert t.query_form._is_bound
     assert list(t.query_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
 
     verify_table_html(table=t, expected_html="""
@@ -1100,7 +1105,7 @@ def test_cell_lambda():
     class TestTable(NoSortTable):
         sentinel1 = 'sentinel1'
 
-        sentinel2 = Column(cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
+        sentinel2 = Column(cell__value=lambda table, bound_column, row, **_: '%s %s %s' % (table.sentinel1, bound_column.name, row.sentinel3))
 
     rows = [Struct(sentinel3="sentinel3")]
 
@@ -1162,7 +1167,7 @@ def test_render_table():
 
     rows = [Struct(foo="foo")]
 
-    response = TestTable(rows=rows).render_to_response(request=RequestFactory().get('/'))
+    response = TestTable(rows=rows).bind(request=req('get')).render_to_response()
     assert isinstance(response, HttpResponse)
     assert b'<table' in response.content
 
@@ -1245,12 +1250,12 @@ def test_choice_queryset():
     TFoo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: TFoo.objects.filter(a=1))
+        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
 
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(rows=TFoo.objects.all(), request=RequestFactory().get("/", ''))
+    foo_table = FooTable(rows=TFoo.objects.all(), request=req('get'))
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
@@ -1267,13 +1272,13 @@ def test_multi_choice_queryset():
     TFoo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, column, **_: TFoo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(rows=TFoo.objects.all(), request=RequestFactory().get("/", ''))
-    foo_table.bind(request=None)
+    foo_table = FooTable(rows=TFoo.objects.all())
+    foo_table.bind(request=req('get'))
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
     assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
@@ -1344,7 +1349,7 @@ def test_row_extra():
         class Meta:
             row__extra__foo = lambda table, row, **_: row.a + row.b
 
-    bound_row = list(TestTable(request=RequestFactory().get(path='/'), rows=[Struct(a=5, b=7)]))[0]
+    bound_row = list(TestTable(request=req('get'), rows=[Struct(a=5, b=7)]))[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1356,7 +1361,7 @@ def test_row_extra_struct():
         class Meta:
             row__extra = lambda table, row, **_: Namespace(foo=row.a + row.b)
 
-    bound_row = list(TestTable(request=RequestFactory().get(path='/'), rows=[Struct(a=5, b=7)]))[0]
+    bound_row = list(TestTable(request=req('get'), rows=[Struct(a=5, b=7)]))[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1401,7 +1406,7 @@ def test_ajax_endpoint():
     class TestTable(Table):
         foo = Column.choice_queryset(
             model=TFoo,
-            choices=lambda table, column, **_: TFoo.objects.all(),
+            choices=lambda table, **_: TFoo.objects.all(),
             query__gui__extra__endpoint_attr='b',
             query__show=True,
             bulk__show=True,
@@ -1424,7 +1429,7 @@ def test_ajax_endpoint_empty_response():
 
         bar = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='', request=req('get'))
     assert actual == []
 
 
@@ -1444,7 +1449,7 @@ def test_ajax_data_endpoint():
     ])
     table.bind(request=None)
 
-    actual = perform_ajax_dispatch(root=table, path='/data', value='', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=table, path='/data', value='', request=req('get'))
     expected = [dict(foo=1, bar=2), dict(foo=3, bar=4)]
     assert actual == expected
 
@@ -1457,9 +1462,9 @@ def test_ajax_endpoint_namespacing():
         baz = Column()
 
     with pytest.raises(InvalidEndpointPathException):
-        perform_ajax_dispatch(root=TestTable(rows=[]), path='/baz', value='', request=RequestFactory().get('/'))
+        perform_ajax_dispatch(root=TestTable(rows=[]), path='/baz', value='', request=req('get'))
 
-    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/bar', value='', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/bar', value='', request=req('get'))
     assert 17 == actual
 
 
@@ -1475,7 +1480,7 @@ def test_table_iteration():
         foo = Column()
         bar = Column(cell__value=lambda row, **_: row['bar'] + 1)
 
-    table = TestTable(request=RequestFactory().get('/'))
+    table = TestTable(request=req('get'))
 
     expected = [
         dict(foo='a', bar=2),
@@ -1490,7 +1495,7 @@ def test_ajax_custom_endpoint():
             endpoint__foo = lambda value, **_: dict(baz=value)
         spam = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='bar', request=RequestFactory().get('/'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='bar', request=req('get'))
     assert actual == dict(baz='bar')
 
 
@@ -1506,7 +1511,7 @@ def test_table_extra_namespace():
 
         foo = Column()
 
-    assert 17 == TestTable(request=RequestFactory().get('/'), rows=[]).extra.foo
+    assert 17 == TestTable(request=req('get'), rows=[]).extra.foo
 
 
 def test_defaults():
@@ -1540,18 +1545,18 @@ def test_ordering():
     TFoo.objects.create(a=4, b='a')
 
     # no ordering
-    t = Table.from_model(model=TFoo, request=RequestFactory().get('/'))
-    t.bind(request=None)
+    t = Table.from_model(model=TFoo)
+    t.bind(request=req('get'))
     assert not t.rows.query.order_by
 
     # ordering from GET parameter
-    t = Table.from_model(model=TFoo, request=RequestFactory().get('/', dict(order='a')))
-    t.bind(request=None)
+    t = Table.from_model(model=TFoo)
+    t.bind(request=req('get'))
     assert list(t.rows.query.order_by) == ['a']
 
     # default ordering
-    t = Table.from_model(model=TFoo, default_sort_order='b', request=RequestFactory().get('/'))
-    t.bind(request=None)
+    t = Table.from_model(model=TFoo, default_sort_order='b')
+    t.bind(request=req('get'))
     assert list(t.rows.query.order_by) == ['b']
 
 
@@ -1659,8 +1664,8 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
         class Meta:
             model = TFoo
 
-    table = MyTable(request=RequestFactory().get("/", ''))
-    table.bind(request=None)
+    table = MyTable()
+    table.bind(request=req('get'))
 
 
 @pytest.mark.django_db
@@ -1712,12 +1717,11 @@ def test_from_model_with_inheritance():
     t = MyTable.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        request=RequestFactory().get('/'),
+        request=req('get'),
         column__value__query__show=True,
         column__value__query__gui__show=True,
         column__value__bulk__show=True,
     )
-    t.bind(request=None)
 
     assert was_called == {
         'MyField.float': 2,
@@ -1784,6 +1788,5 @@ def test_endpoint_path_of_nested_part():
     page = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
     page.bind(request=None)
     assert page.children().table.default_child
-    page.bind(request=None)
     target, parents = find_target(path='/table/query/gui/field/foo', root=page)
     assert target.endpoint_path() == '/foo'

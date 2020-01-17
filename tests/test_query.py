@@ -268,10 +268,10 @@ def test_choice_queryset():
     random_valid_obj = Foo.objects.all().order_by('?')[0]
 
     # test GUI
-    form = Query2(request=req('post', **{'-': '-', 'foo': 'asdasdasdasd'})).form()
+    form = Query2(request=req('post', **{'-': '-', 'foo': 'asdasdasdasd'})).form
     assert not form.is_valid()
     query2 = Query2(request=req('post', **{'-': '-', 'foo': str(random_valid_obj.pk)}))
-    form = query2.form()
+    form = query2.form
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
     q = query2.to_q()
@@ -330,10 +330,10 @@ def test_multi_choice_queryset():
     random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
 
     # test GUI
-    form = Query2(request=req('post', **{'-': '-', 'foo': 'asdasdasdasd'})).form()
+    form = Query2(request=req('post', **{'-': '-', 'foo': 'asdasdasdasd'})).form
     assert not form.is_valid()
     query2 = Query2(request=req('post', **{'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
-    form = query2.form()
+    form = query2.form
     assert form.is_valid()
     assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
     q = query2.to_q()
@@ -401,7 +401,7 @@ def test_endpoint_dispatch():
     request = req('get')
     query = MyQuery(request=request)
 
-    assert '/foo' == query.form().fields_by_name.foo.endpoint_path()
+    assert '/foo' == query.form.fields_by_name.foo.endpoint_path()
     expected = {
         'more': False,
         'page': 1,
@@ -502,12 +502,12 @@ def test_from_model_with_inheritance():
             member_class = MyVariable
             form_class = MyForm
 
-    MyQuery.from_model(
+    query = MyQuery.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        request=req('get'),
         variable__value__gui__show=True,
-    ).form()
+    )
+    query.bind(request=req('get'))
 
     assert was_called == {
         'MyField.float': 1,

@@ -39,7 +39,8 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
         table = table()
 
     request = RequestFactory().get("/", query)
-    table.bind(request=request)
+    if not table._is_bound:
+        table.bind(request=request)
 
     request.user = AnonymousUser()
     actual_html = remove_csrf(table.render(**kwargs))

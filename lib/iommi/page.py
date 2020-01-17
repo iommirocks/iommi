@@ -205,8 +205,9 @@ def portal_page(left=None, center=None, **kwargs):
 #         @functools.wraps(f)
 #         def wrapper(request, *args, **kwargs):
 #             result = f(request, *args, **kwargs)
+#             result.bind(request=request)
 #             if isinstance(result, Page):
-#                 return result.render_to_response(request=request, **render_kwargs)
+#                 return result.render_to_response(**render_kwargs)
 #             else:
 #                 return result
 #
@@ -258,7 +259,7 @@ def middleware(get_response):
                 else:
                     return True, HttpResponse(content_type='application/json')
 
-            return page.render_to_response(request=request)
+            return page.render_to_response()
         else:
             return response
 

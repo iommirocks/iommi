@@ -436,7 +436,7 @@ class StringValue(str):
 def default_endpoint__errors(query, **_):
     try:
         query.to_q()
-        errors = query.form().get_errors()
+        errors = query.form.get_errors()
         # These dicts contains sets that we don't want in the JSON response, so convert to list
         if 'fields' in errors:
             errors['fields'] = {x: list(y) for x, y in errors['fields'].items()}
@@ -479,7 +479,7 @@ class Query(RefinableObject, PagePart):
 
     def children(self):
         return Struct(
-            gui=self.form(),
+            gui=self.form,
             # TODO: this is a potential namespace conflict with gui above. Care or not care?
             **setup_endpoint_proxies(self.endpoint)
         )
@@ -503,6 +503,7 @@ class Query(RefinableObject, PagePart):
         self.variables: List[Variable] = None
         self.bound_variables: List[Variable] = None
         self.bound_variable_by_name: Dict[str, Variable] = None
+        self.form = None
 
         self._form = None
 
@@ -530,6 +531,37 @@ class Query(RefinableObject, PagePart):
         bound_variables = [v.bind(parent=self) for v in self.variables]
         self.bound_variables = filter_show_recursive(bound_variables)
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
+
+        fields = []
+
+        if any(v.freetext for v in self.variables):
+            fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
+
+        for variable in self.bound_variables:
+            if variable.gui is not None and variable.gui.show:
+                # pass gui__* parameters to the GUI component
+                assert variable.name is not MISSING
+                assert variable.attr is not MISSING
+                params = setdefaults_path(
+                    Namespace(),
+                    variable.gui,
+                    name=variable.name,
+                    attr=variable.attr,
+                    model_field=variable.model_field,
+                    call_target__cls=self.get_meta().form_class.get_meta().member_class
+                )
+                fields.append(params())
+
+        form: Form = self.gui(
+            fields=fields,
+            default_child=True,
+        )
+        form.bind(parent=self)
+        # TODO: this seems weird. parent should be enough
+        form.query = self
+        # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
+        form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
+        self.form = form
 
     def parse(self, query_string: str) -> Q:
         if not self._is_bound:
@@ -681,51 +713,11 @@ class Query(RefinableObject, PagePart):
                                      for variable in self.variables
                                      if variable.freetext])
 
-    def form(self):
-        """
-        Create a form and validate input based on a request.
-        """
-        if self._form:
-            return self._form
-        fields = []
-
-        if any(v.freetext for v in self.variables):
-            fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
-
-        for variable in self.bound_variables:
-            if variable.gui is not None and variable.gui.show:
-                # pass gui__* parameters to the GUI component
-                assert variable.name is not MISSING
-                assert variable.attr is not MISSING
-                params = setdefaults_path(
-                    Namespace(),
-                    variable.gui,
-                    name=variable.name,
-                    attr=variable.attr,
-                    model_field=variable.model_field,
-                    call_target__cls=self.get_meta().form_class.get_meta().member_class
-                )
-                fields.append(params())
-
-        form: Form = self.gui(
-            fields=fields,
-            default_child=True,
-        )
-        form.bind(parent=self)
-        # TODO: this seems weird. parent should be enough
-        form.query = self
-        # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
-        form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
-
-        # TODO: what is this good for?
-        self._form = form
-        return form
-
     def to_query_string(self):
         """
         Based on the data in the request, return the equivalent query string that you can use with parse() to create a query set.
         """
-        form = self.form()
+        form = self.form
 
         if self.request() is None:
             return ''

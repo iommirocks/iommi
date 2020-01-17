@@ -938,7 +938,7 @@ class Field(RefinableObject, PagePart):
             model_field=model_field,
             **kwargs)
 
-    def render(self, style='compact'):
+    def render_with_style(self, style='compact'):
         context = {
             'form': self.form,
             'field': self,
@@ -1630,10 +1630,11 @@ class Form(RefinableObject, PagePart):
         if not self._is_bound:
             self.bind(parent=self.parent)
 
+        # TODO: the style thing should be a part of the form
         self.style = style
         r = []
         for field in self.fields:
-            r.append(field.render(style=style))
+            r.append(field.render_with_style(style=style))
 
         if self.is_full_form:
             r.append(format_html(AVOID_EMPTY_FORM, self.path()))

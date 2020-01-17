@@ -388,7 +388,7 @@ class Column(RefinableObject, PagePart):
         display_name='',
         sortable=False,
         header__attrs__class__thin=True,
-        cell__value=lambda table, column, row, **_: True,
+        cell__value=lambda table, **_: True,
         cell__attrs__class__cj=True,
     )
     def icon(cls, icon, is_report=False, icon_title=None, show=True, call_target=None, **kwargs):
@@ -1042,7 +1042,7 @@ class Table(RefinableObject, PagePart):
         self._has_prepared: bool = False
         self.header_levels = None
 
-        if request:
+        if request is not None:
             self.bind(request=request)
 
     def render_actions(self):
@@ -1180,27 +1180,27 @@ class Table(RefinableObject, PagePart):
 
     @property
     def query(self) -> Query:
-        self.prepare()
+        assert self._is_bound
         return self._query
 
     @property
     def query_form(self) -> Form:
-        self.prepare()
+        assert self._is_bound
         return self._query_form
 
     @property
     def query_error(self) -> List[str]:
-        self.prepare()
+        assert self._is_bound
         return self._query_error
 
     @property
     def bulk_form(self) -> Form:
-        self.prepare()
+        assert self._is_bound
         return self._bulk_form
 
     @property
     def bound_columns(self) -> List[Column]:
-        self.prepare()
+        assert self._is_bound
         return self._bound_columns
 
     @property
@@ -1214,11 +1214,6 @@ class Table(RefinableObject, PagePart):
         return self._bound_column_by_name
 
     def on_bind(self) -> None:
-        # TODO: seems like prepare() is exactly bind()! we should unify this
-        self.prepare()
-
-    # noinspection PyProtectedMember
-    def prepare(self):
         if self._has_prepared:
             return
 
@@ -1231,6 +1226,7 @@ class Table(RefinableObject, PagePart):
                 bound_column._evaluate()
                 yield bound_column
 
+        # TODO: use collect_members and bind_members
         self._bound_columns = list(bind_columns())
         self._bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self._bound_columns)
 
@@ -1291,7 +1287,7 @@ class Table(RefinableObject, PagePart):
                 **self.query_args
             )
             self._query.bind(parent=self)
-            self._query_form = self._query.form() if self._query.variables else None
+            self._query_form = self._query.form if self._query.variables else None
 
             self._query_error = ''
             if self._query_form:
@@ -1329,6 +1325,7 @@ class Table(RefinableObject, PagePart):
                     name=self.name,
                     **self.bulk
                 )
+                self._bulk_form.bind(parent=self)
             else:
                 self._bulk_form = None
 
@@ -1346,7 +1343,7 @@ class Table(RefinableObject, PagePart):
         return self
 
     def __iter__(self):
-        self.prepare()
+        assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))

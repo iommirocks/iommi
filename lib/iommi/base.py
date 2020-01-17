@@ -140,7 +140,6 @@ class PagePart:
         template_name=getattr(settings, 'TRI_BASE_TEMPLATE', 'base.html'),
         content_block_name=getattr(settings, 'TRI_CONTENT_BLOCK', 'content'),
     )
-    @catch_response
     def render(self, *, template_name, content_block_name, context=None):
         if context is None:
             context = {}
@@ -151,7 +150,11 @@ class PagePart:
         context['content'] = content
 
         template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
-        return HttpResponse(get_template_from_string(template_string).render(context=context, request=self.request()))
+        return get_template_from_string(template_string).render(context=context, request=self.request())
+
+    @dispatch
+    def render_to_response(self):
+        return HttpResponse(self.render())
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound

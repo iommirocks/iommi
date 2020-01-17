@@ -27,8 +27,9 @@ for specific model in the advanced mode:
 
     def cars(request):
         query = CarQuery()
-        cars_query_set = query.request_to_q(request)
-        form = query.form()
+        query.bind(request=request)
+        cars_query_set = query.to_q()
+        form = query.form
         return render(
             template_name='cars.html',
             context={

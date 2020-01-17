@@ -248,10 +248,9 @@ def test_page_render():
 
     request = RequestFactory().get('/')
     request.user = Struct()
-    response = my_page.render_to_response(
-        request=request,
-        template_name='iommi/form/base.html',
-    )
+
+    # TODO: template_name??
+    response = my_page.render_to_response(template_name='iommi/form/base.html')
 
     expected_html = '''
         <html>
