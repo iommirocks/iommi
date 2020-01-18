@@ -527,6 +527,7 @@ class Action(RefinableObject, PagePart):
     extra = Refinable()
     display_name = Refinable()
     name = Refinable()
+    after = Refinable()
 
     @dispatch(
         tag='a',
@@ -1324,10 +1325,10 @@ class Form(RefinableObject, PagePart):
         attrs__action='',
         attrs__method='post',
         endpoint=EMPTY,
-        actions__submit__call_target=Action.submit,
+        action__submit__call_target=Action.submit,
         actions_template='iommi/form/actions.html',
     )
-    def __init__(self, *, request=None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, actions: Dict[str, Action] = None, field, **kwargs):
+    def __init__(self, *, request=None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, action=None, actions=None, field, **kwargs):
 
         super(Form, self).__init__(field=field, **kwargs)
 
@@ -1344,9 +1345,12 @@ class Form(RefinableObject, PagePart):
         self._valid = None
         self.instance = instance
         self.mode = INITIALS_FROM_GET
-        # self._field = field if fields or fields_dict else {}
+
+        self._action = {}
+        # TODO: Action class here should be self.get_meta().SOMETHING_class,
+        self.declared_actions = collect_members(items=actions, item=action, cls=Action, store_config=self._action)
+
         self._field = {}
-        self._actions = actions
 
         def generate_fields():
             if fields is not None:
@@ -1384,7 +1388,6 @@ class Form(RefinableObject, PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.declared_actions = collect_members(items=self._actions, cls=Action)
         self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
 
         # TODO: Clean up _fields, fields, declared_fields, fields_by_name mess
@@ -1713,7 +1716,8 @@ class Form(RefinableObject, PagePart):
 
         setdefaults_path(
             kwargs,
-            actions__submit=dict(
+            action__submit=dict(
+                # TODO: should be call target attribute
                 call_target=Action.submit,
                 attrs__value=extra.title,
                 attrs__name=name,

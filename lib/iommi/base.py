@@ -6,6 +6,7 @@ from typing import (
     Union,
     Any,
     Dict,
+    List,
 )
 
 from django.conf import settings
@@ -353,20 +354,33 @@ def no_copy_on_bind(cls):
     return cls
 
 
-def collect_members(*, items, cls):
-    def unbound_items():
-        for name, item in items.items():
-            if isinstance(item, dict):
-                item = setdefaults_path(
-                    Namespace(),
-                    item,
-                    call_target=cls,
-                )
-                item = item()
-            setattr(item, 'name', name)
-            yield item
+def collect_members(*, items: List, items_dict: Dict = None, item: Namespace = None, cls, store_config):
+    def handle_instance(x, name):
+        x.name = name
+        store_config[x.name] = item.get(x.name, {})
+        return x
 
-    return list(unbound_items())
+    def unbound_items():
+        if items is not None:
+            for x in items:
+                yield handle_instance(x, x.name)
+        if items_dict is not None:
+            for name, x in items_dict.items():
+                yield handle_instance(x, name)
+        if item is not None:
+            for name, x_spec in item.items():
+                if isinstance(x_spec, dict):
+                    x_spec = setdefaults_path(
+                        Namespace(),
+                        x_spec,
+                        call_target=cls,
+                        name=name,
+                    )
+                    yield x_spec()
+                else:
+                    yield handle_instance(x_spec, name)
+
+    return sort_after(list(unbound_items()))
 
 
 def bind_members(*, unbound_items, parent, **kwargs):

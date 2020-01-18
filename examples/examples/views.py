@@ -84,7 +84,7 @@ def form_example_4(request):
     return edit_object(
         request,
         instance=Foo.objects.all().first(),
-        form__actions=dict(
+        form__action=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
             back=Action(display_name='Back to index', attrs__href='/'),
@@ -99,7 +99,7 @@ def form_example_5(request):
         model=Bar,
         form__base_template='iommi/form/base_select2.html',
         form__field__b__input_template='iommi/form/choice_select2.html',
-        form__actions=dict(
+        form__action=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
             back=Action(display_name='Back to index', attrs__href='/'),

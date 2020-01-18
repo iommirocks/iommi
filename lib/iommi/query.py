@@ -1,4 +1,3 @@
-import copy
 import operator
 from collections import OrderedDict
 from datetime import date

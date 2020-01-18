@@ -1482,7 +1482,7 @@ def test_action_shortcut_icon():
 def test_render_grouped_actions():
     req('get')  # needed when running in flask mode to have an app present
     form = Form(
-        actions=dict(
+        action=dict(
             a=Action(display_name='a'),
             b=Action(display_name='b', show=lambda form, **_: False),
             q=Action(display_name='q', show=lambda form, **_: True),

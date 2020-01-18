@@ -970,7 +970,7 @@ class Table(RefinableObject, PagePart):
         paginator__call_target=Paginator,
 
         # TODO: actions should be action
-        actions=EMPTY,
+        action=EMPTY,
         actions_template='iommi/form/actions.html',
         query=EMPTY,
         bulk=EMPTY,
@@ -981,7 +981,7 @@ class Table(RefinableObject, PagePart):
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, request=None, columns=None, columns_dict=None, model=None, rows=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, actions=None, default_child=None, **kwargs):
+    def __init__(self, *, request=None, columns=None, columns_dict=None, model=None, rows=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, action=None, actions=None, default_child=None, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -994,6 +994,10 @@ class Table(RefinableObject, PagePart):
         """
 
         model, rows = model_and_rows(model, rows)
+
+        self._action = {}
+        # TODO: Action class here should be self.get_meta().SOMETHING_class,
+        self.declared_actions = collect_members(items=actions, item=action, cls=Action, store_config=self._action)
 
         self._column = {}
 
@@ -1226,7 +1230,6 @@ class Table(RefinableObject, PagePart):
         if self._has_prepared:
             return
 
-        self.declared_actions = collect_members(items=self._actions, cls=Action)
         self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, table=self)
 
         def bind_columns():
