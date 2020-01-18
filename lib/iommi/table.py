@@ -1341,9 +1341,6 @@ class Table(RefinableObject, PagePart):
         self._prepare_auto_rowspan()
 
     def bound_rows(self):
-        return self
-
-    def __iter__(self):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)

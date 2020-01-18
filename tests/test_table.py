@@ -1359,7 +1359,7 @@ def test_row_extra():
     ).bind(
         request=req('get'),
     )
-    bound_row = list(table)[0]
+    bound_row = list(table.bound_rows())[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1376,7 +1376,7 @@ def test_row_extra_struct():
     ).bind(
         request=req('get'),
     )
-    bound_row = list(table)[0]
+    bound_row = list(table.bound_rows())[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1445,7 +1445,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in bound_row} for bound_row in table]
+            endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
 
         foo = Column()
         bar = Column()
@@ -1488,11 +1488,16 @@ def test_table_iteration():
 
     table = TestTable().bind(request=req('get'))
 
-    expected = [
+    assert [
+        {
+            bound_cell.bound_column.name: bound_cell.value
+            for bound_cell in bound_row
+        }
+        for bound_row in table.bound_rows()
+    ] == [
         dict(foo='a', bar=2),
         dict(foo='b', bar=3),
     ]
-    assert expected == [{bound_cell.bound_column.name: bound_cell.value for bound_cell in bound_row} for bound_row in table]
 
 
 def test_ajax_custom_endpoint():
@@ -1518,7 +1523,7 @@ def test_table_extra_namespace():
 
         foo = Column()
 
-    assert 17 == TestTable(rows=[]).bind(request=req('get')).extra.foo
+    assert TestTable(rows=[]).bind(request=req('get')).extra.foo == 17
 
 
 def test_defaults():
@@ -1658,7 +1663,7 @@ def test_yield_rows():
 
     table = MyTable(rows=TFoo.objects.all())
     table.bind(request=None)
-    results = list(table)
+    results = list(table.bound_rows())
     assert len(results) == 2
     assert results[0].row == f
     assert results[1].row == Struct(a=15)
@@ -1749,7 +1754,7 @@ def test_column_merge():
     table.bind(request=None)
     assert len(table.columns) == 1
     assert table.columns[0].name == 'foo'
-    for row in table:
+    for row in table.bound_rows():
         assert row['foo'].value == 1
 
 
