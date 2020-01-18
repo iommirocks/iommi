@@ -81,10 +81,6 @@ from tri_declarative import (
     sort_after,
     with_meta,
 )
-from tri_named_struct import (
-    NamedStruct,
-    NamedStructField,
-)
 from tri_struct import (
     merged,
     Struct,
@@ -818,20 +814,20 @@ class BoundCell(object):
         return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.declared_column, self.bound_row.row)  # pragma: no cover
 
 
-class TemplateConfig(NamedStruct):
-    template = NamedStructField()
+class TemplateConfig(Struct, RefinableObject):
+    template: str = Refinable()
 
 
-class HeaderConfig(NamedStruct):
-    attrs = NamedStructField()
-    template = NamedStructField()
-    extra = NamedStructField()
+class HeaderConfig(Struct, RefinableObject):
+    attrs: Dict[str, Any] = Refinable()
+    template: str = Refinable()
+    extra: Dict[str, Any] = Refinable()
 
 
-class RowConfig(NamedStruct):
-    attrs = NamedStructField()
-    template = NamedStructField()
-    extra = NamedStructField()
+class RowConfig(Struct, RefinableObject):
+    attrs: Dict[str, Any] = Refinable()
+    template: str = Refinable()
+    extra: Dict[str, Any] = Refinable()
 
 
 class Header(object):
