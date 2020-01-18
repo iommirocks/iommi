@@ -3,7 +3,7 @@ import json
 import pytest
 from bs4 import BeautifulSoup
 from iommi.base import DISPATCH_PATH_SEPARATOR
-from tri_struct import Struct, merged
+from tri_struct import merged
 
 from iommi.form import (
     INITIALS_FROM_GET,
@@ -14,6 +14,7 @@ from tests.helpers import req
 from tests.test_forms import remove_csrf
 
 
+# TODO: rewrite tests to not require this thing
 def get_request_context(response):
     if 'context_instance' in response:
         return response['context_instance']
@@ -28,7 +29,6 @@ def test_create_and_edit_object():
 
     # 1. View create form
     request = req('get')
-    req.user = Struct(is_authenticated=lambda: True)
 
     p = Form.as_create_page(
         model=CreateOrEditObjectTest,
@@ -163,24 +163,21 @@ def test_redirect_default_case():
 def test_unique_constraint_violation():
     from tests.models import UniqueConstraintTest
 
-    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
-    request.POST = {
+    request = req('post', **{
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        f'-': '',
-    }
-    Form.as_create_page(
-        request=request,
-        model=UniqueConstraintTest)
+        '-': '',
+    })
+    Form.as_create_page(model=UniqueConstraintTest).bind(request=request).render_to_response()
     assert UniqueConstraintTest.objects.all().count() == 1
 
-    response = Form.as_create_page(
-        request=request,
+    p = Form.as_create_page(
         model=UniqueConstraintTest,
-        render__call_target=lambda **kwargs: kwargs)
+    ).bind(request=request)
+    p.render_to_response()
 
-    form = get_request_context(response)['form']
+    form = p.parts.form
     assert form.is_valid() is False
     assert form.get_errors() == {'global': {'Unique constraint test with this F int, F float and F bool already exists.'}}
     assert UniqueConstraintTest.objects.all().count() == 1
@@ -188,61 +185,65 @@ def test_unique_constraint_violation():
 
 @pytest.mark.django_db
 def test_namespace_forms():
-    from tests.models import get_saved_something, reset_saved_something, NamespaceFormsTest
-
-    reset_saved_something()
+    from tests.models import NamespaceFormsTest
+    
+    assert NamespaceFormsTest.objects.all().count() == 0
 
     # Create object
-    request = Struct(method='POST', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
-    request.POST = {
+    request = req('post', **{
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        f'-': '',
-    }
+        '-': '',
+    })
     response = Form.as_create_page(
-        request=request,
         model=NamespaceFormsTest,
         on_save=lambda instance, **_: instance,  # just to check that we get called with the instance as argument
-        render__call_target=lambda **kwargs: kwargs)
-    instance = get_saved_something()
-    reset_saved_something()
+    ).bind(request=request).render_to_response()
+    instance = NamespaceFormsTest.objects.get()
     assert instance is not None
     assert response.status_code == 302
 
-    form_name = 'create_or_edit_object_form'
+    form_name = 'my_form'
     # Edit should NOT work when the form name does not match the POST
-    request.POST = {
-        form_name + DISPATCH_PATH_SEPARATOR + 'f_int': '7',
-        form_name + DISPATCH_PATH_SEPARATOR + 'f_float': '11.2',
-        DISPATCH_PATH_SEPARATOR + 'some_other_form': '',
-    }
-    response = Form.as_edit_page(
-        request=request,
+    # TODO: ok to hardcode DISPATCH_PATH_SEPARATOR?
+    request = req('post', **{
+        f'{form_name}/f_int': '7',
+        f'{form_name}/f_float': '11.2',
+        '-some_other_form': '',
+    })
+    p = Form.as_edit_page(
         instance=instance,
-        form__name=form_name,
-        render__call_target=lambda **kwargs: kwargs)
-    form = get_request_context(response)['form']
+        name=form_name,
+        default_child=False,
+    ).bind(request=request)
+    p.render_to_response()
+    form = p.parts.form
     assert form.get_errors() == {}
     assert form.is_valid() is True
     assert not form.is_target()
+    instance.refresh_from_db()
     assert instance is not None
     assert instance.f_int == 3
     assert instance.f_float == 5.1
     assert instance.f_bool
 
     # Edit should work when the form name is in the POST
-    del request.POST[DISPATCH_PATH_SEPARATOR + 'some_other_form']
-    request.POST[DISPATCH_PATH_SEPARATOR + form_name] = ''
-    response = Form.as_edit_page(
-        request=request,
+    request = req('post', **{
+        f'{form_name}/f_int': '7',
+        f'{form_name}/f_float': '11.2',
+        f'-{form_name}': '',
+    })
+    p = Form.as_edit_page(
         instance=instance,
         redirect=lambda form, **_: {'context_instance': {'form': form}},
-        form__name=form_name,
-        render__call_target=lambda **kwargs: kwargs)
-    form = get_request_context(response)['form']
-    instance = get_saved_something()
-    reset_saved_something()
+        name=form_name,
+        default_child=False,
+    ).bind(request=request)
+    p.render_to_response()
+    form = p.parts.form
+    assert form.path() == f'/{form_name}'
+    instance = instance.refresh_from_db()
     assert form.get_errors() == {}
     assert form.is_valid() is True
     assert form.is_target()
@@ -259,14 +260,12 @@ def test_create_or_edit_object_dispatch():
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
-    request = Struct(method='GET', META={}, GET={DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: True)
+    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''})
 
     response = Form.as_create_page(
         model=Bar,
-        form__field__foo__extra__endpoint_attr='foo',
+        field__foo__extra__endpoint_attr='foo',
         template_name='<template name>',
-        render=lambda **kwargs: kwargs,
-        render__context={'foo': 'FOO'},
     ).bind(request=request).render_to_response()
     assert json.loads(response.content) == dict(
         results=[
@@ -282,7 +281,7 @@ def test_create_or_edit_object_dispatch():
 def test_create_object_default_template():
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
+    request = req('get')
 
     response = Form.as_create_page(model=Foo).bind(request=request).render_to_response()
     assert response.status_code == 200
@@ -303,7 +302,7 @@ def test_create_object_default_template():
 def test_edit_object_default_template():
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
+    request = req('get')
 
     response = Form.as_edit_page(instance=Foo.objects.create(foo=1)).bind(request=request).render_to_response()
     assert response.status_code == 200
@@ -324,7 +323,7 @@ def test_edit_object_default_template():
 def test_create_or_edit_object_default_template_with_name():
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
+    request = req('get')
 
     response = Form.as_create_page(model=Foo, name='form_name').bind(request=request).render_to_response()
     assert response.status_code == 200
@@ -345,34 +344,36 @@ def test_create_or_edit_object_default_template_with_name():
 def test_create_or_edit_object_validate_unique():
     from tests.models import Baz
 
-    request = Struct(
-        method='POST',
-        META={},
-        GET={},
-        POST={
-            'a': '1',
-            'b': '1',
-            f'-': '',
-        },
-        user=Struct(is_authenticated=lambda: True),
-        is_ajax=lambda: False,
-    )
+    request = req('post', **{
+        'a': '1',
+        'b': '1',
+        '-': '',
+    })
 
-    response = Form.as_create_page(request=request, model=Baz)
+    response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
     assert Baz.objects.filter(a=1, b=1).exists()
 
-    response = Form.as_create_page(request=request, model=Baz)
+    response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
-    request.POST['b'] = '2'
-    response = Form.as_create_page(request=request, model=Baz)
+    request = req('post', **{
+        'a': '1',
+        'b': '2',  # <-- changed from 1
+        '-': '',
+    })
+    response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
     instance = Baz.objects.get(a=1, b=2)
 
-    request.POST['b'] = '1'
-    response = Form.as_edit_page(request=request, instance=instance)
+    request = req('post', **{
+        'a': '1',
+        'b': '1',  # <-- 1 again
+        '-': '',
+    })
+
+    response = Form.as_edit_page(instance=instance).bind(request=request).render_to_response()
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
@@ -382,7 +383,7 @@ def test_create_or_edit_object_validate_unique():
 def test_create_or_edit_object_full_template(name):
     from tests.models import Foo
 
-    request = Struct(method='GET', META={}, GET={}, user=Struct(is_authenticated=lambda: True), is_ajax=lambda: False)
+    request = req('get')
 
     response = Form.as_create_page(model=Foo, name=name).bind(request=request).render_to_response()
     assert response.status_code == 200
