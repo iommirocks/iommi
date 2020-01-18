@@ -617,19 +617,26 @@ class Action(RefinableObject, PagePart):
             setattr(self, k, v)
 
 
-def group_actions(actions: Dict[str, Action]):
-    grouped_links = {}
-    if actions is not None:
-        grouped_links = groupby((action for action in actions.values() if action.group is not None), key=lambda l: l.group)
-        grouped_links: Dict[str, Tuple[str, str, List[Action]]] = [(g, slugify(g), list(lg)) for g, lg in grouped_links]  # list(lg) because django templates touches the generator and then I can't iterate it
+def group_actions(actions_without_group: Dict[str, Action]):
+    grouped_actions = {}
+    if actions_without_group is not None:
+        actions_with_group = (action for action in actions_without_group.values() if action.group is not None)
 
-        for _, _, group_links in grouped_links:
+        grouped_actions: Dict[str, Tuple[str, str, List[Action]]] = [
+            (group_name, slugify(group_name), list(actions_in_group))
+            for group_name, actions_in_group in groupby(
+                actions_with_group,
+                key=lambda l: l.group
+            )
+        ]  # list(actions_in_group) because django templates touches the generator and then I can't iterate it
+
+        for _, _, group_links in grouped_actions:
             for link in group_links:
                 link.attrs.role = 'menuitem'
 
-        actions = [action for action in actions.values() if action.group is None]
+        actions_without_group = [action for action in actions_without_group.values() if action.group is None]
 
-    return actions, grouped_links
+    return actions_without_group, grouped_actions
 
 
 @with_meta
