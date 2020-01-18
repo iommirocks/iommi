@@ -243,7 +243,7 @@ def test_namespace_forms():
     p.render_to_response()
     form = p.parts[form_name]
     assert form.path() == form_name
-    instance = instance.refresh_from_db()
+    instance.refresh_from_db()
     assert form.get_errors() == {}
     assert form.is_valid() is True
     assert form.is_target()
