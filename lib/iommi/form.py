@@ -1328,12 +1328,9 @@ class Form(RefinableObject, PagePart):
         action__submit__call_target=Action.submit,
         actions_template='iommi/form/actions.html',
     )
-    def __init__(self, *, request=None, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, action=None, actions=None, field, **kwargs):
+    def __init__(self, *, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, action=None, actions=None, field, **kwargs):
 
         super(Form, self).__init__(field=field, **kwargs)
-
-        # TODO: this seems redundant with the bind() at the end
-        self._request_data = request_data(request) if request else None
 
         if callable(fields):
             fields = fields(model=self.model)
@@ -1372,9 +1369,6 @@ class Form(RefinableObject, PagePart):
 
         # TODO: use collect_members and bind_members
         self.declared_fields = {x.name: x for x in sort_after(list(generate_fields()))}
-
-        if request is not None:
-            self.bind(request=request)
 
     def on_bind(self) -> None:
         self._valid = None
@@ -1471,7 +1465,7 @@ class Form(RefinableObject, PagePart):
     @dispatch(
         field=EMPTY,
     )
-    def from_model(cls, *, request=None, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, *, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_field__param". For example:
@@ -1488,7 +1482,7 @@ class Form(RefinableObject, PagePart):
 
         """
         fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
-        return cls(request=request, model=model, instance=instance, fields=fields, **kwargs)
+        return cls(model=model, instance=instance, fields=fields, **kwargs)
 
     def own_target_marker(self):
         return f'-{self.path()}'

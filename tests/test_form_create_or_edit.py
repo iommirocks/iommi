@@ -3,13 +3,13 @@ import json
 import pytest
 from bs4 import BeautifulSoup
 from iommi.base import DISPATCH_PATH_SEPARATOR
-from tri_struct import merged
-
 from iommi.form import (
-    INITIALS_FROM_GET,
     create_or_edit_object_redirect,
     Form,
+    INITIALS_FROM_GET,
 )
+from tri_struct import merged
+
 from tests.helpers import req
 from tests.test_forms import remove_csrf
 

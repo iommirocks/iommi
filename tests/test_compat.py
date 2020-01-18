@@ -45,7 +45,11 @@ def test_format_html4():
 
 
 def test_format_html5():
-    actual = Form(fields=[Field(name='foo')], request=RequestFactory().get('/')).render()
+    actual = Form(
+        fields=[Field(name='foo')],
+    ).bind(
+        request=RequestFactory().get('/'),
+    ).render()
     print(actual)
     assert type(actual) == SafeText
 

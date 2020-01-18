@@ -981,7 +981,7 @@ class Table(RefinableObject, PagePart):
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, request=None, columns=None, columns_dict=None, model=None, rows=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, action=None, actions=None, default_child=None, **kwargs):
+    def __init__(self, *, columns=None, columns_dict=None, model=None, rows=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, action=None, actions=None, default_child=None, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1054,9 +1054,6 @@ class Table(RefinableObject, PagePart):
         self._bound_column_by_name: Dict[str, Column] = None
         self._has_prepared: bool = False
         self.header_levels = None
-
-        if request is not None:
-            self.bind(request=request)
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)

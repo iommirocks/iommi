@@ -3,28 +3,31 @@ import json
 from collections import defaultdict
 from functools import wraps
 from typing import (
-    Union,
-    Any,
     Dict,
     List,
+    Union,
 )
 
 from django.conf import settings
 from django.db.models import QuerySet
-from django.http.response import HttpResponseBase, HttpResponse
+from django.http.response import (
+    HttpResponse,
+    HttpResponseBase,
+)
 from django.template import Template
+from iommi._web_compat import (
+    get_template_from_string,
+    render_template,
+)
 from tri_declarative import (
     dispatch,
     EMPTY,
     Namespace,
-    setattr_path,
     setdefaults_path,
-    sort_after,
     should_show,
+    sort_after,
 )
-from iommi._web_compat import get_template_from_string, render_template
 from tri_struct import Struct
-from tri_struct._cstruct import _Struct
 
 
 class GroupPathsByChildrenError(Exception):

@@ -57,7 +57,6 @@ def get_rows():
 
 
 def explicit_table():
-
     columns = [
         Column(name="foo"),
         Column.number(name="bar"),
@@ -67,9 +66,7 @@ def explicit_table():
 
 
 def declarative_table():
-
     class TestTable(Table):
-
         class Meta:
             attrs__class__another_class = lambda table: True
             attrs__id = lambda table: 'table_id'
@@ -85,7 +82,6 @@ def declarative_table():
     declarative_table()
 ])
 def test_render_impl(table):
-
     verify_table_html(table=table, expected_html="""
         <table class="another_class listview" data-endpoint="/tbody" id="table_id">
             <thead>
@@ -112,7 +108,6 @@ def test_render_impl(table):
 
 
 def test_declaration_merge():
-
     class MyTable(Table):
         class Meta:
             columns = [Column(name='foo')]
@@ -138,7 +133,6 @@ def test_bad_arg():
 
 
 def test_column_ordering():
-
     class MyTable(Table):
         foo = Column(after='bar')
         bar = Column()
@@ -163,7 +157,6 @@ def test_column_with_meta():
 
 @pytest.mark.django_db
 def test_django_table():
-
     f1 = TFoo.objects.create(a=17, b="Hej")
     f2 = TFoo.objects.create(a=42, b="Hopp")
 
@@ -218,7 +211,6 @@ def test_django_table():
 
 
 def test_inheritance():
-
     class FooTable(Table):
         foo = Column()
 
@@ -233,11 +225,9 @@ def test_inheritance():
 
 
 def test_output():
-
     is_report = False
 
     class TestTable(Table):
-
         class Meta:
             attrs__class__listview = True
             attrs__id = 'table_id'
@@ -647,7 +637,6 @@ def test_column_presets():
 
 @pytest.mark.django_db
 def test_django_table_pagination():
-
     for x in range(30):
         TFoo(a=x, b="foo").save()
 
@@ -678,7 +667,6 @@ def test_django_table_pagination():
 @pytest.mark.skipif(django.VERSION[0] < 2, reason='This requires the new paginator API in django 2.0+')
 @pytest.mark.django_db
 def test_django_table_pagination_custom_paginator():
-
     for x in range(30):
         TFoo(a=x, b="foo").save()
 
@@ -782,6 +770,7 @@ def test_bulk_edit():
 
     result = TestTable(
         rows=TFoo.objects.all(),
+    ).bind(
         request=req('get', pk_1='', pk_2='', a='0', b='changed'),
     ).render()
     assert '<form method="post" action=".">' in result
@@ -796,6 +785,7 @@ def test_bulk_edit():
     t = TestTable(
         rows=TFoo.objects.all().order_by('pk'),
         post_bulk_edit=post_bulk_edit,
+    ).bind(
         request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed'}),
     )
     assert t._is_bound
@@ -948,7 +938,6 @@ def test_cell_template():
 
 
 def test_cell_format_escape():
-
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: '<foo>')
 
@@ -970,7 +959,6 @@ def test_cell_format_escape():
 
 
 def test_cell_format_no_escape():
-
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: mark_safe('<foo/>'))
 
@@ -993,7 +981,6 @@ def test_cell_format_no_escape():
 
 @pytest.mark.django_db
 def test_template_string():
-
     TFoo.objects.create(a=1)
 
     def explode(**_):
@@ -1268,7 +1255,11 @@ def test_choice_queryset():
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(rows=TFoo.objects.all(), request=req('get'))
+    foo_table = FooTable(
+        rows=TFoo.objects.all(),
+    ).bind(
+        request=req('get'),
+    )
 
     assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
@@ -1311,10 +1302,11 @@ def test_query_namespace_inject():
         foo = Table(
             rows=[],
             model=TFoo,
-            request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
             columns=[Column(name='a', query__show=True, query__gui__show=True)],
-            query__gui__post_validation=post_validation)
-        foo.bind(request=None)
+            query__gui__post_validation=post_validation,
+        ).bind(
+            request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
+        )
 
 
 def test_float():
@@ -1362,7 +1354,12 @@ def test_row_extra():
         class Meta:
             row__extra__foo = lambda table, row, **_: row.a + row.b
 
-    bound_row = list(TestTable(request=req('get'), rows=[Struct(a=5, b=7)]))[0]
+    table = TestTable(
+        rows=[Struct(a=5, b=7)]
+    ).bind(
+        request=req('get'),
+    )
+    bound_row = list(table)[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1374,7 +1371,12 @@ def test_row_extra_struct():
         class Meta:
             row__extra = lambda table, row, **_: Namespace(foo=row.a + row.b)
 
-    bound_row = list(TestTable(request=req('get'), rows=[Struct(a=5, b=7)]))[0]
+    table = TestTable(
+        rows=[Struct(a=5, b=7)],
+    ).bind(
+        request=req('get'),
+    )
+    bound_row = list(table)[0]
     assert bound_row.extra.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
@@ -1441,14 +1443,12 @@ def test_ajax_endpoint_empty_response():
 
 
 def test_ajax_data_endpoint():
-
     class TestTable(Table):
         class Meta:
             endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in bound_row} for bound_row in table]
 
         foo = Column()
         bar = Column()
-
 
     table = TestTable(rows=[
         Struct(foo=1, bar=2),
@@ -1476,7 +1476,6 @@ def test_ajax_endpoint_namespacing():
 
 
 def test_table_iteration():
-
     class TestTable(Table):
         class Meta:
             rows = [
@@ -1487,7 +1486,7 @@ def test_table_iteration():
         foo = Column()
         bar = Column(cell__value=lambda row, **_: row['bar'] + 1)
 
-    table = TestTable(request=req('get'))
+    table = TestTable().bind(request=req('get'))
 
     expected = [
         dict(foo='a', bar=2),
@@ -1500,6 +1499,7 @@ def test_ajax_custom_endpoint():
     class TestTable(Table):
         class Meta:
             endpoint__foo = lambda value, **_: dict(baz=value)
+
         spam = Column()
 
     actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='bar', request=req('get'))
@@ -1518,12 +1518,13 @@ def test_table_extra_namespace():
 
         foo = Column()
 
-    assert 17 == TestTable(request=req('get'), rows=[]).extra.foo
+    assert 17 == TestTable(rows=[]).bind(request=req('get')).extra.foo
 
 
 def test_defaults():
     class TestTable(Table):
         foo = Column()
+
     assert not TestTable.foo.query.show
     assert not TestTable.foo.bulk.show
     assert not TestTable.foo.auto_rowspan
@@ -1724,10 +1725,11 @@ def test_from_model_with_inheritance():
     t = MyTable.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        request=req('get'),
         column__value__query__show=True,
         column__value__query__gui__show=True,
         column__value__bulk__show=True,
+    ).bind(
+        request=req('get'),
     )
 
     assert was_called == {

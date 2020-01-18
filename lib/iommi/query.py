@@ -495,7 +495,7 @@ class Query(RefinableObject, PagePart):
         endpoint__errors=default_endpoint__errors,
         variable=EMPTY,
     )
-    def __init__(self, *, request=None, model=None, rows=None, variable, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, *, model=None, rows=None, variable, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
         model, rows = model_and_rows(model, rows)
 
         setdefaults_path(
@@ -537,9 +537,6 @@ class Query(RefinableObject, PagePart):
 
         # TODO: use collect_members and bind_members
         self.variables = sort_after(list(generate_variables()))
-
-        if request is not None:
-            self.bind(request=request)
 
     def on_bind(self) -> None:
         bound_variables = [v.bind(parent=self) for v in self.variables]
