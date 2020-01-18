@@ -1,6 +1,3 @@
-import copy
-import warnings
-from collections import OrderedDict
 from enum import (
     auto,
     Enum,
@@ -15,7 +12,6 @@ from typing import (
     Optional,
     Type,
     Union,
-    Callable,
 )
 
 from django.conf import settings
@@ -41,14 +37,14 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    PagePart,
-    path_join,
-    setup_endpoint_proxies,
+    bind_members,
+    collect_members,
     DISPATCH_PREFIX,
     model_and_rows,
     no_copy_on_bind,
-    collect_members,
-    bind_members,
+    PagePart,
+    path_join,
+    setup_endpoint_proxies,
 )
 from iommi.form import (
     Action,
@@ -73,6 +69,7 @@ from tri_declarative import (
     EMPTY,
     evaluate,
     evaluate_recursive,
+    evaluate_strict,
     getattr_path,
     LAST,
     Namespace,
@@ -83,7 +80,6 @@ from tri_declarative import (
     setdefaults_path,
     sort_after,
     with_meta,
-    evaluate_strict,
 )
 from tri_named_struct import (
     NamedStruct,
@@ -96,7 +92,7 @@ from tri_struct import (
 
 LAST = LAST
 
-_column_factory_by_field_type = OrderedDict()
+_column_factory_by_field_type = {}
 
 
 def register_column_factory(field_class, factory):
@@ -1237,7 +1233,7 @@ class Table(RefinableObject, PagePart):
 
         # TODO: use collect_members and bind_members
         self._bound_columns = list(bind_columns())
-        self._bound_column_by_name = OrderedDict((bound_column.name, bound_column) for bound_column in self._bound_columns)
+        self._bound_column_by_name = {bound_column.name: bound_column for bound_column in self._bound_columns}
 
         self._has_prepared = True
         self._is_bound = True

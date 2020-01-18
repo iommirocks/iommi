@@ -1,6 +1,5 @@
 import json
 import re
-from collections import OrderedDict
 from datetime import datetime
 from decimal import (
     Decimal,
@@ -22,6 +21,32 @@ from typing import (
 )
 
 from django.http import HttpResponseRedirect
+from iommi._db_compat import field_defaults_factory
+from iommi._web_compat import (
+    csrf,
+    format_html,
+    get_template_from_string,
+    mark_safe,
+    render_template,
+    render_to_string,
+    slugify,
+    Template,
+    URLValidator,
+    validate_email,
+    ValidationError,
+)
+from iommi.base import (
+    bind_members,
+    collect_members,
+    DISPATCH_PATH_SEPARATOR,
+    MISSING,
+    no_copy_on_bind,
+    PagePart,
+    render_template_name,
+    request_data,
+    setup_endpoint_proxies,
+)
+from iommi.render import render_attrs
 from tri_declarative import (
     assert_kwargs_empty,
     class_shortcut,
@@ -44,33 +69,6 @@ from tri_declarative import (
     with_meta,
 )
 from tri_struct import Struct
-from iommi._db_compat import field_defaults_factory
-from iommi._web_compat import (
-    csrf,
-    format_html,
-    get_template_from_string,
-    mark_safe,
-    render_template,
-    render_to_string,
-    slugify,
-    Template,
-    URLValidator,
-    validate_email,
-    ValidationError,
-)
-from iommi.base import (
-    DISPATCH_PATH_SEPARATOR,
-    MISSING,
-    PagePart,
-    render_template_name,
-    setup_endpoint_proxies,
-    request_data,
-    no_copy_on_bind,
-    collect_members,
-    bind_members,
-)
-from iommi.render import render_attrs
-
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -114,7 +112,7 @@ def many_to_many_factory_write_to_instance(field, instance, value):
     getattr_path(instance, field.attr).set(value)
 
 
-_field_factory_by_field_type = OrderedDict()
+_field_factory_by_field_type = {}
 
 
 def register_field_factory(field_class, factory):
@@ -187,7 +185,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     factory = factory_lookup.get(type(model_field), MISSING)
 
     if factory is MISSING:
-        for django_field_type, foo in reversed(factory_lookup.items()):
+        for django_field_type, foo in reversed(list(factory_lookup.items())):
             if isinstance(model_field, django_field_type):
                 factory = foo
                 break  # pragma: no mutate optimization

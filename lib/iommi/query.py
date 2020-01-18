@@ -1,5 +1,4 @@
 import operator
-from collections import OrderedDict
 from datetime import date
 from functools import reduce
 from typing import (
@@ -14,58 +13,58 @@ from django.db.models import (
     Model,
     Q,
 )
-
+from iommi.base import (
+    MISSING,
+    model_and_rows,
+    no_copy_on_bind,
+    PagePart,
+    request_data,
+    setup_endpoint_proxies,
+)
+from iommi.form import (
+    bool_parse,
+    create_members_from_model,
+    expand_member,
+    Form,
+    member_from_model,
+)
 from pyparsing import (
+    alphanums,
+    alphas,
     CaselessLiteral,
     Combine,
+    delimitedList,
     Forward,
     Group,
     Keyword,
+    nums,
+    oneOf,
     Optional,
     ParseException,
     ParseResults,
     QuotedString,
+    quotedString,
     Word,
     ZeroOrMore,
-    alphanums,
-    alphas,
-    delimitedList,
-    nums,
-    oneOf,
-    quotedString,
 )
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
-    RefinableObject,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate_recursive,
     filter_show_recursive,
+    Namespace,
+    Refinable,
     refinable,
+    RefinableObject,
+    setattr_path,
     setdefaults_path,
     sort_after,
     with_meta,
-    setattr_path,
 )
 from tri_struct import Struct
-from iommi.base import (
-    MISSING,
-    PagePart,
-    setup_endpoint_proxies,
-    model_and_rows,
-    request_data,
-    no_copy_on_bind,
-)
-from iommi.form import (
-    Form,
-    bool_parse,
-    create_members_from_model,
-    expand_member,
-    member_from_model,
-)
+
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
@@ -93,7 +92,7 @@ Q_OP_BY_OP = {
 FREETEXT_SEARCH_NAME = 'term'
 ADVANCED_QUERY_PARAM = 'query'
 
-_variable_factory_by_django_field_type = OrderedDict()
+_variable_factory_by_django_field_type = {}
 
 
 def register_variable_factory(field_class, factory):
