@@ -1695,9 +1695,8 @@ class Form(RefinableObject, PagePart):
         default_child=True,
         post_handler=create_or_edit_object__post_handler,
     )
-    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, **kwargs):
+    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, name, **kwargs):
         assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
-        assert 'name' not in kwargs, "I'm afraid you can't do that Dave, this form is always named `form`"
         if model is None and instance is not None:
             model = type(instance)
 
@@ -1717,16 +1716,18 @@ class Form(RefinableObject, PagePart):
             actions__submit=dict(
                 call_target=Action.submit,
                 attrs__value=extra.title,
-                attrs__name=kwargs['name'],
+                attrs__name=name,
             ),
         )
 
         from iommi.page import Page
         from iommi.page import html
         return Page(
-            part__title=html.h1(extra.title, **part.pop('title', {})),
-            part__form=call_target(extra=extra, model=model, instance=instance, **kwargs),
-            part=part
+            part={
+                'title': html.h1(extra.title, **part.pop('title', {})),
+                name: call_target(extra=extra, model=model, instance=instance, **kwargs),
+                **part
+            }
         )
 
     @classmethod

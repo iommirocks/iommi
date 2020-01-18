@@ -35,9 +35,9 @@ def test_create_and_edit_object():
         extra__model_verbose_name='baz',
     )
     p.bind(request=request)
-    assert p.parts.form.default_child
-    response = p.parts.form.render(render__call_target=lambda **kwargs: kwargs)
-    form = get_request_context(response)['form']
+    assert p.parts.create.default_child
+    response = p.parts.create.render(render__call_target=lambda **kwargs: kwargs)
+    form = p.parts.create
     assert form.extra.model_verbose_name == 'baz'  # check explicit model_verbose_name parameter to Form.as_create_page
     assert get_request_context(response)['csrf_token']
 
@@ -48,13 +48,13 @@ def test_create_and_edit_object():
         template_name='<template name>',
     )
     p.bind(request=request)
-    response = p.parts.form.render(
+    response = p.parts.create.render(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
         render__call_target=lambda **kwargs: kwargs,
     )
 
-    form = get_request_context(response)['form']
+    form = p.parts.create
     assert form.extra.model_verbose_name == 'foo bar'  # Meta verbose_name
     assert form.extra.is_create is True
     assert get_request_context(response)['foo'] == 'FOO'
@@ -93,7 +93,7 @@ def test_create_and_edit_object():
     )
     p.bind(request=request)
     response = p.render_to_response()
-    assert p.parts.form._request_data
+    assert p.parts.create._request_data
     instance = CreateOrEditObjectTest.objects.get()
     assert instance is not None
     assert instance.f_int == 3
@@ -108,10 +108,10 @@ def test_create_and_edit_object():
         instance=instance,
     )
     p.bind(request=request)
-    response = p.parts.form.render(
+    response = p.parts.edit.render(
         render=lambda **kwargs: kwargs,
     )
-    form = get_request_context(response)['form']
+    form = p.parts.edit
     assert form.get_errors() == {}
     assert form.fields_by_name['f_int'].value == 3
     assert form.fields_by_name['f_float'].value == 5.1
@@ -177,7 +177,7 @@ def test_unique_constraint_violation():
     ).bind(request=request)
     p.render_to_response()
 
-    form = p.parts.form
+    form = p.parts.create
     assert form.is_valid() is False
     assert form.get_errors() == {'global': {'Unique constraint test with this F int, F float and F bool already exists.'}}
     assert UniqueConstraintTest.objects.all().count() == 1
@@ -218,7 +218,7 @@ def test_namespace_forms():
         default_child=False,
     ).bind(request=request)
     p.render_to_response()
-    form = p.parts.form
+    form = p.parts[form_name]
     assert form.get_errors() == {}
     assert form.is_valid() is True
     assert not form.is_target()
@@ -241,8 +241,8 @@ def test_namespace_forms():
         default_child=False,
     ).bind(request=request)
     p.render_to_response()
-    form = p.parts.form
-    assert form.path() == f'/{form_name}'
+    form = p.parts[form_name]
+    assert form.path() == form_name
     instance = instance.refresh_from_db()
     assert form.get_errors() == {}
     assert form.is_valid() is True
