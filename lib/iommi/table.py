@@ -394,7 +394,7 @@ class Column(RefinableObject, PagePart):
         :param icon: the font awesome name of the icon
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+            show=lambda table, **rest: evaluate_strict(show, table=table, **rest) and not is_report,
             header__attrs__title=icon_title,
             cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
         ))
@@ -450,7 +450,7 @@ class Column(RefinableObject, PagePart):
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+            show=lambda table, **rest: evaluate_strict(show, table=table, **rest) and not is_report,
         ))
         return call_target(**kwargs)
 
@@ -472,7 +472,7 @@ class Column(RefinableObject, PagePart):
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate(show, table=table, **rest) and not is_report,
+            show=lambda table, **rest: evaluate_strict(show, table=table, **rest) and not is_report,
             cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         ))
         return call_target(**kwargs)
@@ -806,7 +806,7 @@ class BoundCell(object):
         return cell_contents
 
     def render_formatted(self):
-        return evaluate(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return evaluate_strict(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
     def __str__(self):
         return self.render()
@@ -1111,7 +1111,7 @@ class Table(RefinableObject, PagePart):
             if len(tmp) == 0:
                 return  # Unidentified sort column
             sort_column = tmp[0]
-            order_args = evaluate(sort_column.sort_key, column=sort_column)
+            order_args = evaluate_strict(sort_column.sort_key, column=sort_column)
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
             if sort_column.sortable:
