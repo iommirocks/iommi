@@ -962,7 +962,6 @@ class Table(RefinableObject, PagePart):
         paginator_template='iommi/table/paginator.html',
         paginator__call_target=Paginator,
 
-        # TODO: actions should be action
         action=EMPTY,
         actions_template='iommi/form/actions.html',
         query=EMPTY,

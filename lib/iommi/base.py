@@ -181,7 +181,7 @@ class PagePart:
     def render(self, *, context=None, render=None):
         assert False, 'Not implemented'
 
-    # TODO: ick
+    # TODO: ick! why is this on ALL PageParts?
     @dispatch(
         template_name=getattr(settings, 'IOMMI_BASE_TEMPLATE', 'base.html'),
         content_block_name=getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content'),
@@ -199,7 +199,7 @@ class PagePart:
         template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
         return get_template_from_string(template_string).render(context=context, request=self.request())
 
-    # TODO: ick
+    # TODO: ick! why is this on ALL PageParts?
     @dispatch
     def render_to_response(self, **kwargs):
         request = self.request()
@@ -283,7 +283,7 @@ class PagePart:
 
     def path(self) -> str:
         # TODO: this assert seems like a good idea, but it fires in Table.prepare... not sure what to do about that right now
-        # assert self._is_bound
+        assert self._is_bound
         if self.default_child:
             if self.parent is not None:
                 return self.parent.path()
