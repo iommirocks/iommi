@@ -387,14 +387,14 @@ class Column(RefinableObject, PagePart):
         cell__value=lambda table, **_: True,
         cell__attrs__class__cj=True,
     )
-    def icon(cls, icon, is_report=False, icon_title=None, show=True, call_target=None, **kwargs):
+    def icon(cls, icon, icon_title=None, show=True, call_target=None, **kwargs):
         """
         Shortcut to create font awesome-style icons.
 
         :param icon: the font awesome name of the icon
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate_strict(show, table=table, **rest) and not is_report,
+            show=lambda table, **rest: evaluate_strict(show, table=table, **rest),
             header__attrs__title=icon_title,
             cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
         ))
@@ -406,11 +406,11 @@ class Column(RefinableObject, PagePart):
         cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
         display_name=''
     )
-    def edit(cls, is_report=False, call_target=None, **kwargs):
+    def edit(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
         """
-        return call_target('pencil-square-o', is_report, 'Edit', **kwargs)
+        return call_target('pencil-square-o', 'Edit', **kwargs)
 
     @classmethod
     @class_shortcut(
@@ -418,11 +418,11 @@ class Column(RefinableObject, PagePart):
         cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
         display_name=''
     )
-    def delete(cls, is_report=False, call_target=None, **kwargs):
+    def delete(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
         """
-        return call_target('trash-o', is_report, 'Delete', **kwargs)
+        return call_target('trash-o', 'Delete', **kwargs)
 
     @classmethod
     @class_shortcut(
@@ -430,11 +430,11 @@ class Column(RefinableObject, PagePart):
         cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
         cell__value=lambda row, **_: getattr(row, 'pk', False),
     )
-    def download(cls, is_report=False, call_target=None, **kwargs):
+    def download(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
         """
-        return call_target('download', is_report, 'Download', **kwargs)
+        return call_target('download', 'Download', **kwargs)
 
     @classmethod
     @class_shortcut(
@@ -445,12 +445,12 @@ class Column(RefinableObject, PagePart):
         cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
         cell__value='Run',
     )
-    def run(cls, is_report=False, show=True, call_target=None, **kwargs):
+    def run(cls, show=True, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate_strict(show, table=table, **rest) and not is_report,
+            show=lambda table, **rest: evaluate_strict(show, table=table, **rest),
         ))
         return call_target(**kwargs)
 
@@ -464,7 +464,7 @@ class Column(RefinableObject, PagePart):
         header__attrs__class__nopad=True,
         cell__attrs__class__cj=True,
     )
-    def select(cls, is_report=False, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
+    def select(cls, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
@@ -472,7 +472,7 @@ class Column(RefinableObject, PagePart):
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate_strict(show, table=table, **rest) and not is_report,
+            show=lambda table, **rest: evaluate_strict(show, table=table, **rest),
             cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         ))
         return call_target(**kwargs)
@@ -483,7 +483,7 @@ class Column(RefinableObject, PagePart):
         query__call_target__attribute='boolean',
         bulk__call_target__attribute='boolean',
     )
-    def boolean(cls, is_report=False, call_target=None, **kwargs):
+    def boolean(cls, call_target=None, **kwargs):
         """
         Shortcut to render booleans as a check mark if true or blank if false.
         """
@@ -494,7 +494,7 @@ class Column(RefinableObject, PagePart):
             return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
 
         setdefaults_path(kwargs, dict(
-            cell__format=lambda value, **rest: yes_no_formatter(value=value, **rest) if is_report else render_icon(value),
+            cell__format=lambda value, **rest: render_icon(value),
         ))
         return call_target(**kwargs)
 

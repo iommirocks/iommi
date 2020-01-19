@@ -225,8 +225,6 @@ def test_inheritance():
 
 
 def test_output():
-    is_report = False
-
     class TestTable(Table):
         class Meta:
             attrs__class__listview = True
@@ -234,9 +232,9 @@ def test_output():
 
         foo = Column()
         bar = Column.number()
-        icon = Column.icon('history', is_report, group="group")
-        edit = Column.edit(is_report, group="group")
-        delete = Column.delete(is_report)
+        icon = Column.icon('history', group="group")
+        edit = Column.edit(group="group")
+        delete = Column.delete()
 
     rows = [
         Struct(foo="Hello räksmörgås ><&>",
@@ -581,16 +579,14 @@ def test_attrs_new_syntax():
 
 
 def test_column_presets():
-    is_report = False
-
     class TestTable(NoSortTable):
-        icon = Column.icon(is_report)
-        edit = Column.edit(is_report)
-        delete = Column.delete(is_report)
-        download = Column.download(is_report)
-        run = Column.run(is_report)
-        select = Column.select(is_report)
-        boolean = Column.boolean(is_report)
+        icon = Column.icon('some-icon')
+        edit = Column.edit()
+        delete = Column.delete()
+        download = Column.download()
+        run = Column.run()
+        select = Column.select()
+        boolean = Column.boolean()
         link = Column.link(cell__format="Yadahada name")
         number = Column.number()
 
@@ -622,7 +618,7 @@ def test_column_presets():
             </thead>
             <tbody>
                 <tr data-pk="123">
-                    <td class="cj"> <i class="fa fa-lg fa-False" /> </td>
+                    <td class="cj"> <i class="fa fa-lg fa-some-icon" /> </td>
                     <td class="cj"> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
                     <td class="cj"> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
                     <td class="cj"> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
