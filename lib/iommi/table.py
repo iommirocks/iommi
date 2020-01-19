@@ -993,27 +993,7 @@ class Table(RefinableObject, PagePart):
         self.declared_actions = collect_members(items=actions, item=action, cls=Action, store_config=self._action)
 
         self._column = {}
-
-        def generate_columns():
-            if columns is not None:
-                for column_ in columns:
-                    self._column[column_.name] = column.get(column_.name, {})
-                    yield column_
-            for name, column_ in columns_dict.items():
-                column_.name = name
-                self._column[column_.name] = column.get(column_.name, {})
-                yield column_
-            for name, column_spec in column.items():
-                column_spec = setdefaults_path(
-                    Namespace(),
-                    column_spec,
-                    call_target=self.get_meta().member_class,
-                    name=name,
-                )
-                yield column_spec()
-
-        # TODO: use collect_members and bind_members
-        columns = sort_after(list(generate_columns()))
+        columns = collect_members(items=columns, items_dict=columns_dict, item=column, cls=self.get_meta().member_class, store_config=self._column)
 
         assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
 
@@ -1228,7 +1208,7 @@ class Table(RefinableObject, PagePart):
                 bound_column._evaluate()
                 yield bound_column
 
-        # TODO: use collect_members and bind_members
+        # TODO: use bind_members
         self._bound_columns = list(bind_columns())
         self._bound_column_by_name = {bound_column.name: bound_column for bound_column in self._bound_columns}
 

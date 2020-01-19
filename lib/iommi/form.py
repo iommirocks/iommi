@@ -1353,27 +1353,8 @@ class Form(RefinableObject, PagePart):
         self.declared_actions = collect_members(items=actions, item=action, cls=Action, store_config=self._action)
 
         self._field = {}
-
-        def generate_fields():
-            if fields is not None:
-                for field_ in fields:
-                    self._field[field_.name] = field.get(field_.name, {})
-                    yield field_
-            for name, field_ in fields_dict.items():
-                field_.name = name
-                self._field[name] = field.get(name, {})
-                yield field_
-            for name, field_spec in field.items():
-                field_spec = setdefaults_path(
-                    Namespace(),
-                    field_spec,
-                    call_target=self.get_meta().member_class,
-                    name=name,
-                )
-                yield field_spec()
-
-        # TODO: use collect_members and bind_members
-        self.declared_fields = {x.name: x for x in sort_after(list(generate_fields()))}
+        # TODO: ugh, why is this a dict, but not the corresponding on Query, Table, Page?
+        self.declared_fields = {x.name: x for x in collect_members(items=fields, items_dict=fields_dict, item=field, cls=self.get_meta().member_class, store_config=self._field)}
 
     def on_bind(self) -> None:
         self._valid = None
@@ -1390,6 +1371,7 @@ class Form(RefinableObject, PagePart):
         self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
 
         # TODO: Clean up _fields, fields, declared_fields, fields_by_name mess
+        # TODO: use bind_members
         self._fields: List[Field] = [f.bind(parent=self) for f in self.declared_fields.values()]
 
         for field in self._fields:

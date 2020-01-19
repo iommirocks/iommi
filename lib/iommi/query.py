@@ -20,6 +20,7 @@ from iommi.base import (
     PagePart,
     request_data,
     setup_endpoint_proxies,
+    collect_members,
 )
 from iommi.form import (
     bool_parse,
@@ -507,7 +508,6 @@ class Query(RefinableObject, PagePart):
         self.bound_variables: List[Variable] = None
         self.bound_variable_by_name: Dict[str, Variable] = None
         self.form = None
-        self._variable = {}
         self._form = None
 
         super(Query, self).__init__(
@@ -516,28 +516,11 @@ class Query(RefinableObject, PagePart):
             **kwargs
         )
 
-        def generate_variables():
-            if variables is not None:
-                for variable_ in variables:
-                    self._variable[variable_.name] = variable.get(variable_.name, {})
-                    yield variable_
-            for name, variable_ in variables_dict.items():
-                variable_.name = name
-                self._variable[variable_.name] = variable.get(variable_.name, {})
-                yield variable_
-            for name, variable_spec in variable.items():
-                variable_spec = setdefaults_path(
-                    Namespace(),
-                    variable_spec,
-                    call_target=self.get_meta().member_class,
-                    name=name,
-                )
-                yield variable_spec()
-
-        # TODO: use collect_members and bind_members
-        self.variables = sort_after(list(generate_variables()))
+        self._variable = {}
+        self.variables = collect_members(items=variables, items_dict=variables_dict, item=variable, cls=self.get_meta().member_class, store_config=self._variable)
 
     def on_bind(self) -> None:
+        # TODO: use bind_members
         bound_variables = [v.bind(parent=self) for v in self.variables]
         self.bound_variables = filter_show_recursive(bound_variables)
         self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
