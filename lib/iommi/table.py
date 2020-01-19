@@ -80,6 +80,7 @@ from tri_declarative import (
     setdefaults_path,
     sort_after,
     with_meta,
+    evaluate_recursive_strict,
 )
 from tri_struct import (
     merged,
@@ -759,7 +760,7 @@ class BoundCell(object):
 
     @property
     def attrs(self):
-        return evaluate_recursive(
+        return evaluate_recursive_strict(
             self.bound_column.cell.attrs,
             table=self.table,
             column=self.bound_column,
@@ -1344,7 +1345,7 @@ class Table(RefinableObject, PagePart):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
-            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive(self.row, table=self, row=row))
+            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive_strict(self.row, table=self, row=row))
 
     def render_attrs(self):
         attrs = self.attrs.copy()
