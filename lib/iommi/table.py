@@ -900,13 +900,15 @@ class Table(RefinableObject, PagePart):
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
-    form_class = Refinable()
-    query_class = Refinable()
+    form_class: Type[Form] = Refinable()
+    query_class: Type[Query] = Refinable()
+    action_class: Type[Action] = Refinable()
 
     class Meta:
         member_class = Column
         form_class = Form
         query_class = Query
+        action_class = Action
         endpoint__tbody = (lambda table, key, value: {'html': table.render(template='tri_table/table_container.html')})
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
@@ -988,8 +990,7 @@ class Table(RefinableObject, PagePart):
         model, rows = model_and_rows(model, rows)
 
         self._action = {}
-        # TODO: Action class here should be self.get_meta().SOMETHING_class,
-        self.declared_actions = collect_members(items=actions, item=action, cls=Action, store_config=self._action)
+        self.declared_actions = collect_members(items=actions, item=action, cls=self.get_meta().action_class, store_config=self._action)
 
         self._column = {}
         columns = collect_members(items=columns, items_dict=columns_dict, item=column, cls=self.get_meta().member_class, store_config=self._column)

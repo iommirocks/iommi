@@ -18,6 +18,7 @@ from typing import (
     Set,
     Tuple,
     Union,
+    Type,
 )
 
 from django.http import HttpResponseRedirect
@@ -1283,7 +1284,8 @@ class Form(RefinableObject, PagePart):
     endpoint: Namespace = Refinable()
     extra: Namespace = Refinable()
     base_template: str = Refinable()
-    member_class = Refinable()
+    member_class: Type[Field] = Refinable()
+    action_class: Type[Action] = Refinable()
     default_child = Refinable()
     template_name = Refinable()
 
@@ -1291,6 +1293,7 @@ class Form(RefinableObject, PagePart):
         base_template = 'iommi/form/base.html'
         template_name = 'iommi/form/form.html'
         member_class = Field
+        action_class = Action
 
     def __repr__(self):
         return f'<Form: {self.name} at path {self.path()}>'
@@ -1349,8 +1352,7 @@ class Form(RefinableObject, PagePart):
         self.mode = INITIALS_FROM_GET
 
         self._action = {}
-        # TODO: Action class here should be self.get_meta().SOMETHING_class,
-        self.declared_actions = collect_members(items=actions, item=action, cls=Action, store_config=self._action)
+        self.declared_actions = collect_members(items=actions, item=action, cls=self.get_meta().action_class, store_config=self._action)
 
         self._field = {}
         # TODO: ugh, why is this a dict, but not the corresponding on Query, Table, Page?
