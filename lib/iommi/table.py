@@ -1200,7 +1200,8 @@ class Table(RefinableObject, PagePart):
         if self._has_prepared:
             return
 
-        self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, table=self)
+        # TODO: we throw away bound_actions here, only storing shown_bound_actions
+        _, self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, table=self)
 
         def bind_columns():
             for column in self.columns:

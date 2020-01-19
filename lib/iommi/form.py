@@ -1370,7 +1370,8 @@ class Form(RefinableObject, PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
+        # TODO: we throw away bound_actions here, only storing shown_bound_actions
+        _, self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
 
         # TODO: Clean up _fields, fields, declared_fields, fields_by_name mess
         # TODO: use bind_members

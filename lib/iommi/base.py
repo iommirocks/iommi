@@ -6,6 +6,7 @@ from typing import (
     Dict,
     List,
     Union,
+    Tuple,
 )
 
 from django.conf import settings
@@ -386,15 +387,15 @@ def collect_members(*, items: List, items_dict: Dict = None, item: Namespace = N
     return sort_after(list(unbound_items()))
 
 
-def bind_members(*, unbound_items, parent, **kwargs):
-    bound_items = sort_after([x.bind(parent=parent) for x in unbound_items])
+def bind_members(*, unbound_items, parent, **kwargs) -> Tuple[Dict[str, PagePart], Dict[str, PagePart]]:
+    bound_items = Struct({item.name: item for item in sort_after([x.bind(parent=parent) for x in unbound_items])})
 
-    for item in bound_items:
+    for item in bound_items.values():
         item._evaluate_show(**kwargs)
 
-    items = Struct({item.name: item for item in bound_items if should_show(item)})
+    shown_bound_items = Struct({item.name: item for item in bound_items.values() if should_show(item)})
 
-    for item in items.values():
+    for item in shown_bound_items.values():
         item._evaluate(**kwargs)
 
-    return items
+    return bound_items, shown_bound_items
