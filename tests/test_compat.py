@@ -55,11 +55,11 @@ def test_format_html5():
 
 
 # TODO: rendering a form should work, but right now there's render_with_style.. which we should fix
-# def test_format_html6():
-#     form = Form(fields=[Field(name='foo')], request=RequestFactory().get('/'))
-#     actual = form.fields_by_name.foo.render()
-#     print(actual)
-#     assert type(actual) == SafeText
+def test_format_html6():
+    form = Form(fields=[Field(name='foo')]).bind(request=RequestFactory().get('/'))
+    actual = form.fields_by_name.foo.render()
+    print(actual)
+    assert type(actual) == SafeText
 
 
 def test_render_template():

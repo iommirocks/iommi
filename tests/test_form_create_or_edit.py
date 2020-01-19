@@ -14,13 +14,6 @@ from tests.helpers import req
 from tests.test_forms import remove_csrf
 
 
-# TODO: rewrite tests to not require this thing
-def get_request_context(response):
-    if 'context_instance' in response:
-        return response['context_instance']
-    return response['context']
-
-
 @pytest.mark.django_db
 def test_create_and_edit_object():
     from tests.models import CreateOrEditObjectTest, Foo
@@ -39,7 +32,7 @@ def test_create_and_edit_object():
     response = p.parts.create.render(render__call_target=lambda **kwargs: kwargs)
     form = p.parts.create
     assert form.extra.model_verbose_name == 'baz'  # check explicit model_verbose_name parameter to Form.as_create_page
-    assert get_request_context(response)['csrf_token']
+    assert response['context']['csrf_token']
 
     p = Form.as_create_page(
         model=CreateOrEditObjectTest,
@@ -57,8 +50,8 @@ def test_create_and_edit_object():
     form = p.parts.create
     assert form.extra.model_verbose_name == 'foo bar'  # Meta verbose_name
     assert form.extra.is_create is True
-    assert get_request_context(response)['foo'] == 'FOO'
-    assert get_request_context(response)['csrf_token']
+    assert response['context']['foo'] == 'FOO'
+    assert response['context']['csrf_token']
     assert response['foobarbaz'] == 'render__foobarbaz'
     assert response['template_name'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
@@ -116,7 +109,7 @@ def test_create_and_edit_object():
     assert form.fields_by_name['f_int'].value == 3
     assert form.fields_by_name['f_float'].value == 5.1
     assert form.fields_by_name['f_bool'].value is True
-    assert get_request_context(response)['csrf_token']
+    assert response['context']['csrf_token']
 
     # 4. Edit
     request = req('POST', **{
@@ -206,10 +199,9 @@ def test_namespace_forms():
 
     form_name = 'my_form'
     # Edit should NOT work when the form name does not match the POST
-    # TODO: ok to hardcode DISPATCH_PATH_SEPARATOR?
     request = req('post', **{
-        f'{form_name}/f_int': '7',
-        f'{form_name}/f_float': '11.2',
+        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_int': '7',
+        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_float': '11.2',
         '-some_other_form': '',
     })
     p = Form.as_edit_page(
@@ -230,8 +222,8 @@ def test_namespace_forms():
 
     # Edit should work when the form name is in the POST
     request = req('post', **{
-        f'{form_name}/f_int': '7',
-        f'{form_name}/f_float': '11.2',
+        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_int': '7',
+        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_float': '11.2',
         f'-{form_name}': '',
     })
     p = Form.as_edit_page(

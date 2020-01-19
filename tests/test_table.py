@@ -1511,11 +1511,6 @@ def test_ajax_custom_endpoint():
     assert actual == dict(baz='bar')
 
 
-def test_row_level_additions():
-    # TODO: empty test? what was this?
-    pass
-
-
 def test_table_extra_namespace():
     class TestTable(Table):
         class Meta:
