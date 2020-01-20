@@ -13,7 +13,14 @@ from iommi.page import (
     Page,
 )
 from iommi.table import Table
-from iommi.base import group_paths_by_children, GroupPathsByChildrenError, find_target, InvalidEndpointPathException
+from iommi.base import (
+    group_paths_by_children,
+    GroupPathsByChildrenError,
+    find_target,
+    InvalidEndpointPathException,
+    evaluate_attrs,
+)
+from tri_declarative import Namespace
 from tri_struct import Struct
 
 from tests.helpers import (
@@ -47,11 +54,11 @@ request = req('get')  # TODO: we shouldn't need this, but tri.query eagerly trie
 class MyPage(Page):
     t1 = Table.from_model(
         model=T1,
-        column__foo=dict(
+        columns__foo=dict(
             query__show=True,
             query__gui__show=True,
         ),
-        column__bar=dict(
+        columns__bar=dict(
             query__show=True,
             query__gui__show=True,
         ),
@@ -60,11 +67,11 @@ class MyPage(Page):
 
     t2 = Table.from_model(
         model=T2,
-        column__foo=dict(
+        columns__foo=dict(
             query__show=True,
             query__gui__show=True,
         ),
-        column__bar=dict(
+        columns__bar=dict(
             query__show=True,
             query__gui__show=True,
         ),
@@ -264,4 +271,27 @@ def test_page_render():
 
     actual = BeautifulSoup(response.content, 'html.parser').prettify()
     expected = BeautifulSoup(expected_html, 'html.parser').prettify()
+    assert actual == expected
+
+
+def test_evaluate_attrs():
+    actual = evaluate_attrs(
+        Namespace(
+            class__listview=True,
+            class__foo=lambda foo: True,
+            data=1,
+            data2=lambda foo: foo,
+        ),
+        foo=3
+    )
+
+    expected = {
+        'class': {
+            'listview': True,
+            'foo': True,
+        },
+        'data': 1,
+        'data2': 3,
+    }
+
     assert actual == expected

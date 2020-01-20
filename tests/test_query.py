@@ -58,10 +58,10 @@ def test_show():
             extra__foo='show2')
 
     # noinspection PyTypeChecker
-    assert [x.name for x in ShowQuery().bind(request=req('get', foo='hide')).bound_variables] == ['foo']
+    assert list(ShowQuery().bind(request=req('get', foo='hide')).variables.keys()) == ['foo']
 
     # noinspection PyTypeChecker
-    assert [x.name for x in ShowQuery().bind(request=req('get', foo='show')).bound_variables] == ['foo', 'bar']
+    assert list(ShowQuery().bind(request=req('get', foo='show')).variables.keys()) == ['foo', 'bar']
 
 
 def test_request_data():
@@ -181,12 +181,9 @@ def test_invalid_value():
     request = req('get', query='bazaar=asd')
     # noinspection PyTypeChecker
     query2 = Query(
-        variables=[
-            Variable.integer(
-                name='bazaar',
-                value_to_q=lambda variable, op, value_string_or_f: None
-            ),
-        ],
+        variables__bazaar=Variable.integer(
+            value_to_q=lambda variable, op, value_string_or_f: None
+        ),
     ).bind(request=request)
     with pytest.raises(QueryException) as e:
         query2.to_q()
@@ -196,9 +193,7 @@ def test_invalid_value():
 def test_invalid_variable():
     # noinspection PyTypeChecker
     query2 = Query(
-        variables=[
-            Variable(name='bazaar')
-        ]
+        variables__bazaar=Variable(),
     ).bind(request=req('get', query='not_bazaar=asd'))
     with pytest.raises(QueryException) as e:
         query2.to_q()
@@ -208,9 +203,7 @@ def test_invalid_variable():
 def test_invalid_form_data():
     # noinspection PyTypeChecker
     query2 = Query(
-        variables=[
-            Variable.integer(name='bazaar', attr='quux__bar__bazaar', gui__show=True),
-        ],
+        variables__bazaar=Variable.integer(attr='quux__bar__bazaar', gui__show=True),
     ).bind(request=req('get', bazaar='asds'))
     assert query2.to_query_string() == ''
     assert repr(query2.to_q()) == repr(Q())
@@ -219,9 +212,7 @@ def test_invalid_form_data():
 def test_none_attr():
     # noinspection PyTypeChecker
     query2 = Query(
-        variables=[
-            Variable(name='bazaar', attr=None, gui__show=True)
-        ]
+        variables__bazaar=Variable(attr=None, gui__show=True),
     ).bind(request=req('get', bazaar='foo'))
     assert repr(query2.to_q()) == repr(Q())
 
@@ -294,7 +285,7 @@ def test_choice_queryset():
     query2 = Query2().bind(request=req('post', **{'-': '-', 'foo': str(random_valid_obj.pk)}))
     form = query2.form
     assert form.is_valid()
-    assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
+    assert set(form.fields['foo'].choices) == set(Foo.objects.all())
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
 
@@ -362,7 +353,7 @@ def test_multi_choice_queryset():
     query2 = Query2().bind(request=req('post', **{'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
     form = query2.form
     assert form.is_valid()
-    assert set(form.fields_by_name['foo'].choices) == set(Foo.objects.all())
+    assert set(form.fields['foo'].choices) == set(Foo.objects.all())
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk__in=[random_valid_obj.pk, random_valid_obj2.pk]))
 
@@ -391,16 +382,16 @@ def test_multi_choice_queryset():
 
 @pytest.mark.django_db
 def test_from_model_with_model_class():
-    t = Query.from_model(model=Foo)
-    assert [x.name for x in t.variables] == ['id', 'foo']
-    assert [x.name for x in t.variables if x.show] == ['foo']
+    t = Query.from_model(model=Foo).bind(request=None)
+    assert list(t.declared_variables.keys()) == ['id', 'foo']
+    assert list(t.variables.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
-    t = Query.from_model(rows=Foo.objects.all())
-    assert [x.name for x in t.variables] == ['id', 'foo']
-    assert [x.name for x in t.variables if x.show] == ['foo']
+    t = Query.from_model(rows=Foo.objects.all()).bind(request=None)
+    assert list(t.declared_variables.keys()) == ['id', 'foo']
+    assert list(t.variables.keys()) == ['foo']
 
 
 def test_from_model_foreign_key():
@@ -409,8 +400,8 @@ def test_from_model_foreign_key():
             variables = Query.variables_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert [x.name for x in t.variables] == ['id', 'foo']
-    assert isinstance(t.bound_variable_by_name['foo'].choices, QuerySet)
+    assert list(t.declared_variables.keys()) == ['id', 'foo']
+    assert isinstance(t.variables['foo'].choices, QuerySet)
 
 
 @pytest.mark.django_db
@@ -428,7 +419,7 @@ def test_endpoint_dispatch():
     request = req('get')
     query = MyQuery().bind(request=request)
 
-    assert '/foo' == query.form.fields_by_name.foo.endpoint_path()
+    assert '/foo' == query.form.fields.foo.endpoint_path()
     expected = {
         'more': False,
         'page': 1,
@@ -532,7 +523,7 @@ def test_from_model_with_inheritance():
     query = MyQuery.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        variable__value__gui__show=True,
+        variables__value__gui__show=True,
     )
     query.bind(request=req('get'))
 

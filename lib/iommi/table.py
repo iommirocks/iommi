@@ -1,6 +1,6 @@
 from enum import (
-    auto,
     Enum,
+    auto,
 )
 from functools import total_ordering
 from itertools import groupby
@@ -33,24 +33,27 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from iommi._web_compat import (
-    render_template,
     Template,
+    render_template,
 )
 from iommi.base import (
+    DISPATCH_PREFIX,
+    PagePart,
     bind_members,
     collect_members,
-    DISPATCH_PREFIX,
     model_and_rows,
     no_copy_on_bind,
-    PagePart,
     path_join,
     setup_endpoint_proxies,
+    evaluate_member,
+    evaluate_members,
+    evaluate_attrs,
 )
 from iommi.form import (
     Action,
+    Form,
     create_members_from_model,
     expand_member,
-    Form,
     group_actions,
     member_from_model,
 )
@@ -63,28 +66,26 @@ from iommi.render import (
     render_attrs,
 )
 from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
     EMPTY,
-    evaluate,
-    evaluate_recursive,
-    evaluate_strict,
-    getattr_path,
     LAST,
     Namespace,
     Refinable,
-    refinable,
     RefinableObject,
+    class_shortcut,
+    declarative,
+    dispatch,
+    evaluate_recursive,
+    evaluate_recursive_strict,
+    evaluate_strict,
+    getattr_path,
+    refinable,
     setattr_path,
     setdefaults_path,
-    sort_after,
     with_meta,
-    evaluate_recursive_strict,
 )
 from tri_struct import (
-    merged,
     Struct,
+    merged,
 )
 
 LAST = LAST
@@ -94,11 +95,6 @@ _column_factory_by_field_type = {}
 
 def register_column_factory(field_class, factory):
     _column_factory_by_field_type[field_class] = factory
-
-
-def evaluate_members(obj, attrs, **kwargs):
-    for attr in attrs:
-        setattr(obj, attr, evaluate_recursive(getattr(obj, attr), **kwargs))
 
 
 DESCENDING = 'descending'
@@ -286,6 +282,7 @@ class Column(RefinableObject, PagePart):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         """
 
+        # TODO: what's this?
         if 'attrs' in kwargs:
             if not kwargs['attrs']['class']:
                 del kwargs['attrs']['class']
@@ -323,7 +320,7 @@ class Column(RefinableObject, PagePart):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
-        for k, v in self.parent._column.get(self.name, {}).items():
+        for k, v in self.parent._columns_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
 
         self.header.attrs = Namespace(self.header.attrs.copy())
@@ -340,6 +337,12 @@ class Column(RefinableObject, PagePart):
             attr=self.attr,
         )
         self.declared_column = self._declared
+
+    def _evaluate_attribute(self, key, **kwargs):
+        evaluate_member(self, key, table=self.parent, column=self, **kwargs)
+
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', **kwargs)
 
     def _evaluate(self):
         """
@@ -700,8 +703,8 @@ class BoundRow(object):
         assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
         self.template = template
-        self.attrs = attrs
         self.extra = extra
+        self.attrs = evaluate_attrs(attrs, table=table, row=row, bound_row=self)
 
     def render(self):
         if self.template:
@@ -726,11 +729,11 @@ class BoundRow(object):
         return mark_safe('\n'.join(bound_cell.render() for bound_cell in self))
 
     def __iter__(self):
-        for bound_column in self.table.shown_bound_columns:
+        for bound_column in self.table.columns.values():
             yield BoundCell(bound_row=self, bound_column=bound_column)
 
     def __getitem__(self, name):
-        bound_column = self.table.bound_column_by_name[name]
+        bound_column = self.table.columns[name]
         return BoundCell(bound_row=self, bound_column=bound_column)
 
 
@@ -844,7 +847,7 @@ class Header(object):
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
         self.attrs = attrs
-        evaluate_members(self, ['attrs'], header=self, table=table, bound_column=bound_column)
+        self.attrs = evaluate_attrs(self.attrs, table=table, bound_column=bound_column, header=self)
 
     @property
     def rendered(self):
@@ -858,7 +861,7 @@ class Header(object):
 
 
 @no_copy_on_bind
-@declarative(Column, 'columns_dict')
+@declarative(Column, '_columns_dict')
 @with_meta
 class Table(RefinableObject, PagePart):
     """
@@ -888,7 +891,7 @@ class Table(RefinableObject, PagePart):
     header = Refinable()
     model: Type['django.db.models.Model'] = Refinable()
     rows = Refinable()
-    column = Refinable()
+    columns = Refinable()
     bulk: Namespace = Refinable()
     default_child = Refinable()
     extra: Namespace = Refinable()
@@ -897,7 +900,6 @@ class Table(RefinableObject, PagePart):
     paginator: Namespace = Refinable()
     paginator_template: str = Refinable()
     page_size: int = Refinable()
-    actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
     form_class: Type[Form] = Refinable()
@@ -923,7 +925,7 @@ class Table(RefinableObject, PagePart):
             # TODO: should be a PagePart?
             columns=Struct(
                 name='columns',
-                children=lambda: self.bound_column_by_name,
+                children=lambda: self.columns,
             ),
             # TODO: this can have name collisions with the keys above
             **setup_endpoint_proxies(self.endpoint)
@@ -949,7 +951,7 @@ class Table(RefinableObject, PagePart):
         pass
 
     @dispatch(
-        column=EMPTY,
+        columns=EMPTY,
         bulk_filter={},
         bulk_exclude={},
         sortable=True,
@@ -964,7 +966,7 @@ class Table(RefinableObject, PagePart):
         paginator_template='iommi/table/paginator.html',
         paginator__call_target=Paginator,
 
-        action=EMPTY,
+        actions=EMPTY,
         actions_template='iommi/form/actions.html',
         query=EMPTY,
         bulk=EMPTY,
@@ -975,7 +977,7 @@ class Table(RefinableObject, PagePart):
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, columns=None, columns_dict=None, model=None, rows=None, filter=None, column=None, bulk=None, header=None, query=None, row=None, instance=None, action=None, actions=None, default_child=None, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, instance=None, actions: Namespace = None, default_child=None, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -986,18 +988,17 @@ class Table(RefinableObject, PagePart):
         :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
         :param sortable: set this to false to turn off sorting for all columns
         """
+        assert isinstance(columns, dict)
 
         model, rows = model_and_rows(model, rows)
 
-        self._action = {}
-        self.declared_actions = collect_members(items=actions, item=action, cls=self.get_meta().action_class, store_config=self._action)
+        self._actions_unapplied_data = {}
+        self.declared_actions = collect_members(items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
+        self.actions = None
 
-        self._column = {}
-        columns = collect_members(items=columns, items_dict=columns_dict, item=column, cls=self.get_meta().member_class, store_config=self._column)
-
-        assert len(columns) > 0, 'columns must be specified. It is only set to None to make linting tools not give false positives on the declarative style'
-
-        self.columns: List[Column] = columns
+        self._columns_unapplied_data = {}
+        self.declared_columns: Dict[str, Column] = collect_members(items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
+        self.columns = None
 
         self.instance = instance
 
@@ -1008,13 +1009,10 @@ class Table(RefinableObject, PagePart):
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
-            column=column,
             **kwargs
         )
 
         self.default_child = default_child
-
-        self._actions = actions
 
         self.query_args = query
         self._query: Query = None
@@ -1022,9 +1020,6 @@ class Table(RefinableObject, PagePart):
         self._query_error: List[str] = None
 
         self._bulk_form: Form = None
-        self._bound_columns: List[Column] = None
-        self._shown_bound_columns: List[Column] = None
-        self._bound_column_by_name: Dict[str, Column] = None
         self._has_prepared: bool = False
         self.header_levels = None
 
@@ -1048,7 +1043,7 @@ class Table(RefinableObject, PagePart):
         return render_template(self.request(), self.filter.template, merged(self.context, form=self.query_form))
 
     def _prepare_auto_rowspan(self):
-        auto_rowspan_columns = [column for column in self.shown_bound_columns if column.auto_rowspan]
+        auto_rowspan_columns = [column for column in self.columns.values() if column.auto_rowspan]
 
         if auto_rowspan_columns:
             self.rows = list(self.rows)
@@ -1087,7 +1082,7 @@ class Table(RefinableObject, PagePart):
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            tmp = [x for x in self._shown_bound_columns if x.name == order_field]
+            tmp = [x for x in self.columns.values() if x.name == order_field]
             if len(tmp) == 0:
                 return  # Unidentified sort column
             sort_column = tmp[0]
@@ -1107,9 +1102,9 @@ class Table(RefinableObject, PagePart):
                     self.rows = self.rows.order_by(*order_args)
 
     def _prepare_headers(self):
-        prepare_headers(self, self.shown_bound_columns)
+        prepare_headers(self, self.columns.values())
 
-        for bound_column in self._bound_columns:
+        for bound_column in self.columns.values():
             evaluate_members(
                 bound_column,
                 [
@@ -1125,7 +1120,7 @@ class Table(RefinableObject, PagePart):
         subheaders = []
 
         # The id(header) and stuff is to make None not be equal to None in the grouping
-        for _, group_iterator in groupby(self._shown_bound_columns, key=lambda header: header.group or id(header)):
+        for _, group_iterator in groupby(self.columns.values(), key=lambda header: header.group or id(header)):
             columns_in_group = list(group_iterator)
             group_name = columns_in_group[0].group
 
@@ -1161,6 +1156,7 @@ class Table(RefinableObject, PagePart):
         else:
             self.header_levels = [superheaders, subheaders]
 
+    # TODO: clear out as many as these properties as we can
     @property
     def query(self) -> Query:
         assert self._is_bound
@@ -1181,72 +1177,49 @@ class Table(RefinableObject, PagePart):
         assert self._is_bound
         return self._bulk_form
 
-    @property
-    def bound_columns(self) -> List[Column]:
-        assert self._is_bound
-        return self._bound_columns
-
-    @property
-    def shown_bound_columns(self) -> List[Column]:
-        assert self._is_bound
-        return self._shown_bound_columns
-
-    @property
-    def bound_column_by_name(self) -> Dict[str, Column]:
-        assert self._is_bound
-        return self._bound_column_by_name
-
     def on_bind(self) -> None:
         if self._has_prepared:
             return
 
-        # TODO: we throw away bound_actions here, only storing shown_bound_actions
-        _, self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, table=self)
-
-        def bind_columns():
-            for column in self.columns:
-                bound_column = column.bind(parent=self)
-                bound_column._evaluate()
-                yield bound_column
-
-        # TODO: use bind_members
-        self._bound_columns = list(bind_columns())
-        self._bound_column_by_name = {bound_column.name: bound_column for bound_column in self._bound_columns}
-
+        # TODO: clean out _has_prepared
         self._has_prepared = True
-        self._is_bound = True
 
-        self._shown_bound_columns = [bound_column for bound_column in self._bound_columns if bound_column.show]
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self, table=self)
+        for item in self.actions.values():
+            item._evaluate()
 
-        evaluate_members(self, ['sortable'], table=self)  # needs to be done first because _prepare_headers depends on it
+        self.columns = bind_members(declared_items=self.declared_columns, parent=self)
+        for item in self.columns.values():
+            item._evaluate()
+
+        evaluate_member(self, 'sortable', table=self)  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
-        for bound_column in self._shown_bound_columns:
+        for column in self.columns.values():
             # special case for entire table not sortable
             if not self.sortable:
-                bound_column.sortable = False
+                column.sortable = False
 
         self._prepare_headers()
         evaluate_members(
             self,
             [
-                'column',
                 'bulk_filter',
                 'bulk_exclude',
-                'attrs',
                 'row',
                 'filter',
-                'model',
                 '_query',
                 'bulk',
             ],
             table=self,
         )
+        evaluate_member(self, 'model', table=self, __strict=False)
+        self.attrs = evaluate_attrs(self.attrs, table=self)
 
         if self.model:
 
             def generate_variables():
-                for column in self._bound_columns:
+                for column in self.columns.values():
                     if column.query.show:
                         query_namespace = setdefaults_path(
                             Namespace(),
@@ -1263,7 +1236,7 @@ class Table(RefinableObject, PagePart):
                             query_namespace['field_name'] = column.attr
                         yield query_namespace()
 
-            variables = list(generate_variables())
+            variables = Struct({x.name: x for x in generate_variables()})
 
             self._query = self.get_meta().query_class(
                 variables=variables,
@@ -1282,7 +1255,7 @@ class Table(RefinableObject, PagePart):
                     self._query_error = str(e)
 
             def generate_bulk_fields():
-                for column in self._bound_columns:
+                for column in self.columns.values():
                     if column.bulk.show:
                         bulk_namespace = setdefaults_path(
                             Namespace(),
@@ -1299,9 +1272,9 @@ class Table(RefinableObject, PagePart):
                             bulk_namespace['field_name'] = column.attr
                         yield bulk_namespace()
 
-            bulk_fields = list(generate_bulk_fields())
+            bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
             if bulk_fields:
-                bulk_fields.append(self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html'))
+                bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html')
 
                 self._bulk_form = self.get_meta().form_class(
                     fields=bulk_fields,
@@ -1313,8 +1286,8 @@ class Table(RefinableObject, PagePart):
                 self._bulk_form = None
 
         if isinstance(self.rows, QuerySet):
-            prefetch = [x.attr for x in self.shown_bound_columns if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
-            select = [x.attr for x in self.shown_bound_columns if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
+            prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
+            select = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
             if prefetch:
                 self.rows = self.rows.prefetch_related(*prefetch)
             if select:
@@ -1322,10 +1295,17 @@ class Table(RefinableObject, PagePart):
 
         self._prepare_auto_rowspan()
 
+    def _evaluate_attribute(self, key, **kwargs):
+        evaluate_member(self, key, table=self, **kwargs)
+
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', **kwargs)
+
     def bound_rows(self):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
+            # TODO: **evaluate_recursive_strict? I think we can not do this if we just handle some cases in the BoundRow init
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive_strict(self.row, table=self, row=row))
 
     def render_attrs(self):
@@ -1367,30 +1347,30 @@ class Table(RefinableObject, PagePart):
 
     @classmethod
     @dispatch(
-        column=EMPTY,
+        columns=EMPTY,
     )
-    def columns_from_model(cls, column, **kwargs):
+    def columns_from_model(cls, columns, **kwargs):
         return create_members_from_model(
-            member_params_by_member_name=column,
+            member_params_by_member_name=columns,
             default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
     @classmethod
     @dispatch(
-        column=EMPTY,
+        columns=EMPTY,
     )
-    def from_model(cls, rows=None, model=None, column=None, instance=None, include=None, exclude=None, extra_columns=None, **kwargs):
+    def from_model(cls, rows=None, model=None, columns=None, instance=None, include=None, exclude=None, extra_columns=None, **kwargs):
         """
         Create an entire form based on the columns of a model. To override a column parameter send keyword arguments in the form
-        of "the_name_of_the_column__param". For example:
+        of "the_name_of_the_columns__param". For example:
 
         .. code:: python
 
             class Foo(Model):
                 foo = IntegerField()
 
-            Table.from_model(request=request, model=Foo, column__foo__help_text='Overridden help text')
+            Table.from_model(request=request, model=Foo, columns__foo__help_text='Overridden help text')
 
         :param include: columns to include. Defaults to all
         :param exclude: columns to exclude. Defaults to none (except that AutoField is always excluded!)
@@ -1398,7 +1378,8 @@ class Table(RefinableObject, PagePart):
         """
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_columns, column=column)
+        # TODO: extra/extra_columns should be a namespace
+        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_columns, columns=columns)
         return cls(rows=rows, model=model, instance=instance, columns=columns, **kwargs)
 
     def bulk_queryset(self):
@@ -1433,7 +1414,7 @@ class Table(RefinableObject, PagePart):
 
                 updates = {
                     field.name: field.value
-                    for field in self.bulk_form.fields
+                    for field in self.bulk_form.fields.values()
                     if field.value is not None and field.value != '' and field.attr is not None
                 }
                 queryset.update(**updates)

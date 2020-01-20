@@ -37,7 +37,7 @@ def test_format_html4():
         RequestFactory().get('/'),
         Template('{{foo}}'),
         dict(
-            foo=Form(fields=[Field(name='foo')]),
+            foo=Form(fields=dict(foo=Field())),
         )
     )
     print(actual)
@@ -46,7 +46,7 @@ def test_format_html4():
 
 def test_format_html5():
     actual = Form(
-        fields=[Field(name='foo')],
+        fields__foo=Field(),
     ).bind(
         request=RequestFactory().get('/'),
     ).render()
@@ -56,8 +56,8 @@ def test_format_html5():
 
 # TODO: rendering a form should work, but right now there's render_with_style.. which we should fix
 def test_format_html6():
-    form = Form(fields=[Field(name='foo')]).bind(request=RequestFactory().get('/'))
-    actual = form.fields_by_name.foo.render()
+    form = Form(fields__foo=Field()).bind(request=RequestFactory().get('/'))
+    actual = form.fields.foo.render()
     print(actual)
     assert type(actual) == SafeText
 

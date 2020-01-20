@@ -54,13 +54,12 @@ And we want a computed column `square` that is the square of the value, then we 
 
     Table.from_model(
         model=Foo,
-        extra_fields=[
-            Column(
-                name='square',
+        extra_fields=dict(
+            square=Column(
                 # computed value:
                 cell__value=lambda row, **_: row.value * row.value,
             )
-        ]
+        )
     )
 
 or we could do:
@@ -105,13 +104,13 @@ If we just do :code:`Table.from_model(model=Foo)` we'll get the columns in the o
 
 .. code:: python
 
-    Table.from_model(model=Foo, column__c__after=-1)
+    Table.from_model(model=Foo, columns__c__after=-1)
 
 :code:`-1` means the first, other numbers mean index. We can also put columns after another named column like so:
 
 .. code:: python
 
-    Table.from_model(model=Foo, column__c__after='a')
+    Table.from_model(model=Foo, columns__c__after='a')
 
 this will put the columns in the order a, c, b.
 
@@ -124,8 +123,8 @@ Pass the value :code:`query__show=True` to the column, to enable searching in th
 
     Table.from_model(
         model=Foo,
-        column__a__query__show=True,
-        column__a__query__gui__show=True,
+        columns__a__query__show=True,
+        columns__a__query__gui__show=True,
     )
 
 .. _attrs:
@@ -228,7 +227,7 @@ Just pass :code:`show=False` to hide the column or :code:`show=True` to show it.
 
     Table.from_model(
         model=Foo,
-        column__a__show=lambda table, **_: table.request().GET.get('some_parameter') == 'hello!',
+        columns__a__show=lambda table, **_: table.request().GET.get('some_parameter') == 'hello!',
     )
 
 This will show the column :code:`a` only if the GET parameter :code:`some_parameter` is set to `hello!`.
@@ -278,9 +277,9 @@ we can build a table of :code:`Bar` that shows the data of `a` like this:
 
     Table.from_model(
         model=Bar,
-        extra_fields=[
-            Column.from_model(name='c__a'),
-        ],
+        extra_fields=dict(
+            c__a=Column.from_model,
+        ),
     )
 
 How do I turn off sorting? (on a column or table wide)
@@ -292,7 +291,7 @@ To turn off column on a column pass it :code:`sortable=False` (you can also use 
 
     Table.from_model(
         model=Foo,
-        column__a__sortable=False,
+        columns__a__sortable=False,
     )
 
 and to turn it off on the entire table:
@@ -313,7 +312,7 @@ The :code:`display_name` property of a column is displayed in the header.
 
     Table.from_model(
         model=Foo,
-        column__a__display_name='header title',
+        columns__a__display_name='header title',
     )
 
 How do I set the default sort order of a column to be descending instead of ascending?
@@ -323,7 +322,7 @@ How do I set the default sort order of a column to be descending instead of asce
 
     Table.from_model(
         model=Foo,
-        column__a__sort_default_desc=True,  # or a lambda!
+        columns__a__sort_default_desc=True,  # or a lambda!
     )
 
 
@@ -334,8 +333,8 @@ How do I group columns?
 
     Table.from_model(
         model=Foo,
-        column__a__group='foo',
-        column__b__group='foo',
+        columns__a__group='foo',
+        columns__b__group='foo',
     )
 
 The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
@@ -350,7 +349,7 @@ You can manually set the rowspan attribute via :code:`row__attrs__rowspan` but t
 
     Table.from_model(
         model=Foo,
-        column__a__auto_rowspan=True,
+        columns__a__auto_rowspan=True,
     )
 
 How do I make a freetext search field?
@@ -362,15 +361,15 @@ If you want to filter based on a freetext query on one or more columns we've got
 
     Table.from_model(
         model=Foo,
-        column__a__query__freetext=True,
-        column__b__query__freetext=True,
+        columns__a__query__freetext=True,
+        columns__b__query__freetext=True,
     )
 
-(You don't need to enable querying with :code:`column__b__query__show=True` first)
+(You don't need to enable querying with :code:`columns__b__query__show=True` first)
 
 What is the difference between `attr` and `name`?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :code:`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use :code:`__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to :code:`None` to not read any attribute from the row.
 
-:code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.column_by_name` and it's the name used in the GET parameter to sort by that column. This is a required field.
+:code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.columns` and it's the name used in the GET parameter to sort by that column. This is a required field.

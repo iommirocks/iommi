@@ -14,7 +14,7 @@ def render_attrs(attrs):
                 if value is None:
                     continue
                 if value is True:
-                    yield '%s' % (key, )
+                    yield f'{key}'
                     continue
                 if isinstance(value, dict):
                     if key == 'class':
@@ -30,12 +30,13 @@ def render_attrs(attrs):
                         if not value:
                             continue
                     else:
-                        raise TypeError('Only the class and style attributes can be dicts, you sent %s' % value)
+                        raise TypeError(f'Only the class and style attributes can be dicts, you sent {value}')
                 elif isinstance(value, (list, tuple)):
-                    raise TypeError("Attributes can't be of type %s, you sent %s" % (type(value).__name__, value))
+                    raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value}")
                 elif callable(value):
-                    raise TypeError("Attributes can't be callable, you sent %s" % value)
-                yield '%s="%s"' % (key, ('%s' % value).replace('"', '&quot;'))
+                    raise TypeError(f"Attributes can't be callable, you sent {value} for key {key}")
+                v = f'{value}'.replace('"', '&quot;')
+                yield f'{key}="{v}"'
         return mark_safe(' %s' % ' '.join(parts()))
     return ''
 
@@ -45,4 +46,4 @@ def render_class(class_dict):
 
 
 def render_style(class_dict):
-    return '; '.join(sorted(('%s: %s' % (k, v)) for k, v in class_dict.items()))
+    return '; '.join(sorted(f'{k}: {v}' for k, v in class_dict.items()))

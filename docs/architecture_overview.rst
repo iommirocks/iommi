@@ -44,10 +44,10 @@ that can look both like a normal simple python API:
 .. code:: python
 
     my_table = Table(
-        columns=[
-            Column(name='foo'),
-            Column('bar'),
-        ],
+        columns=dict(
+            foo=Column(),
+            bar=Column(),
+        ),
         sortable=False)
 
 This code is hopefully pretty self explanatory. But the cool thing is
@@ -73,7 +73,7 @@ constructor:
 .. code:: python
 
     my_table = MyTable(
-        column__foo__show=False,  # <- hides the column foo
+        columns__foo__show=False,  # <- hides the column foo
         sortable=True,            # <- turns on sorting again
     )
 
@@ -85,7 +85,7 @@ Namespace dispatching
 ---------------------
 
 I've already hinted at this above in the example where we do
-``column__foo__show=False``. This is an example of the powerful
+``columns__foo__show=False``. This is an example of the powerful
 namespace dispatch mechanism from tri.declarative. It's inspired by the
 query syntax of Django where you use ``__`` to jump namespace. (If
 you're not familiar with Django, here's the gist of it: you can do

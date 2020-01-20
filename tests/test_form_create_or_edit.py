@@ -36,8 +36,8 @@ def test_create_and_edit_object():
 
     p = Form.as_create_page(
         model=CreateOrEditObjectTest,
-        field__f_int__initial=1,
-        field__f_float__initial=lambda form, field: 2,
+        fields__f_int__initial=1,
+        fields__f_float__initial=lambda form, field: 2,
         template_name='<template name>',
     )
     p.bind(request=request)
@@ -55,12 +55,12 @@ def test_create_and_edit_object():
     assert response['foobarbaz'] == 'render__foobarbaz'
     assert response['template_name'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
-    assert form.fields_by_name['f_int'].initial == 1
-    assert form.fields_by_name['f_int'].errors == set()
-    assert form.fields_by_name['f_int'].value == 1
-    assert form.fields_by_name['f_float'].value == 2
-    assert form.fields_by_name['f_bool'].value is None
-    assert set(form.fields_by_name.keys()) == {'f_int', 'f_float', 'f_bool', 'f_foreign_key', 'f_many_to_many'}
+    assert form.fields['f_int'].initial == 1
+    assert form.fields['f_int'].errors == set()
+    assert form.fields['f_int'].value == 1
+    assert form.fields['f_float'].value == 2
+    assert form.fields['f_bool'].value is None
+    assert set(form.fields.keys()) == {'f_int', 'f_float', 'f_bool', 'f_foreign_key', 'f_many_to_many'}
 
     # 2. Create
     foo = Foo.objects.create(foo=7)
@@ -106,9 +106,9 @@ def test_create_and_edit_object():
     )
     form = p.parts.edit
     assert form.get_errors() == {}
-    assert form.fields_by_name['f_int'].value == 3
-    assert form.fields_by_name['f_float'].value == 5.1
-    assert form.fields_by_name['f_bool'].value is True
+    assert form.fields['f_int'].value == 3
+    assert form.fields['f_float'].value == 5.1
+    assert form.fields['f_bool'].value is True
     assert response['context']['csrf_token']
 
     # 4. Edit
@@ -256,7 +256,7 @@ def test_create_or_edit_object_dispatch():
 
     response = Form.as_create_page(
         model=Bar,
-        field__foo__extra__endpoint_attr='foo',
+        fields__foo__extra__endpoint_attr='foo',
         template_name='<template name>',
     ).bind(request=request).render_to_response()
     assert json.loads(response.content) == dict(

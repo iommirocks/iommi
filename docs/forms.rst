@@ -56,14 +56,12 @@ or just instantiate a :code:`Form` with a :code:`Field` list and use it directly
 .. code:: python
 
     def edit_user_view(request, username):
-        form = Form(fields=[
-            Field.text(
-                name='name',
+        form = Form(fields=dict(
+            name=Field.text(
                 is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'),
             ),
-            Field.text(name='username'),
-            Field.boolean(
-                name='is_admin',
+            username=Field.text(),
+            is_admin=Field.boolean(
                 # show only for staff
                 show=lambda form, **_: form.request().user.is_staff,
                 label_template='tweak_label_tag.html',

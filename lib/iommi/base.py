@@ -4,9 +4,9 @@ from collections import defaultdict
 from functools import wraps
 from typing import (
     Dict,
-    List,
     Union,
-    Tuple,
+    Any,
+    Type,
 )
 
 from django.conf import settings
@@ -27,6 +27,9 @@ from tri_declarative import (
     setdefaults_path,
     should_show,
     sort_after,
+    evaluate_recursive_strict,
+    evaluate_strict,
+    evaluate,
 )
 from tri_struct import Struct
 
@@ -358,44 +361,68 @@ def no_copy_on_bind(cls):
     return cls
 
 
-def collect_members(*, items: List, items_dict: Dict = None, item: Namespace = None, cls, store_config):
-    def handle_instance(x, name):
-        x.name = name
-        store_config[x.name] = item.get(x.name, {})
-        return x
+def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unapplied_config: Dict) -> Dict[str, Any]:
+    unbound_items = {}
 
-    def unbound_items():
-        if items is not None:
-            for x in items:
-                yield handle_instance(x, x.name)
-        if items_dict is not None:
-            for name, x in items_dict.items():
-                yield handle_instance(x, name)
-        if item is not None:
-            for name, x_spec in item.items():
-                if isinstance(x_spec, dict):
-                    x_spec = setdefaults_path(
+    if items_dict is not None:
+        for name, x in items_dict.items():
+            x.name = name
+            unbound_items[name] = x
+
+    if items is not None:
+        for name, item in items.items():
+            if not isinstance(item, dict):
+                item.name = name
+                unbound_items[name] = item
+            else:
+                if name in unbound_items:
+                    unapplied_config[name] = item
+                else:
+                    item = setdefaults_path(
                         Namespace(),
-                        x_spec,
+                        item,
                         call_target=cls,
                         name=name,
                     )
-                    yield x_spec()
-                else:
-                    yield handle_instance(x_spec, name)
+                    unbound_items[name] = item()
 
-    return sort_after(list(unbound_items()))
+    return Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
 
 
-def bind_members(*, unbound_items, parent, **kwargs) -> Tuple[Dict[str, PagePart], Dict[str, PagePart]]:
-    bound_items = Struct({item.name: item for item in sort_after([x.bind(parent=parent) for x in unbound_items])})
+def bind_members(*, declared_items: Dict[str, Any], parent: PagePart, **kwargs) -> Dict[str, Any]:
+    bound_items = [item for item in sort_after([x.bind(parent=parent) for x in declared_items.values()])]
 
-    for item in bound_items.values():
+    for item in bound_items:
         item._evaluate_show(**kwargs)
 
-    shown_bound_items = Struct({item.name: item for item in bound_items.values() if should_show(item)})
+    return Struct({item.name: item for item in bound_items if should_show(item)})
 
-    for item in shown_bound_items.values():
-        item._evaluate(**kwargs)
 
-    return bound_items, shown_bound_items
+# TODO: maybe this is an unnecessary function
+def evaluate_members(obj, keys, **kwargs):
+    for key in keys:
+        evaluate_member(obj, key, **kwargs)
+
+
+def evaluate_member(obj, key, __strict=True, **kwargs):
+    value = getattr(obj, key)
+    # TODO: I changed this from recursive to non-recursive... was that a good idea?
+    new_value = evaluate(value, __strict=__strict, **kwargs)
+    if new_value is not value:
+        setattr(obj, key, new_value)
+
+
+def evaluate_attrs(attrs, **kwargs):
+    classes = {
+        k: evaluate_strict(v, **kwargs)
+        for k, v in attrs.get('class', {}).items()
+    }
+    attrs = {
+        k: evaluate_strict(v, **kwargs)
+        for k, v in attrs.items()
+        if k != 'class'
+    }
+    return {
+        'class': classes,
+        **attrs
+    }

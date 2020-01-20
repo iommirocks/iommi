@@ -57,10 +57,10 @@ def get_rows():
 
 
 def explicit_table():
-    columns = [
-        Column(name="foo"),
-        Column.number(name="bar"),
-    ]
+    columns = dict(
+        foo=Column(),
+        bar=Column.number(),
+    )
 
     return Table(rows=get_rows(), columns=columns, attrs__class__another_class=True, attrs__id='table_id')
 
@@ -68,8 +68,8 @@ def explicit_table():
 def declarative_table():
     class TestTable(Table):
         class Meta:
-            attrs__class__another_class = lambda table: True
-            attrs__id = lambda table: 'table_id'
+            attrs__class__another_class = lambda table, **_: True
+            attrs__id = lambda table, **_: 'table_id'
 
         foo = Column()
         bar = Column.number()
@@ -110,25 +110,25 @@ def test_render_impl(table):
 def test_declaration_merge():
     class MyTable(Table):
         class Meta:
-            columns = [Column(name='foo')]
+            columns__name = Column()
 
         bar = Column()
 
-    assert {'foo', 'bar'} == {column.name for column in MyTable(rows=[]).columns}
+    assert {'foo', 'bar'} == set(MyTable(rows=[]).bind(request=None).columns.keys())
 
 
 def test_kwarg_column_config_injection():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(rows=[], column__foo__extra__stuff="baz")
+    table = MyTable(rows=[], columns__foo__extra__stuff="baz")
     table.bind(request=None)
-    assert 'baz' == table.bound_column_by_name['foo'].extra.stuff
+    assert 'baz' == table.columns['foo'].extra.stuff
 
 
 def test_bad_arg():
     with pytest.raises(TypeError) as e:
-        Table(rows=[], columns=[Column()], foo=None)
+        Table(rows=[], columns__foo=Column(), foo=None)
     assert 'foo' in str(e.value)
 
 
@@ -137,7 +137,7 @@ def test_column_ordering():
         foo = Column(after='bar')
         bar = Column()
 
-    assert ['bar', 'foo'] == [column.name for column in MyTable(rows=[]).columns]
+    assert ['bar', 'foo'] == list(MyTable(rows=[]).bind(request=None).columns.keys())
 
 
 def test_column_with_meta():
@@ -151,8 +151,8 @@ def test_column_with_meta():
 
     table = MyTable(rows=[])
     table.bind(request=None)
-    assert not table.bound_column_by_name['foo'].sortable
-    assert not table.bound_column_by_name['bar'].sortable
+    assert not table.columns['foo'].sortable
+    assert not table.columns['bar'].sortable
 
 
 @pytest.mark.django_db
@@ -171,13 +171,13 @@ def test_django_table():
     t = TestTable(rows=TBar.objects.all().order_by('pk'))
     t.bind(request=req('get'))
 
-    assert list(t.bound_column_by_name['foo'].choices) == list(TFoo.objects.all())
+    assert list(t.columns['foo'].choices) == list(TFoo.objects.all())
 
     assert t.bulk_form._is_bound
-    assert list(t.bulk_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
+    assert list(t.bulk_form.fields['foo'].choices) == list(TFoo.objects.all())
 
     assert t.query_form._is_bound
-    assert list(t.query_form.fields_by_name['foo'].choices) == list(TFoo.objects.all())
+    assert list(t.query_form.fields['foo'].choices) == list(TFoo.objects.all())
 
     verify_table_html(table=t, expected_html="""
         <table class="listview" data-endpoint="/tbody">
@@ -220,8 +220,8 @@ def test_inheritance():
     class TestTable(FooTable, BarTable):
         another = Column()
 
-    t = TestTable(rows=[])
-    assert [c.name for c in t.columns] == ['foo', 'bar', 'another']
+    t = TestTable(rows=[]).bind(request=None)
+    assert list(t.columns.keys()) == ['foo', 'bar', 'another']
 
 
 def test_output():
@@ -525,7 +525,7 @@ def test_attrs():
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
-            attrs__foo = lambda table: 'bar'
+            attrs__foo = lambda table, **_: 'bar'
             row__attrs__class__classier = True
             row__attrs__foo = lambda table, row, **_: "barier"
 
@@ -553,10 +553,10 @@ def test_attrs_new_syntax():
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
-            attrs__foo = lambda table: 'bar'
+            attrs__foo = lambda table, **_: 'bar'
 
             row__attrs__class__classier = True
-            row__attrs__foo = lambda table: "barier"
+            row__attrs__foo = lambda table, **_: "barier"
 
         yada = Column()
 
@@ -709,7 +709,7 @@ def test_actions():
         foo = Column(header__attrs__title="Some title")
 
         class Meta:
-            action = dict(
+            actions = dict(
                 a=Action(display_name='Foo', attrs__href='/foo/', show=lambda table, **_: table.rows is not rows),
                 b=Action(display_name='Bar', attrs__href='/bar/', show=lambda table, **_: table.rows is rows),
                 c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
@@ -1002,7 +1002,7 @@ def test_template_string():
 
     verify_table_html(
         table=TestTable(
-            action__foo=Action(display_name='foo', attrs__href='bar'),
+            actions__foo=Action(display_name='foo', attrs__href='bar'),
         ),
         expected_html="""
         What filters
@@ -1073,7 +1073,7 @@ def test_row_template():
         bar = Column()
 
         class Meta:
-            row__template = lambda table: 'test_table_row.html'
+            row__template = lambda table, **_: 'test_table_row.html'
 
     rows = [Struct(foo="sentinel", bar="schmentinel")]
 
@@ -1257,9 +1257,9 @@ def test_choice_queryset():
         request=req('get'),
     )
 
-    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
-    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
-    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.query_form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
 
 
 @pytest.mark.django_db
@@ -1280,9 +1280,9 @@ def test_multi_choice_queryset():
     foo_table = FooTable(rows=TFoo.objects.all())
     foo_table.bind(request=req('get'))
 
-    assert repr(foo_table.bound_column_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.bulk_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.query_form.fields_by_name['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.query_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
 
 
 @pytest.mark.django_db
@@ -1298,7 +1298,7 @@ def test_query_namespace_inject():
         foo = Table(
             rows=[],
             model=TFoo,
-            columns=[Column(name='a', query__show=True, query__gui__show=True)],
+            columns__a=Column(name='a', query__show=True, query__gui__show=True),
             query__gui__post_validation=post_validation,
         ).bind(
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
@@ -1339,8 +1339,8 @@ def test_extra():
     class TestTable(Table):
         foo = Column(extra__foo=1, extra__bar=2)
 
-    assert TestTable(rows=[]).columns[0].extra.foo == 1
-    assert TestTable(rows=[]).columns[0].extra.bar == 2
+    assert TestTable(rows=[]).bind(request=None).columns.foo.extra.foo == 1
+    assert TestTable(rows=[]).bind(request=None).columns.foo.extra.bar == 2
 
 
 def test_row_extra():
@@ -1381,22 +1381,22 @@ def test_from_model():
     t = Table.from_model(
         model=TFoo,
         rows=TFoo.objects.all(),
-        column__a__display_name='Some a',
-        column__a__extra__stuff='Some stuff',
+        columns__a__display_name='Some a',
+        columns__a__extra__stuff='Some stuff',
     )
     t.bind(request=None)
-    assert [x.name for x in t.columns] == ['id', 'a', 'b']
-    assert [x.name for x in t.columns if x.show] == ['a', 'b']
-    assert 'Some a' == t.bound_column_by_name['a'].display_name
-    assert 'Some stuff' == t.bound_column_by_name['a'].extra.stuff
+    assert list(t.declared_columns.keys()) == ['id', 'a', 'b']
+    assert list(t.columns.keys()) == ['a', 'b']
+    assert 'Some a' == t.columns['a'].display_name
+    assert 'Some stuff' == t.columns['a'].extra.stuff
 
 
 def test_from_model_foreign_key():
     t = Table.from_model(
         model=TBar,
-    )
-    assert [x.name for x in t.columns] == ['id', 'foo', 'c']
-    assert [x.name for x in t.columns if x.show] == ['foo', 'c']
+    ).bind(request=None)
+    assert list(t.declared_columns.keys()) == ['id', 'foo', 'c']
+    assert list(t.columns.keys()) == ['foo', 'c']
 
 
 @override_settings(DEBUG=True)
@@ -1721,9 +1721,9 @@ def test_from_model_with_inheritance():
     t = MyTable.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        column__value__query__show=True,
-        column__value__query__gui__show=True,
-        column__value__bulk__show=True,
+        columns__value__query__show=True,
+        columns__value__query__gui__show=True,
+        columns__value__bulk__show=True,
     ).bind(
         request=req('get'),
     )
@@ -1737,14 +1737,14 @@ def test_from_model_with_inheritance():
 
 def test_column_merge():
     table = Table(
-        column__foo={},
+        columns__foo={},
         rows=[
             Struct(foo=1),
         ]
     )
     table.bind(request=None)
     assert len(table.columns) == 1
-    assert table.columns[0].name == 'foo'
+    assert table.columns.foo.name == 'foo'
     for row in table.bound_rows():
         assert row['foo'].value == 1
 
@@ -1753,22 +1753,22 @@ def test_hide_named_column():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(column__foo__show=False, rows=[])
+    table = MyTable(columns__foo__show=False, rows=[])
     table.bind(request=None)
-    assert len(table.shown_bound_columns) == 0
+    assert len(table.columns) == 0
 
 
 def test_override_doesnt_stick():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(column__foo__show=False, rows=[])
+    table = MyTable(columns__foo__show=False, rows=[])
     table.bind(request=None)
-    assert len(table.shown_bound_columns) == 0
+    assert len(table.columns) == 0
 
     table2 = MyTable(rows=[])
     table2.bind(request=None)
-    assert len(table2.shown_bound_columns) == 1
+    assert len(table2.columns) == 1
 
 
 @pytest.mark.django_db
@@ -1779,7 +1779,7 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
+        return Table.as_page(model=TBar, columns__foo__query=dict(show=True, gui__show=True))
 
     from iommi.page import middleware
     m = middleware(get_response)
@@ -1799,7 +1799,7 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table.as_page(model=TBar, column__foo__query=dict(show=True, gui__show=True))
+    page = Table.as_page(model=TBar, columns__foo__query=dict(show=True, gui__show=True))
     page.bind(request=None)
     assert page.children().table.default_child
     target, parents = find_target(path='/table/query/gui/field/foo', root=page)

@@ -21,6 +21,8 @@ from iommi.base import (
     request_data,
     setup_endpoint_proxies,
     collect_members,
+    bind_members,
+    evaluate_member,
 )
 from iommi.form import (
     bool_parse,
@@ -197,23 +199,28 @@ class Variable(RefinableObject, PagePart):
         return self.parent
 
     def on_bind(self) -> None:
-        for k, v in self.parent._variable.get(self.name, {}).items():
+        for k, v in self.parent._variables_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
-
-        query = self.parent
 
         if self.attr is MISSING:
             self.attr = self.name
 
+        # TODO: should we just have "declared"?
+        self.declared_variable = self._declared
+
+    def _evaluate_attribute(self, key, **kwargs):
+        evaluate_member(self, key, query=self.parent, variable=self, **kwargs)
+
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', **kwargs)
+
+    def _evaluate(self):
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
             v = getattr(self, k)
-            new_value = evaluate_recursive(v, query=query, variable=self)
+            new_value = evaluate_recursive(v, query=self.parent, variable=self)
             if new_value is not v:
                 setattr(self, k, new_value)
-
-        # TOOD: should we just have "declared"?
-        self.declared_variable = self._declared
 
     @staticmethod
     @refinable
@@ -451,7 +458,7 @@ def default_endpoint__errors(query, **_):
 
 
 @no_copy_on_bind
-@declarative(Variable, 'variables_dict')
+@declarative(Variable, '_variables_dict')
 @with_meta
 class Query(RefinableObject, PagePart):
     """
@@ -491,12 +498,13 @@ class Query(RefinableObject, PagePart):
         return dict(query=self)
 
     @dispatch(
-        # TODO: convert to an item in self.children()?
         endpoint__errors=default_endpoint__errors,
-        variable=EMPTY,
+        variables=EMPTY,
     )
-    def __init__(self, *, model=None, rows=None, variable, variables=None, variables_dict=None, **kwargs):  # variables=None to make pycharm tooling not confused
+    def __init__(self, *, model=None, rows=None, variables=None, _variables_dict=None, **kwargs):
         model, rows = model_and_rows(model, rows)
+
+        assert isinstance(variables, dict)
 
         setdefaults_path(
             kwargs,
@@ -504,9 +512,7 @@ class Query(RefinableObject, PagePart):
             gui__name='gui',
         )
 
-        self.variables: List[Variable] = None
-        self.bound_variables: List[Variable] = None
-        self.bound_variable_by_name: Dict[str, Variable] = None
+        # TODO: ?
         self.form = None
         self._form = None
 
@@ -516,21 +522,21 @@ class Query(RefinableObject, PagePart):
             **kwargs
         )
 
-        self._variable = {}
-        self.variables = collect_members(items=variables, items_dict=variables_dict, item=variable, cls=self.get_meta().member_class, store_config=self._variable)
+        self._variables_unapplied_data = {}
+        self.declared_variables = collect_members(items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class, unapplied_config=self._variables_unapplied_data)
+        self.variables = None
 
     def on_bind(self) -> None:
-        # TODO: use bind_members
-        bound_variables = [v.bind(parent=self) for v in self.variables]
-        self.bound_variables = filter_show_recursive(bound_variables)
-        self.bound_variable_by_name = {variable.name: variable for variable in self.bound_variables}
+        self.variables: Dict[str, Variable] = bind_members(declared_items=self.declared_variables, parent=self)
+        for item in self.variables.values():
+            item._evaluate()
 
         fields = []
 
-        if any(v.freetext for v in self.variables):
+        if any(v.freetext for v in self.variables.values()):
             fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
-        for variable in self.bound_variables:
+        for variable in self.variables.values():
             if variable.gui is not None and variable.gui.show:
                 # pass gui__* parameters to the GUI component
                 assert variable.name is not MISSING
@@ -546,7 +552,7 @@ class Query(RefinableObject, PagePart):
                 fields.append(params())
 
         form: Form = self.gui(
-            fields=fields,
+            fields={x.name: x for x in fields},
             default_child=True,
         )
         form.bind(parent=self)
@@ -555,6 +561,12 @@ class Query(RefinableObject, PagePart):
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
         form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
         self.form = form
+
+    def _evaluate_attribute(self, key, **kwargs):
+        evaluate_member(self, key, query=self, **kwargs)
+
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', **kwargs)
 
     def parse(self, query_string: str) -> Q:
         if not self._is_bound:
@@ -685,26 +697,31 @@ class Query(RefinableObject, PagePart):
         """
         assert self._is_bound
         variable_name, op, value_string_or_variable_name = token
-        variable = self.bound_variable_by_name.get(variable_name.lower())
+        variable = self.variables.get(variable_name.lower())
         if variable:
-            if isinstance(value_string_or_variable_name, str) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.bound_variable_by_name:
-                value_string_or_f = F(self.bound_variable_by_name[value_string_or_variable_name.lower()].attr)
+            if isinstance(value_string_or_variable_name, str) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.variables:
+                value_string_or_f = F(self.variables[value_string_or_variable_name.lower()].attr)
             else:
                 value_string_or_f = value_string_or_variable_name
             result = variable.value_to_q(variable=variable, op=op, value_string_or_f=value_string_or_f)
             if result is None:
                 raise QueryException('Unknown value "%s" for variable "%s"' % (value_string_or_f, variable.name))
             return result
-        raise QueryException(f'Unknown variable "{variable_name}", available variables: {list(self.bound_variable_by_name.keys())}')
+        raise QueryException(f'Unknown variable "{variable_name}", available variables: {list(self.variables.keys())}')
 
     def freetext_as_q(self, token):
-        assert any(v.freetext for v in self.variables)
+        assert any(v.freetext for v in self.variables.values())
         assert len(token) == 1
         token = token[0].strip('"')
 
-        return reduce(operator.or_, [Q(**{variable.attr + '__' + variable.op_to_q_op(':'): token})
-                                     for variable in self.variables
-                                     if variable.freetext])
+        return reduce(
+            operator.or_,
+            [
+                Q(**{variable.attr + '__' + variable.op_to_q_op(':'): token})
+                for variable in self.variables.values()
+                if variable.freetext
+            ]
+        )
 
     def to_query_string(self):
         """
@@ -724,20 +741,26 @@ class Query(RefinableObject, PagePart):
                     return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list]) + ')'
                 return ''.join([
                     field.name,
-                    self.bound_variable_by_name[field.name].gui_op,
-                    value_to_query_string_value_string(self.bound_variable_by_name[field.name], value)],
+                    self.variables[field.name].gui_op,
+                    value_to_query_string_value_string(self.variables[field.name], value)],
                 )
 
-            result = [expr(field, field.is_list, field.value)
-                      for field in form.fields
-                      if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '') or field.value_list not in (None, [])]
+            result = [
+                expr(field, field.is_list, field.value)
+                for field in form.fields.values()
+                if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '') or field.value_list not in (None, [])
+            ]
 
-            if FREETEXT_SEARCH_NAME in form.fields_by_name:
-                freetext = form.fields_by_name[FREETEXT_SEARCH_NAME].value
+            if FREETEXT_SEARCH_NAME in form.fields:
+                freetext = form.fields[FREETEXT_SEARCH_NAME].value
                 if freetext:
-                    result.append('(%s)' % ' or '.join(['%s:%s' % (variable.name, to_string_surrounded_by_quote(freetext))
-                                                        for variable in self.variables
-                                                        if variable.freetext]))
+                    result.append(
+                        '(%s)' % ' or '.join([
+                            f'{variable.name}:{to_string_surrounded_by_quote(freetext)}'
+                            for variable in self.variables.values()
+                            if variable.freetext]
+                        )
+                    )
             return ' and '.join(result)
         else:
             return ''
@@ -750,30 +773,30 @@ class Query(RefinableObject, PagePart):
 
     @classmethod
     @dispatch(
-        variable=EMPTY,
+        variables=EMPTY,
     )
-    def variables_from_model(cls, variable, **kwargs):
+    def variables_from_model(cls, variables, **kwargs):
         return create_members_from_model(
-            member_params_by_member_name=variable,
+            member_params_by_member_name=variables,
             default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
     @classmethod
     @dispatch(
-        variable=EMPTY,
+        variables=EMPTY,
     )
-    def from_model(cls, *, rows=None, model=None, variable, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
-        of "the_name_of_the_field__param". For example:
+        of "the_name_of_the_fields__param". For example:
 
         .. code:: python
 
             class Foo(Model):
                 foo = IntegerField()
 
-            Table.from_model(data=request.GET, model=Foo, field__foo__help_text='Overridden help text')
+            Table.from_model(data=request.GET, model=Foo, fields__foo__help_text='Overridden help text')
 
         :param include: fields to include. Defaults to all
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
@@ -781,5 +804,5 @@ class Query(RefinableObject, PagePart):
         """
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variable=variable)
+        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variables=variables)
         return cls(rows=rows, model=model, variables=variables, **kwargs)

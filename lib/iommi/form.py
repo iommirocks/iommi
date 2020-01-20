@@ -46,6 +46,8 @@ from iommi.base import (
     render_template_name,
     request_data,
     setup_endpoint_proxies,
+    evaluate_member,
+    evaluate_attrs,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
@@ -68,6 +70,7 @@ from tri_declarative import (
     should_show,
     sort_after,
     with_meta,
+    evaluate_strict,
 )
 from tri_struct import Struct
 
@@ -120,6 +123,7 @@ def register_field_factory(field_class, factory):
     _field_factory_by_field_type[field_class] = factory
 
 
+# TODO: extra param here should also be a dict
 @dispatch  # pragma: no mutate
 def create_members_from_model(default_factory, model, member_params_by_member_name, include=None, exclude=None, extra=None):
     def should_include(name):
@@ -158,7 +162,8 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
                 assert foo.name == field.name, f"Field {foo.name} has a name that doesn't match the model field it belongs to: {field.name}"
                 members.append(foo)
     assert_kwargs_empty(member_params_by_member_name)
-    return members + (extra if extra is not None else []) + [default_factory(model=model, field_name=x) for x in extra_includes]
+    all_members = members + (extra if extra is not None else []) + [default_factory(model=model, field_name=x) for x in extra_includes]
+    return Struct({x.name: x for x in all_members})
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
@@ -222,9 +227,9 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
 
 
 @dispatch(
-    field=EMPTY,
+    fields=EMPTY,
 )
-def expand_member(cls, model, factory_lookup, defaults_factory, name, field, field_name=None, model_field=None):
+def expand_member(cls, model, factory_lookup, defaults_factory, name, fields, field_name=None, model_field=None):
     if field_name is None:
         field_name = name
 
@@ -242,11 +247,11 @@ def expand_member(cls, model, factory_lookup, defaults_factory, name, field, fie
             field_name=sub_model_field.name,
             name=name + '__' + sub_model_field.name,
             attr=field_name + '__' + sub_model_field.name,
-            **field.pop(sub_model_field.name, {})
+            **fields.pop(sub_model_field.name, {})
         )
         for sub_model_field in get_fields(model=model_field.remote_field.model)
     ]
-    assert_kwargs_empty(field)
+    assert_kwargs_empty(fields)
     return [x for x in result if x is not None]
 
 
@@ -254,7 +259,7 @@ def create_or_edit_object__post_handler(*, form, **_):
     if form.extra.is_create:
         assert form.instance is None
         form.instance = form.model()
-        for field in form.fields:  # two phase save for creation in django, have to save main object before related stuff
+        for field in form.fields.items():  # two phase save for creation in django, have to save main object before related stuff
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
@@ -310,9 +315,9 @@ def int_parse(string_value, **_):
     return int(string_value)
 
 
-def choice_is_valid(form, field, parsed_data):
+def choice_is_valid(form, field, parsed_data, **_):
     del form
-    return parsed_data in field.choices, '%s not in available choices' % parsed_data
+    return parsed_data in field.choices, f'{parsed_data} not in available choices'
 
 
 def choice_post_validation(form, field):
@@ -343,7 +348,7 @@ def choice_parse(form, field, string_value):
 
 
 def choice_queryset__is_valid(field, parsed_data, **_):
-    return field.choices.filter(pk=parsed_data.pk).exists(), '%s not in available choices' % (field.raw_data or ', '.join(field.raw_data_list))
+    return field.choices.filter(pk=parsed_data.pk).exists(), f'{field.raw_data or ", ".join(field.raw_data_list)} not in available choices'
 
 
 def choice_queryset__endpoint_handler(*, form, field, value, **_):
@@ -592,13 +597,11 @@ class Action(RefinableObject, PagePart):
         return call_target(**kwargs)
 
     def on_bind(self) -> None:
-        self.declared_action = self._declared
+        for k, v in self.parent._actions_unapplied_data.get(self.name, {}).items():
+            setattr_path(self, k, v)
 
     def _evaluate_attribute(self, key, **kwargs):
-        value = getattr(self, key)
-        new_value = evaluate_recursive_strict(value, action=self, **kwargs)
-        if new_value is not value:
-            setattr(self, key, new_value)
+        evaluate_member(self, key, action=self, **kwargs)
 
     def _evaluate_show(self, **kwargs):
         self._evaluate_attribute('show', **kwargs)
@@ -607,6 +610,7 @@ class Action(RefinableObject, PagePart):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
+        # TODO: whitelist instead of blacklist
         not_evaluated_attributes = {'show', 'extra', 'endpoint'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
         for key in evaluated_attributes:
@@ -754,7 +758,7 @@ class Field(RefinableObject, PagePart):
         :param errors_template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
         :param required: if the field is a required field. Default: True
         :param container__attrs: extra html attributes to set on the container (i.e. row if rendering as a table). Default: set()
-        :param help_text: The help text will be grabbed from the django model if specified and available. Default: lambda form, field: '' if form.model is None else form.model._meta.get_field_by_name(field.name)[0].help_text or ''
+        :param help_text: The help text will be grabbed from the django model if specified and available.
 
         :param editable: default: True
         :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: True
@@ -773,7 +777,6 @@ class Field(RefinableObject, PagePart):
             assert self.initial_list is None, 'The parameter initial_list is only valid if is_list is True, otherwise use initial'
 
         # Bound field data
-        self.field = None
         self.errors = None
 
         # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
@@ -801,7 +804,7 @@ class Field(RefinableObject, PagePart):
 
     @staticmethod
     @refinable
-    def is_valid(form: 'Form', field: 'Field', parsed_data: Any) -> Tuple[bool, str]:
+    def is_valid(form: 'Form', field: 'Field', parsed_data: Any, **_) -> Tuple[bool, str]:
         return True, ''
 
     @staticmethod
@@ -848,7 +851,7 @@ class Field(RefinableObject, PagePart):
         setattr_path(instance, field.attr, value)
 
     def on_bind(self) -> None:
-        for k, v in self.parent._field.get(self.name, {}).items():
+        for k, v in self.parent._fields_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
 
         form = self.parent
@@ -859,9 +862,6 @@ class Field(RefinableObject, PagePart):
         if self.display_name is MISSING:
             self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
 
-        for k, v in form.field.get(self.name, {}).items():
-            setattr_path(self, k, v)
-
         self.field = self
         self.errors = set()
 
@@ -870,23 +870,58 @@ class Field(RefinableObject, PagePart):
 
         self.declared_field = self._declared
 
-    def _evaluate_attribute(self, key):
-        value = getattr(self, key)
-        new_value = evaluate_recursive(value, form=self.parent, field=self)
-        if new_value is not value:
-            setattr(self, key, new_value)
+    def _evaluate_attribute(self, key, **kwargs):
+        evaluate_member(self, key, form=self.parent, field=self, **kwargs)
 
-    def _evaluate_show(self):
-        self._evaluate_attribute('show')
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', **kwargs)
 
     def _evaluate(self):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        not_evaluated_attributes = {'post_validation', 'show', 'endpoint'}
-        evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
+        evaluated_attributes = [
+            'name',
+            'show',
+            'attr',
+            'id',
+            'display_name',
+            'after',
+            'parse_empty_string_as_none',
+            'template',
+            'template_string',
+            'input_template',
+            'label_template',
+            'errors_template',
+            'required',
+            'container',
+            'label_container',
+            'input_container',
+            'is_list',
+            'is_boolean',
+            'model_field',
+            'editable',
+            'strip_input',
+            'input_type',
+            'choices',
+            'choice_tuples',
+            'empty_label',
+            'empty_choice_tuple',
+            'help_text',
+            # This is useful for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
+            'raw_data',
+            'raw_data_list',
+        ]
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
+
+        # non-strict because the model is callable at the end. Not ideal, but what can you do?
+        self._evaluate_attribute('model', __strict=False)
+
+        self.attrs = evaluate_attrs(self.attrs, field=self, form=self.parent)
+
+        self.extra = evaluate_recursive(self.extra, form=self.parent, field=self)
+
 
         if not self.editable:
             self.input_template = 'iommi/form/non_editable.html'
@@ -1178,6 +1213,7 @@ class Field(RefinableObject, PagePart):
         template='iommi/form/heading.html',
         editable=False,
         attr=None,
+        # TODO: this type of thing seems like it's irrelevant after fields=[...] is removed
         name='@@heading@@',
     )
     def heading(cls, call_target=None, **kwargs):
@@ -1249,7 +1285,7 @@ def get_fields(model):
 
 
 @no_copy_on_bind
-@declarative(Field, 'fields_dict')
+@declarative(Field, '_fields_dict')
 @with_meta
 class Form(RefinableObject, PagePart):
     """
@@ -1303,7 +1339,7 @@ class Form(RefinableObject, PagePart):
         return Struct(
             field=Struct(
                 name='field',
-                children=lambda: self.fields_by_name,
+                children=lambda: self.fields,
                 default_child=True,  # TODO: unsure about this
                 endpoint_kwargs=lambda: dict(form=self),
             ),
@@ -1328,22 +1364,21 @@ class Form(RefinableObject, PagePart):
         is_full_form=True,
         model=None,
         editable=True,
-        field=EMPTY,
+        fields=EMPTY,
         extra=EMPTY,
         attrs__action='',
         attrs__method='post',
         endpoint=EMPTY,
-        action__submit__call_target=Action.submit,
+        actions__submit__call_target=Action.submit,
         actions_template='iommi/form/actions.html',
     )
-    def __init__(self, *, instance=None, fields: List[Field] = None, fields_dict: Dict[str, Field] = None, action=None, actions=None, field, **kwargs):
+    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, **kwargs):
 
-        super(Form, self).__init__(field=field, **kwargs)
+        super(Form, self).__init__(**kwargs)
 
-        if callable(fields):
-            fields = fields(model=self.model)
+        assert isinstance(fields, dict)
 
-        self.fields_by_name = None
+        self.fields = None
         """ :type: Struct[str, Field] """
         self.style = None
         self.errors: Set[str] = set()
@@ -1351,12 +1386,13 @@ class Form(RefinableObject, PagePart):
         self.instance = instance
         self.mode = INITIALS_FROM_GET
 
-        self._action = {}
-        self.declared_actions = collect_members(items=actions, item=action, cls=self.get_meta().action_class, store_config=self._action)
+        self._actions_unapplied_data = {}
+        self.declared_actions = collect_members(items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
+        self.actions = None
 
-        self._field = {}
-        # TODO: ugh, why is this a dict, but not the corresponding on Query, Table, Page?
-        self.declared_fields = {x.name: x for x in collect_members(items=fields, items_dict=fields_dict, item=field, cls=self.get_meta().member_class, store_config=self._field)}
+        self._fields_unapplied_data = {}
+        self.declared_fields = collect_members(items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
+        self.fields = None
 
     def on_bind(self) -> None:
         self._valid = None
@@ -1370,30 +1406,25 @@ class Form(RefinableObject, PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        # TODO: we throw away bound_actions here, only storing shown_bound_actions
-        _, self.actions = bind_members(unbound_items=self.declared_actions, cls=Action, parent=self, form=self)
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self, form=self)
+        for item in self.actions.values():
+            item._evaluate()
 
-        # TODO: Clean up _fields, fields, declared_fields, fields_by_name mess
-        # TODO: use bind_members
-        self._fields: List[Field] = [f.bind(parent=self) for f in self.declared_fields.values()]
-
-        for field in self._fields:
-            field._evaluate_show()
-
-        self.fields = [field for field in self._fields if should_show(field)]
-        self.fields_by_name = Struct({field.name: field for field in self.fields})
+        self.fields = bind_members(declared_items=self.declared_fields, parent=self)
 
         if self.instance is not None:
-            for field in self.fields:
+            for field in self.fields.values():
                 if field.attr:
                     initial = field.read_from_instance(field, self.instance)
+
+                    # TODO: we always overwrite here, even if we got passed something.. seems strange
                     if field.is_list:
                         field.initial_list = initial
                     else:
                         field.initial = initial
 
         if self._request_data is not None:
-            for field in self.fields:
+            for field in self.fields.values():
                 if field.is_list:
                     if field.raw_data_list is not None:
                         continue
@@ -1417,7 +1448,7 @@ class Form(RefinableObject, PagePart):
                     if field.raw_data and field.strip_input:
                         field.raw_data = field.raw_data.strip()
 
-        for field in self.fields:
+        for field in self.fields.values():
             field._evaluate()
 
         self.is_valid()
@@ -1442,36 +1473,36 @@ class Form(RefinableObject, PagePart):
 
     @classmethod
     @dispatch(
-        field=EMPTY,
+        fields=EMPTY,
     )
-    def fields_from_model(cls, field, **kwargs):
+    def fields_from_model(cls, fields, **kwargs):
         return create_members_from_model(
-            member_params_by_member_name=field,
+            member_params_by_member_name=fields,
             default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
     @classmethod
     @dispatch(
-        field=EMPTY,
+        fields=EMPTY,
     )
-    def from_model(cls, *, model, field, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, *, model, fields, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
-        of "the_name_of_the_field__param". For example:
+        of "the_name_of_the_fields__param". For example:
 
         .. code:: python
 
             class Foo(Model):
                 foo = IntegerField()
 
-            Form.from_model(request=request, model=Foo, field__foo__help_text='Overridden help text')
+            Form.from_model(request=request, model=Foo, fields__foo__help_text='Overridden help text')
 
         :param include: fields to include. Defaults to all
         :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
 
         """
-        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, field=field)
+        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, fields=fields)
         return cls(model=model, instance=instance, fields=fields, **kwargs)
 
     def own_target_marker(self):
@@ -1483,7 +1514,7 @@ class Form(RefinableObject, PagePart):
     def is_valid(self):
         if self._valid is None:
             self.validate()
-            for field in self.fields:
+            for field in self.fields.values():
                 if field.errors:
                     self._valid = False
                     break
@@ -1504,7 +1535,7 @@ class Form(RefinableObject, PagePart):
                 field.errors.add(msg)
 
     def parse(self):
-        for field in self.fields:
+        for field in self.fields.values():
             if not field.editable:
                 continue
 
@@ -1529,7 +1560,7 @@ class Form(RefinableObject, PagePart):
     def validate(self):
         self.parse()
 
-        for field in self.fields:
+        for field in self.fields.values():
             if (not field.editable) or (self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None):
                 if field.is_list:
                     field.value_list = field.initial_list
@@ -1553,7 +1584,7 @@ class Form(RefinableObject, PagePart):
                     field.value = value
                     field.value_list = value_list
 
-        for field in self.fields:
+        for field in self.fields.values():
             field.post_validation(form=self, field=field)
         self.post_validation(form=self)
         return self
@@ -1600,7 +1631,7 @@ class Form(RefinableObject, PagePart):
         # TODO: the style thing should be a part of the form
         self.style = style
         r = []
-        for field in self.fields:
+        for field in self.fields.values():
             r.append(field.render_with_style(style=style))
 
         if self.is_full_form:
@@ -1609,7 +1640,7 @@ class Form(RefinableObject, PagePart):
         request = self.request()
         if request:
             # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
-            own_field_paths = {f.path() for f in self.fields}
+            own_field_paths = {f.path() for f in self.fields.values()}
             for k, v in request.GET.items():
                 if k == self.own_target_marker():
                     continue
@@ -1648,7 +1679,7 @@ class Form(RefinableObject, PagePart):
         Write the new values specified in the form into the instance specified.
         """
         assert self.is_valid()
-        for field in self.fields:
+        for field in self.fields.values():
             self.apply_field(instance=instance, field=field)
         return instance
 
@@ -1665,7 +1696,7 @@ class Form(RefinableObject, PagePart):
         r = {}
         if self.errors:
             r['global'] = self.errors
-        field_errors = {x.name: x.errors for x in self.fields if x.errors}
+        field_errors = {x.name: x.errors for x in self.fields.values() if x.errors}
         if field_errors:
             r['fields'] = field_errors
         return r

@@ -22,7 +22,7 @@ for specific model in the advanced mode:
     class CarQuery(Query):
         make = Variable.choice(
             choices=['Toyota', 'Volvo', 'Ford'],
-            form_field__show=True)  # Display this field in the simple style GUI
+            form_fields__show=True)  # Display this field in the simple style GUI
         model = Variable.text()
 
     def cars(request):

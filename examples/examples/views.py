@@ -54,7 +54,7 @@ def form_example_1(request):
             name,
             bound_field.value
         )
-        for name, bound_field in form.fields_by_name.items()))
+        for name, bound_field in form.fields.items()))
 
     return HttpResponse(format_html(
         """
@@ -98,7 +98,7 @@ def form_example_5(request):
         request,
         model=Bar,
         form__base_template='iommi/form/base_select2.html',
-        form__field__b__input_template='iommi/form/choice_select2.html',
+        form__fields__b__input_template='iommi/form/choice_select2.html',
         form__action=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
