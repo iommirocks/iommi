@@ -1731,7 +1731,7 @@ class Form(RefinableObject, PagePart):
 
         setdefaults_path(
             kwargs,
-            action__submit=dict(
+            actions__submit=dict(
                 # TODO: should be call target attribute
                 call_target=Action.submit,
                 attrs__value=extra.title,

@@ -732,7 +732,6 @@ def test_field_validate_foreign_key_does_not_exist():
 
     class MyForm(Form):
         class Meta:
-            model = FieldFromModelForeignKeyTest
             fields = Form.fields_from_model(model=FieldFromModelForeignKeyTest)
 
     assert MyForm().bind(request=req('post', foo_fk=foo.pk)).is_valid() is True
@@ -745,7 +744,6 @@ def test_form_default_fields_from_model():
 
     class FooForm(Form):
         class Meta:
-            model = Foo
             fields = Form.fields_from_model(model=Foo)
             fields__bar = Field.text(attr=None)
 
