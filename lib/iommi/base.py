@@ -235,6 +235,8 @@ class PagePart:
             try:
                 result = dispatcher(root=self, path=dispatch_target, value=value, request=request)
             except InvalidEndpointPathException:
+                if settings.DEBUG:
+                    raise
                 result = dict(error=dispatch_error)
 
             if result is not None:

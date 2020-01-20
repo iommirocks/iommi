@@ -114,7 +114,7 @@ def test_declaration_merge():
 
         bar = Column()
 
-    assert {'foo', 'bar'} == set(MyTable(rows=[]).bind(request=None).columns.keys())
+    assert {'name', 'bar'} == set(MyTable(rows=[]).bind(request=None).columns.keys())
 
 
 def test_kwarg_column_config_injection():
