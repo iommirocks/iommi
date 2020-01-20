@@ -259,7 +259,7 @@ def create_or_edit_object__post_handler(*, form, **_):
     if form.extra.is_create:
         assert form.instance is None
         form.instance = form.model()
-        for field in form.fields.items():  # two phase save for creation in django, have to save main object before related stuff
+        for field in form.fields.values():  # two phase save for creation in django, have to save main object before related stuff
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
