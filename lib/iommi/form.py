@@ -897,6 +897,7 @@ class Field(RefinableObject, PagePart):
             'container',
             'label_container',
             'input_container',
+            'initial',
             'is_list',
             'is_boolean',
             'model_field',
