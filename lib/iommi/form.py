@@ -1625,7 +1625,7 @@ class Form(PagePart):
             template_name=self.template_name,
         )
 
-        request = (self.request())
+        request = self.request()
         render.context.update(csrf(request))
         render.context['form'] = self
 
