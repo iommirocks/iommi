@@ -49,7 +49,7 @@ def test_format_html5():
         fields__foo=Field(),
     ).bind(
         request=RequestFactory().get('/'),
-    ).render()
+    ).render_part()
     print(actual)
     assert type(actual) == SafeText
 
@@ -57,7 +57,7 @@ def test_format_html5():
 # TODO: rendering a form should work, but right now there's render_with_style.. which we should fix
 def test_format_html6():
     form = Form(fields__foo=Field()).bind(request=RequestFactory().get('/'))
-    actual = form.fields.foo.render()
+    actual = form.fields.foo.render_part()
     print(actual)
     assert type(actual) == SafeText
 

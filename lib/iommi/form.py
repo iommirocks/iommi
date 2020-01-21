@@ -17,13 +17,16 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
     Type,
+    Union,
 )
 
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
+    Template,
+    URLValidator,
+    ValidationError,
     csrf,
     format_html,
     get_template_from_string,
@@ -31,46 +34,37 @@ from iommi._web_compat import (
     render_template,
     render_to_string,
     slugify,
-    Template,
-    URLValidator,
     validate_email,
-    ValidationError,
 )
 from iommi.base import (
-    bind_members,
-    collect_members,
     DISPATCH_PATH_SEPARATOR,
     MISSING,
-    no_copy_on_bind,
     PagePart,
+    bind_members,
+    collect_members,
+    evaluate_attrs,
+    no_copy_on_bind,
     render_template_name,
     request_data,
     setup_endpoint_proxies,
-    evaluate_member,
-    evaluate_attrs,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
+    EMPTY,
+    Namespace,
+    Refinable,
     assert_kwargs_empty,
     class_shortcut,
     declarative,
     dispatch,
-    EMPTY,
     evaluate,
     evaluate_recursive,
-    evaluate_recursive_strict,
     flatten,
     getattr_path,
-    Namespace,
-    Refinable,
     refinable,
-    RefinableObject,
     setattr_path,
     setdefaults_path,
-    should_show,
-    sort_after,
     with_meta,
-    evaluate_strict,
 )
 from tri_struct import Struct
 
@@ -540,17 +534,17 @@ class Action(PagePart):
     def render_attrs(self):
         return render_attrs(self.attrs)
 
-    def render(self):
+    def render_part(self):
         if self.template:
             return render_to_string(self.template, dict(action=self))
         else:
             return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.render_attrs(), display_name=self.display_name)
 
     def __str__(self):
-        return self.render()
+        return self.render_part()
 
     def __html__(self):
-        return self.render()
+        return self.render_part()
 
     def __repr__(self):
         return f'<Action: {self.name}>'
@@ -637,7 +631,7 @@ def group_actions(actions_without_group: Dict[str, Action]):
 @with_meta
 class Field(PagePart):
     """
-    Class that describes a field, i.e. what input controls to render, the label, etc.
+    Class that describes a field, i.e. what input controls to render_part, the label, etc.
 
     The life cycle of the data is:
         1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
@@ -743,7 +737,7 @@ class Field(PagePart):
         :param editable: default: True
         :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: True
         :param input_type: the type attribute on the standard input HTML tag. Default: 'text'
-        :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
+        :param render_value: render_part the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :param is_list: interpret request data as a list (can NOT be a callable). Default False
         :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
@@ -958,7 +952,7 @@ class Field(PagePart):
             'field': self,
         }
         if self.template_string is not None:
-            return get_template_from_string(self.template_string, origin='tri.form', name='Form.render').render(context, self.request())
+            return get_template_from_string(self.template_string, origin='tri.form', name='Form.render_part').render(context, self.request())
         else:
             return render_template(self.request(), self.template.format(style=style), context)
 
@@ -1624,7 +1618,7 @@ class Form(PagePart):
         render__call_target=render_template_name,
         context=EMPTY,
     )
-    def render(self, *, context=None, render=None):
+    def render_part(self, *, context=None, render=None):
         setdefaults_path(
             render,
             context=context,

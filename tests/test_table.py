@@ -768,7 +768,7 @@ def test_bulk_edit():
         rows=TFoo.objects.all(),
     ).bind(
         request=req('get', pk_1='', pk_2='', a='0', b='changed'),
-    ).render()
+    ).render_part()
     assert '<form method="post" action=".">' in result
     assert '<input type="submit" class="button" value="Bulk change"/>' in result
 
@@ -786,7 +786,7 @@ def test_bulk_edit():
     )
     assert t._is_bound
     assert t.bulk_form.name == 'bulk'
-    t.render()
+    t.render_part()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
@@ -800,7 +800,7 @@ def test_bulk_edit():
         rows=TFoo.objects.all()
     ).bind(
         request=req('post', pk_1='', pk_2='', **{'bulk/a': '', 'bulk/b': ''}),
-    ).render()
+    ).render_part()
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
@@ -813,7 +813,7 @@ def test_bulk_edit():
         rows=TFoo.objects.all()
     ).bind(
         request=req('post', _all_pks_='1', **{'bulk/a': '11', 'bulk/b': 'changed2'}),
-    ).render()
+    ).render_part()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 11, u'changed2'),
@@ -1811,9 +1811,8 @@ def test_new_style_ajax_dispatch():
 
     from iommi.page import middleware
     m = middleware(get_response)
-    done, response = m(request=req('get', **{'/table/query/gui/field/foo': ''}))
+    response = m(request=req('get', **{'/table/query/gui/field/foo': ''}))
 
-    assert done
     assert json.loads(response.content) == {
         'results': [
             {'id': 1, 'text': 'Foo(1, A)'},

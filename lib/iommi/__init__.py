@@ -9,5 +9,9 @@ from iommi.form import Form
 from iommi.form import Field
 from iommi.form import Action
 from iommi.base import MISSING
+from iommi.page import (
+    Page,
+    middleware,
+)
 
 setup_db_compat()

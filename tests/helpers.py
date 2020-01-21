@@ -43,7 +43,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
         table.bind(request=request)
 
     request.user = AnonymousUser()
-    actual_html = remove_csrf(table.render(**kwargs))
+    actual_html = remove_csrf(table.render_part(**kwargs))
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
@@ -62,9 +62,7 @@ def request_with_middleware(*, response, data):
         return response
 
     m = middleware(get_response)
-    done, response = m(request=RequestFactory().get('/', data=data))
-    assert done
-    return response
+    return m(request=RequestFactory().get('/', data=data))
 
 
 def req(method, **data):

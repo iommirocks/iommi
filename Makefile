@@ -12,7 +12,8 @@ help:
 	@echo "release-check - check release tag"
 
 clean: clean-build clean-pyc
-	rm -fr htmlcov/
+	rm -rf htmlcov/
+	rm -rf venv
 
 clean-build:
 	rm -fr build/
@@ -50,3 +51,9 @@ tag:
 
 release-check:
 	python setup.py release_check
+
+venv:
+	tox -e venv
+
+run-examples: venv
+	venv/bin/python examples/manage.py runserver

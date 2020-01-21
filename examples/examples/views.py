@@ -1,15 +1,31 @@
-from os.path import dirname, abspath, join
-from tri_struct import Struct
+from os.path import (
+    abspath,
+    dirname,
+    join,
+)
 
 from django.http import HttpResponse
-from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from tri_struct import Struct
+from iommi import (
+    Action,
+    Column,
+    Table,
+    Page,
+)
+from iommi.form import (
+    Field,
+    Form,
+    choice_parse,
+)
 
-from iommi.form import Form, Field, choice_parse
-from iommi.views import create_object, edit_object
-from iommi import Action
-from iommi.table import Table, render_table_to_response, Column
-from .models import Bar, Foo, TFoo, TBar
+from .models import (
+    Bar,
+    Foo,
+    TBar,
+    TFoo,
+)
 
 
 def ensure_objects():
@@ -46,7 +62,8 @@ def form_example_1(request):
         foo = Field()
         bar = Field()
 
-    form = MyForm(request=request)
+    form = MyForm()
+    form.bind(request=request)
 
     message = mark_safe("\n".join(
         format_html(
@@ -54,7 +71,8 @@ def form_example_1(request):
             name,
             bound_field.value
         )
-        for name, bound_field in form.fields.items()))
+        for name, bound_field in form.fields.items())
+    )
 
     return HttpResponse(format_html(
         """
@@ -65,26 +83,25 @@ def form_example_1(request):
                 </body>
             </html>
         """,
-        form.render(),
+        form.render_part(),
         message))
 
 
 def form_example_2(request):
     ensure_objects()
-    return create_object(request, model=Foo)
+    return Form.as_create_page(model=Foo)
 
 
 def form_example_3(request):
     ensure_objects()
-    return edit_object(request, instance=Foo.objects.all().first())
+    return Form.as_edit_page(instance=Foo.objects.all().first())
 
 
 def form_example_4(request):
     ensure_objects()
-    return edit_object(
-        request,
+    return Form.as_edit_page(
         instance=Foo.objects.all().first(),
-        form__action=dict(
+        actions=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
             back=Action(display_name='Back to index', attrs__href='/'),
@@ -94,12 +111,11 @@ def form_example_4(request):
 
 def form_example_5(request):
     ensure_objects()
-    return create_object(
-        request,
+    return Form.as_create_page(
         model=Bar,
-        form__base_template='iommi/form/base_select2.html',
-        form__fields__b__input_template='iommi/form/choice_select2.html',
-        form__action=dict(
+        base_template='iommi/form/base_select2.html',
+        fields__b__input_template='iommi/form/choice_select2.html',
+        actions=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
             back=Action(display_name='Back to index', attrs__href='/'),
@@ -130,35 +146,21 @@ class SinkForm(Form):
 
 def form_kitchen(request):
     ensure_objects()
-    kitchen_form = KitchenForm(request)
-    sink_form = SinkForm(request)
-    sink_form2 = SinkForm(request, name='sinkform2')
 
-    if request.method == 'POST':
-        if kitchen_form.is_target() and kitchen_form.is_valid():
-            values = kitchen_form.apply(Struct())
-            return HttpResponse(format_html("Kitchen values was {}", values))
+    def kitchen_form_post_handler(form, **_):
+        values = form.apply(Struct())
+        return HttpResponse(format_html("Kitchen values was {}", values))
 
-        if sink_form.is_target() and sink_form.is_valid():
-            values = sink_form.apply(Struct())
-            return HttpResponse(format_html("Sink values was {}", values))
+    def sink_form_post_handler(form, **_):
+        values = form.apply(Struct())
+        return HttpResponse(format_html("Sink values was {}", values))
 
-    return HttpResponse(format_html(
-        """\
-            <html>
-                <body>
-                    <h2>Kitchen</h2>
-                    {}
-                    <h2>Sink</h2>
-                    {}
-                    <h2>Sink</h2>
-                    {}
-                </body>
-            </html>
-        """,
-        kitchen_form.render(),
-        sink_form.render(),
-        sink_form2.render()))
+    class KitchenPage(Page):
+        kitchen_form = KitchenForm(post_handler=kitchen_form_post_handler)
+        sink_form = SinkForm(post_handler=sink_form_post_handler)
+        sink_form2 = SinkForm(name='sinkform2')
+
+    return KitchenPage()
 
 
 def table_index(request):
@@ -196,7 +198,7 @@ def table_readme_example_1(request):
             template = 'base.html'
 
     # now to get an HTML table:
-    return render_table_to_response(request, table=FooTable(data=foos))
+    return FooTable(data=foos)
 
 
 def fill_dummy_data():
@@ -220,7 +222,7 @@ def table_readme_example_2(request):
             query__show=True,
             query__gui__show=True)
 
-    return render_table_to_response(request, table=BarTable(data=Bar.objects.all()), template='base.html', paginate_by=20)
+    return BarTable(data=Bar.objects.all(), template='base.html', paginate_by=20)
 
 
 def table_kitchen_sink(request):
@@ -262,4 +264,8 @@ def table_kitchen_sink(request):
             template = 'base.html'
             page_size = 20
 
-    return render_table_to_response(request, table=BarTable(data=Bar.objects.all()))
+    return BarTable(data=Bar.objects.all())
+
+
+# TODO: Page, Fragment examples
+# TODO: admin

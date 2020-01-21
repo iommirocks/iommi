@@ -5,6 +5,7 @@ from typing import (
     Type,
 )
 
+from django.http.response import HttpResponseBase
 from django.utils.html import format_html
 from iommi._web_compat import (
     Template,
@@ -83,7 +84,7 @@ class Fragment(PagePart):
         context=EMPTY,
         render=fragment__render,
     )
-    def render(self, *, context=None, render=None):
+    def render_part(self, *, context=None, render=None):
         return render(fragment=self, context=context)
 
     def _evaluate_attribute_kwargs(self):
@@ -140,7 +141,7 @@ class Page(PagePart):
         context=EMPTY,
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
-    def render(self, *, context=None, render=None):
+    def render_part(self, *, context=None, render=None):
         rendered = {}
         for part in self.parts.values():
             assert part.name not in context
@@ -204,12 +205,15 @@ def portal_page(left=None, center=None, **kwargs):
 
 # TODO: this should be iommi.middleware I think
 def middleware(get_response):
-    def _middleware(request):
+    def iommi_middleware(request):
 
         response = get_response(request)
         if isinstance(response, PagePart):
-            return True, response.bind(request=request).render_to_response()
+            x = response.bind(request=request).render_to_response()
+            assert isinstance(x, HttpResponseBase)
+            return x
         else:
-            return True, response
+            assert isinstance(response, HttpResponseBase)
+            return response
 
-    return _middleware
+    return iommi_middleware

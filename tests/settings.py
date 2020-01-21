@@ -42,7 +42,7 @@ class HighlightBrokenVariable:
         return True
 
     def __mod__(self, other):
-        raise Exception(f'Tried to render non-existent variable {other}')
+        raise Exception(f'Tried to render_part non-existent variable {other}')
 
 
 TEMPLATES[0]['OPTIONS']['string_if_invalid'] = HighlightBrokenVariable()

@@ -337,8 +337,8 @@ def test_non_editable_from_initial():
     class MyForm(Form):
         foo = Field(editable=False, initial=':bar:')
 
-    assert ':bar:' in MyForm().bind(request=req('get')).render()
-    assert ':bar:' in MyForm().bind(request=req('post', **{'-': ''})).render()
+    assert ':bar:' in MyForm().bind(request=req('get')).render_part()
+    assert ':bar:' in MyForm().bind(request=req('post', **{'-': ''})).render_part()
 
 
 def test_apply():
@@ -427,7 +427,7 @@ def test_render_template_string():
 
 
 def test_render_template():
-    assert '<form' in Form(fields__foo=Field()).bind(request=req('get', foo='7')).render()
+    assert '<form' in Form(fields__foo=Field()).bind(request=req('get', foo='7')).render_part()
 
 
 def test_render_on_dunder_html():
@@ -538,7 +538,7 @@ def test_hidden_with_name():
         )
 
     page = MyPage().bind(request=req('get', **{'baz/foo': '1'}))
-    rendered_page = page.render()
+    rendered_page = page.render_part()
 
     assert page.default_child
     assert not page.children().baz.default_child
@@ -639,7 +639,7 @@ def test_multi_choice_queryset():
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
-    result = form.render()
+    result = form.render_part()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" multiple="" name="foo" type="hidden"/>'
     assert f'var data = [{{"id": {user.pk}, "text": "{user}"}}];' in result
 
@@ -660,7 +660,7 @@ def test_choice_queryset():
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
-    result = form.render()
+    result = form.render_part()
     print(result)
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" name="foo" type="hidden"/>'
     assert f'var data = {{"id": {user.pk}, "text": "{user}"}};' in result
@@ -678,13 +678,13 @@ def test_choice_queryset_do_not_cache():
     # There is just one user, check that we get it
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo.errors == set()
-    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
+    assert str(BeautifulSoup(form.render_part(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
     # Now create a new queryset, check that we get two!
     User.objects.create(username='foo2')
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo.errors == set()
-    assert str(BeautifulSoup(form.render(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
+    assert str(BeautifulSoup(form.render_part(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
 
 
 @pytest.mark.django
@@ -1233,7 +1233,7 @@ def test_file_no_roundtrip():
 
     form = FooForm().bind(request=req('post', foo=b'binary_content_here'))
     assert form.is_valid() is False, form.get_errors()
-    assert 'binary_content_here' not in form.render()
+    assert 'binary_content_here' not in form.render_part()
 
 
 @pytest.mark.django
@@ -1429,8 +1429,8 @@ def test_ajax_config_and_validate():
 
 def test_is_empty_form_marker():
     request = req('get')
-    assert AVOID_EMPTY_FORM.format('') in Form().bind(request=request).render()
-    assert AVOID_EMPTY_FORM.format('') not in Form(is_full_form=False).bind(request=request).render()
+    assert AVOID_EMPTY_FORM.format('') in Form().bind(request=request).render_part()
+    assert AVOID_EMPTY_FORM.format('') not in Form(is_full_form=False).bind(request=request).render_part()
 
 
 @override_settings(DEBUG=True)
@@ -1479,7 +1479,7 @@ def test_render():
         </form>
     """
 
-    actual_html = remove_csrf(MyForm().bind(request=req('get')).render())
+    actual_html = remove_csrf(MyForm().bind(request=req('get')).render_part())
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
     assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
@@ -1529,8 +1529,8 @@ def test_action_render():
     import os
     RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
     action = Action(display_name='Title', template='test_action_render.html')
-    assert action.render() == 'tag=a display_name=Title'
-    assert action.render() == action.__html__()  # used by jinja2
+    assert action.render_part() == 'tag=a display_name=Title'
+    assert action.render_part() == action.__html__()  # used by jinja2
 
 
 def test_action_repr():
@@ -1538,7 +1538,7 @@ def test_action_repr():
 
 
 def test_action_shortcut_icon():
-    assert Action.icon('foo', display_name='title').render() == '<a ><i class="fa fa-foo"></i> title</a>'
+    assert Action.icon('foo', display_name='title').render_part() == '<a ><i class="fa fa-foo"></i> title</a>'
 
 
 def test_render_grouped_actions():
