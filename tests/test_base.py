@@ -227,20 +227,21 @@ Parents so far: [Root, Foo, 'bar'].
 Path left: baz"""
 
 
+# TODO: move page tests to test_pages.py, delete test_page.py
 def test_page_constructor():
     class MyPage(Page):
         h1 = html.h1()
 
     my_page = MyPage(
-        parts=[html.div(name='foo')],
-        part__bar=html.div()
+        parts__foo=html.div(name='foo'),
+        parts__bar=html.div()
     )
 
     # TODO: should this be necessary?
     my_page.bind(request=None)
 
     assert len(my_page.parts) == 3
-    assert ['foo', 'h1', 'bar'] == list(my_page.parts.keys())
+    assert ['h1', 'foo', 'bar'] == list(my_page.parts.keys())
 
 
 @override_settings(

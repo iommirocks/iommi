@@ -217,14 +217,11 @@ class DataRetrievalMethods(Enum):
 
 
 @with_meta
-class Column(RefinableObject, PagePart):
+class Column(PagePart):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
-    name: str = Refinable()
-    after: Union[int, str] = Refinable()
     url: str = Refinable()
-    show: bool = Refinable()
     sort_default_desc: bool = Refinable()
     sortable: bool = Refinable()
     group: Optional[str] = Refinable()
@@ -235,13 +232,11 @@ class Column(RefinableObject, PagePart):
     choices: Iterable = Refinable()
     bulk: Namespace = Refinable()
     query: Namespace = Refinable()
-    extra: Namespace = Refinable()
     superheader = Refinable()
     header: Namespace = Refinable()
     data_retrieval_method = Refinable()
 
     @dispatch(
-        show=True,
         sort_default_desc=False,
         sortable=True,
         auto_rowspan=False,
@@ -254,7 +249,6 @@ class Column(RefinableObject, PagePart):
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
-        extra=EMPTY,
         header__attrs__class__sorted_column=lambda bound_column, **_: bound_column.is_sorting,
         header__attrs__class__descending=lambda bound_column, **_: bound_column.sort_direction == DESCENDING,
         header__attrs__class__ascending=lambda bound_column, **_: bound_column.sort_direction == ASCENDING,
@@ -338,11 +332,8 @@ class Column(RefinableObject, PagePart):
         )
         self.declared_column = self._declared
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, table=self.parent, column=self, **kwargs)
-
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(table=self.parent, column=self)
 
     def _evaluate(self):
         """
@@ -688,6 +679,7 @@ class Column(RefinableObject, PagePart):
         return call_target(**kwargs)
 
 
+# TODO: why isn't this PagePart?
 class BoundRow(object):
     """
     Internal class used in row rendering
@@ -863,7 +855,7 @@ class Header(object):
 @no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
-class Table(RefinableObject, PagePart):
+class Table(PagePart):
     """
     Describe a table. Example:
 
@@ -879,7 +871,6 @@ class Table(RefinableObject, PagePart):
 
     """
 
-    name = Refinable()
     bulk_filter: Namespace = Refinable()
     bulk_exclude: Namespace = Refinable()
     sortable = Refinable()
@@ -893,8 +884,6 @@ class Table(RefinableObject, PagePart):
     rows = Refinable()
     columns = Refinable()
     bulk: Namespace = Refinable()
-    default_child = Refinable()
-    extra: Namespace = Refinable()
     endpoint: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Namespace = Refinable()
@@ -971,8 +960,6 @@ class Table(RefinableObject, PagePart):
         query=EMPTY,
         bulk=EMPTY,
         page_size=DEFAULT_PAGE_SIZE,
-
-        extra=EMPTY,
 
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
@@ -1295,11 +1282,8 @@ class Table(RefinableObject, PagePart):
 
         self._prepare_auto_rowspan()
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, table=self, **kwargs)
-
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(table=self)
 
     def bound_rows(self):
         assert self._is_bound
@@ -1437,12 +1421,12 @@ class Table(RefinableObject, PagePart):
 
     @classmethod
     @class_shortcut(
-        part=EMPTY,
+        parts=EMPTY,
         call_target__attribute='from_model',
         extra__model_verbose_name=None,
         extra__title=None,
     )
-    def as_page(cls, *, call_target=None, model=None, part=None, extra=None, rows=None, **kwargs):
+    def as_page(cls, *, call_target=None, model=None, parts=None, extra=None, rows=None, **kwargs):
         if model is None and isinstance(rows, QuerySet):
             model = rows.model
 
@@ -1459,9 +1443,11 @@ class Table(RefinableObject, PagePart):
             html,
         )
         return Page(
-            part__title=html.h1(extra.title, **part.pop('title', {})),
-            part__table=call_target(extra=extra, model=model, default_child=True, **kwargs),
-            part=part,
+            # TODO: do I need to do this pop manually? Won't this be handled by collect_members/bind_members?
+            parts__title=html.h1(extra.title, **parts.pop('title', {})),
+            # TODO: we should use the name given here, not hard code "table"
+            parts__table=call_target(extra=extra, model=model, default_child=True, **kwargs),
+            parts=parts,
             default_child=True,
         )
 

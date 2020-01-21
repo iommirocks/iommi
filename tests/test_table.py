@@ -1399,6 +1399,23 @@ def test_from_model_foreign_key():
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
+@pytest.mark.django_db
+def test_explicit_table_does_not_use_from_model():
+    class TestTable(Table):
+        foo = Column.choice_queryset(
+            model=TFoo,
+            choices=lambda table, **_: TFoo.objects.all(),
+            query__gui__extra__endpoint_attr='b',
+            query__show=True,
+            query__gui__show=True,
+            bulk__show=True,
+        )
+
+    p = TestTable.as_page(rows=TBar.objects.all()).bind(request=None)
+    assert 'table' in p.parts.keys()
+    assert list(p.parts.table.declared_columns.keys()) == ['foo']
+
+
 @override_settings(DEBUG=True)
 @pytest.mark.django_db
 def test_ajax_endpoint():
@@ -1414,8 +1431,9 @@ def test_ajax_endpoint():
             choices=lambda table, **_: TFoo.objects.all(),
             query__gui__extra__endpoint_attr='b',
             query__show=True,
+            query__gui__show=True,
             bulk__show=True,
-            query__gui__show=True)
+        )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
     result = request_with_middleware(response=TestTable.as_page(rows=TBar.objects.all()), data={'/table/query/gui/field/foo': 'hopp'})

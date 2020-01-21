@@ -151,33 +151,27 @@ def boolean_value_to_q(variable, op, value_string_or_f):
 
 
 @with_meta
-class Variable(RefinableObject, PagePart):
+class Variable(PagePart):
     """
     Class that describes a variable that you can search for.
     """
 
-    name = Refinable()
-    after = Refinable()
-    show = Refinable()
     attr = Refinable()
     gui = Refinable()
     gui_op = Refinable()
     freetext = Refinable()
     model = Refinable()
     model_field = Refinable()
-    extra = Refinable()
     choices = Refinable()
     value_to_q_lookup = Refinable()
 
     @dispatch(
         gui_op='=',
-        show=True,
         attr=MISSING,
         gui=Namespace(
             show=False,
             required=False,
         ),
-        extra=EMPTY,
     )
     def __init__(self, **kwargs):
         """
@@ -208,11 +202,8 @@ class Variable(RefinableObject, PagePart):
         # TODO: should we just have "declared"?
         self.declared_variable = self._declared
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, query=self.parent, variable=self, **kwargs)
-
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(query=self.parent, variable=self)
 
     def _evaluate(self):
         evaluated_attributes = self.get_declared('refinable_members').keys()
@@ -460,7 +451,7 @@ def default_endpoint__errors(query, **_):
 @no_copy_on_bind
 @declarative(Variable, '_variables_dict')
 @with_meta
-class Query(RefinableObject, PagePart):
+class Query(PagePart):
     """
     Declare a query language. Example:
 
@@ -473,10 +464,8 @@ class Query(RefinableObject, PagePart):
         query_set = Car.objects.filter(CarQuery(request=request).to_q())
     """
 
-    name: str = Refinable()
     gui: Namespace = Refinable()
     endpoint: Namespace = Refinable()
-    default_child = Refinable()
     model: Type['django.db.models.Model'] = Refinable()
     rows = Refinable()
 
@@ -562,11 +551,8 @@ class Query(RefinableObject, PagePart):
         form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
         self.form = form
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, query=self, **kwargs)
-
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(query=self)
 
     def parse(self, query_string: str) -> Q:
         if not self._is_bound:

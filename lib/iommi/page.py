@@ -1,23 +1,19 @@
-import json
 from typing import (
     Dict,
     List,
     Optional,
+    Type,
 )
 
-from django.http.response import (
-    HttpResponse,
-)
 from django.utils.html import format_html
 from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    DISPATCH_PATH_SEPARATOR,
-    InvalidEndpointPathException,
     PagePart,
     PartType,
-    find_target,
+    bind_members,
+    collect_members,
     no_copy_on_bind,
     render_part,
 )
@@ -25,84 +21,11 @@ from iommi.render import render_attrs
 from tri_declarative import (
     EMPTY,
     Namespace,
+    Refinable,
     declarative,
     dispatch,
-    should_show,
-    sort_after,
     with_meta,
 )
-from tri_struct import Struct
-
-
-@no_copy_on_bind
-@with_meta
-@declarative(
-    parameter='parts_dict',
-    is_member=lambda obj: isinstance(obj, (PagePart, str, Template)),
-    sort_key=lambda x: 0,
-)
-class Page(PagePart):
-    @dispatch(
-        part=EMPTY,
-    )
-    def __init__(
-        self,
-        *,
-        parts: List[PartType] = None,
-        parts_dict: Dict[str, PartType] = None,
-        part: dict,
-        default_child=None,
-    ):
-        self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
-
-        def generate_parts():
-            if parts is not None:
-                for part_ in parts:
-                    yield part_
-            for name, part_ in {**parts_dict, **part}.items():
-                if isinstance(part_, dict):
-                    if 'call_target' not in part_:
-                        assert False, f"I got a 'part' that didn't result in a PagePart. It's called {name} and looks like {part_}."
-
-                    yield Namespace(part_)(name=name)
-                elif isinstance(part_, PagePart):
-                    part_.name = name
-                    yield part_
-                else:
-                    yield Fragment(part_, name=name)
-
-        # TODO: use collect_members and bind_members
-        self.declared_parts = {x.name: x for x in sort_after(list(generate_parts()))}
-
-        self.default_child = default_child
-
-    def on_bind(self) -> None:
-        parts = {name: p.bind(parent=self) for name, p in self.declared_parts.items()}
-        self.parts = Struct({name: p for name, p in parts.items() if should_show(p)})
-
-    def __repr__(self):
-        return f'<Page with parts: {list(self.parts.keys())}>'
-
-    def children(self):
-        if not self._is_bound:
-            # TODO: hmm...
-            self.bind(request=None)
-        return self.parts
-
-    def endpoint_kwargs(self):
-        return dict(page=self)
-
-    @dispatch(
-        context=EMPTY,
-        render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
-    )
-    def render(self, *, context=None, render=None):
-        rendered = {}
-        for part in self.parts.values():
-            assert part.name not in context
-            rendered[part.name] = render_part(part=part, context=context)
-
-        return render(rendered)
 
 
 def fragment__render(fragment, context):
@@ -122,23 +45,21 @@ def fragment__render(fragment, context):
 
 
 class Fragment(PagePart):
+    attrs = Refinable()
+    tag = Refinable()
+
     @dispatch(
-        name=None,
         attrs=EMPTY,
-        show=True,
+        tag=None,
     )
-    def __init__(self, child: PartType = None, *, name: str = None, tag: str = None, children: Optional[List[PartType]] = None, attrs=None, show, default_child=None):
-        self.name = name
-        self.tag = tag
-        self.name = name
-        self.show = show
+    def __init__(self, child: PartType = None, *, children: Optional[List[PartType]] = None, **kwargs):
+        super(Fragment, self).__init__(**kwargs)
+
         self._children = []  # TODO: _children to avoid colliding with PageParts children() API. Not nice. We should do something nicer here.
         if child is not None:
             self._children.append(child)
 
         self._children.extend(children or [])
-        self.attrs = attrs
-        self.default_child = default_child
 
     def render_text_or_children(self, context):
         return format_html(
@@ -165,6 +86,68 @@ class Fragment(PagePart):
     def render(self, *, context=None, render=None):
         return render(fragment=self, context=context)
 
+    def _evaluate_attribute_kwargs(self):
+        return dict(page=self.parent, fragment=self)
+
+
+@no_copy_on_bind
+@with_meta
+@declarative(
+    parameter='_parts_dict',
+    is_member=lambda obj: isinstance(obj, (PagePart, str, Template)),
+    sort_key=lambda x: 0,
+)
+class Page(PagePart):
+    member_class: Type[Fragment] = Refinable()
+
+    class Meta:
+        member_class = Fragment
+
+    @dispatch(
+        parts=EMPTY,
+    )
+    def __init__(
+        self,
+        *,
+        _parts_dict: Dict[str, PartType] = None,
+        parts: dict,
+        **kwargs
+    ):
+        super(Page, self).__init__(**kwargs)
+        
+        self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
+
+        # TODO: use collect_members and bind_members
+        self._columns_unapplied_data = {}
+        self.declared_parts: Dict[str, PartType] = collect_members(items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
+
+    def on_bind(self) -> None:
+        self.parts = bind_members(declared_items=self.declared_parts, parent=self)
+
+    def __repr__(self):
+        return f'<Page with parts: {list(self.parts.keys())}>'
+
+    def children(self):
+        if not self._is_bound:
+            # TODO: hmm...
+            self.bind(request=None)
+        return self.parts
+
+    def endpoint_kwargs(self):
+        return dict(page=self)
+
+    @dispatch(
+        context=EMPTY,
+        render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
+    )
+    def render(self, *, context=None, render=None):
+        rendered = {}
+        for part in self.parts.values():
+            assert part.name not in context
+            rendered[part.name] = render_part(part=part, context=context)
+
+        return render(rendered)
+
 
 class Html:
     def __getattr__(self, tag):
@@ -177,23 +160,23 @@ html = Html()
 
 
 def portal_page(left=None, center=None, **kwargs):
-    part = Namespace()
+    parts = Namespace()
     if left:
-        part.left = html.div(
+        parts.left = html.div(
             attrs__class='left-menu',
             child=left,
         )
     if center:
-        part.center = html.div(
+        parts.center = html.div(
             attrs__class='t-main',
             child=center,
         )
 
     return Page(
-        part__main=html.div(
+        parts__main=html.div(
             attrs__class='main-layout',
             child=Page(
-                part=part,
+                parts=parts,
                 **kwargs
             ),
         ),

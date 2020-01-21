@@ -522,23 +522,16 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
 
 
 # TODO: move this class.. maybe lots of other stuff from here
-class Action(RefinableObject, PagePart):
+class Action(PagePart):
     tag = Refinable()
     attrs = Refinable()
     group = Refinable()
-    show = Refinable()
     template = Refinable()
-    extra = Refinable()
     display_name = Refinable()
-    name = Refinable()
-    after = Refinable()
 
     @dispatch(
         tag='a',
         attrs=EMPTY,
-        show=True,
-        extra=EMPTY,
-        name=None,
     )
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -600,11 +593,8 @@ class Action(RefinableObject, PagePart):
         for k, v in self.parent._actions_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, action=self, **kwargs)
-
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(action=self)
 
     def _evaluate(self, **kwargs):
         """
@@ -645,7 +635,7 @@ def group_actions(actions_without_group: Dict[str, Action]):
 
 
 @with_meta
-class Field(RefinableObject, PagePart):
+class Field(PagePart):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
 
@@ -657,15 +647,9 @@ class Field(RefinableObject, PagePart):
     The variables *_list should be used if the input is a list.
     """
 
-    name = Refinable()
-
-    show = Refinable()
-
     attr = Refinable()
     id = Refinable()
     display_name = Refinable()
-
-    after = Refinable()
 
     # raw_data/raw_data contains the strings grabbed directly from the request data
     raw_data = Refinable()
@@ -695,8 +679,6 @@ class Field(RefinableObject, PagePart):
     strip_input = Refinable()
     input_type = Refinable()
 
-    extra = Refinable()
-
     choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
     choice_to_option = Refinable()
     choice_tuples = Refinable()
@@ -712,8 +694,6 @@ class Field(RefinableObject, PagePart):
         attr=MISSING,
         id=MISSING,
         display_name=MISSING,
-        show=True,
-        extra=EMPTY,
         attrs__class=EMPTY,
         parse_empty_string_as_none=True,
         required=True,
@@ -862,6 +842,7 @@ class Field(RefinableObject, PagePart):
         if self.display_name is MISSING:
             self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
 
+        # TODO: ??
         self.field = self
         self.errors = set()
 
@@ -870,11 +851,8 @@ class Field(RefinableObject, PagePart):
 
         self.declared_field = self._declared
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, form=self.parent, field=self, **kwargs)
-
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(form=self.parent, field=self)
 
     def _evaluate(self):
         """
@@ -1277,7 +1255,7 @@ def get_fields(model):
 @no_copy_on_bind
 @declarative(Field, '_fields_dict')
 @with_meta
-class Form(RefinableObject, PagePart):
+class Form(PagePart):
     """
     Describe a Form. Example:
 
@@ -1301,18 +1279,14 @@ class Form(RefinableObject, PagePart):
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
     attrs = Refinable()
-    name: str = Refinable()
     editable = Refinable()
-    field = Refinable()
 
     model = Refinable()
     """ :type: django.db.models.Model """
     endpoint: Namespace = Refinable()
-    extra: Namespace = Refinable()
     base_template: str = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
-    default_child = Refinable()
     template_name = Refinable()
 
     class Meta:
@@ -1355,7 +1329,6 @@ class Form(RefinableObject, PagePart):
         model=None,
         editable=True,
         fields=EMPTY,
-        extra=EMPTY,
         attrs__action='',
         attrs__method='post',
         endpoint=EMPTY,
@@ -1698,12 +1671,12 @@ class Form(RefinableObject, PagePart):
         on_save=lambda **kwargs: None,  # pragma: no mutate
         redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         redirect_to=None,
-        part=EMPTY,
+        parts=EMPTY,
         extra__title=None,
         default_child=True,
         post_handler=create_or_edit_object__post_handler,
     )
-    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, part=None, name, **kwargs):
+    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, **kwargs):
         assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
         if model is None and instance is not None:
             model = type(instance)
@@ -1732,10 +1705,11 @@ class Form(RefinableObject, PagePart):
         from iommi.page import Page
         from iommi.page import html
         return Page(
-            part={
-                'title': html.h1(extra.title, **part.pop('title', {})),
+            parts={
+                # TODO: do we really need to pop from parts ourselves here?
+                'title': html.h1(extra.title, **parts.pop('title', {})),
                 name: call_target(extra=extra, model=model, instance=instance, **kwargs),
-                **part
+                **parts
             }
         )
 

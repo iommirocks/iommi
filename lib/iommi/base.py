@@ -3,10 +3,10 @@ import json
 from collections import defaultdict
 from functools import wraps
 from typing import (
-    Dict,
-    Union,
     Any,
+    Dict,
     Type,
+    Union,
 )
 
 from django.conf import settings
@@ -21,15 +21,16 @@ from iommi._web_compat import (
     render_template,
 )
 from tri_declarative import (
-    dispatch,
     EMPTY,
     Namespace,
+    dispatch,
+    evaluate,
+    evaluate_strict,
     setdefaults_path,
     should_show,
     sort_after,
-    evaluate_recursive_strict,
-    evaluate_strict,
-    evaluate,
+    RefinableObject,
+    Refinable,
 )
 from tri_struct import Struct
 
@@ -172,11 +173,23 @@ def perform_post_dispatch(*, root, path, value, request):
 
 
 # TODO: abc?
-class PagePart:
+class PagePart(RefinableObject):
+    name: str = Refinable()
+    show: bool = Refinable()
+    after: Union[int, str] = Refinable()
+    default_child = Refinable()
+    extra: Namespace = Refinable()
+
     parent = None
-    name = None
-    default_child = None
     _is_bound = False
+
+    @dispatch(
+        extra=EMPTY,
+        show=True,
+        name=None,
+    )
+    def __init__(self, **kwargs):
+        super(PagePart, self).__init__(**kwargs)
 
     @dispatch(
         context=EMPTY,
@@ -304,6 +317,15 @@ class PagePart:
 
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.path()
+
+    def _evaluate_attribute_kwargs(self):
+        return {}
+
+    def _evaluate_attribute(self, key, **kwargs):
+        evaluate_member(self, key, **self._evaluate_attribute_kwargs(), **kwargs)
+
+    def _evaluate_show(self, **kwargs):
+        self._evaluate_attribute('show', **kwargs)
 
 
 def render_template_name(template_name, **kwargs):
