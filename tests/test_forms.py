@@ -961,23 +961,6 @@ def test_field_from_model_many_to_many():
 
 
 @pytest.mark.django_db
-def test_field_from_model_foreign_key2():
-    from tests.models import FieldFromModelOneToOneTest
-
-    form = Form.from_model(
-        model=FieldFromModelOneToOneTest,
-        fields__foo_one_to_one__call_target=Field.from_model_expand,
-        fields__foo_one_to_one__fields__foo__display_name='blaha',
-        fields__foo_one_to_one__fields__foo__extra__stuff='blahada',
-    ).bind(
-        request=req('get'),
-    )
-    assert set(form.fields.keys()) == {'foo_one_to_one__foo'}
-    assert form.fields['foo_one_to_one__foo'].display_name == 'blaha'
-    assert form.fields['foo_one_to_one__foo'].extra.stuff == 'blahada'
-
-
-@pytest.mark.django_db
 def test_field_from_model_many_to_one_foreign_key():
     from tests.models import Bar
 
@@ -1779,54 +1762,6 @@ def test_from_model_with_inheritance():
     assert was_called == {
         'MyField.float': 1,
     }
-
-
-@pytest.mark.django_db
-def test_expand_member_test():
-    from tests.models import ExpandModelTestB
-
-    form = Form.from_model(
-        model=ExpandModelTestB,
-        fields__link__call_target=Field.from_model_expand,
-    ).bind(
-        request=req('get'),
-    )
-    assert set(form.fields.keys()) == {'link__f_int', 'link__f_float', 'link__f_bool'}
-
-
-@pytest.mark.django_db
-def test_expand_member_test_2():
-    from tests.models import ExpandModelTestB
-
-    class MyForm(Form):
-        class Meta:
-            fields = Field.from_model_expand(ExpandModelTestB, name='some_thing', field_name='link')
-
-    form = MyForm().bind(request=req('get'))
-    assert set(form.fields.keys()) == {'some_thing__f_int', 'some_thing__f_float', 'some_thing__f_bool'}
-    assert {x.attr for x in form.fields.values()} == {'link__f_int', 'link__f_float', 'link__f_bool'}
-
-
-@pytest.mark.django_db
-def test_expand_member_test_error():
-    from tests.models import ExpandModelTestB
-
-    with pytest.raises(TypeError):
-        Form.from_model(
-            request=req('get'),
-            model=ExpandModelTestB,
-            fields__doesnotexist__call_target=Field.from_model_expand,
-        )
-
-
-@pytest.mark.django_db
-def test_expand_member_test_error_2():
-    from tests.models import ExpandModelTestB
-
-    with pytest.raises(TypeError):
-        class MyForm(Form):
-            class Meta:
-                fields = Field.from_model_expand(ExpandModelTestB, name='some_thing', field_name='link', fields__doesnotexist=1)
 
 
 @pytest.mark.django_db

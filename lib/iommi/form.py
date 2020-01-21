@@ -974,17 +974,6 @@ class Field(RefinableObject, PagePart):
             model_field=model_field,
             **kwargs)
 
-    @classmethod
-    def from_model_expand(cls, model, field_name=None, model_field=None, **kwargs):
-        return expand_member(
-            cls=cls,
-            model=model,
-            factory_lookup=_field_factory_by_field_type,
-            defaults_factory=field_defaults_factory,
-            field_name=field_name,
-            model_field=model_field,
-            **kwargs)
-
     def render_with_style(self, style='compact'):
         context = {
             'form': self.form,
@@ -1756,8 +1745,8 @@ class Form(RefinableObject, PagePart):
         name='create',
         extra__is_create=True,
     )
-    def as_create_page(cls, *, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def as_create_page(cls, *, name, call_target=None, **kwargs):
+        return call_target(name=name or 'create', **kwargs)
 
     @classmethod
     @class_shortcut(
@@ -1765,8 +1754,8 @@ class Form(RefinableObject, PagePart):
         name='edit',
         extra__is_create=False,
     )
-    def as_edit_page(cls, *, call_target=None, instance, **kwargs):
-        return call_target(instance=instance, **kwargs)
+    def as_edit_page(cls, *, name, call_target=None, instance, **kwargs):
+        return call_target(instance=instance, name=name or 'edit', **kwargs)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
