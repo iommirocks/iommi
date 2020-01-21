@@ -296,3 +296,11 @@ def test_evaluate_attrs():
     }
 
     assert actual == expected
+
+
+def test_render_simple_tag():
+    assert html.a('bar', attrs__href='foo').render_part() == '<a href="foo">bar</a>'
+
+
+def test_render_empty_tag():
+    assert html.br().render_part() == '<br />'

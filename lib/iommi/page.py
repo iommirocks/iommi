@@ -30,18 +30,28 @@ from tri_declarative import (
 
 
 def fragment__render(fragment, context):
+    rendered_children = fragment.render_text_or_children(context=context)
+
     if fragment.tag:
-        return format_html(
-            '<{}{}>{}</{}>',
-            fragment.tag,
-            render_attrs(fragment.attrs),
-            fragment.render_text_or_children(context=context),
-            fragment.tag,
-        )
+        if rendered_children:
+            return format_html(
+                '<{}{}>{}</{}>',
+                fragment.tag,
+                render_attrs(fragment.attrs),
+                rendered_children,
+                fragment.tag,
+            )
+        else:
+            return format_html(
+                '<{}{}/>',
+                fragment.tag,
+                render_attrs(fragment.attrs),
+            )
+
     else:
         return format_html(
             '{}',
-            fragment.render_text_or_children(context=context),
+            rendered_children,
         )
 
 
@@ -118,7 +128,16 @@ class Page(PagePart):
         
         self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
 
-        # TODO: use collect_members and bind_members
+        # First we have to up sample parts that aren't PagePart into Fragment
+        def as_fragment_if_needed(k, v):
+            if not isinstance(v, PagePart):
+                return Fragment(v, name=k)
+            else:
+                return v
+
+        _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in _parts_dict.items()}
+        parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in parts.items()})
+
         self._columns_unapplied_data = {}
         self.declared_parts: Dict[str, PartType] = collect_members(items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
 
@@ -209,11 +228,8 @@ def middleware(get_response):
 
         response = get_response(request)
         if isinstance(response, PagePart):
-            x = response.bind(request=request).render_to_response()
-            assert isinstance(x, HttpResponseBase)
-            return x
+            return response.bind(request=request).render_to_response()
         else:
-            assert isinstance(response, HttpResponseBase)
             return response
 
     return iommi_middleware

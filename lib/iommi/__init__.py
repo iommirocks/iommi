@@ -12,6 +12,7 @@ from iommi.base import MISSING
 from iommi.page import (
     Page,
     middleware,
+    html,
 )
 
 setup_db_compat()

@@ -5,20 +5,25 @@ from os.path import (
 )
 
 from django.http import HttpResponse
+from django.template import (
+    RequestContext,
+    Template,
+)
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from tri_struct import Struct
 from iommi import (
     Action,
     Column,
-    Table,
     Page,
+    Table,
+    html,
 )
 from iommi.form import (
     Field,
     Form,
     choice_parse,
 )
+from tri_struct import Struct
 
 from .models import (
     Bar,
@@ -34,27 +39,34 @@ def ensure_objects():
 
 
 def index(request):
-    return HttpResponse(
-        """<html><body>
-        <a href="form/">form examples</a><br/>
-        <a href="table/">table examples</a><br/>
-        </body></html>""")
+    class IndexPage(Page):
+        header = html.h1('iommi examples')
 
+        form_header = html.h2('Form examples')
 
-def form_index(request):
-    return HttpResponse(
-        """<html><body>
-        <a href="example_1/">Example 1</a><br/>
-        <a href="example_2/">Example 2 create</a><br/>
-        <a href="example_3/">Example 3 edit</a><br/>
-        <a href="example_4/">Example 4 custom buttons</a><br/>
-        <a href="example_5/">Example 5 automatic AJAX endpoint</a><br/>
-        <a href="kitchen/">Kitchen sink</a><br/>
-        </body></html>""")
+        # We can create html fragments...
+        f_a_1 = html.a('Example 1', attrs__href="form_example_1/")
+        f_b_1 = html.br()
+        f_a_2 = html.a('Example 2 create', attrs__href="form_example_2/")
+        f_b_2 = html.br()
+        f_a_3 = html.a('Example 3 edit', attrs__href="form_example_3/")
+        f_b_3 = html.br()
+        f_a_4 = html.a('Example 4 custom buttons', attrs__href="form_example_4/")
+        f_b_4 = html.br()
+        f_a_5 = html.a('Example 5 automatic AJAX endpoint', attrs__href="form_example_5/")
+        f_b_5 = html.br()
+        f_a_k = html.a('Kitchen sink', attrs__href="form_kitchen/")
 
+        table_header = html.h2('Table examples')
 
-def form_style(request):
-    return HttpResponse(open(join(dirname(dirname(dirname(abspath(__file__)))), 'form.css')).read())
+        # ...or just throw a big chunk of html in here
+        table_links = mark_safe("""
+        <a href="table_readme_example_1/">Example 1 from the README</a><br>
+        <a href="table_readme_example_2/">Example 2 from the README</a><br>
+        <a href="table_kitchen_sink/">Kitchen sink</a><br>
+        """)
+
+    return IndexPage()
 
 
 def form_example_1(request):
@@ -74,17 +86,20 @@ def form_example_1(request):
         for name, bound_field in form.fields.items())
     )
 
-    return HttpResponse(format_html(
-        """
-            <html>
-                <body>
-                    {}
-                    {}
-                </body>
-            </html>
-        """,
-        form.render_part(),
-        message))
+    return HttpResponse(
+        Template("""
+            {% extends "base.html" %} 
+            {% block content %}
+                {{ form }} 
+                {{ message }} 
+            {% endblock %}
+        """).render(
+            context=RequestContext(
+                request,
+                dict(form=form, message=message)
+            )
+        ),
+    )
 
 
 def form_example_2(request):
@@ -163,15 +178,6 @@ def form_kitchen(request):
     return KitchenPage()
 
 
-def table_index(request):
-    return HttpResponse(
-        """<html><body>
-        <a href="readme_example_1/">Example 1 from the README</a><br/>
-        <a href="readme_example_2/">Example 2 from the README</a><br/>
-        <a href="kitchen_sink/">Kitchen sink</a><br/>
-        </body></html>""")
-
-
 def table_style(request):
     return HttpResponse(open(join(dirname(dirname(dirname(abspath(__file__)))), 'table.css')).read())
 
@@ -194,11 +200,8 @@ def table_readme_example_1(request):
         c = Column(cell__format=lambda value, **_: value[-1])  # Display the last value of the tuple
         sum_c = Column(cell__value=lambda row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
 
-        class Meta:
-            template = 'base.html'
-
     # now to get an HTML table:
-    return FooTable(data=foos)
+    return FooTable(rows=foos)
 
 
 def fill_dummy_data():
@@ -214,6 +217,7 @@ def table_readme_example_2(request):
 
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
+        # TODO: this doesn't work anymore :(
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
             query__show=True,  # put this field into the query language
             query__gui__show=True)  # put this field into the simple filtering GUI
@@ -222,7 +226,7 @@ def table_readme_example_2(request):
             query__show=True,
             query__gui__show=True)
 
-    return BarTable(data=Bar.objects.all(), template='base.html', paginate_by=20)
+    return BarTable(rows=Bar.objects.all(), page_size=20)
 
 
 def table_kitchen_sink(request):
@@ -261,10 +265,9 @@ def table_kitchen_sink(request):
         class Meta:
             name = 'bar'
             model = Bar
-            template = 'base.html'
             page_size = 20
 
-    return BarTable(data=Bar.objects.all())
+    return BarTable(rows=Bar.objects.all())
 
 
 # TODO: Page, Fragment examples

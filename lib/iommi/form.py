@@ -1570,10 +1570,10 @@ class Form(PagePart):
         self.errors.add(msg)
 
     def __str__(self):
-        return self.table()
+        return self.render_part()
 
     def __html__(self):
-        return self.table()
+        return self.render_part()
 
     def compact(self):
         return self.render_with_style(template_name=None)
