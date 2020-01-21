@@ -999,6 +999,10 @@ class Table(PagePart):
             **kwargs
         )
 
+        if model and self.extra.get('model_verbose_name') is None:
+            # noinspection PyProtectedMember
+            self.extra.model_verbose_name = model._meta.verbose_name_plural.replace('_', ' ').capitalize()
+
         self.default_child = default_child
 
         self.query_args = query
@@ -1419,34 +1423,26 @@ class Table(PagePart):
 
         return render(request=request, template=self.template, context=self.context)
 
-    @classmethod
-    @class_shortcut(
+    @dispatch(
         parts=EMPTY,
-        call_target__attribute='from_model',
-        extra__model_verbose_name=None,
-        extra__title=None,
     )
-    def as_page(cls, *, call_target=None, model=None, parts=None, extra=None, rows=None, **kwargs):
-        if model is None and isinstance(rows, QuerySet):
-            model = rows.model
+    def as_page(self, *, title=None, parts=None, default_child=True):
 
-        if model and extra.model_verbose_name is None:
-            # noinspection PyProtectedMember
-            extra.model_verbose_name = model._meta.verbose_name_plural.replace('_', ' ').capitalize()
+        # TODO: clean this up
+        if title is None:
+            title = self.extra.get('model_verbose_name', '')
 
-        if extra.title is None:
-            extra.title = extra.model_verbose_name
+        self.default_child = default_child
 
-        # TODO: move import?
         from iommi.page import (
             Page,
             html,
         )
         return Page(
             # TODO: do I need to do this pop manually? Won't this be handled by collect_members/bind_members?
-            parts__title=html.h1(extra.title, **parts.pop('title', {})),
+            parts__title=html.h1(title, **parts.pop('title', {})),
             # TODO: we should use the name given here, not hard code "table"
-            parts__table=call_target(extra=extra, model=model, default_child=True, **kwargs),
+            parts__table=self,
             parts=parts,
             default_child=True,
         )

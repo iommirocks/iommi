@@ -1411,9 +1411,19 @@ def test_explicit_table_does_not_use_from_model():
             bulk__show=True,
         )
 
-    p = TestTable.as_page(rows=TBar.objects.all()).bind(request=None)
+    p = TestTable().as_page().bind(request=None)
     assert 'table' in p.parts.keys()
     assert list(p.parts.table.declared_columns.keys()) == ['foo']
+
+
+@pytest.mark.django_db
+def test_from_model_implicit():
+    class TestTable(Table):
+        pass
+
+    p = TestTable.from_model(rows=TBar.objects.all()).as_page().bind(request=None)
+    assert 'table' in p.parts.keys()
+    assert list(p.parts.table.declared_columns.keys()) == ['id', 'foo', 'c']
 
 
 @override_settings(DEBUG=True)
@@ -1436,7 +1446,7 @@ def test_ajax_endpoint():
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable.as_page(rows=TBar.objects.all()), data={'/table/query/gui/field/foo': 'hopp'})
+    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/gui/field/foo': 'hopp'})
     assert json.loads(result.content) == {
         'more': False,
         'page': 1,
@@ -1797,7 +1807,7 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table.as_page(model=TBar, columns__foo__query=dict(show=True, gui__show=True))
+        return Table.from_model(model=TBar, columns__foo__query=dict(show=True, gui__show=True)).as_page()
 
     from iommi.page import middleware
     m = middleware(get_response)
@@ -1817,7 +1827,7 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table.as_page(model=TBar, columns__foo__query=dict(show=True, gui__show=True))
+    page = Table.from_model(model=TBar, columns__foo__query=dict(show=True, gui__show=True)).as_page()
     page.bind(request=None)
     assert page.children().table.default_child
     target, parents = find_target(path='/table/query/gui/field/foo', root=page)
