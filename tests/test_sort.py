@@ -21,7 +21,7 @@ def test_sort_list():
         table=TestTable(rows=rows),
         query=dict(order='bar'),
         expected_html="""\
-      <table class="listview" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -54,7 +54,7 @@ def test_sort_list():
         table=TestTable(rows=rows),
         query=dict(order='-bar'),
         expected_html="""\
-      <table class="listview" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -103,7 +103,7 @@ def test_sort_with_name():
         table=table,
         query={'my_table/order': 'bar'},
         expected_html="""\
-      <table class="listview" data-endpoint="/my_table/tbody">
+      <table class="table" data-endpoint="/my_table/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -148,7 +148,7 @@ def test_sort_list_with_none_values():
         table=TestTable(rows=rows),
         query=dict(order='bar'),
         expected_html="""\
-      <table class="listview" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -195,7 +195,7 @@ def test_sort_list_bad_parameter():
     verify_table_html(table=TestTable(rows=rows),
                       query=dict(order='barfology'),
                       expected_html="""\
-      <table class="listview" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -235,7 +235,7 @@ def test_sort_django_table():
         table=TestTable(rows=TFoo.objects.all()),
         query=dict(order='a'),
         expected_html="""\
-    <table class="listview" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody">
       <thead>
         <tr>
           <th class="ascending first_column sorted_column subheader">
@@ -268,7 +268,7 @@ def test_sort_django_table():
         table=TestTable(rows=TFoo.objects.all()),
         query=dict(order='-a'),
         expected_html="""\
-    <table class="listview" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody">
       <thead>
         <tr>
           <th class="descending first_column sorted_column subheader">
@@ -392,7 +392,7 @@ def test_sort_django_table_from_model():
         table__rows=TFoo.objects.all(),
         query=dict(order='a'),
         expected_html="""\
-    <table class="listview" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody">
       <thead>
         <tr>
           <th class="ascending first_column sorted_column subheader">

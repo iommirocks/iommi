@@ -552,7 +552,7 @@ class Action(PagePart):
     @classmethod
     @class_shortcut(
         tag='button',
-        attrs__class__button=True,
+        attrs__class={'btn': True, 'btn-primary': True},
     )
     def button(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -832,7 +832,7 @@ class Field(PagePart):
         if self.attr is MISSING:
             self.attr = self.name
         if self.id is MISSING:
-            self.id = 'id_%s' % self.name if self.name else ''
+            self.id = f'id_{self.path()}'.replace(DISPATCH_PATH_SEPARATOR, '__') if self.name else ''
         if self.display_name is MISSING:
             self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
 

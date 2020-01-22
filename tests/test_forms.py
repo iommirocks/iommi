@@ -59,6 +59,10 @@ from .helpers import (
     reindent,
     req,
 )
+from .models import (
+    TBar,
+    Bar,
+)
 
 
 def assert_one_error_and_matches_reg_exp(errors, reg_exp):
@@ -640,8 +644,7 @@ def test_multi_choice_queryset():
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
     result = form.render_part()
-    assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" multiple="" name="foo" type="hidden"/>'
-    assert f'var data = [{{"id": {user.pk}, "text": "{user}"}}];' in result
+    assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
 
 @pytest.mark.django_db
@@ -662,8 +665,7 @@ def test_choice_queryset():
     assert form.fields.foo.errors == set()
     result = form.render_part()
     print(result)
-    assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<input id="id_foo" name="foo" type="hidden"/>'
-    assert f'var data = {{"id": {user.pk}, "text": "{user}"}};' in result
+    assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
 
 @pytest.mark.django_db
@@ -1868,3 +1870,16 @@ def test_override_shenanigans():
 
     form = MyForm(fields__foo__extra__hello=True).bind(request=req('get'))
     assert form.fields.foo.extra.hello is True
+
+
+def test_dunder_name_for_column():
+    class FooForm(Form):
+        class Meta:
+            model = Bar
+
+        foo = Field()
+        foo__a = Field()
+
+    form = FooForm()
+    form.bind(request=None)
+    assert list(form.fields.keys()) == ['foo', 'foo__a']

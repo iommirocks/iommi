@@ -31,7 +31,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     Verify that the table renders to the expected markup, modulo formatting
     """
     if find is None:
-        find = dict(class_='listview')
+        find = dict(class_='table')
         if not expected_html.strip():
             expected_html = "<table/>"
 

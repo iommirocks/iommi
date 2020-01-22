@@ -4,13 +4,14 @@ from tri_struct import merged
 from iommi.form import Field, Form
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import render_to_string, format_html, render_template, Template
-from .compat import RequestFactory, SafeText
+from .compat import SafeText
+from .helpers import req
 
 
 def test_render_to_string():
     assert render_to_string(
         template_name='iommi/form/non_editable.html',
-        request=RequestFactory().get('/'),
+        request=req('get'),
         context=dict(
             field=dict(
                 id=SafeText('<a b c><d><e>'),
@@ -25,19 +26,19 @@ def test_format_html():
 
 
 def test_format_html2():
-    assert render_template(RequestFactory().get('/'), Template('{{foo}}'), dict(foo=format_html('<a href="foo">foo</a>'))) == '<a href="foo">foo</a>'
+    assert render_template(req('get'), Template('{{foo}}'), dict(foo=format_html('<a href="foo">foo</a>'))) == '<a href="foo">foo</a>'
 
 
 def test_format_html3():
-    assert render_template(RequestFactory().get('/'), Template('{{foo}}'), dict(foo=format_html('{}', format_html('<a href="foo">foo</a>')))) == '<a href="foo">foo</a>'
+    assert render_template(req('get'), Template('{{foo}}'), dict(foo=format_html('{}', format_html('<a href="foo">foo</a>')))) == '<a href="foo">foo</a>'
 
 
 def test_format_html4():
     actual = render_template(
-        RequestFactory().get('/'),
+        req('get'),
         Template('{{foo}}'),
         dict(
-            foo=Form(fields=dict(foo=Field())),
+            foo=Form(fields=dict(foo=Field())).bind(request=req('get')),
         )
     )
     print(actual)
@@ -48,7 +49,7 @@ def test_format_html5():
     actual = Form(
         fields__foo=Field(),
     ).bind(
-        request=RequestFactory().get('/'),
+        request=req('get'),
     ).render_part()
     print(actual)
     assert type(actual) == SafeText
@@ -56,14 +57,14 @@ def test_format_html5():
 
 # TODO: rendering a form should work, but right now there's render_with_style.. which we should fix
 def test_format_html6():
-    form = Form(fields__foo=Field()).bind(request=RequestFactory().get('/'))
+    form = Form(fields__foo=Field()).bind(request=req('get'))
     actual = form.fields.foo.render_part()
     print(actual)
     assert type(actual) == SafeText
 
 
 def test_render_template():
-    actual = render_template(RequestFactory().get('/'), Template('{{foo}}'), dict(foo=1))
+    actual = render_template(req('get'), Template('{{foo}}'), dict(foo=1))
     print(actual)
     assert type(actual) == SafeText
 

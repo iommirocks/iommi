@@ -204,7 +204,7 @@ def table_readme_example_1(request):
 
 
 def fill_dummy_data():
-    if not Bar.objects.all():
+    if not TBar.objects.all():
         # Fill in some dummy data if none exists
         for i in range(200):
             f = TFoo.objects.create(a=i, name='Foo: %s' % i)
@@ -219,11 +219,13 @@ def table_readme_example_2(request):
         # TODO: this doesn't work anymore :(
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
             query__show=True,  # put this field into the query language
-            query__gui__show=True)  # put this field into the simple filtering GUI
+            query__gui__show=True,  # put this field into the simple filtering GUI
+        )
         c = Column(
             bulk__show=True,  # Enable bulk editing for this field
             query__show=True,
-            query__gui__show=True)
+            query__gui__show=True,
+        )
 
     return BarTable(rows=Bar.objects.all(), page_size=20)
 
@@ -234,28 +236,33 @@ def table_kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
+
+        # TODO: this doesn't work without the register_name_field machinery
         b = Column.choice_queryset(
-            show=False,
+            render_column=False,
             choices=TFoo.objects.all(),
-            model=TFoo,
+            model=Bar,
+            model_field=TFoo,
             bulk__show=True,
             query__show=True,
             query__gui__show=True,
         )
         c = Column(bulk__show=True)  # The form is created automatically
 
-        d = Column(display_name='Display name',
-                   attr__class__css_class=True,
-                   url='url',
-                   sortable=False,
-                   group='Foo',
-                   auto_rowspan=True,
-                   cell__value=lambda row, **_: row.b.a // 3,
-                   cell__format=lambda value, **_: '- %s -' % value,
-                   cell__attrs__class__cj=True,
-                   cell__attrs__title='cell title',
-                   cell__url='url',
-                   cell__url_title='cell url title')
+        d = Column(
+            display_name='Display name',
+            attr__class__css_class=True,
+            url='url',
+            sortable=False,
+            group='Foo',
+            auto_rowspan=True,
+            cell__value=lambda row, **_: row.b.a // 3,
+            cell__format=lambda value, **_: '- %s -' % value,
+            cell__attrs__class__cj=True,
+            cell__attrs__title='cell title',
+            cell__url='url',
+            cell__url_title='cell url title',
+        )
         e = Column(group='Foo', cell__value='explicit value', sortable=False)
         f = Column(show=False, sortable=False)
         g = Column(attr='c', sortable=False)
@@ -266,7 +273,7 @@ def table_kitchen_sink(request):
             model = Bar
             page_size = 20
 
-    return BarTable(rows=Bar.objects.all())
+    return BarTable(rows=TBar.objects.all())
 
 
 # TODO: Page, Fragment examples

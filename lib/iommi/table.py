@@ -103,12 +103,12 @@ ASCENDING = 'ascending'
 DEFAULT_PAGE_SIZE = 40
 
 
-def prepare_headers(table, bound_columns):
+def prepare_headers(table, columns):
     request = table.request()
     if request is None:
         return
 
-    for column in bound_columns:
+    for column in columns:
         if column.sortable:
             params = request.GET.copy()
             param_path = path_join(table.path(), 'order')
@@ -235,6 +235,7 @@ class Column(PagePart):
     superheader = Refinable()
     header: Namespace = Refinable()
     data_retrieval_method = Refinable()
+    render_column: bool = Refinable()
 
     @dispatch(
         sort_default_desc=False,
@@ -255,6 +256,7 @@ class Column(PagePart):
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
         header__attrs__class__subheader=True,
         header__template='iommi/table/header.html',
+        render_column=True,
     )
     def __init__(self, **kwargs):
         """
@@ -274,6 +276,7 @@ class Column(PagePart):
         :param cell__attrs: dict of attr name to callables that receive kw arguments: `table`, `column`, `row` and `value`.
         :param cell__url: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
+        :param render_column: If set to false the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
         """
 
         # TODO: what's this?
@@ -339,6 +342,7 @@ class Column(PagePart):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
+        # TODO: we should have an explicit list of attributes here, not just loop through them all, and we should have strict evaluation wherever possible
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
             v = getattr(self, k)
@@ -721,11 +725,11 @@ class BoundRow(object):
         return mark_safe('\n'.join(bound_cell.render_part() for bound_cell in self))
 
     def __iter__(self):
-        for bound_column in self.table.columns.values():
+        for bound_column in self.table.rendered_columns.values():
             yield BoundCell(bound_row=self, bound_column=bound_column)
 
     def __getitem__(self, name):
-        bound_column = self.table.columns[name]
+        bound_column = self.table.rendered_columns[name]
         return BoundCell(bound_row=self, bound_column=bound_column)
 
 
@@ -908,8 +912,8 @@ class Table(PagePart):
 
     def children(self):
         return Struct(
-            query=self.query,
-            bulk=self.bulk,
+            query=self.query,  # TODO: this is a property which we should try to remove
+            bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
 
             # TODO: should be a PagePart?
             columns=Struct(
@@ -986,6 +990,7 @@ class Table(PagePart):
         self._columns_unapplied_data = {}
         self.declared_columns: Dict[str, Column] = collect_members(items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
         self.columns = None
+        self.rendered_columns = None
 
         self.instance = instance
 
@@ -1093,9 +1098,9 @@ class Table(PagePart):
                     self.rows = self.rows.order_by(*order_args)
 
     def _prepare_headers(self):
-        prepare_headers(self, self.columns.values())
+        prepare_headers(self, self.rendered_columns.values())
 
-        for bound_column in self.columns.values():
+        for bound_column in self.rendered_columns.values():
             evaluate_members(
                 bound_column,
                 [
@@ -1111,7 +1116,7 @@ class Table(PagePart):
         subheaders = []
 
         # The id(header) and stuff is to make None not be equal to None in the grouping
-        for _, group_iterator in groupby(self.columns.values(), key=lambda header: header.group or id(header)):
+        for _, group_iterator in groupby(self.rendered_columns.values(), key=lambda header: header.group or id(header)):
             columns_in_group = list(group_iterator)
             group_name = columns_in_group[0].group
 
@@ -1190,6 +1195,8 @@ class Table(PagePart):
             # special case for entire table not sortable
             if not self.sortable:
                 column.sortable = False
+
+        self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
         self._prepare_headers()
         evaluate_members(

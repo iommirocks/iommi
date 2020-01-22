@@ -278,7 +278,7 @@ def test_page_render():
 def test_evaluate_attrs():
     actual = evaluate_attrs(
         Namespace(
-            class__listview=True,
+            class__table=True,
             class__foo=lambda foo: True,
             data=1,
             data2=lambda foo: foo,
@@ -288,7 +288,7 @@ def test_evaluate_attrs():
 
     expected = {
         'class': {
-            'listview': True,
+            'table': True,
             'foo': True,
         },
         'data': 1,
