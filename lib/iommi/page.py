@@ -5,7 +5,6 @@ from typing import (
     Type,
 )
 
-from django.http.response import HttpResponseBase
 from django.utils.html import format_html
 from iommi._web_compat import (
     Template,
@@ -177,59 +176,3 @@ class Html:
 
 
 html = Html()
-
-
-def portal_page(left=None, center=None, **kwargs):
-    parts = Namespace()
-    if left:
-        parts.left = html.div(
-            attrs__class='left-menu',
-            child=left,
-        )
-    if center:
-        parts.center = html.div(
-            attrs__class='t-main',
-            child=center,
-        )
-
-    return Page(
-        parts__main=html.div(
-            attrs__class='main-layout',
-            child=Page(
-                parts=parts,
-                **kwargs
-            ),
-        ),
-    )
-
-
-# def page(*function, **render_kwargs):
-#     def decorator(f):
-#         @functools.wraps(f)
-#         def wrapper(request, *args, **kwargs):
-#             result = f(request, *args, **kwargs)
-#             result.bind(request=request)
-#             if isinstance(result, Page):
-#                 return result.render_to_response(**render_kwargs)
-#             else:
-#                 return result
-#
-#         return wrapper
-#
-#     if function:
-#         assert len(function) == 1
-#         return decorator(function[0])
-#
-#     return decorator
-
-# TODO: this should be iommi.middleware I think
-def middleware(get_response):
-    def iommi_middleware(request):
-
-        response = get_response(request)
-        if isinstance(response, PagePart):
-            return response.bind(request=request).render_to_response()
-        else:
-            return response
-
-    return iommi_middleware

@@ -534,9 +534,14 @@ class Action(PagePart):
     def render_attrs(self):
         return render_attrs(self.attrs)
 
-    def as_html(self):
+    @dispatch(
+        context=EMPTY,
+        render=EMPTY,
+    )
+    def as_html(self, *, context=None, render=None):
+        assert not render
         if self.template:
-            return render_to_string(self.template, dict(action=self))
+            return render_to_string(self.template, dict(**context, action=self))
         else:
             return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.render_attrs(), display_name=self.display_name)
 
@@ -552,7 +557,6 @@ class Action(PagePart):
     @classmethod
     @class_shortcut(
         tag='button',
-        attrs__class={'btn': True, 'btn-primary': True},
     )
     def button(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -691,7 +695,7 @@ class Field(PagePart):
         attrs__class=EMPTY,
         parse_empty_string_as_none=True,
         required=True,
-        template='iommi/form/{style}_form_row.html',
+        template='iommi/form/{style}/row.html',
         input_template='iommi/form/input.html',
         label_template='iommi/form/label.html',
         errors_template='iommi/form/errors.html',
@@ -725,7 +729,7 @@ class Field(PagePart):
         :param attrs: a dict containing any custom html attributes to be sent to the input_template.
         :param id: the HTML id attribute. Default: 'id_%s' % name
         :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
-        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'iommi/form/{style}_form_row.html'
+        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'iommi/form/{style}/form_row.html'
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
         :param input_template: django template filename for the template for just the input control. Default: 'iommi/form/input.html'
         :param label_template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
@@ -915,6 +919,7 @@ class Field(PagePart):
         return render_attrs(self.attrs)
 
     def get_container_attrs(self):
+        # TODO: this is very complicated.. we must be able to handle this nicer with any new style system
         container_attrs = Namespace(flatten(self.container.attrs))
         if self.required and self.editable:
             container_attrs.setdefault('class', dict())['required'] = True
@@ -958,15 +963,22 @@ class Field(PagePart):
             model_field=model_field,
             **kwargs)
 
-    def render_with_style(self, style='compact'):
+    @dispatch(
+        context=EMPTY,
+        render=EMPTY,
+    )
+    def as_html(self, *, context=None, render=None):
+        assert not render
         context = {
             'form': self.form,
             'field': self,
         }
+        # TODO: grab the template_string from the style?
         if self.template_string is not None:
             return get_template_from_string(self.template_string, origin='iommi', name='Form.render_with_style').render(context, self.request())
         else:
-            return render_template(self.request(), self.template.format(style=style), context)
+            assert self.parent.style
+            return render_template(self.request(), self.template.format(style=self.parent.style), context)
 
     @classmethod
     @class_shortcut(
@@ -1016,7 +1028,7 @@ class Field(PagePart):
     @class_shortcut(
         parse=lambda string_value, **_: bool_parse(string_value),
         required=False,
-        template='iommi/form/{style}_form_row_checkbox.html',
+        template='iommi/form/{style}/row_checkbox.html',
         input_template='iommi/form/checkbox.html',
         is_boolean=True,
     )
@@ -1173,7 +1185,8 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         input_type='file',
-        template_string="{% extends 'iommi/form/table_form_row.html' %}{% block extra_content %}{{ field.value }}{% endblock %}",
+        # TODO: yuck!
+        template_string="{% extends 'iommi/form/{style}/row.html' %}{% block extra_content %}{{ field.value }}{% endblock %}",
         input_template='iommi/form/file.html',
         write_to_instance=file_write_to_instance,
     )
@@ -1293,9 +1306,12 @@ class Form(PagePart):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template_name = Refinable()
+    # TODO: is this a good idea? seems like it's a bit heavy handed.. similar to endpoint_dispatch_prefix, although not quite as bad
+    style = Refinable()
 
     class Meta:
         template_name = 'iommi/form/form.html'
+        style = 'bootstrap'
         member_class = Field
         action_class = Action
 
@@ -1347,7 +1363,6 @@ class Form(PagePart):
 
         self.fields = None
         """ :type: Struct[str, Field] """
-        self.style = None
         self.errors: Set[str] = set()
         self._valid = None
         self.instance = instance
@@ -1585,44 +1600,24 @@ class Form(PagePart):
     def __html__(self):
         return self.as_html()
 
-    def compact(self):
-        return self.render_with_style(template_name=None)
-
-    def table(self):
-        return self.render_with_style(style='table', template_name=None)
-
-    def render_with_style(self, style: str = 'compact', template_name: Optional[str] = 'iommi/form/form.html'):
-        if not self._is_bound:
-            self.bind(parent=self.parent)
-
-        # TODO: the style thing should be a part of the form
-        self.style = style
+    def render_fields(self):
         r = []
         for field in self.fields.values():
-            r.append(field.render_with_style(style=style))
+            r.append(field.as_html())
 
         if self.is_full_form:
             r.append(format_html(AVOID_EMPTY_FORM, self.path()))
 
-        request = self.request()
-        if request:
-            # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
-            own_field_paths = {f.path() for f in self.fields.values()}
-            for k, v in request.GET.items():
-                if k == self.own_target_marker():
-                    continue
-                # TODO: why is there a special case for '-' here?
-                if k not in own_field_paths and k != '-':
-                    r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
+        # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
+        own_field_paths = {f.path() for f in self.fields.values()}
+        for k, v in self.request().GET.items():
+            if k == self.own_target_marker():
+                continue
+            # TODO: why is there a special case for '-' here?
+            if k not in own_field_paths and k != '-':
+                r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
-        if template_name is None:
-            return format_html('{}\n' * len(r), *r)
-        else:
-            return render_to_string(
-                template_name=template_name,
-                context=dict(form=self, **csrf(request)),
-                request=request
-            )
+        return format_html('{}\n' * len(r), *r)
 
     @dispatch(
         render__call_target=render_template_name,

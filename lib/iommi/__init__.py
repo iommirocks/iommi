@@ -8,11 +8,25 @@ from iommi.query import Variable
 from iommi.form import Form
 from iommi.form import Field
 from iommi.form import Action
-from iommi.base import MISSING
+from iommi.base import (
+    MISSING,
+    PagePart,
+)
 from iommi.page import (
     Page,
-    middleware,
     html,
 )
 
 setup_db_compat()
+
+
+def middleware(get_response):
+    def iommi_middleware(request):
+
+        response = get_response(request)
+        if isinstance(response, PagePart):
+            return response.bind(request=request).render_to_response()
+        else:
+            return response
+
+    return iommi_middleware

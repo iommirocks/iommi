@@ -951,7 +951,6 @@ class Table(PagePart):
         sortable=True,
         default_sort_order=None,
         attrs=EMPTY,
-        attrs__class__table=True,
         template='iommi/table/list.html',
         row__attrs__class=EMPTY,
         row__template=None,

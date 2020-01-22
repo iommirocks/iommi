@@ -2,7 +2,10 @@ import re
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
-from iommi import Table
+from iommi import (
+    Table,
+    middleware,
+)
 from tri_declarative import (
     dispatch,
     Namespace,
@@ -57,8 +60,6 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
 
 
 def request_with_middleware(*, response, data):
-    from iommi.page import middleware
-
     def get_response(request):
         del request
         return response

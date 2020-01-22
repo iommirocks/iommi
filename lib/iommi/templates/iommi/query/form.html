@@ -3,6 +3,7 @@
     <a href="#" id="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
 
     <!-- TODO: iommi_query_form should be namespaced -->
+    <!-- TODO: the form tag here should come from Query, not be hard coded here -->
     <form id="iommi_query_form" class="compact">
         <table style="width: 100%">
             <tr class="iommi_query_form_advanced" style="display: none">
@@ -12,7 +13,7 @@
                 <td>
                     <!-- TODO: iommi_query_form_simple should be namespaced -->
                     <div id="iommi_query_form_simple">
-                        {{ form.compact }}
+                        {{ form }}
                     </div>
                     <div class="iommi_query_form_advanced" style="display: none">
                         <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.query_advanced_value }}"/>

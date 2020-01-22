@@ -1809,7 +1809,7 @@ def test_new_style_ajax_dispatch():
         del request
         return Table.from_model(model=TBar, columns__foo__query=dict(show=True, gui__show=True)).as_page()
 
-    from iommi.page import middleware
+    from iommi import middleware
     m = middleware(get_response)
     response = m(request=req('get', **{'/table/query/gui/field/foo': ''}))
 

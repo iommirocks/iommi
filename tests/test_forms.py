@@ -399,8 +399,8 @@ def test_non_editable_form():
 
 
 def test_text_fields():
-    assert '<input type="text" ' in Form(fields__foo=Field.text()).bind(request=req('get')).compact()
-    assert '<textarea' in Form(fields__foo=Field.textarea()).bind(request=req('get')).compact()
+    assert '<input type="text" ' in str(Form(fields__foo=Field.text()).bind(request=req('get')))
+    assert '<textarea' in str(Form(fields__foo=Field.textarea()).bind(request=req('get')))
 
 
 def test_integer_field():
@@ -427,7 +427,7 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    assert Form(fields__foo=Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')).bind(request=req('get', foo='7')).compact() == '7 compact\n' + AVOID_EMPTY_FORM.format('') + '\n'
+    assert Form(fields__foo=Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')).bind(request=req('get', foo='7')).as_html() == '7 compact\n' + AVOID_EMPTY_FORM.format('') + '\n'
 
 
 def test_render_template():
