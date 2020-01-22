@@ -37,7 +37,7 @@ In short we want to be able to have code that reads like:
 Declarative/programmatic hybrid API
 -----------------------------------
 
-The ``@declarative``, ``@with_meta`` and ``@creation_ordered``
+The ``@declarative`` and ``@with_meta``
 decorators from tri.declarative enables us to very easily write an API
 that can look both like a normal simple python API:
 
