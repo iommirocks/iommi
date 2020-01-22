@@ -934,6 +934,18 @@ class Field(PagePart):
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
+    def choice_to_options_selected(self):
+        if self.is_list:
+            if self.value_list is None:
+                return
+
+            for v in self.value_list:
+                yield self.choice_to_option(form=self.parent, field=self, choice=v)
+        else:
+            if self.value is None:
+                return
+            yield self.choice_to_option(form=self.parent, field=self, choice=self.value)
+
     @classmethod
     def from_model(cls, model, field_name=None, model_field=None, **kwargs):
         return member_from_model(
@@ -1278,13 +1290,11 @@ class Form(PagePart):
     model = Refinable()
     """ :type: django.db.models.Model """
     endpoint: Namespace = Refinable()
-    base_template: str = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template_name = Refinable()
 
     class Meta:
-        base_template = 'iommi/form/base.html'
         template_name = 'iommi/form/form.html'
         member_class = Field
         action_class = Action

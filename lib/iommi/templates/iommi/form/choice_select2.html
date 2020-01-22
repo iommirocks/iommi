@@ -1,42 +1,32 @@
-<input type="hidden" name="{{ field.path }}" id="{{ field.id }}"{{ field.render_attrs }}>
+<select name="{{ field.path }}" id="{{ field.id }}"{{ field.render_attrs }}>
+    {% for choice in field.choice_to_options_selected %}
+        <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %} label="{{ choice.2 }}">{{ choice.2 }}</option>
+    {% endfor %}
+</select>
+
+<style>
+    #{{ field.id }} {
+        min-width: 200px;
+    }
+</style>
 
 <script type="text/javascript">
     var id_field = "#{{ field.id }}";
     $(id_field).select2({
+        placeholder: '', // TODO: would be nice to configure this
         ajax: {
             url: ".",
             dataType: "json",
-            data: function (term, page) {
-                let params;
-
-                if (typeof page === 'undefined') {
-                    // We are running in Select2 4.x
-                    params = term;
-                }
-                else {
-                    // We are running in Select2 3.x
-                    params = {term: term, page: page};
-                }
+            data: function (params) {
                 return {
                     '{{ field.endpoint_path }}': params.term, // search term
                     page: params.page
                 };
-            },
-            results: function (data) {
-                return data;
-            },
-            processResults: function (data) {
-                return data;
-            },
-            cache: true
+            }
         },
         allowClear: true,
         multiple: {% if field.attrs.multiple %}true{% else %}false{% endif %},
-        minimumInputLength: 2,
-        initSelection: function (element, callback) {
-            var data = {{ field.extra.current_selection_json }};
-            callback(data);
-        }
+        minimumInputLength: 2
     });
 
 

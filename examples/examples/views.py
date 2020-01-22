@@ -45,15 +45,15 @@ def index(request):
         form_header = html.h2('Form examples')
 
         # We can create html fragments...
-        f_a_1 = html.a('Example 1', attrs__href="form_example_1/")
+        f_a_1 = html.a('Example 1: echo submitted data', attrs__href="form_example_1/")
         f_b_1 = html.br()
-        f_a_2 = html.a('Example 2 create', attrs__href="form_example_2/")
+        f_a_2 = html.a('Example 2: create a Foo', attrs__href="form_example_2/")
         f_b_2 = html.br()
-        f_a_3 = html.a('Example 3 edit', attrs__href="form_example_3/")
+        f_a_3 = html.a('Example 3: edit a Foo', attrs__href="form_example_3/")
         f_b_3 = html.br()
-        f_a_4 = html.a('Example 4 custom buttons', attrs__href="form_example_4/")
+        f_a_4 = html.a('Example 4: custom buttons', attrs__href="form_example_4/")
         f_b_4 = html.br()
-        f_a_5 = html.a('Example 5 automatic AJAX endpoint', attrs__href="form_example_5/")
+        f_a_5 = html.a('Example 5: automatic AJAX endpoint', attrs__href="form_example_5/")
         f_b_5 = html.br()
         f_a_k = html.a('Kitchen sink', attrs__href="form_kitchen/")
 
@@ -128,7 +128,6 @@ def form_example_5(request):
     ensure_objects()
     return Form.as_create_page(
         model=Bar,
-        base_template='iommi/form/base_select2.html',
         fields__b__input_template='iommi/form/choice_select2.html',
         actions=dict(
             foo=Action.submit(attrs__value='Foo'),

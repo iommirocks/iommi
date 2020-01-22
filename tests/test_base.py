@@ -258,7 +258,7 @@ def test_page_render():
     my_page.bind(request=request)
 
     # TODO: template_name??
-    response = my_page.render_to_response(template_name='iommi/form/base.html')
+    response = my_page.render_to_response(template_name='base.html')
 
     expected_html = '''
         <html>
