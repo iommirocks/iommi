@@ -16,7 +16,7 @@ from iommi.base import (
     bind_members,
     collect_members,
     no_copy_on_bind,
-    render_part,
+    as_html,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
@@ -76,7 +76,7 @@ class Fragment(PagePart):
         return format_html(
             '{}' * len(self._children),
             *[
-                render_part(part=x, context=context)
+                as_html(part=x, context=context)
                 for x in self._children
             ])
 
@@ -94,7 +94,7 @@ class Fragment(PagePart):
         context=EMPTY,
         render=fragment__render,
     )
-    def render_part(self, *, context=None, render=None):
+    def as_html(self, *, context=None, render=None):
         return render(fragment=self, context=context)
 
     def _evaluate_attribute_kwargs(self):
@@ -160,11 +160,11 @@ class Page(PagePart):
         context=EMPTY,
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
-    def render_part(self, *, context=None, render=None):
+    def as_html(self, *, context=None, render=None):
         rendered = {}
         for part in self.parts.values():
             assert part.name not in context
-            rendered[part.name] = render_part(part=part, context=context)
+            rendered[part.name] = as_html(part=part, context=context)
 
         return render(rendered)
 

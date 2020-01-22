@@ -50,16 +50,26 @@ def test_format_html5():
         fields__foo=Field(),
     ).bind(
         request=req('get'),
-    ).render_part()
+    ).as_html()
+    assert '<form' in actual
+    assert '<input' in actual
     print(actual)
     assert type(actual) == SafeText
 
 
-# TODO: rendering a form should work, but right now there's render_with_style.. which we should fix
 def test_format_html6():
     form = Form(fields__foo=Field()).bind(request=req('get'))
-    actual = form.fields.foo.render_part()
+    actual = form.fields.foo.as_html()
     print(actual)
+    assert '<input' in actual
+    assert type(actual) == SafeText
+
+
+def test_format_html7():
+    form = Form(fields__foo=Field()).bind(request=req('get'))
+    actual = str(form.fields.foo)
+    print(actual)
+    assert '<input' in actual
     assert type(actual) == SafeText
 
 

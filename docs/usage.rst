@@ -106,8 +106,6 @@ Or create a table the declarative and explicit way:
 and then you can render it in your template:
 
 
-.. TODO: this part doesn't currently work!! Rendering needs to be done my_table.something I think
-
 .. code:: html
 
     {{ my_table }}

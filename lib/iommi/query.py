@@ -175,15 +175,13 @@ class Variable(PagePart):
     )
     def __init__(self, **kwargs):
         """
-        Parameters with the prefix "gui__" will be passed along downstream to the tri.form.Field instance if applicable. This can be used to tweak the basic style interface.
+        Parameters with the prefix "gui__" will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
 
         :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
-        :param gui__call_target: the factory to create a tri.form.Field for the basic GUI, for example tri.form.Field.choice. Default: tri.form.Field
+        :param gui__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
         """
 
         super(Variable, self).__init__(**kwargs)
-
-        self.declared_variable = None
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -198,9 +196,6 @@ class Variable(PagePart):
 
         if self.attr is MISSING:
             self.attr = self.name
-
-        # TODO: should we just have "declared"?
-        self.declared_variable = self._declared
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self.parent, variable=self)

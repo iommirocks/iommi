@@ -195,7 +195,7 @@ class PagePart(RefinableObject):
         context=EMPTY,
         render=EMPTY,
     )
-    def render_part(self, *, context=None, render=None):
+    def as_html(self, *, context=None, render=None):
         assert False, 'Not implemented'
 
     # TODO: ick! why is this on ALL PageParts?
@@ -208,7 +208,7 @@ class PagePart(RefinableObject):
         if context is None:
             context = {}
 
-        content = self.render_part(context=context, **render)
+        content = self.as_html(context=context, **render)
 
         assert 'content' not in context
         context['content'] = content
@@ -335,14 +335,14 @@ def render_template_name(template_name, **kwargs):
 PartType = Union[PagePart, str, Template]
 
 
-def render_part(*, part: PartType, context):
+def as_html(*, part: PartType, context):
     if isinstance(part, str):
         return part
     elif isinstance(part, Template):
         template = part
         return template.render(context=context)
     else:
-        return part.render_part(context=context)
+        return part.as_html(context=context)
 
 
 def path_join(prefix, name) -> str:

@@ -1,12 +1,7 @@
 import json
 
 import pytest
-from bs4 import BeautifulSoup
 from django.db import models
-from django.test import (
-    override_settings,
-    RequestFactory,
-)
 
 from iommi.page import (
     html,
@@ -25,7 +20,6 @@ from tri_struct import Struct
 
 from tests.helpers import (
     request_with_middleware,
-    req,
 )
 
 
@@ -46,9 +40,6 @@ class T2(models.Model):
 
     class Meta:
         ordering = ('id',)
-
-
-request = req('get')  # TODO: we shouldn't need this, but tri.query eagerly tries to read request parameters. We should fix that.
 
 
 class MyPage(Page):
@@ -227,54 +218,6 @@ Parents so far: [Root, Foo, 'bar'].
 Path left: baz"""
 
 
-# TODO: move page tests to test_pages.py, delete test_page.py
-def test_page_constructor():
-    class MyPage(Page):
-        h1 = html.h1()
-
-    my_page = MyPage(
-        parts__foo=html.div(name='foo'),
-        parts__bar=html.div()
-    )
-
-    # TODO: should this be necessary?
-    my_page.bind(request=None)
-
-    assert len(my_page.parts) == 3
-    assert ['h1', 'foo', 'bar'] == list(my_page.parts.keys())
-
-
-@override_settings(
-    MIDDLEWARE_CLASSES=[],
-)
-def test_page_render():
-    class MyPage(Page):
-        header = html.h1('Foo')
-        body = html.div('bar bar')
-
-    my_page = MyPage()
-    request = req('get')
-    request.user = Struct()
-    my_page.bind(request=request)
-
-    # TODO: template_name??
-    response = my_page.render_to_response(template_name='base.html')
-
-    expected_html = '''
-        <html>
-            <head></head>
-            <body>
-                 <h1> Foo </h1>
-                 <div> bar bar </div>
-            </body>
-        </html>
-    '''
-
-    actual = BeautifulSoup(response.content, 'html.parser').prettify()
-    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
-    assert actual == expected
-
-
 def test_evaluate_attrs():
     actual = evaluate_attrs(
         Namespace(
@@ -299,8 +242,8 @@ def test_evaluate_attrs():
 
 
 def test_render_simple_tag():
-    assert html.a('bar', attrs__href='foo').render_part() == '<a href="foo">bar</a>'
+    assert html.a('bar', attrs__href='foo').as_html() == '<a href="foo">bar</a>'
 
 
 def test_render_empty_tag():
-    assert html.br().render_part() == '<br />'
+    assert html.br().as_html() == '<br />'

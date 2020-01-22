@@ -534,17 +534,17 @@ class Action(PagePart):
     def render_attrs(self):
         return render_attrs(self.attrs)
 
-    def render_part(self):
+    def as_html(self):
         if self.template:
             return render_to_string(self.template, dict(action=self))
         else:
             return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.render_attrs(), display_name=self.display_name)
 
     def __str__(self):
-        return self.render_part()
+        return self.as_html()
 
     def __html__(self):
-        return self.render_part()
+        return self.as_html()
 
     def __repr__(self):
         return f'<Action: {self.name}>'
@@ -631,7 +631,7 @@ def group_actions(actions_without_group: Dict[str, Action]):
 @with_meta
 class Field(PagePart):
     """
-    Class that describes a field, i.e. what input controls to render_part, the label, etc.
+    Class that describes a field, i.e. what input controls to render, the label, etc.
 
     The life cycle of the data is:
         1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
@@ -737,7 +737,7 @@ class Field(PagePart):
         :param editable: default: True
         :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: True
         :param input_type: the type attribute on the standard input HTML tag. Default: 'text'
-        :param render_value: render_part the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
+        :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :param is_list: interpret request data as a list (can NOT be a callable). Default False
         :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
@@ -964,7 +964,7 @@ class Field(PagePart):
             'field': self,
         }
         if self.template_string is not None:
-            return get_template_from_string(self.template_string, origin='tri.form', name='Form.render_part').render(context, self.request())
+            return get_template_from_string(self.template_string, origin='iommi', name='Form.render_with_style').render(context, self.request())
         else:
             return render_template(self.request(), self.template.format(style=style), context)
 
@@ -1580,10 +1580,10 @@ class Form(PagePart):
         self.errors.add(msg)
 
     def __str__(self):
-        return self.render_part()
+        return self.as_html()
 
     def __html__(self):
-        return self.render_part()
+        return self.as_html()
 
     def compact(self):
         return self.render_with_style(template_name=None)
@@ -1628,7 +1628,7 @@ class Form(PagePart):
         render__call_target=render_template_name,
         context=EMPTY,
     )
-    def render_part(self, *, context=None, render=None):
+    def as_html(self, *, context=None, render=None):
         setdefaults_path(
             render,
             context=context,

@@ -38,12 +38,14 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     if isinstance(table, Namespace):
         table = table()
 
+    table: Table
+
     request = RequestFactory().get("/", query)
     if not table._is_bound:
         table.bind(request=request)
 
     request.user = AnonymousUser()
-    actual_html = remove_csrf(table.render_part(**kwargs))
+    actual_html = remove_csrf(table.as_html(**kwargs))
 
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
     actual_soup = BeautifulSoup(actual_html, 'html.parser')

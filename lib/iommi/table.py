@@ -483,7 +483,7 @@ class Column(PagePart):
     )
     def boolean(cls, call_target=None, **kwargs):
         """
-        Shortcut to render_part booleans as a check mark if true or blank if false.
+        Shortcut to render booleans as a check mark if true or blank if false.
         """
 
         def render_icon(value):
@@ -702,7 +702,7 @@ class BoundRow(object):
         self.extra = extra
         self.attrs = evaluate_attrs(attrs, table=table, row=row, bound_row=self)
 
-    def render_part(self):
+    def as_html(self):
         if self.template:
             context = dict(bound_row=self, row=self.row, **self.table.context)
             return render_template(self.table.request(), self.template, context)
@@ -722,7 +722,7 @@ class BoundRow(object):
         return render_attrs(attrs)
 
     def render_cells(self):
-        return mark_safe('\n'.join(bound_cell.render_part() for bound_cell in self))
+        return mark_safe('\n'.join(bound_cell.as_html() for bound_cell in self))
 
     def __iter__(self):
         for bound_column in self.table.rendered_columns.values():
@@ -781,7 +781,7 @@ class BoundCell(object):
             url_title = url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
         return url_title
 
-    def render_part(self):
+    def as_html(self):
         cell__template = self.bound_column.cell.template
         if cell__template:
             context = dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
@@ -808,7 +808,7 @@ class BoundCell(object):
         return evaluate_strict(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
 
     def __str__(self):
-        return self.render_part()
+        return self.as_html()
 
     def __repr__(self):
         return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.declared_column, self.bound_row.row)  # pragma: no cover
@@ -882,6 +882,7 @@ class Table(PagePart):
     attrs = Refinable()
     template: Union[str, Template] = Refinable()
     row = Refinable()
+    # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template
     filter: Namespace = Refinable()
     header = Refinable()
     model: Type['django.db.models.Model'] = Refinable()
@@ -904,7 +905,7 @@ class Table(PagePart):
         form_class = Form
         query_class = Query
         action_class = Action
-        endpoint__tbody = (lambda table, key, value: {'html': table.render_part(template='tri_table/table_container.html')})
+        endpoint__tbody = (lambda table, key, value: {'html': table.as_html(template='tri_table/table_container.html')})
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
         query__default_child = True
@@ -1036,6 +1037,7 @@ class Table(PagePart):
     def render_filter(self):
         if not self.query_form:
             return ''
+        # TODO: why are we using self.filter.template here? and all this complex stuff generally, when we should be able to just render the query in the template like {{ table.query }}?
         return render_template(self.request(), self.filter.template, merged(self.context, form=self.query_form))
 
     def _prepare_auto_rowspan(self):
@@ -1309,7 +1311,7 @@ class Table(PagePart):
         return render_attrs(attrs)
 
     def render_tbody(self):
-        return mark_safe('\n'.join([bound_row.render_part() for bound_row in self.bound_rows()]))
+        return mark_safe('\n'.join([bound_row.as_html() for bound_row in self.bound_rows()]))
 
     def paginator_context(self, adjacent_pages=6):
         context = self.context.copy()
@@ -1393,7 +1395,7 @@ class Table(PagePart):
         render=render_template,
         context=EMPTY,
     )
-    def render_part(self, *, context=None, render=None):
+    def as_html(self, *, context=None, render=None):
         assert self._is_bound
 
         if not context:
@@ -1430,6 +1432,9 @@ class Table(PagePart):
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
         return render(request=request, template=self.template, context=self.context)
+
+    def __str__(self):
+        return self.as_html()
 
     @dispatch(
         parts=EMPTY,

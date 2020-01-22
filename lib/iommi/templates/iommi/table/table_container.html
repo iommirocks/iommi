@@ -1,4 +1,5 @@
 <script>
+    // TODO: select_all_pages_q and id__all_pks_ needs to be namespaced
     function iommi_table_js_select_all(base) {
         var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
         Array.prototype.forEach.call(tbody.querySelectorAll('.checkbox'), function(el, i) {
@@ -33,6 +34,7 @@
     {% include 'iommi/table/table.html' %}
 
     {% if bulk_form %}
+        {# TODO: this is a bit weird. There should be no table here anyway #}
         <table {{ bulk_form.render_attrs }}>
             {{ bulk_form }}
 

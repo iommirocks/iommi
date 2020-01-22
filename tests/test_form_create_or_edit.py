@@ -29,7 +29,7 @@ def test_create_and_edit_object():
     )
     p.bind(request=request)
     assert p.parts.create.default_child
-    response = p.parts.create.render_part(render__call_target=lambda **kwargs: kwargs)
+    response = p.parts.create.as_html(render__call_target=lambda **kwargs: kwargs)
     form = p.parts.create
     assert form.extra.model_verbose_name == 'baz'  # check explicit model_verbose_name parameter to Form.as_create_page
     assert response['context']['csrf_token']
@@ -41,7 +41,7 @@ def test_create_and_edit_object():
         template_name='<template name>',
     )
     p.bind(request=request)
-    response = p.parts.create.render_part(
+    response = p.parts.create.as_html(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
         render__call_target=lambda **kwargs: kwargs,
@@ -101,7 +101,7 @@ def test_create_and_edit_object():
         instance=instance,
     )
     p.bind(request=request)
-    response = p.parts.edit.render_part(
+    response = p.parts.edit.as_html(
         render=lambda **kwargs: kwargs,
     )
     form = p.parts.edit
@@ -281,7 +281,7 @@ def test_create_object_default_template():
     expected_html = """
         <div class="form_buttons clear">
             <div class="links">
-                <input accesskey="s" class="button" name="create" type="submit" value="Create foo"/>
+                <input accesskey="s" class="btn btn-primary" name="create" type="submit" value="Create foo"/>
             </div>
         </div>
     """
@@ -302,7 +302,7 @@ def test_edit_object_default_template():
     expected_html = """
         <div class="form_buttons clear">
             <div class="links">
-                <input accesskey="s" class="button" name="edit" type="submit" value="Save foo"/>
+                <input accesskey="s" class="btn btn-primary" name="edit" type="submit" value="Save foo"/>
             </div>
         </div>
     """
@@ -323,7 +323,7 @@ def test_create_or_edit_object_default_template_with_name():
     expected_html = """
         <div class="form_buttons clear">
             <div class="links">
-                <input accesskey="s" class="button" name="form_name" type="submit" value="Create foo"/>
+                <input accesskey="s" class="btn btn-primary" name="form_name" type="submit" value="Create foo"/>
             </div>
         </div>
     """
@@ -405,7 +405,7 @@ def test_create_or_edit_object_full_template(name):
             <div class="form_buttons clear">
                 <div class="links">
                     &nbsp;
-                    <input accesskey="s" class="button" {name_attr}type="submit" value="Create foo"></input>
+                    <input accesskey="s" class="btn btn-primary" {name_attr}type="submit" value="Create foo"></input>
                 </div>
             </div>
         </form>
