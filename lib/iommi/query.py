@@ -541,7 +541,7 @@ class Query(PagePart):
                 fields.append(params())
 
         form: Form = self.gui(
-            fields={x.name: x for x in fields},
+            _fields_dict={x.name: x for x in fields},
             default_child=True,
         )
         form.bind(parent=self)

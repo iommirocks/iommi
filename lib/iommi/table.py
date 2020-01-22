@@ -950,7 +950,7 @@ class Table(PagePart):
         template='iommi/table/list.html',
         row__attrs__class=EMPTY,
         row__template=None,
-        filter__template='iommi/query/form.html',  # tri.query dependency, see render_filter() below.
+        filter__template='iommi/query/form.html',
         header__template='iommi/table/table_header_rows.html',
         paginator_template='iommi/table/paginator.html',
         paginator__call_target=Paginator,
@@ -1211,6 +1211,7 @@ class Table(PagePart):
 
             def generate_variables():
                 for column in self.columns.values():
+                    # TODO: column.query.show... is this evaluated here?
                     if column.query.show:
                         query_namespace = setdefaults_path(
                             Namespace(),
@@ -1230,7 +1231,7 @@ class Table(PagePart):
             variables = Struct({x.name: x for x in generate_variables()})
 
             self._query = self.get_meta().query_class(
-                variables=variables,
+                _variables_dict=variables,
                 **self.query_args
             )
             self._query.bind(parent=self)

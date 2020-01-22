@@ -1831,3 +1831,18 @@ def test_endpoint_path_of_nested_part():
     assert page.children().table.default_child
     target, parents = find_target(path='/table/query/gui/field/foo', root=page)
     assert target.endpoint_path() == '/foo'
+
+
+def test_dunder_name_for_column():
+    class FooTable(Table):
+        class Meta:
+            model = TBar
+
+        foo = Column(query__show=True, query__gui__show=True)
+        foo__a = Column(query__show=True, query__gui__show=True)
+
+    table = FooTable()
+    table.bind(request=None)
+    assert list(table.columns.keys()) == ['foo', 'foo__a']
+    assert list(table.query.variables.keys()) == ['foo', 'foo__a']
+    assert list(table.query.form.fields.keys()) == ['foo', 'foo__a']
