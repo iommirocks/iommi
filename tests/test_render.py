@@ -67,3 +67,16 @@ def test_render_attrs_raises_for_some_common_pitfall_types():
         ))
 
     assert re.match("Attributes can't be callable, you sent <function .*>", str(e.value))
+
+
+def test_render_attrs_quote():
+    assert render_attrs(
+        dict(
+            a='"1"',
+            b="'1'",
+            style=dict(
+                foo='url("foo")',
+                bar="url('bar')",
+            ),
+        )
+    ) == ' a="&quot;1&quot;" b="\'1\'" style="bar: url(\'bar\'); foo: url(&quot;foo&quot;)"'
