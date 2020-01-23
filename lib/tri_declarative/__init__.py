@@ -509,7 +509,9 @@ def class_shortcut(*args, **defaults):
                     call_target__call_target__cls=cls,
                 )
 
-            return __target__(cls, *args, **kwargs)
+            r = __target__(cls, *args, **kwargs)
+            r.__tri_declarative_shortcut_stack = [__target__.__name__] + getattr(r, '__tri_declarative_shortcut_stack', [])
+            return r
 
         class_shortcut_wrapper.__doc__ = __target__.__doc__
         return class_shortcut_wrapper
