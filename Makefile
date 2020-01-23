@@ -56,4 +56,5 @@ venv:
 	tox -e venv
 
 run-examples: venv
+	venv/bin/python examples/manage.py migrate
 	venv/bin/python examples/manage.py runserver
