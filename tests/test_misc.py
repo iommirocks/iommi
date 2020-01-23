@@ -1042,3 +1042,31 @@ def test_shortcut_chaining():
     )
 
     assert bar() == dict(tag='foo', bar=1)
+
+
+def test_class_shortcut__shortcut_stack():
+    class MyFoo:
+        @classmethod
+        @class_shortcut
+        def shortcut(cls, call_target):
+            return call_target()
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='shortcut'
+        )
+        def shortcut2(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    middle = Shortcut(call_target=MyFoo.shortcut2)
+
+    class MyOtherFoo(MyFoo):
+        @classmethod
+        @class_shortcut(
+            call_target=middle
+        )
+        def shortcut3(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    assert MyOtherFoo().shortcut2().__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut']
+    assert MyOtherFoo().shortcut3().__tri_declarative_shortcut_stack == ['shortcut3', 'shortcut2', 'shortcut']
