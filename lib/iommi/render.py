@@ -1,5 +1,11 @@
 from iommi._web_compat import mark_safe
 
+# TODO: this package name is silly
+
+
+# TODO: inline this into Attrs
+from tri_declarative import Namespace
+
 
 def render_attrs(attrs):
     """
@@ -47,3 +53,14 @@ def render_class(class_dict):
 
 def render_style(class_dict):
     return '; '.join(sorted(f'{k}: {v}' for k, v in class_dict.items()))
+
+
+class Attrs(Namespace):
+    def __init__(self, attrs):
+        super(Attrs, self).__init__(attrs)
+
+    def __html__(self):
+        return str(self)
+
+    def __str__(self):
+        return render_attrs(self)

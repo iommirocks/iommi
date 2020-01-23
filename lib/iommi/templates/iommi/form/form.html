@@ -1,6 +1,7 @@
-<form{{ form.render_attrs }}>{% if form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
+<form{{ form.attrs }}>{% if form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
 
     {% for error in form.errors %}
+    {# TODO: style classes #}
     <div class="error">{{ error }}</div>
     {% endfor %}
 
@@ -8,6 +9,7 @@
         {{ form.render_fields }}
     </div>
 
+    {# TODO: style classes #}
     <div class="form_buttons clear">
         {{ form.render_actions }}
     </div>

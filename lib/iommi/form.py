@@ -48,7 +48,11 @@ from iommi.base import (
     request_data,
     setup_endpoint_proxies,
 )
-from iommi.render import render_attrs
+from iommi.page import Fragment
+from iommi.render import (
+    render_attrs,
+    Attrs,
+)
 from tri_declarative import (
     EMPTY,
     Namespace,
@@ -518,7 +522,7 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
 # TODO: move this class.. maybe lots of other stuff from here
 class Action(PagePart):
     tag = Refinable()
-    attrs = Refinable()
+    attrs: Dict[str, Any] = Refinable()
     group = Refinable()
     template = Refinable()
     display_name = Refinable()
@@ -531,9 +535,6 @@ class Action(PagePart):
         super().__init__(**kwargs)
         self.declared_action = None
 
-    def render_attrs(self):
-        return render_attrs(self.attrs)
-
     @dispatch(
         context=EMPTY,
         render=EMPTY,
@@ -543,13 +544,7 @@ class Action(PagePart):
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:
-            return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.render_attrs(), display_name=self.display_name)
-
-    def __str__(self):
-        return self.as_html()
-
-    def __html__(self):
-        return self.as_html()
+            return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.attrs, display_name=self.display_name)
 
     def __repr__(self):
         return f'<Action: {self.name}>'
@@ -590,24 +585,18 @@ class Action(PagePart):
     def on_bind(self) -> None:
         for k, v in self.parent._actions_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
-
-    def _evaluate_attribute_kwargs(self):
-        return dict(action=self)
-
-    def _evaluate(self, **kwargs):
-        """
-        Evaluates callable/lambda members. After this function is called all members will be values.
-        """
+        self.attrs = evaluate_attrs(self.attrs, action=self)
         # TODO: whitelist instead of blacklist
         not_evaluated_attributes = {'show', 'extra', 'endpoint'}
         evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
         for key in evaluated_attributes:
-            self._evaluate_attribute(key, **kwargs)
+            self._evaluate_attribute(key)
 
-        self.extra = evaluate_recursive(self.extra, action=self, **kwargs)
+        self.extra = evaluate_recursive(self.extra, action=self)
+        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def _evaluate_attribute_kwargs(self):
+        return dict(action=self)
 
 
 def group_actions(actions_without_group: Dict[str, Action]):
@@ -656,9 +645,9 @@ class Field(PagePart):
     parse_empty_string_as_none = Refinable()
     initial = Refinable()
     initial_list = Refinable()
-    template = Refinable()
+    template: str = Refinable()
     template_string = Refinable()
-    attrs = Refinable()
+    attrs: Dict[str, Any] = Refinable()
     input_template = Refinable()
     label_template = Refinable()
     errors_template = Refinable()
@@ -666,7 +655,8 @@ class Field(PagePart):
 
     container = Refinable()
     label_container = Refinable()
-    input_container = Refinable()
+    input_container: Namespace = Refinable()
+    input = Refinable()
 
     is_list = Refinable()
     is_boolean = Refinable()
@@ -695,10 +685,6 @@ class Field(PagePart):
         attrs__class=EMPTY,
         parse_empty_string_as_none=True,
         required=True,
-        template='iommi/form/{style}/row.html',
-        input_template='iommi/form/input.html',
-        label_template='iommi/form/label.html',
-        errors_template='iommi/form/errors.html',
         is_list=False,
         is_boolean=False,
         editable=True,
@@ -710,6 +696,8 @@ class Field(PagePart):
         container__attrs=EMPTY,
         label_container__attrs__class__description_container=True,
         input_container__attrs=EMPTY,
+        input__call_target=Fragment,
+        input__tag='input',
     )
     def __init__(self, **kwargs):
         """
@@ -729,9 +717,9 @@ class Field(PagePart):
         :param attrs: a dict containing any custom html attributes to be sent to the input_template.
         :param id: the HTML id attribute. Default: 'id_%s' % name
         :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
-        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below. Default: 'iommi/form/{style}/form_row.html'
+        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
-        :param input_template: django template filename for the template for just the input control. Default: 'iommi/form/input.html'
+        :param input_template: django template filename for the template for just the input control.
         :param label_template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
         :param errors_template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
         :param required: if the field is a required field. Default: True
@@ -829,6 +817,7 @@ class Field(PagePart):
         setattr_path(instance, field.attr, value)
 
     def on_bind(self) -> None:
+        assert self.template
         for k, v in self.parent._fields_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
 
@@ -848,9 +837,6 @@ class Field(PagePart):
             self.editable = False
 
         self.declared_field = self._declared
-
-    def _evaluate_attribute_kwargs(self):
-        return dict(form=self.parent, field=self)
 
     def _evaluate(self):
         """
@@ -895,13 +881,18 @@ class Field(PagePart):
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', __strict=False)
 
-        self.attrs = evaluate_attrs(self.attrs, field=self, form=self.parent)
+        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
 
-        self.extra = evaluate_recursive(self.extra, form=self.parent, field=self)
+        self.extra = evaluate_recursive(self.extra, **self._evaluate_attribute_kwargs())
 
+        self.input = self.input().bind(parent=self)
 
         if not self.editable:
+            # TODO: style!
             self.input_template = 'iommi/form/non_editable.html'
+
+    def _evaluate_attribute_kwargs(self):
+        return dict(form=self.parent, field=self)
 
     @property
     def rendered_value(self):
@@ -911,12 +902,6 @@ class Field(PagePart):
             return self.render_value_list(form=self.form, field=self, value_list=self.value_list)
         else:
             return self.render_value(form=self.form, field=self, value=self.value)
-
-    def render_attrs(self):
-        """
-        Render HTML attributes, or return '' if no attributes needs to be rendered.
-        """
-        return render_attrs(self.attrs)
 
     def get_container_attrs(self):
         # TODO: this is very complicated.. we must be able to handle this nicer with any new style system
@@ -973,12 +958,10 @@ class Field(PagePart):
             'form': self.form,
             'field': self,
         }
-        # TODO: grab the template_string from the style?
         if self.template_string is not None:
-            return get_template_from_string(self.template_string, origin='iommi', name='Form.render_with_style').render(context, self.request())
+            return get_template_from_string(self.template_string, origin='iommi', name='Form.as_html').render(context, self.request())
         else:
-            assert self.parent.style
-            return render_template(self.request(), self.template.format(style=self.parent.style), context)
+            return render_template(self.request(), self.template, context)
 
     @classmethod
     @class_shortcut(
@@ -1028,8 +1011,7 @@ class Field(PagePart):
     @class_shortcut(
         parse=lambda string_value, **_: bool_parse(string_value),
         required=False,
-        template='iommi/form/{style}/row_checkbox.html',
-        input_template='iommi/form/checkbox.html',
+        input__attrs__type='checkbox',
         is_boolean=True,
     )
     def boolean(cls, call_target=None, **kwargs):
@@ -1297,7 +1279,7 @@ class Form(PagePart):
     is_full_form = Refinable()
     actions = Refinable()
     actions_template: Union[str, Template] = Refinable()
-    attrs = Refinable()
+    attrs: Dict[str, Any] = Refinable()
     editable = Refinable()
 
     model = Refinable()
@@ -1306,12 +1288,8 @@ class Form(PagePart):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template_name = Refinable()
-    # TODO: is this a good idea? seems like it's a bit heavy handed.. similar to endpoint_dispatch_prefix, although not quite as bad
-    style = Refinable()
 
     class Meta:
-        template_name = 'iommi/form/form.html'
-        style = 'bootstrap'
         member_class = Field
         action_class = Action
 
@@ -1336,6 +1314,7 @@ class Form(PagePart):
             **setup_endpoint_proxies(self.endpoint)
         )
 
+    # TODO: should this just be _evaluate_attribute_kwargs?
     def endpoint_kwargs(self):
         return dict(form=self)
 
@@ -1353,7 +1332,6 @@ class Form(PagePart):
         attrs__method='post',
         endpoint=EMPTY,
         actions__submit__call_target=Action.submit,
-        actions_template='iommi/form/actions.html',
     )
     def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, **kwargs):
 
@@ -1374,9 +1352,11 @@ class Form(PagePart):
 
         self._fields_unapplied_data = {}
         self.declared_fields = collect_members(items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
-        self.fields = None
+        self.fields: Dict[str, Field] = None
 
     def on_bind(self) -> None:
+        assert self.template_name
+        assert self.actions_template
         self._valid = None
         request = self.request()
         self._request_data = request_data(request) if request else None
@@ -1388,10 +1368,7 @@ class Form(PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self, form=self)
-        for item in self.actions.values():
-            item._evaluate()
-
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self._evaluate_attribute_kwargs())
         self.fields = bind_members(declared_items=self.declared_fields, parent=self)
 
         if self.instance is not None:
@@ -1433,13 +1410,12 @@ class Form(PagePart):
         for field in self.fields.values():
             field._evaluate()
 
+        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
+
         self.is_valid()
 
-    def render_attrs(self):
-        """
-        Render HTML attributes, or return '' if no attributes needs to be rendered.
-        """
-        return render_attrs(self.attrs)
+    def _evaluate_attribute_kwargs(self):
+        return dict(form=self)
 
     def render_actions(self):
         assert self._is_bound, 'The form has not been bound. You need to call bind() either explicitly, or pass data/request to the constructor to cause an indirect bind()'
@@ -1593,12 +1569,6 @@ class Form(PagePart):
 
     def add_error(self, msg):
         self.errors.add(msg)
-
-    def __str__(self):
-        return self.as_html()
-
-    def __html__(self):
-        return self.as_html()
 
     def render_fields(self):
         r = []

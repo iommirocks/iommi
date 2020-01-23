@@ -20,6 +20,11 @@ from iommi._web_compat import (
     get_template_from_string,
     render_template,
 )
+from iommi.render import Attrs
+from iommi.style import (
+    apply_style_recursively,
+    get_style_for_object,
+)
 from tri_declarative import (
     EMPTY,
     Namespace,
@@ -179,6 +184,7 @@ class PagePart(RefinableObject):
     after: Union[int, str] = Refinable()
     default_child = Refinable()
     extra: Namespace = Refinable()
+    style: str = Refinable()
 
     parent = None
     _is_bound = False
@@ -197,6 +203,14 @@ class PagePart(RefinableObject):
     )
     def as_html(self, *, context=None, render=None):
         assert False, 'Not implemented'
+
+    def __str__(self):
+        assert self._is_bound
+        return self.as_html()
+
+    def __html__(self):
+        assert self._is_bound
+        return self.as_html()
 
     # TODO: ick! why is this on ALL PageParts?
     @dispatch(
@@ -273,11 +287,14 @@ class PagePart(RefinableObject):
         else:
             result = copy.copy(self)
             result._declared = self
+        del self  # to prevent mistakes when changing the code below
 
         result.parent = parent
         result._is_bound = True
 
+        result.apply_style()
         result.on_bind()
+        # TODO: evaluate extra here?
 
         if len(result.children()) == 1:
             for the_only_part in result.children().values():
@@ -289,6 +306,10 @@ class PagePart(RefinableObject):
     def on_bind(self) -> None:
         pass
 
+    def apply_style(self):
+        style = get_style_for_object(style=self.get_style(), self=self)
+        apply_style_recursively(style, self)
+
     def children(self):
         assert self._is_bound
 
@@ -299,6 +320,14 @@ class PagePart(RefinableObject):
             return self._request
         else:
             return self.parent.request()
+
+    def get_style(self):
+        if self.style:
+            return self.style
+        if self.parent:
+            return self.parent.get_style()
+
+        return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
     def path(self) -> str:
         # TODO: this assert seems like a good idea, but it fires in Table.prepare... not sure what to do about that right now
@@ -447,7 +476,7 @@ def evaluate_attrs(attrs, **kwargs):
         for k, v in attrs.items()
         if k != 'class'
     }
-    return {
+    return Attrs({
         'class': classes,
         **attrs
-    }
+    })

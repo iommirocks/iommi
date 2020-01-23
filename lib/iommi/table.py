@@ -335,20 +335,17 @@ class Column(PagePart):
         )
         self.declared_column = self._declared
 
-    def _evaluate_attribute_kwargs(self):
-        return dict(table=self.parent, column=self)
-
-    def _evaluate(self):
-        """
-        Evaluates callable/lambda members. After this function is called all members will be values.
-        """
         # TODO: we should have an explicit list of attributes here, not just loop through them all, and we should have strict evaluation wherever possible
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
             v = getattr(self, k)
-            new_value = evaluate_recursive(v, table=self.table, column=self)
+            new_value = evaluate_recursive(v, **self._evaluate_attribute_kwargs())
             if new_value is not v:
                 setattr(self, k, new_value)
+
+    def _evaluate_attribute_kwargs(self):
+        return dict(table=self.parent, column=self)
+
 
     @classmethod
     @dispatch(
@@ -707,19 +704,7 @@ class BoundRow(object):
             context = dict(bound_row=self, row=self.row, **self.table.context)
             return render_template(self.table.request(), self.template, context)
 
-        return format_html('<tr{}>{}</tr>', self.render_attrs(), self.render_cells())
-
-    @property
-    def rendered_attrs(self):
-        return self.render_attrs()
-
-    def render_attrs(self):
-        attrs = self.attrs.copy()
-        attrs['class'] = attrs['class'].copy() if isinstance(attrs['class'], dict) else {k: True for k in attrs['class'].split(' ')}
-        pk = getattr(self.row, 'pk', None)
-        if pk is not None:
-            attrs['data-pk'] = pk
-        return render_attrs(attrs)
+        return format_html('<tr{}>{}</tr>', self.attrs, self.render_cells())
 
     def render_cells(self):
         return mark_safe('\n'.join(bound_cell.as_html() for bound_cell in self))
@@ -787,7 +772,7 @@ class BoundCell(object):
             context = dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.request(), cell__template, context)
 
-        return format_html('<td{}>{}</td>', self.render_attrs(), self.render_cell_contents())
+        return format_html('<td{}>{}</td>', self.attrs, self.render_cell_contents())
 
     def render_attrs(self):
         return render_attrs(self.attrs)
@@ -843,14 +828,12 @@ class Header(object):
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
         self.attrs = attrs
+        # TODO: bound_column here maybe should just be column?
         self.attrs = evaluate_attrs(self.attrs, table=table, bound_column=bound_column, header=self)
 
     @property
     def rendered(self):
         return render_template(self.table.request(), self.template, dict(header=self))
-
-    def render_attrs(self):
-        return render_attrs(self.attrs)
 
     def __repr__(self):
         return '<Header: %s>' % ('superheader' if self.bound_column is None else self.bound_column.name)
@@ -879,7 +862,7 @@ class Table(PagePart):
     bulk_exclude: Namespace = Refinable()
     sortable = Refinable()
     default_sort_order = Refinable()
-    attrs = Refinable()
+    attrs: Dict[str, Any] = Refinable()
     template: Union[str, Template] = Refinable()
     row = Refinable()
     # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template
@@ -1181,15 +1164,10 @@ class Table(PagePart):
         # TODO: clean out _has_prepared
         self._has_prepared = True
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self, table=self)
-        for item in self.actions.values():
-            item._evaluate()
-
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self._evaluate_attribute_kwargs())
         self.columns = bind_members(declared_items=self.declared_columns, parent=self)
-        for item in self.columns.values():
-            item._evaluate()
 
-        evaluate_member(self, 'sortable', table=self)  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self._evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
         for column in self.columns.values():
@@ -1210,10 +1188,10 @@ class Table(PagePart):
                 '_query',
                 'bulk',
             ],
-            table=self,
+            **self._evaluate_attribute_kwargs()
         )
-        evaluate_member(self, 'model', table=self, __strict=False)
-        self.attrs = evaluate_attrs(self.attrs, table=self)
+        evaluate_member(self, 'model', __strict=False, **self._evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
 
         if self.model:
 
@@ -1274,6 +1252,7 @@ class Table(PagePart):
 
             bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
             if bulk_fields:
+                # TODO: I deleted this template
                 bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html')
 
                 self._bulk_form = self.get_meta().form_class(
@@ -1304,10 +1283,6 @@ class Table(PagePart):
             row = self.preprocess_row(table=self, row=row)
             # TODO: **evaluate_recursive_strict? I think we can not do this if we just handle some cases in the BoundRow init
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive_strict(self.row, table=self, row=row))
-
-    def render_attrs(self):
-        attrs = self.attrs.copy()
-        return render_attrs(attrs)
 
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.as_html() for bound_row in self.bound_rows()]))
@@ -1431,9 +1406,6 @@ class Table(PagePart):
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
         return render(request=request, template=self.template, context=self.context)
-
-    def __str__(self):
-        return self.as_html()
 
     @dispatch(
         parts=EMPTY,

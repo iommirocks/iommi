@@ -440,14 +440,14 @@ def test_render_on_dunder_html():
 
 
 def test_render_attrs():
-    assert Form(fields__foo=Field(attrs={'foo': '1'})).bind(request=req('get', foo='7')).fields.foo.render_attrs() == ' foo="1"'
-    assert Form(fields__foo=Field()).bind(request=req('get', foo='7')).fields.foo.render_attrs() == ' '
+    assert str(Form(fields__foo=Field(attrs={'foo': '1'})).bind(request=req('get', foo='7')).fields.foo.attrs) == ' foo="1"'
+    assert str(Form(fields__foo=Field()).bind(request=req('get', foo='7')).fields.foo.attrs) == ' '
     assert render_attrs(dict(foo='"foo"')) == ' foo="&quot;foo&quot;"'
 
 
 def test_render_attrs_new_style():
-    assert Form(fields__foo=Field(name='foo', attrs__foo='1')).bind(request=req('get', foo='7')).fields.foo.render_attrs() == ' foo="1"'
-    assert Form(fields__foo=Field(name='foo')).bind(request=req('get', foo='7')).fields.foo.render_attrs() == ' '
+    assert str(Form(fields__foo=Field(name='foo', attrs__foo='1')).bind(request=req('get', foo='7')).fields.foo.attrs) == ' foo="1"'
+    assert str(Form(fields__foo=Field(name='foo')).bind(request=req('get', foo='7')).fields.foo.attrs) == ' '
 
 
 def test_render_attrs_bug_with_curly_brace():

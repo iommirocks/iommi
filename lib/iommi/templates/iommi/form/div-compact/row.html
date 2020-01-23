@@ -1,7 +1,7 @@
 <div{{ field.render_container_attrs }}>
     <div{{ field.render_label_container_attrs }}>{% block label %}{% include field.label_template %}{% endblock %}</div>
 
-    <span{{ field.render_input_container_attrs }}>{% block input %}{% include field.input_template %}{% endblock %}</span>
+    <span{{ field.render_input_container_attrs }}>{% block input %}{{ field.input }}{% endblock %}</span>
 
     {% block errors %}{% include field.errors_template %}{% endblock %}
 </div>

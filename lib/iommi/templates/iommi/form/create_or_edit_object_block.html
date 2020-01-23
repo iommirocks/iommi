@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<form{{ form.render_attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+<form{{ form.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 
   {% for error in form.errors %}
     <div class="error">{{ error }}</div>

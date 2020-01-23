@@ -1,15 +1,13 @@
-<tr{{ field.render_container_attrs }}>
-    <td{{ field.render_label_container_attrs }}>
-        <div class="formlabel">{% block label %}{% include field.label_template %}{% endblock %}</div>
-        <div class="formdescr">{{ field.help_text }}</div>
+<div{{ field.attrs }}>
+    <div{{ field.style_structure.label_container.attrs }}>
+        {% block label %}{% include field.label_template %}{% endblock %}
+        <div class="form-text text-muted">{{ field.help_text }}</div>
         {% block extra_description_container %}{% endblock %}
-    </td>
-    <td{{ field.render_input_container_attrs }}>
         {% block field %}
-            {% block input %}{% include field.input_template %}{% endblock %}
+            {% block input %}{{ field.input }}{% endblock %}
             {% block errors %}{% include field.errors_template %}{% endblock %}
 
             {% block extra_content %}{% endblock %}
         {% endblock %}
-    </td>
-</tr>
+    </div>
+</div>

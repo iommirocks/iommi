@@ -3,6 +3,7 @@ from typing import (
     List,
     Optional,
     Type,
+    Any,
 )
 
 from django.utils.html import format_html
@@ -16,6 +17,7 @@ from iommi.base import (
     collect_members,
     no_copy_on_bind,
     as_html,
+    evaluate_attrs,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
@@ -55,7 +57,7 @@ def fragment__render(fragment, context):
 
 
 class Fragment(PagePart):
-    attrs = Refinable()
+    attrs: Dict[str, Any] = Refinable()
     tag = Refinable()
 
     @dispatch(
@@ -88,6 +90,9 @@ class Fragment(PagePart):
 
     def __repr__(self):
         return f'tag:{self.tag}'
+
+    def on_bind(self) -> None:
+        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
 
     @dispatch(
         context=EMPTY,

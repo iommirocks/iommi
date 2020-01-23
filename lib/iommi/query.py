@@ -197,16 +197,16 @@ class Variable(PagePart):
         if self.attr is MISSING:
             self.attr = self.name
 
-    def _evaluate_attribute_kwargs(self):
-        return dict(query=self.parent, variable=self)
-
-    def _evaluate(self):
+        # TODO: specific list, not just all refinable members
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
             v = getattr(self, k)
-            new_value = evaluate_recursive(v, query=self.parent, variable=self)
+            new_value = evaluate_recursive(v, **self._evaluate_attribute_kwargs())
             if new_value is not v:
                 setattr(self, k, new_value)
+
+    def _evaluate_attribute_kwargs(self):
+        return dict(query=self.parent, variable=self)
 
     @staticmethod
     @refinable
@@ -512,8 +512,6 @@ class Query(PagePart):
 
     def on_bind(self) -> None:
         self.variables: Dict[str, Variable] = bind_members(declared_items=self.declared_variables, parent=self)
-        for item in self.variables.values():
-            item._evaluate()
 
         fields = []
 

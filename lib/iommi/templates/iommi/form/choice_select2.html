@@ -1,4 +1,4 @@
-<select name="{{ field.path }}" id="{{ field.id }}"{{ field.render_attrs }}>
+<select name="{{ field.path }}" id="{{ field.id }}"{{ field.attrs }}>
     {% for choice in field.choice_to_options_selected %}
         <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %} label="{{ choice.2 }}">{{ choice.2 }}</option>
     {% endfor %}

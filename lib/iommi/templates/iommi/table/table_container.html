@@ -35,7 +35,7 @@
 
     {% if bulk_form %}
         {# TODO: this is a bit weird. There should be no table here anyway #}
-        <table {{ bulk_form.render_attrs }}>
+        <table {{ bulk_form.attrs }}>
             {{ bulk_form }}
 
             <tr>

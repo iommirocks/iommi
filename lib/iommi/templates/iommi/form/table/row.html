@@ -6,7 +6,7 @@
     </td>
     <td{{ field.render_input_container_attrs }}>
         {% block field %}
-            {% block input %}{% include field.input_template %}{% endblock %}
+            {% block input %}{{ input }}{% endblock %}
             {% block errors %}{% include field.errors_template %}{% endblock %}
 
             {% block extra_content %}{% endblock %}
