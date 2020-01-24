@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import functools
 import inspect
 from collections import (
@@ -507,9 +505,15 @@ def class_shortcut(*args, **defaults):
                     call_target__call_target__cls=cls,
                 )
 
-            r = __target__(cls, *args, **kwargs)
-            r.__tri_declarative_shortcut_stack = [__target__.__name__] + getattr(r, '__tri_declarative_shortcut_stack', [])
-            return r
+            result = __target__(cls, *args, **kwargs)
+
+            shortcut_stack = [__target__.__name__] + getattr(result, '__tri_declarative_shortcut_stack', [])
+            try:
+                result.__tri_declarative_shortcut_stack = shortcut_stack
+            except AttributeError:
+                pass
+
+            return result
 
         class_shortcut_wrapper.__doc__ = __target__.__doc__
         return class_shortcut_wrapper
