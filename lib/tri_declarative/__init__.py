@@ -288,15 +288,13 @@ def matches(caller_parameters, callee_parameters):
 
 
 def get_callable_description(c):
-    description = str(c)
-    if '<lambda>' in description:
+    if getattr(c, '__name__', None) == '<lambda>':
         import inspect
         try:
             return 'lambda found at: `{}`'.format(inspect.getsource(c).strip())
         except OSError:
             pass
-
-    return '`{}`'.format(description)
+    return f'`{c}`'
 
 
 def evaluate(func_or_value, __signature=None, __strict=False, **kwargs):

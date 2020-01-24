@@ -11,6 +11,7 @@ from tri_declarative import (
     evaluate_recursive_strict,
     should_show,
     get_callable_description,
+    Namespace,
 )
 
 
@@ -203,4 +204,12 @@ def test_get_callable_description():
 
     description = get_callable_description(foo)
     assert description.startswith('`<function test_get_callable_description.<locals>.foo at')
+    assert description.endswith('`')
+
+
+def test_get_callable_description_nested_lambda():
+    foo = Namespace(bar=lambda x: x)
+
+    description = get_callable_description(foo)
+    assert description.startswith('`Namespace(bar=<function test_get_callable_description_nested_lambda.<locals>.<lambda> at')
     assert description.endswith('`')
