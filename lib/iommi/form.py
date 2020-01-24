@@ -588,8 +588,8 @@ class Action(PagePart):
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 
-        self.extra = evaluate_recursive(self.extra, action=self)
-        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
+        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(action=self)
@@ -693,6 +693,7 @@ class Field(PagePart):
         label__call_target=Fragment,
         label__tag='label',
         errors=EMPTY,
+        input__attrs__name=lambda field, **_: field.path(),
     )
     def __init__(self, **kwargs):
         """
@@ -872,9 +873,9 @@ class Field(PagePart):
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', __strict=False)
 
-        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
-        self.extra = evaluate_recursive(self.extra, **self._evaluate_attribute_kwargs())
+        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
@@ -1264,14 +1265,14 @@ class Form(PagePart):
     endpoint: Namespace = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
-    template_name = Refinable()
+    template: Union[str, Template] = Refinable()
 
     class Meta:
         member_class = Field
         action_class = Action
 
     def __repr__(self):
-        return f'<Form: {self.name} at path {self.path()}>'
+        return f'<Form: {self.name} at path {self.path() if self.parent else "<unbound>"}>'
 
     def children(self):
         assert self._is_bound
@@ -1332,7 +1333,6 @@ class Form(PagePart):
         self.fields: Dict[str, Field] = None
 
     def on_bind(self) -> None:
-        assert self.template_name
         assert self.actions_template
         self._valid = None
         request = self.request()
@@ -1345,7 +1345,7 @@ class Form(PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self._evaluate_attribute_kwargs())
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self.evaluate_attribute_kwargs())
         self.fields = bind_members(declared_items=self.declared_fields, parent=self)
 
         if self.instance is not None:
@@ -1387,7 +1387,7 @@ class Form(PagePart):
         for field in self.fields.values():
             field._evaluate()
 
-        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
         self.is_valid()
 
@@ -1571,10 +1571,11 @@ class Form(PagePart):
         context=EMPTY,
     )
     def as_html(self, *, context=None, render=None):
+        # TODO: what if self.template is a Template?
         setdefaults_path(
             render,
             context=context,
-            template_name=self.template_name,
+            template_name=self.template,
         )
 
         request = self.request()
@@ -1608,7 +1609,7 @@ class Form(PagePart):
         field_errors = {x.name: x.errors for x in self.fields.values() if x.errors}
         if field_errors:
             r['fields'] = field_errors
-        return r
+        return Errors(parent=self, **r)
 
     @classmethod
     @class_shortcut(

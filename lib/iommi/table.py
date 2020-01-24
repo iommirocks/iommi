@@ -339,7 +339,7 @@ class Column(PagePart):
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
             v = getattr(self, k)
-            new_value = evaluate_recursive(v, **self._evaluate_attribute_kwargs())
+            new_value = evaluate_recursive(v, **self.evaluate_attribute_kwargs())
             if new_value is not v:
                 setattr(self, k, new_value)
 
@@ -744,7 +744,7 @@ class BoundCell(object):
 
     @property
     def attrs(self):
-        return evaluate_recursive_strict(
+        return evaluate_attrs(
             self.bound_column.cell.attrs,
             table=self.table,
             column=self.bound_column,
@@ -1164,10 +1164,10 @@ class Table(PagePart):
         # TODO: clean out _has_prepared
         self._has_prepared = True
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self._evaluate_attribute_kwargs())
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self.evaluate_attribute_kwargs())
         self.columns = bind_members(declared_items=self.declared_columns, parent=self)
 
-        evaluate_member(self, 'sortable', **self._evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
         for column in self.columns.values():
@@ -1188,10 +1188,10 @@ class Table(PagePart):
                 '_query',
                 'bulk',
             ],
-            **self._evaluate_attribute_kwargs()
+            **self.evaluate_attribute_kwargs()
         )
-        evaluate_member(self, 'model', __strict=False, **self._evaluate_attribute_kwargs())
-        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
+        evaluate_member(self, 'model', __strict=False, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
         if self.model:
 
@@ -1405,6 +1405,7 @@ class Table(PagePart):
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
+        # TODO: what if self.template is a Template?
         return render(request=request, template=self.template, context=self.context)
 
     @dispatch(

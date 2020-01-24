@@ -346,11 +346,15 @@ class PagePart(RefinableObject):
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.path()
 
+    def evaluate_attribute_kwargs(self):
+        # Note that we only travel one level up!
+        return {**self._evaluate_attribute_kwargs(), **(self.parent._evaluate_attribute_kwargs() if self.parent else {})}
+
     def _evaluate_attribute_kwargs(self):
         return {}
 
     def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, **self._evaluate_attribute_kwargs(), **kwargs)
+        evaluate_member(self, key, **self.evaluate_attribute_kwargs(), **kwargs)
 
     def _evaluate_show(self, **kwargs):
         self._evaluate_attribute('show', **kwargs)

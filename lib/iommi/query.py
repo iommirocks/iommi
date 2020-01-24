@@ -201,7 +201,7 @@ class Variable(PagePart):
         evaluated_attributes = self.get_declared('refinable_members').keys()
         for k in evaluated_attributes:
             v = getattr(self, k)
-            new_value = evaluate_recursive(v, **self._evaluate_attribute_kwargs())
+            new_value = evaluate_recursive(v, **self.evaluate_attribute_kwargs())
             if new_value is not v:
                 setattr(self, k, new_value)
 
@@ -535,6 +535,7 @@ class Query(PagePart):
 
         form: Form = self.gui(
             _fields_dict={x.name: x for x in fields},
+            attrs__method='get',
             default_child=True,
         )
         form.bind(parent=self)

@@ -227,7 +227,7 @@ def table_readme_example_2(request):
             query__gui__show=True,
         )
 
-    return BarTable(rows=Bar.objects.all(), page_size=20)
+    return BarTable(rows=TBar.objects.all(), page_size=20)
 
 
 def table_kitchen_sink(request):

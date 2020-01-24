@@ -98,7 +98,7 @@ class Fragment(PagePart):
         return f'<Fragment: tag:{self.tag}, attrs:{self.attrs}>'
 
     def on_bind(self) -> None:
-        self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
     @dispatch(
         context=EMPTY,
@@ -108,7 +108,7 @@ class Fragment(PagePart):
         return render(fragment=self, context=context)
 
     def _evaluate_attribute_kwargs(self):
-        return dict(page=self.parent, fragment=self)
+        return dict(fragment=self)
 
 
 @no_copy_on_bind

@@ -38,7 +38,7 @@ def test_create_and_edit_object():
         model=CreateOrEditObjectTest,
         fields__f_int__initial=1,
         fields__f_float__initial=lambda form, field: 2,
-        template_name='<template name>',
+        template='<template name>',
     )
     p.bind(request=request)
     response = p.parts.create.as_html(
@@ -53,7 +53,7 @@ def test_create_and_edit_object():
     assert response['context']['foo'] == 'FOO'
     assert response['context']['csrf_token']
     assert response['foobarbaz'] == 'render__foobarbaz'
-    assert response['template_name'] == '<template name>'
+    assert response['template'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
     assert form.fields['f_int'].initial == 1
     assert form.fields['f_int'].errors == set()
@@ -257,7 +257,7 @@ def test_create_or_edit_object_dispatch():
     response = Form.as_create_page(
         model=Bar,
         fields__foo__extra__endpoint_attr='foo',
-        template_name='<template name>',
+        template='<template name>',
     ).bind(request=request).render_to_response()
     assert json.loads(response.content) == dict(
         results=[

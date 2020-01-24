@@ -27,7 +27,7 @@ class Style:
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj):
-        result = {}
+        result = Namespace()
         for class_name in class_names_for(obj):
             if class_name in self.config:
                 config = Namespace(self.config.get(class_name, {}))
@@ -35,18 +35,20 @@ class Style:
                 result.update(config)
 
                 for shortcut_name in reversed(getattr(obj, '__tri_declarative_shortcut_stack', [])):
-                    result.update(shortcuts_config.get(shortcut_name, {}))
+                    result = Namespace(result, shortcuts_config.get(shortcut_name, {}))
         return result
 
 
 base = Style(
     Form=dict(
-        template_name='iommi/form/form.html',
+        template='iommi/form/form.html',
         actions_template='iommi/form/actions.html',
     ),
     Field=dict(
         label_template='iommi/form/label.html',
     ),
+    # TODO: this is a bit bonkers
+    Query__gui__attrs__id='iommi_query_form',
 )
 
 
@@ -55,7 +57,7 @@ bootstrap = Style(
     Field=dict(
         shortcuts=dict(
             boolean=dict(
-                input__attrs__class={'form-check-input': True},
+                input__attrs__class={'form-check-input': True, 'form-control': False},
                 attrs__class={'form-check': True},
                 label__attrs__class={'form-check-label': True},
                 template='iommi/form/bootstrap/row_checkbox.html',
@@ -79,6 +81,31 @@ bootstrap = Style(
             }
         ),
     ),
+    Table=dict(
+        attrs__class__table=True,
+    ),
+    Query__gui__style='bootstrap_horizontal',
+)
+
+bootstrap_horizontal = Style(
+    bootstrap,
+    Field=dict(
+        shortcuts=dict(
+            boolean__label__attrs__class={
+                'col-form-label': True,
+            },
+        ),
+        attrs__class={
+            'form-group': False,
+            'col-sm-3': True,
+            'my-1': True,
+        },
+        errors__attrs__class={'invalid-feedback': True},
+        errors_template='iommi/form/bootstrap/errors.html',
+    ),
+    Form__attrs__class={
+        'align-items-center': True,
+    }
 )
 
 _styles = {}
@@ -91,6 +118,7 @@ def register_style(name, conf):
 
 register_style('base', base)
 register_style('bootstrap', bootstrap)
+register_style('bootstrap_horizontal', bootstrap_horizontal)
 
 
 def get_style(name):

@@ -4,7 +4,7 @@
 
     <!-- TODO: iommi_query_form should be namespaced -->
     <!-- TODO: the form tag here should come from Query, not be hard coded here -->
-    <form id="iommi_query_form" class="compact">
+    <form{{ form.attrs }}>
         <table style="width: 100%">
             <tr class="iommi_query_form_advanced" style="display: none">
                 <td><label for="id_query">Search query:</label></td>
@@ -12,8 +12,9 @@
             <tr>
                 <td>
                     <!-- TODO: iommi_query_form_simple should be namespaced -->
-                    <div id="iommi_query_form_simple">
-                        {{ form }}
+                    <!-- TODO: these classes needs to be specified by the styling system -->
+                    <div id="iommi_query_form_simple" class="form-row align-items-center">
+                        {{ form.render_fields }}
                     </div>
                     <div class="iommi_query_form_advanced" style="display: none">
                         <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ form.query_advanced_value }}"/>
@@ -48,13 +49,8 @@
                 </td>
             </tr>
         </table>
-        {% if query_form.errors %}
-          <ul class="errorlist">
-            {% for error in query_form.errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
+        {# TOOD: should be just query_form.errors #}
+        {{ query_form.get_errors }}
 
         {% if iommi_query_error %}
           <!-- TODO: iommi_query_error should be namespaced -->
@@ -86,7 +82,9 @@
             }
         </style>
 
-        <div class="submit"><input class="button" type="submit" value="Filter" /></div>
+        <div class="submit">
+            {{ query_form.render_actions }}
+        </div>
    </form>
 </div>
 
