@@ -4,7 +4,11 @@ from iommi._web_compat import mark_safe
 
 
 # TODO: inline this into Attrs
-from tri_declarative import Namespace
+from tri_declarative import (
+    Namespace,
+    EMPTY,
+    dispatch,
+)
 
 
 def render_attrs(attrs):
@@ -63,4 +67,37 @@ class Attrs(Namespace):
         return str(self)
 
     def __str__(self):
+        return self.as_html()
+
+    # noinspection PyUnusedLocal
+    def as_html(self, *, context=None):
         return render_attrs(self)
+
+
+class Errors(set):
+    @dispatch(
+        attrs=EMPTY,
+    )
+    def __init__(self, *, parent, attrs):
+        super(Errors, self).__init__()
+        self.parent = parent
+        self.attrs = attrs
+
+    def __html__(self):
+        return str(self)
+
+    def __str__(self):
+        return self.as_html()
+
+    # noinspection PyUnusedLocal
+    def as_html(self, *, context=None):
+        if not self:
+            return ''
+
+        from iommi.page import Fragment
+        return Fragment(
+            child='',
+            tag='ul',
+            attrs=self.attrs,
+            children=[Fragment(tag='li') for error in self],
+        ).bind(parent=self.parent).as_html()

@@ -14,7 +14,6 @@ from typing import (
     Callable,
     Dict,
     List,
-    Optional,
     Set,
     Tuple,
     Type,
@@ -49,10 +48,7 @@ from iommi.base import (
     setup_endpoint_proxies,
 )
 from iommi.page import Fragment
-from iommi.render import (
-    render_attrs,
-    Attrs,
-)
+from iommi.render import Errors
 from tri_declarative import (
     EMPTY,
     Namespace,
@@ -63,7 +59,6 @@ from tri_declarative import (
     dispatch,
     evaluate,
     evaluate_recursive,
-    flatten,
     getattr_path,
     refinable,
     setattr_path,
@@ -544,6 +539,7 @@ class Action(PagePart):
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:
+            # TODO: use fragment rendering to avoid the bogus </input>
             return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.attrs, display_name=self.display_name)
 
     def __repr__(self):
@@ -653,10 +649,8 @@ class Field(PagePart):
     errors_template = Refinable()
     required = Refinable()
 
-    container = Refinable()
-    label_container = Refinable()
-    input_container: Namespace = Refinable()
     input = Refinable()
+    label = Refinable()
 
     is_list = Refinable()
     is_boolean = Refinable()
@@ -668,8 +662,9 @@ class Field(PagePart):
     input_type = Refinable()
 
     choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
-    choice_to_option = Refinable()
+    choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
     choice_tuples = Refinable()
+    errors: Errors = Refinable()
 
     empty_label = Refinable()
     empty_choice_tuple = Refinable()
@@ -693,11 +688,11 @@ class Field(PagePart):
         endpoint=EMPTY,
         endpoint__config=default_endpoint__config,
         endpoint__validate=default_endpoint__validate,
-        container__attrs=EMPTY,
-        label_container__attrs__class__description_container=True,
-        input_container__attrs=EMPTY,
         input__call_target=Fragment,
         input__tag='input',
+        label__call_target=Fragment,
+        label__tag='label',
+        errors=EMPTY,
     )
     def __init__(self, **kwargs):
         """
@@ -716,14 +711,13 @@ class Field(PagePart):
         :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
         :param attrs: a dict containing any custom html attributes to be sent to the input_template.
         :param id: the HTML id attribute. Default: 'id_%s' % name
-        :param label: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
+        :param display_name: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
         :param input_template: django template filename for the template for just the input control.
         :param label_template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
         :param errors_template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
         :param required: if the field is a required field. Default: True
-        :param container__attrs: extra html attributes to set on the container (i.e. row if rendering as a table). Default: set()
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
         :param editable: default: True
@@ -742,9 +736,6 @@ class Field(PagePart):
         else:
             assert self.initial_list is None, 'The parameter initial_list is only valid if is_list is True, otherwise use initial'
 
-        # Bound field data
-        self.errors = None
-
         # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
         self.parsed_data = None
         self.parsed_data_list = None
@@ -756,6 +747,9 @@ class Field(PagePart):
         self.choice_tuples = None
 
         self.declared_field = None
+
+        self.input = self.input()
+        self.label = self.label()
 
     def endpoint_kwargs(self):
         return dict(field=self)
@@ -831,7 +825,7 @@ class Field(PagePart):
 
         # TODO: ??
         self.field = self
-        self.errors = set()
+        self.errors = Errors(parent=self, **self.errors)
 
         if form.editable is False:
             self.editable = False
@@ -856,9 +850,6 @@ class Field(PagePart):
             'label_template',
             'errors_template',
             'required',
-            'container',
-            'label_container',
-            'input_container',
             'initial',
             'is_list',
             'is_boolean',
@@ -885,7 +876,11 @@ class Field(PagePart):
 
         self.extra = evaluate_recursive(self.extra, **self._evaluate_attribute_kwargs())
 
-        self.input = self.input().bind(parent=self)
+        self.input = self.input.bind(parent=self)
+        self.label = self.label.bind(parent=self)
+        # TODO: special class for label that does this?
+        assert not self.label._children
+        self.label._children = [self.display_name]
 
         if not self.editable:
             # TODO: style!
@@ -902,24 +897,6 @@ class Field(PagePart):
             return self.render_value_list(form=self.form, field=self, value_list=self.value_list)
         else:
             return self.render_value(form=self.form, field=self, value=self.value)
-
-    def get_container_attrs(self):
-        # TODO: this is very complicated.. we must be able to handle this nicer with any new style system
-        container_attrs = Namespace(flatten(self.container.attrs))
-        if self.required and self.editable:
-            container_attrs.setdefault('class', dict())['required'] = True
-        if self.form.style == 'compact':
-            container_attrs.setdefault('class', dict())['key-value'] = True
-        return container_attrs
-
-    def render_container_attrs(self):
-        return render_attrs(self.get_container_attrs())
-
-    def render_label_container_attrs(self):
-        return render_attrs(self.label_container.attrs)
-
-    def render_input_container_attrs(self):
-        return render_attrs(self.input_container.attrs)
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
@@ -966,7 +943,7 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         input_type='hidden',
-        container__attrs__style__display='none',
+        attrs__style__display='none',
     )
     def hidden(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

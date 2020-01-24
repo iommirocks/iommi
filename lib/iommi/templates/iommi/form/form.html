@@ -5,13 +5,8 @@
     <div class="error">{{ error }}</div>
     {% endfor %}
 
-    <div>
-        {{ form.render_fields }}
-    </div>
+    {{ form.render_fields }}
 
-    {# TODO: style classes #}
-    <div class="form_buttons clear">
-        {{ form.render_actions }}
-    </div>
+    {{ form.render_actions }}
 </form>
 

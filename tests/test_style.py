@@ -76,3 +76,21 @@ def test_style():
     assert overrides.component(b) == dict(foo=4, bar=7)
     apply_style_recursively(overrides.component(b), b)
     assert b.items() == dict(foo=4, bar=7)
+
+
+def test_apply_checkbox_style():
+    from iommi import Form
+    from iommi import Field
+
+    class MyForm(Form):
+        class Meta:
+            style = 'bootstrap'
+
+        foo = Field.boolean()
+
+    form = MyForm()
+    form.bind(request=None)
+
+    assert form.fields.foo.attrs == {'class': {'form-group': True, 'form-check': True}}
+    assert form.fields.foo.input.attrs == {'type': 'checkbox', 'class': {'form-check-input': True}}
+    assert form.fields.foo.label.attrs == {'class': {'form-check-label': True}}

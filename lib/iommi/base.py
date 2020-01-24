@@ -209,8 +209,7 @@ class PagePart(RefinableObject):
         return self.as_html()
 
     def __html__(self):
-        assert self._is_bound
-        return self.as_html()
+        return str(self)
 
     # TODO: ick! why is this on ALL PageParts?
     @dispatch(

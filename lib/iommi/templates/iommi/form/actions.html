@@ -17,12 +17,6 @@
         {% endfor %}
 
         {% for action in actions %}
-            {% if foorloop %}
-                {% if not forloop.first %} &nbsp; {% endif %}
-            {% else %}
-                {% if not loop.first %} &nbsp; {% endif %}
-            {% endif %}
-
             {{ action }}
         {% endfor %}
     </div>

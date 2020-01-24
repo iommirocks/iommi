@@ -30,23 +30,29 @@ from tri_declarative import (
 )
 
 
+# https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+_void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
+
+
 def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
+    is_void_element = fragment.tag in _void_elements
+
     if fragment.tag:
         if rendered_children:
+            assert not is_void_element
             return format_html(
-                '<{}{}>{}</{}>',
-                fragment.tag,
-                render_attrs(fragment.attrs),
-                rendered_children,
-                fragment.tag,
+                '<{tag}{attrs}>{children}</{tag}>',
+                tag=fragment.tag,
+                attrs=render_attrs(fragment.attrs),
+                children=rendered_children,
             )
         else:
             return format_html(
-                '<{}{}/>',
-                fragment.tag,
-                render_attrs(fragment.attrs),
+                '<{tag}{attrs}>' if is_void_element else '<{tag}{attrs}></{tag}>',
+                tag=fragment.tag,
+                attrs=render_attrs(fragment.attrs),
             )
 
     else:
@@ -89,7 +95,7 @@ class Fragment(PagePart):
         return self
 
     def __repr__(self):
-        return f'tag:{self.tag}'
+        return f'<Fragment: tag:{self.tag}, attrs:{self.attrs}>'
 
     def on_bind(self) -> None:
         self.attrs = evaluate_attrs(self.attrs, **self._evaluate_attribute_kwargs())

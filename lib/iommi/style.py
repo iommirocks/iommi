@@ -1,7 +1,5 @@
 from tri_declarative import (
     Namespace,
-    getattr_path,
-    setattr_path,
     RefinableObject,
 )
 
@@ -17,9 +15,16 @@ def class_names_for(obj):
         yield cls.__name__.rpartition('.')[-1]  # this converts iommi.form.Form to just Form
 
 
+def recursive_namespace(d):
+    if isinstance(d, dict):
+        return Namespace({k: recursive_namespace(v) for k, v in d.items()})
+    else:
+        return d
+
+
 class Style:
     def __init__(self, *bases, **kwargs):
-        self.config = Namespace(*[x.config for x in bases], kwargs)
+        self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj):
         result = {}
@@ -34,8 +39,6 @@ class Style:
         return result
 
 
-# TODO: table style? or do we just delete it? if we do, delete all the templates!
-
 base = Style(
     Form=dict(
         template_name='iommi/form/form.html',
@@ -47,12 +50,16 @@ base = Style(
 )
 
 
-# TODO: use base here and remove redundant stuff
 bootstrap = Style(
     base,
     Field=dict(
         shortcuts=dict(
-            boolean__input__attrs__class={'form-check-input': True},
+            boolean=dict(
+                input__attrs__class={'form-check-input': True},
+                attrs__class={'form-check': True},
+                label__attrs__class={'form-check-label': True},
+                template='iommi/form/bootstrap/row_checkbox.html',
+            ),
         ),
         attrs__class={
             'form-group': True,
@@ -60,8 +67,17 @@ bootstrap = Style(
         input__attrs__class={
             'form-control': True,
         },
+        errors__attrs__class={'invalid-feedback': True},
         template='iommi/form/bootstrap/row.html',
         errors_template='iommi/form/bootstrap/errors.html',
+    ),
+    Action=dict(
+        shortcuts=dict(
+            button__attrs__class={
+                'btn': True,
+                'btn-primary': True,
+            }
+        ),
     ),
 )
 
@@ -89,7 +105,7 @@ def apply_style_recursively(data, obj):
             if isinstance(v, dict):
                 apply_style_recursively(v, getattr(obj, k))
             else:
-                setattr_path(obj, k, v)
+                setattr(obj, k, v)
 
 
 def get_style_for_object(style, self):
