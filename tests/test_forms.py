@@ -2,57 +2,55 @@ import re
 from collections import defaultdict
 from datetime import (
     date,
+    datetime,
     time,
 )
-from datetime import datetime
 from decimal import Decimal
 
 import pytest
 from bs4 import BeautifulSoup
 from django.test import override_settings
-from tri_declarative import (
-    Namespace,
-    Shortcut,
-    class_shortcut,
-    getattr_path,
-    setattr_path,
-)
-from tri_struct import Struct
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    Template,
     smart_str,
+    Template,
+    ValidationError,
 )
-from iommi._web_compat import ValidationError
 from iommi.base import (
     InvalidEndpointPathException,
     perform_ajax_dispatch,
 )
 from iommi.form import (
-    AVOID_EMPTY_FORM,
     Action,
-    FULL_FORM_FROM_REQUEST,
-    Field,
-    Form,
-    INITIALS_FROM_GET,
+    AVOID_EMPTY_FORM,
     bool_parse,
     create_members_from_model,
     datetime_iso_formats,
     datetime_parse,
     decimal_parse,
+    Field,
     float_parse,
+    Form,
+    FULL_FORM_FROM_REQUEST,
     get_name_field,
+    INITIALS_FROM_GET,
     int_parse,
     member_from_model,
     register_field_factory,
-    render_attrs,
     render_template,
     url_parse,
 )
 from iommi.page import (
     Page,
 )
-
+from tri_declarative import (
+    class_shortcut,
+    getattr_path,
+    Namespace,
+    setattr_path,
+    Shortcut,
+)
+from tri_struct import Struct
 
 from .compat import RequestFactory
 from .helpers import (
@@ -60,7 +58,6 @@ from .helpers import (
     req,
 )
 from .models import (
-    TBar,
     Bar,
 )
 
@@ -106,7 +103,7 @@ class MyTestForm(Form):
 
 def test_repr():
     assert '<iommi.form.Field foo>' == repr(Field(name='foo'))
-    assert '<iommi.form.Field foo>' == str(Field(name='foo'))
+    assert '<iommi.form.Field foo>' == str(Field(name='foo').bind(request=False))
 
 
 def test_required_choice():

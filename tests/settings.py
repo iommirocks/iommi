@@ -46,3 +46,6 @@ class HighlightBrokenVariable:
 
 
 TEMPLATES[0]['OPTIONS']['string_if_invalid'] = HighlightBrokenVariable()
+
+
+IOMMI_DEFAULT_STYLE = 'base'

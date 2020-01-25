@@ -246,4 +246,4 @@ def test_render_simple_tag():
 
 
 def test_render_empty_tag():
-    assert html.br().as_html() == '<br />'
+    assert html.br().as_html() == '<br >'
