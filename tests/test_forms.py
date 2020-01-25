@@ -43,6 +43,7 @@ from iommi.form import (
 from iommi.page import (
     Page,
 )
+from iommi.render import render_attrs
 from tri_declarative import (
     class_shortcut,
     getattr_path,
@@ -101,9 +102,9 @@ class MyTestForm(Form):
     # TODO: tests for all shortcuts with required=False
 
 
-def test_repr():
+def test_field_repr():
     assert '<iommi.form.Field foo>' == repr(Field(name='foo'))
-    assert '<iommi.form.Field foo>' == str(Field(name='foo').bind(request=False))
+    assert '<iommi.form.Field foo>' == str(Form(fields__foo=Field()).bind(request=None).fields.foo)
 
 
 def test_required_choice():
@@ -433,7 +434,7 @@ def test_render_template():
 
 def test_render_on_dunder_html():
     form = Form(fields__foo=Field()).bind(request=req('get', foo='7'))
-    assert form.table() == form.__html__()  # used by jinja2
+    assert form.as_html() == form.__html__()  # used by jinja2
 
 
 def test_render_attrs():
@@ -484,7 +485,7 @@ def test_render_table():
             id='$$$$5$$$$$'
         )
 
-    table = MyForm().bind(request=req('get', foo='!!!7!!!')).table()
+    table = MyForm().bind(request=req('get', foo='!!!7!!!')).as_html()
     assert '!!!7!!!' in table
     assert '###5###' in table
     assert '$$$11$$$' in table
@@ -498,13 +499,13 @@ def test_render_table():
 
 
 def test_heading():
-    assert '<th colspan="2">#foo#</th>' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).table()
+    assert '<th colspan="2">#foo#</th>' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).as_html()
 
 
 def test_info():
     form = Form(fields__foo=Field.info(value='#foo#')).bind(request=req('get'))
     assert form.is_valid() is True
-    assert '#foo#' in form.table()
+    assert '#foo#' in form.as_html()
 
 
 def test_radio():
@@ -519,13 +520,13 @@ def test_radio():
     ).bind(
         request=req('get', foo='a'),
     )
-    soup = BeautifulSoup(form.table(), 'html.parser')
+    soup = BeautifulSoup(form.as_html(), 'html.parser')
     assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
     assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
 
 
 def test_hidden():
-    soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).table(), 'html.parser')
+    soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).as_html(), 'html.parser')
     assert [(x.attrs['type'], x.attrs['name'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', 'foo', '1'), ('hidden', '-', '')]
 
 
@@ -560,7 +561,7 @@ def test_hidden_with_name():
 
 
 def test_password():
-    assert ' type="password" ' in Form(fields__foo=Field.password()).bind(request=req('get', foo='1')).table()
+    assert ' type="password" ' in Form(fields__foo=Field.password()).bind(request=req('get', foo='1')).as_html()
 
 
 def test_choice_not_required():
@@ -594,7 +595,7 @@ def test_multi_choice():
         fields__foo=Field.multi_choice(choices=['a'])
     ).bind(
         request=req('get', foo=['0']),
-    ).table(), 'html.parser')
+    ).as_html(), 'html.parser')
     assert [x.attrs['multiple'] for x in soup.find_all('select')] == ['']
 
 
@@ -1183,7 +1184,7 @@ def test_choice_shortcut():
 
 def test_render_custom():
     sentinel = '!!custom!!'
-    assert sentinel in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel)).table()
+    assert sentinel in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel)).as_html()
 
 
 def test_boolean_initial_true():
@@ -1527,7 +1528,7 @@ def test_render_template_template_object():
 def test_action_render():
     import os
     RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
-    action = Action(display_name='Title', template='test_action_render.html')
+    action = Action(display_name='Title', template='test_action_render.html').bind(request=None)
     assert action.as_html() == 'tag=a display_name=Title'
     assert action.as_html() == action.__html__()  # used by jinja2
 

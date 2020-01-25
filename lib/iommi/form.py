@@ -536,6 +536,7 @@ class Action(PagePart):
     )
     def as_html(self, *, context=None, render=None):
         assert not render
+        assert self._is_bound
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:

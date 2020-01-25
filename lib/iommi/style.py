@@ -52,6 +52,20 @@ base = Style(
 )
 
 
+test = Style(
+    base,
+    Field=dict(
+        shortcuts=dict(
+            boolean=dict(
+                template='iommi/form/bootstrap/row_checkbox.html',
+            ),
+        ),
+        template='iommi/form/bootstrap/row.html',
+        errors_template='iommi/form/bootstrap/errors.html',
+    ),
+)
+
+# TODO: move to tests/settings.py
 bootstrap = Style(
     base,
     Field=dict(
@@ -117,6 +131,7 @@ def register_style(name, conf):
 
 
 register_style('base', base)
+register_style('test', test)
 register_style('bootstrap', bootstrap)
 register_style('bootstrap_horizontal', bootstrap_horizontal)
 
