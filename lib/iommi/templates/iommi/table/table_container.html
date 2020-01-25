@@ -34,16 +34,7 @@
     {% include 'iommi/table/table.html' %}
 
     {% if bulk_form %}
-        {# TODO: this is a bit weird. There should be no table here anyway #}
-        <table {{ bulk_form.attrs }}>
-            {{ bulk_form }}
-
-            <tr>
-                <td colspan="99">
-                    <input type="submit" class="button" value="Bulk change"/>
-                </td>
-            </tr>
-        </table>
+        {{ bulk_form }}
     {% endif %}
 
     {{ table.render_actions }}

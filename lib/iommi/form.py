@@ -582,9 +582,16 @@ class Action(PagePart):
         for k, v in self.parent._actions_unapplied_data.get(self.name, {}).items():
             setattr_path(self, k, v)
         self.attrs = evaluate_attrs(self.attrs, action=self)
-        # TODO: whitelist instead of blacklist
-        not_evaluated_attributes = {'show', 'extra', 'endpoint'}
-        evaluated_attributes = (x for x in self.get_declared('refinable_members').keys() if x not in not_evaluated_attributes)
+        evaluated_attributes = [
+            'tag',
+            'group',
+            'template',
+            'display_name',
+            'name',
+            'after',
+            'default_child',
+            'style',
+        ]
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 

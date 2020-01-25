@@ -1,3 +1,4 @@
+{# TODO: this template could probably be condensed down to some Fragments. We should remove the "jump to page" feature. #}
 <span class="paginate-pages" onclick="Paginator.jumpToPage({{ pages }}, '{{ extra|escape }}')" title="Page Jump">{{ pages }} Page{{ pages|pluralize }}</span>
 {% if show_first %}<a href="?{{ extra|escape }}page=1" title="First Page"><span class="paginate-first">&laquo;</span></a>{% endif %}
 {% if has_previous %}<a href="?{{ extra|escape }}page={{ previous }}" title="Previous Page"><span class="paginate-previous">&lt;</span></a>{% endif %}

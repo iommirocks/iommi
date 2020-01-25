@@ -839,6 +839,21 @@ class Header(object):
         return '<Header: %s>' % ('superheader' if self.bound_column is None else self.bound_column.name)
 
 
+def bulk__post_handler(table, form, **_):
+    queryset = table.bulk_queryset()
+
+    updates = {
+        field.name: field.value
+        for field in form.fields.values()
+        if field.value is not None and field.value != '' and field.attr is not None
+    }
+    queryset.update(**updates)
+
+    table.post_bulk_edit(table=table, queryset=queryset, updates=updates)
+
+    return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
+
+
 @no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
@@ -1252,15 +1267,17 @@ class Table(PagePart):
 
             bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
             if bulk_fields:
-                # TODO: I deleted this template
-                bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False, template='iommi/form/input.html')
+                bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False)
 
                 self._bulk_form = self.get_meta().form_class(
                     fields=bulk_fields,
                     name='bulk',
+                    post_handler=bulk__post_handler,
                     **self.bulk
                 )
                 self._bulk_form.bind(parent=self)
+                assert 'bulk' not in self.actions
+                self.actions['bulk'] = Action(name='bulk').bind(parent=self)
             else:
                 self._bulk_form = None
 
@@ -1380,20 +1397,6 @@ class Table(PagePart):
         context['iommi_query_error'] = self.query_error
 
         request = self.request()
-        if self.bulk_form and request.method == 'POST':
-            if self.bulk_form.is_valid():
-                queryset = self.bulk_queryset()
-
-                updates = {
-                    field.name: field.value
-                    for field in self.bulk_form.fields.values()
-                    if field.value is not None and field.value != '' and field.attr is not None
-                }
-                queryset.update(**updates)
-
-                self.post_bulk_edit(table=self, queryset=queryset, updates=updates)
-
-                return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
         self.context = table_context(
             request,

@@ -241,7 +241,7 @@ def table_kitchen_sink(request):
         b = Column.choice_queryset(
             render_column=False,
             choices=TFoo.objects.all(),
-            model=Bar,
+            model=TBar,
             model_field=TFoo,
             bulk__show=True,
             query__show=True,
@@ -270,7 +270,6 @@ def table_kitchen_sink(request):
 
         class Meta:
             name = 'bar'
-            model = Bar
             page_size = 20
 
     return BarTable(rows=TBar.objects.all())

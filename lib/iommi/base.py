@@ -168,13 +168,10 @@ def perform_post_dispatch(*, root, path, value, request):
     path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
     target, parents = find_target(path=path, root=root)
 
-    # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
-    kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
-
     if target.post_handler is None:
         raise InvalidEndpointPathException(f'Target {target} has no registered post_handler')
 
-    return target.post_handler(request=request, value=value, **kwargs)
+    return target.post_handler(request=request, value=value, **target.evaluate_attribute_kwargs())
 
 
 # TODO: abc?
