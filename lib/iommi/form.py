@@ -871,7 +871,7 @@ class Field(PagePart):
             self._evaluate_attribute(key)
 
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
-        self._evaluate_attribute('model', __strict=False)
+        self._evaluate_attribute('model', strict=False)
 
         self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
@@ -1345,7 +1345,7 @@ class Form(PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self.evaluate_attribute_kwargs())
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self)
         self.fields = bind_members(declared_items=self.declared_fields, parent=self)
 
         if self.instance is not None:

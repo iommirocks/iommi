@@ -1164,7 +1164,7 @@ class Table(PagePart):
         # TODO: clean out _has_prepared
         self._has_prepared = True
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self, **self.evaluate_attribute_kwargs())
+        self.actions = bind_members(declared_items=self.declared_actions, parent=self)
         self.columns = bind_members(declared_items=self.declared_columns, parent=self)
 
         evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
@@ -1190,7 +1190,7 @@ class Table(PagePart):
             ],
             **self.evaluate_attribute_kwargs()
         )
-        evaluate_member(self, 'model', __strict=False, **self.evaluate_attribute_kwargs())
+        evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
         self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
 
         if self.model:

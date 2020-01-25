@@ -347,17 +347,16 @@ class PagePart(RefinableObject):
         return DISPATCH_PREFIX + self.path()
 
     def evaluate_attribute_kwargs(self):
-        # Note that we only travel one level up!
-        return {**self._evaluate_attribute_kwargs(), **(self.parent._evaluate_attribute_kwargs() if self.parent else {})}
+        return {**self._evaluate_attribute_kwargs(), **(self.parent.evaluate_attribute_kwargs() if self.parent else {})}
 
     def _evaluate_attribute_kwargs(self):
         return {}
 
-    def _evaluate_attribute(self, key, **kwargs):
-        evaluate_member(self, key, **self.evaluate_attribute_kwargs(), **kwargs)
+    def _evaluate_attribute(self, key, strict=True):
+        evaluate_member(self, key, **self.evaluate_attribute_kwargs(), strict=strict)
 
-    def _evaluate_show(self, **kwargs):
-        self._evaluate_attribute('show', **kwargs)
+    def _evaluate_show(self):
+        self._evaluate_attribute('show')
 
 
 def render_template_name(template_name, **kwargs):
@@ -446,11 +445,11 @@ def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cl
     return Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
 
 
-def bind_members(*, declared_items: Dict[str, Any], parent: PagePart, **kwargs) -> Dict[str, Any]:
+def bind_members(*, declared_items: Dict[str, Any], parent: PagePart) -> Dict[str, Any]:
     bound_items = [item for item in sort_after([x.bind(parent=parent) for x in declared_items.values()])]
 
     for item in bound_items:
-        item._evaluate_show(**kwargs)
+        item._evaluate_show()
 
     return Struct({item.name: item for item in bound_items if should_show(item)})
 
@@ -461,10 +460,10 @@ def evaluate_members(obj, keys, **kwargs):
         evaluate_member(obj, key, **kwargs)
 
 
-def evaluate_member(obj, key, __strict=True, **kwargs):
+def evaluate_member(obj, key, strict=True, **kwargs):
     value = getattr(obj, key)
     # TODO: I changed this from recursive to non-recursive... was that a good idea?
-    new_value = evaluate(value, __strict=__strict, **kwargs)
+    new_value = evaluate(value, __strict=strict, **kwargs)
     if new_value is not value:
         setattr(obj, key, new_value)
 
