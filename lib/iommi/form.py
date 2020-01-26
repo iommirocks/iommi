@@ -639,7 +639,6 @@ class Field(PagePart):
     """
 
     attr = Refinable()
-    id = Refinable()
     display_name = Refinable()
 
     # raw_data/raw_data contains the strings grabbed directly from the request data
@@ -679,7 +678,6 @@ class Field(PagePart):
 
     @dispatch(
         attr=MISSING,
-        id=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
         parse_empty_string_as_none=True,
@@ -710,7 +708,7 @@ class Field(PagePart):
 
         .. code:: python
 
-            Field(id=lambda form, field: 'my_id_%s' % field.name)
+            Field(attrs__id=lambda form, field: 'my_id_%s' % field.name)
 
         :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally request.GET or request.POST)
         :param is_valid: validation function. Should return a tuple of (bool, reason_for_failure_if_bool_is_false) or raise ValidationError. Default: lambda form, field, parsed_data: (True, '')
@@ -718,7 +716,6 @@ class Field(PagePart):
         :param initial: initial value of the field
         :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
         :param attrs: a dict containing any custom html attributes to be sent to the input__template.
-        :param id: the HTML id attribute. Default: 'id_%s' % name
         :param display_name: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input__template, label__template and error__template below.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
@@ -825,8 +822,6 @@ class Field(PagePart):
         form = self.parent.parent
         if self.attr is MISSING:
             self.attr = self.name
-        if self.id is MISSING:
-            self.id = f'id_{self.path()}'.replace(DISPATCH_PATH_SEPARATOR, '__') if self.name else ''
         if self.display_name is MISSING:
             self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
 
@@ -847,7 +842,6 @@ class Field(PagePart):
             'name',
             'show',
             'attr',
-            'id',
             'display_name',
             'after',
             'parse_empty_string_as_none',

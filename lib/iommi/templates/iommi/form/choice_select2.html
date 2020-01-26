@@ -1,17 +1,17 @@
-<select name="{{ field.path }}" id="{{ field.id }}"{{ field.attrs }}>
+<select{{ field.attrs }}>
     {% for choice in field.choice_to_options_selected %}
         <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %} label="{{ choice.2 }}">{{ choice.2 }}</option>
     {% endfor %}
 </select>
 
 <style>
-    #{{ field.id }} {
+    #{{ field.input.attrs.id }} {
         min-width: 200px;
     }
 </style>
 
 <script type="text/javascript">
-    var id_field = "#{{ field.id }}";
+    var id_field = "#{{ field.input.attrs.id }}";
     $(id_field).select2({
         placeholder: '', // TODO: would be nice to configure this
         ajax: {

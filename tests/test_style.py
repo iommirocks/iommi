@@ -95,5 +95,5 @@ def test_apply_checkbox_style():
 
     assert get_style_for_object(style=form.fields.foo.get_style(), self=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
-    assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" type="checkbox"'
+    assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
     assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label"'

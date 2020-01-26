@@ -490,7 +490,7 @@ def test_multi_select_with_one_value_only():
     ).bind(request=req('get', foo=['a'])).fields.foo.value_list
 
 
-def test_render_table():
+def test_render_misc_attributes():
     class MyForm(Form):
         foo = Field(
             attrs__class=dict(**{'@@@@21@@@@': True}),
@@ -498,7 +498,7 @@ def test_render_table():
             label__attrs__class=dict(**{'$$$11$$$': True}),
             help_text='^^^13^^^',
             display_name='***17***',
-            id='$$$$5$$$$$'
+            attrs__id='$$$$5$$$$$'
         )
 
     table = MyForm().bind(request=req('get', foo='!!!7!!!')).as_html()
@@ -509,10 +509,6 @@ def test_render_table():
     assert '***17***' in table
     assert '@@@@21@@@@' in table
     assert 'id="$$$$5$$$$$"' in table
-    assert '<tr' in table
-
-    # Assert that table is the default
-    assert table == "%s" % MyForm().bind(request=req('get', foo='!!!7!!!'))
 
 
 def test_heading():
