@@ -963,6 +963,7 @@ class Table(PagePart):
         attrs=EMPTY,
         template='iommi/table/list.html',
         row__attrs__class=EMPTY,
+        row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
         row__template=None,
         filter__template='iommi/query/form.html',
         header__template='iommi/table/table_header_rows.html',

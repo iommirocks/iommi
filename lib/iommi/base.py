@@ -451,7 +451,7 @@ def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cl
 class Members(PagePart):
     def __init__(self, *, declared_items, **kwargs):
         super(Members, self).__init__(**kwargs)
-        self.members = None
+        self.members: Dict[str, Any] = None
         self.declared_items = declared_items
 
     def on_bind(self) -> None:
@@ -461,6 +461,9 @@ class Members(PagePart):
             item._evaluate_show()
 
         self.members = {item.name: item for item in bound_items if should_show(item)}
+
+    def get(self, key, default=None):
+        return self.members.get(key, default)
 
     def __getattr__(self, item):
         if self.members is None:

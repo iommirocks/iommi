@@ -63,6 +63,9 @@ test = Style(
         template='iommi/form/bootstrap/row.html',
         errors_template='iommi/form/bootstrap/errors.html',
     ),
+    Table=dict(
+        attrs__class__table=True,
+    ),
 )
 
 # TODO: move to tests/settings.py
