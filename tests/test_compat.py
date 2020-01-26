@@ -44,7 +44,7 @@ def test_format_html4():
         )
     )
     print(actual)
-    assert '<input type="text" value="" name="foo" id="id_foo"' in actual
+    assert '<input id="id_foo" name="foo" type="text">' in actual
 
 
 def test_format_html5():

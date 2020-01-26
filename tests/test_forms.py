@@ -57,6 +57,7 @@ from .compat import RequestFactory
 from .helpers import (
     reindent,
     req,
+    get_attrs,
 )
 from .models import (
     Bar,
@@ -104,7 +105,7 @@ class MyTestForm(Form):
 
 def test_field_repr():
     assert '<iommi.form.Field foo>' == repr(Field(name='foo'))
-    assert '<iommi.form.Field foo>' == str(Form(fields__foo=Field()).bind(request=None).fields.foo)
+    assert '<iommi.form.Field foo>' == repr(Form(fields__foo=Field()).bind(request=None).fields.foo)
 
 
 def test_required_choice():
@@ -196,7 +197,7 @@ def test_parse():
         }),
     )
 
-    assert [x.errors for x in form.fields.values()] == [set() for _ in form.fields]
+    assert [x.errors for x in form.fields.values()] == [set() for _ in form.fields.keys()]
     assert form.is_valid() is True
     assert form.fields['party'].parsed_data == 'ABC'
     assert form.fields['party'].value == 'ABC'
@@ -376,7 +377,7 @@ def test_non_editable():
         fields__foo=Field(editable=False),
     ).bind(
         request=req('get'),
-    ).fields.foo.input_template == 'iommi/form/non_editable.html'
+    ).fields.foo.input__template == 'iommi/form/non_editable.html'
 
 
 def test_non_editable_form():
@@ -396,9 +397,20 @@ def test_non_editable_form():
     assert False is form.fields.bar.editable
 
 
-def test_text_fields():
-    assert '<input type="text" ' in str(Form(fields__foo=Field.text()).bind(request=req('get')))
-    assert '<textarea' in str(Form(fields__foo=Field.textarea()).bind(request=req('get')))
+def test_text_field():
+    rendered_form = str(Form(fields__foo=Field.text()).bind(request=req('get')))
+    # TODO: this test assumes that type comes first, it does not. Use BS4 to do something nicer.
+    foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
+    assert foo.name == 'input'
+    assert get_attrs(foo, ['type']) == {'type': 'text'}
+
+
+def test_textarea_field():
+    rendered_form = str(Form(fields__foo=Field.textarea()).bind(request=req('get')))
+    # TODO: this test assumes that type comes first, it does not. Use BS4 to do something nicer.
+    foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
+    assert foo.name == 'textarea'
+    assert get_attrs(foo, ['type']) == {'type': None}
 
 
 def test_integer_field():
@@ -425,7 +437,10 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    assert Form(fields__foo=Field(name='foo', template=None, template_string='{{ field.value }} {{ form.style }}')).bind(request=req('get', foo='7')).as_html() == '7 compact\n' + AVOID_EMPTY_FORM.format('') + '\n'
+    form = Form(name='hello', fields__foo=Field(name='foo', template=None, template_string='{{ field.value }} {{ form.name }}'))
+    form.bind(request=req('get', foo='7'))
+    assert form.name == 'hello'
+    assert form.fields.foo.as_html() == '7 hello'
 
 
 def test_render_template():
@@ -434,7 +449,7 @@ def test_render_template():
 
 def test_render_on_dunder_html():
     form = Form(fields__foo=Field()).bind(request=req('get', foo='7'))
-    assert form.as_html() == form.__html__()  # used by jinja2
+    assert remove_csrf(form.as_html()) == remove_csrf(form.__html__())  # used by jinja2
 
 
 def test_render_attrs():
@@ -478,8 +493,9 @@ def test_multi_select_with_one_value_only():
 def test_render_table():
     class MyForm(Form):
         foo = Field(
-            input_container__attrs__class=dict(**{'###5###': True}),
-            label_container__attrs__class=dict(**{'$$$11$$$': True}),
+            attrs__class=dict(**{'@@@@21@@@@': True}),
+            input__attrs__class=dict(**{'###5###': True}),
+            label__attrs__class=dict(**{'$$$11$$$': True}),
             help_text='^^^13^^^',
             display_name='***17***',
             id='$$$$5$$$$$'
@@ -491,6 +507,7 @@ def test_render_table():
     assert '$$$11$$$' in table
     assert '^^^13^^^' in table
     assert '***17***' in table
+    assert '@@@@21@@@@' in table
     assert 'id="$$$$5$$$$$"' in table
     assert '<tr' in table
 
@@ -521,13 +538,15 @@ def test_radio():
         request=req('get', foo='a'),
     )
     soup = BeautifulSoup(form.as_html(), 'html.parser')
-    assert len(soup.find_all('input')) == len(choices) + 1  # +1 for AVOID_EMPTY_FORM
-    assert [x.attrs['value'] for x in soup.find_all('input') if 'checked' in x.attrs] == ['a']
+    items = [x for x in soup.find_all('input') if x.attrs['type'] == 'radio']
+    assert len(items) == 3
+    assert [x.attrs['value'] for x in items if 'checked' in x.attrs] == ['a']
 
 
 def test_hidden():
     soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).as_html(), 'html.parser')
-    assert [(x.attrs['type'], x.attrs['name'], x.attrs['value']) for x in soup.find_all('input')] == [('hidden', 'foo', '1'), ('hidden', '-', '')]
+    x = soup.find(id='id_foo')
+    assert get_attrs(x, ['type', 'name', 'value']) == dict(type='hidden', name='foo', value='1')
 
 
 def test_hidden_with_name():
@@ -1184,7 +1203,7 @@ def test_choice_shortcut():
 
 def test_render_custom():
     sentinel = '!!custom!!'
-    assert sentinel in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel)).as_html()
+    assert sentinel in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel)).bind(request=req('get')).as_html()
 
 
 def test_boolean_initial_true():
@@ -1354,6 +1373,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         not_returning_anything = Field.integer()
 
     form = MyForm()
+    form.bind(request=None)
     actual = perform_ajax_dispatch(root=form, path='/field/username', value='ar', request=req('get'))
     assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
 
@@ -1399,6 +1419,7 @@ def test_ajax_namespacing():
 
     request = req('get')
     form = MyForm()
+    form.bind(request=request)
     assert 'default' == perform_ajax_dispatch(root=form, path='/field/foo', value='ar', request=request)
     assert 'bar' == perform_ajax_dispatch(root=form, path='/field/foo/bar', value='ar', request=request)
     assert 'baaz' == perform_ajax_dispatch(root=form, path='/field/foo/baaz', value='ar', request=request)
@@ -1412,6 +1433,7 @@ def test_ajax_config_and_validate():
 
     request = req('get')
     form = MyForm()
+    form.bind(request=request)
     assert dict(
         name='foo',
     ) == perform_ajax_dispatch(root=form, path='/field/foo/config', value=None, request=request)
@@ -1440,6 +1462,7 @@ def test_custom_endpoint():
             endpoint__foo = lambda value, **_: 'foo' + value
 
     form = MyForm()
+    form.bind(request=None)
     assert 'foobar' == perform_ajax_dispatch(root=form, path='/foo', value='bar', request=req('get'))
 
 

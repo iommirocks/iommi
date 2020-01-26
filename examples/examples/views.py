@@ -128,7 +128,7 @@ def form_example_5(request):
     ensure_objects()
     return Form.as_create_page(
         model=Bar,
-        fields__b__input_template='iommi/form/choice_select2.html',
+        fields__b__input__template='iommi/form/choice_select2.html',
         actions=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),

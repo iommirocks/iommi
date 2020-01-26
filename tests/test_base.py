@@ -220,11 +220,13 @@ Path left: baz"""
 
 def test_evaluate_attrs():
     actual = evaluate_attrs(
-        Namespace(
-            class__table=True,
-            class__foo=lambda foo: True,
-            data=1,
-            data2=lambda foo: foo,
+        Struct(
+            attrs=Namespace(
+                class__table=True,
+                class__foo=lambda foo: True,
+                data=1,
+                data2=lambda foo: foo,
+            ),
         ),
         foo=3
     )

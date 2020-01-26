@@ -70,3 +70,7 @@ def request_with_middleware(*, response, data):
 
 def req(method, **data):
     return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())('/', data=data)
+
+
+def get_attrs(x, attrs):
+    return {a: x.attrs.get(a) for a in attrs}

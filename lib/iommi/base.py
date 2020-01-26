@@ -144,9 +144,7 @@ def catch_response(view_function):
 
 
 def perform_ajax_dispatch(*, root, path, value, request):
-    if not root._is_bound:
-        # This is mostly useful for tests
-        root.bind(request=request)
+    assert root._is_bound
 
     target, parents = find_target(path=path, root=root)
 
@@ -318,9 +316,9 @@ class PagePart(RefinableObject):
             return self.parent.request()
 
     def get_style(self):
-        if self.style:
+        if self.style is not None:
             return self.style
-        if self.parent:
+        if self.parent is not None:
             return self.parent.get_style()
 
         return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
@@ -351,7 +349,7 @@ class PagePart(RefinableObject):
         return DISPATCH_PREFIX + self.path()
 
     def evaluate_attribute_kwargs(self):
-        return {**self._evaluate_attribute_kwargs(), **(self.parent.evaluate_attribute_kwargs() if self.parent else {})}
+        return {**self._evaluate_attribute_kwargs(), **(self.parent.evaluate_attribute_kwargs() if self.parent is not None else {})}
 
     def _evaluate_attribute_kwargs(self):
         return {}
@@ -490,12 +488,18 @@ class Members(PagePart):
     def __getitem__(self, item):
         return self.members[item]
 
+    def __len__(self):
+        return len(self.members)
 
-def bind_members(*, name, declared_items: Dict[str, Any], parent: PagePart) -> Members:
-    # TODO: This function should return a PagePart specialized as a container.. or maybe we introduce the base class of PagePart here and it's one of those. This introduces problems though like.. what is x.children? PagePart.children or x['children']? Does all of PageParts API need to be prefixed with _ ? Not great for the public APIs like bind()!
-    m = Members(name=name, declared_items=declared_items)
-    m.bind(parent=parent)
-    return m
+    def __iter__(self):
+        raise NotImplementedError('Iterate with .keys(), .values() or .items()')
+
+
+def bind_members(obj: PagePart, *, name: str, default_child=False) -> None:
+    declared_items = getattr(obj, f'declared_{name}')
+    m = Members(name=name, declared_items=declared_items, default_child=default_child)
+    m.bind(parent=obj)
+    setattr(obj, name, m)
 
 
 # TODO: maybe this is an unnecessary function

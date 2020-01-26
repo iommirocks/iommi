@@ -580,8 +580,9 @@ class Action(PagePart):
         return call_target(**kwargs)
 
     def on_bind(self) -> None:
-        for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
-            setattr_path(self, k, v)
+        if self.parent is not None and self.parent.parent is not None:
+            for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
+                setattr_path(self, k, v)
         evaluated_attributes = [
             'tag',
             'group',
@@ -651,9 +652,6 @@ class Field(PagePart):
     template: str = Refinable()
     template_string = Refinable()
     attrs: Dict[str, Any] = Refinable()
-    input_template = Refinable()
-    label_template = Refinable()
-    errors_template = Refinable()
     required = Refinable()
 
     input = Refinable()
@@ -697,6 +695,7 @@ class Field(PagePart):
         input__call_target=Fragment,
         input__tag='input',
         input__name='input',
+        input__attrs__id=lambda field, **_: f'id_{field.path().replace("/", "__")}',
         label__call_target=Fragment,
         label__tag='label',
         label__name='label',
@@ -718,14 +717,14 @@ class Field(PagePart):
         :param parse: parse function. Default just returns the string input unchanged: lambda form, field, string_value: string_value
         :param initial: initial value of the field
         :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
-        :param attrs: a dict containing any custom html attributes to be sent to the input_template.
+        :param attrs: a dict containing any custom html attributes to be sent to the input__template.
         :param id: the HTML id attribute. Default: 'id_%s' % name
         :param display_name: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
-        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input_template, label_template and error_template below.
+        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input__template, label__template and error__template below.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
-        :param input_template: django template filename for the template for just the input control.
-        :param label_template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
-        :param errors_template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
+        :param input__template: django template filename for the template for just the input control.
+        :param label__template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
+        :param errors__template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
         :param required: if the field is a required field. Default: True
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
@@ -768,7 +767,7 @@ class Field(PagePart):
 
     @property
     def form(self):
-        return self.parent
+        return self.parent.parent
 
     @staticmethod
     @refinable
@@ -854,9 +853,6 @@ class Field(PagePart):
             'parse_empty_string_as_none',
             'template',
             'template_string',
-            'input_template',
-            'label_template',
-            'errors_template',
             'required',
             'initial',
             'is_list',
@@ -891,7 +887,7 @@ class Field(PagePart):
 
         if not self.editable:
             # TODO: style!
-            self.input_template = 'iommi/form/non_editable.html'
+            self.input__template = 'iommi/form/non_editable.html'
 
     def _evaluate_attribute_kwargs(self):
         return dict(form=self.parent, field=self)
@@ -942,6 +938,8 @@ class Field(PagePart):
             'form': self.form,
             'field': self,
         }
+        # TODO: hack!
+        self.input.attrs.value = self.rendered_value
         if self.template_string is not None:
             return get_template_from_string(self.template_string, origin='iommi', name='Form.as_html').render(context, self.request())
         else:
@@ -964,7 +962,8 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_template='iommi/form/text.html',
+        # TODO: remove this template and instead use input__tag='textarea', input__type=None
+        input__template='iommi/form/text.html',
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1009,7 +1008,7 @@ class Field(PagePart):
         is_valid=choice_is_valid,
         choice_to_option=choice_choice_to_option,
         parse=choice_parse,
-        input_template='iommi/form/choice.html',
+        input__template='iommi/form/choice.html',
     )
     def choice(cls, call_target=None, **kwargs):
         """
@@ -1055,7 +1054,7 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice",
-        input_template='iommi/form/choice_select2.html',
+        input__template='iommi/form/choice_select2.html',
         parse=choice_queryset__parse,
         choice_to_option=choice_queryset__choice_to_option,
         endpoint_handler=choice_queryset__endpoint_handler,
@@ -1104,7 +1103,7 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice',
-        input_template='iommi/form/radio.html',
+        input__template='iommi/form/radio.html',
     )
     def radio(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1151,9 +1150,7 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         input__attrs__type='file',
-        # TODO: yuck!
-        template_string="{% extends 'iommi/form/{style}/row.html' %}{% block extra_content %}{{ field.value }}{% endblock %}",
-        input_template='iommi/form/file.html',
+        input__template='iommi/form/file.html',
         write_to_instance=file_write_to_instance,
     )
     def file(cls, call_target=None, **kwargs):
@@ -1278,17 +1275,12 @@ class Form(PagePart):
         action_class = Action
 
     def __repr__(self):
-        return f'<Form: {self.name} at path {self.path() if self.parent else "<unbound>"}>'
+        return f'<Form: {self.name} at path {self.path() if self.parent is not None else "<unbound>"}>'
 
     def children(self):
         assert self._is_bound
         return Struct(
-            field=Struct(
-                name='field',
-                children=lambda: self.fields,
-                default_child=True,  # TODO: unsure about this
-                endpoint_kwargs=lambda: dict(form=self),
-            ),
+            fields=self.fields,
             actions=Struct(
                 name='actions',
                 children=lambda: self.actions,
@@ -1351,8 +1343,8 @@ class Form(PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.actions = bind_members(name='actions', declared_items=self.declared_actions, parent=self)
-        self.fields = bind_members(name='fields', declared_items=self.declared_fields, parent=self)
+        bind_members(self, name='actions')
+        bind_members(self, name='fields', default_child=True)
 
         if self.instance is not None:
             for field in self.fields.values():

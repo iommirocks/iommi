@@ -4,11 +4,13 @@ from typing import (
     Optional,
     Type,
     Any,
+    Union,
 )
 
 from django.utils.html import format_html
 from iommi._web_compat import (
     Template,
+    render_template,
 )
 from iommi.base import (
     PagePart,
@@ -36,6 +38,9 @@ _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'l
 
 def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
+
+    if fragment.template:
+        return render_template(fragment.request(), fragment.template, {**context, **fragment.evaluate_attribute_kwargs(), rendered_children: rendered_children})
 
     is_void_element = fragment.tag in _void_elements
 
@@ -65,6 +70,7 @@ def fragment__render(fragment, context):
 class Fragment(PagePart):
     attrs: Dict[str, Any] = Refinable()
     tag = Refinable()
+    template: Union[str, Template] = Refinable()
 
     @dispatch(
         attrs=EMPTY,
@@ -152,7 +158,7 @@ class Page(PagePart):
         self.declared_parts: Dict[str, PartType] = collect_members(items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
 
     def on_bind(self) -> None:
-        self.parts = bind_members(name='parts', declared_items=self.declared_parts, parent=self)
+        bind_members(self, name='parts', default_child=True)
 
     def __repr__(self):
         return f'<Page with parts: {list(self.parts.keys())}>'

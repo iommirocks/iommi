@@ -511,7 +511,7 @@ class Query(PagePart):
         self.variables = None
 
     def on_bind(self) -> None:
-        self.variables: Dict[str, Variable] = bind_members(name='variables', declared_items=self.declared_variables, parent=self)
+        bind_members(self, name='variables', default_child=True)
 
         fields = []
 
