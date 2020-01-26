@@ -317,7 +317,7 @@ class Column(PagePart):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
-        for k, v in self.parent._columns_unapplied_data.get(self.name, {}).items():
+        for k, v in getattr(self.parent, '_columns_unapplied_data').get(self.name, {}).items():
             setattr_path(self, k, v)
 
         self.header.attrs = Namespace(self.header.attrs.copy())

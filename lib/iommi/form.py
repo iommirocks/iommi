@@ -580,7 +580,7 @@ class Action(PagePart):
         return call_target(**kwargs)
 
     def on_bind(self) -> None:
-        for k, v in self.parent._actions_unapplied_data.get(self.name, {}).items():
+        for k, v in getattr(self.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
         self.attrs = evaluate_attrs(self.attrs, action=self)
         evaluated_attributes = [
@@ -821,7 +821,7 @@ class Field(PagePart):
 
     def on_bind(self) -> None:
         assert self.template
-        for k, v in self.parent._fields_unapplied_data.get(self.name, {}).items():
+        for k, v in getattr(self.parent, '_fields_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
 
         form = self.parent

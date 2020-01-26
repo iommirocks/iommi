@@ -191,7 +191,7 @@ class Variable(PagePart):
         return self.parent
 
     def on_bind(self) -> None:
-        for k, v in self.parent._variables_unapplied_data.get(self.name, {}).items():
+        for k, v in getattr(self.parent, '_variables_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
 
         if self.attr is MISSING:
