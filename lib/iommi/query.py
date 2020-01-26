@@ -191,7 +191,7 @@ class Variable(PagePart):
         return self.parent
 
     def on_bind(self) -> None:
-        for k, v in getattr(self.parent, '_variables_unapplied_data', {}).get(self.name, {}).items():
+        for k, v in getattr(self.parent.parent, '_variables_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
 
         if self.attr is MISSING:
@@ -511,7 +511,7 @@ class Query(PagePart):
         self.variables = None
 
     def on_bind(self) -> None:
-        self.variables: Dict[str, Variable] = bind_members(declared_items=self.declared_variables, parent=self)
+        self.variables: Dict[str, Variable] = bind_members(name='variables', declared_items=self.declared_variables, parent=self)
 
         fields = []
 

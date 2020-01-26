@@ -48,6 +48,7 @@ from iommi.base import (
     evaluate_member,
     evaluate_members,
     evaluate_attrs,
+    Members,
 )
 from iommi.form import (
     Action,
@@ -317,7 +318,7 @@ class Column(PagePart):
         return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
-        for k, v in getattr(self.parent, '_columns_unapplied_data').get(self.name, {}).items():
+        for k, v in getattr(self.parent.parent, '_columns_unapplied_data').get(self.name, {}).items():
             setattr_path(self, k, v)
 
         self.header.attrs = Namespace(self.header.attrs.copy())
@@ -697,7 +698,9 @@ class BoundRow(object):
         self.row_index = row_index
         self.template = template
         self.extra = extra
-        self.attrs = evaluate_attrs(attrs, table=table, row=row, bound_row=self)
+        self.parent = table
+        self.attrs = attrs
+        self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
     def as_html(self):
         if self.template:
@@ -717,7 +720,11 @@ class BoundRow(object):
         bound_column = self.table.rendered_columns[name]
         return BoundCell(bound_row=self, bound_column=bound_column)
 
+    def dunder_path(self):
+        return self.parent.dunder_path() + '__row'
 
+
+# TODO: make this a PagePart?
 class BoundCell(object):
 
     def __init__(self, bound_row, bound_column):
@@ -745,7 +752,11 @@ class BoundCell(object):
     @property
     def attrs(self):
         return evaluate_attrs(
-            self.bound_column.cell.attrs,
+            # TODO: fix this hack
+            Struct(
+                attrs=self.bound_column.cell.attrs,
+                dunder_path=lambda: self.bound_column.dunder_path() + '__cell'
+            ),
             table=self.table,
             column=self.bound_column,
             row=self.row,
@@ -815,6 +826,7 @@ class RowConfig(Struct, RefinableObject):
     extra: Dict[str, Any] = Refinable()
 
 
+# TODO: make this a PagePart?
 class Header(object):
     @dispatch(
         attrs=EMPTY,
@@ -829,7 +841,7 @@ class Header(object):
         self.index_in_group = index_in_group
         self.attrs = attrs
         # TODO: bound_column here maybe should just be column?
-        self.attrs = evaluate_attrs(self.attrs, table=table, bound_column=bound_column, header=self)
+        self.attrs = evaluate_attrs(self, table=table, bound_column=bound_column, header=self)
 
     @property
     def rendered(self):
@@ -837,6 +849,9 @@ class Header(object):
 
     def __repr__(self):
         return '<Header: %s>' % ('superheader' if self.bound_column is None else self.bound_column.name)
+
+    def dunder_path(self):
+        return self.table.dunder_path() + '__header'
 
 
 def bulk__post_handler(table, form, **_):
@@ -914,11 +929,8 @@ class Table(PagePart):
             query=self.query,  # TODO: this is a property which we should try to remove
             bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
 
-            # TODO: should be a PagePart?
-            columns=Struct(
-                name='columns',
-                children=lambda: self.columns,
-            ),
+            # TODO: should be a PagePart? !!!! that this isn't a page part breaks the path for the table cells
+            columns=self.columns,
             # TODO: this can have name collisions with the keys above
             **setup_endpoint_proxies(self.endpoint)
         )
@@ -1179,8 +1191,8 @@ class Table(PagePart):
         # TODO: clean out _has_prepared
         self._has_prepared = True
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self)
-        self.columns = bind_members(declared_items=self.declared_columns, parent=self)
+        self.actions = bind_members(name='actions', declared_items=self.declared_actions, parent=self)
+        self.columns = bind_members(name='columns', declared_items=self.declared_columns, parent=self)
 
         evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
@@ -1206,7 +1218,7 @@ class Table(PagePart):
             **self.evaluate_attribute_kwargs()
         )
         evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
-        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
         if self.model:
 
@@ -1233,6 +1245,7 @@ class Table(PagePart):
 
             self._query = self.get_meta().query_class(
                 _variables_dict=variables,
+                name='query',
                 **self.query_args
             )
             self._query.bind(parent=self)

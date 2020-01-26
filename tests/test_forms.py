@@ -499,7 +499,7 @@ def test_render_table():
 
 
 def test_heading():
-    assert '<th colspan="2">#foo#</th>' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).as_html()
+    assert '>#foo#</' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).as_html()
 
 
 def test_info():
@@ -1538,7 +1538,7 @@ def test_action_repr():
 
 
 def test_action_shortcut_icon():
-    assert Action.icon('foo', display_name='title').as_html() == '<a ><i class="fa fa-foo"></i> title</a>'
+    assert Action.icon('foo', display_name='title').bind(request=None).as_html() == '<a ><i class="fa fa-foo"></i> title</a>'
 
 
 def test_render_grouped_actions():

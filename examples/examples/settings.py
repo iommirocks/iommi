@@ -101,3 +101,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
+IOMMI_DEBUG_SHOW_PATHS = True
+
+SILENCED_SYSTEM_CHECKS = True

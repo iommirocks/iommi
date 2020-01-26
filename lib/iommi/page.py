@@ -98,7 +98,7 @@ class Fragment(PagePart):
         return f'<Fragment: tag:{self.tag}, attrs:{self.attrs}>'
 
     def on_bind(self) -> None:
-        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
     @dispatch(
         context=EMPTY,
@@ -152,7 +152,7 @@ class Page(PagePart):
         self.declared_parts: Dict[str, PartType] = collect_members(items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
 
     def on_bind(self) -> None:
-        self.parts = bind_members(declared_items=self.declared_parts, parent=self)
+        self.parts = bind_members(name='parts', declared_items=self.declared_parts, parent=self)
 
     def __repr__(self):
         return f'<Page with parts: {list(self.parts.keys())}>'

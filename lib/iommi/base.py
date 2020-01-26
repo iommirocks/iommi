@@ -325,8 +325,15 @@ class PagePart(RefinableObject):
 
         return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
+    def dunder_path(self) -> str:
+        assert self._is_bound
+        if self.parent is not None:
+            return path_join(self.parent.dunder_path(), self.name, separator='__')
+        else:
+            assert self.name, f'{self} is missing a name, but it was asked about its path'
+            return self.name
+
     def path(self) -> str:
-        # TODO: this assert seems like a good idea, but it fires in Table.prepare... not sure what to do about that right now
         assert self._is_bound
         if self.default_child:
             if self.parent is not None:
@@ -373,16 +380,16 @@ def as_html(*, part: PartType, context):
         return part.as_html(context=context)
 
 
-def path_join(prefix, name) -> str:
-    if not prefix:
-        return name
-    else:
-        return prefix + DISPATCH_PATH_SEPARATOR + name
-
-
 DISPATCH_PATH_SEPARATOR = '/'
 DISPATCH_PREFIX = DISPATCH_PATH_SEPARATOR
 MISSING = object()
+
+
+def path_join(prefix, name, separator=DISPATCH_PATH_SEPARATOR) -> str:
+    if not prefix:
+        return name
+    else:
+        return prefix + separator + name
 
 
 def model_and_rows(model, rows):
@@ -442,13 +449,53 @@ def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cl
     return Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
 
 
-def bind_members(*, declared_items: Dict[str, Any], parent: PagePart) -> Dict[str, Any]:
-    bound_items = [item for item in sort_after([x.bind(parent=parent) for x in declared_items.values()])]
+@no_copy_on_bind
+class Members(PagePart):
+    def __init__(self, *, declared_items, **kwargs):
+        super(Members, self).__init__(**kwargs)
+        self.members = None
+        self.declared_items = declared_items
 
-    for item in bound_items:
-        item._evaluate_show()
+    def on_bind(self) -> None:
+        bound_items = [item for item in sort_after([x.bind(parent=self) for x in self.declared_items.values()])]
 
-    return Struct({item.name: item for item in bound_items if should_show(item)})
+        for item in bound_items:
+            item._evaluate_show()
+
+        self.members = {item.name: item for item in bound_items if should_show(item)}
+
+    def __getattr__(self, item):
+        if self.members is None:
+            raise AttributeError()
+        try:
+            return self.members[item]
+        except KeyError:
+            raise AttributeError()
+
+    def values(self):
+        return self.members.values()
+
+    def keys(self):
+        return self.members.keys()
+
+    def items(self):
+        return self.members.items()
+
+    def __contains__(self, item):
+        return item in self.members
+
+    def __setitem__(self, key, value):
+        self.members[key] = value
+
+    def __getitem__(self, item):
+        return self.members[item]
+
+
+def bind_members(*, name, declared_items: Dict[str, Any], parent: PagePart) -> Members:
+    # TODO: This function should return a PagePart specialized as a container.. or maybe we introduce the base class of PagePart here and it's one of those. This introduces problems though like.. what is x.children? PagePart.children or x['children']? Does all of PageParts API need to be prefixed with _ ? Not great for the public APIs like bind()!
+    m = Members(name=name, declared_items=declared_items)
+    m.bind(parent=parent)
+    return m
 
 
 # TODO: maybe this is an unnecessary function
@@ -465,7 +512,8 @@ def evaluate_member(obj, key, strict=True, **kwargs):
         setattr(obj, key, new_value)
 
 
-def evaluate_attrs(attrs, **kwargs):
+def evaluate_attrs(obj, **kwargs):
+    attrs = obj.attrs
     classes = {
         k: evaluate_strict(v, **kwargs)
         for k, v in attrs.get('class', {}).items()
@@ -475,6 +523,8 @@ def evaluate_attrs(attrs, **kwargs):
         for k, v in attrs.items()
         if k != 'class'
     }
+    if getattr(settings, 'IOMMI_DEBUG_SHOW_PATHS', False):
+        attrs['data-iommi-path'] = obj.dunder_path()
     return Attrs({
         'class': classes,
         **attrs

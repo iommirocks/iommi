@@ -580,9 +580,8 @@ class Action(PagePart):
         return call_target(**kwargs)
 
     def on_bind(self) -> None:
-        for k, v in getattr(self.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
+        for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
-        self.attrs = evaluate_attrs(self.attrs, action=self)
         evaluated_attributes = [
             'tag',
             'group',
@@ -597,7 +596,7 @@ class Action(PagePart):
             self._evaluate_attribute(key)
 
         self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
-        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(action=self)
@@ -667,7 +666,6 @@ class Field(PagePart):
 
     editable = Refinable()
     strip_input = Refinable()
-    input_type = Refinable()
 
     choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
     choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
@@ -692,14 +690,16 @@ class Field(PagePart):
         is_boolean=False,
         editable=True,
         strip_input=True,
-        input_type='text',
+        input__attrs__type='text',
         endpoint=EMPTY,
         endpoint__config=default_endpoint__config,
         endpoint__validate=default_endpoint__validate,
         input__call_target=Fragment,
         input__tag='input',
+        input__name='input',
         label__call_target=Fragment,
         label__tag='label',
+        label__name='label',
         errors=EMPTY,
         input__attrs__name=lambda field, **_: field.path(),
     )
@@ -731,7 +731,6 @@ class Field(PagePart):
 
         :param editable: default: True
         :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: True
-        :param input_type: the type attribute on the standard input HTML tag. Default: 'text'
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
         :param is_list: interpret request data as a list (can NOT be a callable). Default False
         :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
@@ -821,10 +820,10 @@ class Field(PagePart):
 
     def on_bind(self) -> None:
         assert self.template
-        for k, v in getattr(self.parent, '_fields_unapplied_data', {}).get(self.name, {}).items():
+        for k, v in getattr(self.parent.parent, '_fields_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
 
-        form = self.parent
+        form = self.parent.parent
         if self.attr is MISSING:
             self.attr = self.name
         if self.id is MISSING:
@@ -865,7 +864,6 @@ class Field(PagePart):
             'model_field',
             'editable',
             'strip_input',
-            'input_type',
             'choices',
             'choice_tuples',
             'empty_label',
@@ -881,7 +879,7 @@ class Field(PagePart):
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', strict=False)
 
-        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
         self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
 
@@ -951,7 +949,7 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_type='hidden',
+        input__attrs__type='hidden',
         attrs__style__display='none',
     )
     def hidden(cls, call_target=None, **kwargs):
@@ -959,7 +957,7 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_type='text',
+        input__attrs__type='text',
     )
     def text(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -987,7 +985,7 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_type='password',
+        input__attrs__type='password',
     )
     def password(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1144,7 +1142,7 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_type='url',
+        input__attrs__type='url',
         parse=url_parse,
     )
     def url(cls, call_target=None, **kwargs):
@@ -1152,7 +1150,7 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_type='file',
+        input__attrs__type='file',
         # TODO: yuck!
         template_string="{% extends 'iommi/form/{style}/row.html' %}{% block extra_content %}{{ field.value }}{% endblock %}",
         input_template='iommi/form/file.html',
@@ -1192,7 +1190,7 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        input_type='email',
+        input__attrs__type='email',
         parse=email_parse,
     )
     def email(cls, call_target=None, **kwargs):
@@ -1353,8 +1351,8 @@ class Form(PagePart):
         if self._request_data is None:
             self._request_data = {}
 
-        self.actions = bind_members(declared_items=self.declared_actions, parent=self)
-        self.fields = bind_members(declared_items=self.declared_fields, parent=self)
+        self.actions = bind_members(name='actions', declared_items=self.declared_actions, parent=self)
+        self.fields = bind_members(name='fields', declared_items=self.declared_fields, parent=self)
 
         if self.instance is not None:
             for field in self.fields.values():
@@ -1395,7 +1393,7 @@ class Form(PagePart):
         for field in self.fields.values():
             field._evaluate()
 
-        self.attrs = evaluate_attrs(self.attrs, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
         self.is_valid()
 
