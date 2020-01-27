@@ -373,10 +373,10 @@ def choice_queryset__endpoint_handler(*, form, field, value, **_):
 def choice_queryset__extra__current_selection_json(form, field, **_):
     # Return a function here to make r callable from the template and not be evaluated here
     def result():
-        if field.value is None and field.value_list is None:
+        if field.value is None:
             return 'null'
         if field.is_list:
-            r = choice_queryset__extra__model_from_choices(form, field, field.value_list)
+            r = choice_queryset__extra__model_from_choices(form, field, field.value)
         else:
             r = choice_queryset__extra__model_from_choices(form, field, [field.value])[0]
 
@@ -513,11 +513,11 @@ def phone_number_is_valid(parsed_data, **_):
 
 
 def multi_choice_choice_to_option(field, choice, **_):
-    return choice, "%s" % choice, "%s" % choice, field.value_list and choice in field.value_list
+    return choice, "%s" % choice, "%s" % choice, field.value and choice in field.value
 
 
 def multi_choice_queryset_choice_to_option(field, choice, **_):
-    return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
+    return choice, choice.pk, "%s" % choice, field.value and choice in field.value
 
 
 # TODO: move this class.. maybe lots of other stuff from here
@@ -643,10 +643,9 @@ class Field(PagePart):
 
     The life cycle of the data is:
         1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
-        2. parsed_data/parsed_data_list: set if parsing is successful, which only happens if the previous step succeeded
-        3. value/value_list: set if validation is successful, which only happens if the previous step succeeded
+        2. parsed_data: set if parsing is successful, which only happens if the previous step succeeded
+        3. value: set if validation is successful, which only happens if the previous step succeeded
 
-    The variables *_list should be used if the input is a list.
     """
 
     attr = Refinable()
@@ -742,18 +741,11 @@ class Field(PagePart):
 
         super(Field, self).__init__(**kwargs)
 
-        if self.is_list:
-            assert self.initial is None, 'The parameter initial is only valid if is_list is False, otherwise use initial_list'
-        else:
-            assert self.initial_list is None, 'The parameter initial_list is only valid if is_list is True, otherwise use initial'
-
         # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
         self.parsed_data = None
-        self.parsed_data_list = None
 
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
-        self.value_list = None
 
         self.choice_tuples = None
 
@@ -789,15 +781,10 @@ class Field(PagePart):
     @staticmethod
     @refinable
     def render_value(form: 'Form', field: 'Field', value: Any) -> str:
-        return "%s" % value if value is not None else ''
-
-    @staticmethod
-    @refinable
-    def render_value_list(form, field, value_list):
-        if value_list:
-            return ', '.join(field.render_value(form=form, field=field, value=value) for value in value_list)
+        if isinstance(value, list):
+            return ', '.join(field.render_value(form=form, field=field, value=v) for v in value)
         else:
-            return ''
+            return "%s" % value if value is not None else ''
 
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
@@ -892,24 +879,19 @@ class Field(PagePart):
     def rendered_value(self):
         if self.errors:
             return self.raw_data
-        if self.is_list:
-            return self.render_value_list(form=self.form, field=self, value_list=self.value_list)
-        else:
-            return self.render_value(form=self.form, field=self, value=self.value)
+        return self.render_value(form=self.form, field=self, value=self.value)
 
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
     def choice_to_options_selected(self):
-        if self.is_list:
-            if self.value_list is None:
-                return
+        if self.value is None:
+            return
 
-            for v in self.value_list:
+        if self.is_list:
+            for v in self.value:
                 yield self.choice_to_option(form=self.parent, field=self, choice=v)
         else:
-            if self.value is None:
-                return
             yield self.choice_to_option(form=self.parent, field=self, choice=self.value)
 
     @classmethod
@@ -1465,9 +1447,9 @@ class Form(PagePart):
 
             if field.is_list:
                 if field.raw_data_list is not None:
-                    field.parsed_data_list = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
+                    field.parsed_data = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
                 else:
-                    field.parsed_data_list = None
+                    field.parsed_data = None
             elif field.is_boolean:
                 field.parsed_data = self.parse_field_raw_value(field, '0' if field.raw_data is None else field.raw_data)
             else:
@@ -1483,27 +1465,22 @@ class Form(PagePart):
 
         for field in self.fields.values():
             if (not field.editable) or (self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None):
-                if field.is_list:
-                    field.value_list = field.initial_list
-                else:
-                    field.value = field.initial
+                field.value = field.initial
                 continue
 
             value = None
-            value_list = None
             if field.is_list:
-                if field.parsed_data_list is not None:
-                    value_list = [self.validate_field_parsed_data(field, x) for x in field.parsed_data_list if x is not None]
+                if field.parsed_data is not None:
+                    value = [self.validate_field_parsed_data(field, x) for x in field.parsed_data if x is not None]
             else:
                 if field.parsed_data is not None:
                     value = self.validate_field_parsed_data(field, field.parsed_data)
 
             if not field.errors:
-                if self.mode is FULL_FORM_FROM_REQUEST and field.required and value in [None, ''] and not value_list:
+                if self.mode is FULL_FORM_FROM_REQUEST and field.required and value in [None, '']:
                     field.errors.add('This field is required')
                 else:
                     field.value = value
-                    field.value_list = value_list
 
         for field in self.fields.values():
             field.post_validation(form=self, field=field)
@@ -1520,7 +1497,7 @@ class Form(PagePart):
             form=self,
             field=field,
             parsed_data=value)
-        if is_valid and not field.errors and field.parsed_data is not None:
+        if is_valid and not field.errors and field.parsed_data is not None and not field.is_list:
             value = field.parsed_data
         elif not is_valid and self.mode:
             if not isinstance(error, set):
@@ -1583,10 +1560,9 @@ class Form(PagePart):
     def apply_field(instance, field):
         if not field.editable:
             field.value = field.initial
-            field.value_list = field.initial_list
 
         if field.attr is not None:
-            field.write_to_instance(field, instance, field.value_list if field.is_list else field.value)
+            field.write_to_instance(field, instance, field.value)
 
     def get_errors(self):
         r = {}

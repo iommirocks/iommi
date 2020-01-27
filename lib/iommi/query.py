@@ -705,7 +705,7 @@ class Query(PagePart):
         elif form.is_valid():
             def expr(field, is_list, value):
                 if is_list:
-                    return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value_list]) + ')'
+                    return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value]) + ')'
                 return ''.join([
                     field.name,
                     self.variables[field.name].gui_op,
@@ -715,7 +715,7 @@ class Query(PagePart):
             result = [
                 expr(field, field.is_list, field.value)
                 for field in form.fields.values()
-                if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '') or field.value_list not in (None, [])
+                if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '', [])
             ]
 
             if FREETEXT_SEARCH_NAME in form.fields:
