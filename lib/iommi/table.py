@@ -1279,6 +1279,7 @@ class Table(PagePart):
                     fields=bulk_fields,
                     name='bulk',
                     post_handler=bulk__post_handler,
+                    actions__submit__show=False,
                     **self.bulk
                 )
                 self._bulk_form.bind(parent=self)

@@ -237,12 +237,10 @@ def table_kitchen_sink(request):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
 
-        # TODO: this doesn't work without the register_name_field machinery
-        b = Column.choice_queryset(
+        b = Column.from_model(
             render_column=False,
-            choices=TFoo.objects.all(),
             model=TBar,
-            model_field=TFoo,
+            field_name='b',
             bulk__show=True,
             query__show=True,
             query__gui__show=True,

@@ -78,8 +78,8 @@ class Errors(set):
     @dispatch(
         attrs=EMPTY,
     )
-    def __init__(self, *, parent, attrs, template=None):
-        super(Errors, self).__init__()
+    def __init__(self, *, parent, attrs, errors=None, template=None):
+        super(Errors, self).__init__(errors or [])
         self.parent = parent
         self.attrs = attrs
         self.template = template
@@ -89,6 +89,9 @@ class Errors(set):
 
     def __str__(self):
         return self.as_html()
+
+    def __bool__(self):
+        return len(self) != 0
 
     # noinspection PyUnusedLocal
     def as_html(self, *, context=None):

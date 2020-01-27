@@ -31,6 +31,7 @@ from iommi.form import (
     Form,
     member_from_model,
 )
+from iommi.render import Errors
 from pyparsing import (
     alphanums,
     alphas,
@@ -535,6 +536,7 @@ class Query(PagePart):
             _fields_dict={x.name: x for x in fields},
             attrs__method='get',
             default_child=True,
+            actions__submit__attrs__value='Filter',
         )
         form.bind(parent=self)
         # TODO: this seems weird. parent should be enough

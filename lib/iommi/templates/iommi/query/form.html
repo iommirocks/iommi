@@ -49,8 +49,7 @@
                 </td>
             </tr>
         </table>
-        {# TOOD: should be just query_form.errors #}
-        {{ query_form.get_errors }}
+        {{ form.errors }}
 
         {% if iommi_query_error %}
           <!-- TODO: iommi_query_error should be namespaced -->
@@ -83,7 +82,7 @@
         </style>
 
         <div class="submit">
-            {{ query_form.render_actions }}
+            {{ form.render_actions }}
         </div>
    </form>
 </div>

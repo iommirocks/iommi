@@ -528,7 +528,7 @@ def evaluate_attrs(obj, **kwargs):
         for k, v in attrs.items()
         if k != 'class'
     }
-    if getattr(settings, 'IOMMI_DEBUG_SHOW_PATHS', False):
+    if getattr(settings, 'IOMMI_DEBUG_SHOW_PATHS', False) and getattr(obj, 'name', None) is not None:
         attrs['data-iommi-path'] = obj.dunder_path()
     return Attrs({
         'class': classes,

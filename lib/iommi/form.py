@@ -1375,6 +1375,8 @@ class Form(PagePart):
 
         self.is_valid()
 
+        self.errors = Errors(parent=self, errors=self.errors)
+
     def _evaluate_attribute_kwargs(self):
         return dict(form=self)
 
