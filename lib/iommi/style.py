@@ -142,6 +142,9 @@ bootstrap = Style(
     Table=dict(
         attrs__class__table=True,
     ),
+    Column=dict(
+        header__attrs__class={'text-nowrap': True},
+    ),
     Query__gui__style='bootstrap_horizontal',
 )
 
