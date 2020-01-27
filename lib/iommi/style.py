@@ -146,6 +146,9 @@ bootstrap = Style(
         header__attrs__class={'text-nowrap': True},
     ),
     Query__gui__style='bootstrap_horizontal',
+
+    # TODO move to a better place?
+    Table__shortcuts__number__cell__attrs__class__rj=True,
 )
 
 bootstrap_horizontal = Style(
