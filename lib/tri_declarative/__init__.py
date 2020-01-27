@@ -656,7 +656,8 @@ def sort_after(l):
     result = list(traverse())
 
     if to_be_moved_by_name:
-        raise KeyError('Tried to order after %s but %s not exist' % (', '.join(sorted(to_be_moved_by_name.keys())), 'that key does' if len(to_be_moved_by_name) == 1 else 'those keys do'))
+        available_names = "\n   ".join(sorted([x.name for x in l]))
+        raise KeyError(f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} not exist.\nAvailable names:\n    {available_names}')
 
     return result
 
