@@ -37,7 +37,7 @@ def test_create_and_edit_object():
     p = Form.as_create_page(
         model=CreateOrEditObjectTest,
         fields__f_int__initial=1,
-        fields__f_float__initial=lambda form, field: 2,
+        fields__f_float__initial=lambda form, field, **_: 2,
         template='<template name>',
     )
     p.bind(request=request)

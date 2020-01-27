@@ -8,6 +8,7 @@ from tri_declarative import (
     Refinable,
     RefinableObject,
     class_shortcut,
+    Namespace,
 )
 
 
@@ -64,19 +65,19 @@ def test_style():
 
     # Now let's add the style
     b = B()
-    apply_style_recursively(overrides.component(b), b)
+    apply_style_recursively(style_data=overrides.component(b), obj=b)
     assert b.items() == dict(foo=5, bar=7)
 
     b = B.shortcut1()
     assert overrides.component(b) == dict(foo=4, bar=7)
     assert b.__tri_declarative_shortcut_stack == ['shortcut1']
-    apply_style_recursively(overrides.component(b), b)
+    apply_style_recursively(style_data=overrides.component(b), obj=b)
     assert b.items() == dict(foo=4, bar=7)
 
     b = B.shortcut2()
     assert b.__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
     assert overrides.component(b) == dict(foo=4, bar=7)
-    apply_style_recursively(overrides.component(b), b)
+    apply_style_recursively(style_data=overrides.component(b), obj=b)
     assert b.items() == dict(foo=4, bar=7)
 
 
@@ -97,3 +98,11 @@ def test_apply_checkbox_style():
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
     assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label"'
+
+
+def test_apply_style_recursively_does_not_overwrite():
+    foo = Namespace(bar__template='specified')
+    style = Namespace(bar__template='style_template')
+
+    apply_style_recursively(style_data=style, obj=foo)
+    assert foo == Namespace(bar__template='specified')

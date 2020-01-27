@@ -156,18 +156,15 @@ def perform_ajax_dispatch(*, root, path, value):
     return target.endpoint_handler(value=value, **target.evaluate_attribute_kwargs())
 
 
-def perform_post_dispatch(*, root, path, value, request):
-    if not root._is_bound:
-        # This is mostly useful for tests
-        root.bind(request=request)
-
+def perform_post_dispatch(*, root, path, value):
+    assert root._is_bound
     path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
     target, parents = find_target(path=path, root=root)
 
     if target.post_handler is None:
         raise InvalidEndpointPathException(f'Target {target} has no registered post_handler')
 
-    return target.post_handler(request=request, value=value, **target.evaluate_attribute_kwargs())
+    return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
 
 
 # TODO: abc?
@@ -300,7 +297,7 @@ class PagePart(RefinableObject):
 
     def apply_style(self):
         style = get_style_for_object(style=self.get_style(), self=self)
-        apply_style_recursively(style, self)
+        apply_style_recursively(style_data=style, obj=self)
 
     def children(self):
         assert self._is_bound

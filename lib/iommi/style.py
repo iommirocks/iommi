@@ -142,16 +142,16 @@ def get_style(name):
     return _styles[name]
 
 
-def apply_style_recursively(data, obj):
+def apply_style_recursively(*, style_data, obj):
     if isinstance(obj, Namespace):
-        for k, v in data.items():
+        for k, v in style_data.items():
             obj.setitem_path(k, v)
     elif isinstance(obj, dict):
-        obj.update(**data)
+        obj.update(**style_data)
     else:
-        for k, v in data.items():
+        for k, v in style_data.items():
             if isinstance(v, dict):
-                apply_style_recursively(v, getattr(obj, k))
+                apply_style_recursively(style_data=v, obj=getattr(obj, k))
             else:
                 setattr(obj, k, v)
 
