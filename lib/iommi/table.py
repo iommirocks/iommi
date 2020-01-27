@@ -1,6 +1,6 @@
 from enum import (
-    Enum,
     auto,
+    Enum,
 )
 from functools import total_ordering
 from itertools import groupby
@@ -33,28 +33,27 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from iommi._web_compat import (
-    Template,
     render_template,
+    Template,
 )
 from iommi.base import (
-    DISPATCH_PREFIX,
-    PagePart,
     bind_members,
     collect_members,
-    model_and_rows,
-    no_copy_on_bind,
-    path_join,
-    setup_endpoint_proxies,
+    DISPATCH_PREFIX,
+    evaluate_attrs,
     evaluate_member,
     evaluate_members,
-    evaluate_attrs,
-    Members,
+    model_and_rows,
+    no_copy_on_bind,
+    PagePart,
+    path_join,
+    setup_endpoint_proxies,
 )
 from iommi.form import (
     Action,
-    Form,
     create_members_from_model,
     expand_member,
+    Form,
     group_actions,
     member_from_model,
 )
@@ -67,26 +66,26 @@ from iommi.render import (
     render_attrs,
 )
 from tri_declarative import (
-    EMPTY,
-    LAST,
-    Namespace,
-    Refinable,
-    RefinableObject,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate_recursive,
     evaluate_recursive_strict,
     evaluate_strict,
     getattr_path,
+    LAST,
+    Namespace,
+    Refinable,
     refinable,
+    RefinableObject,
     setattr_path,
     setdefaults_path,
     with_meta,
 )
 from tri_struct import (
-    Struct,
     merged,
+    Struct,
 )
 
 LAST = LAST

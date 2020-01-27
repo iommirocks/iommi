@@ -23,9 +23,6 @@ from typing import (
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    Template,
-    URLValidator,
-    ValidationError,
     csrf,
     format_html,
     get_template_from_string,
@@ -33,36 +30,38 @@ from iommi._web_compat import (
     render_template,
     render_to_string,
     slugify,
+    Template,
+    URLValidator,
     validate_email,
+    ValidationError,
 )
 from iommi.base import (
-    DISPATCH_PATH_SEPARATOR,
-    MISSING,
-    PagePart,
     bind_members,
     collect_members,
+    DISPATCH_PATH_SEPARATOR,
     evaluate_attrs,
+    MISSING,
     no_copy_on_bind,
+    PagePart,
     render_template_name,
     request_data,
     setup_endpoint_proxies,
 )
 from iommi.page import (
     Fragment,
-    _void_elements,
 )
 from iommi.render import Errors
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
     assert_kwargs_empty,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate,
     evaluate_recursive,
     getattr_path,
+    Namespace,
+    Refinable,
     refinable,
     setattr_path,
     setdefaults_path,

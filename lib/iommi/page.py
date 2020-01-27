@@ -1,37 +1,35 @@
 from typing import (
+    Any,
     Dict,
     List,
     Optional,
     Type,
-    Any,
     Union,
 )
 
 from django.utils.html import format_html
 from iommi._web_compat import (
-    Template,
     render_template,
+    Template,
 )
 from iommi.base import (
-    PagePart,
-    PartType,
+    as_html,
     bind_members,
     collect_members,
-    no_copy_on_bind,
-    as_html,
     evaluate_attrs,
+    no_copy_on_bind,
+    PagePart,
+    PartType,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
+    declarative,
+    dispatch,
     EMPTY,
     Namespace,
     Refinable,
-    declarative,
-    dispatch,
     with_meta,
-    evaluate_strict,
 )
-
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
