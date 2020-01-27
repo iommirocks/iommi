@@ -347,7 +347,6 @@ class Column(PagePart):
     def _evaluate_attribute_kwargs(self):
         return dict(table=self.parent, column=self)
 
-
     @classmethod
     @dispatch(
         query__call_target__attribute='from_model',
@@ -376,7 +375,6 @@ class Column(PagePart):
 
     @classmethod
     @class_shortcut(
-        name='',
         display_name='',
         sortable=False,
         header__attrs__class__thin=True,
@@ -434,7 +432,6 @@ class Column(PagePart):
 
     @classmethod
     @class_shortcut(
-        name='',
         header__attrs__title='Run',
         sortable=False,
         header__attrs__class__thin=True,
@@ -452,7 +449,6 @@ class Column(PagePart):
 
     @classmethod
     @class_shortcut(
-        name='__select__',
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
     )

@@ -118,9 +118,13 @@ def register_field_factory(field_class, factory):
     _field_factory_by_field_type[field_class] = factory
 
 
-# TODO: extra param here should also be a dict
 @dispatch  # pragma: no mutate
-def create_members_from_model(default_factory, model, member_params_by_member_name, include=None, exclude=None, extra=None):
+def create_members_from_model(default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, extra: Dict[str, Any] = None):
+    if extra is None:
+        extra = {}
+
+    # TODO: assert that extra does not collide with the include/exclude/etc fields
+
     def should_include(name):
         if exclude is not None and name in exclude:
             return False
@@ -157,8 +161,8 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
                 assert foo.name == field.name, f"Field {foo.name} has a name that doesn't match the model field it belongs to: {field.name}"
                 members.append(foo)
     assert_kwargs_empty(member_params_by_member_name)
-    all_members = members + (extra if extra is not None else []) + [default_factory(model=model, field_name=x) for x in extra_includes]
-    return Struct({x.name: x for x in all_members})
+    all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
+    return Struct({x.name: x for x in all_members}, **extra)
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
