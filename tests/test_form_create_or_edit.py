@@ -127,7 +127,6 @@ def test_create_and_edit_object():
     response = p.render_to_response()
     assert response.status_code == 302
 
-    # TODO: really?
     assert response['Location'] == '../../'
 
     instance.refresh_from_db()

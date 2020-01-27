@@ -39,7 +39,6 @@ def test_style():
         ),
     )
 
-    # TODO: use base here and remove redundant stuff
     overrides = Style(
         base,
         A=dict(

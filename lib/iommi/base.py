@@ -1,7 +1,6 @@
 import copy
 import json
 from collections import defaultdict
-from functools import wraps
 from typing import (
     Any,
     Dict,
@@ -13,7 +12,6 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.http.response import (
     HttpResponse,
-    HttpResponseBase,
 )
 from django.template import Template
 from iommi._web_compat import (
@@ -26,16 +24,16 @@ from iommi.style import (
     get_style_for_object,
 )
 from tri_declarative import (
-    EMPTY,
-    Namespace,
     dispatch,
+    EMPTY,
     evaluate,
     evaluate_strict,
+    Namespace,
+    Refinable,
+    RefinableObject,
     setdefaults_path,
     should_show,
     sort_after,
-    RefinableObject,
-    Refinable,
 )
 from tri_struct import Struct
 
@@ -77,7 +75,6 @@ class EndPointHandlerProxy:
         return self.func(value=value, **kwargs)
 
     def evaluate_attribute_kwargs(self):
-        # TODO: I used to have request added here, should we do that?
         return self.parent.evaluate_attribute_kwargs()
 
 
@@ -115,34 +112,6 @@ def find_target(*, path, root):
         if not p:
             return next_node, parents
         parents.append(next_node)
-
-
-def is_response(obj):
-    return isinstance(obj, HttpResponseBase)
-
-
-class ResponseException(Exception):
-    def __init__(self, response):
-        self.response = response
-
-
-def raise_on_response(result_or_response):
-    if is_response(result_or_response):
-        raise ResponseException(result_or_response)
-    else:
-        return result_or_response
-
-
-# TODO: is catch_response obsolete now?
-def catch_response(view_function):
-    @wraps(view_function)
-    def catch_response_view(*args, **kwargs):
-        try:
-            return view_function(*args, **kwargs)
-        except ResponseException as e:
-            return e.response
-
-    return catch_response_view
 
 
 def perform_ajax_dispatch(*, root, path, value):

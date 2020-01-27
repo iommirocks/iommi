@@ -488,8 +488,6 @@ class Query(PagePart):
             gui__name='gui',
         )
 
-        # TODO: ?
-        self.form = None
         self._form = None
 
         super(Query, self).__init__(
@@ -532,8 +530,6 @@ class Query(PagePart):
             actions__submit__attrs__value='Filter',
         )
         form.bind(parent=self)
-        # TODO: this seems weird. parent should be enough
-        form.query = self
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
         form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
         self.form = form
@@ -542,9 +538,7 @@ class Query(PagePart):
         return dict(query=self)
 
     def parse(self, query_string: str) -> Q:
-        if not self._is_bound:
-            # TODO: should we do implicit bind? seems error prone, but it's convenient for the tests for now...
-            self.bind(request=None)
+        assert self._is_bound
         query_string = query_string.strip()
         if not query_string:
             return Q()

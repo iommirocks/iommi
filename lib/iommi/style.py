@@ -94,7 +94,6 @@ base = Style(
     Query__gui__attrs__id='iommi_query_form',
 )
 
-
 test = Style(
     base,
     Field=dict(
@@ -111,7 +110,6 @@ test = Style(
     ),
 )
 
-# TODO: move to tests/settings.py
 bootstrap = Style(
     base,
     Field=dict(
@@ -196,7 +194,6 @@ def apply_style_recursively(*, style_data, obj):
             if isinstance(v, dict):
                 apply_style_recursively(style_data=v, obj=getattr(obj, k))
             else:
-                # TODO: can't decide if I want this or not. test_create_and_edit_object fails because it's commented out, but if I add it the style system doesn't work
                 if getattr(obj, k) is None:
                     setattr(obj, k, v)
 

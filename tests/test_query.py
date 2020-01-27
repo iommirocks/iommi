@@ -72,12 +72,12 @@ def test_request_data():
 
 
 def test_empty_string():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('')) == repr(Q())
 
 
 def test_unknown_field():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse('unknown_variable=1')
 
@@ -86,7 +86,7 @@ def test_unknown_field():
 
 
 def test_freetext():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     expected = repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
     assert repr(query.parse('"asd"')) == expected
 
@@ -95,22 +95,22 @@ def test_freetext():
 
 
 def test_or():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name="asd" or bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) | Q(**{'bar__exact': 7}))
 
 
 def test_and():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name="asd" and bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7}))
 
 
 def test_negation():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name!:"asd" and bar_name != 7')) == repr(~Q(**{'foo__icontains': 'asd'}) & ~Q(**{'bar__exact': 7}))
 
 
 def test_precedence():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name="asd" and bar_name = 7 or baz_name = 11')) == repr((Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7})) | Q(**{'baz__iexact': 11}))
     assert repr(query.parse('foo_name="asd" or bar_name = 7 and baz_name = 11')) == repr(Q(**{'foo__iexact': 'asd'}) | (Q(**{'bar__exact': 7})) & Q(**{'baz__iexact': 11}))
 
@@ -126,12 +126,12 @@ def test_precedence():
     (':', 'icontains'),
 ])
 def test_ops(op, django_op):
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name%sbar' % op)) == repr(Q(**{'foo__%s' % django_op: 'bar'}))
 
 
 def test_parenthesis():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name="asd" and (bar_name = 7 or baz_name = 11)')) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
 
 
@@ -158,8 +158,8 @@ def test_boolean_parse():
     class MyQuery(Query):
         foo = Variable.boolean()
 
-    assert repr(MyQuery().parse('foo=false')) == repr(Q(**{'foo__iexact': False}))
-    assert repr(MyQuery().parse('foo=true')) == repr(Q(**{'foo__iexact': True}))
+    assert repr(MyQuery().bind(request=None).parse('foo=false')) == repr(Q(**{'foo__iexact': False}))
+    assert repr(MyQuery().bind(request=None).parse('foo=true')) == repr(Q(**{'foo__iexact': True}))
 
 
 def test_integer_request_to_q_simple():
@@ -224,22 +224,22 @@ def test_request_to_q_freetext():
 
 
 def test_self_reference_with_f_object():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name=bar_name')) == repr(Q(**{'foo__iexact': F('bar')}))
 
 
 def test_null():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name=null')) == repr(Q(**{'foo': None}))
 
 
 def test_date():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     assert repr(query.parse('foo_name=2014-03-07')) == repr(Q(**{'foo__iexact': date(2014, 3, 7)}))
 
 
 def test_date_out_of_range():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse('foo_name=2014-03-37')
 
@@ -247,7 +247,7 @@ def test_date_out_of_range():
 
 
 def test_invalid_syntax():
-    query = MyTestQuery()
+    query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
         query.parse('asdadad213124av@$#$#')
 

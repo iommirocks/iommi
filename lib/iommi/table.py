@@ -280,14 +280,6 @@ class Column(PagePart):
         :param render_column: If set to false the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
         """
 
-        # TODO: what's this?
-        if 'attrs' in kwargs:
-            if not kwargs['attrs']['class']:
-                del kwargs['attrs']['class']
-
-            if not kwargs['attrs']:
-                kwargs.pop('attrs')
-
         super(Column, self).__init__(**kwargs)
 
         # TODO: this seems weird.. why do we need this?
@@ -919,7 +911,6 @@ class Table(PagePart):
             query=self.query,  # TODO: this is a property which we should try to remove
             bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
 
-            # TODO: should be a PagePart? !!!! that this isn't a page part breaks the path for the table cells
             columns=self.columns,
             # TODO: this can have name collisions with the keys above
             **setup_endpoint_proxies(self)
@@ -1014,7 +1005,6 @@ class Table(PagePart):
         self._query_error: List[str] = None
 
         self._bulk_form: Form = None
-        self._has_prepared: bool = False
         self.header_levels = None
 
     def render_actions(self):
@@ -1173,12 +1163,6 @@ class Table(PagePart):
         return self._bulk_form
 
     def on_bind(self) -> None:
-        if self._has_prepared:
-            return
-
-        # TODO: clean out _has_prepared
-        self._has_prepared = True
-
         bind_members(self, name='actions')
         bind_members(self, name='columns')
 
@@ -1329,8 +1313,6 @@ class Table(PagePart):
             page_numbers=page_numbers,
             show_first=1 not in page_numbers,
             show_last=context["pages"] not in page_numbers,
-            show_hits=context["show_hits"],
-            hit_label=context["hit_label"],
         ))
 
     def render_paginator(self, adjacent_pages=6):
@@ -1369,7 +1351,6 @@ class Table(PagePart):
         """
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        # TODO: extra/extra_columns should be a namespace
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_columns, columns=columns)
         return cls(rows=rows, model=model, instance=instance, columns=columns, **kwargs)
 
@@ -1472,10 +1453,6 @@ def table_context(request, *, table: Table, extra_context, paginator: Namespace)
             'page': page_obj.number,
             'pages': paginator.num_pages,
             'hits': paginator.count,
-
-            # TODO: remove these, remember the template
-            'show_hits': False,
-            'hit_label': 'Items',
         })
     else:
         base_context.update({

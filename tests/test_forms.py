@@ -114,7 +114,6 @@ def test_required_choice():
 
     form = Required().bind(request=req('post', **{'-': ''}))
 
-    # TODO: we assume this type of mode check without asserting in a lot of tests.. should fix this
     assert form.mode == FULL_FORM_FROM_REQUEST
 
     assert form.is_target()
@@ -399,7 +398,6 @@ def test_non_editable_form():
 
 def test_text_field():
     rendered_form = str(Form(fields__foo=Field.text()).bind(request=req('get')))
-    # TODO: this test assumes that type comes first, it does not. Use BS4 to do something nicer.
     foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
     assert foo.name == 'input'
     assert get_attrs(foo, ['type']) == {'type': 'text'}
@@ -1491,8 +1489,6 @@ def test_render():
         </form>
     """
 
-
-    # TODO: this test is borken because bs4 gets confused by the non-terminated input tags, but that iommi is following the spec and bs4 is not as far as I can tell.
     actual_html = remove_csrf(MyForm().bind(request=req('get')).as_html())
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()

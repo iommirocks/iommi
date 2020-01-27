@@ -158,9 +158,7 @@ class Page(PagePart):
         return f'<Page with parts: {list(self.parts.keys())}>'
 
     def children(self):
-        if not self._is_bound:
-            # TODO: hmm...
-            self.bind(request=None)
+        assert self._is_bound
         return self.parts
 
     def _evaluate_attribute_kwargs(self):

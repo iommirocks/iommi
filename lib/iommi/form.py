@@ -683,7 +683,6 @@ class Field(PagePart):
     empty_label = Refinable()
     empty_choice_tuple = Refinable()
 
-    # TODO: are these two redundant?
     endpoint: Namespace = Refinable()
     endpoint_handler: Callable = Refinable()
 
@@ -830,8 +829,6 @@ class Field(PagePart):
         if self.display_name is MISSING:
             self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
 
-        # TODO: ??
-        self.field = self
         self.errors = Errors(parent=self, **self.errors)
 
         if form.editable is False:
@@ -1549,7 +1546,7 @@ class Form(PagePart):
         for k, v in self.request().GET.items():
             if k == self.own_target_marker():
                 continue
-            # TODO: why is there a special case for '-' here?
+            # TODO: why is there a special case for '-' here? shouldn't it be self.own_target_marker or something?
             if k not in own_field_paths and k != '-':
                 r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
@@ -1631,8 +1628,7 @@ class Form(PagePart):
         setdefaults_path(
             kwargs,
             actions__submit=dict(
-                # TODO: should be call target attribute
-                call_target=Action.submit,
+                call_target__attribute='submit',
                 attrs__value=extra.title,
                 attrs__name=name,
             ),
