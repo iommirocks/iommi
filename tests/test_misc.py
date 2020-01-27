@@ -932,12 +932,18 @@ def test_refinable_object3():
     with pytest.raises(TypeError) as e:
         MyClass(z=42)
 
-    assert str(e.value) == "'MyClass' object has no refinable attribute(s): z"
+    assert str(e.value) == """'MyClass' object has no refinable attribute(s): z.
+Available attributes:
+    x
+    y"""
 
     with pytest.raises(TypeError) as e:
         MyClass(z=42, w=99)
 
-    assert str(e.value) == "'MyClass' object has no refinable attribute(s): w, z"
+    assert str(e.value) == """'MyClass' object has no refinable attribute(s): w, z.
+Available attributes:
+    x
+    y"""
 
 
 def test_refinable_no_constructor():

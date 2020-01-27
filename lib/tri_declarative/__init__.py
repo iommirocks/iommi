@@ -701,7 +701,8 @@ class RefinableObject:
     # has done any attribute assignments to self BEFORE calling super(...)
     @dispatch()
     def __init__(self, **kwargs):
-        for k, v in self.get_declared('refinable_members').items():
+        declared_items = self.get_declared('refinable_members')
+        for k, v in declared_items.items():
             if isinstance(v, Refinable):
                 setattr(self, k, kwargs.pop(k, None))
             else:
@@ -709,7 +710,10 @@ class RefinableObject:
                     setattr(self, k, kwargs.pop(k))
 
         if kwargs:
-            raise TypeError("'%s' object has no refinable attribute(s): %s" % (self.__class__.__name__, ', '.join(sorted(kwargs.keys()))))
+            available_keys = '\n    '.join(sorted(declared_items.keys()))
+            raise TypeError(f"""'{self.__class__.__name__}' object has no refinable attribute(s): {', '.join(sorted(kwargs.keys()))}.
+Available attributes:
+    {available_keys}""")
 
         super(RefinableObject, self).__init__()
 
