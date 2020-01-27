@@ -45,6 +45,50 @@ base = Style(
         actions_template='iommi/form/actions.html',
     ),
     Field=dict(
+        shortcuts=dict(
+            textarea=dict(
+                input__template='iommi/form/textarea.html',
+            ),
+            boolean=dict(
+                input__attrs__type='checkbox',
+            ),
+            choice=dict(
+                input__template='iommi/form/choice.html',
+                input__attrs__value=None,
+                input__attrs__type=None,
+            ),
+            choice_queryset=dict(
+                input__template='iommi/form/choice_select2.html',
+            ),
+            radio=dict(
+                input__template='iommi/form/radio.html',
+            ),
+            file=dict(
+                input__template='iommi/form/file.html',
+            ),
+            heading=dict(
+                template='iommi/form/heading.html',
+            ),
+        ),
+        input__attrs__type='text',
+        input__tag='input',
+        input__name='input',
+        label__tag='label',
+        label__name='label',
+    ),
+    Column=dict(
+        shortcuts=dict(
+            select=dict(
+                header__attrs__title='Select all',
+                header__attrs__class__thin=True,
+                header__attrs__class__nopad=True,
+                cell__attrs__class__cj=True,
+
+            ),
+            number=dict(
+                cell__attrs__class__rj=True,
+            ),
+        )
     ),
     # TODO: this is a bit bonkers
     Query__gui__attrs__id='iommi_query_form',
@@ -60,7 +104,7 @@ test = Style(
             ),
         ),
         template='iommi/form/bootstrap/row.html',
-        errors_template='iommi/form/bootstrap/errors.html',
+        errors__template='iommi/form/bootstrap/errors.html',
     ),
     Table=dict(
         attrs__class__table=True,
@@ -87,7 +131,7 @@ bootstrap = Style(
         },
         errors__attrs__class={'invalid-feedback': True},
         template='iommi/form/bootstrap/row.html',
-        errors_template='iommi/form/bootstrap/errors.html',
+        errors__template='iommi/form/bootstrap/errors.html',
     ),
     Action=dict(
         shortcuts=dict(
@@ -117,7 +161,7 @@ bootstrap_horizontal = Style(
             'my-1': True,
         },
         errors__attrs__class={'invalid-feedback': True},
-        errors_template='iommi/form/bootstrap/errors.html',
+        errors__template='iommi/form/bootstrap/errors.html',
     ),
     Form__attrs__class={
         'align-items-center': True,
@@ -143,17 +187,18 @@ def get_style(name):
 
 
 def apply_style_recursively(*, style_data, obj):
-    if isinstance(obj, Namespace):
-        for k, v in style_data.items():
-            obj.setitem_path(k, v)
-    elif isinstance(obj, dict):
-        obj.update(**style_data)
+    if isinstance(obj, dict):
+        result = Namespace(style_data, obj)
+        obj.clear()
+        obj.update(**result)
     else:
         for k, v in style_data.items():
             if isinstance(v, dict):
                 apply_style_recursively(style_data=v, obj=getattr(obj, k))
             else:
-                setattr(obj, k, v)
+                # TODO: can't decide if I want this or not. test_create_and_edit_object fails because it's commented out, but if I add it the style system doesn't work
+                if getattr(obj, k) is None:
+                    setattr(obj, k, v)
 
 
 def get_style_for_object(style, self):

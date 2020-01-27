@@ -18,9 +18,7 @@ def test_style():
         bar = Refinable()
 
         @classmethod
-        @class_shortcut(
-            foo=1,
-        )
+        @class_shortcut
         def shortcut1(cls, call_target, **kwargs):
             return call_target(**kwargs)
 
@@ -30,8 +28,6 @@ def test_style():
     class B(A):
         @classmethod
         @class_shortcut(
-            foo=2,
-            bar=3,
             call_target__attribute='shortcut1'
         )
         def shortcut2(cls, call_target, **kwargs):
@@ -60,8 +56,8 @@ def test_style():
 
     # First the unstyled case
     assert B().items() == dict(foo=None, bar=None)
-    assert B.shortcut1().items() == dict(foo=1, bar=None)
-    assert B.shortcut2().items() == dict(foo=2, bar=3)
+    assert B.shortcut1().items() == dict(foo=None, bar=None)
+    assert B.shortcut2().items() == dict(foo=None, bar=None)
 
     # Now let's add the style
     b = B()
@@ -94,10 +90,11 @@ def test_apply_checkbox_style():
     form = MyForm()
     form.bind(request=None)
 
+    assert form.fields.foo.get_style() == 'bootstrap'
     assert get_style_for_object(style=form.fields.foo.get_style(), self=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
-    assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label"'
+    assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label" for="id_foo"'
 
 
 def test_apply_style_recursively_does_not_overwrite():
@@ -106,3 +103,17 @@ def test_apply_style_recursively_does_not_overwrite():
 
     apply_style_recursively(style_data=style, obj=foo)
     assert foo == Namespace(bar__template='specified')
+
+
+def test_last_win():
+    from iommi import Form
+
+    class MyForm(Form):
+        class Meta:
+            style = 'bootstrap'
+            template = 'override'
+
+    form = MyForm()
+    form.bind(request=None)
+
+    assert form.template == 'override'

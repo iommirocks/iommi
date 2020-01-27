@@ -78,10 +78,11 @@ class Errors(set):
     @dispatch(
         attrs=EMPTY,
     )
-    def __init__(self, *, parent, attrs):
+    def __init__(self, *, parent, attrs, template=None):
         super(Errors, self).__init__()
         self.parent = parent
         self.attrs = attrs
+        self.template = template
 
     def __html__(self):
         return str(self)
@@ -99,5 +100,6 @@ class Errors(set):
             child='',
             tag='ul',
             attrs=self.attrs,
+            template=self.template,
             children=[Fragment(tag='li') for error in self],
         ).bind(parent=self.parent).as_html()

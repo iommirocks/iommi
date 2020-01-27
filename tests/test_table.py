@@ -770,7 +770,7 @@ def test_bulk_edit():
         request=req('get'),
     ).as_html()
     assert '<form method="post" action=".">' in result
-    assert '<input accesskey="s" type="submit" value="Bulk change">' in result
+    assert '<input accesskey="s" type="submit" value="Bulk change">' in result, result
 
     def post_bulk_edit(table, queryset, updates, **_):
         assert isinstance(table, TestTable)

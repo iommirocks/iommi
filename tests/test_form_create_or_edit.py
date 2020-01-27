@@ -53,7 +53,7 @@ def test_create_and_edit_object():
     assert response['context']['foo'] == 'FOO'
     assert response['context']['csrf_token']
     assert response['foobarbaz'] == 'render__foobarbaz'
-    assert response['template'] == '<template name>'
+    assert response['template_name'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
     assert form.fields['f_int'].initial == 1
     assert form.fields['f_int'].errors == set()
@@ -252,7 +252,7 @@ def test_create_or_edit_object_dispatch():
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
-    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'field' + DISPATCH_PATH_SEPARATOR + 'foo': ''})
+    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'fields' + DISPATCH_PATH_SEPARATOR + 'foo': ''})
 
     response = Form.as_create_page(
         model=Bar,
@@ -267,69 +267,6 @@ def test_create_or_edit_object_dispatch():
         more=False,
         page=1,
     )
-
-
-@pytest.mark.django_db
-def test_create_object_default_template():
-    from tests.models import Foo
-
-    request = req('get')
-
-    response = Form.as_create_page(model=Foo).bind(request=request).render_to_response()
-    assert response.status_code == 200
-
-    expected_html = """
-        <div class="form_buttons clear">
-            <div class="links">
-                <input accesskey="s" class="btn btn-primary" name="create" type="submit" value="Create foo"/>
-            </div>
-        </div>
-    """
-    actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
-    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
-    assert actual == expected
-
-
-@pytest.mark.django_db
-def test_edit_object_default_template():
-    from tests.models import Foo
-
-    request = req('get')
-
-    response = Form.as_edit_page(instance=Foo.objects.create(foo=1)).bind(request=request).render_to_response()
-    assert response.status_code == 200
-
-    expected_html = """
-        <div class="form_buttons clear">
-            <div class="links">
-                <input accesskey="s" class="btn btn-primary" name="edit" type="submit" value="Save foo"/>
-            </div>
-        </div>
-    """
-    actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
-    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
-    assert actual == expected
-
-
-@pytest.mark.django_db
-def test_create_or_edit_object_default_template_with_name():
-    from tests.models import Foo
-
-    request = req('get')
-
-    response = Form.as_create_page(model=Foo, name='form_name').bind(request=request).render_to_response()
-    assert response.status_code == 200
-
-    expected_html = """
-        <div class="form_buttons clear">
-            <div class="links">
-                <input accesskey="s" class="btn btn-primary" name="form_name" type="submit" value="Create foo"/>
-            </div>
-        </div>
-    """
-    actual = BeautifulSoup(response.content, 'html.parser').select('.form_buttons')[0].prettify()
-    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
-    assert actual == expected
 
 
 @pytest.mark.django_db
@@ -380,38 +317,35 @@ def test_create_or_edit_object_full_template(name):
     response = Form.as_create_page(model=Foo, name=name).bind(request=request).render_to_response()
     assert response.status_code == 200
 
-    prefix = '' if not name else name + '/'
-    name_attr = '' if not name else f'name="{name}" '
+    name = name or 'create'
 
     expected_html = f"""
 <html>
-    <head>Create foo</head>
+    <head>
+    </head>
     <body>
-        <form action="" method="post"><input type="hidden" name="csrfmiddlewaretoken" value="vt93bLZuhPhOAMvMFcyIOOXHYU3PCY0csFyUusDbb22FErp1uefHKD4JbMaa1SFr"/>
-            <div class="tablewrapper">
-                <table class="formview" width="100%">
-                    <tr class="required">
-                        <td class="description_container">
-                            <div class="formlabel"><label for="id_foo">Foo</label></div>
-                            <div class="formdescr">foo_help_text</div>
-                        </td>
-                        <td>
-                            <input type="text" value="" name="{prefix}foo" id="id_foo">
-                        </td>
-                    </tr>
-                    <input type="hidden" name="-{name or ''}" value=""/>
-                </table>
-            </div>
-            <div class="form_buttons clear">
-                <div class="links">
-                    &nbsp;
-                    <input accesskey="s" class="btn btn-primary" {name_attr}type="submit" value="Create foo"></input>
+        <h1>
+            Create foo
+        </h1>
+        <form action="" method="post">
+            <div>
+                <label for="id_foo">
+                    Foo
+                </label>
+                <input id="id_foo" name="foo" type="text" value=""/>
+                <div class="form-text text-muted">
+                    foo_help_text
                 </div>
+            </div>
+            <input name="-" type="hidden" value=""/>
+            <div class="links">
+                <input accesskey="s" name="{name}" type="submit" value="Create foo"/>
             </div>
         </form>
     </body>
 </html>
+
     """
-    actual = remove_csrf(BeautifulSoup(response.content, 'html.parser').prettify())
-    expected = remove_csrf(BeautifulSoup(expected_html, 'html.parser').prettify())
+    actual = BeautifulSoup(remove_csrf(response.content.decode()), 'html.parser').prettify()
+    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
     assert actual == expected

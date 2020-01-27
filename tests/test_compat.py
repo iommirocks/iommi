@@ -14,7 +14,11 @@ def test_render_to_string():
         request=req('get'),
         context=dict(
             field=dict(
-                id=SafeText('<a b c><d><e>'),
+                input=dict(
+                    attrs=dict(
+                        id=SafeText('<a b c><d><e>'),
+                    ),
+                ),
                 rendered_value=SafeText('<a b c><d><e>'),
             ),
         )
@@ -44,7 +48,7 @@ def test_format_html4():
         )
     )
     print(actual)
-    assert '<input id="id_foo" name="foo" type="text">' in actual
+    assert '<input id="id_foo" name="foo" type="text" value="">' in actual
 
 
 def test_format_html5():

@@ -454,12 +454,8 @@ class Column(PagePart):
     @classmethod
     @class_shortcut(
         name='__select__',
-        header__attrs__title='Select all',
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
-        header__attrs__class__thin=True,
-        header__attrs__class__nopad=True,
-        cell__attrs__class__cj=True,
     )
     def select(cls, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
         """
@@ -576,9 +572,7 @@ class Column(PagePart):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        cell__attrs__class__rj=True,
-    )
+    @class_shortcut
     def number(cls, call_target, **kwargs):
         # Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
         return call_target(**kwargs)

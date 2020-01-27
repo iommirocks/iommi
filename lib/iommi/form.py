@@ -47,7 +47,10 @@ from iommi.base import (
     request_data,
     setup_endpoint_proxies,
 )
-from iommi.page import Fragment
+from iommi.page import (
+    Fragment,
+    _void_elements,
+)
 from iommi.render import Errors
 from tri_declarative import (
     EMPTY,
@@ -516,11 +519,11 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
 
 # TODO: move this class.. maybe lots of other stuff from here
 class Action(PagePart):
-    tag = Refinable()
+    tag: str = Refinable()
     attrs: Dict[str, Any] = Refinable()
-    group = Refinable()
+    group: str = Refinable()
     template = Refinable()
-    display_name = Refinable()
+    display_name: str = Refinable()
 
     @dispatch(
         tag='a',
@@ -543,8 +546,7 @@ class Action(PagePart):
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:
-            # TODO: use fragment rendering to avoid the bogus </input>
-            return format_html(u'<{tag}{attrs}>{display_name}</{tag}>', tag=self.tag, attrs=self.attrs, display_name=self.display_name)
+            return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).as_html()
 
     def __repr__(self):
         return f'<Action: {self.name}>'
@@ -692,21 +694,16 @@ class Field(PagePart):
         is_boolean=False,
         editable=True,
         strip_input=True,
-        input__attrs__type='text',
         endpoint=EMPTY,
         endpoint__config=default_endpoint__config,
         endpoint__validate=default_endpoint__validate,
-        input__call_target=Fragment,
-        input__tag='input',
-        input__name='input',
-        input__attrs__id=default_input_id,
-        label__call_target=Fragment,
-        label__tag='label',
-        label__name='label',
-        label__attrs__for=default_input_id,
-        input__attrs__name=lambda field, **_: field.path(),
         errors=EMPTY,
         default_child=False,
+        input__call_target=Fragment,
+        input__attrs__id=default_input_id,
+        label__call_target=Fragment,
+        label__attrs__for=default_input_id,
+        input__attrs__name=lambda field, **_: field.path(),
     )
     def __init__(self, **kwargs):
         """
@@ -964,7 +961,6 @@ class Field(PagePart):
     @class_shortcut(
         input__tag='textarea',
         input__attrs__type=None,
-        input__template='iommi/form/textarea.html',
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -995,7 +991,6 @@ class Field(PagePart):
     @class_shortcut(
         parse=lambda string_value, **_: bool_parse(string_value),
         required=False,
-        input__attrs__type='checkbox',
         is_boolean=True,
     )
     def boolean(cls, call_target=None, **kwargs):
@@ -1009,9 +1004,6 @@ class Field(PagePart):
         is_valid=choice_is_valid,
         choice_to_option=choice_choice_to_option,
         parse=choice_parse,
-        input__template='iommi/form/choice.html',
-        input__attrs__value=None,
-        input__attrs__type=None,
     )
     def choice(cls, call_target=None, **kwargs):
         """
@@ -1057,7 +1049,6 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice",
-        input__template='iommi/form/choice_select2.html',
         parse=choice_queryset__parse,
         choice_to_option=choice_queryset__choice_to_option,
         endpoint_handler=choice_queryset__endpoint_handler,
@@ -1106,7 +1097,6 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice',
-        input__template='iommi/form/radio.html',
     )
     def radio(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1153,7 +1143,6 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         input__attrs__type='file',
-        input__template='iommi/form/file.html',
         write_to_instance=file_write_to_instance,
     )
     def file(cls, call_target=None, **kwargs):
@@ -1163,11 +1152,8 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         show=True,
-        template='iommi/form/heading.html',
         editable=False,
         attr=None,
-        # TODO: this type of thing seems like it's irrelevant after fields=[...] is removed
-        name='@@heading@@',
     )
     def heading(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

@@ -1538,12 +1538,19 @@ def test_render_template_template_object():
     ) == 'foo 1 bar'
 
 
-@pytest.mark.django
 def test_action_render():
-    import os
-    RequestFactory().get('/', params={}, root_path=os.path.dirname(__file__))
-    action = Action(display_name='Title', template='test_action_render.html').bind(request=None)
-    assert action.as_html() == 'tag=a display_name=Title'
+    action = Action(display_name='Title', template='test_action_render.html').bind(request=req('get'))
+    assert action.as_html().strip() == 'tag=a display_name=Title'
+    assert action.as_html() == action.__html__()  # used by jinja2
+
+
+def test_action_submit_render():
+    with pytest.raises(AssertionError):
+        # display_name is invalid on buttons, you must use attrs__value
+        Action.submit(display_name='Title')
+
+    action = Action.submit(attrs__value='Title', template='test_action_render.html').bind(request=req('get'))
+    assert action.as_html().strip() == 'tag=input display_name=None accesskey="s" type="submit" value="Title"'
     assert action.as_html() == action.__html__()  # used by jinja2
 
 
