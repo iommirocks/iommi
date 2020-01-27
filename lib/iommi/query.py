@@ -172,6 +172,7 @@ class Variable(PagePart):
             show=False,
             required=False,
         ),
+        default_child=False,
     )
     def __init__(self, **kwargs):
         """
@@ -475,11 +476,8 @@ class Query(PagePart):
         return Struct(
             gui=self.form,
             # TODO: this is a potential namespace conflict with gui above. Care or not care?
-            **setup_endpoint_proxies(self.endpoint)
+            **setup_endpoint_proxies(self)
         )
-
-    def endpoint_kwargs(self):
-        return dict(query=self)
 
     @dispatch(
         endpoint__errors=default_endpoint__errors,

@@ -249,3 +249,8 @@ def test_render_simple_tag():
 
 def test_render_empty_tag():
     assert html.br().as_html() == '<br >'
+
+
+def test_fragment():
+    foo = html.h1('asd')
+    assert foo.as_html() == '<h1 >asd</h1>'

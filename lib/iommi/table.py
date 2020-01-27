@@ -258,6 +258,7 @@ class Column(PagePart):
         header__attrs__class__subheader=True,
         header__template='iommi/table/header.html',
         render_column=True,
+        default_child=False,
     )
     def __init__(self, **kwargs):
         """
@@ -932,11 +933,8 @@ class Table(PagePart):
             # TODO: should be a PagePart? !!!! that this isn't a page part breaks the path for the table cells
             columns=self.columns,
             # TODO: this can have name collisions with the keys above
-            **setup_endpoint_proxies(self.endpoint)
+            **setup_endpoint_proxies(self)
         )
-
-    def endpoint_kwargs(self):
-        return dict(table=self)
 
     @staticmethod
     @refinable
@@ -1291,7 +1289,7 @@ class Table(PagePart):
                 )
                 self._bulk_form.bind(parent=self)
                 assert 'bulk' not in self.actions
-                self.actions['bulk'] = Action(name='bulk').bind(parent=self)
+                self.actions['bulk'] = Action.submit(name='bulk', attrs__value='Bulk change').bind(parent=self)
             else:
                 self._bulk_form = None
 

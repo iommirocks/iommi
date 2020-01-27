@@ -1,4 +1,4 @@
-<select{{ field.attrs }}>
+<select{{ field.input.attrs }}>
     {% for choice in field.choice_to_options_selected %}
         <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %} label="{{ choice.2 }}">{{ choice.2 }}</option>
     {% endfor %}
@@ -25,7 +25,7 @@
             }
         },
         allowClear: true,
-        multiple: {% if field.attrs.multiple %}true{% else %}false{% endif %},
+        multiple: {% if field.input.attrs.multiple %}true{% else %}false{% endif %},
         minimumInputLength: 2
     });
 

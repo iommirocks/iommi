@@ -83,7 +83,7 @@ INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just 
 # as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
 # is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
 # (at least) this key-value.
-AVOID_EMPTY_FORM = '<input type="hidden" name="-{}" value="" />'
+AVOID_EMPTY_FORM = '<input type="hidden" name="-{}" value="">'
 
 
 def dispatch_prefix_and_remaining_from_key(key):
@@ -530,6 +530,9 @@ class Action(PagePart):
         super().__init__(**kwargs)
         self.declared_action = None
 
+        if self.tag == 'input' and self.display_name:
+            assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"
+
     @dispatch(
         context=EMPTY,
         render=EMPTY,
@@ -560,7 +563,6 @@ class Action(PagePart):
         attrs__type='submit',
         attrs__value='Submit',
         attrs__accesskey='s',
-        display_name='',
     )
     def submit(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -623,6 +625,10 @@ def group_actions(actions_without_group: Dict[str, Action]):
         actions_without_group = [action for action in actions_without_group.values() if action.group is None]
 
     return actions_without_group, grouped_actions
+
+
+def default_input_id(field, **_):
+    return f'id_{field.path().replace("/", "__")}'
 
 
 @with_meta
@@ -693,12 +699,14 @@ class Field(PagePart):
         input__call_target=Fragment,
         input__tag='input',
         input__name='input',
-        input__attrs__id=lambda field, **_: f'id_{field.path().replace("/", "__")}',
+        input__attrs__id=default_input_id,
         label__call_target=Fragment,
         label__tag='label',
         label__name='label',
-        errors=EMPTY,
+        label__attrs__for=default_input_id,
         input__attrs__name=lambda field, **_: field.path(),
+        errors=EMPTY,
+        default_child=False,
     )
     def __init__(self, **kwargs):
         """
@@ -720,7 +728,7 @@ class Field(PagePart):
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input__template, label__template and error__template below.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
         :param input__template: django template filename for the template for just the input control.
-        :param label__template: django template filename for the template for just the label tab. Default: 'iommi/form/label.html'
+        :param label__template: django template filename for the template for just the label tab.
         :param errors__template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
         :param required: if the field is a required field. Default: True
         :param help_text: The help text will be grabbed from the django model if specified and available.
@@ -755,12 +763,9 @@ class Field(PagePart):
         self.input = self.input()
         self.label = self.label()
 
-    def endpoint_kwargs(self):
-        return dict(field=self)
-
     def children(self):
         assert self._is_bound
-        return setup_endpoint_proxies(self.endpoint)
+        return setup_endpoint_proxies(self)
 
     @property
     def form(self):
@@ -933,7 +938,8 @@ class Field(PagePart):
             'field': self,
         }
         # TODO: hack!
-        self.input.attrs.value = self.rendered_value
+        if 'value' not in self.input.attrs:
+            self.input.attrs.value = self.rendered_value
         if self.template_string is not None:
             return get_template_from_string(self.template_string, origin='iommi', name='Form.as_html').render(context, self.request())
         else:
@@ -956,8 +962,9 @@ class Field(PagePart):
 
     @classmethod
     @class_shortcut(
-        # TODO: remove this template and instead use input__tag='textarea', input__type=None
-        input__template='iommi/form/text.html',
+        input__tag='textarea',
+        input__attrs__type=None,
+        input__template='iommi/form/textarea.html',
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1003,6 +1010,8 @@ class Field(PagePart):
         choice_to_option=choice_choice_to_option,
         parse=choice_parse,
         input__template='iommi/form/choice.html',
+        input__attrs__value=None,
+        input__attrs__type=None,
     )
     def choice(cls, call_target=None, **kwargs):
         """
@@ -1077,7 +1086,7 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice',
-        attrs__multiple=True,
+        input__attrs__multiple=True,
         choice_to_option=multi_choice_choice_to_option,
         is_list=True,
     )
@@ -1087,7 +1096,7 @@ class Field(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
-        attrs__multiple=True,
+        input__attrs__multiple=True,
         choice_to_option=multi_choice_queryset_choice_to_option,
         is_list=True,
     )
@@ -1275,18 +1284,15 @@ class Form(PagePart):
         assert self._is_bound
         return Struct(
             fields=self.fields,
+            # TODO: This should be a PagePart
             actions=Struct(
                 name='actions',
                 children=lambda: self.actions,
-                endpoint_kwargs=lambda: dict(form=self),
+                _evaluate_attribute_kwargs=lambda: dict(form=self),
             ),
             # TODO: this is a potential name conflict with field and actions above
-            **setup_endpoint_proxies(self.endpoint)
+            **setup_endpoint_proxies(self)
         )
-
-    # TODO: should this just be _evaluate_attribute_kwargs?
-    def endpoint_kwargs(self):
-        return dict(form=self)
 
     @staticmethod
     @refinable
@@ -1601,7 +1607,7 @@ class Form(PagePart):
         field_errors = {x.name: x.errors for x in self.fields.values() if x.errors}
         if field_errors:
             r['fields'] = field_errors
-        return Errors(parent=self, **r)
+        return r
 
     @classmethod
     @class_shortcut(

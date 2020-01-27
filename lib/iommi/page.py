@@ -29,6 +29,7 @@ from tri_declarative import (
     declarative,
     dispatch,
     with_meta,
+    evaluate_strict,
 )
 
 
@@ -93,18 +94,13 @@ class Fragment(PagePart):
                 for x in self._children
             ])
 
-    def __getitem__(self, item):
-        if isinstance(item, tuple):
-            self._children.extend(item)
-        else:
-            self._children.append(item)
-        return self
-
     def __repr__(self):
-        return f'<Fragment: tag:{self.tag}, attrs:{self.attrs}>'
+        return f'<Fragment: tag:{self.tag}, attrs:{self.attrs.items()}>'
 
     def on_bind(self) -> None:
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+        # TODO: do we want to do this?
+        # self._children = [evaluate_strict(x, **self.evaluate_attribute_kwargs()) for x in self._children]
 
     @dispatch(
         context=EMPTY,
@@ -169,7 +165,7 @@ class Page(PagePart):
             self.bind(request=None)
         return self.parts
 
-    def endpoint_kwargs(self):
+    def _evaluate_attribute_kwargs(self):
         return dict(page=self)
 
     @dispatch(

@@ -770,7 +770,7 @@ def test_bulk_edit():
         request=req('get', pk_1='', pk_2='', a='0', b='changed'),
     ).as_html()
     assert '<form method="post" action=".">' in result
-    assert '<input type="submit" class="button" value="Bulk change"/>' in result
+    assert '<input accesskey="s" type="submit" value="Bulk change">' in result
 
     def post_bulk_edit(table, queryset, updates, **_):
         assert isinstance(table, TestTable)
@@ -1446,7 +1446,7 @@ def test_ajax_endpoint():
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/gui/field/foo': 'hopp'})
+    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/gui/fields/foo': 'hopp'})
     assert json.loads(result.content) == {
         'more': False,
         'page': 1,
@@ -1462,7 +1462,7 @@ def test_ajax_endpoint_empty_response():
 
         bar = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='', request=req('get'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]).bind(request=req('get')), path='/foo', value='')
     assert actual == []
 
 
@@ -1478,9 +1478,9 @@ def test_ajax_data_endpoint():
         Struct(foo=1, bar=2),
         Struct(foo=3, bar=4),
     ])
-    table.bind(request=None)
+    table.bind(request=req('get'))
 
-    actual = perform_ajax_dispatch(root=table, path='/data', value='', request=req('get'))
+    actual = perform_ajax_dispatch(root=table, path='/data', value='')
     expected = [dict(foo=1, bar=2), dict(foo=3, bar=4)]
     assert actual == expected
 
@@ -1493,9 +1493,9 @@ def test_ajax_endpoint_namespacing():
         baz = Column()
 
     with pytest.raises(InvalidEndpointPathException):
-        perform_ajax_dispatch(root=TestTable(rows=[]), path='/baz', value='', request=req('get'))
+        perform_ajax_dispatch(root=TestTable(rows=[]).bind(request=req('get')), path='/baz', value='')
 
-    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/bar', value='', request=req('get'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]).bind(request=req('get')), path='/bar', value='')
     assert 17 == actual
 
 
@@ -1531,7 +1531,7 @@ def test_ajax_custom_endpoint():
 
         spam = Column()
 
-    actual = perform_ajax_dispatch(root=TestTable(rows=[]), path='/foo', value='bar', request=req('get'))
+    actual = perform_ajax_dispatch(root=TestTable(rows=[]).bind(request=req('get')), path='/foo', value='bar')
     assert actual == dict(baz='bar')
 
 
@@ -1811,7 +1811,7 @@ def test_new_style_ajax_dispatch():
 
     from iommi import middleware
     m = middleware(get_response)
-    response = m(request=req('get', **{'/table/query/gui/field/foo': ''}))
+    response = m(request=req('get', **{'/table/query/gui/fields/foo': ''}))
 
     assert json.loads(response.content) == {
         'results': [
@@ -1829,7 +1829,7 @@ def test_endpoint_path_of_nested_part():
     page = Table.from_model(model=TBar, columns__foo__query=dict(show=True, gui__show=True)).as_page()
     page.bind(request=None)
     assert page.children().table.default_child
-    target, parents = find_target(path='/table/query/gui/field/foo', root=page)
+    target, parents = find_target(path='/table/query/gui/fields/foo', root=page)
     assert target.endpoint_path() == '/foo'
 
 

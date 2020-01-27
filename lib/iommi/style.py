@@ -45,7 +45,6 @@ base = Style(
         actions_template='iommi/form/actions.html',
     ),
     Field=dict(
-        label_template='iommi/form/label.html',
     ),
     # TODO: this is a bit bonkers
     Query__gui__attrs__id='iommi_query_form',
@@ -144,7 +143,10 @@ def get_style(name):
 
 
 def apply_style_recursively(data, obj):
-    if isinstance(obj, dict):
+    if isinstance(obj, Namespace):
+        for k, v in data.items():
+            obj.setitem_path(k, v)
+    elif isinstance(obj, dict):
         obj.update(**data)
     else:
         for k, v in data.items():

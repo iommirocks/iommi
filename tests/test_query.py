@@ -425,8 +425,8 @@ def test_endpoint_dispatch():
         'page': 1,
         'results': [{'id': x.pk, 'text': str(x)}],
     }
-    assert perform_ajax_dispatch(root=query, path='/gui/field/foo', value='ar', request=request) == expected
-    assert perform_ajax_dispatch(root=query, path='/foo', value='ar', request=request) == expected
+    assert perform_ajax_dispatch(root=query, path='/gui/fields/foo', value='ar') == expected
+    assert perform_ajax_dispatch(root=query, path='/foo', value='ar') == expected
 
 
 def test_endpoint_dispatch_errors():
@@ -437,9 +437,21 @@ def test_endpoint_dispatch_errors():
             choices=('a', 'b'),
         )
 
-    assert perform_ajax_dispatch(root=MyQuery(), path='/errors', value='', request=req('get', **{ADVANCED_QUERY_PARAM: 'foo=!'})) == {'global': ['Invalid syntax for query']}
-    assert perform_ajax_dispatch(root=MyQuery(), path='/errors', value='', request=req('get', **{ADVANCED_QUERY_PARAM: 'foo=a'})) == {}
-    assert perform_ajax_dispatch(root=MyQuery(), path='/errors', value='', request=req('get', foo='q')) == {'fields': {'foo': ['q not in available choices']}}
+    assert perform_ajax_dispatch(
+        root=MyQuery().bind(request=req('get', **{ADVANCED_QUERY_PARAM: 'foo=!'})),
+        path='/errors',
+        value='',
+    ) == {'global': ['Invalid syntax for query']}
+    assert perform_ajax_dispatch(
+        root=MyQuery().bind(request=req('get', **{ADVANCED_QUERY_PARAM: 'foo=a'})),
+        path='/errors',
+        value='',
+    ) == {}
+    assert perform_ajax_dispatch(
+        root=MyQuery().bind(request=req('get', foo='q')),
+        path='/errors',
+        value='',
+    ) == {'fields': {'foo': ['q not in available choices']}}
 
 
 def test_variable_repr():

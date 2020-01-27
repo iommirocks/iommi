@@ -406,11 +406,11 @@ def test_text_field():
 
 
 def test_textarea_field():
-    rendered_form = str(Form(fields__foo=Field.textarea()).bind(request=req('get')))
-    # TODO: this test assumes that type comes first, it does not. Use BS4 to do something nicer.
+    rendered_form = str(Form(fields__foo=Field.textarea(initial='test')).bind(request=req('get')))
     foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
-    assert foo.name == 'textarea'
+    assert foo.name == 'textarea', rendered_form
     assert get_attrs(foo, ['type']) == {'type': None}
+    assert foo.text == 'test'
 
 
 def test_integer_field():
@@ -693,6 +693,9 @@ def test_choice_queryset_do_not_cache():
     # There is just one user, check that we get it
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo.errors == set()
+
+    # TODO: this test was written when Field.choice_queryset was not ajaxy. Now it's broken. I guess we need to query the ajax endpoint?
+
     assert str(BeautifulSoup(form.as_html(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
     # Now create a new queryset, check that we get two!
@@ -1369,12 +1372,12 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         not_returning_anything = Field.integer()
 
     form = MyForm()
-    form.bind(request=None)
-    actual = perform_ajax_dispatch(root=form, path='/field/username', value='ar', request=req('get'))
+    form.bind(request=req('get'))
+    actual = perform_ajax_dispatch(root=form, path='/fields/username', value='ar')
     assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
 
     with pytest.raises(InvalidEndpointPathException) as e:
-        perform_ajax_dispatch(root=form, path='/field/not_returning_anything', value='ar', request=req('get'))
+        perform_ajax_dispatch(root=form, path='/fields/not_returning_anything', value='ar')
 
 
 @pytest.mark.django_db
@@ -1399,7 +1402,7 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     user2 = User.objects.create(username='bar')
 
     form = Form.from_model(model=FooModel, **kwargs).bind(request=req('get'))
-    actual = perform_ajax_dispatch(root=form, path='/field/user', value='ar', request=req('get'))
+    actual = perform_ajax_dispatch(root=form, path='/fields/user', value='ar')
 
     assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
 
@@ -1416,9 +1419,9 @@ def test_ajax_namespacing():
     request = req('get')
     form = MyForm()
     form.bind(request=request)
-    assert 'default' == perform_ajax_dispatch(root=form, path='/field/foo', value='ar', request=request)
-    assert 'bar' == perform_ajax_dispatch(root=form, path='/field/foo/bar', value='ar', request=request)
-    assert 'baaz' == perform_ajax_dispatch(root=form, path='/field/foo/baaz', value='ar', request=request)
+    assert 'default' == perform_ajax_dispatch(root=form, path='/fields/foo', value='ar')
+    assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/bar', value='ar')
+    assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/baaz', value='ar')
 
 
 @override_settings(DEBUG=True)
@@ -1432,17 +1435,17 @@ def test_ajax_config_and_validate():
     form.bind(request=request)
     assert dict(
         name='foo',
-    ) == perform_ajax_dispatch(root=form, path='/field/foo/config', value=None, request=request)
+    ) == perform_ajax_dispatch(root=form, path='/fields/foo/config', value=None)
 
     assert dict(
         valid=True,
         errors=[]
-    ) == perform_ajax_dispatch(root=form, path='/field/foo/validate', value='new value', request=request)
+    ) == perform_ajax_dispatch(root=form, path='/fields/foo/validate', value='new value')
 
     assert dict(
         valid=False,
         errors=['FAIL']
-    ) == perform_ajax_dispatch(root=form, path='/field/bar/validate', value='new value', request=request)
+    ) == perform_ajax_dispatch(root=form, path='/fields/bar/validate', value='new value')
 
 
 def test_is_empty_form_marker():
@@ -1459,7 +1462,7 @@ def test_custom_endpoint():
 
     form = MyForm()
     form.bind(request=None)
-    assert 'foobar' == perform_ajax_dispatch(root=form, path='/foo', value='bar', request=req('get'))
+    assert 'foobar' == perform_ajax_dispatch(root=form, path='/foo', value='bar')
 
 
 def remove_csrf(html_code):
@@ -1474,30 +1477,22 @@ def test_render():
     expected_html = """
         <form action="" method="post">
             <div>
-                <tr class="required">
-                    <td class="description_container">
-                        <div class="formlabel">
-                            <label for="id_bar">
-                                Bar
-                            </label>
-                        </div>
-                        <div class="formdescr">
-                        </div>
-                    </td>
-                    <td>
-                        <input id="id_bar" name="bar" type="text" value="">
-                    </td>
-                </tr>
-                <input name="-" type="hidden" value=""/>
-            </div>
-            <div class="form_buttons clear">
-                <div class="links">
-                    <input accesskey="s" class="button" type="submit" value="Submit"></input>
+                <label for="id_bar">
+                    Bar
+                </label>
+                <input id="id_bar" name="bar" type="text" value="">
+                <div class="form-text text-muted">
                 </div>
+            </div>
+            <input name="-" type="hidden" value="">
+            <div class="links">
+                <input accesskey="s" type="submit" value="Submit">
             </div>
         </form>
     """
 
+
+    # TODO: this test is borken because bs4 gets confused by the non-terminated input tags, but that iommi is following the spec and bs4 is not as far as I can tell.
     actual_html = remove_csrf(MyForm().bind(request=req('get')).as_html())
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()

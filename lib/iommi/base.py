@@ -68,21 +68,23 @@ class InvalidEndpointPathException(Exception):
 
 
 class EndPointHandlerProxy:
-    def __init__(self, func):
+    def __init__(self, func, parent):
         self.func = func
+        self.parent = parent
         assert callable(func)
 
-    def endpoint_handler(self, request, value, **kwargs):
-        return self.func(request=request, value=value, **kwargs)
+    def endpoint_handler(self, value, **kwargs):
+        return self.func(value=value, **kwargs)
 
-    def endpoint_kwargs(self):
-        return {}
+    def evaluate_attribute_kwargs(self):
+        # TODO: I used to have request added here, should we do that?
+        return self.parent.evaluate_attribute_kwargs()
 
 
-def setup_endpoint_proxies(endpoint: Namespace) -> Dict[str, EndPointHandlerProxy]:
+def setup_endpoint_proxies(parent: 'PagePart') -> Dict[str, EndPointHandlerProxy]:
     return Namespace({
-        k: EndPointHandlerProxy(v)
-        for k, v in endpoint.items()
+        k: EndPointHandlerProxy(v, parent=parent)
+        for k, v in parent.endpoint.items()
     })
 
 
@@ -143,19 +145,15 @@ def catch_response(view_function):
     return catch_response_view
 
 
-def perform_ajax_dispatch(*, root, path, value, request):
+def perform_ajax_dispatch(*, root, path, value):
     assert root._is_bound
 
     target, parents = find_target(path=path, root=root)
-
-    # TODO: should contain the endpoint_kwargs of all parents I think... or just the target and Field.endpoint_kwargs needs to add `form`
-    kwargs = {**parents[-1].endpoint_kwargs(), **target.endpoint_kwargs()}
-
     if target.endpoint_handler is None:
         raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
 
     # TODO: this API should be endpoint(), fix Table.children when this is fixed
-    return target.endpoint_handler(request=request, value=value, **kwargs)
+    return target.endpoint_handler(value=value, **target.evaluate_attribute_kwargs())
 
 
 def perform_post_dispatch(*, root, path, value, request):
@@ -254,7 +252,7 @@ class PagePart(RefinableObject):
         if dispatch_commands:
             dispatch_target, value = next(iter(dispatch_commands.items()))
             try:
-                result = dispatcher(root=self, path=dispatch_target, value=value, request=request)
+                result = dispatcher(root=self, path=dispatch_target, value=value)
             except InvalidEndpointPathException:
                 if settings.DEBUG:
                     raise
@@ -453,6 +451,9 @@ class Members(PagePart):
         super(Members, self).__init__(**kwargs)
         self.members: Dict[str, Any] = None
         self.declared_items = declared_items
+
+    def children(self):
+        return self.members
 
     def on_bind(self) -> None:
         bound_items = [item for item in sort_after([x.bind(parent=self) for x in self.declared_items.values()])]
