@@ -3,7 +3,7 @@ Architecture overview
 
 iommi follows a design philosophy that adds a few rules on top of the Zen of python.
 
-* Things that are similar should look similar, things that are different should look different
+* Things that are similar should look similar, things that are different should look different.
 * Things that are connected should be close, things that are separate should be apart.
 * Layers should be layered.
 * Everything needs a name, so we can reference it for customization.

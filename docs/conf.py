@@ -17,7 +17,6 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-import iommi.base
 
 sys.path.insert(0, os.path.abspath('../lib'))
 
@@ -29,6 +28,9 @@ project_root = os.path.dirname(cwd)
 # This lets us ensure that the source package is imported, and that its
 # version is used.
 sys.path.insert(0, project_root)
+
+from django.conf import settings
+settings.configure()
 
 import iommi
 
