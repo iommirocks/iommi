@@ -18,6 +18,7 @@ from iommi import (
     Table,
     html,
 )
+from iommi.admin import admin
 from iommi.form import (
     Field,
     Form,
@@ -39,6 +40,11 @@ def ensure_objects():
 
 
 def index(request):
+    class AdminPage(Page):
+        admin_header = html.h2('Admin example')
+
+        admin_a = html.a('Admin', attrs__href="iommi-admin/")
+
     class IndexPage(Page):
         header = html.h1('iommi examples')
 
@@ -65,6 +71,10 @@ def index(request):
         <a href="table_readme_example_2/">Example 2 from the README</a><br>
         <a href="table_kitchen_sink/">Kitchen sink</a><br>
         """)
+
+        # You can also nest pages
+        admin = AdminPage()
+
 
     return IndexPage()
 
@@ -273,5 +283,19 @@ def table_kitchen_sink(request):
     return BarTable(rows=TBar.objects.all())
 
 
-# TODO: Page, Fragment examples
-# TODO: admin
+def iommi_admin(request, **kwargs):
+    del request
+    return admin(
+        all_models__app__sessions__session__show=False,
+        list_model__app__auth__user__table__columns=dict(
+            # groups__query=dict(show=True, gui__show=True),
+            # email__call_target__attribute='freetext_search',
+            # username__call_target__attribute='freetext_search',
+            username__query__freetext=True,
+            username__query__show=True,
+            # first__call_target__attribute='freetext',
+            # last__call_target__attribute='freetext',
+            password__show=False,
+        ),
+        **kwargs,
+    )
