@@ -472,7 +472,6 @@ def bind_members(obj: PagePart, *, name: str, default_child=False) -> None:
     setattr(obj, name, m)
 
 
-# TODO: maybe this is an unnecessary function
 def evaluate_members(obj, keys, **kwargs):
     for key in keys:
         evaluate_member(obj, key, **kwargs)
@@ -480,7 +479,6 @@ def evaluate_members(obj, keys, **kwargs):
 
 def evaluate_member(obj, key, strict=True, **kwargs):
     value = getattr(obj, key)
-    # TODO: I changed this from recursive to non-recursive... was that a good idea?
     new_value = evaluate(value, __strict=strict, **kwargs)
     if new_value is not value:
         setattr(obj, key, new_value)

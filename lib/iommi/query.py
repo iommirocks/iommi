@@ -20,6 +20,7 @@ from iommi.base import (
     PagePart,
     request_data,
     setup_endpoint_proxies,
+    evaluate_members,
 )
 from iommi.form import (
     bool_parse,
@@ -59,6 +60,7 @@ from tri_declarative import (
     setattr_path,
     setdefaults_path,
     with_meta,
+    evaluate,
 )
 from tri_struct import Struct
 
@@ -192,13 +194,22 @@ class Variable(PagePart):
         if self.attr is MISSING:
             self.attr = self.name
 
-        # TODO: specific list, not just all refinable members
-        evaluated_attributes = self.get_declared('refinable_members').keys()
-        for k in evaluated_attributes:
-            v = getattr(self, k)
-            new_value = evaluate_recursive(v, **self.evaluate_attribute_kwargs())
-            if new_value is not v:
-                setattr(self, k, new_value)
+        self.model = evaluate(self.model, **self.evaluate_attribute_kwargs())
+
+        evaluated_attributes = [
+            'name',
+            'show',
+            'after',
+            'default_child',
+            'extra',
+            'style',
+            'attr',
+            'gui_op',
+            'freetext',
+            'model_field',
+            'choices',
+        ]
+        evaluate_members(self, evaluated_attributes, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self.parent, variable=self)

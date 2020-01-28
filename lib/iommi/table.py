@@ -48,6 +48,7 @@ from iommi.base import (
     PagePart,
     path_join,
     setup_endpoint_proxies,
+    MISSING,
 )
 from iommi.form import (
     Action,
@@ -82,6 +83,7 @@ from tri_declarative import (
     setattr_path,
     setdefaults_path,
     with_meta,
+    evaluate,
 )
 from tri_struct import (
     merged,
@@ -216,8 +218,6 @@ class DataRetrievalMethods(Enum):
     select = auto()
 
 
-def default_query_on_index(table, column, **_):
-    return table.query_from_indexes and column.model_field is not None and column.model_field.db_index
 
 
 @with_meta
@@ -226,6 +226,7 @@ class Column(PagePart):
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
     url: str = Refinable()
+    attr: str = Refinable()
     sort_default_desc: bool = Refinable()
     sortable: bool = Refinable()
     group: Optional[str] = Refinable()
@@ -242,22 +243,23 @@ class Column(PagePart):
     render_column: bool = Refinable()
 
     @dispatch(
+        attr=MISSING,
         sort_default_desc=False,
         sortable=True,
         auto_rowspan=False,
         bulk__show=False,
-        query__show=default_query_on_index,
-        query__gui__show=default_query_on_index,
+        query__show=False,
+        query__gui__show=False,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
-        cell__value=lambda table, bound_column, row, **_: getattr_path(row, evaluate_strict(bound_column.attr, table=table, bound_column=bound_column)),
+        cell__value=lambda column, row, **kwargs: getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs)),
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
-        header__attrs__class__sorted_column=lambda bound_column, **_: bound_column.is_sorting,
-        header__attrs__class__descending=lambda bound_column, **_: bound_column.sort_direction == DESCENDING,
-        header__attrs__class__ascending=lambda bound_column, **_: bound_column.sort_direction == ASCENDING,
+        header__attrs__class__sorted_column=lambda column, **_: column.is_sorting,
+        header__attrs__class__descending=lambda column, **_: column.sort_direction == DESCENDING,
+        header__attrs__class__ascending=lambda column, **_: column.sort_direction == ASCENDING,
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
         header__attrs__class__subheader=True,
         header__template='iommi/table/header.html',
@@ -276,7 +278,7 @@ class Column(PagePart):
         :param sort_default_desc: Set to True to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
-        :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `bound_column`, `bound_row`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
+        :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `column`, `bound_row`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
         :param cell__value: string or callable that receives kw arguments: `table`, `column` and `row`. This is used to extract which data to display from the object.
         :param cell__format: string or callable that receives kw arguments: `table`, `column`, `row` and `value`. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
         :param cell__attrs: dict of attr name to callables that receive kw arguments: `table`, `column`, `row` and `value`.
@@ -299,10 +301,6 @@ class Column(PagePart):
     def table(self):
         return self.parent
 
-    @staticmethod
-    @refinable
-    def attr(table, column, **_):
-        return column.name
 
     @staticmethod
     @refinable
@@ -317,6 +315,9 @@ class Column(PagePart):
     def on_bind(self) -> None:
         for k, v in getattr(self.parent.parent, '_columns_unapplied_data').get(self.name, {}).items():
             setattr_path(self, k, v)
+
+        if self.attr is MISSING:
+            self.attr = self.name
 
         self.header.attrs = Namespace(self.header.attrs.copy())
         self.header.attrs['class'] = Namespace(self.header.attrs['class'].copy())
@@ -333,13 +334,37 @@ class Column(PagePart):
         )
         self.declared_column = self._declared
 
-        # TODO: we should have an explicit list of attributes here, not just loop through them all, and we should have strict evaluation wherever possible
-        evaluated_attributes = self.get_declared('refinable_members').keys()
-        for k in evaluated_attributes:
-            v = getattr(self, k)
-            new_value = evaluate_recursive(v, **self.evaluate_attribute_kwargs())
-            if new_value is not v:
-                setattr(self, k, new_value)
+        self.model = evaluate(self.model, **self.evaluate_attribute_kwargs())
+
+        evaluated_attributes = [
+            'name',
+            'show',
+            'attr',
+            'after',
+            'default_child',
+            'style',
+            'url',
+            'sort_default_desc',
+            'sortable',
+            'group',
+            'auto_rowspan',
+            'choices',
+            'superheader',
+            'header',
+            'data_retrieval_method',
+            'render_column',
+            'attr',
+            'sort_key',
+            'display_name',
+            # TODO: not sure about these
+            # 'model_field',
+            # 'cell',
+            # 'bulk',
+            # 'query',
+            # 'extra',
+        ]
+        evaluate_members(self, evaluated_attributes, **self.evaluate_attribute_kwargs())
+        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(table=self.parent, column=self)
@@ -650,8 +675,8 @@ class Column(PagePart):
             bulk__call_target__attribute='many_to_many',
             query__call_target__attribute='many_to_many',
             extra__django_related_field=True,
+            model_field=model_field.remote_field,
         )
-        kwargs['model'] = model_field.remote_field.model
         return call_target(**kwargs)
 
     @classmethod
@@ -663,7 +688,7 @@ class Column(PagePart):
         setdefaults_path(
             kwargs,
             choices=model_field.foreign_related_fields[0].model.objects.all(),
-            model=model_field.foreign_related_fields[0].model,
+            model_field=model_field.foreign_related_fields[0].model,
         )
         return call_target(**kwargs)
 
@@ -701,12 +726,12 @@ class BoundRow(object):
         return mark_safe('\n'.join(bound_cell.as_html() for bound_cell in self))
 
     def __iter__(self):
-        for bound_column in self.table.rendered_columns.values():
-            yield BoundCell(bound_row=self, bound_column=bound_column)
+        for column in self.table.rendered_columns.values():
+            yield BoundCell(bound_row=self, column=column)
 
     def __getitem__(self, name):
-        bound_column = self.table.rendered_columns[name]
-        return BoundCell(bound_row=self, bound_column=bound_column)
+        column = self.table.rendered_columns[name]
+        return BoundCell(bound_row=self, column=column)
 
     def dunder_path(self):
         return self.parent.dunder_path() + '__row'
@@ -715,10 +740,10 @@ class BoundRow(object):
 # TODO: make this a PagePart?
 class BoundCell(object):
 
-    def __init__(self, bound_row, bound_column):
-        assert bound_column.show
+    def __init__(self, bound_row, column):
+        assert column.show
 
-        self.bound_column = bound_column
+        self.column = column
         self.bound_row = bound_row
         self.table = bound_row.table
         self.row = bound_row.row
@@ -727,12 +752,12 @@ class BoundCell(object):
     def value(self):
         if not hasattr(self, '_value'):
             self._value = evaluate_strict(
-                self.bound_column.cell.value,
+                self.column.cell.value,
                 table=self.bound_row.table,
-                declared_column=self.bound_column.declared_column,
+                declared_column=self.column.declared_column,
                 row=self.bound_row.row,
                 bound_row=self.bound_row,
-                bound_column=self.bound_column,
+                column=self.column,
             )
         return self._value
 
@@ -741,34 +766,34 @@ class BoundCell(object):
         return evaluate_attrs(
             # TODO: fix this hack
             Struct(
-                attrs=self.bound_column.cell.attrs,
-                dunder_path=lambda: self.bound_column.dunder_path() + '__cell',
+                attrs=self.column.cell.attrs,
+                dunder_path=lambda: self.column.dunder_path() + '__cell',
                 name='cell',
             ),
             table=self.table,
-            column=self.bound_column,
+            column=self.column,
             row=self.row,
             value=self.value,
         )
 
     @property
     def url(self):
-        url = self.bound_column.cell.url
+        url = self.column.cell.url
         if callable(url):
-            url = url(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+            url = url(table=self.table, column=self.column, row=self.row, value=self.value)
         return url
 
     @property
     def url_title(self):
-        url_title = self.bound_column.cell.url_title
+        url_title = self.column.cell.url_title
         if callable(url_title):
-            url_title = url_title(table=self.table, column=self.bound_column, row=self.row, value=self.value)
+            url_title = url_title(table=self.table, column=self.column, row=self.row, value=self.value)
         return url_title
 
     def as_html(self):
-        cell__template = self.bound_column.cell.template
+        cell__template = self.column.cell.template
         if cell__template:
-            context = dict(table=self.table, bound_column=self.bound_column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
+            context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.request(), cell__template, context)
 
         return format_html('<td{}>{}</td>', self.attrs, self.render_cell_contents())
@@ -789,13 +814,13 @@ class BoundCell(object):
         return cell_contents
 
     def render_formatted(self):
-        return evaluate_strict(self.bound_column.cell.format, table=self.table, column=self.bound_column, row=self.row, value=self.value)
+        return evaluate_strict(self.column.cell.format, table=self.table, column=self.column, row=self.row, value=self.value)
 
     def __str__(self):
         return self.as_html()
 
     def __repr__(self):
-        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.bound_column.declared_column, self.bound_row.row)  # pragma: no cover
+        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.column.declared_column, self.bound_row.row)  # pragma: no cover
 
 
 class TemplateConfig(Struct, RefinableObject):
@@ -819,24 +844,23 @@ class Header(object):
     @dispatch(
         attrs=EMPTY,
     )
-    def __init__(self, display_name, attrs, template, table, url=None, bound_column=None, number_of_columns_in_group=None, index_in_group=None):
+    def __init__(self, *, display_name, attrs, template, table, url=None, column=None, number_of_columns_in_group=None, index_in_group=None):
         self.table = table
         self.display_name = mark_safe(display_name)
         self.template = template
         self.url = url
-        self.bound_column = bound_column
+        self.column = column
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
         self.attrs = attrs
-        # TODO: bound_column here maybe should just be column?
-        self.attrs = evaluate_attrs(self, table=table, bound_column=bound_column, header=self)
+        self.attrs = evaluate_attrs(self, table=table, column=column, header=self)
 
     @property
     def rendered(self):
         return render_template(self.table.request(), self.template, dict(header=self))
 
     def __repr__(self):
-        return '<Header: %s>' % ('superheader' if self.bound_column is None else self.bound_column.name)
+        return '<Header: %s>' % ('superheader' if self.column is None else self.column.name)
 
     def dunder_path(self):
         return self.table.dunder_path() + '__header'
@@ -1096,16 +1120,14 @@ class Table(PagePart):
     def _prepare_headers(self):
         prepare_headers(self, self.rendered_columns.values())
 
-        for bound_column in self.rendered_columns.values():
+        for column in self.rendered_columns.values():
             evaluate_members(
-                bound_column,
+                column,
                 [
                     'superheader',
                     'header',
                 ],
-                table=self,
-                column=bound_column.declared_column,
-                bound_column=bound_column,
+                **self.evaluate_attribute_kwargs()
             )
 
         superheaders = []
@@ -1126,15 +1148,15 @@ class Table(PagePart):
                 template=self.superheader.template,
             ))
 
-            for i, bound_column in enumerate(columns_in_group):
+            for i, column in enumerate(columns_in_group):
                 subheaders.append(
                     Header(
-                        display_name=bound_column.display_name,
+                        display_name=column.display_name,
                         table=self,
-                        attrs=bound_column.header.attrs,
-                        template=bound_column.header.template,
-                        url=bound_column.url,
-                        bound_column=bound_column,
+                        attrs=column.header.attrs,
+                        template=column.header.template,
+                        url=column.url,
+                        column=column,
                         number_of_columns_in_group=number_of_columns_in_group,
                         index_in_group=i,
                     )
@@ -1176,10 +1198,17 @@ class Table(PagePart):
         evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
+        evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
+
         for column in self.columns.values():
-            # special case for entire table not sortable
+            # Special case for entire table not sortable
             if not self.sortable:
                 column.sortable = False
+
+            # Special case for automatic query config
+            if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
+                column.query.show = True
+                column.query.gui.show = True
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
@@ -1196,7 +1225,6 @@ class Table(PagePart):
             ],
             **self.evaluate_attribute_kwargs()
         )
-        evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
         if self.model:

@@ -1101,7 +1101,7 @@ def test_cell_lambda():
     class TestTable(NoSortTable):
         sentinel1 = 'sentinel1'
 
-        sentinel2 = Column(cell__value=lambda table, bound_column, row, **_: '%s %s %s' % (table.sentinel1, bound_column.name, row.sentinel3))
+        sentinel2 = Column(cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
 
     rows = [Struct(sentinel3="sentinel3")]
 
@@ -1469,7 +1469,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoint__data = lambda table, **_: [{cell.bound_column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
+            endpoint__data = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
 
         foo = Column()
         bar = Column()
@@ -1514,7 +1514,7 @@ def test_table_iteration():
 
     assert [
         {
-            bound_cell.bound_column.name: bound_cell.value
+            bound_cell.column.name: bound_cell.value
             for bound_cell in bound_row
         }
         for bound_row in table.bound_rows()
@@ -1553,8 +1553,8 @@ def test_defaults():
     table.bind(request=None)
 
     col = table.columns.foo
-    assert not col.query.show
-    assert not col.bulk.show
+    assert table.query is None
+    assert table.bulk_form is None
     assert not col.auto_rowspan
     assert not col.sort_default_desc
     assert col.sortable
