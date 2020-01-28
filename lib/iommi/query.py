@@ -24,8 +24,10 @@ from iommi.base import (
 )
 from iommi.form import (
     bool_parse,
-    create_members_from_model,
     Form,
+)
+from iommi.from_model import (
+    create_members_from_model,
     member_from_model,
 )
 from pyparsing import (
