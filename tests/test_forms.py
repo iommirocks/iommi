@@ -21,7 +21,6 @@ from iommi.base import (
     perform_ajax_dispatch,
 )
 from iommi.form import (
-    Action,
     AVOID_EMPTY_FORM,
     bool_parse,
     datetime_iso_formats,
@@ -38,6 +37,7 @@ from iommi.form import (
     render_template,
     url_parse,
 )
+from iommi import Action
 from iommi.from_model import (
     create_members_from_model,
     member_from_model,

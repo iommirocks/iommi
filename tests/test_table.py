@@ -13,10 +13,10 @@ from iommi.base import (
     find_target,
 )
 from iommi.form import (
-    Action,
     Field,
     Form,
 )
+from iommi import Action
 from iommi.base import perform_ajax_dispatch
 from iommi.query import (
     Query,

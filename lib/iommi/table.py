@@ -36,6 +36,10 @@ from iommi._web_compat import (
     render_template,
     Template,
 )
+from iommi.action import (
+    Action,
+    group_actions,
+)
 from iommi.base import (
     bind_members,
     collect_members,
@@ -51,9 +55,7 @@ from iommi.base import (
     setup_endpoint_proxies,
 )
 from iommi.form import (
-    Action,
     Form,
-    group_actions,
 )
 from iommi.from_model import (
     create_members_from_model,

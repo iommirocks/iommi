@@ -7,7 +7,6 @@ from decimal import (
 )
 from itertools import (
     chain,
-    groupby,
 )
 from typing import (
     Any,
@@ -28,12 +27,14 @@ from iommi._web_compat import (
     get_template_from_string,
     mark_safe,
     render_template,
-    render_to_string,
-    slugify,
     Template,
     URLValidator,
     validate_email,
     ValidationError,
+)
+from iommi.action import (
+    Action,
+    group_actions,
 )
 from iommi.base import (
     bind_members,
@@ -388,125 +389,6 @@ def multi_choice_choice_to_option(field, choice, **_):
 
 def multi_choice_queryset_choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, field.value_list and choice in field.value_list
-
-
-# TODO: move this class.. maybe lots of other stuff from here
-class Action(PagePart):
-    tag: str = Refinable()
-    attrs: Dict[str, Any] = Refinable()
-    group: str = Refinable()
-    template = Refinable()
-    display_name: str = Refinable()
-
-    @dispatch(
-        tag='a',
-        attrs=EMPTY,
-    )
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.declared_action = None
-
-        if self.tag == 'input' and self.display_name:
-            assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"
-
-    @dispatch(
-        context=EMPTY,
-        render=EMPTY,
-    )
-    def __html__(self, *, context=None, render=None):
-        assert not render
-        assert self._is_bound
-        if self.template:
-            return render_to_string(self.template, dict(**context, action=self))
-        else:
-            return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).__html__()
-
-    def __repr__(self):
-        return f'<Action: {self.name}>'
-
-    @classmethod
-    @class_shortcut(
-        tag='button',
-    )
-    def button(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
-
-    @classmethod
-    @class_shortcut(
-        call_target__attribute='button',
-        tag='input',
-        attrs__type='submit',
-        attrs__value='Submit',
-        attrs__accesskey='s',
-    )
-    def submit(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
-
-    @classmethod
-    @class_shortcut(
-        call_target__attribute='submit',
-    )
-    def delete(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
-
-    @classmethod
-    @class_shortcut(
-        icon_classes=[],
-    )
-    def icon(cls, icon, *, display_name=None, call_target=None, icon_classes=None, **kwargs):
-        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
-        if icon_classes_str:
-            icon_classes_str = ' ' + icon_classes_str
-        setdefaults_path(
-            kwargs,
-            display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
-        )
-        return call_target(**kwargs)
-
-    def on_bind(self) -> None:
-        if self.parent is not None and self.parent.parent is not None:
-            for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
-                setattr_path(self, k, v)
-        evaluated_attributes = [
-            'tag',
-            'group',
-            'template',
-            'display_name',
-            'name',
-            'after',
-            'default_child',
-            'style',
-        ]
-        for key in evaluated_attributes:
-            self._evaluate_attribute(key)
-
-        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
-
-    def _evaluate_attribute_kwargs(self):
-        return dict(action=self)
-
-
-def group_actions(actions_without_group: Dict[str, Action]):
-    grouped_actions = {}
-    if actions_without_group is not None:
-        actions_with_group = (action for action in actions_without_group.values() if action.group is not None)
-
-        grouped_actions: Dict[str, Tuple[str, str, List[Action]]] = [
-            (group_name, slugify(group_name), list(actions_in_group))
-            for group_name, actions_in_group in groupby(
-                actions_with_group,
-                key=lambda l: l.group
-            )
-        ]  # list(actions_in_group) because django templates touches the generator and then I can't iterate it
-
-        for _, _, group_links in grouped_actions:
-            for link in group_links:
-                link.attrs.role = 'menuitem'
-
-        actions_without_group = [action for action in actions_without_group.values() if action.group is None]
-
-    return actions_without_group, grouped_actions
 
 
 def default_input_id(field, **_):
