@@ -682,6 +682,7 @@ class BoundRow(object):
         self.extra = extra
         self.parent = table
         self.attrs = attrs
+        self.name = 'row'
         self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
     def as_html(self):
@@ -710,7 +711,6 @@ class BoundRow(object):
 class BoundCell(object):
 
     def __init__(self, bound_row, bound_column):
-
         assert bound_column.show
 
         self.bound_column = bound_column
@@ -737,7 +737,8 @@ class BoundCell(object):
             # TODO: fix this hack
             Struct(
                 attrs=self.bound_column.cell.attrs,
-                dunder_path=lambda: self.bound_column.dunder_path() + '__cell'
+                dunder_path=lambda: self.bound_column.dunder_path() + '__cell',
+                name='cell',
             ),
             table=self.table,
             column=self.bound_column,
