@@ -53,7 +53,6 @@ from iommi.base import (
 from iommi.form import (
     Action,
     create_members_from_model,
-    expand_member,
     Form,
     group_actions,
     member_from_model,
@@ -383,16 +382,6 @@ class Column(PagePart):
             field_name=field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
-            **kwargs)
-
-    @classmethod
-    def expand_member(cls, model, field_name=None, model_field=None, **kwargs):
-        return expand_member(
-            cls=cls,
-            model=model,
-            factory_lookup=_column_factory_by_field_type,
-            field_name=field_name,
-            model_field=model_field,
             **kwargs)
 
     @classmethod

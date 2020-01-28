@@ -25,7 +25,6 @@ from iommi.base import (
 from iommi.form import (
     bool_parse,
     create_members_from_model,
-    expand_member,
     Form,
     member_from_model,
 )
@@ -246,16 +245,6 @@ class Variable(PagePart):
             field_name=field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
-            **kwargs)
-
-    @classmethod
-    def expand_member(cls, model, field_name=None, model_field=None, **kwargs):
-        return expand_member(
-            cls=cls,
-            model=model,
-            factory_lookup=_variable_factory_by_django_field_type,
-            field_name=field_name,
-            model_field=model_field,
             **kwargs)
 
     @classmethod

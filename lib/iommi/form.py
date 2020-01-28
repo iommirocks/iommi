@@ -225,35 +225,6 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     return factory(model_field=model_field, model=model, **kwargs)
 
 
-@dispatch(
-    fields=EMPTY,
-)
-def expand_member(cls, model, factory_lookup, defaults_factory, name, fields, field_name=None, model_field=None):
-    if field_name is None:
-        field_name = name
-
-    if model_field is None:
-        # noinspection PyProtectedMember
-        model_field = model._meta.get_field(field_name)
-
-    result = [
-        member_from_model(
-            cls=cls,
-            model=model_field.remote_field.model,
-            factory_lookup=factory_lookup,
-            factory_lookup_register_function=register_field_factory,
-            defaults_factory=defaults_factory,
-            field_name=sub_model_field.name,
-            name=name + '__' + sub_model_field.name,
-            attr=field_name + '__' + sub_model_field.name,
-            **fields.pop(sub_model_field.name, {})
-        )
-        for sub_model_field in get_fields(model=model_field.remote_field.model)
-    ]
-    assert_kwargs_empty(fields)
-    return [x for x in result if x is not None]
-
-
 def create_or_edit_object__post_handler(*, form, **_):
     if form.extra.is_create:
         assert form.instance is None
