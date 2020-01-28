@@ -88,6 +88,7 @@ def list_model(model, app, table):
             ),
         ),
         table__call_target__attribute='from_model',
+        table__query_from_indexes=True,
     )
     return kwargs.table().as_page(parts__header=admin_h1)
 
@@ -103,6 +104,7 @@ def create_object(*, model, form, **kwargs):
     )
 
 
+# TODO: there should be a Form.as_delete_page() which is basically Form.as_edit_page but with POST, a post_handler and editable=False
 @dispatch()
 def delete_object(*, pk, model, form, **kwargs):
     obj = model.objects.get(pk=pk)
@@ -137,7 +139,6 @@ def edit_object(*, pk, model, form, **kwargs):
     )
 
 # TODO: name, description, display_name field should be freetext searchable by default
-# TODO: everything with an index should be searchable
 # TODO: bulk edit?
 # TODO: bulk delete
 # TODO: fix so that the data-iommi-path in the DOM maps cleaner to arguments to admin()

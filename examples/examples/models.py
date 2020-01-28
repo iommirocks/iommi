@@ -13,7 +13,7 @@ class Bar(models.Model):
 
 
 class TFoo(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     a = models.IntegerField()
 
     def __unicode__(self):

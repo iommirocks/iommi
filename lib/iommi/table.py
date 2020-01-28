@@ -216,6 +216,10 @@ class DataRetrievalMethods(Enum):
     select = auto()
 
 
+def default_query_on_index(table, column, **_):
+    return table.query_from_indexes and column.model_field is not None and column.model_field.db_index
+
+
 @with_meta
 class Column(PagePart):
     """
@@ -242,7 +246,8 @@ class Column(PagePart):
         sortable=True,
         auto_rowspan=False,
         bulk__show=False,
-        query__show=False,
+        query__show=default_query_on_index,
+        query__gui__show=default_query_on_index,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
@@ -873,7 +878,8 @@ class Table(PagePart):
 
     bulk_filter: Namespace = Refinable()
     bulk_exclude: Namespace = Refinable()
-    sortable = Refinable()
+    sortable: bool = Refinable()
+    query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
     attrs: Dict[str, Any] = Refinable()
     template: Union[str, Template] = Refinable()
