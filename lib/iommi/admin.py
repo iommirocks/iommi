@@ -1,4 +1,3 @@
-from django.http import HttpResponseRedirect
 from iommi import (
     Page,
     html,
@@ -65,7 +64,6 @@ def all_models(app, table, **kwargs):
     app=EMPTY,
 )
 def list_model(model, app, table):
-    column_cls = table.call_target.cls.get_meta().member_class
     app_name, model_name = app_and_name_by_model[model]
     kwargs = setdefaults_path(
         Namespace(),
@@ -73,15 +71,13 @@ def list_model(model, app, table):
         table=table,
         table__rows=model.objects.all(),
         table__extra_columns=dict(
-            select=getattr(column_cls, 'select')(after=0),
-            # TODO: I think this should work! extra in create_members_from_model seems to not be expanded like it should be
-            # dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
-            edit=getattr(column_cls, 'edit')(after='select', cell__url=lambda row, **_: '%s/edit/' % row.pk),
-            delete=getattr(column_cls, 'delete')(after='select', cell__url=lambda row, **_: '%s/delete/' % row.pk),
+            select=dict(call_target__attribute='select', after=0),
+            edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
+            delete=dict(call_target__attribute='delete', after='select', cell__url=lambda row, **_: '%s/delete/' % row.pk),
         ),
         table__actions=dict(
-            # TODO: call_target__attribute='submit' doesn't work here
-            # TODO: bulk_delete=Action.submit(display_name='Delete', on_post=lambda table, **_: table.bulk_queryset().delete()),
+            # TODO: bulk delete
+            # bulk_delete=dict(call_target__attribute='submit', display_name='Delete', on_post=lambda table, **_: table.bulk_queryset().delete()),
             create=dict(
                 display_name=f'Create {model._meta.verbose_name}',
                 attrs__href='create/',
@@ -129,8 +125,6 @@ def edit_object(*, pk, model, form, **kwargs):
 
 # TODO: name, description, display_name field should be freetext searchable by default
 # TODO: bulk edit?
-# TODO: bulk delete
-# TODO: fix so that the data-iommi-path in the DOM maps cleaner to arguments to admin()
 
 
 @dispatch(

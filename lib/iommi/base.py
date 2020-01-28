@@ -293,7 +293,7 @@ class PagePart(RefinableObject):
             return path_join(self.parent.dunder_path(), self.name, separator='__')
         else:
             assert self.name, f'{self} is missing a name, but it was asked about its path'
-            return self.name
+            return ''
 
     def path(self) -> str:
         assert self._is_bound
