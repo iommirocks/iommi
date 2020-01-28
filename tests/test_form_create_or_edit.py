@@ -29,7 +29,7 @@ def test_create_and_edit_object():
     )
     p.bind(request=request)
     assert p.parts.create.default_child
-    response = p.parts.create.as_html(render__call_target=lambda **kwargs: kwargs)
+    response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
     form = p.parts.create
     assert form.extra.model_verbose_name == 'baz'  # check explicit model_verbose_name parameter to Form.as_create_page
     assert response['context']['csrf_token']
@@ -41,7 +41,7 @@ def test_create_and_edit_object():
         template='<template name>',
     )
     p.bind(request=request)
-    response = p.parts.create.as_html(
+    response = p.parts.create.__html__(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
         render__call_target=lambda **kwargs: kwargs,
@@ -101,7 +101,7 @@ def test_create_and_edit_object():
         instance=instance,
     )
     p.bind(request=request)
-    response = p.parts.edit.as_html(
+    response = p.parts.edit.__html__(
         render=lambda **kwargs: kwargs,
     )
     form = p.parts.edit

@@ -63,14 +63,11 @@ class Attrs(Namespace):
     def __init__(self, attrs):
         super(Attrs, self).__init__(attrs)
 
-    def __html__(self):
-        return str(self)
-
     def __str__(self):
-        return self.as_html()
+        return self.__html__()
 
     # noinspection PyUnusedLocal
-    def as_html(self, *, context=None):
+    def __html__(self, *, context=None):
         return render_attrs(self)
 
 
@@ -84,17 +81,14 @@ class Errors(set):
         self.attrs = attrs
         self.template = template
 
-    def __html__(self):
-        return str(self)
-
     def __str__(self):
-        return self.as_html()
+        return self.__html__()
 
     def __bool__(self):
         return len(self) != 0
 
     # noinspection PyUnusedLocal
-    def as_html(self, *, context=None):
+    def __html__(self, *, context=None):
         if not self:
             return ''
 
@@ -105,4 +99,4 @@ class Errors(set):
             attrs=self.attrs,
             template=self.template,
             children=[Fragment(tag='li') for error in self],
-        ).bind(parent=self.parent).as_html()
+        ).bind(parent=self.parent).__html__()

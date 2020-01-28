@@ -715,7 +715,7 @@ class BoundRow(object):
         self.name = 'row'
         self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
-    def as_html(self):
+    def __html__(self):
         if self.template:
             context = dict(bound_row=self, row=self.row, **self.table.context)
             return render_template(self.table.request(), self.template, context)
@@ -723,7 +723,7 @@ class BoundRow(object):
         return format_html('<tr{}>{}</tr>', self.attrs, self.render_cells())
 
     def render_cells(self):
-        return mark_safe('\n'.join(bound_cell.as_html() for bound_cell in self))
+        return mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))
 
     def __iter__(self):
         for column in self.table.rendered_columns.values():
@@ -790,7 +790,7 @@ class BoundCell(object):
             url_title = url_title(table=self.table, column=self.column, row=self.row, value=self.value)
         return url_title
 
-    def as_html(self):
+    def __html__(self):
         cell__template = self.column.cell.template
         if cell__template:
             context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
@@ -817,7 +817,7 @@ class BoundCell(object):
         return evaluate_strict(self.column.cell.format, table=self.table, column=self.column, row=self.row, value=self.value)
 
     def __str__(self):
-        return self.as_html()
+        return self.__html__()
 
     def __repr__(self):
         return "<%s column=%s row=%s>" % (self.__class__.__name__, self.column.declared_column, self.bound_row.row)  # pragma: no cover
@@ -931,7 +931,7 @@ class Table(PagePart):
         form_class = Form
         query_class = Query
         action_class = Action
-        endpoint__tbody = (lambda table, key, value: {'html': table.as_html(template='tri_table/table_container.html')})
+        endpoint__tbody = (lambda table, key, value: {'html': table.__html__(template='tri_table/table_container.html')})
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
         query__default_child = True
@@ -1323,7 +1323,7 @@ class Table(PagePart):
             yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive_strict(self.row, table=self, row=row))
 
     def render_tbody(self):
-        return mark_safe('\n'.join([bound_row.as_html() for bound_row in self.bound_rows()]))
+        return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))
 
     def paginator_context(self, adjacent_pages=6):
         context = self.context.copy()
@@ -1404,7 +1404,7 @@ class Table(PagePart):
         render=render_template,
         context=EMPTY,
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         assert self._is_bound
 
         if not context:

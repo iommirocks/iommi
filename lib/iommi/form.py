@@ -543,13 +543,13 @@ class Action(PagePart):
         context=EMPTY,
         render=EMPTY,
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         assert not render
         assert self._is_bound
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:
-            return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).as_html()
+            return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).__html__()
 
     def __repr__(self):
         return f'<Action: {self.name}>'
@@ -935,7 +935,7 @@ class Field(PagePart):
         context=EMPTY,
         render=EMPTY,
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         assert not render
         context = {
             'form': self.form,
@@ -945,7 +945,7 @@ class Field(PagePart):
         if 'value' not in self.input.attrs:
             self.input.attrs.value = self.rendered_value
         if self.template_string is not None:
-            return get_template_from_string(self.template_string, origin='iommi', name='Form.as_html').render(context, self.request())
+            return get_template_from_string(self.template_string, origin='iommi', name='Form.__html__').render(context, self.request())
         else:
             return render_template(self.request(), self.template, context)
 
@@ -1543,7 +1543,7 @@ class Form(PagePart):
     def render_fields(self):
         r = []
         for field in self.fields.values():
-            r.append(field.as_html())
+            r.append(field.__html__())
 
         if self.is_full_form:
             r.append(format_html(AVOID_EMPTY_FORM, self.path()))
@@ -1563,7 +1563,7 @@ class Form(PagePart):
         render__call_target=render_template_name,
         context=EMPTY,
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         # TODO: what if self.template is a Template?
         setdefaults_path(
             render,

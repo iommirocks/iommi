@@ -768,7 +768,7 @@ def test_bulk_edit():
         rows=TFoo.objects.all(),
     ).bind(
         request=req('get'),
-    ).as_html()
+    ).__html__()
     assert '<form method="post" action=".">' in result
     assert '<input accesskey="s" type="submit" value="Bulk change">' in result, result
 

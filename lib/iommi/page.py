@@ -13,7 +13,7 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    as_html,
+    __html__,
     bind_members,
     collect_members,
     evaluate_attrs,
@@ -88,7 +88,7 @@ class Fragment(PagePart):
         return format_html(
             '{}' * len(self._children),
             *[
-                as_html(part=x, context=context)
+                __html__(part=x, context=context)
                 for x in self._children
             ])
 
@@ -104,7 +104,7 @@ class Fragment(PagePart):
         context=EMPTY,
         render=fragment__render,
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         return render(fragment=self, context=context)
 
     def _evaluate_attribute_kwargs(self):
@@ -168,11 +168,11 @@ class Page(PagePart):
         context=EMPTY,
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         rendered = {}
         for part in self.parts.values():
             assert part.name not in context
-            rendered[part.name] = as_html(part=part, context=context)
+            rendered[part.name] = __html__(part=part, context=context)
 
         return render(rendered)
 

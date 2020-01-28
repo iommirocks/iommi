@@ -67,7 +67,7 @@ def test_format_html5():
         fields__foo=Field(),
     ).bind(
         request=req('get'),
-    ).as_html()
+    ).__html__()
     assert '<form' in actual
     assert '<input' in actual
     print(actual)
@@ -76,7 +76,7 @@ def test_format_html5():
 
 def test_format_html6():
     form = Form(fields__foo=Field()).bind(request=req('get'))
-    actual = form.fields.foo.as_html()
+    actual = form.fields.foo.__html__()
     print(actual)
     assert '<input' in actual
     assert type(actual) == SafeText

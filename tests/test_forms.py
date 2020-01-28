@@ -339,8 +339,8 @@ def test_non_editable_from_initial():
     class MyForm(Form):
         foo = Field(editable=False, initial=':bar:')
 
-    assert ':bar:' in MyForm().bind(request=req('get')).as_html()
-    assert ':bar:' in MyForm().bind(request=req('post', **{'-': ''})).as_html()
+    assert ':bar:' in MyForm().bind(request=req('get')).__html__()
+    assert ':bar:' in MyForm().bind(request=req('post', **{'-': ''})).__html__()
 
 
 def test_apply():
@@ -438,16 +438,16 @@ def test_render_template_string():
     form = Form(name='hello', fields__foo=Field(name='foo', template=None, template_string='{{ field.value }} {{ form.name }}'))
     form.bind(request=req('get', foo='7'))
     assert form.name == 'hello'
-    assert form.fields.foo.as_html() == '7 hello'
+    assert form.fields.foo.__html__() == '7 hello'
 
 
 def test_render_template():
-    assert '<form' in Form(fields__foo=Field()).bind(request=req('get', foo='7')).as_html()
+    assert '<form' in Form(fields__foo=Field()).bind(request=req('get', foo='7')).__html__()
 
 
 def test_render_on_dunder_html():
     form = Form(fields__foo=Field()).bind(request=req('get', foo='7'))
-    assert remove_csrf(form.as_html()) == remove_csrf(form.__html__())  # used by jinja2
+    assert remove_csrf(form.__html__()) == remove_csrf(form.__html__())  # used by jinja2
 
 
 def test_render_attrs():
@@ -499,7 +499,7 @@ def test_render_misc_attributes():
             attrs__id='$$$$5$$$$$'
         )
 
-    table = MyForm().bind(request=req('get', foo='!!!7!!!')).as_html()
+    table = MyForm().bind(request=req('get', foo='!!!7!!!')).__html__()
     assert '!!!7!!!' in table
     assert '###5###' in table
     assert '$$$11$$$' in table
@@ -510,13 +510,13 @@ def test_render_misc_attributes():
 
 
 def test_heading():
-    assert '>#foo#</' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).as_html()
+    assert '>#foo#</' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).__html__()
 
 
 def test_info():
     form = Form(fields__foo=Field.info(value='#foo#')).bind(request=req('get'))
     assert form.is_valid() is True
-    assert '#foo#' in form.as_html()
+    assert '#foo#' in form.__html__()
 
 
 def test_radio():
@@ -531,14 +531,14 @@ def test_radio():
     ).bind(
         request=req('get', foo='a'),
     )
-    soup = BeautifulSoup(form.as_html(), 'html.parser')
+    soup = BeautifulSoup(form.__html__(), 'html.parser')
     items = [x for x in soup.find_all('input') if x.attrs['type'] == 'radio']
     assert len(items) == 3
     assert [x.attrs['value'] for x in items if 'checked' in x.attrs] == ['a']
 
 
 def test_hidden():
-    soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).as_html(), 'html.parser')
+    soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).__html__(), 'html.parser')
     x = soup.find(id='id_foo')
     assert get_attrs(x, ['type', 'name', 'value']) == dict(type='hidden', name='foo', value='1')
 
@@ -553,7 +553,7 @@ def test_hidden_with_name():
         )
 
     page = MyPage().bind(request=req('get', **{'baz/foo': '1'}))
-    rendered_page = page.as_html()
+    rendered_page = page.__html__()
 
     assert page.default_child
     assert not page.children().baz.default_child
@@ -574,7 +574,7 @@ def test_hidden_with_name():
 
 
 def test_password():
-    assert ' type="password" ' in Form(fields__foo=Field.password()).bind(request=req('get', foo='1')).as_html()
+    assert ' type="password" ' in Form(fields__foo=Field.password()).bind(request=req('get', foo='1')).__html__()
 
 
 def test_choice_not_required():
@@ -608,7 +608,7 @@ def test_multi_choice():
         fields__foo=Field.multi_choice(choices=['a'])
     ).bind(
         request=req('get', foo=['0']),
-    ).as_html(), 'html.parser')
+    ).__html__(), 'html.parser')
     assert [x.attrs['multiple'] for x in soup.find_all('select')] == ['']
 
 
@@ -654,7 +654,7 @@ def test_multi_choice_queryset():
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
-    result = form.as_html()
+    result = form.__html__()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
 
@@ -674,7 +674,7 @@ def test_choice_queryset():
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
-    result = form.as_html()
+    result = form.__html__()
     print(result)
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
@@ -694,13 +694,13 @@ def test_choice_queryset_do_not_cache():
 
     # TODO: this test was written when Field.choice_queryset was not ajaxy. Now it's broken. I guess we need to query the ajax endpoint?
 
-    assert str(BeautifulSoup(form.as_html(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
+    assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
     # Now create a new queryset, check that we get two!
     User.objects.create(username='foo2')
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo.errors == set()
-    assert str(BeautifulSoup(form.as_html(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
+    assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
 
 
 @pytest.mark.django
@@ -1200,7 +1200,7 @@ def test_choice_shortcut():
 
 def test_render_custom():
     sentinel = '!!custom!!'
-    assert sentinel in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel)).bind(request=req('get')).as_html()
+    assert sentinel in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel)).bind(request=req('get')).__html__()
 
 
 def test_boolean_initial_true():
@@ -1249,7 +1249,7 @@ def test_file_no_roundtrip():
 
     form = FooForm().bind(request=req('post', foo=b'binary_content_here'))
     assert form.is_valid() is False, form.get_errors()
-    assert 'binary_content_here' not in form.as_html()
+    assert 'binary_content_here' not in form.__html__()
 
 
 @pytest.mark.django
@@ -1448,8 +1448,8 @@ def test_ajax_config_and_validate():
 
 def test_is_empty_form_marker():
     request = req('get')
-    assert AVOID_EMPTY_FORM.format('') in Form().bind(request=request).as_html()
-    assert AVOID_EMPTY_FORM.format('') not in Form(is_full_form=False).bind(request=request).as_html()
+    assert AVOID_EMPTY_FORM.format('') in Form().bind(request=request).__html__()
+    assert AVOID_EMPTY_FORM.format('') not in Form(is_full_form=False).bind(request=request).__html__()
 
 
 @override_settings(DEBUG=True)
@@ -1489,7 +1489,7 @@ def test_render():
         </form>
     """
 
-    actual_html = remove_csrf(MyForm().bind(request=req('get')).as_html())
+    actual_html = remove_csrf(MyForm().bind(request=req('get')).__html__())
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
     assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
@@ -1536,8 +1536,8 @@ def test_render_template_template_object():
 
 def test_action_render():
     action = Action(display_name='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.as_html().strip() == 'tag=a display_name=Title'
-    assert action.as_html() == action.__html__()  # used by jinja2
+    assert action.__html__().strip() == 'tag=a display_name=Title'
+    assert action.__html__() == action.__html__()  # used by jinja2
 
 
 def test_action_submit_render():
@@ -1546,8 +1546,8 @@ def test_action_submit_render():
         Action.submit(display_name='Title')
 
     action = Action.submit(attrs__value='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.as_html().strip() == 'tag=input display_name=None accesskey="s" type="submit" value="Title"'
-    assert action.as_html() == action.__html__()  # used by jinja2
+    assert action.__html__().strip() == 'tag=input display_name=None accesskey="s" type="submit" value="Title"'
+    assert action.__html__() == action.__html__()  # used by jinja2
 
 
 def test_action_repr():
@@ -1555,7 +1555,7 @@ def test_action_repr():
 
 
 def test_action_shortcut_icon():
-    assert Action.icon('foo', display_name='title').bind(request=None).as_html() == '<a ><i class="fa fa-foo"></i> title</a>'
+    assert Action.icon('foo', display_name='title').bind(request=None).__html__() == '<a ><i class="fa fa-foo"></i> title</a>'
 
 
 def test_render_grouped_actions():

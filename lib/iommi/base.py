@@ -160,15 +160,12 @@ class PagePart(RefinableObject):
         context=EMPTY,
         render=EMPTY,
     )
-    def as_html(self, *, context=None, render=None):
+    def __html__(self, *, context=None, render=None):
         assert False, 'Not implemented'
 
     def __str__(self):
         assert self._is_bound
-        return self.as_html()
-
-    def __html__(self):
-        return str(self)
+        return self.__html__()
 
     # TODO: ick! why is this on ALL PageParts?
     @dispatch(
@@ -180,7 +177,7 @@ class PagePart(RefinableObject):
         if context is None:
             context = {}
 
-        content = self.as_html(context=context, **render)
+        content = self.__html__(context=context, **render)
 
         assert 'content' not in context
         context['content'] = content
@@ -332,14 +329,14 @@ def render_template_name(template_name, **kwargs):
 PartType = Union[PagePart, str, Template]
 
 
-def as_html(*, part: PartType, context):
+def __html__(*, part: PartType, context):
     if isinstance(part, str):
         return part
     elif isinstance(part, Template):
         template = part
         return template.render(context=context)
     else:
-        return part.as_html(context=context)
+        return part.__html__(context=context)
 
 
 DISPATCH_PATH_SEPARATOR = '/'
