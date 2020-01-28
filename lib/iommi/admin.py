@@ -38,7 +38,7 @@ def all_models(app, table, **kwargs):
     def app_data():
         for app_name, models in apps.all_models.items():
             for name, cls in models.items():
-                if app.get(app_name, {}).get(name, {}).get('show', True):
+                if app.get(app_name, {}).get(name, {}).get('include', True):
                     yield Struct(app_name=app_name, model_name=name, model=cls)
 
     table = setdefaults_path(

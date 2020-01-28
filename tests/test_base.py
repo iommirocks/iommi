@@ -46,12 +46,12 @@ class MyPage(Page):
     t1 = Table.from_model(
         model=T1,
         columns__foo=dict(
-            query__show=True,
-            query__form__show=True,
+            query__include=True,
+            query__form__include=True,
         ),
         columns__bar=dict(
-            query__show=True,
-            query__form__show=True,
+            query__include=True,
+            query__form__include=True,
         ),
         default_child=True,
     )
@@ -59,12 +59,12 @@ class MyPage(Page):
     t2 = Table.from_model(
         model=T2,
         columns__foo=dict(
-            query__show=True,
-            query__form__show=True,
+            query__include=True,
+            query__form__include=True,
         ),
         columns__bar=dict(
-            query__show=True,
-            query__form__show=True,
+            query__include=True,
+            query__form__include=True,
         ),
     )
     assert not t2.default_child

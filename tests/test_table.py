@@ -166,7 +166,7 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__form__show=True)
+        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__include=True, bulk__include=True, query__form__include=True)
 
     t = TestTable(rows=TBar.objects.all().order_by('pk'))
     t.bind(request=req('get'))
@@ -452,10 +452,10 @@ def test_header_url():
     </table>""")
 
 
-def test_show():
+def test_include():
     class TestTable(NoSortTable):
         foo = Column()
-        bar = Column(show=False)
+        bar = Column(include=False)
 
     rows = [Struct(foo="foo", bar="bar")]
 
@@ -472,15 +472,15 @@ def test_show():
     </table>""")
 
 
-def test_show_lambda():
-    def show_callable(table, column):
+def test_include_lambda():
+    def include_callable(table, column):
         assert isinstance(table, TestTable)
         assert column.name == 'bar'
         return False
 
     class TestTable(NoSortTable):
         foo = Column()
-        bar = Column.icon('foo', show=show_callable)
+        bar = Column.icon('foo', include=include_callable)
 
     rows = [Struct(foo="foo", bar="bar")]
 
@@ -638,7 +638,7 @@ def test_django_table_pagination():
 
     class TestTable(Table):
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
-        b = Column(show=False)  # should still be able to filter on this though!
+        b = Column(include=False)  # should still be able to filter on this though!
 
     verify_table_html(table=TestTable(rows=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
@@ -668,7 +668,7 @@ def test_django_table_pagination_custom_paginator():
 
     class TestTable(Table):
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
-        b = Column(show=False)  # should still be able to filter on this though!
+        b = Column(include=False)  # should still be able to filter on this though!
 
     from django.core.paginator import Paginator
 
@@ -710,8 +710,8 @@ def test_actions():
 
         class Meta:
             actions = dict(
-                a=Action(display_name='Foo', attrs__href='/foo/', show=lambda table, **_: table.rows is not rows),
-                b=Action(display_name='Bar', attrs__href='/bar/', show=lambda table, **_: table.rows is rows),
+                a=Action(display_name='Foo', attrs__href='/foo/', include=lambda table, **_: table.rows is not rows),
+                b=Action(display_name='Bar', attrs__href='/bar/', include=lambda table, **_: table.rows is rows),
                 c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
                 d=dict(display_name='Qux', attrs__href='/bar/', group='Other'),
                 e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
@@ -761,8 +761,8 @@ def test_bulk_edit():
     assert [x.pk for x in foos] == [1, 2, 3, 4]
 
     class TestTable(Table):
-        a = Column.integer(sortable=False, bulk__show=True)  # turn off sorting to not get the link with random query params
-        b = Column(bulk__show=True)
+        a = Column.integer(sortable=False, bulk__include=True)  # turn off sorting to not get the link with random query params
+        b = Column(bulk__include=True)
 
     result = TestTable(
         rows=TFoo.objects.all(),
@@ -833,8 +833,8 @@ def test_query():
     TFoo(a=4, b="bar").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, query__show=True, query__form__show=True)  # turn off sorting to not get the link with random query params
-        b = Column.substring(query__show=True, query__form__show=True)
+        a = Column.number(sortable=False, query__include=True, query__form__include=True)  # turn off sorting to not get the link with random query params
+        b = Column.substring(query__include=True, query__form__include=True)
 
         class Meta:
             sortable = False
@@ -996,8 +996,8 @@ def test_template_string():
             cell__format=explode,
             cell__url=explode,
             cell__url_title=explode,
-            query__show=True,
-            query__form__show=True,
+            query__include=True,
+            query__form__include=True,
         )
 
     verify_table_html(
@@ -1246,7 +1246,7 @@ def test_choice_queryset():
     TFoo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query__show=True, query__form__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
+        foo = Column.choice_queryset(query__include=True, query__form__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
 
         class Meta:
             model = TFoo
@@ -1272,7 +1272,7 @@ def test_multi_choice_queryset():
     TFoo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(query__show=True, query__form__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(query__include=True, query__form__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
             model = TFoo
@@ -1298,7 +1298,7 @@ def test_query_namespace_inject():
         foo = Table(
             rows=[],
             model=TFoo,
-            columns__a=Column(name='a', query__show=True, query__form__show=True),
+            columns__a=Column(name='a', query__include=True, query__form__include=True),
             query__form__post_validation=post_validation,
         ).bind(
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
@@ -1406,9 +1406,9 @@ def test_explicit_table_does_not_use_from_model():
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
             query__form__extra__endpoint_attr='b',
-            query__show=True,
-            query__form__show=True,
-            bulk__show=True,
+            query__include=True,
+            query__form__include=True,
+            bulk__include=True,
         )
 
     p = TestTable().as_page().bind(request=None)
@@ -1440,9 +1440,9 @@ def test_ajax_endpoint():
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
             query__form__extra__endpoint_attr='b',
-            query__show=True,
-            query__form__show=True,
-            bulk__show=True,
+            query__include=True,
+            query__form__include=True,
+            bulk__include=True,
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
@@ -1558,7 +1558,7 @@ def test_defaults():
     assert not col.auto_rowspan
     assert not col.sort_default_desc
     assert col.sortable
-    assert col.show
+    assert col.include
 
 
 def test_yes_no_formatter():
@@ -1695,7 +1695,7 @@ def test_yield_rows():
 @pytest.mark.django_db
 def test_non_model_based_column_should_not_explore_in_query_object_creation():
     class MyTable(Table):
-        c = Column(attr=None, query__show=True, query__form__show=True)
+        c = Column(attr=None, query__include=True, query__form__include=True)
 
         class Meta:
             model = TFoo
@@ -1753,9 +1753,9 @@ def test_from_model_with_inheritance():
     t = MyTable.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        columns__value__query__show=True,
-        columns__value__query__form__show=True,
-        columns__value__bulk__show=True,
+        columns__value__query__include=True,
+        columns__value__query__form__include=True,
+        columns__value__bulk__include=True,
     ).bind(
         request=req('get'),
     )
@@ -1785,7 +1785,7 @@ def test_hide_named_column():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(columns__foo__show=False, rows=[])
+    table = MyTable(columns__foo__include=False, rows=[])
     table.bind(request=None)
     assert len(table.columns) == 0
 
@@ -1794,7 +1794,7 @@ def test_override_doesnt_stick():
     class MyTable(Table):
         foo = Column()
 
-    table = MyTable(columns__foo__show=False, rows=[])
+    table = MyTable(columns__foo__include=False, rows=[])
     table.bind(request=None)
     assert len(table.columns) == 0
 
@@ -1811,7 +1811,7 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table.from_model(model=TBar, columns__foo__query=dict(show=True, form__show=True)).as_page()
+        return Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
 
     from iommi import middleware
     m = middleware(get_response)
@@ -1830,7 +1830,7 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table.from_model(model=TBar, columns__foo__query=dict(show=True, form__show=True)).as_page()
+    page = Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
     assert page.children().table.default_child
     target, parents = find_target(path='/table/query/form/fields/foo', root=page)
@@ -1842,8 +1842,8 @@ def test_dunder_name_for_column():
         class Meta:
             model = TBar
 
-        foo = Column(query__show=True, query__form__show=True)
-        foo__a = Column(query__show=True, query__form__show=True)
+        foo = Column(query__include=True, query__form__include=True)
+        foo__a = Column(query__include=True, query__form__include=True)
 
     table = FooTable()
     table.bind(request=None)

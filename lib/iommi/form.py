@@ -849,7 +849,7 @@ class Field(PagePart):
         """
         evaluated_attributes = [
             'name',
-            'show',
+            'include',
             'attr',
             'display_name',
             'after',
@@ -1158,7 +1158,8 @@ class Field(PagePart):
     # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
     @classmethod
     @class_shortcut(
-        show=True,
+        # TODO: isn't include true the default? ^_-
+        include=True,
         editable=False,
         attr=None,
     )

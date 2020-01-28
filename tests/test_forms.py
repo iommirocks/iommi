@@ -352,17 +352,17 @@ def test_apply():
     assert Struct(foo=17) == form.apply(Struct())
 
 
-def test_show():
-    assert list(Form(fields__foo=Field(show=True)).bind(request=req('get')).fields.keys()) == ['foo']
-    assert list(Form(fields__foo=Field(show=False)).bind(request=req('get')).fields.keys()) == []
-    assert list(Form(fields__foo=Field(show=lambda form, field: False)).bind(request=req('get')).fields.keys()) == []
+def test_include():
+    assert list(Form(fields__foo=Field(include=True)).bind(request=req('get')).fields.keys()) == ['foo']
+    assert list(Form(fields__foo=Field(include=False)).bind(request=req('get')).fields.keys()) == []
+    assert list(Form(fields__foo=Field(include=lambda form, field: False)).bind(request=req('get')).fields.keys()) == []
 
 
 def test_declared_fields():
     form = Form(
         fields=dict(
-            foo=Field(show=True),
-            bar=Field(show=False),
+            foo=Field(include=True),
+            bar=Field(include=False),
         ),
     ).bind(
         request=req('get'),
@@ -1563,12 +1563,12 @@ def test_render_grouped_actions():
     form = Form(
         actions=dict(
             a=Action(display_name='a'),
-            b=Action(display_name='b', show=lambda form, **_: False),
-            q=Action(display_name='q', show=lambda form, **_: True),
+            b=Action(display_name='b', include=lambda form, **_: False),
+            q=Action(display_name='q', include=lambda form, **_: True),
             c=Action(display_name='c', group='group'),
             d=Action(display_name='d', group='group'),
             f=Action(display_name='f', group='group'),
-            submit__show=False,
+            submit__include=False,
         ),
     ).bind(
         request=req('get'),
@@ -1605,9 +1605,9 @@ def test_render_grouped_actions():
     assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
 
 
-def test_show_prevents_read_from_instance():
+def test_include_prevents_read_from_instance():
     class MyForm(Form):
-        foo = Field(show=False)
+        foo = Field(include=False)
 
     MyForm(instance=object()).bind(request=req('get'))
 
@@ -1654,7 +1654,7 @@ def test_auto_field():
     form = Form.from_model(model=Foo).bind(request=req('get'))
     assert 'id' not in form.fields
 
-    form = Form.from_model(model=Foo, fields__id__show=True).bind(request=req('get'))
+    form = Form.from_model(model=Foo, fields__id__include=True).bind(request=req('get'))
     assert 'id' in form.fields
 
 
@@ -1869,7 +1869,7 @@ def test_override_doesnt_stick():
     class MyForm(Form):
         foo = Field()
 
-    form = MyForm(fields__foo__show=False).bind(request=req('get'))
+    form = MyForm(fields__foo__include=False).bind(request=req('get'))
     assert len(form.fields) == 0
 
     form2 = MyForm().bind(request=req('get'))

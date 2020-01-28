@@ -93,15 +93,15 @@ Now I can display a list of Bars in a table like this:
             # Show "a" from "b". This works for plain old objects too.
             b__a = Column.number(
                 # put this field into the query language
-                query__show=True,
+                query__include=True,
 
                 # put this field into the simple filtering GUI
-                query__form__show=True)
+                query__form__include=True)
             c = Column(
                 # Enable bulk editing for this field
                 bulk=True,
-                query_show=True,
-                query__form__show=True)
+                query_include=True,
+                query__form__include=True)
 
         return BarTable(data=Bar.objects.all())
 

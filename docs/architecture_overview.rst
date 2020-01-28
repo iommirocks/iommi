@@ -73,8 +73,8 @@ constructor:
 .. code:: python
 
     my_table = MyTable(
-        columns__foo__show=False,  # <- hides the column foo
-        sortable=True,            # <- turns on sorting again
+        columns__foo__include=False,  # <- hides the column foo
+        sortable=True,                # <- turns on sorting again
     )
 
 ...without having to create a new class inheriting from ``MyTable``. So
@@ -85,7 +85,7 @@ Namespace dispatching
 ---------------------
 
 I've already hinted at this above in the example where we do
-``columns__foo__show=False``. This is an example of the powerful
+``columns__foo__include=False``. This is an example of the powerful
 namespace dispatch mechanism from tri.declarative. It's inspired by the
 query syntax of Django where you use ``__`` to jump namespace. (If
 you're not familiar with Django, here's the gist of it: you can do

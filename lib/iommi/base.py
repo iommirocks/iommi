@@ -32,10 +32,25 @@ from tri_declarative import (
     Refinable,
     RefinableObject,
     setdefaults_path,
-    should_show,
     sort_after,
+    get_callable_description,
 )
 from tri_struct import Struct
+
+
+def should_include(item):
+    try:
+        r = item.include
+    except AttributeError:
+        try:
+            r = item['include']
+        except (TypeError, KeyError):
+            return True
+
+    if callable(r):
+        assert False, "`include` was a callable. You probably forgot to evaluate it. The callable was: {}".format(get_callable_description(r))
+
+    return r
 
 
 class GroupPathsByChildrenError(Exception):
@@ -139,7 +154,7 @@ def perform_post_dispatch(*, root, path, value):
 # TODO: abc?
 class PagePart(RefinableObject):
     name: str = Refinable()
-    show: bool = Refinable()
+    include: bool = Refinable()
     after: Union[int, str] = Refinable()
     default_child = Refinable()
     extra: Namespace = Refinable()
@@ -150,7 +165,7 @@ class PagePart(RefinableObject):
 
     @dispatch(
         extra=EMPTY,
-        show=True,
+        include=True,
         name=None,
     )
     def __init__(self, **kwargs):
@@ -318,8 +333,8 @@ class PagePart(RefinableObject):
     def _evaluate_attribute(self, key, strict=True):
         evaluate_member(self, key, **self.evaluate_attribute_kwargs(), strict=strict)
 
-    def _evaluate_show(self):
-        self._evaluate_attribute('show')
+    def _evaluate_include(self):
+        self._evaluate_attribute('include')
 
 
 def render_template_name(template_name, **kwargs):
@@ -422,9 +437,9 @@ class Members(PagePart):
         bound_items = [item for item in sort_after([x.bind(parent=self) for x in self.declared_items.values()])]
 
         for item in bound_items:
-            item._evaluate_show()
+            item._evaluate_include()
 
-        self.members = {item.name: item for item in bound_items if should_show(item)}
+        self.members = {item.name: item for item in bound_items if should_include(item)}
 
     def get(self, key, default=None):
         return self.members.get(key, default)

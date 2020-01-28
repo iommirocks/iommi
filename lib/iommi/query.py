@@ -165,7 +165,7 @@ class Variable(PagePart):
         gui_op='=',
         attr=MISSING,
         form=Namespace(
-            show=False,
+            include=False,
             required=False,
         ),
         default_child=False,
@@ -174,7 +174,7 @@ class Variable(PagePart):
         """
         Parameters with the prefix "form__" will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
 
-        :param form__show: set to True to display a GUI element for this variable in the basic style interface.
+        :param form__include: set to True to display a GUI element for this variable in the basic style interface.
         :param form__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
         """
 
@@ -198,7 +198,7 @@ class Variable(PagePart):
 
         evaluated_attributes = [
             'name',
-            'show',
+            'include',
             'after',
             'default_child',
             'extra',
@@ -520,7 +520,7 @@ class Query(PagePart):
             fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
         for variable in self.variables.values():
-            if variable.form is not None and variable.form.show:
+            if variable.form is not None and variable.form.include:
                 # pass form__* parameters to the GUI component
                 assert variable.name is not MISSING
                 assert variable.attr is not MISSING

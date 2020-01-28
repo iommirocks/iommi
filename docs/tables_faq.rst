@@ -117,14 +117,14 @@ this will put the columns in the order a, c, b.
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass the value :code:`query__show=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass :code:`query__form__show=True`:
+Pass the value :code:`query__include=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass :code:`query__form__include=True`:
 
 .. code:: python
 
     Table.from_model(
         model=Foo,
-        columns__a__query__show=True,
-        columns__a__query__form__show=True,
+        columns__a__query__include=True,
+        columns__a__query__form__include=True,
     )
 
 .. _attrs:
@@ -221,16 +221,18 @@ See the question `How do I create a column based on computed data?`_
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Just pass :code:`show=False` to hide the column or :code:`show=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
+Just pass :code:`include=False` to hide the column or :code:`include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
 
 .. code:: python
 
     Table.from_model(
         model=Foo,
-        columns__a__show=lambda table, **_: table.request().GET.get('some_parameter') == 'hello!',
+        columns__a__include=lambda table, **_: table.request().GET.get('some_parameter') == 'hello!',
     )
 
 This will show the column :code:`a` only if the GET parameter :code:`some_parameter` is set to `hello!`.
+
+To be more precise, :code:`include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the :code:`render_column` parameter instead.
 
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -365,7 +367,7 @@ If you want to filter based on a freetext query on one or more columns we've got
         columns__b__query__freetext=True,
     )
 
-(You don't need to enable querying with :code:`columns__b__query__show=True` first)
+(You don't need to enable querying with :code:`columns__b__query__include=True` first)
 
 What is the difference between `attr` and `name`?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

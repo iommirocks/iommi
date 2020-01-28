@@ -36,8 +36,8 @@ from tests.models import (
 
 
 class MyTestQuery(Query):
-    foo_name = Variable(attr='foo', freetext=True, form__show=True)
-    bar_name = Variable.case_sensitive(attr='bar', freetext=True, form__show=True)
+    foo_name = Variable(attr='foo', freetext=True, form__include=True)
+    bar_name = Variable.case_sensitive(attr='bar', freetext=True, form__include=True)
     baz_name = Variable(attr='baz')
 
 
@@ -50,18 +50,18 @@ F.__repr__ = f_repr
 Q.__repr__ = lambda self: str(self)
 
 
-def test_show():
+def test_include():
     class ShowQuery(Query):
         foo = Variable()
         bar = Variable(
-            show=lambda query, variable: query.request().GET['foo'] == 'show' and variable.extra.foo == 'show2',
-            extra__foo='show2')
+            include=lambda query, variable: query.request().GET['foo'] == 'include' and variable.extra.foo == 'include2',
+            extra__foo='include2')
 
     # noinspection PyTypeChecker
     assert list(ShowQuery().bind(request=req('get', foo='hide')).variables.keys()) == ['foo']
 
     # noinspection PyTypeChecker
-    assert list(ShowQuery().bind(request=req('get', foo='show')).variables.keys()) == ['foo', 'bar']
+    assert list(ShowQuery().bind(request=req('get', foo='include')).variables.keys()) == ['foo', 'bar']
 
 
 def test_request_data():
@@ -143,7 +143,7 @@ def test_request_to_q_advanced():
 
 def test_request_to_q_simple():
     class Query2(MyTestQuery):
-        bazaar = Variable.boolean(attr='quux__bar__bazaar', form__show=True)
+        bazaar = Variable.boolean(attr='quux__bar__bazaar', form__include=True)
 
     # noinspection PyTypeChecker
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
@@ -164,7 +164,7 @@ def test_boolean_parse():
 
 def test_integer_request_to_q_simple():
     class Query2(Query):
-        bazaar = Variable.integer(attr='quux__bar__bazaar', form=Struct(show=True))
+        bazaar = Variable.integer(attr='quux__bar__bazaar', form=Struct(include=True))
 
     # noinspection PyTypeChecker
     query2 = Query2().bind(request=req('get', bazaar='11'))
@@ -203,7 +203,7 @@ def test_invalid_variable():
 def test_invalid_form_data():
     # noinspection PyTypeChecker
     query2 = Query(
-        variables__bazaar=Variable.integer(attr='quux__bar__bazaar', form__show=True),
+        variables__bazaar=Variable.integer(attr='quux__bar__bazaar', form__include=True),
     ).bind(request=req('get', bazaar='asds'))
     assert query2.to_query_string() == ''
     assert repr(query2.to_q()) == repr(Q())
@@ -212,7 +212,7 @@ def test_invalid_form_data():
 def test_none_attr():
     # noinspection PyTypeChecker
     query2 = Query(
-        variables__bazaar=Variable(attr=None, form__show=True),
+        variables__bazaar=Variable(attr=None, form__include=True),
     ).bind(request=req('get', bazaar='foo'))
     assert repr(query2.to_q()) == repr(Q())
 
@@ -267,7 +267,7 @@ def test_choice_queryset():
     class Query2(Query):
         foo = Variable.choice_queryset(
             choices=Foo.objects.all(),
-            form__show=True,
+            form__include=True,
             value_to_q_lookup='foo')
         baz = Variable.choice_queryset(
             model=Foo,
@@ -337,7 +337,7 @@ def test_multi_choice_queryset():
     class Query2(Query):
         foo = Variable.multi_choice_queryset(
             choices=Foo.objects.all(),
-            form__show=True,
+            form__include=True,
             value_to_q_lookup='foo')
         baz = Variable.multi_choice_queryset(
             model=Foo,
@@ -411,7 +411,7 @@ def test_endpoint_dispatch():
 
     class MyQuery(Query):
         foo = Variable.choice_queryset(
-            form__show=True,
+            form__include=True,
             form__attr='name',
             choices=EndPointDispatchModel.objects.all().order_by('id'),
         )
@@ -432,7 +432,7 @@ def test_endpoint_dispatch():
 def test_endpoint_dispatch_errors():
     class MyQuery(Query):
         foo = Variable.choice(
-            form__show=True,
+            form__include=True,
             form__attr='name',
             choices=('a', 'b'),
         )
@@ -473,7 +473,7 @@ def test_nice_error_message():
 
 def test_escape_quote():
     class MyQuery(Query):
-        foo = Variable(form__show=True)
+        foo = Variable(form__include=True)
 
     # noinspection PyTypeChecker
     query = MyQuery().bind(request=Struct(method='GET', GET={'foo': '"', '-': '-'}))
@@ -493,10 +493,10 @@ def test_escape_quote_freetext():
 
 def test_freetext_combined_with_other_stuff():
     class MyTestQuery(Query):
-        foo_name = Variable(attr='foo', freetext=True, form__show=True)
-        bar_name = Variable.case_sensitive(attr='bar', freetext=True, form__show=True)
+        foo_name = Variable(attr='foo', freetext=True, form__include=True)
+        bar_name = Variable.case_sensitive(attr='bar', freetext=True, form__include=True)
 
-        baz_name = Variable(attr='baz', form__show=True)
+        baz_name = Variable(attr='baz', form__include=True)
 
     expected = repr(Q(**{'baz__iexact': '123'}) & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
 
@@ -535,7 +535,7 @@ def test_from_model_with_inheritance():
     query = MyQuery.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
-        variables__value__form__show=True,
+        variables__value__form__include=True,
     )
     query.bind(request=req('get'))
 

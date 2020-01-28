@@ -247,9 +247,9 @@ class Column(PagePart):
         sort_default_desc=False,
         sortable=True,
         auto_rowspan=False,
-        bulk__show=False,
-        query__show=False,
-        query__form__show=False,
+        bulk__include=False,
+        query__include=False,
+        query__form__include=False,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
@@ -272,7 +272,7 @@ class Column(PagePart):
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
         :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
         :param url: URL of the header. This should only be used if "sorting" is off.
-        :param show: set this to False to hide the column
+        :param include: set this to False to hide the column
         :param sortable: set this to False to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
         :param sort_default_desc: Set to True to make table sort link to sort descending first.
@@ -338,7 +338,7 @@ class Column(PagePart):
 
         evaluated_attributes = [
             'name',
-            'show',
+            'include',
             'attr',
             'after',
             'default_child',
@@ -403,14 +403,14 @@ class Column(PagePart):
         cell__value=lambda table, **_: True,
         cell__attrs__class__cj=True,
     )
-    def icon(cls, icon, icon_title=None, show=True, call_target=None, **kwargs):
+    def icon(cls, icon, icon_title=None, include=True, call_target=None, **kwargs):
         """
         Shortcut to create font awesome-style icons.
 
         :param icon: the font awesome name of the icon
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate_strict(show, table=table, **rest),
+            include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
             header__attrs__title=icon_title,
             cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
         ))
@@ -460,12 +460,12 @@ class Column(PagePart):
         cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
         cell__value='Run',
     )
-    def run(cls, show=True, call_target=None, **kwargs):
+    def run(cls, include=True, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate_strict(show, table=table, **rest),
+            include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
         ))
         return call_target(**kwargs)
 
@@ -474,7 +474,7 @@ class Column(PagePart):
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
     )
-    def select(cls, checkbox_name='pk', show=True, checked=lambda x: False, call_target=None, **kwargs):
+    def select(cls, checkbox_name='pk', include=True, checked=lambda x: False, call_target=None, **kwargs):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
@@ -482,7 +482,7 @@ class Column(PagePart):
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
         """
         setdefaults_path(kwargs, dict(
-            show=lambda table, **rest: evaluate_strict(show, table=table, **rest),
+            include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
             cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
         ))
         return call_target(**kwargs)
@@ -741,7 +741,7 @@ class BoundRow(object):
 class BoundCell(object):
 
     def __init__(self, bound_row, column):
-        assert column.show
+        assert column.include
 
         self.column = column
         self.bound_row = bound_row
@@ -1207,8 +1207,8 @@ class Table(PagePart):
 
             # Special case for automatic query config
             if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
-                column.query.show = True
-                column.query.form.show = True
+                column.query.include = True
+                column.query.form.include = True
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
@@ -1231,8 +1231,8 @@ class Table(PagePart):
 
             def generate_variables():
                 for column in self.columns.values():
-                    # TODO: column.query.show... is this evaluated here?
-                    if column.query.show:
+                    # TODO: column.query.include... is this evaluated here?
+                    if column.query.include:
                         query_namespace = setdefaults_path(
                             Namespace(),
                             column.query,
@@ -1269,7 +1269,7 @@ class Table(PagePart):
 
             def generate_bulk_fields():
                 for column in self.columns.values():
-                    if column.bulk.show:
+                    if column.bulk.include:
                         bulk_namespace = setdefaults_path(
                             Namespace(),
                             column.bulk,
@@ -1293,7 +1293,7 @@ class Table(PagePart):
                     fields=bulk_fields,
                     name='bulk',
                     post_handler=bulk__post_handler,
-                    actions__submit__show=False,
+                    actions__submit__include=False,
                     **self.bulk
                 )
                 self._bulk_form.bind(parent=self)

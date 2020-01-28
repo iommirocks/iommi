@@ -43,7 +43,7 @@ def setup_db_compat_django():
     register_column_factory(TextField, Shortcut(call_target__attribute='text'))
     register_column_factory(FloatField, Shortcut(call_target__attribute='float'))
     register_column_factory(IntegerField, Shortcut(call_target__attribute='integer'))
-    register_column_factory(AutoField, Shortcut(call_target__attribute='integer', show=False))
+    register_column_factory(AutoField, Shortcut(call_target__attribute='integer', include=False))
     register_column_factory(ManyToOneRel, None)
     register_column_factory(ManyToManyField, Shortcut(call_target__attribute='many_to_many'))
     register_column_factory(ManyToManyRel, None)
@@ -63,7 +63,7 @@ def setup_db_compat_django():
     register_variable_factory(FloatField, Shortcut(call_target__attribute='float')),
     register_variable_factory(IntegerField, Shortcut(call_target__attribute='integer')),
 
-    register_variable_factory(AutoField, Shortcut(call_target__attribute='integer', show=False))
+    register_variable_factory(AutoField, Shortcut(call_target__attribute='integer', include=False))
     register_variable_factory(ManyToManyField, Shortcut(call_target__attribute='many_to_many'))
 
     register_variable_factory(ManyToOneRel, None),
@@ -90,7 +90,7 @@ def setup_db_compat_django():
     register_field_factory(TextField, Shortcut(call_target__attribute='textarea'))
     register_field_factory(FloatField, Shortcut(call_target__attribute='float'))
     register_field_factory(IntegerField, Shortcut(call_target__attribute='integer'))
-    register_field_factory(AutoField, Shortcut(call_target__attribute='integer', show=False))
+    register_field_factory(AutoField, Shortcut(call_target__attribute='integer', include=False))
     register_field_factory(ManyToOneRel, None)
     register_field_factory(ManyToManyRel, None)
     register_field_factory(FileField, Shortcut(call_target__attribute='file'))

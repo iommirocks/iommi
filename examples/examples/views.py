@@ -228,13 +228,13 @@ def table_readme_example_2(request):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         # TODO: this doesn't work anymore :(
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
-            query__show=True,  # put this field into the query language
-            query__form__show=True,  # put this field into the simple filtering GUI
+            query__include=True,  # put this field into the query language
+            query__form__include=True,  # put this field into the simple filtering GUI
         )
         c = Column(
-            bulk__show=True,  # Enable bulk editing for this field
-            query__show=True,
-            query__form__show=True,
+            bulk__include=True,  # Enable bulk editing for this field
+            query__include=True,
+            query__form__include=True,
         )
 
     return BarTable(rows=TBar.objects.all(), page_size=20)
@@ -251,11 +251,11 @@ def table_kitchen_sink(request):
             render_column=False,
             model=TBar,
             field_name='b',
-            bulk__show=True,
-            query__show=True,
-            query__form__show=True,
+            bulk__include=True,
+            query__include=True,
+            query__form__include=True,
         )
-        c = Column(bulk__show=True)  # The form is created automatically
+        c = Column(bulk__include=True)  # The form is created automatically
 
         d = Column(
             display_name='Display name',
@@ -272,7 +272,7 @@ def table_kitchen_sink(request):
             cell__url_title='cell url title',
         )
         e = Column(group='Foo', cell__value='explicit value', sortable=False)
-        f = Column(show=False, sortable=False)
+        f = Column(include=False, sortable=False)
         g = Column(attr='c', sortable=False)
         django_templates_for_cells = Column(sortable=False, cell__value=None, cell__template='kitchen_sink_cell_template.html')
 
@@ -286,16 +286,16 @@ def table_kitchen_sink(request):
 def iommi_admin(request, **kwargs):
     del request
     return admin(
-        all_models__app__sessions__session__show=False,
+        all_models__app__sessions__session__include=False,
         list_model__app__auth__user__table__columns=dict(
-            # groups__query=dict(show=True, form__show=True),
+            # groups__query=dict(include=True, form__include=True),
             # email__call_target__attribute='freetext_search',
             # username__call_target__attribute='freetext_search',
             username__query__freetext=True,
-            username__query__show=True,
+            username__query__include=True,
             # first__call_target__attribute='freetext',
             # last__call_target__attribute='freetext',
-            password__show=False,
+            password__include=False,
         ),
         **kwargs,
     )
