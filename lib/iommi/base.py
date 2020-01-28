@@ -403,7 +403,7 @@ def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cl
                     item = setdefaults_path(
                         Namespace(),
                         item,
-                        call_target=cls,
+                        call_target__cls=cls,
                         name=name,
                     )
                     unbound_items[name] = item()

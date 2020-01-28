@@ -376,7 +376,7 @@ def test_non_editable():
         fields__foo=Field(editable=False),
     ).bind(
         request=req('get'),
-    ).fields.foo.input__template == 'iommi/form/non_editable.html'
+    ).fields.foo.input.template == 'iommi/form/non_editable.html'
 
 
 def test_non_editable_form():

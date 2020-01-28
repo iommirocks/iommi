@@ -104,26 +104,15 @@ def create_object(*, model, form, **kwargs):
     )
 
 
-# TODO: there should be a Form.as_delete_page() which is basically Form.as_edit_page but with POST, a post_handler and editable=False
-@dispatch()
+@dispatch(
+    form__call_target__attribute='as_delete_page',
+)
 def delete_object(*, pk, model, form, **kwargs):
-    obj = model.objects.get(pk=pk)
-
-    def delete_obj(form, **_):
-        obj.delete()
-        return HttpResponseRedirect('../..')
-
-    return Page(
+    assert pk
+    return form(
+        instance=model.objects.get(pk=pk),
         parts__header=admin_h1,
-        parts__title=html.h1('Are you sure you want to delete this object?'),
-        parts__obj=str(obj),
-        parts__form=form(
-            actions__submit=dict(
-                attrs__value='Delete',
-            ),
-            post_handler=delete_obj,
-        ),
-        **kwargs,
+        **kwargs
     )
 
 

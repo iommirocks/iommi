@@ -1549,12 +1549,16 @@ def test_defaults():
     class TestTable(Table):
         foo = Column()
 
-    assert not TestTable.foo.query.show
-    assert not TestTable.foo.bulk.show
-    assert not TestTable.foo.auto_rowspan
-    assert TestTable.foo.sortable
-    assert not TestTable.foo.sort_default_desc
-    assert TestTable.foo.show
+    table = TestTable()
+    table.bind(request=None)
+
+    col = table.columns.foo
+    assert not col.query.show
+    assert not col.bulk.show
+    assert not col.auto_rowspan
+    assert not col.sort_default_desc
+    assert col.sortable
+    assert col.show
 
 
 def test_yes_no_formatter():

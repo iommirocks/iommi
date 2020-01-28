@@ -574,6 +574,13 @@ class Action(PagePart):
 
     @classmethod
     @class_shortcut(
+        call_target__attribute='submit',
+    )
+    def delete(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
         icon_classes=[],
     )
     def icon(cls, icon, *, display_name=None, call_target=None, icon_classes=None, **kwargs):
@@ -883,7 +890,7 @@ class Field(PagePart):
 
         if not self.editable:
             # TODO: style!
-            self.input__template = 'iommi/form/non_editable.html'
+            self.input.template = 'iommi/form/non_editable.html'
 
     def _evaluate_attribute_kwargs(self):
         return dict(form=self.parent, field=self)
@@ -1293,7 +1300,7 @@ class Form(PagePart):
         attrs__action='',
         attrs__method='post',
         endpoint=EMPTY,
-        actions__submit__call_target=Action.submit,
+        actions__submit__call_target__attribute='submit',
     )
     def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, **kwargs):
 
@@ -1628,7 +1635,7 @@ class Form(PagePart):
         setdefaults_path(
             kwargs,
             actions__submit=dict(
-                call_target__attribute='submit',
+                # call_target__attribute='submitasd',
                 attrs__value=extra.title,
                 attrs__name=name,
             ),
@@ -1663,6 +1670,24 @@ class Form(PagePart):
     def as_edit_page(cls, *, name, call_target=None, instance, **kwargs):
         return call_target(instance=instance, name=name or 'edit', **kwargs)
 
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='as_create_or_edit_page',
+        name='delete',
+        extra__is_create=False,
+    )
+    def as_delete_page(cls, *, name, call_target=None, instance, **kwargs):
+        return call_target(
+            instance=instance,
+            name=name or 'delete',
+            attrs__method='post',
+            extra__title='Delete',
+            actions__submit__call_target__attribute='delete',
+            editable=False,
+            post_handler=delete_object__post_handler,
+            **kwargs
+        )
+
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
     if redirect_to is None:
@@ -1671,3 +1696,8 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
         else:
             redirect_to = "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
     return redirect(request=request, redirect_to=redirect_to, form=form)
+
+
+def delete_object__post_handler(form, **_):
+    form.instance.delete()
+    return HttpResponseRedirect('../..')

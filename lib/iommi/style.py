@@ -136,7 +136,11 @@ bootstrap = Style(
             button__attrs__class={
                 'btn': True,
                 'btn-primary': True,
-            }
+            },
+            delete__attrs__class={
+                'btn-primary': False,
+                'btn-danger': True,
+            },
         ),
     ),
     Table=dict(

@@ -1,26 +1,37 @@
 import pytest
+from django.template import RequestContext
 from tri_struct import merged
 
-from iommi.form import Field, Form
 from iommi._db_compat import field_defaults_factory
-from iommi._web_compat import render_to_string, format_html, render_template, Template
+from iommi._web_compat import (
+    Template,
+    format_html,
+    render_template,
+)
+from iommi.form import (
+    Field,
+    Form,
+)
+
 from .compat import SafeText
 from .helpers import req
 
 
 def test_render_to_string():
-    assert render_to_string(
-        template_name='iommi/form/non_editable.html',
-        request=req('get'),
-        context=dict(
-            field=dict(
-                input=dict(
-                    attrs=dict(
-                        id=SafeText('<a b c><d><e>'),
+    t = Template('<span id="{{ field.input.attrs.id }}">{{ field.rendered_value }}</span>')
+    assert t.render(
+        context=RequestContext(
+            req('get'),
+            dict(
+                field=dict(
+                    input=dict(
+                        attrs=dict(
+                            id=SafeText('<a b c><d><e>'),
+                        ),
                     ),
+                    rendered_value=SafeText('<a b c><d><e>'),
                 ),
-                rendered_value=SafeText('<a b c><d><e>'),
-            ),
+            )
         )
     ).strip() == '<span id="<a b c><d><e>"><a b c><d><e></span>'
 
