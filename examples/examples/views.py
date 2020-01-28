@@ -229,12 +229,12 @@ def table_readme_example_2(request):
         # TODO: this doesn't work anymore :(
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
             query__show=True,  # put this field into the query language
-            query__gui__show=True,  # put this field into the simple filtering GUI
+            query__form__show=True,  # put this field into the simple filtering GUI
         )
         c = Column(
             bulk__show=True,  # Enable bulk editing for this field
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         )
 
     return BarTable(rows=TBar.objects.all(), page_size=20)
@@ -253,7 +253,7 @@ def table_kitchen_sink(request):
             field_name='b',
             bulk__show=True,
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         )
         c = Column(bulk__show=True)  # The form is created automatically
 
@@ -288,7 +288,7 @@ def iommi_admin(request, **kwargs):
     return admin(
         all_models__app__sessions__session__show=False,
         list_model__app__auth__user__table__columns=dict(
-            # groups__query=dict(show=True, gui__show=True),
+            # groups__query=dict(show=True, form__show=True),
             # email__call_target__attribute='freetext_search',
             # username__call_target__attribute='freetext_search',
             username__query__freetext=True,

@@ -134,7 +134,7 @@ def choice_queryset_value_to_q(variable, op, value_string_or_f):
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{variable.attr: None})
     try:
-        instance = variable.gui.choices.get(**{variable.value_to_q_lookup: str(value_string_or_f)})
+        instance = variable.form.choices.get(**{variable.value_to_q_lookup: str(value_string_or_f)})
     except ObjectDoesNotExist:
         return None
     return Q(**{variable.attr + '__pk': instance.pk})
@@ -153,7 +153,7 @@ class Variable(PagePart):
     """
 
     attr = Refinable()
-    gui = Refinable()
+    form: Namespace = Refinable()
     gui_op = Refinable()
     freetext = Refinable()
     model = Refinable()
@@ -164,7 +164,7 @@ class Variable(PagePart):
     @dispatch(
         gui_op='=',
         attr=MISSING,
-        gui=Namespace(
+        form=Namespace(
             show=False,
             required=False,
         ),
@@ -172,10 +172,10 @@ class Variable(PagePart):
     )
     def __init__(self, **kwargs):
         """
-        Parameters with the prefix "gui__" will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
+        Parameters with the prefix "form__" will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
 
-        :param gui__show: set to True to display a GUI element for this variable in the basic style interface.
-        :param gui__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
+        :param form__show: set to True to display a GUI element for this variable in the basic style interface.
+        :param form__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
         """
 
         super(Variable, self).__init__(**kwargs)
@@ -272,7 +272,7 @@ class Variable(PagePart):
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='choice',
+        form__call_target__attribute='choice',
     )
     def choice(cls, call_target=None, **kwargs):
         """
@@ -280,13 +280,13 @@ class Variable(PagePart):
         :type choices: list
         """
         setdefaults_path(kwargs, dict(
-            gui__choices=kwargs.get('choices'),
+            form__choices=kwargs.get('choices'),
         ))
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='multi_choice',
+        form__call_target__attribute='multi_choice',
     )
     def multi_choice(cls, call_target=None, **kwargs):
         """
@@ -294,13 +294,13 @@ class Variable(PagePart):
         :type choices: list
         """
         setdefaults_path(kwargs, dict(
-            gui__choices=kwargs.get('choices'),
+            form__choices=kwargs.get('choices'),
         ))
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='choice_queryset',
+        form__call_target__attribute='choice_queryset',
         op_to_q_op=lambda op: 'exact',
         value_to_q_lookup='name',
         value_to_q=choice_queryset_value_to_q,
@@ -316,8 +316,8 @@ class Variable(PagePart):
             kwargs['model'] = choices.model
 
         setdefaults_path(kwargs, dict(
-            gui__choices=choices,
-            gui__model=kwargs['model'],
+            form__choices=choices,
+            form__model=kwargs['model'],
             choices=choices,
         ))
         return call_target(**kwargs)
@@ -325,14 +325,14 @@ class Variable(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice_queryset",
-        gui__call_target__attribute='multi_choice_queryset',
+        form__call_target__attribute='multi_choice_queryset',
     )
     def multi_choice_queryset(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='boolean',
+        form__call_target__attribute='boolean',
         value_to_q=boolean_value_to_q,
     )
     def boolean(cls, call_target=None, **kwargs):
@@ -340,7 +340,7 @@ class Variable(PagePart):
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='boolean_tristate',
+        form__call_target__attribute='boolean_tristate',
         value_to_q=boolean_value_to_q,
     )
     def boolean_tristate(cls, call_target=None, **kwargs):
@@ -348,56 +348,56 @@ class Variable(PagePart):
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='integer',
+        form__call_target__attribute='integer',
     )
     def integer(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='float',
+        form__call_target__attribute='float',
     )
     def float(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='url',
+        form__call_target__attribute='url',
     )
     def url(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='time',
+        form__call_target__attribute='time',
     )
     def time(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='datetime',
+        form__call_target__attribute='datetime',
     )
     def datetime(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='date',
+        form__call_target__attribute='date',
     )
     def date(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='email',
+        form__call_target__attribute='email',
     )
     def email(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        gui__call_target__attribute='decimal',
+        form__call_target__attribute='decimal',
     )
     def decimal(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -465,7 +465,7 @@ class Query(PagePart):
         query_set = Car.objects.filter(CarQuery(request=request).to_q())
     """
 
-    gui: Namespace = Refinable()
+    form: Namespace = Refinable()
     endpoint: Namespace = Refinable()
     model: Type['django.db.models.Model'] = Refinable()
     rows = Refinable()
@@ -479,8 +479,8 @@ class Query(PagePart):
 
     def children(self):
         return Struct(
-            gui=self.form,
-            # TODO: this is a potential namespace conflict with gui above. Care or not care?
+            form=self.form,
+            # TODO: this is a potential namespace conflict with form above. Care or not care?
             **setup_endpoint_proxies(self)
         )
 
@@ -495,8 +495,8 @@ class Query(PagePart):
 
         setdefaults_path(
             kwargs,
-            gui__call_target=self.get_meta().form_class,
-            gui__name='gui',
+            form__call_target=self.get_meta().form_class,
+            form__name='form',
         )
 
         self._form = None
@@ -520,13 +520,13 @@ class Query(PagePart):
             fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
         for variable in self.variables.values():
-            if variable.gui is not None and variable.gui.show:
-                # pass gui__* parameters to the GUI component
+            if variable.form is not None and variable.form.show:
+                # pass form__* parameters to the GUI component
                 assert variable.name is not MISSING
                 assert variable.attr is not MISSING
                 params = setdefaults_path(
                     Namespace(),
-                    variable.gui,
+                    variable.form,
                     name=variable.name,
                     attr=variable.attr,
                     model_field=variable.model_field,
@@ -534,16 +534,15 @@ class Query(PagePart):
                 )
                 fields.append(params())
 
-        form: Form = self.gui(
+        self.form: Form = self.form(
             _fields_dict={x.name: x for x in fields},
             attrs__method='get',
             default_child=True,
             actions__submit__attrs__value='Filter',
         )
-        form.bind(parent=self)
+        self.form.bind(parent=self)
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
-        form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
-        self.form = form
+        self.form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self)

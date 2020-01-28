@@ -47,11 +47,11 @@ class MyPage(Page):
         model=T1,
         columns__foo=dict(
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         ),
         columns__bar=dict(
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         ),
         default_child=True,
     )
@@ -60,11 +60,11 @@ class MyPage(Page):
         model=T2,
         columns__foo=dict(
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         ),
         columns__bar=dict(
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         ),
     )
     assert not t2.default_child
@@ -75,19 +75,19 @@ def test_group_paths_by_children_happy_path():
     my_page.bind(request=None)
 
     data = {
-        't1/query/gui/foo': '1',
-        't2/query/gui/foo': '2',
+        't1/query/form/foo': '1',
+        't2/query/form/foo': '2',
         'bar': '3',
         't2/bar': '4',
     }
 
     assert group_paths_by_children(children=my_page.children(), data=data) == {
         't1': {
-            'query/gui/foo': '1',
+            'query/form/foo': '1',
             'bar': '3',
         },
         't2': {
-            'query/gui/foo': '2',
+            'query/form/foo': '2',
             'bar': '4',
         },
     }
@@ -95,12 +95,12 @@ def test_group_paths_by_children_happy_path():
     assert group_paths_by_children(
         children=my_page.children().t1.children(),
         data={
-            'query/gui/foo': '1',
+            'query/form/foo': '1',
             'bar': '3',
         },
     ) == {
         'query': {
-            'gui/foo': '1',
+            'form/foo': '1',
             'bar': '3',
         }
     }
@@ -108,11 +108,11 @@ def test_group_paths_by_children_happy_path():
     assert group_paths_by_children(
         children=my_page.children().t1.children().query.children(),
         data={
-            'gui/foo': '1',
+            'form/foo': '1',
             'bar': '3',
         },
     ) == {
-        'gui': {
+        'form': {
             'foo': '1',
             'bar': '3',
         }

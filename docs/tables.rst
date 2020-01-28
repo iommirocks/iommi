@@ -96,12 +96,12 @@ Now I can display a list of Bars in a table like this:
                 query__show=True,
 
                 # put this field into the simple filtering GUI
-                query__gui__show=True)
+                query__form__show=True)
             c = Column(
                 # Enable bulk editing for this field
                 bulk=True,
                 query_show=True,
-                query__gui__show=True)
+                query__form__show=True)
 
         return BarTable(data=Bar.objects.all())
 

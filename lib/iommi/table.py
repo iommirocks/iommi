@@ -249,7 +249,7 @@ class Column(PagePart):
         auto_rowspan=False,
         bulk__show=False,
         query__show=False,
-        query__gui__show=False,
+        query__form__show=False,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
@@ -935,7 +935,7 @@ class Table(PagePart):
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
         query__default_child = True
-        query__gui__default_child = True
+        query__form__default_child = True
 
     def children(self):
         return Struct(
@@ -1208,7 +1208,7 @@ class Table(PagePart):
             # Special case for automatic query config
             if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
                 column.query.show = True
-                column.query.gui.show = True
+                column.query.form.show = True
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
@@ -1240,8 +1240,8 @@ class Table(PagePart):
                             model=self.model,
                             name=column.name,
                             attr=column.attr,
-                            gui__display_name=column.display_name,
-                            gui__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                            form__display_name=column.display_name,
+                            form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
                         )
                         if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
                                 'attribute') == 'from_model':

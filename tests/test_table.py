@@ -166,7 +166,7 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__gui__show=True)
+        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__show=True, bulk__show=True, query__form__show=True)
 
     t = TestTable(rows=TBar.objects.all().order_by('pk'))
     t.bind(request=req('get'))
@@ -833,8 +833,8 @@ def test_query():
     TFoo(a=4, b="bar").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, query__show=True, query__gui__show=True)  # turn off sorting to not get the link with random query params
-        b = Column.substring(query__show=True, query__gui__show=True)
+        a = Column.number(sortable=False, query__show=True, query__form__show=True)  # turn off sorting to not get the link with random query params
+        b = Column.substring(query__show=True, query__form__show=True)
 
         class Meta:
             sortable = False
@@ -997,7 +997,7 @@ def test_template_string():
             cell__url=explode,
             cell__url_title=explode,
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
         )
 
     verify_table_html(
@@ -1246,7 +1246,7 @@ def test_choice_queryset():
     TFoo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
+        foo = Column.choice_queryset(query__show=True, query__form__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
 
         class Meta:
             model = TFoo
@@ -1272,7 +1272,7 @@ def test_multi_choice_queryset():
     TFoo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(query__show=True, query__gui__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(query__show=True, query__form__show=True, bulk__show=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
             model = TFoo
@@ -1298,8 +1298,8 @@ def test_query_namespace_inject():
         foo = Table(
             rows=[],
             model=TFoo,
-            columns__a=Column(name='a', query__show=True, query__gui__show=True),
-            query__gui__post_validation=post_validation,
+            columns__a=Column(name='a', query__show=True, query__form__show=True),
+            query__form__post_validation=post_validation,
         ).bind(
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
         )
@@ -1405,9 +1405,9 @@ def test_explicit_table_does_not_use_from_model():
         foo = Column.choice_queryset(
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
-            query__gui__extra__endpoint_attr='b',
+            query__form__extra__endpoint_attr='b',
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
             bulk__show=True,
         )
 
@@ -1439,14 +1439,14 @@ def test_ajax_endpoint():
         foo = Column.choice_queryset(
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
-            query__gui__extra__endpoint_attr='b',
+            query__form__extra__endpoint_attr='b',
             query__show=True,
-            query__gui__show=True,
+            query__form__show=True,
             bulk__show=True,
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/gui/fields/foo': 'hopp'})
+    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/form/fields/foo': 'hopp'})
     assert json.loads(result.content) == {
         'more': False,
         'page': 1,
@@ -1695,7 +1695,7 @@ def test_yield_rows():
 @pytest.mark.django_db
 def test_non_model_based_column_should_not_explore_in_query_object_creation():
     class MyTable(Table):
-        c = Column(attr=None, query__show=True, query__gui__show=True)
+        c = Column(attr=None, query__show=True, query__form__show=True)
 
         class Meta:
             model = TFoo
@@ -1722,7 +1722,7 @@ def test_from_model_with_inheritance():
     class MyVariable(Variable):
         @classmethod
         @class_shortcut(
-            gui__call_target__attribute='float',
+            form__call_target__attribute='float',
         )
         def float(cls, call_target=None, **kwargs):
             was_called['MyVariable.float'] += 1
@@ -1754,7 +1754,7 @@ def test_from_model_with_inheritance():
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
         columns__value__query__show=True,
-        columns__value__query__gui__show=True,
+        columns__value__query__form__show=True,
         columns__value__bulk__show=True,
     ).bind(
         request=req('get'),
@@ -1811,11 +1811,11 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table.from_model(model=TBar, columns__foo__query=dict(show=True, gui__show=True)).as_page()
+        return Table.from_model(model=TBar, columns__foo__query=dict(show=True, form__show=True)).as_page()
 
     from iommi import middleware
     m = middleware(get_response)
-    response = m(request=req('get', **{'/table/query/gui/fields/foo': ''}))
+    response = m(request=req('get', **{'/table/query/form/fields/foo': ''}))
 
     assert json.loads(response.content) == {
         'results': [
@@ -1830,10 +1830,10 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table.from_model(model=TBar, columns__foo__query=dict(show=True, gui__show=True)).as_page()
+    page = Table.from_model(model=TBar, columns__foo__query=dict(show=True, form__show=True)).as_page()
     page.bind(request=None)
     assert page.children().table.default_child
-    target, parents = find_target(path='/table/query/gui/fields/foo', root=page)
+    target, parents = find_target(path='/table/query/form/fields/foo', root=page)
     assert target.endpoint_path() == '/foo'
 
 
@@ -1842,8 +1842,8 @@ def test_dunder_name_for_column():
         class Meta:
             model = TBar
 
-        foo = Column(query__show=True, query__gui__show=True)
-        foo__a = Column(query__show=True, query__gui__show=True)
+        foo = Column(query__show=True, query__form__show=True)
+        foo__a = Column(query__show=True, query__form__show=True)
 
     table = FooTable()
     table.bind(request=None)

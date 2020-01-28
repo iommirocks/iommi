@@ -117,14 +117,14 @@ this will put the columns in the order a, c, b.
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass the value :code:`query__show=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass :code:`query__gui__show=True`:
+Pass the value :code:`query__show=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass :code:`query__form__show=True`:
 
 .. code:: python
 
     Table.from_model(
         model=Foo,
         columns__a__query__show=True,
-        columns__a__query__gui__show=True,
+        columns__a__query__form__show=True,
     )
 
 .. _attrs:
