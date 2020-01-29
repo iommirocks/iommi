@@ -1,16 +1,12 @@
 Changelog
 ---------
 
-5.1.0 (2020-01-??)
+5.0.0 (----------)
 ------------------
 
 * Added private field to shortcuts: `__tri_declarative_shortcut_stack`. This is useful to be able to figure out a shortcut stack after the fact
 
 * `get_callable_description` thought stuff that contained a lambda in its string representation was a lambda
-
-
-5.0.0 (2019-10-24)
-------------------
 
 * Removed all deprecated APIs/behaviors:
     * `creation_ordered`
