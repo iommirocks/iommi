@@ -5,7 +5,10 @@ from typing import (
     Type,
 )
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    MultipleObjectsReturned,
+)
 from django.db.models import (
     F,
     Model,
@@ -112,6 +115,8 @@ def value_to_query_string_value_string(variable, v):
         try:
             v = getattr(v, variable.value_to_q_lookup)
         except AttributeError:
+            # TODO: this is bad! exactly "name" is an ok default, otherwise require name registration
+            # TODO: also, if name isn't unique we can't do this anyway, but must output some pk syntax
             name_ish_attributes = [x for x in dir(v) if 'name' in x and not x.startswith('_')]
             raise AttributeError(
                 '{} object has no attribute {}. You can specify another name property with the value_to_q_lookup argument.{}'.format(
@@ -128,13 +133,16 @@ def case_sensitive_op_to_q_op(op):
 
 def choice_queryset_value_to_q(variable, op, value_string_or_f):
     if op != '=':
-        raise QueryException('Invalid operator "%s" for variable "%s"' % (op, variable.name))
+        raise QueryException(f'Invalid operator "{op}" for variable "{variable.name}"')
     if variable.attr is None:
         return Q()
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{variable.attr: None})
     try:
+        # TODO: only do this if variable.model_field.unique, else just pk! Also need to change when producing the query that we are parsing here. value_to_query_string_value_string above does the wrong thing with guessing name fields!
         instance = variable.form.choices.get(**{variable.value_to_q_lookup: str(value_string_or_f)})
+    except MultipleObjectsReturned:
+        raise QueryException(f'Found more than one object for name "{value_string_or_f}"')
     except ObjectDoesNotExist:
         return None
     return Q(**{variable.attr + '__pk': instance.pk})

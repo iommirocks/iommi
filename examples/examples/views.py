@@ -77,9 +77,14 @@ def index(request):
         <a href="table_kitchen_sink/">Kitchen sink</a><br>
         """)
 
+        page_header = html.h2('Page examples')
+
+        page_links = mark_safe("""
+        <a href="page_busy/">A busy page with lots of stuff</a><br>
+        """)
+
         # You can also nest pages
         admin = AdminPage()
-
 
     return IndexPage()
 
@@ -285,6 +290,15 @@ def table_kitchen_sink(request):
             page_size = 20
 
     return BarTable(rows=TBar.objects.all())
+
+
+def page_busy(request):
+    class BusyPage(Page):
+        tfoo = Table.from_model(model=TFoo, page_size=5, columns__name__query=dict(include=True, form__include=True))
+        tbar = Table.from_model(model=TBar, page_size=5, columns__b__query=dict(include=True, form__include=True))
+        create_tbar = Form.as_create_page(model=TBar)
+
+    return BusyPage()
 
 
 def iommi_admin(request, **kwargs):

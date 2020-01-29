@@ -15,5 +15,7 @@ urlpatterns = [
     url(r'^table_readme_example_2/$', views.table_readme_example_2, name='readme_example_2'),
     url(r'^table_kitchen_sink/$', views.table_kitchen_sink, name='kitchen_sink'),
 
+    url(r'^page_busy/$', views.page_busy, name='page_busy'),
+
     url(r'^iommi-admin/(?P<app_name>\w+)?/?(?P<model_name>\w+)?/?(?P<pk>\d+)?/?(?P<command>\w+)?/?', views.iommi_admin, name='iommi-admin'),
 ]

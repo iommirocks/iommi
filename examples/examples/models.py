@@ -16,7 +16,7 @@ class TFoo(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     a = models.IntegerField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 

@@ -72,7 +72,7 @@ Say I have some models:
     class Foo(models.Model):
         a = models.IntegerField()
 
-        def __unicode__(self):
+        def __str__(self):
             return 'Foo: %s' % self.a
 
     class Bar(models.Model):

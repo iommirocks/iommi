@@ -875,12 +875,13 @@ def bulk__post_handler(table, form, **_):
     return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
 
 
+# TODO: full PagePart?
 class Paginator:
     def __init__(self, *, django_paginator, table, page, adjacent_pages=6):
         self.paginator = django_paginator
         self.table: Table = table
         self.adjacent_pages = adjacent_pages
-        self.page = int(page)
+        self.page = int(page) if page else 1
 
     def get_paginated_rows(self):
         return self.paginator.get_page(self.page).object_list
@@ -1002,6 +1003,8 @@ class Table(PagePart):
             bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
 
             columns=self.columns,
+            # TODO: paginator?
+
             # TODO: this can have name collisions with the keys above
             **setup_endpoint_proxies(self)
         )
