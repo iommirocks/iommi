@@ -1,14 +1,36 @@
 {# TODO: this template could probably be condensed down to some Fragments. It's ugly, big and not namespaced properly #}
-<span class="paginate-pages" title="Page Jump">{{ pages }} Page{{ pages|pluralize }}</span>
-{% if show_first %}<a href="?{{ extra|escape }}page=1" title="First Page"><span class="paginate-first">&laquo;</span></a>{% endif %}
-{% if has_previous %}<a href="?{{ extra|escape }}page={{ previous }}" title="Previous Page"><span class="paginate-previous">&lt;</span></a>{% endif %}
-{% for num in page_numbers %}
-  {% if num == page %}
-    <span class="paginate-current" title="Current Page">{{ num }}</span>
-  {% else %}
-    <a href="?{{ extra|escape }}page={{ num }}" title="Page {{ num }}"><span class="paginate-link">{{ num }}</span></a>
-  {% endif %}
-{% endfor %}
-{% if has_next %}<a href="?{{ extra|escape }}page={{ next }}" title="Next Page"><span class="paginate-next">&gt;</span></a>{% endif %}
-{% if show_last %}<a href="?{{ extra|escape }}page={{ pages }}" title="Last Page"><span class="paginate-last">&raquo;</span></a>{% endif %}
+
+<nav aria-label="Pages">
+    <ul class="pagination">
+        {% if show_first %}
+            <li class="page-item">
+                <a class="page-link" href="?{{ extra|escape }}page=1" aria-label="First Page">&laquo;</a>
+            </li>
+        {% endif %}
+
+        {% if has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{{ extra|escape }}page={{ previous }}" aria-label="Previous Page">&lt;</a>
+            </li>
+        {% endif %}
+
+        {% for num in page_numbers %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="?{{ extra|escape }}page={{ num }}" aria-label="Page {{ num }}">{{ num }}</a>
+            </li>
+        {% endfor %}
+
+        {% if has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{{ extra|escape }}page={{ next }}" aria-label="Next Page">&gt;</a>
+            </li>
+        {% endif %}
+
+        {% if show_last %}
+            <li class="page-item">
+                <a class="page-link" href="?{{ extra|escape }}page={{ pages }}" aria-label="Last Page">&raquo;</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
 
