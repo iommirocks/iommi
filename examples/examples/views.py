@@ -24,6 +24,7 @@ from iommi.form import (
     Form,
     choice_parse,
 )
+from iommi.style import validate_styles
 from tri_struct import Struct
 
 from .models import (
@@ -32,6 +33,10 @@ from .models import (
     TBar,
     TFoo,
 )
+
+
+# Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
+validate_styles()
 
 
 def ensure_objects():

@@ -3,6 +3,7 @@ from iommi.style import (
     Style,
     apply_style_recursively,
     get_style_for_object,
+    validate_styles,
 )
 from tri_declarative import (
     Refinable,
@@ -116,3 +117,7 @@ def test_last_win():
     form.bind(request=None)
 
     assert form.template == 'override'
+
+
+def test_validate_default_styles():
+    validate_styles()
