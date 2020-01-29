@@ -7,7 +7,6 @@ from decimal import (
 )
 from itertools import (
     chain,
-    groupby,
 )
 from typing import (
     Any,
@@ -28,12 +27,14 @@ from iommi._web_compat import (
     get_template_from_string,
     mark_safe,
     render_template,
-    render_to_string,
-    slugify,
     Template,
     URLValidator,
     validate_email,
     ValidationError,
+)
+from iommi.action import (
+    Action,
+    group_actions,
 )
 from iommi.base import (
     bind_members,
@@ -47,17 +48,20 @@ from iommi.base import (
     request_data,
     setup_endpoint_proxies,
 )
+from iommi.from_model import (
+    create_members_from_model,
+    get_fields,
+    member_from_model,
+)
 from iommi.page import (
     Fragment,
 )
 from iommi.render import Errors
 from tri_declarative import (
-    assert_kwargs_empty,
     class_shortcut,
     declarative,
     dispatch,
     EMPTY,
-    evaluate,
     evaluate_recursive,
     getattr_path,
     Namespace,
@@ -116,113 +120,6 @@ _field_factory_by_field_type = {}
 
 def register_field_factory(field_class, factory):
     _field_factory_by_field_type[field_class] = factory
-
-
-@dispatch  # pragma: no mutate
-def create_members_from_model(default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, extra: Dict[str, Any] = None):
-    if extra is None:
-        extra = {}
-
-    # TODO: assert that extra does not collide with the include/exclude/etc fields
-
-    def should_include(name):
-        if exclude is not None and name in exclude:
-            return False
-        if include is not None:
-            return name in include
-        return True
-
-    members = []
-
-    # Validate include/exclude parameters
-    field_names = {x.name for x in get_fields(model)}
-    if include:
-        not_existing = {x for x in include if x.partition('__')[0] not in field_names}
-        assert not not_existing, 'You can only include fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
-    if exclude:
-        not_existing = {x for x in exclude if x not in field_names}
-        assert not not_existing, 'You can only exclude fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
-
-    extra_includes = [x for x in include if '__' in x] if include else []
-
-    for field in get_fields(model):
-        if should_include(field.name):
-            foo = member_params_by_member_name.pop(field.name, {})
-            if isinstance(foo, dict):
-                subkeys = Namespace(**foo)
-                subkeys.setdefault('call_target', default_factory)
-                foo = subkeys(name=field.name, model=model, model_field=field)
-            if foo is None:
-                continue
-            if isinstance(foo, list):
-                members.extend(foo)
-            else:
-                assert foo.name, "Fields must have a name attribute"
-                assert foo.name == field.name, f"Field {foo.name} has a name that doesn't match the model field it belongs to: {field.name}"
-                members.append(foo)
-    assert_kwargs_empty(member_params_by_member_name)
-    all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
-    return Struct({x.name: x for x in all_members}, **extra)
-
-
-def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
-    if model_field is None:
-        assert field_name is not None, "Field can't be automatically created from model, you must specify it manually"
-
-        sub_field_name, _, field_path_rest = field_name.partition('__')
-
-        # noinspection PyProtectedMember
-        model_field = model._meta.get_field(sub_field_name)
-
-        if field_path_rest:
-            result = member_from_model(
-                cls=cls,
-                model=model_field.remote_field.model,
-                factory_lookup=factory_lookup,
-                defaults_factory=defaults_factory,
-                factory_lookup_register_function=factory_lookup_register_function,
-                field_name=field_path_rest,
-                **kwargs)
-            result.name = field_name
-            result.attr = field_name
-            return result
-
-    factory = factory_lookup.get(type(model_field), MISSING)
-
-    if factory is MISSING:
-        for django_field_type, foo in reversed(list(factory_lookup.items())):
-            if isinstance(model_field, django_field_type):
-                factory = foo
-                break  # pragma: no mutate optimization
-
-    if factory is MISSING:
-        message = 'No factory for %s.' % type(model_field)
-        if factory_lookup_register_function is not None:
-            message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
-        raise AssertionError(message)
-
-    if factory is None:
-        return None
-
-    factory = evaluate(factory, model_field=model_field, field_name=field_name)
-
-    setdefaults_path(
-        kwargs,
-        name=field_name,
-        call_target__cls=cls,
-    )
-
-    defaults = defaults_factory(model_field)
-    if isinstance(factory, Namespace):
-        factory = setdefaults_path(
-            Namespace(),
-            factory,
-            defaults,
-        )
-    else:
-        kwargs.update(**defaults)
-
-    return factory(model_field=model_field, model=model, **kwargs)
 
 
 def create_or_edit_object__post_handler(*, form, **_):
@@ -322,7 +219,10 @@ def choice_queryset__is_valid(field, parsed_data, **_):
 
 
 def choice_queryset__endpoint_handler(*, form, field, value, **_):
-    from django.core.paginator import EmptyPage, Paginator
+    from django.core.paginator import (
+        EmptyPage,
+        Paginator,
+    )
 
     page_size = field.extra.get('endpoint_page_size', 40)
     page = int(form.request().GET.get('page', 1))
@@ -489,125 +389,6 @@ def multi_choice_choice_to_option(field, choice, **_):
 
 def multi_choice_queryset_choice_to_option(field, choice, **_):
     return choice, choice.pk, "%s" % choice, field.value and choice in field.value
-
-
-# TODO: move this class.. maybe lots of other stuff from here
-class Action(PagePart):
-    tag: str = Refinable()
-    attrs: Dict[str, Any] = Refinable()
-    group: str = Refinable()
-    template = Refinable()
-    display_name: str = Refinable()
-
-    @dispatch(
-        tag='a',
-        attrs=EMPTY,
-    )
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.declared_action = None
-
-        if self.tag == 'input' and self.display_name:
-            assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"
-
-    @dispatch(
-        context=EMPTY,
-        render=EMPTY,
-    )
-    def __html__(self, *, context=None, render=None):
-        assert not render
-        assert self._is_bound
-        if self.template:
-            return render_to_string(self.template, dict(**context, action=self))
-        else:
-            return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).__html__()
-
-    def __repr__(self):
-        return f'<Action: {self.name}>'
-
-    @classmethod
-    @class_shortcut(
-        tag='button',
-    )
-    def button(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
-
-    @classmethod
-    @class_shortcut(
-        call_target__attribute='button',
-        tag='input',
-        attrs__type='submit',
-        attrs__value='Submit',
-        attrs__accesskey='s',
-    )
-    def submit(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
-
-    @classmethod
-    @class_shortcut(
-        call_target__attribute='submit',
-    )
-    def delete(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
-
-    @classmethod
-    @class_shortcut(
-        icon_classes=[],
-    )
-    def icon(cls, icon, *, display_name=None, call_target=None, icon_classes=None, **kwargs):
-        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
-        if icon_classes_str:
-            icon_classes_str = ' ' + icon_classes_str
-        setdefaults_path(
-            kwargs,
-            display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
-        )
-        return call_target(**kwargs)
-
-    def on_bind(self) -> None:
-        if self.parent is not None and self.parent.parent is not None:
-            for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
-                setattr_path(self, k, v)
-        evaluated_attributes = [
-            'tag',
-            'group',
-            'template',
-            'display_name',
-            'name',
-            'after',
-            'default_child',
-            'style',
-        ]
-        for key in evaluated_attributes:
-            self._evaluate_attribute(key)
-
-        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
-
-    def _evaluate_attribute_kwargs(self):
-        return dict(action=self)
-
-
-def group_actions(actions_without_group: Dict[str, Action]):
-    grouped_actions = {}
-    if actions_without_group is not None:
-        actions_with_group = (action for action in actions_without_group.values() if action.group is not None)
-
-        grouped_actions: Dict[str, Tuple[str, str, List[Action]]] = [
-            (group_name, slugify(group_name), list(actions_in_group))
-            for group_name, actions_in_group in groupby(
-                actions_with_group,
-                key=lambda l: l.group
-            )
-        ]  # list(actions_in_group) because django templates touches the generator and then I can't iterate it
-
-        for _, _, group_links in grouped_actions:
-            for link in group_links:
-                link.attrs.role = 'menuitem'
-
-        actions_without_group = [action for action in actions_without_group.values() if action.group is None]
-
-    return actions_without_group, grouped_actions
 
 
 def default_input_id(field, **_):
@@ -996,10 +777,10 @@ class Field(PagePart):
         choices=[True, False],
         parse=choice_parse,
         choice_to_option=lambda form, field, choice, **_: (
-            choice,
-            'true' if choice else 'false',
-            'Yes' if choice else 'No',
-            choice == field.value,
+                choice,
+                'true' if choice else 'false',
+                'Yes' if choice else 'No',
+                choice == field.value,
         ),
         required=False,
     )
@@ -1176,12 +957,6 @@ class Field(PagePart):
         )
         kwargs['model'] = model_field.remote_field.model
         return call_target(model_field=model_field, **kwargs)
-
-
-def get_fields(model):
-    # noinspection PyProtectedMember
-    for field in model._meta.get_fields():
-        yield field
 
 
 @no_copy_on_bind
