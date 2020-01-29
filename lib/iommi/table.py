@@ -17,7 +17,7 @@ from typing import (
 from django.conf import settings
 from django.core.paginator import (
     InvalidPage,
-    Paginator,
+    Paginator as DjangoPaginator,
 )
 from django.db.models import QuerySet
 from django.http import (
@@ -875,6 +875,71 @@ def bulk__post_handler(table, form, **_):
     return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
 
 
+class Paginator:
+    def __init__(self, *, django_paginator, table, page, adjacent_pages=6):
+        self.paginator = django_paginator
+        self.table: Table = table
+        self.adjacent_pages = adjacent_pages
+        self.page = int(page)
+
+    def get_paginated_rows(self):
+        return self.paginator.get_page(self.page).object_list
+
+    def __html__(self):
+        context = {}
+
+        assert self.page != 0  # pages are 1-indexed!
+        num_pages = self.paginator.num_pages
+        if self.page <= self.adjacent_pages:
+            self.page = self.adjacent_pages + 1
+        elif self.page > num_pages - self.adjacent_pages:
+            self.page = num_pages - self.adjacent_pages
+        page_numbers = [
+            n for n in
+            range(self.page - self.adjacent_pages, self.page + self.adjacent_pages + 1)
+            if 0 < n <= num_pages
+        ]
+
+        get = context['request'].GET.copy() if 'request' in context else {}
+
+        # TODO: namespace!
+        if 'page' in get:
+            del get['page']
+
+        context = {**context, **dict(
+            extra=get and (get.urlencode() + "&") or "",
+            page_numbers=page_numbers,
+            show_first=1 not in page_numbers,
+            show_last=num_pages not in page_numbers,
+        )}
+
+        page_obj = self.paginator.get_page(self.page)
+
+        if self.paginator.num_pages > 1:
+            context.update({
+                'is_paginated': self.paginator.num_pages > 1,
+                'results_per_page': self.table.page_size,
+                'has_next': page_obj.has_next(),
+                'has_previous': page_obj.has_previous(),
+                'next': page_obj.next_page_number() if page_obj.has_next() else None,
+                'previous': page_obj.previous_page_number() if page_obj.has_previous() else None,
+                'page': page_obj.number,
+                'pages': self.paginator.num_pages,
+                'hits': self.paginator.count,
+            })
+        else:
+            return ''
+
+        return render_template(
+            request=self.table.request(),
+            template=self.table.paginator_template,
+            context=context,
+        )
+
+    def __str__(self):
+        return self.__html__()
+
+
 @no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
@@ -911,7 +976,7 @@ class Table(PagePart):
     bulk: Namespace = Refinable()
     endpoint: Namespace = Refinable()
     superheader: Namespace = Refinable()
-    paginator: Namespace = Refinable()
+    paginator: Paginator = Refinable()
     paginator_template: str = Refinable()
     page_size: int = Refinable()
     actions_template: Union[str, Template] = Refinable()
@@ -1319,34 +1384,6 @@ class Table(PagePart):
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))
 
-    def paginator_context(self, adjacent_pages=6):
-        context = self.context.copy()
-        page = context["page"]
-        assert page != 0  # pages are 1-indexed!
-        if page <= adjacent_pages:
-            page = adjacent_pages + 1
-        elif page > context["pages"] - adjacent_pages:
-            page = context["pages"] - adjacent_pages
-        page_numbers = [
-            n for n in
-            range(page - adjacent_pages, page + adjacent_pages + 1)
-            if 0 < n <= context["pages"]
-        ]
-
-        get = context['request'].GET.copy() if 'request' in context else {}
-        if 'page' in get:
-            del get['page']
-
-        return merged(context, dict(
-            extra=get and (get.urlencode() + "&") or "",
-            page_numbers=page_numbers,
-            show_first=1 not in page_numbers,
-            show_last=context["pages"] not in page_numbers,
-        ))
-
-    def render_paginator(self, adjacent_pages=6):
-        return render_template(request=self.request(), template=self.paginator_template, context=self.paginator_context(adjacent_pages=adjacent_pages))
-
     @classmethod
     @dispatch(
         columns=EMPTY,
@@ -1403,19 +1440,45 @@ class Table(PagePart):
 
         if not context:
             context = {}
+        else:
+            context = context.copy()
 
+        context['table'] = self
         context['bulk_form'] = self.bulk_form
         context['query_form'] = self.query_form
         context['iommi_query_error'] = self.query_error
 
         request = self.request()
 
-        self.context = table_context(
-            request,
-            table=self,
-            extra_context=context,
-            paginator=self.paginator,
-        )
+        assert self.rows is not None
+
+        # TODO: move all this to on_bind!
+        if self.page_size:
+            try:
+                self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
+            except ValueError:
+                pass
+
+            page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
+
+            if isinstance(self.paginator, type) and issubclass(self.paginator, DjangoPaginator):
+                django_paginator = self.paginator(self.rows, self.page_size)
+            elif isinstance(self.paginator, DjangoPaginator):
+                django_paginator = self.paginator
+            else:
+                assert isinstance(self.paginator, Namespace)
+                django_paginator = DjangoPaginator(self.rows, self.page_size)
+            self.paginator = Paginator(table=self, django_paginator=django_paginator, page=page)
+
+            try:
+                self.rows = self.paginator.get_paginated_rows()
+            except (InvalidPage, ValueError):
+                raise Http404
+
+            context['paginator'] = self.paginator
+
+        self.context = context
+
         if self.query_form and not self.query_form.is_valid():
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
@@ -1446,47 +1509,3 @@ class Table(PagePart):
             parts=parts,
             default_child=True,
         )
-
-
-def table_context(request, *, table: Table, extra_context, paginator: Namespace):
-    if extra_context is None:
-        extra_context = {}
-
-    assert table.rows is not None
-
-    base_context = {
-        'table': table,
-    }
-
-    if table.page_size:
-        try:
-            table.page_size = int(request.GET.get('page_size', table.page_size)) if request else table.page_size
-        except ValueError:
-            pass
-        paginator = paginator(table.rows, table.page_size)
-        page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
-        try:
-            page_obj = paginator.get_page(page)
-            table.rows = page_obj.object_list
-        except (InvalidPage, ValueError):
-            raise Http404
-
-        base_context.update({
-            'request': request,
-            'is_paginated': paginator.num_pages > 1,
-            'results_per_page': table.page_size,
-            'has_next': page_obj.has_next(),
-            'has_previous': page_obj.has_previous(),
-            'next': page_obj.next_page_number() if page_obj.has_next() else None,
-            'previous': page_obj.previous_page_number() if page_obj.has_previous() else None,
-            'page': page_obj.number,
-            'pages': paginator.num_pages,
-            'hits': paginator.count,
-        })
-    else:
-        base_context.update({
-            'is_paginated': False,
-        })
-
-    base_context.update(extra_context)
-    return base_context

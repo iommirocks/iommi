@@ -5,17 +5,17 @@
     {{ empty_message }}
 {% else %}
 
-        <table{{ table.attrs }}>
+    <table{{ table.attrs }}>
 
-            {{ table.render_header }}
+        {# TODO: render_* is bad. Use __html__! #}
+        {{ table.render_header }}
 
-            <tbody>
-               {{ table.render_tbody }}
-            </tbody>
-        </table>
+        <tbody>
+            {# TODO: render_* is bad, Use __html__! #}
+            {{ table.render_tbody }}
+        </tbody>
+    </table>
 
-        {% if is_paginated %}
-          <div class="paginator">{{ table.render_paginator }}</div>
-        {% endif %}
+    {{ table.paginator }}
 
 {% endif %}
