@@ -424,9 +424,11 @@ def test_endpoint_dispatch():
 
     assert '/foo' == query.form.fields.foo.endpoint_path()
     expected = {
-        'more': False,
+        'results': [
+            {'id': x.pk, 'text': str(x)},
+        ],
+        'pagination': {'more': False},
         'page': 1,
-        'results': [{'id': x.pk, 'text': str(x)}],
     }
     assert perform_ajax_dispatch(root=query, path='/form/fields/foo', value='ar') == expected
     assert perform_ajax_dispatch(root=query, path='/foo', value='ar') == expected

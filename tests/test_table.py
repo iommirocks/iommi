@@ -1449,9 +1449,11 @@ def test_ajax_endpoint():
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
     result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/form/fields/foo': 'hopp'})
     assert json.loads(result.content) == {
-        'more': False,
+        'results': [
+            {'id': 2, 'text': 'Foo(42, Hopp)'},
+        ],
+        'pagination': {'more': False},
         'page': 1,
-        'results': [{'id': 2, 'text': 'Foo(42, Hopp)'}]
     }
 
 
@@ -1825,7 +1827,7 @@ def test_new_style_ajax_dispatch():
             {'id': 3, 'text': 'Foo(3, C)'},
         ],
         'page': 1,
-        'more': False,
+        'pagination': {'more': False},
     }
 
 

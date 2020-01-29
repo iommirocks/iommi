@@ -258,14 +258,14 @@ def test_create_or_edit_object_dispatch():
         fields__foo__extra__endpoint_attr='foo',
         template='<template name>',
     ).bind(request=request).render_to_response()
-    assert json.loads(response.content) == dict(
-        results=[
+    assert json.loads(response.content) == {
+        'results': [
             {"text": str(f1), "id": f1.pk},
             {"text": str(f2), "id": f2.pk},
         ],
-        more=False,
-        page=1,
-    )
+        'pagination': {'more': False},
+        'page': 1,
+    }
 
 
 @pytest.mark.django_db

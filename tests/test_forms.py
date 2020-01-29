@@ -1374,7 +1374,13 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
     form = MyForm()
     form.bind(request=req('get'))
     actual = perform_ajax_dispatch(root=form, path='/fields/username', value='ar')
-    assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
+    assert actual == {
+        'results': [
+            {'id': user2.pk, 'text': smart_str(user2)}
+        ],
+        'pagination': {'more': False},
+        'page': 1,
+    }
 
     with pytest.raises(InvalidEndpointPathException) as e:
         perform_ajax_dispatch(root=form, path='/fields/not_returning_anything', value='ar')
@@ -1404,7 +1410,13 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     form = Form.from_model(model=FooModel, **kwargs).bind(request=req('get'))
     actual = perform_ajax_dispatch(root=form, path='/fields/user', value='ar')
 
-    assert actual == dict(results=[{'id': user2.pk, 'text': smart_str(user2)}], more=False, page=1)
+    assert actual == {
+        'results': [
+            {'id': user2.pk, 'text': smart_str(user2)}
+        ],
+        'pagination': {'more': False},
+        'page': 1,
+    }
 
 
 @override_settings(DEBUG=True)
