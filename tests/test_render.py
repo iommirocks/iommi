@@ -3,6 +3,7 @@ import re
 import pytest
 
 from iommi.render import render_attrs
+from tri_declarative import Namespace
 
 
 def test_render_attrs():
@@ -80,3 +81,21 @@ def test_render_attrs_quote():
             ),
         )
     ) == ' a="&quot;1&quot;" b="\'1\'" style="bar: url(\'bar\'); foo: url(&quot;foo&quot;)"'
+
+
+def test_render_attrs_empty_class():
+    assert render_attrs(
+        Namespace(
+            class__foo=False,
+            class__bar=False,
+        )
+    ) == ' '
+
+
+def test_render_attrs_empty_style():
+    assert render_attrs(
+        Namespace(
+            style__foo=None,
+            style__bar=None,
+        )
+    ) == ' '

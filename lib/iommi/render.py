@@ -56,7 +56,7 @@ def render_class(class_dict):
 
 
 def render_style(class_dict):
-    return '; '.join(sorted(f'{k}: {v}' for k, v in class_dict.items()))
+    return '; '.join(sorted(f'{k}: {v}' for k, v in class_dict.items() if v))
 
 
 class Attrs(Namespace):
