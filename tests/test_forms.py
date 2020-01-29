@@ -1732,7 +1732,7 @@ def test_namespaces_do_not_call_in_templates():
     from django.template import RequestContext
 
     def raise_always():
-        assert False
+        assert False  # pragma: no cover as the test is that this doesn't fire!
 
     assert Template('{{ foo }}').render(RequestContext(None, dict(foo=Namespace(call_target=raise_always))))
 

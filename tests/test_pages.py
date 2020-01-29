@@ -4,6 +4,11 @@ from iommi import (
     Page,
     html,
 )
+from iommi._web_compat import (
+    format_html,
+)
+from iommi.page import Fragment
+from iommi.render import Attrs
 from tri_struct import Struct
 
 from tests.helpers import req
@@ -51,3 +56,20 @@ def test_page_render():
     actual = BeautifulSoup(response.content, 'html.parser').prettify()
     expected = BeautifulSoup(expected_html, 'html.parser').prettify()
     assert actual == expected
+
+
+def test_fragment__render__simple_cases():
+    assert format_html('{}', html.h1('foo')) == '<h1 >foo</h1>'
+    assert format_html('{}', Fragment('foo<foo>')) == 'foo&lt;foo&gt;'
+
+
+def test_fragment_repr():
+    assert repr(Fragment(tag='foo', attrs=Attrs({'foo-bar': 'baz'}))) == "<Fragment: tag:foo, attrs:dict_items([('foo-bar', 'baz')])>"
+
+
+def test_promote_str_to_fragment_for_page():
+    class MyPage(Page):
+        foo = 'asd'
+
+    page = MyPage()
+    assert isinstance(page.declared_parts.foo, Fragment)

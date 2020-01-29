@@ -2,6 +2,15 @@ import json
 
 import pytest
 from django.db import models
+from django.template import (
+    Template,
+    RequestContext,
+)
+from django.test import override_settings
+from iommi._web_compat import (
+    mark_safe,
+    format_html,
+)
 
 from iommi.page import (
     html,
@@ -14,12 +23,18 @@ from iommi.base import (
     find_target,
     InvalidEndpointPathException,
     evaluate_attrs,
+    should_include,
+    perform_post_dispatch,
+    PagePart,
+    no_copy_on_bind,
+    as_html,
 )
 from tri_declarative import Namespace
 from tri_struct import Struct
 
 from tests.helpers import (
     request_with_middleware,
+    req,
 )
 
 
@@ -243,6 +258,28 @@ def test_evaluate_attrs():
     assert actual == expected
 
 
+@override_settings(IOMMI_DEBUG_SHOW_PATHS=True)
+def test_evaluate_attrs_show_debug_paths():
+    actual = evaluate_attrs(
+        Struct(
+            attrs=Namespace(
+                class__table=True,
+            ),
+            name='foo',
+            dunder_path=lambda: '<path here>',
+        ),
+    )
+
+    expected = {
+        'class': {
+            'table': True,
+        },
+        'data-iommi-path': '<path here>',
+    }
+
+    assert actual == expected
+
+
 def test_render_simple_tag():
     assert html.a('bar', attrs__href='foo').__html__() == '<a href="foo">bar</a>'
 
@@ -254,3 +291,109 @@ def test_render_empty_tag():
 def test_fragment():
     foo = html.h1('asd')
     assert foo.__html__() == '<h1 >asd</h1>'
+
+
+def test_should_include_error_message():
+    with pytest.raises(AssertionError) as e:
+        should_include(Struct(include=lambda foo: foo))
+
+    assert str(e.value).startswith('`include` was a callable. You probably forgot to evaluate it. The callable was: lambda found at')
+
+
+def test_perform_post_dispatch_error_message():
+    @no_copy_on_bind
+    class MyPart(PagePart):
+        def children(self):
+            return Struct(
+                foo=Struct(
+                    post_handler=None,
+                    default_child=False,
+                )
+            )
+
+        def __html__(self):
+            return 'MyPart'
+
+    target = MyPart()
+    target.bind(request=None)
+
+    with pytest.raises(InvalidEndpointPathException) as e:
+        perform_post_dispatch(root=target, path='/foo', value='')
+
+    assert str(e.value) == f'''Target Struct(default_child=False, post_handler=None) has no registered post_handler.
+    Path: "/foo"
+    Parents:
+        MyPart'''
+
+
+def test_dunder_path_is_different_from_path_and_fully_qualified_skipping_root():
+    @no_copy_on_bind
+    class MyPart(PagePart):
+        def __init__(self):
+            super(MyPart, self).__init__()
+            self.name = 'my_part'
+
+        def __html__(self):
+            return 'MyPart'
+
+    @no_copy_on_bind
+    class MyPart2(PagePart):
+        def __init__(self):
+            super(MyPart2, self).__init__()
+            self.name = 'my_part2'
+            self.my_part = MyPart()
+
+        def on_bind(self):
+            self.my_part.bind(parent=self)
+
+        def children(self):
+            return Struct(
+                my_part=self.my_part
+            )
+
+        def __html__(self):
+            return 'MyPart'
+
+    @no_copy_on_bind
+    class MyPart3(PagePart):
+        def __init__(self):
+            super(MyPart3, self).__init__()
+            self.name = 'my_part3'
+            self.my_part2 = MyPart2()
+
+        def on_bind(self):
+            self.my_part2.bind(parent=self)
+
+        def children(self):
+            return Struct(
+                my_part2=self.my_part2
+            )
+
+        def __html__(self):
+            return 'MyPart'
+
+    foo = MyPart3()
+    foo.bind(request=None)
+
+    assert foo.children().my_part2.path() == ''
+    assert foo.children().my_part2.dunder_path() == 'my_part2'
+
+    assert foo.children().my_part2.children().my_part.path() == ''
+    assert foo.children().my_part2.children().my_part.dunder_path() == 'my_part2__my_part'
+
+
+def test_as_html():
+    # str case
+    assert format_html('{}', as_html(part='foo', context={})) == 'foo'
+    assert format_html('{}', as_html(part='<foo>bar</foo>', context={})) == '&lt;foo&gt;bar&lt;/foo&gt;'
+    assert format_html('{}', as_html(part=mark_safe('<foo>bar</foo>'), context={})) == '<foo>bar</foo>'
+
+    # Template case
+    c = RequestContext(req('get'))
+    assert format_html('{}', as_html(part=Template('foo'), context=c)) == 'foo'
+    assert format_html('{}', as_html(part=Template('<foo>bar</foo>'), context=c)) == '<foo>bar</foo>'
+
+    # __html__ attribute case
+    assert format_html('{}', as_html(part=Struct(__html__=lambda context: 'foo'), context={})) == 'foo'
+    assert format_html('{}', as_html(part=Struct(__html__=lambda context: '<foo>bar</foo>'), context={})) == '&lt;foo&gt;bar&lt;/foo&gt;'
+    assert format_html('{}', as_html(part=Struct(__html__=lambda context: mark_safe('<foo>bar</foo>')), context={})) == '<foo>bar</foo>'

@@ -8,7 +8,10 @@ from django.db.models import (
     QuerySet,
 )
 from iommi.base import perform_ajax_dispatch
-from tri_declarative import class_shortcut
+from tri_declarative import (
+    class_shortcut,
+    get_shortcuts_by_name,
+)
 from tri_struct import Struct
 from iommi.form import (
     Field,
@@ -543,3 +546,19 @@ def test_from_model_with_inheritance():
         'MyField.float': 1,
         'MyVariable.float': 1,
     }
+
+
+@pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Variable).items())
+def test_shortcuts_map_to_form(name, shortcut):
+    if name == 'case_sensitive':  # This has no equivalent in Field
+        return
+
+    # TODO: why doesn't this exist in Field?
+    if name == 'foreign_key':  # This has no equivalent in Field
+        return
+
+    # TODO: why doesn't this exist in Field?
+    if name == 'many_to_many':  # This has no equivalent in Field
+        return
+
+    assert shortcut.dispatch.form.call_target.attribute == name

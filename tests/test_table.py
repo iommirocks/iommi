@@ -34,6 +34,7 @@ from tri_declarative import (
     Namespace,
     class_shortcut,
     getattr_path,
+    get_shortcuts_by_name,
 )
 
 from tests.helpers import (
@@ -1886,3 +1887,25 @@ def test_render_column_attribute():
     """
 
     verify_table_html(expected_html=expected_html, table=FooTable(rows=[Struct(a=1)]))
+
+
+@pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Column).items())
+def test_shortcuts_map_to_form_and_query(name, shortcut):
+    whitelist = {
+        'icon',
+        'select',
+        'run',
+        'link',
+        'number',  # no equivalent in Field or Variable, there you have to choose integer or float
+        'substring',
+        'boolean_tristate',  # this is special in the bulk case where you want want a boolean_quadstate: don't change, clear, True, False. For now we'll wait for someone to report this misfeature/bug :)
+    }
+    if name in whitelist:
+        return
+
+    if 'call_target' in shortcut.dispatch and shortcut.dispatch.call_target.attribute in whitelist:
+        # shortcuts that in turn point to whitelisted ones are also whitelisted
+        return
+
+    assert shortcut.dispatch.query.call_target.attribute == name
+    assert shortcut.dispatch.bulk.call_target.attribute == name

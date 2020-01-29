@@ -92,11 +92,6 @@ INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just 
 AVOID_EMPTY_FORM = '<input type="hidden" name="-{}" value="">'
 
 
-def dispatch_prefix_and_remaining_from_key(key):
-    prefix, _, remaining_key = key.partition(DISPATCH_PATH_SEPARATOR)
-    return prefix, remaining_key
-
-
 def bool_parse(string_value):
     s = string_value.lower()
     if s in ('1', 'true', 't', 'yes', 'y', 'on'):
@@ -775,7 +770,6 @@ class Field(PagePart):
     @class_shortcut(
         call_target__attribute="choice",
         choices=[True, False],
-        parse=choice_parse,
         choice_to_option=lambda form, field, choice, **_: (
                 choice,
                 'true' if choice else 'false',
@@ -994,6 +988,7 @@ class Form(PagePart):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template: Union[str, Template] = Refinable()
+    post_handler: Callable = Refinable()
 
     class Meta:
         member_class = Field
@@ -1016,10 +1011,6 @@ class Form(PagePart):
             **setup_endpoint_proxies(self)
         )
 
-    @staticmethod
-    @refinable
-    def post_handler(form, **_):
-        return None
 
     @dispatch(
         is_full_form=True,

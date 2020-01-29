@@ -560,7 +560,10 @@ class Column(PagePart):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut
+    @class_shortcut(
+        bulk__call_target__attribute='text',
+        query__call_target__attribute='text',
+    )
     def text(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
@@ -655,6 +658,8 @@ class Column(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='multi_choice_queryset',
+        bulk__call_target__attribute='many_to_many',
+        query__call_target__attribute='many_to_many',
         cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
         data_retrieval_method=DataRetrievalMethods.prefetch,
     )
@@ -672,6 +677,8 @@ class Column(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
+        bulk__call_target__attribute='foreign_key',
+        query__call_target__attribute='foreign_key',
         data_retrieval_method=DataRetrievalMethods.select,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
@@ -787,9 +794,6 @@ class BoundCell(object):
             return render_template(self.table.request(), cell__template, context)
 
         return format_html('<td{}>{}</td>', self.attrs, self.render_cell_contents())
-
-    def render_attrs(self):
-        return render_attrs(self.attrs)
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()

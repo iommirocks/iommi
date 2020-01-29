@@ -12,56 +12,55 @@ from django.db.models import (
     Q,
 )
 from iommi.base import (
+    MISSING,
+    PagePart,
     bind_members,
     collect_members,
-    MISSING,
+    evaluate_members,
     model_and_rows,
     no_copy_on_bind,
-    PagePart,
     request_data,
     setup_endpoint_proxies,
-    evaluate_members,
 )
 from iommi.form import (
-    bool_parse,
     Form,
+    bool_parse,
 )
 from iommi.from_model import (
     create_members_from_model,
     member_from_model,
 )
 from pyparsing import (
-    alphanums,
-    alphas,
     CaselessLiteral,
     Combine,
-    delimitedList,
     Forward,
     Group,
     Keyword,
-    nums,
-    oneOf,
     Optional,
     ParseException,
     ParseResults,
     QuotedString,
-    quotedString,
     Word,
     ZeroOrMore,
+    alphanums,
+    alphas,
+    delimitedList,
+    nums,
+    oneOf,
+    quotedString,
 )
 from tri_declarative import (
+    EMPTY,
+    Namespace,
+    Refinable,
     class_shortcut,
     declarative,
     dispatch,
-    EMPTY,
-    evaluate_recursive,
-    Namespace,
-    Refinable,
+    evaluate,
     refinable,
     setattr_path,
     setdefaults_path,
     with_meta,
-    evaluate,
 )
 from tri_struct import Struct
 
@@ -184,10 +183,6 @@ class Variable(PagePart):
     def __repr__(self):
         return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
 
-    @property
-    def query(self):
-        return self.parent
-
     def on_bind(self) -> None:
         for k, v in getattr(self.parent.parent, '_variables_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
@@ -250,7 +245,9 @@ class Variable(PagePart):
             **kwargs)
 
     @classmethod
-    @class_shortcut
+    @class_shortcut(
+        form__call_target__attribute='text',
+    )
     def text(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 

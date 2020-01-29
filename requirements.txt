@@ -1,3 +1,4 @@
 tri.declarative>=5.1.0,<6.0.0
 tri.struct>=3.0.0,<4.0.0
 pyparsing
+Django>=2.0.0

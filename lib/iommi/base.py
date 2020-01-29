@@ -24,33 +24,25 @@ from iommi.style import (
     get_style_for_object,
 )
 from tri_declarative import (
-    dispatch,
     EMPTY,
-    evaluate,
-    evaluate_strict,
     Namespace,
     Refinable,
     RefinableObject,
+    dispatch,
+    evaluate,
+    evaluate_strict,
+    get_callable_description,
     setdefaults_path,
     sort_after,
-    get_callable_description,
 )
 from tri_struct import Struct
 
 
 def should_include(item):
-    try:
-        r = item.include
-    except AttributeError:
-        try:
-            r = item['include']
-        except (TypeError, KeyError):
-            return True
+    if callable(item.include):
+        assert False, "`include` was a callable. You probably forgot to evaluate it. The callable was: {}".format(get_callable_description(item.include))
 
-    if callable(r):
-        assert False, "`include` was a callable. You probably forgot to evaluate it. The callable was: {}".format(get_callable_description(r))
-
-    return r
+    return item.include
 
 
 class GroupPathsByChildrenError(Exception):
@@ -107,6 +99,8 @@ def find_target(*, path, root):
     next_node = root
     parents = [root]
 
+    # TODO: what if the path is just / ? We can't get to that object as is. If we allow this then it can't work with default_child
+
     while True:
         data = {p: sentinel}
         try:
@@ -142,11 +136,13 @@ def perform_ajax_dispatch(*, root, path, value):
 
 def perform_post_dispatch(*, root, path, value):
     assert root._is_bound
+    assert path[0] in ('/', '-')
     path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
     target, parents = find_target(path=path, root=root)
 
     if target.post_handler is None:
-        raise InvalidEndpointPathException(f'Target {target} has no registered post_handler')
+        parents_str = '        \n'.join([str(p) for p in parents])
+        raise InvalidEndpointPathException(f'Target {target} has no registered post_handler.\n    Path: "{path}"\n    Parents:\n        {parents_str}')
 
     return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
 
@@ -344,13 +340,14 @@ def render_template_name(template_name, **kwargs):
 PartType = Union[PagePart, str, Template]
 
 
-def __html__(*, part: PartType, context):
+def as_html(*, part: PartType, context):
     if isinstance(part, str):
         return part
     elif isinstance(part, Template):
         template = part
         return template.render(context=context)
     else:
+        # TODO: this isn't compatible with jinja2
         return part.__html__(context=context)
 
 

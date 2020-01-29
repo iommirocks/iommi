@@ -13,7 +13,7 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    __html__,
+    as_html,
     bind_members,
     collect_members,
     evaluate_attrs,
@@ -88,7 +88,7 @@ class Fragment(PagePart):
         return format_html(
             '{}' * len(self._children),
             *[
-                __html__(part=x, context=context)
+                as_html(part=x, context=context)
                 for x in self._children
             ])
 
@@ -172,7 +172,7 @@ class Page(PagePart):
         rendered = {}
         for part in self.parts.values():
             assert part.name not in context
-            rendered[part.name] = __html__(part=part, context=context)
+            rendered[part.name] = as_html(part=part, context=context)
 
         return render(rendered)
 
