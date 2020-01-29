@@ -226,7 +226,6 @@ def table_readme_example_2(request):
 
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
-        # TODO: this doesn't work anymore :(
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
             query__include=True,  # put this field into the query language
             query__form__include=True,  # put this field into the simple filtering GUI

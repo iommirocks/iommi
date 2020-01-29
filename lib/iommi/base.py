@@ -130,7 +130,6 @@ def perform_ajax_dispatch(*, root, path, value):
     if target.endpoint_handler is None:
         raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
 
-    # TODO: this API should be endpoint(), fix Table.children when this is fixed
     return target.endpoint_handler(value=value, **target.evaluate_attribute_kwargs())
 
 
