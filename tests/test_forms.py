@@ -176,7 +176,7 @@ def test_custom_raw_data_list():
         )
 
     form = MyForm().bind(request=req('post', **{'-': ''}))
-    assert form.fields.foo.value_list == ['this is custom raw data list']
+    assert form.fields.foo.value == ['this is custom raw data list']
 
 
 def test_parse():
@@ -217,8 +217,8 @@ def test_parse():
     assert form.fields['admin'].value is False
 
     assert form.fields['manages'].raw_data_list == ['DEF', 'KTH']
-    assert form.fields['manages'].parsed_data_list == ['DEF', 'KTH']
-    assert form.fields['manages'].value_list == ['DEF', 'KTH']
+    assert form.fields['manages'].parsed_data == ['DEF', 'KTH']
+    assert form.fields['manages'].value == ['DEF', 'KTH']
 
     assert form.fields['a_date'].raw_data == '2014-02-12'
     assert form.fields['a_date'].parsed_data == date(2014, 2, 12)
@@ -229,8 +229,8 @@ def test_parse():
     assert form.fields['a_time'].value == time(1, 2, 3)
 
     assert form.fields['multi_choice_field'].raw_data_list == ['a', 'b']
-    assert form.fields['multi_choice_field'].parsed_data_list == ['a', 'b']
-    assert form.fields['multi_choice_field'].value_list == ['a', 'b']
+    assert form.fields['multi_choice_field'].parsed_data == ['a', 'b']
+    assert form.fields['multi_choice_field'].value == ['a', 'b']
     assert form.fields['multi_choice_field'].is_list
     assert not form.fields['multi_choice_field'].errors
     assert form.fields['multi_choice_field'].rendered_value == 'a, b'
@@ -309,8 +309,8 @@ def test_parse_errors():
 
     assert form.fields['multi_choice_field'].raw_data_list == ['q']
     assert_one_error_and_matches_reg_exp(form.fields['multi_choice_field'].errors, "q not in available choices")
-    assert form.fields['multi_choice_field'].parsed_data_list == ['q']
-    assert form.fields['multi_choice_field'].value_list is None
+    assert form.fields['multi_choice_field'].parsed_data == ['q']
+    assert form.fields['multi_choice_field'].value is None
 
     with pytest.raises(AssertionError):
         form.apply(Struct())
@@ -483,9 +483,11 @@ def test_setattr_path():
 
 
 def test_multi_select_with_one_value_only():
-    assert ['a'] == Form(
+    assert Form(
         fields__foo=Field.multi_choice(name='foo', choices=['a', 'b']),
-    ).bind(request=req('get', foo=['a'])).fields.foo.value_list
+    ).bind(
+        request=req('get', foo=['a'])
+    ).fields.foo.value == ['a']
 
 
 def test_render_misc_attributes():
@@ -1010,8 +1012,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             request=req('get', foo=''),
         )
         assert not f.get_errors()
-        assert f.fields.foo.value is None
-        assert f.fields.foo.value_list is None or f.fields.foo.value_list == []
+        assert f.fields.foo.value in (None, [])
         assert f.fields.foo.rendered_value == ''
 
     def test_empty_data():
@@ -1021,8 +1022,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             request=req('get'),
         )
         assert not f.get_errors()
-        assert f.fields.foo.value is None
-        assert f.fields.foo.value_list is None or f.fields.foo.value_list == []
+        assert f.fields.foo.value in (None, [])
 
     def test_editable_false():
         f = Form(
@@ -1035,12 +1035,12 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
 
     def test_editable_false_list():
         f = Form(
-            fields__foo=shortcut(required=False, initial_list=[SENTINEL], editable=False),
+            fields__foo=shortcut(required=False, initial=[SENTINEL], editable=False),
         ).bind(
             request=req('get', foo='asdasasd'),
         )
         assert not f.get_errors()
-        assert f.fields.foo.value_list == [SENTINEL]
+        assert f.fields.foo.value == [SENTINEL]
 
     def test_roundtrip_from_initial_to_raw_string():
         for raw, initial in raw_and_parsed_data_tuples:
@@ -1066,7 +1066,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             f = form.fields.foo
             assert f.initial_list == initial_list
             assert f.is_list
-            assert initial_list == f.value_list
+            assert f.value == initial_list
             assert ', '.join([str(x) for x in raw]) == f.rendered_value, 'Roundtrip failed'
 
     def test_roundtrip_from_raw_string_to_initial():
@@ -1080,7 +1080,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             f = form.fields.foo
             if f.is_list:
                 assert f.raw_data_list == raw
-                assert f.value_list == initial
+                assert f.value == initial
                 if initial:
                     assert [type(x) for x in f.value_list] == [type(x) for x in initial]
             else:
