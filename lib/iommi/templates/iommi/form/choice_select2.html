@@ -19,14 +19,13 @@
             dataType: "json",
             data: function (params) {
                 return {
-                    '{{ field.endpoint_path }}': params.term, // search term
-                    page: params.page
+                    '{{ field.endpoint_path }}': params.term || '', // search term
+                    page: params.page || 1
                 };
             }
         },
         allowClear: true,
-        multiple: {% if field.is_list %}true{% else %}false{% endif %},
-        minimumInputLength: 2
+        multiple: {% if field.is_list %}true{% else %}false{% endif %}
     });
 
 </script>

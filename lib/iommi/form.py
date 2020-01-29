@@ -230,7 +230,9 @@ def choice_queryset__endpoint_handler(*, form, field, value, **_):
         return dict(
             results=field.extra.model_from_choices(form, field, result),
             page=page,
-            more=has_more,
+            pagination=dict(
+                more=has_more,
+            ),
         )
     except EmptyPage:
         return dict(result=[])
