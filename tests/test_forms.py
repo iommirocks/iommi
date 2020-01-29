@@ -328,13 +328,13 @@ def test_initial_from_instance():
     ).fields.foo.initial == 7
 
 
-def test_initial_list_from_instance():
+def test_initial_from_instance_is_list():
     assert Form(
         instance=Struct(a=Struct(b=[7])),
         fields__foo=Field(attr='a__b', is_list=True),
     ).bind(
         request=req('get'),
-    ).fields.foo.initial_list == [7]
+    ).fields.foo.initial == [7]
 
 
 def test_non_editable_from_initial():
@@ -973,11 +973,11 @@ def test_field_from_model_many_to_many():
     assert isinstance(choices, QuerySet)
     assert set(choices) == set(Foo.objects.all())
     m2m = FieldFromModelManyToManyTest.objects.create()
-    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.foo_many_to_many.initial_list) == set()
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.foo_many_to_many.initial) == set()
     m2m.foo_many_to_many.add(b)
-    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.foo_many_to_many.initial_list) == {b}
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.foo_many_to_many.initial) == {b}
     m2m.foo_many_to_many.add(c)
-    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.foo_many_to_many.initial_list) == {b, c}
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.foo_many_to_many.initial) == {b, c}
 
 
 @pytest.mark.django_db
@@ -1058,17 +1058,17 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             assert raw == f.rendered_value, 'Roundtrip failed'
 
     def test_roundtrip_from_initial_to_raw_string_list():
-        for raw, initial_list in raw_and_parsed_data_tuples:
+        for raw, initial in raw_and_parsed_data_tuples:
             form = Form(
-                fields__foo=shortcut(required=True, initial_list=initial_list),
+                fields__foo=shortcut(required=True, initial=initial),
             ).bind(
                 request=req('get'),
             )
             assert not form.get_errors()
             f = form.fields.foo
-            assert f.initial_list == initial_list
+            assert f.initial == initial
             assert f.is_list
-            assert f.value == initial_list
+            assert f.value == initial
             assert ', '.join([str(x) for x in raw]) == f.rendered_value, 'Roundtrip failed'
 
     def test_roundtrip_from_raw_string_to_initial():
@@ -1084,7 +1084,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
                 assert f.raw_data_list == raw
                 assert f.value == initial
                 if initial:
-                    assert [type(x) for x in f.value_list] == [type(x) for x in initial]
+                    assert [type(x) for x in f.value] == [type(x) for x in initial]
             else:
                 assert f.raw_data == raw
                 assert f.value == initial
@@ -1182,8 +1182,8 @@ def test_multi_choice_shortcut():
         ),
         is_list=True,
         raw_and_parsed_data_tuples=[
-            # (['b', 'c'], ['b', 'c']),
-            ([], []),
+            (['b', 'c'], ['b', 'c']),
+            ([], None),
         ],
     )
 

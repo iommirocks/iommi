@@ -161,7 +161,7 @@ class KitchenForm(Form):
     fisk = Field.multi_choice(
         choices=[1, 2, 3, 4],
         parse=choice_parse,
-        initial_list=[1, 2],
+        initial=[1, 2],
         editable=False
     )
 

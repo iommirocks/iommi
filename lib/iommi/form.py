@@ -411,7 +411,6 @@ class Field(PagePart):
 
     parse_empty_string_as_none = Refinable()
     initial = Refinable()
-    initial_list = Refinable()
     template: str = Refinable()
     template_string = Refinable()
     attrs: Dict[str, Any] = Refinable()
@@ -1065,10 +1064,7 @@ class Form(PagePart):
                     initial = field.read_from_instance(field, self.instance)
 
                     # TODO: we always overwrite here, even if we got passed something.. seems strange
-                    if field.is_list:
-                        field.initial_list = initial
-                    else:
-                        field.initial = initial
+                    field.initial = initial
 
         if self._request_data is not None:
             for field in self.fields.values():
@@ -1209,7 +1205,7 @@ class Form(PagePart):
         self.parse()
 
         for field in self.fields.values():
-            if (not field.editable) or (self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None):
+            if (not field.editable) or (self.mode is INITIALS_FROM_GET and field.raw_data is None and not field.raw_data_list):
                 field.value = field.initial
                 continue
 
