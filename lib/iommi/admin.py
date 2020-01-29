@@ -9,6 +9,7 @@ from tri_declarative import (
     Namespace,
     setdefaults_path,
     EMPTY,
+    LAST,
 )
 from django.apps import apps
 from tri_struct import Struct
@@ -72,8 +73,8 @@ def list_model(model, app, table):
         table__rows=model.objects.all(),
         table__extra_columns=dict(
             select=dict(call_target__attribute='select', after=0),
-            edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
-            delete=dict(call_target__attribute='delete', after='select', cell__url=lambda row, **_: '%s/delete/' % row.pk),
+            edit=dict(call_target__attribute='edit', after='select', cell__url=lambda row, **_: '%s/edit/' % row.pk),
+            delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
         ),
         table__actions=dict(
             # TODO: bulk delete

@@ -114,6 +114,8 @@ If we just do :code:`Table.from_model(model=Foo)` we'll get the columns in the o
 
 this will put the columns in the order a, c, b.
 
+There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
+
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
