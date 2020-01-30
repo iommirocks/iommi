@@ -318,8 +318,8 @@ def test_sort_default_desc_no_sort():
         foo = Column()
         bar = Column(sort_default_desc=True)
 
-    verify_table_html\
-        (table=TestTable(rows=[]),
+    verify_table_html(
+        table=TestTable(rows=[]),
         query=dict(),
         find=dict(name='thead'),
         expected_html="""\

@@ -178,7 +178,7 @@ def test_unique_constraint_violation():
 @pytest.mark.django_db
 def test_namespace_forms():
     from tests.models import NamespaceFormsTest
-    
+
     assert NamespaceFormsTest.objects.all().count() == 0
 
     # Create object

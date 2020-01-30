@@ -126,4 +126,3 @@ class TBaz(Model):
 
     class Meta:
         ordering = ('pk',)
-

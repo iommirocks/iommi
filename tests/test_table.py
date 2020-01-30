@@ -31,7 +31,6 @@ from iommi.table import (
     yes_no_formatter,
 )
 from tri_declarative import (
-    Namespace,
     class_shortcut,
     getattr_path,
     get_shortcuts_by_name,
@@ -1297,7 +1296,7 @@ def test_query_namespace_inject():
         raise FooException()
 
     with pytest.raises(FooException):
-        foo = Table(
+        Table(
             rows=[],
             model=TFoo,
             columns__a=Column(name='a', query__include=True, query__form__include=True),
@@ -1762,7 +1761,7 @@ def test_from_model_with_inheritance():
             form_class = MyForm
             query_class = MyQuery
 
-    t = MyTable.from_model(
+    MyTable.from_model(
         rows=FromModelWithInheritanceTest.objects.all(),
         model=FromModelWithInheritanceTest,
         columns__value__query__include=True,

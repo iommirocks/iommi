@@ -1382,7 +1382,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         'page': 1,
     }
 
-    with pytest.raises(InvalidEndpointPathException) as e:
+    with pytest.raises(InvalidEndpointPathException):
         perform_ajax_dispatch(root=form, path='/fields/not_returning_anything', value='ar')
 
 
