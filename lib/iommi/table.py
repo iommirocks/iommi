@@ -152,7 +152,7 @@ def order_by_on_list(objects, order_field, is_desc=False):
     Utility function to sort objects django-style even for non-query set collections
 
     :param objects: list of objects to sort
-    :param order_field: field name, follows django conventions, so "foo__bar" means `foo.bar`, can be a callable.
+    :param order_field: field name, follows django conventions, so `foo__bar` means `foo.bar`, can be a callable.
     :param is_desc: reverse the sorting
     :return:
     """
@@ -270,13 +270,13 @@ class Column(PagePart):
     def __init__(self, **kwargs):
         """
         :param name: the name of the column
-        :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so "foo__bar" is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
+        :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
         :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
         :param url: URL of the header. This should only be used if "sorting" is off.
-        :param include: set this to False to hide the column
-        :param sortable: set this to False to disable sorting on this column
+        :param include: set this to `False` to hide the column
+        :param sortable: set this to `False` to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
-        :param sort_default_desc: Set to True to make table sort link to sort descending first.
+        :param sort_default_desc: Set to `True` to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
         :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `column`, `bound_row`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
@@ -285,7 +285,7 @@ class Column(PagePart):
         :param cell__attrs: dict of attr name to callables that receive kw arguments: `table`, `column`, `row` and `value`.
         :param cell__url: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
-        :param render_column: If set to false the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
+        :param render_column: If set to `False` the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
         """
 
         super(Column, self).__init__(**kwargs)
@@ -468,8 +468,8 @@ class Column(PagePart):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
-        :param checkbox_name: the name of the checkbox. Default is "pk", resulting in checkboxes like "pk_1234".
-        :param checked: callable to specify if the checkbox should be checked initially. Defaults to False.
+        :param checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
+        :param checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
         """
         setdefaults_path(kwargs, dict(
             include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
@@ -1064,9 +1064,9 @@ class Table(PagePart):
         :param attrs: dict of strings to string/callable of HTML attributes to apply to the table
         :param row__attrs: dict of strings to string/callable of HTML attributes to apply to the row. Callables are passed the row as argument.
         :param row__template: name of template (or `Template` object) to use for rendering the row
-        :param bulk_filter: filters to apply to the QuerySet before performing the bulk operation
-        :param bulk_exclude: exclude filters to apply to the QuerySet before performing the bulk operation
-        :param sortable: set this to false to turn off sorting for all columns
+        :param bulk_filter: filters to apply to the `QuerySet` before performing the bulk operation
+        :param bulk_exclude: exclude filters to apply to the `QuerySet` before performing the bulk operation
+        :param sortable: set this to `False` to turn off sorting for all columns
         """
         assert isinstance(columns, dict)
 

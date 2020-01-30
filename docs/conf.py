@@ -17,7 +17,6 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-import iommi.action
 
 sys.path.insert(0, os.path.abspath('../lib'))
 
@@ -103,7 +102,8 @@ release = iommi.__version__
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = None
+# This turns `foo` from just italic to the same as :code:`foo`
+default_role = 'code'
 
 #html_extra_path = []
 

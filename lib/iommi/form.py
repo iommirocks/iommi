@@ -471,25 +471,25 @@ class Field(PagePart):
 
             Field(attrs__id=lambda form, field: 'my_id_%s' % field.name)
 
-        :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally request.GET or request.POST)
-        :param is_valid: validation function. Should return a tuple of (bool, reason_for_failure_if_bool_is_false) or raise ValidationError. Default: lambda form, field, parsed_data: (True, '')
+        :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally `request.GET` or `request.POST`)
+        :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
         :param parse: parse function. Default just returns the string input unchanged: lambda form, field, string_value: string_value
         :param initial: initial value of the field
-        :param attr: the attribute path to apply or get the data from. For example using "foo__bar__baz" will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
+        :param attr: the attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
         :param attrs: a dict containing any custom html attributes to be sent to the input__template.
-        :param display_name: the text in the HTML label tag. Default: capitalize(name).replace('_', ' ')
+        :param display_name: the text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input__template, label__template and error__template below.
-        :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: None
+        :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: `None`
         :param input__template: django template filename for the template for just the input control.
         :param label__template: django template filename for the template for just the label tab.
-        :param errors__template: django template filename for the template for just the errors output. Default: 'iommi/form/errors.html'
-        :param required: if the field is a required field. Default: True
+        :param errors__template: django template filename for the template for just the errors output. Default: `'iommi/form/errors.html'`
+        :param required: if the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
-        :param editable: default: True
-        :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: True
-        :param render_value: render the parsed and validated value into a string. Default just converts to unicode: lambda form, field, value: unicode(value)
-        :param is_list: interpret request data as a list (can NOT be a callable). Default False
+        :param editable: default: `True`
+        :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
+        :param render_value: render the parsed and validated value into a string. Default just converts to unicode: `lambda form, field, value: unicode(value)`
+        :param is_list: interpret request data as a list (can NOT be a callable). Default: `False``
         :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """

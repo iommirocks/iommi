@@ -188,7 +188,7 @@ class Variable(PagePart):
         """
         Parameters with the prefix "form__" will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
 
-        :param form__include: set to True to display a GUI element for this variable in the basic style interface.
+        :param form__include: set to `True` to display a GUI element for this variable in the basic style interface.
         :param form__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
         """
 
