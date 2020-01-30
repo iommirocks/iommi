@@ -1,4 +1,4 @@
-__version__ = '1.0.0'
+__version__ = '0.1.0'
 
 from iommi._db_compat import setup_db_compat
 from iommi.action import Action
