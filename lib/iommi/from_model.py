@@ -4,6 +4,7 @@ from typing import (
     Any,
 )
 
+from django.core.exceptions import FieldDoesNotExist
 from iommi.base import MISSING
 from tri_declarative import (
     dispatch,
@@ -126,3 +127,34 @@ def get_fields(model):
     # noinspection PyProtectedMember
     for field in model._meta.get_fields():
         yield field
+
+
+_name_fields_by_model = {}
+
+
+def get_name_field_for_model(model):
+    name_field = _name_fields_by_model.get(model, MISSING)
+    if name_field is MISSING:
+        try:
+            name_field = model._meta.get_field('name')
+        except FieldDoesNotExist:
+            return None
+        return 'name' if name_field.unique else None
+
+    return name_field
+
+
+def register_name_field_for_model(model, name_field):
+    def validate_name_field(path):
+        field = model._meta.get_field(path[0])
+        if len(path) == 1:
+            if not field.unique:
+                raise Exception(f'Cannot register name "{name_field}" for model {model}. {path[0]} must be unique.')
+        else:
+            validate_name_field(path[1:])
+
+    validate_name_field(name_field.split('__'))
+    _name_fields_by_model[model] = name_field
+
+# TODO: this would be nice as a default, but where do we initialize it when django is started?
+# register_name_field_for_model(User, 'username')

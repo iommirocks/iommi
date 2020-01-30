@@ -1118,7 +1118,7 @@ class Table(PagePart):
         if not self.query_form:
             return ''
         # TODO: why are we using self.filter.template here? and all this complex stuff generally, when we should be able to just render the query in the template like {{ table.query }}?
-        return render_template(self.request(), self.filter.template, merged(self.context, form=self.query_form))
+        return render_template(self.request(), self.filter.template, self.context)
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.columns.values() if column.auto_rowspan]
@@ -1448,7 +1448,7 @@ class Table(PagePart):
 
         context['table'] = self
         context['bulk_form'] = self.bulk_form
-        context['query_form'] = self.query_form
+        context['query'] = self.query
         context['iommi_query_error'] = self.query_error
 
         request = self.request()

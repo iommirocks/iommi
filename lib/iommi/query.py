@@ -32,6 +32,7 @@ from iommi.form import (
 from iommi.from_model import (
     create_members_from_model,
     member_from_model,
+    get_name_field_for_model,
 )
 from pyparsing import (
     CaselessLiteral,
@@ -115,8 +116,6 @@ def value_to_query_string_value_string(variable, v):
         try:
             v = getattr(v, variable.value_to_q_lookup)
         except AttributeError:
-            # TODO: this is bad! exactly "name" is an ok default, otherwise require name registration
-            # TODO: also, if name isn't unique we can't do this anyway, but must output some pk syntax
             name_ish_attributes = [x for x in dir(v) if 'name' in x and not x.startswith('_')]
             raise AttributeError(
                 '{} object has no attribute {}. You can specify another name property with the value_to_q_lookup argument.{}'.format(
@@ -125,6 +124,13 @@ def value_to_query_string_value_string(variable, v):
                     " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
             )
     return to_string_surrounded_by_quote(v)
+
+
+def build_query_expression(*, field, variable, value):
+    if isinstance(value, Model) and not get_name_field_for_model(type(value)):
+        return f'{field.name}.pk={value.pk}'
+
+    return f'{field.name}{variable.gui_op}{value_to_query_string_value_string(variable, value)}'
 
 
 def case_sensitive_op_to_q_op(op):
@@ -670,6 +676,19 @@ class Query(PagePart):
         """
         assert self._is_bound
         variable_name, op, value_string_or_variable_name = token
+
+        if variable_name.endswith('.pk'):
+            variable = self.variables.get(variable_name.lower()[:-len('.pk')])
+            if op != '=':
+                raise QueryException('Only = is supported for primary key lookup')
+
+            try:
+                pk = int(value_string_or_variable_name)
+            except ValueError:
+                raise QueryException(f'Could not interpret {value_string_or_variable_name} as an integer')
+
+            return Q(**{variable.attr + '__pk': pk})
+
         variable = self.variables.get(variable_name.lower())
         if variable:
             if isinstance(value_string_or_variable_name, str) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.variables:
@@ -712,11 +731,7 @@ class Query(PagePart):
             def expr(field, is_list, value):
                 if is_list:
                     return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value]) + ')'
-                return ''.join([
-                    field.name,
-                    self.variables[field.name].gui_op,
-                    value_to_query_string_value_string(self.variables[field.name], value)],
-                )
+                return build_query_expression(field=field, variable=self.variables[field.name], value=value)
 
             result = [
                 expr(field, field.is_list, field.value)
