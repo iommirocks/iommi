@@ -877,10 +877,14 @@ def bulk__post_handler(table, form, **_):
 
 # TODO: full PagePart?
 class Paginator:
-    def __init__(self, *, django_paginator, table, page, adjacent_pages=6):
+    def __init__(self, *, django_paginator, table, adjacent_pages=6):
         self.paginator = django_paginator
         self.table: Table = table
         self.adjacent_pages = adjacent_pages
+
+        request = self.table.request()
+        self.page_param_path = path_join(self.table.path(), 'page')
+        page = request.GET.get(self.page_param_path) if request else None
         self.page = int(page) if page else 1
 
     def get_paginated_rows(self):
@@ -888,6 +892,8 @@ class Paginator:
 
     def __html__(self):
         context = {}
+
+        request = self.table.request()
 
         assert self.page != 0  # pages are 1-indexed!
         num_pages = self.paginator.num_pages
@@ -902,11 +908,10 @@ class Paginator:
             if 0 < n <= num_pages
         ]
 
-        get = context['request'].GET.copy() if 'request' in context else {}
+        get = request.GET.copy() if request is not None else {}
 
-        # TODO: namespace!
-        if 'page' in get:
-            del get['page']
+        if self.page_param_path in get:
+            del get[self.page_param_path]
 
         context = {**context, **dict(
             extra=get and (get.urlencode() + "&") or "",
@@ -919,6 +924,7 @@ class Paginator:
 
         if self.paginator.num_pages > 1:
             context.update({
+                'page_param_path': self.page_param_path,
                 'is_paginated': self.paginator.num_pages > 1,
                 'results_per_page': self.table.page_size,
                 'has_next': page_obj.has_next(),
@@ -1381,8 +1387,6 @@ class Table(PagePart):
             except ValueError:
                 pass
 
-            page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
-
             if isinstance(self.paginator.call_target, type) and issubclass(self.paginator.call_target, DjangoPaginator):
                 django_paginator = self.paginator(self.rows, self.page_size)
             elif isinstance(self.paginator.call_target, DjangoPaginator):
@@ -1390,7 +1394,7 @@ class Table(PagePart):
             else:
                 assert isinstance(self.paginator, Namespace)
                 django_paginator = DjangoPaginator(self.rows, self.page_size)
-            self.paginator = Paginator(table=self, django_paginator=django_paginator, page=page)
+            self.paginator = Paginator(table=self, django_paginator=django_paginator)
 
             try:
                 self.rows = self.paginator.get_paginated_rows()
