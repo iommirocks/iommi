@@ -37,6 +37,8 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+MISSING = object()
+
 
 def should_include(item):
     if callable(item.include):
@@ -146,6 +148,28 @@ def perform_post_dispatch(*, root, path, value):
     return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
 
 
+@dispatch(
+    render=EMPTY,
+)
+def render_root(*, part, template_name=MISSING, content_block_name=MISSING, context=None, **render):
+    if context is None:
+        context = {}
+
+    if template_name is MISSING:
+        template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', 'base.html')
+    if content_block_name is MISSING:
+        content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content')
+
+
+    content = part.__html__(context=context, **render)
+
+    assert 'content' not in context
+    context['content'] = content
+
+    template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
+    return get_template_from_string(template_string).render(context=context, request=part.request())
+
+
 # TODO: abc?
 class PagePart(RefinableObject):
     name: str = Refinable()
@@ -176,24 +200,6 @@ class PagePart(RefinableObject):
     def __str__(self):
         assert self._is_bound
         return self.__html__()
-
-    # TODO: ick! why is this on ALL PageParts?
-    @dispatch(
-        template_name=getattr(settings, 'IOMMI_BASE_TEMPLATE', 'base.html'),
-        content_block_name=getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content'),
-        render=EMPTY,
-    )
-    def render_root(self, *, template_name, content_block_name, context=None, **render):
-        if context is None:
-            context = {}
-
-        content = self.__html__(context=context, **render)
-
-        assert 'content' not in context
-        context['content'] = content
-
-        template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
-        return get_template_from_string(template_string).render(context=context, request=self.request())
 
     # TODO: ick! why is this on ALL PageParts?
     @dispatch
@@ -234,7 +240,7 @@ class PagePart(RefinableObject):
             if result is not None:
                 return dispatch_response_handler(result)
 
-        return HttpResponse(self.render_root(**kwargs))
+        return HttpResponse(render_root(part=self, **kwargs))
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
@@ -352,7 +358,6 @@ def as_html(*, part: PartType, context):
 
 DISPATCH_PATH_SEPARATOR = '/'
 DISPATCH_PREFIX = DISPATCH_PATH_SEPARATOR
-MISSING = object()
 
 
 def path_join(prefix, name, separator=DISPATCH_PATH_SEPARATOR) -> str:
