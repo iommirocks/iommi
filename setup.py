@@ -6,7 +6,6 @@ from setuptools import setup, find_packages, Command
 from io import open
 
 readme = open('README.rst', encoding='utf8').read()
-history = open('HISTORY.rst', encoding='utf8').read().replace('.. :changelog:', '')
 
 
 def read_reqs(name):
@@ -74,7 +73,7 @@ setup(
     name='iommi',
     version=read_version(),
     description='iommi is a high level framework built on django',
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
     author='Anders Hovmöller',
     author_email='anders.hovmoller@trioptima.com',
     url='https://github.com/TriOptima/iommi',
