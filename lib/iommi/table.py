@@ -1,6 +1,6 @@
 from enum import (
-    auto,
     Enum,
+    auto,
 )
 from functools import total_ordering
 from itertools import groupby
@@ -25,7 +25,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.utils.encoding import (
-    force_text,
+    force_str,
 )
 from django.utils.html import (
     conditional_escape,
@@ -33,27 +33,27 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from iommi._web_compat import (
-    render_template,
     Template,
+    render_template,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
+    DISPATCH_PREFIX,
+    MISSING,
+    PagePart,
     bind_members,
     collect_members,
-    DISPATCH_PREFIX,
     evaluate_attrs,
     evaluate_member,
     evaluate_members,
-    MISSING,
+    evaluate_strict_container,
     model_and_rows,
     no_copy_on_bind,
-    PagePart,
     path_join,
     setup_endpoint_proxies,
-    evaluate_strict_container,
 )
 from iommi.form import (
     Form,
@@ -68,25 +68,23 @@ from iommi.query import (
     QueryException,
 )
 from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
     EMPTY,
-    evaluate,
-    evaluate_recursive_strict,
-    evaluate_strict,
-    getattr_path,
     LAST,
     Namespace,
     Refinable,
-    refinable,
     RefinableObject,
+    class_shortcut,
+    declarative,
+    dispatch,
+    evaluate,
+    evaluate_strict,
+    getattr_path,
+    refinable,
     setattr_path,
     setdefaults_path,
     with_meta,
 )
 from tri_struct import (
-    merged,
     Struct,
 )
 
@@ -307,7 +305,7 @@ class Column(PagePart):
     @staticmethod
     @refinable
     def display_name(table, column, **_):
-        return force_text(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
+        return force_str(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
         for k, v in getattr(self.parent.parent, '_columns_unapplied_data').get(self.name, {}).items():

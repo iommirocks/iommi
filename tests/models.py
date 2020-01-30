@@ -93,6 +93,9 @@ class Baz(Model):
 class FromModelWithInheritanceTest(Model):
     value = FloatField()
 
+    class Meta:
+        ordering = ('pk',)
+
 
 class EndPointDispatchModel(Model):
     name = CharField(max_length=255)
