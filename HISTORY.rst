@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.0.0 (----------)
+5.0.0 (2019-01-30)
 ------------------
 
 * Added private field to shortcuts: `__tri_declarative_shortcut_stack`. This is useful to be able to figure out a shortcut stack after the fact
@@ -11,6 +11,8 @@ Changelog
 * Removed all deprecated APIs/behaviors:
     * `creation_ordered`
     * The promotion of string values to keys in `Namespace`
+
+* Much improved error messages
 
 
 4.0.1 (2019-10-23)
