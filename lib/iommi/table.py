@@ -694,22 +694,17 @@ class BoundRow(object):
     Internal class used in row rendering
     """
 
-    @dispatch(
-        attrs=EMPTY,
-        extra=EMPTY,
-        extra_evaluated=EMPTY,
-    )
-    def __init__(self, table, row, row_index, template, attrs, extra, extra_evaluated):
+    def __init__(self, table, row, row_index):
         self.table: Table = table
         self.row: Any = row
         assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
-        self.template = template
-        self.extra = extra
-        self.extra_evaluated = evaluate_strict_container(extra_evaluated, row=self.row, **table.evaluate_attribute_kwargs())
         self.parent = table
-        self.attrs = attrs
         self.name = 'row'
+        self.template = evaluate(table.row.template, row=self.row, **table.evaluate_attribute_kwargs())
+        self.extra = table.row.extra
+        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_attribute_kwargs())
+        self.attrs = table.row.attrs
         self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
     def __html__(self):
@@ -821,16 +816,17 @@ class TemplateConfig(Struct, RefinableObject):
     template: str = Refinable()
 
 
-class HeaderConfig(Struct, RefinableObject):
+class HeaderConfig(RefinableObject):
     attrs: Dict[str, Any] = Refinable()
     template: str = Refinable()
     extra: Dict[str, Any] = Refinable()
 
 
-class RowConfig(Struct, RefinableObject):
+class RowConfig(RefinableObject):
     attrs: Dict[str, Any] = Refinable()
     template: str = Refinable()
     extra: Dict[str, Any] = Refinable()
+    extra_evaluated: Dict[str, Any] = Refinable()
 
 
 # TODO: make this a PagePart?
@@ -1043,6 +1039,8 @@ class Table(PagePart):
         row__attrs__class=EMPTY,
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
         row__template=None,
+        row__extra=EMPTY,
+        row__extra_evaluated=EMPTY,
         filter__template='iommi/query/form.html',
         header__template='iommi/table/table_header_rows.html',
         paginator_template='iommi/table/paginator.html',
@@ -1412,7 +1410,7 @@ class Table(PagePart):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
-            yield BoundRow(table=self, row=row, row_index=i, **self.row)
+            yield BoundRow(table=self, row=row, row_index=i)
 
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))

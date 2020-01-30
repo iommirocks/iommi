@@ -28,6 +28,7 @@ from iommi.base import (
     PagePart,
     no_copy_on_bind,
     as_html,
+    evaluate_strict_container,
 )
 from tri_declarative import Namespace
 from tri_struct import Struct
@@ -398,3 +399,8 @@ def test_as_html():
     assert format_html('{}', as_html(part=Struct(__html__=lambda context: 'foo'), context={})) == 'foo'
     assert format_html('{}', as_html(part=Struct(__html__=lambda context: '<foo>bar</foo>'), context={})) == '&lt;foo&gt;bar&lt;/foo&gt;'
     assert format_html('{}', as_html(part=Struct(__html__=lambda context: mark_safe('<foo>bar</foo>')), context={})) == '<foo>bar</foo>'
+
+
+def test_evaluate_strict_container():
+    assert evaluate_strict_container(Namespace(foo=1)) == Namespace(foo=1)
+    assert evaluate_strict_container(Namespace(foo=lambda foo: foo), foo=3) == Namespace(foo=3)

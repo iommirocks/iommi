@@ -1365,12 +1365,16 @@ def test_row_extra():
     assert bound_row['result'].value == 5 + 7
 
 
-def test_row_extra_struct():
+def test_row_extra_evaluated():
+    def some_callable(table, row, **_):
+        return row.a + row.b
+
     class TestTable(Table):
-        result = Column(cell__value=lambda bound_row, **_: bound_row.extra.foo)
+        result = Column(cell__value=lambda bound_row, **_: bound_row.extra_evaluated.foo)
 
         class Meta:
-            row__extra = lambda table, row, **_: Namespace(foo=row.a + row.b)
+            row__extra__foo = some_callable
+            row__extra_evaluated__foo = some_callable
 
     table = TestTable(
         rows=[Struct(a=5, b=7)],
@@ -1378,7 +1382,8 @@ def test_row_extra_struct():
         request=req('get'),
     )
     bound_row = list(table.bound_rows())[0]
-    assert bound_row.extra.foo == 5 + 7
+    assert bound_row.extra.foo is some_callable
+    assert bound_row.extra_evaluated.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
 
