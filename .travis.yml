@@ -36,9 +36,9 @@ jobs:
       script: python setup.py sdist
       deploy:
         provider: pypi
-        user: j_lubcke
+        user: "__token__"
         password:
-          secure: GP/vGk9q++12p0v6hXpEfHJzADApvtPwf60DUf2U8SNWaZ+ErhaOnwyZkVyxFZ+YpFB+9uTUUcFzOhV4UCIVYCMq21gMkwnP2Dagsg2Yox8YuyzyWc0WVOYm9kZm+8fgpHcFkl33jTMB0BLAJ2xBCM/3PWsly1HKz1Hf/WBugpzEk/sWAOAnF0EZWHBH8YPaMhXze2m9mU0NdlumD/7Ia76jSLgHzIjvGvdECxnWs+pQHJTTpFgVcvg8hVcoIBuvu8apqewBtGQa3DAA+d5bNqinN/IHLQfNQ7HX02pHcO+n8EOaWlQ+dAQugOFHJXJ+fm4v4l616V360+MB2J/iekQIduRB4ZIw+Ouixl4NullqWeBqpIOkukQHpDAJHIPwCgIzzeYcSB045/E55c0CgHS4y45wiPBNLZW+7wmmZ2t51rOLqrNXgRqEfzL34VNqgJNgyKKjilSJtgAx70PJBOZiD+5UHF4EPihXQmTonAW4halmuS0KVz7NpyYZdAKzcyvaJAUbbRXDKeseyio6iW5sjOjYzZ6mt8PXJU7R8TzqLJ/MwTZ4khH03VleGZWWGJaauexUitr5o+AUNpnyO0hzBS+K9M0eS2ijN2F2BCM/zgOZ9h3FpU/WZXDH2ihZpWNzWi9nfrwqkUtIVhN2wZSUvD6fxrLMNvb9n1iRa1U=
+          secure: jp2ceMSJMIKjzib7inC4bE/fbPkNe/mRaub92Oj3j2Z92p6JcWwQEjUblYwvvosRvnblqvSAa5KWkyO7w1zBbMk09c39S0Y9d6dlvrqq9QFZ6zNu+d+AkYaeSKXrye16UCwZown9f9LEC2+L4GY8VnPFqqHyJSrC4ZrA85oRJMltrPa6arDwxqkBWWEPWWc/WH8C4DJMG9xBO6ygtoF9absobhTQEKJbR7BbGJbs8drNun0GU0zHB9k3JBz1SIC45lBHhYEv8FCcOHZMXkicwaLkut46kz+SMCYdTyeokw2Ye8B8PJiI6tSNfonSmOXj9EjLic68bG8W76jFBQ7WLJaNiTH+6stCFxy0D4qKqdpQzJzQyrsTbdY3kEMN8pRgdO9s6Ewa50c9lMfzc1y8ILeXf+Vpi2IAEwnIjFPz5G//H7osYvHFvyj5S8yz7vD+Uf6nETcsxDIzuH3UetUJcothRvw9MBsHCRUwymFPtEGwsHElZin27z8zmUmAC9Nz0RQQTi41A1iesA4aUUUHN0HlBZ1dXI20Bj6JbORHioGLykvICjKZ+Fd9aB+iEnwe7Ik/bUSHR2Zg3NV+YkZHB+2rro0X0JlgwBNy7HMRjZpWTvHz7liNaBl49WMoRBjPVio/glMC57MnBAk2hJhvY+xcdyAyF4G9NXszowoXcG4=
         on:
           tags: true
           repo: TriOptima/iommi
