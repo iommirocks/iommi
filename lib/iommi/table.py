@@ -882,9 +882,15 @@ class Paginator:
         self.page = int(page) if page else 1
 
     def get_paginated_rows(self):
+        if self.paginator is None:
+            return self.table.rows
+
         return self.paginator.get_page(self.page).object_list
 
     def __html__(self):
+        if self.paginator is None:
+            return ''
+
         context = {}
 
         request = self.table.request()
@@ -1377,7 +1383,7 @@ class Table(PagePart):
 
         request = self.request()
         # TODO: I paginate only when I have a request... this is a bit weird, but matches old behavior and the tests assume this for now
-        if self.page_size and request:
+        if self.page_size and request and isinstance(self.rows, QuerySet) and self.paginator is not None:
             try:
                 self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
             except ValueError:
@@ -1396,6 +1402,8 @@ class Table(PagePart):
                 self.rows = self.paginator.get_paginated_rows()
             except (InvalidPage, ValueError):
                 raise Http404
+        else:
+            self.paginator = Paginator(table=self, django_paginator=None)
 
         self._prepare_auto_rowspan()
 

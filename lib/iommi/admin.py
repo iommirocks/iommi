@@ -46,7 +46,6 @@ def all_models(app, table, **kwargs):
         table,
         sortable=False,
         rows=app_data(),
-        page_size=None,
         columns=dict(
             app_name=column_cls(auto_rowspan=True),
             model_name=column_cls(cell__url=lambda row, **_: '%s/%s/' % (row.app_name, row.model_name)),
@@ -72,7 +71,8 @@ def list_model(model, app, table):
         table=table,
         table__rows=model.objects.all(),
         table__extra_columns=dict(
-            select=dict(call_target__attribute='select', after=0),
+            # TODO: bulk edit and bulk delete
+            # select=dict(call_target__attribute='select', after=0),
             edit=dict(call_target__attribute='edit', after='select', cell__url=lambda row, **_: '%s/edit/' % row.pk),
             delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
         ),
@@ -90,40 +90,6 @@ def list_model(model, app, table):
     return kwargs.table().as_page(parts__header=admin_h1)
 
 
-@dispatch(
-    form__call_target__attribute='as_create_page',
-)
-def create_object(*, model, form, **kwargs):
-    return form(
-        model=model,
-        parts__header=admin_h1,
-        **kwargs
-    )
-
-
-@dispatch(
-    form__call_target__attribute='as_delete_page',
-)
-def delete_object(*, pk, model, form, **kwargs):
-    assert pk
-    return form(
-        instance=model.objects.get(pk=pk),
-        parts__header=admin_h1,
-        **kwargs
-    )
-
-
-@dispatch(
-    form__call_target__attribute='as_edit_page',
-)
-def edit_object(*, pk, model, form, **kwargs):
-    assert pk
-    return form(
-        instance=model.objects.get(pk=pk),
-        parts__header=admin_h1,
-        **kwargs
-    )
-
 # TODO: name, description, display_name field should be freetext searchable by default
 # TODO: bulk edit?
 
@@ -131,11 +97,12 @@ def edit_object(*, pk, model, form, **kwargs):
 @dispatch(
     all_models__call_target=all_models,
     list_model__call_target=list_model,
-    create_object__call_target=create_object,
-    delete_object__call_target=delete_object,
-    edit_object__call_target=edit_object,
+    create_object__call_target__attribute='as_create_page',
+    delete_object__call_target__attribute='as_delete_page',
+    edit_object__call_target__attribute='as_edit_page',
     table__call_target__cls=Table,
     form__call_target__cls=Form,
+    form__parts__header=admin_h1,
 )
 def admin(app_name, model_name, pk, command, all_models, list_model, create_object, edit_object, delete_object, table, form):
 
@@ -157,19 +124,22 @@ def admin(app_name, model_name, pk, command, all_models, list_model, create_obje
     if app_name is None and model_name is None:
         return all_models(table=table)
 
-    elif command is None:
+    model = apps.all_models[app_name][model_name]
+
+    if command is None:
         assert pk is None
-        return list_model(model=apps.all_models[app_name][model_name], table=table)
+        return list_model(model=model, table=table)
 
-    elif command == 'create':
+    if command == 'create':
         assert pk is None
-        return create_object(model=apps.all_models[app_name][model_name], form=form)
+        return Namespace(create_object, form)(model=model)
 
-    elif command == 'edit':
-        return edit_object(model=apps.all_models[app_name][model_name], pk=pk, form=form)
+    instance = model.objects.get(pk=pk)
 
-    elif command == 'delete':
-        return delete_object(model=apps.all_models[app_name][model_name], pk=pk, form=form)
+    if command == 'edit':
+        return Namespace(edit_object, form)(model=model, instance=instance)
 
-    else:
-        assert False, 'unknown command %s' % command
+    if command == 'delete':
+        return Namespace(delete_object, form)(model=model, instance=instance)
+
+    assert False, 'unknown command %s' % command

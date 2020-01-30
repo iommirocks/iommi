@@ -19,6 +19,7 @@ from typing import (
     Union,
 )
 
+from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
@@ -536,7 +537,7 @@ class Field(PagePart):
     @staticmethod
     @refinable
     def render_value(form: 'Form', field: 'Field', value: Any) -> str:
-        if isinstance(value, list):
+        if isinstance(value, (list, QuerySet)):
             return ', '.join(field.render_value(form=form, field=field, value=v) for v in value)
         else:
             return "%s" % value if value is not None else ''
