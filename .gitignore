@@ -128,6 +128,8 @@ output/*/index.html
 # Sphinx
 docs/_build
 docs/iommi.rst
+docs/lib.iommi.rst
+docs/lib.rst
 docs/Table.rst
 docs/Column.rst
 docs/Query.rst

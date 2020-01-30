@@ -1,3 +1,4 @@
 sphinx
 alabaster
+Django
 -r../requirements.txt
