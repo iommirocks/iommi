@@ -102,6 +102,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     if factory is None:
         return None
 
+    # Not strict evaluate on purpose
     factory = evaluate(factory, model_field=model_field, field_name=field_name)
 
     setdefaults_path(

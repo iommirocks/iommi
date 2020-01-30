@@ -53,6 +53,7 @@ from iommi.base import (
     PagePart,
     path_join,
     setup_endpoint_proxies,
+    evaluate_strict_container,
 )
 from iommi.form import (
     Form,
@@ -66,16 +67,12 @@ from iommi.query import (
     Query,
     QueryException,
 )
-from iommi.render import (
-    render_attrs,
-)
 from tri_declarative import (
     class_shortcut,
     declarative,
     dispatch,
     EMPTY,
     evaluate,
-    evaluate_recursive,
     evaluate_recursive_strict,
     evaluate_strict,
     getattr_path,
@@ -334,6 +331,7 @@ class Column(PagePart):
         )
         self.declared_column = self._declared
 
+        # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.evaluate_attribute_kwargs())
 
         evaluated_attributes = [
@@ -364,7 +362,7 @@ class Column(PagePart):
             # 'extra',
         ]
         evaluate_members(self, evaluated_attributes, **self.evaluate_attribute_kwargs())
-        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(table=self.parent, column=self)
@@ -699,14 +697,16 @@ class BoundRow(object):
     @dispatch(
         attrs=EMPTY,
         extra=EMPTY,
+        extra_evaluated=EMPTY,
     )
-    def __init__(self, table, row, row_index, template, attrs, extra):
+    def __init__(self, table, row, row_index, template, attrs, extra, extra_evaluated):
         self.table: Table = table
         self.row: Any = row
         assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
         self.template = template
         self.extra = extra
+        self.extra_evaluated = evaluate_strict_container(extra_evaluated, row=self.row, **table.evaluate_attribute_kwargs())
         self.parent = table
         self.attrs = attrs
         self.name = 'row'
@@ -1403,6 +1403,8 @@ class Table(PagePart):
 
         self._prepare_auto_rowspan()
 
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+
     def _evaluate_attribute_kwargs(self):
         return dict(table=self)
 
@@ -1410,8 +1412,7 @@ class Table(PagePart):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
-            # TODO: **evaluate_recursive_strict? I think we can not do this if we just handle some cases in the BoundRow init
-            yield BoundRow(table=self, row=row, row_index=i, **evaluate_recursive_strict(self.row, table=self, row=row))
+            yield BoundRow(table=self, row=row, row_index=i, **self.row)
 
     def render_tbody(self):
         return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))

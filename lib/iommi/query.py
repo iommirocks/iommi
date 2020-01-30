@@ -24,6 +24,7 @@ from iommi.base import (
     no_copy_on_bind,
     request_data,
     setup_endpoint_proxies,
+    evaluate_strict_container,
 )
 from iommi.form import (
     Form,
@@ -204,6 +205,7 @@ class Variable(PagePart):
         if self.attr is MISSING:
             self.attr = self.name
 
+        # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.evaluate_attribute_kwargs())
 
         evaluated_attributes = [
@@ -545,6 +547,8 @@ class Query(PagePart):
         self.form.bind(parent=self)
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
         self.form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
+
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self)

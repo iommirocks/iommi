@@ -47,6 +47,15 @@ def should_include(item):
     return item.include
 
 
+def evaluate_strict_container(c, **kwargs):
+    return Namespace(
+        {
+            k: evaluate_strict(v, **kwargs)
+            for k, v in c.items()
+        }
+    )
+
+
 class GroupPathsByChildrenError(Exception):
     pass
 
@@ -177,6 +186,7 @@ class PagePart(RefinableObject):
     after: Union[int, str] = Refinable()
     default_child = Refinable()
     extra: Namespace = Refinable()
+    extra_evaluated: Namespace = Refinable()
     style: str = Refinable()
 
     parent = None
@@ -184,6 +194,7 @@ class PagePart(RefinableObject):
 
     @dispatch(
         extra=EMPTY,
+        extra_evaluated=EMPTY,
         include=True,
         name=None,
     )
@@ -265,7 +276,6 @@ class PagePart(RefinableObject):
 
         result.apply_style()
         result.on_bind()
-        # TODO: evaluate extra here?
 
         if len(result.children()) == 1:
             for the_only_part in result.children().values():

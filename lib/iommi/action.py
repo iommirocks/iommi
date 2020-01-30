@@ -12,13 +12,13 @@ from django.utils.text import slugify
 from iommi.base import (
     evaluate_attrs,
     PagePart,
+    evaluate_strict_container,
 )
 from iommi.page import Fragment
 from tri_declarative import (
     class_shortcut,
     dispatch,
     EMPTY,
-    evaluate_recursive,
     Refinable,
     setattr_path,
     setdefaults_path,
@@ -114,7 +114,7 @@ class Action(PagePart):
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 
-        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):

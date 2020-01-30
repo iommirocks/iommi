@@ -1675,10 +1675,10 @@ def test_auto_field():
 def test_initial_set_earlier_than_evaluate_is_called():
     class MyForm(Form):
         foo = Field(
-            extra__bar=lambda form, field, **_: field.initial
+            extra_evaluated__bar=lambda form, field, **_: field.initial
         )
 
-    assert 17 == MyForm(instance=Struct(foo=17)).bind(request=req('get')).fields.foo.extra.bar
+    assert 17 == MyForm(instance=Struct(foo=17)).bind(request=req('get')).fields.foo.extra_evaluated.bar
 
 
 @pytest.mark.django_db

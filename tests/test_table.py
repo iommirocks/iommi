@@ -1347,10 +1347,11 @@ def test_extra():
 
 def test_row_extra():
     class TestTable(Table):
-        result = Column(cell__value=lambda bound_row, **_: bound_row.extra.foo)
+        result = Column(cell__value=lambda bound_row, **_: bound_row.extra_evaluated.foo)
 
         class Meta:
-            row__extra__foo = lambda table, row, **_: row.a + row.b
+            row__extra__foo = 7
+            row__extra_evaluated__foo = lambda table, row, **_: row.a + row.b
 
     table = TestTable(
         rows=[Struct(a=5, b=7)]
@@ -1358,7 +1359,9 @@ def test_row_extra():
         request=req('get'),
     )
     bound_row = list(table.bound_rows())[0]
-    assert bound_row.extra.foo == 5 + 7
+
+    assert bound_row.extra.foo == 7
+    assert bound_row.extra_evaluated.foo == 5 + 7
     assert bound_row['result'].value == 5 + 7
 
 

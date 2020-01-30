@@ -47,6 +47,7 @@ from iommi.base import (
     render_template_name,
     request_data,
     setup_endpoint_proxies,
+    evaluate_strict_container,
 )
 from iommi.from_model import (
     create_members_from_model,
@@ -62,7 +63,6 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    evaluate_recursive,
     getattr_path,
     Namespace,
     Refinable,
@@ -615,7 +615,7 @@ class Field(PagePart):
 
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
-        self.extra = evaluate_recursive(self.extra, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
@@ -1101,6 +1101,8 @@ class Form(PagePart):
         self.is_valid()
 
         self.errors = Errors(parent=self, errors=self.errors)
+
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(form=self)
