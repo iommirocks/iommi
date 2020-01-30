@@ -152,6 +152,7 @@ def test_group_paths_by_children_error_message():
         group_paths_by_children(children=my_page.children(), data=data)
 
 
+@pytest.mark.django_db
 def test_dispatch_error_message_to_client():
     response = request_with_middleware(response=MyPage(), data={'/qwe': ''})
     data = json.loads(response.content)

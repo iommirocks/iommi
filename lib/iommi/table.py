@@ -1372,6 +1372,30 @@ class Table(PagePart):
             if select:
                 self.rows = self.rows.select_related(*select)
 
+        request = self.request()
+        # TODO: I paginate only when I have a request... this is a bit weird, but matches old behavior and the tests assume this for now
+        if self.page_size and request:
+            try:
+                self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
+            except ValueError:
+                pass
+
+            page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
+
+            if isinstance(self.paginator.call_target, type) and issubclass(self.paginator.call_target, DjangoPaginator):
+                django_paginator = self.paginator(self.rows, self.page_size)
+            elif isinstance(self.paginator.call_target, DjangoPaginator):
+                django_paginator = self.paginator
+            else:
+                assert isinstance(self.paginator, Namespace)
+                django_paginator = DjangoPaginator(self.rows, self.page_size)
+            self.paginator = Paginator(table=self, django_paginator=django_paginator, page=page)
+
+            try:
+                self.rows = self.paginator.get_paginated_rows()
+            except (InvalidPage, ValueError):
+                raise Http404
+
         self._prepare_auto_rowspan()
 
     def _evaluate_attribute_kwargs(self):
@@ -1454,31 +1478,7 @@ class Table(PagePart):
         request = self.request()
 
         assert self.rows is not None
-
-        # TODO: move all this to on_bind!
-        if self.page_size:
-            try:
-                self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
-            except ValueError:
-                pass
-
-            page = request.GET.get('page') if request else None  # None is translated to the default page in paginator.get_page
-
-            if isinstance(self.paginator, type) and issubclass(self.paginator, DjangoPaginator):
-                django_paginator = self.paginator(self.rows, self.page_size)
-            elif isinstance(self.paginator, DjangoPaginator):
-                django_paginator = self.paginator
-            else:
-                assert isinstance(self.paginator, Namespace)
-                django_paginator = DjangoPaginator(self.rows, self.page_size)
-            self.paginator = Paginator(table=self, django_paginator=django_paginator, page=page)
-
-            try:
-                self.rows = self.paginator.get_paginated_rows()
-            except (InvalidPage, ValueError):
-                raise Http404
-
-            context['paginator'] = self.paginator
+        context['paginator'] = self.paginator
 
         self.context = context
 

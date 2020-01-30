@@ -1154,6 +1154,7 @@ def test_auto_rowspan_and_render_twice():
         </table>"""
 
     t = TestTable(rows=rows)
+    t.bind(request=req('get'))
     verify_table_html(table=t, expected_html=expected)
     verify_table_html(table=t, expected_html=expected)
 
