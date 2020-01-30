@@ -891,13 +891,14 @@ class Paginator:
 
         assert self.page != 0  # pages are 1-indexed!
         num_pages = self.paginator.num_pages
-        if self.page <= self.adjacent_pages:
-            self.page = self.adjacent_pages + 1
-        elif self.page > num_pages - self.adjacent_pages:
-            self.page = num_pages - self.adjacent_pages
+        foo = self.page
+        if foo <= self.adjacent_pages:
+            foo = self.adjacent_pages + 1
+        elif foo > num_pages - self.adjacent_pages:
+            foo = num_pages - self.adjacent_pages
         page_numbers = [
             n for n in
-            range(self.page - self.adjacent_pages, self.page + self.adjacent_pages + 1)
+            range(self.page - self.adjacent_pages, foo + self.adjacent_pages + 1)
             if 0 < n <= num_pages
         ]
 
