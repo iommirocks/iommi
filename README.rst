@@ -13,10 +13,10 @@ iommi is a django-based framework for even higher abstraction and faster develop
 Major features:
 
 - A system to project django model definitions into more high level definitions
-- :doc:`Forms <docs/forms>`: view models, data validation, and parsing
-- :doc:`Queries <docs/queries>`: filtering lists/query sets
-- :doc:`Tables <docs/tables>`: view models for lists/query sets, html tables, and CSV reports
-- :doc:`Pages <docs/pages>`: compose pages from parts like forms, tables and html fragments
+- `Forms <https://docs.iommi.rocks/en/latest/forms.html>`_: view models, data validation, and parsing
+- `Queries <https://docs.iommi.rocks/en/latest/queries.html>`_: filtering lists/query sets
+- `Tables <https://docs.iommi.rocks/en/latest/tables.html>`_: view models for lists/query sets, html tables, and CSV reports
+- `Pages <https://docs.iommi.rocks/en/latest/pages.html>`_: compose pages from parts like forms, tables and html fragments
 
 All the components are written with the same philosophy of:
 
@@ -47,7 +47,7 @@ This creates a page with two tables, one for the model :code:`Foo` and one for t
 Usage
 ------
 
-See :doc:`usage`.
+See `usage <https://docs.iommi.rocks/en/latest/usage.html>`_.
 
 
 Running tests
