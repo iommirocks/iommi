@@ -23,6 +23,9 @@ Contents:
    authors
    contributing
 
+   @github <https://github.com/TriOptima/iommi>
+   @pypi <https://pypi.org/project/iommi/>
+
 Indices and tables
 ==================
 

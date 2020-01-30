@@ -60,9 +60,3 @@ License
 -------
 
 BSD
-
-
-Documentation
--------------
-
-http://iommi.readthedocs.org.

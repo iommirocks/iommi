@@ -65,4 +65,4 @@ BSD
 Documentation
 -------------
 
-http://iommi.readthedocs.org.
+https://docs.iommi.rocks
