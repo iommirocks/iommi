@@ -7,5 +7,9 @@ class IommiConfig(AppConfig):
     verbose_name = 'iommi'
 
     def ready(self):
-        from django.contrib.auth.models import User
+        from django.contrib.auth.models import (
+            User,
+            Permission,
+        )
         register_name_field(model=User, name_field='username')
+        register_name_field(model=Permission, name_field='codename')

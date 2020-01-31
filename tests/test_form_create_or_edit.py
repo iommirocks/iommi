@@ -4,9 +4,9 @@ import pytest
 from bs4 import BeautifulSoup
 from iommi.base import DISPATCH_PATH_SEPARATOR
 from iommi.form import (
-    create_or_edit_object_redirect,
     Form,
     INITIALS_FROM_GET,
+    create_or_edit_object_redirect,
 )
 from tri_struct import merged
 

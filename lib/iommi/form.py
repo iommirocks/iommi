@@ -19,7 +19,10 @@ from typing import (
     Union,
 )
 
-from django.db.models import QuerySet
+from django.db.models import (
+    QuerySet,
+    Q,
+)
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
@@ -53,6 +56,8 @@ from iommi.from_model import (
     create_members_from_model,
     get_fields,
     member_from_model,
+    get_name_field_for_model,
+    NoRegisteredNameException,
 )
 from iommi.page import (
     Fragment,
@@ -218,13 +223,12 @@ def choice_queryset__is_valid(field, parsed_data, **_):
     return field.choices.filter(pk=parsed_data.pk).exists(), f'{field.raw_data or ", ".join(field.raw_data_list)} not in available choices'
 
 
-def choice_queryset__endpoint_handler(*, form, field, value, **_):
+def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
     from django.core.paginator import (
         EmptyPage,
         Paginator,
     )
 
-    page_size = field.extra.get('endpoint_page_size', 40)
     page = int(form.request().GET.get('page', 1))
     choices = field.extra.filter_and_sort(form=form, field=field, value=value)
     try:
@@ -243,21 +247,6 @@ def choice_queryset__endpoint_handler(*, form, field, value, **_):
         return dict(result=[])
 
 
-def choice_queryset__extra__current_selection_json(form, field, **_):
-    # Return a function here to make r callable from the template and not be evaluated here
-    def result():
-        if field.value is None:
-            return 'null'
-        if field.is_list:
-            r = choice_queryset__extra__model_from_choices(form, field, field.value)
-        else:
-            r = choice_queryset__extra__model_from_choices(form, field, [field.value])[0]
-
-        return mark_safe(json.dumps(r))
-
-    return result
-
-
 def choice_queryset__extra__model_from_choices(form, field, choices):
     def traverse():
         for choice in choices:
@@ -270,36 +259,14 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
     return list(traverse())
 
 
-def get_name_field(field):
-    from django.db import models
-    fields = [x.attname for x in get_fields(field.model_field.target_field.model) if isinstance(x, models.CharField)]
-    if 'name' in fields:
-        return 'name'
-    else:
-        name_fields = [x for x in fields if 'name' in x]
-        if name_fields:
-            return name_fields[0]
-
-    assert fields, "Searching for a field requires it to have a character field we can use for searching. I couldn't find one to use as a guess you you must specify how to perform the search explicitly via `extra__endpoint_attrs`"
-    return fields[0]
-
-
 def choice_queryset__extra__filter_and_sort(field, value, **_):
-    # TODO: too magical AND wrong. There should be a name registration system for this.
-    if 'endpoint_attrs' not in field.extra and 'endpoint_attr' in field.extra:
-        attrs = [field.extra.endpoint_attr]
-    elif 'endpoint_attrs' in field.extra:
-        attrs = field.extra.endpoint_attrs
-    elif field.model_field:
-        attrs = [get_name_field(field)]
-    else:
-        attrs = [field.attr]
-
-    from django.db.models import Q
-    qs = Q()
-    for attr in attrs:
-        qs |= Q((attr + '__icontains', value))
-    return field.choices.filter(qs)
+    if not value:
+        return field.choices
+    try:
+        return field.choices.filter(Q((get_name_field_for_model(field.model) + '__icontains', value)))
+    except NoRegisteredNameException:
+        # TODO: warning? seems not great ending up here
+        return field.choices.filter(Q(pk=value))
 
 
 def choice_queryset__parse(field, string_value, **_):
@@ -797,7 +764,6 @@ class Field(PagePart):
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
-        extra__current_selection_json=choice_queryset__extra__current_selection_json,
     )
     def choice_queryset(cls, choices, call_target=None, **kwargs):
         from django.db.models import QuerySet

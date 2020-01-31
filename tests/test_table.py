@@ -18,6 +18,7 @@ from iommi.form import (
 )
 from iommi import Action
 from iommi.base import perform_ajax_dispatch
+from iommi.from_model import register_name_field
 from iommi.query import (
     Query,
     Variable,
@@ -47,6 +48,8 @@ from tests.models import (
     TBaz,
     TFoo,
 )
+
+register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
 
 
 def get_rows():

@@ -98,7 +98,7 @@ class FromModelWithInheritanceTest(Model):
 
 
 class EndPointDispatchModel(Model):
-    name = CharField(max_length=255)
+    name = CharField(max_length=255, unique=True)
 
 
 class NonStandardName(Model):

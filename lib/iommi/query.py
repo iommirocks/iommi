@@ -34,6 +34,7 @@ from iommi.from_model import (
     create_members_from_model,
     member_from_model,
     get_name_field_for_model,
+    NoRegisteredNameException,
 )
 from pyparsing import (
     CaselessLiteral,
@@ -133,8 +134,11 @@ def value_to_query_string_value_string(variable, v):
 
 
 def build_query_expression(*, field, variable, value):
-    if isinstance(value, Model) and not get_name_field_for_model(type(value)):
-        return f'{field.name}.pk={value.pk}'
+    if isinstance(value, Model):
+        try:
+            get_name_field_for_model(type(value))
+        except NoRegisteredNameException:
+            return f'{field.name}.pk={value.pk}'
 
     return f'{field.name}{variable.gui_op}{value_to_query_string_value_string(variable, value)}'
 

@@ -30,7 +30,6 @@ from iommi.form import (
     float_parse,
     Form,
     FULL_FORM_FROM_REQUEST,
-    get_name_field,
     INITIALS_FROM_GET,
     int_parse,
     register_field_factory,
@@ -1806,66 +1805,6 @@ def test_from_model_override_field():
         request=req('get'),
     )
     assert form.fields.f_float.parse is not float_parse
-
-
-@pytest.mark.django_db
-def test_get_name_field():
-    from django.db.models import (
-        Model,
-        IntegerField,
-        CharField,
-        ForeignKey,
-        CASCADE,
-    )
-
-    class Foo1(Model):
-        a = IntegerField()
-        name = CharField(max_length=255)
-
-    class Bar1(Model):
-        foo = ForeignKey(Foo1, on_delete=CASCADE)
-
-    class Foo2(Model):
-        a = IntegerField()
-        fooname = CharField(max_length=255)
-        name = CharField(max_length=255)
-
-    class Bar2(Model):
-        foo = ForeignKey(Foo2, on_delete=CASCADE)
-
-    class Foo3(Model):
-        name = IntegerField()
-        fooname = CharField(max_length=255)
-
-    class Bar3(Model):
-        foo = ForeignKey(Foo3, on_delete=CASCADE)
-
-    class Foo4(Model):
-        fooname = CharField(max_length=255)
-        barname = CharField(max_length=255)
-
-    class Bar4(Model):
-        foo = ForeignKey(Foo4, on_delete=CASCADE)
-
-    class Foo5(Model):
-        blabla = CharField(max_length=255)
-
-    class Bar5(Model):
-        foo = ForeignKey(Foo5, on_delete=CASCADE)
-
-    class Foo6(Model):
-        a = IntegerField()
-
-    class Bar6(Model):
-        foo = ForeignKey(Foo6, on_delete=CASCADE)
-
-    assert get_name_field(Form.from_model(model=Bar1).bind(request=req('get')).fields.foo) == 'name'
-    assert get_name_field(Form.from_model(model=Bar2).bind(request=req('get')).fields.foo) == 'name'
-    assert get_name_field(Form.from_model(model=Bar3).bind(request=req('get')).fields.foo) == 'fooname'
-    assert get_name_field(Form.from_model(model=Bar4).bind(request=req('get')).fields.foo) == 'fooname'
-    assert get_name_field(Form.from_model(model=Bar5).bind(request=req('get')).fields.foo) == 'blabla'
-    with pytest.raises(AssertionError):
-        get_name_field(Form.from_model(model=Bar6).bind(request=req('get')).fields.foo)
 
 
 def test_field_merge():

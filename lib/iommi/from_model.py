@@ -133,23 +133,36 @@ def get_fields(model):
 _name_fields_by_model = {}
 
 
+class NoRegisteredNameException(Exception):
+    pass
+
+
 def get_name_field_for_model(model):
     name_field = _name_fields_by_model.get(model, MISSING)
     if name_field is MISSING:
         try:
             name_field = model._meta.get_field('name')
         except FieldDoesNotExist:
-            return None
-        return 'name' if name_field.unique else None
+            raise NoRegisteredNameException(f'The model {model} has no registered name field. Please register one with register_name_field.')
+        if not name_field.unique:
+            raise NoRegisteredNameException(
+                f"The model {model} has no registered name field. Please register one with register_name_field. It has a field `name` but it's not unique in the database so we can't use that.")
+        return 'name'
 
     return name_field
 
 
-def register_name_field(*, model, name_field):
+def register_name_field(*, model, name_field, allow_non_unique=False):
     def validate_name_field(path):
         field = model._meta.get_field(path[0])
         if len(path) == 1:
+            if allow_non_unique:
+                return
+
             if not field.unique:
+                for unique_together in model._meta.unique_together:
+                    if path[0] in unique_together:
+                        return
                 raise Exception(f'Cannot register name "{name_field}" for model {model}. {path[0]} must be unique.')
         else:
             validate_name_field(path[1:])
