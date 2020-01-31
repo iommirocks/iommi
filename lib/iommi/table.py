@@ -891,11 +891,11 @@ class Paginator:
         page = request.GET.get(self.page_param_path) if request else None
         self.current_page = int(page) if page else 1
         self.attrs = Namespace()
-        self.container = Namespace()
-        self.page = Namespace()
-        self.active_item = Namespace()
-        self.item = Namespace()
-        self.link = Namespace()
+        self.container = Namespace(attrs=EMPTY)
+        self.page = Namespace(attrs=EMPTY)
+        self.active_item = Namespace(attrs=EMPTY)
+        self.item = Namespace(attrs=EMPTY)
+        self.link = Namespace(attrs=EMPTY)
 
         apply_style(self)
         self.attrs = evaluate_attrs(self)

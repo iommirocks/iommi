@@ -45,7 +45,6 @@ def middleware(get_response):
     return iommi_middleware
 
 
-# TODO: make sure we have documentation for all this public API!
 __all__ = [
     'Action',
     'Column',

@@ -193,7 +193,6 @@ def get_style_for(obj):
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
 
-# TODO: abc?
 class PagePart(RefinableObject):
     name: str = Refinable()
     include: bool = Refinable()
@@ -226,7 +225,6 @@ class PagePart(RefinableObject):
         assert self._is_bound
         return self.__html__()
 
-    # TODO: ick! why is this on ALL PageParts?
     @dispatch
     def render_to_response(self, **kwargs):
         request = self.request()
