@@ -1,12 +1,64 @@
+.mobile-logo {
+    display: none;
+}
+
+body {
+    box-sizing: border-box;
+}
+
 .sphinxsidebar h3,
 .sphinxsidebar h1.logo {
     display: none;
 }
 
-div.document {
-    width: 1040px;
-}
-
 pre {
     padding: 7px 15px;
+}
+
+@media screen and (min-width: 1040px) {
+    div.document {
+        width: 1040px;
+    }
+}
+
+@media screen and (max-width: 875px) {
+
+    .mobile-logo {
+        display: block;
+        text-align: center;
+    }
+
+    .logo {
+        width: 150px;
+    }
+
+    div.body {
+        min-width: 0;
+    }
+
+    body {
+        padding: 10px 20px;
+    }
+
+    ul {
+        padding-left: 13px;
+    }
+
+    .highlight-python,
+    .highlight-html {
+        margin: 0 -20px;
+    }
+
+    .highlight pre {
+        padding: 4px 8px;
+    }
+
+    /* Hide badges */
+    .reference.external.image-reference {
+        display: none;
+    }
+
+    #iommi h1 {
+        display: none;
+    }
 }

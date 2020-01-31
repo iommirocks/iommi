@@ -73,7 +73,7 @@ def list_model(model, app, table):
         table__extra_columns=dict(
             # TODO: bulk edit and bulk delete
             # select=dict(call_target__attribute='select', after=0),
-            edit=dict(call_target__attribute='edit', after='select', cell__url=lambda row, **_: '%s/edit/' % row.pk),
+            edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
             delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
         ),
         table__actions=dict(

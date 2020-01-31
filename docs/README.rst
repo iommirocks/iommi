@@ -1,6 +1,10 @@
 iommi
 =====
 
+.. raw:: html
+
+    <p class="mobile-logo"><a href="#"><img class="logo" src="_static/logo.svg" alt="Logo"></a></p>
+
 .. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
     :target: https://travis-ci.org/TriOptima/iommi.svg
 
