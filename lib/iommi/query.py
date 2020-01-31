@@ -66,6 +66,7 @@ from tri_declarative import (
     setattr_path,
     setdefaults_path,
     with_meta,
+    Shortcut,
 )
 from tri_struct import Struct
 
@@ -99,8 +100,12 @@ ADVANCED_QUERY_PARAM = 'query'
 _variable_factory_by_django_field_type = {}
 
 
-def register_variable_factory(field_class, factory):
-    _variable_factory_by_django_field_type[field_class] = factory
+def register_variable_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name)
+
+    _variable_factory_by_django_field_type[django_field_class] = factory
 
 
 def to_string_surrounded_by_quote(v):

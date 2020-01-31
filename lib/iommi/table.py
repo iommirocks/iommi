@@ -73,6 +73,7 @@ from tri_declarative import (
     Namespace,
     Refinable,
     RefinableObject,
+    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
@@ -93,8 +94,12 @@ LAST = LAST
 _column_factory_by_field_type = {}
 
 
-def register_column_factory(field_class, factory):
-    _column_factory_by_field_type[field_class] = factory
+def register_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name)
+
+    _column_factory_by_field_type[django_field_class] = factory
 
 
 DESCENDING = 'descending'

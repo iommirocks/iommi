@@ -17,6 +17,7 @@ Contents:
    tables
    queries
    forms
+   registrations
    tables_faq
    api
    history

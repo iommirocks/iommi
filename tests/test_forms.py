@@ -996,7 +996,7 @@ def test_field_from_model_many_to_one_foreign_key():
 def test_register_field_factory():
     from tests.models import FooField, RegisterFieldFactoryTest
 
-    register_field_factory(FooField, lambda **kwargs: 7)
+    register_field_factory(FooField, factory=lambda **kwargs: 7)
 
     assert Field.from_model(RegisterFieldFactoryTest, 'foo') == 7
 
@@ -1343,7 +1343,7 @@ def test_null_field_factory():
         should_be_null = ShouldBeNullField()
         foo = models.IntegerField()
 
-    register_field_factory(ShouldBeNullField, None)
+    register_field_factory(ShouldBeNullField, factory=None)
 
     form = Form.from_model(model=FooModel).bind(request=req('get'))
     assert list(form.fields.keys()) == ['foo']

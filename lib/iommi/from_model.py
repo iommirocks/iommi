@@ -145,7 +145,7 @@ def get_name_field_for_model(model):
     return name_field
 
 
-def register_name_field_for_model(model, name_field):
+def register_name_field(*, model, name_field):
     def validate_name_field(path):
         field = model._meta.get_field(path[0])
         if len(path) == 1:
@@ -156,6 +156,3 @@ def register_name_field_for_model(model, name_field):
 
     validate_name_field(name_field.split('__'))
     _name_fields_by_model[model] = name_field
-
-# TODO: this would be nice as a default, but where do we initialize it when django is started?
-# register_name_field_for_model(User, 'username')

@@ -23,32 +23,31 @@ from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
+    Template,
+    URLValidator,
+    ValidationError,
     csrf,
     format_html,
     get_template_from_string,
     mark_safe,
     render_template,
-    Template,
-    URLValidator,
     validate_email,
-    ValidationError,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
+    MISSING,
+    PagePart,
     bind_members,
     collect_members,
-    DISPATCH_PATH_SEPARATOR,
     evaluate_attrs,
-    MISSING,
+    evaluate_strict_container,
     no_copy_on_bind,
-    PagePart,
     render_template_name,
     request_data,
     setup_endpoint_proxies,
-    evaluate_strict_container,
 )
 from iommi.from_model import (
     create_members_from_model,
@@ -60,13 +59,14 @@ from iommi.page import (
 )
 from iommi.render import Errors
 from tri_declarative import (
+    EMPTY,
+    Namespace,
+    Refinable,
+    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
-    EMPTY,
     getattr_path,
-    Namespace,
-    Refinable,
     refinable,
     setattr_path,
     setdefaults_path,
@@ -114,8 +114,12 @@ def many_to_many_factory_write_to_instance(field, instance, value):
 _field_factory_by_field_type = {}
 
 
-def register_field_factory(field_class, factory):
-    _field_factory_by_field_type[field_class] = factory
+def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+    assert shortcut_name is not MISSING or factory is not MISSING
+    if factory is MISSING:
+        factory = Shortcut(call_target__attribute=shortcut_name)
+
+    _field_factory_by_field_type[django_field_class] = factory
 
 
 def create_or_edit_object__post_handler(*, form, **_):
@@ -537,6 +541,7 @@ class Field(PagePart):
     @staticmethod
     @refinable
     def render_value(form: 'Form', field: 'Field', value: Any) -> str:
+        # TODO: why not use the nice behavior in default_cell_formatter?
         if isinstance(value, (list, QuerySet)):
             return ', '.join(field.render_value(form=form, field=field, value=v) for v in value)
         else:

@@ -77,16 +77,7 @@ This only affects the formatting when we render the cell value. Which might make
 How do I get iommi tables to understand my Django ModelField subclasses?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You use the :code:`iommi.db_compat.register_column_factory` function to register your own factory. We can look at the pre-registered factories to understand how to make your own:
-
-.. code:: python
-
-    register_column_factory(
-        TimeField,
-        Shortcut(call_target__attribute='time')
-    )
-
-This registers the a factory that, when it sees a django :code:`TimeField` will call the :code:`Column.time` shortcut to create a column.
+See :doc:`registrations`.
 
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
