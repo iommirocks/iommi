@@ -35,6 +35,7 @@ def recursive_namespace(d):
 
 class Style:
     def __init__(self, *bases, **kwargs):
+        self.name = None
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj):
@@ -158,11 +159,17 @@ bootstrap = Style(
         attrs__class__table=True,
     ),
     Column=dict(
+        shortcuts__number__cell__attrs__class__rj=True,
         header__attrs__class={'text-nowrap': True},
     ),
     Query__form__style='bootstrap_horizontal',
-
-    Column__shortcuts__number__cell__attrs__class__rj=True,
+    Paginator=dict(
+        container__attrs__class__pagination=True,
+        page__attrs__class={'page-link': True},
+        active_item__attrs__class={'page-item': True, 'active': True},
+        link__attrs__class={'page-link': True},
+        item__attrs__class={'page-item': True},
+    ),
 )
 
 bootstrap_horizontal = Style(
@@ -183,7 +190,7 @@ bootstrap_horizontal = Style(
     ),
     Form__attrs__class={
         'align-items-center': True,
-    }
+    },
 )
 
 _styles = {}
@@ -191,6 +198,8 @@ _styles = {}
 
 def register_style(name, conf):
     assert name not in _styles
+    assert conf.name is None
+    conf.name = name
     _styles[name] = conf
 
 
@@ -218,8 +227,8 @@ def apply_style_recursively(*, style_data, obj):
                     setattr(obj, k, v)
 
 
-def get_style_for_object(style, self):
-    return get_style(style).component(self)
+def get_style_obj_for_object(style, obj):
+    return get_style(style).component(obj)
 
 
 class InvalidStyleConfigurationException(Exception):
@@ -236,6 +245,7 @@ def validate_styles(*, classes: List[Type] = None):
         Query,
         Action,
     )
+    from iommi.table import Paginator
     classes = (classes or []) + [
         Field,
         Form,
@@ -244,6 +254,7 @@ def validate_styles(*, classes: List[Type] = None):
         Variable,
         Query,
         Action,
+        Paginator,
     ]
 
     # We can have multiple classes called Field. In fact that's the recommended way to use iommi!

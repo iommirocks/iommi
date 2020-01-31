@@ -54,6 +54,7 @@ from iommi.base import (
     no_copy_on_bind,
     path_join,
     setup_endpoint_proxies,
+    apply_style,
 )
 from iommi.form import (
     Form,
@@ -67,6 +68,8 @@ from iommi.query import (
     Query,
     QueryException,
 )
+from iommi.render import Attrs
+from iommi.style import apply_style_recursively
 from tri_declarative import (
     EMPTY,
     LAST,
@@ -877,6 +880,8 @@ def bulk__post_handler(table, form, **_):
 # TODO: full PagePart?
 class Paginator:
     def __init__(self, *, django_paginator, table, adjacent_pages=6):
+        self.style = None
+        self.parent = table
         self.paginator = django_paginator
         self.table: Table = table
         self.adjacent_pages = adjacent_pages
@@ -884,32 +889,44 @@ class Paginator:
         request = self.table.request()
         self.page_param_path = path_join(self.table.path(), 'page')
         page = request.GET.get(self.page_param_path) if request else None
-        self.page = int(page) if page else 1
+        self.current_page = int(page) if page else 1
+        self.attrs = Namespace()
+        self.container = Namespace()
+        self.page = Namespace()
+        self.active_item = Namespace()
+        self.item = Namespace()
+        self.link = Namespace()
+
+        apply_style(self)
+        self.attrs = evaluate_attrs(self)
+        self.container.attrs = evaluate_attrs(self.container)
+        self.page.attrs = evaluate_attrs(self.page)
+        self.active_item.attrs = evaluate_attrs(self.active_item)
+        self.item.attrs = evaluate_attrs(self.item)
+        self.link.attrs = evaluate_attrs(self.link)
 
     def get_paginated_rows(self):
         if self.paginator is None:
             return self.table.rows
 
-        return self.paginator.get_page(self.page).object_list
+        return self.paginator.get_page(self.current_page).object_list
 
     def __html__(self):
         if self.paginator is None:
             return ''
 
-        context = {}
-
         request = self.table.request()
 
-        assert self.page != 0  # pages are 1-indexed!
+        assert self.current_page != 0  # pages are 1-indexed!
         num_pages = self.paginator.num_pages
-        foo = self.page
+        foo = self.current_page
         if foo <= self.adjacent_pages:
             foo = self.adjacent_pages + 1
         elif foo > num_pages - self.adjacent_pages:
             foo = num_pages - self.adjacent_pages
         page_numbers = [
             n for n in
-            range(self.page - self.adjacent_pages, foo + self.adjacent_pages + 1)
+            range(self.current_page - self.adjacent_pages, foo + self.adjacent_pages + 1)
             if 0 < n <= num_pages
         ]
 
@@ -918,14 +935,14 @@ class Paginator:
         if self.page_param_path in get:
             del get[self.page_param_path]
 
-        context = {**context, **dict(
+        context = dict(
             extra=get and (get.urlencode() + "&") or "",
             page_numbers=page_numbers,
             show_first=1 not in page_numbers,
             show_last=num_pages not in page_numbers,
-        )}
+        )
 
-        page_obj = self.paginator.get_page(self.page)
+        page_obj = self.paginator.get_page(self.current_page)
 
         if self.paginator.num_pages > 1:
             context.update({
@@ -939,6 +956,7 @@ class Paginator:
                 'page': page_obj.number,
                 'pages': self.paginator.num_pages,
                 'hits': self.paginator.count,
+                'paginator': self,
             })
         else:
             return ''

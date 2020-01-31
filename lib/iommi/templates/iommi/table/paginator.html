@@ -1,34 +1,34 @@
-{# TODO: this template could probably be condensed down to some Fragments. It's ugly and big and can't be styled properly #}
+{# TODO: this template could probably be condensed down to some Fragments. #}
 
-<nav aria-label="Pages">
-    <ul class="pagination">
+<nav aria-label="Pages"{{ paginator.attrs }}>
+    <ul{{ paginator.container.attrs }}>
         {% if show_first %}
-            <li class="page-item">
-                <a class="page-link" href="?{{ extra|escape }}{{ page_param_path }}=1" aria-label="First Page">&laquo;</a>
+            <li{{ paginator.item.attrs }}>
+                <a href="?{{ extra|escape }}{{ page_param_path }}=1" aria-label="First Page"{{ paginator.link.attrs }}>&laquo;</a>
             </li>
         {% endif %}
 
         {% if has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?{{ extra|escape }}{{ page_param_path }}={{ previous }}" aria-label="Previous Page">&lt;</a>
+            <li{{ paginator.item.attrs }}>
+                <a href="?{{ extra|escape }}{{ page_param_path }}={{ previous }}" aria-label="Previous Page"{{ paginator.link.attrs }}>&lt;</a>
             </li>
         {% endif %}
 
         {% for num in page_numbers %}
-            <li class="page-item {% if num == page %}active{% endif %}">
-                <a class="page-link" href="?{{ extra|escape }}{{ page_param_path }}={{ num }}" aria-label="Page {{ num }}">{{ num }}</a>
+            <li{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>
+                <a href="?{{ extra|escape }}{{ page_param_path }}={{ num }}" aria-label="Page {{ num }}"{{ paginator.link.attrs }}>{{ num }}</a>
             </li>
         {% endfor %}
 
         {% if has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?{{ extra|escape }}{{ page_param_path }}={{ next }}" aria-label="Next Page">&gt;</a>
+            <li{{ paginator.item.attrs }}>
+                <a href="?{{ extra|escape }}{{ page_param_path }}={{ next }}" aria-label="Next Page"{{ paginator.link.attrs }}>&gt;</a>
             </li>
         {% endif %}
 
         {% if show_last %}
-            <li class="page-item">
-                <a class="page-link" href="?{{ extra|escape }}{{ page_param_path }}={{ pages }}" aria-label="Last Page">&raquo;</a>
+            <li{{ paginator.item.attrs }}>
+                <a href="?{{ extra|escape }}{{ page_param_path }}={{ pages }}" aria-label="Last Page"{{ paginator.link.attrs }}>&raquo;</a>
             </li>
         {% endif %}
     </ul>

@@ -21,7 +21,7 @@ from iommi._web_compat import (
 from iommi.render import Attrs
 from iommi.style import (
     apply_style_recursively,
-    get_style_for_object,
+    get_style_obj_for_object,
 )
 from tri_declarative import (
     EMPTY,
@@ -179,6 +179,20 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     return get_template_from_string(template_string).render(context=context, request=part.request())
 
 
+def apply_style(obj):
+    style = get_style_obj_for_object(style=get_style_for(obj), obj=obj)
+    apply_style_recursively(style_data=style, obj=obj)
+
+
+def get_style_for(obj):
+    if obj.style is not None:
+        return obj.style
+    if obj.parent is not None:
+        return get_style_for(obj.parent)
+
+    return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
+
+
 # TODO: abc?
 class PagePart(RefinableObject):
     name: str = Refinable()
@@ -274,7 +288,7 @@ class PagePart(RefinableObject):
         result.parent = parent
         result._is_bound = True
 
-        result.apply_style()
+        apply_style(result)
         result.on_bind()
 
         if len(result.children()) == 1:
@@ -287,10 +301,6 @@ class PagePart(RefinableObject):
     def on_bind(self) -> None:
         pass
 
-    def apply_style(self):
-        style = get_style_for_object(style=self.get_style(), self=self)
-        apply_style_recursively(style_data=style, obj=self)
-
     def children(self):
         assert self._is_bound
 
@@ -301,14 +311,6 @@ class PagePart(RefinableObject):
             return self._request
         else:
             return self.parent.request()
-
-    def get_style(self):
-        if self.style is not None:
-            return self.style
-        if self.parent is not None:
-            return self.parent.get_style()
-
-        return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
     def dunder_path(self) -> str:
         assert self._is_bound
@@ -518,9 +520,7 @@ def evaluate_attrs(obj, **kwargs):
         for k, v in attrs.items()
         if k != 'class'
     }
-    if getattr(settings, 'IOMMI_DEBUG_SHOW_PATHS', False) and getattr(obj, 'name', None) is not None:
-        attrs['data-iommi-path'] = obj.dunder_path()
     return Attrs({
         'class': classes,
         **attrs
-    })
+    }, parent=obj)

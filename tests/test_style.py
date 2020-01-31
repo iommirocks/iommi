@@ -1,15 +1,16 @@
+from iommi.base import get_style_for
 from iommi.render import render_attrs
 from iommi.style import (
     Style,
     apply_style_recursively,
-    get_style_for_object,
+    get_style_obj_for_object,
     validate_styles,
 )
 from tri_declarative import (
+    Namespace,
     Refinable,
     RefinableObject,
     class_shortcut,
-    Namespace,
 )
 
 
@@ -90,8 +91,8 @@ def test_apply_checkbox_style():
     form = MyForm()
     form.bind(request=None)
 
-    assert form.fields.foo.get_style() == 'bootstrap'
-    assert get_style_for_object(style=form.fields.foo.get_style(), self=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
+    assert get_style_for(form.fields.foo) == 'bootstrap'
+    assert get_style_obj_for_object(style=get_style_for(form.fields.foo), obj=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
     assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label" for="id_foo"'
