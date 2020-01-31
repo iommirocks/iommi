@@ -13,6 +13,7 @@ from django.db.models import (
     F,
     Model,
     Q,
+    QuerySet,
 )
 from iommi.base import (
     MISSING,
@@ -318,12 +319,10 @@ class Variable(PagePart):
         value_to_q_lookup='name',
         value_to_q=choice_queryset_value_to_q,
     )
-    def choice_queryset(cls, choices, call_target=None, **kwargs):
+    def choice_queryset(cls, choices: QuerySet, call_target=None, **kwargs):
         """
         Field that has one value out of a set.
-        :type choices: django.db.models.QuerySet
         """
-        from django.db.models import QuerySet
         if 'model' not in kwargs:
             assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
             kwargs['model'] = choices.model

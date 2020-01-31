@@ -2,6 +2,7 @@
   <dictionary name="andersh">
     <words>
       <w>callables</w>
+      <w>icontains</w>
       <w>iommi</w>
       <w>quux</w>
       <w>refinable</w>

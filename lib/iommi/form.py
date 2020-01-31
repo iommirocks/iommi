@@ -1,4 +1,3 @@
-import json
 import re
 from datetime import datetime
 from decimal import (
@@ -20,8 +19,9 @@ from typing import (
 )
 
 from django.db.models import (
-    QuerySet,
+    Model,
     Q,
+    QuerySet,
 )
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
@@ -32,7 +32,6 @@ from iommi._web_compat import (
     csrf,
     format_html,
     get_template_from_string,
-    mark_safe,
     render_template,
     validate_email,
 )
@@ -53,11 +52,10 @@ from iommi.base import (
     setup_endpoint_proxies,
 )
 from iommi.from_model import (
-    create_members_from_model,
-    get_fields,
-    member_from_model,
-    get_name_field_for_model,
     NoRegisteredNameException,
+    create_members_from_model,
+    get_name_field_for_model,
+    member_from_model,
 )
 from iommi.page import (
     Fragment,
@@ -195,8 +193,7 @@ def int_parse(string_value, **_):
     return int(string_value)
 
 
-def choice_is_valid(form, field, parsed_data, **_):
-    del form
+def choice_is_valid(field, parsed_data, **_):
     return parsed_data in field.choices, f'{parsed_data} not in available choices'
 
 
@@ -357,7 +354,7 @@ def email_parse(string_value, **_):
 
 
 def phone_number_is_valid(parsed_data, **_):
-    return re.match(r'^\+\d{1,3}(( |-)?\(\d+\))?(( |-)?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
+    return re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
 
 
 def multi_choice_choice_to_option(field, choice, **_):
@@ -384,37 +381,37 @@ class Field(PagePart):
 
     """
 
-    attr = Refinable()
-    display_name = Refinable()
+    attr: str = Refinable()
+    display_name: str = Refinable()
 
     # raw_data/raw_data contains the strings grabbed directly from the request data
-    raw_data = Refinable()
-    raw_data_list = Refinable()
+    raw_data: str = Refinable()
+    raw_data_list: List[str] = Refinable()
 
-    parse_empty_string_as_none = Refinable()
-    initial = Refinable()
+    parse_empty_string_as_none: bool = Refinable()
+    initial: Any = Refinable()
     template: str = Refinable()
-    template_string = Refinable()
+    template_string: str = Refinable()
     attrs: Dict[str, Any] = Refinable()
-    required = Refinable()
+    required: bool = Refinable()
 
     input = Refinable()
     label = Refinable()
 
-    is_list = Refinable()
-    is_boolean = Refinable()
-    model = Refinable()
+    is_list: bool = Refinable()
+    is_boolean: bool = Refinable()
+    model: Type[Model] = Refinable()
     model_field = Refinable()
 
-    editable = Refinable()
-    strip_input = Refinable()
+    editable: bool = Refinable()
+    strip_input: bool = Refinable()
 
     choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
     choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
     choice_tuples = Refinable()
     errors: Errors = Refinable()
 
-    empty_label = Refinable()
+    empty_label: str = Refinable()
     empty_choice_tuple = Refinable()
 
     endpoint: Namespace = Refinable()
@@ -497,11 +494,13 @@ class Field(PagePart):
     def form(self):
         return self.parent.parent
 
+    # noinspection PyUnusedLocal
     @staticmethod
     @refinable
     def is_valid(form: 'Form', field: 'Field', parsed_data: Any, **_) -> Tuple[bool, str]:
         return True, ''
 
+    # noinspection PyUnusedLocal
     @staticmethod
     @refinable
     def parse(form: 'Form', field: 'Field', string_value: str, **_) -> Any:
@@ -726,8 +725,6 @@ class Field(PagePart):
     def choice(cls, call_target=None, **kwargs):
         """
         Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
-        :param empty_label: default '---'
-        :param choices: list of objects
         :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
         """
         assert 'choices' in kwargs
@@ -774,7 +771,6 @@ class Field(PagePart):
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
     )
     def choice_queryset(cls, choices, call_target=None, **kwargs):
-        from django.db.models import QuerySet
         if 'model' not in kwargs:
             if isinstance(choices, QuerySet):
                 kwargs['model'] = choices.model
@@ -957,14 +953,13 @@ class Form(PagePart):
 
     See tri.declarative docs for more on this dual style of declaration.
 """
-    is_full_form = Refinable()
-    actions = Refinable()
+    is_full_form: bool = Refinable()
+    actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
     attrs: Dict[str, Any] = Refinable()
-    editable = Refinable()
+    editable: bool = Refinable()
 
-    model = Refinable()
-    """ :type: django.db.models.Model """
+    model: Type[Model] = Refinable()
     endpoint: Namespace = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
@@ -992,7 +987,6 @@ class Form(PagePart):
             **setup_endpoint_proxies(self)
         )
 
-
     @dispatch(
         is_full_form=True,
         model=None,
@@ -1010,7 +1004,6 @@ class Form(PagePart):
         assert isinstance(fields, dict)
 
         self.fields = None
-        """ :type: Struct[str, Field] """
         self.errors: Set[str] = set()
         self._valid = None
         self.instance = instance
