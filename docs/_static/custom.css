@@ -44,6 +44,7 @@ pre {
         padding-left: 13px;
     }
 
+    .highlight-default,
     .highlight-python,
     .highlight-html {
         margin: 0 -20px;
