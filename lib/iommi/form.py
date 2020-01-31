@@ -1293,7 +1293,6 @@ class Form(PagePart):
     @classmethod
     @class_shortcut(
         call_target__attribute='from_model',
-        extra__model_verbose_name=None,
         on_save=lambda **kwargs: None,  # pragma: no mutate
         redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         redirect_to=None,
@@ -1302,18 +1301,13 @@ class Form(PagePart):
         default_child=True,
         post_handler=create_or_edit_object__post_handler,
     )
-    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, **kwargs):
+    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
         assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
         if model is None and instance is not None:
             model = type(instance)
 
-        if extra.model_verbose_name is None:
-            assert model, 'If there is no model, you must specify extra__model_verbose_name, so we can create the title; or specify title.'
-            # noinspection PyProtectedMember
-            extra.model_verbose_name = model._meta.verbose_name.replace('_', ' ')
-
-        if extra.title is None:
-            extra.title = '%s %s' % ('Create' if extra.is_create else 'Save', extra.model_verbose_name)
+        if title is None:
+            title = '%s %s' % ('Create' if extra.is_create else 'Save', model._meta.verbose_name.replace('_', ' '))
         extra.on_save = on_save
         extra.redirect = redirect
         extra.redirect_to = redirect_to
@@ -1321,8 +1315,7 @@ class Form(PagePart):
         setdefaults_path(
             kwargs,
             actions__submit=dict(
-                # call_target__attribute='submitasd',
-                attrs__value=extra.title,
+                attrs__value=title,
                 attrs__name=name,
             ),
         )
@@ -1332,7 +1325,7 @@ class Form(PagePart):
         return Page(
             parts={
                 # TODO: do we really need to pop from parts ourselves here?
-                'title': html.h1(extra.title, **parts.pop('title', {})),
+                'title': html.h1(title, **parts.pop('title', {})),
                 name: call_target(extra=extra, model=model, instance=instance, **kwargs),
                 **parts
             }

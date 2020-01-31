@@ -1100,10 +1100,6 @@ class Table(PagePart):
             **kwargs
         )
 
-        if model and self.extra.get('model_verbose_name') is None:
-            # noinspection PyProtectedMember
-            self.extra.model_verbose_name = model._meta.verbose_name_plural.replace('_', ' ').capitalize()
-
         self.default_child = default_child
 
         self.query_args = query
@@ -1508,11 +1504,6 @@ class Table(PagePart):
         parts=EMPTY,
     )
     def as_page(self, *, title=None, parts=None, default_child=True):
-
-        # TODO: clean this up
-        if title is None:
-            title = self.extra.get('model_verbose_name', '')
-
         self.default_child = default_child
 
         from iommi.page import (

@@ -25,13 +25,11 @@ def test_create_and_edit_object():
 
     p = Form.as_create_page(
         model=CreateOrEditObjectTest,
-        extra__model_verbose_name='baz',
     )
     p.bind(request=request)
     assert p.parts.create.default_child
     response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
     form = p.parts.create
-    assert form.extra.model_verbose_name == 'baz'  # check explicit model_verbose_name parameter to Form.as_create_page
     assert response['context']['csrf_token']
 
     p = Form.as_create_page(
@@ -48,7 +46,6 @@ def test_create_and_edit_object():
     )
 
     form = p.parts.create
-    assert form.extra.model_verbose_name == 'foo bar'  # Meta verbose_name
     assert form.extra.is_create is True
     assert response['context']['foo'] == 'FOO'
     assert response['context']['csrf_token']
