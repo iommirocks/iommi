@@ -1,33 +1,26 @@
-<div>
-    <!-- TODO: iommi_query_toggle_simple_mode should be namespaced -->
-    <a href="#" id="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
+<div id="iommi_{{ query.dunder_path }}">
+    <a href="#" class="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
 
-    <!-- TODO: iommi_query_form should be namespaced -->
-    <!-- TODO: the form tag here should come from Query, not be hard coded here -->
     <form{{ query.form.attrs }}>
         <table style="width: 100%">
             <tr class="iommi_query_form_advanced" style="display: none">
-                <td><label for="id_query">Search query:</label></td>
+                <td><label for="iommi_{{ query.dunder_path }}_query">Search query:</label></td>
             </tr>
             <tr>
                 <td>
-                    <!-- TODO: iommi_query_form_simple should be namespaced -->
-                    <!-- TODO: these classes needs to be specified by the styling system -->
-                    <div id="iommi_query_form_simple" class="form-row align-items-center">
+                    <div class="iommi_query_form_simple form-row align-items-center">
                         {{ query.form.render_fields }}
                     </div>
                     <div class="iommi_query_form_advanced" style="display: none">
-                        <input id="id_query" name="query" type="text" style="width:95%" data-query="{{ query.form.query_advanced_value }}"/>
+                        <input id="iommi_{{ query.dunder_path }}_query" name="query" type="text" style="width:95%" data-query="{{ query.form.query_advanced_value }}"/>
                     </div>
                 </td>
-                <!-- TODO: iommi_query_toggle_help should be namespaced -->
-                <td id="iommi_query_toggle_help" style="display: none">
+                <td class="iommi_query_toggle_help" style="display: none">
                     <span>Show help</span> <i class="fa fa-chevron-down"></i>
                 </td>
             </tr>
             <tr>
-                <!-- TODO: iommi_query_help should be namespaced -->
-                <td id="iommi_query_help" style="display: none">
+                <td class="iommi_query_help" style="display: none">
                     <div class="iommi_query_available_fields">
                         <h3>Available fields</h3>
                         <ul>
@@ -53,7 +46,7 @@
 
         {% if iommi_query_error %}
           <!-- TODO: iommi_query_error should be namespaced -->
-          <div id="iommi_query_error">
+          <div class="iommi_query_error">
               {{ iommi_query_error }}
           </div>
         {% endif %}
@@ -65,18 +58,18 @@
                 vertical-align: top;
                 margin-right: 10px;
             }
-            #iommi_query_toggle_help,
-            #iommi_query_help {
+            .iommi_query_toggle_help,
+            .iommi_query_help {
                 margin-left: 3px;
             }
-            #iommi_query_toggle_help {
+            .iommi_query_toggle_help {
                 cursor: pointer;
                 width: 100px;
             }
-            #iommi_query_toggle_simple_mode {
+            .iommi_query_toggle_simple_mode {
                 float: right;
             }
-            #iommi_query_error {
+            .iommi_query_error {
                 color: red;
             }
         </style>
@@ -89,11 +82,14 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        var base = document.getElementById('iommi_{{ query.dunder_path }}');
+        var q = document.getElementById('iommi_{{ query.dunder_path }}_query');
+        var help = base.getElementsByClassName('iommi_query_toggle_help')[0];
+
         function toggle_simple_advanced() {
-            var toggle_simple_mode = document.getElementById("iommi_query_toggle_simple_mode");
-            var simple = document.getElementById("iommi_query_form_simple");
-            var adv = document.getElementsByClassName("iommi_query_form_advanced");
-            var q = document.getElementById('id_query');
+            var toggle_simple_mode = base.getElementsByClassName("iommi_query_toggle_simple_mode")[0];
+            var simple = base.getElementsByClassName("iommi_query_form_simple")[0];
+            var adv = base.getElementsByClassName("iommi_query_form_advanced");
             if (toggle_simple_mode.getAttribute('data-advanced_mode') === 'simple') {
                 q.value = q.getAttribute('data-query');
                 toggle_simple_mode.setAttribute('data-advanced_mode', 'advanced');
@@ -101,7 +97,7 @@
                 adv[1].style.display = '';
                 simple.style.display = 'none';
                 toggle_simple_mode.innerHTML = 'Switch to basic search';
-                document.getElementById('iommi_query_toggle_help').style.display = '';
+                help.style.display = '';
             }
             else {
                 q.setAttribute('data-query', q.value);
@@ -111,8 +107,8 @@
                 adv[1].style.display = 'none';
                 simple.style.display = '';
                 toggle_simple_mode.innerHTML = 'Switch to advanced search';
-                document.getElementById('iommi_query_toggle_help').style.display = 'none';
-                if (document.getElementById('iommi_query_help').style.display === '') {
+                help.style.display = 'none';
+                if (help.style.display === '') {
                     toggle_help();
                 }
             }
@@ -120,26 +116,26 @@
         }
 
         function toggle_help() {
-            var icon = document.getElementById('iommi_query_toggle_help').querySelector('i');
+            var icon = help.querySelector('i');
             if (icon.classList.contains('fa-chevron-down')) {
-                document.getElementById('iommi_query_help').style.display = '';
+                base.getElementsByClassName('iommi_query_help')[0].style.display = '';
                 icon.classList.remove('fa-chevron-down');
                 icon.classList.add('fa-chevron-up');
-                document.getElementById('iommi_query_toggle_help').querySelector('span').innerText = 'Hide help';
+                help.querySelector('span').innerText = 'Hide help';
             }
             else {
-                document.getElementById('iommi_query_help').style.display = 'none';
+                document.getElementsByClassName('iommi_query_help')[0].style.display = 'none';
                 icon.classList.remove('fa-chevron-up');
                 icon.classList.add('fa-chevron-down');
-                document.getElementById('iommi_query_toggle_help').querySelector('span').innerText = 'Show help';
+                help.querySelector('span').innerText = 'Show help';
             }
         }
 
-        if (document.getElementById('id_query').getAttribute('data-query') !== '') {
+        if (q.getAttribute('data-query') !== '') {
             toggle_simple_advanced();
         }
 
-        document.getElementById("iommi_query_toggle_simple_mode").addEventListener('click', toggle_simple_advanced);
-        document.getElementById('iommi_query_toggle_help').addEventListener('click', toggle_help);
+        base.getElementsByClassName("iommi_query_toggle_simple_mode")[0].addEventListener('click', toggle_simple_advanced);
+        help.addEventListener('click', toggle_help);
     });
 </script>
