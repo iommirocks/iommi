@@ -127,8 +127,16 @@ def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory
     _field_factory_by_field_type[django_field_class] = factory
 
 
-def create_or_edit_object__post_handler(*, form, **_):
-    if form.extra.is_create:
+def create_object__post_handler(*, form, **kwargs):
+    return create_or_edit_object__post_handler(form=form, is_create=True, **kwargs)
+
+
+def edit_object__post_handler(*, form, **kwargs):
+    return create_or_edit_object__post_handler(form=form, is_create=False, **kwargs)
+
+
+def create_or_edit_object__post_handler(*, form, is_create, **_):
+    if is_create:
         assert form.instance is None
         form.instance = form.model()
         for field in form.fields.values():  # two phase save for creation in django, have to save main object before related stuff
@@ -142,12 +150,12 @@ def create_or_edit_object__post_handler(*, form, **_):
         form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
     if form.is_valid():
-        if form.extra.is_create:  # two phase save for creation in django...
+        if is_create:  # two phase save for creation in django...
             form.instance.save()
 
         form.apply(form.instance)
 
-        if not form.extra.is_create:
+        if not is_create:
             try:
                 form.instance.validate_unique()
             except ValidationError as e:
@@ -159,7 +167,7 @@ def create_or_edit_object__post_handler(*, form, **_):
 
             form.extra.on_save(form=form, instance=form.instance)
 
-            return create_or_edit_object_redirect(form.extra.is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
+            return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
 
 
 def default_endpoint__config(field: 'Field', **_) -> dict:
@@ -1299,7 +1307,6 @@ class Form(PagePart):
         parts=EMPTY,
         extra__title=None,
         default_child=True,
-        post_handler=create_or_edit_object__post_handler,
     )
     def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
         assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
@@ -1336,6 +1343,7 @@ class Form(PagePart):
         call_target__attribute='as_create_or_edit_page',
         name='create',
         extra__is_create=True,
+        post_handler=create_object__post_handler,
     )
     def as_create_page(cls, *, name, call_target=None, **kwargs):
         return call_target(name=name or 'create', **kwargs)
@@ -1345,6 +1353,7 @@ class Form(PagePart):
         call_target__attribute='as_create_or_edit_page',
         name='edit',
         extra__is_create=False,
+        post_handler=edit_object__post_handler,
     )
     def as_edit_page(cls, *, name, call_target=None, instance, **kwargs):
         return call_target(instance=instance, name=name or 'edit', **kwargs)
