@@ -18,7 +18,6 @@ from iommi.form import (
     Form,
 )
 from iommi.query import (
-    ADVANCED_QUERY_PARAM,
     FREETEXT_SEARCH_NAME,
     Q_OP_BY_OP,
     Query,
@@ -60,10 +59,10 @@ def test_include():
             include=lambda query, variable: query.request().GET['foo'] == 'include' and variable.extra.foo == 'include2',
             extra__foo='include2')
 
-    # noinspection PyTypeChecker
+
     assert list(ShowQuery().bind(request=req('get', foo='hide')).variables.keys()) == ['foo']
 
-    # noinspection PyTypeChecker
+
     assert list(ShowQuery().bind(request=req('get', foo='include')).variables.keys()) == ['foo', 'bar']
 
 
@@ -139,8 +138,9 @@ def test_parenthesis():
 
 
 def test_request_to_q_advanced():
-    # noinspection PyTypeChecker
-    query = MyTestQuery().bind(request=req('get', **{ADVANCED_QUERY_PARAM: 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'}))
+
+    q = MyTestQuery().bind(request=req('get'))
+    query = MyTestQuery().bind(request=req('get', **{q.advanced_query_param(): 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'}))
     assert repr(query.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
 
 
@@ -148,11 +148,11 @@ def test_request_to_q_simple():
     class Query2(MyTestQuery):
         bazaar = Variable.boolean(attr='quux__bar__bazaar', form__include=True)
 
-    # noinspection PyTypeChecker
+
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
 
-    # noinspection PyTypeChecker
+
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'false'}))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 0}))
 
@@ -169,7 +169,7 @@ def test_integer_request_to_q_simple():
     class Query2(Query):
         bazaar = Variable.integer(attr='quux__bar__bazaar', form=Struct(include=True))
 
-    # noinspection PyTypeChecker
+
     query2 = Query2().bind(request=req('get', bazaar='11'))
     assert repr(query2.to_q()) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
 
@@ -181,8 +181,13 @@ def test_gui_is_not_required():
 
 
 def test_invalid_value():
-    request = req('get', query='bazaar=asd')
-    # noinspection PyTypeChecker
+    q = Query(
+        variables__bazaar=Variable.integer(
+            value_to_q=lambda variable, op, value_string_or_f: None
+        ),
+    ).bind(request=req('get'))
+    request = req('get', **{q.advanced_query_param(): 'bazaar=asd'})
+
     query2 = Query(
         variables__bazaar=Variable.integer(
             value_to_q=lambda variable, op, value_string_or_f: None
@@ -194,17 +199,20 @@ def test_invalid_value():
 
 
 def test_invalid_variable():
-    # noinspection PyTypeChecker
+    q = Query(
+        variables__bazaar=Variable(),
+    ).bind(request=req('get'))
+
     query2 = Query(
         variables__bazaar=Variable(),
-    ).bind(request=req('get', query='not_bazaar=asd'))
+    ).bind(request=req('get', **{q.advanced_query_param():'not_bazaar=asd'}))
     with pytest.raises(QueryException) as e:
         query2.to_q()
     assert 'Unknown variable "not_bazaar"' in str(e)
 
 
 def test_invalid_form_data():
-    # noinspection PyTypeChecker
+
     query2 = Query(
         variables__bazaar=Variable.integer(attr='quux__bar__bazaar', form__include=True),
     ).bind(request=req('get', bazaar='asds'))
@@ -213,7 +221,7 @@ def test_invalid_form_data():
 
 
 def test_none_attr():
-    # noinspection PyTypeChecker
+
     query2 = Query(
         variables__bazaar=Variable(attr=None, form__include=True),
     ).bind(request=req('get', bazaar='foo'))
@@ -221,7 +229,7 @@ def test_none_attr():
 
 
 def test_request_to_q_freetext():
-    # noinspection PyTypeChecker
+
     query = MyTestQuery().bind(request=req('get', **{FREETEXT_SEARCH_NAME: "asd"}))
     assert repr(query.to_q()) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
@@ -294,7 +302,7 @@ def test_choice_queryset():
 
     # test query
     query2 = Query2().bind(
-        request=req('post', **{'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}),
+        request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}),
     )
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
@@ -302,7 +310,7 @@ def test_choice_queryset():
 
     # test searching for something that does not exist
     query2 = Query2().bind(
-        request=req('post', **{'-': '-', 'query': 'foo=%s' % str(11)}),
+        request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s' % str(11)}),
     )
     value_that_does_not_exist = 11
     assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
@@ -314,7 +322,7 @@ def test_choice_queryset():
     valid_ops = ['=']
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
         query2 = Query2().bind(
-            request=req('post', **{'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}),
+            request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}),
         )
         with pytest.raises(QueryException) as e:
             query2.to_q()
@@ -361,13 +369,13 @@ def test_multi_choice_queryset():
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk__in=[random_valid_obj.pk, random_valid_obj2.pk]))
 
     # test query
-    query2 = Query2().bind(request=req('post', **{'-': '-', 'query': 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}))
+    query2 = Query2().bind(request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}))
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
     assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
 
     # test searching for something that does not exist
-    query2 = Query2().bind(request=req('post', **{'-': '-', 'query': 'foo=%s' % str(11)}))
+    query2 = Query2().bind(request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s' % str(11)}))
     value_that_does_not_exist = 11
     assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
@@ -377,7 +385,7 @@ def test_multi_choice_queryset():
     # test invalid ops
     valid_ops = ['=']
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
-        query2 = Query2().bind(request=req('post', **{'-': '-', 'query': 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
+        query2 = Query2().bind(request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
@@ -442,13 +450,15 @@ def test_endpoint_dispatch_errors():
             choices=('a', 'b'),
         )
 
+    q = MyQuery().bind(request=req('get'))
+
     assert perform_ajax_dispatch(
-        root=MyQuery().bind(request=req('get', **{ADVANCED_QUERY_PARAM: 'foo=!'})),
+        root=MyQuery().bind(request=req('get', **{q.advanced_query_param(): 'foo=!'})),
         path='/errors',
         value='',
     ) == {'global': ['Invalid syntax for query']}
     assert perform_ajax_dispatch(
-        root=MyQuery().bind(request=req('get', **{ADVANCED_QUERY_PARAM: 'foo=a'})),
+        root=MyQuery().bind(request=req('get', **{q.advanced_query_param(): 'foo=a'})),
         path='/errors',
         value='',
     ) == {}
@@ -480,7 +490,7 @@ def test_escape_quote():
     class MyQuery(Query):
         foo = Variable(form__include=True)
 
-    # noinspection PyTypeChecker
+
     query = MyQuery().bind(request=Struct(method='GET', GET={'foo': '"', '-': '-'}))
     assert query.to_query_string() == 'foo="\\""'
     assert repr(query.to_q()) == repr(Q(**{'foo__iexact': '"'}))
@@ -490,7 +500,7 @@ def test_escape_quote_freetext():
     class MyQuery(Query):
         foo = Variable(freetext=True)
 
-    # noinspection PyTypeChecker
+
     query = MyQuery().bind(request=Struct(method='GET', GET={'term': '"', '-': '-'}))
     assert query.to_query_string() == '(foo:"\\"")'
     assert repr(query.to_q()) == repr(Q(**{'foo__icontains': '"'}))
