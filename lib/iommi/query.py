@@ -26,6 +26,7 @@ from iommi.base import (
     request_data,
     setup_endpoint_proxies,
     evaluate_strict_container,
+    path_join,
 )
 from iommi.form import (
     Form,
@@ -97,7 +98,6 @@ Q_OP_BY_OP = {
 }
 
 FREETEXT_SEARCH_NAME = 'term'
-ADVANCED_QUERY_PARAM = 'query'
 
 _variable_factory_by_django_field_type = {}
 
@@ -554,12 +554,15 @@ class Query(PagePart):
         )
         self.form.bind(parent=self)
         # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
-        self.form.query_advanced_value = request_data(self.request()).get(ADVANCED_QUERY_PARAM, '') if self.request else ''
+        self.form.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self)
+
+    def advanced_query_param(self):
+        return path_join(self.path(), '-query')
 
     def parse(self, query_string: str) -> Q:
         assert self._is_bound
@@ -737,8 +740,8 @@ class Query(PagePart):
             return ''
 
         request = self.request()
-        if request_data(request).get(ADVANCED_QUERY_PARAM, '').strip():
-            return request_data(request).get(ADVANCED_QUERY_PARAM)
+        if request_data(request).get(self.advanced_query_param(), '').strip():
+            return request_data(request).get(self.advanced_query_param())
         elif form.is_valid():
             def expr(field, is_list, value):
                 if is_list:

@@ -12,7 +12,7 @@
                         {{ query.form.render_fields }}
                     </div>
                     <div class="iommi_query_form_advanced" style="display: none">
-                        <input id="iommi_{{ query.dunder_path }}_query" name="query" type="text" style="width:95%" data-query="{{ query.form.query_advanced_value }}"/>
+                        <input id="iommi_{{ query.dunder_path }}_query" name="{{ query.advanced_query_param }}" type="text" style="width:95%" data-query="{{ query.form.query_advanced_value }}"/>
                     </div>
                 </td>
                 <td class="iommi_query_toggle_help" style="display: none">
@@ -45,7 +45,6 @@
         {{ query.form.errors }}
 
         {% if iommi_query_error %}
-          <!-- TODO: iommi_query_error should be namespaced -->
           <div class="iommi_query_error">
               {{ iommi_query_error }}
           </div>
