@@ -144,20 +144,19 @@ still keeping the code simple. Here's a contrived example:
     # y: 2
 
 This is really useful for the Table class as it means we can expose the full
-feature set of the underling Query and Form classes by just
+feature set of the underling `Query` and `Form` classes by just
 dispatching keyword arguments downstream. It also enables us to bundle
-commonly used features in what we call "shortcuts", which are pre
-packaged sets of defaults.
+commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.
 
 
 Execution phases
 ----------------
 
-Page parts have this life cycles:
+Page parts have this life cycle:
 
 1. Definition
 2. Construction
-3. Bind
+3. `Bind`_
 4. Traversal (e.g. render to html, respond to ajax, custom report creation)
 
 
@@ -173,3 +172,19 @@ At bind time we:
 - invoke any user defined :code:`on_bind` handlers
 
 At traversal time we are good to go and can now invoke the final methods of all objects. We can now render html, respond to ajax, etc.
+
+
+Bind
+----
+
+"Bind" is when we take an abstract declaration of what we want and convert it into the "bound" concrete expression of that. It consists of these parts:
+
+1. Copy of the part if needed (the `@no_copy_on_bind` decarator is used to mark a class as not needing to be copied). For those that are copied we set a member `_declared` to point to the original definition if you need to refer to it for debugging purposes.
+2. Set the `parent` and set `_is_bound` to `True
+3. Style application
+4. Call the parts `on_bind` method
+5. If the part has only one child we automatically set it to be the default child
+
+The parts are responsible for calling `bind(parent=self)` on all their children in `on_bind`.
+
+The root object of the graph is initialized with `bind(request=request)`. Only one object can be the root.

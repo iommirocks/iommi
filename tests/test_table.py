@@ -842,7 +842,7 @@ def test_query():
         class Meta:
             sortable = False
 
-    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(id='iommi_query_error'), expected_html='<div id="iommi_query_error">Invalid syntax for query</div>')
+    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(class_='iommi_query_error'), expected_html='<div class="iommi_query_error">Invalid syntax for query</div>')
 
     verify_table_html(query=dict(a='1'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>

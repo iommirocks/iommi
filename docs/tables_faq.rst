@@ -54,7 +54,7 @@ And we want a computed column `square` that is the square of the value, then we 
 
     Table.from_model(
         model=Foo,
-        extra_fields=dict(
+        extra_columns=dict(
             square=Column(
                 # computed value:
                 cell__value=lambda row, **_: row.value * row.value,
@@ -272,7 +272,7 @@ we can build a table of :code:`Bar` that shows the data of `a` like this:
 
     Table.from_model(
         model=Bar,
-        extra_fields=dict(
+        extra_columns=dict(
             c__a=Column.from_model,
         ),
     )

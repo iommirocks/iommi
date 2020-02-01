@@ -786,7 +786,7 @@ class Query(PagePart):
     @dispatch(
         variables=EMPTY,
     )
-    def from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, extra_variables=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_fields__param". For example:
@@ -804,5 +804,5 @@ class Query(PagePart):
         """
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, variables=variables)
+        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_variables, variables=variables)
         return cls(rows=rows, model=model, variables=variables, **kwargs)

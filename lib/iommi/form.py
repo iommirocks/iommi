@@ -1107,7 +1107,7 @@ class Form(PagePart):
     @dispatch(
         fields=EMPTY,
     )
-    def from_model(cls, *, model, fields, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
+    def from_model(cls, model, *, fields, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_fields__param". For example:
