@@ -2,12 +2,14 @@ import operator
 from datetime import date
 from functools import reduce
 from typing import (
+    Any,
+    Dict,
     Type,
 )
 
 from django.core.exceptions import (
-    ObjectDoesNotExist,
     MultipleObjectsReturned,
+    ObjectDoesNotExist,
 )
 from django.db.models import (
     F,
@@ -16,60 +18,61 @@ from django.db.models import (
     QuerySet,
 )
 from iommi.base import (
-    MISSING,
-    Part,
     bind_members,
     collect_members,
     evaluate_members,
+    evaluate_strict_container,
+    MISSING,
     model_and_rows,
     no_copy_on_bind,
+    Part,
+    path_join,
     request_data,
     setup_endpoint_proxies,
-    evaluate_strict_container,
-    path_join,
+    setup_endpoints,
 )
 from iommi.form import (
-    Form,
     bool_parse,
+    Form,
 )
 from iommi.from_model import (
     create_members_from_model,
-    member_from_model,
     get_name_field_for_model,
+    member_from_model,
     NoRegisteredNameException,
 )
 from pyparsing import (
+    alphanums,
+    alphas,
     CaselessLiteral,
     Combine,
+    delimitedList,
     Forward,
     Group,
     Keyword,
+    nums,
+    oneOf,
     Optional,
     ParseException,
     ParseResults,
     QuotedString,
+    quotedString,
     Word,
     ZeroOrMore,
-    alphanums,
-    alphas,
-    delimitedList,
-    nums,
-    oneOf,
-    quotedString,
 )
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate,
+    Namespace,
+    Refinable,
     refinable,
     setattr_path,
     setdefaults_path,
-    with_meta,
     Shortcut,
+    with_meta,
 )
 from tri_struct import Struct
 
@@ -192,7 +195,6 @@ class Variable(Part):
             include=False,
             required=False,
         ),
-        default_child=False,
     )
     def __init__(self, **kwargs):
         """
@@ -218,7 +220,6 @@ class Variable(Part):
             'name',
             'include',
             'after',
-            'default_child',
             'extra',
             'style',
             'attr',
@@ -476,7 +477,7 @@ class Query(Part):
     """
 
     form: Namespace = Refinable()
-    endpoint: Namespace = Refinable()
+    endpoints: Namespace = Refinable()
     model: Type['django.db.models.Model'] = Refinable()
     rows = Refinable()
 
@@ -487,18 +488,11 @@ class Query(Part):
         member_class = Variable
         form_class = Form
 
-    def children(self):
-        return Struct(
-            form=self.form,
-            # TODO: this is a potential namespace conflict with form above. Care or not care?
-            **setup_endpoint_proxies(self)
-        )
-
     @dispatch(
-        endpoint__errors=default_endpoint__errors,
+        endpoints__errors=default_endpoint__errors,
         variables=EMPTY,
     )
-    def __init__(self, *, model=None, rows=None, variables=None, _variables_dict=None, **kwargs):
+    def __init__(self, *, model=None, rows=None, variables=None, endpoints: Dict[str, Any] = None, _variables_dict=None, **kwargs):
         model, rows = model_and_rows(model, rows)
 
         assert isinstance(variables, dict)
@@ -519,18 +513,15 @@ class Query(Part):
         )
 
         self._variables_unapplied_data = {}
-        self.declared_variables = collect_members(items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class, unapplied_config=self._variables_unapplied_data)
+        collect_members(self, name='variables', items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class, unapplied_config=self._variables_unapplied_data)
         self.variables = None
-
-    def on_bind(self) -> None:
-        bind_members(self, name='variables', default_child=True)
 
         fields = []
 
-        if any(v.freetext for v in self.variables.values()):
+        if any(v.freetext for v in self.declared_variables.values()):
             fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
 
-        for variable in self.variables.values():
+        for variable in self.declared_variables.values():
             if variable.form is not None and variable.form.include:
                 # pass form__* parameters to the GUI component
                 assert variable.name is not MISSING
@@ -548,9 +539,21 @@ class Query(Part):
         self.form: Form = self.form(
             _fields_dict={x.name: x for x in fields},
             attrs__method='get',
-            default_child=True,
             actions__submit__attrs__value='Filter',
         )
+        self.declared_members.form = self.form
+
+        setup_endpoints(self, endpoints)
+
+    def children(self):
+        return Struct(
+            form=self.form,
+            endpoints=setup_endpoint_proxies(self),
+        )
+
+    def on_bind(self) -> None:
+        bind_members(self, name='variables')
+
         self.form.bind(parent=self)
         self.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
 

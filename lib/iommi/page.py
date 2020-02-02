@@ -32,6 +32,8 @@ from tri_declarative import (
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+from tri_struct import Struct
+
 _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
 
 
@@ -149,14 +151,14 @@ class Page(Part):
         parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in parts.items()})
 
         self._columns_unapplied_data = {}
-        self.declared_parts: Dict[str, PartType] = collect_members(items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
+        collect_members(self, name='parts', items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
 
     def on_bind(self) -> None:
-        bind_members(self, name='parts', default_child=True)
+        bind_members(self, name='parts')
 
     def children(self):
         assert self._is_bound
-        return self.parts
+        return Struct(parts=self.parts)
 
     def _evaluate_attribute_kwargs(self):
         return dict(page=self)

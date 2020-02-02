@@ -552,14 +552,11 @@ def test_hidden_with_name():
             name='baz',
             fields__foo=Field.hidden(),
             attrs__method='get',
-            default_child=False,
         )
 
     page = MyPage().bind(request=req('get', **{'baz/foo': '1'}))
     rendered_page = page.__html__()
 
-    assert page.default_child
-    assert not page.children().baz.default_child
     assert page.children().baz._is_bound
     assert page.children().baz.mode == INITIALS_FROM_GET
 
@@ -1421,16 +1418,16 @@ def test_ajax_namespacing():
     class MyForm(Form):
         foo = Field(
             endpoint_handler=lambda **_: 'default',
-            endpoint__bar=lambda **_: 'bar',
-            endpoint__baaz=lambda **_: 'baaz',
+            endpoints__bar=lambda **_: 'bar',
+            endpoints__baaz=lambda **_: 'baaz',
         )
 
     request = req('get')
     form = MyForm()
     form.bind(request=request)
     assert 'default' == perform_ajax_dispatch(root=form, path='/fields/foo', value='ar')
-    assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/bar', value='ar')
-    assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/baaz', value='ar')
+    assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/bar', value='ar')
+    assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/baaz', value='ar')
 
 
 @override_settings(DEBUG=True)

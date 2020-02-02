@@ -26,52 +26,53 @@ from django.db.models import (
 from django.http import HttpResponseRedirect
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    Template,
-    URLValidator,
-    ValidationError,
     csrf,
     format_html,
     get_template_from_string,
     render_template,
+    Template,
+    URLValidator,
     validate_email,
+    ValidationError,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
-    MISSING,
-    Part,
     bind_members,
     collect_members,
     evaluate_attrs,
     evaluate_strict_container,
+    MISSING,
     no_copy_on_bind,
+    Part,
     request_data,
     setup_endpoint_proxies,
+    setup_endpoints,
 )
 from iommi.from_model import (
-    NoRegisteredNameException,
     create_members_from_model,
     get_name_field_for_model,
     member_from_model,
+    NoRegisteredNameException,
 )
 from iommi.page import (
     Fragment,
 )
 from iommi.render import Errors
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
-    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     getattr_path,
+    Namespace,
+    Refinable,
     refinable,
     setattr_path,
     setdefaults_path,
+    Shortcut,
     with_meta,
 )
 from tri_struct import Struct
@@ -413,7 +414,8 @@ class Field(Part):
     empty_label: str = Refinable()
     empty_choice_tuple = Refinable()
 
-    endpoint: Namespace = Refinable()
+    endpoints: Namespace = Refinable()
+        # TODO move endpoint_handler to endpoints__choices
     endpoint_handler: Callable = Refinable()
 
     @dispatch(
@@ -426,18 +428,17 @@ class Field(Part):
         is_boolean=False,
         editable=True,
         strip_input=True,
-        endpoint=EMPTY,
-        endpoint__config=default_endpoint__config,
-        endpoint__validate=default_endpoint__validate,
+        endpoints=EMPTY,
+        endpoints__config=default_endpoint__config,
+        endpoints__validate=default_endpoint__validate,
         errors=EMPTY,
-        default_child=False,
         input__call_target=Fragment,
         input__attrs__id=default_input_id,
         label__call_target=Fragment,
         label__attrs__for=default_input_id,
         input__attrs__name=lambda field, **_: field.path(),
     )
-    def __init__(self, **kwargs):
+    def __init__(self, *, endpoints: Dict[str, Any] = None, **kwargs):
         """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
 
@@ -485,9 +486,13 @@ class Field(Part):
         self.input = self.input()
         self.label = self.label()
 
+        setup_endpoints(self, endpoints)
+
     def children(self):
         assert self._is_bound
-        return setup_endpoint_proxies(self)
+        return Struct(
+            endpoints=setup_endpoint_proxies(self),
+        )
 
     @property
     def form(self):
@@ -960,7 +965,7 @@ class Form(Part):
     editable: bool = Refinable()
 
     model: Type[Model] = Refinable()
-    endpoint: Namespace = Refinable()
+    endpoints: Namespace = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template: Union[str, Template] = Refinable()
@@ -970,20 +975,6 @@ class Form(Part):
         member_class = Field
         action_class = Action
 
-    def children(self):
-        assert self._is_bound
-        return Struct(
-            fields=self.fields,
-            # TODO: This should be a Part
-            actions=Struct(
-                name='actions',
-                children=lambda: self.actions,
-                _evaluate_attribute_kwargs=lambda: dict(form=self),
-            ),
-            # TODO: this is a potential name conflict with field and actions above
-            **setup_endpoint_proxies(self)
-        )
-
     @dispatch(
         is_full_form=True,
         model=None,
@@ -991,10 +982,10 @@ class Form(Part):
         fields=EMPTY,
         attrs__action='',
         attrs__method='post',
-        endpoint=EMPTY,
+        endpoints=EMPTY,
         actions__submit__call_target__attribute='submit',
     )
-    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, **kwargs):
+    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, endpoints: Dict[str, Any] = None, **kwargs):
 
         super(Form, self).__init__(**kwargs)
 
@@ -1007,12 +998,28 @@ class Form(Part):
         self.mode = INITIALS_FROM_GET
 
         self._actions_unapplied_data = {}
-        self.declared_actions = collect_members(items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
+
+        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
         self.actions = None
 
         self._fields_unapplied_data = {}
-        self.declared_fields = collect_members(items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
+        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
         self.fields: Dict[str, Field] = None
+
+        setup_endpoints(self, endpoints)
+
+    def children(self):
+        assert self._is_bound
+        return Struct(
+            fields=self.fields,
+            # TODO: This should be a Part
+            actions=Struct(
+                name='actions',
+                children=lambda: self.actions,
+                _evaluate_attribute_kwargs=lambda: dict(form=self),
+            ),
+            endpoints=setup_endpoint_proxies(self)
+        )
 
     def on_bind(self) -> None:
         assert self.actions_template
@@ -1028,7 +1035,7 @@ class Form(Part):
             self._request_data = {}
 
         bind_members(self, name='actions')
-        bind_members(self, name='fields', default_child=True)
+        bind_members(self, name='fields')
 
         if self.instance is not None:
             for field in self.fields.values():
@@ -1295,7 +1302,6 @@ class Form(Part):
         redirect_to=None,
         parts=EMPTY,
         extra__title=None,
-        default_child=True,
     )
     def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
         assert 'request' not in kwargs, "I'm afraid you can't do that Dave"

@@ -1,6 +1,6 @@
 from enum import (
-    Enum,
     auto,
+    Enum,
 )
 from functools import total_ordering
 from itertools import groupby
@@ -33,28 +33,29 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from iommi._web_compat import (
-    Template,
     render_template,
+    Template,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
-    DISPATCH_PREFIX,
-    MISSING,
-    Part,
+    apply_style,
     bind_members,
     collect_members,
+    DISPATCH_PREFIX,
     evaluate_attrs,
     evaluate_member,
     evaluate_members,
     evaluate_strict_container,
+    MISSING,
     model_and_rows,
     no_copy_on_bind,
+    Part,
     path_join,
     setup_endpoint_proxies,
-    apply_style,
+    setup_endpoints,
 )
 from iommi.form import (
     Form,
@@ -69,26 +70,24 @@ from iommi.query import (
     QueryException,
 )
 from iommi.render import (
-    Attrs,
     render_attrs,
 )
-from iommi.style import apply_style_recursively
 from tri_declarative import (
-    EMPTY,
-    LAST,
-    Namespace,
-    Refinable,
-    RefinableObject,
-    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate,
     evaluate_strict,
     getattr_path,
+    LAST,
+    Namespace,
+    Refinable,
     refinable,
+    RefinableObject,
     setattr_path,
     setdefaults_path,
+    Shortcut,
     with_meta,
 )
 from tri_struct import (
@@ -272,7 +271,6 @@ class Column(Part):
         header__attrs__class__subheader=True,
         header__template='iommi/table/header.html',
         render_column=True,
-        default_child=False,
     )
     def __init__(self, **kwargs):
         """
@@ -346,7 +344,6 @@ class Column(Part):
             'include',
             'attr',
             'after',
-            'default_child',
             'style',
             'url',
             'sort_default_desc',
@@ -1027,20 +1024,6 @@ class Table(Part):
         endpoint__tbody = (lambda table, key, value: {'html': table.__html__(template='tri_table/table_container.html')})
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
-        query__default_child = True
-        query__form__default_child = True
-
-    def children(self):
-        return Struct(
-            query=self.query,  # TODO: this is a property which we should try to remove
-            bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
-
-            columns=self.columns,
-            # TODO: paginator?
-
-            # TODO: this can have name collisions with the keys above
-            **setup_endpoint_proxies(self)
-        )
 
     @staticmethod
     @refinable
@@ -1082,10 +1065,12 @@ class Table(Part):
         bulk=EMPTY,
         page_size=DEFAULT_PAGE_SIZE,
 
+        endpoints=EMPTY,
+
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, instance=None, actions: Namespace = None, default_child=None, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, instance=None, actions: Namespace = None, endpoints: Dict[str, Any] = None, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1101,11 +1086,9 @@ class Table(Part):
         model, rows = model_and_rows(model, rows)
 
         self._actions_unapplied_data = {}
-        self.declared_actions = collect_members(items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
         self.actions = None
 
         self._columns_unapplied_data = {}
-        self.declared_columns: Dict[str, Column] = collect_members(items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
         self.columns = None
         self.rendered_columns = None
 
@@ -1121,7 +1104,9 @@ class Table(Part):
             **kwargs
         )
 
-        self.default_child = default_child
+        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
+        collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
+        setup_endpoints(self, endpoints)
 
         self.query_args = query
         self._query: Query = None
@@ -1131,6 +1116,45 @@ class Table(Part):
         self._bulk_form: Form = None
         self.header_levels = None
         self.is_paginated = False
+
+        if self.model:
+            def generate_variables():
+                for column in self.declared_columns.values():
+                    # TODO: column.query.include... is this evaluated here?
+                    if column.query.include:
+                        query_namespace = setdefaults_path(
+                            Namespace(),
+                            column.query,
+                            call_target__cls=self.get_meta().query_class.get_meta().member_class,
+                            model=self.model,
+                            name=column.name,
+                            attr=column.name if column.attr is MISSING else column.attr,
+                            form__display_name=column.display_name,
+                            form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                        )
+                        if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get('attribute') == 'from_model':
+                            query_namespace['field_name'] = column.name if column.attr is MISSING else column.attr
+                        yield query_namespace()
+
+            variables = Struct({x.name: x for x in generate_variables()})
+
+            self._query = self.get_meta().query_class(
+                _variables_dict=variables,
+                name='query',
+                **self.query_args
+            )
+            self.declared_members.query = self._query
+
+    def children(self):
+        return Struct(
+            query=self.query,  # TODO: this is a property which we should try to remove
+            bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
+
+            columns=self.columns,
+            # TODO: paginator?
+
+            endpoints=setup_endpoint_proxies(self),
+        )
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
@@ -1322,33 +1346,6 @@ class Table(Part):
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
         if self.model:
-
-            def generate_variables():
-                for column in self.columns.values():
-                    # TODO: column.query.include... is this evaluated here?
-                    if column.query.include:
-                        query_namespace = setdefaults_path(
-                            Namespace(),
-                            column.query,
-                            call_target__cls=self.get_meta().query_class.get_meta().member_class,
-                            model=self.model,
-                            name=column.name,
-                            attr=column.attr,
-                            form__display_name=column.display_name,
-                            form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
-                        )
-                        if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
-                                'attribute') == 'from_model':
-                            query_namespace['field_name'] = column.attr
-                        yield query_namespace()
-
-            variables = Struct({x.name: x for x in generate_variables()})
-
-            self._query = self.get_meta().query_class(
-                _variables_dict=variables,
-                name='query',
-                **self.query_args
-            )
             self._query.bind(parent=self)
             self._query_form = self._query.form if self._query.variables else None
 
@@ -1526,9 +1523,7 @@ class Table(Part):
     @dispatch(
         parts=EMPTY,
     )
-    def as_page(self, *, title=None, parts=None, default_child=True):
-        self.default_child = default_child
-
+    def as_page(self, *, title=None, parts=None):
         from iommi.page import (
             Page,
             html,
@@ -1539,5 +1534,4 @@ class Table(Part):
             # TODO: we should use the name given here, not hard code "table"
             parts__table=self,
             parts=parts,
-            default_child=True,
         )

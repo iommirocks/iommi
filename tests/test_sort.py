@@ -98,7 +98,7 @@ def test_sort_with_name():
         Struct(foo='a', bar=1),
     ]
 
-    table = TestTable(rows=rows, default_child=False)
+    table = TestTable(rows=rows)
     verify_table_html(
         table=table,
         query={'my_table/order': 'bar'},

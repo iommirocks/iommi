@@ -18,8 +18,6 @@ from iommi.page import (
 )
 from iommi.table import Table
 from iommi.base import (
-    group_paths_by_children,
-    GroupPathsByChildrenError,
     find_target,
     InvalidEndpointPathException,
     evaluate_attrs,
@@ -69,7 +67,6 @@ class MyPage(Page):
             query__include=True,
             query__form__include=True,
         ),
-        default_child=True,
     )
 
     t2 = Table.from_model(
@@ -83,74 +80,6 @@ class MyPage(Page):
             query__form__include=True,
         ),
     )
-    assert not t2.default_child
-
-
-def test_group_paths_by_children_happy_path():
-    my_page = MyPage()
-    my_page.bind(request=None)
-
-    data = {
-        't1/query/form/foo': '1',
-        't2/query/form/foo': '2',
-        'bar': '3',
-        't2/bar': '4',
-    }
-
-    assert group_paths_by_children(children=my_page.children(), data=data) == {
-        't1': {
-            'query/form/foo': '1',
-            'bar': '3',
-        },
-        't2': {
-            'query/form/foo': '2',
-            'bar': '4',
-        },
-    }
-
-    assert group_paths_by_children(
-        children=my_page.children().t1.children(),
-        data={
-            'query/form/foo': '1',
-            'bar': '3',
-        },
-    ) == {
-        'query': {
-            'form/foo': '1',
-            'bar': '3',
-        }
-    }
-
-    assert group_paths_by_children(
-        children=my_page.children().t1.children().query.children(),
-        data={
-            'form/foo': '1',
-            'bar': '3',
-        },
-    ) == {
-        'form': {
-            'foo': '1',
-            'bar': '3',
-        }
-    }
-
-
-def test_group_paths_by_children_error_message():
-    class NoDefaultChildPage(Page):
-        foo = html.h1('asd', default_child=False)
-
-        class Meta:
-            default_child = False
-
-    my_page = NoDefaultChildPage()
-    my_page.bind(request=None)
-
-    data = {
-        'unknown': '5',
-    }
-
-    with pytest.raises(GroupPathsByChildrenError):
-        group_paths_by_children(children=my_page.children(), data=data)
 
 
 @pytest.mark.django_db
@@ -184,13 +113,11 @@ def test_find_target_with_default_child_present():
         children=lambda: Struct(
             baz=baz,
         ),
-        default_child=True,
     )
     foo = Struct(
         children=lambda: Struct(
             bar=bar,
         ),
-        default_child=True,
     )
     root = Struct(
         children=lambda: Struct(
@@ -309,7 +236,6 @@ def test_perform_post_dispatch_error_message():
             return Struct(
                 foo=Struct(
                     post_handler=None,
-                    default_child=False,
                 )
             )
 
@@ -322,7 +248,7 @@ def test_perform_post_dispatch_error_message():
     with pytest.raises(InvalidEndpointPathException) as e:
         perform_post_dispatch(root=target, path='/foo', value='')
 
-    assert str(e.value) == f'''Target Struct(default_child=False, post_handler=None) has no registered post_handler.
+    assert str(e.value) == f'''Target Struct(post_handler=None) has no registered post_handler.
     Path: "/foo"
     Parents:
         <tests.test_base.MyPart root (bound) children:['foo']>'''

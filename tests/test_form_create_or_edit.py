@@ -27,7 +27,6 @@ def test_create_and_edit_object():
         model=CreateOrEditObjectTest,
     )
     p.bind(request=request)
-    assert p.parts.create.default_child
     response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
     form = p.parts.create
     assert response['context']['csrf_token']
@@ -203,7 +202,6 @@ def test_namespace_forms():
     p = Form.as_edit_page(
         instance=instance,
         name=form_name,
-        default_child=False,
     ).bind(request=request)
     p.render_to_response()
     form = p.parts[form_name]
@@ -226,7 +224,6 @@ def test_namespace_forms():
         instance=instance,
         redirect=lambda form, **_: {'context_instance': {'form': form}},
         name=form_name,
-        default_child=False,
     ).bind(request=request)
     p.render_to_response()
     form = p.parts[form_name]

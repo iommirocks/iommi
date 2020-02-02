@@ -1469,7 +1469,7 @@ def test_ajax_endpoint():
 def test_ajax_endpoint_empty_response():
     class TestTable(Table):
         class Meta:
-            endpoint__foo = lambda **_: []
+            endpoints__foo = lambda **_: []
 
         bar = Column()
 
@@ -1480,7 +1480,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoint__data = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
+            endpoints__data = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
 
         foo = Column()
         bar = Column()
@@ -1499,7 +1499,7 @@ def test_ajax_data_endpoint():
 def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
-            endpoint__bar = lambda **_: 17
+            endpoints__bar = lambda **_: 17
 
         baz = Column()
 
@@ -1843,7 +1843,6 @@ def test_new_style_ajax_dispatch():
 def test_endpoint_path_of_nested_part():
     page = Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
-    assert page.children().table.default_child
     target, parents = find_target(path='/table/query/form/fields/foo', root=page)
     assert target.endpoint_path() == '/foo'
 
