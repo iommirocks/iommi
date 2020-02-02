@@ -852,7 +852,11 @@ def test_query():
         class Meta:
             sortable = False
 
-    verify_table_html(query=dict(a='1'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    t = TestTable(rows=TFoo.objects.all().order_by('pk'))
+    t.bind(request=req('get'))
+    assert t.columns.a.path() == 'a'
+
+    verify_table_html(query=dict(a='1'), table=t, find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -863,7 +867,7 @@ def test_query():
             </td>
         </tr>
     </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='bar'), table=t, find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -882,7 +886,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(query='b="bar"'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(query='b="bar"'), table=t, find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -901,7 +905,7 @@ def test_query():
             </td>
         </tr>
     </tbody>""")
-    verify_table_html(query=dict(b='fo'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    verify_table_html(query=dict(b='fo'), table=t, find=dict(name='tbody'), expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
