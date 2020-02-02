@@ -854,7 +854,7 @@ def test_query():
 
     t = TestTable(rows=TFoo.objects.all().order_by('pk'))
     t.bind(request=req('get'))
-    assert t.columns.a.path() == 'a'
+    assert t.query.variables.a.path() == 'a'
 
     verify_table_html(query=dict(a='1'), table=t, find=dict(name='tbody'), expected_html="""
     <tbody>
