@@ -53,7 +53,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
-    assert hit, actual_soup
+    assert hit, actual_soup if actual_soup else actual_html
     prettified_actual = reindent(hit.prettify()).strip()
 
     assert prettified_actual == prettified_expected

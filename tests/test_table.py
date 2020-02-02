@@ -827,6 +827,16 @@ def test_bulk_edit():
 
 
 @pytest.mark.django_db
+def test_invalid_syntax_query():
+    class TestTable(Table):
+        a = Column.number(sortable=False, query__include=True)
+
+    adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.advanced_query_param()
+
+    verify_table_html(query={adv_query_param: 'asdasdsasd'}, table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(class_='iommi_query_error'), expected_html='<div class="iommi_query_error">Invalid syntax for query</div>')
+
+
+@pytest.mark.django_db
 def test_query():
     assert TFoo.objects.all().count() == 0
 
@@ -841,8 +851,6 @@ def test_query():
 
         class Meta:
             sortable = False
-
-    verify_table_html(query=dict(query='asdasdsasd'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(class_='iommi_query_error'), expected_html='<div class="iommi_query_error">Invalid syntax for query</div>')
 
     verify_table_html(query=dict(a='1'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
     <tbody>
