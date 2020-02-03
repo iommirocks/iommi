@@ -47,7 +47,6 @@ from iommi.base import (
     evaluate_attrs,
     evaluate_strict_container,
     no_copy_on_bind,
-    render_template_name,
     request_data,
     setup_endpoint_proxies,
 )
@@ -604,7 +603,7 @@ class Field(Part):
         self.label._children = [self.display_name]
 
         if not self.editable:
-            # TODO: style!
+            # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
             self.input.template = 'iommi/form/non_editable.html'
 
     def _evaluate_attribute_kwargs(self):
@@ -863,8 +862,6 @@ class Field(Part):
     # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
     @classmethod
     @class_shortcut(
-        # TODO: isn't include true the default? ^_-
-        include=True,
         editable=False,
         attr=None,
     )
@@ -1248,15 +1245,14 @@ class Form(Part):
         return format_html('{}\n' * len(r), *r)
 
     @dispatch(
-        render__call_target=render_template_name,
+        render__call_target=render_template,
         context=EMPTY,
     )
     def __html__(self, *, context=None, render=None):
-        # TODO: what if self.template is a Template?
         setdefaults_path(
             render,
             context=context,
-            template_name=self.template,
+            template=self.template,
         )
 
         request = self.request()

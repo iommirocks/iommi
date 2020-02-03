@@ -156,7 +156,6 @@ def choice_queryset_value_to_q(variable, op, value_string_or_f):
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{variable.attr: None})
     try:
-        # TODO: only do this if variable.model_field.unique, else just pk! Also need to change when producing the query that we are parsing here. value_to_query_string_value_string above does the wrong thing with guessing name fields!
         instance = variable.form.choices.get(**{variable.value_to_q_lookup: str(value_string_or_f)})
     except MultipleObjectsReturned:
         raise QueryException(f'Found more than one object for name "{value_string_or_f}"')
@@ -512,6 +511,7 @@ class Query(Part):
         )
 
         self._form = None
+        self.query_advanced_value = None
 
         super(Query, self).__init__(
             model=model,
@@ -553,8 +553,7 @@ class Query(Part):
             actions__submit__attrs__value='Filter',
         )
         self.form.bind(parent=self)
-        # TODO: This is suspect. The advanced query param isn't namespaced for one, and why is it stored there?
-        self.form.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
+        self.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 

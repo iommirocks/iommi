@@ -21,7 +21,11 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
     if extra is None:
         extra = {}
 
-    # TODO: assert that extra does not collide with the include/exclude/etc fields
+    for key in extra.items():
+        if include is not None and key in include:
+            assert False, f"extra contains {key} which conflicts with the same name in include."
+        if exclude is not None and key in exclude:
+            assert False, f"extra contains {key} which conflicts with the same name in exclude."
 
     def should_include(name):
         if exclude is not None and name in exclude:

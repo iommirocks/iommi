@@ -50,7 +50,7 @@ def test_create_and_edit_object():
     assert response['context']['foo'] == 'FOO'
     assert response['context']['csrf_token']
     assert response['foobarbaz'] == 'render__foobarbaz'
-    assert response['template_name'] == '<template name>'
+    assert response['template'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
     assert form.fields['f_int'].initial == 1
     assert form.fields['f_int'].errors == set()

@@ -41,8 +41,7 @@ try:
         if template is None:
             return ''
         elif isinstance(template, six.string_types):
-            # positional arguments here to get compatibility with django 1.8+
-            return render_to_string(template, context, request=request)
+            return render_to_string(template_name=template, context=context, request=request)
         elif isinstance(template, Template):
             return template.render(RequestContext(request, context))
         else:

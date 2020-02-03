@@ -360,12 +360,6 @@ class Column(Part):
             'attr',
             'sort_key',
             'display_name',
-            # TODO: not sure about these
-            # 'model_field',
-            # 'cell',
-            # 'bulk',
-            # 'query',
-            # 'extra',
         ]
         evaluate_members(self, evaluated_attributes, **self.evaluate_attribute_kwargs())
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
@@ -1515,7 +1509,6 @@ class Table(Part):
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-        # TODO: what if self.template is a Template?
         return render(request=request, template=self.template, context=self.context)
 
     @dispatch(

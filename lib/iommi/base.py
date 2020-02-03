@@ -349,10 +349,6 @@ class Part(RefinableObject):
         self._evaluate_attribute('include')
 
 
-def render_template_name(template_name, **kwargs):
-    return render_template(template=template_name, **kwargs)
-
-
 PartType = Union[Part, str, Template]
 
 
@@ -389,7 +385,6 @@ def model_and_rows(model, rows):
 
 
 def request_data(request):
-    # TODO: this seems wrong. should at least be a QueryDictThingie
     if request is None:
         return QueryDict()
 
@@ -399,7 +394,6 @@ def request_data(request):
         return request.GET
     else:
         assert False, f'unsupported request method {request.method}'
-    # TODO: support more verbs here. OPTIONS seems reasonable for example
 
 
 def no_copy_on_bind(cls):

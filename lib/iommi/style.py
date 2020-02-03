@@ -102,8 +102,6 @@ base = Style(
             ),
         )
     ),
-    # TODO: this is a bit bonkers
-    Query__form__attrs__id='iommi_query_form',
 )
 
 test = Style(

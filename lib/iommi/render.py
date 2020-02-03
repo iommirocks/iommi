@@ -4,7 +4,6 @@ from iommi._web_compat import mark_safe
 # TODO: this package name is silly
 
 
-# TODO: inline this into Attrs
 from tri_declarative import (
     Namespace,
     EMPTY,

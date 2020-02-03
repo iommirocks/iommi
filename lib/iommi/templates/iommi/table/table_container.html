@@ -1,12 +1,14 @@
+{{ table.path }}
+
 <script>
-    // TODO: select_all_pages_q and id__all_pks_ needs to be namespaced
     function iommi_table_js_select_all(base) {
+        // 4 times parentNode to go from i -> th -> tr -> table
         var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
         Array.prototype.forEach.call(tbody.querySelectorAll('.checkbox'), function(el, i) {
             el.click();
         });
 
-        var has_paginator = tbody.parentNode.parentNode.querySelector('.paginator') !== null;
+        var has_paginator = {{ table.paginator.paginator.num_pages }} > 1;
 
         if (has_paginator) {
             if (tbody.querySelector('.select_all_pages_q') === null) {
@@ -16,7 +18,7 @@
             else {
                 tbody.querySelector('.select_all_pages_q').parentNode.parentNode.removeChild(tbody.querySelector('.select_all_pages_q').parentNode);
                 var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
-                form.querySelector('#id__all_pks_').value = 0;
+                form.querySelector('#id__{{ path.dunder_path }}__all_pks_').value = 0;
             }
         }
     }
@@ -25,7 +27,7 @@
         var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
         var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
         tbody.querySelector('.select_all_pages_q').textContent = 'All items selected';
-        form.querySelector('#id__all_pks_').value = 1;
+        form.querySelector('#id__{{ path.dunder_path }}__all_pks_').value = 1;
     }
 </script>
 
