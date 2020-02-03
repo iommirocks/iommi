@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.0.1 (2019-02-03)
+------------------
+
+* A minor update to the documentation generation to make it play nice with rST
+
+
 5.0.0 (2019-01-30)
 ------------------
 

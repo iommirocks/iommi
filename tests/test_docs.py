@@ -81,43 +81,43 @@ docstring for Foo
 Refinable members
 -----------------
 
-* description
-* name
+* `description`
+* `name`
     description of the name field
 
-* refinable_func
-* some_other_thing
+* `refinable_func`
+* `some_other_thing`
 
 Defaults
 ^^^^^^^^
 
-* description
-    * lambda foo, bar: 'qwe'
-* name
-    * foo-name
-* some_other_thing
-    * test_docs.some_callable
+* `description`
+    * `lambda foo, bar: 'qwe'`
+* `name`
+    * `foo-name`
+* `some_other_thing`
+    * `test_docs.some_callable`
 
 Shortcuts
 ---------
 
-shortcut1
-^^^^^^^^^
+`shortcut1`
+^^^^^^^^^^^
 
-shortcut2
-^^^^^^^^^
+`shortcut2`
+^^^^^^^^^^^
 
 shortcut2 docstring
 
-shortcut3
-^^^^^^^^^
+`shortcut3`
+^^^^^^^^^^^
 
 shortcut3 docstring
 
             :param call_target: something something call_target
 
-shortcut4
-^^^^^^^^^
+`shortcut4`
+^^^^^^^^^^^
     """
 
     assert actual_doc.strip() == expected_doc.strip()
@@ -139,7 +139,7 @@ Foo
 Refinable members
 -----------------
 
-* name
+* `name`
 
 """
 
@@ -178,7 +178,7 @@ __init__ description
 Refinable members
 -----------------
 
-* name
+* `name`
 
 """
 
@@ -208,13 +208,13 @@ Foo
 Refinable members
 -----------------
 
-* name
+* `name`
 
 Defaults
 ^^^^^^^^
 
-* name
-    * lambda X: X
+* `name`
+    * `lambda X: X`
 
 """
 
