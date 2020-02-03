@@ -7,7 +7,7 @@ from iommi._db_compat import (
 from iommi.action import Action
 from iommi.base import (
     MISSING,
-    PagePart,
+    Part,
 )
 from iommi.form import (
     Field,
@@ -37,7 +37,7 @@ def middleware(get_response):
     def iommi_middleware(request):
 
         response = get_response(request)
-        if isinstance(response, PagePart):
+        if isinstance(response, Part):
             return response.bind(request=request).render_to_response()
         else:
             return response
@@ -54,7 +54,7 @@ __all__ = [
     'middleware',
     'MISSING',
     'Page',
-    'PagePart',
+    'Part',
     'Query',
     'Table',
     'Variable',

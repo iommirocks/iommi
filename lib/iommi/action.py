@@ -11,7 +11,7 @@ from django.utils.html import format_html
 from django.utils.text import slugify
 from iommi.base import (
     evaluate_attrs,
-    PagePart,
+    Part,
     evaluate_strict_container,
 )
 from iommi.page import Fragment
@@ -25,7 +25,7 @@ from tri_declarative import (
 )
 
 
-class Action(PagePart):
+class Action(Part):
     tag: str = Refinable()
     attrs: Dict[str, Any] = Refinable()
     group: str = Refinable()

@@ -17,7 +17,7 @@ from django.db.models import (
 )
 from iommi.base import (
     MISSING,
-    PagePart,
+    Part,
     bind_members,
     collect_members,
     evaluate_members,
@@ -172,7 +172,7 @@ def boolean_value_to_q(variable, op, value_string_or_f):
 
 
 @with_meta
-class Variable(PagePart):
+class Variable(Part):
     """
     Class that describes a variable that you can search for.
     """
@@ -464,7 +464,7 @@ def default_endpoint__errors(query, **_):
 @no_copy_on_bind
 @declarative(Variable, '_variables_dict')
 @with_meta
-class Query(PagePart):
+class Query(Part):
     """
     Declare a query language. Example:
 

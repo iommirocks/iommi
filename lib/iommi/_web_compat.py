@@ -1,7 +1,10 @@
 try:
     from django.core.exceptions import ValidationError
     from django.core.validators import validate_email, URLValidator
-    from django.http import HttpResponse
+    from django.http import (
+        HttpResponse,
+        QueryDict,
+    )
     from django.template import RequestContext
     from django.template.loader import render_to_string
     from django.utils.html import format_html

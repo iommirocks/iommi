@@ -18,10 +18,10 @@ def _style_name_for_class(cls):
 
 
 def class_names_for(cls):
-    from iommi import PagePart  # avoid circular import
+    from iommi import Part  # avoid circular import
 
     for base_class in reversed(cls.mro()):
-        if base_class in (object, PagePart, RefinableObject):
+        if base_class in (object, Part, RefinableObject):
             continue
         yield _style_name_for_class(base_class)
 

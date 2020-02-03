@@ -25,7 +25,7 @@ from iommi.base import (
     evaluate_attrs,
     should_include,
     perform_post_dispatch,
-    PagePart,
+    Part,
     no_copy_on_bind,
     as_html,
     evaluate_strict_container,
@@ -304,7 +304,7 @@ def test_should_include_error_message():
 
 def test_perform_post_dispatch_error_message():
     @no_copy_on_bind
-    class MyPart(PagePart):
+    class MyPart(Part):
         def children(self):
             return Struct(
                 foo=Struct(
@@ -330,7 +330,7 @@ def test_perform_post_dispatch_error_message():
 
 def test_dunder_path_is_different_from_path_and_fully_qualified_skipping_root():
     @no_copy_on_bind
-    class MyPart(PagePart):
+    class MyPart(Part):
         def __init__(self):
             super(MyPart, self).__init__()
             self.name = 'my_part'
@@ -339,7 +339,7 @@ def test_dunder_path_is_different_from_path_and_fully_qualified_skipping_root():
             return 'MyPart'
 
     @no_copy_on_bind
-    class MyPart2(PagePart):
+    class MyPart2(Part):
         def __init__(self):
             super(MyPart2, self).__init__()
             self.name = 'my_part2'
@@ -357,7 +357,7 @@ def test_dunder_path_is_different_from_path_and_fully_qualified_skipping_root():
             return 'MyPart'
 
     @no_copy_on_bind
-    class MyPart3(PagePart):
+    class MyPart3(Part):
         def __init__(self):
             super(MyPart3, self).__init__()
             self.name = 'my_part3'

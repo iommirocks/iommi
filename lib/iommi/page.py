@@ -18,7 +18,7 @@ from iommi.base import (
     collect_members,
     evaluate_attrs,
     no_copy_on_bind,
-    PagePart,
+    Part,
     PartType,
 )
 from iommi.render import render_attrs
@@ -66,7 +66,7 @@ def fragment__render(fragment, context):
         )
 
 
-class Fragment(PagePart):
+class Fragment(Part):
     attrs: Dict[str, Any] = Refinable()
     tag = Refinable()
     template: Union[str, Template] = Refinable()
@@ -78,7 +78,7 @@ class Fragment(PagePart):
     def __init__(self, child: PartType = None, *, children: Optional[List[PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
 
-        self._children = []  # TODO: _children to avoid colliding with PageParts children() API. Not nice. We should do something nicer here.
+        self._children = []  # TODO: _children to avoid colliding with Parts children() API. Not nice. We should do something nicer here.
         if child is not None:
             self._children.append(child)
 
@@ -115,10 +115,10 @@ class Fragment(PagePart):
 @with_meta
 @declarative(
     parameter='_parts_dict',
-    is_member=lambda obj: isinstance(obj, (PagePart, str, Template)),
+    is_member=lambda obj: isinstance(obj, (Part, str, Template)),
     sort_key=lambda x: 0,
 )
-class Page(PagePart):
+class Page(Part):
     member_class: Type[Fragment] = Refinable()
 
     class Meta:
@@ -138,9 +138,9 @@ class Page(PagePart):
         
         self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
 
-        # First we have to up sample parts that aren't PagePart into Fragment
+        # First we have to up sample parts that aren't Part into Fragment
         def as_fragment_if_needed(k, v):
-            if not isinstance(v, PagePart):
+            if not isinstance(v, Part):
                 return Fragment(v, name=k)
             else:
                 return v

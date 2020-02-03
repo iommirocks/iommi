@@ -31,7 +31,7 @@ This creates a page with a h1 tag, a table of users and a form to create a new u
 Page
 ----
 
-The :code:`Page` class is used to compose pages. If you have installed the iommi middleware you can also return them directly from your views. They accept :code:`str`, :code:`PagePart` and Django :code:`Template` types:
+The :code:`Page` class is used to compose pages. If you have installed the iommi middleware you can also return them directly from your views. They accept :code:`str`, :code:`Part` and Django :code:`Template` types:
 
 .. code:: python
 
@@ -46,13 +46,13 @@ The :code:`Page` class is used to compose pages. If you have installed the iommi
         # You can nest Page objects!
         some_other_page = MyOtherPage()
 
-        # Table and Form are PagePart types
+        # Table and Form are Part types
         my_table = Table.from_model(Foo)
 
         # Django template
         other_stuff = Template('<div>{{ foo }}</div>')
 
-The types here that aren't :code:`PagePart` will be converted to a :code:`PagePart` derived class as needed.
+The types here that aren't :code:`Part` will be converted to a :code:`Part` derived class as needed.
 
 html
 ----
@@ -61,10 +61,10 @@ html
 html is a little builder object to create simple elements. You just do :code:`html.h1('some text')` to create a h1 html tag. It works by creating :code:`Fragment` instances, so the :code:`html.h1('foo')` is the same as :code:`Fragment('some text', tag='h1')`. See :code:`Fragment` for more available parameters.
 
 
-PagePart
+Part
 --------
 
-:code:`PagePart` it the base class/API for objects that can be composed into a page.
+:code:`Part` it the base class/API for objects that can be composed into a page.
 
 
 Fragment

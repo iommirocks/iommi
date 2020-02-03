@@ -43,7 +43,7 @@ from iommi.action import (
 from iommi.base import (
     DISPATCH_PREFIX,
     MISSING,
-    PagePart,
+    Part,
     bind_members,
     collect_members,
     evaluate_attrs,
@@ -225,7 +225,7 @@ class DataRetrievalMethods(Enum):
 
 
 @with_meta
-class Column(PagePart):
+class Column(Part):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
@@ -694,7 +694,7 @@ class Column(PagePart):
         return call_target(**kwargs)
 
 
-# TODO: why isn't this PagePart?
+# TODO: why isn't this Part?
 class BoundRow(object):
     """
     Internal class used in row rendering
@@ -735,7 +735,7 @@ class BoundRow(object):
         return self.parent.dunder_path() + '__row'
 
 
-# TODO: make this a PagePart?
+# TODO: make this a Part?
 class BoundCell(object):
 
     def __init__(self, bound_row, column):
@@ -835,7 +835,7 @@ class RowConfig(RefinableObject):
     extra_evaluated: Dict[str, Any] = Refinable()
 
 
-# TODO: make this a PagePart?
+# TODO: make this a Part?
 class Header(object):
     @dispatch(
         attrs=EMPTY,
@@ -877,7 +877,7 @@ def bulk__post_handler(table, form, **_):
     return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
 
 
-# TODO: full PagePart?
+# TODO: full Part?
 class Paginator:
     def __init__(self, *, django_paginator, table, adjacent_pages=6):
         self.style = None
@@ -974,7 +974,7 @@ class Paginator:
 @no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
-class Table(PagePart):
+class Table(Part):
     """
     Describe a table. Example:
 

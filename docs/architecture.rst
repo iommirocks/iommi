@@ -1,11 +1,11 @@
-Architecture overview
-=====================
+Architecture
+============
 
 
 Execution phases
 ----------------
 
-Page parts have this life cycle:
+`Part` objects have this life cycle:
 
 1. Definition
 2. Construction

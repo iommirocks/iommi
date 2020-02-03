@@ -244,6 +244,6 @@ of the classes in iommi. This is your place to put whatever you want in order
 to extend iommi for a general feature or just some simple one-off customization
 for a single view. We also have `extra_evaluated` that is similar but values
 here are evaluated (see
-`Callables for advanced usage, values for the simple cases`_)   All PagePart
+`Callables for advanced usage, values for the simple cases`_)   All Part
 derived classes have `extra` and `extra_evaluated` namespaces, for example:
 Page, Column, Table, Field, Form, and Action.

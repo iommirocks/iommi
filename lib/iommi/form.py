@@ -41,7 +41,7 @@ from iommi.action import (
 )
 from iommi.base import (
     MISSING,
-    PagePart,
+    Part,
     bind_members,
     collect_members,
     evaluate_attrs,
@@ -370,7 +370,7 @@ def default_input_id(field, **_):
 
 
 @with_meta
-class Field(PagePart):
+class Field(Part):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
 
@@ -933,7 +933,7 @@ class Field(PagePart):
 @no_copy_on_bind
 @declarative(Field, '_fields_dict')
 @with_meta
-class Form(PagePart):
+class Form(Part):
     """
     Describe a Form. Example:
 
@@ -977,7 +977,7 @@ class Form(PagePart):
         assert self._is_bound
         return Struct(
             fields=self.fields,
-            # TODO: This should be a PagePart
+            # TODO: This should be a Part
             actions=Struct(
                 name='actions',
                 children=lambda: self.actions,

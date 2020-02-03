@@ -17,6 +17,7 @@ from django.template import Template
 from iommi._web_compat import (
     get_template_from_string,
     render_template,
+    QueryDict,
 )
 from iommi.render import Attrs
 from iommi.style import (
@@ -96,7 +97,7 @@ class EndPointHandlerProxy:
         return self.parent.evaluate_attribute_kwargs()
 
 
-def setup_endpoint_proxies(parent: 'PagePart') -> Dict[str, EndPointHandlerProxy]:
+def setup_endpoint_proxies(parent: 'Part') -> Dict[str, EndPointHandlerProxy]:
     return Namespace({
         k: EndPointHandlerProxy(v, parent=parent)
         for k, v in parent.endpoint.items()
@@ -193,7 +194,7 @@ def get_style_for(obj):
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
 
-class PagePart(RefinableObject):
+class Part(RefinableObject):
     name: str = Refinable()
     include: bool = Refinable()
     after: Union[int, str] = Refinable()
@@ -212,7 +213,7 @@ class PagePart(RefinableObject):
         name=None,
     )
     def __init__(self, **kwargs):
-        super(PagePart, self).__init__(**kwargs)
+        super(Part, self).__init__(**kwargs)
 
     @dispatch(
         context=EMPTY,
@@ -352,7 +353,7 @@ def render_template_name(template_name, **kwargs):
     return render_template(template=template_name, **kwargs)
 
 
-PartType = Union[PagePart, str, Template]
+PartType = Union[Part, str, Template]
 
 
 def as_html(*, part: PartType, context):
@@ -390,7 +391,7 @@ def model_and_rows(model, rows):
 def request_data(request):
     # TODO: this seems wrong. should at least be a QueryDictThingie
     if request is None:
-        return {}
+        return QueryDict()
 
     if request.method == 'POST':
         return request.POST
@@ -435,7 +436,7 @@ def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cl
 
 
 @no_copy_on_bind
-class Members(PagePart):
+class Members(Part):
     def __init__(self, *, declared_items, **kwargs):
         super(Members, self).__init__(**kwargs)
         self.members: Dict[str, Any] = None
@@ -488,7 +489,7 @@ class Members(PagePart):
         raise NotImplementedError('Iterate with .keys(), .values() or .items()')
 
 
-def bind_members(obj: PagePart, *, name: str, default_child=False) -> None:
+def bind_members(obj: Part, *, name: str, default_child=False) -> None:
     declared_items = getattr(obj, f'declared_{name}')
     m = Members(name=name, declared_items=declared_items, default_child=default_child)
     m.bind(parent=obj)
