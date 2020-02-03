@@ -695,8 +695,6 @@ def test_choice_queryset_do_not_cache():
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo.errors == set()
 
-    # TODO: this test was written when Field.choice_queryset was not ajaxy. Now it's broken. I guess we need to query the ajax endpoint?
-
     assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
     # Now create a new queryset, check that we get two!
