@@ -4,8 +4,8 @@ iommi
 .. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
     :target: https://travis-ci.org/TriOptima/iommi.svg
 
-.. image:: http://codecov.io/github/TriOptima/iommi.svg/coverage.svg?branch=master
-    :target: http://codecov.io/github/TriOptima/iommi.svg?branch=master
+.. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/TriOptima/iommi
 
 
 iommi is a django-based framework for even higher abstraction and faster development than django itself.
