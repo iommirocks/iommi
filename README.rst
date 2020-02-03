@@ -2,7 +2,7 @@ iommi
 =====
 
 .. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
-    :target: https://travis-ci.org/TriOptima/iommi.svg
+    :target: https://travis-ci.org/TriOptima/iommi
 
 .. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/TriOptima/iommi

@@ -1455,7 +1455,7 @@ class Table(PagePart):
     @dispatch(
         columns=EMPTY,
     )
-    def from_model(cls, rows=None, model=None, columns=None, instance=None, include=None, exclude=None, extra_columns=None, **kwargs):
+    def from_model(cls, *, rows=None, model=None, columns=None, instance=None, include=None, exclude=None, extra_columns=None, **kwargs):
         """
         Create an entire form based on the columns of a model. To override a column parameter send keyword arguments in the form
         of "the_name_of_the_columns__param". For example:

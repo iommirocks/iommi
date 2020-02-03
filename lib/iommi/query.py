@@ -789,7 +789,7 @@ class Query(PagePart):
     @dispatch(
         variables=EMPTY,
     )
-    def from_model(cls, model, *, rows=None, variables, include=None, exclude=None, extra_variables=None, **kwargs):
+    def from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, extra_variables=None, **kwargs):
         """
         Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
         of "the_name_of_the_fields__param". For example:
