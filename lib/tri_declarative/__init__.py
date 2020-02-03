@@ -794,7 +794,7 @@ def _generate_rst_docs(classes, missing_objects=None):
 
         section(1, 'Refinable members')
         for refinable, value in sorted(dict.items(get_namespace(c))):
-            w(0, '* ' + refinable)
+            w(0, '* `' + refinable + '`')
 
             if constructor_doc['params'].get(refinable):
                 w(1, constructor_doc['params'][refinable])
@@ -819,8 +819,11 @@ def _generate_rst_docs(classes, missing_objects=None):
                     elif callable(v):
                         v = v.__module__ + '.' + v.__name__
 
-                    w(0, '* %s' % k)
-                    w(1, '* %s' % v)
+                    if v == '':
+                        v = '""'
+
+                    w(0, '* `%s`' % k)
+                    w(1, '* `%s`' % v)
             w(0, '')
 
         shortcuts = get_shortcuts_by_name(c)
@@ -828,7 +831,7 @@ def _generate_rst_docs(classes, missing_objects=None):
             section(1, 'Shortcuts')
 
             for name, shortcut in sorted(shortcuts.items()):
-                section(2, name)
+                section(2, f'`{name}`')
 
                 if shortcut.__doc__:
                     doc = shortcut.__doc__
