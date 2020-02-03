@@ -50,10 +50,14 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     request.user = AnonymousUser()
     actual_html = remove_csrf(table.__html__(**kwargs))
 
-    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').find(**find).prettify()).strip()
+    expected_soup = BeautifulSoup(expected_html, 'html.parser')
+    prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
-    assert hit, actual_soup if actual_soup else actual_html
+    if not hit:
+        print(actual_html)
+        assert False, f"Couldn't find selector {find} in actual output"
+    assert hit, actual_soup
     prettified_actual = reindent(hit.prettify()).strip()
 
     assert prettified_actual == prettified_expected
