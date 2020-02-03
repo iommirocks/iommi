@@ -1121,6 +1121,7 @@ class Table(Part):
 
         self._bulk_form: Form = None
         self.header_levels = None
+        self.is_paginated = False
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
@@ -1417,6 +1418,8 @@ class Table(Part):
                 raise Http404
         else:
             self.paginator = Paginator(table=self, django_paginator=None)
+
+        self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
 
         self._prepare_auto_rowspan()
 
