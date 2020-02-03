@@ -24,13 +24,16 @@ Major features:
 
 All the components are written with the same philosophy of:
 
-- Late binding
-- Many layered customization
-- Single point customization without needing to introduce entire chains of classes
-- Prepackaged commonly used patterns (that can still be customized!)
-- Declarative/programmatic hybrid API
-- Everything has a name so can be referenced for customization
-- Escape hatches included
+* Everything has a name
+* Traversing a namespace is done with `__` when `.` can't be used in normal python syntax
+* Callables for advanced usage, values for the simple cases
+* Late binding
+* Declarative/programmatic hybrid API
+* Prepackaged commonly used patterns (that can still be customized!)
+* Single point customization with *no* boilerplate
+* Escape hatches included
+
+See :doc:`philosophy` for explanations of all these.
 
 
 Example:
@@ -38,14 +41,16 @@ Example:
 
 .. code:: python
 
-    def my_page(request):
-        class MyPage(Page):
-            foos = Table.from_model(model=Foo)
-            bars = Table.from_model(model=Bar)
+    def music_page(request):
+        class MusicPage(Page):
+            musicians = Table.from_model(
+                model=Musician)
+            albums = Table.from_model(
+                model=Album)
 
-        return MyPage()
+        return MusicPage()
 
-This creates a page with two tables, one for the model :code:`Foo` and one for the model :code:`Bar`.
+This creates a page with two separate tables, one for the model :code:`Musician` and one for the model :code:`Album`.
 
 
 Usage

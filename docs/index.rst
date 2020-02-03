@@ -12,7 +12,8 @@ Contents:
 
    installation
    usage
-   architecture_overview
+   philosophy
+   architecture
    pages
    tables
    queries

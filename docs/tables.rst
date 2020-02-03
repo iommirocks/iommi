@@ -110,19 +110,3 @@ This gives me a view with filtering, sorting, bulk edit and pagination.
 All these examples and a bigger example using many more features can be found in the examples django project.
 
 Read the full documentation for more.
-
-
-Motivation
-----------
-
-iommi tables grew out of a frustration with how tables were created at TriOptima. We have a *lot* of tables and the code to produce them included long HTML templates and often the code to extract and massage the data in some trivial way ended up as methods on the model classes or template tags, even though it was only used by one view.
-
-This code was also error prone to change since we often have columns that we show or hide based on the permissions of the user, which meant the `thead` and `tbody` had to be in sync. When you have a lot of columns and more and more complex logic for when to show/hide columns this can become harder than it sounds!
-
-We also saw that almost always the names of the columns (aka the headers) could be derived from the name of the field they should display data for, so we opted for defaults to make this case easier.
-
-It was very important for us to have customization available at many levels. Many table libraries have really nice and short code for the default case but when you have to customize some tiny thing you have to rewrite huge swaths of the library's code. We didn't want to do that since we made this library in order to refactor out exactly this thing from our existing code base. We ended up with the powerful pattern of being able to supply callables for the points of customization, leading to small tweaks moving into the table definition instead of being scattered in model or template tag code. We also have many levels or customization so that the path from "just display columns x, y and z somehow" to heavy customization is smooth and gradual.
-
-We chose to mimic how django forms and models are declared because we really like that kind of declarative style, but you can also use it in a more functional style if you want. The latter is useful when you want to create a list of the columns to display programmatically for example.
-
-This library has been a big win for us. The time to create a page with a table on it has been drastically reduced without sacrificing any flexibility when we later want to tweak the view.
