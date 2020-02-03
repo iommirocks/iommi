@@ -5,12 +5,14 @@ Add this to settings.py:
 
 .. code:: python
 
-    # NOTE: if your base template is called "base.html" then you don't need this!
+    # NOTE: if your base template is called "base.html"
+    # then you don't need this!
     IOMMI_BASE_TEMPLATE = 'my_base.html'
-    # NOTE: if your base template has a content block called "content" then you don't need this!
+    # NOTE: if your base template has a content block
+    # called "content" then you don't need this!
     IOMMI_CONTENT_BLOCK = 'content'
 
-The base template is the one containing your :code:`<html>` tag and has :code:`{% block content %}`.
+The base template is the one containing your `<html>` tag and has `{% block content %}`.
 
 
 Add `iommi` to installed apps:
@@ -22,7 +24,7 @@ Add `iommi` to installed apps:
         'iommi',
     ]
 
-Add iommi's page middleware:
+Add iommi's middleware:
 
 .. code:: python
 
@@ -32,11 +34,62 @@ Add iommi's page middleware:
     ]
 
 
-You can start by importing `:code:Table` from :code:`iommi` to try it out when
-you're just trying it out, but if you want to use iommi
-long term you should put this boilerplate in some module and use these classes.
-This is so you have a central place to override or add functionality.
+You can start by importing `Table` from `iommi` to try it out when
+you're just trying it out, but if you want to use iommi long term go read
+`production use`_ (it's not long).
 
+When you've done the stuff above you can create a page with a table in it:
+
+.. code:: python
+
+    def my_view(request):
+        return Table.as_page(
+            request=request,
+            table__model=MyModel,
+        )
+
+
+Or create a table the declarative and explicit way:
+
+.. code:: python
+
+    class MyTable(Table):
+        a_column = Column()
+        another_column = Column.date()
+
+
+    my_table = MyTable(request=request, data=MyModel.objects.all())
+
+and then you can render it in your template:
+
+
+.. code:: html
+
+    {{ my_table }}
+
+
+Or you can compose a page with two tables:
+
+.. code:: python
+
+    def my_page(request):
+        class MyPage(Page):
+            foos = Table.from_model(model=Foo)
+            bars = Table.from_model(model=Bar)
+
+        return MyPage()
+
+
+Production use
+--------------
+
+Just like you have your own custom base class for django `Model` to have a
+central place to put customization you will want to do the same for the base
+classes of iommi. In iommi this is even more important since you will almost
+certain want to add more shortcuts that are specific to your product.
+
+Copy this boilerplate to some place in your code and import these classes
+instead of the corresponding ones from iommi:
 
 .. code:: python
 
@@ -81,52 +134,12 @@ This is so you have a central place to override or add functionality.
         pass
 
 
-When you've done the stuff above you can create a page with a table in it:
-
-.. code:: python
-
-    def my_view(request):
-        return Table.as_page(
-            request=request,
-            table__model=MyModel,
-        )
-
-
-Or create a table the declarative and explicit way:
-
-.. code:: python
-
-    class MyTable(Table):
-        a_column = Column()
-        another_column = Column.date()
-
-
-    my_table = MyTable(request=request, data=MyModel.objects.all())
-
-and then you can render it in your template:
-
-
-.. code:: html
-
-    {{ my_table }}
-
-
-Or you can compose a page with two tables:
-
-.. code:: python
-
-    def my_page(request):
-        class MyPage(Page):
-            foos = Table.from_model(model=Foo)
-            bars = Table.from_model(model=Bar)
-
-        return MyPage()
-
 
 Under the hood
 --------------
 
-You can also use the parts of iommi by themselves, without using the middleware. With middleware it looks like this:
+You can also use the parts of iommi by themselves, without using the
+middleware. With middleware it looks like this:
 
 
 .. code:: python

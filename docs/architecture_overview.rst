@@ -44,6 +44,8 @@ The parts are responsible for calling `bind(parent=self)` on all their children 
 
 The root object of the graph is initialized with `bind(request=request)`. Only one object can be the root.
 
+.. _dispatching:
+
 Namespace dispatching
 ---------------------
 

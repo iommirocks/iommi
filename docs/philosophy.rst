@@ -30,7 +30,7 @@ The philosophy has these main parts:
 * `Late binding`_
 * `Declarative/programmatic hybrid API`_
 * `Prepackaged commonly used patterns (that can still be customized!)`_
-* `Single point customization with *no* boilerplate`_
+* `Single point customization with no boilerplate`_
 * `Escape hatches included`_
 
 
@@ -44,7 +44,7 @@ and more. This is why iommi requires names for everything. This might seem
 overly verbose in the beginning but this is what enables many of the powerful
 features of iommi and the robust error handling and error messages.
 
-This philosophy is what enables `Single point customization`_ via `Namespace dispatching`_
+This philosophy is what enables `Single point customization with no boilerplate`_ via :ref:`dispatching`.
 
 Traversing a namespace is done with __ when . can't be used in normal python syntax
 -----------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ to configure a small thing but keep all the defaults this can become noisy:
 .. code:: python
 
     car = Car(
-        engine=InternalCumbustionEngine(
+        engine=InternalCombustionEngine(
             turbo=True,
             cylinders=6,
             gearbox=SequentialGearbox(
@@ -73,7 +73,8 @@ to configure a small thing but keep all the defaults this can become noisy:
             color='blue',
             doors=4,
             make='toyota'
-            ...and on and on!...)
+            # ...and on and on!...
+    )
 
 Now it's impossible to see the intent of the programmer: which of all those
 options was the single thing they wanted to change and which are copy paste
@@ -205,8 +206,8 @@ config in a shortcut are defaults, not hard behavior. That means we can start
 with a shortcut that does mostly what we want and then pass one or more
 arguments to further refine. Again without writing a class.
 
-Single point customization with *no* boilerplate
-------------------------------------------------
+Single point customization with no boilerplate
+----------------------------------------------
 
 GUIs consists of have layers of abstraction like a form containing fields,
 fields containing input tags, and a button. But to customize the input tag of
