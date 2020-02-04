@@ -5,6 +5,8 @@ iommi
 
     <p class="mobile-logo"><a href="#"><img class="logo" src="_static/logo.svg" alt="Logo"></a></p>
 
+    <h3 class="pun">Your first pick for a django power cord</h3>
+
 .. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
     :target: https://travis-ci.org/TriOptima/iommi
 

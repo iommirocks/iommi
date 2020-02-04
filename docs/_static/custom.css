@@ -15,10 +15,18 @@ pre {
     padding: 7px 15px;
 }
 
+div.body h3.pun {
+    font-size: 100%;
+    padding-top: 0;
+    margin-top: -10px;
+    font-style: italic;
+}
+
 @media screen and (min-width: 1040px) {
     div.document {
         width: 1040px;
     }
+
 }
 
 @media screen and (max-width: 875px) {
