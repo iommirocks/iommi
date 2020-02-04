@@ -219,7 +219,7 @@ class Part(RefinableObject):
         render=EMPTY,
     )
     def __html__(self, *, context=None, render=None):
-        assert False, 'Not implemented'
+        assert False, 'Not implemented'  # pragma: no cover
 
     def __str__(self):
         assert self._is_bound
@@ -246,7 +246,7 @@ class Part(RefinableObject):
             def dispatch_response_handler(r):
                 return r
 
-        else:
+        else:  # pragma: no cover
             assert False  # This has already been checked in request_data()
 
         dispatch_commands = {key: value for key, value in req_data.items() if key.startswith(dispatch_prefix)}
@@ -454,7 +454,7 @@ class Members(Part):
             raise AttributeError()
         try:
             return self.members[item]
-        except KeyError:
+        except KeyError:  # pragma: no cover
             raise AttributeError()
 
     def values(self):
@@ -478,7 +478,7 @@ class Members(Part):
     def __len__(self):
         return len(self.members)
 
-    def __iter__(self):
+    def __iter__(self):  # pragma: no cover
         raise NotImplementedError('Iterate with .keys(), .values() or .items()')
 
 

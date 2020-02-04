@@ -404,3 +404,8 @@ def test_as_html():
 def test_evaluate_strict_container():
     assert evaluate_strict_container(Namespace(foo=1)) == Namespace(foo=1)
     assert evaluate_strict_container(Namespace(foo=lambda foo: foo), foo=3) == Namespace(foo=3)
+
+
+def test_middleware_fallthrough_on_non_part():
+    sentinel = object()
+    assert request_with_middleware(response=sentinel, data={}) is sentinel

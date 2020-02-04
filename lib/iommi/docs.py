@@ -24,10 +24,7 @@ def generate_rst_docs(directory, classes, missing_objects=None):  # pragma: no c
 def get_docs_callable_description(c):
     if getattr(c, '__name__', None) == '<lambda>':
         import inspect
-        try:
-            return inspect.getsource(c).strip()
-        except OSError:
-            pass
+        return inspect.getsource(c).strip()
     return c.__module__ + '.' + c.__name__
 
 

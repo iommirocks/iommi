@@ -240,6 +240,15 @@ def test_namespace_forms():
     assert instance.f_float == 11.2
     assert not instance.f_bool
 
+    p = Form.as_delete_page(
+        instance=instance,
+    ).bind(request=req('post', **{'-': ''}))
+    response = p.render_to_response()
+    assert response.status_code == 302
+
+    with pytest.raises(NamespaceFormsTest.DoesNotExist):
+        instance.refresh_from_db()
+
 
 @pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results with an unordered")

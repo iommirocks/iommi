@@ -7,10 +7,7 @@ from tri_declarative import (
     Shortcut,
 )
 
-from iommi.docs import (
-    _generate_rst_docs,
-    get_docs_callable_description,
-)
+from iommi.docs import _generate_rst_docs
 
 
 def test_generate_docs():
@@ -23,11 +20,13 @@ def test_generate_docs():
         name = Refinable()
         description = Refinable()
         some_other_thing = Refinable()
+        empty_string_default = Refinable()
 
         @dispatch(
             name='foo-name',
             description=lambda foo, bar: 'qwe',
             some_other_thing=some_callable,
+            empty_string_default='',
         )
         def __init__(self):
             """
@@ -86,6 +85,7 @@ Refinable members
 -----------------
 
 * `description`
+* `empty_string_default`
 * `name`
     description of the name field
 
@@ -97,6 +97,8 @@ Defaults
 
 * `description`
     * `lambda foo, bar: 'qwe'`
+* `empty_string_default`
+    * `""`
 * `name`
     * `foo-name`
 * `some_other_thing`
@@ -165,7 +167,7 @@ def test_generate_docs_description_and_params_in_constructor():
 
             :param foo: foo description
             """
-            super(Foo, self).__init__(**kwargs)
+            super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
     (actual_filename, actual_doc), = list(_generate_rst_docs(classes=[Foo]))
 
@@ -198,7 +200,7 @@ def test_generate_docs_kill_obscure_mutant():
             name=lambda X: X,
         )
         def __init__(self, **kwargs):
-            super(Foo, self).__init__(**kwargs)
+            super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
     (actual_filename, actual_doc), = list(_generate_rst_docs(classes=[Foo]))
 
