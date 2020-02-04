@@ -92,20 +92,30 @@ base = Style(
         shortcuts=dict(
             select=dict(
                 header__attrs__title='Select all',
+                # TODO: ??
                 header__attrs__class__thin=True,
                 header__attrs__class__nopad=True,
-                cell__attrs__class__cj=True,
-
-            ),
-            number=dict(
-                cell__attrs__class__rj=True,
             ),
         )
     ),
 )
 
+font_awesome_4 = Style(
+    Column__shortcuts=dict(
+        icon__extra=dict(
+            icon_attrs__class={'fa': True, 'fa-lg': True},
+            icon_prefix='fa-',
+        ),
+        edit__extra__icon='pencil-square-o',
+        delete__extra__icon='trash-o',
+        download__extra__icon='download',
+    ),
+    # TODO: break out icon stuff from Action.icon
+)
+
 test = Style(
     base,
+    font_awesome_4,
     Field=dict(
         shortcuts=dict(
             boolean=dict(
@@ -118,9 +128,12 @@ test = Style(
     Table=dict(
         attrs__class__table=True,
     ),
+    Column=dict(
+        shortcuts__number__cell__attrs__class__rj=True,
+    )
 )
 
-bootstrap = Style(
+bootstrap_base = Style(
     base,
     Field=dict(
         shortcuts=dict(
@@ -157,8 +170,18 @@ bootstrap = Style(
         attrs__class__table=True,
     ),
     Column=dict(
-        shortcuts__number__cell__attrs__class__rj=True,
         header__attrs__class={'text-nowrap': True},
+        shortcuts=dict(
+            select=dict(
+                header__attrs__title='Select all',
+                header__attrs__class__thin=True,
+                header__attrs__class__nopad=True,
+                cell__attrs__class={'text-center': True},
+
+            ),
+            number__cell__attrs__class={'text-right': True},
+            boolean__cell__attrs__class={'text-center': True},
+        )
     ),
     Query__form__style='bootstrap_horizontal',
     Paginator=dict(
@@ -168,6 +191,11 @@ bootstrap = Style(
         link__attrs__class={'page-link': True},
         item__attrs__class={'page-item': True},
     ),
+)
+
+bootstrap = Style(
+    bootstrap_base,
+    font_awesome_4,
 )
 
 bootstrap_horizontal = Style(

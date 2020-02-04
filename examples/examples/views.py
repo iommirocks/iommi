@@ -275,7 +275,7 @@ def table_kitchen_sink(request):
             auto_rowspan=True,
             cell__value=lambda row, **_: row.b.a // 3,
             cell__format=lambda value, **_: '- %s -' % value,
-            cell__attrs__class__cj=True,
+            cell__attrs__class={'text-center': True},
             cell__attrs__title='cell title',
             cell__url='url',
             cell__url_title='cell url title',

@@ -262,17 +262,17 @@ def test_output():
                         <a href="?order=bar"> Bar </a>
                     </th>
                     <th class="first_column subheader thin"> </th>
-                    <th class="subheader thin" title="Edit"> </th>
-                    <th class="first_column subheader thin" title="Delete"> </th>
+                    <th class="subheader thin"> Edit </th>
+                    <th class="first_column subheader thin"> Delete </th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td> Hello räksmörgås &gt;&lt;&amp;&gt; </td>
                     <td class="rj"> 17 </td>
-                    <td class="cj"> <i class="fa fa-lg fa-history"> </i> </td>
-                    <td class="cj"> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit"> </i> </a> </td>
-                    <td class="cj"> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete"> </i> </a> </td>
+                    <td> <i class="fa fa-history fa-lg"> </i> </td>
+                    <td> <a href="/somewhere/edit/"> <i class="fa fa-lg fa-pencil-square-o"> </i> Edit </a> </td>
+                    <td> <a href="/somewhere/delete/"> <i class="fa fa-lg fa-trash-o"> </i> Delete </a> </td>
                 </tr>
             </tbody>
         </table>
@@ -389,7 +389,7 @@ def test_display_name():
 def test_link():
     class TestTable(NoSortTable):
         foo = Column.link(cell__url='https://whereever', cell__url_title="whatever")
-        bar = Column.link(cell__value='bar', cell__url_title=lambda **_: "url_title_goes_here")
+        bar = Column.link(cell__value='bar', cell__url_title=lambda value, **_: "url_title_goes_here")
 
     rows = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
@@ -607,10 +607,10 @@ def test_column_presets():
             <thead>
                 <tr>
                     <th class="first_column subheader thin" />
-                    <th class="first_column subheader thin" title="Edit" />
-                    <th class="first_column subheader thin" title="Delete" />
-                    <th class="first_column subheader thin" title="Download" />
-                    <th class="first_column subheader thin" title="Run"> Run </th>
+                    <th class="first_column subheader thin">Edit </th>
+                    <th class="first_column subheader thin">Delete </th>
+                    <th class="first_column subheader thin">Download </th>
+                    <th class="first_column subheader thin">Run </th>
                     <th class="first_column nopad subheader thin" title="Select all">
                         {}
                     </th>
@@ -621,12 +621,12 @@ def test_column_presets():
             </thead>
             <tbody>
                 <tr data-pk="123">
-                    <td class="cj"> <i class="fa fa-lg fa-some-icon" /> </td>
-                    <td class="cj"> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o" title="Edit" /> </a> </td>
-                    <td class="cj"> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o" title="Delete" /> </a> </td>
-                    <td class="cj"> <a href="http://yada/download/"> <i class="fa fa-lg fa-download" title="Download" /> </a> </td>
+                    <td> <i class="fa fa-lg fa-some-icon" /> </td>
+                    <td> <a href="http://yada/edit/"> <i class="fa fa-lg fa-pencil-square-o"/> Edit </a> </td>
+                    <td> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o"/> Delete </a> </td>
+                    <td> <a href="http://yada/download/"> <i class="fa fa-download fa-lg"/> Download </a> </td>
                     <td> <a href="http://yada/run/"> Run </a> </td>
-                    <td class="cj"> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td class="cj"> <i class="fa fa-check" title="Yes" /> </td>
+                    <td> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td> <i class="fa fa-check" title="Yes" /> </td>
                     <td> <a href="http://yadahada/"> Yadahada name </a> </td>
                     <td class="rj"> 123 </td>
                 </tr>
@@ -927,11 +927,8 @@ def test_query():
 
 
 def test_cell_template():
-    def explode(**_):
-        assert False
-
     class TestTable(NoSortTable):
-        foo = Column(cell__template='test_cell_template.html', cell__format=explode, cell__url=explode, cell__url_title=explode)
+        foo = Column(cell__template='test_cell_template.html')
 
     rows = [Struct(foo="sentinel")]
 
@@ -994,9 +991,6 @@ def test_cell_format_no_escape():
 def test_template_string():
     TFoo.objects.create(a=1)
 
-    def explode(**_):
-        assert False
-
     class TestTable(NoSortTable):
         class Meta:
             model = TFoo
@@ -1008,9 +1002,6 @@ def test_template_string():
 
         a = Column(
             cell__template=Template('Custom cell: {{ row.a }}'),
-            cell__format=explode,
-            cell__url=explode,
-            cell__url_title=explode,
             query__include=True,
             query__form__include=True,
         )
@@ -1035,15 +1026,9 @@ def test_template_string():
 
 
 def test_cell_template_string():
-    def explode(**_):
-        assert False
-
     class TestTable(NoSortTable):
         foo = Column(
             cell__template=Template('Custom renderedXXXX: {{ row.foo }}'),
-            cell__format=explode,
-            cell__url=explode,
-            cell__url_title=explode,
         )
 
     rows = [Struct(foo="sentinel")]

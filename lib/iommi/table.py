@@ -68,7 +68,10 @@ from iommi.query import (
     Query,
     QueryException,
 )
-from iommi.render import Attrs
+from iommi.render import (
+    Attrs,
+    render_attrs,
+)
 from iommi.style import apply_style_recursively
 from tri_declarative import (
     EMPTY,
@@ -261,11 +264,14 @@ class Column(Part):
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
-        header__attrs__class__sorted_column=lambda column, **_: column.is_sorting,
-        header__attrs__class__descending=lambda column, **_: column.sort_direction == DESCENDING,
-        header__attrs__class__ascending=lambda column, **_: column.sort_direction == ASCENDING,
-        header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
-        header__attrs__class__subheader=True,
+        cell__contents__attrs=EMPTY,
+        header__attrs__class=dict(
+            sorted_column=lambda column, **_: column.is_sorting,
+            descending=lambda column, **_: column.sort_direction == DESCENDING,
+            ascending=lambda column, **_: column.sort_direction == ASCENDING,
+            first_column=lambda header, **_: header.index_in_group == 0,
+            subheader=True,
+        ),
         header__template='iommi/table/header.html',
         render_column=True,
         default_child=False,
@@ -387,20 +393,35 @@ class Column(Part):
     @class_shortcut(
         display_name='',
         sortable=False,
+        # TODO: remove this class and similar in the codebase
         header__attrs__class__thin=True,
         cell__value=lambda table, **_: True,
-        cell__attrs__class__cj=True,
+        extra__icon_attrs__class=EMPTY,
     )
-    def icon(cls, icon, icon_title=None, include=True, call_target=None, **kwargs):
+    def icon(cls, *args, include=True, call_target=None, **kwargs):
         """
         Shortcut to create font awesome-style icons.
 
-        :param icon: the font awesome name of the icon
+        :param extra__icon: the font awesome name of the icon
         """
+        assert len(args) in (0, 1), "You can only pass 1 positional argument: icon, or you can pass no arguments."
+
+        if args:
+            setdefaults_path(kwargs, dict(extra__icon=args[0]))
+
+        def icon_format(column, value, **_):
+            if not value or not column.extra.get('icon', None):
+                return column.display_name
+
+            attrs = column.extra.icon_attrs
+            attrs['class'][column.extra.icon_prefix + column.extra.icon] = True
+
+            return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
+
         setdefaults_path(kwargs, dict(
+            # TODO: what?
             include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
-            header__attrs__title=icon_title,
-            cell__format=lambda value, **_: mark_safe('<i class="fa fa-lg fa-%s"%s></i>' % (icon, ' title="%s"' % icon_title if icon_title else '')) if value else ''
+            cell__format=icon_format,
         ))
         return call_target(**kwargs)
 
@@ -408,53 +429,49 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
-        display_name=''
+        display_name='Edit'
     )
     def edit(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
         """
-        return call_target('pencil-square-o', 'Edit', **kwargs)
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
-        display_name=''
+        display_name='Delete'
     )
     def delete(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
         """
-        return call_target('trash-o', 'Delete', **kwargs)
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
         cell__value=lambda row, **_: getattr(row, 'pk', False),
+        display_name='Download'
     )
     def download(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
         """
-        return call_target('download', 'Download', **kwargs)
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        header__attrs__title='Run',
-        sortable=False,
-        header__attrs__class__thin=True,
+        call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
-        cell__value='Run',
+        display_name='Run',
     )
-    def run(cls, include=True, call_target=None, **kwargs):
+    def run(cls, call_target=None, **kwargs):
         """
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
         """
-        setdefaults_path(kwargs, dict(
-            include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
-        ))
         return call_target(**kwargs)
 
     @classmethod
@@ -477,7 +494,6 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        cell__attrs__class__cj=True,
         query__call_target__attribute='boolean',
         bulk__call_target__attribute='boolean',
     )
@@ -487,6 +503,7 @@ class Column(Part):
         """
 
         def render_icon(value):
+            # TODO: fugly evaluate
             if callable(value):
                 value = value()
             return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
@@ -568,6 +585,7 @@ class Column(Part):
     @classmethod
     @class_shortcut
     def link(cls, call_target, **kwargs):
+        # TODO: this can be simplified
         # Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         def link_cell_url(table, column, row, value):
             del table, value
@@ -582,7 +600,6 @@ class Column(Part):
     @classmethod
     @class_shortcut
     def number(cls, call_target, **kwargs):
-        # Shortcut for rendering a number. Sets the "rj" (as in "right justified") CSS class on the cell and header.
         return call_target(**kwargs)
 
     @classmethod
@@ -734,53 +751,49 @@ class BoundCell(object):
 
     def __init__(self, bound_row, column):
         assert column.include
+        # TODO: is this really right?
+        self.name = 'cell'
 
         self.column = column
         self.bound_row = bound_row
         self.table = bound_row.table
         self.row = bound_row.row
 
-    @property
-    def value(self):
-        if not hasattr(self, '_value'):
-            self._value = evaluate_strict(
-                self.column.cell.value,
-                table=self.bound_row.table,
-                declared_column=self.column.declared_column,
-                row=self.bound_row.row,
-                bound_row=self.bound_row,
-                column=self.column,
-            )
-        return self._value
-
-    @property
-    def attrs(self):
-        return evaluate_attrs(
-            # TODO: fix this hack
-            Struct(
-                attrs=self.column.cell.attrs,
-                dunder_path=lambda: self.column.dunder_path() + '__cell',
-                name='cell',
-            ),
+        # TODO: clean up these evaluates.. why are the kwargs so different?
+        self.value = evaluate_strict(
+            self.column.cell.value,
+            table=self.bound_row.table,
+            declared_column=self.column.declared_column,
+            row=self.bound_row.row,
+            bound_row=self.bound_row,
+            column=self.column,
+        )
+        self.url = evaluate_strict(
+            self.column.cell.url,
+            table=self.table,
+            column=self.column,
+            row=self.row,
+            value=self.value,
+        )
+        self.attrs = self.column.cell.attrs
+        self.attrs = evaluate_attrs(
+            self,
+            table=self.table,
+            column=self.column,
+            row=self.row,
+            value=self.value,
+        )
+        self.url_title = evaluate_strict(
+            self.column.cell.url_title,
             table=self.table,
             column=self.column,
             row=self.row,
             value=self.value,
         )
 
-    @property
-    def url(self):
-        url = self.column.cell.url
-        if callable(url):
-            url = url(table=self.table, column=self.column, row=self.row, value=self.value)
-        return url
-
-    @property
-    def url_title(self):
-        url_title = self.column.cell.url_title
-        if callable(url_title):
-            url_title = url_title(table=self.table, column=self.column, row=self.row, value=self.value)
-        return url_title
+    def dunder_path(self):
+        # TODO: is this really right?
+        return self.column.dunder_path() + '__cell'
 
     def __html__(self):
         cell__template = self.column.cell.template
@@ -796,6 +809,7 @@ class BoundCell(object):
         url = self.url
         if url:
             url_title = self.url_title
+            # TODO: we should be able to set attrs here and style
             cell_contents = format_html('<a{}{}>{}</a>',
                                         format_html(' href="{}"', url),
                                         format_html(' title="{}"', url_title) if url_title else '',
