@@ -29,7 +29,7 @@ All the components are written with the same philosophy of:
 * Single point customization with *no* boilerplate
 * Escape hatches included
 
-See `philosophy <https://docs.iommi.rocks/en/latest/philosophy.html>` for explanations of all these.
+See `philosophy <https://docs.iommi.rocks/en/latest/philosophy.html>`_ for explanations of all these.
 
 Example:
 
