@@ -19,8 +19,7 @@ Contents:
    queries
    forms
    registrations
-   tables_faq
-   forms_faq
+   howto
    api
    history
    authors

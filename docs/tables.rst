@@ -15,7 +15,7 @@ iommi tables makes it easy to create full featured HTML tables easily:
 
 All these examples and a bigger example using many more features can be found in the examples django project.
 
-Read the full documentation and the :doc:`tables_faq` for more.
+Read the full documentation and the :doc:`howto` for more.
 
 .. contents::
 
