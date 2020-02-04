@@ -34,7 +34,7 @@ settings.configure()
 
 import iommi
 
-from tri_declarative import generate_rst_docs
+from iommi.docs import generate_rst_docs
 
 generate_rst_docs(
     '.',
@@ -76,7 +76,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iommi'
-copyright = u'2020, Anders Hovmöller'
+copyright = u'2020, Anders Hovmöller & Johan Lübcke'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

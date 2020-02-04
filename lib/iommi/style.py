@@ -196,6 +196,7 @@ bootstrap_base = Style(
 bootstrap = Style(
     bootstrap_base,
     font_awesome_4,
+    # TODO: special template for Column.delete in order to get the text-danger css class on the a tag
 )
 
 bootstrap_horizontal = Style(

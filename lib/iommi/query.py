@@ -473,7 +473,9 @@ class Query(Part):
             make = Variable.choice(choices=['Toyota', 'Volvo', 'Ford])
             model = Variable()
 
-        query_set = Car.objects.filter(CarQuery(request=request).to_q())
+        query_set = Car.objects.filter(
+            CarQuery().bind(request=request).to_q()
+        )
     """
 
     form: Namespace = Refinable()

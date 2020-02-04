@@ -16,7 +16,6 @@ from django.http.response import (
 from django.template import Template
 from iommi._web_compat import (
     get_template_from_string,
-    render_template,
     QueryDict,
 )
 from iommi.render import Attrs
@@ -25,14 +24,14 @@ from iommi.style import (
     get_style_obj_for_object,
 )
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
-    RefinableObject,
     dispatch,
+    EMPTY,
     evaluate,
     evaluate_strict,
     get_callable_description,
+    Namespace,
+    Refinable,
+    RefinableObject,
     setdefaults_path,
     sort_after,
 )

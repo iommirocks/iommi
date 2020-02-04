@@ -374,9 +374,9 @@ class Field(Part):
     Class that describes a field, i.e. what input controls to render, the label, etc.
 
     The life cycle of the data is:
-        1. raw_data/raw_data_list: will be set if the corresponding key is present in the HTTP request
-        2. parsed_data: set if parsing is successful, which only happens if the previous step succeeded
-        3. value: set if validation is successful, which only happens if the previous step succeeded
+        1. `raw_data`/`raw_data_list`: will be set if the corresponding key is present in the HTTP request
+        2. `parsed_data`: set if parsing is successful, which only happens if the previous step succeeded
+        3. `value`: set if validation is successful, which only happens if the previous step succeeded
 
     """
 
@@ -441,7 +441,7 @@ class Field(Part):
         """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
 
-        All these parameters can be callables, and if they are, will be evaluated with the keyword arguments form and field. The only exceptions are is_valid (which gets form, field and parsed_data), render_value (which takes form, field and value) and parse (which gets form, field, string_value). Example of using a lambda to specify a value:
+        All these parameters can be callables, and if they are, will be evaluated with the keyword arguments form and field. The only exceptions are `is_valid` (which gets `form`, `field` and `parsed_data`), `render_value` (which takes `form`, `field` and `value`) and `parse` (which gets `form`, `field`, `string_value`). Example of using a lambda to specify a value:
 
         .. code:: python
 
@@ -449,12 +449,12 @@ class Field(Part):
 
         :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally `request.GET` or `request.POST`)
         :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
-        :param parse: parse function. Default just returns the string input unchanged: lambda form, field, string_value: string_value
+        :param parse: parse function. Default just returns the string input unchanged: `lambda form, field, string_value: string_value`
         :param initial: initial value of the field
-        :param attr: the attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the apply() function. Defaults to same as name
-        :param attrs: a dict containing any custom html attributes to be sent to the input__template.
+        :param attr: the attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Defaults to same as name
+        :param attrs: a dict containing any custom html attributes to be sent to the `input__template`.
         :param display_name: the text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
-        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see input__template, label__template and error__template below.
+        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level, see `input__template`, `label__template` and `error__template` below.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: `None`
         :param input__template: django template filename for the template for just the input control.
         :param label__template: django template filename for the template for just the label tab.
@@ -462,7 +462,7 @@ class Field(Part):
         :param required: if the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
-        :param editable: default: `True`
+        :param editable: Default: `True`
         :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
         :param render_value: render the parsed and validated value into a string. Default just converts to unicode: `lambda form, field, value: unicode(value)`
         :param is_list: interpret request data as a list (can NOT be a callable). Default: `False``
@@ -946,7 +946,13 @@ class Form(Part):
 
     .. code:: python
 
-        form = MyForm(request=request, fields=[Field(name='a'), Field.email(name='b')])
+        form = MyForm(
+            request=request,
+            fields=dict(
+                a=Field(),
+                b=Field.email(),
+            ]
+        )
 
     See tri.declarative docs for more on this dual style of declaration.
 """

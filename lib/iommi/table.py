@@ -265,13 +265,11 @@ class Column(Part):
         cell__url=None,
         cell__url_title=None,
         cell__contents__attrs=EMPTY,
-        header__attrs__class=dict(
-            sorted_column=lambda column, **_: column.is_sorting,
-            descending=lambda column, **_: column.sort_direction == DESCENDING,
-            ascending=lambda column, **_: column.sort_direction == ASCENDING,
-            first_column=lambda header, **_: header.index_in_group == 0,
-            subheader=True,
-        ),
+        header__attrs__class__sorted_column=lambda column, **_: column.is_sorting,
+        header__attrs__class__descending=lambda column, **_: column.sort_direction == DESCENDING,
+        header__attrs__class__ascending=lambda column, **_: column.sort_direction == ASCENDING,
+        header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
+        header__attrs__class__subheader=True,
         header__template='iommi/table/header.html',
         render_column=True,
         default_child=False,
@@ -281,13 +279,13 @@ class Column(Part):
         :param name: the name of the column
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
         :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
-        :param url: URL of the header. This should only be used if "sorting" is off.
+        :param url: URL of the header. This should only be used if sorting is off.
         :param include: set this to `False` to hide the column
         :param sortable: set this to `False` to disable sorting on this column
         :param sort_key: string denoting what value to use as sort key when this column is selected for sorting. (Or callable when rendering a table from list.)
         :param sort_default_desc: Set to `True` to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
-        :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this auto_rowspan to True and make those two cells output the same text and we'll handle the rest.
+        :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this `auto_rowspan` to `True` and make those two cells output the same text and we'll handle the rest.
         :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `column`, `bound_row`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
         :param cell__value: string or callable that receives kw arguments: `table`, `column` and `row`. This is used to extract which data to display from the object.
         :param cell__format: string or callable that receives kw arguments: `table`, `column`, `row` and `value`. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
