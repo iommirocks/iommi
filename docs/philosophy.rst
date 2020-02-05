@@ -124,7 +124,7 @@ we supply. In this case you have `form`, and `field` accessible. If you don't
 know which arguments you can use, you can write whatever and you will get an
 error message telling you what arguments are available.
 
-The reason we dont' allow you to match a function that takes just `**` is
+The reason we don't allow you to match a function that takes just `**` is
 because we've found that this becomes very error prone and confusing.
 
 Late binding
@@ -132,13 +132,13 @@ Late binding
 
 Late binding allows us to sometimes avoid doing work, but more importantly
 it enables us to build more flexible customizations. A concrete example can
-be to show a column in a table for staff users only even though the table is
+be to show a column in a table for only staff users even though the table is
 defined in the module scope, long before there even is a request object.
 
 Late binding is accomplished by two mechanisms:
 
 - not creating object structures until the :ref:`bind` phase
-- and ` Callables for advanced usage, values for the simple cases`_
+- and `Callables for advanced usage, values for the simple cases`_
 
 
 Declarative/programmatic hybrid API
@@ -209,7 +209,7 @@ arguments to further refine. Again without writing a class.
 Single point customization with no boilerplate
 ----------------------------------------------
 
-GUIs consists of have layers of abstraction like a form containing fields,
+GUIs consists of layers of abstraction like a form containing fields,
 fields containing input tags, and a button. But to customize the input tag of
 a form field row you must subclass several classes even for very trivial
 things. Often trivial things also requires copy pasting a template and making
@@ -217,9 +217,9 @@ a minor change. This leads to lots of code that basically does nothing and it
 *hides* the unique and relevant code in the noise of the other cruft around
 it that is just copy paste or boilerplate.
 
-In iommi we strive to avoid this by enabling one-off customizations with no
-overhead. To set a CSS style on an input field on a form inside an
-automatically generated form we can write:
+In iommi we strive to avoid this by enabling one-off customizations with
+*no overhead*. To set a CSS style on a specific input field inside a form
+that was automatically generated we can write:
 
 .. code:: python
 
@@ -233,9 +233,9 @@ Escape hatches included
 -----------------------
 
 It's frustrating when a library can't do what you want. But if the library
-can't be extended to do what you want it's even worse. We aim to include escape
+can't be *extended* to do what you want it's even worse. We aim to include escape
 hatches for when you reach the limits of iommi. You should be able to add your
-own logic and data without having to subclass ever or patch the code.
+own logic and data without having to subclass or patch the code.
 
 Very often it's useful to add some little bit of data on the side that you need
 later to customize something. We think it's important to support this use case

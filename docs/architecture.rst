@@ -38,7 +38,6 @@ Bind
 2. Set the `parent` and set `_is_bound` to `True`
 3. Style application
 4. Call the parts `on_bind` method
-5. If the part has only one child we automatically set it to be the default child
 
 The parts are responsible for calling `bind(parent=self)` on all their children in `on_bind`.
 
@@ -108,7 +107,7 @@ still keeping the code simple. Here's a contrived example:
     # z: 5
     # y: 2
 
-This is really useful for the Table class as it means we can expose the full
+This is really useful for the `Table` class as it means we can expose the full
 feature set of the underling `Query` and `Form` classes by just
 dispatching keyword arguments downstream. It also enables us to bundle
 commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.

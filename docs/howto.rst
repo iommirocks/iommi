@@ -96,8 +96,8 @@ Normally this will be handled automatically by looking at the model definition, 
 
     form = Form.from_model(
         model=Foo,
-        fields__foo__initial=7,
-        fields__bar__initial=lambda field, form, **_: 11,
+        fields__foo__required=True,
+        fields__bar__required=lambda field, form, **_: True,
     )
 
 
@@ -113,10 +113,12 @@ You can change the order in your model definitions as this is what iommi uses. I
 
     form = Form.from_model(
         model=Foo,
-        fields__foo__after=0,
+        fields__baz__after=LAST,
         fields__bar__after='foo',
-        fields__bar__after=LAST,
+        fields__foo__after=0,
     )
+
+This will make the field order foo, bar, baz.
 
 If there are multiple fields with the same index or name the order of the fields will be used to disambiguate.
 
@@ -149,7 +151,10 @@ or more succinctly:
     )
 
 
-The thing to remember is that the basic namespace is dict with key value pairs that gets projected out into the HTML, but there are two special cases for `style` and `class`. The example above will result in the following attributes on the field tag:
+The thing to remember is that the basic namespace is a dict with key value
+pairs that gets projected out into the HTML, but there are two special cases
+for `style` and `class`. The example above will result in the following
+attributes on the field tag:
 
 .. code:: html
 
@@ -215,7 +220,7 @@ To customize the cell, see `How do I customize the rendering of a cell?`_
 How do you turn off pagination?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Specify :code:`paginate_by=None`:
+Specify `page_size=None`:
 
 .. code:: python
 
