@@ -1,6 +1,7 @@
 import copy
 import json
 from collections import defaultdict
+from pprint import pprint
 from typing import (
     Any,
     Dict,
@@ -229,7 +230,10 @@ class Part(RefinableObject):
     def __repr__(self):
         n = f' {self.name}' if self.name is not None else ''
         b = ' (bound)' if self._is_bound else ''
-        p = f" path:'{self.path()}'" if self.parent is not None else ""
+        try:
+            p = f" path:'{self.path()}'" if self.parent is not None else ""
+        except AssertionError:
+            p = ' path:<no path>'
         c = ''
         if self._is_bound:
             children = self.children()
@@ -390,7 +394,8 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                     result[candidate] = '/'.join(long_path_segments)
                     break
             else:
-                assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken."
+                so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
+                assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
 
         children = getattr(node, 'declared_members', node)
         for name, child in children.items():
@@ -406,7 +411,7 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 )
 
     _traverse(root, [], [])
-
+    pprint(result)
     return result
 
 

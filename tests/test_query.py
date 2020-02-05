@@ -148,10 +148,8 @@ def test_request_to_q_simple():
     class Query2(MyTestQuery):
         bazaar = Variable.boolean(attr='quux__bar__bazaar', form__include=True)
 
-
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
-
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'false'}))
     assert repr(query2.to_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 0}))
@@ -168,7 +166,6 @@ def test_boolean_parse():
 def test_integer_request_to_q_simple():
     class Query2(Query):
         bazaar = Variable.integer(attr='quux__bar__bazaar', form=Struct(include=True))
-
 
     query2 = Query2().bind(request=req('get', bazaar='11'))
     assert repr(query2.to_q()) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
@@ -220,6 +217,7 @@ def test_invalid_form_data():
     assert repr(query2.to_q()) == repr(Q())
 
 
+@pytest.mark.skip("This shouldn't work. If you need a query.form thing, put it there")
 def test_none_attr():
 
     query2 = Query(

@@ -531,6 +531,7 @@ class Query(Part):
                     Namespace(),
                     variable.form,
                     name=variable.name,
+                    attr=variable.name if variable.attr is MISSING else variable.attr,
                     call_target__cls=field_class,
                 )()
 
@@ -540,6 +541,9 @@ class Query(Part):
             actions__submit__attrs__value='Filter',
         )
         self.declared_members.form = self.form
+
+        # Variables need to be at the end to not steal the short names
+        self.declared_members.variables = self.declared_members.pop('variables')
 
         setup_endpoints(self, endpoints)
 
