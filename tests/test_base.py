@@ -325,7 +325,7 @@ def test_perform_post_dispatch_error_message():
     assert str(e.value) == f'''Target Struct(default_child=False, post_handler=None) has no registered post_handler.
     Path: "/foo"
     Parents:
-        MyPart'''
+        <tests.test_base.MyPart root (bound) children:['foo']>'''
 
 
 def test_dunder_path_is_different_from_path_and_fully_qualified_skipping_root():

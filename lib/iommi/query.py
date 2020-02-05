@@ -204,9 +204,6 @@ class Variable(Part):
 
         super(Variable, self).__init__(**kwargs)
 
-    def __repr__(self):
-        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
-
     def on_bind(self) -> None:
         for k, v in getattr(self.parent.parent, '_variables_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)

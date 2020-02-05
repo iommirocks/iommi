@@ -93,7 +93,7 @@ class Fragment(Part):
             ])
 
     def __repr__(self):
-        return f'<Fragment: tag:{self.tag}, attrs:{self.attrs.items()}>'
+        return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
@@ -153,9 +153,6 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts', default_child=True)
-
-    def __repr__(self):
-        return f'<Page with parts: {list(self.parts.keys())}>'
 
     def children(self):
         assert self._is_bound

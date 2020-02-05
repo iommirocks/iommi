@@ -55,9 +55,6 @@ class Action(Part):
         else:
             return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).__html__()
 
-    def __repr__(self):
-        return f'<Action: {self.name}>'
-
     @classmethod
     @class_shortcut(
         tag='button',

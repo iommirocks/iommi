@@ -302,9 +302,6 @@ class Column(Part):
         self.is_sorting: bool = None
         self.sort_direction: str = None
 
-    def __repr__(self):
-        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
-
     @property
     def table(self):
         return self.parent

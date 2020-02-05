@@ -105,8 +105,8 @@ class MyTestForm(Form):
 
 
 def test_field_repr():
-    assert '<iommi.form.Field foo>' == repr(Field(name='foo'))
-    assert '<iommi.form.Field foo>' == repr(Form(fields__foo=Field()).bind(request=None).fields.foo)
+    assert repr(Field(name='foo')) == "<iommi.form.Field foo>"
+    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' children:['config', 'validate']>"
 
 
 def test_required_choice():
@@ -1503,7 +1503,7 @@ def test_render():
     actual_html = remove_csrf(MyForm().bind(request=req('get')).__html__())
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
-    assert prettified_expected == prettified_actual, "{}\n !=\n {}".format(prettified_expected, prettified_actual)
+    assert prettified_actual == prettified_expected
 
 
 def test_bool_parse():
@@ -1562,7 +1562,7 @@ def test_action_submit_render():
 
 
 def test_action_repr():
-    assert repr(Action(name='name', template='test_link_render.html')) == '<Action: name>'
+    assert repr(Action(name='name', template='test_link_render.html')) == '<iommi.action.Action name>'
 
 
 def test_action_shortcut_icon():

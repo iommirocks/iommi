@@ -615,9 +615,6 @@ class Field(Part):
             return self.raw_data
         return self.render_value(form=self.form, field=self, value=self.value)
 
-    def __repr__(self):
-        return '<{}.{} {}>'.format(self.__class__.__module__, self.__class__.__name__, self.name)
-
     def choice_to_options_selected(self):
         if self.value is None:
             return
@@ -972,9 +969,6 @@ class Form(Part):
     class Meta:
         member_class = Field
         action_class = Action
-
-    def __repr__(self):
-        return f'<Form: {self.name} at path {self.path() if self.parent is not None else "<unbound>"}>'
 
     def children(self):
         assert self._is_bound

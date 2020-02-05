@@ -151,7 +151,7 @@ def perform_post_dispatch(*, root, path, value):
     target, parents = find_target(path=path, root=root)
 
     if target.post_handler is None:
-        parents_str = '        \n'.join([str(p) for p in parents])
+        parents_str = '        \n'.join([repr(p) for p in parents])
         raise InvalidEndpointPathException(f'Target {target} has no registered post_handler.\n    Path: "{path}"\n    Parents:\n        {parents_str}')
 
     return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
@@ -224,6 +224,18 @@ class Part(RefinableObject):
     def __str__(self):
         assert self._is_bound
         return self.__html__()
+
+    def __repr__(self):
+        n = f' {self.name}' if self.name is not None else ''
+        b = ' (bound)' if self._is_bound else ''
+        p = f" path:'{self.path()}'" if self.parent is not None else ""
+        c = ''
+        if self._is_bound:
+            children = self.children()
+            if children:
+                c = f" children:{list(children.keys())!r}"
+
+        return f'<{self.__class__.__module__}.{self.__class__.__name__}{n}{b}{p}{c}>'
 
     @dispatch
     def render_to_response(self, **kwargs):

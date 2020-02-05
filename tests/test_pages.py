@@ -64,7 +64,7 @@ def test_fragment__render__simple_cases():
 
 
 def test_fragment_repr():
-    assert repr(Fragment(tag='foo', attrs=Attrs({'foo-bar': 'baz'}, parent=None))) == "<Fragment: tag:foo, attrs:dict_items([('foo-bar', 'baz')])>"
+    assert repr(Fragment(tag='foo', attrs=Attrs({'foo-bar': 'baz'}, parent=None))) == "<Fragment tag:foo attrs:{'foo-bar': 'baz'}>"
 
 
 def test_promote_str_to_fragment_for_page():
