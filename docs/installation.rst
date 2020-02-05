@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ pip install tri.table
+    $ pip install iommi
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv tri.table
-    $ pip install tri.table
+    $ mkvirtualenv iommi
+    $ pip install iommi

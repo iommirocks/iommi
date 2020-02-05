@@ -1,5 +1,6 @@
 import copy
 import json
+from abc import abstractmethod
 from collections import defaultdict
 from typing import (
     Any,
@@ -15,8 +16,8 @@ from django.http.response import (
 )
 from django.template import Template
 from iommi._web_compat import (
-    get_template_from_string,
     QueryDict,
+    get_template_from_string,
 )
 from iommi.render import Attrs
 from iommi.style import (
@@ -24,14 +25,14 @@ from iommi.style import (
     get_style_obj_for_object,
 )
 from tri_declarative import (
-    dispatch,
     EMPTY,
-    evaluate,
-    evaluate_strict,
-    get_callable_description,
     Namespace,
     Refinable,
     RefinableObject,
+    dispatch,
+    evaluate,
+    evaluate_strict,
+    get_callable_description,
     setdefaults_path,
     sort_after,
 )
@@ -218,6 +219,7 @@ class Part(RefinableObject):
         context=EMPTY,
         render=EMPTY,
     )
+    @abstractmethod
     def __html__(self, *, context=None, render=None):
         assert False, 'Not implemented'  # pragma: no cover
 
