@@ -115,31 +115,31 @@ def find_target(*, path, root):
     long_path = root._long_path_by_path.get(p)
     if long_path is None:
         long_path = p
-        if not long_path in root._path_by_long_path.keys():
+        if long_path not in root._path_by_long_path.keys():
             short_paths = ', '.join(map(repr, root._long_path_by_path.keys()))
             long_paths = ', '.join(map(repr, root._path_by_long_path.keys()))
-            assert False, (
+            raise InvalidEndpointPathException(
                 f"Given path {path} not found.\n"
                 f"  Short alternatives: {short_paths}\n"
                 f"  Long alternatives: {long_paths}"
             )
 
     node = root
-    parents = []
     for part in long_path.split('/'):
-        parents.append(node)
+        if part == '':
+            continue
         children = node.children()
         node = children.get(part)
         assert node is not None, f'Failed to traverse long path {long_path}'
-    parents.append(node)
 
-    return node, parents
+    return node
 
 
 def perform_ajax_dispatch(*, root, path, value):
     assert root._is_bound
 
-    target, parents = find_target(path=path, root=root)
+    target = find_target(path=path, root=root)
+
     if target.endpoint_handler is None:
         raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
 
@@ -150,11 +150,7 @@ def perform_post_dispatch(*, root, path, value):
     assert root._is_bound
     assert path[0] in ('/', '-')
     path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
-    target, parents = find_target(path=path, root=root)
-
-    if target.post_handler is None:
-        parents_str = '        \n'.join([repr(p) for p in parents])
-        raise InvalidEndpointPathException(f'Target {target} has no registered post_handler.\n    Path: "{path}"\n    Parents:\n        {parents_str}')
+    target = find_target(path=path, root=root)
 
     return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
 
@@ -388,14 +384,25 @@ def build_long_path_by_path(root) -> Dict[str, str]:
 
     def _traverse(node, long_path_segments, short_path_candidate_segments):
         if include_in_short_path(node):
-            for i in range(len(short_path_candidate_segments), -1, -1):
-                candidate = '/'.join(short_path_candidate_segments[i:])
-                if candidate not in result:
-                    result[candidate] = '/'.join(long_path_segments)
-                    break
+            def find_unique_suffix(parts):
+                for i in range(len(parts), -1, -1):
+                    candidate = '/'.join(parts[i:])
+                    if candidate not in result:
+                        return candidate
+
+            long_path = '/'.join(long_path_segments)
+            short_path = find_unique_suffix(short_path_candidate_segments)
+            if short_path is not None:
+                result[short_path] = long_path
             else:
-                so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
-                assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
+                less_short_path = find_unique_suffix(long_path_segments)
+                if less_short_path is not None:
+                    result[less_short_path] = long_path
+                else:
+                    print(long_path_segments)
+                    print(short_path_candidate_segments)
+                    so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
+                    assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
 
         children = getattr(node, 'declared_members', node)
         for name, child in children.items():
@@ -501,7 +508,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 class Members(Part):
     def __init__(self, *, declared_items, **kwargs):
         super(Members, self).__init__(**kwargs)
-        self.members: Dict[str, Any] = {}
+        self.members: Dict[str, Any] = Struct()
         self.declared_items = declared_items
 
     def children(self):
@@ -513,7 +520,7 @@ class Members(Part):
         for item in bound_items:
             item._evaluate_include()
 
-        self.members = {item.name: item for item in bound_items if should_include(item)}
+        self.members = Struct({item.name: item for item in bound_items if should_include(item)})
 
     def get(self, key, default=None):
         return self.members.get(key, default)

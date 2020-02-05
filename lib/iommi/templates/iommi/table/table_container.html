@@ -29,7 +29,9 @@
     }
 </script>
 
+{% if bulk_form %}
 <form{{ bulk_form.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+{% endif %}
 
     {% include 'iommi/table/table.html' %}
 
@@ -38,10 +40,15 @@
     <div class="error">{{ error }}</div>
     {% endfor %}
 
+{% if bulk_form %}
     {{ bulk_form.render_fields }}
 
     {{ bulk_form.render_actions }}
+{% endif %}
 
     {{ table.render_actions }}
+
+{% if bulk_form %}
 </form>
+{% endif %}
 

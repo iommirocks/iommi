@@ -1147,26 +1147,27 @@ class Table(Part):
             # Bulk
             def generate_bulk_fields():
                 for column in self.declared_columns.values():
-                    bulk_namespace = setdefaults_path(
-                        Namespace(),
-                        column.bulk,
-                        call_target__cls=self.get_meta().form_class.get_meta().member_class,
-                        model=self.model,
-                        name=column.name,
-                        attr=column.name if column.attr is MISSING else column.attr,
-                        required=False,
-                        empty_choice_tuple=(None, '', '---', True),
-                    )
-                    if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
-                        bulk_namespace['field_name'] = bulk_namespace.attr
-                    yield bulk_namespace()
+                    if column.bulk.include:
+                        bulk_namespace = setdefaults_path(
+                            Namespace(),
+                            column.bulk,
+                            call_target__cls=self.get_meta().form_class.get_meta().member_class,
+                            model=self.model,
+                            name=column.name,
+                            attr=column.name if column.attr is MISSING else column.attr,
+                            required=False,
+                            empty_choice_tuple=(None, '', '---', True),
+                        )
+                        if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
+                            bulk_namespace['field_name'] = bulk_namespace.attr
+                        yield bulk_namespace()
 
             declared_bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
             if declared_bulk_fields:
                 declared_bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False)
 
                 self._bulk_form = self.get_meta().form_class(
-                    fields=declared_bulk_fields,
+                    _fields_dict=declared_bulk_fields,
                     name='bulk',
                     post_handler=bulk__post_handler,
                     actions__submit__include=False,
@@ -1415,8 +1416,9 @@ class Table(Part):
                     )
                     yield bulk_namespace
 
-            self._bulk_form._fields_unapplied_data = Struct({x.name: x for x in generate_bulk_fields_unapplied_data()})
-            self._bulk_form.bind(parent=self)
+            if self._bulk_form is not None:
+                self._bulk_form._fields_unapplied_data = Struct({x.name: x for x in generate_bulk_fields_unapplied_data()})
+                self._bulk_form.bind(parent=self)
 
         if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]

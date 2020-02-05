@@ -113,7 +113,7 @@ def test_create_and_edit_object():
         'f_float': '11.2',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        '-': '',
+        '-edit': '',
         # Not sending a parameter in a POST is the same thing as false
     })
     p = Form.as_edit_page(
@@ -155,7 +155,7 @@ def test_unique_constraint_violation():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        '-': '',
+        '-create': '',
     })
     Form.as_create_page(model=UniqueConstraintTest).bind(request=request).render_to_response()
     assert UniqueConstraintTest.objects.all().count() == 1
@@ -182,7 +182,7 @@ def test_namespace_forms():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        '-': '',
+        '-create': '',
     })
     response = Form.as_create_page(
         model=NamespaceFormsTest,
@@ -254,7 +254,7 @@ def test_create_or_edit_object_dispatch():
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
-    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'fields' + DISPATCH_PATH_SEPARATOR + 'foo': ''})
+    request = req('get', **{ DISPATCH_PATH_SEPARATOR + 'foo': ''})
 
     response = Form.as_create_page(
         model=Bar,
@@ -278,7 +278,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '1',
-        '-': '',
+        '-create': '',
     })
 
     response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
@@ -292,7 +292,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '2',  # <-- changed from 1
-        '-': '',
+        '-create': '',
     })
     response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
@@ -301,7 +301,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '1',  # <-- 1 again
-        '-': '',
+        '-edit': '',
     })
 
     response = Form.as_edit_page(instance=instance).bind(request=request).render_to_response()
@@ -339,7 +339,7 @@ def test_create_or_edit_object_full_template(name):
                     foo_help_text
                 </div>
             </div>
-            <input name="-" type="hidden" value=""/>
+            <input name="-{name}" type="hidden" value=""/>
             <div class="links">
                 <input accesskey="s" name="{name}" type="submit" value="Create foo"/>
             </div>
