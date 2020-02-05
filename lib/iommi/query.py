@@ -100,7 +100,7 @@ Q_OP_BY_OP = {
     ':': 'icontains',
 }
 
-FREETEXT_SEARCH_NAME = 'term'
+FREETEXT_SEARCH_NAME = 'freetext'
 
 _variable_factory_by_django_field_type = {}
 
@@ -516,28 +516,26 @@ class Query(Part):
         collect_members(self, name='variables', items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class, unapplied_config=self._variables_unapplied_data)
         self.variables = None
 
-        fields = []
+        def generate_fields_declaration():
+            field_class = self.get_meta().form_class.get_meta().member_class
+            yield field_class(
+                name=FREETEXT_SEARCH_NAME,
+                display_name='Search',
+                required=False,
+                include=False,
+            )
 
-        if any(v.freetext for v in self.declared_variables.values()):
-            fields.append(self.get_meta().form_class.get_meta().member_class(name=FREETEXT_SEARCH_NAME, display_name='Search', required=False))
-
-        for variable in self.declared_variables.values():
-            if variable.form is not None and variable.form.include:
-                # pass form__* parameters to the GUI component
+            for variable in self.declared_variables.values():
                 assert variable.name is not MISSING
-                assert variable.attr is not MISSING
-                params = setdefaults_path(
+                yield setdefaults_path(
                     Namespace(),
                     variable.form,
                     name=variable.name,
-                    attr=variable.attr,
-                    model_field=variable.model_field,
-                    call_target__cls=self.get_meta().form_class.get_meta().member_class
-                )
-                fields.append(params())
+                    call_target__cls=field_class,
+                )()
 
         self.form: Form = self.form(
-            _fields_dict={x.name: x for x in fields},
+            _fields_dict={x.name: x for x in generate_fields_declaration()},
             attrs__method='get',
             actions__submit__attrs__value='Filter',
         )
@@ -554,10 +552,28 @@ class Query(Part):
     def on_bind(self) -> None:
         bind_members(self, name='variables')
 
-        self.form.bind(parent=self)
         self.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+
+        if any(v.freetext for v in self.variables.values()):
+            self.form.declared_fields[FREETEXT_SEARCH_NAME].include = True
+
+        def generate_fields_unapplied_data():
+            for variable in self.variables.values():
+                assert variable.attr
+                params = setdefaults_path(
+                    Namespace(),
+                    name=variable.name,
+                    attr=variable.attr,
+                    model_field=variable.model_field,
+                )
+                if not variable.include:
+                    params.include = False
+                yield params
+
+        self.form._fields_unapplied_data = Struct({x.name: x for x in generate_fields_unapplied_data()})
+        self.form.bind(parent=self)
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self)

@@ -1118,32 +1118,64 @@ class Table(Part):
         self.is_paginated = False
 
         if self.model:
+            # Query
             def generate_variables():
                 for column in self.declared_columns.values():
-                    # TODO: column.query.include... is this evaluated here?
-                    if column.query.include:
-                        query_namespace = setdefaults_path(
-                            Namespace(),
-                            column.query,
-                            call_target__cls=self.get_meta().query_class.get_meta().member_class,
-                            model=self.model,
-                            name=column.name,
-                            attr=column.name if column.attr is MISSING else column.attr,
-                            form__display_name=column.display_name,
-                            form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
-                        )
-                        if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get('attribute') == 'from_model':
-                            query_namespace['field_name'] = column.name if column.attr is MISSING else column.attr
-                        yield query_namespace()
+                    query_namespace = setdefaults_path(
+                        Namespace(),
+                        column.query,
+                        call_target__cls=self.get_meta().query_class.get_meta().member_class,
+                        model=self.model,
+                        name=column.name,
+                        attr=column.name if column.attr is MISSING else column.attr,
+                        form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                    )
+                    if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
+                            'attribute') == 'from_model':
+                        query_namespace['field_name'] = query_namespace.attr
+                    yield query_namespace()
 
-            variables = Struct({x.name: x for x in generate_variables()})
+            declared_variables = Struct({x.name: x for x in generate_variables()})
 
             self._query = self.get_meta().query_class(
-                _variables_dict=variables,
+                _variables_dict=declared_variables,
                 name='query',
                 **self.query_args
             )
             self.declared_members.query = self._query
+
+            # Bulk
+            def generate_bulk_fields():
+                for column in self.declared_columns.values():
+                    bulk_namespace = setdefaults_path(
+                        Namespace(),
+                        column.bulk,
+                        call_target__cls=self.get_meta().form_class.get_meta().member_class,
+                        model=self.model,
+                        name=column.name,
+                        attr=column.name if column.attr is MISSING else column.attr,
+                        required=False,
+                        empty_choice_tuple=(None, '', '---', True),
+                    )
+                    if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
+                        bulk_namespace['field_name'] = bulk_namespace.attr
+                    yield bulk_namespace()
+
+            declared_bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
+            if declared_bulk_fields:
+                declared_bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False)
+
+                self._bulk_form = self.get_meta().form_class(
+                    fields=declared_bulk_fields,
+                    name='bulk',
+                    post_handler=bulk__post_handler,
+                    actions__submit__include=False,
+                    **self.bulk
+                )
+                assert 'bulk' not in self.declared_actions
+                self.declared_actions['bulk_submit'] = Action.submit(attrs__value='Bulk change')
+
+                self.declared_members.bulk = self._bulk_form
 
     def children(self):
         return Struct(
@@ -1346,6 +1378,19 @@ class Table(Part):
         self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
 
         if self.model:
+            def generate_variables_unapplied_data():
+                for column in self.columns.values():
+
+                    query_namespace = setdefaults_path(
+                        Namespace(),
+                        name=column.name,
+                        include=column.query.include,
+                        form__display_name=column.display_name,
+                    )
+                    yield query_namespace
+
+            self._query._variables_unapplied_data = Struct({x.name: x for x in generate_variables_unapplied_data()})
+
             self._query.bind(parent=self)
             self._query_form = self._query.form if self._query.variables else None
 
@@ -1358,40 +1403,20 @@ class Table(Part):
                 except QueryException as e:
                     self._query_error = str(e)
 
-            def generate_bulk_fields():
+            def generate_bulk_fields_unapplied_data():
                 for column in self.columns.values():
-                    if column.bulk.include:
-                        bulk_namespace = setdefaults_path(
-                            Namespace(),
-                            column.bulk,
-                            call_target__cls=self.get_meta().form_class.get_meta().member_class,
-                            model=self.model,
-                            name=column.name,
-                            attr=column.attr,
-                            display_name=column.display_name,
-                            required=False,
-                            empty_choice_tuple=(None, '', '---', True),
-                        )
-                        if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
-                            bulk_namespace['field_name'] = column.attr
-                        yield bulk_namespace()
 
-            bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
-            if bulk_fields:
-                bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False)
+                    bulk_namespace = setdefaults_path(
+                        Namespace(),
+                        column.bulk,
+                        name=column.name,
+                        include=column.bulk.include,
+                        display_name=column.display_name,
+                    )
+                    yield bulk_namespace
 
-                self._bulk_form = self.get_meta().form_class(
-                    fields=bulk_fields,
-                    name='bulk',
-                    post_handler=bulk__post_handler,
-                    actions__submit__include=False,
-                    **self.bulk
-                )
-                self._bulk_form.bind(parent=self)
-                assert 'bulk' not in self.actions
-                self.actions['bulk'] = Action.submit(name='bulk', attrs__value='Bulk change').bind(parent=self)
-            else:
-                self._bulk_form = None
+            self._bulk_form._fields_unapplied_data = Struct({x.name: x for x in generate_bulk_fields_unapplied_data()})
+            self._bulk_form.bind(parent=self)
 
         if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]

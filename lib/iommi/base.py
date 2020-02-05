@@ -13,7 +13,10 @@ from django.db.models import QuerySet
 from django.http.response import (
     HttpResponse,
 )
-from django.template import Template
+from django.template import (
+    Template,
+    Node,
+)
 from iommi._web_compat import (
     get_template_from_string,
     QueryDict,
@@ -380,7 +383,6 @@ def build_long_path_by_path(root) -> Dict[str, str]:
     result = dict()
 
     def _traverse(node, long_path_segments, short_path_candidate_segments):
-        print(repr(node))
         if include_in_short_path(node):
             for i in range(len(short_path_candidate_segments), -1, -1):
                 candidate = '/'.join(short_path_candidate_segments[i:])

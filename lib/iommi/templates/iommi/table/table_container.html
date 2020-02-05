@@ -29,13 +29,19 @@
     }
 </script>
 
-<form method="post" action="."><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+<form{{ bulk_form.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 
     {% include 'iommi/table/table.html' %}
 
-    {% if bulk_form %}
-        {{ bulk_form }}
-    {% endif %}
+    {% for error in bulk_form.errors %}
+    {# TODO: style classes.. and why isn't this just {{ form.errors? }} #}
+    <div class="error">{{ error }}</div>
+    {% endfor %}
+
+    {{ bulk_form.render_fields }}
+
+    {{ bulk_form.render_actions }}
 
     {{ table.render_actions }}
 </form>
+
