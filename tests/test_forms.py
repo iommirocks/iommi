@@ -106,7 +106,7 @@ class MyTestForm(Form):
 
 def test_field_repr():
     assert repr(Field(name='foo')) == "<iommi.form.Field foo>"
-    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' children:['config', 'validate']>"
+    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' children:['endpoints']>"
 
 
 def test_required_choice():
@@ -552,28 +552,26 @@ def test_hidden_with_name():
             name='baz',
             fields__foo=Field.hidden(),
             attrs__method='get',
-            default_child=False,
         )
 
-    page = MyPage().bind(request=req('get', **{'baz/foo': '1'}))
+    page = MyPage().bind(request=req('get', **{'foo': '1'}))
     rendered_page = page.__html__()
 
-    assert page.default_child
-    assert not page.children().baz.default_child
-    assert page.children().baz._is_bound
-    assert page.children().baz.mode == INITIALS_FROM_GET
+    assert page.parts.children().baz._is_bound
+    assert page.parts.children().baz.mode == INITIALS_FROM_GET
 
     soup = BeautifulSoup(rendered_page, 'html.parser')
-    actual = [
+    actual = {
         (x.attrs['type'], x.attrs.get('name'), x.attrs['value'])
         for x in soup.find_all('input')
         if x.attrs['type'] == 'hidden'
-    ]
-    expected = [
-        ('hidden', 'baz/foo', '1'),
+    }
+    expected = {
+        ('hidden', 'foo', '1'),
         ('hidden', '-baz', ''),
-    ]
-    assert actual == expected
+    }
+
+    assert actual == expected, rendered_page
 
 
 def test_password():
@@ -1421,16 +1419,16 @@ def test_ajax_namespacing():
     class MyForm(Form):
         foo = Field(
             endpoint_handler=lambda **_: 'default',
-            endpoint__bar=lambda **_: 'bar',
-            endpoint__baaz=lambda **_: 'baaz',
+            endpoints__bar=lambda **_: 'bar',
+            endpoints__baaz=lambda **_: 'baaz',
         )
 
     request = req('get')
     form = MyForm()
     form.bind(request=request)
     assert 'default' == perform_ajax_dispatch(root=form, path='/fields/foo', value='ar')
-    assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/bar', value='ar')
-    assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/baaz', value='ar')
+    assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/bar', value='ar')
+    assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/baaz', value='ar')
 
 
 @override_settings(DEBUG=True)
@@ -1444,17 +1442,17 @@ def test_ajax_config_and_validate():
     form.bind(request=request)
     assert dict(
         name='foo',
-    ) == perform_ajax_dispatch(root=form, path='/fields/foo/config', value=None)
+    ) == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/config', value=None)
 
     assert dict(
         valid=True,
         errors=[]
-    ) == perform_ajax_dispatch(root=form, path='/fields/foo/validate', value='new value')
+    ) == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/validate', value='new value')
 
     assert dict(
         valid=False,
         errors=['FAIL']
-    ) == perform_ajax_dispatch(root=form, path='/fields/bar/validate', value='new value')
+    ) == perform_ajax_dispatch(root=form, path='/fields/bar/endpoints/validate', value='new value')
 
 
 def test_is_empty_form_marker():
@@ -1467,7 +1465,7 @@ def test_is_empty_form_marker():
 def test_custom_endpoint():
     class MyForm(Form):
         class Meta:
-            endpoint__foo = lambda value, **_: 'foo' + value
+            endpoints__foo = lambda value, **_: 'foo' + value
 
     form = MyForm()
     form.bind(request=None)

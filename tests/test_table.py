@@ -772,7 +772,7 @@ def test_bulk_edit():
     ).bind(
         request=req('get'),
     ).__html__()
-    assert '<form method="post" action=".">' in result
+    assert '<form action="" method="post">' in result, result
     assert '<input accesskey="s" type="submit" value="Bulk change">' in result, result
 
     def post_bulk_edit(table, queryset, updates, **_):
@@ -854,9 +854,16 @@ def test_query():
 
     t = TestTable(rows=TFoo.objects.all().order_by('pk'))
     t.bind(request=req('get'))
-    assert t.query.variables.a.path() == 'a'
+    assert t.query.variables.a.path() == 'query/a'
+    assert t.query.form.fields.a.path() == 'a'
 
-    verify_table_html(query=dict(a='1'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    rows = TFoo.objects.all().order_by('pk')
+
+    verify_table_html(
+        query=dict(a='1'),
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -866,8 +873,13 @@ def test_query():
                 foo
             </td>
         </tr>
-    </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    </table>
+    """)
+    verify_table_html(
+        query=dict(b='bar'),
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -885,8 +897,13 @@ def test_query():
                 bar
             </td>
         </tr>
-    </tbody>""")
-    verify_table_html(query={t.query.advanced_query_param(): 'b="bar"'}, table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    </tbody>
+    """)
+    verify_table_html(
+        query={t.query.advanced_query_param(): 'b="bar"'},
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -904,8 +921,13 @@ def test_query():
                 bar
             </td>
         </tr>
-    </tbody>""")
-    verify_table_html(query=dict(b='fo'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    </tbody>
+    """)
+    verify_table_html(
+        query=dict(b='fo'),
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -923,7 +945,8 @@ def test_query():
                 foo
             </td>
         </tr>
-    </table>""")
+    </table>
+    """)
 
 
 def test_cell_template():
@@ -1455,7 +1478,7 @@ def test_ajax_endpoint():
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/table/query/form/fields/foo': 'hopp'})
+    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/parts/table/query/form/fields/foo': 'hopp'})
     assert json.loads(result.content) == {
         'results': [
             {'id': 2, 'text': 'Foo(42, Hopp)'},
@@ -1469,7 +1492,7 @@ def test_ajax_endpoint():
 def test_ajax_endpoint_empty_response():
     class TestTable(Table):
         class Meta:
-            endpoint__foo = lambda **_: []
+            endpoints__foo = lambda **_: []
 
         bar = Column()
 
@@ -1480,7 +1503,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoint__data = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
+            endpoints__data = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
 
         foo = Column()
         bar = Column()
@@ -1499,7 +1522,7 @@ def test_ajax_data_endpoint():
 def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
-            endpoint__bar = lambda **_: 17
+            endpoints__bar = lambda **_: 17
 
         baz = Column()
 
@@ -1538,7 +1561,7 @@ def test_table_iteration():
 def test_ajax_custom_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoint__foo = lambda value, **_: dict(baz=value)
+            endpoints__foo = lambda value, **_: dict(baz=value)
 
         spam = Column()
 
@@ -1702,7 +1725,7 @@ def test_yield_rows():
 
 
 @pytest.mark.django_db
-def test_non_model_based_column_should_not_explore_in_query_object_creation():
+def test_error_on_invalid_variable_setup():
     class MyTable(Table):
         c = Column(attr=None, query__include=True, query__form__include=True)
 
@@ -1710,7 +1733,8 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
             model = TFoo
 
     table = MyTable()
-    table.bind(request=req('get'))
+    with pytest.raises(AssertionError):
+        table.bind(request=req('get'))
 
 
 @pytest.mark.django_db
@@ -1813,6 +1837,7 @@ def test_override_doesnt_stick():
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
 def test_new_style_ajax_dispatch():
     TFoo.objects.create(a=1, b='A')
     TFoo.objects.create(a=2, b='B')
@@ -1824,7 +1849,7 @@ def test_new_style_ajax_dispatch():
 
     from iommi import middleware
     m = middleware(get_response)
-    response = m(request=req('get', **{'/table/query/form/fields/foo': ''}))
+    response = m(request=req('get', **{'/parts/table/query/form/fields/foo': ''}))
 
     assert json.loads(response.content) == {
         'results': [
@@ -1841,9 +1866,9 @@ def test_new_style_ajax_dispatch():
 def test_endpoint_path_of_nested_part():
     page = Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
-    assert page.children().table.default_child
-    target, parents = find_target(path='/table/query/form/fields/foo', root=page)
+    target = find_target(path='/parts/table/query/form/fields/foo', root=page)
     assert target.endpoint_path() == '/foo'
+    assert target.dunder_path() == 'parts__table__query__form__fields__foo'
 
 
 def test_dunder_name_for_column():

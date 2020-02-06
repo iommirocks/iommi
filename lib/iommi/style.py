@@ -4,6 +4,7 @@ from typing import (
     Type,
 )
 
+from iommi.base import Traversable
 from tri_declarative import (
     Namespace,
     RefinableObject,
@@ -21,7 +22,7 @@ def class_names_for(cls):
     from iommi.base import Part  # avoid circular import
 
     for base_class in reversed(cls.mro()):
-        if base_class in (object, Part, RefinableObject):
+        if base_class in (object, Part, RefinableObject, Traversable):
             continue
         yield _style_name_for_class(base_class)
 

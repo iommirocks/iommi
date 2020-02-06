@@ -1,5 +1,7 @@
 <form{{ form.attrs }}>{% if form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
 
+    {% block before_fields %}{% endblock %}
+
     {% for error in form.errors %}
     {# TODO: style classes.. and why isn't this just {{ form.errors? }} #}
     <div class="error">{{ error }}</div>

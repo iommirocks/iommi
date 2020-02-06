@@ -105,7 +105,6 @@ class Action(Part):
             'display_name',
             'name',
             'after',
-            'default_child',
             'style',
         ]
         for key in evaluated_attributes:

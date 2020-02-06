@@ -98,19 +98,19 @@ def test_sort_with_name():
         Struct(foo='a', bar=1),
     ]
 
-    table = TestTable(rows=rows, default_child=False)
+    table = TestTable(rows=rows)
     verify_table_html(
         table=table,
-        query={'my_table/order': 'bar'},
+        query={'order': 'bar'},
         expected_html="""\
-      <table class="table" data-endpoint="/my_table/tbody">
+      <table class="table" data-endpoint="/tbody">
         <thead>
           <tr>
             <th class="first_column subheader">
-              <a href="?my_table%2Forder=foo"> Foo </a>
+              <a href="?order=foo"> Foo </a>
             </th>
             <th class="ascending first_column sorted_column subheader">
-              <a href="?my_table%2Forder=-bar"> Bar </a>
+              <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
         </thead>

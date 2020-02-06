@@ -257,7 +257,6 @@ def table_kitchen_sink(request):
         b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
 
         b = Column.from_model(
-            render_column=False,
             model=TBar,
             field_name='b',
             bulk__include=True,

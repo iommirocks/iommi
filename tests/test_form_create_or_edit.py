@@ -27,7 +27,6 @@ def test_create_and_edit_object():
         model=CreateOrEditObjectTest,
     )
     p.bind(request=request)
-    assert p.parts.create.default_child
     response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
     form = p.parts.create
     assert response['context']['csrf_token']
@@ -114,7 +113,7 @@ def test_create_and_edit_object():
         'f_float': '11.2',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        '-': '',
+        '-edit': '',
         # Not sending a parameter in a POST is the same thing as false
     })
     p = Form.as_edit_page(
@@ -156,7 +155,7 @@ def test_unique_constraint_violation():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        '-': '',
+        '-create': '',
     })
     Form.as_create_page(model=UniqueConstraintTest).bind(request=request).render_to_response()
     assert UniqueConstraintTest.objects.all().count() == 1
@@ -173,91 +172,13 @@ def test_unique_constraint_violation():
 
 
 @pytest.mark.django_db
-def test_namespace_forms():
-    from tests.models import NamespaceFormsTest
-
-    assert NamespaceFormsTest.objects.all().count() == 0
-
-    # Create object
-    request = req('post', **{
-        'f_int': '3',
-        'f_float': '5.1',
-        'f_bool': 'True',
-        '-': '',
-    })
-    response = Form.as_create_page(
-        model=NamespaceFormsTest,
-        on_save=lambda instance, **_: instance,  # just to check that we get called with the instance as argument
-    ).bind(request=request).render_to_response()
-    instance = NamespaceFormsTest.objects.get()
-    assert instance is not None
-    assert response.status_code == 302
-
-    form_name = 'my_form'
-    # Edit should NOT work when the form name does not match the POST
-    request = req('post', **{
-        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_int': '7',
-        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_float': '11.2',
-        '-some_other_form': '',
-    })
-    p = Form.as_edit_page(
-        instance=instance,
-        name=form_name,
-        default_child=False,
-    ).bind(request=request)
-    p.render_to_response()
-    form = p.parts[form_name]
-    assert form.get_errors() == {}
-    assert form.is_valid() is True
-    assert not form.is_target()
-    instance.refresh_from_db()
-    assert instance is not None
-    assert instance.f_int == 3
-    assert instance.f_float == 5.1
-    assert instance.f_bool
-
-    # Edit should work when the form name is in the POST
-    request = req('post', **{
-        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_int': '7',
-        f'{form_name}{DISPATCH_PATH_SEPARATOR}f_float': '11.2',
-        f'-{form_name}': '',
-    })
-    p = Form.as_edit_page(
-        instance=instance,
-        redirect=lambda form, **_: {'context_instance': {'form': form}},
-        name=form_name,
-        default_child=False,
-    ).bind(request=request)
-    p.render_to_response()
-    form = p.parts[form_name]
-    assert form.path() == form_name
-    instance.refresh_from_db()
-    assert form.get_errors() == {}
-    assert form.is_valid() is True
-    assert form.is_target()
-    assert instance is not None
-    assert instance.f_int == 7
-    assert instance.f_float == 11.2
-    assert not instance.f_bool
-
-    p = Form.as_delete_page(
-        instance=instance,
-    ).bind(request=req('post', **{'-': ''}))
-    response = p.render_to_response()
-    assert response.status_code == 302
-
-    with pytest.raises(NamespaceFormsTest.DoesNotExist):
-        instance.refresh_from_db()
-
-
-@pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results with an unordered")
 def test_create_or_edit_object_dispatch():
     from tests.models import Bar, Foo
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
-    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'fields' + DISPATCH_PATH_SEPARATOR + 'foo': ''})
+    request = req('get', **{ DISPATCH_PATH_SEPARATOR + 'foo': ''})
 
     response = Form.as_create_page(
         model=Bar,
@@ -281,7 +202,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '1',
-        '-': '',
+        '-create': '',
     })
 
     response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
@@ -295,7 +216,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '2',  # <-- changed from 1
-        '-': '',
+        '-create': '',
     })
     response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
@@ -304,7 +225,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '1',  # <-- 1 again
-        '-': '',
+        '-edit': '',
     })
 
     response = Form.as_edit_page(instance=instance).bind(request=request).render_to_response()
@@ -342,7 +263,7 @@ def test_create_or_edit_object_full_template(name):
                     foo_help_text
                 </div>
             </div>
-            <input name="-" type="hidden" value=""/>
+            <input name="-{name}" type="hidden" value=""/>
             <div class="links">
                 <input accesskey="s" name="{name}" type="submit" value="Create foo"/>
             </div>

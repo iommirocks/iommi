@@ -1,10 +1,11 @@
 import copy
 import json
 from abc import abstractmethod
-from collections import defaultdict
+from pprint import pprint
 from typing import (
     Any,
     Dict,
+    List,
     Type,
     Union,
 )
@@ -14,16 +15,14 @@ from django.db.models import QuerySet
 from django.http.response import (
     HttpResponse,
 )
-from django.template import Template
+from django.template import (
+    Template,
+)
 from iommi._web_compat import (
     QueryDict,
     get_template_from_string,
 )
 from iommi.render import Attrs
-from iommi.style import (
-    apply_style_recursively,
-    get_style_obj_for_object,
-)
 from tri_declarative import (
     EMPTY,
     Namespace,
@@ -57,35 +56,29 @@ def evaluate_strict_container(c, **kwargs):
     )
 
 
-class GroupPathsByChildrenError(Exception):
-    pass
-
-
-def group_paths_by_children(*, children, data):
-    results = defaultdict(dict)
-
-    default_child = [k for k, v in children.items() if getattr(v, 'default_child', False)]
-    assert len(default_child) in (0, 1), f'There can only be one default_child per level: found {default_child}'
-    default_child = default_child[0] if default_child else None
-
-    for path, value in data.items():
-        first, _, rest = path.partition('/')
-        if first in children:
-            results[first][rest] = value
-        else:
-            if not default_child:
-                raise GroupPathsByChildrenError(path)
-            results[default_child][path] = value
-
-    return results
-
-
 class InvalidEndpointPathException(Exception):
     pass
 
 
+class Endpoint:
+    declared_members = {}
+
+    def __init__(self, name, func):
+        self.name = name
+        self.func = func
+
+
+def setup_endpoints(parent, endpoints):
+    members = Struct()
+    for k, v in endpoints.items():
+        members[k] = Endpoint(k, v)
+    parent.declared_members.endpoints = members
+    parent.declared_endpoints = members
+
+
 class EndPointHandlerProxy:
-    def __init__(self, func, parent):
+    def __init__(self, name, func, parent):
+        self.name = name
         self.func = func
         self.parent = parent
         assert callable(func)
@@ -96,51 +89,55 @@ class EndPointHandlerProxy:
     def evaluate_attribute_kwargs(self):
         return self.parent.evaluate_attribute_kwargs()
 
+    def children(self):
+        return {}
+
 
 def setup_endpoint_proxies(parent: 'Part') -> Dict[str, EndPointHandlerProxy]:
-    return Namespace({
-        k: EndPointHandlerProxy(v, parent=parent)
-        for k, v in parent.endpoint.items()
+    result = Struct({
+        k: EndPointHandlerProxy(k, v.func, parent=parent)
+        for k, v in parent.declared_endpoints.items()
     })
+
+    result.children = lambda: result
+
+    return result
 
 
 def find_target(*, path, root):
     assert path.startswith(DISPATCH_PATH_SEPARATOR)
     p = path[1:]
-    sentinel = object()
-    next_node = root
-    parents = [root]
 
-    # TODO: what if the path is just / ? We can't get to that object as is. If we allow this then it can't work with default_child
+    long_path = root._long_path_by_path.get(p)
+    if long_path is None:
+        long_path = p
+        if long_path not in root._path_by_long_path.keys():
+            short_paths = ', '.join(map(repr, root._long_path_by_path.keys()))
+            long_paths = ', '.join(map(repr, root._path_by_long_path.keys()))
+            raise InvalidEndpointPathException(
+                f"Given path {path} not found.\n"
+                f"  Short alternatives: {short_paths}\n"
+                f"  Long alternatives: {long_paths}"
+            )
 
-    while True:
-        data = {p: sentinel}
-        try:
-            next_node.children
-        except AttributeError:
-            raise InvalidEndpointPathException(f"Invalid path {path}.\n{next_node} (of type {type(next_node)} has no attribute children so can't be traversed.\nParents so far: {parents}.\nPath left: {p}")
-        children = next_node.children()
-        assert children is not None
-        try:
-            foo = group_paths_by_children(children=children, data=data)
-        except GroupPathsByChildrenError:
-            raise InvalidEndpointPathException(f"Invalid path {path}.\nchildren does not contain what we're looking for, these are the keys available: {list(children.keys())}.\nParents so far: {parents}.\nPath left: {p}")
+    node = root
+    for part in long_path.split('/'):
+        if part == '':
+            continue
+        children = node.children()
+        node = children.get(part)
+        assert node is not None, f'Failed to traverse long path {long_path}'
 
-        assert len(foo) == 1
-        name, rest = foo.popitem()
-        p, _ = rest.popitem()
-        next_node = children[name]
-        if not p:
-            return next_node, parents
-        parents.append(next_node)
+    return node
 
 
 def perform_ajax_dispatch(*, root, path, value):
     assert root._is_bound
 
-    target, parents = find_target(path=path, root=root)
-    if target.endpoint_handler is None:
-        raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
+    target = find_target(path=path, root=root)
+
+    if getattr(target, 'endpoint_handler', None) is None:
+        raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
 
     return target.endpoint_handler(value=value, **target.evaluate_attribute_kwargs())
 
@@ -149,11 +146,10 @@ def perform_post_dispatch(*, root, path, value):
     assert root._is_bound
     assert path[0] in ('/', '-')
     path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
-    target, parents = find_target(path=path, root=root)
+    target = find_target(path=path, root=root)
 
-    if target.post_handler is None:
-        parents_str = '        \n'.join([repr(p) for p in parents])
-        raise InvalidEndpointPathException(f'Target {target} has no registered post_handler.\n    Path: "{path}"\n    Parents:\n        {parents_str}')
+    if getattr(target, 'post_handler', None) is None:
+        raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
     return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
 
@@ -170,7 +166,6 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content')
 
-
     content = part.__html__(context=context, **render)
 
     assert 'content' not in context
@@ -181,6 +176,11 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
 
 
 def apply_style(obj):
+    # Avoid circular import
+    from iommi.style import (
+        apply_style_recursively,
+        get_style_obj_for_object,
+    )
     style = get_style_obj_for_object(style=get_style_for(obj), obj=obj)
     apply_style_recursively(style_data=style, obj=obj)
 
@@ -194,17 +194,92 @@ def get_style_for(obj):
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
 
-class Part(RefinableObject):
+class Traversable(RefinableObject):
+    parent = None
+    _is_bound = False
+    # TODO: would be nice to not have this here
+    style: str = Refinable()
+
+    def __init__(self, **kwargs):
+        self.declared_members = Struct()
+        super(Traversable, self).__init__(**kwargs)
+
+    def __repr__(self):
+        n = f' {self.name}' if self.name is not None else ''
+        b = ' (bound)' if self._is_bound else ''
+        try:
+            p = f" path:'{self.path()}'" if self.parent is not None else ""
+        except AssertionError:
+            p = ' path:<no path>'
+        c = ''
+        if self._is_bound:
+            children = self.children()
+            if children:
+                c = f" children:{list(children.keys())!r}"
+
+        return f'<{self.__class__.__module__}.{self.__class__.__name__}{n}{b}{p}{c}>'
+
+    # TODO: rename to bound_members? calculate on bind, not a function!
+    def children(self):
+        assert self._is_bound
+        return Struct()
+
+    def path(self) -> str:
+        path_by_long_path = get_root(self)._path_by_long_path
+        long_path = build_long_path(self)
+        path = path_by_long_path.get(long_path)
+        if path is None:
+            candidates = '\n'.join(path_by_long_path.keys())
+            assert False, f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}"
+        return path
+
+    def dunder_path(self) -> str:
+        assert self._is_bound
+        return build_long_path(self).replace('/', '__')
+
+    def bind(self, *, parent=None, request=None):
+        assert parent is None or parent._is_bound
+        assert not self._is_bound
+
+        if parent is None:
+            self._request = request
+            if self.name is None:
+                self.name = 'root'
+
+        long_path_by_path = None
+        if parent is None:
+            long_path_by_path = build_long_path_by_path(self)
+
+        if hasattr(self, '_no_copy_on_bind'):
+            result = self
+        else:
+            result = copy.copy(self)
+            result._declared = self
+        del self  # to prevent mistakes when changing the code below
+
+        result.parent = parent
+        if parent is None:
+            result._long_path_by_path = long_path_by_path
+            result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
+
+        result._is_bound = True
+
+        apply_style(result)
+        result.on_bind()
+
+        return result
+
+    def on_bind(self) -> None:
+        pass
+
+
+class Part(Traversable):
     name: str = Refinable()
     include: bool = Refinable()
     after: Union[int, str] = Refinable()
-    default_child = Refinable()
     extra: Namespace = Refinable()
     extra_evaluated: Namespace = Refinable()
     style: str = Refinable()
-
-    parent = None
-    _is_bound = False
 
     @dispatch(
         extra=EMPTY,
@@ -226,18 +301,6 @@ class Part(RefinableObject):
     def __str__(self):
         assert self._is_bound
         return self.__html__()
-
-    def __repr__(self):
-        n = f' {self.name}' if self.name is not None else ''
-        b = ' (bound)' if self._is_bound else ''
-        p = f" path:'{self.path()}'" if self.parent is not None else ""
-        c = ''
-        if self._is_bound:
-            children = self.children()
-            if children:
-                c = f" children:{list(children.keys())!r}"
-
-        return f'<{self.__class__.__module__}.{self.__class__.__name__}{n}{b}{p}{c}>'
 
     @dispatch
     def render_to_response(self, **kwargs):
@@ -279,72 +342,11 @@ class Part(RefinableObject):
 
         return HttpResponse(render_root(part=self, **kwargs))
 
-    def bind(self, *, parent=None, request=None):
-        assert parent is None or parent._is_bound
-        assert not self._is_bound
-
-        if parent is None:
-            self._request = request
-            if self.name is None:
-                self.name = 'root'
-            if self.default_child is None:
-                self.default_child = True
-
-        if hasattr(self, '_no_copy_on_bind'):
-            result = self
-        else:
-            result = copy.copy(self)
-            result._declared = self
-        del self  # to prevent mistakes when changing the code below
-
-        result.parent = parent
-        result._is_bound = True
-
-        apply_style(result)
-        result.on_bind()
-
-        if len(result.children()) == 1:
-            for the_only_part in result.children().values():
-                if the_only_part.default_child is None:
-                    the_only_part.default_child = True
-
-        return result
-
-    def on_bind(self) -> None:
-        pass
-
-    def children(self):
-        assert self._is_bound
-
-        return Struct()
-
     def request(self):
         if self.parent is None:
             return self._request
         else:
             return self.parent.request()
-
-    def dunder_path(self) -> str:
-        assert self._is_bound
-        if self.parent is not None:
-            return path_join(self.parent.dunder_path(), self.name, separator='__')
-        else:
-            assert self.name, f'{self} is missing a name, but it was asked about its path'
-            return ''
-
-    def path(self) -> str:
-        assert self._is_bound
-        if self.default_child:
-            if self.parent is not None:
-                return self.parent.path()
-            else:
-                return ''
-
-        if self.parent is not None:
-            return path_join(self.parent.path(), self.name)
-        else:
-            assert self.name, f'{self} is missing a name, but it was asked about its path'
-            return self.name
 
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.path()
@@ -360,6 +362,70 @@ class Part(RefinableObject):
 
     def _evaluate_include(self):
         self._evaluate_attribute('include')
+
+
+def get_root(node: Traversable) -> Traversable:
+    while node.parent is not None:
+        node = node.parent
+    return node
+
+
+def build_long_path(node: Traversable) -> str:
+    def _traverse(node: Traversable) -> List[str]:
+        # noinspection PyProtectedMember
+        assert node._is_bound
+        if node.parent is None:
+            return []
+        return _traverse(node.parent) + [node.name]
+
+    return '/'.join(_traverse(node))
+
+
+def include_in_short_path(node):
+    return getattr(node, 'name', None) is not None
+
+
+def build_long_path_by_path(root) -> Dict[str, str]:
+    result = dict()
+
+    def _traverse(node, long_path_segments, short_path_candidate_segments):
+        if include_in_short_path(node):
+            def find_unique_suffix(parts):
+                for i in range(len(parts), -1, -1):
+                    candidate = '/'.join(parts[i:])
+                    if candidate not in result:
+                        return candidate
+
+            long_path = '/'.join(long_path_segments)
+            short_path = find_unique_suffix(short_path_candidate_segments)
+            if short_path is not None:
+                result[short_path] = long_path
+            else:
+                less_short_path = find_unique_suffix(long_path_segments)
+                if less_short_path is not None:
+                    result[less_short_path] = long_path
+                else:
+                    print(long_path_segments)
+                    print(short_path_candidate_segments)
+                    so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
+                    assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
+
+        children = getattr(node, 'declared_members', node)
+        for name, child in children.items():
+            if child:
+                _traverse(
+                    child,
+                    long_path_segments=long_path_segments + [name],
+                    short_path_candidate_segments=short_path_candidate_segments + (
+                        [name]
+                        if include_in_short_path(child)
+                        else []
+                    )
+                )
+
+    _traverse(root, [], [])
+    pprint(result)
+    return result
 
 
 PartType = Union[Part, str, Template]
@@ -414,39 +480,41 @@ def no_copy_on_bind(cls):
     return cls
 
 
-def collect_members(*, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unapplied_config: Dict) -> Dict[str, Any]:
+def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unapplied_config: Dict) -> Dict[str, Any]:
     unbound_items = {}
 
     if items_dict is not None:
-        for name, x in items_dict.items():
-            x.name = name
-            unbound_items[name] = x
+        for key, x in items_dict.items():
+            x.name = key
+            unbound_items[key] = x
 
     if items is not None:
-        for name, item in items.items():
+        for key, item in items.items():
             if not isinstance(item, dict):
-                item.name = name
-                unbound_items[name] = item
+                item.name = key
+                unbound_items[key] = item
             else:
-                if name in unbound_items:
-                    unapplied_config[name] = item
+                if key in unbound_items:
+                    unapplied_config[key] = item
                 else:
                     item = setdefaults_path(
                         Namespace(),
                         item,
                         call_target__cls=cls,
-                        name=name,
+                        name=key,
                     )
-                    unbound_items[name] = item()
+                    unbound_items[key] = item()
 
-    return Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
+    members = Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
+    obj.declared_members[name] = members
+    setattr(obj, 'declared_' + name, members)
 
 
 @no_copy_on_bind
 class Members(Part):
     def __init__(self, *, declared_items, **kwargs):
         super(Members, self).__init__(**kwargs)
-        self.members: Dict[str, Any] = None
+        self.members: Dict[str, Any] = Struct()
         self.declared_items = declared_items
 
     def children(self):
@@ -458,7 +526,7 @@ class Members(Part):
         for item in bound_items:
             item._evaluate_include()
 
-        self.members = {item.name: item for item in bound_items if should_include(item)}
+        self.members = Struct({item.name: item for item in bound_items if should_include(item)})
 
     def get(self, key, default=None):
         return self.members.get(key, default)
@@ -496,9 +564,9 @@ class Members(Part):
         raise NotImplementedError('Iterate with .keys(), .values() or .items()')
 
 
-def bind_members(obj: Part, *, name: str, default_child=False) -> None:
+def bind_members(obj: Part, *, name: str) -> None:
     declared_items = getattr(obj, f'declared_{name}')
-    m = Members(name=name, declared_items=declared_items, default_child=default_child)
+    m = Members(name=name, declared_items=declared_items)
     m.bind(parent=obj)
     setattr(obj, name, m)
 
