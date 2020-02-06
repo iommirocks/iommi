@@ -1621,9 +1621,7 @@ def test_many_to_many():
     <thead>
         <tr>
             <th class="first_column subheader">
-                <a href="?order=foo">
-                    Foo
-                </a>
+                Foo
             </th>
         </tr>
     </thead>

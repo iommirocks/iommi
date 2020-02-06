@@ -672,6 +672,7 @@ class Column(Part):
         query__call_target__attribute='many_to_many',
         cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
         data_retrieval_method=DataRetrievalMethods.prefetch,
+        sortable=False,
     )
     def many_to_many(cls, call_target, model_field, **kwargs):
         setdefaults_path(
