@@ -88,13 +88,6 @@ def capitalize(s):
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
 
-# This input is added to all forms. It is used to circumvent the fact that unchecked checkboxes are not sent as
-# parameters in the request. More specifically, the problem occurs when the checkbox is checked by default,
-# as it would not be possible to distinguish between the initial request and a subsequent request where the checkbox
-# is unchecked. By adding this input, it is possible to make this distinction as subsequent requests will contain
-# (at least) this key-value.
-AVOID_EMPTY_FORM = '<input type="hidden" name="-{}" value="">'
-
 
 def bool_parse(string_value):
     s = string_value.lower()
@@ -963,7 +956,6 @@ class Form(Part):
 
     See tri.declarative docs for more on this dual style of declaration.
 """
-    is_full_form: bool = Refinable()
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
     attrs: Dict[str, Any] = Refinable()
@@ -974,14 +966,12 @@ class Form(Part):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template: Union[str, Template] = Refinable()
-    post_handler: Callable = Refinable()
 
     class Meta:
         member_class = Field
         action_class = Action
 
     @dispatch(
-        is_full_form=True,
         model=None,
         editable=True,
         fields=EMPTY,
@@ -1032,15 +1022,15 @@ class Form(Part):
         request = self.request()
         self._request_data = request_data(request) if request else None
 
-        if self._request_data is not None and self.is_target():
-            self.mode = FULL_FORM_FROM_REQUEST
-
         # TODO: seems a bit convoluted to do this and the None check above
         if self._request_data is None:
             self._request_data = {}
 
         bind_members(self, name='actions')
         bind_members(self, name='fields')
+
+        if self._request_data is not None and self.is_target():
+            self.mode = FULL_FORM_FROM_REQUEST
 
         if self.instance is not None:
             for field in self.fields.values():
@@ -1135,11 +1125,8 @@ class Form(Part):
         fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, fields=fields)
         return cls(model=model, instance=instance, fields=fields, **kwargs)
 
-    def own_target_marker(self):
-        return f'-{self.path()}'
-
     def is_target(self):
-        return self.own_target_marker() in self._request_data
+        return any(action.is_target() for action in self.actions.values())
 
     def is_valid(self):
         if self._valid is None:
@@ -1242,16 +1229,10 @@ class Form(Part):
         for field in self.fields.values():
             r.append(field.__html__())
 
-        if self.is_full_form:
-            r.append(format_html(AVOID_EMPTY_FORM, self.path()))
-
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.path() for f in self.fields.values()}
         for k, v in self.request().GET.items():
-            if k == self.own_target_marker():
-                continue
-            # TODO: why is there a special case for '-' here? shouldn't it be self.own_target_marker or something?
-            if k not in own_field_paths and k != '-':
+            if k not in own_field_paths and not k.startswith('-'):
                 r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
         return format_html('{}\n' * len(r), *r)
@@ -1323,7 +1304,6 @@ class Form(Part):
             kwargs,
             actions__submit=dict(
                 attrs__value=title,
-                attrs__name=name,
             ),
         )
 
@@ -1343,7 +1323,7 @@ class Form(Part):
         call_target__attribute='as_create_or_edit_page',
         name='create',
         extra__is_create=True,
-        post_handler=create_object__post_handler,
+        actions__submit__post_handler=create_object__post_handler,
     )
     def as_create_page(cls, *, name, call_target=None, **kwargs):
         return call_target(name=name or 'create', **kwargs)
@@ -1353,7 +1333,7 @@ class Form(Part):
         call_target__attribute='as_create_or_edit_page',
         name='edit',
         extra__is_create=False,
-        post_handler=edit_object__post_handler,
+        actions__submit__post_handler=edit_object__post_handler,
     )
     def as_edit_page(cls, *, name, call_target=None, instance, **kwargs):
         return call_target(instance=instance, name=name or 'edit', **kwargs)
@@ -1372,8 +1352,8 @@ class Form(Part):
             attrs__method='post',
             extra__title='Delete',
             actions__submit__call_target__attribute='delete',
+            actions__submit__post_handler=delete_object__post_handler,
             editable=False,
-            post_handler=delete_object__post_handler,
             **kwargs
         )
 

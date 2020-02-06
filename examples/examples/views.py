@@ -193,12 +193,12 @@ def form_kitchen(request):
 
     def sink_form_post_handler(form, **_):
         values = form.apply(Struct())
-        return HttpResponse(format_html("Sink values was {}", values))
+        return HttpResponse(format_html("Sink values from form {} was {}", form.name, values))
 
     class KitchenPage(Page):
-        kitchen_form = KitchenForm(post_handler=kitchen_form_post_handler)
-        sink_form = SinkForm(post_handler=sink_form_post_handler)
-        sink_form2 = SinkForm(name='sinkform2')
+        kitchen_form = KitchenForm(actions__submit__post_handler=kitchen_form_post_handler)
+        sink_form = SinkForm(actions__submit__post_handler=sink_form_post_handler)
+        sink_form2 = SinkForm(name='sinkform2', actions__submit__post_handler=sink_form_post_handler)
 
     return KitchenPage()
 
@@ -430,7 +430,7 @@ def select_style_post_handler(form, **_):
 
 class StyleSelector(Form):
     class Meta:
-        post_handler = select_style_post_handler
+        actions__submit__post_handler = select_style_post_handler
 
     style = Field.choice(
         choices=[

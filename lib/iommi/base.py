@@ -379,6 +379,7 @@ def build_long_path(node: Traversable) -> str:
     def _traverse(node: Traversable) -> List[str]:
         # noinspection PyProtectedMember
         assert node._is_bound
+        assert node.name is not None
         if node.parent is None:
             return []
         return _traverse(node.parent) + [node.name]

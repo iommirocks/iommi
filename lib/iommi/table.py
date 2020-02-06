@@ -1167,12 +1167,10 @@ class Table(Part):
                 self._bulk_form = self.get_meta().form_class(
                     _fields_dict=declared_bulk_fields,
                     name='bulk',
-                    post_handler=bulk__post_handler,
-                    actions__submit__include=False,
+                    actions__submit__post_handler=bulk__post_handler,
+                    actions__submit__attrs__value='Bulk change',
                     **self.bulk
                 )
-                assert 'bulk' not in self.declared_actions
-                self.declared_actions['bulk_submit'] = Action.submit(attrs__value='Bulk change')
 
                 self.declared_members.bulk = self._bulk_form
 

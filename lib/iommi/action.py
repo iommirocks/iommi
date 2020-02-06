@@ -1,9 +1,10 @@
 from itertools import groupby
 from typing import (
     Any,
+    Callable,
     Dict,
-    Tuple,
     List,
+    Tuple,
 )
 
 from django.template.loader import render_to_string
@@ -11,8 +12,8 @@ from django.utils.html import format_html
 from django.utils.text import slugify
 from iommi.base import (
     evaluate_attrs,
-    Part,
     evaluate_strict_container,
+    Part,
 )
 from iommi.page import Fragment
 from tri_declarative import (
@@ -31,6 +32,7 @@ class Action(Part):
     group: str = Refinable()
     template = Refinable()
     display_name: str = Refinable()
+    post_handler: Callable = Refinable()
 
     @dispatch(
         tag='a',
@@ -42,6 +44,12 @@ class Action(Part):
 
         if self.tag == 'input' and self.display_name:
             assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"
+
+    def own_target_marker(self):
+        return f'-{self.path()}'
+
+    def is_target(self):
+        return self.own_target_marker() in self.parent.parent._request_data
 
     @dispatch(
         context=EMPTY,
@@ -69,6 +77,7 @@ class Action(Part):
         attrs__type='submit',
         attrs__value='Submit',
         attrs__accesskey='s',
+        attrs__name=lambda action, **_: action.own_target_marker(),
     )
     def submit(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

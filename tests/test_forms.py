@@ -21,7 +21,6 @@ from iommi.base import (
     perform_ajax_dispatch,
 )
 from iommi.form import (
-    AVOID_EMPTY_FORM,
     bool_parse,
     datetime_iso_formats,
     datetime_parse,
@@ -113,7 +112,7 @@ def test_required_choice():
     class Required(Form):
         c = Field.choice(choices=[1, 2, 3])
 
-    form = Required().bind(request=req('post', **{'-': ''}))
+    form = Required().bind(request=req('post', **{'-submit': ''}))
 
     assert form.mode == FULL_FORM_FROM_REQUEST
 
@@ -124,14 +123,14 @@ def test_required_choice():
     class NotRequired(Form):
         c = Field.choice(choices=[1, 2, 3], required=False)
 
-    form = NotRequired().bind(request=req('post', **{'-': '', 'c': ''}))
+    form = NotRequired().bind(request=req('post', **{'-submit': '', 'c': ''}))
     assert form.is_target()
     assert form.is_valid()
     assert form.fields['c'].errors == set()
 
 
 def test_required():
-    form = MyTestForm().bind(request=req('post', **{'-': ''}))
+    form = MyTestForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_target()
     assert form.is_valid() is False
     assert form.fields['a_date'].value is None
@@ -144,7 +143,7 @@ def test_required_with_falsy_option():
             choices=[0, 1],
             parse=lambda string_value, **_: int(string_value)
         )
-    form = MyForm().bind(request=req('post', **{'foo': '0', '-': ''}))
+    form = MyForm().bind(request=req('post', **{'foo': '0', '-submit': ''}))
     assert form.fields.foo.value == 0
     assert form.fields.foo.errors == set()
 
@@ -158,7 +157,7 @@ def test_custom_raw_data():
     class MyForm(Form):
         foo = Field(raw_data=my_form_raw_data)
 
-    form = MyForm().bind(request=req('post', **{'-': ''}))
+    form = MyForm().bind(request=req('post', **{'-submit': ''}))
     assert form.fields.foo.value == 'this is custom raw data'
 
 
@@ -267,7 +266,7 @@ def test_parse_errors():
             a_date='fooasd',
             a_time='asdasd',
             multi_choice_field=['q'],
-            **{'-': ''}
+            **{'-submit': ''}
         )),
     )
 
@@ -568,10 +567,9 @@ def test_hidden_with_name():
     }
     expected = {
         ('hidden', 'foo', '1'),
-        ('hidden', '-baz', ''),
     }
 
-    assert actual == expected, rendered_page
+    assert actual == expected
 
 
 def test_password():
@@ -1211,10 +1209,10 @@ def test_boolean_initial_true():
 
     # If there are arguments, but not for key foo it means checkbox for foo has been unchecked.
     # Field foo should therefore be false.
-    form = Form(fields=fields).bind(request=RequestFactory().get('/', dict(bar='baz', **{'-': ''})))
+    form = Form(fields=fields).bind(request=RequestFactory().get('/', dict(bar='baz', **{'-submit': ''})))
     assert form.fields.foo.value is False
 
-    form = Form(fields=fields).bind(request=RequestFactory().get('/', dict(foo='on', bar='baz', **{'-': ''})))
+    form = Form(fields=fields).bind(request=RequestFactory().get('/', dict(foo='on', bar='baz', **{'-submit': ''})))
     assert form.fields.foo.value is True
 
 
@@ -1257,7 +1255,7 @@ def test_mode_full_form_from_request():
         baz = Field.boolean(initial=True)
 
     # empty POST
-    form = FooForm().bind(request=req('post', **{'-': ''}))
+    form = FooForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_valid() is False
     assert form.errors == set()
     assert form.fields.foo.errors == {'This field is required'}
@@ -1268,13 +1266,13 @@ def test_mode_full_form_from_request():
         'foo': 'x',
         'bar': 'y',
         'baz': 'false',
-        '-': '',
+        '-submit': '',
     }))
     assert form.is_valid() is True
     assert form.fields['baz'].value is False
 
     # all params in GET
-    form = FooForm().bind(request=req('get', **{'-': ''}))
+    form = FooForm().bind(request=req('get', **{'-submit': ''}))
     assert form.is_valid() is False
     assert form.fields.foo.errors == {'This field is required'}
     assert form.fields['bar'].errors == {'This field is required'}
@@ -1284,7 +1282,7 @@ def test_mode_full_form_from_request():
         'foo': 'x',
         'bar': 'y',
         'baz': 'on',
-        '-': '',
+        '-submit': '',
     }))
     assert not form.errors
     assert not form.fields.foo.errors
@@ -1455,12 +1453,6 @@ def test_ajax_config_and_validate():
     ) == perform_ajax_dispatch(root=form, path='/fields/bar/endpoints/validate', value='new value')
 
 
-def test_is_empty_form_marker():
-    request = req('get')
-    assert AVOID_EMPTY_FORM.format('') in Form().bind(request=request).__html__()
-    assert AVOID_EMPTY_FORM.format('') not in Form(is_full_form=False).bind(request=request).__html__()
-
-
 @override_settings(DEBUG=True)
 def test_custom_endpoint():
     class MyForm(Form):
@@ -1491,9 +1483,8 @@ def test_render():
                 <div class="form-text text-muted">
                 </div>
             </div>
-            <input name="-" type="hidden" value="">
             <div class="links">
-                <input accesskey="s" type="submit" value="Submit">
+                <input accesskey="s" name="-submit" type="submit" value="Submit">
             </div>
         </form>
     """
@@ -1555,7 +1546,7 @@ def test_action_submit_render():
         Action.submit(display_name='Title')
 
     action = Action.submit(attrs__value='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.__html__().strip() == 'tag=input display_name=None accesskey="s" type="submit" value="Title"'
+    assert action.__html__().strip() == 'tag=input display_name=None accesskey="s" name="-" type="submit" value="Title"'
     assert action.__html__() == action.__html__()  # used by jinja2
 
 

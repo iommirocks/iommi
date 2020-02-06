@@ -2,11 +2,13 @@ import json
 
 import pytest
 from bs4 import BeautifulSoup
+from django.test import override_settings
 from iommi.base import DISPATCH_PATH_SEPARATOR
 from iommi.form import (
     Form,
     INITIALS_FROM_GET,
     create_or_edit_object_redirect,
+    FULL_FORM_FROM_REQUEST,
 )
 from tri_struct import merged
 
@@ -15,6 +17,7 @@ from tests.test_forms import remove_csrf
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
 def test_create_and_edit_object():
     from tests.models import CreateOrEditObjectTest, Foo
 
@@ -67,7 +70,7 @@ def test_create_and_edit_object():
         'f_bool': 'True',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        form.own_target_marker(): '',
+        form.actions.submit.own_target_marker(): '',
     })
 
     def on_save(form, instance, **_):
@@ -113,13 +116,14 @@ def test_create_and_edit_object():
         'f_float': '11.2',
         'f_foreign_key': str(foo.pk),
         'f_many_to_many': [str(foo.pk)],
-        '-edit': '',
+        '-submit': '',
         # Not sending a parameter in a POST is the same thing as false
     })
     p = Form.as_edit_page(
         instance=instance,
     )
     p.bind(request=request)
+    assert p.parts.edit.mode == FULL_FORM_FROM_REQUEST
     response = p.render_to_response()
     assert response.status_code == 302
 
@@ -155,7 +159,7 @@ def test_unique_constraint_violation():
         'f_int': '3',
         'f_float': '5.1',
         'f_bool': 'True',
-        '-create': '',
+        '-submit': '',
     })
     Form.as_create_page(model=UniqueConstraintTest).bind(request=request).render_to_response()
     assert UniqueConstraintTest.objects.all().count() == 1
@@ -202,7 +206,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '1',
-        '-create': '',
+        '-submit': '',
     })
 
     response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
@@ -216,7 +220,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '2',  # <-- changed from 1
-        '-create': '',
+        '-submit': '',
     })
     response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
@@ -225,7 +229,7 @@ def test_create_or_edit_object_validate_unique():
     request = req('post', **{
         'a': '1',
         'b': '1',  # <-- 1 again
-        '-edit': '',
+        '-submit': '',
     })
 
     response = Form.as_edit_page(instance=instance).bind(request=request).render_to_response()
@@ -263,9 +267,8 @@ def test_create_or_edit_object_full_template(name):
                     foo_help_text
                 </div>
             </div>
-            <input name="-{name}" type="hidden" value=""/>
             <div class="links">
-                <input accesskey="s" name="{name}" type="submit" value="Create foo"/>
+                <input accesskey="s" name="{name}" type="submit" value="Create foo" name="-submit">
             </div>
         </form>
     </body>

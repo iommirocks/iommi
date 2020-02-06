@@ -773,7 +773,7 @@ def test_bulk_edit():
         request=req('get'),
     ).__html__()
     assert '<form action="" method="post">' in result, result
-    assert '<input accesskey="s" type="submit" value="Bulk change">' in result, result
+    assert '<input accesskey="s" name="-bulk/submit" type="submit" value="Bulk change">' in result, result
 
     def post_bulk_edit(table, queryset, updates, **_):
         assert isinstance(table, TestTable)
@@ -785,7 +785,7 @@ def test_bulk_edit():
         rows=TFoo.objects.all().order_by('pk'),
         post_bulk_edit=post_bulk_edit,
     ).bind(
-        request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk': ''}),
+        request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
     assert t.bulk_form.name == 'bulk'
@@ -815,7 +815,7 @@ def test_bulk_edit():
     TestTable(
         rows=TFoo.objects.all()
     ).bind(
-        request=req('post', _all_pks_='1', **{'bulk/a': '11', 'bulk/b': 'changed2', '-bulk': ''}),
+        request=req('post', _all_pks_='1', **{'bulk/a': '11', 'bulk/b': 'changed2', '-bulk/submit': ''}),
     ).render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
