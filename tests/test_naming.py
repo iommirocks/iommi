@@ -15,7 +15,7 @@ from iommi.page import (
 from tri_declarative import Namespace
 from tri_struct import Struct
 
-from tests.helpers import TestTraversable
+from tests.helpers import StubTraversable
 
 
 def test_traverse():
@@ -34,7 +34,7 @@ def test_traverse():
             bar=bar,
         ),
     )
-    root = TestTraversable(
+    root = StubTraversable(
         name='root',
         children=Struct(
             foo=foo

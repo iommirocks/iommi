@@ -27,7 +27,7 @@ def test_sort_list():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="ascending first_column sorted_column subheader">
+            <th class="ascending first_column sorted subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
@@ -60,7 +60,7 @@ def test_sort_list():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="descending first_column sorted_column subheader">
+            <th class="descending first_column sorted subheader">
               <a href="?order=bar"> Bar </a>
             </th>
           </tr>
@@ -109,7 +109,7 @@ def test_sort_with_name():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="ascending first_column sorted_column subheader">
+            <th class="ascending first_column sorted subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
@@ -154,7 +154,7 @@ def test_sort_list_with_none_values():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="ascending first_column sorted_column subheader">
+            <th class="ascending first_column sorted subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
           </tr>
@@ -238,7 +238,7 @@ def test_sort_django_table():
     <table class="table" data-endpoint="/tbody">
       <thead>
         <tr>
-          <th class="ascending first_column sorted_column subheader">
+          <th class="ascending first_column sorted subheader">
             <a href="?order=-a"> A </a>
           </th>
           <th class="first_column subheader">
@@ -271,7 +271,7 @@ def test_sort_django_table():
     <table class="table" data-endpoint="/tbody">
       <thead>
         <tr>
-          <th class="descending first_column sorted_column subheader">
+          <th class="descending first_column sorted subheader">
             <a href="?order=a"> A </a>
           </th>
           <th class="first_column subheader">
@@ -348,7 +348,7 @@ def test_sort_default_desc_other_col_sorted():
         expected_html="""\
         <thead>
           <tr>
-            <th class="ascending first_column sorted_column subheader">
+            <th class="ascending first_column sorted subheader">
               <a href="?order=-foo"> Foo </a>
             </th>
             <th class="first_column subheader">
@@ -374,7 +374,7 @@ def test_sort_default_desc_already_sorted():
             <th class="first_column subheader">
               <a href="?order=foo"> Foo </a>
             </th>
-            <th class="ascending first_column sorted_column subheader">
+            <th class="ascending first_column sorted subheader">
               <a href="?order=-bar"> Bar </a>
             </th>
         </thead>
@@ -395,7 +395,7 @@ def test_sort_django_table_from_model():
     <table class="table" data-endpoint="/tbody">
       <thead>
         <tr>
-          <th class="ascending first_column sorted_column subheader">
+          <th class="ascending first_column sorted subheader">
             <a href="?order=-a"> A </a>
           </th>
           <th class="first_column subheader">

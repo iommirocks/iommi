@@ -35,7 +35,7 @@ from tri_struct import Struct
 from tests.helpers import (
     request_with_middleware,
     req,
-    TestTraversable,
+    StubTraversable,
 )
 
 
@@ -95,14 +95,14 @@ def test_find_target():
     # To build paths: declared_members: Struct, and optionally name
     # To find target: _long_path_by_path: Dict on root, children()
 
-    bar = TestTraversable(name='bar')
-    foo = TestTraversable(
+    bar = StubTraversable(name='bar')
+    foo = StubTraversable(
         name='foo',
         children=Struct(
             bar=bar,
         ),
     )
-    root = TestTraversable(
+    root = StubTraversable(
         name='root',
         children=Struct(
             foo=foo
@@ -116,14 +116,14 @@ def test_find_target():
 
 
 def test_find_target_with_invalid_path():
-    bar = TestTraversable(name='bar')
-    foo = TestTraversable(
+    bar = StubTraversable(name='bar')
+    foo = StubTraversable(
         name='foo',
         children=Struct(
             bar=bar,
         ),
     )
-    root = TestTraversable(
+    root = StubTraversable(
         name='root',
         children=Struct(
             foo=foo
@@ -207,23 +207,23 @@ def test_should_include_error_message():
 
 
 def test_perform_post_dispatch_error_message():
-    target = TestTraversable(name='root', children=Struct(foo=TestTraversable(name='foo')))
+    target = StubTraversable(name='root', children=Struct(foo=StubTraversable(name='foo')))
     target.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
         perform_post_dispatch(root=target, path='/foo', value='')
 
-    assert str(e.value) == "Target <tests.helpers.TestTraversable foo (bound) path:'foo'> has no registered post_handler"
+    assert str(e.value) == "Target <tests.helpers.StubTraversable foo (bound) path:'foo'> has no registered post_handler"
 
 
 def test_dunder_path_is_fully_qualified_and_skipping_root():
-    foo = TestTraversable(
+    foo = StubTraversable(
         name='my_part3',
         children=Struct(
-            my_part2=TestTraversable(
+            my_part2=StubTraversable(
                 name='my_part2',
                 children=Struct(
-                    my_part=TestTraversable(
+                    my_part=StubTraversable(
                         name='my_part',
                     )
                 )

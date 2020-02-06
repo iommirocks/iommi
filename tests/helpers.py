@@ -86,9 +86,9 @@ def get_attrs(x, attrs):
 
 
 @no_copy_on_bind
-class TestTraversable(Traversable):
+class StubTraversable(Traversable):
     def __init__(self, *, name, children=None):
-        super(TestTraversable, self).__init__()
+        super(StubTraversable, self).__init__()
         self.name = name
         self.declared_members = children or {}
         self.bound_members = None
