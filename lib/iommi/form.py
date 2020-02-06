@@ -653,8 +653,13 @@ class Field(Part):
             'field': self,
         }
         # TODO: hack!
-        if 'value' not in self.input.attrs:
-            self.input.attrs.value = self.rendered_value
+        if not self.is_boolean:
+            if 'value' not in self.input.attrs:
+                self.input.attrs.value = self.rendered_value
+        else:
+            if 'checked' not in self.input.attrs and self.value:
+                self.input.attrs.checked = ''
+
         if self.template_string is not None:
             return get_template_from_string(self.template_string, origin='iommi', name='Form.__html__').render(context, self.request())
         else:
