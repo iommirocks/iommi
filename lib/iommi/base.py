@@ -405,8 +405,6 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 if less_short_path is not None:
                     result[less_short_path] = long_path
                 else:
-                    print(long_path_segments)
-                    print(short_path_candidate_segments)
                     so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
                     assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
 
@@ -424,6 +422,7 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 )
 
     _traverse(root, [], [])
+    # TODO: remove
     pprint(result)
     return result
 
