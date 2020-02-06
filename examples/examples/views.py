@@ -25,8 +25,8 @@ from iommi.form import (
     choice_parse,
 )
 from iommi.style import validate_styles
-from tri_declarative import get_members, Shortcut, is_shortcut
-from tri_struct import Struct
+from tri_declarative import get_members, Shortcut, is_shortcut, Namespace
+from tri_struct import Struct, merged
 
 from .models import (
     Bar,
@@ -84,6 +84,7 @@ def index(request):
         """)
 
         all_field_sorts = html.a("Show different type of form field types", attrs__href='all_field_sorts')
+        all_table_sorts = html.a("Show different type of table column types", attrs__href='all_column_sorts')
 
         # You can also nest pages
         admin = AdminPage()
@@ -328,6 +329,70 @@ def all_field_sorts(request):
                     # These only work if we have an instance
                     'foreign_key',
                     'many_to_many']
+            })
+    ))
+
+
+def all_column_sorts(request):
+    shortcuts = [
+        t
+        for t in get_members(
+            cls=Column,
+            member_class=Shortcut,
+            is_member=is_shortcut
+        ).keys()
+        if t not in [
+            'icon',
+            'foreign_key',
+            'many_to_many',
+            'choice_queryset',
+            'multi_choice_queryset',
+        ]
+    ]
+
+    class ShortcutSelectorForm(Form):
+        class Meta:
+            attrs__method = 'get'
+
+        shortcut = Field.multi_choice(
+            choices=shortcuts,
+        )
+
+    shortcuts = ShortcutSelectorForm().bind(request=request).fields.shortcut.value or []
+
+    class DummyRow:
+        def __init__(self, idx):
+            self.idx = idx
+
+        def __getattr__(self, attr):
+            _, _, shortcut = attr.partition('column_of_type_')
+            s = f'{shortcut} #{self.idx}'
+            if attr == 'column_of_type_link':
+                return Struct(
+                    get_absolute_url=lambda: '#',
+                )
+            return s
+
+        @staticmethod
+        def get_absolute_url():
+            return '#'
+
+    type_specifics = Namespace(
+        choice__choices=['Foo', 'Bar', 'Baz'],
+        multi_choice__choices=['Foo', 'Bar', 'Baz'],
+    )
+
+    return Page(parts=dict(
+        header=html.h2('All sorts of columns'),
+        form=ShortcutSelectorForm(),
+        table=Table(
+            rows=[DummyRow(i) for i in range(10)],
+            **{
+                f'columns__column_of_type_{t}': merged(
+                    type_specifics.get(t, {}),
+                    call_target__attribute=t,
+                )
+                for t in shortcuts
             })
     ))
 
