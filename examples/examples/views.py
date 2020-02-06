@@ -25,6 +25,7 @@ from iommi.form import (
     choice_parse,
 )
 from iommi.style import validate_styles
+from tri_declarative import get_members, Shortcut, is_shortcut
 from tri_struct import Struct
 
 from .models import (
@@ -33,7 +34,6 @@ from .models import (
     TBar,
     TFoo,
 )
-
 
 # Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
 validate_styles()
@@ -82,6 +82,8 @@ def index(request):
         page_links = mark_safe("""
         <a href="page_busy/">A busy page with lots of stuff</a><br>
         """)
+
+        all_field_sorts = html.a("Show different type of form field types", attrs__href='all_field_sorts')
 
         # You can also nest pages
         admin = AdminPage()
@@ -284,7 +286,8 @@ def table_kitchen_sink(request):
         e = Column(group='Foo', cell__value='explicit value', sortable=False)
         f = Column(include=False, sortable=False)
         g = Column(attr='c', sortable=False)
-        django_templates_for_cells = Column(sortable=False, cell__value=None, cell__template='kitchen_sink_cell_template.html')
+        django_templates_for_cells = Column(sortable=False, cell__value=None,
+                                            cell__template='kitchen_sink_cell_template.html')
 
         class Meta:
             name = 'bar'
@@ -300,6 +303,33 @@ def page_busy(request):
         create_tbar = Form.as_create_page(model=TBar)
 
     return BusyPage()
+
+
+def all_field_sorts(request):
+    some_choices = ['Foo', 'Bar', 'Baz']
+    return Page(parts=dict(
+        header=html.h2('All sorts of fields'),
+        form=Form(
+            actions__submit__include=False,
+            fields__field_of_type_radio__choices=some_choices,
+            fields__field_of_type_choice__choices=some_choices,
+            fields__field_of_type_choice_queryset__choices=TFoo.objects.all(),
+            fields__field_of_type_multi_choice__choices=some_choices,
+            fields__field_of_type_multi_choice_queryset__choices=TBar.objects.all(),
+            fields__field_of_type_info__value="This is some information",
+            **{
+                f'fields__field_of_type_{t}__call_target__attribute': t
+                for t in get_members(
+                    cls=Field,
+                    member_class=Shortcut,
+                    is_member=is_shortcut
+                ).keys()
+                if t not in [
+                    # These only work if we have an instance
+                    'foreign_key',
+                    'many_to_many']
+            })
+    ))
 
 
 def iommi_admin(request, **kwargs):
