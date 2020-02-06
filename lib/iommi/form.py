@@ -1352,6 +1352,7 @@ class Form(Part):
         call_target__attribute='as_create_or_edit_page',
         name='delete',
         extra__is_create=False,
+        title='Delete',
     )
     def as_delete_page(cls, *, name, call_target=None, instance, **kwargs):
         return call_target(
