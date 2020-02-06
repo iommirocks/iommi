@@ -185,6 +185,7 @@ bootstrap_base = Style(
     ),
     Query__form__style='bootstrap_horizontal',
     Paginator=dict(
+        template='iommi/table/bootstrap/paginator.html',
         container__attrs__class__pagination=True,
         page__attrs__class={'page-link': True},
         active_item__attrs__class={'page-item': True, 'active': True},
@@ -220,6 +221,76 @@ bootstrap_horizontal = Style(
     },
 )
 
+
+semantic_ui_base = Style(
+    base,
+    Form=dict(
+        attrs__class=dict(
+            ui=True,
+            form=True,
+            error=True,  # semantic ui hides error messages otherwise
+        ),
+    ),
+    Field=dict(
+        shortcuts=dict(
+            boolean=dict(
+                template='iommi/form/semantic_ui/row_checkbox.html',
+            ),
+        ),
+        attrs__class__field=True,
+        template='iommi/form/semantic_ui/row.html',
+        errors__template='iommi/form/semantic_ui/errors.html',
+    ),
+    Action=dict(
+        shortcuts=dict(
+            button__attrs__class={
+                'ui': True,
+                'button': True,
+            },
+            delete__attrs__class__negative=True,
+        ),
+    ),
+    Table=dict(
+        attrs__class__table=True,
+        attrs__class__ui=True,
+        attrs__class__celled=True,
+        attrs__class__sortable=True,
+    ),
+    Column=dict(
+        shortcuts=dict(
+            select=dict(
+                header__attrs__title='Select all',
+            ),
+            number__cell__attrs__class={
+                'ui': True,
+                'container': True,
+                'fluid': True,
+                'right aligned': True,
+            },
+        )
+    ),
+    Query__form__attrs__class__fields=True,
+    Paginator=dict(
+        template='iommi/table/semantic_ui/paginator.html',
+        item__attrs__class__item=True,
+        attrs__class=dict(
+            ui=True,
+            pagination=True,
+            menu=True,
+        ),
+        active_item__attrs__class=dict(
+            item=True,
+            active=True,
+        )
+    ),
+)
+
+semantic_ui = Style(
+    semantic_ui_base,
+    font_awesome_4,
+    # TODO: special template for Column.delete in order to get the negative css class on the a tag
+)
+
 _styles = {}
 
 
@@ -234,6 +305,7 @@ register_style('base', base)
 register_style('test', test)
 register_style('bootstrap', bootstrap)
 register_style('bootstrap_horizontal', bootstrap_horizontal)
+register_style('semantic_ui', semantic_ui)
 
 
 def get_style(name):

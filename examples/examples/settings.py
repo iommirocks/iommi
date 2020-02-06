@@ -104,3 +104,6 @@ STATIC_URL = '/static/'
 IOMMI_DEBUG_SHOW_PATHS = True
 
 SILENCED_SYSTEM_CHECKS = True
+
+# IOMMI_BASE_TEMPLATE = 'base_semantic_ui.html'
+# IOMMI_DEFAULT_STYLE = 'semantic_ui'

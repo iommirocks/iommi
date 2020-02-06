@@ -265,7 +265,7 @@ class Column(Part):
         cell__url=None,
         cell__url_title=None,
         cell__contents__attrs=EMPTY,
-        header__attrs__class__sorted_column=lambda column, **_: column.is_sorting,
+        header__attrs__class__sorted=lambda column, **_: column.is_sorting,
         header__attrs__class__descending=lambda column, **_: column.sort_direction == DESCENDING,
         header__attrs__class__ascending=lambda column, **_: column.sort_direction == ASCENDING,
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
@@ -898,6 +898,7 @@ class Paginator:
         self.active_item = Namespace(attrs=EMPTY)
         self.item = Namespace(attrs=EMPTY)
         self.link = Namespace(attrs=EMPTY)
+        self.template = None
 
         apply_style(self)
         self.attrs = evaluate_attrs(self)
@@ -965,7 +966,7 @@ class Paginator:
 
         return render_template(
             request=self.table.request(),
-            template=self.table.paginator_template,
+            template=self.template,
             context=context,
         )
 
@@ -1010,7 +1011,6 @@ class Table(Part):
     endpoint: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
-    paginator_template: str = Refinable()
     page_size: int = Refinable()
     actions_template: Union[str, Template] = Refinable()
     member_class = Refinable()
@@ -1072,7 +1072,6 @@ class Table(Part):
         row__extra_evaluated=EMPTY,
         filter__template='iommi/query/form.html',
         header__template='iommi/table/table_header_rows.html',
-        paginator_template='iommi/table/paginator.html',
         paginator__call_target=Paginator,
 
         actions=EMPTY,

@@ -1,14 +1,15 @@
 <div id="iommi_{{ query.dunder_path }}">
-    <a href="#" class="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
-
     <form{{ query.form.attrs }}>
+        <a href="#" class="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
+
         <table style="width: 100%">
             <tr class="iommi_query_form_advanced" style="display: none">
                 <td><label for="iommi_{{ query.dunder_path }}_query">Search query:</label></td>
             </tr>
             <tr>
                 <td>
-                    <div class="iommi_query_form_simple form-row align-items-center">
+                    {# form-row align-items-center is bootstrap specific, ui form fields is semantic ui #}
+                    <div class="iommi_query_form_simple form-row align-items-center ui form fields">
                         {{ query.form.render_fields }}
                     </div>
                     <div class="iommi_query_form_advanced" style="display: none">

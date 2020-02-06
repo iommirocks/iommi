@@ -273,6 +273,8 @@ def table_kitchen_sink(request):
             sortable=False,
             group='Foo',
             auto_rowspan=True,
+            query__include=True,
+            query__form__include=True,
             cell__value=lambda row, **_: row.b.a // 3,
             cell__format=lambda value, **_: '- %s -' % value,
             cell__attrs__class={'text-center': True},

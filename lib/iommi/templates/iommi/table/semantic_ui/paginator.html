@@ -1,0 +1,22 @@
+<div aria-label="Pages"{{ paginator.attrs }}>
+    {% if show_first %}
+        <a href="?{{ extra|escape }}{{ page_param_path }}=1" aria-label="First Page"{{ paginator.item.attrs }}>&laquo;</a>
+    {% endif %}
+
+    {% if has_previous %}
+        <a href="?{{ extra|escape }}{{ page_param_path }}={{ previous }}" aria-label="Previous Page"{{ paginator.item.attrs }}>&lt;</a>
+    {% endif %}
+
+    {% for num in page_numbers %}
+        <a href="?{{ extra|escape }}{{ page_param_path }}={{ num }}" aria-label="Page {{ num }}"{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>{{ num }}</a>
+    {% endfor %}
+
+    {% if has_next %}
+        <a href="?{{ extra|escape }}{{ page_param_path }}={{ next }}" aria-label="Next Page"{{ paginator.item.attrs }}>&gt;</a>
+    {% endif %}
+
+    {% if show_last %}
+        <a href="?{{ extra|escape }}{{ page_param_path }}={{ pages }}" aria-label="Last Page"{{ paginator.item.attrs }}>&raquo;</a>
+    {% endif %}
+</div>
+
