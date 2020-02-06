@@ -59,10 +59,7 @@ def test_include():
             include=lambda query, variable: query.request().GET['foo'] == 'include' and variable.extra.foo == 'include2',
             extra__foo='include2')
 
-
     assert list(ShowQuery().bind(request=req('get', foo='hide')).variables.keys()) == ['foo']
-
-
     assert list(ShowQuery().bind(request=req('get', foo='include')).variables.keys()) == ['foo', 'bar']
 
 
@@ -92,7 +89,7 @@ def test_freetext():
     expected = repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
     assert repr(query.parse('"asd"')) == expected
 
-    query2 = MyTestQuery().bind(request=req('get', **{'-': '-', 'term': 'asd'}))
+    query2 = MyTestQuery().bind(request=req('get', **{'-': '-', FREETEXT_SEARCH_NAME: 'asd'}))
     assert repr(query2.to_q()) == expected
 
 
@@ -278,37 +275,24 @@ def test_choice_queryset():
             choices=Foo.objects.all(),
             form__include=True,
             value_to_q_lookup='foo')
-        baz = Variable.choice_queryset(
-            model=Foo,
-            attr=None,
-            choices=None,
-        )
 
     random_valid_obj = Foo.objects.all().order_by('?')[0]
 
     # test GUI
     form = Query2().bind(
-        request=req('post', **{'-': '-', 'foo': 'asdasdasdasd'}),
+        request=req('get', **{'-': '-', 'foo': 'asdasdasdasd'}),
     ).form
     assert not form.is_valid()
-    query2 = Query2().bind(request=req('post', **{'-': '-', 'foo': str(random_valid_obj.pk)}))
+    query2 = Query2().bind(request=req('get', **{'-': '-', 'foo': str(random_valid_obj.pk)}))
     form = query2.form
     assert form.is_valid()
     assert set(form.fields['foo'].choices) == set(Foo.objects.all())
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
 
-    # test query
-    query2 = Query2().bind(
-        request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}),
-    )
-    q = query2.to_q()
-    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
-    assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
-
     # test searching for something that does not exist
     query2 = Query2().bind(
-        request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s' % str(11)}),
+        request=req('get', **{'-': '-', query2.advanced_query_param(): 'foo=%s' % str(11)}),
     )
     value_that_does_not_exist = 11
     assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
@@ -320,7 +304,7 @@ def test_choice_queryset():
     valid_ops = ['=']
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
         query2 = Query2().bind(
-            request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}),
+            request=req('get', **{'-': '-', query2.advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}),
         )
         with pytest.raises(QueryException) as e:
             query2.to_q()
@@ -348,32 +332,21 @@ def test_multi_choice_queryset():
             choices=Foo.objects.all(),
             form__include=True,
             value_to_q_lookup='foo')
-        baz = Variable.multi_choice_queryset(
-            model=Foo,
-            attr=None,
-            choices=None,
-        )
 
     random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
 
     # test GUI
-    form = Query2().bind(request=req('post', **{'-': '-', 'foo': 'asdasdasdasd'})).form
+    form = Query2().bind(request=req('get', **{'-': '-', 'foo': 'asdasdasdasd'})).form
     assert not form.is_valid()
-    query2 = Query2().bind(request=req('post', **{'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
+    query2 = Query2().bind(request=req('get', **{'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
     form = query2.form
     assert form.is_valid()
     assert set(form.fields['foo'].choices) == set(Foo.objects.all())
     q = query2.to_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk__in=[random_valid_obj.pk, random_valid_obj2.pk]))
 
-    # test query
-    query2 = Query2().bind(request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s and baz=buzz' % str(random_valid_obj.foo)}))
-    q = query2.to_q()
-    assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
-    assert repr(q) == repr(Q(**{'foo__pk': random_valid_obj.pk}))
-
     # test searching for something that does not exist
-    query2 = Query2().bind(request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo=%s' % str(11)}))
+    query2 = Query2().bind(request=req('get', **{'-': '-', query2.advanced_query_param(): 'foo=%s' % str(11)}))
     value_that_does_not_exist = 11
     assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
@@ -383,7 +356,7 @@ def test_multi_choice_queryset():
     # test invalid ops
     valid_ops = ['=']
     for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
-        query2 = Query2().bind(request=req('post', **{'-': '-', query2.advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
+        query2 = Query2().bind(request=req('get', **{'-': '-', query2.advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.to_q()
         assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
@@ -499,7 +472,7 @@ def test_escape_quote_freetext():
         foo = Variable(freetext=True)
 
 
-    query = MyQuery().bind(request=Struct(method='GET', GET={'term': '"', '-': '-'}))
+    query = MyQuery().bind(request=Struct(method='GET', GET={FREETEXT_SEARCH_NAME: '"', '-': '-'}))
     assert query.to_query_string() == '(foo:"\\"")'
     assert repr(query.to_q()) == repr(Q(**{'foo__icontains': '"'}))
 
@@ -513,7 +486,7 @@ def test_freetext_combined_with_other_stuff():
 
     expected = repr(Q(**{'baz__iexact': '123'}) & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
 
-    assert repr(MyTestQuery().bind(request=req('get', **{'-': '-', 'term': 'asd', 'baz_name': '123'})).to_q()) == expected
+    assert repr(MyTestQuery().bind(request=req('get', **{'-': '-', FREETEXT_SEARCH_NAME: 'asd', 'baz_name': '123'})).to_q()) == expected
 
 
 @pytest.mark.django_db

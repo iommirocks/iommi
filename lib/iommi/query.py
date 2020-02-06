@@ -565,7 +565,7 @@ class Query(Part):
 
         def generate_fields_unapplied_data():
             for variable in self.variables.values():
-                assert variable.attr
+                assert variable.attr, f"{variable.name} cannot be a part of a query, it has no attr so we don't know what to search for"
                 params = setdefaults_path(
                     Namespace(),
                     name=variable.name,

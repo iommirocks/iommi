@@ -1178,6 +1178,9 @@ class Table(Part):
 
                 self.declared_members.bulk = self._bulk_form
 
+        # Columns need to be at the end to not steal the short names
+        self.declared_members.columns = self.declared_members.pop('columns')
+
     def children(self):
         return Struct(
             query=self.query,  # TODO: this is a property which we should try to remove

@@ -1,11 +1,21 @@
 from django.test import RequestFactory
-from iommi import Table, Column, Field, Form
-from iommi.base import build_long_path_by_path
-from iommi.page import Fragment, Page
+from iommi import (
+    Column,
+    Field,
+    Form,
+    Table,
+)
+from iommi.base import (
+    build_long_path_by_path,
+)
+from iommi.page import (
+    Fragment,
+    Page,
+)
 from tri_declarative import Namespace
 from tri_struct import Struct
 
-from tests.models import Foo
+from tests.helpers import TestTraversable
 
 
 def test_traverse():
@@ -24,9 +34,9 @@ def test_traverse():
             bar=bar,
         ),
     )
-    root = Struct(
+    root = TestTraversable(
         name='root',
-        declared_members=Struct(
+        children=Struct(
             foo=foo
         ),
     )

@@ -1,10 +1,10 @@
 import copy
 import json
-from collections import defaultdict
 from pprint import pprint
 from typing import (
     Any,
     Dict,
+    List,
     Type,
     Union,
 )
@@ -16,26 +16,21 @@ from django.http.response import (
 )
 from django.template import (
     Template,
-    Node,
 )
 from iommi._web_compat import (
-    get_template_from_string,
     QueryDict,
+    get_template_from_string,
 )
 from iommi.render import Attrs
-from iommi.style import (
-    apply_style_recursively,
-    get_style_obj_for_object,
-)
 from tri_declarative import (
-    dispatch,
     EMPTY,
-    evaluate,
-    evaluate_strict,
-    get_callable_description,
     Namespace,
     Refinable,
     RefinableObject,
+    dispatch,
+    evaluate,
+    evaluate_strict,
+    get_callable_description,
     setdefaults_path,
     sort_after,
 )
@@ -140,8 +135,8 @@ def perform_ajax_dispatch(*, root, path, value):
 
     target = find_target(path=path, root=root)
 
-    if target.endpoint_handler is None:
-        raise InvalidEndpointPathException(f'Target {target} has no registered endpoint_handler')
+    if getattr(target, 'endpoint_handler', None) is None:
+        raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
 
     return target.endpoint_handler(value=value, **target.evaluate_attribute_kwargs())
 
@@ -151,6 +146,9 @@ def perform_post_dispatch(*, root, path, value):
     assert path[0] in ('/', '-')
     path = '/' + path[1:]  # replace initial - with / to convert from post-y paths to ajax-y paths
     target = find_target(path=path, root=root)
+
+    if getattr(target, 'post_handler', None) is None:
+        raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
     return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
 
@@ -167,7 +165,6 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content')
 
-
     content = part.__html__(context=context, **render)
 
     assert 'content' not in context
@@ -178,6 +175,11 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
 
 
 def apply_style(obj):
+    # Avoid circular import
+    from iommi.style import (
+        apply_style_recursively,
+        get_style_obj_for_object,
+    )
     style = get_style_obj_for_object(style=get_style_for(obj), obj=obj)
     apply_style_recursively(style_data=style, obj=obj)
 
@@ -191,37 +193,15 @@ def get_style_for(obj):
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
 
 
-class Part(RefinableObject):
-    name: str = Refinable()
-    include: bool = Refinable()
-    after: Union[int, str] = Refinable()
-    extra: Namespace = Refinable()
-    extra_evaluated: Namespace = Refinable()
-    style: str = Refinable()
-
+class Traversable(RefinableObject):
     parent = None
     _is_bound = False
+    # TODO: would be nice to not have this here
+    style: str = Refinable()
 
-    @dispatch(
-        extra=EMPTY,
-        extra_evaluated=EMPTY,
-        include=True,
-        name=None,
-    )
     def __init__(self, **kwargs):
         self.declared_members = Struct()
-        super(Part, self).__init__(**kwargs)
-
-    @dispatch(
-        context=EMPTY,
-        render=EMPTY,
-    )
-    def __html__(self, *, context=None, render=None):
-        assert False, 'Not implemented'  # pragma: no cover
-
-    def __str__(self):
-        assert self._is_bound
-        return self.__html__()
+        super(Traversable, self).__init__(**kwargs)
 
     def __repr__(self):
         n = f' {self.name}' if self.name is not None else ''
@@ -237,6 +217,88 @@ class Part(RefinableObject):
                 c = f" children:{list(children.keys())!r}"
 
         return f'<{self.__class__.__module__}.{self.__class__.__name__}{n}{b}{p}{c}>'
+
+    # TODO: rename to bound_members? calculate on bind, not a function!
+    def children(self):
+        assert self._is_bound
+        return Struct()
+
+    def path(self) -> str:
+        path_by_long_path = get_root(self)._path_by_long_path
+        long_path = build_long_path(self)
+        path = path_by_long_path.get(long_path)
+        if path is None:
+            candidates = '\n'.join(path_by_long_path.keys())
+            assert False, f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}"
+        return path
+
+    def dunder_path(self) -> str:
+        assert self._is_bound
+        return build_long_path(self).replace('/', '__')
+
+    def bind(self, *, parent=None, request=None):
+        assert parent is None or parent._is_bound
+        assert not self._is_bound
+
+        if parent is None:
+            self._request = request
+            if self.name is None:
+                self.name = 'root'
+
+        long_path_by_path = None
+        if parent is None:
+            long_path_by_path = build_long_path_by_path(self)
+
+        if hasattr(self, '_no_copy_on_bind'):
+            result = self
+        else:
+            result = copy.copy(self)
+            result._declared = self
+        del self  # to prevent mistakes when changing the code below
+
+        result.parent = parent
+        if parent is None:
+            result._long_path_by_path = long_path_by_path
+            result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
+
+        result._is_bound = True
+
+        apply_style(result)
+        result.on_bind()
+
+        return result
+
+    def on_bind(self) -> None:
+        pass
+
+
+class Part(Traversable):
+    name: str = Refinable()
+    include: bool = Refinable()
+    after: Union[int, str] = Refinable()
+    extra: Namespace = Refinable()
+    extra_evaluated: Namespace = Refinable()
+    style: str = Refinable()
+
+    @dispatch(
+        extra=EMPTY,
+        extra_evaluated=EMPTY,
+        include=True,
+        name=None,
+    )
+    def __init__(self, **kwargs):
+        super(Part, self).__init__(**kwargs)
+
+    @dispatch(
+        context=EMPTY,
+        render=EMPTY,
+    )
+    def __html__(self, *, context=None, render=None):
+        assert False, 'Not implemented'  # pragma: no cover
+
+    def __str__(self):
+        assert self._is_bound
+        return self.__html__()
 
     @dispatch
     def render_to_response(self, **kwargs):
@@ -278,70 +340,11 @@ class Part(RefinableObject):
 
         return HttpResponse(render_root(part=self, **kwargs))
 
-    def bind(self, *, parent=None, request=None):
-        assert parent is None or parent._is_bound
-        assert not self._is_bound
-
-        if parent is None:
-            self._request = request
-            if self.name is None:
-                self.name = 'root'
-
-        long_path_by_path = None
-        if parent is None:
-            long_path_by_path = build_long_path_by_path(self)
-
-        if hasattr(self, '_no_copy_on_bind'):
-            result = self
-        else:
-            result = copy.copy(self)
-            result._declared = self
-        del self  # to prevent mistakes when changing the code below
-
-        result.parent = parent
-        if parent is None:
-            result._long_path_by_path = long_path_by_path
-            result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
-            result._node_by_path = {}
-            result._node_by_long_path = {}
-
-        result._is_bound = True
-
-        apply_style(result)
-        result.on_bind()
-
-        return result
-
-    def on_bind(self) -> None:
-        pass
-
-    def children(self):
-        assert self._is_bound
-
-        return Struct()
-
     def request(self):
         if self.parent is None:
             return self._request
         else:
             return self.parent.request()
-
-    def dunder_path(self) -> str:
-        assert self._is_bound
-        if self.parent is not None:
-            return path_join(self.parent.dunder_path(), self.name, separator='__')
-        else:
-            assert self.name, f'{self} is missing a name, but it was asked about its path'
-            return ''
-
-    def path(self) -> str:
-        path_by_long_path = get_root(self)._path_by_long_path
-        long_path = build_long_path(self)
-        path = path_by_long_path.get(long_path)
-        if path is None:
-            candidates = '\n'.join(path_by_long_path.keys())
-            assert False, f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}"
-        return path
 
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.path()
@@ -359,14 +362,15 @@ class Part(RefinableObject):
         self._evaluate_attribute('include')
 
 
-def get_root(node):
+def get_root(node: Traversable) -> Traversable:
     while node.parent is not None:
         node = node.parent
     return node
 
 
-def build_long_path(node):
-    def _traverse(node):
+def build_long_path(node: Traversable) -> str:
+    def _traverse(node: Traversable) -> List[str]:
+        # noinspection PyProtectedMember
         assert node._is_bound
         if node.parent is None:
             return []

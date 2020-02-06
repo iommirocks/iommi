@@ -855,8 +855,15 @@ def test_query():
     t = TestTable(rows=TFoo.objects.all().order_by('pk'))
     t.bind(request=req('get'))
     assert t.query.variables.a.path() == 'query/a'
+    assert t.query.form.fields.a.path() == 'a'
 
-    verify_table_html(query=dict(a='1'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    rows = TFoo.objects.all().order_by('pk')
+
+    verify_table_html(
+        query=dict(a='1'),
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -866,8 +873,13 @@ def test_query():
                 foo
             </td>
         </tr>
-    </table>""")
-    verify_table_html(query=dict(b='bar'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    </table>
+    """)
+    verify_table_html(
+        query=dict(b='bar'),
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -885,8 +897,13 @@ def test_query():
                 bar
             </td>
         </tr>
-    </tbody>""")
-    verify_table_html(query={t.query.advanced_query_param(): 'b="bar"'}, table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    </tbody>
+    """)
+    verify_table_html(
+        query={t.query.advanced_query_param(): 'b="bar"'},
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="3">
             <td class="rj">
@@ -904,8 +921,13 @@ def test_query():
                 bar
             </td>
         </tr>
-    </tbody>""")
-    verify_table_html(query=dict(b='fo'), table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(name='tbody'), expected_html="""
+    </tbody>
+    """)
+    verify_table_html(
+        query=dict(b='fo'),
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
     <tbody>
         <tr data-pk="1">
             <td class="rj">
@@ -923,7 +945,8 @@ def test_query():
                 foo
             </td>
         </tr>
-    </table>""")
+    </table>
+    """)
 
 
 def test_cell_template():
@@ -1704,7 +1727,7 @@ def test_yield_rows():
 
 
 @pytest.mark.django_db
-def test_non_model_based_column_should_not_explore_in_query_object_creation():
+def test_error_on_invalid_variable_setup():
     class MyTable(Table):
         c = Column(attr=None, query__include=True, query__form__include=True)
 
@@ -1712,7 +1735,8 @@ def test_non_model_based_column_should_not_explore_in_query_object_creation():
             model = TFoo
 
     table = MyTable()
-    table.bind(request=req('get'))
+    with pytest.raises(AssertionError):
+        table.bind(request=req('get'))
 
 
 @pytest.mark.django_db
@@ -1845,7 +1869,8 @@ def test_endpoint_path_of_nested_part():
     page = Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
     target = find_target(path='/parts/table/query/form/fields/foo', root=page)
-    assert target.endpoint_path() == '/form/foo'
+    assert target.endpoint_path() == '/foo'
+    assert target.dunder_path() == 'parts__table__query__form__fields__foo'
 
 
 def test_dunder_name_for_column():

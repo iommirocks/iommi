@@ -1004,7 +1004,7 @@ class Form(Part):
 
         self._fields_unapplied_data = {}
         collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
-        self.fields: Dict[str, Field] = None
+        self.fields: Struct = None
 
         setup_endpoints(self, endpoints)
 

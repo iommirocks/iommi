@@ -6,10 +6,15 @@ from iommi import (
     Table,
     middleware,
 )
+from iommi.base import (
+    Traversable,
+    no_copy_on_bind,
+)
 from tri_declarative import (
     dispatch,
     Namespace,
 )
+from tri_struct import Struct
 
 
 def reindent(s, before=" ", after="    "):
@@ -78,3 +83,18 @@ def req(method, **data):
 
 def get_attrs(x, attrs):
     return {a: x.attrs.get(a) for a in attrs}
+
+
+@no_copy_on_bind
+class TestTraversable(Traversable):
+    def __init__(self, *, name, children=None):
+        super(TestTraversable, self).__init__()
+        self.name = name
+        self.declared_members = children or {}
+        self.bound_members = None
+
+    def children(self):
+        return self.bound_members
+
+    def on_bind(self):
+        self.bound_members = Struct({k: v.bind(parent=self) for k, v in self.declared_members.items()})

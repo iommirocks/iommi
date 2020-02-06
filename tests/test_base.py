@@ -27,6 +27,7 @@ from iommi.base import (
     no_copy_on_bind,
     as_html,
     evaluate_strict_container,
+    build_long_path,
 )
 from tri_declarative import Namespace
 from tri_struct import Struct
@@ -34,6 +35,7 @@ from tri_struct import Struct
 from tests.helpers import (
     request_with_middleware,
     req,
+    TestTraversable,
 )
 
 
@@ -90,76 +92,51 @@ def test_dispatch_error_message_to_client():
 
 
 def test_find_target():
-    bar = 'bar'
-    foo = Struct(
-        children=lambda: Struct(
+    # To build paths: declared_members: Struct, and optionally name
+    # To find target: _long_path_by_path: Dict on root, children()
+
+    bar = TestTraversable(name='bar')
+    foo = TestTraversable(
+        name='foo',
+        children=Struct(
             bar=bar,
         ),
     )
-    root = Struct(
-        children=lambda: Struct(
+    root = TestTraversable(
+        name='root',
+        children=Struct(
             foo=foo
         ),
     )
+    root.bind(request=None)
 
-    target, parents = find_target(path='/foo/bar', root=root)
+    target = find_target(path='/foo/bar', root=root)
     assert target is bar
-    assert parents == [root, foo]
-
-
-def test_find_target_with_default_child_present():
-    baz = 'baz'
-    bar = Struct(
-        children=lambda: Struct(
-            baz=baz,
-        ),
-    )
-    foo = Struct(
-        children=lambda: Struct(
-            bar=bar,
-        ),
-    )
-    root = Struct(
-        children=lambda: Struct(
-            foo=foo
-        ),
-    )
-
-    # First check the canonical path
-    target, parents = find_target(path='/foo/bar/baz', root=root)
-    assert target is baz
-    assert parents == [root, foo, bar]
-
-    # Then we check the short path using the default_child property
-    target, parents = find_target(path='/baz', root=root)
-    assert target is baz
-    assert parents == [root, foo, bar]
+    assert build_long_path(target) == 'foo/bar'
 
 
 def test_find_target_with_invalid_path():
-    bar = 'bar'
-
-    class Foo:
-        def children(self):
-            return Struct(bar=bar)
-
-        def __repr__(self):
-            return 'Foo'
-
-    class Root:
-        def children(self):
-            return Struct(foo=Foo())
-
-        def __repr__(self):
-            return 'Root'
+    bar = TestTraversable(name='bar')
+    foo = TestTraversable(
+        name='foo',
+        children=Struct(
+            bar=bar,
+        ),
+    )
+    root = TestTraversable(
+        name='root',
+        children=Struct(
+            foo=foo
+        ),
+    )
+    root.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
-        find_target(path='/foo/bar/baz', root=Root())
+        find_target(path='/foo/bar/baz', root=root)
 
-    assert str(e.value) == """Invalid path /foo/bar/baz.
-bar (of type <class 'str'> has no attribute children so can't be traversed.
-Parents so far: [Root, Foo, 'bar'].
-Path left: baz"""
+    assert str(e.value) == "Given path /foo/bar/baz not found.\n" \
+                           "  Short alternatives: '', 'foo', 'bar'\n" \
+                           "  Long alternatives: '', 'foo', 'foo/bar'"
 
 
 def test_evaluate_attrs():
@@ -230,83 +207,37 @@ def test_should_include_error_message():
 
 
 def test_perform_post_dispatch_error_message():
-    @no_copy_on_bind
-    class MyPart(Part):
-        def children(self):
-            return Struct(
-                foo=Struct(
-                    post_handler=None,
-                )
-            )
-
-        def __html__(self):
-            return 'MyPart'
-
-    target = MyPart()
+    target = TestTraversable(name='root', children=Struct(foo=TestTraversable(name='foo')))
     target.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
         perform_post_dispatch(root=target, path='/foo', value='')
 
-    assert str(e.value) == f'''Target Struct(post_handler=None) has no registered post_handler.
-    Path: "/foo"
-    Parents:
-        <tests.test_base.MyPart root (bound) children:['foo']>'''
+    assert str(e.value) == "Target <tests.helpers.TestTraversable foo (bound) path:'foo'> has no registered post_handler"
 
 
-def test_dunder_path_is_different_from_path_and_fully_qualified_skipping_root():
-    @no_copy_on_bind
-    class MyPart(Part):
-        def __init__(self):
-            super(MyPart, self).__init__()
-            self.name = 'my_part'
-
-        def __html__(self):
-            return 'MyPart'
-
-    @no_copy_on_bind
-    class MyPart2(Part):
-        def __init__(self):
-            super(MyPart2, self).__init__()
-            self.name = 'my_part2'
-            self.my_part = MyPart()
-
-        def on_bind(self):
-            self.my_part.bind(parent=self)
-
-        def children(self):
-            return Struct(
-                my_part=self.my_part
+def test_dunder_path_is_fully_qualified_and_skipping_root():
+    foo = TestTraversable(
+        name='my_part3',
+        children=Struct(
+            my_part2=TestTraversable(
+                name='my_part2',
+                children=Struct(
+                    my_part=TestTraversable(
+                        name='my_part',
+                    )
+                )
             )
-
-        def __html__(self):
-            return 'MyPart'
-
-    @no_copy_on_bind
-    class MyPart3(Part):
-        def __init__(self):
-            super(MyPart3, self).__init__()
-            self.name = 'my_part3'
-            self.my_part2 = MyPart2()
-
-        def on_bind(self):
-            self.my_part2.bind(parent=self)
-
-        def children(self):
-            return Struct(
-                my_part2=self.my_part2
-            )
-
-        def __html__(self):
-            return 'MyPart'
-
-    foo = MyPart3()
+        )
+    )
     foo.bind(request=None)
 
-    assert foo.children().my_part2.path() == ''
+    assert foo.path() == ''
+
+    assert foo.children().my_part2.path() == 'my_part2'
     assert foo.children().my_part2.dunder_path() == 'my_part2'
 
-    assert foo.children().my_part2.children().my_part.path() == ''
+    assert foo.children().my_part2.children().my_part.path() == 'my_part'
     assert foo.children().my_part2.children().my_part.dunder_path() == 'my_part2__my_part'
 
 
