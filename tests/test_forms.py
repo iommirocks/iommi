@@ -105,7 +105,7 @@ class MyTestForm(Form):
 
 def test_field_repr():
     assert repr(Field(name='foo')) == "<iommi.form.Field foo>"
-    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' children:['endpoints']>"
+    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' members:['endpoints']>"
 
 
 def test_required_choice():
@@ -556,8 +556,8 @@ def test_hidden_with_name():
     page = MyPage().bind(request=req('get', **{'foo': '1'}))
     rendered_page = page.__html__()
 
-    assert page.parts.children().baz._is_bound
-    assert page.parts.children().baz.mode == INITIALS_FROM_GET
+    assert page.parts.bound_members.baz._is_bound
+    assert page.parts.bound_members.baz.mode == INITIALS_FROM_GET
 
     soup = BeautifulSoup(rendered_page, 'html.parser')
     actual = {

@@ -156,10 +156,6 @@ class Page(Part):
     def on_bind(self) -> None:
         bind_members(self, name='parts')
 
-    def children(self):
-        assert self._is_bound
-        return Struct(parts=self.parts)
-
     def _evaluate_attribute_kwargs(self):
         return dict(page=self)
 

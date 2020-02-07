@@ -567,11 +567,6 @@ class Query(Part):
 
         setup_endpoints(self, endpoints)
 
-    def children(self):
-        return Struct(
-            form=self.form,
-            endpoints=setup_endpoint_proxies(self),
-        )
 
     def on_bind(self) -> None:
         bind_members(self, name='variables')
@@ -598,6 +593,9 @@ class Query(Part):
 
         self.form._fields_unapplied_data = Struct({x.name: x for x in generate_fields_unapplied_data()})
         self.form.bind(parent=self)
+
+        self.bound_members.form = self.form
+        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def _evaluate_attribute_kwargs(self):
         return dict(query=self)

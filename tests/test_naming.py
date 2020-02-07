@@ -36,7 +36,7 @@ def test_traverse():
     )
     root = StubTraversable(
         name='root',
-        children=Struct(
+        members=Struct(
             foo=foo
         ),
     )

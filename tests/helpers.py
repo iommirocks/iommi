@@ -88,14 +88,11 @@ def get_attrs(x, attrs):
 
 @no_copy_on_bind
 class StubTraversable(Traversable):
-    def __init__(self, *, name, children=None):
+    def __init__(self, *, name, members=None):
         super(StubTraversable, self).__init__()
         self.name = name
-        self.declared_members = children or {}
+        self.declared_members = members or {}
         self.bound_members = None
-
-    def children(self):
-        return self.bound_members
 
     def on_bind(self):
         self.bound_members = Struct({k: v.bind(parent=self) for k, v in self.declared_members.items()})

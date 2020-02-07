@@ -482,12 +482,6 @@ class Field(Part):
 
         setup_endpoints(self, endpoints)
 
-    def children(self):
-        assert self._is_bound
-        return Struct(
-            endpoints=setup_endpoint_proxies(self),
-        )
-
     @property
     def form(self):
         return self.parent.parent
@@ -555,6 +549,8 @@ class Field(Part):
             self.editable = False
 
         self.declared_field = self._declared
+
+        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def _evaluate(self):
         """
@@ -1023,19 +1019,6 @@ class Form(Part):
 
         setup_endpoints(self, endpoints)
 
-    def children(self):
-        assert self._is_bound
-        return Struct(
-            fields=self.fields,
-            # TODO: This should be a Part
-            actions=Struct(
-                name='actions',
-                children=lambda: self.actions,
-                _evaluate_attribute_kwargs=lambda: dict(form=self),
-            ),
-            endpoints=setup_endpoint_proxies(self)
-        )
-
     def on_bind(self) -> None:
         assert self.actions_template
         self._valid = None
@@ -1095,6 +1078,8 @@ class Form(Part):
         self.errors = Errors(parent=self, errors=self.errors)
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+
+        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def _evaluate_attribute_kwargs(self):
         return dict(form=self)

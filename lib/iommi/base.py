@@ -86,15 +86,13 @@ class EndPointHandlerProxy:
         self.func = func
         self.parent = parent
         assert callable(func)
+        self.bound_members = {}
 
     def endpoint_handler(self, value, **kwargs):
         return self.func(value=value, **kwargs)
 
     def evaluate_attribute_kwargs(self):
         return self.parent.evaluate_attribute_kwargs()
-
-    def children(self):
-        return {}
 
 
 def setup_endpoint_proxies(parent: 'Part') -> Dict[str, EndPointHandlerProxy]:
@@ -103,7 +101,7 @@ def setup_endpoint_proxies(parent: 'Part') -> Dict[str, EndPointHandlerProxy]:
         for k, v in parent.declared_endpoints.items()
     })
 
-    result.children = lambda: result
+    result.bound_members = result
 
     return result
 
@@ -128,8 +126,7 @@ def find_target(*, path, root):
     for part in long_path.split('/'):
         if part == '':
             continue
-        children = node.children()
-        node = children.get(part)
+        node = node.bound_members.get(part)
         assert node is not None, f'Failed to traverse long path {long_path}'
 
     return node
@@ -218,16 +215,11 @@ class Traversable(RefinableObject):
             p = ' path:<no path>'
         c = ''
         if self._is_bound:
-            children = self.children()
-            if children:
-                c = f" children:{list(children.keys())!r}"
+            members = self.bound_members
+            if members:
+                c = f" members:{list(members.keys())!r}"
 
         return f'<{self.__class__.__module__}.{self.__class__.__name__}{n}{b}{p}{c}>'
-
-    # TODO: rename to bound_members? calculate on bind, not a function!
-    def children(self):
-        assert self._is_bound
-        return Struct()
 
     def path(self) -> str:
         path_by_long_path = get_root(self)._path_by_long_path
@@ -268,6 +260,7 @@ class Traversable(RefinableObject):
             result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
 
         result._is_bound = True
+        result.bound_members = Struct()
 
         apply_style(result)
         result.on_bind()
@@ -276,6 +269,72 @@ class Traversable(RefinableObject):
 
     def on_bind(self) -> None:
         pass
+
+
+def get_root(node: Traversable) -> Traversable:
+    while node.parent is not None:
+        node = node.parent
+    return node
+
+
+def build_long_path(node: Traversable) -> str:
+    def _traverse(node: Traversable) -> List[str]:
+        # noinspection PyProtectedMember
+        assert node._is_bound
+        assert node.name is not None
+        if node.parent is None:
+            return []
+        return _traverse(node.parent) + [node.name]
+
+    return '/'.join(_traverse(node))
+
+
+def include_in_short_path(node):
+    return getattr(node, 'name', None) is not None
+
+
+def build_long_path_by_path(root) -> Dict[str, str]:
+    result = dict()
+
+    def _traverse(node, long_path_segments, short_path_candidate_segments):
+        if include_in_short_path(node):
+            def find_unique_suffix(parts):
+                for i in range(len(parts), -1, -1):
+                    candidate = '/'.join(parts[i:])
+                    if candidate not in result:
+                        return candidate
+
+            long_path = '/'.join(long_path_segments)
+            short_path = find_unique_suffix(short_path_candidate_segments)
+            if short_path is not None:
+                result[short_path] = long_path
+            else:
+                less_short_path = find_unique_suffix(long_path_segments)
+                if less_short_path is not None:
+                    result[less_short_path] = long_path
+                else:
+                    so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
+                    assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
+
+        members = getattr(node, 'declared_members', node)
+        for name, member in members.items():
+            if member:
+                _traverse(
+                    member,
+                    long_path_segments=long_path_segments + [name],
+                    short_path_candidate_segments=short_path_candidate_segments + (
+                        [name]
+                        if include_in_short_path(member)
+                        else []
+                    )
+                )
+
+    _traverse(root, [], [])
+
+    # TODO: remove
+    pprint(result)
+
+    return result
 
 
 class Part(Traversable):
@@ -369,70 +428,6 @@ class Part(Traversable):
         self._evaluate_attribute('include')
 
 
-def get_root(node: Traversable) -> Traversable:
-    while node.parent is not None:
-        node = node.parent
-    return node
-
-
-def build_long_path(node: Traversable) -> str:
-    def _traverse(node: Traversable) -> List[str]:
-        # noinspection PyProtectedMember
-        assert node._is_bound
-        assert node.name is not None
-        if node.parent is None:
-            return []
-        return _traverse(node.parent) + [node.name]
-
-    return '/'.join(_traverse(node))
-
-
-def include_in_short_path(node):
-    return getattr(node, 'name', None) is not None
-
-
-def build_long_path_by_path(root) -> Dict[str, str]:
-    result = dict()
-
-    def _traverse(node, long_path_segments, short_path_candidate_segments):
-        if include_in_short_path(node):
-            def find_unique_suffix(parts):
-                for i in range(len(parts), -1, -1):
-                    candidate = '/'.join(parts[i:])
-                    if candidate not in result:
-                        return candidate
-
-            long_path = '/'.join(long_path_segments)
-            short_path = find_unique_suffix(short_path_candidate_segments)
-            if short_path is not None:
-                result[short_path] = long_path
-            else:
-                less_short_path = find_unique_suffix(long_path_segments)
-                if less_short_path is not None:
-                    result[less_short_path] = long_path
-                else:
-                    so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
-                    assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
-
-        children = getattr(node, 'declared_members', node)
-        for name, child in children.items():
-            if child:
-                _traverse(
-                    child,
-                    long_path_segments=long_path_segments + [name],
-                    short_path_candidate_segments=short_path_candidate_segments + (
-                        [name]
-                        if include_in_short_path(child)
-                        else []
-                    )
-                )
-
-    _traverse(root, [], [])
-    # TODO: remove
-    pprint(result)
-    return result
-
-
 PartType = Union[Part, str, Template]
 
 
@@ -519,11 +514,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 class Members(Part):
     def __init__(self, *, declared_items, **kwargs):
         super(Members, self).__init__(**kwargs)
-        self.members: Dict[str, Any] = Struct()
         self.declared_items = declared_items
-
-    def children(self):
-        return self.members
 
     def on_bind(self) -> None:
         bound_items = [item for item in sort_after([x.bind(parent=self) for x in self.declared_items.values()])]
@@ -531,39 +522,39 @@ class Members(Part):
         for item in bound_items:
             item._evaluate_include()
 
-        self.members = Struct({item.name: item for item in bound_items if should_include(item)})
+        self.bound_members = Struct({item.name: item for item in bound_items if should_include(item)})
 
     def get(self, key, default=None):
-        return self.members.get(key, default)
+        return self.bound_members.get(key, default)
 
     def __getattr__(self, item):
-        if self.members is None:
+        if self.bound_members is None:
             raise AttributeError()
         try:
-            return self.members[item]
+            return self.bound_members[item]
         except KeyError:  # pragma: no cover
             raise AttributeError()
 
     def values(self):
-        return self.members.values()
+        return self.bound_members.values()
 
     def keys(self):
-        return self.members.keys()
+        return self.bound_members.keys()
 
     def items(self):
-        return self.members.items()
+        return self.bound_members.items()
 
     def __contains__(self, item):
-        return item in self.members
+        return item in self.bound_members
 
     def __setitem__(self, key, value):
-        self.members[key] = value
+        self.bound_members[key] = value
 
     def __getitem__(self, item):
-        return self.members[item]
+        return self.bound_members[item]
 
     def __len__(self):
-        return len(self.members)
+        return len(self.bound_members)
 
     def __iter__(self):  # pragma: no cover
         raise NotImplementedError('Iterate with .keys(), .values() or .items()')
@@ -574,6 +565,7 @@ def bind_members(obj: Part, *, name: str) -> None:
     m = Members(name=name, declared_items=declared_items)
     m.bind(parent=obj)
     setattr(obj, name, m)
+    setattr(obj.bound_members, name, m)
 
 
 def evaluate_members(obj, keys, **kwargs):

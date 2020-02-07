@@ -1196,16 +1196,125 @@ class Table(Part):
         # Columns need to be at the end to not steal the short names
         self.declared_members.columns = self.declared_members.pop('columns')
 
-    def children(self):
-        return Struct(
-            query=self.query,  # TODO: this is a property which we should try to remove
-            bulk=self.bulk_form,  # TODO: this is a property which we should try to remove, also different from the line above
+    def on_bind(self) -> None:
+        bind_members(self, name='actions')
+        bind_members(self, name='columns')
 
-            columns=self.columns,
-            # TODO: paginator?
+        evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
+        self._prepare_sorting()
 
-            endpoints=setup_endpoint_proxies(self),
+        evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
+
+        for column in self.columns.values():
+            # Special case for entire table not sortable
+            if not self.sortable:
+                column.sortable = False
+
+            # Special case for automatic query config
+            if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
+                column.query.include = True
+                column.query.form.include = True
+
+        self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
+
+        self._prepare_headers()
+        evaluate_members(
+            self,
+            [
+                'bulk_filter',
+                'bulk_exclude',
+                'row',
+                'filter',
+                '_query',
+                'bulk',
+            ],
+            **self.evaluate_attribute_kwargs()
         )
+        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+
+        if self.model:
+            def generate_variables_unapplied_data():
+                for column in self.columns.values():
+
+                    query_namespace = setdefaults_path(
+                        Namespace(),
+                        name=column.name,
+                        include=column.query.include,
+                        form__display_name=column.display_name,
+                    )
+                    yield query_namespace
+
+            self._query._variables_unapplied_data = Struct({x.name: x for x in generate_variables_unapplied_data()})
+
+            self._query.bind(parent=self)
+            self._query_form = self._query.form if self._query.variables else None
+            self.bound_members.query = self._query
+
+            self._query_error = ''
+            if self._query_form:
+                try:
+                    q = self.query.to_q()
+                    if q:
+                        self.rows = self.rows.filter(q)
+                except QueryException as e:
+                    self._query_error = str(e)
+
+            def generate_bulk_fields_unapplied_data():
+                for column in self.columns.values():
+
+                    bulk_namespace = setdefaults_path(
+                        Namespace(),
+                        column.bulk,
+                        name=column.name,
+                        include=column.bulk.include,
+                        display_name=column.display_name,
+                    )
+                    yield bulk_namespace
+
+            if self._bulk_form is not None:
+                self._bulk_form._fields_unapplied_data = Struct({x.name: x for x in generate_bulk_fields_unapplied_data()})
+                self._bulk_form.bind(parent=self)
+                self.bound_members.bulk = self._bulk_form
+
+        if isinstance(self.rows, QuerySet):
+            prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
+            select = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
+            if prefetch:
+                self.rows = self.rows.prefetch_related(*prefetch)
+            if select:
+                self.rows = self.rows.select_related(*select)
+
+        request = self.request()
+        # TODO: I paginate only when I have a request... this is a bit weird, but matches old behavior and the tests assume this for now
+        if self.page_size and request and isinstance(self.rows, QuerySet) and self.paginator is not None:
+            try:
+                self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
+            except ValueError:
+                pass
+
+            if isinstance(self.paginator.call_target, type) and issubclass(self.paginator.call_target, DjangoPaginator):
+                django_paginator = self.paginator(self.rows, self.page_size)
+            elif isinstance(self.paginator.call_target, DjangoPaginator):
+                django_paginator = self.paginator
+            else:
+                assert isinstance(self.paginator, Namespace)
+                django_paginator = DjangoPaginator(self.rows, self.page_size)
+            self.paginator = Paginator(table=self, django_paginator=django_paginator)
+
+            try:
+                self.rows = self.paginator.get_paginated_rows()
+            except (InvalidPage, ValueError):
+                raise Http404
+        else:
+            self.paginator = Paginator(table=self, django_paginator=None)
+
+        self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
+
+        self._prepare_auto_rowspan()
+
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+
+        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
@@ -1359,122 +1468,6 @@ class Table(Part):
     def bulk_form(self) -> Form:
         assert self._is_bound
         return self._bulk_form
-
-    def on_bind(self) -> None:
-        bind_members(self, name='actions')
-        bind_members(self, name='columns')
-
-        evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
-        self._prepare_sorting()
-
-        evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
-
-        for column in self.columns.values():
-            # Special case for entire table not sortable
-            if not self.sortable:
-                column.sortable = False
-
-            # Special case for automatic query config
-            if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
-                column.query.include = True
-                column.query.form.include = True
-
-        self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
-
-        self._prepare_headers()
-        evaluate_members(
-            self,
-            [
-                'bulk_filter',
-                'bulk_exclude',
-                'row',
-                'filter',
-                '_query',
-                'bulk',
-            ],
-            **self.evaluate_attribute_kwargs()
-        )
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
-
-        if self.model:
-            def generate_variables_unapplied_data():
-                for column in self.columns.values():
-
-                    query_namespace = setdefaults_path(
-                        Namespace(),
-                        name=column.name,
-                        include=column.query.include,
-                        form__display_name=column.display_name,
-                    )
-                    yield query_namespace
-
-            self._query._variables_unapplied_data = Struct({x.name: x for x in generate_variables_unapplied_data()})
-
-            self._query.bind(parent=self)
-            self._query_form = self._query.form if self._query.variables else None
-
-            self._query_error = ''
-            if self._query_form:
-                try:
-                    q = self.query.to_q()
-                    if q:
-                        self.rows = self.rows.filter(q)
-                except QueryException as e:
-                    self._query_error = str(e)
-
-            def generate_bulk_fields_unapplied_data():
-                for column in self.columns.values():
-
-                    bulk_namespace = setdefaults_path(
-                        Namespace(),
-                        column.bulk,
-                        name=column.name,
-                        include=column.bulk.include,
-                        display_name=column.display_name,
-                    )
-                    yield bulk_namespace
-
-            if self._bulk_form is not None:
-                self._bulk_form._fields_unapplied_data = Struct({x.name: x for x in generate_bulk_fields_unapplied_data()})
-                self._bulk_form.bind(parent=self)
-
-        if isinstance(self.rows, QuerySet):
-            prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
-            select = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
-            if prefetch:
-                self.rows = self.rows.prefetch_related(*prefetch)
-            if select:
-                self.rows = self.rows.select_related(*select)
-
-        request = self.request()
-        # TODO: I paginate only when I have a request... this is a bit weird, but matches old behavior and the tests assume this for now
-        if self.page_size and request and isinstance(self.rows, QuerySet) and self.paginator is not None:
-            try:
-                self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
-            except ValueError:
-                pass
-
-            if isinstance(self.paginator.call_target, type) and issubclass(self.paginator.call_target, DjangoPaginator):
-                django_paginator = self.paginator(self.rows, self.page_size)
-            elif isinstance(self.paginator.call_target, DjangoPaginator):
-                django_paginator = self.paginator
-            else:
-                assert isinstance(self.paginator, Namespace)
-                django_paginator = DjangoPaginator(self.rows, self.page_size)
-            self.paginator = Paginator(table=self, django_paginator=django_paginator)
-
-            try:
-                self.rows = self.paginator.get_paginated_rows()
-            except (InvalidPage, ValueError):
-                raise Http404
-        else:
-            self.paginator = Paginator(table=self, django_paginator=None)
-
-        self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
-
-        self._prepare_auto_rowspan()
-
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
 
     def _evaluate_attribute_kwargs(self):
         return dict(table=self)

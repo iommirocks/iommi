@@ -98,13 +98,13 @@ def test_find_target():
     bar = StubTraversable(name='bar')
     foo = StubTraversable(
         name='foo',
-        children=Struct(
+        members=Struct(
             bar=bar,
         ),
     )
     root = StubTraversable(
         name='root',
-        children=Struct(
+        members=Struct(
             foo=foo
         ),
     )
@@ -119,13 +119,13 @@ def test_find_target_with_invalid_path():
     bar = StubTraversable(name='bar')
     foo = StubTraversable(
         name='foo',
-        children=Struct(
+        members=Struct(
             bar=bar,
         ),
     )
     root = StubTraversable(
         name='root',
-        children=Struct(
+        members=Struct(
             foo=foo
         ),
     )
@@ -207,7 +207,7 @@ def test_should_include_error_message():
 
 
 def test_perform_post_dispatch_error_message():
-    target = StubTraversable(name='root', children=Struct(foo=StubTraversable(name='foo')))
+    target = StubTraversable(name='root', members=Struct(foo=StubTraversable(name='foo')))
     target.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
@@ -219,10 +219,10 @@ def test_perform_post_dispatch_error_message():
 def test_dunder_path_is_fully_qualified_and_skipping_root():
     foo = StubTraversable(
         name='my_part3',
-        children=Struct(
+        members=Struct(
             my_part2=StubTraversable(
                 name='my_part2',
-                children=Struct(
+                members=Struct(
                     my_part=StubTraversable(
                         name='my_part',
                     )
@@ -234,11 +234,11 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
 
     assert foo.path() == ''
 
-    assert foo.children().my_part2.path() == 'my_part2'
-    assert foo.children().my_part2.dunder_path() == 'my_part2'
+    assert foo.bound_members.my_part2.path() == 'my_part2'
+    assert foo.bound_members.my_part2.dunder_path() == 'my_part2'
 
-    assert foo.children().my_part2.children().my_part.path() == 'my_part'
-    assert foo.children().my_part2.children().my_part.dunder_path() == 'my_part2__my_part'
+    assert foo.bound_members.my_part2.bound_members.my_part.path() == 'my_part'
+    assert foo.bound_members.my_part2.bound_members.my_part.dunder_path() == 'my_part2__my_part'
 
 
 def test_as_html():
