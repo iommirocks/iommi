@@ -1,8 +1,11 @@
+import csv
+from datetime import datetime
 from enum import (
     auto,
     Enum,
 )
 from functools import total_ordering
+from io import StringIO
 from itertools import groupby
 from typing import (
     Any,
@@ -13,6 +16,7 @@ from typing import (
     Type,
     Union,
 )
+from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.core.paginator import (
@@ -23,6 +27,8 @@ from django.db.models import QuerySet
 from django.http import (
     Http404,
     HttpResponseRedirect,
+    HttpResponse,
+    FileResponse,
 )
 from django.utils.encoding import (
     force_str,
@@ -35,6 +41,7 @@ from django.utils.safestring import mark_safe
 from iommi._web_compat import (
     render_template,
     Template,
+    smart_text,
 )
 from iommi.action import (
     Action,
@@ -1019,6 +1026,64 @@ class TableAutoConfig(AutoConfig):
     rows = Refinable()
 
 
+def endpoint__csv(table, **_):
+    columns = [c for c in table.columns.values() if c.extra_evaluated.get('report_name')]
+    csv_safe_column_indexes = {i for i, c in enumerate(table.columns.values()) if 'csv_whitelist' in c.extra}
+    assert columns, 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
+    assert 'report_name' in table.extra_evaluated, 'To get CSV output you must specify extra_evaluated__report_name on the table'
+    filename = table.extra_evaluated.report_name
+
+    header = [c.extra_evaluated.report_name for c in columns]
+
+    def smart_text2(s):
+        if s is None:
+            return ''
+        elif isinstance(s, float):
+            result = ('%f' % s).strip('0')
+            if result[-1] == '.':
+                result += '0'
+            return result
+        else:
+            assert not isinstance(s, bytes)
+            return str(s).strip()
+
+    def safe_csv_value(value):
+        # CSV formula injection protection: http://georgemauer.net/2017/10/07/csv-injection.html
+        if value and value[0] in ('+', '-', '@', '='):
+            return '\t' + value
+        else:
+            return value
+
+    def cell_value(bound_row, bound_column):
+        value = BoundCell(bound_row, bound_column).value
+        return bound_column.extra_evaluated.get('report_value', value)
+
+    def rows():
+        for bound_row in table.bound_rows():
+            yield [cell_value(bound_row, bound_column) for bound_column in columns]
+
+    def write_csv_row(writer, row):
+        row_strings = [smart_text2(value) for value in row]
+        safe_row = [
+            v if i in csv_safe_column_indexes else safe_csv_value(v)
+            for i, v in enumerate(row_strings)
+        ]
+        writer.writerow(safe_row)
+
+    f = StringIO()
+    writer = csv.writer(f)
+    writer.writerow(header)
+    for row in rows():
+        write_csv_row(writer, row)
+
+    response = FileResponse(f.getvalue(), 'text/csv')
+
+    # RFC 2183, RFC 2184
+    response['Content-Disposition'] = smart_text("attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename)))
+    response['Last-Modified'] = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+    return response
+
+
 @no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
@@ -1053,7 +1118,7 @@ class Table(Part):
     rows = Refinable()
     columns = Refinable()
     bulk: Namespace = Refinable()
-    endpoint: Namespace = Refinable()
+    endpoints: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = Refinable()
@@ -1068,7 +1133,8 @@ class Table(Part):
         form_class = Form
         query_class = Query
         action_class = Action
-        endpoint__tbody = (lambda table, key, value: {'html': table.__html__(template='tri_table/table_container.html')})
+        endpoints__tbody = (lambda table, **_: {'html': table.__html__(template='tri_table/table_container.html')})
+        endpoints__csv = endpoint__csv
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
 

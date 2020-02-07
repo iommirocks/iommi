@@ -14,6 +14,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.http.response import (
     HttpResponse,
+    HttpResponseBase,
 )
 from django.template import (
     Template,
@@ -114,12 +115,12 @@ def find_target(*, path, root):
     if long_path is None:
         long_path = p
         if long_path not in root._path_by_long_path.keys():
-            short_paths = ', '.join(map(repr, root._long_path_by_path.keys()))
-            long_paths = ', '.join(map(repr, root._path_by_long_path.keys()))
+            short_paths = '\n        '.join(root._long_path_by_path.keys())
+            long_paths = '\n        '.join(root._path_by_long_path.keys())
             raise InvalidEndpointPathException(
                 f"Given path {path} not found.\n"
-                f"  Short alternatives: {short_paths}\n"
-                f"  Long alternatives: {long_paths}"
+                f"    Short alternatives: {short_paths}\n"
+                f"    Long alternatives: {long_paths}"
             )
 
     node = root
@@ -377,7 +378,11 @@ class Part(Traversable):
             dispatch_error = 'Invalid endpoint path'
 
             def dispatch_response_handler(r):
-                return HttpResponse(json.dumps(r), content_type='application/json')
+                if isinstance(r, dict):
+                    return HttpResponse(json.dumps(r), content_type='application/json')
+                else:
+                    assert isinstance(r, HttpResponseBase)
+                    return r
 
         elif request.method == 'POST':
             dispatch_prefix = '-'

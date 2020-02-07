@@ -19,7 +19,6 @@ from tri_struct import Struct
 from iommi.base import MISSING
 
 
-@dispatch  # pragma: no mutate
 def create_members_from_model(default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):
     if additional is None:
         additional = {}
