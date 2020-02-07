@@ -115,12 +115,14 @@ def find_target(*, path, root):
     if long_path is None:
         long_path = p
         if long_path not in root._path_by_long_path.keys():
-            short_paths = '\n        '.join(root._long_path_by_path.keys())
-            long_paths = '\n        '.join(root._path_by_long_path.keys())
+            def format_paths(paths):
+                return '\n        '.join(["''" if not x else x for x in paths.keys()])
+            short_paths = format_paths(root._long_path_by_path)
+            long_paths = format_paths(root._path_by_long_path)
             raise InvalidEndpointPathException(
                 f"Given path {path} not found.\n"
-                f"    Short alternatives: {short_paths}\n"
-                f"    Long alternatives: {long_paths}"
+                f"    Short alternatives:\n        {short_paths}\n"
+                f"    Long alternatives:\n        {long_paths}"
             )
 
     node = root

@@ -135,8 +135,14 @@ def test_find_target_with_invalid_path():
         find_target(path='/foo/bar/baz', root=root)
 
     assert str(e.value) == "Given path /foo/bar/baz not found.\n" \
-                           "  Short alternatives: '', 'foo', 'bar'\n" \
-                           "  Long alternatives: '', 'foo', 'foo/bar'"
+                           "    Short alternatives:\n" \
+                           "        ''\n" \
+                           "        foo\n" \
+                           "        bar\n" \
+                           "    Long alternatives:\n" \
+                           "        ''\n" \
+                           "        foo\n" \
+                           "        foo/bar"
 
 
 def test_evaluate_attrs():
