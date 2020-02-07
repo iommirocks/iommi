@@ -56,6 +56,7 @@ from iommi.from_model import (
     get_name_field_for_model,
     member_from_model,
     NoRegisteredNameException,
+    AutoConfig,
 )
 from iommi.page import (
     Fragment,
@@ -927,6 +928,10 @@ class Field(Part):
         return call_target(model_field=model_field, **kwargs)
 
 
+class FormAutoConfig(AutoConfig):
+    instance = Refinable()
+
+
 @no_copy_on_bind
 @declarative(Field, '_fields_dict')
 @with_meta
@@ -979,10 +984,25 @@ class Form(Part):
         attrs__method='post',
         endpoints=EMPTY,
         actions__submit__call_target__attribute='submit',
+        auto=EMPTY,
     )
-    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, endpoints: Dict[str, Any] = None, **kwargs):
+    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, endpoints: Dict[str, Any] = None, model, auto, **kwargs):
 
-        super(Form, self).__init__(**kwargs)
+        if auto:
+            auto = FormAutoConfig(**auto)
+            assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
+            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
+            assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
+            model, instance, fields = self._from_model(
+                model=auto.model,
+                instance=auto.instance,
+                fields=fields,
+                include=auto.include,
+                exclude=auto.exclude,
+                additional=auto.additional,
+            )
+
+        super(Form, self).__init__(model=model, **kwargs)
 
         assert isinstance(fields, dict)
 
@@ -1106,24 +1126,9 @@ class Form(Part):
     @dispatch(
         fields=EMPTY,
     )
-    def from_model(cls, model, *, fields, instance=None, include=None, exclude=None, extra_fields=None, **kwargs):
-        """
-        Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
-        of "the_name_of_the_fields__param". For example:
-
-        .. code:: python
-
-            class Foo(Model):
-                foo = IntegerField()
-
-            Form.from_model(request=request, model=Foo, fields__foo__help_text='Overridden help text')
-
-        :param include: fields to include. Defaults to all
-        :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
-
-        """
-        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, extra=extra_fields, fields=fields)
-        return cls(model=model, instance=instance, fields=fields, **kwargs)
+    def _from_model(cls, model, *, fields, instance=None, include=None, exclude=None, additional=None):
+        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, additional=additional, fields=fields)
+        return model, instance, fields
 
     def is_target(self):
         return any(action.is_target() for action in self.actions.values())
@@ -1281,15 +1286,14 @@ class Form(Part):
         return r
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='from_model',
+    @dispatch(
         on_save=lambda **kwargs: None,  # pragma: no mutate
         redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         redirect_to=None,
         parts=EMPTY,
         extra__title=None,
     )
-    def as_create_or_edit_page(cls, *, call_target=None, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
+    def as_create_or_edit_page(cls, *, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
         assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
         if model is None and instance is not None:
             model = type(instance)
@@ -1313,7 +1317,7 @@ class Form(Part):
             parts={
                 # TODO: do we really need to pop from parts ourselves here?
                 'title': html.h1(title, **parts.pop('title', {})),
-                name: call_target(extra=extra, model=model, instance=instance, **kwargs),
+                name: cls(extra=extra, auto__model=model, auto__instance=instance, **kwargs),
                 **parts
             }
         )

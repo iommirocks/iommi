@@ -63,6 +63,7 @@ from iommi.form import (
 from iommi.from_model import (
     create_members_from_model,
     member_from_model,
+    AutoConfig,
 )
 from iommi.query import (
     Q_OP_BY_OP,
@@ -971,6 +972,10 @@ class Paginator:
         return self.__html__()
 
 
+class TableAutoConfig(AutoConfig):
+    rows = Refinable()
+
+
 @no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
@@ -1067,8 +1072,10 @@ class Table(Part):
 
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
+
+        auto=EMPTY,
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, instance=None, actions: Namespace = None, endpoints: Dict[str, Any] = None, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, endpoints: Dict[str, Any] = None, auto, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1079,6 +1086,20 @@ class Table(Part):
         :param bulk_exclude: exclude filters to apply to the `QuerySet` before performing the bulk operation
         :param sortable: set this to `False` to turn off sorting for all columns
         """
+        if auto:
+            auto = TableAutoConfig(**auto)
+            assert not _columns_dict, "You can't have an auto generated Table AND a declarative Table at the same time"
+            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
+            assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+            model, rows, columns = self._from_model(
+                model=auto.model,
+                rows=auto.rows,
+                columns=columns,
+                include=auto.include,
+                exclude=auto.exclude,
+                additional=auto.additional,
+            )
+
         assert isinstance(columns, dict)
 
         model, rows = model_and_rows(model, rows)
@@ -1089,8 +1110,6 @@ class Table(Part):
         self._columns_unapplied_data = {}
         self.columns = None
         self.rendered_columns = None
-
-        self.instance = instance
 
         super(Table, self).__init__(
             model=model,
@@ -1484,26 +1503,11 @@ class Table(Part):
     @dispatch(
         columns=EMPTY,
     )
-    def from_model(cls, *, rows=None, model=None, columns=None, instance=None, include=None, exclude=None, extra_columns=None, **kwargs):
-        """
-        Create an entire form based on the columns of a model. To override a column parameter send keyword arguments in the form
-        of "the_name_of_the_columns__param". For example:
-
-        .. code:: python
-
-            class Foo(Model):
-                foo = IntegerField()
-
-            Table.from_model(request=request, model=Foo, columns__foo__help_text='Overridden help text')
-
-        :param include: columns to include. Defaults to all
-        :param exclude: columns to exclude. Defaults to none (except that AutoField is always excluded!)
-
-        """
+    def _from_model(cls, *, rows=None, model=None, columns=None, include=None, exclude=None, additional=None):
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, extra=extra_columns, columns=columns)
-        return cls(rows=rows, model=model, instance=instance, columns=columns, **kwargs)
+        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, additional=additional, columns=columns)
+        return model, rows, columns
 
     def bulk_queryset(self):
         queryset = self.model.objects.all() \

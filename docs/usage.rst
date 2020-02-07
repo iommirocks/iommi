@@ -74,8 +74,8 @@ Or you can compose a page with two tables:
 
     def my_page(request):
         class MyPage(Page):
-            foos = Table.from_model(model=Foo)
-            bars = Table.from_model(model=Bar)
+            foos = Table(auto__model=Foo)
+            bars = Table(auto__model=Bar)
 
         return MyPage()
 

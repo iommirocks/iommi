@@ -13,6 +13,7 @@ from iommi.base import (
 from tri_declarative import (
     dispatch,
     Namespace,
+    EMPTY,
 )
 from tri_struct import Struct
 
@@ -32,7 +33,7 @@ def remove_csrf(html_code):
 
 
 @dispatch(
-    table__call_target=Table.from_model,
+    table__call_target=Table,
 )
 def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     """

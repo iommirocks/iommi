@@ -103,8 +103,8 @@ place a value, you can use a lambda. So for example the simple case could be:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Musician,
+    form = Form(
+        auto__model=Musician,
         fields__instrument__initial='guitar',
     )
 
@@ -113,8 +113,8 @@ but for the more dynamic case we can write:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Musician,
+    form = Form(
+        auto__model=Musician,
         fields__instrument__initial=
             lambda form, **_: 'guitar' if form.request().is_staff else 'tambourine',
     )
@@ -223,8 +223,8 @@ that was automatically generated we can write:
 
 .. code:: python
 
-    Form.from_model(
-        model=Foo,
+    Form(
+        auto__model=Foo,
         fields__a_field__input__attrs__style__font='helvetica')
 
 See also `Everything has a name`_

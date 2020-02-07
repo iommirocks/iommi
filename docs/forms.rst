@@ -77,9 +77,8 @@ is equivalent to:
 .. code:: python
 
     def edit_user_view(request, username):
-        form = Form.from_model(
-            data=request.POST,
-            model=User,
+        form = Form(
+            auto__model=User,
             # the field 'name' is generated automatically and
             # we are fine with the defaults
             username__is_valid=
@@ -88,6 +87,7 @@ is equivalent to:
             # show only for staff
             is_admin__include=lambda form, **_: form.request().user.is_staff,
         )
+        form.bind(request=request)
 
         # rest of view function...
 

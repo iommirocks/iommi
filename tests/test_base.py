@@ -59,8 +59,8 @@ class T2(models.Model):
 
 
 class MyPage(Page):
-    t1 = Table.from_model(
-        model=T1,
+    t1 = Table(
+        auto__model=T1,
         columns__foo=dict(
             query__include=True,
             query__form__include=True,
@@ -71,8 +71,8 @@ class MyPage(Page):
         ),
     )
 
-    t2 = Table.from_model(
-        model=T2,
+    t2 = Table(
+        auto__model=T2,
         columns__foo=dict(
             query__include=True,
             query__form__include=True,

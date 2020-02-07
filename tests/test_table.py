@@ -1410,9 +1410,8 @@ def test_row_extra_evaluated():
 
 
 def test_from_model():
-    t = Table.from_model(
-        model=TFoo,
-        rows=TFoo.objects.all(),
+    t = Table(
+        auto__model=TFoo,
         columns__a__display_name='Some a',
         columns__a__extra__stuff='Some stuff',
     )
@@ -1424,8 +1423,8 @@ def test_from_model():
 
 
 def test_from_model_foreign_key():
-    t = Table.from_model(
-        model=TBar,
+    t = Table(
+        auto__model=TBar,
     ).bind(request=None)
     assert list(t.declared_columns.keys()) == ['id', 'foo', 'c']
     assert list(t.columns.keys()) == ['foo', 'c']
@@ -1453,7 +1452,7 @@ def test_from_model_implicit():
     class TestTable(Table):
         pass
 
-    p = TestTable.from_model(rows=TBar.objects.all()).as_page().bind(request=None)
+    p = TestTable(auto__rows=TBar.objects.all()).as_page().bind(request=None)
     assert 'table' in p.parts.keys()
     assert list(p.parts.table.declared_columns.keys()) == ['id', 'foo', 'c']
 
@@ -1615,17 +1614,17 @@ def test_ordering():
     TFoo.objects.create(a=4, b='a')
 
     # no ordering
-    t = Table.from_model(model=TFoo)
+    t = Table(auto__model=TFoo)
     t.bind(request=req('get'))
     assert not t.rows.query.order_by
 
     # ordering from GET parameter
-    t = Table.from_model(model=TFoo)
+    t = Table(auto__model=TFoo)
     t.bind(request=req('get', order='a'))
     assert list(t.rows.query.order_by) == ['a']
 
     # default ordering
-    t = Table.from_model(model=TFoo, default_sort_order='b')
+    t = Table(auto__model=TFoo, default_sort_order='b')
     t.bind(request=req('get', order='b'))
     assert list(t.rows.query.order_by) == ['b']
 
@@ -1658,7 +1657,7 @@ def test_many_to_many():
 </table>
 """
 
-    verify_table_html(expected_html=expected_html, table__model=TBaz)
+    verify_table_html(expected_html=expected_html, table__auto__model=TBaz)
 
 
 @pytest.mark.django_db
@@ -1783,9 +1782,9 @@ def test_from_model_with_inheritance():
             form_class = MyForm
             query_class = MyQuery
 
-    MyTable.from_model(
-        rows=FromModelWithInheritanceTest.objects.all(),
-        model=FromModelWithInheritanceTest,
+    MyTable(
+        auto__rows=FromModelWithInheritanceTest.objects.all(),
+        auto__model=FromModelWithInheritanceTest,
         columns__value__query__include=True,
         columns__value__query__form__include=True,
         columns__value__bulk__include=True,
@@ -1845,7 +1844,7 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
+        return Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
 
     from iommi import middleware
     m = middleware(get_response)
@@ -1864,7 +1863,7 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table.from_model(model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
+    page = Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
     target = find_target(path='/parts/table/query/form/fields/foo', root=page)
     assert target.endpoint_path() == '/foo'

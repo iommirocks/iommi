@@ -38,10 +38,12 @@ Example:
 
     def music_page(request):
         class MusicPage(Page):
-            musicians = Table.from_model(
-                model=Musician)
-            albums = Table.from_model(
-                model=Album)
+            musicians = Table(
+                auto__model=Musician,
+            )
+            albums = Table(
+                auto__model=Album,
+            )
 
         return MusicPage()
 

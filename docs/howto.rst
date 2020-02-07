@@ -11,8 +11,8 @@ Pass a callable to the `parse` member of the field:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__parse=
             lambda field, string_value, **_: int(string_value),
     )
@@ -24,8 +24,8 @@ Pass a callable or `bool` to the `editable` member of the field:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__editable=
             lambda field, form, **_: form.request().user.is_staff,
         fields__bar__editable=False,
@@ -38,8 +38,8 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         editable=False,
     )
 
@@ -50,8 +50,8 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__is_valid=
             lambda form, field, parsed_data: (False, 'invalid!'),
     )
@@ -64,12 +64,12 @@ See `How do I say which fields to include when creating a form from a model?`_
 How do I say which fields to include when creating a form from a model?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Form.from_model()` has four methods to select which fields are included in the final form:
+`Form()` has four methods to select which fields are included in the final form:
 
-1. the `include` parameter: this is a list of strings for members of the model to use to generate the form.
-2. the `exclude` parameter: the inverse of `include`. If you use this the form gets all the fields from the model excluding the ones with names you supply in `exclude`.
+1. the `auto__include` parameter: this is a list of strings for members of the model to use to generate the form.
+2. the `auto__exclude` parameter: the inverse of `include`. If you use this the form gets all the fields from the model excluding the ones with names you supply in `exclude`.
 3. for more advanced usages you can also pass the `include` parameter to a specific field like `fields__my_field__include=True`. Here you can supply either a `bool` or a callable like `fields__my_field__include=lambda form, field, **_: form.request().user.is_staff`.
-4. you can also add fields that are not present in the model with the `extra_fields`. This is a `dict` from name to either a `Field` instance or a `dict` containing a definition of how to create a `Field`.
+4. you can also add fields that are not present in the model with the `auto__additional`. This is a `dict` from name to either a `Field` instance or a `dict` containing a definition of how to create a `Field`.
 
 
 How do I supply a custom initial value?
@@ -79,8 +79,8 @@ Pass a value or callable to the `initial` member:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__initial=7,
         fields__bar__initial=lambda field, form, **_: 11,
     )
@@ -94,8 +94,8 @@ Normally this will be handled automatically by looking at the model definition, 
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__required=True,
         fields__bar__required=lambda field, form, **_: True,
     )
@@ -111,8 +111,8 @@ You can change the order in your model definitions as this is what iommi uses. I
 
     from tri_declarative import LAST
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__baz__after=LAST,
         fields__bar__after='foo',
         fields__foo__after=0,
@@ -130,8 +130,8 @@ The `attrs` namespace on `Field`, `Form`, `Header`, `Cell` and more is used to c
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__attrs__foo='bar',
         fields__bar__after__class__bar=True,
         fields__bar__after__style__baz='qwe,
@@ -141,8 +141,8 @@ or more succinctly:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__foo__attrs=dict(
             foo='bar',
             class__bar=True,
@@ -164,8 +164,8 @@ The values in these dicts can be callables:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__bar__after__class__bar=
             lambda form, **_: form.request().user.is_staff,
     )
@@ -178,8 +178,8 @@ Pass a template name or a `Template` object:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__bar__template='my_template.html',
         fields__bar__template=Template('{{ field.attrs }}'),
     )
@@ -193,8 +193,8 @@ Pass a template name or a `Template` object to the `input` namespace:
 
 .. code:: python
 
-    form = Form.from_model(
-        model=Foo,
+    form = Form(
+        auto__model=Foo,
         fields__bar__input__template='my_template.html',
         fields__bar__input__template=Template('{{ field.attrs }}'),
     )
@@ -224,8 +224,8 @@ Specify `page_size=None`:
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         page_size=None,
     )
 
@@ -254,9 +254,9 @@ And we want a computed column `square` that is the square of the value, then we 
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
-        extra_columns=dict(
+    Table(
+        auto__model=Foo,
+        auto__additional=dict(
             square=Column(
                 # computed value:
                 cell__value=lambda row, **_: row.value * row.value,
@@ -293,17 +293,17 @@ By default the columns come in the order defined so if you have an explicit tabl
         b = models.IntegerField()
         c = models.IntegerField()
 
-If we just do :code:`Table.from_model(model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the :code:`after` value :code:`-1`:
+If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value `-1`:
 
 .. code:: python
 
-    Table.from_model(model=Foo, columns__c__after=-1)
+    Table(auto__model=Foo, columns__c__after=-1)
 
 :code:`-1` means the first, other numbers mean index. We can also put columns after another named column like so:
 
 .. code:: python
 
-    Table.from_model(model=Foo, columns__c__after='a')
+    Table(auto__model=Foo, columns__c__after='a')
 
 this will put the columns in the order a, c, b.
 
@@ -316,8 +316,8 @@ Pass the value :code:`query__include=True` to the column, to enable searching in
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__query__include=True,
         columns__a__query__form__include=True,
     )
@@ -420,8 +420,8 @@ Just pass :code:`include=False` to hide the column or :code:`include=True` to sh
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__include=
             lambda table, **_: table.request().GET.get('some_parameter') == 'hello!',
     )
@@ -473,9 +473,9 @@ we can build a table of :code:`Bar` that shows the data of `a` like this:
 
 .. code:: python
 
-    Table.from_model(
-        model=Bar,
-        extra_columns=dict(
+    Table(
+        auto__model=Bar,
+        auto__additional=dict(
             c__a=Column.from_model,
         ),
     )
@@ -487,8 +487,8 @@ To turn off column on a column pass it :code:`sortable=False` (you can also use 
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__sortable=False,
     )
 
@@ -496,8 +496,8 @@ and to turn it off on the entire table:
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         sortable=False,
     )
 
@@ -508,8 +508,8 @@ The :code:`display_name` property of a column is displayed in the header.
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__display_name='header title',
     )
 
@@ -518,8 +518,8 @@ How do I set the default sort order of a column to be descending instead of asce
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__sort_default_desc=True,  # or a lambda!
     )
 
@@ -529,8 +529,8 @@ How do I group columns?
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__group='foo',
         columns__b__group='foo',
     )
@@ -545,8 +545,8 @@ You can manually set the rowspan attribute via :code:`row__attrs__rowspan` but t
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__auto_rowspan=True,
     )
 
@@ -557,8 +557,8 @@ If you want to filter based on a freetext query on one or more columns we've got
 
 .. code:: python
 
-    Table.from_model(
-        model=Foo,
+    Table(
+        auto__model=Foo,
         columns__a__query__freetext=True,
         columns__b__query__freetext=True,
     )

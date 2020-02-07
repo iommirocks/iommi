@@ -20,7 +20,7 @@ Example
     def my_view(request):
         class MyPage(Page):
             title = html.h1('My page')
-            users = Table.from_model(User)
+            users = Table(auto__model=User)
             create_user = Form.as_create_page(model=User)
 
         return MyPage()
@@ -47,7 +47,7 @@ The :code:`Page` class is used to compose pages. If you have installed the iommi
         some_other_page = MyOtherPage()
 
         # Table and Form are Part types
-        my_table = Table.from_model(Foo)
+        my_table = Table(auto_model=Foo)
 
         # Django template
         other_stuff = Template('<div>{{ foo }}</div>')

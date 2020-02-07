@@ -389,7 +389,7 @@ def test_sort_django_table_from_model():
     TFoo(a=42, b="b").save()
 
     verify_table_html(
-        table__rows=TFoo.objects.all(),
+        table__auto__rows=TFoo.objects.all(),
         query=dict(order='a'),
         expected_html="""\
     <table class="table" data-endpoint="/tbody">

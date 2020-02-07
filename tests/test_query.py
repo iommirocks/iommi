@@ -364,14 +364,14 @@ def test_multi_choice_queryset():
 
 @pytest.mark.django_db
 def test_from_model_with_model_class():
-    t = Query.from_model(model=Foo).bind(request=None)
+    t = Query(auto__model=Foo).bind(request=None)
     assert list(t.declared_variables.keys()) == ['id', 'foo']
     assert list(t.variables.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
-    t = Query.from_model(rows=Foo.objects.all()).bind(request=None)
+    t = Query(auto__rows=Foo.objects.all()).bind(request=None)
     assert list(t.declared_variables.keys()) == ['id', 'foo']
     assert list(t.variables.keys()) == ['foo']
 
@@ -518,9 +518,8 @@ def test_from_model_with_inheritance():
             member_class = MyVariable
             form_class = MyForm
 
-    query = MyQuery.from_model(
-        rows=FromModelWithInheritanceTest.objects.all(),
-        model=FromModelWithInheritanceTest,
+    query = MyQuery(
+        auto__model=FromModelWithInheritanceTest,
         variables__value__form__include=True,
     )
     query.bind(request=req('get'))

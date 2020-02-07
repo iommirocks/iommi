@@ -12,16 +12,18 @@ from tri_declarative import (
     assert_kwargs_empty,
     evaluate,
     setdefaults_path,
+    RefinableObject,
+    Refinable,
 )
 from tri_struct import Struct
 
 
 @dispatch  # pragma: no mutate
-def create_members_from_model(default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, extra: Dict[str, Any] = None):
-    if extra is None:
-        extra = {}
+def create_members_from_model(default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):
+    if additional is None:
+        additional = {}
 
-    for key in extra.items():
+    for key in additional.items():
         if include is not None and key in include:
             assert False, f"extra contains {key} which conflicts with the same name in include."
         if exclude is not None and key in exclude:
@@ -64,7 +66,7 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
                 members.append(foo)
     assert_kwargs_empty(member_params_by_member_name)
     all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
-    return Struct({x.name: x for x in all_members}, **extra)
+    return Struct({x.name: x for x in all_members}, **additional)
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
@@ -173,3 +175,10 @@ def register_name_field(*, model, name_field, allow_non_unique=False):
 
     validate_name_field(name_field.split('__'))
     _name_fields_by_model[model] = name_field
+
+
+class AutoConfig(RefinableObject):
+    model = Refinable()
+    include = Refinable()
+    exclude = Refinable()
+    additional = Refinable()

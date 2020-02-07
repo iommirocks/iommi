@@ -40,6 +40,7 @@ from iommi.from_model import (
     get_name_field_for_model,
     member_from_model,
     NoRegisteredNameException,
+    AutoConfig,
 )
 from pyparsing import (
     alphanums,
@@ -458,6 +459,10 @@ def default_endpoint__errors(query, **_):
         return {'global': [str(e)]}
 
 
+class QueryAutoConfig(AutoConfig):
+    rows = Refinable()
+
+
 @no_copy_on_bind
 @declarative(Variable, '_variables_dict')
 @with_meta
@@ -491,11 +496,26 @@ class Query(Part):
     @dispatch(
         endpoints__errors=default_endpoint__errors,
         variables=EMPTY,
+        auto=EMPTY,
     )
-    def __init__(self, *, model=None, rows=None, variables=None, endpoints: Dict[str, Any] = None, _variables_dict=None, **kwargs):
+    def __init__(self, *, model=None, rows=None, variables=None, endpoints: Dict[str, Any] = None, _variables_dict=None, auto, **kwargs):
         model, rows = model_and_rows(model, rows)
 
         assert isinstance(variables, dict)
+
+        if auto:
+            auto = QueryAutoConfig(**auto)
+            assert not _variables_dict, "You can't have an auto generated Query AND a declarative Query at the same time"
+            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
+            assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+            model, rows, variables = self._from_model(
+                model=auto.model,
+                rows=auto.rows,
+                variables=variables,
+                include=auto.include,
+                exclude=auto.exclude,
+                additional=auto.additional,
+            )
 
         setdefaults_path(
             kwargs,
@@ -810,23 +830,8 @@ class Query(Part):
     @dispatch(
         variables=EMPTY,
     )
-    def from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, extra_variables=None, **kwargs):
-        """
-        Create an entire form based on the fields of a model. To override a field parameter send keyword arguments in the form
-        of "the_name_of_the_fields__param". For example:
-
-        .. code:: python
-
-            class Foo(Model):
-                foo = IntegerField()
-
-            Table.from_model(data=request.GET, model=Foo, fields__foo__help_text='Overridden help text')
-
-        :param include: fields to include. Defaults to all
-        :param exclude: fields to exclude. Defaults to none (except that AutoField is always excluded!)
-
-        """
+    def _from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, additional=None):
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, extra=extra_variables, variables=variables)
-        return cls(rows=rows, model=model, variables=variables, **kwargs)
+        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, additional=additional, variables=variables)
+        return model, rows, variables

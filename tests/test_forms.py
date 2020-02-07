@@ -627,11 +627,11 @@ def test_help_text_from_model():
 def test_help_text_from_model2():
     from .models import Foo, Bar
     # simple integer field
-    assert Form.from_model(include=['foo'], model=Foo).bind(request=req('get', foo='1')).fields.foo.help_text == 'foo_help_text'
+    assert Form(auto__model=Foo, include=['foo']).bind(request=req('get', foo='1')).fields.foo.help_text == 'foo_help_text'
 
     # foreign key field
     Bar.objects.create(foo=Foo.objects.create(foo=1))
-    form = Form.from_model(include=['foo'], model=Bar).bind(request=req('get'))
+    form = Form(auto__model=Bar, include=['foo']).bind(request=req('get'))
     assert form.fields.foo.help_text == 'bar_help_text'
     assert form.fields.foo.model is Foo
 
@@ -818,9 +818,9 @@ def test_field_from_model_label():
 def test_form_from_model_valid_form():
     from tests.models import FormFromModelTest
 
-    assert [x.value for x in Form.from_model(
-        model=FormFromModelTest,
-        include=['f_int', 'f_float', 'f_bool'],
+    assert [x.value for x in Form(
+        auto__model=FormFromModelTest,
+        auto__include=['f_int', 'f_float', 'f_bool'],
     ).bind(
         request=req('get', f_int='1', f_float='1.1', f_bool='true'),
     ).fields.values()] == [
@@ -834,7 +834,7 @@ def test_form_from_model_valid_form():
 def test_form_from_model_error_message_include():
     from tests.models import FormFromModelTest
     with pytest.raises(AssertionError) as e:
-        Form.from_model(model=FormFromModelTest, include=['does_not_exist', 'another_non_existant__sub', 'f_float'], data=None)
+        Form(auto__model=FormFromModelTest, auto__include=['does_not_exist', 'another_non_existant__sub', 'f_float']).bind(request=None)
 
     assert 'You can only include fields that exist on the model: another_non_existant__sub, does_not_exist specified but does not exist' == str(e.value)
 
@@ -843,7 +843,7 @@ def test_form_from_model_error_message_include():
 def test_form_from_model_error_message_exclude():
     from tests.models import FormFromModelTest
     with pytest.raises(AssertionError) as e:
-        Form.from_model(model=FormFromModelTest, exclude=['does_not_exist', 'does_not_exist_2', 'f_float'], data=None)
+        Form(auto__model=FormFromModelTest, auto__exclude=['does_not_exist', 'does_not_exist_2', 'f_float']).bind(request=None)
 
     assert 'You can only exclude fields that exist on the model: does_not_exist, does_not_exist_2 specified but does not exist' == str(e.value)
 
@@ -852,9 +852,9 @@ def test_form_from_model_error_message_exclude():
 def test_form_from_model_invalid_form():
     from tests.models import FormFromModelTest
 
-    actual_errors = [x.errors for x in Form.from_model(
-        model=FormFromModelTest,
-        exclude=['f_int_excluded'],
+    actual_errors = [x.errors for x in Form(
+        auto__model=FormFromModelTest,
+        auto__exclude=['f_int_excluded'],
     ).bind(
         request=req('get', f_int='1.1', f_float='true', f_bool='asd', f_file='foo'),
     ).fields.values()]
@@ -977,8 +977,8 @@ def test_field_from_model_many_to_many():
 def test_field_from_model_many_to_one_foreign_key():
     from tests.models import Bar
 
-    assert set(Form.from_model(
-        model=Bar,
+    assert set(Form(
+        auto__model=Bar,
         fields__foo__call_target=Field.from_model
     ).bind(
         request=req('get'),
@@ -1338,7 +1338,7 @@ def test_null_field_factory():
 
     register_field_factory(ShouldBeNullField, factory=None)
 
-    form = Form.from_model(model=FooModel).bind(request=req('get'))
+    form = Form(auto__model=FooModel).bind(request=req('get'))
     assert list(form.fields.keys()) == ['foo']
 
 
@@ -1400,7 +1400,7 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     User.objects.create(username='foo')
     user2 = User.objects.create(username='bar')
 
-    form = Form.from_model(model=FooModel, **kwargs).bind(request=req('get'))
+    form = Form(auto__model=FooModel, **kwargs).bind(request=req('get'))
     actual = perform_ajax_dispatch(root=form, path='/fields/user', value='ar')
 
     assert actual == {
@@ -1648,13 +1648,18 @@ def test_instance_set_earlier_than_evaluate_is_called():
 
 
 @pytest.mark.django_db
-def test_auto_field():
+def test_auto_field_not_included_by_default():
     from tests.models import Foo
 
-    form = Form.from_model(model=Foo).bind(request=req('get'))
+    form = Form(auto__model=Foo).bind(request=req('get'))
     assert 'id' not in form.fields
 
-    form = Form.from_model(model=Foo, fields__id__include=True).bind(request=req('get'))
+
+@pytest.mark.django_db
+def test_auto_field_possible_to_show():
+    from tests.models import Foo
+
+    form = Form(auto__model=Foo, fields__id__include=True).bind(request=req('get'))
     assert 'id' in form.fields
 
 
@@ -1771,8 +1776,8 @@ def test_from_model_with_inheritance():
         class Meta:
             member_class = MyField
 
-    MyForm.from_model(
-        model=FromModelWithInheritanceTest,
+    MyForm(
+        auto__model=FromModelWithInheritanceTest,
     ).bind(
         request=req('get'),
     )
@@ -1785,8 +1790,8 @@ def test_from_model_with_inheritance():
 @pytest.mark.django_db
 def test_from_model_override_field():
     from tests.models import FormFromModelTest
-    form = Form.from_model(
-        model=FormFromModelTest,
+    form = Form(
+        auto__model=FormFromModelTest,
         fields__f_float=Field(name='f_float'),
     ).bind(
         request=req('get'),

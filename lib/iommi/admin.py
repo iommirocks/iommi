@@ -69,12 +69,14 @@ def list_model(model, app, table):
         Namespace(),
         app.get(app_name, {}).get(model_name, {}),
         table=table,
-        table__rows=model.objects.all(),
-        table__extra_columns=dict(
-            # TODO: bulk edit and bulk delete
-            # select=dict(call_target__attribute='select', after=0),
-            edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
-            delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
+        table__auto=dict(
+            model=model,
+            additional=dict(
+                # TODO: bulk edit and bulk delete
+                # select=dict(call_target__attribute='select', after=0),
+                edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
+                delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
+            ),
         ),
         table__actions=dict(
             # TODO: bulk delete
@@ -84,7 +86,6 @@ def list_model(model, app, table):
                 attrs__href='create/',
             ),
         ),
-        table__call_target__attribute='from_model',
         table__query_from_indexes=True,
     )
     return kwargs.table().as_page(parts__header=admin_h1)
