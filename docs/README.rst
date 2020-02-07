@@ -56,6 +56,8 @@ Example:
 
 This creates a page with two separate tables, one for the model :code:`Musician` and one for the model :code:`Album`.
 
+For more examples, see the `examples project <https://github.com/TriOptima/iommi/tree/master/examples/examples>`_.
+
 
 Usage
 ------
