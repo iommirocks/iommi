@@ -177,10 +177,14 @@ bootstrap_base = Style(
                 header__attrs__title='Select all',
                 header__attrs__class__thin=True,
                 header__attrs__class__nopad=True,
+                header__attrs__class={'text-center': True},
                 cell__attrs__class={'text-center': True},
 
             ),
-            number__cell__attrs__class={'text-right': True},
+            number=dict(
+                cell__attrs__class={'text-right': True},
+                header__attrs__class={'text-right': True},
+            ),
             boolean__cell__attrs__class={'text-center': True},
         )
     ),
@@ -262,12 +266,20 @@ semantic_ui_base = Style(
             select=dict(
                 header__attrs__title='Select all',
             ),
-            number__cell__attrs__class={
-                'ui': True,
-                'container': True,
-                'fluid': True,
-                'right aligned': True,
-            },
+            number=dict(
+                cell__attrs__class={
+                    'ui': True,
+                    'container': True,
+                    'fluid': True,
+                    'right aligned': True,
+                },
+                header__attrs__class={
+                    'ui': True,
+                    'container': True,
+                    'fluid': True,
+                    'right aligned': True,
+                },
+            ),
         )
     ),
     Query__form__attrs__class__fields=True,

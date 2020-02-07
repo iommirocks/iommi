@@ -59,11 +59,13 @@ from iommi.base import (
 )
 from iommi.form import (
     Form,
+    Field,
 )
 from iommi.from_model import (
     create_members_from_model,
     member_from_model,
     AutoConfig,
+    get_fields,
 )
 from iommi.query import (
     Q_OP_BY_OP,
@@ -472,7 +474,7 @@ class Column(Part):
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
     )
-    def select(cls, checkbox_name='pk', include=True, checked=lambda x: False, call_target=None, **kwargs):
+    def select(cls, checkbox_name='pk', include=True, checked=lambda row, **_: False, call_target=None, **kwargs):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
@@ -481,7 +483,7 @@ class Column(Part):
         """
         setdefaults_path(kwargs, dict(
             include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
-            cell__value=lambda row, **_: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if checked(row.pk) else '', checkbox_name, row.pk)),
+            cell__value=lambda row, **kwargs: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if evaluate_strict(checked, row=row, **kwargs) else '', checkbox_name, row.pk)),
         ))
         return call_target(**kwargs)
 
@@ -877,6 +879,47 @@ def bulk__post_handler(table, form, **_):
     return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
 
 
+def bulk_delete__post_handler(table, form, **_):
+    queryset = table.bulk_queryset()
+
+    from iommi.page import Page, html
+
+    class ConfirmPage(Page):
+        title = html.h1(f'Are you sure you want to delete these {queryset.count()} items?')
+        confirm = Table(
+            auto__rows=queryset,
+            columns__select=dict(
+                include=True,
+                checked=True,
+                bulk__include=True,
+                bulk__attrs__style__display='none',
+            ),
+            bulk=dict(
+                fields__confirmed=Field.hidden(initial='confirmed'),
+                actions__submit__include=False,
+                actions__delete=dict(
+                    call_target__attribute='delete',
+                    attrs__value='Yes, delete all!',
+                    include=True,
+                ),
+            ),
+        )
+
+    request = form.request()
+    # We need to remove the target for the old delete button that we pressed to get here,
+    # otherwise ConfirmPage will give an error saying it can't find that button
+    request.POST = request.POST.copy()
+    del request.POST[form.actions.delete.own_target_marker()]
+
+    p = ConfirmPage().bind(request=request)
+
+    if request.POST.get(p.parts.confirm._bulk_form.fields.confirmed.path()) == 'confirmed':
+        queryset.delete()
+        return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
+
+    return p.render_to_response()
+
+
 # TODO: full Part?
 class Paginator:
     def __init__(self, *, django_paginator, table, adjacent_pages=6):
@@ -1065,7 +1108,7 @@ class Table(Part):
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
         query=EMPTY,
-        bulk=EMPTY,
+        bulk__fields=EMPTY,
         page_size=DEFAULT_PAGE_SIZE,
 
         endpoints=EMPTY,
@@ -1086,11 +1129,26 @@ class Table(Part):
         :param bulk_exclude: exclude filters to apply to the `QuerySet` before performing the bulk operation
         :param sortable: set this to `False` to turn off sorting for all columns
         """
+        select_config = setdefaults_path(
+            Namespace(),
+            columns.get('select', {}),
+            call_target__attribute='select',
+            attr=None,
+            name='select',
+            after=-1,
+            include=lambda table, **_: table._bulk_form is not None,
+        )
+
+        select_column = select_config
+
         if auto:
             auto = TableAutoConfig(**auto)
             assert not _columns_dict, "You can't have an auto generated Table AND a declarative Table at the same time"
             assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
             assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+            if 'select' not in auto.additional:
+                auto.additional['select'] = select_column
+
             model, rows, columns = self._from_model(
                 model=auto.model,
                 rows=auto.rows,
@@ -1163,32 +1221,53 @@ class Table(Part):
 
             # Bulk
             def generate_bulk_fields():
+                field_class = self.get_meta().form_class.get_meta().member_class
+
                 for column in self.declared_columns.values():
+                    bulk_config = self.bulk.fields.pop(column.name, {})
+
                     if column.bulk.include:
                         bulk_namespace = setdefaults_path(
                             Namespace(),
                             column.bulk,
-                            call_target__cls=self.get_meta().form_class.get_meta().member_class,
+                            call_target__cls=field_class,
                             model=self.model,
                             name=column.name,
                             attr=column.name if column.attr is MISSING else column.attr,
                             required=False,
                             empty_choice_tuple=(None, '', '---', True),
+                            **bulk_config
                         )
                         if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
                             bulk_namespace['field_name'] = bulk_namespace.attr
                         yield bulk_namespace()
 
             declared_bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
-            if declared_bulk_fields:
-                declared_bulk_fields._all_pks_ = self.get_meta().form_class.get_meta().member_class.hidden(name='_all_pks_', attr=None, initial='0', required=False)
 
-                self._bulk_form = self.get_meta().form_class(
+            if declared_bulk_fields:
+                form_class = self.get_meta().form_class
+                declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
+                    name='_all_pks_',
+                    attr=None,
+                    initial='0',
+                    required=False,
+                    input__attrs__class__all_pks=True,
+                )
+
+                self._bulk_form = form_class(
                     _fields_dict=declared_bulk_fields,
                     name='bulk',
-                    actions__submit__post_handler=bulk__post_handler,
-                    actions__submit__attrs__value='Bulk change',
-                    **self.bulk
+                    actions__submit=dict(
+                        post_handler=bulk__post_handler,
+                        attrs__value='Bulk change',
+                    ),
+                    actions__delete=dict(
+                        call_target__attribute='delete',
+                        post_handler=bulk_delete__post_handler,
+                        attrs__value='Bulk delete',
+                        include=False,
+                    ),
+                    **bulk
                 )
 
                 self.declared_members.bulk = self._bulk_form
@@ -1390,7 +1469,7 @@ class Table(Part):
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in DEV, but just ignore in PROD
                         # noinspection PyProtectedMember
-                        valid_sort_fields = {x.name for x in self.model._meta.get_fields()}
+                        valid_sort_fields = {x.name for x in get_fields(self.model)}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.rows = self.rows.order_by(*order_args)

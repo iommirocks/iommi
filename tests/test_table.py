@@ -1416,7 +1416,7 @@ def test_from_model():
         columns__a__extra__stuff='Some stuff',
     )
     t.bind(request=None)
-    assert list(t.declared_columns.keys()) == ['id', 'a', 'b']
+    assert list(t.declared_columns.keys()) == ['select', 'id', 'a', 'b']
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
     assert 'Some stuff' == t.columns['a'].extra.stuff
@@ -1426,7 +1426,7 @@ def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
     ).bind(request=None)
-    assert list(t.declared_columns.keys()) == ['id', 'foo', 'c']
+    assert list(t.declared_columns.keys()) == ['select', 'id', 'foo', 'c']
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
@@ -1454,7 +1454,7 @@ def test_from_model_implicit():
 
     p = TestTable(auto__rows=TBar.objects.all()).as_page().bind(request=None)
     assert 'table' in p.parts.keys()
-    assert list(p.parts.table.declared_columns.keys()) == ['id', 'foo', 'c']
+    assert list(p.parts.table.declared_columns.keys()) == ['select', 'id', 'foo', 'c']
 
 
 @override_settings(DEBUG=True)
@@ -1941,3 +1941,18 @@ def test_shortcuts_map_to_form_and_query(name, shortcut):
 
     assert shortcut.dispatch.query.call_target.attribute == name
     assert shortcut.dispatch.bulk.call_target.attribute == name
+
+
+@pytest.mark.django_db
+def test_bulk_namespaces_are_merged():
+    t = Table(
+        auto__model=TFoo,
+        bulk__fields__a__initial=3,
+        columns__a__bulk=dict(
+            display_name='7',
+            include=True,
+        ),
+    )
+    t.bind(request=req('get'))
+    assert t._bulk_form.fields.a.initial == 3
+    assert t._bulk_form.fields.a.display_name == '7'

@@ -16,7 +16,7 @@
             else {
                 tbody.querySelector('.select_all_pages_q').parentNode.parentNode.removeChild(tbody.querySelector('.select_all_pages_q').parentNode);
                 var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
-                form.querySelector('#id__{{ table.dunder_path }}__all_pks_').value = 0;
+                form.querySelector('.all_pks').value = 0;
             }
         }
     }
@@ -25,7 +25,7 @@
         var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
         var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
         tbody.querySelector('.select_all_pages_q').textContent = 'All items selected';
-        form.querySelector('#id__{{ table.dunder_path }}__all_pks_').value = 1;
+        form.querySelector('.all_pks').value = 1;
     }
 </script>
 

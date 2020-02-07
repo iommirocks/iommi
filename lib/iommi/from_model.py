@@ -1,21 +1,22 @@
 from typing import (
-    List,
-    Dict,
     Any,
+    Dict,
+    List,
 )
 
 from django.core.exceptions import FieldDoesNotExist
-from iommi.base import MISSING
 from tri_declarative import (
-    dispatch,
+    EMPTY,
     Namespace,
-    assert_kwargs_empty,
+    Refinable,
+    RefinableObject,
+    dispatch,
     evaluate,
     setdefaults_path,
-    RefinableObject,
-    Refinable,
 )
 from tri_struct import Struct
+
+from iommi.base import MISSING
 
 
 @dispatch  # pragma: no mutate
@@ -64,7 +65,9 @@ def create_members_from_model(default_factory, model, member_params_by_member_na
                 assert foo.name, "Fields must have a name attribute"
                 assert foo.name == field.name, f"Field {foo.name} has a name that doesn't match the model field it belongs to: {field.name}"
                 members.append(foo)
-    assert_kwargs_empty(member_params_by_member_name)
+
+    additional = {**member_params_by_member_name, **additional}
+
     all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
     return Struct({x.name: x for x in all_members}, **additional)
 
@@ -182,3 +185,9 @@ class AutoConfig(RefinableObject):
     include = Refinable()
     exclude = Refinable()
     additional = Refinable()
+
+    @dispatch(
+        additional=EMPTY,
+    )
+    def __init__(self, **kwargs):
+        super(AutoConfig, self).__init__(**kwargs)

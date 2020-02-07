@@ -1724,13 +1724,6 @@ def test_create_members_from_model_path():
     assert form.fields.foo.help_text == 'foo_help_text'
 
 
-@pytest.mark.django_db
-def test_create_members_from_model_reject_extra_arguments_to_member_params_by_member_name():
-    from .models import Foo
-    with pytest.raises(TypeError):
-        create_members_from_model(default_factory=None, model=Foo, member_params_by_member_name=dict(foo=1), include=[])
-
-
 @pytest.mark.django
 def test_namespaces_do_not_call_in_templates():
     from django.template import RequestContext

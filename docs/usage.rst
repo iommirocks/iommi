@@ -89,10 +89,10 @@ Or you can compose a page with two tables:
 Production use
 --------------
 
-Just like you have your own custom base class for django `Model` to have a
+Just like you have your own custom base class for Django's `Model` to have a
 central place to put customization you will want to do the same for the base
 classes of iommi. In iommi this is even more important since you will almost
-certain want to add more shortcuts that are specific to your product.
+certainly want to add more shortcuts that are specific to your product.
 
 Copy this boilerplate to some place in your code and import these classes
 instead of the corresponding ones from iommi:
@@ -183,3 +183,15 @@ or even more low level:
         if dispatch:
             return dispatch
         return page.render_to_response()
+
+
+This style also does not require the middleware:
+
+.. code:: python
+
+    class MyPage(Page):
+        title = html.h1('Hello')
+        div = html.div('Some text')
+
+    # urls.py:
+    url(r'^foo/$', MyPage.as_view()),
