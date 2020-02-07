@@ -42,6 +42,12 @@ When you've done the stuff above you can create a page with a table in it:
 
 .. code:: python
 
+    url(r'^table_as_view/$', Table.as_view(auto__model=MyModel)),
+
+...or as a function based view:
+
+.. code:: python
+
     def my_view(request):
         return Table.as_page(
             request=request,
@@ -49,7 +55,7 @@ When you've done the stuff above you can create a page with a table in it:
         )
 
 
-Or create a table the declarative and explicit way:
+...or create a table the declarative and explicit way:
 
 .. code:: python
 
