@@ -347,7 +347,7 @@ class Column(Part):
         self.declared_column = self._declared
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self.evaluate_attribute_kwargs())
+        self.model = evaluate(self.model, **self.evaluate_parameters())
 
         evaluated_attributes = [
             'name',
@@ -369,10 +369,10 @@ class Column(Part):
             'sort_key',
             'display_name',
         ]
-        evaluate_members(self, evaluated_attributes, **self.evaluate_attribute_kwargs())
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+        evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(table=self.parent, column=self)
 
     @classmethod
@@ -719,9 +719,9 @@ class BoundRow(object):
         self.row_index = row_index
         self.parent = table
         self.name = 'row'
-        self.template = evaluate(table.row.template, row=self.row, **table.evaluate_attribute_kwargs())
+        self.template = evaluate(table.row.template, row=self.row, **table.evaluate_parameters())
         self.extra = table.row.extra
-        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_parameters())
         self.attrs = table.row.attrs
         self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
@@ -1345,10 +1345,10 @@ class Table(Part):
         bind_members(self, name='actions')
         bind_members(self, name='columns')
 
-        evaluate_member(self, 'sortable', **self.evaluate_attribute_kwargs())  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self.evaluate_parameters())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
-        evaluate_member(self, 'model', strict=False, **self.evaluate_attribute_kwargs())
+        evaluate_member(self, 'model', strict=False, **self.evaluate_parameters())
 
         for column in self.columns.values():
             # Special case for entire table not sortable
@@ -1373,9 +1373,9 @@ class Table(Part):
                 '_query',
                 'bulk',
             ],
-            **self.evaluate_attribute_kwargs()
+            **self.evaluate_parameters()
         )
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
         if self.model:
             def generate_variables_unapplied_data():
@@ -1457,7 +1457,7 @@ class Table(Part):
 
         self._prepare_auto_rowspan()
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         self.bound_members.endpoints = setup_endpoint_proxies(self)
 
@@ -1550,7 +1550,7 @@ class Table(Part):
                     'superheader',
                     'header',
                 ],
-                **self.evaluate_attribute_kwargs()
+                **self.evaluate_parameters()
             )
 
         superheaders = []
@@ -1614,7 +1614,7 @@ class Table(Part):
         assert self._is_bound
         return self._bulk_form
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(table=self)
 
     def bound_rows(self):

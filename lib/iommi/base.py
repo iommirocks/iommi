@@ -92,8 +92,8 @@ class EndPointHandlerProxy:
     def endpoint_handler(self, value, **kwargs):
         return self.func(value=value, **kwargs)
 
-    def evaluate_attribute_kwargs(self):
-        return self.parent.evaluate_attribute_kwargs()
+    def evaluate_parameters(self):
+        return self.parent.evaluate_parameters()
 
 
 def setup_endpoint_proxies(parent: 'Part') -> Dict[str, EndPointHandlerProxy]:
@@ -143,7 +143,7 @@ def perform_ajax_dispatch(*, root, path, value):
     if getattr(target, 'endpoint_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
 
-    return target.endpoint_handler(value=value, **target.evaluate_attribute_kwargs())
+    return target.endpoint_handler(value=value, **target.evaluate_parameters())
 
 
 def perform_post_dispatch(*, root, path, value):
@@ -155,7 +155,7 @@ def perform_post_dispatch(*, root, path, value):
     if getattr(target, 'post_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
-    return target.post_handler(value=value, **target.evaluate_attribute_kwargs())
+    return target.post_handler(value=value, **target.evaluate_parameters())
 
 
 @dispatch(
@@ -422,14 +422,14 @@ class Part(Traversable):
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.path()
 
-    def evaluate_attribute_kwargs(self):
-        return {**self._evaluate_attribute_kwargs(), **(self.parent.evaluate_attribute_kwargs() if self.parent is not None else {})}
+    def evaluate_parameters(self):
+        return {**self.own_evaluate_parameters(), **(self.parent.evaluate_parameters() if self.parent is not None else {})}
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return {}
 
     def _evaluate_attribute(self, key, strict=True):
-        evaluate_member(self, key, **self.evaluate_attribute_kwargs(), strict=strict)
+        evaluate_member(self, key, **self.evaluate_parameters(), strict=strict)
 
     def _evaluate_include(self):
         self._evaluate_attribute('include')

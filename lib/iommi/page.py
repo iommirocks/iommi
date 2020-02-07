@@ -41,7 +41,7 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.request(), fragment.template, {**context, **fragment.evaluate_attribute_kwargs(), rendered_children: rendered_children})
+        return render_template(fragment.request(), fragment.template, {**context, **fragment.evaluate_parameters(), rendered_children: rendered_children})
 
     is_void_element = fragment.tag in _void_elements
 
@@ -98,9 +98,9 @@ class Fragment(Part):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
         # TODO: do we want to do this?
-        # self._children = [evaluate_strict(x, **self.evaluate_attribute_kwargs()) for x in self._children]
+        # self._children = [evaluate_strict(x, **self.evaluate_parameters()) for x in self._children]
 
     @dispatch(
         context=EMPTY,
@@ -109,7 +109,7 @@ class Fragment(Part):
     def __html__(self, *, context=None, render=None):
         return render(fragment=self, context=context)
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(fragment=self)
 
 
@@ -156,7 +156,7 @@ class Page(Part):
     def on_bind(self) -> None:
         bind_members(self, name='parts')
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(page=self)
 
     @dispatch(

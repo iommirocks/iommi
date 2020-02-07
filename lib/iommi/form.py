@@ -587,9 +587,9 @@ class Field(Part):
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', strict=False)
 
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
@@ -601,7 +601,7 @@ class Field(Part):
             # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
             self.input.template = 'iommi/form/non_editable.html'
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(form=self.parent, field=self)
 
     @property
@@ -1071,17 +1071,17 @@ class Form(Part):
         for field in self.fields.values():
             field._evaluate()
 
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
         self.is_valid()
 
         self.errors = Errors(parent=self, errors=self.errors)
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         self.bound_members.endpoints = setup_endpoint_proxies(self)
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(form=self)
 
     def render_actions(self):

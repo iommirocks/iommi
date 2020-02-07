@@ -215,7 +215,7 @@ class Variable(Part):
             self.attr = self.name
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self.evaluate_attribute_kwargs())
+        self.model = evaluate(self.model, **self.evaluate_parameters())
 
         evaluated_attributes = [
             'name',
@@ -229,9 +229,9 @@ class Variable(Part):
             'model_field',
             'choices',
         ]
-        evaluate_members(self, evaluated_attributes, **self.evaluate_attribute_kwargs())
+        evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(query=self.parent, variable=self)
 
     @staticmethod
@@ -573,7 +573,7 @@ class Query(Part):
 
         self.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         if any(v.freetext for v in self.variables.values()):
             self.form.declared_fields[FREETEXT_SEARCH_NAME].include = True
@@ -597,7 +597,7 @@ class Query(Part):
         self.bound_members.form = self.form
         self.bound_members.endpoints = setup_endpoint_proxies(self)
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(query=self)
 
     def advanced_query_param(self):

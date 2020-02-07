@@ -119,10 +119,10 @@ class Action(Part):
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_attribute_kwargs())
-        self.attrs = evaluate_attrs(self, **self.evaluate_attribute_kwargs())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
+        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
-    def _evaluate_attribute_kwargs(self):
+    def own_evaluate_parameters(self):
         return dict(action=self)
 
 
