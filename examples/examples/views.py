@@ -77,6 +77,7 @@ def index(request):
         <a href="table_readme_example_1/">Example 1 from the README</a><br>
         <a href="table_readme_example_2/">Example 2 from the README</a><br>
         <a href="table_kitchen_sink/">Kitchen sink</a><br>
+        <a href="table_as_view/">Table.as_view() example</a><br>
         """)
 
         page_header = html.h2('Page examples')
@@ -129,7 +130,7 @@ def form_example_1(request):
 
 
 def form_example_2(request):
-    ensure_objects()
+    # NOTE: See urls.py for example 2b! This example is equivalent to this view, but is defined fully in views.py
     return Form.as_create_page(model=Foo)
 
 
@@ -201,10 +202,6 @@ def form_kitchen(request):
         sink_form2 = SinkForm(name='sinkform2', actions__submit__post_handler=sink_form_post_handler)
 
     return KitchenPage()
-
-
-def table_style(request):
-    return HttpResponse(open(join(dirname(dirname(dirname(abspath(__file__)))), 'table.css')).read())
 
 
 def table_readme_example_1(request):

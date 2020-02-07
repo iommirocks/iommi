@@ -1565,3 +1565,15 @@ class Table(Part):
             parts__table=self,
             parts=parts,
         )
+
+    @classmethod
+    @dispatch(
+        parts=EMPTY,
+    )
+    def as_view(cls, *, title=None, parts=None, **kwargs):
+        def view_wrapper(request, **url_kwargs):
+            return cls(**kwargs).as_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+        # TODO: add kwargs to __name__?
+        view_wrapper.__name__ = f'{cls.__name__}.as_view'
+        view_wrapper.__doc__ = cls.__doc__
+        return view_wrapper

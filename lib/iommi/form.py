@@ -1361,6 +1361,54 @@ class Form(Part):
             **kwargs
         )
 
+    @classmethod
+    @dispatch(
+        parts=EMPTY,
+    )
+    def as_create_or_edit_view(cls, *, title=None, parts=None, **kwargs):
+        def view_wrapper(request, **url_kwargs):
+            return cls(**kwargs).as_create_or_edit_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+        # TODO: add kwargs to __name__?
+        view_wrapper.__name__ = f'{cls.__name__}.as_create_or_edit_view'
+        view_wrapper.__doc__ = cls.__doc__
+        return view_wrapper
+
+    @classmethod
+    @dispatch(
+        parts=EMPTY,
+    )
+    def as_create_view(cls, *, title=None, parts=None, **kwargs):
+        def view_wrapper(request, **url_kwargs):
+            return cls(**kwargs).as_create_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+        # TODO: add kwargs to __name__?
+        view_wrapper.__name__ = f'{cls.__name__}.as_create_view'
+        view_wrapper.__doc__ = cls.__doc__
+        return view_wrapper
+
+    @classmethod
+    @dispatch(
+        parts=EMPTY,
+    )
+    def as_edit_view(cls, *, title=None, parts=None, **kwargs):
+        def view_wrapper(request, **url_kwargs):
+            return cls(**kwargs).as_edit_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+        # TODO: add kwargs to __name__?
+        view_wrapper.__name__ = f'{cls.__name__}.as_edit_view'
+        view_wrapper.__doc__ = cls.__doc__
+        return view_wrapper
+        
+    @classmethod
+    @dispatch(
+        parts=EMPTY,
+    )
+    def as_delete_view(cls, *, title=None, parts=None, **kwargs):
+        def view_wrapper(request, **url_kwargs):
+            return cls(**kwargs).as_delete_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+        # TODO: add kwargs to __name__?
+        view_wrapper.__name__ = f'{cls.__name__}.as_delete_view'
+        view_wrapper.__doc__ = cls.__doc__
+        return view_wrapper
+
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
     if redirect_to is None:
