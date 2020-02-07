@@ -524,47 +524,12 @@ class Members(Part):
 
         self.bound_members = Struct({item.name: item for item in bound_items if should_include(item)})
 
-    def get(self, key, default=None):
-        return self.bound_members.get(key, default)
-
-    def __getattr__(self, item):
-        if self.bound_members is None:
-            raise AttributeError()
-        try:
-            return self.bound_members[item]
-        except KeyError:  # pragma: no cover
-            raise AttributeError()
-
-    def values(self):
-        return self.bound_members.values()
-
-    def keys(self):
-        return self.bound_members.keys()
-
-    def items(self):
-        return self.bound_members.items()
-
-    def __contains__(self, item):
-        return item in self.bound_members
-
-    def __setitem__(self, key, value):
-        self.bound_members[key] = value
-
-    def __getitem__(self, item):
-        return self.bound_members[item]
-
-    def __len__(self):
-        return len(self.bound_members)
-
-    def __iter__(self):  # pragma: no cover
-        raise NotImplementedError('Iterate with .keys(), .values() or .items()')
-
 
 def bind_members(obj: Part, *, name: str) -> None:
     declared_items = getattr(obj, f'declared_{name}')
     m = Members(name=name, declared_items=declared_items)
     m.bind(parent=obj)
-    setattr(obj, name, m)
+    setattr(obj, name, m.bound_members)
     setattr(obj.bound_members, name, m)
 
 

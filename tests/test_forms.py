@@ -556,8 +556,8 @@ def test_hidden_with_name():
     page = MyPage().bind(request=req('get', **{'foo': '1'}))
     rendered_page = page.__html__()
 
-    assert page.parts.bound_members.baz._is_bound
-    assert page.parts.bound_members.baz.mode == INITIALS_FROM_GET
+    assert page.parts.baz._is_bound
+    assert page.parts.baz.mode == INITIALS_FROM_GET
 
     soup = BeautifulSoup(rendered_page, 'html.parser')
     actual = {
