@@ -111,6 +111,7 @@ def list_model(model, app, table):
     create_object__call_target__attribute='as_create_page',
     delete_object__call_target__attribute='as_delete_page',
     edit_object__call_target__attribute='as_edit_page',
+    table__call_target__cls=Table,
     form__call_target__cls=Form,
     form__parts__header=admin_h1,
 )
