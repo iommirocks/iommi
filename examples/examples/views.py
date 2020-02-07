@@ -1,3 +1,4 @@
+from collections import defaultdict
 from os.path import (
     abspath,
     dirname,
@@ -17,6 +18,7 @@ from iommi import (
     Page,
     Table,
     html,
+    base,
 )
 from iommi.admin import admin
 from iommi.form import (
@@ -81,13 +83,14 @@ def index(request):
 
         page_links = mark_safe("""
         <a href="page_busy/">A busy page with lots of stuff</a><br>
+        <a href="all_field_sorts">Show different type of form field types</a><br>
+        <a href="all_column_sorts">Show different type of table column types</a>
         """)
-
-        all_field_sorts = html.a("Show different type of form field types", attrs__href='all_field_sorts')
-        all_table_sorts = html.a("Show different type of table column types", attrs__href='all_column_sorts')
 
         # You can also nest pages
         admin = AdminPage()
+
+        select_style = StyleSelector()
 
     return IndexPage()
 
@@ -333,49 +336,49 @@ def all_field_sorts(request):
     ))
 
 
-def all_column_sorts(request):
-    shortcuts = [
-        t
-        for t in get_members(
-            cls=Column,
-            member_class=Shortcut,
-            is_member=is_shortcut
-        ).keys()
-        if t not in [
-            'icon',
-            'foreign_key',
-            'many_to_many',
-            'choice_queryset',
-            'multi_choice_queryset',
+class DummyRow:
+    def __init__(self, idx):
+        self.idx = idx
+
+    def __getattr__(self, attr):
+        _, _, shortcut = attr.partition('column_of_type_')
+        s = f'{shortcut} #{self.idx}'
+        if shortcut == 'link':
+            return Struct(
+                get_absolute_url=lambda: '#',
+            )
+        return s
+
+    @staticmethod
+    def get_absolute_url():
+        return '#'
+
+
+class ShortcutSelectorForm(Form):
+    class Meta:
+        attrs__method = 'get'
+
+    shortcut = Field.multi_choice(
+        choices=[
+            t
+            for t in get_members(
+                cls=Column,
+                member_class=Shortcut,
+                is_member=is_shortcut
+            ).keys()
+            if t not in [
+                'icon',
+                'foreign_key',
+                'many_to_many',
+                'choice_queryset',
+                'multi_choice_queryset',
+            ]
         ]
-    ]
+    )
 
-    class ShortcutSelectorForm(Form):
-        class Meta:
-            attrs__method = 'get'
 
-        shortcut = Field.multi_choice(
-            choices=shortcuts,
-        )
-
-    shortcuts = ShortcutSelectorForm().bind(request=request).fields.shortcut.value or []
-
-    class DummyRow:
-        def __init__(self, idx):
-            self.idx = idx
-
-        def __getattr__(self, attr):
-            _, _, shortcut = attr.partition('column_of_type_')
-            s = f'{shortcut} #{self.idx}'
-            if attr == 'column_of_type_link':
-                return Struct(
-                    get_absolute_url=lambda: '#',
-                )
-            return s
-
-        @staticmethod
-        def get_absolute_url():
-            return '#'
+def all_column_sorts(request):
+    selected_shortcuts = ShortcutSelectorForm().bind(request=request).fields.shortcut.value or []
 
     type_specifics = Namespace(
         choice__choices=['Foo', 'Bar', 'Baz'],
@@ -388,11 +391,11 @@ def all_column_sorts(request):
         table=Table(
             rows=[DummyRow(i) for i in range(10)],
             **{
-                f'columns__column_of_type_{t}': merged(
+                f'columns__column_of_type_{t}': dict(
                     type_specifics.get(t, {}),
                     call_target__attribute=t,
                 )
-                for t in shortcuts
+                for t in selected_shortcuts
             })
     ))
 
@@ -412,4 +415,27 @@ def iommi_admin(request, **kwargs):
             password__include=False,
         ),
         **kwargs,
+    )
+
+
+BASE_TEMPLATE_BY_STYLE = defaultdict(lambda: 'base.html')
+BASE_TEMPLATE_BY_STYLE['semantic_ui'] = 'base_semantic_ui.html'
+
+
+def select_style_post_handler(form, **_):
+    style = form.fields['style'].value
+    base.DEFAULT_STYLE = style
+    base.DEFAULT_BASE_TEMPLATE = BASE_TEMPLATE_BY_STYLE[style]
+
+
+class StyleSelector(Form):
+    class Meta:
+        post_handler = select_style_post_handler
+
+    style = Field.choice(
+        choices=[
+            'bootstrap',
+            'semantic_ui',
+        ],
+        initial=lambda form, field, **_: base.DEFAULT_STYLE,
     )

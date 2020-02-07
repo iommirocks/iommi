@@ -37,6 +37,10 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+DEFAULT_STYLE = 'bootstrap'
+DEFAULT_BASE_TEMPLATE = 'base.html'
+DEFAULT_CONTENT_BLOCK = 'content'
+
 MISSING = object()
 
 
@@ -162,9 +166,10 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
         context = {}
 
     if template_name is MISSING:
-        template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', 'base.html')
+        template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', DEFAULT_BASE_TEMPLATE)
+        print('template name', template_name)
     if content_block_name is MISSING:
-        content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', 'content')
+        content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
     content = part.__html__(context=context, **render)
 
@@ -191,7 +196,7 @@ def get_style_for(obj):
     if obj.parent is not None:
         return get_style_for(obj.parent)
 
-    return getattr(settings, 'IOMMI_DEFAULT_STYLE', 'bootstrap')
+    return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
 
 class Traversable(RefinableObject):
