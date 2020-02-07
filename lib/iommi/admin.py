@@ -1,9 +1,4 @@
-from iommi import (
-    Page,
-    html,
-    Table,
-    Form,
-)
+from django.apps import apps
 from tri_declarative import (
     dispatch,
     Namespace,
@@ -11,9 +6,17 @@ from tri_declarative import (
     EMPTY,
     LAST,
 )
-from django.apps import apps
 from tri_struct import Struct
 
+from iommi import (
+    Page,
+    html,
+    Table,
+    Form,
+)
+from iommi.from_model import (
+    get_fields,
+)
 
 model_by_app_and_name = {
     (app_name, model_name): model
@@ -62,6 +65,7 @@ def all_models(app, table, **kwargs):
 
 @dispatch(
     app=EMPTY,
+    table__call_target__cls=Table,
 )
 def list_model(model, app, table):
     app_name, model_name = app_and_name_by_model[model]
@@ -72,22 +76,28 @@ def list_model(model, app, table):
         table__auto=dict(
             model=model,
             additional=dict(
-                # TODO: bulk edit and bulk delete
-                # select=dict(call_target__attribute='select', after=0),
                 edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
                 delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
             ),
         ),
         table__actions=dict(
-            # TODO: bulk delete
-            # bulk_delete=dict(call_target__attribute='submit', display_name='Delete', on_post=lambda table, **_: table.bulk_queryset().delete()),
             create=dict(
                 display_name=f'Create {model._meta.verbose_name}',
                 attrs__href='create/',
             ),
         ),
         table__query_from_indexes=True,
+        table__columns__select__include=True,
+        table__bulk__actions__delete__include=True,
     )
+    for field in get_fields(model):
+        if field.unique:
+            continue
+        setdefaults_path(
+            kwargs,
+            **{'table__columns__' + field.name + '__bulk__include': True},
+        )
+
     return kwargs.table().as_page(parts__header=admin_h1)
 
 
@@ -101,7 +111,6 @@ def list_model(model, app, table):
     create_object__call_target__attribute='as_create_page',
     delete_object__call_target__attribute='as_delete_page',
     edit_object__call_target__attribute='as_edit_page',
-    table__call_target__cls=Table,
     form__call_target__cls=Form,
     form__parts__header=admin_h1,
 )
