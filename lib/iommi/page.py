@@ -32,8 +32,6 @@ from tri_declarative import (
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
-from tri_struct import Struct
-
 _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
 
 

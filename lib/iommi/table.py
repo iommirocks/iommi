@@ -23,11 +23,10 @@ from django.core.paginator import (
     InvalidPage,
     Paginator as DjangoPaginator,
 )
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Model
 from django.http import (
     Http404,
     HttpResponseRedirect,
-    HttpResponse,
     FileResponse,
 )
 from django.utils.encoding import (
@@ -38,6 +37,28 @@ from django.utils.html import (
     format_html,
 )
 from django.utils.safestring import mark_safe
+from tri_declarative import (
+    class_shortcut,
+    declarative,
+    dispatch,
+    EMPTY,
+    evaluate,
+    evaluate_strict,
+    getattr_path,
+    LAST,
+    Namespace,
+    Refinable,
+    refinable,
+    RefinableObject,
+    setattr_path,
+    setdefaults_path,
+    Shortcut,
+    with_meta,
+)
+from tri_struct import (
+    Struct,
+)
+
 from iommi._web_compat import (
     render_template,
     Template,
@@ -81,27 +102,6 @@ from iommi.query import (
 )
 from iommi.render import (
     render_attrs,
-)
-from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
-    EMPTY,
-    evaluate,
-    evaluate_strict,
-    getattr_path,
-    LAST,
-    Namespace,
-    Refinable,
-    refinable,
-    RefinableObject,
-    setattr_path,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-)
-from tri_struct import (
-    Struct,
 )
 
 LAST = LAST
@@ -1114,7 +1114,7 @@ class Table(Part):
     # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template
     filter: Namespace = Refinable()
     header = Refinable()
-    model: Type['django.db.models.Model'] = Refinable()
+    model: Type[Model] = Refinable()
     rows = Refinable()
     columns = Refinable()
     bulk: Namespace = Refinable()

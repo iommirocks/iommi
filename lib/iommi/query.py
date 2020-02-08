@@ -185,6 +185,7 @@ class Variable(Part):
 
     attr = Refinable()
     form: Namespace = Refinable()
+    # TODO: rename to form_op?
     gui_op = Refinable()
     freetext = Refinable()
     model = Refinable()
@@ -239,12 +240,12 @@ class Variable(Part):
 
     @staticmethod
     @refinable
-    def op_to_q_op(op: str) -> Q:
+    def op_to_q_op(op: str) -> str:
         return Q_OP_BY_OP[op]
 
     @staticmethod
     @refinable
-    def value_to_q(variable, op, value_string_or_f):
+    def value_to_q(variable, op, value_string_or_f) -> Q:
         if variable.attr is None:
             return Q()
         negated = False
@@ -485,7 +486,7 @@ class Query(Part):
 
     form: Namespace = Refinable()
     endpoints: Namespace = Refinable()
-    model: Type['django.db.models.Model'] = Refinable()
+    model: Type[Model] = Refinable()
     rows = Refinable()
 
     member_class = Refinable()
@@ -568,7 +569,6 @@ class Query(Part):
         self.declared_members.variables = self.declared_members.pop('variables')
 
         setup_endpoints(self, endpoints)
-
 
     def on_bind(self) -> None:
         bind_members(self, name='variables')
