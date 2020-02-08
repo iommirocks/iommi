@@ -125,12 +125,15 @@ def value_to_query_string_value_string(variable, v):
     if type(v) in (int, float):
         return str(v)
     if isinstance(v, Model):
+        value_to_q_lookup = variable.value_to_q_lookup
+        if value_to_q_lookup is None:
+            get_name_field_for_model(v.__class__)
         try:
-            v = getattr(v, variable.value_to_q_lookup)
+            v = getattr(v, value_to_q_lookup)
         except AttributeError:
             name_ish_attributes = [x for x in dir(v) if 'name' in x and not x.startswith('_')]
             raise AttributeError(
-                '{} object has no attribute {}. You can specify another name property with the value_to_q_lookup argument.{}'.format(
+                '{} object has no attribute {}. You can register a name with register_name_field() or specify another name property with the value_to_q_lookup argument.{}'.format(
                     type(v),
                     variable.value_to_q_lookup,
                     " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
@@ -314,7 +317,6 @@ class Variable(Part):
     @class_shortcut(
         form__call_target__attribute='choice_queryset',
         op_to_q_op=lambda op: 'exact',
-        value_to_q_lookup='name',
         value_to_q=choice_queryset_value_to_q,
     )
     def choice_queryset(cls, choices: QuerySet, call_target=None, **kwargs):

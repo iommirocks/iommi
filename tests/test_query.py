@@ -449,12 +449,12 @@ def test_nice_error_message():
     with pytest.raises(AttributeError) as e:
         value_to_query_string_value_string(Variable(value_to_q_lookup='name'), NonStandardName(non_standard_name='foo'))
 
-    assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument. Maybe one of ['non_standard_name']?"
+    assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the value_to_q_lookup argument. Maybe one of ['non_standard_name']?"
 
     with pytest.raises(AttributeError) as e:
         value_to_query_string_value_string(Variable(value_to_q_lookup='name'), Foo(foo=5))
 
-    assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can specify another name property with the value_to_q_lookup argument."
+    assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the value_to_q_lookup argument."
 
 
 def test_escape_quote():
