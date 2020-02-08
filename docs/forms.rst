@@ -1,19 +1,22 @@
 Forms
 =====
 
-iommi forms is alternative forms system for Django. It is inspired by, and comes from a frustration with, the standard Django forms.
+iommi forms is alternative forms system for Django. It is inspired by, and
+comes from a frustration with, the standard Django forms.
 
 Major features compared to Django forms:
 
-- Supports :code:`__` syntax for going across table/object boundaries, similar to how Django does with QuerySets.
-- Send in a callable that is late evaluated to determine if a field should be displayed (:code:`include`). This is very handy for showing a slightly different form to administrators for example.
+- Supports `__` syntax for going across table/object boundaries, similar to how Django does with QuerySets.
+- Send in a callable that is late evaluated to determine if a field should be displayed (`include`). This is very handy for showing a slightly different form to administrators for example.
 - Easy configuration without writing entire classes that are only used in one place anyway.
+
+Read the full documentation and the :doc:`howto` for more.
 
 
 Example
 -------
 
-You can either create a subclass of :code:`Form`...
+You can either create a subclass of `Form`...
 
 .. code:: python
 
@@ -51,7 +54,7 @@ You can either create a subclass of :code:`Form`...
       <input type="submit" value="Save" />
     </form>
 
-or just instantiate a :code:`Form` with a :code:`Field` list and use it directly:
+or just instantiate a `Form` with a `Field` list and use it directly:
 
 .. code:: python
 
@@ -71,8 +74,8 @@ or just instantiate a :code:`Form` with a :code:`Field` list and use it directly
         # rest of view function...
 
 
-You can also generate forms from Django models automatically (but still change the behavior!). The above example
-is equivalent to:
+You can also generate forms from Django models automatically (but still
+change the behavior!). The above example is equivalent to:
 
 .. code:: python
 
@@ -91,7 +94,7 @@ is equivalent to:
 
         # rest of view function...
 
-or even better: use :code:`Form.as_edit_page`:
+or even better: use `Form.as_edit_page`:
 
 .. code:: python
 
@@ -107,6 +110,8 @@ or even better: use :code:`Form.as_edit_page`:
         )
         # no html template! iommi has a nice default for you :P
 
-iommi pre-packages sets of defaults for common field types as 'shortcuts'. Some examples include :code:`Field.boolean`,
-:code:`Field.integer` and :code:`Field.choice`. The full list of shortcuts can be found in the `API documentation for Field <api.html#iommi.Field>`_.
+iommi pre-packages sets of defaults for common field types as 'shortcuts'.
+Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.
+The full list of shortcuts can be found in the
+`API documentation for Field <api.html#iommi.Field>`_.
 

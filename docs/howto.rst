@@ -571,3 +571,34 @@ What is the difference between `attr` and `name`?
 :code:`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use :code:`__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to :code:`None` to not read any attribute from the row.
 
 :code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.columns` and it's the name used in the GET parameter to sort by that column. This is a required field.
+
+
+Queries
+-------
+
+How do I override what operator is used for a query?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The member `op_to_q_op` for `Variable` is used to convert from e.g. `:`
+to `icontains`. You can specify another callable here:
+
+.. code:: python
+
+    Table(
+        auto__model=Song,
+        columns__album__query__op_to_q_op=lambda op: 'exact',
+    )
+
+The above will force the album name to always be looked up with case
+sensitive match even if the user types `album<Paranoid` in the
+advanced query language. Use this feature with caution!
+
+See also `How do I control what Q is produced?`_
+
+How do I control what Q is produced?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For more advanced customization you can use `value_to_q`. It is a
+callable that takes `variable, op, value_string_or_f` and returns a
+`Q` object. The default handles `__`, different operators, negation
+and special handling of when the user searches for `null`.
