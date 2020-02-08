@@ -61,52 +61,6 @@ def evaluate_strict_container(c, **kwargs):
     )
 
 
-class InvalidEndpointPathException(Exception):
-    pass
-
-
-class Endpoint:
-    declared_members = {}
-
-    def __init__(self, name, func):
-        self.name = name
-        self.func = func
-
-
-def setup_endpoints(parent, endpoints):
-    members = Struct()
-    for k, v in endpoints.items():
-        members[k] = Endpoint(k, v)
-    parent.declared_members.endpoints = members
-    parent.declared_endpoints = members
-
-
-class EndPointHandlerProxy:
-    def __init__(self, name, func, parent):
-        self.name = name
-        self.func = func
-        self.parent = parent
-        assert callable(func)
-        self.bound_members = {}
-
-    def endpoint_handler(self, value, **kwargs):
-        return self.func(value=value, **kwargs)
-
-    def evaluate_parameters(self):
-        return self.parent.evaluate_parameters()
-
-
-def setup_endpoint_proxies(parent: 'Part') -> Dict[str, EndPointHandlerProxy]:
-    result = Struct({
-        k: EndPointHandlerProxy(k, v.func, parent=parent)
-        for k, v in parent.declared_endpoints.items()
-    })
-
-    result.bound_members = result
-
-    return result
-
-
 def find_target(*, path, root):
     assert path.startswith(DISPATCH_PATH_SEPARATOR)
     p = path[1:]
@@ -273,6 +227,18 @@ class Traversable(RefinableObject):
     def on_bind(self) -> None:
         pass
 
+    def evaluate_parameters(self):
+        return {**self.own_evaluate_parameters(), **(self.parent.evaluate_parameters() if self.parent is not None else {})}
+
+    def own_evaluate_parameters(self):
+        return {}
+
+    def _evaluate_attribute(self, key, strict=True):
+        evaluate_member(self, key, **self.evaluate_parameters(), strict=strict)
+
+    def _evaluate_include(self):
+        self._evaluate_attribute('include')
+
 
 def get_root(node: Traversable) -> Traversable:
     while node.parent is not None:
@@ -319,7 +285,13 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                     so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
                     assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
 
-        members = getattr(node, 'declared_members', node)
+        if hasattr(node, 'declared_members'):
+            members = node.declared_members
+        elif isinstance(node, dict):
+            members = node
+        else:
+            return
+
         for name, member in members.items():
             if member:
                 _traverse(
@@ -418,21 +390,6 @@ class Part(Traversable):
             return self._request
         else:
             return self.parent.request()
-
-    def endpoint_path(self):
-        return DISPATCH_PREFIX + self.path()
-
-    def evaluate_parameters(self):
-        return {**self.own_evaluate_parameters(), **(self.parent.evaluate_parameters() if self.parent is not None else {})}
-
-    def own_evaluate_parameters(self):
-        return {}
-
-    def _evaluate_attribute(self, key, strict=True):
-        evaluate_member(self, key, **self.evaluate_parameters(), strict=strict)
-
-    def _evaluate_include(self):
-        self._evaluate_attribute('include')
 
 
 PartType = Union[Part, str, Template]
@@ -569,3 +526,30 @@ def evaluate_attrs(obj, **kwargs):
         'class': classes,
         **attrs
     }, parent=obj)
+
+
+class InvalidEndpointPathException(Exception):
+    pass
+
+
+class Endpoint(Traversable):
+    name = Refinable()
+    func = Refinable()
+    include = Refinable()
+
+    @dispatch(
+        name=None,
+        func=None,
+        include=True,
+    )
+    def __init__(self, **kwargs):
+        super(Endpoint, self).__init__(**kwargs)
+
+    def on_bind(self) -> None:
+        assert callable(self.func)
+
+    def endpoint_handler(self, value, **kwargs):
+        return self.func(value=value, **kwargs)
+
+    def endpoint_path(self):
+        return DISPATCH_PREFIX + self.path()

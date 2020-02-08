@@ -80,11 +80,12 @@ def declarative_table():
     return TestTable(rows=get_rows())
 
 
-@pytest.mark.parametrize('table', [
-    explicit_table(),
-    declarative_table()
+@pytest.mark.parametrize('table_builder', [
+    explicit_table,
+    declarative_table
 ])
-def test_render_impl(table):
+def test_render_impl(table_builder):
+    table = table_builder()
     verify_table_html(table=table, expected_html="""
         <table class="another_class table" data-endpoint="/tbody" id="table_id">
             <thead>
@@ -1477,7 +1478,7 @@ def test_ajax_endpoint():
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/parts/table/query/form/fields/foo': 'hopp'})
+    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/parts/table/query/form/fields/foo/endpoints/choices': 'hopp'})
     assert json.loads(result.content) == {
         'results': [
             {'id': 2, 'text': 'Foo(42, Hopp)'},
@@ -1491,7 +1492,7 @@ def test_ajax_endpoint():
 def test_ajax_endpoint_empty_response():
     class TestTable(Table):
         class Meta:
-            endpoints__foo = lambda **_: []
+            endpoints__foo__func = lambda **_: []
 
         bar = Column()
 
@@ -1502,7 +1503,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__data = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
+            endpoints__data__func = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
 
         foo = Column()
         bar = Column()
@@ -1521,7 +1522,7 @@ def test_ajax_data_endpoint():
 def test_ajax_endpoint_namespacing():
     class TestTable(Table):
         class Meta:
-            endpoints__bar = lambda **_: 17
+            endpoints__bar__func = lambda **_: 17
 
         baz = Column()
 
@@ -1560,7 +1561,7 @@ def test_table_iteration():
 def test_ajax_custom_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__foo = lambda value, **_: dict(baz=value)
+            endpoints__foo__func = lambda value, **_: dict(baz=value)
 
         spam = Column()
 
@@ -1848,7 +1849,7 @@ def test_new_style_ajax_dispatch():
 
     from iommi import middleware
     m = middleware(get_response)
-    response = m(request=req('get', **{'/parts/table/query/form/fields/foo': ''}))
+    response = m(request=req('get', **{'/parts/table/query/form/fields/foo/endpoints/choices': ''}))
 
     assert json.loads(response.content) == {
         'results': [
@@ -1865,9 +1866,9 @@ def test_new_style_ajax_dispatch():
 def test_endpoint_path_of_nested_part():
     page = Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
-    target = find_target(path='/parts/table/query/form/fields/foo', root=page)
-    assert target.endpoint_path() == '/foo'
-    assert target.dunder_path() == 'parts__table__query__form__fields__foo'
+    target = find_target(path='/parts/table/query/form/fields/foo/endpoints/choices', root=page)
+    assert target.endpoint_path() == '/choices'
+    assert target.dunder_path() == 'parts__table__query__form__fields__foo__endpoints__choices'
 
 
 def test_dunder_name_for_column():

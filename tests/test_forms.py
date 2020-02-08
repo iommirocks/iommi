@@ -1366,7 +1366,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
 
     form = MyForm()
     form.bind(request=req('get'))
-    actual = perform_ajax_dispatch(root=form, path='/fields/username', value='ar')
+    actual = perform_ajax_dispatch(root=form, path='/fields/username/endpoints/choices', value='ar')
     assert actual == {
         'results': [
             {'id': user2.pk, 'text': smart_str(user2)}
@@ -1401,7 +1401,7 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     user2 = User.objects.create(username='bar')
 
     form = Form(auto__model=FooModel, **kwargs).bind(request=req('get'))
-    actual = perform_ajax_dispatch(root=form, path='/fields/user', value='ar')
+    actual = perform_ajax_dispatch(root=form, path='/fields/user/endpoints/choices', value='ar')
 
     assert actual == {
         'results': [
@@ -1416,15 +1416,13 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
 def test_ajax_namespacing():
     class MyForm(Form):
         foo = Field(
-            endpoint_handler=lambda **_: 'default',
-            endpoints__bar=lambda **_: 'bar',
-            endpoints__baaz=lambda **_: 'baaz',
+            endpoints__bar__func=lambda **_: 'bar',
+            endpoints__baaz__func=lambda **_: 'baaz',
         )
 
     request = req('get')
     form = MyForm()
     form.bind(request=request)
-    assert 'default' == perform_ajax_dispatch(root=form, path='/fields/foo', value='ar')
     assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/bar', value='ar')
     assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/baaz', value='ar')
 
@@ -1457,7 +1455,7 @@ def test_ajax_config_and_validate():
 def test_custom_endpoint():
     class MyForm(Form):
         class Meta:
-            endpoints__foo = lambda value, **_: 'foo' + value
+            endpoints__foo__func = lambda value, **_: 'foo' + value
 
     form = MyForm()
     form.bind(request=None)

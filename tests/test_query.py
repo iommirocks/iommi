@@ -401,7 +401,7 @@ def test_endpoint_dispatch():
     request = req('get')
     query = MyQuery().bind(request=request)
 
-    assert '/foo' == query.form.fields.foo.endpoint_path()
+    assert query.form.fields.foo.endpoints.choices.endpoint_path() == '/choices'
     expected = {
         'results': [
             {'id': x.pk, 'text': str(x)},
@@ -409,8 +409,8 @@ def test_endpoint_dispatch():
         'pagination': {'more': False},
         'page': 1,
     }
-    assert perform_ajax_dispatch(root=query, path='/form/fields/foo', value='ar') == expected
-    assert perform_ajax_dispatch(root=query, path='/foo', value='ar') == expected
+    assert perform_ajax_dispatch(root=query, path='/form/fields/foo/endpoints/choices', value='ar') == expected
+    assert perform_ajax_dispatch(root=query, path='/choices', value='ar') == expected
 
 
 def test_endpoint_dispatch_errors():

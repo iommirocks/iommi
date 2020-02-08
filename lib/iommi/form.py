@@ -48,9 +48,7 @@ from iommi.base import (
     no_copy_on_bind,
     Part,
     request_data,
-    setup_endpoint_proxies,
-    setup_endpoints,
-)
+    Endpoint)
 from iommi.from_model import (
     create_members_from_model,
     get_name_field_for_model,
@@ -162,13 +160,13 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
             return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
 
 
-def default_endpoint__config(field: 'Field', **_) -> dict:
+def default_endpoints__config(field: 'Field', **_) -> dict:
     return dict(
         name=field.name,
     )
 
 
-def default_endpoint__validate(field: 'Field', **_) -> dict:
+def default_endpoints__validate(field: 'Field', **_) -> dict:
     return dict(
         valid=not bool(field.errors),
         errors=list(field.errors),
@@ -409,8 +407,6 @@ class Field(Part):
     empty_choice_tuple = Refinable()
 
     endpoints: Namespace = Refinable()
-        # TODO move endpoint_handler to endpoints__choices
-    endpoint_handler: Callable = Refinable()
 
     @dispatch(
         attr=MISSING,
@@ -423,8 +419,8 @@ class Field(Part):
         editable=True,
         strip_input=True,
         endpoints=EMPTY,
-        endpoints__config=default_endpoint__config,
-        endpoints__validate=default_endpoint__validate,
+        endpoints__config__func=default_endpoints__config,
+        endpoints__validate__func=default_endpoints__validate,
         errors=EMPTY,
         input__call_target=Fragment,
         input__attrs__id=default_input_id,
@@ -480,7 +476,7 @@ class Field(Part):
         self.input = self.input()
         self.label = self.label()
 
-        setup_endpoints(self, endpoints)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
 
     @property
     def form(self):
@@ -537,6 +533,8 @@ class Field(Part):
         for k, v in getattr(self.parent.parent, '_fields_unapplied_data', {}).get(self.name, {}).items():
             setattr_path(self, k, v)
 
+        bind_members(self, name='endpoints')
+
         form = self.parent.parent
         if self.attr is MISSING:
             self.attr = self.name
@@ -549,8 +547,6 @@ class Field(Part):
             self.editable = False
 
         self.declared_field = self._declared
-
-        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def _evaluate(self):
         """
@@ -761,7 +757,7 @@ class Field(Part):
         call_target__attribute="choice",
         parse=choice_queryset__parse,
         choice_to_option=choice_queryset__choice_to_option,
-        endpoint_handler=choice_queryset__endpoint_handler,
+        endpoints__choices__func=choice_queryset__endpoint_handler,
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
@@ -1017,7 +1013,7 @@ class Form(Part):
         collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
         self.fields: Struct = None
 
-        setup_endpoints(self, endpoints)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
 
     def on_bind(self) -> None:
         assert self.actions_template
@@ -1031,6 +1027,7 @@ class Form(Part):
 
         bind_members(self, name='actions')
         bind_members(self, name='fields')
+        bind_members(self, name='endpoints')
 
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
@@ -1078,8 +1075,6 @@ class Form(Part):
         self.errors = Errors(parent=self, errors=self.errors)
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
-
-        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def own_evaluate_parameters(self):
         return dict(form=self)

@@ -73,6 +73,7 @@ from iommi.base import (
     bind_members,
     collect_members,
     DISPATCH_PREFIX,
+    Endpoint,
     evaluate_attrs,
     evaluate_member,
     evaluate_members,
@@ -82,8 +83,6 @@ from iommi.base import (
     no_copy_on_bind,
     Part,
     path_join,
-    setup_endpoint_proxies,
-    setup_endpoints,
 )
 from iommi.form import (
     Form,
@@ -1133,8 +1132,8 @@ class Table(Part):
         form_class = Form
         query_class = Query
         action_class = Action
-        endpoints__tbody = (lambda table, **_: {'html': table.__html__(template='tri_table/table_container.html')})
-        endpoints__csv = endpoint__csv
+        endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='tri_table/table_container.html')})
+        endpoints__csv__func = endpoint__csv
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
 
@@ -1247,7 +1246,7 @@ class Table(Part):
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
-        setup_endpoints(self, endpoints)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
 
         self.query_args = query
         self._query: Query = None
@@ -1344,6 +1343,7 @@ class Table(Part):
     def on_bind(self) -> None:
         bind_members(self, name='actions')
         bind_members(self, name='columns')
+        bind_members(self, name='endpoints')
 
         evaluate_member(self, 'sortable', **self.evaluate_parameters())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
@@ -1458,8 +1458,6 @@ class Table(Part):
         self._prepare_auto_rowspan()
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
-
-        self.bound_members.endpoints = setup_endpoint_proxies(self)
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
