@@ -1416,7 +1416,7 @@ def test_from_model():
         columns__a__extra__stuff='Some stuff',
     )
     t.bind(request=None)
-    assert list(t.declared_columns.keys()) == ['select', 'id', 'a', 'b']
+    assert list(t.declared_members.columns.keys()) == ['select', 'id', 'a', 'b']
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
     assert 'Some stuff' == t.columns['a'].extra.stuff
@@ -1426,7 +1426,7 @@ def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
     ).bind(request=None)
-    assert list(t.declared_columns.keys()) == ['select', 'id', 'foo', 'c']
+    assert list(t.declared_members.columns.keys()) == ['select', 'id', 'foo', 'c']
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
@@ -1444,7 +1444,7 @@ def test_explicit_table_does_not_use_from_model():
 
     p = TestTable().as_page().bind(request=None)
     assert 'table' in p.parts.keys()
-    assert list(p.parts.table.declared_columns.keys()) == ['foo']
+    assert list(p.parts.table.declared_members.columns.keys()) == ['foo']
 
 
 @pytest.mark.django_db
@@ -1454,7 +1454,7 @@ def test_from_model_implicit():
 
     p = TestTable(auto__rows=TBar.objects.all()).as_page().bind(request=None)
     assert 'table' in p.parts.keys()
-    assert list(p.parts.table.declared_columns.keys()) == ['select', 'id', 'foo', 'c']
+    assert list(p.parts.table.declared_members.columns.keys()) == ['select', 'id', 'foo', 'c']
 
 
 @override_settings(DEBUG=True)

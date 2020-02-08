@@ -40,7 +40,6 @@ class Action(Part):
     )
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.declared_action = None
 
         if self.tag == 'input' and self.display_name:
             assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"

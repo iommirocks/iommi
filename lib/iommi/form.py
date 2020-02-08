@@ -475,8 +475,6 @@ class Field(Part):
 
         self.choice_tuples = None
 
-        self.declared_field = None
-
         self.input = self.input()
         self.label = self.label()
 

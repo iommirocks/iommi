@@ -514,7 +514,6 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 
     members = Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
     obj.declared_members[name] = members
-    setattr(obj, 'declared_' + name, members)
 
 
 @no_copy_on_bind
