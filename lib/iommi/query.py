@@ -224,7 +224,6 @@ class Variable(Part):
             'name',
             'include',
             'after',
-            'extra',
             'style',
             'attr',
             'gui_op',
@@ -233,6 +232,7 @@ class Variable(Part):
             'choices',
         ]
         evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(query=self.parent, variable=self)

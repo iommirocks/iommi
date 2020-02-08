@@ -20,7 +20,7 @@ from iommi.base import (
     no_copy_on_bind,
     Part,
     PartType,
-)
+    evaluate_strict_container)
 from iommi.render import render_attrs
 from tri_declarative import (
     declarative,
@@ -99,6 +99,7 @@ class Fragment(Part):
 
     def on_bind(self) -> None:
         self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
         # TODO: do we want to do this?
         # self._children = [evaluate_strict(x, **self.evaluate_parameters()) for x in self._children]
 
@@ -155,6 +156,7 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
+        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(page=self)
