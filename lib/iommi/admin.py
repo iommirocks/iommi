@@ -91,7 +91,7 @@ def list_model(model, app, table):
         table__bulk__actions__delete__include=True,
     )
     for field in get_fields(model):
-        if field.unique:
+        if getattr(field, 'unique', False):
             continue
         setdefaults_path(
             kwargs,

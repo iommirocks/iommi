@@ -519,12 +519,15 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 
 @no_copy_on_bind
 class Members(Part):
-    def __init__(self, *, declared_items, **kwargs):
+    def __init__(self, *, declared_members, **kwargs):
         super(Members, self).__init__(**kwargs)
-        self.declared_items = declared_items
+        self.declared_members = declared_members
 
     def on_bind(self) -> None:
-        bound_items = [item for item in sort_after([x.bind(parent=self) for x in self.declared_items.values()])]
+        bound_items = sort_after([
+            m.bind(parent=self)
+            for m in self.declared_members.values()
+        ])
 
         for item in bound_items:
             item._evaluate_include()
@@ -533,8 +536,7 @@ class Members(Part):
 
 
 def bind_members(obj: Part, *, name: str) -> None:
-    declared_items = getattr(obj, f'declared_{name}')
-    m = Members(name=name, declared_items=declared_items)
+    m = Members(name=name, declared_members=obj.declared_members[name])
     m.bind(parent=obj)
     setattr(obj, name, m.bound_members)
     setattr(obj.bound_members, name, m)
