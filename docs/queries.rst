@@ -35,7 +35,7 @@ match. You can exclude with `!=`. As the example above shows `:` is used for
 case insensitive "contains" queries, and the inverse of that is `!:`
 
 iommi tries to support what the user might intuitively write for searching
-boolean columns. It will interpret "n", "no", "0", "false", "f" and "off"
+boolean columns. It will interpret "n", "no", "0" (zero), "false", "f" and "off"
 as `false`  and the corresponding values for `true`.
 
 You can configure a `Variable` to be case sensitive by setting `op_to_q_op`
@@ -44,7 +44,7 @@ to `case_sensitive_op_to_q_op`.
 iommi queries have a special form for filtering directly on pk, which can be
 very handy: `album.pk=3`.
 
-`gui_op` specifies what operation the simple form bases querying uses to
+`gui_op` specifies what operation the simple form uses to
 interpret its inputs. The default is `=`, meaning exact case insensitive match.
 
 If you have table of `Song` and a foreign key to `Album`, if you search for
