@@ -480,7 +480,7 @@ class Field(Part):
         self.input = self.input()
         self.label = self.label()
 
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     @property
     def form(self):
@@ -534,8 +534,6 @@ class Field(Part):
 
     def on_bind(self) -> None:
         assert self.template
-        for k, v in getattr(self.parent.parent, '_fields_unapplied_data', {}).get(self.name, {}).items():
-            setattr_path(self, k, v)
 
         bind_members(self, name='endpoints')
 
@@ -1010,16 +1008,9 @@ class Form(Part):
         self.instance = instance
         self.mode = INITIALS_FROM_GET
 
-        self._actions_unapplied_data = {}
-
-        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
-        self.actions = None
-
-        self._fields_unapplied_data = {}
-        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class, unapplied_config=self._fields_unapplied_data)
-        self.fields: Struct = None
-
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
+        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
+        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     def on_bind(self) -> None:
         assert self.actions_template

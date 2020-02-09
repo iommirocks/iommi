@@ -211,9 +211,6 @@ class Variable(Part):
         super(Variable, self).__init__(**kwargs)
 
     def on_bind(self) -> None:
-        for k, v in getattr(self.parent.parent, '_variables_unapplied_data', {}).get(self.name, {}).items():
-            setattr_path(self, k, v)
-
         if self.attr is MISSING:
             self.attr = self.name
 
@@ -520,9 +517,7 @@ class Query(Part):
             **kwargs
         )
 
-        self._variables_unapplied_data = {}
-        collect_members(self, name='variables', items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class, unapplied_config=self._variables_unapplied_data)
-        self.variables = None
+        collect_members(self, name='variables', items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class)
 
         def generate_fields_declaration():
             field_class = self.get_meta().form_class.get_meta().member_class
@@ -553,7 +548,7 @@ class Query(Part):
         # Variables need to be at the end to not steal the short names
         self.declared_members.variables = self.declared_members.pop('variables')
 
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     def on_bind(self) -> None:
         bind_members(self, name='variables')
@@ -563,20 +558,21 @@ class Query(Part):
         if any(v.freetext for v in self.variables.values()):
             self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True
 
-        def generate_fields_unapplied_data():
+        def generate_fields_unapplied_config():
             for variable in self.variables.values():
-                assert variable.attr, f"{variable.name} cannot be a part of a query, it has no attr so we don't know what to search for"
+                name = variable.name
+                assert variable.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
                 params = setdefaults_path(
                     Namespace(),
-                    name=variable.name,
+                    name=name,
                     attr=variable.attr,
                     model_field=variable.model_field,
                 )
                 if not variable.include:
                     params.include = False
-                yield params
+                yield name, params
 
-        self.form._fields_unapplied_data = Struct({x.name: x for x in generate_fields_unapplied_data()})
+        self.form.unapplied_config.fields = Struct(generate_fields_unapplied_config())
         self.form.bind(parent=self)
 
         self.bound_members.form = self.form

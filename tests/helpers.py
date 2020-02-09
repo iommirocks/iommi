@@ -92,7 +92,6 @@ class StubTraversable(Traversable):
         super(StubTraversable, self).__init__()
         self.name = name
         self.declared_members = members or {}
-        self.bound_members = None
 
     def on_bind(self):
         self.bound_members = Struct({k: v.bind(parent=self) for k, v in self.declared_members.items()})

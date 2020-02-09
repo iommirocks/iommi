@@ -101,11 +101,6 @@ class Action(Part):
         )
         return call_target(**kwargs)
 
-    def on_bind(self) -> None:
-        if self.parent is not None and self.parent.parent is not None:
-            for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
-                setattr_path(self, k, v)
-
     def own_evaluate_parameters(self):
         return dict(action=self)
 

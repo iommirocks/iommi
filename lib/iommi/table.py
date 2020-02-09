@@ -327,8 +327,6 @@ class Column(Part):
         return force_str(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
-        for k, v in getattr(self.parent.parent, '_columns_unapplied_data').get(self.name, {}).items():
-            setattr_path(self, k, v)
 
         self.table = self.parent.parent
 
@@ -1233,10 +1231,6 @@ class Table(Part):
 
         model, rows = model_and_rows(model, rows)
 
-        self._actions_unapplied_data = {}
-        self.actions = None
-
-        self._columns_unapplied_data = {}
         self.columns = None
         self.rendered_columns = None
 
@@ -1250,9 +1244,9 @@ class Table(Part):
             **kwargs
         )
 
-        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class, unapplied_config=self._actions_unapplied_data)
-        collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class, unapplied_config=self._columns_unapplied_data)
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
+        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
+        collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
         self.query_args = query
         self._query: Query = None
@@ -1376,19 +1370,18 @@ class Table(Part):
         self._prepare_headers()
 
         if self.model:
-            def generate_variables_unapplied_data():
+            def generate_variables_unapplied_config():
                 for column in self.columns.values():
-
+                    name = column.name
                     query_namespace = setdefaults_path(
                         Namespace(),
-                        name=column.name,
+                        name=name,
                         include=column.query.include,
                         form__display_name=column.display_name,
                     )
-                    yield query_namespace
+                    yield name, query_namespace
 
-            self._query._variables_unapplied_data = Struct({x.name: x for x in generate_variables_unapplied_data()})
-
+            self._query.unapplied_config.variables = Struct(generate_variables_unapplied_config())
             self._query.bind(parent=self)
             self._query_form = self._query.form if self._query.variables else None
             self.bound_members.query = self._query
@@ -1402,20 +1395,20 @@ class Table(Part):
                 except QueryException as e:
                     self._query_error = str(e)
 
-            def generate_bulk_fields_unapplied_data():
+            def generate_bulk_fields_unapplied_config():
                 for column in self.columns.values():
-
+                    name = column.name
                     bulk_namespace = setdefaults_path(
                         Namespace(),
                         column.bulk,
-                        name=column.name,
+                        name=name,
                         include=column.bulk.include,
                         display_name=column.display_name,
                     )
-                    yield bulk_namespace
+                    yield name, bulk_namespace
 
             if self._bulk_form is not None:
-                self._bulk_form._fields_unapplied_data = Struct({x.name: x for x in generate_bulk_fields_unapplied_data()})
+                self._bulk_form.unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
                 self._bulk_form.bind(parent=self)
                 self.bound_members.bulk = self._bulk_form
 

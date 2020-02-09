@@ -176,6 +176,9 @@ class Traversable(RefinableObject):
 
     def __init__(self, **kwargs):
         self.declared_members = Struct()
+        self.unapplied_config = Struct()
+        self.bound_members = None
+
         super(Traversable, self).__init__(**kwargs)
 
     def __repr__(self):
@@ -210,9 +213,10 @@ class Traversable(RefinableObject):
         assert parent is None or parent._is_bound
         assert not self._is_bound
 
+        name = getattr(self, 'name', None)
         if parent is None:
             self._request = request
-            if self.name is None:
+            if name is None:
                 self.name = 'root'
 
         long_path_by_path = None
@@ -224,6 +228,7 @@ class Traversable(RefinableObject):
         else:
             result = copy.copy(self)
             result._declared = self
+
         del self  # to prevent mistakes when changing the code below
 
         result.parent = parent
@@ -235,6 +240,19 @@ class Traversable(RefinableObject):
         result.bound_members = Struct()
 
         apply_style(result)
+
+        if parent is not None:
+            unapplied_config = parent.unapplied_config.get(name, {})
+            for k, v in unapplied_config.items():
+                if k in result.declared_members:
+                    result.unapplied_config[k] = v
+                    continue
+                # TODO what to check for? isinstnace Members seems weird
+                if not isinstance(result, Members) and hasattr(result, k):
+                    setattr(result, k, v)
+                    continue
+                print(f'Unable to set {k} on {result.name}')
+
         result.on_bind()
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.evaluate_parameters())
@@ -461,9 +479,10 @@ def no_copy_on_bind(cls):
     return cls
 
 
-def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unapplied_config: Dict) -> Dict[str, Any]:
+def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type) -> Dict[str, Any]:
     assert name != 'items'
     unbound_items = {}
+    unapplied_config = {}
 
     if items_dict is not None:
         for key, x in items_dict.items():
@@ -487,6 +506,9 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
                     )
                     unbound_items[key] = item()
 
+    if unapplied_config:
+        obj.unapplied_config[name] = unapplied_config
+
     # TODO: shouldn't sort_after be done on the bound items?
     members = Struct({x.name: x for x in unbound_items.values()})
     obj.declared_members[name] = members
@@ -508,7 +530,10 @@ class Members(Part):
 
 
 def bind_members(obj: Part, *, name: str) -> None:
-    m = Members(name=name, declared_members=obj.declared_members[name])
+    m = Members(
+        name=name,
+        declared_members=obj.declared_members[name],
+    )
     m.bind(parent=obj)
     setattr(obj, name, m.bound_members)
     setattr(obj.bound_members, name, m)
