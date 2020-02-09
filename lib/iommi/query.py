@@ -548,7 +548,7 @@ class Query(Part):
                 include=False,
             )
 
-            for variable in self.declared_variables.values():
+            for variable in self.declared_members.variables.values():
                 assert variable.name is not MISSING
                 yield setdefaults_path(
                     Namespace(),
@@ -578,7 +578,7 @@ class Query(Part):
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         if any(v.freetext for v in self.variables.values()):
-            self.form.declared_fields[FREETEXT_SEARCH_NAME].include = True
+            self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True
 
         def generate_fields_unapplied_data():
             for variable in self.variables.values():

@@ -365,14 +365,14 @@ def test_multi_choice_queryset():
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert list(t.declared_variables.keys()) == ['id', 'foo']
+    assert list(t.declared_members.variables.keys()) == ['id', 'foo']
     assert list(t.variables.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert list(t.declared_variables.keys()) == ['id', 'foo']
+    assert list(t.declared_members.variables.keys()) == ['id', 'foo']
     assert list(t.variables.keys()) == ['foo']
 
 
@@ -382,7 +382,7 @@ def test_from_model_foreign_key():
             variables = Query.variables_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert list(t.declared_variables.keys()) == ['id', 'foo']
+    assert list(t.declared_members.variables.keys()) == ['id', 'foo']
     assert isinstance(t.variables['foo'].choices, QuerySet)
 
 

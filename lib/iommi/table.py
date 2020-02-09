@@ -305,8 +305,6 @@ class Column(Part):
 
         super(Column, self).__init__(**kwargs)
 
-        # TODO: this seems weird.. why do we need this?
-        self.declared_column: Column = None
         self.is_sorting: bool = None
         self.sort_direction: str = None
 
@@ -1261,7 +1259,7 @@ class Table(Part):
         if self.model:
             # Query
             def generate_variables():
-                for column in self.declared_columns.values():
+                for column in self.declared_members.columns.values():
                     query_namespace = setdefaults_path(
                         Namespace(),
                         column.query,
@@ -1289,7 +1287,7 @@ class Table(Part):
             def generate_bulk_fields():
                 field_class = self.get_meta().form_class.get_meta().member_class
 
-                for column in self.declared_columns.values():
+                for column in self.declared_members.columns.values():
                     bulk_config = self.bulk.fields.pop(column.name, {})
 
                     if column.bulk.include:
