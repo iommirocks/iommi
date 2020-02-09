@@ -28,9 +28,7 @@ from iommi.base import (
     Part,
     path_join,
     request_data,
-    setup_endpoint_proxies,
-    setup_endpoints,
-)
+    Endpoint)
 from iommi.form import (
     bool_parse,
     Form,
@@ -497,7 +495,7 @@ class Query(Part):
         form_class = Form
 
     @dispatch(
-        endpoints__errors=default_endpoint__errors,
+        endpoints__errors__func=default_endpoint__errors,
         variables=EMPTY,
         auto=EMPTY,
     )
@@ -568,7 +566,7 @@ class Query(Part):
         # Variables need to be at the end to not steal the short names
         self.declared_members.variables = self.declared_members.pop('variables')
 
-        setup_endpoints(self, endpoints)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint, unapplied_config={})
 
     def on_bind(self) -> None:
         bind_members(self, name='variables')
@@ -597,7 +595,8 @@ class Query(Part):
         self.form.bind(parent=self)
 
         self.bound_members.form = self.form
-        self.bound_members.endpoints = setup_endpoint_proxies(self)
+
+        bind_members(self, name='endpoints')
 
     def own_evaluate_parameters(self):
         return dict(query=self)

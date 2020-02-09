@@ -177,12 +177,13 @@ def test_unique_constraint_violation():
 
 @pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results with an unordered")
+@override_settings(DEBUG=True)
 def test_create_or_edit_object_dispatch():
     from tests.models import Bar, Foo
 
     f1 = Foo.objects.create(foo=1)
     f2 = Foo.objects.create(foo=2)
-    request = req('get', **{ DISPATCH_PATH_SEPARATOR + 'foo': ''})
+    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'choices': ''})
 
     response = Form.as_create_page(
         model=Bar,

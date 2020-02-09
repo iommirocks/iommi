@@ -19,7 +19,7 @@
             dataType: "json",
             data: function (params) {
                 return {
-                    '{{ field.endpoint_path }}': params.term || '', // search term
+                    '{{ field.endpoints.choices.endpoint_path }}': params.term || '', // search term
                     page: params.page || 1
                 };
             }
