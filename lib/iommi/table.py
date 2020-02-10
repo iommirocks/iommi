@@ -23,7 +23,12 @@ from django.core.paginator import (
     InvalidPage,
     Paginator as DjangoPaginator,
 )
-from django.db.models import QuerySet, Model
+from django.db.models import (
+    QuerySet,
+    Model,
+    BooleanField,
+    ManyToManyField,
+)
 from django.http import (
     Http404,
     HttpResponseRedirect,
@@ -867,14 +872,38 @@ class Header(object):
 
 
 def bulk__post_handler(table, form, **_):
+    if not form.is_valid():
+        return
+
     queryset = table.bulk_queryset()
 
+    simple_updates = []
+    m2m_updates = []
+    for field in form.fields.values():
+        if field.value is None:
+            continue
+        if field.value in ['', []]:
+            continue
+        if field.attr is None:
+            continue
+
+        if isinstance(field.model_field, ManyToManyField):
+            m2m_updates.append(field)
+        else:
+            simple_updates.append(field)
+
     updates = {
-        field.name: field.value
-        for field in form.fields.values()
-        if field.value is not None and field.value != '' and field.attr is not None
+        field.attr: field.value
+        for field in simple_updates
     }
     queryset.update(**updates)
+
+    if m2m_updates:
+        for obj in queryset:
+            for field in m2m_updates:
+                assert '__' not in field.attr, "Nested m2m relations is currently not supported for bulk editing"
+                getattr(obj, field.attr).set(field.value)
+            obj.save()
 
     table.post_bulk_edit(table=table, queryset=queryset, updates=updates)
 
@@ -882,6 +911,9 @@ def bulk__post_handler(table, form, **_):
 
 
 def bulk_delete__post_handler(table, form, **_):
+    if not form.is_valid():
+        return
+
     queryset = table.bulk_queryset()
 
     from iommi.page import Page, html
@@ -1297,8 +1329,11 @@ class Table(Part):
                             attr=column.name if column.attr is MISSING else column.attr,
                             required=False,
                             empty_choice_tuple=(None, '', '---', True),
+                            parse_empty_string_as_none=True,
                             **bulk_config
                         )
+                        if isinstance(column.model_field, BooleanField):
+                            bulk_namespace.call_target.attribute = 'boolean_tristate'
                         if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
                             bulk_namespace['field_name'] = bulk_namespace.attr
                         yield bulk_namespace()

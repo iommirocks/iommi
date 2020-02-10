@@ -139,25 +139,27 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
         form.errors.update(set(e.messages))
         form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
+    if not form.is_valid():
+        return
+
+    if is_create:  # two phase save for creation in django...
+        form.instance.save()
+
+    form.apply(form.instance)
+
+    if not is_create:
+        try:
+            form.instance.validate_unique()
+        except ValidationError as e:
+            form.errors.update(set(e.messages))
+            form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
+
     if form.is_valid():
-        if is_create:  # two phase save for creation in django...
-            form.instance.save()
+        form.instance.save()
 
-        form.apply(form.instance)
+        form.extra.on_save(form=form, instance=form.instance)
 
-        if not is_create:
-            try:
-                form.instance.validate_unique()
-            except ValidationError as e:
-                form.errors.update(set(e.messages))
-                form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
-
-        if form.is_valid():
-            form.instance.save()
-
-            form.extra.on_save(form=form, instance=form.instance)
-
-            return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
+        return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
 
 
 def default_endpoints__config(field: 'Field', **_) -> dict:
@@ -268,7 +270,7 @@ def choice_queryset__extra__filter_and_sort(field, value, **_):
 
 def choice_queryset__parse(field, string_value, **_):
     try:
-        return field.model.objects.get(pk=string_value) if string_value else None
+        return field.choices.get(pk=string_value) if string_value else None
     except field.model.DoesNotExist as e:
         raise ValidationError(str(e))
 
@@ -949,7 +951,6 @@ class Field(Part):
             write_to_instance=many_to_many_factory_write_to_instance,
             extra__django_related_field=True,
         )
-        kwargs['model'] = model_field.remote_field.model
         return call_target(model_field=model_field, **kwargs)
 
 

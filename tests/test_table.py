@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import django
 import pytest
+from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
@@ -47,6 +48,7 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    BooleanFromModelTestModel,
 )
 
 register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
@@ -825,6 +827,31 @@ def test_bulk_edit():
         (3, 11, u'changed2'),
         (4, 11, u'changed2'),
     ]
+
+
+@pytest.mark.django_db
+def test_bulk_edit_from_model_has_tristate_for_booleans():
+    t = Table(
+        auto__model=BooleanFromModelTestModel,
+        columns__b__bulk__include=True,
+    ).bind(request=req('get'))
+    assert t._bulk_form.fields.b.__tri_declarative_shortcut_stack[0] == 'boolean_tristate'
+
+
+@pytest.mark.django_db
+def test_bulk_edit_for_m2m_relations():
+    f1 = TFoo.objects.create(a=1, b='a')
+    f2 = TFoo.objects.create(a=2, b='b')
+    baz = TBaz.objects.create()
+    baz.foo.set([f1, f2])
+
+    t = Table(
+        auto__model=TBaz,
+        columns__foo__bulk__include=True,
+    ).bind(request=req('post', _all_pks_='1', **{'bulk/foo': [f1.pk], '-bulk/submit': ''}))
+    t.render_to_response()
+    baz.refresh_from_db()
+    assert list(baz.foo.all()) == [f1]
 
 
 @pytest.mark.django_db

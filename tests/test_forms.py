@@ -61,6 +61,7 @@ from .helpers import (
 )
 from .models import (
     Bar,
+    BooleanFromModelTestModel,
 )
 
 
@@ -648,8 +649,8 @@ def test_multi_choice_queryset():
         foo = Field.multi_choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
-    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo.errors == {'%s not in available choices' % user2.pk}
-    assert MyForm().bind(request=req('get', foo=[smart_str(user2.pk), smart_str(user3.pk)])).fields.foo.errors == {'%s, %s not in available choices' % (user2.pk, user3.pk)}
+    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo.errors == {'User matching query does not exist.'}
+    assert MyForm().bind(request=req('get', foo=[smart_str(user2.pk), smart_str(user3.pk)])).fields.foo.errors == {'User matching query does not exist.'}
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
@@ -669,7 +670,7 @@ def test_choice_queryset():
         foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
-    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo.errors == {'%s not in available choices' % user2.pk}
+    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo.errors == {'User matching query does not exist.'}
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
@@ -1835,3 +1836,9 @@ def test_dunder_name_for_column():
     form = FooForm()
     form.bind(request=None)
     assert list(form.fields.keys()) == ['foo', 'foo__a']
+
+
+def test_help_text_for_boolean_tristate():
+    form = Form(auto__model=BooleanFromModelTestModel)
+    form.bind(request=req('get'))
+    assert '$$$$' in str(form)

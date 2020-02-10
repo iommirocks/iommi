@@ -135,3 +135,6 @@ class AdminUnique(Model):
     foo = IntegerField()
     unique = IntegerField(unique=True)
 
+
+class BooleanFromModelTestModel(Model):
+    b = BooleanField(help_text='$$$$')
