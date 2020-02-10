@@ -224,6 +224,9 @@ class Traversable(RefinableObject):
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.evaluate_parameters())
 
+        if hasattr(result, 'extra_evaluated'):
+            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated, **result.evaluate_parameters())
+
         return result
 
     def on_bind(self) -> None:

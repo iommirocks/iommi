@@ -83,8 +83,6 @@ class MenuBase(Part):
                 for item in sorted(self.sub_menu.values(), key=lambda x: x.display_name)
             })
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
-
     def own_evaluate_parameters(self):
         return dict(menu_item=self)
 

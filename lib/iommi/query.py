@@ -231,7 +231,6 @@ class Variable(Part):
             'choices',
         ]
         evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(query=self.parent, variable=self)
@@ -572,8 +571,6 @@ class Query(Part):
         bind_members(self, name='variables')
 
         self.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
-
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         if any(v.freetext for v in self.variables.values()):
             self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True

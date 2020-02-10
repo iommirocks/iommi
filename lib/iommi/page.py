@@ -96,9 +96,9 @@ class Fragment(Part):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
         # TODO: do we want to do this?
         # self._children = [evaluate_strict(x, **self.evaluate_parameters()) for x in self._children]
+        pass
 
     @dispatch(
         context=EMPTY,
@@ -153,7 +153,6 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(page=self)

@@ -366,7 +366,6 @@ class Column(Part):
             'display_name',
         ]
         evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(table=self.table, column=self)
@@ -1452,8 +1451,6 @@ class Table(Part):
         self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
 
         self._prepare_auto_rowspan()
-
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)

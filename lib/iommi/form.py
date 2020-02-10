@@ -544,7 +544,45 @@ class Field(Part):
         if form.editable is False:
             self.editable = False
 
-        self.declared_field = self._declared
+        self._set_initial()
+        self._read_raw_data()
+
+        self._evaluate()
+
+    def _set_initial(self):
+        form = self.parent.parent
+        if self.include and form.instance is not None:
+            if self.attr:
+                initial = self.read_from_instance(self, form.instance)
+
+                # TODO: we always overwrite here, even if we got passed something.. seems strange
+                self.initial = initial
+
+    def _read_raw_data(self):
+        form = self.parent.parent
+
+        if self.is_list:
+            if self.raw_data_list is not None:
+                return
+            try:
+                # django and similar
+                # noinspection PyUnresolvedReferences
+                raw_data_list = form._request_data.getlist(self.path())
+            except AttributeError:  # pragma: no cover
+                # werkzeug and similar
+                raw_data_list = form._request_data.get(self.path())
+
+            if raw_data_list and self.strip_input:
+                raw_data_list = [x.strip() for x in raw_data_list]
+
+            if raw_data_list is not None:
+                self.raw_data_list = raw_data_list
+        else:
+            if self.raw_data is not None:
+                return
+            self.raw_data = form._request_data.get(self.path())
+            if self.raw_data and self.strip_input:
+                self.raw_data = self.raw_data.strip()
 
     def _evaluate(self):
         """
@@ -581,7 +619,6 @@ class Field(Part):
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', strict=False)
 
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
@@ -1028,47 +1065,9 @@ class Form(Part):
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
 
-        if self.instance is not None:
-            for field in self.fields.values():
-                if field.attr:
-                    initial = field.read_from_instance(field, self.instance)
-
-                    # TODO: we always overwrite here, even if we got passed something.. seems strange
-                    field.initial = initial
-
-        if self._request_data is not None:
-            for field in self.fields.values():
-                if field.is_list:
-                    if field.raw_data_list is not None:
-                        continue
-                    try:
-                        # django and similar
-                        # noinspection PyUnresolvedReferences
-                        raw_data_list = self._request_data.getlist(field.path())
-                    except AttributeError:  # pragma: no cover
-                        # werkzeug and similar
-                        raw_data_list = self._request_data.get(field.path())
-
-                    if raw_data_list and field.strip_input:
-                        raw_data_list = [x.strip() for x in raw_data_list]
-
-                    if raw_data_list is not None:
-                        field.raw_data_list = raw_data_list
-                else:
-                    if field.raw_data is not None:
-                        continue
-                    field.raw_data = self._request_data.get(field.path())
-                    if field.raw_data and field.strip_input:
-                        field.raw_data = field.raw_data.strip()
-
-        for field in self.fields.values():
-            field._evaluate()
-
         self.is_valid()
 
         self.errors = Errors(parent=self, errors=self.errors)
-
-        self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(form=self)
