@@ -17,66 +17,64 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from iommi.base import (
-    bind_members,
-    collect_members,
-    evaluate_members,
-    evaluate_strict_container,
-    MISSING,
-    model_and_rows,
-    no_copy_on_bind,
-    Part,
-    path_join,
-    request_data,
-    Endpoint,
-    EvaluatedRefinable,
-    is_evaluated_refinable,
-)
-from iommi.form import (
-    bool_parse,
-    Form,
-)
-from iommi.from_model import (
-    create_members_from_model,
-    get_name_field_for_model,
-    member_from_model,
-    NoRegisteredNameException,
-    AutoConfig,
-)
 from pyparsing import (
-    alphanums,
-    alphas,
     CaselessLiteral,
     Combine,
-    delimitedList,
     Forward,
     Group,
     Keyword,
-    nums,
-    oneOf,
     Optional,
     ParseException,
     ParseResults,
     QuotedString,
-    quotedString,
     Word,
     ZeroOrMore,
+    alphanums,
+    alphas,
+    delimitedList,
+    nums,
+    oneOf,
+    quotedString,
 )
 from tri_declarative import (
+    EMPTY,
+    Namespace,
+    Refinable,
+    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
-    EMPTY,
     evaluate,
-    Namespace,
-    Refinable,
     refinable,
     setattr_path,
     setdefaults_path,
-    Shortcut,
     with_meta,
 )
 from tri_struct import Struct
+
+from iommi.base import (
+    Endpoint,
+    EvaluatedRefinable,
+    MISSING,
+    Part,
+    bind_members,
+    collect_members,
+    model_and_rows,
+    no_copy_on_bind,
+    path_join,
+    request_data,
+)
+from iommi.form import (
+    Form,
+    bool_parse,
+)
+from iommi.from_model import (
+    AutoConfig,
+    NoRegisteredNameException,
+    create_members_from_model,
+    get_name_field_for_model,
+    member_from_model,
+)
 
 
 # TODO: short form for boolean values? "is_us_person" or "!is_us_person"

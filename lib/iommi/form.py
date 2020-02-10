@@ -24,62 +24,60 @@ from django.db.models import (
     QuerySet,
 )
 from django.http import HttpResponseRedirect
+from tri_declarative import (
+    EMPTY,
+    Namespace,
+    Refinable,
+    Shortcut,
+    class_shortcut,
+    declarative,
+    dispatch,
+    evaluate,
+    getattr_path,
+    refinable,
+    setattr_path,
+    setdefaults_path,
+    with_meta,
+)
+from tri_struct import Struct
+
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
+    Template,
+    URLValidator,
+    ValidationError,
     csrf,
     format_html,
     get_template_from_string,
     render_template,
-    Template,
-    URLValidator,
     validate_email,
-    ValidationError,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
-    bind_members,
-    collect_members,
-    evaluate_attrs,
-    evaluate_strict_container,
-    MISSING,
-    no_copy_on_bind,
-    Part,
-    request_data,
     Endpoint,
     EvaluatedRefinable,
-    is_evaluated_refinable,
+    MISSING,
+    Part,
+    bind_members,
+    collect_members,
     evaluated_refinable,
-    evaluate_members,
+    no_copy_on_bind,
+    request_data,
 )
 from iommi.from_model import (
+    AutoConfig,
+    NoRegisteredNameException,
     create_members_from_model,
     get_name_field_for_model,
     member_from_model,
-    NoRegisteredNameException,
-    AutoConfig,
 )
 from iommi.page import (
     Fragment,
 )
 from iommi.render import Errors
-from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
-    EMPTY,
-    getattr_path,
-    Namespace,
-    Refinable,
-    refinable,
-    setattr_path,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-)
-from tri_struct import Struct
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -608,8 +606,8 @@ class Field(Part):
             # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
             self.input.template = 'iommi/form/non_editable.html'
 
-        # non-strict because the model is callable at the end. Not ideal, but what can you do?
-        self._evaluate_attribute('model', strict=False)
+        # Not strict evaluate on purpose
+        self.model = evaluate(self.model, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(form=self.parent, field=self)

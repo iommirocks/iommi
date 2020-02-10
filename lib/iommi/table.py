@@ -1,8 +1,8 @@
 import csv
 from datetime import datetime
 from enum import (
-    auto,
     Enum,
+    auto,
 )
 from functools import total_ordering
 from io import StringIO
@@ -24,15 +24,15 @@ from django.core.paginator import (
     Paginator as DjangoPaginator,
 )
 from django.db.models import (
-    QuerySet,
-    Model,
     BooleanField,
     ManyToManyField,
+    Model,
+    QuerySet,
 )
 from django.http import (
+    FileResponse,
     Http404,
     HttpResponseRedirect,
-    FileResponse,
 )
 from django.utils.encoding import (
     force_str,
@@ -43,21 +43,21 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
     EMPTY,
-    evaluate,
-    evaluate_strict,
-    getattr_path,
     LAST,
     Namespace,
     Refinable,
-    refinable,
     RefinableObject,
+    Shortcut,
+    class_shortcut,
+    declarative,
+    dispatch,
+    evaluate,
+    evaluate_strict,
+    getattr_path,
+    refinable,
     setattr_path,
     setdefaults_path,
-    Shortcut,
     with_meta,
 )
 from tri_struct import (
@@ -65,8 +65,8 @@ from tri_struct import (
 )
 
 from iommi._web_compat import (
-    render_template,
     Template,
+    render_template,
     smart_text,
 )
 from iommi.action import (
@@ -74,33 +74,32 @@ from iommi.action import (
     group_actions,
 )
 from iommi.base import (
+    DISPATCH_PREFIX,
+    Endpoint,
+    EvaluatedRefinable,
+    MISSING,
+    Part,
     apply_style,
     bind_members,
     collect_members,
-    DISPATCH_PREFIX,
-    Endpoint,
     evaluate_attrs,
     evaluate_member,
     evaluate_members,
     evaluate_strict_container,
-    MISSING,
+    evaluated_refinable,
     model_and_rows,
     no_copy_on_bind,
-    Part,
     path_join,
-    EvaluatedRefinable,
-    is_evaluated_refinable,
-    evaluated_refinable,
 )
 from iommi.form import (
-    Form,
     Field,
+    Form,
 )
 from iommi.from_model import (
-    create_members_from_model,
-    member_from_model,
     AutoConfig,
+    create_members_from_model,
     get_fields,
+    member_from_model,
 )
 from iommi.query import (
     Q_OP_BY_OP,
@@ -1110,22 +1109,23 @@ class Table(Part):
                 attrs__style = 'background: green'
 
     """
+    # TODO: seems like a bunch more of these fields should be EvaluatedRefinable
 
-    bulk_filter: Namespace = Refinable()
-    bulk_exclude: Namespace = Refinable()
-    sortable: bool = Refinable()
+    bulk_filter: Namespace = EvaluatedRefinable()
+    bulk_exclude: Namespace = EvaluatedRefinable()
+    sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
     attrs: Dict[str, Any] = Refinable()
     template: Union[str, Template] = Refinable()
-    row = Refinable()
+    row = EvaluatedRefinable()
     # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template
-    filter: Namespace = Refinable()
+    filter: Namespace = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
     columns = Refinable()
-    bulk: Namespace = Refinable()
+    bulk: Namespace = EvaluatedRefinable()
     endpoints: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
@@ -1375,18 +1375,6 @@ class Table(Part):
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
         self._prepare_headers()
-        evaluate_members(
-            self,
-            [
-                'bulk_filter',
-                'bulk_exclude',
-                'row',
-                'filter',
-                '_query',
-                'bulk',
-            ],
-            **self.evaluate_parameters()
-        )
 
         if self.model:
             def generate_variables_unapplied_data():

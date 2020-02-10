@@ -1,13 +1,12 @@
+from pathlib import PurePosixPath
 from typing import (
     Dict,
     Union,
-    List,
 )
 from urllib.parse import (
-    urlparse,
     unquote,
+    urlparse,
 )
-from pathlib import PurePosixPath
 
 from tri_declarative import (
     EMPTY,
@@ -23,11 +22,6 @@ from iommi._web_compat import (
 from iommi.base import (
     bind_members,
     collect_members,
-    evaluate_attrs,
-    evaluate_strict_container,
-    EvaluatedRefinable,
-    is_evaluated_refinable,
-    evaluate_members,
 )
 from iommi.page import Fragment
 from iommi.render import Attrs

@@ -260,12 +260,6 @@ class Traversable(RefinableObject):
     def own_evaluate_parameters(self):
         return {}
 
-    def _evaluate_attribute(self, key, strict=True):
-        evaluate_member(self, key, **self.evaluate_parameters(), strict=strict)
-
-    def _evaluate_include(self):
-        self._evaluate_attribute('include')
-
 
 def get_root(node: Traversable) -> Traversable:
     while node.parent is not None:
@@ -513,9 +507,6 @@ class Members(Part):
             m.bind(parent=self)
             for m in self.declared_members.values()
         ])
-
-        for item in bound_items:
-            item._evaluate_include()
 
         self.bound_members = Struct({item.name: item for item in bound_items if should_include(item)})
 

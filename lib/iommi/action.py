@@ -10,23 +10,20 @@ from typing import (
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.text import slugify
-from iommi.base import (
-    evaluate_attrs,
-    evaluate_strict_container,
-    Part,
-    EvaluatedRefinable,
-    is_evaluated_refinable,
-    evaluate_members,
-)
-from iommi.page import Fragment
 from tri_declarative import (
-    class_shortcut,
-    dispatch,
     EMPTY,
     Refinable,
+    class_shortcut,
+    dispatch,
     setattr_path,
     setdefaults_path,
 )
+
+from iommi.base import (
+    EvaluatedRefinable,
+    Part,
+)
+from iommi.page import Fragment
 
 
 class Action(Part):
