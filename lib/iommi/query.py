@@ -28,7 +28,10 @@ from iommi.base import (
     Part,
     path_join,
     request_data,
-    Endpoint)
+    Endpoint,
+    EvaluatedRefinable,
+    is_evaluated_refinable,
+)
 from iommi.form import (
     bool_parse,
     Form,
@@ -181,14 +184,14 @@ class Variable(Part):
     Class that describes a variable that you can search for.
     """
 
-    attr = Refinable()
+    attr = EvaluatedRefinable()
     form: Namespace = Refinable()
     # TODO: rename to form_op?
-    gui_op = Refinable()
-    freetext = Refinable()
-    model = Refinable()
+    gui_op = EvaluatedRefinable()
+    freetext = EvaluatedRefinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
-    choices = Refinable()
+    choices = EvaluatedRefinable()
     value_to_q_lookup = Refinable()
 
     @dispatch(
@@ -219,17 +222,7 @@ class Variable(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.evaluate_parameters())
 
-        evaluated_attributes = [
-            'name',
-            'include',
-            'after',
-            'style',
-            'attr',
-            'gui_op',
-            'freetext',
-            'model_field',
-            'choices',
-        ]
+        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
         evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
@@ -483,7 +476,7 @@ class Query(Part):
 
     form: Namespace = Refinable()
     endpoints: Namespace = Refinable()
-    model: Type[Model] = Refinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
 
     member_class = Refinable()

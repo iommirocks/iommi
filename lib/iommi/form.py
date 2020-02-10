@@ -48,7 +48,11 @@ from iommi.base import (
     no_copy_on_bind,
     Part,
     request_data,
-    Endpoint)
+    Endpoint,
+    EvaluatedRefinable,
+    is_evaluated_refinable,
+    evaluated_refinable,
+)
 from iommi.from_model import (
     create_members_from_model,
     get_name_field_for_model,
@@ -375,38 +379,41 @@ class Field(Part):
 
     """
 
-    attr: str = Refinable()
-    display_name: str = Refinable()
+    attr: str = EvaluatedRefinable()
+    display_name: str = EvaluatedRefinable()
 
     # raw_data/raw_data contains the strings grabbed directly from the request data
-    raw_data: str = Refinable()
-    raw_data_list: List[str] = Refinable()
+    # It is useful that they are evaluated for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
+    raw_data: str = EvaluatedRefinable()
+    raw_data_list: List[str] = EvaluatedRefinable()
 
-    parse_empty_string_as_none: bool = Refinable()
-    initial: Any = Refinable()
-    template: str = Refinable()
-    template_string: str = Refinable()
+    parse_empty_string_as_none: bool = EvaluatedRefinable()
+    initial: Any = EvaluatedRefinable()
+    template: str = EvaluatedRefinable()
+
+    # TODO: remove this?
+    template_string: str = EvaluatedRefinable()
     attrs: Dict[str, Any] = Refinable()
-    required: bool = Refinable()
+    required: bool = EvaluatedRefinable()
 
     input = Refinable()
     label = Refinable()
 
-    is_list: bool = Refinable()
-    is_boolean: bool = Refinable()
-    model: Type[Model] = Refinable()
+    is_list: bool = EvaluatedRefinable()
+    is_boolean: bool = EvaluatedRefinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
 
-    editable: bool = Refinable()
-    strip_input: bool = Refinable()
+    editable: bool = EvaluatedRefinable()
+    strip_input: bool = EvaluatedRefinable()
 
-    choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()
+    choices: Callable[['Form', 'Field', str], List[Any]] = EvaluatedRefinable()
     choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
-    choice_tuples = Refinable()
+    choice_tuples = EvaluatedRefinable()
     errors: Errors = Refinable()
 
-    empty_label: str = Refinable()
-    empty_choice_tuple = Refinable()
+    empty_label: str = EvaluatedRefinable()
+    empty_choice_tuple = EvaluatedRefinable()
 
     endpoints: Namespace = Refinable()
 
@@ -512,7 +519,7 @@ class Field(Part):
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
     @staticmethod
-    @refinable
+    @evaluated_refinable
     def help_text(field, **_):
         if field.model_field is None:
             return ''
@@ -590,37 +597,12 @@ class Field(Part):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        evaluated_attributes = [
-            'name',
-            'include',
-            'attr',
-            'display_name',
-            'after',
-            'parse_empty_string_as_none',
-            'template',
-            'template_string',
-            'required',
-            'initial',
-            'is_list',
-            'is_boolean',
-            'model_field',
-            'editable',
-            'strip_input',
-            'choices',
-            'choice_tuples',
-            'empty_label',
-            'empty_choice_tuple',
-            'help_text',
-            # This is useful for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
-            'raw_data',
-            'raw_data_list',
-        ]
+        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', strict=False)
-
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
@@ -992,7 +974,7 @@ class Form(Part):
     attrs: Dict[str, Any] = Refinable()
     editable: bool = Refinable()
 
-    model: Type[Model] = Refinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     endpoints: Namespace = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()

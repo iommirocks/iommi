@@ -25,6 +25,8 @@ from iommi.base import (
     collect_members,
     evaluate_attrs,
     evaluate_strict_container,
+    EvaluatedRefinable,
+    is_evaluated_refinable,
 )
 from iommi.page import Fragment
 from iommi.render import Attrs
@@ -64,13 +66,7 @@ class MenuBase(Part):
         return r
 
     def on_bind(self):
-        evaluated_attributes = [
-            'name',
-            'after',
-            'style',
-
-            'sort',
-        ]
+        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 
@@ -106,12 +102,7 @@ class MenuItem(MenuBase):
     def on_bind(self):
         super(MenuItem, self).on_bind()
 
-        evaluated_attributes = [
-            'display_name',
-            'url',
-            'regex',
-            'group',
-        ]
+        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
         for key in evaluated_attributes:
             self._evaluate_attribute(key)
 

@@ -2,9 +2,11 @@ from typing import (
     Any,
     Dict,
     List,
+    Type,
 )
 
 from django.core.exceptions import FieldDoesNotExist
+from django.db.models import Model
 from tri_declarative import (
     EMPTY,
     Namespace,
@@ -180,7 +182,7 @@ def register_name_field(*, model, name_field, allow_non_unique=False):
 
 
 class AutoConfig(RefinableObject):
-    model = Refinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     include = Refinable()
     exclude = Refinable()
     additional = Refinable()

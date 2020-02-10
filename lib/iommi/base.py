@@ -35,6 +35,7 @@ from tri_declarative import (
     get_callable_description,
     setdefaults_path,
     sort_after,
+    refinable,
 )
 from tri_struct import Struct
 
@@ -59,6 +60,20 @@ def evaluate_strict_container(c, **kwargs):
             for k, v in c.items()
         }
     )
+
+
+class EvaluatedRefinable(Refinable):
+    pass
+
+
+def evaluated_refinable(f):
+    f = refinable(f)
+    f.__iommi__evaluated = True
+    return f
+
+
+def is_evaluated_refinable(x):
+    return isinstance(x, EvaluatedRefinable) or getattr(x, '__iommi__evaluated', False)
 
 
 def find_target(*, path, root):
@@ -157,7 +172,7 @@ class Traversable(RefinableObject):
     parent = None
     _is_bound = False
     # TODO: would be nice to not have this here
-    style: str = Refinable()
+    style: str = EvaluatedRefinable()
 
     def __init__(self, **kwargs):
         self.declared_members = Struct()
@@ -322,12 +337,12 @@ def build_long_path_by_path(root) -> Dict[str, str]:
 
 
 class Part(Traversable):
-    name: str = Refinable()
-    include: bool = Refinable()
-    after: Union[int, str] = Refinable()
+    name: str = EvaluatedRefinable()
+    include: bool = EvaluatedRefinable()
+    after: Union[int, str] = EvaluatedRefinable()
     extra: Namespace = Refinable()
-    extra_evaluated: Namespace = Refinable()
-    style: str = Refinable()
+    extra_evaluated: Namespace = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    style: str = EvaluatedRefinable()
 
     @dispatch(
         extra=EMPTY,

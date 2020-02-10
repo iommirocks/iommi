@@ -88,6 +88,9 @@ from iommi.base import (
     no_copy_on_bind,
     Part,
     path_join,
+    EvaluatedRefinable,
+    is_evaluated_refinable,
+    evaluated_refinable,
 )
 from iommi.form import (
     Form,
@@ -245,22 +248,22 @@ class Column(Part):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
     """
-    url: str = Refinable()
-    attr: str = Refinable()
-    sort_default_desc: bool = Refinable()
-    sortable: bool = Refinable()
-    group: Optional[str] = Refinable()
-    auto_rowspan: bool = Refinable()
+    url: str = EvaluatedRefinable()
+    attr: str = EvaluatedRefinable()
+    sort_default_desc: bool = EvaluatedRefinable()
+    sortable: bool = EvaluatedRefinable()
+    group: Optional[str] = EvaluatedRefinable()
+    auto_rowspan: bool = EvaluatedRefinable()
     cell: Namespace = Refinable()
-    model = Refinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
-    choices: Iterable = Refinable()
+    choices: Iterable = EvaluatedRefinable()
     bulk: Namespace = Refinable()
     query: Namespace = Refinable()
-    superheader = Refinable()
-    header: Namespace = Refinable()
-    data_retrieval_method = Refinable()
-    render_column: bool = Refinable()
+    superheader = EvaluatedRefinable()
+    header: Namespace = EvaluatedRefinable()
+    data_retrieval_method = EvaluatedRefinable()
+    render_column: bool = EvaluatedRefinable()
 
     @dispatch(
         attr=MISSING,
@@ -314,12 +317,12 @@ class Column(Part):
         self.table = None
 
     @staticmethod
-    @refinable
+    @evaluated_refinable
     def sort_key(table, column, **_):
         return column.attr
 
     @staticmethod
-    @refinable
+    @evaluated_refinable
     def display_name(table, column, **_):
         return force_str(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
@@ -350,26 +353,7 @@ class Column(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.evaluate_parameters())
 
-        evaluated_attributes = [
-            'name',
-            'include',
-            'attr',
-            'after',
-            'style',
-            'url',
-            'sort_default_desc',
-            'sortable',
-            'group',
-            'auto_rowspan',
-            'choices',
-            'superheader',
-            'header',
-            'data_retrieval_method',
-            'render_column',
-            'attr',
-            'sort_key',
-            'display_name',
-        ]
+        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
         evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
@@ -1141,7 +1125,7 @@ class Table(Part):
     # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template
     filter: Namespace = Refinable()
     header = Refinable()
-    model: Type[Model] = Refinable()
+    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
     columns = Refinable()
     bulk: Namespace = Refinable()
