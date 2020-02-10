@@ -221,6 +221,8 @@ class Traversable(RefinableObject):
 
         apply_style(result)
         result.on_bind()
+        if hasattr(result, 'attrs'):
+            result.attrs = evaluate_attrs(result, **result.evaluate_parameters())
 
         return result
 

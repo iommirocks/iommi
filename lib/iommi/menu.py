@@ -84,7 +84,6 @@ class MenuBase(Part):
             })
 
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
-        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(menu_item=self)

@@ -96,7 +96,6 @@ class Fragment(Part):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
         # TODO: do we want to do this?
         # self._children = [evaluate_strict(x, **self.evaluate_parameters()) for x in self._children]

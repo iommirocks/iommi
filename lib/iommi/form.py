@@ -581,8 +581,6 @@ class Field(Part):
         # non-strict because the model is callable at the end. Not ideal, but what can you do?
         self._evaluate_attribute('model', strict=False)
 
-        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
-
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
         self.input = self.input.bind(parent=self)
@@ -1065,8 +1063,6 @@ class Form(Part):
 
         for field in self.fields.values():
             field._evaluate()
-
-        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
         self.is_valid()
 

@@ -1372,7 +1372,6 @@ class Table(Part):
             ],
             **self.evaluate_parameters()
         )
-        self.attrs = evaluate_attrs(self, **self.evaluate_parameters())
 
         if self.model:
             def generate_variables_unapplied_data():
