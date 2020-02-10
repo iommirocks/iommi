@@ -37,4 +37,6 @@ urlpatterns = [
     url(r'^all_column_sorts/$', views.all_column_sorts, name='all_column_sorts'),
 
     url(r'^iommi-admin/(?P<app_name>\w+)?/?(?P<model_name>\w+)?/?(?P<pk>\d+)?/?(?P<command>\w+)?/?', views.iommi_admin, name='iommi-admin'),
+
+    url(r'^menu_test/$', views.menu_test, name='menu_test'),
 ]

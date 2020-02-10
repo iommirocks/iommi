@@ -306,10 +306,7 @@ class Column(Part):
 
         self.is_sorting: bool = None
         self.sort_direction: str = None
-
-    @property
-    def table(self):
-        return self.parent
+        self.table = None
 
     @staticmethod
     @refinable
@@ -324,6 +321,8 @@ class Column(Part):
     def on_bind(self) -> None:
         for k, v in getattr(self.parent.parent, '_columns_unapplied_data').get(self.name, {}).items():
             setattr_path(self, k, v)
+
+        self.table = self.parent.parent
 
         if self.attr is MISSING:
             self.attr = self.name
@@ -370,7 +369,7 @@ class Column(Part):
         self.extra_evaluated = evaluate_strict_container(self.extra_evaluated, **self.evaluate_parameters())
 
     def own_evaluate_parameters(self):
-        return dict(table=self.parent, column=self)
+        return dict(table=self.table, column=self)
 
     @classmethod
     @dispatch(

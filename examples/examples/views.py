@@ -1,10 +1,4 @@
 from collections import defaultdict
-from os.path import (
-    abspath,
-    dirname,
-    join,
-)
-
 from django.http import HttpResponse
 from django.template import (
     RequestContext,
@@ -26,9 +20,13 @@ from iommi.form import (
     Form,
     choice_parse,
 )
+from iommi.menu import (
+    MenuItem,
+    Menu,
+)
 from iommi.style import validate_styles
 from tri_declarative import get_members, Shortcut, is_shortcut, Namespace
-from tri_struct import Struct, merged
+from tri_struct import Struct
 
 from .models import (
     Bar,
@@ -86,6 +84,12 @@ def index(request):
         <a href="page_busy/">A busy page with lots of stuff</a><br>
         <a href="all_field_sorts">Show different type of form field types</a><br>
         <a href="all_column_sorts">Show different type of table column types</a>
+        """)
+
+        menu_examples = mark_safe("""
+        <h2>Menu examples</h2>
+        
+        <a href="menu_test/">A menu example</a><br>
         """)
 
         # You can also nest pages
@@ -436,3 +440,24 @@ class StyleSelector(Form):
         ],
         initial=lambda form, field, **_: base.DEFAULT_STYLE,
     )
+
+
+def menu_test(request):
+    class FooPage(Page):
+        menu = Menu(
+            attrs__class={'flex-column': True},
+            sub_menu=dict(
+                root=MenuItem(url='/'),
+
+                test=MenuItem(url='/menu_test'),
+
+                f_a_1=MenuItem(display_name='Example 1: echo submitted data', url="form_example_1/"),
+                f_a_2=MenuItem(display_name='Example 2: create a Foo', url="form_example_2/"),
+                f_a_3=MenuItem(display_name='Example 3: edit a Foo', url="form_example_3/"),
+                f_a_4=MenuItem(display_name='Example 4: custom buttons', url="form_example_4/"),
+                f_a_5=MenuItem(display_name='Example 5: automatic AJAX endpoint', url="form_example_5/"),
+                f_a_k=MenuItem(display_name='Kitchen sink', url="form_kitchen/"),
+            ),
+        )
+
+    return FooPage()

@@ -227,8 +227,12 @@ class Traversable(RefinableObject):
     def on_bind(self) -> None:
         pass
 
+    # TODO: this should be a variable, created at bind time, just before on_bind()
     def evaluate_parameters(self):
-        return {**self.own_evaluate_parameters(), **(self.parent.evaluate_parameters() if self.parent is not None else {})}
+        return {
+            **(self.parent.evaluate_parameters() if self.parent is not None else {}),
+            **self.own_evaluate_parameters(),
+        }
 
     def own_evaluate_parameters(self):
         return {}
@@ -445,6 +449,7 @@ def no_copy_on_bind(cls):
 
 
 def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unapplied_config: Dict) -> Dict[str, Any]:
+    assert name != 'items'
     unbound_items = {}
 
     if items_dict is not None:
@@ -469,7 +474,8 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
                     )
                     unbound_items[key] = item()
 
-    members = Struct({x.name: x for x in sort_after(list(unbound_items.values()))})
+    # TODO: shouldn't sort_after be done on the bound items?
+    members = Struct({x.name: x for x in unbound_items.values()})
     obj.declared_members[name] = members
 
 
