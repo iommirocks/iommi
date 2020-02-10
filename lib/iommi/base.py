@@ -239,6 +239,9 @@ class Traversable(RefinableObject):
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.evaluate_parameters())
 
+        evaluated_attributes = [k for k, v in result.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
+        evaluate_members(result, evaluated_attributes, **result.evaluate_parameters())
+
         if hasattr(result, 'extra_evaluated'):
             result.extra_evaluated = evaluate_strict_container(result.extra_evaluated, **result.evaluate_parameters())
 

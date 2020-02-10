@@ -16,6 +16,7 @@ from iommi.base import (
     Part,
     EvaluatedRefinable,
     is_evaluated_refinable,
+    evaluate_members,
 )
 from iommi.page import Fragment
 from tri_declarative import (
@@ -108,10 +109,6 @@ class Action(Part):
         if self.parent is not None and self.parent.parent is not None:
             for k, v in getattr(self.parent.parent, '_actions_unapplied_data', {}).get(self.name, {}).items():
                 setattr_path(self, k, v)
-
-        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        for key in evaluated_attributes:
-            self._evaluate_attribute(key)
 
     def own_evaluate_parameters(self):
         return dict(action=self)

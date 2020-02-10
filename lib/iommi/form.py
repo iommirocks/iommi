@@ -52,6 +52,7 @@ from iommi.base import (
     EvaluatedRefinable,
     is_evaluated_refinable,
     evaluated_refinable,
+    evaluate_members,
 )
 from iommi.from_model import (
     create_members_from_model,
@@ -597,13 +598,6 @@ class Field(Part):
         """
         Evaluates callable/lambda members. After this function is called all members will be values.
         """
-        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        for key in evaluated_attributes:
-            self._evaluate_attribute(key)
-
-        # non-strict because the model is callable at the end. Not ideal, but what can you do?
-        self._evaluate_attribute('model', strict=False)
-
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
         # TODO: special class for label that does this?
@@ -613,6 +607,9 @@ class Field(Part):
         if not self.editable:
             # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
             self.input.template = 'iommi/form/non_editable.html'
+
+        # non-strict because the model is callable at the end. Not ideal, but what can you do?
+        self._evaluate_attribute('model', strict=False)
 
     def own_evaluate_parameters(self):
         return dict(form=self.parent, field=self)

@@ -27,6 +27,7 @@ from iommi.base import (
     evaluate_strict_container,
     EvaluatedRefinable,
     is_evaluated_refinable,
+    evaluate_members,
 )
 from iommi.page import Fragment
 from iommi.render import Attrs
@@ -66,10 +67,6 @@ class MenuBase(Part):
         return r
 
     def on_bind(self):
-        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        for key in evaluated_attributes:
-            self._evaluate_attribute(key)
-
         bind_members(self, name='sub_menu')
 
         # TODO:
@@ -101,10 +98,6 @@ class MenuItem(MenuBase):
 
     def on_bind(self):
         super(MenuItem, self).on_bind()
-
-        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        for key in evaluated_attributes:
-            self._evaluate_attribute(key)
 
         # If this is a section header, and all sub-parts are hidden, hide myself
         if not self.url and not self.sub_menu:

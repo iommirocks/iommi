@@ -222,9 +222,6 @@ class Variable(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.evaluate_parameters())
 
-        evaluated_attributes = [k for k, v in self.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        evaluate_members(self, evaluated_attributes, **self.evaluate_parameters())
-
     def own_evaluate_parameters(self):
         return dict(query=self.parent, variable=self)
 
