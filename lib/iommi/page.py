@@ -67,7 +67,7 @@ def fragment__render(fragment, context):
 
 
 class Fragment(Part):
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = Refinable()
     template: Union[str, Template] = Refinable()
 

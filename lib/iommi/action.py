@@ -28,7 +28,7 @@ from iommi.page import Fragment
 
 class Action(Part):
     tag: str = EvaluatedRefinable()
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     group: str = EvaluatedRefinable()
     template = EvaluatedRefinable()
     display_name: str = EvaluatedRefinable()

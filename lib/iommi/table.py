@@ -812,13 +812,13 @@ class TemplateConfig(Struct, RefinableObject):
 
 
 class HeaderConfig(RefinableObject):
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: str = Refinable()
     extra: Dict[str, Any] = Refinable()
 
 
 class RowConfig(RefinableObject):
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: str = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
@@ -1116,7 +1116,7 @@ class Table(Part):
     sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = Refinable()
     row = EvaluatedRefinable()
     # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template

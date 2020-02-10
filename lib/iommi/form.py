@@ -392,7 +392,7 @@ class Field(Part):
 
     # TODO: remove this?
     template_string: str = EvaluatedRefinable()
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     required: bool = EvaluatedRefinable()
 
     input = Refinable()
@@ -966,7 +966,7 @@ class Form(Part):
 """
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
-    attrs: Dict[str, Any] = Refinable()
+    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
 
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
