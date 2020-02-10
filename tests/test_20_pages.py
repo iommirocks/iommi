@@ -11,7 +11,7 @@ from iommi.page import Fragment
 from iommi.base import Attrs
 from tri_struct import Struct
 
-from tests.helpers import req
+from tests.helpers import req, prettify
 
 
 def test_page_constructor():
@@ -53,9 +53,9 @@ def test_page_render():
         </html>
     '''
 
-    actual = BeautifulSoup(response.content, 'html.parser').prettify()
-    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
-    assert actual == expected
+    prettified_expected = prettify(expected_html)
+    prettified_actual = prettify(response.content)
+    assert prettified_expected == prettified_actual
 
 
 def test_fragment__render__simple_cases():

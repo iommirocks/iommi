@@ -704,9 +704,11 @@ class BoundRow(object):
             context = dict(bound_row=self, row=self.row, **self.table.context)
             return render_template(self.table.get_request(), self.template, context)
 
-        return format_html('<tr{}>{}</tr>', self.attrs, self.render_cells())
+        return format_html('<tr{}>{}</tr>', self.attrs, self.rendered_cells)
 
-    def render_cells(self):
+    # TODO: this is a property for just one test in jinja2 mode. Seems not very useful.
+    @property
+    def rendered_cells(self):
         return mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))
 
     def __iter__(self):
@@ -1444,6 +1446,10 @@ class Table(Part):
         self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
 
         self._prepare_auto_rowspan()
+
+        # jinja2 compat
+        # TODO: should be able to just do {{ table.actions }}
+        self.render_actions.__dict__['__html__'] = lambda: self.render_actions()
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)

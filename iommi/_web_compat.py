@@ -1,3 +1,5 @@
+from django.template.utils import InvalidTemplateEngineError
+
 try:
     from django.core.exceptions import ValidationError
     from django.core.validators import validate_email, URLValidator
@@ -10,12 +12,34 @@ try:
     from django.utils.html import format_html
     from django.utils.text import slugify
     from django.http import HttpResponseRedirect
-    from django.template import Template
     from django.shortcuts import render
     from django.utils.encoding import smart_str
     from django.template.context_processors import csrf as csrf_
     from django.utils.safestring import mark_safe
     from django.http import HttpRequest
+
+    DjangoTemplate = None
+    JinjaTemplate = None
+
+    from django.conf import settings
+    if any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
+        from django.template import Template as DjangoTemplate
+    else:
+        assert any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES)
+        import jinja2
+        from jinja2 import Template as JinjaTemplate
+
+    class Template:
+        def __init__(self, template_string):
+            self.s = template_string
+
+        def render(self, context):
+            if DjangoTemplate is not None:
+                return DjangoTemplate(self.s).render(context=context)
+            else:
+                assert JinjaTemplate is not None
+                return JinjaTemplate(self.s).render(**context.flatten())
+
 
     def csrf(request):
         return {} if request is None else csrf_(request)
@@ -29,7 +53,12 @@ try:
 
         def get_template_from_string(template_code, origin=None, name=None):
             del origin, name  # the origin and name parameters seems not to be implemented in django 1.8
-            return engines['django'].from_string(template_code)
+            try:
+                engine = engines['django']
+            except InvalidTemplateEngineError:
+                engine = engines.all()[0]
+
+            return engine.from_string(template_code)
 
     def render_template(request, template, context):
         """
@@ -41,11 +70,11 @@ try:
         if template is None:
             return ''
         elif isinstance(template, str):
-            return render_to_string(template_name=template, context=context, request=request)
+            return mark_safe(render_to_string(template_name=template, context=context, request=request))
         elif isinstance(template, Template):
-            return template.render(RequestContext(request, context))
+            return mark_safe(template.render(context=RequestContext(request, context)))
         else:
-            return template.render(context, request)
+            return mark_safe(template.render(context, request))
 
 except ImportError:  # pragma: no cover This flask support is a work in progress/future plan
     from jinja2 import Markup

@@ -5,7 +5,6 @@ import django
 import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
-from django.template import Template
 from django.test import override_settings
 from django.utils.safestring import mark_safe
 from tri_declarative import (
@@ -29,6 +28,7 @@ from iommi.form import (
     Form,
 )
 from iommi.from_model import register_name_field
+from iommi._web_compat import Template
 from iommi.query import (
     Query,
     Variable,
@@ -1082,7 +1082,7 @@ def test_template_string(NoSortTable):
             header__template = Template('What headers')
             query__template = Template('What filters')
 
-            row__template = Template('Oh, rows: {{ bound_row.render_cells }}')
+            row__template = Template('Oh, rows: {{ bound_row.rendered_cells }}')
 
         a = Column(
             cell__template=Template('Custom cell: {{ row.a }}'),

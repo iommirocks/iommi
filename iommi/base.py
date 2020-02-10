@@ -20,9 +20,6 @@ from django.http.response import (
     HttpResponse,
     HttpResponseBase,
 )
-from django.template import (
-    Template,
-)
 from django.utils.safestring import mark_safe
 from tri_declarative import (
     dispatch,
@@ -44,6 +41,7 @@ from iommi._web_compat import (
     get_template_from_string,
     HttpRequest,
     QueryDict,
+    Template,
 )
 
 DEFAULT_STYLE = 'bootstrap'
@@ -676,7 +674,7 @@ def as_html(*, part: PartType, context):
         return part
     elif isinstance(part, Template):
         template = part
-        return template.render(context=context)
+        return mark_safe(template.render(context=context))
     else:
         # TODO: this isn't compatible with jinja2
         return part.__html__(context=context)

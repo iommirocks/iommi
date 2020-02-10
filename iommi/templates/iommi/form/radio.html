@@ -1,7 +1,7 @@
-{# TODO: this template is not jinja2 compatible and also it's ugly #}
+{# TODO: this template is jinja2 compatible but it's super ugly #}
 {% for choice in field.choice_tuples %}
     {# TODO: rendering field.input.attrs here seems bad.. we already render some of them manually so won't this create duplicates? #}
-    <input type="radio" value="{{ choice.1 }}" name="{{ field.iommi_path }}" id="{{ field.input.attrs.id }}_{{ forloop.counter }}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
-    <label for="{{ field.input.attrs.id }}_{{ forloop.counter }}">{{ choice.2 }}</label>
-    {% if not forloop.last %}<br>{% endif %}
+    <input type="radio" value="{{ choice.1 }}" name="{{ field.iommi_path }}" id="{{ field.input.attrs.id }}_{% if loop %}{{ loop.counter }}{% else %}{{ forloop.counter }}{% endif %}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
+    <label for="{{ field.input.attrs.id }}_{% if loop %}{{ loop.counter }}{% else %}{{ forloop.counter }}{% endif %}">{{ choice.2 }}</label>
+    {% if loop %}{% if not loop.last %}<br>{% endif %}{% else %}{% if not forloop.last %}<br>{% endif %}{% endif %}
 {% endfor %}

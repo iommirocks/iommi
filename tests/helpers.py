@@ -1,7 +1,13 @@
 import re
+
 from bs4 import BeautifulSoup
-from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
+from tri_declarative import (
+    dispatch,
+    Namespace,
+)
+from tri_struct import Struct
+
 from iommi import (
     Table,
     middleware,
@@ -10,12 +16,6 @@ from iommi.base import (
     Traversable,
     no_copy_on_bind,
 )
-from tri_declarative import (
-    dispatch,
-    Namespace,
-    EMPTY,
-)
-from tri_struct import Struct
 
 
 def reindent(s, before=" ", after="    "):
@@ -53,6 +53,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     if not table._is_bound:
         table.bind(request=request)
 
+    from django.contrib.auth.models import AnonymousUser
     request.user = AnonymousUser()
     actual_html = remove_csrf(table.__html__(**kwargs))
 
@@ -66,6 +67,8 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     assert hit, actual_soup
     prettified_actual = reindent(hit.prettify()).strip()
 
+    if prettified_actual != prettified_expected:
+        print(actual_html)
     assert prettified_actual == prettified_expected
 
 
@@ -94,3 +97,7 @@ class StubTraversable(Traversable):
 
     def on_bind(self):
         self.bound_members = Struct({k: v.bind(parent=self) for k, v in self.declared_members.items()})
+
+
+def prettify(content):
+    return reindent(BeautifulSoup(content, 'html.parser').prettify().strip())

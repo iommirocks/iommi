@@ -12,7 +12,7 @@ from iommi.form import (
 )
 from tri_struct import merged
 
-from tests.helpers import req, remove_csrf
+from tests.helpers import req, remove_csrf, prettify
 
 
 @pytest.mark.django_db
@@ -275,8 +275,8 @@ def test_create_or_edit_object_full_template(name):
 </html>
 
     """
-    actual = BeautifulSoup(remove_csrf(response.content.decode()), 'html.parser').prettify()
-    expected = BeautifulSoup(expected_html, 'html.parser').prettify()
+    actual = prettify(remove_csrf(response.content.decode()))
+    expected = prettify(expected_html)
     assert actual == expected
 
 

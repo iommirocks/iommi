@@ -11,7 +11,7 @@ except ImportError:
             from flask import Flask
             import os
             if not root_path:
-                root_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib/iommi/', )
+                root_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'iommi/', )
             app = AppContext(Flask('iommi', root_path=root_path))
             app.push()
             from werkzeug.test import create_environ

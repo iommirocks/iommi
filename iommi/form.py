@@ -195,12 +195,12 @@ def choice_is_valid(field, parsed_data, **_):
 
 def choice_post_validation(form, field):
     def choice_tuples_lazy():
-        choice_tuples = (field.choice_to_option(form=form, field=field, choice=choice) for choice in field.choices)
         if not field.required and not field.is_list:
-            choice_tuples = chain([field.empty_choice_tuple], choice_tuples)
-        return choice_tuples
+            yield field.empty_choice_tuple
+        for choice in field.choices:
+            yield field.choice_to_option(form=form, field=field, choice=choice)
 
-    field.choice_tuples = choice_tuples_lazy
+    field.choice_tuples = choice_tuples_lazy()
 
 
 def choice_choice_to_option(form, field, choice):
@@ -607,6 +607,7 @@ class Field(Part):
             return self.raw_data
         return self.render_value(form=self.form, field=self, value=self.value)
 
+    @property
     def choice_to_options_selected(self):
         if self.value is None:
             return
@@ -1017,6 +1018,10 @@ class Form(Part):
         self.is_valid()
 
         self.errors = Errors(parent=self, errors=self.errors)
+
+        # jinja2 compat
+        self.render_fields.__dict__['__html__'] = lambda: self.render_fields()
+        self.render_actions.__dict__['__html__'] = lambda: self.render_actions()
 
     def own_evaluate_parameters(self):
         return dict(form=self)

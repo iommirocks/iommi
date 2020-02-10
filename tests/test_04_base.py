@@ -2,7 +2,7 @@ import json
 
 import pytest
 from django.db import models
-from django.template import (
+from iommi._web_compat import (
     RequestContext,
     Template,
 )

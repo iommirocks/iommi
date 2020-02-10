@@ -17,6 +17,18 @@ from .compat import SafeText
 from .helpers import req
 
 
+def test_simple_render_to_string():
+    t = Template('{{ field }}')
+    assert t.render(
+        context=RequestContext(
+            req('get'),
+            dict(
+                field='foo'
+            )
+        )
+    ).strip() == 'foo'
+
+
 def test_render_to_string():
     t = Template('<span id="{{ field.input.attrs.id }}">{{ field.rendered_value }}</span>')
     assert t.render(
