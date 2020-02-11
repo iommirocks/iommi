@@ -805,7 +805,7 @@ class BoundCell(object):
         return "<%s column=%s row=%s>" % (self.__class__.__name__, self.column.declared_column, self.bound_row.row)  # pragma: no cover
 
 
-class TemplateConfig(Struct, RefinableObject):
+class TemplateConfig(RefinableObject):
     template: str = Refinable()
 
 
@@ -816,7 +816,7 @@ class HeaderConfig(Traversable):
     extra_evaluated: Dict[str, Any] = Refinable()
 
 
-class RowConfig(Traversable):
+class RowConfig(RefinableObject):
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
