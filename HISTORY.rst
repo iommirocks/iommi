@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.1.1 (2020-02-11)
+------------------
+
+* Improve namespace merge in @with_meta to not trip up @declarative
+
+
 5.1.0 (2020-02-11)
 ------------------
 

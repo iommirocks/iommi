@@ -30,6 +30,19 @@ def test_find_members():
     assert subject.members == dict(foo=Member(foo='bar'))
 
 
+def test_declarative_with_dunder_in_name():
+    @declarative(str)
+    class Foo:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    assert Foo(
+        members=Struct(bink__bonk=4711),
+    ).kwargs == dict(
+        members=dict(bink__bonk=4711),
+    )
+
+
 def test_find_members_by_check_function():
     @declarative(
         is_member=lambda x: x == "foo",

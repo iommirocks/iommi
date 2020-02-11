@@ -1,5 +1,12 @@
 import pytest
-from tri_declarative import with_meta, Namespace
+from tri_struct import Struct
+
+from tri_declarative import (
+    with_meta,
+    Namespace,
+    dispatch,
+    declarative,
+)
 
 
 def test_empty():
@@ -207,6 +214,7 @@ def test_namespaciness_override():
         class Meta:
             foo = {'bar': 17}
 
+        @dispatch
         def __init__(self, **kwargs):
             self.kwargs = kwargs
 
