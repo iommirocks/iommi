@@ -199,3 +199,18 @@ def test_namespaciness():
         foo__bar=17,
         foo__baz=42,
     )
+
+
+def test_namespaciness_override():
+    @with_meta()
+    class Foo:
+        class Meta:
+            foo = {'bar': 17}
+
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    assert Foo(foo__baz=42).kwargs == Namespace(
+        foo__bar=17,
+        foo__baz=42,
+    )

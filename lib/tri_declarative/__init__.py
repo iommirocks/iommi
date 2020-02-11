@@ -212,7 +212,7 @@ def inject_args(args, kwargs, extra_args, pos_arg_names):
         new_args = []
     else:
         new_args = args
-    new_kwargs.update(kwargs)
+    new_kwargs = Namespace(new_kwargs, kwargs)
     return new_args, new_kwargs
 
 
