@@ -45,9 +45,18 @@ generate_rst_docs(
         iommi.Variable,
         iommi.Form,
         iommi.Field,
-        iommi.action.Action,
+        iommi.Action,
+        iommi.Page,
+        iommi.Menu,
+        iommi.MenuItem,
+
+        # Private-ish APIs
+        iommi.base.Endpoint,
+        iommi.base.Part,
+        iommi.base.Traversable,
+        iommi.base.Members,
     ],
-    (iommi.base.MISSING,))
+)
 
 # -- General configuration -----------------------------------------------------
 
@@ -104,7 +113,6 @@ exclude_patterns = ['_build']
 # The reST default role (used for this markup: `text`) to use for all documents.
 # This turns `foo` from just italic to the same as :code:`foo`
 default_role = 'code'
-
 #html_extra_path = []
 
 # If true, '()' will be appended to :func: etc. cross-reference text.

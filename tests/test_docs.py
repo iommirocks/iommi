@@ -15,7 +15,9 @@ def test_generate_docs():
         pass
 
     class Foo(RefinableObject):
-        """docstring for Foo"""
+        """
+        docstring for Foo
+        """
 
         name = Refinable()
         description = Refinable()
@@ -81,6 +83,8 @@ Foo
 
 docstring for Foo
 
+Base class: :doc:`RefinableObject <RefinableObject>`
+
 Refinable members
 -----------------
 
@@ -142,6 +146,8 @@ Foo
 ===
 
 
+Base class: :doc:`RefinableObject <RefinableObject>`
+
 Refinable members
 -----------------
 
@@ -181,13 +187,14 @@ First description
 
 __init__ description
 
+Base class: :doc:`RefinableObject <RefinableObject>`
+
 Refinable members
 -----------------
 
 * `name`
 
 """
-
     assert actual_doc.strip() == expected_doc.strip()
 
 
@@ -210,6 +217,8 @@ def test_generate_docs_kill_obscure_mutant():
 Foo
 ===
 
+
+Base class: :doc:`RefinableObject <RefinableObject>`
 
 Refinable members
 -----------------

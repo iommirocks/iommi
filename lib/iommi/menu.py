@@ -15,7 +15,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi import Part
+from iommi.base import Part
 from iommi._web_compat import (
     Template,
 )
@@ -23,6 +23,7 @@ from iommi.base import (
     bind_members,
     collect_members,
     EvaluatedRefinable,
+    path_join,
 )
 from iommi.page import Fragment
 from iommi.render import Attrs
@@ -51,7 +52,6 @@ class MenuBase(Part):
             items=sub_menu,
             # TODO: cls=self.get_meta().menu_item_class,
             cls=MenuItem,
-            unapplied_config={},
         )
 
     def __repr__(self):
@@ -75,14 +75,21 @@ class MenuBase(Part):
 
 
 class MenuItem(MenuBase):
+    """
+    Class that is used for the clickable menu items in a menu.
+
+    See :doc:`Menu` for more complete examples.
+    """
+
     display_name: str = EvaluatedRefinable()
     url: str = EvaluatedRefinable()
     regex: str = EvaluatedRefinable()
     group: str = EvaluatedRefinable()
 
     @dispatch(
-        display_name=lambda menu_item, **_: menu_item.name.title(),
-        url=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
+        display_name=lambda menu_item, **_: menu_item.name.title().replace('_', ' '),
+        regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
+        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.parent, 'url', None), menu_item.name) + '/',
         tag='li',
     )
     def __init__(self, **kwargs):
@@ -102,7 +109,7 @@ class MenuItem(MenuBase):
             attrs__href=self.url,
             attrs__class={'nav-link': True},  # TODO: style!
             child=self.display_name,
-        )
+        ).bind(parent=self)
         self.fragment = Fragment(
             tag=self.tag,
             template=self.template,
@@ -120,6 +127,26 @@ class MenuException(Exception):
 
 
 class Menu(MenuBase):
+    """
+    Class that describes menus.
+
+    Example:
+
+    .. code:: python
+
+        menu = Menu(
+            sub_menu=dict(
+                root=MenuItem(url='/'),
+
+                albums=MenuItem(url='/albums/'),
+
+                # url defaults to /<name>/ so we
+                # don't need to write /musicians/ here
+                musicians=MenuItem(),
+            ),
+        )
+    """
+
     @dispatch(
         sort=False
     )

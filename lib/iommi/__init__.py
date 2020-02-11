@@ -29,6 +29,10 @@ from iommi.table import (
     register_column_factory,
     register_cell_formatter,
 )
+from iommi.menu import (
+    Menu,
+    MenuItem,
+)
 from iommi.style import register_style
 setup_db_compat()
 
@@ -51,6 +55,8 @@ __all__ = [
     'Field',
     'Form',
     'html',
+    'Menu',
+    'MenuItem',
     'middleware',
     'MISSING',
     'Page',

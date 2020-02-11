@@ -31,6 +31,7 @@ from tri_declarative import (
     Namespace,
     Refinable,
     with_meta,
+    evaluate_strict,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
@@ -97,9 +98,7 @@ class Fragment(Part):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        # TODO: do we want to do this?
-        # self._children = [evaluate_strict(x, **self.evaluate_parameters) for x in self._children]
-        pass
+        self._children = [evaluate_strict(x, **self.evaluate_parameters) for x in self._children]
 
     @dispatch(
         context=EMPTY,

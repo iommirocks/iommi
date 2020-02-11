@@ -15,6 +15,7 @@ try:
     from django.utils.encoding import smart_str
     from django.template.context_processors import csrf as csrf_
     from django.utils.safestring import mark_safe
+    from django.http import HttpRequest
 
     def csrf(request):
         return {} if request is None else csrf_(request)

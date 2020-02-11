@@ -138,6 +138,13 @@ docs/Form.rst
 docs/Field.rst
 docs/Action.rst
 docs/Link.rst
+docs/Endpoint.rst
+docs/Members.rst
+docs/Menu.rst
+docs/MenuItem.rst
+docs/Part.rst
+docs/Page.rst
+docs/Traversable.rst
 
 # tests
 results/

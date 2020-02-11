@@ -153,6 +153,8 @@ def test_evaluate_attrs():
                 class__foo=lambda foo: True,
                 data=1,
                 data2=lambda foo: foo,
+                style__foo=1,
+                style__bar=lambda foo: f'foo{3}',
             ),
         ),
         foo=3
@@ -163,6 +165,10 @@ def test_evaluate_attrs():
             'table': True,
             'foo': True,
         },
+        'style': {
+            'foo': 1,
+            'bar': 'foo3'
+        },
         'data': 1,
         'data2': 3,
     }
@@ -170,7 +176,7 @@ def test_evaluate_attrs():
     assert actual == expected
 
 
-@override_settings(IOMMI_DEBUG_SHOW_PATHS=True)
+@override_settings(IOMMI_DEBUG=True)
 def test_evaluate_attrs_show_debug_paths():
     actual = evaluate_attrs(
         Struct(
@@ -307,8 +313,10 @@ def test_invalid_enpoint_path(settings):
 Given path /foo not found.
     Short alternatives:
         ''
+        debug_tree
     Long alternatives:
         ''
+        endpoints/debug_tree
 """.strip()
 
 

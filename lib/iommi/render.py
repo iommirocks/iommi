@@ -60,9 +60,15 @@ def render_style(class_dict):
 
 
 class Attrs(Namespace):
-    def __init__(self, attrs, *, parent):
-        if getattr(settings, 'IOMMI_DEBUG_SHOW_PATHS', False) and getattr(parent, 'name', None) is not None:
+    def __init__(self, parent, **attrs):
+        if getattr(settings, 'IOMMI_DEBUG', False) and getattr(parent, 'name', None) is not None:
             attrs['data-iommi-path'] = parent.dunder_path()
+
+        if 'style' in attrs and not attrs['style']:
+            del attrs['style']
+
+        if 'class' in attrs and not attrs['class']:
+            del attrs['class']
 
         super(Attrs, self).__init__(attrs)
 

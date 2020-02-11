@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from tri_declarative import (
     Namespace,
     get_declared,
@@ -5,17 +7,18 @@ from tri_declarative import (
     get_shortcuts_by_name,
 )
 
+from iommi import MISSING
 
-def generate_rst_docs(directory, classes, missing_objects=None):  # pragma: no coverage
+
+def generate_rst_docs(directory, classes):
     """
     Generate documentation for tri.declarative APIs
 
     :param directory: directory to write the .rst files into
     :param classes: list of classes to generate documentation for
-    :param missing_objects: tuple of objects to count as missing markers, if applicable
     """
 
-    doc_by_filename = _generate_rst_docs(classes=classes, missing_objects=missing_objects)  # pragma: no mutate
+    doc_by_filename = _generate_rst_docs(classes=classes)  # pragma: no mutate
     for filename, doc in doc_by_filename:  # pragma: no mutate
         with open(directory + filename, 'w') as f2:  # pragma: no mutate
             f2.write(doc)  # pragma: no mutate
@@ -28,16 +31,14 @@ def get_docs_callable_description(c):
     return c.__module__ + '.' + c.__name__
 
 
-def _generate_rst_docs(classes, missing_objects=None):
-    if missing_objects is None:
-        missing_objects = tuple()
-
+def _generate_rst_docs(classes):
     import re
 
     def docstring_param_dict(obj):
         doc = obj.__doc__
         if doc is None:
             return dict(text=None, params={})
+        doc = dedent(doc)
         return dict(
             text=doc[:doc.find(':param')].strip() if ':param' in doc else doc.strip(),
             params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc))
@@ -47,8 +48,10 @@ def _generate_rst_docs(classes, missing_objects=None):
         return (' ' * levels * 4) + s.strip()
 
     def get_namespace(c):
-        return Namespace(
-            {k: c.__init__.dispatch.get(k) for k, v in get_declared(c, 'refinable_members').items()})
+        return Namespace({
+            k: c.__init__.dispatch.get(k)
+            for k, v in get_declared(c, 'refinable_members').items()
+        })
 
     for c in classes:
         from io import StringIO
@@ -86,6 +89,10 @@ def _generate_rst_docs(classes, missing_objects=None):
 
         w(0, '')
 
+        w(0, f'Base class: :doc:`{c.__base__.__name__} <{c.__base__.__name__}>`')
+
+        w(0, '')
+
         section(1, 'Refinable members')
         for refinable, value in sorted(dict.items(get_namespace(c))):
             w(0, '* `' + refinable + '`')
@@ -97,7 +104,7 @@ def _generate_rst_docs(classes, missing_objects=None):
 
         defaults = Namespace()
         for refinable, value in sorted(get_namespace(c).items()):
-            if value not in (None,) + missing_objects:
+            if value not in (None, MISSING):
                 defaults[refinable] = value
 
         if defaults:

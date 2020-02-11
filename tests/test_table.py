@@ -2030,7 +2030,7 @@ def test_bulk_namespaces_are_merged():
     assert t._bulk_form.fields.a.display_name == '7'
 
 
-@override_settings(IOMMI_DEBUG_SHOW_PATHS=True)
+@override_settings(IOMMI_DEBUG=True)
 def test_data_iommi_path():
     class FooTable(Table):
         a = Column(group='foo')

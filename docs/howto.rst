@@ -14,7 +14,7 @@ set:
 
 .. code:: python
 
-    IOMMI_DEBUG_SHOW_PATHS = True
+    IOMMI_DEBUG = True
 
 Now iommi will output `data-iommi-path` attributes in the HTML that will
 help you find the path to stuff to configure. E.g. in the kitchen

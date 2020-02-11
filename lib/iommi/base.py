@@ -21,6 +21,8 @@ from django.template import (
 from iommi._web_compat import (
     QueryDict,
     get_template_from_string,
+    HttpRequest,
+    format_html,
 )
 from iommi.render import Attrs
 from tri_declarative import (
@@ -126,6 +128,51 @@ def perform_post_dispatch(*, root, path, value):
     return target.post_handler(value=value, **target.evaluate_parameters)
 
 
+def endpoint__debug_tree(endpoint, **_):
+    root = endpoint.parent.parent
+
+    def rows(obj, depth=0):
+        if hasattr(obj, 'bound_members'):
+            for k, v in obj.bound_members.items():
+                if k == 'debug_tree':
+                    continue
+                yield Struct(name=k, obj=v, depth=depth)
+                for row in rows(v, depth + 1):
+                    yield row
+        else:
+            pass
+
+    from iommi import (
+        Column,
+        Table,
+    )
+    request = HttpRequest()
+    request.method = 'GET'
+    return Table(
+        rows=rows(root),
+        template=Template("""
+            <style>
+                .full-path {
+                    opacity: 0.0;
+                }
+                tr:hover .full-path {
+                    opacity: 0.8;
+                }
+            </style>
+            {% include "iommi/table/list.html" %}            
+        """),
+        # columns__name=Column(cell__attrs__style={'padding-left': lambda row, **_: f'{row.depth*20}px'}),
+        columns__path=Column(
+            cell__value=lambda row, **_: format_html('<span class="full-path">{}__</span>{}', row.obj.dunder_path().rpartition('__')[0], row.obj.name),
+        ),
+        columns__type=Column(
+            cell__value=lambda row, **_: row.obj.__class__.__name__,
+            cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html'
+        ),
+        sortable=False,
+    ).bind(request=request).render_to_response()
+
+
 @dispatch(
     render=EMPTY,
 )
@@ -169,12 +216,19 @@ def get_style_for(obj):
 
 
 class Traversable(RefinableObject):
+    """
+    Abstract API for objects that have a place in the iommi path structure.
+    You should not need to care about this class as it is an implementation
+    detail.
+    """
+
     name: str = EvaluatedRefinable()
     parent = None
     _is_bound = False
     # TODO: would be nice to not have this here
     style: str = EvaluatedRefinable()
 
+    @dispatch
     def __init__(self, **kwargs):
         self.declared_members = Struct()
         self.unapplied_config = Struct()
@@ -354,6 +408,10 @@ def build_long_path_by_path(root) -> Dict[str, str]:
 
 
 class Part(Traversable):
+    """
+    `Part` is the base class for parts of a page that can be rendered as html, and can respond to ajax and post.
+    """
+
     include: bool = EvaluatedRefinable()
     after: Union[int, str] = EvaluatedRefinable()
     extra: Namespace = Refinable()
@@ -365,7 +423,10 @@ class Part(Traversable):
         extra=EMPTY,
         include=True,
         name=None,
-        endpoints=EMPTY,
+        endpoints__debug_tree=Namespace(
+            include=lambda endpoint, **_: getattr(settings, 'IOMMI_DEBUG', settings.DEBUG),
+            func=endpoint__debug_tree,
+        ),
     )
     def __init__(self, endpoints: Dict[str, Any] = None, **kwargs):
         super(Part, self).__init__(**kwargs)
@@ -519,6 +580,11 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 
 @no_copy_on_bind
 class Members(Traversable):
+    """
+    Internal iommi class that holds members of another class, for example the columns of a `Table` instance.
+    """
+
+    @dispatch
     def __init__(self, *, declared_members, **kwargs):
         super(Members, self).__init__(**kwargs)
         self.declared_members = declared_members
@@ -556,19 +622,24 @@ def evaluate_member(obj, key, strict=True, **kwargs):
 
 def evaluate_attrs(obj, **kwargs):
     attrs = obj.attrs or {}
-    classes = {
-        k: evaluate_strict(v, **kwargs)
-        for k, v in attrs.get('class', {}).items()
-    }
-    attrs = {
-        k: evaluate_strict(v, **kwargs)
-        for k, v in attrs.items()
-        if k != 'class'
-    }
-    return Attrs({
-        'class': classes,
-        **attrs
-    }, parent=obj)
+    return Attrs(
+        obj,
+        **{
+            'class': {
+                k: evaluate_strict(v, **kwargs)
+                for k, v in attrs.get('class', {}).items()
+            }
+        },
+        style={
+            k: evaluate_strict(v, **kwargs)
+            for k, v in attrs.get('style', {}).items()
+        },
+        **{
+            k: evaluate_strict(v, **kwargs)
+            for k, v in attrs.items()
+            if k not in ('class', 'style')
+        },
+    )
 
 
 class InvalidEndpointPathException(Exception):
@@ -576,6 +647,23 @@ class InvalidEndpointPathException(Exception):
 
 
 class Endpoint(Traversable):
+    """
+    Class that describes an endpoint in iommi. You can create your own custom
+    endpoints on any :doc:`Part`.
+
+    Example:
+
+    .. code:: python
+
+        def my_view(request):
+            return Page(
+                parts__h1=html.h1('Hi!'),
+                endpoint__echo__func=lambda value, **_: value,
+            )
+
+    this page will respond to `?/echo=foo` by returning a json response `"foo"`.
+    """
+
     name = Refinable()
     func = Refinable()
     include = EvaluatedRefinable()
@@ -596,3 +684,6 @@ class Endpoint(Traversable):
 
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.path()
+
+    def own_evaluate_parameters(self):
+        return dict(endpoint=self)

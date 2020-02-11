@@ -180,6 +180,8 @@ def boolean_value_to_q(variable, op, value_string_or_f):
 class Variable(Part):
     """
     Class that describes a variable that you can search for.
+
+    See :doc:`Query` for more complete examples.
     """
 
     attr = EvaluatedRefinable()

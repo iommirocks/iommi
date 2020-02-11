@@ -11,11 +11,10 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.text import slugify
 from tri_declarative import (
-    EMPTY,
-    Refinable,
     class_shortcut,
     dispatch,
-    setattr_path,
+    EMPTY,
+    Refinable,
     setdefaults_path,
 )
 
@@ -27,6 +26,23 @@ from iommi.page import Fragment
 
 
 class Action(Part):
+    """
+    The `Action` class describes buttons and links.
+
+    Examples:
+
+    .. code:: python
+
+        # Link
+        Action(attrs__href='http://example.com')
+
+        # Link with icon
+        Action.icon('edit', attrs__href="edit/")
+
+        # Button
+        Action.button(attrs__value='Button title!')
+    """
+
     tag: str = EvaluatedRefinable()
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     group: str = EvaluatedRefinable()

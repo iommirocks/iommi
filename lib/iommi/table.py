@@ -68,6 +68,7 @@ from iommi._web_compat import (
     Template,
     render_template,
     smart_text,
+    HttpResponse,
 )
 from iommi.action import (
     Action,
@@ -247,6 +248,9 @@ class DataRetrievalMethods(Enum):
 class Column(Part):
     """
     Class that describes a column, i.e. the text of the header, how to get and display the data in the cell, etc.
+
+    See :doc:`Table` for more complete examples.
+
     """
     url: str = EvaluatedRefinable()
     attr: str = EvaluatedRefinable()
@@ -1486,17 +1490,17 @@ class Table(Part):
                     else:
                         rowspan_by_row[id(prev_row)] += 1
 
-                orig_style = column.cell.attrs.get('style')
-
                 def rowspan(row, **_):
                     return rowspan_by_row[id(row)] if id(row) in rowspan_by_row else None
 
-                def style(row, **_):
-                    return 'display: none%s' % ('; ' + orig_style if orig_style else '') if id(row) not in rowspan_by_row else orig_style
+                def auto_rowspan_style(row, **_):
+                    return 'none' if id(row) not in rowspan_by_row else ''
 
                 assert 'rowspan' not in column.cell.attrs
-                dict.__setitem__(column.cell.attrs, 'rowspan', rowspan)
-                dict.__setitem__(column.cell.attrs, 'style', style)
+                column.cell.attrs['rowspan'] = rowspan
+                if 'style' not in column.cell.attrs:
+                    column.cell.attrs['style'] = {}
+                column.cell.attrs['style']['display'] = auto_rowspan_style
 
     def _prepare_sorting(self):
         request = self.request()
