@@ -135,9 +135,15 @@ class AdminUnique(Model):
     foo = IntegerField()
     unique = IntegerField(unique=True)
 
+    class Meta:
+        ordering = ('pk',)
+
 
 class BooleanFromModelTestModel(Model):
     b = BooleanField(help_text='$$$$')
+
+    class Meta:
+        ordering = ('pk',)
 
 
 class CSVExportTestModel(Model):
@@ -147,9 +153,15 @@ class CSVExportTestModel(Model):
     d = IntegerField(null=True)
     danger = CharField(max_length=255, default="=2+5+cmd|' /C calc'!A0")
 
+    class Meta:
+        ordering = ('pk',)
+
 
 class QueryFromIndexesTestModel(Model):
     a = IntegerField()
     b = CharField(max_length=1, db_index=True)
     c = FloatField(db_index=True)
+
+    class Meta:
+        ordering = ('pk',)
 
