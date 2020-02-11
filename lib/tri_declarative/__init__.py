@@ -10,7 +10,7 @@ from tri_struct import (
     Struct,
 )
 
-__version__ = '5.1.0'
+__version__ = '5.1.1'
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):
