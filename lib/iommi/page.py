@@ -20,7 +20,9 @@ from iommi.base import (
     no_copy_on_bind,
     Part,
     PartType,
-    evaluate_strict_container)
+    evaluate_strict_container,
+    EvaluatedRefinable,
+)
 from iommi.render import render_attrs
 from tri_declarative import (
     declarative,
@@ -68,11 +70,10 @@ def fragment__render(fragment, context):
 
 class Fragment(Part):
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    tag = Refinable()
-    template: Union[str, Template] = Refinable()
+    tag = EvaluatedRefinable()
+    template: Union[str, Template] = EvaluatedRefinable()
 
     @dispatch(
-        attrs=EMPTY,
         tag=None,
     )
     def __init__(self, child: PartType = None, *, children: Optional[List[PartType]] = None, **kwargs):

@@ -17,7 +17,7 @@ def render_attrs(attrs):
     """
     if attrs is not None:
         if not attrs:
-            return ' '
+            return ''
 
         def parts():
             for key, value in sorted(attrs.items()):

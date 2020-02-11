@@ -197,12 +197,12 @@ def test_render_simple_tag():
 
 
 def test_render_empty_tag():
-    assert html.br().__html__() == '<br >'
+    assert html.br().__html__() == '<br>'
 
 
 def test_fragment():
     foo = html.h1('asd')
-    assert foo.__html__() == '<h1 >asd</h1>'
+    assert foo.__html__() == '<h1>asd</h1>'
 
 
 def test_should_include_error_message():

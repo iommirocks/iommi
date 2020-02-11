@@ -388,10 +388,8 @@ class Field(Part):
 
     parse_empty_string_as_none: bool = EvaluatedRefinable()
     initial: Any = EvaluatedRefinable()
-    template: str = EvaluatedRefinable()
+    template: Union[str, Template] = EvaluatedRefinable()
 
-    # TODO: remove this?
-    template_string: str = EvaluatedRefinable()
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     required: bool = EvaluatedRefinable()
 
@@ -658,10 +656,7 @@ class Field(Part):
             if 'checked' not in self.input.attrs and self.value:
                 self.input.attrs.checked = ''
 
-        if self.template_string is not None:
-            return get_template_from_string(self.template_string, origin='iommi', name='Form.__html__').render(context, self.request())
-        else:
-            return render_template(self.request(), self.template, context)
+        return render_template(self.request(), self.template, context)
 
     @classmethod
     @class_shortcut(
@@ -973,7 +968,7 @@ class Form(Part):
     endpoints: Namespace = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
-    template: Union[str, Template] = Refinable()
+    template: Union[str, Template] = EvaluatedRefinable()
 
     class Meta:
         member_class = Field

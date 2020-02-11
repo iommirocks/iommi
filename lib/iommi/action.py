@@ -36,7 +36,6 @@ class Action(Part):
 
     @dispatch(
         tag='a',
-        attrs=EMPTY,
     )
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

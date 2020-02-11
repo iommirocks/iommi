@@ -22,21 +22,21 @@ from iommi._web_compat import (
 from iommi.base import (
     bind_members,
     collect_members,
+    EvaluatedRefinable,
 )
 from iommi.page import Fragment
 from iommi.render import Attrs
 
 
 class MenuBase(Part):
-    tag: str = Refinable()
-    sort: bool = Refinable()  # only applies for submenu items
+    tag: str = EvaluatedRefinable()
+    sort: bool = EvaluatedRefinable()  # only applies for submenu items
     sub_menu: Dict = Refinable()
     attrs: Attrs = Refinable()
-    template: Union[str, Template] = Refinable()
+    template: Union[str, Template] = EvaluatedRefinable()
 
     @dispatch(
         sort=True,
-        attrs=EMPTY,
         attrs__class__nav=True,  # TODO: style!
         attrs__class={'nav-pills': True},  # TODO: style!
         tag='ul',  # TODO: style!
@@ -75,10 +75,10 @@ class MenuBase(Part):
 
 
 class MenuItem(MenuBase):
-    display_name: str = Refinable()
-    url: str = Refinable()
-    regex: str = Refinable()
-    group: str = Refinable()
+    display_name: str = EvaluatedRefinable()
+    url: str = EvaluatedRefinable()
+    regex: str = EvaluatedRefinable()
+    group: str = EvaluatedRefinable()
 
     @dispatch(
         display_name=lambda menu_item, **_: menu_item.name.title(),

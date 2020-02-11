@@ -436,7 +436,7 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    form = Form(name='hello', fields__foo=Field(name='foo', template=None, template_string='{{ field.value }} {{ form.name }}'))
+    form = Form(name='hello', fields__foo=Field(name='foo', template=Template('{{ field.value }} {{ form.name }}')))
     form.bind(request=req('get', foo='7'))
     assert form.name == 'hello'
     assert form.fields.foo.__html__() == '7 hello'

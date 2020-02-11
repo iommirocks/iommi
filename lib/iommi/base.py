@@ -243,7 +243,7 @@ class Traversable(RefinableObject):
         evaluate_members(result, evaluated_attributes, **result.evaluate_parameters())
 
         if hasattr(result, 'extra_evaluated'):
-            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated, **result.evaluate_parameters())
+            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result.evaluate_parameters())
 
         return result
 
@@ -343,7 +343,6 @@ class Part(Traversable):
 
     @dispatch(
         extra=EMPTY,
-        extra_evaluated=EMPTY,
         include=True,
         name=None,
     )
@@ -531,7 +530,7 @@ def evaluate_member(obj, key, strict=True, **kwargs):
 
 
 def evaluate_attrs(obj, **kwargs):
-    attrs = obj.attrs
+    attrs = obj.attrs or {}
     classes = {
         k: evaluate_strict(v, **kwargs)
         for k, v in attrs.get('class', {}).items()

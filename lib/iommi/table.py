@@ -90,6 +90,7 @@ from iommi.base import (
     model_and_rows,
     no_copy_on_bind,
     path_join,
+    Traversable,
 )
 from iommi.form import (
     Field,
@@ -333,9 +334,6 @@ class Column(Part):
 
         if self.attr is MISSING:
             self.attr = self.name
-
-        self.header.attrs = Namespace(self.header.attrs.copy())
-        self.header.attrs['class'] = Namespace(self.header.attrs['class'].copy())
 
         self.bulk = setdefaults_path(
             Struct(),
@@ -811,15 +809,16 @@ class TemplateConfig(Struct, RefinableObject):
     template: str = Refinable()
 
 
-class HeaderConfig(RefinableObject):
+class HeaderConfig(Traversable):
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    template: str = Refinable()
+    template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
+    extra_evaluated: Dict[str, Any] = Refinable()
 
 
-class RowConfig(RefinableObject):
+class RowConfig(Traversable):
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    template: str = Refinable()
+    template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
 
@@ -827,7 +826,6 @@ class RowConfig(RefinableObject):
 # TODO: make this a Part?
 class Header(object):
     @dispatch(
-        attrs=EMPTY,
     )
     def __init__(self, *, display_name, attrs, template, table, url=None, column=None, number_of_columns_in_group=None, index_in_group=None):
         self.table = table
@@ -1168,7 +1166,6 @@ class Table(Part):
         bulk_exclude={},
         sortable=True,
         default_sort_order=None,
-        attrs=EMPTY,
         template='iommi/table/list.html',
         row__attrs__class=EMPTY,
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
@@ -1357,6 +1354,8 @@ class Table(Part):
         bind_members(self, name='columns')
         bind_members(self, name='endpoints')
 
+        self.header.bind(parent=self)
+
         evaluate_member(self, 'sortable', **self.evaluate_parameters())  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
@@ -1537,16 +1536,6 @@ class Table(Part):
 
     def _prepare_headers(self):
         prepare_headers(self, self.rendered_columns.values())
-
-        for column in self.rendered_columns.values():
-            evaluate_members(
-                column,
-                [
-                    'superheader',
-                    'header',
-                ],
-                **self.evaluate_parameters()
-            )
 
         superheaders = []
         subheaders = []

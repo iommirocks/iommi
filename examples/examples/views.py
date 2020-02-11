@@ -291,8 +291,12 @@ def table_kitchen_sink(request):
         e = Column(group='Foo', cell__value='explicit value', sortable=False)
         f = Column(include=False, sortable=False)
         g = Column(attr='c', sortable=False)
-        django_templates_for_cells = Column(sortable=False, cell__value=None,
-                                            cell__template='kitchen_sink_cell_template.html')
+        django_templates_for_cells = Column(
+            sortable=False,
+            cell__value=None,
+            cell__template='kitchen_sink_cell_template.html',
+            group='Bar',
+        )
 
         class Meta:
             name = 'bar'
