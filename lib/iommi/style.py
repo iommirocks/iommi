@@ -325,6 +325,9 @@ def get_style(name):
     return _styles[name]
 
 
+_no_attribute_sentinel = object()
+
+
 def apply_style_recursively(*, style_data, obj):
     if isinstance(obj, dict):
         result = Namespace(style_data, obj)
@@ -335,7 +338,10 @@ def apply_style_recursively(*, style_data, obj):
             if isinstance(v, dict):
                 apply_style_recursively(style_data=v, obj=getattr(obj, k))
             else:
-                if getattr(obj, k) is None:
+                attrib = getattr(obj, k, _no_attribute_sentinel)
+                if attrib is _no_attribute_sentinel:
+                    raise InvalidStyleConfigurationException(f'Object {obj!r} has no attribute {k} which the style tried to set.')
+                if attrib is None:
                     setattr(obj, k, v)
 
 
@@ -347,7 +353,20 @@ class InvalidStyleConfigurationException(Exception):
     pass
 
 
-def validate_styles(*, classes: List[Type] = None):
+def validate_styles(*, additional_classes: List[Type] = None, default_classes=None, styles=None):
+    """
+    This function validates all registered styles against all standard
+    classes. If you have more classes you need to have checked against,
+    pass these as the `classes` argument.
+
+    The `default_classes` parameter can be used to say which classes are
+    checked for valid data. By default this is all the `Part`-derived
+    classes in iommmi. This parameter is primarily used by tests.
+
+    The `styles` parameter can be used to specify which exact styles to
+    validate. By default it will validate all registered styles. This
+    parameter is primarily used by tests.
+    """
     from iommi import (
         Field,
         Form,
@@ -358,16 +377,24 @@ def validate_styles(*, classes: List[Type] = None):
         Action,
     )
     from iommi.table import Paginator
-    classes = (classes or []) + [
-        Field,
-        Form,
-        Column,
-        Table,
-        Variable,
-        Query,
-        Action,
-        Paginator,
-    ]
+    if default_classes is None:
+        default_classes = [
+            Field,
+            Form,
+            Column,
+            Table,
+            Variable,
+            Query,
+            Action,
+            Paginator,
+        ]
+    if additional_classes is None:
+        additional_classes = []
+
+    classes = default_classes + additional_classes
+
+    if styles is None:
+        styles = _styles
 
     # We can have multiple classes called Field. In fact that's the recommended way to use iommi!
     classes_by_name = defaultdict(list)
@@ -383,7 +410,7 @@ def validate_styles(*, classes: List[Type] = None):
 
     invalid_class_names = []
     non_existent_shortcut_names = []
-    for style_name, style in _styles.items():
+    for style_name, style in styles.items():
         for cls_name, config in style.config.items():
             # First validate the top level classes
             if cls_name not in classes_by_name:

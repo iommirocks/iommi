@@ -1,3 +1,5 @@
+import pytest
+
 from iommi.base import get_style_for
 from iommi.render import render_attrs
 from iommi.style import (
@@ -5,6 +7,7 @@ from iommi.style import (
     apply_style_recursively,
     get_style_obj_for_object,
     validate_styles,
+    InvalidStyleConfigurationException,
 )
 from tri_declarative import (
     Namespace,
@@ -122,3 +125,37 @@ def test_last_win():
 
 def test_validate_default_styles():
     validate_styles()
+
+
+def test_error_when_trying_to_style_non_existent_attribute():
+    class Foo:
+        def __repr__(self):
+            return '<Foo>'
+
+    style = Namespace(something_that_does_not_exist='!!!')
+
+    with pytest.raises(InvalidStyleConfigurationException) as e:
+        apply_style_recursively(style_data=style, obj=Foo())
+
+    assert str(e.value) == 'Object <Foo> has no attribute something_that_does_not_exist which the style tried to set.'
+
+
+def test_error_message_for_invalid_style():
+    class Foo:
+        pass
+
+    style = Style(
+        ClassThatDoesNotExist__foo='',
+        Foo__shortcuts__does_not_exist__foo='',
+    )
+
+    with pytest.raises(InvalidStyleConfigurationException) as e:
+        validate_styles(additional_classes=[Foo], default_classes=[], styles=dict(foo=style))
+
+    assert str(e.value) == '''
+Invalid class names:
+    Style: foo - class: ClassThatDoesNotExist
+
+Invalid shortcut names:
+    Style: foo - class: Foo - shortcut: does_not_exist
+'''.strip()

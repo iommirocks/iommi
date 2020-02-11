@@ -21,15 +21,15 @@ from tri_struct import Struct
 from iommi.base import MISSING
 
 
-def create_members_from_model(default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):
+def create_members_from_model(*, default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):
     if additional is None:
         additional = {}
 
-    for key in additional.items():
+    for key in additional.keys():
         if include is not None and key in include:
-            assert False, f"extra contains {key} which conflicts with the same name in include."
+            assert False, f"additional contains {key} which conflicts with the same name in include."
         if exclude is not None and key in exclude:
-            assert False, f"extra contains {key} which conflicts with the same name in exclude."
+            assert False, f"additional contains {key} which conflicts with the same name in exclude."
 
     def should_include(name):
         if exclude is not None and name in exclude:

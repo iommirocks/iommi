@@ -3,38 +3,38 @@ import json
 import pytest
 from django.db import models
 from django.template import (
-    Template,
     RequestContext,
+    Template,
 )
 from django.test import override_settings
-from iommi._web_compat import (
-    mark_safe,
-    format_html,
-)
+from tri_declarative import Namespace
+from tri_struct import Struct
 
+from iommi._web_compat import (
+    format_html,
+    HttpResponse,
+    mark_safe,
+)
+from iommi.base import (
+    as_html,
+    build_long_path,
+    evaluate_attrs,
+    evaluate_strict_container,
+    find_target,
+    InvalidEndpointPathException,
+    Part,
+    perform_post_dispatch,
+    should_include,
+    request_data,
+)
 from iommi.page import (
     html,
     Page,
 )
 from iommi.table import Table
-from iommi.base import (
-    find_target,
-    InvalidEndpointPathException,
-    evaluate_attrs,
-    should_include,
-    perform_post_dispatch,
-    Part,
-    no_copy_on_bind,
-    as_html,
-    evaluate_strict_container,
-    build_long_path,
-)
-from tri_declarative import Namespace
-from tri_struct import Struct
-
 from tests.helpers import (
-    request_with_middleware,
     req,
+    request_with_middleware,
     StubTraversable,
 )
 
@@ -272,3 +272,46 @@ def test_evaluate_strict_container():
 def test_middleware_fallthrough_on_non_part():
     sentinel = object()
     assert request_with_middleware(response=sentinel, data={}) is sentinel
+
+
+def test_dispatch_auto_json():
+    class MyPart(Part):
+        def endpoint_handler(self, value, **_):
+            return dict(a=1, b='asd', c=value)
+
+    p = MyPart()
+    r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
+    assert r['Content-type'] == 'application/json'
+    assert json.loads(r.content) == dict(a=1, b='asd', c='7')
+
+
+def test_dispatch_return_http_response():
+    class MyPart(Part):
+        def endpoint_handler(self, value, **_):
+            return HttpResponse(f'foo {value}')
+
+    p = MyPart()
+    r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
+    assert r.content == b'foo 7'
+
+
+def test_invalid_enpoint_path(settings):
+    p = Page().bind(request=req('get', **{'/foo': ''}))
+    assert p.render_to_response().content == b'{"error": "Invalid endpoint path"}'
+
+    settings.DEBUG = True
+    with pytest.raises(InvalidEndpointPathException) as e:
+        p.render_to_response()
+
+    assert str(e.value) == """
+Given path /foo not found.
+    Short alternatives:
+        ''
+    Long alternatives:
+        ''
+""".strip()
+
+
+def test_unsupported_request_method():
+    with pytest.raises(AssertionError):
+        request_data(Struct(method='OPTIONS'))

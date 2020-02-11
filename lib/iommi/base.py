@@ -366,25 +366,22 @@ class Part(Traversable):
         request = self.request()
         req_data = request_data(request)
 
+        def dispatch_response_handler(r):
+            if isinstance(r, dict):
+                return HttpResponse(json.dumps(r), content_type='application/json')
+            else:
+                assert isinstance(r, HttpResponseBase)
+                return r
+
         if request.method == 'GET':
             dispatch_prefix = DISPATCH_PATH_SEPARATOR
             dispatcher = perform_ajax_dispatch
             dispatch_error = 'Invalid endpoint path'
 
-            def dispatch_response_handler(r):
-                if isinstance(r, dict):
-                    return HttpResponse(json.dumps(r), content_type='application/json')
-                else:
-                    assert isinstance(r, HttpResponseBase)
-                    return r
-
         elif request.method == 'POST':
             dispatch_prefix = '-'
             dispatcher = perform_post_dispatch
             dispatch_error = 'Invalid post path'
-
-            def dispatch_response_handler(r):
-                return r
 
         else:  # pragma: no cover
             assert False  # This has already been checked in request_data()
@@ -553,7 +550,7 @@ class InvalidEndpointPathException(Exception):
 class Endpoint(Traversable):
     name = Refinable()
     func = Refinable()
-    include = Refinable()
+    include = EvaluatedRefinable()
 
     @dispatch(
         name=None,
