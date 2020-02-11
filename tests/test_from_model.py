@@ -19,7 +19,6 @@ def test_get_name_field_for_model_error():
     with pytest.raises(NoRegisteredNameException) as e:
         get_name_field_for_model(NoRegisteredNameExceptionModel)
 
-    print(e.value)
     assert str(e.value) == "The model <class 'tests.test_from_model.test_get_name_field_for_model_error.<locals>.NoRegisteredNameExceptionModel'> has no registered name field. Please register one with register_name_field."
 
 
@@ -30,7 +29,6 @@ def test_register_name_field_error():
     with pytest.raises(Exception) as e:
         register_name_field(model=RegisterNameExceptionModel, name_field='foo')
 
-    print(e.value)
     assert str(e.value) == """Cannot register name "foo" for model <class 'tests.test_from_model.test_register_name_field_error.<locals>.RegisterNameExceptionModel'>. foo must be unique."""
 
 

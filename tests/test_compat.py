@@ -58,7 +58,6 @@ def test_format_html4():
             form=form,
         )
     )
-    print(actual)
     assert '<input id="id_foo" name="foo" type="text" value="">' in actual
 
 
@@ -70,14 +69,12 @@ def test_format_html5():
     ).__html__()
     assert '<form' in actual
     assert '<input' in actual
-    print(actual)
     assert type(actual) == SafeText
 
 
 def test_format_html6():
     form = Form(fields__foo=Field()).bind(request=req('get'))
     actual = form.fields.foo.__html__()
-    print(actual)
     assert '<input' in actual
     assert type(actual) == SafeText
 
@@ -85,14 +82,12 @@ def test_format_html6():
 def test_format_html7():
     form = Form(fields__foo=Field()).bind(request=req('get'))
     actual = str(form.fields.foo)
-    print(actual)
     assert '<input' in actual
     assert type(actual) == SafeText
 
 
 def test_render_template():
     actual = render_template(req('get'), Template('{{foo}}'), dict(foo=1))
-    print(actual)
     assert type(actual) == SafeText
 
 

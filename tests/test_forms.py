@@ -679,7 +679,6 @@ def test_choice_queryset():
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo.errors == set()
     result = form.__html__()
-    print(result)
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
 
