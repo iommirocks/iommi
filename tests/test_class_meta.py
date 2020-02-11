@@ -1,11 +1,9 @@
 import pytest
-from tri_struct import Struct
 
 from tri_declarative import (
-    with_meta,
-    Namespace,
     dispatch,
-    declarative,
+    Namespace,
+    with_meta,
 )
 
 
