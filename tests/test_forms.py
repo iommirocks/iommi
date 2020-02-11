@@ -10,6 +10,18 @@ from decimal import Decimal
 import pytest
 from bs4 import BeautifulSoup
 from django.test import override_settings
+from tri_declarative import (
+    class_shortcut,
+    get_members,
+    getattr_path,
+    is_shortcut,
+    Namespace,
+    setattr_path,
+    Shortcut,
+)
+from tri_struct import Struct
+
+from iommi import Action
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
     smart_str,
@@ -35,33 +47,25 @@ from iommi.form import (
     render_template,
     url_parse,
 )
-from iommi import Action
 from iommi.from_model import (
-    create_members_from_model,
     member_from_model,
 )
 from iommi.page import (
     Page,
 )
 from iommi.render import render_attrs
-from tri_declarative import (
-    class_shortcut,
-    getattr_path,
-    Namespace,
-    setattr_path,
-    Shortcut,
-)
-from tri_struct import Struct
-
 from .compat import RequestFactory
 from .helpers import (
+    get_attrs,
     reindent,
     req,
-    get_attrs,
 )
 from .models import (
     Bar,
     BooleanFromModelTestModel,
+    TBar,
+    TBaz,
+    TFoo,
 )
 
 
@@ -1842,3 +1846,47 @@ def test_help_text_for_boolean_tristate():
     form = Form(auto__model=BooleanFromModelTestModel)
     form.bind(request=req('get'))
     assert '$$$$' in str(form)
+
+
+@pytest.mark.django_db
+def test_all_field_shortcuts():
+    class MyFancyField(Field):
+        class Meta:
+            extra__fancy = True
+
+    class MyFancyForm(Form):
+        class Meta:
+            member_class = MyFancyField
+
+    all_shortcut_names = get_members(
+        cls=MyFancyField,
+        member_class=Shortcut,
+        is_member=is_shortcut,
+    ).keys()
+
+    config = {
+        f'fields__field_of_type_{t}__call_target__attribute': t
+        for t in all_shortcut_names
+    }
+
+    type_specifics = Namespace(
+        fields__field_of_type_choice__choices=[],
+        fields__field_of_type_multi_choice__choices=[],
+        fields__field_of_type_radio__choices=[],
+        fields__field_of_type_choice_queryset__choices=TFoo.objects.none(),
+        fields__field_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
+        fields__field_of_type_many_to_many__model_field=TBaz.foo.field,
+        fields__field_of_type_foreign_key__model_field=TBar.foo.field,
+        fields__field_of_type_foreign_key__model=TBar,
+        fields__field_of_type_info__value='dummy information',
+    )
+
+    form = MyFancyForm(
+        **config,
+        **type_specifics
+    ).bind(
+        request=req('get')
+    )
+
+    for name, field in form.fields.items():
+        assert field.extra.get('fancy'), name

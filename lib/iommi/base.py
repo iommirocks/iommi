@@ -1,7 +1,6 @@
 import copy
 import json
 from abc import abstractmethod
-from pprint import pprint
 from typing import (
     Any,
     Dict,
@@ -343,9 +342,6 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 )
 
     _traverse(root, [], [])
-
-    # TODO: remove
-    pprint(result)
 
     return result
 

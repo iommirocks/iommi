@@ -7,12 +7,20 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from iommi.base import perform_ajax_dispatch
 from tri_declarative import (
     class_shortcut,
+    get_members,
     get_shortcuts_by_name,
+    is_shortcut,
+    Namespace,
+    Shortcut,
 )
 from tri_struct import Struct
+
+from iommi.base import (
+    perform_ajax_dispatch,
+    request_data,
+)
 from iommi.form import (
     Field,
     Form,
@@ -25,8 +33,6 @@ from iommi.query import (
     value_to_query_string_value_string,
     Variable,
 )
-from iommi.base import request_data
-
 from tests.helpers import req
 from tests.models import (
     Bar,
@@ -34,6 +40,9 @@ from tests.models import (
     Foo,
     FromModelWithInheritanceTest,
     NonStandardName,
+    TBar,
+    TBaz,
+    TFoo,
 )
 
 
@@ -544,3 +553,45 @@ def test_shortcuts_map_to_form(name, shortcut):
         return
 
     assert shortcut.dispatch.form.call_target.attribute == name
+
+
+@pytest.mark.django_db
+def test_all_variable_shortcuts():
+    class MyFancyVariable(Variable):
+        class Meta:
+            extra__fancy = True
+
+    class MyFancyQuery(Query):
+        class Meta:
+            member_class = MyFancyVariable
+
+    all_shortcut_names = get_members(
+        cls=MyFancyVariable,
+        member_class=Shortcut,
+        is_member=is_shortcut,
+    ).keys()
+
+    config = {
+        f'variables__variable_of_type_{t}__call_target__attribute': t
+        for t in all_shortcut_names
+    }
+
+    type_specifics = Namespace(
+        variables__variable_of_type_choice__choices=[],
+        variables__variable_of_type_multi_choice__choices=[],
+        variables__variable_of_type_choice_queryset__choices=TFoo.objects.none(),
+        variables__variable_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
+        variables__variable_of_type_many_to_many__model_field=TBaz.foo.field,
+        variables__variable_of_type_foreign_key__model_field=TBar.foo.field,
+    )
+
+    query = MyFancyQuery(
+        **config,
+        **type_specifics
+    ).bind(
+        request=req('get')
+    )
+
+    for name, variable in query.variables.items():
+        assert variable.extra.get('fancy'), name
+

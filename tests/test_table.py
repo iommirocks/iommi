@@ -14,6 +14,7 @@ from tri_declarative import (
     get_shortcuts_by_name,
     getattr_path,
     is_shortcut,
+    Namespace,
     Shortcut,
 )
 
@@ -2149,28 +2150,32 @@ def test_all_column_shortcuts():
         class Meta:
             member_class = MyFancyColumn
 
-    type_specifics = dict(
-        choice=dict(choices=['Foo', 'Bar', 'Baz']),
-        multi_choice=dict(choices=['Foo', 'Bar', 'Baz']),
-        choice_queryset=dict(choices=TFoo.objects.none()),
-        multi_choice_queryset=dict(choices=TFoo.objects.none()),
-        many_to_many=dict(model_field=TBaz.foo.field),
-        foreign_key=dict(model_field=TBar.foo.field),
-    )
+    all_shortcut_names = get_members(
+        cls=MyFancyColumn,
+        member_class=Shortcut,
+        is_member=is_shortcut,
+    ).keys()
 
     config = {
-        f'columns__column_of_type_{t}': dict(
-            type_specifics.get(t, {}),
-            call_target__attribute=t,
-        )
-        for t in get_members(
-            cls=MyFancyColumn,
-            member_class=Shortcut,
-            is_member=is_shortcut,
-        ).keys()
+        f'columns__column_of_type_{t}__call_target__attribute': t
+        for t in all_shortcut_names
     }
 
-    table = MyFancyTable(**config).bind(request=req('get'))
+    type_specifics = Namespace(
+        columns__column_of_type_choice__choices=[],
+        columns__column_of_type_multi_choice__choices=[],
+        columns__column_of_type_choice_queryset__choices=TFoo.objects.none(),
+        columns__column_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
+        columns__column_of_type_many_to_many__model_field=TBaz.foo.field,
+        columns__column_of_type_foreign_key__model_field=TBar.foo.field,
+    )
+
+    table = MyFancyTable(
+        **config,
+        **type_specifics,
+    ).bind(
+        request=req('get'),
+    )
 
     for name, column in table.columns.items():
         assert column.extra.get('fancy'), name

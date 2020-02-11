@@ -401,8 +401,7 @@ class Variable(Part):
     @class_shortcut(
         call_target__attribute='choice_queryset',
     )
-    def foreign_key(cls, model_field, model, call_target, **kwargs):
-        del model
+    def foreign_key(cls, model_field, call_target, **kwargs):
         setdefaults_path(
             kwargs,
             choices=model_field.foreign_related_fields[0].model.objects.all(),
