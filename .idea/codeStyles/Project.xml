@@ -2,6 +2,7 @@
   <code_scheme name="Project" version="173">
     <Python>
       <option name="OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS" value="true" />
+      <option name="OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE" value="true" />
       <option name="OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER" value="true" />
       <option name="FROM_IMPORT_WRAPPING" value="2" />
       <option name="FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS" value="true" />
