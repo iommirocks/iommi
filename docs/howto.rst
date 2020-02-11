@@ -1,6 +1,34 @@
 HOWTO
 =====
 
+General
+-------
+
+
+How do I find the path to a parameter?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Navigating the namespaces can sometimes feel a bit daunting. To help with
+this iommi has a special debug mode that can help a lot. In your settings
+set:
+
+.. code:: python
+
+    IOMMI_DEBUG_SHOW_PATHS = True
+
+Now iommi will output `data-iommi-path` attributes in the HTML that will
+help you find the path to stuff to configure. E.g. in the kitchen
+sink table example a cell looks like this:
+
+.. code:: html
+
+    <td data-iommi-path="columns__e__cell">explicit value</td>
+
+To customize this cell you can pass for example
+`columns__e__cell__format=lambda value, **_: value.upper()`. See below for
+many more examples.
+
+
 Forms
 -----
 

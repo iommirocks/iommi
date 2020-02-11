@@ -144,7 +144,7 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     assert 'content' not in context
     context['content'] = content
     if 'title' not in context:
-        context['title'] = getattr(part, 'title') or ''
+        context['title'] = getattr(part, 'title', '') or ''
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.request())
