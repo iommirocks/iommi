@@ -138,3 +138,18 @@ class AdminUnique(Model):
 
 class BooleanFromModelTestModel(Model):
     b = BooleanField(help_text='$$$$')
+
+
+class CSVExportTestModel(Model):
+    a = IntegerField()
+    b = CharField(max_length=1)
+    c = FloatField()
+    d = IntegerField(null=True)
+    danger = CharField(max_length=255, default="=2+5+cmd|' /C calc'!A0")
+
+
+class QueryFromIndexesTestModel(Model):
+    a = IntegerField()
+    b = CharField(max_length=1, db_index=True)
+    c = FloatField(db_index=True)
+

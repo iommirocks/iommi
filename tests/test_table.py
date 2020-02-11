@@ -49,6 +49,8 @@ from tests.models import (
     TBaz,
     TFoo,
     BooleanFromModelTestModel,
+    CSVExportTestModel,
+    QueryFromIndexesTestModel,
 )
 
 register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
@@ -855,6 +857,31 @@ def test_bulk_edit_for_m2m_relations():
 
 
 @pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_bulk_delete():
+    TFoo.objects.create(a=1, b='a')
+    TFoo.objects.create(a=2, b='b')
+    t = Table(
+        auto__model=TFoo,
+        bulk__actions__delete__include=True,
+        # TODO: we shouldn't need to have bulk editing on a column in order to get bulk delete
+        columns__a__bulk__include=True,
+    ).bind(request=req('post', _all_pks_='1', **{'-delete': ''}))
+    assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
+
+    t = Table(
+        auto__model=TFoo,
+        bulk__actions__delete__include=True,
+        # TODO: we shouldn't need to have bulk editing on a column in order to get bulk delete
+        columns__a__bulk__include=True,
+    ).bind(request=req('post', _all_pks_='1', **{'-delete': '', 'confirmed': 'confirmed'}))
+    response = t.render_to_response()
+    assert response.status_code == 302, response.content.decode()
+
+    assert TFoo.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_invalid_syntax_query():
     class TestTable(Table):
         a = Column.number(sortable=False, query__include=True)
@@ -1638,6 +1665,11 @@ def test_yes_no_formatter():
     assert yes_no_formatter(False) == 'No'
     assert yes_no_formatter(0) == 'No'
 
+    with pytest.raises(AssertionError) as e:
+        yes_no_formatter({})
+
+    assert str(e.value) == 'Unable to convert {} to Yes/No'
+
 
 def test_repr():
     assert repr(Column(name='foo')) == '<iommi.table.Column foo>'
@@ -1993,3 +2025,102 @@ def test_bulk_namespaces_are_merged():
     t.bind(request=req('get'))
     assert t._bulk_form.fields.a.initial == 3
     assert t._bulk_form.fields.a.display_name == '7'
+
+
+@override_settings(IOMMI_DEBUG_SHOW_PATHS=True)
+def test_data_iommi_path():
+    class FooTable(Table):
+        a = Column(group='foo')
+
+    t = FooTable()
+    t.bind(request=None)
+
+    expected_html = """
+    <table class="table" data-endpoint="/tbody" data-iommi-path="">
+        <thead>
+            <tr>
+                <th class="superheader" colspan="1">
+                    foo
+                </th>
+            </tr>
+
+            <tr>
+                <th class="first_column subheader" data-iommi-path="columns__a__header">
+                    <a href="?order=a">
+                        A
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-iommi-path="row">
+                <td data-iommi-path="columns__a__cell">
+                    1
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    """
+
+    verify_table_html(expected_html=expected_html, table=FooTable(rows=[Struct(a=1)]))
+
+
+@pytest.mark.django_db
+def test_csv_download_error_message_column():
+    TFoo.objects.create(a=1, b='a')
+    TFoo.objects.create(a=2, b='b')
+    t = Table(
+        auto__model=TFoo,
+    ).bind(request=req('get', **{'/csv': ''}))
+    with pytest.raises(AssertionError) as e:
+        t.render_to_response()
+
+    assert str(e.value) == 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
+
+
+@pytest.mark.django_db
+def test_csv_download_error_message_filename():
+    TFoo.objects.create(a=1, b='a')
+    TFoo.objects.create(a=2, b='b')
+    t = Table(
+        auto__model=TFoo,
+        columns__a__extra_evaluated__report_name='A',
+    ).bind(request=req('get', **{'/csv': ''}))
+    with pytest.raises(AssertionError) as e:
+        t.render_to_response()
+
+    assert str(e.value) == 'To get CSV output you must specify extra_evaluated__report_name on the table'
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_csv_download():
+    CSVExportTestModel.objects.create(a=1, b='a', c=2.3)
+    CSVExportTestModel.objects.create(a=2, b='b', c=5.0)
+    t = Table(
+        auto__model=CSVExportTestModel,
+        columns__a__extra_evaluated__report_name='A',
+        columns__b__extra_evaluated__report_name='B',
+        columns__c__extra_evaluated__report_name='C',
+        columns__d__extra_evaluated__report_name='D',
+        columns__danger__extra_evaluated__report_name='DANGER',
+        extra_evaluated__report_name='foo',
+    ).bind(request=req('get', **{'/csv': ''}))
+    response = t.render_to_response()
+    assert response['Content-Type'] == 'text/csv'
+    assert response['Content-Disposition'] == "attachment; filename*=UTF-8''foo.csv"
+    assert response.getvalue().decode() == """
+A,B,C,D,DANGER
+1,a,2.3,,\t=2+5+cmd|' /C calc'!A0
+2,b,5.0,,\t=2+5+cmd|' /C calc'!A0
+""".lstrip().replace('\n', '\r\n')
+
+
+@pytest.mark.django_db
+def test_query_from_indexes():
+    t = Table(
+        auto__model=QueryFromIndexesTestModel,
+        query_from_indexes=True,
+    ).bind(request=req('get'))
+    assert list(t.query.variables.keys()) == ['b', 'c']
+    assert list(t.query.form.fields.keys()) == ['b', 'c']

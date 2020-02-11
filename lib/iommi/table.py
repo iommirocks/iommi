@@ -496,9 +496,8 @@ class Column(Part):
         call_target__attribute='boolean',
         query__call_target__attribute='boolean_tristate',
     )
-    def boolean_tristate(cls, *args, **kwargs):
-        call_target = kwargs.pop('call_target', cls)
-        return call_target(*args, **kwargs)
+    def boolean_tristate(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
@@ -720,7 +719,7 @@ class BoundRow(object):
         return BoundCell(bound_row=self, column=column)
 
     def dunder_path(self):
-        return self.parent.dunder_path() + '__row'
+        return path_join(self.parent.dunder_path(), 'row', separator='__')
 
 
 # TODO: make this a Part?
@@ -770,7 +769,7 @@ class BoundCell(object):
 
     def dunder_path(self):
         # TODO: is this really right?
-        return self.column.dunder_path() + '__cell'
+        return path_join(self.column.dunder_path(), 'cell', separator='__')
 
     def __html__(self):
         cell__template = self.column.cell.template
@@ -834,6 +833,7 @@ class Header(object):
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
         self.attrs = attrs
+        self.name = 'header'
         self.attrs = evaluate_attrs(self, table=table, column=column, header=self)
 
     @property
@@ -844,7 +844,9 @@ class Header(object):
         return '<Header: %s>' % ('superheader' if self.column is None else self.column.name)
 
     def dunder_path(self):
-        return self.table.dunder_path() + '__header'
+        if self.column is None:
+            return None
+        return path_join(self.column.dunder_path(), self.name, separator='__')
 
 
 def bulk__post_handler(table, form, **_):
@@ -1034,7 +1036,7 @@ def endpoint__csv(table, **_):
     csv_safe_column_indexes = {i for i, c in enumerate(table.columns.values()) if 'csv_whitelist' in c.extra}
     assert columns, 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
     assert 'report_name' in table.extra_evaluated, 'To get CSV output you must specify extra_evaluated__report_name on the table'
-    filename = table.extra_evaluated.report_name
+    filename = table.extra_evaluated.report_name + '.csv'
 
     header = [c.extra_evaluated.report_name for c in columns]
 
@@ -1273,6 +1275,10 @@ class Table(Part):
                     if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
                             'attribute') == 'from_model':
                         query_namespace['field_name'] = query_namespace.attr
+                    # Special case for automatic query config
+                    if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
+                        query_namespace.include = True
+                        query_namespace.form.include = True
                     yield query_namespace()
 
             declared_variables = Struct({x.name: x for x in generate_variables()})
@@ -1360,11 +1366,6 @@ class Table(Part):
             if not self.sortable:
                 column.sortable = False
 
-            # Special case for automatic query config
-            if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
-                column.query.include = True
-                column.query.form.include = True
-
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
         self._prepare_headers()
@@ -1376,10 +1377,10 @@ class Table(Part):
                     query_namespace = setdefaults_path(
                         Namespace(),
                         name=name,
-                        include=column.query.include,
                         form__display_name=column.display_name,
                     )
                     yield name, query_namespace
+
 
             self._query.unapplied_config.variables = Struct(generate_variables_unapplied_config())
             self._query.bind(parent=self)

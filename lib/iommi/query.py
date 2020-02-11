@@ -530,6 +530,8 @@ class Query(Part):
 
             for variable in self.declared_members.variables.values():
                 assert variable.name is not MISSING
+                if variable.attr is None:
+                    continue
                 yield setdefaults_path(
                     Namespace(),
                     variable.form,

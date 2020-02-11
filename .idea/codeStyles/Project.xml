@@ -10,5 +10,8 @@
       <option name="FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE" value="true" />
       <option name="FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE" value="true" />
     </Python>
+    <codeStyleSettings language="Python">
+      <option name="RIGHT_MARGIN" value="999" />
+    </codeStyleSettings>
   </code_scheme>
 </component>
