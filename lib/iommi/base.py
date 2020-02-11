@@ -136,7 +136,6 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
 
     if template_name is MISSING:
         template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', DEFAULT_BASE_TEMPLATE)
-        print('template name', template_name)
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
@@ -144,6 +143,8 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
 
     assert 'content' not in context
     context['content'] = content
+    if 'title' not in context:
+        context['title'] = getattr(part, 'title') or ''
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.request())

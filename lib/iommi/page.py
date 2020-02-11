@@ -120,6 +120,7 @@ class Fragment(Part):
     sort_key=lambda x: 0,
 )
 class Page(Part):
+    title: str = EvaluatedRefinable()
     member_class: Type[Fragment] = Refinable()
 
     class Meta:

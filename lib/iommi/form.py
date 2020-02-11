@@ -1251,6 +1251,7 @@ class Form(Part):
         from iommi.page import Page
         from iommi.page import html
         return Page(
+            title=title,
             parts={
                 # TODO: do we really need to pop from parts ourselves here?
                 'title': html.h1(title, **parts.pop('title', {})),

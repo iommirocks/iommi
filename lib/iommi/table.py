@@ -1675,6 +1675,7 @@ class Table(Part):
             html,
         )
         return Page(
+            title=title,
             # TODO: do I need to do this pop manually? Won't this be handled by collect_members/bind_members?
             parts__title=html.h1(title, **parts.pop('title', {})),
             # TODO: we should use the name given here, not hard code "table"

@@ -56,6 +56,7 @@ def all_models(app, table, **kwargs):
     )
 
     return Page(
+        title='Admin',
         parts__header=admin_h1,
         parts__title=html.h2('All models'),
         parts__table=table(),
@@ -98,7 +99,10 @@ def list_model(model, app, table):
             **{'table__columns__' + field.name + '__bulk__include': True},
         )
 
-    return kwargs.table().as_page(parts__header=admin_h1)
+    return kwargs.table().as_page(
+        title=f'{model._meta.verbose_name}',
+        parts__header=admin_h1,
+    )
 
 
 # TODO: name, description, display_name field should be freetext searchable by default
