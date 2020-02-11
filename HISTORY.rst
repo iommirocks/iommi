@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.1.0 (----------)
+5.1.0 (2020-02-11)
 ------------------
 
 * Fix @with_meta argument injector to merge namespaces
