@@ -41,7 +41,7 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.request(), fragment.template, {**context, **fragment.evaluate_parameters(), rendered_children: rendered_children})
+        return render_template(fragment.request(), fragment.template, {**context, **fragment.evaluate_parameters, rendered_children: rendered_children})
 
     is_void_element = fragment.tag in _void_elements
 
@@ -98,7 +98,7 @@ class Fragment(Part):
 
     def on_bind(self) -> None:
         # TODO: do we want to do this?
-        # self._children = [evaluate_strict(x, **self.evaluate_parameters()) for x in self._children]
+        # self._children = [evaluate_strict(x, **self.evaluate_parameters) for x in self._children]
         pass
 
     @dispatch(

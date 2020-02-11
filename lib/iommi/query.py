@@ -215,7 +215,7 @@ class Variable(Part):
             self.attr = self.name
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self.evaluate_parameters())
+        self.model = evaluate(self.model, **self.evaluate_parameters)
 
     def own_evaluate_parameters(self):
         return dict(query=self.parent, variable=self)

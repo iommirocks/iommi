@@ -346,10 +346,10 @@ class Column(Part):
         self.declared_column = self._declared
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self.evaluate_parameters())
+        self.model = evaluate(self.model, **self.evaluate_parameters)
 
     def own_evaluate_parameters(self):
-        return dict(table=self.table, column=self)
+        return dict(table=self.parent.parent, column=self)
 
     @classmethod
     @dispatch(
@@ -694,9 +694,9 @@ class BoundRow(object):
         self.row_index = row_index
         self.parent = table
         self.name = 'row'
-        self.template = evaluate(table.row.template, row=self.row, **table.evaluate_parameters())
+        self.template = evaluate(table.row.template, row=self.row, **table.evaluate_parameters)
         self.extra = table.row.extra
-        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_parameters())
+        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_parameters)
         self.attrs = table.row.attrs
         self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
@@ -1356,10 +1356,10 @@ class Table(Part):
 
         self.header.bind(parent=self)
 
-        evaluate_member(self, 'sortable', **self.evaluate_parameters())  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self.evaluate_parameters)  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
-        evaluate_member(self, 'model', strict=False, **self.evaluate_parameters())
+        evaluate_member(self, 'model', strict=False, **self.evaluate_parameters)
 
         for column in self.columns.values():
             # Special case for entire table not sortable

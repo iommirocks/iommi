@@ -112,7 +112,7 @@ def perform_ajax_dispatch(*, root, path, value):
     if getattr(target, 'endpoint_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
 
-    return target.endpoint_handler(value=value, **target.evaluate_parameters())
+    return target.endpoint_handler(value=value, **target.evaluate_parameters)
 
 
 def perform_post_dispatch(*, root, path, value):
@@ -124,7 +124,7 @@ def perform_post_dispatch(*, root, path, value):
     if getattr(target, 'post_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
-    return target.post_handler(value=value, **target.evaluate_parameters())
+    return target.post_handler(value=value, **target.evaluate_parameters)
 
 
 @dispatch(
@@ -178,6 +178,7 @@ class Traversable(RefinableObject):
         self.declared_members = Struct()
         self.unapplied_config = Struct()
         self.bound_members = None
+        self.evaluate_parameters = None
 
         super(Traversable, self).__init__(**kwargs)
 
@@ -253,27 +254,24 @@ class Traversable(RefinableObject):
                     continue
                 print(f'Unable to set {k} on {result.name}')
 
+        result.evaluate_parameters = {
+            **(result.parent.evaluate_parameters if result.parent is not None else {}),
+            **result.own_evaluate_parameters(),
+        }
         result.on_bind()
         if hasattr(result, 'attrs'):
-            result.attrs = evaluate_attrs(result, **result.evaluate_parameters())
+            result.attrs = evaluate_attrs(result, **result.evaluate_parameters)
 
         evaluated_attributes = [k for k, v in result.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        evaluate_members(result, evaluated_attributes, **result.evaluate_parameters())
+        evaluate_members(result, evaluated_attributes, **result.evaluate_parameters)
 
         if hasattr(result, 'extra_evaluated'):
-            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result.evaluate_parameters())
+            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result.evaluate_parameters)
 
         return result
 
     def on_bind(self) -> None:
         pass
-
-    # TODO: this should be a variable, created at bind time, just before on_bind()
-    def evaluate_parameters(self):
-        return {
-            **(self.parent.evaluate_parameters() if self.parent is not None else {}),
-            **self.own_evaluate_parameters(),
-        }
 
     def own_evaluate_parameters(self):
         return {}
