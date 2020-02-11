@@ -3,22 +3,30 @@ from collections import defaultdict
 
 import django
 import pytest
-from django.db import models
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.template import Template
 from django.test import override_settings
 from django.utils.safestring import mark_safe
+from tri_declarative import (
+    class_shortcut,
+    get_members,
+    get_shortcuts_by_name,
+    getattr_path,
+    is_shortcut,
+    Shortcut,
+)
+
+from iommi import Action
 from iommi.base import (
-    InvalidEndpointPathException,
     find_target,
+    InvalidEndpointPathException,
+    perform_ajax_dispatch,
 )
 from iommi.form import (
     Field,
     Form,
 )
-from iommi import Action
-from iommi.base import perform_ajax_dispatch
 from iommi.from_model import register_name_field
 from iommi.query import (
     Query,
@@ -26,31 +34,25 @@ from iommi.query import (
 )
 from iommi.table import (
     Column,
+    register_cell_formatter,
     SELECT_DISPLAY_NAME,
     Struct,
     Table,
-    register_cell_formatter,
     yes_no_formatter,
 )
-from tri_declarative import (
-    class_shortcut,
-    getattr_path,
-    get_shortcuts_by_name,
-)
-
 from tests.helpers import (
     req,
     request_with_middleware,
     verify_table_html,
 )
 from tests.models import (
+    BooleanFromModelTestModel,
+    CSVExportTestModel,
     FromModelWithInheritanceTest,
+    QueryFromIndexesTestModel,
     TBar,
     TBaz,
     TFoo,
-    BooleanFromModelTestModel,
-    CSVExportTestModel,
-    QueryFromIndexesTestModel,
 )
 
 register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
@@ -2135,3 +2137,40 @@ def test_table_as_view():
 
     as_view_path = Table.as_view(auto__model=TFoo, query_from_indexes=True)(request=req('get')).content
     assert render_to_response_path == as_view_path
+
+
+@pytest.mark.django_db
+def test_all_column_shortcuts():
+    class MyFancyColumn(Column):
+        class Meta:
+            extra__fancy = True
+
+    class MyFancyTable(Table):
+        class Meta:
+            member_class = MyFancyColumn
+
+    type_specifics = dict(
+        choice=dict(choices=['Foo', 'Bar', 'Baz']),
+        multi_choice=dict(choices=['Foo', 'Bar', 'Baz']),
+        choice_queryset=dict(choices=TFoo.objects.none()),
+        multi_choice_queryset=dict(choices=TFoo.objects.none()),
+        many_to_many=dict(model_field=TBaz.foo.field),
+        foreign_key=dict(model_field=TBar.foo.field),
+    )
+
+    config = {
+        f'columns__column_of_type_{t}': dict(
+            type_specifics.get(t, {}),
+            call_target__attribute=t,
+        )
+        for t in get_members(
+            cls=MyFancyColumn,
+            member_class=Shortcut,
+            is_member=is_shortcut,
+        ).keys()
+    }
+
+    table = MyFancyTable(**config).bind(request=req('get'))
+
+    for name, column in table.columns.items():
+        assert column.extra.get('fancy'), name
