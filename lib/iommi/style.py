@@ -169,6 +169,7 @@ bootstrap_base = Style(
     ),
     Table=dict(
         attrs__class__table=True,
+        attrs__class={'table-sm': True},
     ),
     Column=dict(
         header__attrs__class={'text-nowrap': True},
