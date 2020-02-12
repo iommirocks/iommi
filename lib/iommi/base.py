@@ -139,54 +139,68 @@ def perform_post_dispatch(*, root, path, value):
 def endpoint__debug_tree(endpoint, **_):
     root = endpoint.parent.parent
 
-    def rows(obj, depth=0):
-        if hasattr(obj, 'bound_members'):
-            for k, v in obj.bound_members.items():
-                yield Struct(name=k, obj=v, depth=depth)
-                yield from rows(v, depth + 1)
-        else:
-            pass
+    def rows(node, name='', path=[]):
+        yield Struct(
+            name=name,
+            obj=node,
+            type=node.__class__.__name__ if type(node) is not Struct else None,
+            path='/'.join(path),
+            dunder_path='__'.join(path),
+        )
+
+        children = []
+        if isinstance(node, dict):
+            children += list(node.items())
+        if isinstance(node, Traversable):
+            children += list(node.declared_members.items())
+
+        for k, v in children:
+            yield from rows(v, name=k, path=path + [k])
 
     from iommi import (
         Column,
         Table,
     )
+
+    def dunder_path__value(row, **_):
+        prefix = row.dunder_path.rpartition('__')[0]
+        return format_html(
+            '<span class="full-path">{prefix}{separator}</span>{name}',
+            prefix=prefix,
+            separator='__' if prefix else '',
+            name=row.name
+        )
+
+    class TreeTable(Table):
+        class Meta:
+            template = Template("""
+                <style>
+                    .full-path {
+                        opacity: 0.0;
+                    }
+                    tr:hover .full-path {
+                        opacity: 0.8;
+                    }
+                    
+                </style>
+                
+                {% include "iommi/table/table.html" %}            
+            """)
+            sortable = False
+
+            # @TODO use declarative once path() and dunder_path() are not taken by Traversable...
+            columns__dunder_path = Column(
+                cell__value=dunder_path__value,
+            )
+            columns__path = Column()
+            columns__type = Column(
+                cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html' if value else None
+            )
+
     request = HttpRequest()
     request.method = 'GET'
 
-    def dunder_path__value(row, **_):
-        prefix = row.obj.dunder_path().rpartition('__')[0]
-        separator = '__' if prefix else ''
-        return format_html('<span class="full-path">{}{}</span>{}', prefix, separator, row.obj.name)
-
-    def path__value(row, **_):
-        try:
-            return row.obj.path()
-        except PathNotFoundException:
-            return ''
-
-    return Table(
-        rows=rows(root),
-        template=Template("""
-            <style>
-                .full-path {
-                    opacity: 0.0;
-                }
-                tr:hover .full-path {
-                    opacity: 0.8;
-                }
-                
-            </style>
-            {% include "iommi/table/table.html" %}            
-        """),
-        columns__dunder_path=Column(cell__value=dunder_path__value,),
-        columns__path=Column(cell__value=path__value),
-        columns__type=Column(
-            cell__value=lambda row, **_: row.obj.__class__.__name__,
-            cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html'
-        ),
-        sortable=False,
-    ).bind(request=request).render_to_response()
+    return TreeTable(rows=rows(root)).bind(request=request).render_to_response()
 
 
 def local_debug_url_builder(filename, lineno):
