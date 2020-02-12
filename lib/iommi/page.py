@@ -7,6 +7,7 @@ from typing import (
     Union,
 )
 
+from django.conf import settings
 from django.utils.html import format_html
 from iommi._web_compat import (
     render_template,
@@ -22,6 +23,7 @@ from iommi.base import (
     PartType,
     evaluate_strict_container,
     EvaluatedRefinable,
+    endpoint__debug_tree,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
@@ -127,6 +129,10 @@ class Page(Part):
 
     @dispatch(
         parts=EMPTY,
+        endpoints__debug_tree=Namespace(
+            include=lambda endpoint, **_: getattr(settings, 'IOMMI_DEBUG', settings.DEBUG),
+            func=endpoint__debug_tree,
+        ),
     )
     def __init__(
         self,

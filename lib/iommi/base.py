@@ -134,11 +134,8 @@ def endpoint__debug_tree(endpoint, **_):
     def rows(obj, depth=0):
         if hasattr(obj, 'bound_members'):
             for k, v in obj.bound_members.items():
-                if k == 'debug_tree':
-                    continue
                 yield Struct(name=k, obj=v, depth=depth)
-                for row in rows(v, depth + 1):
-                    yield row
+                yield from rows(v, depth + 1)
         else:
             pass
 
@@ -148,6 +145,18 @@ def endpoint__debug_tree(endpoint, **_):
     )
     request = HttpRequest()
     request.method = 'GET'
+
+    def dunder_path__value(row, **_):
+        prefix = row.obj.dunder_path().rpartition('__')[0]
+        separator = '__' if prefix else ''
+        return format_html('<span class="full-path">{}{}</span>{}', prefix, separator, row.obj.name)
+
+    def path__value(row, **_):
+        try:
+            return row.obj.path()
+        except PathNotFoundException:
+            return ''
+
     return Table(
         rows=rows(root),
         template=Template("""
@@ -158,13 +167,12 @@ def endpoint__debug_tree(endpoint, **_):
                 tr:hover .full-path {
                     opacity: 0.8;
                 }
+                
             </style>
             {% include "iommi/table/list.html" %}            
         """),
-        # columns__name=Column(cell__attrs__style={'padding-left': lambda row, **_: f'{row.depth*20}px'}),
-        columns__path=Column(
-            cell__value=lambda row, **_: format_html('<span class="full-path">{}__</span>{}', row.obj.dunder_path().rpartition('__')[0], row.obj.name),
-        ),
+        columns__dunder_path=Column(cell__value=dunder_path__value,),
+        columns__path=Column(cell__value=path__value),
         columns__type=Column(
             cell__value=lambda row, **_: row.obj.__class__.__name__,
             cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html'
@@ -215,6 +223,10 @@ def get_style_for(obj):
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
 
+class PathNotFoundException(Exception):
+    pass
+
+
 class Traversable(RefinableObject):
     """
     Abstract API for objects that have a place in the iommi path structure.
@@ -258,7 +270,7 @@ class Traversable(RefinableObject):
         path = path_by_long_path.get(long_path)
         if path is None:
             candidates = '\n'.join(path_by_long_path.keys())
-            assert False, f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}"
+            raise PathNotFoundException(f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}")
         return path
 
     def dunder_path(self) -> str:
@@ -423,10 +435,6 @@ class Part(Traversable):
         extra=EMPTY,
         include=True,
         name=None,
-        endpoints__debug_tree=Namespace(
-            include=lambda endpoint, **_: getattr(settings, 'IOMMI_DEBUG', settings.DEBUG),
-            func=endpoint__debug_tree,
-        ),
     )
     def __init__(self, endpoints: Dict[str, Any] = None, **kwargs):
         super(Part, self).__init__(**kwargs)
