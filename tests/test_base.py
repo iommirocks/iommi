@@ -39,9 +39,6 @@ from tests.helpers import (
 )
 
 
-# assert first in children, f'Found invalid path {k}. {first} not a member of {children.keys()}'
-
-
 class T1(models.Model):
     foo = models.CharField(max_length=255)
     bar = models.CharField(max_length=255)
@@ -58,34 +55,33 @@ class T2(models.Model):
         ordering = ('id',)
 
 
-class MyPage(Page):
-    t1 = Table(
-        auto__model=T1,
-        columns__foo=dict(
-            query__include=True,
-            query__form__include=True,
-        ),
-        columns__bar=dict(
-            query__include=True,
-            query__form__include=True,
-        ),
-    )
-
-    t2 = Table(
-        auto__model=T2,
-        columns__foo=dict(
-            query__include=True,
-            query__form__include=True,
-        ),
-        columns__bar=dict(
-            query__include=True,
-            query__form__include=True,
-        ),
-    )
-
-
 @pytest.mark.django_db
 def test_dispatch_error_message_to_client():
+    class MyPage(Page):
+        t1 = Table(
+            auto__model=T1,
+            columns__foo=dict(
+                query__include=True,
+                query__form__include=True,
+            ),
+            columns__bar=dict(
+                query__include=True,
+                query__form__include=True,
+            ),
+        )
+
+        t2 = Table(
+            auto__model=T2,
+            columns__foo=dict(
+                query__include=True,
+                query__form__include=True,
+            ),
+            columns__bar=dict(
+                query__include=True,
+                query__form__include=True,
+            ),
+        )
+
     response = request_with_middleware(response=MyPage(), data={'/qwe': ''})
     data = json.loads(response.content)
     assert data == dict(error='Invalid endpoint path')

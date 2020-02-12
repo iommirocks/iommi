@@ -367,13 +367,16 @@ def test_name_traversal():
 #              </tbody>
 #          </table>""")
 
+# noinspection PyPep8Naming
+@pytest.fixture
+def NoSortTable():
+    class NoSortTable(Table):
+        class Meta:
+            sortable = False
+    return NoSortTable
 
-class NoSortTable(Table):
-    class Meta:
-        sortable = False
 
-
-def test_display_name():
+def test_display_name(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(display_name="Bar")
 
@@ -394,7 +397,7 @@ def test_display_name():
         </table>""")
 
 
-def test_link():
+def test_link(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column.link(cell__url='https://whereever', cell__url_title="whatever")
         bar = Column.link(cell__value='bar', cell__url_title=lambda value, **_: "url_title_goes_here")
@@ -418,7 +421,7 @@ def test_link():
         </table>""")
 
 
-def test_css_class():
+def test_css_class(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(
             header__attrs__class__some_class=True,
@@ -442,7 +445,7 @@ def test_css_class():
     </table>""")
 
 
-def test_header_url():
+def test_header_url(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(url="/some/url")
 
@@ -463,7 +466,7 @@ def test_header_url():
     </table>""")
 
 
-def test_include():
+def test_include(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column()
         bar = Column(include=False)
@@ -483,7 +486,7 @@ def test_include():
     </table>""")
 
 
-def test_include_lambda():
+def test_include_lambda(NoSortTable):
     def include_callable(table, column):
         assert isinstance(table, TestTable)
         assert column.name == 'bar'
@@ -508,7 +511,7 @@ def test_include_lambda():
     </table>""")
 
 
-def test_attr():
+def test_attr(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column()
         bar = Column(attr='foo')
@@ -532,7 +535,7 @@ def test_attr():
     </table>""")
 
 
-def test_attrs():
+def test_attrs(NoSortTable):
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
@@ -560,7 +563,7 @@ def test_attrs():
         </table>""")
 
 
-def test_attrs_new_syntax():
+def test_attrs_new_syntax(NoSortTable):
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
@@ -589,7 +592,7 @@ def test_attrs_new_syntax():
         </table>""")
 
 
-def test_column_presets():
+def test_column_presets(NoSortTable):
     class TestTable(NoSortTable):
         icon = Column.icon('some-icon')
         edit = Column.edit()
@@ -715,7 +718,7 @@ def test_django_table_pagination_custom_paginator():
         </table>""")
 
 
-def test_actions():
+def test_actions(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(header__attrs__title="Some title")
 
@@ -1007,7 +1010,7 @@ def test_query():
     """)
 
 
-def test_cell_template():
+def test_cell_template(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(cell__template='test_cell_template.html')
 
@@ -1026,7 +1029,7 @@ def test_cell_template():
         </table>""")
 
 
-def test_cell_format_escape():
+def test_cell_format_escape(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: '<foo>')
 
@@ -1047,7 +1050,7 @@ def test_cell_format_escape():
             </table>""")
 
 
-def test_cell_format_no_escape():
+def test_cell_format_no_escape(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: mark_safe('<foo/>'))
 
@@ -1069,7 +1072,7 @@ def test_cell_format_no_escape():
 
 
 @pytest.mark.django_db
-def test_template_string():
+def test_template_string(NoSortTable):
     TFoo.objects.create(a=1)
 
     class TestTable(NoSortTable):
@@ -1106,7 +1109,7 @@ def test_template_string():
         </div>""")
 
 
-def test_cell_template_string():
+def test_cell_template_string(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(
             cell__template=Template('Custom renderedXXXX: {{ row.foo }}'),
@@ -1127,7 +1130,7 @@ def test_cell_template_string():
         </table>""")
 
 
-def test_no_header_template():
+def test_no_header_template(NoSortTable):
     class TestTable(NoSortTable):
         class Meta:
             header__template = None
@@ -1148,7 +1151,7 @@ def test_no_header_template():
         </table>""")
 
 
-def test_row_template():
+def test_row_template(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column()
         bar = Column()
@@ -1178,7 +1181,7 @@ def test_row_template():
         </table>""")
 
 
-def test_cell_lambda():
+def test_cell_lambda(NoSortTable):
     class TestTable(NoSortTable):
         sentinel1 = 'sentinel1'
 
@@ -1201,7 +1204,7 @@ def test_cell_lambda():
         </table>""")
 
 
-def test_auto_rowspan_and_render_twice():
+def test_auto_rowspan_and_render_twice(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(auto_rowspan=True)
 
@@ -1239,7 +1242,7 @@ def test_auto_rowspan_and_render_twice():
     verify_table_html(table=t, expected_html=expected)
 
 
-def test_render_table():
+def test_render_table(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(display_name="TBar")
 
@@ -1251,7 +1254,7 @@ def test_render_table():
 
 
 @pytest.mark.django_db
-def test_default_formatters():
+def test_default_formatters(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column()
 

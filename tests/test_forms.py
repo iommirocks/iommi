@@ -89,23 +89,28 @@ def test_declaration_merge():
     assert {'foo', 'bar'} == set(form.fields.keys())
 
 
-class MyTestForm(Form):
-    party = Field.choice(choices=['ABC'], required=False)
-    username = Field(
-        is_valid=lambda form, field, parsed_data: (
-            parsed_data.startswith(form.fields['party'].parsed_data.lower() + '_') if parsed_data is not None else None,
-            'Username must begin with "%s_"' % form.fields['party'].parsed_data)
-    )
-    joined = Field.datetime(attr='contact__joined')
-    a_date = Field.date()
-    a_time = Field.time()
-    staff = Field.boolean()
-    admin = Field.boolean()
-    manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
-    not_editable = Field.text(initial='Some non-editable text', editable=False)
-    multi_choice_field = Field.multi_choice(choices=['a', 'b', 'c', 'd'], required=False)
+# This function is here to avoid declaring the form at import time, which is annoying when trying to debug unrelated tests
+# noinspection PyPep8Naming
+@pytest.fixture
+def MyTestForm():
+    class MyTestForm(Form):
+        party = Field.choice(choices=['ABC'], required=False)
+        username = Field(
+            is_valid=lambda form, field, parsed_data: (
+                parsed_data.startswith(form.fields['party'].parsed_data.lower() + '_') if parsed_data is not None else None,
+                'Username must begin with "%s_"' % form.fields['party'].parsed_data)
+        )
+        joined = Field.datetime(attr='contact__joined')
+        a_date = Field.date()
+        a_time = Field.time()
+        staff = Field.boolean()
+        admin = Field.boolean()
+        manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
+        not_editable = Field.text(initial='Some non-editable text', editable=False)
+        multi_choice_field = Field.multi_choice(choices=['a', 'b', 'c', 'd'], required=False)
 
-    # TODO: tests for all shortcuts with required=False
+        # TODO: tests for all shortcuts with required=False
+    return MyTestForm
 
 
 def test_field_repr():
@@ -134,7 +139,7 @@ def test_required_choice():
     assert form.fields['c'].errors == set()
 
 
-def test_required():
+def test_required(MyTestForm):
     form = MyTestForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_target()
     assert form.is_valid() is False
@@ -184,7 +189,7 @@ def test_custom_raw_data_list():
     assert form.fields.foo.value == ['this is custom raw data list']
 
 
-def test_parse():
+def test_parse(MyTestForm):
     # The spaces in the data are there to check that we strip input
     form = MyTestForm().bind(
         request=req('post', **{
@@ -256,7 +261,7 @@ def test_parse():
     )
 
 
-def test_parse_errors():
+def test_parse_errors(MyTestForm):
     def post_validation(form):
         form.add_error('General snafu')
     form = MyTestForm(
