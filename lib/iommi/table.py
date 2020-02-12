@@ -1169,7 +1169,7 @@ class Table(Part):
         bulk_exclude={},
         sortable=True,
         default_sort_order=None,
-        template='iommi/table/list.html',
+        template='iommi/table/table.html',
         row__attrs__class=EMPTY,
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
         row__template=None,

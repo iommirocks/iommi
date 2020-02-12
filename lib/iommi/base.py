@@ -169,7 +169,7 @@ def endpoint__debug_tree(endpoint, **_):
                 }
                 
             </style>
-            {% include "iommi/table/list.html" %}            
+            {% include "iommi/table/table.html" %}            
         """),
         columns__dunder_path=Column(cell__value=dunder_path__value,),
         columns__path=Column(cell__value=path__value),

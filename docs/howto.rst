@@ -28,6 +28,10 @@ To customize this cell you can pass for example
 `columns__e__cell__format=lambda value, **_: value.upper()`. See below for
 many more examples.
 
+Another nice way to find what is available is to append `?/debug_tree` in the
+url of your view. You will get a table of available paths with the ajax
+endpoint path, and their types with links to the appropriate documentation.
+
 
 Forms
 -----
