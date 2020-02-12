@@ -1,4 +1,3 @@
-from django.conf import settings
 from iommi._web_compat import mark_safe
 
 # TODO: this package name is silly
@@ -61,7 +60,9 @@ def render_style(class_dict):
 
 class Attrs(Namespace):
     def __init__(self, parent, **attrs):
-        if getattr(settings, 'IOMMI_DEBUG', False) and getattr(parent, 'name', None) is not None:
+        from iommi.base import iommi_debug_on
+
+        if iommi_debug_on() and getattr(parent, 'name', None) is not None:
             attrs['data-iommi-path'] = parent.dunder_path()
 
         if 'style' in attrs and not attrs['style']:

@@ -9,8 +9,8 @@ How do I find the path to a parameter?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Navigating the namespaces can sometimes feel a bit daunting. To help with
-this iommi has a special debug mode that can help a lot. In your settings
-set:
+this iommi has a special debug mode that can help a lot. By default it's
+set to settings.DEBUG, but to set it explicitly put this in your settings:
 
 .. code:: python
 
@@ -31,6 +31,18 @@ many more examples.
 Another nice way to find what is available is to append `?/debug_tree` in the
 url of your view. You will get a table of available paths with the ajax
 endpoint path, and their types with links to the appropriate documentation.
+
+
+If `IOMMI_DEBUG` is on you will also get two links on the top of your pages
+called `Code` and `Tree`. Code will jump to the code for the current view
+in PyCharm. You can configure the URL builder to make it open your favored
+editor by setting `IOMMI_DEBUG_URL_BUILDER` in settings:
+
+.. code:: python
+
+    IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: f'my_editor://{filename}:{lineno}'
+
+The `Tree` link will open the `?/debug_tree` page mentioned above.
 
 
 Forms

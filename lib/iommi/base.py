@@ -1,6 +1,10 @@
 import copy
 import json
 from abc import abstractmethod
+from os.path import (
+    isabs,
+    join,
+)
 from typing import (
     Any,
     Dict,
@@ -45,6 +49,10 @@ DEFAULT_BASE_TEMPLATE = 'base.html'
 DEFAULT_CONTENT_BLOCK = 'content'
 
 MISSING = object()
+
+
+def iommi_debug_on():
+    return getattr(settings, 'IOMMI_DEBUG', settings.DEBUG)
 
 
 def should_include(item):
@@ -181,6 +189,50 @@ def endpoint__debug_tree(endpoint, **_):
     ).bind(request=request).render_to_response()
 
 
+def local_debug_url_builder(filename, lineno):
+    if not isabs(filename):
+        filename = join(settings.BASE_DIR, filename)
+    if hasattr(settings, 'DEBUG_URL_MAPPING'):
+        filename = filename.replace(*settings.DEBUG_URL_MAPPING)
+    return "pycharm://open?file=%s" % (filename,) + ('' if lineno is None else "&line=%d" % (lineno,))
+
+
+def src_debug_url_builder(filename, lineno=None):
+    debug_url_builder = getattr(settings, 'IOMMI_DEBUG_URL_BUILDER', local_debug_url_builder)
+    return debug_url_builder(filename, lineno)
+
+
+def iommi_debug_panel(part):
+    if not iommi_debug_on():
+        return ''
+
+    frame = part._instantiated_at_frame
+    source_url = None
+    for _ in range(100):
+        frame = frame.f_back
+        module_name = frame.f_globals.get('__name__')
+        print(module_name)
+        if frame is None:
+            break
+
+        if module_name in ('tri_declarative', 'iommi', ) or module_name.startswith('iommi.'):
+            continue
+        source_url = src_debug_url_builder(frame.f_code.co_filename, frame.f_lineno)
+        break
+
+    if not source_url:
+        return ''
+
+    # TODO: use a Menu here?
+    return format_html(
+        """
+            <div class="iommi_debug_buttons" style="float: right">
+                <a href="{}">Code</a>
+                <a href="?/debug_tree">Tree</a>
+            </div>
+        """, source_url)
+
+
 @dispatch(
     render=EMPTY,
 )
@@ -200,7 +252,9 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     if 'title' not in context:
         context['title'] = getattr(part, 'title', '') or ''
 
-    template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %} {{ content }} {% endblock %}'
+    context['iommi_debug_panel'] = iommi_debug_panel(part)
+
+    template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.request())
 
 
@@ -439,6 +493,10 @@ class Part(Traversable):
     def __init__(self, endpoints: Dict[str, Any] = None, **kwargs):
         super(Part, self).__init__(**kwargs)
         collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
+
+        if iommi_debug_on():
+            import inspect
+            self._instantiated_at_frame = inspect.currentframe().f_back
 
     @dispatch(
         context=EMPTY,

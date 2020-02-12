@@ -24,6 +24,7 @@ from iommi.base import (
     evaluate_strict_container,
     EvaluatedRefinable,
     endpoint__debug_tree,
+    iommi_debug_on,
 )
 from iommi.render import render_attrs
 from tri_declarative import (
@@ -130,7 +131,7 @@ class Page(Part):
     @dispatch(
         parts=EMPTY,
         endpoints__debug_tree=Namespace(
-            include=lambda endpoint, **_: getattr(settings, 'IOMMI_DEBUG', settings.DEBUG),
+            include=lambda endpoint, **_: iommi_debug_on(),
             func=endpoint__debug_tree,
         ),
     )
