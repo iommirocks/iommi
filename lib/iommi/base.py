@@ -169,6 +169,7 @@ def get_style_for(obj):
 
 
 class Traversable(RefinableObject):
+    name: str = EvaluatedRefinable()
     parent = None
     _is_bound = False
     # TODO: would be nice to not have this here
@@ -276,6 +277,12 @@ class Traversable(RefinableObject):
     def own_evaluate_parameters(self):
         return {}
 
+    def request(self):
+        if self.parent is None:
+            return self._request
+        else:
+            return self.parent.request()
+
 
 def get_root(node: Traversable) -> Traversable:
     while node.parent is not None:
@@ -347,20 +354,22 @@ def build_long_path_by_path(root) -> Dict[str, str]:
 
 
 class Part(Traversable):
-    name: str = EvaluatedRefinable()
     include: bool = EvaluatedRefinable()
     after: Union[int, str] = EvaluatedRefinable()
     extra: Namespace = Refinable()
     extra_evaluated: Namespace = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     style: str = EvaluatedRefinable()
+    endpoints: Namespace = Refinable()
 
     @dispatch(
         extra=EMPTY,
         include=True,
         name=None,
+        endpoints=EMPTY,
     )
-    def __init__(self, **kwargs):
+    def __init__(self, endpoints: Dict[str, Any] = None, **kwargs):
         super(Part, self).__init__(**kwargs)
+        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     @dispatch(
         context=EMPTY,
@@ -374,17 +383,22 @@ class Part(Traversable):
         assert self._is_bound
         return self.__html__()
 
+    def bind(self, *, parent=None, request=None):
+        result = super(Part, self).bind(parent=parent, request=request)
+        del self
+        bind_members(result, name='endpoints')
+        return result
+
     @dispatch
     def render_to_response(self, **kwargs):
         request = self.request()
         req_data = request_data(request)
 
         def dispatch_response_handler(r):
-            if isinstance(r, dict):
-                return HttpResponse(json.dumps(r), content_type='application/json')
-            else:
-                assert isinstance(r, HttpResponseBase)
+            if isinstance(r, HttpResponseBase):
                 return r
+            else:
+                return HttpResponse(json.dumps(r), content_type='application/json')
 
         if request.method == 'GET':
             dispatch_prefix = DISPATCH_PATH_SEPARATOR
@@ -414,12 +428,6 @@ class Part(Traversable):
                 return dispatch_response_handler(result)
 
         return HttpResponse(render_root(part=self, **kwargs))
-
-    def request(self):
-        if self.parent is None:
-            return self._request
-        else:
-            return self.parent.request()
 
 
 PartType = Union[Part, str, Template]
@@ -510,7 +518,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 
 
 @no_copy_on_bind
-class Members(Part):
+class Members(Traversable):
     def __init__(self, *, declared_members, **kwargs):
         super(Members, self).__init__(**kwargs)
         self.declared_members = declared_members

@@ -466,7 +466,6 @@ class Query(Part):
     """
 
     form: Namespace = Refinable()
-    endpoints: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
 
@@ -482,7 +481,7 @@ class Query(Part):
         variables=EMPTY,
         auto=EMPTY,
     )
-    def __init__(self, *, model=None, rows=None, variables=None, endpoints: Dict[str, Any] = None, _variables_dict=None, auto, **kwargs):
+    def __init__(self, *, model=None, rows=None, variables=None, _variables_dict=None, auto, **kwargs):
         model, rows = model_and_rows(model, rows)
 
         assert isinstance(variables, dict)
@@ -548,8 +547,6 @@ class Query(Part):
 
         # Variables need to be at the end to not steal the short names
         self.declared_members.variables = self.declared_members.pop('variables')
-
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     def on_bind(self) -> None:
         bind_members(self, name='variables')

@@ -412,8 +412,6 @@ class Field(Part):
     empty_label: str = EvaluatedRefinable()
     empty_choice_tuple = EvaluatedRefinable()
 
-    endpoints: Namespace = Refinable()
-
     @dispatch(
         attr=MISSING,
         display_name=MISSING,
@@ -424,7 +422,6 @@ class Field(Part):
         is_boolean=False,
         editable=True,
         strip_input=True,
-        endpoints=EMPTY,
         endpoints__config__func=default_endpoints__config,
         endpoints__validate__func=default_endpoints__validate,
         errors=EMPTY,
@@ -434,7 +431,7 @@ class Field(Part):
         label__attrs__for=default_input_id,
         input__attrs__name=lambda field, **_: field.path(),
     )
-    def __init__(self, *, endpoints: Dict[str, Any] = None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
 
@@ -479,8 +476,6 @@ class Field(Part):
 
         self.input = self.input()
         self.label = self.label()
-
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     @property
     def form(self):
@@ -534,8 +529,6 @@ class Field(Part):
 
     def on_bind(self) -> None:
         assert self.template
-
-        bind_members(self, name='endpoints')
 
         form = self.parent.parent
         if self.attr is MISSING:
@@ -963,7 +956,6 @@ class Form(Part):
     editable: bool = Refinable()
 
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
-    endpoints: Namespace = Refinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     template: Union[str, Template] = EvaluatedRefinable()
@@ -978,11 +970,10 @@ class Form(Part):
         fields=EMPTY,
         attrs__action='',
         attrs__method='post',
-        endpoints=EMPTY,
         actions__submit__call_target__attribute='submit',
         auto=EMPTY,
     )
-    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, endpoints: Dict[str, Any] = None, model, auto, **kwargs):
+    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model, auto, **kwargs):
 
         if auto:
             auto = FormAutoConfig(**auto)
@@ -1010,7 +1001,6 @@ class Form(Part):
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
         collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class)
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
     def on_bind(self) -> None:
         assert self.actions_template

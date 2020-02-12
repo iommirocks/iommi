@@ -1124,7 +1124,6 @@ class Table(Part):
     rows = Refinable()
     columns = Refinable()
     bulk: Namespace = EvaluatedRefinable()
-    endpoints: Namespace = Refinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = Refinable()
@@ -1189,7 +1188,7 @@ class Table(Part):
 
         auto=EMPTY,
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, endpoints: Dict[str, Any] = None, auto, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1248,7 +1247,6 @@ class Table(Part):
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
         self.query_args = query
         self._query: Query = None

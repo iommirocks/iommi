@@ -315,3 +315,9 @@ Given path /foo not found.
 def test_unsupported_request_method():
     with pytest.raises(AssertionError):
         request_data(Struct(method='OPTIONS'))
+
+
+def test_custom_endpoint_on_page():
+    p = Page(endpoints__test__func=lambda value, **_: 7).bind(request=req('get', **{'/test': ''}))
+
+    assert p.render_to_response().content == b'7'
