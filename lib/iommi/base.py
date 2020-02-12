@@ -225,7 +225,6 @@ def iommi_debug_panel(part):
     for _ in range(100):
         frame = frame.f_back
         module_name = frame.f_globals.get('__name__')
-        print(module_name)
         if frame is None:
             break
 

@@ -85,3 +85,19 @@ def test_traverse_on_iommi():
     assert page.parts.a_table.query.form.path() == 'form'
     assert page.parts.a_table.query.form.fields.fusk.path() == 'fusk'
     assert page.parts.a_table.columns.fusk.path() == 'a_table/fusk'
+
+
+@pytest.mark.skip('TODO: this test is broken right now :(')
+def test_evil_names():
+    class EvilPage(Page):
+        name = Fragment()
+        path = Fragment()
+        dunder_path = Fragment()
+        style = Fragment()
+        bind = Fragment()
+        on_bind = Fragment()
+        own_evaluate_parameters = Fragment()
+        request = Fragment()
+        render_to_response = Fragment()
+
+    assert EvilPage().bind(request=RequestFactory().get('/')).render_to_response() == ''
