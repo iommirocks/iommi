@@ -16,6 +16,7 @@ from iommi.form import (
     register_field_factory,
 )
 from iommi.page import (
+    Fragment,
     html,
     Page,
 )
@@ -55,6 +56,7 @@ __all__ = [
     'Column',
     'Field',
     'Form',
+    'Fragment',
     'html',
     'Menu',
     'MenuItem',
