@@ -26,7 +26,7 @@
                         <h3>Available fields</h3>
                         <ul>
                             {% for variable in query.variables.values %}
-                                <li>{{ variable.name }}</li>
+                                <li>{{ variable.get_name }}</li>
                             {% endfor %}
                         </ul>
                     </div>

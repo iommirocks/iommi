@@ -19,7 +19,7 @@ def test_page_constructor():
         h1 = html.h1()
 
     my_page = MyPage(
-        parts__foo=html.div(name='foo'),
+        parts__foo=html.div(_name='foo'),
         parts__bar=html.div()
     )
 

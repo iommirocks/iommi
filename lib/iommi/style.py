@@ -85,9 +85,7 @@ base = Style(
         ),
         input__attrs__type='text',
         input__tag='input',
-        input__name='input',
         label__tag='label',
-        label__name='label',
     ),
     Column=dict(
         shortcuts=dict(

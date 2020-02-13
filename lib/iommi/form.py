@@ -167,7 +167,7 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
 
 def default_endpoints__config(field: 'Field', **_) -> dict:
     return dict(
-        name=field.name,
+        name=field._name,
     )
 
 
@@ -441,7 +441,7 @@ class Field(Part):
 
         .. code:: python
 
-            Field(attrs__id=lambda form, field: 'my_id_%s' % field.name)
+            Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
         :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally `request.GET` or `request.POST`)
         :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
@@ -476,8 +476,8 @@ class Field(Part):
 
         self.choice_tuples = None
 
-        self.input = self.input()
-        self.label = self.label()
+        self.input = self.input(_name='input')
+        self.label = self.label(_name='label')
 
     @property
     def form(self):
@@ -534,9 +534,9 @@ class Field(Part):
 
         form = self.parent.parent
         if self.attr is MISSING:
-            self.attr = self.name
+            self.attr = self._name
         if self.display_name is MISSING:
-            self.display_name = capitalize(self.name).replace('_', ' ') if self.name else ''
+            self.display_name = capitalize(self._name).replace('_', ' ') if self._name else ''
 
         self.errors = Errors(parent=self, **self.errors)
 
@@ -1209,7 +1209,7 @@ class Form(Part):
         r = {}
         if self.errors:
             r['global'] = self.errors
-        field_errors = {x.name: x.errors for x in self.fields.values() if x.errors}
+        field_errors = {x._name: x.errors for x in self.fields.values() if x.errors}
         if field_errors:
             r['fields'] = field_errors
         return r

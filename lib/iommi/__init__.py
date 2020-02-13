@@ -1,5 +1,6 @@
 __version__ = '0.1.1'
 
+from tri_declarative import LAST
 from iommi._db_compat import (
     setup_db_compat,
     register_factory,
@@ -64,6 +65,7 @@ __all__ = [
     'Query',
     'Table',
     'Variable',
+    'LAST',
     'register_factory',
     'register_field_factory',
     'register_variable_factory',

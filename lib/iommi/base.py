@@ -1,6 +1,7 @@
 import copy
 import json
 from abc import abstractmethod
+from collections import defaultdict
 from os.path import (
     isabs,
     join,
@@ -39,8 +40,8 @@ from tri_declarative import (
     evaluate_strict,
     get_callable_description,
     setdefaults_path,
-    sort_after,
     refinable,
+    LAST,
 )
 from tri_struct import Struct
 
@@ -60,6 +61,61 @@ def should_include(item):
         assert False, "`include` was a callable. You probably forgot to evaluate it. The callable was: {}".format(get_callable_description(item.include))
 
     return item.include
+
+
+def sort_after(l):
+    unmoved = []
+    to_be_moved_by_index = []
+    to_be_moved_by_name = defaultdict(list)
+    to_be_moved_last = []
+    for x in l:
+        after = getattr(x, 'after', None)
+        if after is None:
+            unmoved.append(x)
+        elif after is LAST:
+            to_be_moved_last.append(x)
+        elif isinstance(after, int):
+            to_be_moved_by_index.append(x)
+        else:
+            to_be_moved_by_name[x.after].append(x)
+
+    to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x.after)  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
+
+    def place(x):
+        yield x
+        for y in to_be_moved_by_name.pop(x._name, []):
+            for z in place(y):
+                yield z
+
+    def traverse():
+        count = 0
+        while unmoved or to_be_moved_by_index:
+            while to_be_moved_by_index:
+                next_by_position_index = to_be_moved_by_index[0].after
+                if count < next_by_position_index:  # pragma: no mutate (infinite loop when mutating < to <=)
+                    break  # pragma: no mutate (infinite loop when mutated to continue)
+
+                objects_with_index_due = place(to_be_moved_by_index.pop(0))
+                for x in objects_with_index_due:
+                    yield x
+                    count += 1  # pragma: no mutate
+            if unmoved:
+                next_unmoved_and_its_children = place(unmoved.pop(0))
+                for x in next_unmoved_and_its_children:
+                    yield x
+                    count += 1  # pragma: no mutate
+
+        for x in to_be_moved_last:
+            for y in place(x):
+                yield y
+
+    result = list(traverse())
+
+    if to_be_moved_by_name:
+        available_names = "\n   ".join(sorted([x._name for x in l]))
+        raise KeyError(f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} not exist.\nAvailable names:\n    {available_names}')
+
+    return result
 
 
 def evaluate_strict_container(c, **kwargs):
@@ -301,23 +357,24 @@ class Traversable(RefinableObject):
     detail.
     """
 
-    name: str = EvaluatedRefinable()
+    _name = None
     parent = None
     _is_bound = False
     # TODO: would be nice to not have this here
     style: str = EvaluatedRefinable()
 
     @dispatch
-    def __init__(self, **kwargs):
+    def __init__(self, _name=None, **kwargs):
         self.declared_members = Struct()
         self.unapplied_config = Struct()
         self.bound_members = None
         self.evaluate_parameters = None
+        self._name = _name
 
         super(Traversable, self).__init__(**kwargs)
 
     def __repr__(self):
-        n = f' {self.name}' if self.name is not None else ''
+        n = f' {self._name}' if self._name is not None else ''
         b = ' (bound)' if self._is_bound else ''
         try:
             p = f" path:'{self.path()}'" if self.parent is not None else ""
@@ -330,6 +387,9 @@ class Traversable(RefinableObject):
                 c = f" members:{list(members.keys())!r}"
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
+
+    def get_name(self):
+        return self._name
 
     def path(self) -> str:
         path_by_long_path = get_root(self)._path_by_long_path
@@ -348,11 +408,10 @@ class Traversable(RefinableObject):
         assert parent is None or parent._is_bound
         assert not self._is_bound
 
-        name = getattr(self, 'name', None)
         if parent is None:
             self._request = request
-            if name is None:
-                self.name = 'root'
+            if self._name is None:
+                self._name = 'root'
 
         long_path_by_path = None
         if parent is None:
@@ -377,7 +436,7 @@ class Traversable(RefinableObject):
         apply_style(result)
 
         if parent is not None:
-            unapplied_config = parent.unapplied_config.get(name, {})
+            unapplied_config = parent.unapplied_config.get(result._name, {})
             for k, v in unapplied_config.items():
                 if k in result.declared_members:
                     result.unapplied_config[k] = v
@@ -386,13 +445,14 @@ class Traversable(RefinableObject):
                 if not isinstance(result, Members) and hasattr(result, k):
                     setattr(result, k, v)
                     continue
-                print(f'Unable to set {k} on {result.name}')
+                print(f'Unable to set {k} on {result._name}')
 
         result.evaluate_parameters = {
             **(result.parent.evaluate_parameters if result.parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
         result.on_bind()
+
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.evaluate_parameters)
 
@@ -427,16 +487,16 @@ def build_long_path(node: Traversable) -> str:
     def _traverse(node: Traversable) -> List[str]:
         # noinspection PyProtectedMember
         assert node._is_bound
-        assert node.name is not None
+        assert node._name is not None
         if node.parent is None:
             return []
-        return _traverse(node.parent) + [node.name]
+        return _traverse(node.parent) + [node._name]
 
     return '/'.join(_traverse(node))
 
 
 def include_in_short_path(node):
-    return getattr(node, 'name', None) is not None
+    return getattr(node, '_name', None) is not None
 
 
 def build_long_path_by_path(root) -> Dict[str, str]:
@@ -501,7 +561,6 @@ class Part(Traversable):
     @dispatch(
         extra=EMPTY,
         include=True,
-        name=None,
     )
     def __init__(self, endpoints: Dict[str, Any] = None, **kwargs):
         super(Part, self).__init__(**kwargs)
@@ -629,13 +688,13 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 
     if items_dict is not None:
         for key, x in items_dict.items():
-            x.name = key
+            x._name = key
             unbound_items[key] = x
 
     if items is not None:
         for key, item in items.items():
             if not isinstance(item, dict):
-                item.name = key
+                item._name = key
                 unbound_items[key] = item
             else:
                 if key in unbound_items:
@@ -645,7 +704,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
                         Namespace(),
                         item,
                         call_target__cls=cls,
-                        name=key,
+                        _name=key,
                     )
                     unbound_items[key] = item()
 
@@ -653,7 +712,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
         obj.unapplied_config[name] = unapplied_config
 
     # TODO: shouldn't sort_after be done on the bound items?
-    members = Struct({x.name: x for x in unbound_items.values()})
+    members = Struct({x._name: x for x in unbound_items.values()})
     obj.declared_members[name] = members
 
 
@@ -674,12 +733,12 @@ class Members(Traversable):
             for m in self.declared_members.values()
         ])
 
-        self.bound_members = Struct({item.name: item for item in bound_items if should_include(item)})
+        self.bound_members = Struct({item._name: item for item in bound_items if should_include(item)})
 
 
 def bind_members(obj: Part, *, name: str) -> None:
     m = Members(
-        name=name,
+        _name=name,
         declared_members=obj.declared_members[name],
     )
     m.bind(parent=obj)

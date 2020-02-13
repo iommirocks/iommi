@@ -91,15 +91,15 @@ def test_find_target():
     # To build paths: declared_members: Struct, and optionally name
     # To find target: _long_path_by_path: Dict on root, children()
 
-    bar = StubTraversable(name='bar')
+    bar = StubTraversable(_name='bar')
     foo = StubTraversable(
-        name='foo',
+        _name='foo',
         members=Struct(
             bar=bar,
         ),
     )
     root = StubTraversable(
-        name='root',
+        _name='root',
         members=Struct(
             foo=foo
         ),
@@ -112,15 +112,15 @@ def test_find_target():
 
 
 def test_find_target_with_invalid_path():
-    bar = StubTraversable(name='bar')
+    bar = StubTraversable(_name='bar')
     foo = StubTraversable(
-        name='foo',
+        _name='foo',
         members=Struct(
             bar=bar,
         ),
     )
     root = StubTraversable(
-        name='root',
+        _name='root',
         members=Struct(
             foo=foo
         ),
@@ -179,7 +179,7 @@ def test_evaluate_attrs_show_debug_paths():
             attrs=Namespace(
                 class__table=True,
             ),
-            name='foo',
+            _name='foo',
             dunder_path=lambda: '<path here>',
         ),
     )
@@ -215,7 +215,7 @@ def test_should_include_error_message():
 
 
 def test_perform_post_dispatch_error_message():
-    target = StubTraversable(name='root', members=Struct(foo=StubTraversable(name='foo')))
+    target = StubTraversable(_name='root', members=Struct(foo=StubTraversable(_name='foo')))
     target.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
@@ -226,13 +226,13 @@ def test_perform_post_dispatch_error_message():
 
 def test_dunder_path_is_fully_qualified_and_skipping_root():
     foo = StubTraversable(
-        name='my_part3',
+        _name='my_part3',
         members=Struct(
             my_part2=StubTraversable(
-                name='my_part2',
+                _name='my_part2',
                 members=Struct(
                     my_part=StubTraversable(
-                        name='my_part',
+                        _name='my_part',
                     )
                 )
             )
@@ -276,13 +276,15 @@ def test_middleware_fallthrough_on_non_part():
     assert request_with_middleware(response=sentinel, data={}) is sentinel
 
 
+@override_settings(DEBUG=True)
 def test_dispatch_auto_json():
     class MyPart(Part):
         def endpoint_handler(self, value, **_):
             return dict(a=1, b='asd', c=value)
 
-    p = MyPart()
-    r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
+    p = MyPart().bind(request=req('get', **{'/': '7'}))
+    assert p._long_path_by_path
+    r = p.render_to_response()
     assert r['Content-type'] == 'application/json'
     assert json.loads(r.content) == dict(a=1, b='asd', c='7')
 

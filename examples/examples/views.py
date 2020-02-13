@@ -170,7 +170,7 @@ def form_example_5(request):
 
 class KitchenForm(Form):
     class Meta:
-        name = 'kitchen'
+        _name = 'kitchen'
 
     foo = Field()
 
@@ -184,7 +184,7 @@ class KitchenForm(Form):
 
 class SinkForm(Form):
     class Meta:
-        name = 'sink'
+        _name = 'sink'
 
     foo = Field()
 
@@ -198,12 +198,12 @@ def form_kitchen(request):
 
     def sink_form_post_handler(form, **_):
         values = form.apply(Struct())
-        return HttpResponse(format_html("Sink values from form {} was {}", form.name, values))
+        return HttpResponse(format_html("Sink values from form {} was {}", form._name, values))
 
     class KitchenPage(Page):
         kitchen_form = KitchenForm(actions__submit__post_handler=kitchen_form_post_handler)
         sink_form = SinkForm(actions__submit__post_handler=sink_form_post_handler)
-        sink_form2 = SinkForm(name='sinkform2', actions__submit__post_handler=sink_form_post_handler)
+        sink_form2 = SinkForm(_name='sinkform2', actions__submit__post_handler=sink_form_post_handler)
 
     return KitchenPage()
 
@@ -299,7 +299,7 @@ def table_kitchen_sink(request):
         )
 
         class Meta:
-            name = 'bar'
+            _name = 'bar'
             page_size = 20
 
     return BarTable(rows=TBar.objects.all())

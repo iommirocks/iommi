@@ -489,7 +489,7 @@ def test_include(NoSortTable):
 def test_include_lambda(NoSortTable):
     def include_callable(table, column):
         assert isinstance(table, TestTable)
-        assert column.name == 'bar'
+        assert column._name == 'bar'
         return False
 
     class TestTable(NoSortTable):
@@ -799,7 +799,7 @@ def test_bulk_edit():
         request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
-    assert t.bulk_form.name == 'bulk'
+    assert t.bulk_form._name == 'bulk'
     t.render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
@@ -1185,7 +1185,7 @@ def test_cell_lambda(NoSortTable):
     class TestTable(NoSortTable):
         sentinel1 = 'sentinel1'
 
-        sentinel2 = Column(cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column.name, row.sentinel3))
+        sentinel2 = Column(cell__value=lambda table, column, row, **_: '%s %s %s' % (table.sentinel1, column._name, row.sentinel3))
 
     rows = [Struct(sentinel3="sentinel3")]
 
@@ -1383,7 +1383,7 @@ def test_query_namespace_inject():
         Table(
             rows=[],
             model=TFoo,
-            columns__a=Column(name='a', query__include=True, query__form__include=True),
+            columns__a=Column(_name='a', query__include=True, query__form__include=True),
             query__form__post_validation=post_validation,
         ).bind(
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
@@ -1572,7 +1572,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__data__func = lambda table, **_: [{cell.column.name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
+            endpoints__data__func = lambda table, **_: [{cell.column._name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
 
         foo = Column()
         bar = Column()
@@ -1617,7 +1617,7 @@ def test_table_iteration():
 
     assert [
         {
-            bound_cell.column.name: bound_cell.value
+            bound_cell.column._name: bound_cell.value
             for bound_cell in bound_row
         }
         for bound_row in table.bound_rows()
@@ -1678,7 +1678,7 @@ def test_yes_no_formatter():
 
 
 def test_repr():
-    assert repr(Column(name='foo')) == '<iommi.table.Column foo>'
+    assert repr(Column(_name='foo')) == '<iommi.table.Column foo>'
 
 
 @pytest.mark.django_db
@@ -1883,7 +1883,7 @@ def test_column_merge():
     )
     table.bind(request=None)
     assert len(table.columns) == 1
-    assert table.columns.foo.name == 'foo'
+    assert table.columns.foo._name == 'foo'
     for row in table.bound_rows():
         assert row['foo'].value == 1
 

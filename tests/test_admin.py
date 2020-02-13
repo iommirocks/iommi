@@ -8,4 +8,4 @@ from .helpers import req
 def test_bulk_edit_for_non_unique():
     p = list_model(model=AdminUnique)
     p.bind(request=req('get'))
-    assert [x.name for x in p.parts.table.columns.values() if x.bulk.include] == ['foo']
+    assert [x._name for x in p.parts.table.columns.values() if x.bulk.include] == ['foo']

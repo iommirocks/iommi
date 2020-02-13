@@ -1,19 +1,23 @@
 from typing import (
     Any,
     Dict,
+    Iterator,
     List,
     Type,
 )
 
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Model
+from django.db.models import (
+    Field as DjangoField,
+    Model,
+)
 from tri_declarative import (
+    dispatch,
     EMPTY,
+    evaluate,
     Namespace,
     Refinable,
     RefinableObject,
-    dispatch,
-    evaluate,
     setdefaults_path,
 )
 from tri_struct import Struct
@@ -57,20 +61,20 @@ def create_members_from_model(*, default_factory, model, member_params_by_member
             if isinstance(foo, dict):
                 subkeys = Namespace(**foo)
                 subkeys.setdefault('call_target', default_factory)
-                foo = subkeys(name=field.name, model=model, model_field=field)
+                foo = subkeys(_name=field.name, model=model, model_field=field)
             if foo is None:
                 continue
             if isinstance(foo, list):
                 members.extend(foo)
             else:
-                assert foo.name, "Fields must have a name attribute"
-                assert foo.name == field.name, f"Field {foo.name} has a name that doesn't match the model field it belongs to: {field.name}"
+                assert foo._name, "Fields must have a name attribute"
+                assert foo._name == field.name, f"Field {foo._name} has a name that doesn't match the model field it belongs to: {field.name}"
                 members.append(foo)
 
     additional = {**member_params_by_member_name, **additional}
 
     all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
-    return Struct({x.name: x for x in all_members}, **additional)
+    return Struct({x._name: x for x in all_members}, **additional)
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
@@ -117,7 +121,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
 
     setdefaults_path(
         kwargs,
-        name=field_name,
+        _name=field_name,
         call_target__cls=cls,
     )
 
@@ -134,7 +138,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     return factory(model_field=model_field, model=model, **kwargs)
 
 
-def get_fields(model):
+def get_fields(model: Type[Model]) -> Iterator[DjangoField]:
     # noinspection PyProtectedMember
     for field in model._meta.get_fields():
         yield field

@@ -55,7 +55,7 @@ class MenuBase(Part):
         )
 
     def __repr__(self):
-        r = '%s -> %s\n' % (self.name, self.url)
+        r = '%s -> %s\n' % (self._name, self.url)
         for items in self.sub_menu.values():
             r += '    ' + repr(items)
         return r
@@ -66,7 +66,7 @@ class MenuBase(Part):
         # TODO:
         if self.sort:
             self.sub_menu = Struct({
-                item.name: item
+                item._name: item
                 for item in sorted(self.sub_menu.values(), key=lambda x: x.display_name)
             })
 
@@ -87,9 +87,9 @@ class MenuItem(MenuBase):
     group: str = EvaluatedRefinable()
 
     @dispatch(
-        display_name=lambda menu_item, **_: menu_item.name.title().replace('_', ' '),
+        display_name=lambda menu_item, **_: menu_item._name.title().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
-        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.parent, 'url', None), menu_item.name) + '/',
+        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.parent, 'url', None), menu_item._name) + '/',
         tag='li',
     )
     def __init__(self, **kwargs):

@@ -114,7 +114,7 @@ def MyTestForm():
 
 
 def test_field_repr():
-    assert repr(Field(name='foo')) == "<iommi.form.Field foo>"
+    assert repr(Field(_name='foo')) == "<iommi.form.Field foo>"
     assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' members:['endpoints']>"
 
 
@@ -445,9 +445,9 @@ def test_phone_field():
 
 
 def test_render_template_string():
-    form = Form(name='hello', fields__foo=Field(name='foo', template=Template('{{ field.value }} {{ form.name }}')))
+    form = Form(_name='hello', fields__foo=Field(_name='foo', template=Template('{{ field.value }} {{ form.get_name }}')))
     form.bind(request=req('get', foo='7'))
-    assert form.name == 'hello'
+    assert form._name == 'hello'
     assert form.fields.foo.__html__() == '7 hello'
 
 
@@ -467,8 +467,8 @@ def test_render_attrs():
 
 
 def test_render_attrs_new_style():
-    assert str(Form(fields__foo=Field(name='foo', attrs__foo='1')).bind(request=req('get', foo='7')).fields.foo.attrs) == ' foo="1"'
-    assert str(Form(fields__foo=Field(name='foo')).bind(request=req('get', foo='7')).fields.foo.attrs) == ''
+    assert str(Form(fields__foo=Field(_name='foo', attrs__foo='1')).bind(request=req('get', foo='7')).fields.foo.attrs) == ' foo="1"'
+    assert str(Form(fields__foo=Field(_name='foo')).bind(request=req('get', foo='7')).fields.foo.attrs) == ''
 
 
 def test_render_attrs_bug_with_curly_brace():
@@ -494,7 +494,7 @@ def test_setattr_path():
 
 def test_multi_select_with_one_value_only():
     assert Form(
-        fields__foo=Field.multi_choice(name='foo', choices=['a', 'b']),
+        fields__foo=Field.multi_choice(_name='foo', choices=['a', 'b']),
     ).bind(
         request=req('get', foo=['a'])
     ).fields.foo.value == ['a']
@@ -558,7 +558,6 @@ def test_hidden():
 def test_hidden_with_name():
     class MyPage(Page):
         baz = Form(
-            name='baz',
             fields__foo=Field.hidden(),
             attrs__method='get',
         )
@@ -1236,12 +1235,12 @@ def test_file():
 
     # Non-existent form entry should not overwrite data
     form = FooForm().bind(request=req('get', foo=''))
-    assert form.is_valid(), {x.name: x.errors for x in form.fields}
+    assert form.is_valid(), {x._name: x.errors for x in form.fields}
     form.apply(instance)
     assert instance.foo == '1'
 
     form = FooForm().bind(request=req('get'))
-    assert form.is_valid(), {x.name: x.errors for x in form.fields}
+    assert form.is_valid(), {x._name: x.errors for x in form.fields}
     form.apply(instance)
     assert instance.foo == '1'
 
@@ -1369,7 +1368,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
 
     class MyForm(Form):
         class Meta:
-            name = 'form_name'
+            _name = 'form_name'
         username = Field.choice_queryset(choices=User.objects.all().order_by('username'), **kwargs)
         not_returning_anything = Field.integer()
 
@@ -1558,7 +1557,7 @@ def test_action_submit_render():
 
 
 def test_action_repr():
-    assert repr(Action(name='name', template='test_link_render.html')) == '<iommi.action.Action name>'
+    assert repr(Action(_name='name', template='test_link_render.html')) == '<iommi.action.Action name>'
 
 
 def test_action_shortcut_icon():
@@ -1690,7 +1689,7 @@ def test_field_from_model_path():
             model = Bar
 
     assert FooForm().bind(request=req('get', baz='1')).fields.baz.attr == 'foo__foo'
-    assert FooForm().bind(request=req('get', baz='1')).fields.baz.name == 'baz'
+    assert FooForm().bind(request=req('get', baz='1')).fields.baz._name == 'baz'
     assert FooForm().bind(request=req('get', baz='1')).fields.baz.value == 1
     assert FooForm().bind(request=req('get', baz='1')).fields.baz.help_text == 'another help text'
     assert not FooForm().bind(request=req('get', baz='asd')).is_valid()
@@ -1727,7 +1726,7 @@ def test_create_members_from_model_path():
     form = BarForm(instance=bar).bind(request=req('get'))
 
     assert len(form.fields) == 1
-    assert form.fields.foo.name == 'foo__foo'
+    assert form.fields.foo._name == 'foo__foo'
     assert form.fields.foo.help_text == 'foo_help_text'
 
 
@@ -1792,7 +1791,7 @@ def test_from_model_override_field():
     from tests.models import FormFromModelTest
     form = Form(
         auto__model=FormFromModelTest,
-        fields__f_float=Field(name='f_float'),
+        fields__f_float=Field(_name='f_float'),
     ).bind(
         request=req('get'),
     )
@@ -1807,7 +1806,7 @@ def test_field_merge():
         request=req('get'),
     )
     assert len(form.fields) == 1
-    assert form.fields.foo.name == 'foo'
+    assert form.fields.foo._name == 'foo'
     assert form.fields.foo.value == 1
 
 

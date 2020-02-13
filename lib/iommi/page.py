@@ -149,7 +149,7 @@ class Page(Part):
         # First we have to up sample parts that aren't Part into Fragment
         def as_fragment_if_needed(k, v):
             if not isinstance(v, Part):
-                return Fragment(v, name=k)
+                return Fragment(v, _name=k)
             else:
                 return v
 
@@ -171,8 +171,8 @@ class Page(Part):
     def __html__(self, *, context=None, render=None):
         rendered = {}
         for part in self.parts.values():
-            assert part.name not in context
-            rendered[part.name] = as_html(part=part, context=context)
+            assert part._name not in context
+            rendered[part._name] = as_html(part=part, context=context)
 
         return render(rendered)
 

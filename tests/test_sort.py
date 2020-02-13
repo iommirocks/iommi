@@ -87,7 +87,7 @@ def test_sort_with_name():
 
     class TestTable(Table):
         class Meta:
-            name = 'my_table'
+            _name = 'my_table'
 
         foo = Column()
         bar = Column.number(sort_key='bar')

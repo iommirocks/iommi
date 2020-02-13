@@ -131,23 +131,23 @@ ASCENDING = 'ascending'
 DEFAULT_PAGE_SIZE = 40
 
 
-def prepare_headers(table, columns):
+def prepare_headers(table):
     request = table.request()
     if request is None:
         return
 
-    for column in columns:
+    for name, column in table.rendered_columns.items():
         if column.sortable:
             params = request.GET.copy()
             param_path = path_join(table.path(), 'order')
             order = request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
-            params[param_path] = column.name if not start_sort_desc else '-' + column.name
+            params[param_path] = name if not start_sort_desc else '-' + name
             column.is_sorting = False
             if order is not None:
                 is_desc = order.startswith('-')
                 order_field = order if not is_desc else order[1:]
-                if order_field == column.name:
+                if order_field == name:
                     new_order = order_field if is_desc else ('-' + order_field)
                     params[param_path] = new_order
                     column.sort_direction = DESCENDING if is_desc else ASCENDING
@@ -328,14 +328,15 @@ class Column(Part):
     @staticmethod
     @evaluated_refinable
     def display_name(table, column, **_):
-        return force_str(column.name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
+        return force_str(column._name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
 
     def on_bind(self) -> None:
 
         self.table = self.parent.parent
 
+        # TODO: why don't we do this centrally?
         if self.attr is MISSING:
-            self.attr = self.name
+            self.attr = self._name
 
         self.bulk = setdefaults_path(
             Struct(),
@@ -697,7 +698,7 @@ class BoundRow(object):
         assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
         self.parent = table
-        self.name = 'row'
+        self._name = 'row'
         self.template = evaluate(table.row.template, row=self.row, **table.evaluate_parameters)
         self.extra = table.row.extra
         self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_parameters)
@@ -732,7 +733,7 @@ class BoundCell(object):
     def __init__(self, bound_row, column):
         assert column.include
         # TODO: is this really right?
-        self.name = 'cell'
+        self._name = 'cell'
 
         self.column = column
         self.bound_row = bound_row
@@ -837,7 +838,7 @@ class Header(object):
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
         self.attrs = attrs
-        self.name = 'header'
+        self._name = 'header'
         self.attrs = evaluate_attrs(self, table=table, column=column, header=self)
 
     @property
@@ -845,12 +846,12 @@ class Header(object):
         return render_template(self.table.request(), self.template, dict(header=self))
 
     def __repr__(self):
-        return '<Header: %s>' % ('superheader' if self.column is None else self.column.name)
+        return '<Header: %s>' % ('superheader' if self.column is None else self.column._name)
 
     def dunder_path(self):
         if self.column is None:
             return None
-        return path_join(self.column.dunder_path(), self.name, separator='__')
+        return path_join(self.column.dunder_path(), self._name, separator='__')
 
 
 def bulk__post_handler(table, form, **_):
@@ -1208,7 +1209,7 @@ class Table(Part):
             columns.get('select', {}),
             call_target__attribute='select',
             attr=None,
-            name='select',
+            _name='select',
             after=-1,
             include=lambda table, **_: table._bulk_form is not None,
         )
@@ -1264,14 +1265,14 @@ class Table(Part):
         if self.model:
             # Query
             def generate_variables():
-                for column in self.declared_members.columns.values():
+                for name, column in self.declared_members.columns.items():
                     query_namespace = setdefaults_path(
                         Namespace(),
                         column.query,
                         call_target__cls=self.get_meta().query_class.get_meta().member_class,
                         model=self.model,
-                        name=column.name,
-                        attr=column.name if column.attr is MISSING else column.attr,
+                        _name=name,
+                        attr=name if column.attr is MISSING else column.attr,
                         form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
                     )
                     if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
@@ -1283,11 +1284,11 @@ class Table(Part):
                         query_namespace.form.include = True
                     yield query_namespace()
 
-            declared_variables = Struct({x.name: x for x in generate_variables()})
+            declared_variables = Struct({x._name: x for x in generate_variables()})
 
             self._query = self.get_meta().query_class(
                 _variables_dict=declared_variables,
-                name='query',
+                _name='query',
                 **self.query_args
             )
             self.declared_members.query = self._query
@@ -1296,8 +1297,8 @@ class Table(Part):
             def generate_bulk_fields():
                 field_class = self.get_meta().form_class.get_meta().member_class
 
-                for column in self.declared_members.columns.values():
-                    bulk_config = self.bulk.fields.pop(column.name, {})
+                for name, column in self.declared_members.columns.items():
+                    bulk_config = self.bulk.fields.pop(name, {})
 
                     if column.bulk.include:
                         bulk_namespace = setdefaults_path(
@@ -1305,8 +1306,8 @@ class Table(Part):
                             column.bulk,
                             call_target__cls=field_class,
                             model=self.model,
-                            name=column.name,
-                            attr=column.name if column.attr is MISSING else column.attr,
+                            _name=name,
+                            attr=name if column.attr is MISSING else column.attr,
                             required=False,
                             empty_choice_tuple=(None, '', '---', True),
                             parse_empty_string_as_none=True,
@@ -1318,12 +1319,12 @@ class Table(Part):
                             bulk_namespace['field_name'] = bulk_namespace.attr
                         yield bulk_namespace()
 
-            declared_bulk_fields = Struct({x.name: x for x in generate_bulk_fields()})
+            declared_bulk_fields = Struct({x._name: x for x in generate_bulk_fields()})
 
             if declared_bulk_fields:
                 form_class = self.get_meta().form_class
                 declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
-                    name='_all_pks_',
+                    _name='_all_pks_',
                     attr=None,
                     initial='0',
                     required=False,
@@ -1332,7 +1333,7 @@ class Table(Part):
 
                 self._bulk_form = form_class(
                     _fields_dict=declared_bulk_fields,
-                    name='bulk',
+                    _name='bulk',
                     actions__submit=dict(
                         post_handler=bulk__post_handler,
                         attrs__value='Bulk change',
@@ -1374,11 +1375,10 @@ class Table(Part):
 
         if self.model:
             def generate_variables_unapplied_config():
-                for column in self.columns.values():
-                    name = column.name
+                for name, column in self.columns.items():
                     query_namespace = setdefaults_path(
                         Namespace(),
-                        name=name,
+                        _name=name,
                         form__display_name=column.display_name,
                     )
                     yield name, query_namespace
@@ -1399,12 +1399,11 @@ class Table(Part):
                     self._query_error = str(e)
 
             def generate_bulk_fields_unapplied_config():
-                for column in self.columns.values():
-                    name = column.name
+                for name, column in self.columns.items():
                     bulk_namespace = setdefaults_path(
                         Namespace(),
                         column.bulk,
-                        name=name,
+                        _name=name,
                         include=column.bulk.include,
                         display_name=column.display_name,
                     )
@@ -1511,7 +1510,7 @@ class Table(Part):
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            tmp = [x for x in self.columns.values() if x.name == order_field]
+            tmp = [x for x in self.columns.values() if x._name == order_field]
             if len(tmp) == 0:
                 return  # Unidentified sort column
             sort_column = tmp[0]
@@ -1531,7 +1530,7 @@ class Table(Part):
                     self.rows = self.rows.order_by(*order_args)
 
     def _prepare_headers(self):
-        prepare_headers(self, self.rendered_columns.values())
+        prepare_headers(self)
 
         superheaders = []
         subheaders = []

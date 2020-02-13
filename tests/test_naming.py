@@ -16,26 +16,29 @@ from iommi.page import (
 from tri_declarative import Namespace
 from tri_struct import Struct
 
-from tests.helpers import StubTraversable
+from tests.helpers import (
+    StubTraversable,
+    req,
+)
 from tests.models import TFoo
 
 
 def test_traverse():
     bar = Struct(
-        name='bar',
+        _name='bar',
         declared_members=dict(
-            baz=Struct(name='baz'),
-            buzz=Struct(name='buzz'),
+            baz=Struct(_name='baz'),
+            buzz=Struct(_name='buzz'),
         ),
     )
     foo = Struct(
-        name='foo',
+        _name='foo',
         declared_members=dict(
             bar=bar,
         ),
     )
     root = StubTraversable(
-        name='root',
+        _name='root',
         members=Struct(
             foo=foo
         ),
@@ -72,11 +75,11 @@ def test_traverse_on_iommi():
             ),
         )
 
-    page = MyPage(name='root')
+    page = MyPage(_name='root')
 
     actual = build_long_path_by_path(page)
     assert len(actual.keys()) == len(set(actual.keys()))
-    page = page.bind(request=RequestFactory().get('/'))
+    page = page.bind(request=req('get'))
 
     assert page.path() == ''
     assert page.parts.header.path() == 'header'
@@ -87,17 +90,30 @@ def test_traverse_on_iommi():
     assert page.parts.a_table.columns.fusk.path() == 'a_table/fusk'
 
 
+def test_evil_names_that_work():
+    class EvilPage(Page):
+        name = Fragment()
+
+    assert EvilPage().bind(request=req('get')).render_to_response().status_code == 200
+
+
 @pytest.mark.skip('TODO: this test is broken right now :(')
 def test_evil_names():
     class EvilPage(Page):
-        name = Fragment()
         path = Fragment()
         dunder_path = Fragment()
-        style = Fragment()
-        bind = Fragment()
-        on_bind = Fragment()
-        own_evaluate_parameters = Fragment()
         request = Fragment()
         render_to_response = Fragment()
 
-    assert EvilPage().bind(request=RequestFactory().get('/')).render_to_response() == ''
+    assert EvilPage().bind(request=req('get')).render_to_response() == ''
+
+    class ErrorMessages(Page):
+        style = Fragment()  # ?
+        bind = Fragment()
+        on_bind = Fragment()
+        own_evaluate_parameters = Fragment()
+
+    with pytest.raises(Exception) as e:
+        ErrorMessages()
+
+    assert str(e.value) == 'The names .... are reserved by iommi, please pick other names'

@@ -143,9 +143,9 @@ def build_query_expression(*, field, variable, value):
             # We ignore the return value on purpose here. We are after the raise.
             get_name_field(model=type(value))
         except NoRegisteredNameException:
-            return f'{field.name}.pk={value.pk}'
+            return f'{field._name}.pk={value.pk}'
 
-    return f'{field.name}{variable.query_operator_for_form}{value_to_str_for_query(variable, value)}'
+    return f'{field._name}{variable.query_operator_for_form}{value_to_str_for_query(variable, value)}'
 
 
 def case_sensitive_query_operator_to_q_operator(op):
@@ -154,7 +154,7 @@ def case_sensitive_query_operator_to_q_operator(op):
 
 def choice_queryset_value_to_q(variable, op, value_string_or_f):
     if op != '=':
-        raise QueryException(f'Invalid operator "{op}" for variable "{variable.name}"')
+        raise QueryException(f'Invalid operator "{op}" for variable "{variable._name}"')
     if variable.attr is None:
         return Q()
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
@@ -210,8 +210,9 @@ class Variable(Part):
         super(Variable, self).__init__(**kwargs)
 
     def on_bind(self) -> None:
+        # TODO: why don't we do this centrally?
         if self.attr is MISSING:
-            self.attr = self.name
+            self.attr = self._name
 
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.evaluate_parameters)
@@ -502,7 +503,6 @@ class Query(Part):
         setdefaults_path(
             kwargs,
             form__call_target=self.get_meta().form_class,
-            form__name='form',
         )
 
         self._form = None
@@ -519,26 +519,26 @@ class Query(Part):
         def generate_fields_declaration():
             field_class = self.get_meta().form_class.get_meta().member_class
             yield field_class(
-                name=FREETEXT_SEARCH_NAME,
+                _name=FREETEXT_SEARCH_NAME,
                 display_name='Search',
                 required=False,
                 include=False,
             )
 
-            for variable in self.declared_members.variables.values():
-                assert variable.name is not MISSING
+            for name, variable in self.declared_members.variables.items():
                 if variable.attr is None:
                     continue
                 yield setdefaults_path(
                     Namespace(),
                     variable.form,
-                    name=variable.name,
-                    attr=variable.name if variable.attr is MISSING else variable.attr,
+                    _name=name,
+                    attr=name if variable.attr is MISSING else variable.attr,
                     call_target__cls=field_class,
                 )()
 
         self.form: Form = self.form(
-            _fields_dict={x.name: x for x in generate_fields_declaration()},
+            _name='form',
+            _fields_dict={x._name: x for x in generate_fields_declaration()},
             attrs__method='get',
             actions__submit__attrs__value='Filter',
         )
@@ -556,12 +556,11 @@ class Query(Part):
             self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True
 
         def generate_fields_unapplied_config():
-            for variable in self.variables.values():
-                name = variable.name
+            for name, variable in self.variables.items():
                 assert variable.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
                 params = setdefaults_path(
                     Namespace(),
-                    name=name,
+                    _name=name,
                     attr=variable.attr,
                     model_field=variable.model_field,
                 )
@@ -720,7 +719,7 @@ class Query(Part):
             except ValueError:
                 raise QueryException(f'Could not interpret {value_string_or_variable_name} as an integer')
 
-            return Q(**{variable.attr + '__pk': pk})
+            return Q(**{f'{variable.attr}__pk': pk})
 
         variable = self.variables.get(variable_name.lower())
         if variable:
@@ -730,7 +729,7 @@ class Query(Part):
                 value_string_or_f = value_string_or_variable_name
             result = variable.value_to_q(variable=variable, op=op, value_string_or_f=value_string_or_f)
             if result is None:
-                raise QueryException('Unknown value "%s" for variable "%s"' % (value_string_or_f, variable.name))
+                raise QueryException(f'Unknown value "{value_string_or_f}" for variable "{variable._name}"')
             return result
         raise QueryException(f'Unknown variable "{variable_name}", available variables: {list(self.variables.keys())}')
 
@@ -764,12 +763,12 @@ class Query(Part):
             def expr(field, is_list, value):
                 if is_list:
                     return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value]) + ')'
-                return build_query_expression(field=field, variable=self.variables[field.name], value=value)
+                return build_query_expression(field=field, variable=self.variables[field._name], value=value)
 
             result = [
                 expr(field, field.is_list, field.value)
                 for field in form.fields.values()
-                if field.name != FREETEXT_SEARCH_NAME and field.value not in (None, '', [])
+                if field._name != FREETEXT_SEARCH_NAME and field.value not in (None, '', [])
             ]
 
             if FREETEXT_SEARCH_NAME in form.fields:
@@ -777,7 +776,7 @@ class Query(Part):
                 if freetext:
                     result.append(
                         '(%s)' % ' or '.join([
-                            f'{variable.name}:{to_string_surrounded_by_quote(freetext)}'
+                            f'{variable._name}:{to_string_surrounded_by_quote(freetext)}'
                             for variable in self.variables.values()
                             if variable.freetext]
                         )
