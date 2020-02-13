@@ -71,7 +71,7 @@ from iommi.from_model import (
     AutoConfig,
     NoRegisteredNameException,
     create_members_from_model,
-    get_name_field_for_model,
+    get_name_field,
     member_from_model,
 )
 from iommi.page import (
@@ -265,7 +265,7 @@ def choice_queryset__extra__filter_and_sort(field, value, **_):
     if not value:
         return field.choices
     try:
-        return field.choices.filter(Q((get_name_field_for_model(field.model) + '__icontains', value)))
+        return field.choices.filter(Q((get_name_field(field.model) + '__icontains', value)))
     except NoRegisteredNameException:
         # TODO: warning? seems not great ending up here
         return field.choices.filter(Q(pk=value))

@@ -623,14 +623,14 @@ Queries
 How do I override what operator is used for a query?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The member `op_to_q_op` for `Variable` is used to convert from e.g. `:`
+The member `query_operator_to_q_operator` for `Variable` is used to convert from e.g. `:`
 to `icontains`. You can specify another callable here:
 
 .. code:: python
 
     Table(
         auto__model=Song,
-        columns__album__query__op_to_q_op=lambda op: 'exact',
+        columns__album__query__query_operator_to_q_operator=lambda op: 'exact',
     )
 
 The above will force the album name to always be looked up with case

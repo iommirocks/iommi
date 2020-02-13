@@ -5,7 +5,7 @@ from django.db.models import (
 )
 
 from iommi.from_model import (
-    get_name_field_for_model,
+    get_name_field,
     NoRegisteredNameException,
     register_name_field,
     create_members_from_model,
@@ -17,7 +17,7 @@ def test_get_name_field_for_model_error():
         pass
 
     with pytest.raises(NoRegisteredNameException) as e:
-        get_name_field_for_model(NoRegisteredNameExceptionModel)
+        get_name_field(NoRegisteredNameExceptionModel)
 
     assert str(e.value) == "The model <class 'tests.test_from_model.test_get_name_field_for_model_error.<locals>.NoRegisteredNameExceptionModel'> has no registered name field. Please register one with register_name_field."
 

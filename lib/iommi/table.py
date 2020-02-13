@@ -104,7 +104,7 @@ from iommi.from_model import (
     member_from_model,
 )
 from iommi.query import (
-    Q_OP_BY_OP,
+    Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
     QueryException,
 )
@@ -603,7 +603,7 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        query__gui_op=':',
+        query__query_operator_for_form=':',
     )
     def substring(cls, call_target, **kwargs):
         return call_target(**kwargs)
@@ -611,7 +611,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         query__call_target__attribute='date',
-        query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+        query__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='date',
     )
     def date(cls, call_target, **kwargs):
@@ -620,7 +620,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         query__call_target__attribute='datetime',
-        query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+        query__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='datetime',
     )
     def datetime(cls, call_target, **kwargs):
@@ -629,7 +629,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         query__call_target__attribute='time',
-        query__op_to_q_op=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op],
+        query__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='time',
     )
     def time(cls, call_target, **kwargs):

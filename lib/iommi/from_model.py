@@ -147,7 +147,7 @@ class NoRegisteredNameException(Exception):
     pass
 
 
-def get_name_field_for_model(model):
+def get_name_field(model):
     name_field = _name_fields_by_model.get(model, MISSING)
     if name_field is MISSING:
         try:

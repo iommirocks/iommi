@@ -38,20 +38,20 @@ iommi tries to support what the user might intuitively write for searching
 boolean columns. It will interpret "n", "no", "0" (zero), "false", "f" and "off"
 as `false`  and the corresponding values for `true`.
 
-You can configure a `Variable` to be case sensitive by setting `op_to_q_op`
-to `case_sensitive_op_to_q_op`.
+You can configure a `Variable` to be case sensitive by setting `query_operator_to_q_operator`
+to `case_sensitive_query_operator_to_q_operator`.
 
 iommi queries have a special form for filtering directly on pk, which can be
 very handy: `album.pk=3`.
 
-`gui_op` specifies what operation the simple form uses to
+`query_operator_for_form` specifies what operation the simple form uses to
 interpret its inputs. The default is `=`, meaning exact case insensitive match.
 
 If you have table of `Song` and a foreign key to `Album`, if you search for
 `album=Paranoid` iommi will by default create the Django query
 `Q(album__name='Paranoid')`. If the name field isn't called `name` you can
 register another name field with `register_name_field`, or if you want
-something other special for just this view you can use the `value_to_q_lookup`
+something other special for just this view you can use the `name_field`
 parameter to specify the name field to use. Note that you can use `pk` or
 other non-string columns as the name field if you want.
 

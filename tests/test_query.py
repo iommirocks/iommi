@@ -27,10 +27,10 @@ from iommi.form import (
 )
 from iommi.query import (
     FREETEXT_SEARCH_NAME,
-    Q_OP_BY_OP,
+    Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
     QueryException,
-    value_to_query_string_value_string,
+    value_to_str_for_query,
     Variable,
 )
 from tests.helpers import req
@@ -288,7 +288,7 @@ def test_choice_queryset():
         foo = Variable.choice_queryset(
             choices=Foo.objects.all(),
             form__include=True,
-            value_to_q_lookup='foo')
+            name_field='foo')
 
     random_valid_obj = Foo.objects.all().order_by('?')[0]
 
@@ -316,7 +316,7 @@ def test_choice_queryset():
 
     # test invalid ops
     valid_ops = ['=']
-    for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
+    for invalid_op in [op for op in Q_OPERATOR_BY_QUERY_OPERATOR.keys() if op not in valid_ops]:
         query2 = Query2().bind(
             request=req('get', **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}),
         )
@@ -345,7 +345,7 @@ def test_multi_choice_queryset():
         foo = Variable.multi_choice_queryset(
             choices=Foo.objects.all(),
             form__include=True,
-            value_to_q_lookup='foo')
+            name_field='foo')
 
     random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
 
@@ -369,7 +369,7 @@ def test_multi_choice_queryset():
 
     # test invalid ops
     valid_ops = ['=']
-    for invalid_op in [op for op in Q_OP_BY_OP.keys() if op not in valid_ops]:
+    for invalid_op in [op for op in Q_OPERATOR_BY_QUERY_OPERATOR.keys() if op not in valid_ops]:
         query2 = Query2().bind(request=req('get', **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.get_q()
@@ -461,14 +461,14 @@ def test_variable_repr():
 @pytest.mark.django_db
 def test_nice_error_message():
     with pytest.raises(AttributeError) as e:
-        value_to_query_string_value_string(Variable(value_to_q_lookup='name'), NonStandardName(non_standard_name='foo'))
+        value_to_str_for_query(Variable(name_field='name'), NonStandardName(non_standard_name='foo'))
 
-    assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the value_to_q_lookup argument. Maybe one of ['non_standard_name']?"
+    assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the name_field argument. Maybe one of ['non_standard_name']?"
 
     with pytest.raises(AttributeError) as e:
-        value_to_query_string_value_string(Variable(value_to_q_lookup='name'), Foo(foo=5))
+        value_to_str_for_query(Variable(name_field='name'), Foo(foo=5))
 
-    assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the value_to_q_lookup argument."
+    assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the name_field argument."
 
 
 def test_escape_quote():

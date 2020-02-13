@@ -72,7 +72,7 @@ from iommi.from_model import (
     AutoConfig,
     NoRegisteredNameException,
     create_members_from_model,
-    get_name_field_for_model,
+    get_name_field,
     member_from_model,
 )
 
@@ -89,7 +89,7 @@ PRECEDENCE = {
 }
 assert PRECEDENCE['and'] > PRECEDENCE['or']  # pragma: no mutate
 
-Q_OP_BY_OP = {
+Q_OPERATOR_BY_QUERY_OPERATOR = {
     '>': 'gt',
     '=>': 'gte',
     '>=': 'gte',
@@ -118,23 +118,24 @@ def to_string_surrounded_by_quote(v):
     return '"%s"' % str_v.replace('"', '\\"')
 
 
-def value_to_query_string_value_string(variable, v):
+def value_to_str_for_query(variable, v):
     if type(v) == bool:
         return {True: '1', False: '0'}.get(v)
     if type(v) in (int, float):
         return str(v)
     if isinstance(v, Model):
-        value_to_q_lookup = variable.value_to_q_lookup
-        if value_to_q_lookup is None:
-            get_name_field_for_model(v.__class__)
+        name_field = variable.name_field
+        if name_field is None:
+            # TODO: throw return on the ground?!
+            get_name_field(v.__class__)
         try:
-            v = getattr(v, value_to_q_lookup)
+            v = getattr(v, name_field)
         except AttributeError:
             name_ish_attributes = [x for x in dir(v) if 'name' in x and not x.startswith('_')]
             raise AttributeError(
-                '{} object has no attribute {}. You can register a name with register_name_field() or specify another name property with the value_to_q_lookup argument.{}'.format(
+                '{} object has no attribute {}. You can register a name with register_name_field() or specify another name property with the name_field argument.{}'.format(
                     type(v),
-                    variable.value_to_q_lookup,
+                    variable.name_field,
                     " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
             )
     return to_string_surrounded_by_quote(v)
@@ -143,15 +144,17 @@ def value_to_query_string_value_string(variable, v):
 def build_query_expression(*, field, variable, value):
     if isinstance(value, Model):
         try:
-            get_name_field_for_model(type(value))
+            # TODO: throw return on the ground?!
+            get_name_field(type(value))
         except NoRegisteredNameException:
             return f'{field.name}.pk={value.pk}'
 
-    return f'{field.name}{variable.gui_op}{value_to_query_string_value_string(variable, value)}'
+    # TODO: field.name is wrong, should be the result of get_name_field
+    return f'{field.name}{variable.query_operator_for_form}{value_to_str_for_query(variable, value)}'
 
 
-def case_sensitive_op_to_q_op(op):
-    return {'=': 'exact', ':': 'contains'}.get(op) or Q_OP_BY_OP[op]
+def case_sensitive_query_operator_to_q_operator(op):
+    return {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op]
 
 
 def choice_queryset_value_to_q(variable, op, value_string_or_f):
@@ -162,7 +165,7 @@ def choice_queryset_value_to_q(variable, op, value_string_or_f):
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{variable.attr: None})
     try:
-        instance = variable.form.choices.get(**{variable.value_to_q_lookup: str(value_string_or_f)})
+        instance = variable.form.choices.get(**{variable.name_field: str(value_string_or_f)})
     except MultipleObjectsReturned:
         raise QueryException(f'Found more than one object for name "{value_string_or_f}"')
     except ObjectDoesNotExist:
@@ -186,16 +189,15 @@ class Variable(Part):
 
     attr = EvaluatedRefinable()
     form: Namespace = Refinable()
-    # TODO: rename to form_op?
-    gui_op = EvaluatedRefinable()
+    query_operator_for_form: str = EvaluatedRefinable()
     freetext = EvaluatedRefinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
     choices = EvaluatedRefinable()
-    value_to_q_lookup = Refinable()
+    name_field = Refinable()
 
     @dispatch(
-        gui_op='=',
+        query_operator_for_form='=',
         attr=MISSING,
         form=Namespace(
             include=False,
@@ -224,8 +226,8 @@ class Variable(Part):
 
     @staticmethod
     @refinable
-    def op_to_q_op(op: str) -> str:
-        return Q_OP_BY_OP[op]
+    def query_operator_to_q_operator(op: str) -> str:
+        return Q_OPERATOR_BY_QUERY_OPERATOR[op]
 
     @staticmethod
     @refinable
@@ -239,7 +241,7 @@ class Variable(Part):
         if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
             r = Q(**{variable.attr: None})
         else:
-            r = Q(**{variable.attr + '__' + variable.op_to_q_op(op): value_string_or_f})
+            r = Q(**{variable.attr + '__' + variable.query_operator_to_q_operator(op): value_string_or_f})
         if negated:
             return ~r
         else:
@@ -265,7 +267,7 @@ class Variable(Part):
 
     @classmethod
     @class_shortcut(
-        op_to_q_op=case_sensitive_op_to_q_op,
+        query_operator_to_q_operator=case_sensitive_query_operator_to_q_operator,
     )
     def case_sensitive(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -301,7 +303,7 @@ class Variable(Part):
     @classmethod
     @class_shortcut(
         form__call_target__attribute='choice_queryset',
-        op_to_q_op=lambda op: 'exact',
+        query_operator_to_q_operator=lambda op: 'exact',
         value_to_q=choice_queryset_value_to_q,
     )
     def choice_queryset(cls, choices: QuerySet, call_target=None, **kwargs):
@@ -745,7 +747,7 @@ class Query(Part):
         return reduce(
             operator.or_,
             [
-                Q(**{variable.attr + '__' + variable.op_to_q_op(':'): token})
+                Q(**{variable.attr + '__' + variable.query_operator_to_q_operator(':'): token})
                 for variable in self.variables.values()
                 if variable.freetext
             ]
