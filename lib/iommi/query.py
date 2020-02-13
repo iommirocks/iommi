@@ -126,30 +126,25 @@ def value_to_str_for_query(variable, v):
     if isinstance(v, Model):
         name_field = variable.name_field
         if name_field is None:
-            # TODO: throw return on the ground?!
-            get_name_field(v.__class__)
+            try:
+                name_field = get_name_field(model=type(v))
+            except NoRegisteredNameException as e:
+                raise NoRegisteredNameException(f'{type(v).__name__} has no registered name field. Please register a name with register_name_field or specify name_field.')
         try:
             v = getattr(v, name_field)
         except AttributeError:
-            name_ish_attributes = [x for x in dir(v) if 'name' in x and not x.startswith('_')]
-            raise AttributeError(
-                '{} object has no attribute {}. You can register a name with register_name_field() or specify another name property with the name_field argument.{}'.format(
-                    type(v),
-                    variable.name_field,
-                    " Maybe one of " + repr(name_ish_attributes) + "?" if name_ish_attributes else ""),
-            )
+            raise NoRegisteredNameException(f'{type(v).__name__} has no attribute {name_field}. Please register a name with register_name_field or specify name_field.')
     return to_string_surrounded_by_quote(v)
 
 
 def build_query_expression(*, field, variable, value):
     if isinstance(value, Model):
         try:
-            # TODO: throw return on the ground?!
-            get_name_field(type(value))
+            # We ignore the return value on purpose here. We are after the raise.
+            get_name_field(model=type(value))
         except NoRegisteredNameException:
             return f'{field.name}.pk={value.pk}'
 
-    # TODO: field.name is wrong, should be the result of get_name_field
     return f'{field.name}{variable.query_operator_for_form}{value_to_str_for_query(variable, value)}'
 
 

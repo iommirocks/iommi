@@ -17,19 +17,19 @@ def test_get_name_field_for_model_error():
         pass
 
     with pytest.raises(NoRegisteredNameException) as e:
-        get_name_field(NoRegisteredNameExceptionModel)
+        get_name_field(model=NoRegisteredNameExceptionModel)
 
-    assert str(e.value) == "The model <class 'tests.test_from_model.test_get_name_field_for_model_error.<locals>.NoRegisteredNameExceptionModel'> has no registered name field. Please register one with register_name_field."
+    assert str(e.value) == 'NoRegisteredNameExceptionModel has no registered name field. Please register a name with register_name_field.'
 
 
 def test_register_name_field_error():
     class RegisterNameExceptionModel(Model):
         foo = CharField(max_length=100)
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(TypeError) as e:
         register_name_field(model=RegisterNameExceptionModel, name_field='foo')
 
-    assert str(e.value) == """Cannot register name "foo" for model <class 'tests.test_from_model.test_register_name_field_error.<locals>.RegisterNameExceptionModel'>. foo must be unique."""
+    assert str(e.value) == 'Cannot register name "foo" for model RegisterNameExceptionModel. foo must be unique.'
 
 
 def test_create_members_from_model_error_overlapping_keys_include():

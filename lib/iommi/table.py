@@ -803,7 +803,7 @@ class BoundCell(object):
         return self.__html__()
 
     def __repr__(self):
-        return "<%s column=%s row=%s>" % (self.__class__.__name__, self.column.declared_column, self.bound_row.row)  # pragma: no cover
+        return f"<{type(self).__name__} column={self.column.declared_column} row={self.bound_row.row}>"  # pragma: no cover
 
 
 class TemplateConfig(RefinableObject):

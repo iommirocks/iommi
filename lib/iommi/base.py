@@ -143,7 +143,7 @@ def endpoint__debug_tree(endpoint, **_):
         yield Struct(
             name=name,
             obj=node,
-            type=node.__class__.__name__ if type(node) is not Struct else None,
+            type=type(node).__name__ if type(node) is not Struct else None,
             path='/'.join(path),
             dunder_path='__'.join(path),
         )
@@ -329,7 +329,7 @@ class Traversable(RefinableObject):
             if members:
                 c = f" members:{list(members.keys())!r}"
 
-        return f'<{self.__class__.__module__}.{self.__class__.__name__}{n}{b}{p}{c}>'
+        return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
 
     def path(self) -> str:
         path_by_long_path = get_root(self)._path_by_long_path

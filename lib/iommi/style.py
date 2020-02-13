@@ -41,7 +41,7 @@ class Style:
 
     def component(self, obj):
         result = Namespace()
-        for class_name in class_names_for(obj.__class__):
+        for class_name in class_names_for(type(obj)):
             if class_name in self.config:
                 config = Namespace(self.config.get(class_name, {}))
                 shortcuts_config = Namespace(config.pop('shortcuts', {}))

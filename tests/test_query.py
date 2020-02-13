@@ -25,6 +25,7 @@ from iommi.form import (
     Field,
     Form,
 )
+from iommi.from_model import NoRegisteredNameException
 from iommi.query import (
     FREETEXT_SEARCH_NAME,
     Q_OPERATOR_BY_QUERY_OPERATOR,
@@ -460,15 +461,15 @@ def test_variable_repr():
 
 @pytest.mark.django_db
 def test_nice_error_message():
-    with pytest.raises(AttributeError) as e:
-        value_to_str_for_query(Variable(name_field='name'), NonStandardName(non_standard_name='foo'))
+    with pytest.raises(NoRegisteredNameException) as e:
+        value_to_str_for_query(Variable(), NonStandardName(non_standard_name='foo'))
 
-    assert str(e.value) == "<class 'tests.models.NonStandardName'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the name_field argument. Maybe one of ['non_standard_name']?"
+    assert str(e.value) == "NonStandardName has no registered name field. Please register a name with register_name_field or specify name_field."
 
-    with pytest.raises(AttributeError) as e:
-        value_to_str_for_query(Variable(name_field='name'), Foo(foo=5))
+    with pytest.raises(NoRegisteredNameException) as e:
+        value_to_str_for_query(Variable(name_field='custom_name_field'), NonStandardName(non_standard_name='foo'))
 
-    assert str(e.value) == "<class 'tests.models.Foo'> object has no attribute name. You can register a name with register_name_field() or specify another name property with the name_field argument."
+    assert str(e.value) == "NonStandardName has no attribute custom_name_field. Please register a name with register_name_field or specify name_field."
 
 
 def test_escape_quote():
