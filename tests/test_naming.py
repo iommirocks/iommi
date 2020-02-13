@@ -94,20 +94,13 @@ def test_evil_names_that_work():
     class EvilPage(Page):
         name = Fragment()
         parent = Fragment()
+        path = Fragment()
 
     assert EvilPage().bind(request=req('get')).render_to_response().status_code == 200
 
 
 @pytest.mark.skip('TODO: this test is broken right now :(')
 def test_evil_names():
-    class EvilPage(Page):
-        path = Fragment()
-        iommi_dunder_path = Fragment()
-        request = Fragment()
-        render_to_response = Fragment()
-
-    assert EvilPage().bind(request=req('get')).render_to_response() == ''
-
     class ErrorMessages(Page):
         iommi_style = Fragment()
         bind = Fragment()
