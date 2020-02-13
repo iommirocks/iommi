@@ -481,7 +481,7 @@ class Field(Part):
 
     @property
     def form(self):
-        return self.parent.parent
+        return self._parent._parent
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -532,7 +532,7 @@ class Field(Part):
     def on_bind(self) -> None:
         assert self.template
 
-        form = self.parent.parent
+        form = self._parent._parent
         if self.attr is MISSING:
             self.attr = self._name
         if self.display_name is MISSING:
@@ -549,7 +549,7 @@ class Field(Part):
         self._evaluate()
 
     def _set_initial(self):
-        form = self.parent.parent
+        form = self._parent._parent
         if self.include and form.instance is not None:
             if self.attr:
                 initial = self.read_from_instance(self, form.instance)
@@ -558,7 +558,7 @@ class Field(Part):
                 self.initial = initial
 
     def _read_raw_data(self):
-        form = self.parent.parent
+        form = self._parent._parent
 
         if self.is_list:
             if self.raw_data_list is not None:
@@ -601,7 +601,7 @@ class Field(Part):
         self.model = evaluate(self.model, **self.evaluate_parameters)
 
     def own_evaluate_parameters(self):
-        return dict(form=self.parent, field=self)
+        return dict(form=self._parent, field=self)
 
     @property
     def rendered_value(self):
@@ -615,9 +615,9 @@ class Field(Part):
 
         if self.is_list:
             for v in self.value:
-                yield self.choice_to_option(form=self.parent, field=self, choice=v)
+                yield self.choice_to_option(form=self._parent, field=self, choice=v)
         else:
-            yield self.choice_to_option(form=self.parent, field=self, choice=self.value)
+            yield self.choice_to_option(form=self._parent, field=self, choice=self.value)
 
     @classmethod
     def from_model(cls, model, field_name=None, model_field=None, **kwargs):

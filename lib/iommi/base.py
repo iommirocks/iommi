@@ -193,7 +193,7 @@ def perform_post_dispatch(*, root, path, value):
 
 
 def endpoint__debug_tree(endpoint, **_):
-    root = endpoint.parent.parent
+    root = endpoint._parent._parent
 
     def rows(node, name='', path=[]):
         yield Struct(
@@ -340,8 +340,8 @@ def apply_style(obj):
 def get_style_for(obj):
     if obj.style is not None:
         return obj.style
-    if obj.parent is not None:
-        return get_style_for(obj.parent)
+    if obj._parent is not None:
+        return get_style_for(obj._parent)
 
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
@@ -358,7 +358,7 @@ class Traversable(RefinableObject):
     """
 
     _name = None
-    parent = None
+    _parent = None
     _is_bound = False
     # TODO: would be nice to not have this here
     style: str = EvaluatedRefinable()
@@ -377,7 +377,7 @@ class Traversable(RefinableObject):
         n = f' {self._name}' if self._name is not None else ''
         b = ' (bound)' if self._is_bound else ''
         try:
-            p = f" path:'{self.path()}'" if self.parent is not None else ""
+            p = f" path:'{self.path()}'" if self._parent is not None else ""
         except AssertionError:
             p = ' path:<no path>'
         c = ''
@@ -387,9 +387,6 @@ class Traversable(RefinableObject):
                 c = f" members:{list(members.keys())!r}"
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
-
-    def get_name(self):
-        return self._name
 
     def path(self) -> str:
         path_by_long_path = get_root(self)._path_by_long_path
@@ -425,7 +422,7 @@ class Traversable(RefinableObject):
 
         del self  # to prevent mistakes when changing the code below
 
-        result.parent = parent
+        result._parent = parent
         if parent is None:
             result._long_path_by_path = long_path_by_path
             result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
@@ -448,7 +445,7 @@ class Traversable(RefinableObject):
                 print(f'Unable to set {k} on {result._name}')
 
         result.evaluate_parameters = {
-            **(result.parent.evaluate_parameters if result.parent is not None else {}),
+            **(result._parent.evaluate_parameters if result._parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
         result.on_bind()
@@ -471,15 +468,15 @@ class Traversable(RefinableObject):
         return {}
 
     def request(self):
-        if self.parent is None:
+        if self._parent is None:
             return self._request
         else:
-            return self.parent.request()
+            return self._parent.request()
 
 
 def get_root(node: Traversable) -> Traversable:
-    while node.parent is not None:
-        node = node.parent
+    while node._parent is not None:
+        node = node._parent
     return node
 
 
@@ -488,9 +485,9 @@ def build_long_path(node: Traversable) -> str:
         # noinspection PyProtectedMember
         assert node._is_bound
         assert node._name is not None
-        if node.parent is None:
+        if node._parent is None:
             return []
-        return _traverse(node.parent) + [node._name]
+        return _traverse(node._parent) + [node._name]
 
     return '/'.join(_traverse(node))
 

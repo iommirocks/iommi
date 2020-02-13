@@ -332,7 +332,7 @@ class Column(Part):
 
     def on_bind(self) -> None:
 
-        self.table = self.parent.parent
+        self.table = self._parent._parent
 
         # TODO: why don't we do this centrally?
         if self.attr is MISSING:
@@ -354,7 +354,7 @@ class Column(Part):
         self.model = evaluate(self.model, **self.evaluate_parameters)
 
     def own_evaluate_parameters(self):
-        return dict(table=self.parent.parent, column=self)
+        return dict(table=self._parent._parent, column=self)
 
     @classmethod
     @dispatch(
@@ -697,7 +697,7 @@ class BoundRow(object):
         self.row: Any = row
         assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
-        self.parent = table
+        self._parent = table
         self._name = 'row'
         self.template = evaluate(table.row.template, row=self.row, **table.evaluate_parameters)
         self.extra = table.row.extra
@@ -724,7 +724,7 @@ class BoundRow(object):
         return BoundCell(bound_row=self, column=column)
 
     def dunder_path(self):
-        return path_join(self.parent.dunder_path(), 'row', separator='__')
+        return path_join(self._parent.dunder_path(), 'row', separator='__')
 
 
 # TODO: make this a Part?
@@ -941,7 +941,7 @@ def bulk_delete__post_handler(table, form, **_):
 class Paginator:
     def __init__(self, *, django_paginator, table, adjacent_pages=6):
         self.style = None
-        self.parent = table
+        self._parent = table
         self.paginator = django_paginator
         self.table: Table = table
         self.adjacent_pages = adjacent_pages

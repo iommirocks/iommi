@@ -63,7 +63,7 @@ class Action(Part):
         return f'-{self.path()}'
 
     def is_target(self):
-        return self.own_target_marker() in self.parent.parent._request_data
+        return self.own_target_marker() in self._parent._parent._request_data
 
     @dispatch(
         context=EMPTY,

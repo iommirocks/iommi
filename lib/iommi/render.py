@@ -87,7 +87,7 @@ class Errors(set):
     )
     def __init__(self, *, parent, attrs, errors=None, template=None):
         super(Errors, self).__init__(errors or [])
-        self.parent = parent
+        self._parent = parent
         self.attrs = attrs
         self.template = template
 
@@ -109,4 +109,4 @@ class Errors(set):
             attrs=self.attrs,
             template=self.template,
             children=[Fragment(tag='li') for error in self],
-        ).bind(parent=self.parent).__html__()
+        ).bind(parent=self._parent).__html__()

@@ -25,8 +25,8 @@
                     <div class="iommi_query_available_fields">
                         <h3>Available fields</h3>
                         <ul>
-                            {% for variable in query.variables.values %}
-                                <li>{{ variable.get_name }}</li>
+                            {% for name in query.variables %}
+                                <li>{{ name }}</li>
                             {% endfor %}
                         </ul>
                     </div>

@@ -89,7 +89,7 @@ class MenuItem(MenuBase):
     @dispatch(
         display_name=lambda menu_item, **_: menu_item._name.title().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
-        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.parent, 'url', None), menu_item._name) + '/',
+        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
         tag='li',
     )
     def __init__(self, **kwargs):
