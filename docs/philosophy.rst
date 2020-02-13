@@ -116,7 +116,7 @@ but for the more dynamic case we can write:
     form = Form(
         auto__model=Musician,
         fields__instrument__initial=
-            lambda form, **_: 'guitar' if form.request().is_staff else 'tambourine',
+            lambda form, **_: 'guitar' if form.get_request().is_staff else 'tambourine',
     )
 
 The rule here is that the callable has to match at least one argument of those

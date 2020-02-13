@@ -71,7 +71,7 @@ def test_include():
     class ShowQuery(Query):
         foo = Variable()
         bar = Variable(
-            include=lambda query, variable: query.request().GET['foo'] == 'include' and variable.extra.foo == 'include2',
+            include=lambda query, variable: query.get_request().GET['foo'] == 'include' and variable.extra.foo == 'include2',
             extra__foo='include2')
 
     assert list(ShowQuery().bind(request=req('get', foo='hide')).variables.keys()) == ['foo']

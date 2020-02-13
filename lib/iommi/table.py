@@ -132,7 +132,7 @@ DEFAULT_PAGE_SIZE = 40
 
 
 def prepare_headers(table):
-    request = table.request()
+    request = table.get_request()
     if request is None:
         return
 
@@ -708,7 +708,7 @@ class BoundRow(object):
     def __html__(self):
         if self.template:
             context = dict(bound_row=self, row=self.row, **self.table.context)
-            return render_template(self.table.request(), self.template, context)
+            return render_template(self.table.get_request(), self.template, context)
 
         return format_html('<tr{}>{}</tr>', self.attrs, self.render_cells())
 
@@ -781,7 +781,7 @@ class BoundCell(object):
         cell__template = self.column.cell.template
         if cell__template:
             context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
-            return render_template(self.table.request(), cell__template, context)
+            return render_template(self.table.get_request(), cell__template, context)
 
         return format_html('<td{}>{}</td>', self.attrs, self.render_cell_contents())
 
@@ -844,7 +844,7 @@ class Header(object):
 
     @property
     def rendered(self):
-        return render_template(self.table.request(), self.template, dict(header=self))
+        return render_template(self.table.get_request(), self.template, dict(header=self))
 
     def __repr__(self):
         return '<Header: %s>' % ('superheader' if self.column is None else self.column._name)
@@ -892,7 +892,7 @@ def bulk__post_handler(table, form, **_):
 
     table.post_bulk_edit(table=table, queryset=queryset, updates=updates)
 
-    return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
+    return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
 
 def bulk_delete__post_handler(table, form, **_):
@@ -924,7 +924,7 @@ def bulk_delete__post_handler(table, form, **_):
             ),
         )
 
-    request = form.request()
+    request = form.get_request()
     # We need to remove the target for the old delete button that we pressed to get here,
     # otherwise ConfirmPage will give an error saying it can't find that button
     request.POST = request.POST.copy()
@@ -934,7 +934,7 @@ def bulk_delete__post_handler(table, form, **_):
 
     if request.POST.get(p.parts.confirm._bulk_form.fields.confirmed.path()) == 'confirmed':
         queryset.delete()
-        return HttpResponseRedirect(form.request().META['HTTP_REFERER'])
+        return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
     return p.render_to_response()
 
@@ -948,7 +948,7 @@ class Paginator:
         self.table: Table = table
         self.adjacent_pages = adjacent_pages
 
-        request = self.table.request()
+        request = self.table.get_request()
         self.page_param_path = path_join(self.table.path(), 'page')
         page = request.GET.get(self.page_param_path) if request else None
         self.current_page = int(page) if page else 1
@@ -978,7 +978,7 @@ class Paginator:
         if self.paginator is None:
             return ''
 
-        request = self.table.request()
+        request = self.table.get_request()
 
         assert self.current_page != 0  # pages are 1-indexed!
         num_pages = self.paginator.num_pages
@@ -1025,7 +1025,7 @@ class Paginator:
             return ''
 
         return render_template(
-            request=self.table.request(),
+            request=self.table.get_request(),
             template=self.template,
             context=context,
         )
@@ -1424,7 +1424,7 @@ class Table(Part):
             if select:
                 self.rows = self.rows.select_related(*select)
 
-        request = self.request()
+        request = self.get_request()
         # TODO: I paginate only when I have a request... this is a bit weird, but matches old behavior and the tests assume this for now
         if self.page_size and request and isinstance(self.rows, QuerySet) and self.paginator is not None:
             try:
@@ -1455,7 +1455,7 @@ class Table(Part):
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
-            self.request(),
+            self.get_request(),
             self.actions_template,
             dict(
                 actions=actions,
@@ -1464,13 +1464,13 @@ class Table(Part):
             ))
 
     def render_header(self):
-        return render_template(self.request(), self.header.template, self.context)
+        return render_template(self.get_request(), self.header.template, self.context)
 
     def render_filter(self):
         if not self.query_form:
             return ''
         # TODO: why are we using self.filter.template here? and all this complex stuff generally, when we should be able to just render the query in the template like {{ table.query }}?
-        return render_template(self.request(), self.filter.template, self.context)
+        return render_template(self.get_request(), self.filter.template, self.context)
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.columns.values() if column.auto_rowspan]
@@ -1504,7 +1504,7 @@ class Table(Part):
                 column.cell.attrs['style']['display'] = auto_rowspan_style
 
     def _prepare_sorting(self):
-        request = self.request()
+        request = self.get_request()
         if request is None:
             return
 
@@ -1633,10 +1633,10 @@ class Table(Part):
             .filter(**self.bulk_filter) \
             .exclude(**self.bulk_exclude)
 
-        if self.request().POST.get('_all_pks_') == '1':
+        if self.get_request().POST.get('_all_pks_') == '1':
             return queryset
         else:
-            pks = [key[len('pk_'):] for key in self.request().POST if key.startswith('pk_')]
+            pks = [key[len('pk_'):] for key in self.get_request().POST if key.startswith('pk_')]
             return queryset.filter(pk__in=pks)
 
     @dispatch(
@@ -1656,7 +1656,7 @@ class Table(Part):
         context['query'] = self.query
         context['iommi_query_error'] = self.query_error
 
-        request = self.request()
+        request = self.get_request()
 
         assert self.rows is not None
         context['paginator'] = self.paginator

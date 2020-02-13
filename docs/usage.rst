@@ -50,7 +50,6 @@ When you've done the stuff above you can create a page with a table in it:
 
     def my_view(request):
         return Table.as_page(
-            request=request,
             table__model=MyModel,
         )
 

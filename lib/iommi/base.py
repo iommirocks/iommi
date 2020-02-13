@@ -297,7 +297,7 @@ def iommi_debug_panel(part):
     # TODO: use a Menu here?
     return format_html(
         """
-            <div class="iommi_debug_buttons" style="float: right">
+            <div class="iommi_debug_buttons" style="float: right; padding-left: 20px">
                 <a href="{}">Code</a>
                 <a href="?/debug_tree">Tree</a>
             </div>
@@ -326,7 +326,7 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     context['iommi_debug_panel'] = iommi_debug_panel(part)
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
-    return get_template_from_string(template_string).render(context=context, request=part.request())
+    return get_template_from_string(template_string).render(context=context, request=part.get_request())
 
 
 def apply_style(obj):
@@ -471,11 +471,11 @@ class Traversable(RefinableObject):
     def own_evaluate_parameters(self):
         return {}
 
-    def request(self):
+    def get_request(self):
         if self._parent is None:
             return self._request
         else:
-            return self._parent.request()
+            return self._parent.get_request()
 
 
 def get_root(node: Traversable) -> Traversable:
@@ -590,7 +590,7 @@ class Part(Traversable):
 
     @dispatch
     def render_to_response(self, **kwargs):
-        request = self.request()
+        request = self.get_request()
         req_data = request_data(request)
 
         def dispatch_response_handler(r):

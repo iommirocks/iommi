@@ -550,7 +550,8 @@ class Query(Part):
     def on_bind(self) -> None:
         bind_members(self, name='variables')
 
-        self.query_advanced_value = request_data(self.request()).get(self.get_advanced_query_param(), '') if self.request else ''
+        request = self.get_request()
+        self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
 
         if any(v.freetext for v in self.variables.values()):
             self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True
@@ -752,11 +753,11 @@ class Query(Part):
         Based on the data in the request, return the equivalent query string that you can use with parse_query_string() to create a query set.
         """
         form = self.form
+        request = self.get_request()
 
-        if self.request() is None:
+        if request is None:
             return ''
 
-        request = self.request()
         if request_data(request).get(self.get_advanced_query_param(), '').strip():
             return request_data(request).get(self.get_advanced_query_param())
         elif form.is_valid():

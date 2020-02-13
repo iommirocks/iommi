@@ -45,7 +45,7 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.request(), fragment.template, {**context, **fragment.evaluate_parameters, rendered_children: rendered_children})
+        return render_template(fragment.get_request(), fragment.template, {**context, **fragment.evaluate_parameters, rendered_children: rendered_children})
 
     is_void_element = fragment.tag in _void_elements
 

@@ -26,14 +26,14 @@ You can either create a subclass of `Form`...
             is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'))
         is_admin = Field.boolean(
             # show only for staff
-            include=lambda form, **_: form.request.user.is_staff,
+            include=lambda form, **_: form.get_request().user.is_staff,
             label_template='tweak_label_tag.html')
 
     def edit_user_view(request, username):
         form = UserForm(request=request)
 
         user = User.objects.get(username=username)
-        if form.is_valid() and request.method == 'POST':
+        if form.is_valid() and get_request.method == 'POST':
             form.apply(user)
             user.save()
             return HttpRedirect('..')
@@ -66,7 +66,7 @@ or just instantiate a `Form` with a `Field` list and use it directly:
             username=Field.text(),
             is_admin=Field.boolean(
                 # show only for staff
-                include=lambda form, **_: form.request().user.is_staff,
+                include=lambda form, **_: form.get_request().user.is_staff,
                 label_template='tweak_label_tag.html',
             ),
         ])
@@ -88,7 +88,7 @@ change the behavior!). The above example is equivalent to:
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
             # show only for staff
-            is_admin__include=lambda form, **_: form.request().user.is_staff,
+            is_admin__include=lambda form, **_: form.get_request().user.is_staff,
         )
         form.bind(request=request)
 
@@ -106,7 +106,7 @@ or even better: use `Form.as_edit_page`:
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
             is_admin__label_template='tweak_label_tag.html',
             # show only for staff
-            is_admin__include=lambda form, **_: form.request().user.is_staff,
+            is_admin__include=lambda form, **_: form.get_request().user.is_staff,
         )
         # no html template! iommi has a nice default for you :P
 

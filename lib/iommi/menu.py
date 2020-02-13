@@ -159,7 +159,7 @@ class Menu(MenuBase):
 
     def on_bind(self):
         super(Menu, self).on_bind()
-        self.validate_and_set_active(current_path=self.request().path)
+        self.validate_and_set_active(current_path=self.get_request().path)
 
         self.fragment = Fragment(
             tag=self.tag,

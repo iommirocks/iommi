@@ -19,7 +19,6 @@ At construction time we take the definition namespaces and materialize them into
 
 At bind time we:
 
-- set request object if applicable
 - register parents
 - evaluate callables into real values
 - invoke any user defined :code:`on_bind` handlers

@@ -162,7 +162,7 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
 
         form.extra.on_save(form=form, instance=form.instance)
 
-        return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.request(), form.extra.redirect, form)
+        return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form)
 
 
 def default_endpoints__config(field: 'Field', **_) -> dict:
@@ -231,7 +231,7 @@ def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
         Paginator,
     )
 
-    page = int(form.request().GET.get('page', 1))
+    page = int(form.get_request().GET.get('page', 1))
     choices = field.extra.filter_and_sort(form=form, field=field, value=value)
     try:
         paginator = Paginator(choices, page_size)
@@ -649,7 +649,7 @@ class Field(Part):
             if 'checked' not in self.input.attrs and self.value:
                 self.input.attrs.checked = ''
 
-        return render_template(self.request(), self.template, context)
+        return render_template(self.get_request(), self.template, context)
 
     @classmethod
     @class_shortcut(
@@ -936,19 +936,18 @@ class Form(Part):
             a = Field()
             b = Field.email()
 
-        form = MyForm(request=request)
+        form = MyForm().bind(request=request)
 
     You can also create an instance of a form with this syntax if it's more convenient:
 
     .. code:: python
 
         form = MyForm(
-            request=request,
             fields=dict(
                 a=Field(),
                 b=Field.email(),
             ]
-        )
+        ).bind(request=request)
 
     See tri.declarative docs for more on this dual style of declaration.
 """
@@ -1007,7 +1006,7 @@ class Form(Part):
     def on_bind(self) -> None:
         assert self.actions_template
         self._valid = None
-        request = self.request()
+        request = self.get_request()
         self._request_data = request_data(request) if request else None
 
         # TODO: seems a bit convoluted to do this and the None check above
@@ -1029,10 +1028,10 @@ class Form(Part):
         return dict(form=self)
 
     def render_actions(self):
-        assert self._is_bound, 'The form has not been bound. You need to call bind() either explicitly, or pass data/request to the constructor to cause an indirect bind()'
+        assert self._is_bound, 'The form has not been bound. You need to call bind() before you can render it.'
         actions, grouped_actions = group_actions(self.actions)
         return render_template(
-            self.request(),
+            self.get_request(),
             self.actions_template,
             dict(
                 actions=actions,
@@ -1165,7 +1164,7 @@ class Form(Part):
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.path() for f in self.fields.values()}
-        for k, v in self.request().GET.items():
+        for k, v in self.get_request().GET.items():
             if k not in own_field_paths and not k.startswith('-'):
                 r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
@@ -1182,7 +1181,7 @@ class Form(Part):
             template=self.template,
         )
 
-        request = self.request()
+        request = self.get_request()
         render.context.update(csrf(request))
         render.context['form'] = self
 
@@ -1223,7 +1222,7 @@ class Form(Part):
         extra__title=None,
     )
     def as_create_or_edit_page(cls, *, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
-        assert 'request' not in kwargs, "I'm afraid you can't do that Dave"
+        assert 'get_request' not in kwargs, "I'm afraid you can't do that Dave"
         if model is None and instance is not None:
             model = type(instance)
 
