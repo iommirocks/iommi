@@ -51,7 +51,7 @@ Forms
 How do I supply a custom parser for a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass a callable to the `parse` member of the field:
+Pass a callable to the `parse_query_string` member of the field:
 
 .. code:: python
 

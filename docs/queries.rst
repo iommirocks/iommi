@@ -73,7 +73,7 @@ for specific model in the advanced mode:
     def cars(request):
         query = CarQuery()
         query.bind(request=request)
-        cars_query_set = query.to_q()
+        cars_query_set = query.get_q()
         form = query.form
         return render(
             template_name='cars.html',
@@ -107,6 +107,6 @@ Programmatically call the search API:
 .. code:: python
 
     query = CarQuery()
-    cars_query_set = query.parse(
+    cars_query_set = query.parse_query_string(
         'make=Toyota and (make=1991 or make=1992)'
     )

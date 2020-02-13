@@ -59,7 +59,7 @@ class ReleaseCheck(Command):
             print('Missing %s tag on release' % version)
             raise SystemExit(1)
 
-        current_branch = check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode('utf8')
+        current_branch = check_output(['git', 'rev-parse_query_string', '--abbrev-ref', 'HEAD']).strip().decode('utf8')
         if current_branch != 'master':
             print('Only release from master')
             raise SystemExit(1)

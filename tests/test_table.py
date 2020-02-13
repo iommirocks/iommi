@@ -892,7 +892,7 @@ def test_invalid_syntax_query():
     class TestTable(Table):
         a = Column.number(sortable=False, query__include=True)
 
-    adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.advanced_query_param()
+    adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.get_advanced_query_param()
 
     verify_table_html(query={adv_query_param: 'asdasdsasd'}, table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(class_='iommi_query_error'), expected_html='<div class="iommi_query_error">Invalid syntax for query</div>')
 
@@ -961,7 +961,7 @@ def test_query():
     </tbody>
     """)
     verify_table_html(
-        query={t.query.advanced_query_param(): 'b="bar"'},
+        query={t.query.get_advanced_query_param(): 'b="bar"'},
         table=TestTable(rows=rows),
         find=dict(name='tbody'),
         expected_html="""

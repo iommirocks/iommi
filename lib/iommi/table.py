@@ -1392,7 +1392,7 @@ class Table(Part):
             self._query_error = ''
             if self._query_form:
                 try:
-                    q = self.query.to_q()
+                    q = self.query.get_q()
                     if q:
                         self.rows = self.rows.filter(q)
                 except QueryException as e:

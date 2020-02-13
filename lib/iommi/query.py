@@ -433,7 +433,7 @@ class StringValue(str):
 
 def default_endpoint__errors(query, **_):
     try:
-        query.to_q()
+        query.get_q()
         errors = query.form.get_errors()
         # These dicts contains sets that we don't want in the JSON response, so convert to list
         if 'fields' in errors:
@@ -463,7 +463,7 @@ class Query(Part):
             model = Variable()
 
         query_set = Car.objects.filter(
-            CarQuery().bind(request=request).to_q()
+            CarQuery().bind(request=request).get_q()
         )
     """
 
@@ -553,7 +553,7 @@ class Query(Part):
     def on_bind(self) -> None:
         bind_members(self, name='variables')
 
-        self.query_advanced_value = request_data(self.request()).get(self.advanced_query_param(), '') if self.request else ''
+        self.query_advanced_value = request_data(self.request()).get(self.get_advanced_query_param(), '') if self.request else ''
 
         if any(v.freetext for v in self.variables.values()):
             self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True
@@ -582,34 +582,34 @@ class Query(Part):
     def own_evaluate_parameters(self):
         return dict(query=self)
 
-    def advanced_query_param(self):
+    def get_advanced_query_param(self):
         return path_join(self.path(), '-query')
 
-    def parse(self, query_string: str) -> Q:
+    def parse_query_string(self, query_string: str) -> Q:
         assert self._is_bound
         query_string = query_string.strip()
         if not query_string:
             return Q()
-        parser = self._grammar()
+        parser = self._create_grammar()
         try:
             tokens = parser.parseString(query_string, parseAll=True)
         except ParseException:
             raise QueryException('Invalid syntax for query')
-        return self.compile(tokens)
+        return self._compile(tokens)
 
-    def compile(self, tokens) -> Q:
+    def _compile(self, tokens) -> Q:
         items = []
         for token in tokens:
             if isinstance(token, ParseResults):
-                items.append(self.compile(token))
+                items.append(self._compile(token))
             elif isinstance(token, Q):
                 items.append(token)
             elif token in ('and', 'or'):
                 items.append(token)
-        return self.__rpn_to_q(self.__to_rpn(items))
+        return self._rpn_to_q(self._tokens_to_rpn(items))
 
     @staticmethod
-    def __rpn_to_q(tokens):
+    def _rpn_to_q(tokens):
         stack = []
         for each in tokens:
             if isinstance(each, Q):
@@ -623,7 +623,7 @@ class Query(Part):
         return stack[0]
 
     @staticmethod
-    def __to_rpn(tokens):
+    def _tokens_to_rpn(tokens):
         # Convert a infix sequence of Q objects and 'and/or' operators using
         # dijkstra shunting yard algorithm into RPN
         if len(tokens) == 1:
@@ -647,7 +647,7 @@ class Query(Part):
             result_q.append(stack.pop()[0])
         return result_q
 
-    def _grammar(self):
+    def _create_grammar(self):
         """
         Pyparsing implementation of a where clause grammar based on http://pyparsing.wikispaces.com/file/view/simpleSQL.py
 
@@ -695,8 +695,8 @@ class Query(Part):
 
         # Define a where expression
         where_expression = Forward()
-        binary_operator_statement = (variable_name + binary_op + value_string).setParseAction(self.binary_op_as_q)
-        free_text_statement = quotedString.copy().setParseAction(self.freetext_as_q)
+        binary_operator_statement = (variable_name + binary_op + value_string).setParseAction(self._binary_op_to_q)
+        free_text_statement = quotedString.copy().setParseAction(self._freetext_to_q)
         operator_statement = binary_operator_statement | free_text_statement
         where_condition = Group(operator_statement | ('(' + where_expression + ')'))
         where_expression << where_condition + ZeroOrMore((and_ | or_) + where_expression)
@@ -706,7 +706,7 @@ class Query(Part):
         query_statement << Group(where_expression).setResultsName("where")
         return query_statement
 
-    def binary_op_as_q(self, token):
+    def _binary_op_to_q(self, token):
         """
         Convert a parsed token of variable_name OPERATOR variable_name into a Q object
         """
@@ -737,7 +737,7 @@ class Query(Part):
             return result
         raise QueryException(f'Unknown variable "{variable_name}", available variables: {list(self.variables.keys())}')
 
-    def freetext_as_q(self, token):
+    def _freetext_to_q(self, token):
         assert any(v.freetext for v in self.variables.values())
         assert len(token) == 1
         token = token[0].strip('"')
@@ -751,9 +751,9 @@ class Query(Part):
             ]
         )
 
-    def to_query_string(self):
+    def get_query_string(self):
         """
-        Based on the data in the request, return the equivalent query string that you can use with parse() to create a query set.
+        Based on the data in the request, return the equivalent query string that you can use with parse_query_string() to create a query set.
         """
         form = self.form
 
@@ -761,8 +761,8 @@ class Query(Part):
             return ''
 
         request = self.request()
-        if request_data(request).get(self.advanced_query_param(), '').strip():
-            return request_data(request).get(self.advanced_query_param())
+        if request_data(request).get(self.get_advanced_query_param(), '').strip():
+            return request_data(request).get(self.get_advanced_query_param())
         elif form.is_valid():
             def expr(field, is_list, value):
                 if is_list:
@@ -789,11 +789,11 @@ class Query(Part):
         else:
             return ''
 
-    def to_q(self):
+    def get_q(self):
         """
         Create a query set based on the data in the request.
         """
-        return self.parse(self.to_query_string())
+        return self.parse_query_string(self.get_query_string())
 
     @classmethod
     @dispatch(
