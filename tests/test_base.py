@@ -180,7 +180,7 @@ def test_evaluate_attrs_show_debug_paths():
                 class__table=True,
             ),
             _name='foo',
-            dunder_path=lambda: '<path here>',
+            iommi_dunder_path='<path here>',
         ),
     )
 
@@ -243,10 +243,10 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
     assert foo.path() == ''
 
     assert foo.bound_members.my_part2.path() == 'my_part2'
-    assert foo.bound_members.my_part2.dunder_path() == 'my_part2'
+    assert foo.bound_members.my_part2.iommi_dunder_path == 'my_part2'
 
     assert foo.bound_members.my_part2.bound_members.my_part.path() == 'my_part'
-    assert foo.bound_members.my_part2.bound_members.my_part.dunder_path() == 'my_part2__my_part'
+    assert foo.bound_members.my_part2.bound_members.my_part.iommi_dunder_path == 'my_part2__my_part'
 
 
 def test_as_html():

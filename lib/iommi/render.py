@@ -63,7 +63,7 @@ class Attrs(Namespace):
         from iommi.base import iommi_debug_on
 
         if iommi_debug_on() and getattr(parent, '_name', None) is not None:
-            attrs['data-iommi-path'] = parent.dunder_path()
+            attrs['data-iommi-path'] = parent.iommi_dunder_path
 
         if 'style' in attrs and not attrs['style']:
             del attrs['style']

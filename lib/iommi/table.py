@@ -723,8 +723,9 @@ class BoundRow(object):
         column = self.table.rendered_columns[name]
         return BoundCell(bound_row=self, column=column)
 
-    def dunder_path(self):
-        return path_join(self._parent.dunder_path(), 'row', separator='__')
+    @property
+    def iommi_dunder_path(self):
+        return path_join(self._parent.iommi_dunder_path, 'row', separator='__')
 
 
 # TODO: make this a Part?
@@ -772,9 +773,9 @@ class BoundCell(object):
             value=self.value,
         )
 
-    def dunder_path(self):
-        # TODO: is this really right?
-        return path_join(self.column.dunder_path(), 'cell', separator='__')
+    @property
+    def iommi_dunder_path(self):
+        return path_join(self.column.iommi_dunder_path, 'cell', separator='__')
 
     def __html__(self):
         cell__template = self.column.cell.template
@@ -848,10 +849,11 @@ class Header(object):
     def __repr__(self):
         return '<Header: %s>' % ('superheader' if self.column is None else self.column._name)
 
-    def dunder_path(self):
+    @property
+    def iommi_dunder_path(self):
         if self.column is None:
             return None
-        return path_join(self.column.dunder_path(), self._name, separator='__')
+        return path_join(self.column.iommi_dunder_path, self._name, separator='__')
 
 
 def bulk__post_handler(table, form, **_):

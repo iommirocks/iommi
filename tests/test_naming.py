@@ -102,7 +102,7 @@ def test_evil_names_that_work():
 def test_evil_names():
     class EvilPage(Page):
         path = Fragment()
-        dunder_path = Fragment()
+        iommi_dunder_path = Fragment()
         request = Fragment()
         render_to_response = Fragment()
 

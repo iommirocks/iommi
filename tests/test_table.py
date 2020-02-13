@@ -1942,7 +1942,7 @@ def test_endpoint_path_of_nested_part():
     page.bind(request=None)
     target = find_target(path='/parts/table/query/form/fields/foo/endpoints/choices', root=page)
     assert target.endpoint_path() == '/choices'
-    assert target.dunder_path() == 'parts__table__query__form__fields__foo__endpoints__choices'
+    assert target.iommi_dunder_path == 'parts__table__query__form__fields__foo__endpoints__choices'
 
 
 def test_dunder_name_for_column():

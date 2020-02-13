@@ -195,13 +195,15 @@ def perform_post_dispatch(*, root, path, value):
 def endpoint__debug_tree(endpoint, **_):
     root = endpoint._parent._parent
 
-    def rows(node, name='', path=[]):
+    def rows(node, name='', path=None):
+        if path is None:
+            path = []
         yield Struct(
             name=name,
             obj=node,
             type=type(node).__name__ if type(node) is not Struct else None,
             path='/'.join(path),
-            dunder_path='__'.join(path),
+            iommi_dunder_path='__'.join(path),
         )
 
         children = []
@@ -219,7 +221,7 @@ def endpoint__debug_tree(endpoint, **_):
     )
 
     def dunder_path__value(row, **_):
-        prefix = row.dunder_path.rpartition('__')[0]
+        prefix = row.iommi_dunder_path.rpartition('__')[0]
         return format_html(
             '<span class="full-path">{prefix}{separator}</span>{name}',
             prefix=prefix,
@@ -244,7 +246,7 @@ def endpoint__debug_tree(endpoint, **_):
             """)
             sortable = False
 
-            # @TODO use declarative once path() and dunder_path() are not taken by Traversable...
+            # @TODO use declarative once path() is not taken by Traversable...
             columns__dunder_path = Column(
                 cell__value=dunder_path__value,
             )
@@ -388,6 +390,7 @@ class Traversable(RefinableObject):
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
 
+    # @property iommi_path
     def path(self) -> str:
         path_by_long_path = get_root(self)._path_by_long_path
         long_path = build_long_path(self)
@@ -397,7 +400,8 @@ class Traversable(RefinableObject):
             raise PathNotFoundException(f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}")
         return path
 
-    def dunder_path(self) -> str:
+    @property
+    def iommi_dunder_path(self) -> str:
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
 
