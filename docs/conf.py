@@ -44,6 +44,7 @@ generate_rst_docs(
         iommi.Query,
         iommi.Variable,
         iommi.Form,
+        iommi.Fragment,
         iommi.Field,
         iommi.Action,
         iommi.Page,
