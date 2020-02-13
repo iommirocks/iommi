@@ -87,7 +87,7 @@ def test_apply_checkbox_style():
 
     class MyForm(Form):
         class Meta:
-            style = 'bootstrap'
+            iommi_style = 'bootstrap'
 
         foo = Field.boolean()
 
@@ -114,7 +114,7 @@ def test_last_win():
 
     class MyForm(Form):
         class Meta:
-            style = 'bootstrap'
+            iommi_style = 'bootstrap'
             template = 'override'
 
     form = MyForm()

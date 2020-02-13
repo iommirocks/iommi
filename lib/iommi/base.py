@@ -338,8 +338,8 @@ def apply_style(obj):
 
 
 def get_style_for(obj):
-    if obj.style is not None:
-        return obj.style
+    if obj.iommi_style is not None:
+        return obj.iommi_style
     if obj._parent is not None:
         return get_style_for(obj._parent)
 
@@ -361,7 +361,7 @@ class Traversable(RefinableObject):
     _parent = None
     _is_bound = False
     # TODO: would be nice to not have this here
-    style: str = EvaluatedRefinable()
+    iommi_style: str = EvaluatedRefinable()
 
     @dispatch
     def __init__(self, _name=None, **kwargs):
@@ -552,7 +552,6 @@ class Part(Traversable):
     after: Union[int, str] = EvaluatedRefinable()
     extra: Namespace = Refinable()
     extra_evaluated: Namespace = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
-    style: str = EvaluatedRefinable()
     endpoints: Namespace = Refinable()
 
     @dispatch(

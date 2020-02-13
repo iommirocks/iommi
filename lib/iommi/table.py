@@ -940,7 +940,7 @@ def bulk_delete__post_handler(table, form, **_):
 # TODO: full Part?
 class Paginator:
     def __init__(self, *, django_paginator, table, adjacent_pages=6):
-        self.style = None
+        self.iommi_style = None
         self._parent = table
         self.paginator = django_paginator
         self.table: Table = table

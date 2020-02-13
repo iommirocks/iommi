@@ -187,7 +187,7 @@ bootstrap_base = Style(
             boolean__cell__attrs__class={'text-center': True},
         )
     ),
-    Query__form__style='bootstrap_horizontal',
+    Query__form__iommi_style='bootstrap_horizontal',
     Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
         container__attrs__class__pagination=True,

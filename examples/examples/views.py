@@ -437,7 +437,7 @@ class StyleSelector(Form):
     class Meta:
         actions__submit__post_handler = select_style_post_handler
 
-    style = Field.choice(
+    iommi_style = Field.choice(
         choices=[
             'bootstrap',
             'semantic_ui',

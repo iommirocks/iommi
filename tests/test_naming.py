@@ -93,6 +93,7 @@ def test_traverse_on_iommi():
 def test_evil_names_that_work():
     class EvilPage(Page):
         name = Fragment()
+        parent = Fragment()
 
     assert EvilPage().bind(request=req('get')).render_to_response().status_code == 200
 
@@ -108,7 +109,7 @@ def test_evil_names():
     assert EvilPage().bind(request=req('get')).render_to_response() == ''
 
     class ErrorMessages(Page):
-        style = Fragment()  # ?
+        iommi_style = Fragment()
         bind = Fragment()
         on_bind = Fragment()
         own_evaluate_parameters = Fragment()
