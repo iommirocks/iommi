@@ -73,6 +73,20 @@ def fragment__render(fragment, context):
 
 
 class Fragment(Part):
+    """
+    `Fragment` is a class used to build small HTML fragments that plug into iommis structure.
+
+    .. code:: python
+
+        h1 = Fragment('Tony', tag='h1')
+
+    It's easiest to use via the html builder:
+
+    .. code:: python
+
+        h1 = html.h1('Tony')
+    """
+
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
