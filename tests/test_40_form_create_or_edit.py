@@ -12,8 +12,7 @@ from iommi.form import (
 )
 from tri_struct import merged
 
-from tests.helpers import req
-from tests.test_forms import remove_csrf
+from tests.helpers import req, remove_csrf
 
 
 @pytest.mark.django_db
