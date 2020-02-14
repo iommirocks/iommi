@@ -915,8 +915,8 @@ def test_query():
 
     t = TestTable(rows=TFoo.objects.all().order_by('pk'))
     t.bind(request=req('get'))
-    assert t.query.variables.a.path() == 'query/a'
-    assert t.query.form.fields.a.path() == 'a'
+    assert t.query.variables.a.iommi_path() == 'query/a'
+    assert t.query.form.fields.a.iommi_path() == 'a'
 
     rows = TFoo.objects.all().order_by('pk')
 

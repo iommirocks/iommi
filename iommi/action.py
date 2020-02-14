@@ -60,7 +60,7 @@ class Action(Part):
             assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"
 
     def own_target_marker(self):
-        return f'-{self.path()}'
+        return f'-{self.iommi_path()}'
 
     def is_target(self):
         return self.own_target_marker() in self._parent._parent._request_data

@@ -139,7 +139,7 @@ def prepare_headers(table):
     for name, column in table.rendered_columns.items():
         if column.sortable:
             params = request.GET.copy()
-            param_path = path_join(table.path(), 'order')
+            param_path = path_join(table.iommi_path(), 'order')
             order = request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
             params[param_path] = name if not start_sort_desc else '-' + name
@@ -932,7 +932,7 @@ def bulk_delete__post_handler(table, form, **_):
 
     p = ConfirmPage().bind(request=request)
 
-    if request.POST.get(p.parts.confirm._bulk_form.fields.confirmed.path()) == 'confirmed':
+    if request.POST.get(p.parts.confirm._bulk_form.fields.confirmed.iommi_path()) == 'confirmed':
         queryset.delete()
         return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
@@ -949,7 +949,7 @@ class Paginator:
         self.adjacent_pages = adjacent_pages
 
         request = self.table.get_request()
-        self.page_param_path = path_join(self.table.path(), 'page')
+        self.page_param_path = path_join(self.table.iommi_path(), 'page')
         page = request.GET.get(self.page_param_path) if request else None
         self.current_page = int(page) if page else 1
         self.attrs = Namespace()
@@ -1146,7 +1146,7 @@ class Table(Part):
         endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='tri_table/table_container.html')})
         endpoints__csv__func = endpoint__csv
 
-        attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.path(), 'tbody')}
+        attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.iommi_path(), 'tbody')}
 
     @staticmethod
     @refinable
@@ -1496,7 +1496,7 @@ class Table(Part):
         if request is None:
             return
 
-        order = request.GET.get(path_join(self.path(), 'order'), self.default_sort_order)
+        order = request.GET.get(path_join(self.iommi_path(), 'order'), self.default_sort_order)
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order

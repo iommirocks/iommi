@@ -203,7 +203,7 @@ def endpoint__debug_tree(endpoint, **_):
             obj=node,
             type=type(node).__name__ if type(node) is not Struct else None,
             path='/'.join(path),
-            iommi_dunder_path='__'.join(path),
+            dunder_path='__'.join(path),
         )
 
         children = []
@@ -221,7 +221,7 @@ def endpoint__debug_tree(endpoint, **_):
     )
 
     def dunder_path__value(row, **_):
-        prefix = row.iommi_dunder_path.rpartition('__')[0]
+        prefix = row.dunder_path.rpartition('__')[0]
         return format_html(
             '<span class="full-path">{prefix}{separator}</span>{name}',
             prefix=prefix,
@@ -246,14 +246,13 @@ def endpoint__debug_tree(endpoint, **_):
             """)
             sortable = False
 
-            # @TODO use declarative once path() is not taken by Traversable...
-            columns__dunder_path = Column(
-                cell__value=dunder_path__value,
-            )
-            columns__path = Column()
-            columns__type = Column(
-                cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html' if value else None
-            )
+        dunder_path = Column(
+            cell__value=dunder_path__value,
+        )
+        path = Column()
+        type = Column(
+            cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html' if value else None
+        )
 
     request = HttpRequest()
     request.method = 'GET'
@@ -362,6 +361,8 @@ class Traversable(RefinableObject):
     _name = None
     _parent = None
     _is_bound = False
+    _request = None
+
     # TODO: would be nice to not have this here
     iommi_style: str = EvaluatedRefinable()
 
@@ -379,7 +380,7 @@ class Traversable(RefinableObject):
         n = f' {self._name}' if self._name is not None else ''
         b = ' (bound)' if self._is_bound else ''
         try:
-            p = f" path:'{self.path()}'" if self._parent is not None else ""
+            p = f" path:'{self.iommi_path()}'" if self._parent is not None else ""
         except AssertionError:
             p = ' path:<no path>'
         c = ''
@@ -390,10 +391,10 @@ class Traversable(RefinableObject):
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
 
-    # @property iommi_path
-    def path(self) -> str:
-        path_by_long_path = get_root(self)._path_by_long_path
+    # @property
+    def iommi_path(self) -> str:
         long_path = build_long_path(self)
+        path_by_long_path = get_root(self)._path_by_long_path
         path = path_by_long_path.get(long_path)
         if path is None:
             candidates = '\n'.join(path_by_long_path.keys())
@@ -821,7 +822,7 @@ class Endpoint(Traversable):
         return self.func(value=value, **kwargs)
 
     def endpoint_path(self):
-        return DISPATCH_PREFIX + self.path()
+        return DISPATCH_PREFIX + self.iommi_path()
 
     def own_evaluate_parameters(self):
         return dict(endpoint=self)

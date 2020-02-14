@@ -81,13 +81,13 @@ def test_traverse_on_iommi():
     assert len(actual.keys()) == len(set(actual.keys()))
     page = page.bind(request=req('get'))
 
-    assert page.path() == ''
-    assert page.parts.header.path() == 'header'
-    assert page.parts.some_form.fields.fisk.path() == 'fisk'
-    assert page.parts.some_other_form.fields.fisk.path() == 'some_other_form/fisk'
-    assert page.parts.a_table.query.form.path() == 'form'
-    assert page.parts.a_table.query.form.fields.fusk.path() == 'fusk'
-    assert page.parts.a_table.columns.fusk.path() == 'a_table/fusk'
+    assert page.iommi_path() == ''
+    assert page.parts.header.iommi_path() == 'header'
+    assert page.parts.some_form.fields.fisk.iommi_path() == 'fisk'
+    assert page.parts.some_other_form.fields.fisk.iommi_path() == 'some_other_form/fisk'
+    assert page.parts.a_table.query.form.iommi_path() == 'form'
+    assert page.parts.a_table.query.form.fields.fusk.iommi_path() == 'fusk'
+    assert page.parts.a_table.columns.fusk.iommi_path() == 'a_table/fusk'
 
 
 def test_evil_names_that_work():

@@ -601,7 +601,7 @@ class Query(Part):
         return dict(query=self)
 
     def get_advanced_query_param(self):
-        return path_join(self.path(), '-query')
+        return path_join(self.iommi_path(), '-query')
 
     def parse_query_string(self, query_string: str) -> Q:
         assert self._is_bound
