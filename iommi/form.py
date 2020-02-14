@@ -25,54 +25,53 @@ from django.db.models import (
 )
 from django.http import HttpResponseRedirect
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
-    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate,
     getattr_path,
+    Namespace,
+    Refinable,
     refinable,
     setattr_path,
     setdefaults_path,
+    Shortcut,
     with_meta,
 )
 from tri_struct import Struct
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    Template,
-    URLValidator,
-    ValidationError,
     csrf,
     format_html,
-    get_template_from_string,
     render_template,
+    Template,
+    URLValidator,
     validate_email,
+    ValidationError,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
-    Endpoint,
-    EvaluatedRefinable,
-    MISSING,
-    Part,
     bind_members,
     collect_members,
     evaluated_refinable,
+    EvaluatedRefinable,
+    MISSING,
     no_copy_on_bind,
+    Part,
     request_data,
+    create_as_view_from_as_page,
 )
 from iommi.from_model import (
     AutoConfig,
-    NoRegisteredNameException,
     create_members_from_model,
     get_name_field,
     member_from_model,
+    NoRegisteredNameException,
 )
 from iommi.page import (
     Fragment,
@@ -508,7 +507,7 @@ class Field(Part):
         if isinstance(value, (list, QuerySet)):
             return ', '.join(field.render_value(form=form, field=field, value=v) for v in value)
         else:
-            return "%s" % value if value is not None else ''
+            return f'{value}' if value is not None else ''
 
     # grab help_text from model if applicable
     # noinspection PyProtectedMember
@@ -589,7 +588,6 @@ class Field(Part):
         """
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
-        # TODO: special class for label that does this?
         assert not self.label._children
         self.label._children = [self.display_name]
 
@@ -1007,11 +1005,7 @@ class Form(Part):
         assert self.actions_template
         self._valid = None
         request = self.get_request()
-        self._request_data = request_data(request) if request else None
-
-        # TODO: seems a bit convoluted to do this and the None check above
-        if self._request_data is None:
-            self._request_data = {}
+        self._request_data = request_data(request)
 
         bind_members(self, name='actions')
         bind_members(self, name='fields')
@@ -1295,48 +1289,28 @@ class Form(Part):
         parts=EMPTY,
     )
     def as_create_or_edit_view(cls, *, title=None, parts=None, **kwargs):
-        def view_wrapper(request, **url_kwargs):
-            return cls(**kwargs).as_create_or_edit_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
-        # TODO: add kwargs to __name__?
-        view_wrapper.__name__ = f'{cls.__name__}.as_create_or_edit_view'
-        view_wrapper.__doc__ = cls.__doc__
-        return view_wrapper
+        return create_as_view_from_as_page(cls, 'as_create_or_edit', kwargs=kwargs, title=title, parts=parts)
 
     @classmethod
     @dispatch(
         parts=EMPTY,
     )
     def as_create_view(cls, *, title=None, parts=None, **kwargs):
-        def view_wrapper(request, **url_kwargs):
-            return cls(**kwargs).as_create_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
-        # TODO: add kwargs to __name__?
-        view_wrapper.__name__ = f'{cls.__name__}.as_create_view'
-        view_wrapper.__doc__ = cls.__doc__
-        return view_wrapper
+        return create_as_view_from_as_page(cls, 'as_create', kwargs=kwargs, title=title, parts=parts)
 
     @classmethod
     @dispatch(
         parts=EMPTY,
     )
     def as_edit_view(cls, *, title=None, parts=None, **kwargs):
-        def view_wrapper(request, **url_kwargs):
-            return cls(**kwargs).as_edit_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
-        # TODO: add kwargs to __name__?
-        view_wrapper.__name__ = f'{cls.__name__}.as_edit_view'
-        view_wrapper.__doc__ = cls.__doc__
-        return view_wrapper
+        return create_as_view_from_as_page(cls, 'as_edit', kwargs=kwargs, title=title, parts=parts)
         
     @classmethod
     @dispatch(
         parts=EMPTY,
     )
     def as_delete_view(cls, *, title=None, parts=None, **kwargs):
-        def view_wrapper(request, **url_kwargs):
-            return cls(**kwargs).as_delete_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
-        # TODO: add kwargs to __name__?
-        view_wrapper.__name__ = f'{cls.__name__}.as_delete_view'
-        view_wrapper.__doc__ = cls.__doc__
-        return view_wrapper
+        return create_as_view_from_as_page(cls, 'as_delete', kwargs=kwargs, title=title, parts=parts)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):

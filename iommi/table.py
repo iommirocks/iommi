@@ -1,8 +1,8 @@
 import csv
 from datetime import datetime
 from enum import (
-    Enum,
     auto,
+    Enum,
 )
 from functools import total_ordering
 from io import StringIO
@@ -11,7 +11,6 @@ from typing import (
     Any,
     Dict,
     Iterable,
-    List,
     Optional,
     Type,
     Union,
@@ -43,21 +42,20 @@ from django.utils.html import (
 )
 from django.utils.safestring import mark_safe
 from tri_declarative import (
-    EMPTY,
-    LAST,
-    Namespace,
-    Refinable,
-    RefinableObject,
-    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate,
     evaluate_strict,
     getattr_path,
+    LAST,
+    Namespace,
+    Refinable,
     refinable,
-    setattr_path,
+    RefinableObject,
     setdefaults_path,
+    Shortcut,
     with_meta,
 )
 from tri_struct import (
@@ -65,33 +63,31 @@ from tri_struct import (
 )
 
 from iommi._web_compat import (
-    Template,
     render_template,
     smart_text,
-    HttpResponse,
+    Template,
 )
 from iommi.action import (
     Action,
     group_actions,
 )
 from iommi.base import (
-    DISPATCH_PREFIX,
-    Endpoint,
-    EvaluatedRefinable,
-    MISSING,
-    Part,
     apply_style,
     bind_members,
     collect_members,
+    DISPATCH_PREFIX,
     evaluate_attrs,
     evaluate_member,
-    evaluate_members,
     evaluate_strict_container,
     evaluated_refinable,
+    EvaluatedRefinable,
+    MISSING,
     model_and_rows,
     no_copy_on_bind,
+    Part,
     path_join,
     Traversable,
+    create_as_view_from_as_page,
 )
 from iommi.form import (
     Field,
@@ -1656,9 +1652,5 @@ class Table(Part):
         parts=EMPTY,
     )
     def as_view(cls, *, title=None, parts=None, **kwargs):
-        def view_wrapper(request, **url_kwargs):
-            return cls(**kwargs).as_page(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
-        # TODO: add kwargs to __name__?
-        view_wrapper.__name__ = f'{cls.__name__}.as_view'
-        view_wrapper.__doc__ = cls.__doc__
-        return view_wrapper
+        return create_as_view_from_as_page(cls, 'as', kwargs=kwargs, title=title, parts=parts)
+

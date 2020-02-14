@@ -105,10 +105,6 @@ def list_model(model, app, table):
     )
 
 
-# TODO: name, description, display_name field should be freetext searchable by default
-# TODO: bulk edit?
-
-
 @dispatch(
     all_models__call_target=all_models,
     list_model__call_target=list_model,

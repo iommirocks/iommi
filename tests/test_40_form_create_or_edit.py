@@ -278,3 +278,12 @@ def test_create_or_edit_object_full_template(name):
     actual = BeautifulSoup(remove_csrf(response.content.decode()), 'html.parser').prettify()
     expected = BeautifulSoup(expected_html, 'html.parser').prettify()
     assert actual == expected
+
+
+def test_create_or_edit_view_name():
+    from tests.models import Foo
+
+    class MyForm(Form):
+        pass
+
+    assert MyForm.as_create_or_edit_view(auto__model=Foo).__name__ == "MyForm(auto__model=<class 'tests.models.Foo'>).as_create_or_edit_view"

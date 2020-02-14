@@ -23,28 +23,28 @@ from django.http.response import (
 from django.template import (
     Template,
 )
-from iommi._web_compat import (
-    QueryDict,
-    get_template_from_string,
-    HttpRequest,
-    format_html,
-)
-from iommi.render import Attrs
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
-    RefinableObject,
     dispatch,
+    EMPTY,
     evaluate,
     evaluate_strict,
     get_callable_description,
-    setdefaults_path,
-    refinable,
     LAST,
-    get_declared,
+    Namespace,
+    Refinable,
+    refinable,
+    RefinableObject,
+    setdefaults_path,
 )
 from tri_struct import Struct
+
+from iommi._web_compat import (
+    format_html,
+    get_template_from_string,
+    HttpRequest,
+    QueryDict,
+)
+from iommi.render import Attrs
 
 DEFAULT_STYLE = 'bootstrap'
 DEFAULT_BASE_TEMPLATE = 'base.html'
@@ -401,7 +401,6 @@ class Traversable(RefinableObject):
     _is_bound = False
     _request = None
 
-    # TODO: would be nice to not have this here
     iommi_style: str = EvaluatedRefinable()
 
     @dispatch
@@ -762,7 +761,6 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
     if unapplied_config:
         obj.unapplied_config[name] = unapplied_config
 
-    # TODO: shouldn't sort_after be done on the bound items?
     members = Struct({x._name: x for x in unbound_items.values()})
     obj.declared_members[name] = members
 
@@ -876,3 +874,13 @@ class Endpoint(Traversable):
 
     def own_evaluate_parameters(self):
         return dict(endpoint=self)
+
+
+def create_as_view_from_as_page(cls, name, *, kwargs, title, parts):
+    def view_wrapper(request, **url_kwargs):
+        return getattr(cls(**kwargs), f'{name}_page')(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+
+    view_wrapper.__name__ = f'{cls.__name__}{repr(Namespace(kwargs))[len("Namespace"):]}.{name}_view'
+    view_wrapper.__doc__ = cls.__doc__
+
+    return view_wrapper
