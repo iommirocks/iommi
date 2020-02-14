@@ -12,8 +12,6 @@ from tri_declarative import (
 )
 
 
-# TODO: This system is extremely powerful. It can overwrite anything and everything. It should probably only be applicable to some specifically "stylable" parts.
-
 def _style_name_for_class(cls):
     return cls.__name__.rpartition('.')[-1]  # this converts iommi.form.Form to just Form
 
