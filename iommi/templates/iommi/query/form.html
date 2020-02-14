@@ -45,9 +45,9 @@
         </table>
         {{ query.form.errors }}
 
-        {% if iommi_query_error %}
+        {% if query.extra.iommi_query_error %}
           <div class="iommi_query_error">
-              {{ iommi_query_error }}
+              {{ query.extra.iommi_query_error }}
           </div>
         {% endif %}
 

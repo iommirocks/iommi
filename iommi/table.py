@@ -1124,8 +1124,6 @@ class Table(Part):
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = Refinable()
     row = EvaluatedRefinable()
-    # TODO: this is only used for filter__template, we should change this to just filter_template, or even query_template
-    filter: Namespace = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
@@ -1178,7 +1176,6 @@ class Table(Part):
         row__template=None,
         row__extra=EMPTY,
         row__extra_evaluated=EMPTY,
-        filter__template='iommi/query/form.html',
         header__template='iommi/table/table_header_rows.html',
         paginator__call_target=Paginator,
 
@@ -1195,7 +1192,7 @@ class Table(Part):
 
         auto=EMPTY,
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, filter=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1245,7 +1242,6 @@ class Table(Part):
         super(Table, self).__init__(
             model=model,
             rows=rows,
-            filter=TemplateConfig(**filter),
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
@@ -1258,7 +1254,6 @@ class Table(Part):
         self.query_args = query
         self._query: Query = None
         self._query_form: Form = None
-        self._query_error: List[str] = None
 
         self._bulk_form: Form = None
         self.header_levels = None
@@ -1391,14 +1386,13 @@ class Table(Part):
             self._query_form = self._query.form if self._query.variables else None
             self.bound_members.query = self._query
 
-            self._query_error = ''
             if self._query_form:
                 try:
                     q = self.query.get_q()
                     if q:
                         self.rows = self.rows.filter(q)
                 except QueryException as e:
-                    self._query_error = str(e)
+                    self._query.extra.iommi_query_error = str(e)
 
             def generate_bulk_fields_unapplied_config():
                 for name, column in self.columns.items():
@@ -1465,12 +1459,6 @@ class Table(Part):
 
     def render_header(self):
         return render_template(self.get_request(), self.header.template, self.context)
-
-    def render_filter(self):
-        if not self.query_form:
-            return ''
-        # TODO: why are we using self.filter.template here? and all this complex stuff generally, when we should be able to just render the query in the template like {{ table.query }}?
-        return render_template(self.get_request(), self.filter.template, self.context)
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.columns.values() if column.auto_rowspan]
@@ -1586,11 +1574,6 @@ class Table(Part):
         return self._query_form
 
     @property
-    def query_error(self) -> List[str]:
-        assert self._is_bound
-        return self._query_error
-
-    @property
     def bulk_form(self) -> Form:
         assert self._is_bound
         return self._bulk_form
@@ -1654,7 +1637,6 @@ class Table(Part):
         context['table'] = self
         context['bulk_form'] = self.bulk_form
         context['query'] = self.query
-        context['iommi_query_error'] = self.query_error
 
         request = self.get_request()
 

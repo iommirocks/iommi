@@ -97,6 +97,9 @@ base = Style(
             ),
         )
     ),
+    Query=dict(
+        template='iommi/query/form.html',
+    ),
 )
 
 font_awesome_4 = Style(

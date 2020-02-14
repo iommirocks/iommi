@@ -1080,7 +1080,7 @@ def test_template_string(NoSortTable):
             model = TFoo
             actions_template = Template('What links')
             header__template = Template('What headers')
-            filter__template = Template('What filters')
+            query__template = Template('What filters')
 
             row__template = Template('Oh, rows: {{ bound_row.render_cells }}')
 

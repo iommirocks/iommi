@@ -5,6 +5,7 @@ from typing import (
     Any,
     Dict,
     Type,
+    Union,
 )
 
 from django.core.exceptions import (
@@ -52,6 +53,10 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+from iommi._web_compat import (
+    Template,
+    render_template,
+)
 from iommi.base import (
     Endpoint,
     EvaluatedRefinable,
@@ -468,6 +473,7 @@ class Query(Part):
     form: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
+    template: Union[str, Template] = EvaluatedRefinable()
 
     member_class = Refinable()
     form_class = Refinable()
@@ -546,6 +552,21 @@ class Query(Part):
 
         # Variables need to be at the end to not steal the short names
         self.declared_members.variables = self.declared_members.pop('variables')
+
+    @dispatch(
+        render__call_target=render_template,
+        context=EMPTY,
+    )
+    def __html__(self, *, context=None, render=None):
+        setdefaults_path(
+            render,
+            context=context,
+            template=self.template,
+        )
+
+        context['query'] = self
+
+        return render(request=self.get_request())
 
     def on_bind(self) -> None:
         bind_members(self, name='variables')
