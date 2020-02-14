@@ -843,7 +843,7 @@ def test_bulk_edit_from_model_has_tristate_for_booleans():
         auto__model=BooleanFromModelTestModel,
         columns__b__bulk__include=True,
     ).bind(request=req('get'))
-    assert t._bulk_form.fields.b.__tri_declarative_shortcut_stack[0] == 'boolean_tristate'
+    assert t.bulk_form.fields.b.__tri_declarative_shortcut_stack[0] == 'boolean_tristate'
 
 
 @pytest.mark.django_db
@@ -2029,8 +2029,8 @@ def test_bulk_namespaces_are_merged():
         ),
     )
     t.bind(request=req('get'))
-    assert t._bulk_form.fields.a.initial == 3
-    assert t._bulk_form.fields.a.display_name == '7'
+    assert t.bulk_form.fields.a.initial == 3
+    assert t.bulk_form.fields.a.display_name == '7'
 
 
 @override_settings(IOMMI_DEBUG=True)

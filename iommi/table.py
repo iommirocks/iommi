@@ -932,7 +932,7 @@ def bulk_delete__post_handler(table, form, **_):
 
     p = ConfirmPage().bind(request=request)
 
-    if request.POST.get(p.parts.confirm._bulk_form.fields.confirmed.iommi_path) == 'confirmed':
+    if request.POST.get(p.parts.confirm.bulk_form.fields.confirmed.iommi_path) == 'confirmed':
         queryset.delete()
         return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
@@ -1210,7 +1210,7 @@ class Table(Part):
             attr=None,
             _name='select',
             after=-1,
-            include=lambda table, **_: table._bulk_form is not None,
+            include=lambda table, **_: table.bulk_form is not None,
         )
 
         select_column = select_config
@@ -1254,7 +1254,7 @@ class Table(Part):
         self.query_args = query
         self.query: Query = None
 
-        self._bulk_form: Form = None
+        self.bulk_form: Form = None
         self.header_levels = None
         self.is_paginated = False
 
@@ -1327,7 +1327,7 @@ class Table(Part):
                     input__attrs__class__all_pks=True,
                 )
 
-                self._bulk_form = form_class(
+                self.bulk_form = form_class(
                     _fields_dict=declared_bulk_fields,
                     _name='bulk',
                     actions__submit=dict(
@@ -1343,7 +1343,7 @@ class Table(Part):
                     **bulk
                 )
 
-                self.declared_members.bulk = self._bulk_form
+                self.declared_members.bulk = self.bulk_form
 
         # Columns need to be at the end to not steal the short names
         self.declared_members.columns = self.declared_members.pop('columns')
@@ -1404,10 +1404,10 @@ class Table(Part):
                     )
                     yield name, bulk_namespace
 
-            if self._bulk_form is not None:
-                self._bulk_form.unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
-                self._bulk_form.bind(parent=self)
-                self.bound_members.bulk = self._bulk_form
+            if self.bulk_form is not None:
+                self.bulk_form.unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
+                self.bulk_form.bind(parent=self)
+                self.bound_members.bulk = self.bulk_form
 
         if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
@@ -1560,13 +1560,6 @@ class Table(Part):
             self.header_levels = [subheaders]
         else:
             self.header_levels = [superheaders, subheaders]
-
-    # TODO: clear out as many as these properties as we can
-
-    @property
-    def bulk_form(self) -> Form:
-        assert self._is_bound
-        return self._bulk_form
 
     def own_evaluate_parameters(self):
         return dict(table=self)
