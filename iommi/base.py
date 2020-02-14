@@ -380,7 +380,7 @@ class Traversable(RefinableObject):
         n = f' {self._name}' if self._name is not None else ''
         b = ' (bound)' if self._is_bound else ''
         try:
-            p = f" path:'{self.iommi_path()}'" if self._parent is not None else ""
+            p = f" path:'{self.iommi_path}'" if self._parent is not None else ""
         except AssertionError:
             p = ' path:<no path>'
         c = ''
@@ -391,7 +391,7 @@ class Traversable(RefinableObject):
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
 
-    # @property
+    @property
     def iommi_path(self) -> str:
         long_path = build_long_path(self)
         path_by_long_path = get_root(self)._path_by_long_path
@@ -822,7 +822,7 @@ class Endpoint(Traversable):
         return self.func(value=value, **kwargs)
 
     def endpoint_path(self):
-        return DISPATCH_PREFIX + self.iommi_path()
+        return DISPATCH_PREFIX + self.iommi_path
 
     def own_evaluate_parameters(self):
         return dict(endpoint=self)

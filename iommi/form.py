@@ -363,7 +363,7 @@ def multi_choice_queryset_choice_to_option(field, choice, **_):
 
 
 def default_input_id(field, **_):
-    return f'id_{field.iommi_path().replace("/", "__")}'
+    return f'id_{field.iommi_path.replace("/", "__")}'
 
 
 @with_meta
@@ -431,7 +431,7 @@ class Field(Part):
         input__attrs__id=default_input_id,
         label__call_target=Fragment,
         label__attrs__for=default_input_id,
-        input__attrs__name=lambda field, **_: field.iommi_path(),
+        input__attrs__name=lambda field, **_: field.iommi_path,
     )
     def __init__(self, **kwargs):
         """
@@ -566,10 +566,10 @@ class Field(Part):
             try:
                 # django and similar
                 # noinspection PyUnresolvedReferences
-                raw_data_list = form._request_data.getlist(self.iommi_path())
+                raw_data_list = form._request_data.getlist(self.iommi_path)
             except AttributeError:  # pragma: no cover
                 # werkzeug and similar
-                raw_data_list = form._request_data.get(self.iommi_path())
+                raw_data_list = form._request_data.get(self.iommi_path)
 
             if raw_data_list and self.strip_input:
                 raw_data_list = [x.strip() for x in raw_data_list]
@@ -579,7 +579,7 @@ class Field(Part):
         else:
             if self.raw_data is not None:
                 return
-            self.raw_data = form._request_data.get(self.iommi_path())
+            self.raw_data = form._request_data.get(self.iommi_path)
             if self.raw_data and self.strip_input:
                 self.raw_data = self.raw_data.strip()
 
@@ -1163,7 +1163,7 @@ class Form(Part):
             r.append(field.__html__())
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
-        own_field_paths = {f.iommi_path() for f in self.fields.values()}
+        own_field_paths = {f.iommi_path for f in self.fields.values()}
         for k, v in self.get_request().GET.items():
             if k not in own_field_paths and not k.startswith('-'):
                 r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
