@@ -814,6 +814,12 @@ class HeaderConfig(Traversable):
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
 
+    def __html__(self):
+        return render_template(self.get_request(), self.template, self._parent.context)
+
+    def __str__(self):
+        return self.__html__()
+
 
 class RowConfig(RefinableObject):
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -1349,7 +1355,7 @@ class Table(Part):
         bind_members(self, name='columns')
         bind_members(self, name='endpoints')
 
-        self.header.bind(parent=self)
+        self.header = self.header.bind(parent=self)
 
         evaluate_member(self, 'sortable', **self.evaluate_parameters)  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
@@ -1451,9 +1457,6 @@ class Table(Part):
                 grouped_actions=grouped_actions,
                 table=self,
             ))
-
-    def render_header(self):
-        return render_template(self.get_request(), self.header.template, self.context)
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in self.columns.values() if column.auto_rowspan]
@@ -1566,7 +1569,9 @@ class Table(Part):
             row = self.preprocess_row(table=self, row=row)
             yield BoundRow(table=self, row=row, row_index=i)
 
-    def render_tbody(self):
+    # TODO: would be nicer with a Fragment maybe?
+    @property
+    def tbody(self):
         return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))
 
     @classmethod

@@ -7,12 +7,10 @@
 
     <table{{ table.attrs }}>
 
-        {# TODO: render_* is bad. Use __html__! #}
-        {{ table.render_header }}
+        {{ table.header }}
 
         <tbody>
-            {# TODO: render_* is bad, Use __html__! #}
-            {{ table.render_tbody }}
+            {{ table.tbody }}
         </tbody>
     </table>
 
