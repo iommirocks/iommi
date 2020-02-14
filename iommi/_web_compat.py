@@ -37,11 +37,10 @@ try:
         @type template: str|django.template.Template|django.template.backends.django.Template
         @type context: dict
         """
-        import six
         from iommi._web_compat import Template
         if template is None:
             return ''
-        elif isinstance(template, six.string_types):
+        elif isinstance(template, str):
             return render_to_string(template_name=template, context=context, request=request)
         elif isinstance(template, Template):
             return template.render(RequestContext(request, context))

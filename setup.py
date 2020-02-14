@@ -14,7 +14,7 @@ def read_reqs(name):
 
 
 def read_version():
-    with open(os.path.join('lib', 'iommi', '__init__.py'), encoding='utf8') as f:
+    with open(os.path.join('iommi', '__init__.py'), encoding='utf8') as f:
         m = re.search(r'''__version__\s*=\s*['"]([^'"]*)['"]''', f.read())
         if m:
             return m.group(1)
@@ -77,8 +77,7 @@ setup(
     author='Anders Hovmöller',
     author_email='anders.hovmoller@trioptima.com',
     url='https://github.com/TriOptima/iommi',
-    packages=find_packages('lib'),
-    package_dir={'': 'lib'},
+    packages=['iommi'],
     include_package_data=True,
     install_requires=['Django >= 2.0'] + read_reqs('requirements.txt'),
     license="BSD",

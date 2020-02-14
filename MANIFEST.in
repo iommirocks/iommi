@@ -4,4 +4,5 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 include requirements.txt
-recursive-include lib/iommi/templates *
+exclude tests/*
+recursive-include iommi/templates *
