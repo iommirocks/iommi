@@ -88,6 +88,7 @@ from iommi.base import (
     path_join,
     Traversable,
     create_as_view_from_as_page,
+    render_attrs,
 )
 from iommi.form import (
     Field,
@@ -103,9 +104,6 @@ from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
     QueryException,
-)
-from iommi.render import (
-    render_attrs,
 )
 
 LAST = LAST

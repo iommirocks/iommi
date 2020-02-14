@@ -1,7 +1,9 @@
 import pytest
 
-from iommi.base import get_style_for
-from iommi.render import render_attrs
+from iommi.base import (
+    get_style_for,
+    render_attrs,
+)
 from iommi.style import (
     Style,
     apply_style_recursively,

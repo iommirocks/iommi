@@ -65,6 +65,7 @@ from iommi.base import (
     Part,
     request_data,
     create_as_view_from_as_page,
+    Errors,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -76,7 +77,6 @@ from iommi.from_model import (
 from iommi.page import (
     Fragment,
 )
-from iommi.render import Errors
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True

@@ -15,7 +15,10 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi.base import Part
+from iommi.base import (
+    Part,
+    Attrs,
+)
 from iommi._web_compat import (
     Template,
 )
@@ -26,7 +29,6 @@ from iommi.base import (
     path_join,
 )
 from iommi.page import Fragment
-from iommi.render import Attrs
 
 
 class MenuBase(Part):

@@ -25,8 +25,8 @@ from iommi.base import (
     EvaluatedRefinable,
     endpoint__debug_tree,
     iommi_debug_on,
+    render_attrs,
 )
-from iommi.render import render_attrs
 from tri_declarative import (
     declarative,
     dispatch,

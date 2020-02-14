@@ -8,7 +8,7 @@ from iommi._web_compat import (
     format_html,
 )
 from iommi.page import Fragment
-from iommi.render import Attrs
+from iommi.base import Attrs
 from tri_struct import Struct
 
 from tests.helpers import req

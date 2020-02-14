@@ -31,6 +31,7 @@ from iommi._web_compat import (
 from iommi.base import (
     InvalidEndpointPathException,
     perform_ajax_dispatch,
+    render_attrs,
 )
 from iommi.form import (
     bool_parse,
@@ -53,7 +54,6 @@ from iommi.from_model import (
 from iommi.page import (
     Page,
 )
-from iommi.render import render_attrs
 from .compat import RequestFactory
 from .helpers import (
     get_attrs,
