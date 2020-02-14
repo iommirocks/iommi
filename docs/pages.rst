@@ -4,6 +4,7 @@ Pages
 iommi pages is used to compose parts of a page into a full page.
 
 .. contents::
+    :local:
 
 Example
 -------

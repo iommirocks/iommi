@@ -14,6 +14,7 @@ API documentation
    Menu
    MenuItem
    Part
+   Page
    Query
    Table
    Traversable

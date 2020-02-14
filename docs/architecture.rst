@@ -1,6 +1,8 @@
 Architecture
 ============
 
+.. contents::
+    :local:
 
 Execution phases
 ----------------

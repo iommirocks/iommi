@@ -1,6 +1,9 @@
 HOWTO
 =====
 
+.. contents::
+    :local:
+
 General
 -------
 

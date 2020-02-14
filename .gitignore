@@ -145,6 +145,7 @@ docs/MenuItem.rst
 docs/Part.rst
 docs/Page.rst
 docs/Traversable.rst
+docs/Fragment.rst
 
 # tests
 results/

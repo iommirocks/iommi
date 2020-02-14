@@ -1,19 +1,14 @@
 Usage
 =====
 
-Add this to settings.py:
+.. contents::
+    :local:
 
-.. code:: python
 
-    # NOTE: if your base template is called "base.html"
-    # then you don't need this!
-    IOMMI_BASE_TEMPLATE = 'my_base.html'
-    # NOTE: if your base template has a content block
-    # called "content" then you don't need this!
-    IOMMI_CONTENT_BLOCK = 'content'
+Install
+-------
 
-The base template is the one containing your `<html>` tag and has `{% block content %}`.
-
+First `pip install iommi`.
 
 Add `iommi` to installed apps:
 
@@ -33,6 +28,23 @@ Add iommi's middleware:
         'iommi.middleware',
     ]
 
+If your base template isn't called `base.html` you need to specify it:
+
+.. code:: python
+
+    IOMMI_BASE_TEMPLATE = 'my_base.html'
+
+(The base template is the one containing your `<html>` tag and has `{% block content %}`.)
+
+If your content block in your base template isn't called `content` you need to specify it:
+
+.. code:: python
+
+    IOMMI_CONTENT_BLOCK = 'main_stuff'
+
+
+Basic usage
+-----------
 
 You can start by importing `Table` from `iommi` to try it out when
 you're just trying it out, but if you want to use iommi long term go read
@@ -63,7 +75,7 @@ When you've done the stuff above you can create a page with a table in it:
         another_column = Column.date()
 
 
-    my_table = MyTable(request=request, data=MyModel.objects.all())
+    my_table = MyTable(request=request, rows=MyModel.objects.all())
 
 and then you can render it in your template:
 
@@ -138,6 +150,13 @@ instead of the corresponding ones from iommi:
     class Page(iommi.Page):
         pass
 
+
+    class Menu(iommi.Menu):
+        pass
+
+
+    class MenuItem(iommi.MenuItem):
+        pass
 
 
 Under the hood

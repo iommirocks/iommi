@@ -3,6 +3,8 @@ Registrations
 
 To make iommi understand the specifics of your code base you can register various handlers and behaviors.
 
+.. contents::
+    :local:
 
 Django custom fields
 ~~~~~~~~~~~~~~~~~~~~

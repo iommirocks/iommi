@@ -18,9 +18,77 @@ All these examples and a bigger example using many more features can be found in
 Read the full documentation and the :doc:`howto` for more.
 
 .. contents::
+    :local:
 
-Simple example
---------------
+
+Creating tables from models
+---------------------------
+
+Say I have some models:
+
+.. code:: python
+
+    class Foo(models.Model):
+        a = models.IntegerField()
+
+        def __str__(self):
+            return 'Foo: %s' % self.a
+
+    class Bar(models.Model):
+        b = models.ForeignKey(Foo)
+        c = models.CharField(max_length=255)
+
+Now I can display a list of `Bar` in a table like this:
+
+.. code:: python
+
+    def my_view(request):
+        return Table(auto__model=Bar)
+
+This automatically creates a table with pagination and sorting. If you pass
+`query_from_indexes=True` you will get filters for all the model fields
+that have database indexes. This filtering system includes an advanced filter
+language. See :doc:`queries` for more on filtering.
+
+
+Explicit tables
+---------------
+
+You can also create tables explicitly:
+
+.. code:: python
+
+    def readme_example_2(request):
+        fill_dummy_data()
+
+        class BarTable(Table):
+            # Shortcut for creating checkboxes to select rows
+            select = Column.select()
+
+            # Show "a" from "b". This works for plain old objects too.
+            a = Column.number(
+                attr='b__a',
+
+                # put this field into the query language
+                query__include=True,
+
+                # put this field into the simple filtering GUI
+                query__form__include=True,
+            )
+            c = Column(
+                # Enable bulk editing for this field
+                bulk=True,
+                query__include=True,
+                query__form__include=True,
+            )
+
+        return BarTable(rows=Bar.objects.all())
+
+This gives me a view with filtering, sorting, bulk edit and pagination.
+
+
+Table of plain python objects
+-----------------------------
 
 .. code:: python
 
@@ -37,9 +105,6 @@ Simple example
 
         # I can declare a table:
         class FooTable(Table):
-            # This is a shortcut that results in the css
-            # class "rj" (for right justified) being added
-            # to the header and cell
             a = Column.number()
 
             b = Column()
@@ -56,56 +121,11 @@ Simple example
             )
 
         # now to get an HTML table:
-        return FooTable(data=foos)
+        return FooTable(rows=foos)
 
 And this is what you get:
 
 .. image:: table_example_1.png
-
-Fancy django features
----------------------
-
-Say I have some models:
-
-.. code:: python
-
-    class Foo(models.Model):
-        a = models.IntegerField()
-
-        def __str__(self):
-            return 'Foo: %s' % self.a
-
-    class Bar(models.Model):
-        b = models.ForeignKey(Foo)
-        c = models.CharField(max_length=255)
-
-Now I can display a list of Bars in a table like this:
-
-.. code:: python
-
-    def readme_example_2(request):
-        fill_dummy_data()
-
-        class BarTable(Table):
-            # Shortcut for creating checkboxes to select rows
-            select = Column.select()
-
-            # Show "a" from "b". This works for plain old objects too.
-            b__a = Column.number(
-                # put this field into the query language
-                query__include=True,
-
-                # put this field into the simple filtering GUI
-                query__form__include=True)
-            c = Column(
-                # Enable bulk editing for this field
-                bulk=True,
-                query_include=True,
-                query__form__include=True)
-
-        return BarTable(data=Bar.objects.all())
-
-This gives me a view with filtering, sorting, bulk edit and pagination.
 
 All these examples and a bigger example using many more features can be found in the examples django project.
 

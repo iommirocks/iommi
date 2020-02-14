@@ -24,15 +24,8 @@ In short we want to be able to have code that reads like:
 
 The philosophy has these main parts:
 
-* `Everything has a name`_
-* `Traversing a namespace is done with __ when . can't be used in normal python syntax`_
-* `Callables for advanced usage, values for the simple cases`_
-* `Late binding`_
-* `Declarative/programmatic hybrid API`_
-* `Prepackaged commonly used patterns (that can still be customized!)`_
-* `Single point customization with no boilerplate`_
-* `Escape hatches included`_
-
+.. contents::
+    :local:
 
 Everything has a name
 ---------------------
@@ -46,8 +39,8 @@ features of iommi and the robust error handling and error messages.
 
 This philosophy is what enables `Single point customization with no boilerplate`_ via :ref:`dispatching`.
 
-Traversing a namespace is done with __ when . can't be used in normal python syntax
------------------------------------------------------------------------------------
+Traversing a namespace is done with `__` when `.` can't be used in normal python syntax
+---------------------------------------------------------------------------------------
 
 If you have a class `Car` that has a member `engine` of type `Engine`. Now
 let's say you want to create a `Car` with an electric engine. In standard

@@ -85,6 +85,21 @@ class Fragment(Part):
     .. code:: python
 
         h1 = html.h1('Tony')
+
+    Fragments are useful because attrs, template and tag are evaluated, so if
+    you have a `Page` with a fragment in it you can configure it later:
+
+    .. code:: python
+
+        class MyPage(Page):
+            header = html.h1(
+                'Hi!',
+                attrs__class__staff=
+                    lambda fragment, **_: fragment.get_request().user.is_staff,
+            )
+
+    Rendering a `MyPage` will result in a `<h1>`, but if you do
+    `MyPage(parts__header__tag='h2')` it will be rendered with a `<h2>`.
     """
 
     attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type

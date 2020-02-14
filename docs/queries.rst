@@ -16,6 +16,9 @@ example.
 
 Read the full documentation and the :doc:`howto` for more.
 
+.. contents::
+    :local:
+
 
 Query language
 --------------
