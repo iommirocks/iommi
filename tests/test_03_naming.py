@@ -99,15 +99,17 @@ def test_evil_names_that_work():
     assert EvilPage().bind(request=req('get')).render_to_response().status_code == 200
 
 
-@pytest.mark.skip('TODO: this test is broken right now :(')
 def test_evil_names():
     class ErrorMessages(Page):
-        iommi_style = Fragment()
         bind = Fragment()
+        iommi_style = Fragment()
+        iommi_path = Fragment()
+        iommi_dunderpath = Fragment()
         on_bind = Fragment()
         own_evaluate_parameters = Fragment()
+        get_request = Fragment()
 
     with pytest.raises(Exception) as e:
         ErrorMessages()
 
-    assert str(e.value) == 'The names .... are reserved by iommi, please pick other names'
+    assert str(e.value) == 'The names bind, get_request, iommi_path, iommi_style, on_bind, own_evaluate_parameters are reserved by iommi, please pick other names'

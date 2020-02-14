@@ -42,6 +42,7 @@ from tri_declarative import (
     setdefaults_path,
     refinable,
     LAST,
+    get_declared,
 )
 from tri_struct import Struct
 
@@ -720,7 +721,18 @@ def no_copy_on_bind(cls):
     return cls
 
 
+FORBIDDEN_NAMES = {x for x in dir(Traversable)}
+
+
+class ForbiddenNamesException(Exception):
+    pass
+
+
 def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type) -> Dict[str, Any]:
+    forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
+    if forbidden_names:
+        raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
+
     assert name != 'items'
     unbound_items = {}
     unapplied_config = {}
