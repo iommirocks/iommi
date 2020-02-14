@@ -254,6 +254,8 @@ semantic_ui_base = Style(
             boolean=dict(
                 template='iommi/form/semantic_ui/row_checkbox.html',
             ),
+            radio__input__template='iommi/form/semantic_ui/radio.html',
+            radio__attrs__class={'grouped fields': True},
         ),
         attrs__class__field=True,
         template='iommi/form/semantic_ui/row.html',
