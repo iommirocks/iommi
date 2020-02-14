@@ -786,11 +786,7 @@ def test_field_from_model_factory_error_message():
     with pytest.raises(AssertionError) as error:
         Field.from_model(FooModel, 'foo')
 
-    acceptable_error_messages = [
-        "No factory for <class 'tests.test_forms.CustomField'>. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type",
-        "No factory for <class 'tests.test_forms.test_field_from_model_factory_error_message.<locals>.CustomField'>. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type",
-    ]
-    assert str(error.value) in acceptable_error_messages
+    assert str(error.value) == "No factory for CustomField. Register a factory with register_field_factory, you can also register one that returns None to not handle this field type"
 
 
 @pytest.mark.django

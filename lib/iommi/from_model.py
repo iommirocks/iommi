@@ -108,7 +108,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 break  # pragma: no mutate optimization
 
     if factory is MISSING:
-        message = 'No factory for %s.' % type(model_field)
+        message = f'No factory for {type(model_field).__name__}.'
         if factory_lookup_register_function is not None:
             message += ' Register a factory with %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
         raise AssertionError(message)
