@@ -95,7 +95,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 factory_lookup_register_function=factory_lookup_register_function,
                 field_name=field_path_rest,
                 **kwargs)
-            result.name = field_name
+            result._name = field_name.replace('__', '_')
             result.attr = field_name
             return result
 

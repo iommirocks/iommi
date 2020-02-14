@@ -1708,7 +1708,6 @@ def test_field_from_model_subtype():
     assert result.parse is int_parse
 
 
-@pytest.mark.skip('TODO: this test is broken right now :(')
 @pytest.mark.django_db
 def test_create_members_from_model_path():
     from .models import Foo, Bar
@@ -1721,8 +1720,9 @@ def test_create_members_from_model_path():
     form = BarForm(instance=bar).bind(request=req('get'))
 
     assert len(form.fields) == 1
-    assert form.fields.foo._name == 'foo__foo'
-    assert form.fields.foo.help_text == 'foo_help_text'
+    assert form.fields.foo_foo.attr == 'foo__foo'
+    assert form.fields.foo_foo._name == 'foo_foo'
+    assert form.fields.foo_foo.help_text == 'foo_help_text'
 
 
 @pytest.mark.django
