@@ -145,6 +145,17 @@ bootstrap_base = Style(
                 label__attrs__class={'form-check-label': True},
                 template='iommi/form/bootstrap/row_checkbox.html',
             ),
+            radio=dict(
+                attrs__class={
+                    'form-group': False,
+                    'form-check': True,
+                },
+                template='iommi/form/bootstrap/row_radio.html',
+                input__attrs__class={
+                    'form-check-input': True,
+                    'form-control': False,
+                },
+            ),
         ),
         attrs__class={
             'form-group': True,
