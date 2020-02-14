@@ -428,7 +428,7 @@ BASE_TEMPLATE_BY_STYLE['semantic_ui'] = 'base_semantic_ui.html'
 
 
 def select_style_post_handler(form, **_):
-    style = form.fields.iommi_style.value
+    style = form.fields.style.value
     base.DEFAULT_STYLE = style
     base.DEFAULT_BASE_TEMPLATE = BASE_TEMPLATE_BY_STYLE[style]
 
@@ -449,7 +449,6 @@ class StyleSelector(Form):
 def menu_test(request):
     class FooPage(Page):
         menu = Menu(
-            attrs__class={'flex-column': True},
             sub_menu=dict(
                 root=MenuItem(url='/'),
 

@@ -38,10 +38,8 @@ class MenuBase(Part):
 
     @dispatch(
         sort=True,
-        attrs__class__nav=True,  # TODO: style!
-        attrs__class={'nav-pills': True},  # TODO: style!
-        tag='ul',  # TODO: style!
         sub_menu=EMPTY,
+        attrs=EMPTY,
     )
     def __init__(self, sub_menu, **kwargs):
         super(MenuBase, self).__init__(**kwargs)
@@ -50,7 +48,7 @@ class MenuBase(Part):
             self,
             name='sub_menu',
             items=sub_menu,
-            # TODO: cls=self.get_meta().menu_item_class,
+            # TODO: cls=self.get_meta().member_class,
             cls=MenuItem,
         )
 
@@ -63,7 +61,6 @@ class MenuBase(Part):
     def on_bind(self):
         bind_members(self, name='sub_menu')
 
-        # TODO:
         if self.sort:
             self.sub_menu = Struct({
                 item._name: item
@@ -90,12 +87,12 @@ class MenuItem(MenuBase):
         display_name=lambda menu_item, **_: menu_item._name.title().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
-        tag='li',
+        a__tag='a',
     )
-    def __init__(self, **kwargs):
+    def __init__(self, *, a, **kwargs):
         super(MenuItem, self).__init__(**kwargs)
         self.fragment = None
-        self.a = None
+        self.a = a
 
     def on_bind(self):
         super(MenuItem, self).on_bind()
@@ -105,9 +102,8 @@ class MenuItem(MenuBase):
             self.include = False
 
         self.a = Fragment(
-            tag='a',
             attrs__href=self.url,
-            attrs__class={'nav-link': True},  # TODO: style!
+            **self.a,
             child=self.display_name,
         ).bind(parent=self)
         self.fragment = Fragment(
@@ -203,4 +199,5 @@ class Menu(MenuBase):
                     current_parts_matching = matching_parts
 
         if current:
+            current[0].a.attrs.setdefault('class', {})
             current[0].a.attrs['class']['active'] = True

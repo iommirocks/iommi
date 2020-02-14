@@ -202,6 +202,17 @@ bootstrap_base = Style(
         )
     ),
     Query__form__iommi_style='bootstrap_horizontal',
+    MenuBase=dict(
+        attrs__class__nav=True,
+        attrs__class={'nav-pills': True},
+        tag='ul',
+    ),
+    Menu__attrs__class={'flex-column': True, 'nav': True, 'nav-pills': True},
+    MenuItem=dict(
+        tag='li',
+        a__attrs__class={'nav-link': True},
+        attrs__class={'nav-item': True},
+    ),
     Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
         container__attrs__class__pagination=True,
@@ -298,6 +309,11 @@ semantic_ui_base = Style(
         )
     ),
     Query__form__attrs__class__fields=True,
+    Menu=dict(
+        attrs__class=dict(ui=True, menu=True, vertical=True),
+        tag='div',
+    ),
+    MenuItem__a__attrs__class__item=True,
     Paginator=dict(
         template='iommi/table/semantic_ui/paginator.html',
         item__attrs__class__item=True,
@@ -383,25 +399,31 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     parameter is primarily used by tests.
     """
     from iommi import (
+        Action,
+        Column,
         Field,
         Form,
-        Column,
+        Menu,
+        MenuItem,
+        Query,
         Table,
         Variable,
-        Query,
-        Action,
     )
     from iommi.table import Paginator
+    from iommi.menu import MenuBase
     if default_classes is None:
         default_classes = [
+            Action,
+            Column,
             Field,
             Form,
-            Column,
+            Menu,
+            MenuBase,
+            MenuItem,
+            Paginator,
+            Query,
             Table,
             Variable,
-            Query,
-            Action,
-            Paginator,
         ]
     if additional_classes is None:
         additional_classes = []
