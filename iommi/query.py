@@ -558,6 +558,9 @@ class Query(Part):
         context=EMPTY,
     )
     def __html__(self, *, context=None, render=None):
+        if not self.bound_members.variables.bound_members:
+            return ''
+
         setdefaults_path(
             render,
             context=context,
