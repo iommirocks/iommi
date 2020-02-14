@@ -77,11 +77,10 @@ for specific model in the advanced mode:
         query = CarQuery()
         query.bind(request=request)
         cars_query_set = query.get_q()
-        form = query.form
         return render(
             template_name='cars.html',
             context={
-                'query_form': form,
+                'query': query,
                 'cars': cars_query_set,
             },
         )
@@ -90,7 +89,7 @@ for specific model in the advanced mode:
 .. code:: html
 
     <!-- cars.html -->
-    {% include "iommi/form.html" with form=query_form %}
+    {{ query }}
 
     <ul>
         {% for car in cars %}

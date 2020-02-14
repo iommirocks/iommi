@@ -194,23 +194,49 @@ def perform_post_dispatch(*, root, path, value):
 
 def endpoint__debug_tree(endpoint, **_):
     root = endpoint._parent._parent
+    assert root._is_bound
 
     def rows(node, name='', path=None):
         if path is None:
             path = []
+        is_struct = type(node) is Struct
+        is_bound = getattr(node, '_is_bound', False)
+
+        try:
+            p = node.iommi_path if is_bound else None
+        except PathNotFoundException:
+            p = None
+
+        type_name = type(node).__name__ if not is_struct else None
+        base_type_name = type_name
+        if isinstance(node, Members) and node.declared_members:
+            if name == 'parts':
+                member_type = 'Part'
+            else:
+                member_type = type(list(node.declared_members.values())[0]).__name__
+            type_name = f'Members[{member_type}]'
+
         yield Struct(
             name=name,
             obj=node,
-            type=type(node).__name__ if type(node) is not Struct else None,
-            path='/'.join(path),
+            type=type_name,
+            base_type=base_type_name,
+            path=p,
+            # TODO: seems a bit strange we can't use dunder_path on collected members. We should be able to set parent earlier
+            # dunder_path=node.iommi_dunder_path if not is_struct else None,
             dunder_path='__'.join(path),
+            included=is_bound
         )
 
-        children = []
         if isinstance(node, dict):
-            children += list(node.items())
-        if isinstance(node, Traversable):
-            children += list(node.declared_members.items())
+            children = list(node.items())
+        elif isinstance(node, Traversable):
+            children = [
+                (k, v if not node.bound_members or k not in node.bound_members else node.bound_members[k])
+                for k, v in node.declared_members.items()
+            ]
+        else:
+            assert False
 
         for k, v in children:
             yield from rows(v, name=k, path=path + [k])
@@ -221,6 +247,8 @@ def endpoint__debug_tree(endpoint, **_):
     )
 
     def dunder_path__value(row, **_):
+        if row.dunder_path is None:
+            return ''
         prefix = row.dunder_path.rpartition('__')[0]
         return format_html(
             '<span class="full-path">{prefix}{separator}</span>{name}',
@@ -237,7 +265,14 @@ def endpoint__debug_tree(endpoint, **_):
                         opacity: 0.0;
                     }
                     tr:hover .full-path {
-                        opacity: 0.8;
+                        opacity: 0.6;
+                    }
+                    
+                    tr {
+                        opacity: 0.4;
+                    }
+                    tr.included {
+                        opacity: 1;
                     }
                     
                 </style>
@@ -245,14 +280,16 @@ def endpoint__debug_tree(endpoint, **_):
                 {% include "iommi/table/table.html" %}            
             """)
             sortable = False
+            row__attrs__class__included = lambda row, **_: row.included
 
         dunder_path = Column(
             cell__value=dunder_path__value,
         )
         path = Column()
         type = Column(
-            cell__url=lambda row, value, **_: f'https://docs.iommi.rocks/en/latest/{value}.html' if value else None
+            cell__url=lambda row, **_: f'https://docs.iommi.rocks/en/latest/{row.base_type}.html' if row.base_type else None
         )
+        included = Column.boolean()
 
     request = HttpRequest()
     request.method = 'GET'
@@ -368,6 +405,7 @@ class Traversable(RefinableObject):
 
     @dispatch
     def __init__(self, _name=None, **kwargs):
+        # TODO: _ prefix on some of these?
         self.declared_members = Struct()
         self.unapplied_config = Struct()
         self.bound_members = None

@@ -1252,8 +1252,7 @@ class Table(Part):
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
 
         self.query_args = query
-        self._query: Query = None
-        self._query_form: Form = None
+        self.query: Query = None
 
         self._bulk_form: Form = None
         self.header_levels = None
@@ -1283,12 +1282,12 @@ class Table(Part):
 
             declared_variables = Struct({x._name: x for x in generate_variables()})
 
-            self._query = self.get_meta().query_class(
+            self.query = self.get_meta().query_class(
                 _variables_dict=declared_variables,
                 _name='query',
                 **self.query_args
             )
-            self.declared_members.query = self._query
+            self.declared_members.query = self.query
 
             # Bulk
             def generate_bulk_fields():
@@ -1381,18 +1380,18 @@ class Table(Part):
                     yield name, query_namespace
 
 
-            self._query.unapplied_config.variables = Struct(generate_variables_unapplied_config())
-            self._query.bind(parent=self)
-            self._query_form = self._query.form if self._query.variables else None
-            self.bound_members.query = self._query
+            self.query.unapplied_config.variables = Struct(generate_variables_unapplied_config())
+            self.query.bind(parent=self)
+            self.bound_members.query = self.query
 
-            if self._query_form:
+            # TODO: why isn't this done inside Query?
+            if self.query.form:
                 try:
                     q = self.query.get_q()
                     if q:
                         self.rows = self.rows.filter(q)
                 except QueryException as e:
-                    self._query.extra.iommi_query_error = str(e)
+                    self.query.extra.iommi_query_error = str(e)
 
             def generate_bulk_fields_unapplied_config():
                 for name, column in self.columns.items():
@@ -1563,15 +1562,6 @@ class Table(Part):
             self.header_levels = [superheaders, subheaders]
 
     # TODO: clear out as many as these properties as we can
-    @property
-    def query(self) -> Query:
-        assert self._is_bound
-        return self._query
-
-    @property
-    def query_form(self) -> Form:
-        assert self._is_bound
-        return self._query_form
 
     @property
     def bulk_form(self) -> Form:
@@ -1645,7 +1635,7 @@ class Table(Part):
 
         self.context = context
 
-        if self.query_form and not self.query_form.is_valid():
+        if self.query and self.query.form and not self.query.form.is_valid():
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 

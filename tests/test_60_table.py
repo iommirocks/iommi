@@ -187,8 +187,8 @@ def test_django_table():
     assert t.bulk_form._is_bound
     assert list(t.bulk_form.fields['foo'].choices) == list(TFoo.objects.all())
 
-    assert t.query_form._is_bound
-    assert list(t.query_form.fields['foo'].choices) == list(TFoo.objects.all())
+    assert t.query.form._is_bound
+    assert list(t.query.form.fields['foo'].choices) == list(TFoo.objects.all())
 
     verify_table_html(table=t, expected_html="""
         <table class="table" data-endpoint="/tbody">
@@ -1344,7 +1344,7 @@ def test_choice_queryset():
 
     assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.filter(a=1))
     assert repr(foo_table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
-    assert repr(foo_table.query_form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.query.form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
 
 
 @pytest.mark.django_db
@@ -1367,7 +1367,7 @@ def test_multi_choice_queryset():
 
     assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
     assert repr(foo_table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.query_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(foo_table.query.form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
 
 
 @pytest.mark.django_db
