@@ -19,17 +19,19 @@ from tri_struct import Struct
 
 from iommi.base import (
     Part,
-    Attrs,
+    bind_members,
 )
 from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    bind_members,
     collect_members,
-    EvaluatedRefinable,
     path_join,
 )
+from iommi.traversable import (
+    EvaluatedRefinable,
+)
+from iommi.attrs import Attrs
 from iommi.page import Fragment
 
 

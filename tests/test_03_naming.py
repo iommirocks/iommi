@@ -6,9 +6,7 @@ from iommi import (
     Form,
     Table,
 )
-from iommi.base import (
-    build_long_path_by_path,
-)
+from iommi.traversable import build_long_path_by_path
 from iommi.page import (
     Fragment,
     Page,

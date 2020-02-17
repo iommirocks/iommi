@@ -12,7 +12,7 @@ from iommi import (
     Table,
     middleware,
 )
-from iommi.base import (
+from iommi.traversable import (
     Traversable,
     no_copy_on_bind,
 )

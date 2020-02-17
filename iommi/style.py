@@ -4,12 +4,29 @@ from typing import (
     Type,
 )
 
-from iommi.base import Traversable
+from django.conf import settings
 from tri_declarative import (
     Namespace,
     RefinableObject,
     get_shortcuts_by_name,
 )
+
+
+DEFAULT_STYLE = 'bootstrap'
+
+
+def apply_style(obj):
+    style = get_style_obj_for_object(style=get_style_for(obj), obj=obj)
+    apply_style_recursively(style_data=style, obj=obj)
+
+
+def get_style_for(obj):
+    if obj.iommi_style is not None:
+        return obj.iommi_style
+    if obj._parent is not None:
+        return get_style_for(obj._parent)
+
+    return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
 
 def _style_name_for_class(cls):
@@ -18,6 +35,7 @@ def _style_name_for_class(cls):
 
 def class_names_for(cls):
     from iommi.base import Part  # avoid circular import
+    from iommi.traversable import Traversable
 
     for base_class in reversed(cls.mro()):
         if base_class in (object, Part, RefinableObject, Traversable):

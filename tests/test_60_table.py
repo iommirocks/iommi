@@ -18,10 +18,10 @@ from tri_declarative import (
 )
 
 from iommi import Action
-from iommi.base import (
+from iommi.endpoint import (
     find_target,
-    InvalidEndpointPathException,
     perform_ajax_dispatch,
+    InvalidEndpointPathException,
 )
 from iommi.form import (
     Field,

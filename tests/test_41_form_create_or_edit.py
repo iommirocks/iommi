@@ -4,7 +4,7 @@ import pytest
 from django.test import override_settings
 from tri_struct import merged
 
-from iommi.base import DISPATCH_PATH_SEPARATOR
+from iommi.endpoint import DISPATCH_PATH_SEPARATOR
 from iommi.form import (
     create_or_edit_object_redirect,
     Form,

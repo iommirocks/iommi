@@ -17,16 +17,20 @@ from iommi._web_compat import (
 )
 from iommi.base import (
     as_html,
-    build_long_path,
-    evaluate_attrs,
-    evaluate_strict_container,
-    find_target,
-    InvalidEndpointPathException,
     Part,
-    perform_post_dispatch,
-    should_include,
     request_data,
 )
+from iommi.endpoint import (
+    find_target,
+    perform_post_dispatch,
+    InvalidEndpointPathException,
+)
+from iommi.traversable import (
+    should_include,
+    evaluate_strict_container,
+    build_long_path,
+)
+from iommi.attrs import evaluate_attrs
 from iommi.page import (
     html,
     Page,

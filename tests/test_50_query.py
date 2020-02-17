@@ -18,9 +18,9 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import (
-    perform_ajax_dispatch,
     request_data,
 )
+from iommi.endpoint import perform_ajax_dispatch
 from iommi.form import (
     Field,
     Form,
