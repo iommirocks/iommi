@@ -687,12 +687,10 @@ class BoundRow(Traversable):
             context = dict(bound_row=self, row=self.row, **self._parent.context)
             return render_template(self._parent.get_request(), self.template, context)
 
-        return format_html('<tr{}>{}</tr>', self.attrs, self.rendered_cells)
+        return format_html('<tr{}>{}</tr>', self.attrs, mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self)))
 
-    # TODO: this is a property for just one test in jinja2 mode. Seems not very useful.
-    @property
-    def rendered_cells(self):
-        return mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))
+    def __str__(self):
+        return self.__html__()
 
     def __iter__(self):
         for column in self._parent.rendered_columns.values():
@@ -703,7 +701,7 @@ class BoundRow(Traversable):
         return BoundCell(bound_row=self, column=column)
 
 
-# TODO: make this a Part?
+# TODO: make this a Traversable
 class BoundCell(object):
 
     def __init__(self, bound_row: BoundRow, column):
@@ -758,7 +756,7 @@ class BoundCell(object):
         return self.__html__()
 
     def __repr__(self):
-        return f"<{type(self).__name__} column={self.column.declared_column} row={self.bound_row.row}>"  # pragma: no cover
+        return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.bound_row.row}!r>"  # pragma: no cover
 
 
 class TemplateConfig(RefinableObject):

@@ -1082,7 +1082,7 @@ def test_template_string(NoSortTable):
             header__template = Template('What headers')
             query__template = Template('What filters')
 
-            row__template = Template('Oh, rows: {{ bound_row.rendered_cells }}')
+            row__template = Template('Oh, rows: {% for cell in bound_row %}{{ cell }}{% endfor %}')
 
         a = Column(
             cell__template=Template('Custom cell: {{ row.a }}'),
