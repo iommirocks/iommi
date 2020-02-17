@@ -783,7 +783,7 @@ def test_bulk_edit():
     ).bind(
         request=req('get'),
     ).__html__()
-    assert '<form action="" method="post">' in result, result
+    assert '<form action="" enctype="multipart/form-data" method="post">' in result, result
     assert '<input accesskey="s" name="-bulk/submit" type="submit" value="Bulk change">' in result, result
 
     def post_bulk_edit(table, queryset, updates, **_):

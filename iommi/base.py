@@ -410,7 +410,7 @@ class Traversable(RefinableObject):
     def __init__(self, _name=None, **kwargs):
         self._declared_members = Struct()
         self._unapplied_config = Struct()
-        self._bound_members = None
+        self._bound_members = Struct()
         self._evaluate_parameters = None
         self._name = _name
 
@@ -465,7 +465,6 @@ class Traversable(RefinableObject):
 
         result._parent = parent
         result._is_bound = True
-        result._bound_members = Struct()
 
         apply_style(result)
 
@@ -787,14 +786,19 @@ class Members(Traversable):
     def __init__(self, *, _declared_members, **kwargs):
         super(Members, self).__init__(**kwargs)
         self._declared_members = _declared_members
+        self._bound_members = Struct()
 
     def on_bind(self) -> None:
-        bound_items = sort_after([
-            m.bind(parent=self)
-            for m in self._declared_members.values()
-        ])
+        for m in self._declared_members.values():
+            bound = m.bind(parent=self)
+            del m  # to not make a mistake below
+            if should_include(bound):
+                self._bound_members[bound._name] = bound
 
-        self._bound_members = Struct({item._name: item for item in bound_items if should_include(item)})
+        # TODO: sort_after in place!
+        bound_items = {x._name: x for x in sort_after([m for m in self._bound_members.values()])}
+        self._bound_members.clear()
+        self._bound_members.update(bound_items)
 
 
 def bind_members(parent: Part, *, name: str) -> None:
@@ -802,9 +806,9 @@ def bind_members(parent: Part, *, name: str) -> None:
         _name=name,
         _declared_members=parent._declared_members[name],
     )
-    m.bind(parent=parent)
     setattr(parent, name, m._bound_members)
     setattr(parent._bound_members, name, m)
+    m.bind(parent=parent)
 
 
 def evaluate_members(obj, keys, **kwargs):

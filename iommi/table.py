@@ -632,6 +632,15 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
+        bulk__call_target__attribute='file',
+        query__call_target__attribute='file',
+        cell__format=lambda value, **_: str(value)
+    )
+    def file(cls, call_target, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
         call_target__attribute='multi_choice_queryset',
         bulk__call_target__attribute='many_to_many',
         query__call_target__attribute='many_to_many',

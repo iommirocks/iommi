@@ -23,3 +23,7 @@ class TFoo(models.Model):
 class TBar(models.Model):
     b = models.ForeignKey(TFoo, on_delete=models.CASCADE)
     c = models.CharField(max_length=255)
+
+
+class UploadModel(models.Model):
+    f = models.FileField()

@@ -181,6 +181,8 @@ class KitchenForm(Form):
         editable=False
     )
 
+    textarea = Field.textarea(initial='initial value')
+
 
 class SinkForm(Form):
     class Meta:

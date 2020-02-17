@@ -403,6 +403,13 @@ class Variable(Part):
 
     @classmethod
     @class_shortcut(
+        form__call_target__attribute='file',
+    )
+    def file(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
         call_target__attribute='choice_queryset',
     )
     def foreign_key(cls, model_field, call_target, **kwargs):

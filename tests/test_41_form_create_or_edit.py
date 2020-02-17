@@ -1,18 +1,21 @@
 import json
 
 import pytest
-from bs4 import BeautifulSoup
 from django.test import override_settings
-from iommi.base import DISPATCH_PATH_SEPARATOR
-from iommi.form import (
-    Form,
-    INITIALS_FROM_GET,
-    create_or_edit_object_redirect,
-    FULL_FORM_FROM_REQUEST,
-)
 from tri_struct import merged
 
-from tests.helpers import req, remove_csrf, prettify
+from iommi.base import DISPATCH_PATH_SEPARATOR
+from iommi.form import (
+    create_or_edit_object_redirect,
+    Form,
+    FULL_FORM_FROM_REQUEST,
+    INITIALS_FROM_GET,
+)
+from tests.helpers import (
+    prettify,
+    remove_csrf,
+    req,
+)
 
 
 @pytest.mark.django_db
@@ -30,7 +33,6 @@ def test_create_and_edit_object():
     )
     p.bind(request=request)
     response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
-    form = p.parts.create
     assert response['context']['csrf_token']
 
     p = Form.as_create_page(
@@ -56,6 +58,7 @@ def test_create_and_edit_object():
     assert form.fields['f_int'].initial == 1
     assert form.fields['f_int'].errors == set()
     assert form.fields['f_int'].value == 1
+    assert form.fields['f_float'].initial == 2
     assert form.fields['f_float'].value == 2
     assert form.fields['f_bool'].value is None
     assert set(form.fields.keys()) == {'f_int', 'f_float', 'f_bool', 'f_foreign_key', 'f_many_to_many'}
@@ -257,7 +260,7 @@ def test_create_or_edit_object_full_template(name):
         <h1>
             Create foo
         </h1>
-        <form action="" method="post">
+        <form action="" enctype="multipart/form-data" method="post">
             <div>
                 <label for="id_foo">
                     Foo

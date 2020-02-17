@@ -57,9 +57,6 @@ base = Style(
     ),
     Field=dict(
         shortcuts=dict(
-            textarea=dict(
-                input__template='iommi/form/textarea.html',
-            ),
             boolean=dict(
                 input__attrs__type='checkbox',
             ),

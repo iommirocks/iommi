@@ -38,6 +38,7 @@ from tri_declarative import (
     setdefaults_path,
     Shortcut,
     with_meta,
+    evaluate_strict,
 )
 from tri_struct import Struct
 
@@ -362,6 +363,13 @@ def default_input_id(field, **_):
     return f'id_{field.iommi_path.replace("/", "__")}'
 
 
+def file__raw_data(form, field, **_):
+    request = form.get_request()
+    if field.iommi_path not in request.FILES:
+        return None
+    return request.FILES[field.iommi_path]
+
+
 @with_meta
 class Field(Part):
     """
@@ -381,11 +389,11 @@ class Field(Part):
 
     # raw_data/raw_data contains the strings grabbed directly from the request data
     # It is useful that they are evaluated for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
-    raw_data: str = EvaluatedRefinable()
-    raw_data_list: List[str] = EvaluatedRefinable()
+    raw_data: str = Refinable()  # raw_data is evaluated, but in a special way
+    raw_data_list: List[str] = Refinable()  # raw_data_list is evaluated, but in a special way
 
     parse_empty_string_as_none: bool = EvaluatedRefinable()
-    initial: Any = EvaluatedRefinable()
+    initial: Any = Refinable()  # initial is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -402,7 +410,7 @@ class Field(Part):
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
 
-    choices: Callable[['Form', 'Field', str], List[Any]] = EvaluatedRefinable()
+    choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
     choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
     choice_tuples = EvaluatedRefinable()
     errors: Errors = Refinable()
@@ -539,12 +547,75 @@ class Field(Part):
         if form.editable is False:
             self.editable = False
 
-        self._set_initial()
+        self._read_initial()
         self._read_raw_data()
 
-        self._evaluate()
+        # Not strict evaluate on purpose
+        self.model = evaluate(self.model, **self._evaluate_parameters)
 
-    def _set_initial(self):
+        self.choices = evaluate_strict(self.choices, **self._evaluate_parameters)
+        self.initial = evaluate_strict(self.initial, **self._evaluate_parameters)
+
+        self._parse()
+        self._validate()
+
+        self.input = self.input.bind(parent=self)
+        self.label = self.label.bind(parent=self)
+        assert not self.label.children
+        self.label.children = [self.display_name]
+
+        if not self.editable:
+            # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
+            self.input.template = 'iommi/form/non_editable.html'
+
+    def _parse(self):
+        if not self.editable:
+            return
+
+        if self.form.mode is INITIALS_FROM_GET and self.raw_data is None and self.raw_data_list is None:
+            return
+
+        if self.is_list:
+            if self.raw_data_list is not None:
+                # TODO: this seems silly... why are we going across the form?
+                self.parsed_data = [self.form.parse_field_raw_value(self, x) for x in self.raw_data_list]
+            else:
+                self.parsed_data = None
+        elif self.is_boolean:
+            # TODO: this seems silly... why are we going across the form?
+            self.parsed_data = self.form.parse_field_raw_value(self, '0' if self.raw_data is None else self.raw_data)
+        else:
+            if self.raw_data == '' and self.parse_empty_string_as_none:
+                self.parsed_data = None
+            elif self.raw_data is not None:
+                # TODO: this seems silly... why are we going across the form?
+                self.parsed_data = self.form.parse_field_raw_value(self, self.raw_data)
+            else:
+                self.parsed_data = None
+
+    def _validate(self):
+        form = self.form
+        if (not self.editable) or (form.mode is INITIALS_FROM_GET and self.raw_data is None and not self.raw_data_list):
+            self.value = self.initial
+            return
+
+        value = None
+        if self.is_list:
+            if self.parsed_data is not None:
+                # TODO: this seems silly... why are we going across the form?
+                value = [form.validate_field_parsed_data(self, x) for x in self.parsed_data if x is not None]
+        else:
+            if self.parsed_data is not None:
+                # TODO: this seems silly... why are we going across the form?
+                value = form.validate_field_parsed_data(self, self.parsed_data)
+
+        if not self.errors:
+            if form.mode is FULL_FORM_FROM_REQUEST and self.required and value in [None, '']:
+                self.errors.add('This field is required')
+            else:
+                self.value = value
+
+    def _read_initial(self):
         form = self._parent._parent
         if self.include and form.instance is not None:
             if self.attr:
@@ -554,6 +625,13 @@ class Field(Part):
                 self.initial = initial
 
     def _read_raw_data(self):
+        if self.raw_data is not None:
+            self.raw_data = evaluate_strict(self.raw_data, **self._evaluate_parameters)
+            return
+        if self.raw_data_list is not None:
+            self.raw_data_list = evaluate_strict(self.raw_data_list, **self._evaluate_parameters)
+            return
+
         form = self._parent._parent
 
         if self.is_list:
@@ -579,21 +657,6 @@ class Field(Part):
             if self.raw_data and self.strip_input:
                 self.raw_data = self.raw_data.strip()
 
-    def _evaluate(self):
-        """
-        Evaluates callable/lambda members. After this function is called all members will be values.
-        """
-        self.input = self.input.bind(parent=self)
-        self.label = self.label.bind(parent=self)
-        assert not self.label.children
-        self.label.children = [self.display_name]
-
-        if not self.editable:
-            # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
-            self.input.template = 'iommi/form/non_editable.html'
-
-        # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
         return dict(form=self._parent, field=self)
@@ -665,6 +728,8 @@ class Field(Part):
     @class_shortcut(
         input__tag='textarea',
         input__attrs__type=None,
+        input__attrs__value=None,
+        input__child=lambda field, **_: field.rendered_value,
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -842,6 +907,7 @@ class Field(Part):
     @classmethod
     @class_shortcut(
         input__attrs__type='file',
+        raw_data=file__raw_data,
         write_to_instance=file_write_to_instance,
     )
     def file(cls, call_target=None, **kwargs):
@@ -966,6 +1032,7 @@ class Form(Part):
         fields=EMPTY,
         attrs__action='',
         attrs__method='post',
+        attrs__enctype='multipart/form-data',
         actions__submit__call_target__attribute='submit',
         auto=EMPTY,
     )
@@ -1004,12 +1071,14 @@ class Form(Part):
         request = self.get_request()
         self._request_data = request_data(request)
 
+        # Actions have to be bound first because is_target() needs it
         bind_members(self, name='actions')
-        bind_members(self, name='fields')
-        bind_members(self, name='endpoints')
 
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
+
+        bind_members(self, name='fields')
+        bind_members(self, name='endpoints')
 
         self.is_valid()
 
@@ -1079,51 +1148,7 @@ class Form(Part):
                 assert msg != ''
                 field.errors.add(msg)
 
-    def parse(self):
-        for field in self.fields.values():
-            if not field.editable:
-                continue
-
-            if self.mode is INITIALS_FROM_GET and field.raw_data is None and field.raw_data_list is None:
-                continue
-
-            if field.is_list:
-                if field.raw_data_list is not None:
-                    field.parsed_data = [self.parse_field_raw_value(field, x) for x in field.raw_data_list]
-                else:
-                    field.parsed_data = None
-            elif field.is_boolean:
-                field.parsed_data = self.parse_field_raw_value(field, '0' if field.raw_data is None else field.raw_data)
-            else:
-                if field.raw_data == '' and field.parse_empty_string_as_none:
-                    field.parsed_data = None
-                elif field.raw_data is not None:
-                    field.parsed_data = self.parse_field_raw_value(field, field.raw_data)
-                else:
-                    field.parsed_data = None
-
     def validate(self):
-        self.parse()
-
-        for field in self.fields.values():
-            if (not field.editable) or (self.mode is INITIALS_FROM_GET and field.raw_data is None and not field.raw_data_list):
-                field.value = field.initial
-                continue
-
-            value = None
-            if field.is_list:
-                if field.parsed_data is not None:
-                    value = [self.validate_field_parsed_data(field, x) for x in field.parsed_data if x is not None]
-            else:
-                if field.parsed_data is not None:
-                    value = self.validate_field_parsed_data(field, field.parsed_data)
-
-            if not field.errors:
-                if self.mode is FULL_FORM_FROM_REQUEST and field.required and value in [None, '']:
-                    field.errors.add('This field is required')
-                else:
-                    field.value = value
-
         for field in self.fields.values():
             field.post_validation(form=self, field=field)
         self.post_validation(form=self)

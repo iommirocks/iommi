@@ -6,6 +6,10 @@ from datetime import (
     time,
 )
 from decimal import Decimal
+from io import (
+    StringIO,
+    BytesIO,
+)
 
 import pytest
 from bs4 import BeautifulSoup
@@ -411,11 +415,17 @@ def test_text_field():
 
 
 def test_textarea_field():
-    rendered_form = str(Form(fields__foo=Field.textarea(initial='test')).bind(request=req('get')))
+    form = Form(fields__foo=Field.textarea(initial='test')).bind(request=req('get'))
+    assert form.fields.foo.initial == 'test'
+    assert form.fields.foo.value == 'test'
+    assert form.fields.foo.rendered_value == 'test'
+    rendered_form = str(form)
     foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
+    print(foo)
     assert foo.name == 'textarea', rendered_form
     assert get_attrs(foo, ['type']) == {'type': None}
     assert foo.text == 'test'
+    assert 'value="test">' not in rendered_form
 
 
 def test_integer_field():
@@ -1219,22 +1229,26 @@ def test_boolean_initial_true():
 def test_file():
     class FooForm(Form):
         foo = Field.file(required=False)
-    form = FooForm().bind(request=req('get', foo='1'))
+
+    file_data = '1'
+    fake_file = StringIO(file_data)
+
+    form = FooForm().bind(request=req('post', foo=fake_file))
     instance = Struct(foo=None)
     assert form.is_valid() is True
     form.apply(instance)
-    assert instance.foo == '1'
+    assert instance.foo.file.getvalue() == b'1'
 
     # Non-existent form entry should not overwrite data
-    form = FooForm().bind(request=req('get', foo=''))
+    form = FooForm().bind(request=req('post', foo=''))
     assert form.is_valid(), {x._name: x.errors for x in form.fields}
     form.apply(instance)
-    assert instance.foo == '1'
+    assert instance.foo.file.getvalue() == b'1'
 
-    form = FooForm().bind(request=req('get'))
+    form = FooForm().bind(request=req('post'))
     assert form.is_valid(), {x._name: x.errors for x in form.fields}
     form.apply(instance)
-    assert instance.foo == '1'
+    assert instance.foo.file.getvalue() == b'1'
 
 
 @pytest.mark.django
@@ -1242,7 +1256,9 @@ def test_file_no_roundtrip():
     class FooForm(Form):
         foo = Field.file(is_valid=lambda form, field, parsed_data: (False, 'invalid!'))
 
-    form = FooForm().bind(request=req('post', foo=b'binary_content_here'))
+    fake_file = BytesIO(b'binary_content_here')
+
+    form = FooForm().bind(request=req('post', foo=fake_file))
     assert form.is_valid() is False, form.get_errors()
     assert 'binary_content_here' not in form.__html__()
 
@@ -1472,7 +1488,7 @@ def test_render():
         bar = Field()
 
     expected_html = """
-        <form action="" method="post">
+        <form action="" enctype="multipart/form-data" method="post">
             <div>
                 <label for="id_bar">
                     Bar
