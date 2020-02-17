@@ -219,6 +219,9 @@ bootstrap_base = Style(
         link__attrs__class={'page-link': True},
         item__attrs__class={'page-item': True},
     ),
+    Errors=dict(
+        attrs__class={'text-danger': True},
+    ),
 )
 
 bootstrap = Style(
@@ -409,10 +412,12 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     )
     from iommi.table import Paginator
     from iommi.menu import MenuBase
+    from iommi.base import Errors
     if default_classes is None:
         default_classes = [
             Action,
             Column,
+            Errors,
             Field,
             Form,
             Menu,

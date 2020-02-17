@@ -588,8 +588,8 @@ class Field(Part):
         """
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
-        assert not self.label._children
-        self.label._children = [self.display_name]
+        assert not self.label.children
+        self.label.children = [self.display_name]
 
         if not self.editable:
             # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?

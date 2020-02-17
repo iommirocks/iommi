@@ -329,7 +329,6 @@ def test_parse_errors(MyTestForm):
 def test_initial_from_instance():
     assert Form(
         instance=Struct(a=Struct(b=7)),
-        # TODO: this can't be rewritten as fields__a__b=Field() we should talk about that
         fields__foo=Field(attr='a__b'),
     ).bind(
         request=req('get'),

@@ -964,6 +964,8 @@ class Errors(set):
         self._parent = parent
         self.attrs = attrs
         self.template = template
+        self.iommi_style = None
+        apply_style(self)
 
     def __str__(self):
         return self.__html__()
@@ -982,5 +984,5 @@ class Errors(set):
             tag='ul',
             attrs=self.attrs,
             template=self.template,
-            children=[Fragment(tag='li') for error in self],
+            children=[Fragment(error, tag='li') for error in self],
         ).bind(parent=self._parent).__html__()

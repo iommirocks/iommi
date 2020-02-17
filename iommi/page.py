@@ -112,25 +112,25 @@ class Fragment(Part):
     def __init__(self, child: PartType = None, *, children: Optional[List[PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
 
-        self._children = []  # TODO: _children to avoid colliding with Parts children() API. Not nice. We should do something nicer here.
+        self.children = []
         if child is not None:
-            self._children.append(child)
+            self.children.append(child)
 
-        self._children.extend(children or [])
+        self.children.extend(children or [])
 
     def render_text_or_children(self, context):
         return format_html(
-            '{}' * len(self._children),
+            '{}' * len(self.children),
             *[
                 as_html(part=x, context=context)
-                for x in self._children
+                for x in self.children
             ])
 
     def __repr__(self):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self._children = [evaluate_strict(x, **self.evaluate_parameters) for x in self._children]
+        self.children = [evaluate_strict(x, **self.evaluate_parameters) for x in self.children]
 
     @dispatch(
         context=EMPTY,

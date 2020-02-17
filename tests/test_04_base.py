@@ -89,7 +89,7 @@ def test_dispatch_error_message_to_client():
 
 def test_find_target():
     # To build paths: declared_members: Struct, and optionally name
-    # To find target: _long_path_by_path: Dict on root, children()
+    # To find target: _long_path_by_path: Dict on root
 
     bar = StubTraversable(_name='bar')
     foo = StubTraversable(

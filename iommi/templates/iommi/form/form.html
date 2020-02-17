@@ -2,12 +2,7 @@
 
     {% block before_fields %}{% endblock %}
 
-    {% for error in form.errors %}
-    {# TODO: style classes.. and why isn't this just {{ form.errors? }} #}
-    <div class="error">{{ error }}</div>
-    {% endfor %}
-
+    {{ form.errors }}
     {{ form.render_fields }}
-
     {{ form.render_actions }}
 </form>
