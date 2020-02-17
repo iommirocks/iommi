@@ -26,6 +26,7 @@ from iommi.base import (
     endpoint__debug_tree,
     iommi_debug_on,
     render_attrs,
+    Attrs,
 )
 from tri_declarative import (
     declarative,
@@ -102,7 +103,7 @@ class Fragment(Part):
     `MyPage(parts__header__tag='h2')` it will be rendered with a `<h2>`.
     """
 
-    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 

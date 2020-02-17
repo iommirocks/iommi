@@ -596,8 +596,8 @@ class Part(Traversable):
 
     include: bool = EvaluatedRefinable()
     after: Union[int, str] = EvaluatedRefinable()
-    extra: Namespace = Refinable()
-    extra_evaluated: Namespace = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    extra: Dict[str, Any] = Refinable()
+    extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     endpoints: Namespace = Refinable()
 
     @dispatch(

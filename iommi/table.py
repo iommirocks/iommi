@@ -89,6 +89,7 @@ from iommi.base import (
     Traversable,
     create_as_view_from_as_page,
     render_attrs,
+    Attrs,
 )
 from iommi.form import (
     Field,
@@ -663,33 +664,28 @@ class Column(Part):
         return call_target(**kwargs)
 
 
-# TODO: why isn't this Part?
-class BoundRow(object):
+class BoundRow(Traversable):
     """
     Internal class used in row rendering
     """
+    template: Union[str, Template] = EvaluatedRefinable()
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    extra: Dict[str, Any] = Refinable()
+    extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
 
-    def __init__(self, table, row, row_index):
-        self.table: Table = table
+    def __init__(self, row, row_index, **kwargs):
+        super(BoundRow, self).__init__(_name='row', **kwargs)
+        assert not isinstance(row, BoundRow)
         self.row: Any = row
-        assert not isinstance(self.row, BoundRow)
         self.row_index = row_index
-        self._parent = table
-        self._name = 'row'
-        self._evaluate_parameters = {**table._evaluate_parameters, **self.own_evaluate_parameters()}
-        self.template = evaluate_strict(table.row.template, **self._evaluate_parameters)
-        self.extra = table.row.extra
-        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, **self._evaluate_parameters)
-        self.attrs = table.row.attrs
-        self.attrs = evaluate_attrs(self, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
         return dict(bound_row=self, row=self.row)
 
     def __html__(self):
         if self.template:
-            context = dict(bound_row=self, row=self.row, **self.table.context)
-            return render_template(self.table.get_request(), self.template, context)
+            context = dict(bound_row=self, row=self.row, **self._parent.context)
+            return render_template(self._parent.get_request(), self.template, context)
 
         return format_html('<tr{}>{}</tr>', self.attrs, self.rendered_cells)
 
@@ -699,16 +695,12 @@ class BoundRow(object):
         return mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))
 
     def __iter__(self):
-        for column in self.table.rendered_columns.values():
+        for column in self._parent.rendered_columns.values():
             yield BoundCell(bound_row=self, column=column)
 
     def __getitem__(self, name):
-        column = self.table.rendered_columns[name]
+        column = self._parent.rendered_columns[name]
         return BoundCell(bound_row=self, column=column)
-
-    @property
-    def iommi_dunder_path(self):
-        return path_join(self._parent.iommi_dunder_path, 'row', separator='__')
 
 
 # TODO: make this a Part?
@@ -722,7 +714,7 @@ class BoundCell(object):
 
         self.column = column
         self.bound_row = bound_row
-        self.table = bound_row.table
+        self.table = bound_row._parent
         self.row = bound_row.row
 
         evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
@@ -774,7 +766,7 @@ class TemplateConfig(RefinableObject):
 
 
 class HeaderConfig(Traversable):
-    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
@@ -787,10 +779,13 @@ class HeaderConfig(Traversable):
 
 
 class RowConfig(RefinableObject):
-    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
+
+    def as_dict(self):
+        return {k: getattr(self, k) for k, v in self.get_declared('refinable_members').items()}
 
 
 # TODO: make this a Part?
@@ -1088,9 +1083,9 @@ class Table(Part):
     sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
-    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = Refinable()
-    row = EvaluatedRefinable()
+    row: RowConfig = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
@@ -1536,7 +1531,7 @@ class Table(Part):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
-            yield BoundRow(table=self, row=row, row_index=i)
+            yield BoundRow(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     # TODO: would be nicer with a Fragment maybe?
     @property

@@ -66,6 +66,7 @@ from iommi.base import (
     request_data,
     create_as_view_from_as_page,
     Errors,
+    Attrs,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -387,7 +388,7 @@ class Field(Part):
     initial: Any = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
-    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     required: bool = EvaluatedRefinable()
 
     input = Refinable()
@@ -946,7 +947,7 @@ class Form(Part):
 """
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
-    attrs: Dict[str, Any] = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
 
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type

@@ -37,7 +37,7 @@ class MenuBase(Part):
     tag: str = EvaluatedRefinable()
     sort: bool = EvaluatedRefinable()  # only applies for submenu items
     sub_menu: Dict = Refinable()
-    attrs: Attrs = Refinable()
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
     @dispatch(
