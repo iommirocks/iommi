@@ -151,3 +151,4 @@ docs/Fragment.rst
 results/
 .pytest_cache
 coverage.xml
+.testmondata

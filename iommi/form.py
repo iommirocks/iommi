@@ -577,21 +577,30 @@ class Field(Part):
 
         if self.is_list:
             if self.raw_data_list is not None:
-                # TODO: this seems silly... why are we going across the form?
-                self.parsed_data = [self.form.parse_field_raw_value(self, x) for x in self.raw_data_list]
+                self.parsed_data = [self._parse_raw_value(x) for x in self.raw_data_list]
             else:
                 self.parsed_data = None
         elif self.is_boolean:
-            # TODO: this seems silly... why are we going across the form?
-            self.parsed_data = self.form.parse_field_raw_value(self, '0' if self.raw_data is None else self.raw_data)
+            self.parsed_data = self._parse_raw_value('0' if self.raw_data is None else self.raw_data)
         else:
             if self.raw_data == '' and self.parse_empty_string_as_none:
                 self.parsed_data = None
             elif self.raw_data is not None:
-                # TODO: this seems silly... why are we going across the form?
-                self.parsed_data = self.form.parse_field_raw_value(self, self.raw_data)
+                self.parsed_data = self._parse_raw_value(self.raw_data)
             else:
                 self.parsed_data = None
+
+    def _parse_raw_value(self, raw_data):
+        try:
+            return self.parse(form=self.form, field=self, string_value=raw_data)
+        except ValueError as e:
+            assert str(e) != ''
+            self.errors.add(str(e))
+        except ValidationError as e:
+            for message in e.messages:
+                msg = "%s" % message
+                assert msg != ''
+                self.errors.add(msg)
 
     def _validate(self):
         form = self.form
@@ -602,18 +611,31 @@ class Field(Part):
         value = None
         if self.is_list:
             if self.parsed_data is not None:
-                # TODO: this seems silly... why are we going across the form?
-                value = [form.validate_field_parsed_data(self, x) for x in self.parsed_data if x is not None]
+                value = [self._validate_parsed_data(x) for x in self.parsed_data if x is not None]
         else:
             if self.parsed_data is not None:
-                # TODO: this seems silly... why are we going across the form?
-                value = form.validate_field_parsed_data(self, self.parsed_data)
+                value = self._validate_parsed_data(self.parsed_data)
 
         if not self.errors:
             if form.mode is FULL_FORM_FROM_REQUEST and self.required and value in [None, '']:
                 self.errors.add('This field is required')
             else:
                 self.value = value
+
+    def _validate_parsed_data(self, value):
+        is_valid, error = self.is_valid(
+            form=self.form,
+            field=self,
+            parsed_data=value)
+        if is_valid and not self.errors and self.parsed_data is not None and not self.is_list:
+            value = self.parsed_data
+        elif not is_valid and self.form.mode:
+            if not isinstance(error, set):
+                error = {error}
+            for e in error:
+                assert error != ''
+                self.errors.add(e)
+        return value
 
     def _read_initial(self):
         form = self._parent._parent
@@ -1136,18 +1158,6 @@ class Form(Part):
                 self._valid = not self.errors
         return self._valid
 
-    def parse_field_raw_value(self, field, raw_data):
-        try:
-            return field.parse(form=self, field=field, string_value=raw_data)
-        except ValueError as e:
-            assert str(e) != ''
-            field.errors.add(str(e))
-        except ValidationError as e:
-            for message in e.messages:
-                msg = "%s" % message
-                assert msg != ''
-                field.errors.add(msg)
-
     def validate(self):
         for field in self.fields.values():
             field.post_validation(form=self, field=field)
@@ -1158,21 +1168,6 @@ class Form(Part):
     @refinable
     def post_validation(form):
         pass
-
-    def validate_field_parsed_data(self, field, value):
-        is_valid, error = field.is_valid(
-            form=self,
-            field=field,
-            parsed_data=value)
-        if is_valid and not field.errors and field.parsed_data is not None and not field.is_list:
-            value = field.parsed_data
-        elif not is_valid and self.mode:
-            if not isinstance(error, set):
-                error = {error}
-            for e in error:
-                assert error != ''
-                field.errors.add(e)
-        return value
 
     def add_error(self, msg):
         self.errors.add(msg)
