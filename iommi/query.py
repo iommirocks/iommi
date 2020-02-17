@@ -215,7 +215,6 @@ class Variable(Part):
         super(Variable, self).__init__(**kwargs)
 
     def on_bind(self) -> None:
-        # TODO: why don't we do this centrally?
         if self.attr is MISSING:
             self.attr = self._name
 

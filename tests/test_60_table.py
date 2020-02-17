@@ -269,9 +269,9 @@ def test_output():
                     <th class="first_column subheader">
                         <a href="?order=bar"> Bar </a>
                     </th>
-                    <th class="first_column subheader thin"> </th>
-                    <th class="subheader thin"> Edit </th>
-                    <th class="first_column subheader thin"> Delete </th>
+                    <th class="first_column subheader"> </th>
+                    <th class="subheader"> Edit </th>
+                    <th class="first_column subheader"> Delete </th>
                 </tr>
             </thead>
             <tbody>
@@ -617,12 +617,12 @@ def test_column_presets(NoSortTable):
         <table class="table" data-endpoint="/tbody">
             <thead>
                 <tr>
-                    <th class="first_column subheader thin" />
-                    <th class="first_column subheader thin">Edit </th>
-                    <th class="first_column subheader thin">Delete </th>
-                    <th class="first_column subheader thin">Download </th>
-                    <th class="first_column subheader thin">Run </th>
-                    <th class="first_column nopad subheader thin" title="Select all">
+                    <th class="first_column subheader" />
+                    <th class="first_column subheader">Edit </th>
+                    <th class="first_column subheader">Delete </th>
+                    <th class="first_column subheader">Download </th>
+                    <th class="first_column subheader">Run </th>
+                    <th class="first_column subheader" title="Select all">
                         {}
                     </th>
                     <th class="first_column subheader"> Boolean </th>

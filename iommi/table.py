@@ -328,7 +328,6 @@ class Column(Part):
 
         self.table = self._parent._parent
 
-        # TODO: why don't we do this centrally?
         if self.attr is MISSING:
             self.attr = self._name
 
@@ -370,12 +369,10 @@ class Column(Part):
     @class_shortcut(
         display_name='',
         sortable=False,
-        # TODO: remove this class and similar in the codebase
-        header__attrs__class__thin=True,
         cell__value=lambda table, **_: True,
         extra__icon_attrs__class=EMPTY,
     )
-    def icon(cls, *args, include=True, call_target=None, **kwargs):
+    def icon(cls, *args, call_target=None, **kwargs):
         """
         Shortcut to create font awesome-style icons.
 
@@ -396,8 +393,6 @@ class Column(Part):
             return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
 
         setdefaults_path(kwargs, dict(
-            # TODO: what?
-            include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
             cell__format=icon_format,
         ))
         return call_target(**kwargs)
@@ -456,7 +451,7 @@ class Column(Part):
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
     )
-    def select(cls, checkbox_name='pk', include=True, checked=lambda row, **_: False, call_target=None, **kwargs):
+    def select(cls, checkbox_name='pk', checked=lambda row, **_: False, call_target=None, **kwargs):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
@@ -464,7 +459,6 @@ class Column(Part):
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
         """
         setdefaults_path(kwargs, dict(
-            include=lambda table, **rest: evaluate_strict(include, table=table, **rest),
             cell__value=lambda row, **kwargs: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if evaluate_strict(checked, row=row, **kwargs) else '', checkbox_name, row.pk)),
         ))
         return call_target(**kwargs)
@@ -473,21 +467,12 @@ class Column(Part):
     @class_shortcut(
         query__call_target__attribute='boolean',
         bulk__call_target__attribute='boolean',
+        cell__format=lambda value, **_: mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else '',
     )
     def boolean(cls, call_target=None, **kwargs):
         """
         Shortcut to render booleans as a check mark if true or blank if false.
         """
-
-        def render_icon(value):
-            # TODO: fugly evaluate
-            if callable(value):
-                value = value()
-            return mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else ''
-
-        setdefaults_path(kwargs, dict(
-            cell__format=lambda value, **rest: render_icon(value),
-        ))
         return call_target(**kwargs)
 
     @classmethod

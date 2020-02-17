@@ -221,8 +221,6 @@ def endpoint__debug_tree(endpoint, **_):
             type=type_name,
             base_type=base_type_name,
             path=p,
-            # TODO: seems a bit strange we can't use dunder_path on collected members. We should be able to set parent earlier
-            # dunder_path=node.iommi_dunder_path if not is_struct else None,
             dunder_path='__'.join(path),
             included=is_bound
         )
@@ -486,7 +484,7 @@ class Traversable(RefinableObject):
                 if k in result._declared_members:
                     result._unapplied_config[k] = v
                     continue
-                # TODO what to check for? isinstnace Members seems weird
+                # The Members class applies config itself, so this is for the rest of them
                 if not isinstance(result, Members) and hasattr(result, k):
                     setattr(result, k, v)
                     continue

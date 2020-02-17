@@ -89,9 +89,6 @@ base = Style(
         shortcuts=dict(
             select=dict(
                 header__attrs__title='Select all',
-                # TODO: ??
-                header__attrs__class__thin=True,
-                header__attrs__class__nopad=True,
             ),
         )
     ),
@@ -110,7 +107,6 @@ font_awesome_4 = Style(
         delete__extra__icon='trash-o',
         download__extra__icon='download',
     ),
-    # TODO: break out icon stuff from Action.icon
 )
 
 test = Style(
@@ -186,8 +182,6 @@ bootstrap_base = Style(
         shortcuts=dict(
             select=dict(
                 header__attrs__title='Select all',
-                header__attrs__class__thin=True,
-                header__attrs__class__nopad=True,
                 header__attrs__class={'text-center': True},
                 cell__attrs__class={'text-center': True},
 

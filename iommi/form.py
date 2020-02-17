@@ -263,11 +263,7 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 def choice_queryset__extra__filter_and_sort(field, value, **_):
     if not value:
         return field.choices
-    try:
-        return field.choices.filter(Q((get_name_field(model=field.model) + '__icontains', value)))
-    except NoRegisteredNameException:
-        # TODO: warning? seems not great ending up here
-        return field.choices.filter(Q(pk=value))
+    return field.choices.filter(Q((get_name_field(model=field.model) + '__icontains', value)))
 
 
 def choice_queryset__parse(field, string_value, **_):
@@ -503,7 +499,6 @@ class Field(Part):
     @staticmethod
     @refinable
     def render_value(form: 'Form', field: 'Field', value: Any) -> str:
-        # TODO: why not use the nice behavior in default_cell_formatter?
         if isinstance(value, (list, QuerySet)):
             return ', '.join(field.render_value(form=form, field=field, value=v) for v in value)
         else:
@@ -553,7 +548,7 @@ class Field(Part):
             if self.attr:
                 initial = self.read_from_instance(self, form.instance)
 
-                # TODO: we always overwrite here, even if we got passed something.. seems strange
+                # TODO: we always overwrite here, even if we got passed something.. seems strange. MISSING test here? Tests!
                 self.initial = initial
 
     def _read_raw_data(self):
@@ -640,13 +635,12 @@ class Field(Part):
             'form': self.form,
             'field': self,
         }
-        # TODO: hack!
-        if not self.is_boolean:
-            if 'value' not in self.input.attrs:
-                self.input.attrs.value = self.rendered_value
-        else:
+        if self.is_boolean:
             if 'checked' not in self.input.attrs and self.value:
                 self.input.attrs.checked = ''
+        else:
+            if 'value' not in self.input.attrs:
+                self.input.attrs.value = self.rendered_value
 
         return render_template(self.get_request(), self.template, context)
 
@@ -1240,11 +1234,11 @@ class Form(Part):
 
         from iommi.page import Page
         from iommi.page import html
+        unapplied_title_config = parts.pop('title', {})
         return Page(
             title=title,
             parts={
-                # TODO: do we really need to pop from parts ourselves here?
-                'title': html.h1(title, **parts.pop('title', {})),
+                'title': html.h1(title, **unapplied_title_config),
                 name: cls(extra=extra, auto__model=model, auto__instance=instance, **kwargs),
                 **parts
             }
