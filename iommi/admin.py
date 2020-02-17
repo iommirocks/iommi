@@ -88,7 +88,6 @@ def list_model(model, app, table):
             ),
         ),
         table__query_from_indexes=True,
-        table__columns__select__include=True,
         table__bulk__actions__delete__include=True,
     )
     for field in get_fields(model):

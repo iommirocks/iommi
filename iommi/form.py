@@ -428,6 +428,7 @@ class Field(Part):
         label__call_target=Fragment,
         label__attrs__for=default_input_id,
         input__attrs__name=lambda field, **_: field.iommi_path,
+        input__extra__placeholder='',
     )
     def __init__(self, **kwargs):
         """

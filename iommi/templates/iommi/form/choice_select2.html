@@ -13,7 +13,7 @@
 <script type="text/javascript">
     var id_field = "#{{ field.input.attrs.id }}";
     $(id_field).select2({
-        placeholder: '', // TODO: would be nice to configure this
+        placeholder: '{{ field.input.extra.placeholder }}',
         ajax: {
             url: ".",
             dataType: "json",

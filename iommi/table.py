@@ -706,7 +706,6 @@ class BoundCell(object):
 
     def __init__(self, bound_row: BoundRow, column):
         assert column.include
-        # TODO: is this really right?
         self._name = 'cell'
         self._parent = bound_row
 
@@ -765,7 +764,7 @@ class TemplateConfig(RefinableObject):
 
 class HeaderConfig(Traversable):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    template: Union[str, Template] = Refinable()
+    template: Union[str, Template] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
 
@@ -786,7 +785,6 @@ class RowConfig(RefinableObject):
         return {k: getattr(self, k) for k, v in self.get_declared('refinable_members').items()}
 
 
-# TODO: make this a Part?
 class Header(object):
     @dispatch(
     )
@@ -899,7 +897,7 @@ def bulk_delete__post_handler(table, form, **_):
     return p.render_to_response()
 
 
-# TODO: full Part?
+# TODO: full Part
 class Paginator:
     def __init__(self, *, django_paginator, table, adjacent_pages=6):
         self.iommi_style = None
@@ -1074,15 +1072,13 @@ class Table(Part):
                 attrs__style = 'background: green'
 
     """
-    # TODO: seems like a bunch more of these fields should be EvaluatedRefinable
-
     bulk_filter: Namespace = EvaluatedRefinable()
     bulk_exclude: Namespace = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    template: Union[str, Template] = Refinable()
+    template: Union[str, Template] = EvaluatedRefinable()
     row: RowConfig = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -1091,8 +1087,8 @@ class Table(Part):
     bulk: Namespace = EvaluatedRefinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
-    page_size: int = Refinable()
-    actions_template: Union[str, Template] = Refinable()
+    page_size: int = EvaluatedRefinable()
+    actions_template: Union[str, Template] = EvaluatedRefinable()
     member_class = Refinable()
     form_class: Type[Form] = Refinable()
     query_class: Type[Query] = Refinable()
@@ -1170,7 +1166,7 @@ class Table(Part):
             attr=None,
             _name='select',
             after=-1,
-            include=lambda table, **_: table.bulk_form is not None,
+            include=MISSING,
         )
 
         select_column = select_config
@@ -1277,33 +1273,34 @@ class Table(Part):
 
             declared_bulk_fields = Struct({x._name: x for x in generate_bulk_fields()})
 
-            if declared_bulk_fields:
-                form_class = self.get_meta().form_class
-                declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
-                    _name='_all_pks_',
-                    attr=None,
-                    initial='0',
-                    required=False,
-                    input__attrs__class__all_pks=True,
-                )
 
-                self.bulk_form = form_class(
-                    _fields_dict=declared_bulk_fields,
-                    _name='bulk',
-                    actions__submit=dict(
-                        post_handler=bulk__post_handler,
-                        attrs__value='Bulk change',
-                    ),
-                    actions__delete=dict(
-                        call_target__attribute='delete',
-                        post_handler=bulk_delete__post_handler,
-                        attrs__value='Bulk delete',
-                        include=False,
-                    ),
-                    **bulk
-                )
+            form_class = self.get_meta().form_class
+            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
+                _name='_all_pks_',
+                attr=None,
+                initial='0',
+                required=False,
+                input__attrs__class__all_pks=True,
+            )
 
-                self._declared_members.bulk = self.bulk_form
+            self.bulk_form = form_class(
+                _fields_dict=declared_bulk_fields,
+                _name='bulk',
+                actions__submit=dict(
+                    post_handler=bulk__post_handler,
+                    attrs__value='Bulk change',
+                    include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
+                ),
+                actions__delete=dict(
+                    call_target__attribute='delete',
+                    post_handler=bulk_delete__post_handler,
+                    attrs__value='Bulk delete',
+                    include=False,
+                ),
+                **bulk
+            )
+
+            self._declared_members.bulk = self.bulk_form
 
         # Columns need to be at the end to not steal the short names
         self._declared_members.columns = self._declared_members.pop('columns')
@@ -1325,49 +1322,12 @@ class Table(Part):
             if not self.sortable:
                 column.sortable = False
 
+        if self.model:
+            self._setup_bulk_form()
+
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
         self._prepare_headers()
-
-        if self.model:
-            def generate_variables_unapplied_config():
-                for name, column in self.columns.items():
-                    query_namespace = setdefaults_path(
-                        Namespace(),
-                        _name=name,
-                        form__display_name=column.display_name,
-                    )
-                    yield name, query_namespace
-
-
-            self.query._unapplied_config.variables = Struct(generate_variables_unapplied_config())
-            self.query.bind(parent=self)
-            self._bound_members.query = self.query
-
-            # TODO: why isn't this done inside Query?
-            if self.query.form:
-                try:
-                    q = self.query.get_q()
-                    if q:
-                        self.rows = self.rows.filter(q)
-                except QueryException as e:
-                    self.query.extra.iommi_query_error = str(e)
-
-            def generate_bulk_fields_unapplied_config():
-                for name, column in self.columns.items():
-                    bulk_namespace = setdefaults_path(
-                        Namespace(),
-                        column.bulk,
-                        _name=name,
-                        include=column.bulk.include,
-                        display_name=column.display_name,
-                    )
-                    yield name, bulk_namespace
-
-            if self.bulk_form is not None:
-                self.bulk_form._unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
-                self.bulk_form.bind(parent=self)
-                self._bound_members.bulk = self.bulk_form
 
         if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
@@ -1378,7 +1338,6 @@ class Table(Part):
                 self.rows = self.rows.select_related(*select)
 
         request = self.get_request()
-        # TODO: I paginate only when I have a request... this is a bit weird, but matches old behavior and the tests assume this for now
         if self.page_size and request and isinstance(self.rows, QuerySet) and self.paginator is not None:
             try:
                 self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
@@ -1406,8 +1365,52 @@ class Table(Part):
         self._prepare_auto_rowspan()
 
         # jinja2 compat
-        # TODO: should be able to just do {{ table.actions }}
         self.render_actions.__dict__['__html__'] = lambda: self.render_actions()
+
+    def _setup_bulk_form(self):
+        def generate_variables_unapplied_config():
+            for name, column in self.columns.items():
+                query_namespace = setdefaults_path(
+                    Namespace(),
+                    _name=name,
+                    form__display_name=column.display_name,
+                )
+                yield name, query_namespace
+
+        self.query._unapplied_config.variables = Struct(generate_variables_unapplied_config())
+        self.query.bind(parent=self)
+        self._bound_members.query = self.query
+
+        # TODO: why isn't this done inside Query?
+        if self.query.form:
+            try:
+                q = self.query.get_q()
+                if q:
+                    self.rows = self.rows.filter(q)
+            except QueryException as e:
+                self.query.extra.iommi_query_error = str(e)
+
+        def generate_bulk_fields_unapplied_config():
+            for name, column in self.columns.items():
+                bulk_namespace = setdefaults_path(
+                    Namespace(),
+                    column.bulk,
+                    _name=name,
+                    include=column.bulk.include,
+                    display_name=column.display_name,
+                )
+                yield name, bulk_namespace
+
+        self.bulk_form._unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
+        self.bulk_form.bind(parent=self)
+        if self.bulk_form.actions:
+            self._bound_members.bulk = self.bulk_form
+        else:
+            self.bulk_form = None
+
+            if 'select' in self.columns and self.columns.select.include is MISSING:
+                del self.columns['select']
+                assert 'select' not in self._bound_members['columns']._bound_members
 
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
@@ -1531,7 +1534,6 @@ class Table(Part):
             row = self.preprocess_row(table=self, row=row)
             yield BoundRow(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
-    # TODO: would be nicer with a Fragment maybe?
     @property
     def tbody(self):
         return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))
@@ -1605,11 +1607,10 @@ class Table(Part):
             Page,
             html,
         )
+        unapplied_title_config = parts.pop('title', {})
         return Page(
             title=title,
-            # TODO: do I need to do this pop manually? Won't this be handled by collect_members/bind_members?
-            parts__title=html.h1(title, **parts.pop('title', {})),
-            # TODO: we should use the name given here, not hard code "table"
+            parts__title=html.h1(title, **unapplied_title_config),
             parts__table=self,
             parts=parts,
         )

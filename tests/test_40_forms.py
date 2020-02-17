@@ -108,8 +108,6 @@ def MyTestForm():
         manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
         not_editable = Field.text(initial='Some non-editable text', editable=False)
         multi_choice_field = Field.multi_choice(choices=['a', 'b', 'c', 'd'], required=False)
-
-        # TODO: tests for all shortcuts with required=False
     return MyTestForm
 
 

@@ -870,16 +870,12 @@ def test_bulk_delete():
     t = Table(
         auto__model=TFoo,
         bulk__actions__delete__include=True,
-        # TODO: we shouldn't need to have bulk editing on a column in order to get bulk delete
-        columns__a__bulk__include=True,
     ).bind(request=req('post', _all_pks_='1', **{'-delete': ''}))
     assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
 
     t = Table(
         auto__model=TFoo,
         bulk__actions__delete__include=True,
-        # TODO: we shouldn't need to have bulk editing on a column in order to get bulk delete
-        columns__a__bulk__include=True,
     ).bind(request=req('post', _all_pks_='1', **{'-delete': '', 'confirmed': 'confirmed'}))
     response = t.render_to_response()
     assert response.status_code == 302, response.content.decode()
