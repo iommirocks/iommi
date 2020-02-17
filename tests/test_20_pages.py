@@ -23,7 +23,7 @@ def test_page_constructor():
         parts__bar=html.div()
     )
 
-    assert ['h1', 'foo', 'bar'] == list(my_page.declared_members.parts.keys())
+    assert ['h1', 'foo', 'bar'] == list(my_page._declared_members.parts.keys())
     my_page.bind(request=None)
     assert ['h1', 'foo', 'bar'] == list(my_page.parts.keys())
 
@@ -72,4 +72,4 @@ def test_promote_str_to_fragment_for_page():
         foo = 'asd'
 
     page = MyPage()
-    assert isinstance(page.declared_members.parts.foo, Fragment)
+    assert isinstance(page._declared_members.parts.foo, Fragment)

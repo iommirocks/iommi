@@ -376,7 +376,7 @@ def test_declared_fields():
     ).bind(
         request=req('get'),
     )
-    assert list(form.declared_members.fields.keys()) == ['foo', 'bar']
+    assert list(form._declared_members.fields.keys()) == ['foo', 'bar']
     assert list(form.fields.keys()) == ['foo']
 
 

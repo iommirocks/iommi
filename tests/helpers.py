@@ -93,10 +93,10 @@ def get_attrs(x, attrs):
 class StubTraversable(Traversable):
     def __init__(self, *, _name, members=None):
         super(StubTraversable, self).__init__(_name=_name)
-        self.declared_members = members or {}
+        self._declared_members = members or {}
 
     def on_bind(self):
-        self.bound_members = Struct({k: v.bind(parent=self) for k, v in self.declared_members.items()})
+        self._bound_members = Struct({k: v.bind(parent=self) for k, v in self._declared_members.items()})
 
 
 def prettify(content):

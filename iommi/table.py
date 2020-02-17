@@ -345,7 +345,7 @@ class Column(Part):
         self.declared_column = self._declared
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self.evaluate_parameters)
+        self.model = evaluate(self.model, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
         return dict(table=self._parent._parent, column=self)
@@ -693,9 +693,9 @@ class BoundRow(object):
         self.row_index = row_index
         self._parent = table
         self._name = 'row'
-        self.template = evaluate(table.row.template, row=self.row, **table.evaluate_parameters)
+        self.template = evaluate(table.row.template, row=self.row, **table._evaluate_parameters)
         self.extra = table.row.extra
-        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table.evaluate_parameters)
+        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table._evaluate_parameters)
         self.attrs = table.row.attrs
         self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
 
@@ -1263,7 +1263,7 @@ class Table(Part):
         if self.model:
             # Query
             def generate_variables():
-                for name, column in self.declared_members.columns.items():
+                for name, column in self._declared_members.columns.items():
                     query_namespace = setdefaults_path(
                         Namespace(),
                         column.query,
@@ -1289,13 +1289,13 @@ class Table(Part):
                 _name='query',
                 **self.query_args
             )
-            self.declared_members.query = self.query
+            self._declared_members.query = self.query
 
             # Bulk
             def generate_bulk_fields():
                 field_class = self.get_meta().form_class.get_meta().member_class
 
-                for name, column in self.declared_members.columns.items():
+                for name, column in self._declared_members.columns.items():
                     bulk_config = self.bulk.fields.pop(name, {})
 
                     if column.bulk.include:
@@ -1345,10 +1345,10 @@ class Table(Part):
                     **bulk
                 )
 
-                self.declared_members.bulk = self.bulk_form
+                self._declared_members.bulk = self.bulk_form
 
         # Columns need to be at the end to not steal the short names
-        self.declared_members.columns = self.declared_members.pop('columns')
+        self._declared_members.columns = self._declared_members.pop('columns')
 
     def on_bind(self) -> None:
         bind_members(self, name='actions')
@@ -1357,10 +1357,10 @@ class Table(Part):
 
         self.header = self.header.bind(parent=self)
 
-        evaluate_member(self, 'sortable', **self.evaluate_parameters)  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self._evaluate_parameters)  # needs to be done first because _prepare_headers depends on it
         self._prepare_sorting()
 
-        evaluate_member(self, 'model', strict=False, **self.evaluate_parameters)
+        evaluate_member(self, 'model', strict=False, **self._evaluate_parameters)
 
         for column in self.columns.values():
             # Special case for entire table not sortable
@@ -1382,9 +1382,9 @@ class Table(Part):
                     yield name, query_namespace
 
 
-            self.query.unapplied_config.variables = Struct(generate_variables_unapplied_config())
+            self.query._unapplied_config.variables = Struct(generate_variables_unapplied_config())
             self.query.bind(parent=self)
-            self.bound_members.query = self.query
+            self._bound_members.query = self.query
 
             # TODO: why isn't this done inside Query?
             if self.query.form:
@@ -1407,9 +1407,9 @@ class Table(Part):
                     yield name, bulk_namespace
 
             if self.bulk_form is not None:
-                self.bulk_form.unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
+                self.bulk_form._unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
                 self.bulk_form.bind(parent=self)
-                self.bound_members.bulk = self.bulk_form
+                self._bound_members.bulk = self.bulk_form
 
         if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]

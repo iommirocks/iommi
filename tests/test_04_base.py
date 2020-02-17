@@ -88,7 +88,7 @@ def test_dispatch_error_message_to_client():
 
 
 def test_find_target():
-    # To build paths: declared_members: Struct, and optionally name
+    # To build paths: _declared_members: Struct, and optionally name
     # To find target: _long_path_by_path: Dict on root
 
     bar = StubTraversable(_name='bar')
@@ -242,11 +242,11 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
 
     assert foo.iommi_path == ''
 
-    assert foo.bound_members.my_part2.iommi_path == 'my_part2'
-    assert foo.bound_members.my_part2.iommi_dunder_path == 'my_part2'
+    assert foo._bound_members.my_part2.iommi_path == 'my_part2'
+    assert foo._bound_members.my_part2.iommi_dunder_path == 'my_part2'
 
-    assert foo.bound_members.my_part2.bound_members.my_part.iommi_path == 'my_part'
-    assert foo.bound_members.my_part2.bound_members.my_part.iommi_dunder_path == 'my_part2__my_part'
+    assert foo._bound_members.my_part2._bound_members.my_part.iommi_path == 'my_part'
+    assert foo._bound_members.my_part2._bound_members.my_part.iommi_dunder_path == 'my_part2__my_part'
 
 
 def test_as_html():

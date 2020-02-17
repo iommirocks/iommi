@@ -26,14 +26,14 @@ from tests.models import TFoo
 def test_traverse():
     bar = Struct(
         _name='bar',
-        declared_members=dict(
+        _declared_members=dict(
             baz=Struct(_name='baz'),
             buzz=Struct(_name='buzz'),
         ),
     )
     foo = Struct(
         _name='foo',
-        declared_members=dict(
+        _declared_members=dict(
             bar=bar,
         ),
     )

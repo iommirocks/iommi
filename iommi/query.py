@@ -220,7 +220,7 @@ class Variable(Part):
             self.attr = self._name
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self.evaluate_parameters)
+        self.model = evaluate(self.model, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
         return dict(query=self._parent, variable=self)
@@ -531,7 +531,7 @@ class Query(Part):
                 include=False,
             )
 
-            for name, variable in self.declared_members.variables.items():
+            for name, variable in self._declared_members.variables.items():
                 if variable.attr is None:
                     continue
                 yield setdefaults_path(
@@ -548,17 +548,17 @@ class Query(Part):
             attrs__method='get',
             actions__submit__attrs__value='Filter',
         )
-        self.declared_members.form = self.form
+        self._declared_members.form = self.form
 
         # Variables need to be at the end to not steal the short names
-        self.declared_members.variables = self.declared_members.pop('variables')
+        self._declared_members.variables = self._declared_members.pop('variables')
 
     @dispatch(
         render__call_target=render_template,
         context=EMPTY,
     )
     def __html__(self, *, context=None, render=None):
-        if not self.bound_members.variables.bound_members:
+        if not self._bound_members.variables._bound_members:
             return ''
 
         setdefaults_path(
@@ -578,7 +578,7 @@ class Query(Part):
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
 
         if any(v.freetext for v in self.variables.values()):
-            self.form.declared_members.fields[FREETEXT_SEARCH_NAME].include = True
+            self.form._declared_members.fields[FREETEXT_SEARCH_NAME].include = True
 
         def generate_fields_unapplied_config():
             for name, variable in self.variables.items():
@@ -593,10 +593,10 @@ class Query(Part):
                     params.include = False
                 yield name, params
 
-        self.form.unapplied_config.fields = Struct(generate_fields_unapplied_config())
+        self.form._unapplied_config.fields = Struct(generate_fields_unapplied_config())
         self.form.bind(parent=self)
 
-        self.bound_members.form = self.form
+        self._bound_members.form = self.form
 
         bind_members(self, name='endpoints')
 

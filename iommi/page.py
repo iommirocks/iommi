@@ -45,7 +45,7 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.get_request(), fragment.template, {**context, **fragment.evaluate_parameters, rendered_children: rendered_children})
+        return render_template(fragment.get_request(), fragment.template, {**context, **fragment._evaluate_parameters, rendered_children: rendered_children})
 
     is_void_element = fragment.tag in _void_elements
 
@@ -130,7 +130,7 @@ class Fragment(Part):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self.children = [evaluate_strict(x, **self.evaluate_parameters) for x in self.children]
+        self.children = [evaluate_strict(x, **self._evaluate_parameters) for x in self.children]
 
     @dispatch(
         context=EMPTY,

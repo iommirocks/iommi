@@ -162,7 +162,7 @@ def find_target(*, path, root):
     for part in long_path.split('/'):
         if part == '':
             continue
-        node = node.bound_members.get(part)
+        node = node._bound_members.get(part)
         assert node is not None, f'Failed to traverse long path {long_path}'
 
     return node
@@ -176,7 +176,7 @@ def perform_ajax_dispatch(*, root, path, value):
     if getattr(target, 'endpoint_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
 
-    return target.endpoint_handler(value=value, **target.evaluate_parameters)
+    return target.endpoint_handler(value=value, **target._evaluate_parameters)
 
 
 def perform_post_dispatch(*, root, path, value):
@@ -188,7 +188,7 @@ def perform_post_dispatch(*, root, path, value):
     if getattr(target, 'post_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
-    return target.post_handler(value=value, **target.evaluate_parameters)
+    return target.post_handler(value=value, **target._evaluate_parameters)
 
 
 def endpoint__debug_tree(endpoint, **_):
@@ -208,11 +208,11 @@ def endpoint__debug_tree(endpoint, **_):
 
         type_name = type(node).__name__ if not is_struct else None
         base_type_name = type_name
-        if isinstance(node, Members) and node.declared_members:
+        if isinstance(node, Members) and node._declared_members:
             if name == 'parts':
                 member_type = 'Part'
             else:
-                member_type = type(list(node.declared_members.values())[0]).__name__
+                member_type = type(list(node._declared_members.values())[0]).__name__
             type_name = f'Members[{member_type}]'
 
         yield Struct(
@@ -231,8 +231,8 @@ def endpoint__debug_tree(endpoint, **_):
             children = list(node.items())
         elif isinstance(node, Traversable):
             children = [
-                (k, v if not node.bound_members or k not in node.bound_members else node.bound_members[k])
-                for k, v in node.declared_members.items()
+                (k, v if not node._bound_members or k not in node._bound_members else node._bound_members[k])
+                for k, v in node._declared_members.items()
             ]
         else:
             assert False
@@ -411,11 +411,10 @@ class Traversable(RefinableObject):
 
     @dispatch
     def __init__(self, _name=None, **kwargs):
-        # TODO: _ prefix on some of these?
-        self.declared_members = Struct()
-        self.unapplied_config = Struct()
-        self.bound_members = None
-        self.evaluate_parameters = None
+        self._declared_members = Struct()
+        self._unapplied_config = Struct()
+        self._bound_members = None
+        self._evaluate_parameters = None
         self._name = _name
 
         super(Traversable, self).__init__(**kwargs)
@@ -429,7 +428,7 @@ class Traversable(RefinableObject):
             p = ' path:<no path>'
         c = ''
         if self._is_bound:
-            members = self.bound_members
+            members = self._bound_members
             if members:
                 c = f" members:{list(members.keys())!r}"
 
@@ -477,15 +476,15 @@ class Traversable(RefinableObject):
             result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
 
         result._is_bound = True
-        result.bound_members = Struct()
+        result._bound_members = Struct()
 
         apply_style(result)
 
         if parent is not None:
-            unapplied_config = parent.unapplied_config.get(result._name, {})
-            for k, v in unapplied_config.items():
-                if k in result.declared_members:
-                    result.unapplied_config[k] = v
+            _unapplied_config = parent._unapplied_config.get(result._name, {})
+            for k, v in _unapplied_config.items():
+                if k in result._declared_members:
+                    result._unapplied_config[k] = v
                     continue
                 # TODO what to check for? isinstnace Members seems weird
                 if not isinstance(result, Members) and hasattr(result, k):
@@ -493,20 +492,20 @@ class Traversable(RefinableObject):
                     continue
                 print(f'Unable to set {k} on {result._name}')
 
-        result.evaluate_parameters = {
-            **(result._parent.evaluate_parameters if result._parent is not None else {}),
+        result._evaluate_parameters = {
+            **(result._parent._evaluate_parameters if result._parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
         result.on_bind()
 
         if hasattr(result, 'attrs'):
-            result.attrs = evaluate_attrs(result, **result.evaluate_parameters)
+            result.attrs = evaluate_attrs(result, **result._evaluate_parameters)
 
         evaluated_attributes = [k for k, v in result.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        evaluate_members(result, evaluated_attributes, **result.evaluate_parameters)
+        evaluate_members(result, evaluated_attributes, **result._evaluate_parameters)
 
         if hasattr(result, 'extra_evaluated'):
-            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result.evaluate_parameters)
+            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result._evaluate_parameters)
 
         return result
 
@@ -568,8 +567,8 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                     so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
                     assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
 
-        if hasattr(node, 'declared_members'):
-            members = node.declared_members
+        if hasattr(node, '_declared_members'):
+            members = node._declared_members
         elif isinstance(node, dict):
             members = node
         else:
@@ -740,7 +739,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
 
     assert name != 'items'
     unbound_items = {}
-    unapplied_config = {}
+    _unapplied_config = {}
 
     if items_dict is not None:
         for key, x in items_dict.items():
@@ -754,7 +753,7 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
                 unbound_items[key] = item
             else:
                 if key in unbound_items:
-                    unapplied_config[key] = item
+                    _unapplied_config[key] = item
                 else:
                     item = setdefaults_path(
                         Namespace(),
@@ -764,11 +763,11 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
                     )
                     unbound_items[key] = item()
 
-    if unapplied_config:
-        obj.unapplied_config[name] = unapplied_config
+    if _unapplied_config:
+        obj._unapplied_config[name] = _unapplied_config
 
     members = Struct({x._name: x for x in unbound_items.values()})
-    obj.declared_members[name] = members
+    obj._declared_members[name] = members
 
 
 @no_copy_on_bind
@@ -778,27 +777,27 @@ class Members(Traversable):
     """
 
     @dispatch
-    def __init__(self, *, declared_members, **kwargs):
+    def __init__(self, *, _declared_members, **kwargs):
         super(Members, self).__init__(**kwargs)
-        self.declared_members = declared_members
+        self._declared_members = _declared_members
 
     def on_bind(self) -> None:
         bound_items = sort_after([
             m.bind(parent=self)
-            for m in self.declared_members.values()
+            for m in self._declared_members.values()
         ])
 
-        self.bound_members = Struct({item._name: item for item in bound_items if should_include(item)})
+        self._bound_members = Struct({item._name: item for item in bound_items if should_include(item)})
 
 
 def bind_members(obj: Part, *, name: str) -> None:
     m = Members(
         _name=name,
-        declared_members=obj.declared_members[name],
+        _declared_members=obj._declared_members[name],
     )
     m.bind(parent=obj)
-    setattr(obj, name, m.bound_members)
-    setattr(obj.bound_members, name, m)
+    setattr(obj, name, m._bound_members)
+    setattr(obj._bound_members, name, m)
 
 
 def evaluate_members(obj, keys, **kwargs):
