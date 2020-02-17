@@ -329,14 +329,22 @@ def iommi_debug_panel(part):
     if not source_url:
         return ''
 
-    # TODO: use a Menu here?
-    return format_html(
-        """
-            <div class="iommi_debug_buttons" style="float: right; padding-left: 20px">
-                <a href="{}">Code</a>
-                <a href="?/debug_tree">Tree</a>
-            </div>
-        """, source_url)
+    from iommi import Menu, MenuItem
+
+    class DebugMenu(Menu):
+        code = MenuItem(url=source_url)
+        tree = MenuItem(url='?/debug_tree')
+
+        class Meta:
+            attrs__style = {
+                'float': 'right',
+                'padding-left': '20px',
+            }
+            attrs__class = {
+                'flex-column': False,
+            }
+
+    return DebugMenu().bind(request=part.get_request()).__html__()
 
 
 @dispatch(

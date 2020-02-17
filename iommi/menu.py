@@ -12,6 +12,8 @@ from tri_declarative import (
     EMPTY,
     Refinable,
     dispatch,
+    declarative,
+    with_meta,
 )
 from tri_struct import Struct
 
@@ -43,7 +45,7 @@ class MenuBase(Part):
         sub_menu=EMPTY,
         attrs=EMPTY,
     )
-    def __init__(self, sub_menu, **kwargs):
+    def __init__(self, sub_menu, _sub_menu_dict=None, **kwargs):
         super(MenuBase, self).__init__(**kwargs)
 
         collect_members(
@@ -51,6 +53,7 @@ class MenuBase(Part):
             name='sub_menu',
             items=sub_menu,
             # TODO: cls=self.get_meta().member_class,
+            items_dict=_sub_menu_dict,
             cls=MenuItem,
         )
 
@@ -124,6 +127,8 @@ class MenuException(Exception):
     pass
 
 
+@with_meta
+@declarative(MenuItem, '_sub_menu_dict')
 class Menu(MenuBase):
     """
     Class that describes menus.
