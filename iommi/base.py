@@ -144,18 +144,17 @@ def find_target(*, path, root):
     assert path.startswith(DISPATCH_PATH_SEPARATOR)
     p = path[1:]
 
-    long_path = root._long_path_by_path.get(p)
+    long_path = get_long_path_by_path(root).get(p)
     if long_path is None:
         long_path = p
-        if long_path not in root._path_by_long_path.keys():
+        if long_path not in get_path_by_long_path(root).keys():
             def format_paths(paths):
                 return '\n        '.join(["''" if not x else x for x in paths.keys()])
-            short_paths = format_paths(root._long_path_by_path)
-            long_paths = format_paths(root._path_by_long_path)
+
             raise InvalidEndpointPathException(
                 f"Given path {path} not found.\n"
-                f"    Short alternatives:\n        {short_paths}\n"
-                f"    Long alternatives:\n        {long_paths}"
+                f"    Short alternatives:\n        {format_paths(get_long_path_by_path(root))}\n"
+                f"    Long alternatives:\n        {format_paths(get_path_by_long_path(root))}"
             )
 
     node = root
@@ -435,7 +434,7 @@ class Traversable(RefinableObject):
     @property
     def iommi_path(self) -> str:
         long_path = build_long_path(self)
-        path_by_long_path = get_root(self)._path_by_long_path
+        path_by_long_path = get_path_by_long_path(self)
         path = path_by_long_path.get(long_path)
         if path is None:
             candidates = '\n'.join(path_by_long_path.keys())
@@ -456,10 +455,6 @@ class Traversable(RefinableObject):
             if self._name is None:
                 self._name = 'root'
 
-        long_path_by_path = None
-        if parent is None:
-            long_path_by_path = build_long_path_by_path(self)
-
         if hasattr(self, '_no_copy_on_bind'):
             result = self
         else:
@@ -469,10 +464,6 @@ class Traversable(RefinableObject):
         del self  # to prevent mistakes when changing the code below
 
         result._parent = parent
-        if parent is None:
-            result._long_path_by_path = long_path_by_path
-            result._path_by_long_path = {v: k for k, v in result._long_path_by_path.items()}
-
         result._is_bound = True
         result._bound_members = Struct()
 
@@ -526,10 +517,28 @@ def get_root(node: Traversable) -> Traversable:
     return node
 
 
+def get_long_path_by_path(node):
+    root = get_root(node)
+    long_path_by_path = getattr(root, '_long_path_by_path', None)
+    if long_path_by_path is None:
+        long_path_by_path = build_long_path_by_path(root)
+        root._long_path_by_path = long_path_by_path
+    return long_path_by_path
+
+
+def get_path_by_long_path(node):
+    root = get_root(node)
+    path_by_long_path = getattr(root, '_path_by_long_path', None)
+    if path_by_long_path is None:
+        long_path_by_path = build_long_path_by_path(root)
+        path_by_long_path = {v: k for k, v in long_path_by_path.items()}
+        root._path_by_long_path = path_by_long_path
+    return path_by_long_path
+
+
 def build_long_path(node: Traversable) -> str:
     def _traverse(node: Traversable) -> List[str]:
         # noinspection PyProtectedMember
-        assert node._is_bound
         assert node._name is not None
         if node._parent is None:
             return []
@@ -730,7 +739,7 @@ class ForbiddenNamesException(Exception):
     pass
 
 
-def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type) -> Dict[str, Any]:
+def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type) -> Dict[str, Any]:
     forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
@@ -762,10 +771,10 @@ def collect_members(obj, *, name: str, items_dict: Dict = None, items: Dict[str,
                     unbound_items[key] = item()
 
     if _unapplied_config:
-        obj._unapplied_config[name] = _unapplied_config
+        parent._unapplied_config[name] = _unapplied_config
 
     members = Struct({x._name: x for x in unbound_items.values()})
-    obj._declared_members[name] = members
+    parent._declared_members[name] = members
 
 
 @no_copy_on_bind
@@ -788,14 +797,14 @@ class Members(Traversable):
         self._bound_members = Struct({item._name: item for item in bound_items if should_include(item)})
 
 
-def bind_members(obj: Part, *, name: str) -> None:
+def bind_members(parent: Part, *, name: str) -> None:
     m = Members(
         _name=name,
-        _declared_members=obj._declared_members[name],
+        _declared_members=parent._declared_members[name],
     )
-    m.bind(parent=obj)
-    setattr(obj, name, m._bound_members)
-    setattr(obj._bound_members, name, m)
+    m.bind(parent=parent)
+    setattr(parent, name, m._bound_members)
+    setattr(parent._bound_members, name, m)
 
 
 def evaluate_members(obj, keys, **kwargs):

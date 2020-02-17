@@ -283,7 +283,6 @@ def test_dispatch_auto_json():
             return dict(a=1, b='asd', c=value)
 
     p = MyPart().bind(request=req('get', **{'/': '7'}))
-    assert p._long_path_by_path
     r = p.render_to_response()
     assert r['Content-type'] == 'application/json'
     assert json.loads(r.content) == dict(a=1, b='asd', c='7')
