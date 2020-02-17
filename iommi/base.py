@@ -530,7 +530,7 @@ def get_path_by_long_path(node):
     root = get_root(node)
     path_by_long_path = getattr(root, '_path_by_long_path', None)
     if path_by_long_path is None:
-        long_path_by_path = build_long_path_by_path(root)
+        long_path_by_path = get_long_path_by_path(root)
         path_by_long_path = {v: k for k, v in long_path_by_path.items()}
         root._path_by_long_path = path_by_long_path
     return path_by_long_path
