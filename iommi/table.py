@@ -561,10 +561,8 @@ class Column(Part):
     @classmethod
     @class_shortcut
     def link(cls, call_target, **kwargs):
-        # TODO: this can be simplified
         # Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
-        def link_cell_url(table, column, row, value):
-            del table, value
+        def link_cell_url(column, row, **_):
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
 
@@ -693,11 +691,15 @@ class BoundRow(object):
         self.row_index = row_index
         self._parent = table
         self._name = 'row'
-        self.template = evaluate(table.row.template, row=self.row, **table._evaluate_parameters)
+        self._evaluate_parameters = {**table._evaluate_parameters, **self.own_evaluate_parameters()}
+        self.template = evaluate_strict(table.row.template, **self._evaluate_parameters)
         self.extra = table.row.extra
-        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, row=self.row, **table._evaluate_parameters)
+        self.extra_evaluated = evaluate_strict_container(table.row.extra_evaluated, **self._evaluate_parameters)
         self.attrs = table.row.attrs
-        self.attrs = evaluate_attrs(self, table=table, row=row, bound_row=self)
+        self.attrs = evaluate_attrs(self, **self._evaluate_parameters)
+
+    def own_evaluate_parameters(self):
+        return dict(bound_row=self, row=self.row)
 
     def __html__(self):
         if self.template:
@@ -727,47 +729,25 @@ class BoundRow(object):
 # TODO: make this a Part?
 class BoundCell(object):
 
-    def __init__(self, bound_row, column):
+    def __init__(self, bound_row: BoundRow, column):
         assert column.include
         # TODO: is this really right?
         self._name = 'cell'
+        self._parent = bound_row
 
         self.column = column
         self.bound_row = bound_row
         self.table = bound_row.table
         self.row = bound_row.row
 
-        # TODO: clean up these evaluates.. why are the kwargs so different?
-        self.value = evaluate_strict(
-            self.column.cell.value,
-            table=self.bound_row.table,
-            declared_column=self.column.declared_column,
-            row=self.bound_row.row,
-            bound_row=self.bound_row,
-            column=self.column,
-        )
-        self.url = evaluate_strict(
-            self.column.cell.url,
-            table=self.table,
-            column=self.column,
-            row=self.row,
-            value=self.value,
-        )
+        evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
+
+        self.value = evaluate_strict(self.column.cell.value, **evaluate_parameters)
+        evaluate_parameters['value'] = self.value
+        self.url = evaluate_strict(self.column.cell.url, **evaluate_parameters)
         self.attrs = self.column.cell.attrs
-        self.attrs = evaluate_attrs(
-            self,
-            table=self.table,
-            column=self.column,
-            row=self.row,
-            value=self.value,
-        )
-        self.url_title = evaluate_strict(
-            self.column.cell.url_title,
-            table=self.table,
-            column=self.column,
-            row=self.row,
-            value=self.value,
-        )
+        self.attrs = evaluate_attrs(self, **evaluate_parameters)
+        self.url_title = evaluate_strict(self.column.cell.url_title, **evaluate_parameters)
 
     @property
     def iommi_dunder_path(self):
