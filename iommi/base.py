@@ -182,7 +182,6 @@ def as_html(*, part: PartType, context):
         template = part
         return mark_safe(template.render(context=context))
     else:
-        # TODO: this isn't compatible with jinja2
         return part.__html__(context=context)
 
 

@@ -1377,9 +1377,6 @@ class Table(Part):
 
         self._prepare_auto_rowspan()
 
-        # jinja2 compat
-        self.render_actions.__dict__['__html__'] = lambda: self.render_actions()
-
     def _setup_bulk_form(self):
         def generate_variables_unapplied_config():
             for name, column in self.columns.items():
@@ -1425,6 +1422,8 @@ class Table(Part):
                 del self.columns['select']
                 assert 'select' not in self._bound_members['columns']._bound_members
 
+    # property for jinja2 compatibility
+    @property
     def render_actions(self):
         actions, grouped_actions = group_actions(self.actions)
         return render_template(

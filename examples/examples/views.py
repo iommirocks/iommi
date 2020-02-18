@@ -175,7 +175,7 @@ class KitchenForm(Form):
     class Meta:
         _name = 'kitchen'
 
-    foo = Field()
+    kitchen_foo = Field()
 
     fisk = Field.multi_choice(
         choices=[1, 2, 3, 4],
@@ -185,6 +185,8 @@ class KitchenForm(Form):
     )
 
     textarea = Field.textarea(initial='initial value')
+
+    radio = Field.radio(choices=['foo!!_"', 'bar', 'baz'])
 
 
 class SinkForm(Form):
@@ -208,7 +210,7 @@ def form_kitchen(request):
     class KitchenPage(Page):
         kitchen_form = KitchenForm(actions__submit__post_handler=kitchen_form_post_handler)
         sink_form = SinkForm(actions__submit__post_handler=sink_form_post_handler)
-        sink_form2 = SinkForm(_name='sinkform2', actions__submit__post_handler=sink_form_post_handler)
+        sink_form2 = SinkForm(fields__foo__display_name='foo2', actions__submit__post_handler=sink_form_post_handler)
 
     return KitchenPage()
 

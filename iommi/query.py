@@ -550,6 +550,7 @@ class Query(Part):
                     Namespace(),
                     variable.form,
                     _name=name,
+                    model_field=variable.model_field,
                     attr=name if variable.attr is MISSING else variable.attr,
                     call_target__cls=field_class,
                 )()

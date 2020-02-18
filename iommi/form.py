@@ -1108,13 +1108,11 @@ class Form(Part):
 
         self.errors = Errors(parent=self, errors=self.errors)
 
-        # jinja2 compat
-        self.render_fields.__dict__['__html__'] = lambda: self.render_fields()
-        self.render_actions.__dict__['__html__'] = lambda: self.render_actions()
-
     def own_evaluate_parameters(self):
         return dict(form=self)
 
+    # property for jinja2 compatibility
+    @property
     def render_actions(self):
         assert self._is_bound, 'The form has not been bound. You need to call bind() before you can render it.'
         actions, grouped_actions = group_actions(self.actions)
@@ -1174,6 +1172,8 @@ class Form(Part):
     def add_error(self, msg):
         self.errors.add(msg)
 
+    # property for jinja2 compatibility
+    @property
     def render_fields(self):
         r = []
         for field in self.fields.values():
