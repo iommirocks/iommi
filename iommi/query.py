@@ -36,6 +36,7 @@ from pyparsing import (
     nums,
     oneOf,
     quotedString,
+    Char,
 )
 from tri_declarative import (
     EMPTY,
@@ -81,8 +82,6 @@ from iommi.from_model import (
     member_from_model,
 )
 
-
-# TODO: short form for boolean values? "is_us_person" or "!is_us_person"
 
 class QueryException(Exception):
     pass
@@ -195,6 +194,7 @@ class Variable(Part):
     model_field = Refinable()
     choices = EvaluatedRefinable()
     name_field = Refinable()
+    unary = Refinable()
 
     @dispatch(
         query_operator_for_form='=',
@@ -333,6 +333,7 @@ class Variable(Part):
     @class_shortcut(
         form__call_target__attribute='boolean',
         value_to_q=boolean_value_to_q,
+        unary=True,
     )
     def boolean(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -341,6 +342,7 @@ class Variable(Part):
     @class_shortcut(
         form__call_target__attribute='boolean_tristate',
         value_to_q=boolean_value_to_q,
+        unary=True,
     )
     def boolean_tristate(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -681,11 +683,9 @@ class Query(Part):
         The query language is a series of statements separated by AND or OR operators and parentheses can be used to group/provide
         precedence.
 
-        A statement is a combination of three strings "<variable> <operator> <value>" or "<value> <operator> <variable>".
+        A statement is a combination of three strings "<variable> <operator> <value>" or "<variable> <operator> <variable>".
 
-        A value can be a string, integer or a real(floating) number, a (ISO YYYY-MM-DD) date, or a year based period (nY) where the resulting value
-        will typically be base_date + relativedelta(years=n).
-        See self.period_to_date
+        A value can be a string, integer or a real(floating) number or a (ISO YYYY-MM-DD) date.
 
         An operator must be one of "= != < > >= <= !:" and are translated into django __lte or equivalent suffixes.
         See self.as_q
@@ -723,8 +723,9 @@ class Query(Part):
         # Define a where expression
         where_expression = Forward()
         binary_operator_statement = (variable_name + binary_op + value_string).setParseAction(self._binary_op_to_q)
+        unary_operator_statement = (variable_name | (Char('!') + variable_name)).setParseAction(self._unary_op_to_q)
         free_text_statement = quotedString.copy().setParseAction(self._freetext_to_q)
-        operator_statement = binary_operator_statement | free_text_statement
+        operator_statement = binary_operator_statement | free_text_statement | unary_operator_statement
         where_condition = Group(operator_statement | ('(' + where_expression + ')'))
         where_expression << where_condition + ZeroOrMore((and_ | or_) + where_expression)
 
@@ -732,6 +733,24 @@ class Query(Part):
         query_statement = Forward()
         query_statement << Group(where_expression).setResultsName("where")
         return query_statement
+
+    def _unary_op_to_q(self, token):
+        if len(token) == 1:
+            (variable_name, ) = token
+            value = 'true'
+        else:
+            (op, variable_name) = token
+            value = 'false'
+            if op != '!':
+                raise QueryException(f'Unknown unary variable operator "{op}", available operators: !')
+
+        variable = self.variables.get(variable_name.lower())
+        if variable:
+            if not variable.unary:
+                raise QueryException(f'"{variable_name}" is not a unary variable, you must use it like "{variable_name}=something"')
+            result = variable.value_to_q(variable=variable, op='=', value_string_or_f=value)
+            return result
+        raise QueryException(f'Unknown unary variable "{variable_name}", available variables: {list(self.variables.keys())}')
 
     def _binary_op_to_q(self, token):
         """

@@ -175,6 +175,14 @@ def test_boolean_parse():
     assert repr(MyQuery().bind(request=None).parse_query_string('foo=true')) == repr(Q(**{'foo__iexact': True}))
 
 
+def test_boolean_unary_op():
+    class MyQuery(Query):
+        foo = Variable.boolean()
+
+    assert repr(MyQuery().bind(request=None).parse_query_string('foo')) == repr(Q(**{'foo__iexact': True}))
+    assert repr(MyQuery().bind(request=None).parse_query_string('!foo')) == repr(Q(**{'foo__iexact': False}))
+
+
 def test_integer_request_to_q_simple():
     class Query2(Query):
         bazaar = Variable.integer(attr='quux__bar__bazaar', form=Struct(include=True))
@@ -270,7 +278,7 @@ def test_date_out_of_range(MyTestQuery):
 def test_invalid_syntax(MyTestQuery):
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
-        query.parse_query_string('asdadad213124av@$#$#')
+        query.parse_query_string('??asdadad213124av@$#$#')
 
     assert 'Invalid syntax for query' in str(e)
 
@@ -439,7 +447,7 @@ def test_endpoint_dispatch_errors():
     q = MyQuery().bind(request=req('get'))
 
     assert perform_ajax_dispatch(
-        root=MyQuery().bind(request=req('get', **{q.get_advanced_query_param(): 'foo=!'})),
+        root=MyQuery().bind(request=req('get', **{q.get_advanced_query_param(): '!!'})),
         path='/errors',
         value='',
     ) == {'global': ['Invalid syntax for query']}

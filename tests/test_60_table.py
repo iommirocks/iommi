@@ -890,7 +890,7 @@ def test_invalid_syntax_query():
 
     adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.get_advanced_query_param()
 
-    verify_table_html(query={adv_query_param: 'asdasdsasd'}, table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(class_='iommi_query_error'), expected_html='<div class="iommi_query_error">Invalid syntax for query</div>')
+    verify_table_html(query={adv_query_param: '!!!'}, table=TestTable(rows=TFoo.objects.all().order_by('pk')), find=dict(class_='iommi_query_error'), expected_html='<div class="iommi_query_error">Invalid syntax for query</div>')
 
 
 @pytest.mark.django_db
