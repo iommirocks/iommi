@@ -30,20 +30,20 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.endpoint import (
+    DISPATCH_PATH_SEPARATOR,
     Endpoint,
+    InvalidEndpointPathException,
     perform_ajax_dispatch,
     perform_post_dispatch,
-    DISPATCH_PATH_SEPARATOR,
-    InvalidEndpointPathException,
 )
+from iommi.style import apply_style
 from iommi.traversable import (
     EvaluatedRefinable,
-    Traversable,
     no_copy_on_bind,
     should_include,
     sort_after,
+    Traversable,
 )
-from iommi.style import apply_style
 
 DEFAULT_BASE_TEMPLATE = 'base.html'
 DEFAULT_CONTENT_BLOCK = 'content'
@@ -278,10 +278,7 @@ class Members(Traversable):
             if should_include(bound):
                 self._bound_members[bound._name] = bound
 
-        # TODO: sort_after in place!
-        bound_items = {x._name: x for x in sort_after([m for m in self._bound_members.values()])}
-        self._bound_members.clear()
-        self._bound_members.update(bound_items)
+        sort_after(self._bound_members)
 
 
 def bind_members(parent: Part, *, name: str) -> None:
