@@ -1587,7 +1587,7 @@ def test_render_grouped_actions():
     ).bind(
         request=req('get'),
     )
-    actual_html = form.render_actions()
+    actual_html = form.render_actions
     expected_html = """
     <div class="links">
          <div class="dropdown">
