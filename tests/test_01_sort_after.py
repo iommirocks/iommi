@@ -2,7 +2,7 @@ import pytest
 from tri_declarative import LAST
 from tri_struct import Struct
 
-from iommi.base import sort_after
+from iommi.traversable import sort_after
 
 
 def test_order_after_0():

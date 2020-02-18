@@ -17,6 +17,9 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+import iommi.base
+import iommi.endpoint
+import iommi.traversable
 
 sys.path.insert(0, os.path.abspath('../lib'))
 
@@ -52,9 +55,9 @@ generate_rst_docs(
         iommi.MenuItem,
 
         # Private-ish APIs
-        iommi.base.Endpoint,
+        iommi.endpoint.Endpoint,
         iommi.base.Part,
-        iommi.base.Traversable,
+        iommi.traversable.Traversable,
         iommi.base.Members,
     ],
 )

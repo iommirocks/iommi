@@ -15,19 +15,23 @@ from iommi._web_compat import (
 )
 from iommi.base import (
     as_html,
-    bind_members,
     collect_members,
-    evaluate_attrs,
-    no_copy_on_bind,
     Part,
     PartType,
+    iommi_debug_on,
+    bind_members,
+)
+from iommi.traversable import (
     evaluate_strict_container,
     EvaluatedRefinable,
-    endpoint__debug_tree,
-    iommi_debug_on,
+    no_copy_on_bind,
+)
+from iommi.attrs import (
     render_attrs,
+    evaluate_attrs,
     Attrs,
 )
+from iommi.debug import endpoint__debug_tree
 from tri_declarative import (
     declarative,
     dispatch,

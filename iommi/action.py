@@ -19,10 +19,12 @@ from tri_declarative import (
 )
 
 from iommi.base import (
-    EvaluatedRefinable,
     Part,
-    Attrs,
 )
+from iommi.traversable import (
+    EvaluatedRefinable,
+)
+from iommi.attrs import Attrs
 from iommi.page import Fragment
 
 

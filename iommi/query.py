@@ -59,16 +59,18 @@ from iommi._web_compat import (
     render_template,
 )
 from iommi.base import (
-    Endpoint,
-    EvaluatedRefinable,
     MISSING,
     Part,
-    bind_members,
     collect_members,
     model_and_rows,
-    no_copy_on_bind,
     path_join,
     request_data,
+    bind_members,
+)
+from iommi.endpoint import Endpoint
+from iommi.traversable import (
+    EvaluatedRefinable,
+    no_copy_on_bind,
 )
 from iommi.form import (
     Form,

@@ -72,25 +72,29 @@ from iommi.action import (
     group_actions,
 )
 from iommi.base import (
-    apply_style,
-    bind_members,
     collect_members,
-    DISPATCH_PREFIX,
-    evaluate_attrs,
-    evaluate_member,
-    evaluate_strict_container,
     evaluated_refinable,
-    EvaluatedRefinable,
     MISSING,
     model_and_rows,
-    no_copy_on_bind,
     Part,
     path_join,
-    Traversable,
     create_as_view_from_as_page,
+    bind_members,
+)
+from iommi.endpoint import DISPATCH_PREFIX
+from iommi.traversable import (
+    evaluate_strict_container,
+    EvaluatedRefinable,
+    Traversable,
+    no_copy_on_bind,
+    evaluate_member,
+)
+from iommi.attrs import (
     render_attrs,
+    evaluate_attrs,
     Attrs,
 )
+from iommi.style import apply_style
 from iommi.form import (
     Field,
     Form,

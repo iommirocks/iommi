@@ -6,6 +6,9 @@ from django.template import (
 )
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+
+import iommi.style
+import iommi.traversable
 from iommi import (
     Action,
     Column,
@@ -431,7 +434,7 @@ BASE_TEMPLATE_BY_STYLE['semantic_ui'] = 'base_semantic_ui.html'
 
 def select_style_post_handler(form, **_):
     style = form.fields.style.value
-    base.DEFAULT_STYLE = style
+    iommi.style.DEFAULT_STYLE = style
     base.DEFAULT_BASE_TEMPLATE = BASE_TEMPLATE_BY_STYLE[style]
 
 
@@ -444,7 +447,7 @@ class StyleSelector(Form):
             'bootstrap',
             'semantic_ui',
         ],
-        initial=lambda form, field, **_: base.DEFAULT_STYLE,
+        initial=lambda form, field, **_: iommi.style.DEFAULT_STYLE,
     )
 
 

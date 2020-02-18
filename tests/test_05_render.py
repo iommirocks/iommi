@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from iommi.base import render_attrs
+from iommi.attrs import render_attrs
 from tri_declarative import Namespace
 
 

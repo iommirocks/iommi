@@ -32,11 +32,11 @@ from iommi._web_compat import (
     Template,
     ValidationError,
 )
-from iommi.base import (
-    InvalidEndpointPathException,
+from iommi.endpoint import (
     perform_ajax_dispatch,
-    render_attrs,
+    InvalidEndpointPathException,
 )
+from iommi.attrs import render_attrs
 from iommi.form import (
     bool_parse,
     datetime_iso_formats,

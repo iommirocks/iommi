@@ -57,18 +57,20 @@ from iommi.action import (
     group_actions,
 )
 from iommi.base import (
-    bind_members,
     collect_members,
     evaluated_refinable,
-    EvaluatedRefinable,
     MISSING,
-    no_copy_on_bind,
     Part,
     request_data,
     create_as_view_from_as_page,
     Errors,
-    Attrs,
+    bind_members,
 )
+from iommi.traversable import (
+    EvaluatedRefinable,
+    no_copy_on_bind,
+)
+from iommi.attrs import Attrs
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,

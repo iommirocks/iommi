@@ -1,15 +1,13 @@
 import pytest
 
-from iommi.base import (
-    get_style_for,
-    render_attrs,
-)
+from iommi.attrs import render_attrs
 from iommi.style import (
     Style,
     apply_style_recursively,
     get_style_obj_for_object,
     validate_styles,
     InvalidStyleConfigurationException,
+    get_style_for,
 )
 from tri_declarative import (
     Namespace,
