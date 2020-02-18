@@ -71,9 +71,6 @@ base = Style(
             radio=dict(
                 input__template='iommi/form/radio.html',
             ),
-            file=dict(
-                input__template='iommi/form/file.html',
-            ),
             heading=dict(
                 template='iommi/form/heading.html',
             ),
