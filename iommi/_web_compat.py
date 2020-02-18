@@ -22,7 +22,7 @@ try:
     JinjaTemplate = None
 
     from django.conf import settings
-    if any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
+    if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
         from django.template import Template as DjangoTemplate
     else:
         assert any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES)

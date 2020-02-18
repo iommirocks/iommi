@@ -57,7 +57,6 @@ def test_generate_docs():
         @classmethod
         @class_shortcut(
             description=lambda foo: 'qwe'
-            # TODO: This is currently not shown in the documentation output, but it should be!
         )
         def shortcut3(cls, call_target):
             """
@@ -119,6 +118,12 @@ Shortcuts
 
 shortcut2 docstring
 
+Defaults
+++++++++
+
+* `description`
+    * `fish`
+
 `shortcut3`
 ^^^^^^^^^^^
 
@@ -126,9 +131,26 @@ shortcut3 docstring
 
             :param call_target: something something call_target
 
+Defaults
+++++++++
+
+* `description`
+    * `lambda foo: 'qwe'`
+
 `shortcut4`
 ^^^^^^^^^^^
+
+Defaults
+++++++++
+
+* `call_target`
+    * `tests.test_99_docs.Foo`
+* `name`
+    * `baz`
+* `description`
+    * `qwe`
     """
+    print(actual_doc)
 
     assert actual_doc.strip() == expected_doc.strip()
 

@@ -5,6 +5,7 @@ from tri_declarative import (
     get_declared,
     flatten_items,
     get_shortcuts_by_name,
+    flatten,
 )
 
 from iommi import MISSING
@@ -66,6 +67,7 @@ def _generate_rst_docs(classes):
                 0: '=',
                 1: '-',
                 2: '^',
+                3: '+',
             }[level] * len(title)
             w(0, title)
             w(0, underline)
@@ -107,20 +109,23 @@ def _generate_rst_docs(classes):
             if value not in (None, MISSING):
                 defaults[refinable] = value
 
+        def default_description(v):
+            if callable(v) and not isinstance(v, Namespace):
+                v = get_docs_callable_description(v)
+
+                if 'lambda' in v:
+                    v = v[v.find('lambda'):]
+                    v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
+            if v == '':
+                v = '""'
+            return v
+
         if defaults:
             section(2, 'Defaults')
 
             for k, v in sorted(flatten_items(defaults)):
                 if v != {}:
-                    if callable(v):
-                        v = get_docs_callable_description(v)
-
-                        if 'lambda' in v:
-                            v = v[v.find('lambda'):]
-                            v = v.strip().strip(',')
-
-                    if v == '':
-                        v = '""'
+                    v = default_description(v)
 
                     w(0, '* `%s`' % k)
                     w(1, '* `%s`' % v)
@@ -137,6 +142,16 @@ def _generate_rst_docs(classes):
                     doc = shortcut.__doc__
                     f.write(doc.strip())
                     w(0, '')
+                    w(0, '')
+
+                defaults = shortcut if isinstance(shortcut, dict) else shortcut.dispatch
+                if defaults:
+                    defaults = Namespace(defaults)
+                    section(3, 'Defaults')
+                    for k, v in flatten(defaults).items():
+                        v = default_description(v)
+                        w(0, f'* `{k}`')
+                        w(1, f'* `{v}`')
                     w(0, '')
 
         yield '/%s.rst' % c.__name__, f.getvalue()
