@@ -415,6 +415,7 @@ class Variable(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
+        form__call_target__attribute='foreign_key',
     )
     def foreign_key(cls, model_field, call_target, **kwargs):
         setdefaults_path(
@@ -426,6 +427,7 @@ class Variable(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='multi_choice_queryset',
+        form__call_target__attribute='many_to_many',
     )
     def many_to_many(cls, call_target, model_field, **kwargs):
         setdefaults_path(

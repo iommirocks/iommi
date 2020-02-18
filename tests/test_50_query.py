@@ -558,14 +558,6 @@ def test_shortcuts_map_to_form(name, shortcut):
     if name == 'case_sensitive':  # This has no equivalent in Field
         return
 
-    # TODO: why doesn't this exist in Field?
-    if name == 'foreign_key':  # This has no equivalent in Field
-        return
-
-    # TODO: why doesn't this exist in Field?
-    if name == 'many_to_many':  # This has no equivalent in Field
-        return
-
     assert shortcut.dispatch.form.call_target.attribute == name
 
 
