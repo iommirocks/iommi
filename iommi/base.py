@@ -227,7 +227,7 @@ def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[s
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
 
     assert name != 'items'
-    unbound_items = {}
+    unbound_items = Struct()
     _unapplied_config = {}
 
     if items_dict is not None:
@@ -255,8 +255,7 @@ def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[s
     if _unapplied_config:
         parent._unapplied_config[name] = _unapplied_config
 
-    members = Struct({x._name: x for x in unbound_items.values()})
-    parent._declared_members[name] = members
+    parent._declared_members[name] = unbound_items
 
 
 @no_copy_on_bind

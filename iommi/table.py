@@ -1228,27 +1228,26 @@ class Table(Part):
 
         if self.model:
             # Query
-            def generate_variables():
-                for name, column in self._declared_members.columns.items():
-                    query_namespace = setdefaults_path(
-                        Namespace(),
-                        column.query,
-                        call_target__cls=self.get_meta().query_class.get_meta().member_class,
-                        model=self.model,
-                        _name=name,
-                        attr=name if column.attr is MISSING else column.attr,
-                        form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
-                    )
-                    if 'call_target' not in query_namespace['call_target'] and query_namespace['call_target'].get(
-                            'attribute') == 'from_model':
-                        query_namespace['field_name'] = query_namespace.attr
-                    # Special case for automatic query config
-                    if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
-                        query_namespace.include = True
-                        query_namespace.form.include = True
-                    yield query_namespace()
+            declared_variables = Struct()
+            for name, column in self._declared_members.columns.items():
+                variable = setdefaults_path(
+                    Namespace(),
+                    column.query,
+                    call_target__cls=self.get_meta().query_class.get_meta().member_class,
+                    model=self.model,
+                    _name=name,
+                    attr=name if column.attr is MISSING else column.attr,
+                    form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                )
+                if 'call_target' not in variable['call_target'] and variable['call_target'].get(
+                        'attribute') == 'from_model':
+                    variable['field_name'] = variable.attr
+                # Special case for automatic query config
+                if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
+                    variable.include = True
+                    variable.form.include = True
 
-            declared_variables = Struct({x._name: x for x in generate_variables()})
+                declared_variables[name] = variable()
 
             self.query = self.get_meta().query_class(
                 _variables_dict=declared_variables,
@@ -1258,33 +1257,31 @@ class Table(Part):
             self._declared_members.query = self.query
 
             # Bulk
-            def generate_bulk_fields():
-                field_class = self.get_meta().form_class.get_meta().member_class
+            field_class = self.get_meta().form_class.get_meta().member_class
 
-                for name, column in self._declared_members.columns.items():
-                    bulk_config = self.bulk.fields.pop(name, {})
+            declared_bulk_fields = Struct()
+            for name, column in self._declared_members.columns.items():
+                bulk_config = self.bulk.fields.pop(name, {})
 
-                    if column.bulk.include:
-                        bulk_namespace = setdefaults_path(
-                            Namespace(),
-                            column.bulk,
-                            call_target__cls=field_class,
-                            model=self.model,
-                            _name=name,
-                            attr=name if column.attr is MISSING else column.attr,
-                            required=False,
-                            empty_choice_tuple=(None, '', '---', True),
-                            parse_empty_string_as_none=True,
-                            **bulk_config
-                        )
-                        if isinstance(column.model_field, BooleanField):
-                            bulk_namespace.call_target.attribute = 'boolean_tristate'
-                        if 'call_target' not in bulk_namespace['call_target'] and bulk_namespace['call_target'].get('attribute') == 'from_model':
-                            bulk_namespace['field_name'] = bulk_namespace.attr
-                        yield bulk_namespace()
+                if column.bulk.include:
+                    bulk_field = setdefaults_path(
+                        Namespace(),
+                        column.bulk,
+                        call_target__cls=field_class,
+                        model=self.model,
+                        _name=name,
+                        attr=name if column.attr is MISSING else column.attr,
+                        required=False,
+                        empty_choice_tuple=(None, '', '---', True),
+                        parse_empty_string_as_none=True,
+                        **bulk_config
+                    )
+                    if isinstance(column.model_field, BooleanField):
+                        bulk_field.call_target.attribute = 'boolean_tristate'
+                    if 'call_target' not in bulk_field['call_target'] and bulk_field['call_target'].get('attribute') == 'from_model':
+                        bulk_field['field_name'] = bulk_field.attr
 
-            declared_bulk_fields = Struct({x._name: x for x in generate_bulk_fields()})
-
+                    declared_bulk_fields[name] = bulk_field()
 
             form_class = self.get_meta().form_class
             declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(

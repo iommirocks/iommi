@@ -484,7 +484,11 @@ class Field(Part):
 
         self.choice_tuples = None
 
-        self.non_editable_input = Namespace({**flatten(self.input), **self.non_editable_input, '_name': 'non_editable_input'})
+        self.non_editable_input = Namespace({
+            **flatten(self.input),
+            **self.non_editable_input,
+            '_name': 'non_editable_input',
+        })
         self.input = self.input(_name='input')
         self.label = self.label(_name='label')
         self.non_editable_input = self.non_editable_input()
