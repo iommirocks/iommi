@@ -530,30 +530,32 @@ class Query(Part):
 
         collect_members(self, name='variables', items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class)
 
-        def generate_fields_declaration():
-            field_class = self.get_meta().form_class.get_meta().member_class
-            yield field_class(
-                _name=FREETEXT_SEARCH_NAME,
-                display_name='Search',
-                required=False,
-                include=False,
-            )
+        field_class = self.get_meta().form_class.get_meta().member_class
 
-            for name, variable in self._declared_members.variables.items():
-                if variable.attr is None:
-                    continue
-                yield setdefaults_path(
-                    Namespace(),
-                    variable.form,
-                    _name=name,
-                    model_field=variable.model_field,
-                    attr=name if variable.attr is MISSING else variable.attr,
-                    call_target__cls=field_class,
-                )()
+        declared_fields = Struct()
+        declared_fields[FREETEXT_SEARCH_NAME] = field_class(
+            _name=FREETEXT_SEARCH_NAME,
+            display_name='Search',
+            required=False,
+            include=False,
+        )
+
+        for name, variable in self._declared_members.variables.items():
+            if variable.attr is None:
+                continue
+            field = setdefaults_path(
+                Namespace(),
+                variable.form,
+                _name=name,
+                model_field=variable.model_field,
+                attr=name if variable.attr is MISSING else variable.attr,
+                call_target__cls=field_class,
+                )
+            declared_fields[name] = field()
 
         self.form: Form = self.form(
             _name='form',
-            _fields_dict={x._name: x for x in generate_fields_declaration()},
+            _fields_dict=declared_fields,
             attrs__method='get',
             actions__submit__attrs__value='Filter',
         )
@@ -589,20 +591,20 @@ class Query(Part):
         if any(v.freetext for v in self.variables.values()):
             self.form._declared_members.fields[FREETEXT_SEARCH_NAME].include = True
 
-        def generate_fields_unapplied_config():
-            for name, variable in self.variables.items():
-                assert variable.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
-                params = setdefaults_path(
-                    Namespace(),
-                    _name=name,
-                    attr=variable.attr,
-                    model_field=variable.model_field,
-                )
-                if not variable.include:
-                    params.include = False
-                yield name, params
+        fields_unapplied_config = Struct()
+        for name, variable in self.variables.items():
+            assert variable.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
+            field = setdefaults_path(
+                Namespace(),
+                _name=name,
+                attr=variable.attr,
+                model_field=variable.model_field,
+            )
+            if not variable.include:
+                field.include = False
+            fields_unapplied_config[name] = field
 
-        self.form._unapplied_config.fields = Struct(generate_fields_unapplied_config())
+        self.form._unapplied_config.fields = fields_unapplied_config
         self.form.bind(parent=self)
 
         self._bound_members.form = self.form

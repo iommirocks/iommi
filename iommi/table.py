@@ -1261,10 +1261,10 @@ class Table(Part):
 
             declared_bulk_fields = Struct()
             for name, column in self._declared_members.columns.items():
-                bulk_config = self.bulk.fields.pop(name, {})
+                field = self.bulk.fields.pop(name, {})
 
                 if column.bulk.include:
-                    bulk_field = setdefaults_path(
+                    field = setdefaults_path(
                         Namespace(),
                         column.bulk,
                         call_target__cls=field_class,
@@ -1274,14 +1274,14 @@ class Table(Part):
                         required=False,
                         empty_choice_tuple=(None, '', '---', True),
                         parse_empty_string_as_none=True,
-                        **bulk_config
+                        **field
                     )
                     if isinstance(column.model_field, BooleanField):
-                        bulk_field.call_target.attribute = 'boolean_tristate'
-                    if 'call_target' not in bulk_field['call_target'] and bulk_field['call_target'].get('attribute') == 'from_model':
-                        bulk_field['field_name'] = bulk_field.attr
+                        field.call_target.attribute = 'boolean_tristate'
+                    if 'call_target' not in field['call_target'] and field['call_target'].get('attribute') == 'from_model':
+                        field['field_name'] = field.attr
 
-                    declared_bulk_fields[name] = bulk_field()
+                    declared_bulk_fields[name] = field()
 
             form_class = self.get_meta().form_class
             declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
@@ -1374,16 +1374,16 @@ class Table(Part):
         self._prepare_auto_rowspan()
 
     def _setup_bulk_form(self):
-        def generate_variables_unapplied_config():
-            for name, column in self.columns.items():
-                query_namespace = setdefaults_path(
-                    Namespace(),
-                    _name=name,
-                    form__display_name=column.display_name,
-                )
-                yield name, query_namespace
+        variables_unapplied_config = Struct()
+        for name, column in self.columns.items():
+            variable = setdefaults_path(
+                Namespace(),
+                _name=name,
+                form__display_name=column.display_name,
+            )
+            variables_unapplied_config[name] = variable
 
-        self.query._unapplied_config.variables = Struct(generate_variables_unapplied_config())
+        self.query._unapplied_config.variables = variables_unapplied_config
         self.query.bind(parent=self)
         self._bound_members.query = self.query
 
@@ -1396,18 +1396,19 @@ class Table(Part):
             except QueryException as e:
                 self.query.extra.iommi_query_error = str(e)
 
-        def generate_bulk_fields_unapplied_config():
-            for name, column in self.columns.items():
-                bulk_namespace = setdefaults_path(
-                    Namespace(),
-                    column.bulk,
-                    _name=name,
-                    include=column.bulk.include,
-                    display_name=column.display_name,
-                )
-                yield name, bulk_namespace
+        bulk_fields_unapplied_config = Struct()
+        for name, column in self.columns.items():
+            field = setdefaults_path(
+                Namespace(),
+                column.bulk,
+                _name=name,
+                include=column.bulk.include,
+                display_name=column.display_name,
+            )
+            bulk_fields_unapplied_config[name] = field
 
-        self.bulk_form._unapplied_config.fields = Struct(generate_bulk_fields_unapplied_config())
+        self.bulk_form._unapplied_config.fields = bulk_fields_unapplied_config
+
         self.bulk_form.bind(parent=self)
         if self.bulk_form.actions:
             self._bound_members.bulk = self.bulk_form
