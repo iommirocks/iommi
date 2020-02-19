@@ -96,6 +96,7 @@ base = Style(
         input__attrs__type='text',
         input__tag='input',
         label__tag='label',
+        non_editable_input__tag='span',
     ),
     Column=dict(
         shortcuts=dict(

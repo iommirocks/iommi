@@ -237,13 +237,13 @@ def test_invalid_form_data():
     assert repr(query2.get_q()) == repr(Q())
 
 
-@pytest.mark.skip("This shouldn't work. If you need a query.form thing, put it there")
 def test_none_attr():
+    with pytest.raises(AssertionError) as e:
+        Query(
+            variables__bazaar=Variable(attr=None, form__include=True),
+        ).bind(request=req('get', bazaar='foo'))
 
-    query2 = Query(
-        variables__bazaar=Variable(attr=None, form__include=True),
-    ).bind(request=req('get', bazaar='foo'))
-    assert repr(query2.get_q()) == repr(Q())
+    assert str(e.value) == "bazaar cannot be a part of a query, it has no attr so we don't know what to search for"
 
 
 def test_request_to_q_freetext(MyTestQuery):

@@ -113,6 +113,10 @@ def list_model(model, app, table):
     table__call_target__cls=Table,
     form__call_target__cls=Form,
     form__parts__header=admin_h1,
+    app_name=None,
+    model_name=None,
+    pk=None,
+    command=None,
 )
 def admin(app_name, model_name, pk, command, all_models, list_model, create_object, edit_object, delete_object, table, form):
 

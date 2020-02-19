@@ -63,6 +63,7 @@ from .helpers import (
     get_attrs,
     reindent,
     req,
+    prettify,
 )
 from .models import (
     Bar,
@@ -383,11 +384,39 @@ def test_declared_fields():
 
 
 def test_non_editable():
-    assert Form(
-        fields__foo=Field(editable=False),
+    actual = prettify(Form(
+        fields__foo=Field(editable=False, input__attrs__custom=7, initial='11'),
     ).bind(
         request=req('get'),
-    ).fields.foo.input.template == 'iommi/form/non_editable.html'
+    ).fields.foo.__html__())
+
+    expected = prettify("""
+        <div>
+            <label for="id_foo">Foo</label>
+            <span custom="7" id="id_foo" name="foo">11</span>
+            <div class="form-text text-muted"></div>
+        </div>
+    """)
+
+    assert actual == expected
+
+
+def test_editable():
+    actual = prettify(Form(
+        fields__foo=Field(input__attrs__custom=7, initial='11'),
+    ).bind(
+        request=req('get'),
+    ).fields.foo.__html__())
+
+    expected = prettify("""
+        <div>
+            <label for="id_foo">Foo</label>
+            <input custom="7" id="id_foo" name="foo" type="text" value="11"/>
+            <div class="form-text text-muted"></div>
+        </div>
+    """)
+
+    assert actual == expected
 
 
 def test_non_editable_form():

@@ -39,6 +39,7 @@ from tri_declarative import (
     Shortcut,
     with_meta,
     evaluate_strict,
+    flatten,
 )
 from tri_struct import Struct
 
@@ -401,8 +402,9 @@ class Field(Part):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     required: bool = EvaluatedRefinable()
 
-    input = Refinable()
-    label = Refinable()
+    input: Fragment = Refinable()
+    label: Fragment = Refinable()
+    non_editable_input: Fragment = Refinable()
 
     is_list: bool = EvaluatedRefinable()
     is_boolean: bool = EvaluatedRefinable()
@@ -433,12 +435,14 @@ class Field(Part):
         endpoints__config__func=default_endpoints__config,
         endpoints__validate__func=default_endpoints__validate,
         errors=EMPTY,
-        input__call_target=Fragment,
-        input__attrs__id=default_input_id,
         label__call_target=Fragment,
         label__attrs__for=default_input_id,
+        input__call_target=Fragment,
+        input__attrs__id=default_input_id,
         input__attrs__name=lambda field, **_: field.iommi_path,
         input__extra__placeholder='',
+        non_editable_input__call_target=Fragment,
+        non_editable_input__attrs__type=None,
     )
     def __init__(self, **kwargs):
         """
@@ -483,8 +487,10 @@ class Field(Part):
 
         self.choice_tuples = None
 
+        self.non_editable_input = Namespace({**flatten(self.input), **self.non_editable_input, '_name': 'non_editable_input'})
         self.input = self.input(_name='input')
         self.label = self.label(_name='label')
+        self.non_editable_input = self.non_editable_input()
 
     @property
     def form(self):
@@ -565,10 +571,7 @@ class Field(Part):
         self.label = self.label.bind(parent=self)
         assert not self.label.children
         self.label.children = [self.display_name]
-
-        if not self.editable:
-            # TODO: style! do we want to add on a "virtual" shortcut on top of the stack for the styling system to latch onto?
-            self.input.template = 'iommi/form/non_editable.html'
+        self.non_editable_input = self.non_editable_input.bind(parent=self)
 
     def _parse(self):
         if not self.editable:
@@ -730,6 +733,10 @@ class Field(Part):
         else:
             if 'value' not in self.input.attrs:
                 self.input.attrs.value = self.rendered_value
+
+        if not self.editable:
+            self.non_editable_input.children.append(self.rendered_value)
+            self.input = self.non_editable_input
 
         return render_template(self.get_request(), self.template, context)
 
