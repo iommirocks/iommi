@@ -71,30 +71,22 @@ from iommi.action import (
     Action,
     group_actions,
 )
+from iommi.attrs import (
+    Attrs,
+    evaluate_attrs,
+    render_attrs,
+)
 from iommi.base import (
+    bind_members,
     collect_members,
+    create_as_view_from_as_page,
     evaluated_refinable,
     MISSING,
     model_and_rows,
     Part,
     path_join,
-    create_as_view_from_as_page,
-    bind_members,
 )
 from iommi.endpoint import DISPATCH_PREFIX
-from iommi.traversable import (
-    evaluate_strict_container,
-    EvaluatedRefinable,
-    Traversable,
-    no_copy_on_bind,
-    evaluate_member,
-)
-from iommi.attrs import (
-    render_attrs,
-    evaluate_attrs,
-    Attrs,
-)
-from iommi.style import apply_style
 from iommi.form import (
     Field,
     Form,
@@ -109,6 +101,13 @@ from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
     QueryException,
+)
+from iommi.style import apply_style
+from iommi.traversable import (
+    evaluate_member,
+    EvaluatedRefinable,
+    no_copy_on_bind,
+    Traversable,
 )
 
 LAST = LAST

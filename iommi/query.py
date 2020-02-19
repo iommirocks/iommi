@@ -2,8 +2,6 @@ import operator
 from datetime import date
 from functools import reduce
 from typing import (
-    Any,
-    Dict,
     Type,
     Union,
 )
@@ -19,69 +17,67 @@ from django.db.models import (
     QuerySet,
 )
 from pyparsing import (
+    alphanums,
+    alphas,
     CaselessLiteral,
+    Char,
     Combine,
+    delimitedList,
     Forward,
     Group,
     Keyword,
+    nums,
+    oneOf,
     Optional,
     ParseException,
     ParseResults,
     QuotedString,
+    quotedString,
     Word,
     ZeroOrMore,
-    alphanums,
-    alphas,
-    delimitedList,
-    nums,
-    oneOf,
-    quotedString,
-    Char,
 )
 from tri_declarative import (
-    EMPTY,
-    Namespace,
-    Refinable,
-    Shortcut,
     class_shortcut,
     declarative,
     dispatch,
+    EMPTY,
     evaluate,
+    Namespace,
+    Refinable,
     refinable,
-    setattr_path,
     setdefaults_path,
+    Shortcut,
     with_meta,
 )
 from tri_struct import Struct
 
 from iommi._web_compat import (
-    Template,
     render_template,
+    Template,
 )
 from iommi.base import (
-    MISSING,
-    Part,
+    bind_members,
     collect_members,
+    MISSING,
     model_and_rows,
+    Part,
     path_join,
     request_data,
-    bind_members,
-)
-from iommi.endpoint import Endpoint
-from iommi.traversable import (
-    EvaluatedRefinable,
-    no_copy_on_bind,
 )
 from iommi.form import (
-    Form,
     bool_parse,
+    Form,
 )
 from iommi.from_model import (
     AutoConfig,
-    NoRegisteredNameException,
     create_members_from_model,
     get_name_field,
     member_from_model,
+    NoRegisteredNameException,
+)
+from iommi.traversable import (
+    EvaluatedRefinable,
+    no_copy_on_bind,
 )
 
 

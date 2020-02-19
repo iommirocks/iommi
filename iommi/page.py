@@ -1,5 +1,4 @@
 from typing import (
-    Any,
     Dict,
     List,
     Optional,
@@ -7,39 +6,37 @@ from typing import (
     Union,
 )
 
-from django.conf import settings
 from django.utils.html import format_html
-from iommi._web_compat import (
-    render_template,
-    Template,
-)
-from iommi.base import (
-    as_html,
-    collect_members,
-    Part,
-    PartType,
-    iommi_debug_on,
-    bind_members,
-)
-from iommi.traversable import (
-    evaluate_strict_container,
-    EvaluatedRefinable,
-    no_copy_on_bind,
-)
-from iommi.attrs import (
-    render_attrs,
-    evaluate_attrs,
-    Attrs,
-)
-from iommi.debug import endpoint__debug_tree
 from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
+    evaluate_strict,
     Namespace,
     Refinable,
     with_meta,
-    evaluate_strict,
+)
+
+from iommi._web_compat import (
+    render_template,
+    Template,
+)
+from iommi.attrs import (
+    Attrs,
+    render_attrs,
+)
+from iommi.base import (
+    as_html,
+    bind_members,
+    collect_members,
+    iommi_debug_on,
+    Part,
+    PartType,
+)
+from iommi.debug import endpoint__debug_tree
+from iommi.traversable import (
+    EvaluatedRefinable,
+    no_copy_on_bind,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements

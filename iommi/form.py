@@ -4,9 +4,6 @@ from decimal import (
     Decimal,
     InvalidOperation,
 )
-from itertools import (
-    chain,
-)
 from typing import (
     Any,
     Callable,
@@ -30,6 +27,8 @@ from tri_declarative import (
     dispatch,
     EMPTY,
     evaluate,
+    evaluate_strict,
+    flatten,
     getattr_path,
     Namespace,
     Refinable,
@@ -38,8 +37,6 @@ from tri_declarative import (
     setdefaults_path,
     Shortcut,
     with_meta,
-    evaluate_strict,
-    flatten,
 )
 from tri_struct import Struct
 
@@ -57,30 +54,29 @@ from iommi.action import (
     Action,
     group_actions,
 )
+from iommi.attrs import Attrs
 from iommi.base import (
+    bind_members,
     collect_members,
+    create_as_view_from_as_page,
+    Errors,
     evaluated_refinable,
     MISSING,
     Part,
     request_data,
-    create_as_view_from_as_page,
-    Errors,
-    bind_members,
 )
-from iommi.traversable import (
-    EvaluatedRefinable,
-    no_copy_on_bind,
-)
-from iommi.attrs import Attrs
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
     get_name_field,
     member_from_model,
-    NoRegisteredNameException,
 )
 from iommi.page import (
     Fragment,
+)
+from iommi.traversable import (
+    EvaluatedRefinable,
+    no_copy_on_bind,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
