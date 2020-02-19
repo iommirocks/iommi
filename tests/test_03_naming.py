@@ -69,7 +69,7 @@ def test_traverse_on_iommi():
             model=TFoo,
             columns=Namespace(
                 columns=Column(),
-                fusk=Column(query__include=True, query__form__include=True),
+                fusk=Column(attr='b', query__include=True, query__form__include=True),
             ),
         )
 

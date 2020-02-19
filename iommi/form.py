@@ -439,6 +439,7 @@ class Field(Part):
         input__extra__placeholder='',
         non_editable_input__call_target=Fragment,
         non_editable_input__attrs__type=None,
+        initial=MISSING,
     )
     def __init__(self, **kwargs):
         """
@@ -551,14 +552,14 @@ class Field(Part):
         if form.editable is False:
             self.editable = False
 
-        self._read_initial()
-        self._read_raw_data()
-
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self._evaluate_parameters)
 
         self.choices = evaluate_strict(self.choices, **self._evaluate_parameters)
         self.initial = evaluate_strict(self.initial, **self._evaluate_parameters)
+
+        self._read_initial()
+        self._read_raw_data()
 
         self._parse()
         self._validate()
@@ -640,12 +641,13 @@ class Field(Part):
 
     def _read_initial(self):
         form = self._parent._parent
-        if self.include and form.instance is not None:
+        if self.initial is MISSING and self.include and form.instance is not None:
             if self.attr:
                 initial = self.read_from_instance(self, form.instance)
-
-                # TODO: we always overwrite here, even if we got passed something.. seems strange. MISSING test here? Tests!
                 self.initial = initial
+
+        if self.initial is MISSING:
+            self.initial = None
 
     def _read_raw_data(self):
         if self.raw_data is not None:

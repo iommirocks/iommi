@@ -338,6 +338,15 @@ def test_initial_from_instance():
     ).fields.foo.initial == 7
 
 
+def test_initial_from_instance_override():
+    assert Form(
+        instance=Struct(a=Struct(b=7)),
+        fields__foo=Field(attr='a__b', initial=11),
+    ).bind(
+        request=req('get'),
+    ).fields.foo.initial == 11
+
+
 def test_initial_from_instance_is_list():
     assert Form(
         instance=Struct(a=Struct(b=[7])),
