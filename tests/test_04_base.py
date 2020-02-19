@@ -15,11 +15,11 @@ from iommi._web_compat import (
     HttpResponse,
     mark_safe,
 )
-from iommi.base import (
-    as_html,
-    Part,
+from iommi.part import (
     request_data,
+    as_html,
 )
+from iommi import Part
 from iommi.endpoint import (
     find_target,
     perform_post_dispatch,

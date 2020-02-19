@@ -6,10 +6,10 @@ from iommi._db_compat import (
     register_factory,
 )
 from iommi.action import Action
-from iommi.base import (
-    MISSING,
+from iommi.part import (
     Part,
 )
+from iommi.base import MISSING
 from iommi.form import (
     Field,
     Form,
@@ -61,9 +61,7 @@ __all__ = [
     'Menu',
     'MenuItem',
     'middleware',
-    'MISSING',
     'Page',
-    'Part',
     'Query',
     'Table',
     'Variable',

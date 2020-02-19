@@ -123,7 +123,7 @@ class Traversable(RefinableObject):
                     result._unapplied_config[k] = v
                     continue
                 # The Members class applies config itself, so this is for the rest of them
-                from iommi.base import Members
+                from iommi.member import Members
                 if not isinstance(result, Members) and hasattr(result, k):
                     setattr(result, k, v)
                     continue

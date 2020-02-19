@@ -9,13 +9,15 @@ from django.utils.html import format_html
 from tri_struct import Struct
 
 from iommi._web_compat import Template
-from iommi.base import (
-    Members,
-)
+from iommi.member import Members
 from iommi.traversable import (
     PathNotFoundException,
     Traversable,
 )
+
+
+def iommi_debug_on():
+    return getattr(settings, 'IOMMI_DEBUG', settings.DEBUG)
 
 
 def endpoint__debug_tree(endpoint, **_):

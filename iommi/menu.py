@@ -17,16 +17,14 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi.base import (
-    Part,
-    bind_members,
-)
+from iommi import Part
 from iommi._web_compat import (
     Template,
 )
-from iommi.base import (
+from iommi.endpoint import path_join
+from iommi.member import (
     collect_members,
-    path_join,
+    bind_members,
 )
 from iommi.traversable import (
     EvaluatedRefinable,

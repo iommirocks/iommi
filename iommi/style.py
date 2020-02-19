@@ -34,7 +34,7 @@ def _style_name_for_class(cls):
 
 
 def class_names_for(cls):
-    from iommi.base import Part  # avoid circular import
+    from iommi import Part
     from iommi.traversable import Traversable
 
     for base_class in reversed(cls.mro()):
@@ -419,7 +419,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     )
     from iommi.table import Paginator
     from iommi.menu import MenuBase
-    from iommi.base import Errors
+    from iommi.error import Errors
     if default_classes is None:
         default_classes = [
             Action,

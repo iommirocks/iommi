@@ -56,14 +56,18 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
-    bind_members,
-    collect_members,
     create_as_view_from_as_page,
-    Errors,
     evaluated_refinable,
+)
+from iommi.part import request_data
+from iommi import (
     MISSING,
     Part,
-    request_data,
+)
+from iommi.error import Errors
+from iommi.member import (
+    collect_members,
+    bind_members,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -685,7 +689,6 @@ class Field(Part):
             self.raw_data = form._request_data.get(self.iommi_path)
             if self.raw_data and self.strip_input:
                 self.raw_data = self.raw_data.strip()
-
 
     def own_evaluate_parameters(self):
         return dict(form=self._parent, field=self)
@@ -1336,7 +1339,7 @@ class Form(Part):
     )
     def as_edit_view(cls, *, title=None, parts=None, **kwargs):
         return create_as_view_from_as_page(cls, 'as_edit', kwargs=kwargs, title=title, parts=parts)
-        
+
     @classmethod
     @dispatch(
         parts=EMPTY,

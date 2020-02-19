@@ -18,9 +18,7 @@ from tri_declarative import (
     setdefaults_path,
 )
 
-from iommi.base import (
-    Part,
-)
+from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
 )

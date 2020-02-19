@@ -77,16 +77,22 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
-    bind_members,
-    collect_members,
     create_as_view_from_as_page,
     evaluated_refinable,
-    MISSING,
     model_and_rows,
+)
+from iommi import (
+    MISSING,
     Part,
+)
+from iommi.member import (
+    collect_members,
+    bind_members,
+)
+from iommi.endpoint import (
+    DISPATCH_PREFIX,
     path_join,
 )
-from iommi.endpoint import DISPATCH_PREFIX
 from iommi.form import (
     Field,
     Form,

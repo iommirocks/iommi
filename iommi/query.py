@@ -56,13 +56,17 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
-    bind_members,
-    collect_members,
-    MISSING,
     model_and_rows,
+)
+from iommi.part import request_data
+from iommi import (
+    MISSING,
     Part,
-    path_join,
-    request_data,
+)
+from iommi.endpoint import path_join
+from iommi.member import (
+    collect_members,
+    bind_members,
 )
 from iommi.form import (
     bool_parse,

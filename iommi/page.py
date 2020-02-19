@@ -25,15 +25,19 @@ from iommi.attrs import (
     Attrs,
     render_attrs,
 )
-from iommi.base import (
-    as_html,
+from iommi.debug import (
+    endpoint__debug_tree,
+    iommi_debug_on,
+)
+from iommi.member import (
     bind_members,
     collect_members,
-    iommi_debug_on,
+)
+from iommi.part import (
+    as_html,
     Part,
     PartType,
 )
-from iommi.debug import endpoint__debug_tree
 from iommi.traversable import (
     EvaluatedRefinable,
     no_copy_on_bind,

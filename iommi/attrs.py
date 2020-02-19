@@ -69,7 +69,7 @@ def render_attrs(attrs):
 
 class Attrs(Namespace):
     def __init__(self, parent, **attrs):
-        from iommi.base import iommi_debug_on
+        from iommi.debug import iommi_debug_on
 
         if iommi_debug_on() and getattr(parent, '_name', None) is not None:
             attrs['data-iommi-path'] = parent.iommi_dunder_path

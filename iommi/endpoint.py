@@ -110,3 +110,10 @@ def perform_post_dispatch(*, root, path, value):
         raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
     return target.post_handler(value=value, **target._evaluate_parameters)
+
+
+def path_join(prefix, name, separator=DISPATCH_PATH_SEPARATOR) -> str:
+    if not prefix:
+        return name
+    else:
+        return prefix + separator + name
