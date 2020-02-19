@@ -38,9 +38,7 @@ from django.utils.encoding import (
 )
 from django.utils.html import (
     conditional_escape,
-    format_html,
 )
-from django.utils.safestring import mark_safe
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -63,9 +61,11 @@ from tri_struct import (
 )
 
 from iommi._web_compat import (
+    Template,
+    format_html,
+    mark_safe,
     render_template,
     smart_text,
-    Template,
 )
 from iommi.action import (
     Action,
