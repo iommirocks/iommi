@@ -103,6 +103,9 @@ base = Style(
             select=dict(
                 header__attrs__title='Select all',
             ),
+            delete=dict(
+                cell__link__attrs__class={'text-danger': True},
+            )
         )
     ),
     Query=dict(

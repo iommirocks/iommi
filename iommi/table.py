@@ -84,6 +84,7 @@ from iommi.base import (
 from iommi import (
     MISSING,
     Part,
+    Fragment,
 )
 from iommi.member import (
     collect_members,
@@ -256,7 +257,7 @@ class Column(Part):
     See :doc:`Table` for more complete examples.
 
     """
-    url: str = EvaluatedRefinable()
+    url: str = EvaluatedRefinable()  # TODO: header__url?
     attr: str = EvaluatedRefinable()
     sort_default_desc: bool = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
@@ -289,6 +290,7 @@ class Column(Part):
         cell__url=None,
         cell__url_title=None,
         cell__contents__attrs=EMPTY,
+        cell__link=EMPTY,
         header__attrs__class__sorted=lambda column, **_: column.is_sorting,
         header__attrs__class__descending=lambda column, **_: column.sort_direction == DESCENDING,
         header__attrs__class__ascending=lambda column, **_: column.sort_direction == ASCENDING,
@@ -720,9 +722,22 @@ class BoundRow(Traversable):
 
 
 # TODO: make this a Traversable
-class BoundCell(object):
+class BoundCell(RefinableObject):
+    url = Refinable()
+    url_title = Refinable()
+    attrs = Refinable()
+    template = Refinable()
+    value = Refinable()
+    contents = Refinable()
+    format = Refinable()
+    link = Refinable()
 
     def __init__(self, bound_row: BoundRow, column):
+        kwargs = setdefaults_path(
+            Namespace(),
+            **column.cell,
+        )
+        super(BoundCell, self).__init__(**kwargs)
         assert column.include
         self._name = 'cell'
         self._parent = bound_row
@@ -734,12 +749,11 @@ class BoundCell(object):
 
         evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
 
-        self.value = evaluate_strict(self.column.cell.value, **evaluate_parameters)
+        self.value = evaluate_strict(self.value, **evaluate_parameters)
         evaluate_parameters['value'] = self.value
-        self.url = evaluate_strict(self.column.cell.url, **evaluate_parameters)
-        self.attrs = self.column.cell.attrs
+        self.url = evaluate_strict(self.url, **evaluate_parameters)
         self.attrs = evaluate_attrs(self, **evaluate_parameters)
-        self.url_title = evaluate_strict(self.column.cell.url_title, **evaluate_parameters)
+        self.url_title = evaluate_strict(self.url_title, **evaluate_parameters)
 
     @property
     def iommi_dunder_path(self):
@@ -759,11 +773,14 @@ class BoundCell(object):
         url = self.url
         if url:
             url_title = self.url_title
-            # TODO: we should be able to set attrs here and style
-            cell_contents = format_html('<a{}{}>{}</a>',
-                                        format_html(' href="{}"', url),
-                                        format_html(' title="{}"', url_title) if url_title else '',
-                                        cell_contents)
+            # TODO: `url`, `url_title` and `link` is overly complex
+            cell_contents = Fragment(
+                cell_contents,
+                tag='a',
+                attrs__title=url_title,
+                attrs__href=url,
+                **self.link
+            ).bind(parent=self.table).__html__()
         return cell_contents
 
     def render_formatted(self):

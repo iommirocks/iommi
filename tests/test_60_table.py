@@ -421,6 +421,28 @@ def test_link(NoSortTable):
         </table>""")
 
 
+
+def test_cell__url_with_attr(NoSortTable):
+    class TestTable(NoSortTable):
+        foo = Column(cell__url='https://whereever', cell__url_title="whatever", cell__link__attrs__class__custom='custom')
+
+    rows = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
+
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
+        <table class="table" data-endpoint="/tbody">
+            <thead>
+                <tr>
+                    <th class="first_column subheader"> Foo </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td> <a class="custom" href="https://whereever" title="whatever"> foo </a> </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+
 def test_css_class(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(
