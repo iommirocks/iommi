@@ -525,6 +525,7 @@ class Query(Part):
 
         self._form = None
         self.query_advanced_value = None
+        self.query_error = None
 
         super(Query, self).__init__(
             model=model,
@@ -846,7 +847,11 @@ class Query(Part):
         """
         Create a query set based on the data in the request.
         """
-        return self.parse_query_string(self.get_query_string())
+        try:
+            return self.parse_query_string(self.get_query_string())
+        except QueryException as e:
+            self.query_error = str(e)
+            raise
 
     @classmethod
     @dispatch(

@@ -1423,14 +1423,14 @@ class Table(Part):
         self.query.bind(parent=self)
         self._bound_members.query = self.query
 
-        # TODO: why isn't this done inside Query?
         if self.query.form:
+            q = None
             try:
                 q = self.query.get_q()
-                if q:
-                    self.rows = self.rows.filter(q)
-            except QueryException as e:
-                self.query.extra.iommi_query_error = str(e)
+            except QueryException:
+                pass
+            if q:
+                self.rows = self.rows.filter(q)
 
         bulk_fields_unapplied_config = Struct()
         for name, column in self.columns.items():
