@@ -403,7 +403,7 @@ def test_non_editable():
         <div>
             <label for="id_foo">Foo</label>
             <span custom="7" id="id_foo" name="foo">11</span>
-            <div class="form-text text-muted"></div>
+            <div class="helptext"></div>
         </div>
     """)
 
@@ -421,7 +421,7 @@ def test_editable():
         <div>
             <label for="id_foo">Foo</label>
             <input custom="7" id="id_foo" name="foo" type="text" value="11"/>
-            <div class="form-text text-muted"></div>
+            <div class="helptext"></div>
         </div>
     """)
 
@@ -593,6 +593,64 @@ def test_radio():
     assert [x.attrs['value'] for x in items if 'checked' in x.attrs] == ['a']
 
 
+def test_radio_full_render():
+    choices = [
+        'a',
+        'b',
+        'c',
+    ]
+    req('get')
+    form = Form(
+        fields__foo=Field.radio(choices=choices),
+    ).bind(
+        request=req('get', foo='a'),
+    )
+    first = form.fields.foo.__html__()
+    second = form.fields.foo.__html__()
+    assert first == second
+    actual = prettify(first)
+    print()
+    print(first)
+    expected = prettify("""
+<div>
+    <label for="id_foo">Foo</label>
+    
+    <div>
+        
+        <input type="radio" value="a" name="foo" id="id_foo_1"  id="id_foo" name="foo" checked/>
+        <label for="id_foo_1">a</label>
+
+        <div class="helptext"></div>
+        
+    </div>
+
+    <div>
+        
+        <input type="radio" value="b" name="foo" id="id_foo_2"  id="id_foo" name="foo" />
+        <label for="id_foo_2">b</label>
+
+        <div class="helptext"></div>
+        
+    </div>
+
+    <div>
+        
+        <input type="radio" value="c" name="foo" id="id_foo_3"  id="id_foo" name="foo" />
+        <label for="id_foo_3">c</label>
+
+        <div class="helptext"></div>
+        
+    </div>
+
+
+    <div class="helptext"></div>
+    
+</div>
+
+    """)
+    assert actual == expected
+
+
 def test_hidden():
     soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).__html__(), 'html.parser')
     x = soup.find(id='id_foo')
@@ -750,6 +808,30 @@ def test_choice_queryset_do_not_cache():
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo.errors == set()
     assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
+
+
+@pytest.mark.django_db
+def test_choice_queryset_do_not_look_up_by_default():
+    from django.contrib.auth.models import User
+
+    user = User.objects.create(username='foo')
+
+    class MyForm(Form):
+        foo = Field.choice_queryset(attr=None, choices=User.objects.all())
+
+    form = MyForm().bind(request=req('get'))
+    assert form.fields.foo.errors == set()
+
+    # The list should be empty because options are retrieved via ajax when needed
+    assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n</select>'
+
+    # Now check that it renders the selected value
+    form = MyForm(fields__foo__initial=user).bind(request=req('get'))
+    assert form.fields.foo.value == user
+    assert form.fields.foo.errors == set()
+
+    expected = '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
+    assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == expected
 
 
 @pytest.mark.django
@@ -1532,7 +1614,7 @@ def test_render():
                     Bar
                 </label>
                 <input id="id_bar" name="bar" type="text" value="">
-                <div class="form-text text-muted">
+                <div class="helptext">
                 </div>
             </div>
             <div class="links">

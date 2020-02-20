@@ -266,7 +266,7 @@ def test_create_or_edit_object_full_template(name):
                     Foo
                 </label>
                 <input id="id_foo" name="foo" type="text" value=""/>
-                <div class="form-text text-muted">
+                <div class="helptext">
                     foo_help_text
                 </div>
             </div>

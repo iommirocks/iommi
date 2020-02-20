@@ -1959,7 +1959,7 @@ def test_endpoint_path_of_nested_part():
     page = Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
     page.bind(request=None)
     target = find_target(path='/parts/table/query/form/fields/foo/endpoints/choices', root=page)
-    assert target.endpoint_path() == '/choices'
+    assert target.endpoint_path == '/choices'
     assert target.iommi_dunder_path == 'parts__table__query__form__fields__foo__endpoints__choices'
 
 

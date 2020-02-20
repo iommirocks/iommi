@@ -422,7 +422,7 @@ def test_endpoint_dispatch():
     request = req('get')
     query = MyQuery().bind(request=request)
 
-    assert query.form.fields.foo.endpoints.choices.endpoint_path() == '/choices'
+    assert query.form.fields.foo.endpoints.choices.endpoint_path == '/choices'
     expected = {
         'results': [
             {'id': x.pk, 'text': str(x)},

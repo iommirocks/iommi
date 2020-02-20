@@ -55,6 +55,7 @@ class Endpoint(Traversable):
     def endpoint_handler(self, value, **kwargs):
         return self.func(value=value, **kwargs)
 
+    @property
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.iommi_path
 

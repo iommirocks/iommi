@@ -198,16 +198,6 @@ def choice_is_valid(field, parsed_data, **_):
     return parsed_data in field.choices, f'{parsed_data} not in available choices'
 
 
-def choice_post_validation(form, field):
-    def choice_tuples_lazy():
-        if not field.required and not field.is_list:
-            yield field.empty_choice_tuple + (0,)
-        for i, choice in enumerate(field.choices):
-            yield field.choice_to_option(form=form, field=field, choice=choice) + (i+1,)
-
-    field.choice_tuples = choice_tuples_lazy()
-
-
 def choice_choice_to_option(form, field, choice):
     del form
     return choice, "%s" % choice, "%s" % choice, choice == field.value
@@ -416,7 +406,6 @@ class Field(Part):
 
     choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
     choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
-    choice_tuples = EvaluatedRefinable()
     errors: Errors = Refinable()
 
     empty_label: str = EvaluatedRefinable()
@@ -486,7 +475,7 @@ class Field(Part):
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
 
-        self.choice_tuples = None
+        self._choice_tuples = None
 
         self.non_editable_input = Namespace({
             **flatten(self.input),
@@ -701,13 +690,28 @@ class Field(Part):
     @property
     def choice_to_options_selected(self):
         if self.value is None:
-            return
+            return []
 
         if self.is_list:
-            for v in self.value:
-                yield self.choice_to_option(form=self._parent, field=self, choice=v)
+            return [
+                self.choice_to_option(form=self._parent, field=self, choice=v)
+                for v in self.value
+            ]
         else:
-            yield self.choice_to_option(form=self._parent, field=self, choice=self.value)
+            return [self.choice_to_option(form=self._parent, field=self, choice=self.value)]
+
+    @property
+    def choice_tuples(self):
+        if self._choice_tuples is not None:
+            return self._choice_tuples
+
+        self._choice_tuples = []
+        if not self.required and not self.is_list:
+            self._choice_tuples.append(self.empty_choice_tuple + (0,))
+        for i, choice in enumerate(self.choices):
+            self._choice_tuples.append(self.choice_to_option(form=self.form, field=self, choice=choice) + (i + 1,))
+
+        return self._choice_tuples
 
     @classmethod
     def from_model(cls, model, field_name=None, model_field=None, **kwargs):
@@ -816,15 +820,6 @@ class Field(Part):
         :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
         """
         assert 'choices' in kwargs
-
-        original_post_validation = kwargs.get('post_validation')
-
-        def _choice_post_validation(form, field):
-            choice_post_validation(form=form, field=field)
-            if original_post_validation:
-                original_post_validation(form=form, field=field)
-
-        kwargs['post_validation'] = _choice_post_validation
 
         setdefaults_path(
             kwargs,

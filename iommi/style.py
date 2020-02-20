@@ -77,6 +77,7 @@ base = Style(
         shortcuts=dict(
             boolean=dict(
                 input__attrs__type='checkbox',
+                template='iommi/form/row_checkbox.html',
             ),
             choice=dict(
                 input__template='iommi/form/choice.html',
@@ -97,6 +98,8 @@ base = Style(
         input__tag='input',
         label__tag='label',
         non_editable_input__tag='span',
+        template='iommi/form/row.html',
+        errors__template='iommi/form/errors.html',
     ),
     Column=dict(
         shortcuts=dict(
@@ -127,12 +130,7 @@ test = Style(
     font_awesome_4,
     Field=dict(
         shortcuts=dict(
-            boolean=dict(
-                template='iommi/form/bootstrap/row_checkbox.html',
-            ),
         ),
-        template='iommi/form/bootstrap/row.html',
-        errors__template='iommi/form/bootstrap/errors.html',
     ),
     Table=dict(
         attrs__class__table=True,
