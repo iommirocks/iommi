@@ -103,9 +103,6 @@ base = Style(
             select=dict(
                 header__attrs__title='Select all',
             ),
-            delete=dict(
-                cell__link__attrs__class={'text-danger': True},
-            )
         )
     ),
     Query=dict(
@@ -207,6 +204,9 @@ bootstrap_base = Style(
                 header__attrs__class={'text-right': True},
             ),
             boolean__cell__attrs__class={'text-center': True},
+            delete=dict(
+                cell__link__attrs__class={'text-danger': True},
+            ),
         )
     ),
     Query__form__iommi_style='bootstrap_horizontal',
@@ -237,7 +237,6 @@ bootstrap_base = Style(
 bootstrap = Style(
     bootstrap_base,
     font_awesome_4,
-    # TODO: special template for Column.delete in order to get the text-danger css class on the a tag
 )
 
 bootstrap_horizontal = Style(
@@ -343,7 +342,6 @@ semantic_ui_base = Style(
 semantic_ui = Style(
     semantic_ui_base,
     font_awesome_4,
-    # TODO: special template for Column.delete in order to get the negative css class on the a tag
 )
 
 _styles = {}
