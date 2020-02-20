@@ -201,9 +201,9 @@ def choice_is_valid(field, parsed_data, **_):
 def choice_post_validation(form, field):
     def choice_tuples_lazy():
         if not field.required and not field.is_list:
-            yield field.empty_choice_tuple
-        for choice in field.choices:
-            yield field.choice_to_option(form=form, field=field, choice=choice)
+            yield field.empty_choice_tuple + (0,)
+        for i, choice in enumerate(field.choices):
+            yield field.choice_to_option(form=form, field=field, choice=choice) + (i+1,)
 
     field.choice_tuples = choice_tuples_lazy()
 
