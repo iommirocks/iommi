@@ -130,7 +130,7 @@ class Traversable(RefinableObject):
                     if hasattr(result, k):
                         setattr(result, k, v)
                         continue
-                    print(f'Unable to set {k} on {result._name}')
+                    assert False, f'Unable to set {k} on {result._name}'
 
         result._evaluate_parameters = {
             **(result._parent._evaluate_parameters if result._parent is not None else {}),
