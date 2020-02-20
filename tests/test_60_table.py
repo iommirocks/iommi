@@ -469,7 +469,7 @@ def test_css_class(NoSortTable):
 
 def test_header_url(NoSortTable):
     class TestTable(NoSortTable):
-        foo = Column(url="/some/url")
+        foo = Column(header__url="/some/url")
 
     rows = [Struct(foo="foo")]
 

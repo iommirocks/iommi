@@ -158,7 +158,7 @@ def prepare_headers(table):
                     column.sort_direction = DESCENDING if is_desc else ASCENDING
                     column.is_sorting = True
 
-            column.url = "?" + params.urlencode()
+            column.header.url = "?" + params.urlencode()
         else:
             column.is_sorting = False
 
@@ -257,7 +257,6 @@ class Column(Part):
     See :doc:`Table` for more complete examples.
 
     """
-    url: str = EvaluatedRefinable()  # TODO: header__url?
     attr: str = EvaluatedRefinable()
     sort_default_desc: bool = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
@@ -297,9 +296,10 @@ class Column(Part):
         header__attrs__class__first_column=lambda header, **_: header.index_in_group == 0,
         header__attrs__class__subheader=True,
         header__template='iommi/table/header.html',
+        header__url=None,
         render_column=True,
     )
-    def __init__(self, **kwargs):
+    def __init__(self, header, **kwargs):
         """
         :param name: the name of the column
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
@@ -320,7 +320,7 @@ class Column(Part):
         :param render_column: If set to `False` the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
         """
 
-        super(Column, self).__init__(**kwargs)
+        super(Column, self).__init__(header=HeaderColumnConfig(**header), **kwargs)
 
         self.is_sorting: bool = None
         self.sort_direction: str = None
@@ -802,6 +802,19 @@ class HeaderConfig(Traversable):
     template: Union[str, Template] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
+    url = EvaluatedRefinable()
+
+    def __html__(self):
+        return render_template(self.get_request(), self.template, self._parent.context)
+
+    def __str__(self):
+        return self.__html__()
+
+
+class HeaderColumnConfig(Traversable):
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    template: Union[str, Template] = EvaluatedRefinable()
+    url = EvaluatedRefinable()
 
     def __html__(self):
         return render_template(self.get_request(), self.template, self._parent.context)
@@ -1542,7 +1555,7 @@ class Table(Part):
                         table=self,
                         attrs=column.header.attrs,
                         template=column.header.template,
-                        url=column.url,
+                        url=column.header.url,
                         column=column,
                         number_of_columns_in_group=number_of_columns_in_group,
                         index_in_group=i,
