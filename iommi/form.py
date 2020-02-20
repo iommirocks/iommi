@@ -944,6 +944,14 @@ class Field(Part):
     def file(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='file',
+        template='iommi/form/image_row.html',
+    )
+    def image(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
     # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
     @classmethod
     @class_shortcut(

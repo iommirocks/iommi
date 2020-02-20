@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -103,7 +105,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 IOMMI_DEBUG = True
 
-SILENCED_SYSTEM_CHECKS = True
 
 # IOMMI_BASE_TEMPLATE = 'base_semantic_ui.html'
 # IOMMI_DEFAULT_STYLE = 'semantic_ui'

@@ -32,6 +32,7 @@ def setup_db_compat_django():
         FileField,
         FloatField,
         ForeignKey,
+        ImageField,
         IntegerField,
         ManyToManyField,
         ManyToManyRel,
@@ -69,6 +70,7 @@ def setup_db_compat_django():
     register_variable_factory(TextField, shortcut_name='text')
 
     # Field specific
+    register_field_factory(ImageField, shortcut_name='image')
     register_field_factory(URLField, shortcut_name='url')
     register_field_factory(
         BooleanField,

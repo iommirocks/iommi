@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.conf.urls import url
+from django.conf.urls.static import static
 import examples.views as views
 from iommi import (
     Table,
@@ -39,4 +41,4 @@ urlpatterns = [
     url(r'^iommi-admin/(?P<app_name>\w+)?/?(?P<model_name>\w+)?/?(?P<pk>\d+)?/?(?P<command>\w+)?/?', views.iommi_admin, name='iommi-admin'),
 
     url(r'^menu_test/$', views.menu_test, name='menu_test'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
