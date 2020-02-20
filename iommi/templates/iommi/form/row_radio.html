@@ -1,6 +1,5 @@
 {% for choice in field.choice_tuples %}
     <div{{ field.attrs }}>
-        {# TODO: rendering field.input.attrs here seems bad.. we already render some of them manually so won't this create duplicates? #}
         <input type="radio" value="{{ choice.1 }}" name="{{ field.iommi_path }}" id="{{ field.input.attrs.id }}_{{ choice.4 }}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
         <label for="{{ field.input.attrs.id }}_{{ choice.4 }}">{{ choice.2 }}</label>
 
