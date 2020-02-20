@@ -114,29 +114,32 @@ class Fragment(Part):
 
     @dispatch(
         tag=None,
+        children=EMPTY,
     )
-    def __init__(self, child: PartType = None, *, children: Optional[List[PartType]] = None, **kwargs):
+    def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
 
-        self.children = []
-        if child is not None:
-            self.children.append(child)
+        if text is not None:
+            children = dict(text=text, **children)
 
-        self.children.extend(children or [])
+        self.children = children
 
     def render_text_or_children(self, context):
         return format_html(
             '{}' * len(self.children),
             *[
                 as_html(part=x, context=context)
-                for x in self.children
+                for x in self.children.values()
             ])
 
     def __repr__(self):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self.children = [evaluate_strict(x, **self._evaluate_parameters) for x in self.children]
+        self.children = {
+            k: evaluate_strict(v, **self._evaluate_parameters)
+            for k, v in self.children.items()
+        }
 
     @dispatch(
         context=EMPTY,
@@ -215,7 +218,7 @@ class Page(Part):
 class Html:
     def __getattr__(self, tag):
         def fragment_constructor(child: PartType = None, **kwargs):
-            return Fragment(tag=tag, child=child, **kwargs)
+            return Fragment(child, tag=tag, **kwargs)
         return fragment_constructor
 
 

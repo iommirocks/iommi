@@ -34,6 +34,7 @@ from iommi.attrs import evaluate_attrs
 from iommi.page import (
     html,
     Page,
+    Fragment,
 )
 from iommi.table import Table
 from tests.helpers import (
@@ -330,3 +331,19 @@ def test_custom_endpoint_on_page():
     p = Page(endpoints__test__func=lambda value, **_: 7).bind(request=req('get', **{'/test': ''}))
 
     assert p.render_to_response().content == b'7'
+
+
+def test_html_builder():
+    assert html.h1('foo').bind(request=None).__html__() == '<h1>foo</h1>'
+
+
+def test_fragment_basic():
+    assert Fragment('foo').bind(request=None).__html__() == 'foo'
+
+
+def test_fragment_with_tag():
+    assert Fragment('foo', tag='h1').bind(request=None).__html__() == '<h1>foo</h1>'
+
+
+def test_fragment_with_two_children():
+    assert Fragment('foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'

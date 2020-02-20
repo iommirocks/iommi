@@ -76,7 +76,7 @@ class Action(Part):
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:
-            return Fragment(tag=self.tag, attrs=self.attrs, child=self.display_name).__html__()
+            return Fragment(self.display_name, tag=self.tag, attrs=self.attrs).__html__()
 
     @classmethod
     @class_shortcut(

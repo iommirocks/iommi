@@ -31,9 +31,11 @@ class Errors(set):
 
         from iommi.page import Fragment
         return Fragment(
-            child='',
             tag='ul',
             attrs=self.attrs,
             template=self.template,
-            children=[Fragment(error, tag='li') for error in self],
+            children={
+                f'error_{i}': Fragment(error, tag='li')
+                for i, error in enumerate(self)
+            },
         ).bind(parent=self._parent).__html__()

@@ -492,10 +492,9 @@ class Field(Part):
             **flatten(self.input),
             **self.non_editable_input,
             '_name': 'non_editable_input',
-        })
+        })()
         self.input = self.input(_name='input')
         self.label = self.label(_name='label')
-        self.non_editable_input = self.non_editable_input()
 
     @property
     def form(self):
@@ -575,7 +574,7 @@ class Field(Part):
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
         assert not self.label.children
-        self.label.children = [self.display_name]
+        self.label.children = dict(text=self.display_name)
         self.non_editable_input = self.non_editable_input.bind(parent=self)
 
     def _parse(self):
@@ -740,7 +739,8 @@ class Field(Part):
                 self.input.attrs.value = self.rendered_value
 
         if not self.editable:
-            self.non_editable_input.children.append(self.rendered_value)
+            assert not self.non_editable_input.children
+            self.non_editable_input.children['text'] = self.rendered_value
             self.input = self.non_editable_input
 
         return render_template(self.get_request(), self.template, context)
@@ -765,7 +765,7 @@ class Field(Part):
         input__tag='textarea',
         input__attrs__type=None,
         input__attrs__value=None,
-        input__child=lambda field, **_: field.rendered_value,
+        input__text=lambda field, **_: field.rendered_value,
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

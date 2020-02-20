@@ -107,16 +107,16 @@ class MenuItem(MenuBase):
             self.include = False
 
         self.a = Fragment(
+            self.display_name,
             attrs__href=self.url,
             **self.a,
-            child=self.display_name,
         ).bind(parent=self)
         self.fragment = Fragment(
+            self.a,
             tag=self.tag,
             template=self.template,
             attrs=self.attrs,
-            child=self.a,
-            children=self.sub_menu.values(),
+            children=self.sub_menu,
         ).bind(parent=self)
 
     def __html__(self, *, context=None, render=None):
@@ -168,7 +168,7 @@ class Menu(MenuBase):
             tag=self.tag,
             template=self.template,
             attrs=self.attrs,
-            children=self.sub_menu.values(),
+            children=self.sub_menu,
         ).bind(parent=self)
 
     def validate_and_set_active(self, current_path: str):

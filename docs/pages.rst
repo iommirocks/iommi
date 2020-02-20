@@ -27,12 +27,15 @@ Example
         return MyPage()
 
 
-This creates a page with a h1 tag, a table of users and a form to create a new user.
+This creates a page with a h1 tag, a table of users and a form to create a
+new user.
 
 Page
 ----
 
-The :code:`Page` class is used to compose pages. If you have installed the iommi middleware you can also return them directly from your views. They accept :code:`str`, :code:`Part` and Django :code:`Template` types:
+The `Page` class is used to compose pages. If you have installed the iommi
+middleware you can also return them directly from your views. They accept
+`str`, `Part` and Django `Template` types:
 
 .. code:: python
 
@@ -53,19 +56,25 @@ The :code:`Page` class is used to compose pages. If you have installed the iommi
         # Django template
         other_stuff = Template('<div>{{ foo }}</div>')
 
-The types here that aren't :code:`Part` will be converted to a :code:`Part` derived class as needed.
+The types here that aren't `Part` will be converted to a `Part` derived class
+as needed.
 
 html
 ----
 
 
-html is a little builder object to create simple elements. You just do :code:`html.h1('some text')` to create a h1 html tag. It works by creating :code:`Fragment` instances, so the :code:`html.h1('foo')` is the same as :code:`Fragment('some text', tag='h1')`. See :code:`Fragment` for more available parameters.
+html is a little builder object to create simple elements. You just do
+`html.h1('some text')` to create a h1 html tag. It works by creating `Fragment`
+instances, so the `html.h1('foo')` is the same as
+`Fragment('some text', tag='h1')`, which is itself a convenient short way to
+write `Fragment(children__text='some text', tag='h1')`. See `Fragment` for more
+ available parameters.
 
 
 Part
 --------
 
-:code:`Part` it the base class/API for objects that can be composed into a page.
+`Part` it the base class/API for objects that can be composed into a page.
 
 
 Fragment
@@ -78,9 +87,7 @@ Advanced example:
     Fragment(
         'foo',
         tag='div',
-        children=[
-            Fragment('bar'),
-        ],
+        children__bar=Fragment('bar'),
         attrs__baz='quux',
     )
 
