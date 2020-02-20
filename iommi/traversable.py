@@ -116,6 +116,7 @@ class Traversable(RefinableObject):
 
         apply_style(result)
 
+        from iommi.member import Members
         if parent is not None:
             _unapplied_config = parent._unapplied_config.get(result._name, {})
             for k, v in _unapplied_config.items():
@@ -123,11 +124,11 @@ class Traversable(RefinableObject):
                     result._unapplied_config[k] = v
                     continue
                 # The Members class applies config itself, so this is for the rest of them
-                from iommi.member import Members
-                if not isinstance(result, Members) and hasattr(result, k):
-                    setattr(result, k, v)
-                    continue
-                print(f'Unable to set {k} on {result._name}')
+                if not isinstance(result, Members):
+                    if hasattr(result, k):
+                        setattr(result, k, v)
+                        continue
+                    print(f'Unable to set {k} on {result._name}')
 
         result._evaluate_parameters = {
             **(result._parent._evaluate_parameters if result._parent is not None else {}),
