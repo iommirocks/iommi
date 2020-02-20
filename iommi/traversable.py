@@ -120,6 +120,8 @@ class Traversable(RefinableObject):
         if parent is not None:
             _unapplied_config = parent._unapplied_config.get(result._name, {})
             for k, v in _unapplied_config.items():
+                if k == 'call_target':
+                    continue
                 if k in result._declared_members:
                     result._unapplied_config[k] = v
                     continue
