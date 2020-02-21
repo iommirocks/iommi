@@ -1003,6 +1003,7 @@ def test_field_from_model_supports_all_types():
     not_supported = []
     blacklist = {
         'Field',
+        'NullBooleanField',
         'BinaryField',
         'IPAddressField',
         'DurationField',
