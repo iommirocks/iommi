@@ -26,7 +26,6 @@ from iommi.endpoint import (
     InvalidEndpointPathException,
 )
 from iommi.traversable import (
-    should_include,
     evaluate_strict_container,
     build_long_path,
 )
@@ -210,13 +209,6 @@ def test_render_empty_tag():
 def test_fragment():
     foo = html.h1('asd')
     assert foo.__html__() == '<h1>asd</h1>'
-
-
-def test_should_include_error_message():
-    with pytest.raises(AssertionError) as e:
-        should_include(Struct(include=lambda foo: foo))
-
-    assert str(e.value).startswith('`include` was a callable. You probably forgot to evaluate it. The callable was: lambda found at')
 
 
 def test_perform_post_dispatch_error_message():

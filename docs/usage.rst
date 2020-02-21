@@ -113,6 +113,10 @@ instead of the corresponding ones from iommi:
     import iommi
 
 
+    class Page(iommi.Page):
+        pass
+
+
     class Action(iommi.Action):
         pass
 
@@ -124,6 +128,8 @@ instead of the corresponding ones from iommi:
     class Form(iommi.Form):
         class Meta:
             member_class = Field
+            page_class = Page
+            action_class = Action
 
 
     class Variable(iommi.Variable):
@@ -145,10 +151,8 @@ instead of the corresponding ones from iommi:
             member_class = Column
             form_class = Form
             query_class = Query
-
-
-    class Page(iommi.Page):
-        pass
+            page_class = Page
+            action_class = Action
 
 
     class Menu(iommi.Menu):

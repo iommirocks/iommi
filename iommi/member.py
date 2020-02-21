@@ -13,7 +13,6 @@ from tri_struct import Struct
 from iommi.traversable import (
     Traversable,
     no_copy_on_bind,
-    should_include,
     sort_after,
 )
 
@@ -87,7 +86,7 @@ class Members(Traversable):
         for m in self._declared_members.values():
             bound = m.bind(parent=self)
             del m  # to not make a mistake below
-            if should_include(bound):
+            if bound is not None:
                 self._bound_members[bound._name] = bound
 
         sort_after(self._bound_members)

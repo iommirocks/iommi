@@ -77,6 +77,7 @@ from iommi.from_model import (
 )
 from iommi.page import (
     Fragment,
+    Page,
 )
 from iommi.traversable import (
     EvaluatedRefinable,
@@ -679,7 +680,7 @@ class Field(Part):
                 self.raw_data = self.raw_data.strip()
 
     def own_evaluate_parameters(self):
-        return dict(form=self._parent, field=self)
+        return dict(field=self)
 
     @property
     def rendered_value(self):
@@ -1059,11 +1060,13 @@ class Form(Part):
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
+    page_class: Type[Page] = Refinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
     class Meta:
         member_class = Field
         action_class = Action
+        page_class = Page
 
     @dispatch(
         model=None,
@@ -1271,10 +1274,9 @@ class Form(Part):
             ),
         )
 
-        from iommi.page import Page
         from iommi.page import html
         unapplied_title_config = parts.pop('title', {})
-        return Page(
+        return cls.get_meta().page_class(
             title=title,
             parts={
                 'title': html.h1(title, **unapplied_title_config),

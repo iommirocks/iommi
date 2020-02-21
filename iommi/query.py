@@ -224,7 +224,7 @@ class Variable(Part):
         self.model = evaluate(self.model, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
-        return dict(query=self._parent, variable=self)
+        return dict(variable=self)
 
     @staticmethod
     @refinable

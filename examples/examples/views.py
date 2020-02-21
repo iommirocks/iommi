@@ -2,6 +2,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from django.db import OperationalError
+
 import iommi.part
 import iommi.style
 import iommi.traversable
@@ -64,11 +66,15 @@ def ensure_objects():
             artist, _ = Artist.objects.get_or_create(name=artist_name)
             for album_name, album_data in albums.items():
                 album, _ = Album.objects.get_or_create(artist=artist, name=album_name, year=int(album_data['year']))
-                for track_name, duration in album_data['tracks']:
-                    Track.objects.get_or_create(album=album, name=track_name, duration=duration)
+                for i, (track_name, duration) in enumerate(album_data['tracks']):
+                    Track.objects.get_or_create(album=album, index=i+1, name=track_name, duration=duration)
 
 
-ensure_objects()
+try:
+    ensure_objects()
+except OperationalError:
+    # We'll end up here in the management commands before the db is set up
+    pass
 
 
 def index(request):

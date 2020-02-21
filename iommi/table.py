@@ -81,10 +81,13 @@ from iommi.base import (
     evaluated_refinable,
     model_and_rows,
 )
-from iommi import (
+from iommi.base import (
     MISSING,
+)
+from iommi.page import (
     Part,
     Fragment,
+    Page,
 )
 from iommi.member import (
     collect_members,
@@ -109,7 +112,6 @@ from iommi.query import (
     Query,
     QueryException,
 )
-from iommi.style import apply_style
 from iommi.traversable import (
     evaluate_member,
     EvaluatedRefinable,
@@ -359,7 +361,7 @@ class Column(Part):
         self.model = evaluate(self.model, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
-        return dict(table=self._parent._parent, column=self)
+        return dict(column=self)
 
     @classmethod
     @dispatch(
@@ -1150,12 +1152,14 @@ class Table(Part):
     form_class: Type[Form] = Refinable()
     query_class: Type[Query] = Refinable()
     action_class: Type[Action] = Refinable()
+    page_class: Type[Page] = Refinable()
 
     class Meta:
         member_class = Column
         form_class = Form
         query_class = Query
         action_class = Action
+        page_class = Page
         endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='tri_table/table_container.html')})
         endpoints__csv__func = endpoint__csv
 
@@ -1664,7 +1668,7 @@ class Table(Part):
             html,
         )
         unapplied_title_config = parts.pop('title', {})
-        return Page(
+        return self.get_meta().page_class(
             title=title,
             parts__title=html.h1(title, **unapplied_title_config),
             parts__table=self,

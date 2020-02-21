@@ -51,7 +51,7 @@ class Part(Traversable):
     `Part` is the base class for parts of a page that can be rendered as html, and can respond to ajax and post.
     """
 
-    include: bool = EvaluatedRefinable()
+    include: bool = Refinable()  # This is evaluated, but first and in a special way
     after: Union[int, str] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
@@ -83,6 +83,8 @@ class Part(Traversable):
 
     def bind(self, *, parent=None, request=None):
         result = super(Part, self).bind(parent=parent, request=request)
+        if result is None:
+            return None
         del self
         bind_members(result, name='endpoints')
         return result
