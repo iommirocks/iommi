@@ -1,11 +1,11 @@
 from textwrap import dedent
 
 from tri_declarative import (
-    Namespace,
-    get_declared,
-    flatten_items,
-    get_shortcuts_by_name,
     flatten,
+    flatten_items,
+    get_declared,
+    get_shortcuts_by_name,
+    Namespace,
 )
 
 from iommi import MISSING

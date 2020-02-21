@@ -9,28 +9,24 @@ from urllib.parse import (
 )
 
 from tri_declarative import (
+    declarative,
+    dispatch,
     EMPTY,
     Refinable,
-    dispatch,
-    declarative,
     with_meta,
 )
 from tri_struct import Struct
 
-from iommi import Part
-from iommi._web_compat import (
-    Template,
-)
+from iommi._web_compat import Template
+from iommi.attrs import Attrs
 from iommi.endpoint import path_join
 from iommi.member import (
-    collect_members,
     bind_members,
+    collect_members,
 )
-from iommi.traversable import (
-    EvaluatedRefinable,
-)
-from iommi.attrs import Attrs
 from iommi.page import Fragment
+from iommi.part import Part
+from iommi.traversable import EvaluatedRefinable
 
 
 class MenuBase(Part):

@@ -17,13 +17,13 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi.part import request_data
 from iommi.endpoint import perform_ajax_dispatch
 from iommi.form import (
     Field,
     Form,
 )
 from iommi.from_model import NoRegisteredNameException
+from iommi.part import request_data
 from iommi.query import (
     FREETEXT_SEARCH_NAME,
     Q_OPERATOR_BY_QUERY_OPERATOR,

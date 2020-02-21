@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+
 from iommi.from_model import register_name_field
 
 

@@ -2,40 +2,40 @@ import json
 
 import pytest
 from django.db import models
-from iommi._web_compat import (
-    RequestContext,
-    Template,
-)
 from django.test import override_settings
 from tri_declarative import Namespace
 from tri_struct import Struct
 
+from iommi import Part
 from iommi._web_compat import (
     format_html,
     HttpResponse,
     mark_safe,
 )
-from iommi.part import (
-    request_data,
-    as_html,
-)
-from iommi import Part
-from iommi.endpoint import (
-    find_target,
-    perform_post_dispatch,
-    InvalidEndpointPathException,
-)
-from iommi.traversable import (
-    evaluate_strict_container,
-    build_long_path,
+from iommi._web_compat import (
+    RequestContext,
+    Template,
 )
 from iommi.attrs import evaluate_attrs
+from iommi.endpoint import (
+    find_target,
+    InvalidEndpointPathException,
+    perform_post_dispatch,
+)
 from iommi.page import (
+    Fragment,
     html,
     Page,
-    Fragment,
+)
+from iommi.part import (
+    as_html,
+    request_data,
 )
 from iommi.table import Table
+from iommi.traversable import (
+    build_long_path,
+    evaluate_strict_container,
+)
 from tests.helpers import (
     req,
     request_with_middleware,

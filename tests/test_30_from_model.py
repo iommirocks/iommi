@@ -1,14 +1,14 @@
 import pytest
 from django.db.models import (
-    Model,
     CharField,
+    Model,
 )
 
 from iommi.from_model import (
+    create_members_from_model,
     get_name_field,
     NoRegisteredNameException,
     register_name_field,
-    create_members_from_model,
 )
 
 

@@ -59,26 +59,24 @@ from iommi.base import (
     create_as_view_from_as_page,
     evaluated_refinable,
 )
-from iommi.part import request_data
-from iommi import (
-    MISSING,
-    Part,
-)
+from iommi.base import MISSING
 from iommi.error import Errors
-from iommi.member import (
-    collect_members,
-    bind_members,
-)
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
     get_name_field,
     member_from_model,
 )
+from iommi.member import (
+    bind_members,
+    collect_members,
+)
 from iommi.page import (
     Fragment,
     Page,
 )
+from iommi.part import Part
+from iommi.part import request_data
 from iommi.traversable import (
     EvaluatedRefinable,
     no_copy_on_bind,

@@ -1,22 +1,20 @@
 from django.apps import apps
 from tri_declarative import (
     dispatch,
-    Namespace,
-    setdefaults_path,
     EMPTY,
     LAST,
+    Namespace,
+    setdefaults_path,
 )
 from tri_struct import Struct
 
 from iommi import (
-    Page,
-    html,
-    Table,
     Form,
+    html,
+    Page,
+    Table,
 )
-from iommi.from_model import (
-    get_fields,
-)
+from iommi.from_model import get_fields
 
 model_by_app_and_name = {
     (app_name, model_name): model

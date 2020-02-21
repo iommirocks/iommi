@@ -7,8 +7,8 @@ from datetime import (
 )
 from decimal import Decimal
 from io import (
-    StringIO,
     BytesIO,
+    StringIO,
 )
 
 import pytest
@@ -32,11 +32,11 @@ from iommi._web_compat import (
     Template,
     ValidationError,
 )
-from iommi.endpoint import (
-    perform_ajax_dispatch,
-    InvalidEndpointPathException,
-)
 from iommi.attrs import render_attrs
+from iommi.endpoint import (
+    InvalidEndpointPathException,
+    perform_ajax_dispatch,
+)
 from iommi.form import (
     bool_parse,
     datetime_iso_formats,
@@ -61,9 +61,9 @@ from iommi.page import (
 from .compat import RequestFactory
 from .helpers import (
     get_attrs,
+    prettify,
     reindent,
     req,
-    prettify,
 )
 from .models import (
     Bar,

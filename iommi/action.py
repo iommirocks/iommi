@@ -1,6 +1,5 @@
 from itertools import groupby
 from typing import (
-    Any,
     Callable,
     Dict,
     List,
@@ -18,12 +17,10 @@ from tri_declarative import (
     setdefaults_path,
 )
 
-from iommi.part import Part
-from iommi.traversable import (
-    EvaluatedRefinable,
-)
 from iommi.attrs import Attrs
 from iommi.page import Fragment
+from iommi.part import Part
+from iommi.traversable import EvaluatedRefinable
 
 
 class Action(Part):

@@ -1,27 +1,24 @@
 import copy
 from collections import defaultdict
 from typing import (
-    List,
     Dict,
+    List,
 )
 
 from tri_declarative import (
-    get_callable_description,
-    LAST,
-    Namespace,
-    evaluate_strict,
-    Refinable,
-    RefinableObject,
     dispatch,
     evaluate,
+    evaluate_strict,
+    LAST,
+    Namespace,
+    Refinable,
+    RefinableObject,
 )
 from tri_struct import Struct
 
-from iommi.attrs import (
-    evaluate_attrs,
-)
-from iommi.style import apply_style
+from iommi.attrs import evaluate_attrs
 from iommi.base import MISSING
+from iommi.style import apply_style
 
 
 def no_copy_on_bind(cls):
@@ -70,10 +67,10 @@ class Traversable(RefinableObject):
         b = ' (bound)' if self._is_bound else ''
         try:
             p = f" path:'{self.iommi_path}'" if self._parent is not None else ""
-        except AssertionError:
+        except PathNotFoundException:
             p = ' path:<no path>'
         c = ''
-        if self._is_bound:
+        if self._is_bound and hasattr(self, '_bound_members'):
             members = self._bound_members
             if members:
                 c = f" members:{list(members.keys())!r}"
@@ -143,7 +140,7 @@ class Traversable(RefinableObject):
                     if hasattr(result, k):
                         setattr(result, k, v)
                         continue
-                    assert False, f'Unable to set {k} on {result._name}'
+                    raise ValueError(f'Unable to set {k} on {result._name}')
 
         # Unapplied config and styling has another chance of setting include to False
         if include is not MISSING and result.include is False:

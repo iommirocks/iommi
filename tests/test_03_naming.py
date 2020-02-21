@@ -1,22 +1,21 @@
 import pytest
-from django.test import RequestFactory
+from tri_declarative import Namespace
+from tri_struct import Struct
+
 from iommi import (
     Column,
     Field,
     Form,
     Table,
 )
-from iommi.traversable import build_long_path_by_path
 from iommi.page import (
     Fragment,
     Page,
 )
-from tri_declarative import Namespace
-from tri_struct import Struct
-
+from iommi.traversable import build_long_path_by_path
 from tests.helpers import (
-    StubTraversable,
     req,
+    StubTraversable,
 )
 from tests.models import TFoo
 

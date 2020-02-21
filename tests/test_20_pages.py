@@ -1,17 +1,19 @@
-from bs4 import BeautifulSoup
 from django.test import override_settings
+from tri_struct import Struct
+
 from iommi import (
-    Page,
     html,
+    Page,
 )
 from iommi._web_compat import (
     format_html,
 )
-from iommi.page import Fragment
 from iommi.attrs import Attrs
-from tri_struct import Struct
-
-from tests.helpers import req, prettify
+from iommi.page import Fragment
+from tests.helpers import (
+    prettify,
+    req,
+)
 
 
 def test_page_constructor():

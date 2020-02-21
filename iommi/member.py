@@ -1,19 +1,20 @@
 from typing import (
-    Dict,
     Any,
+    Dict,
     Type,
 )
+
 from tri_declarative import (
-    setdefaults_path,
-    Namespace,
     dispatch,
+    Namespace,
+    setdefaults_path,
 )
 from tri_struct import Struct
 
 from iommi.traversable import (
-    Traversable,
     no_copy_on_bind,
     sort_after,
+    Traversable,
 )
 
 FORBIDDEN_NAMES = {x for x in dir(Traversable)}
@@ -83,10 +84,9 @@ class Members(Traversable):
         self._bound_members = Struct()
 
     def on_bind(self) -> None:
-        for m in self._declared_members.values():
-            bound = m.bind(parent=self)
-            del m  # to not make a mistake below
-            if bound is not None:
-                self._bound_members[bound._name] = bound
+        for key, member in self._declared_members.items():
+            bound_member = member.bind(parent=self)
+            if bound_member is not None:
+                self._bound_members[key] = bound_member
 
         sort_after(self._bound_members)

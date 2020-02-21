@@ -1,5 +1,15 @@
-from django.db.models import Model, IntegerField, BooleanField, FloatField, ForeignKey, OneToOneField, ManyToManyField, \
-    FileField, CASCADE, CharField
+from django.db.models import (
+    BooleanField,
+    CASCADE,
+    CharField,
+    FileField,
+    FloatField,
+    ForeignKey,
+    IntegerField,
+    ManyToManyField,
+    Model,
+    OneToOneField,
+)
 
 
 class FormFromModelTest(Model):

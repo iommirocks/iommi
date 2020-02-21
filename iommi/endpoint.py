@@ -1,15 +1,14 @@
 from tri_declarative import (
-    Refinable,
     dispatch,
+    Refinable,
 )
 
 from iommi.traversable import (
-    Traversable,
     EvaluatedRefinable,
     get_long_path_by_path,
     get_path_by_long_path,
+    Traversable,
 )
-
 
 DISPATCH_PATH_SEPARATOR = '/'
 DISPATCH_PREFIX = DISPATCH_PATH_SEPARATOR

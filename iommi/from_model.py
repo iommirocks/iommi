@@ -22,7 +22,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi import MISSING
+from iommi.base import MISSING
 
 
 def create_members_from_model(*, default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):

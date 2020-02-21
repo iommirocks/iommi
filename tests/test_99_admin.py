@@ -1,7 +1,8 @@
 import pytest
+
 from iommi.admin import list_model
-from .models import AdminUnique
 from .helpers import req
+from .models import AdminUnique
 
 
 @pytest.mark.django_db

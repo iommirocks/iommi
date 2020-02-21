@@ -1,19 +1,19 @@
 import pytest
-
-from iommi.attrs import render_attrs
-from iommi.style import (
-    Style,
-    apply_style_recursively,
-    get_style_obj_for_object,
-    validate_styles,
-    InvalidStyleConfigurationException,
-    get_style_for,
-)
 from tri_declarative import (
+    class_shortcut,
     Namespace,
     Refinable,
     RefinableObject,
-    class_shortcut,
+)
+
+from iommi.attrs import render_attrs
+from iommi.style import (
+    apply_style_recursively,
+    get_style_for,
+    get_style_obj_for_object,
+    InvalidStyleConfigurationException,
+    Style,
+    validate_styles,
 )
 
 

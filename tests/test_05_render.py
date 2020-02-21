@@ -1,9 +1,9 @@
 import re
 
 import pytest
+from tri_declarative import Namespace
 
 from iommi.attrs import render_attrs
-from tri_declarative import Namespace
 
 
 def test_render_attrs():

@@ -6,11 +6,10 @@ from typing import (
 
 from django.conf import settings
 from tri_declarative import (
+    get_shortcuts_by_name,
     Namespace,
     RefinableObject,
-    get_shortcuts_by_name,
 )
-
 
 DEFAULT_STYLE = 'bootstrap'
 

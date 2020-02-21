@@ -1,41 +1,41 @@
 __version__ = '0.2.0'
 
 from tri_declarative import LAST
+
 from iommi._db_compat import (
-    setup_db_compat,
     register_factory,
+    setup_db_compat,
 )
 from iommi.action import Action
-from iommi.part import (
-    Part,
-)
 from iommi.base import MISSING
 from iommi.form import (
     Field,
     Form,
     register_field_factory,
 )
+from iommi.menu import (
+    Menu,
+    MenuItem,
+)
 from iommi.page import (
     Fragment,
     html,
     Page,
 )
+from iommi.part import Part
 from iommi.query import (
     Query,
-    Variable,
     register_variable_factory,
-)
-from iommi.table import (
-    Column,
-    Table,
-    register_column_factory,
-    register_cell_formatter,
-)
-from iommi.menu import (
-    Menu,
-    MenuItem,
+    Variable,
 )
 from iommi.style import register_style
+from iommi.table import (
+    Column,
+    register_cell_formatter,
+    register_column_factory,
+    Table,
+)
+
 setup_db_compat()
 
 

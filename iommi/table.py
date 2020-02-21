@@ -56,16 +56,14 @@ from tri_declarative import (
     Shortcut,
     with_meta,
 )
-from tri_struct import (
-    Struct,
-)
+from tri_struct import Struct
 
 from iommi._web_compat import (
-    Template,
     format_html,
     mark_safe,
     render_template,
     smart_text,
+    Template,
 )
 from iommi.action import (
     Action,
@@ -79,19 +77,8 @@ from iommi.attrs import (
 from iommi.base import (
     create_as_view_from_as_page,
     evaluated_refinable,
-    model_and_rows,
-)
-from iommi.base import (
     MISSING,
-)
-from iommi.page import (
-    Part,
-    Fragment,
-    Page,
-)
-from iommi.member import (
-    collect_members,
-    bind_members,
+    model_and_rows,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -106,6 +93,15 @@ from iommi.from_model import (
     create_members_from_model,
     get_fields,
     member_from_model,
+)
+from iommi.member import (
+    bind_members,
+    collect_members,
+)
+from iommi.page import (
+    Fragment,
+    Page,
+    Part,
 )
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
@@ -1664,7 +1660,6 @@ class Table(Part):
     )
     def as_page(self, *, title=None, parts=None):
         from iommi.page import (
-            Page,
             html,
         )
         unapplied_title_config = parts.pop('title', {})

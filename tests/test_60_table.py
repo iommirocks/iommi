@@ -18,17 +18,17 @@ from tri_declarative import (
 )
 
 from iommi import Action
+from iommi._web_compat import Template
 from iommi.endpoint import (
     find_target,
-    perform_ajax_dispatch,
     InvalidEndpointPathException,
+    perform_ajax_dispatch,
 )
 from iommi.form import (
     Field,
     Form,
 )
 from iommi.from_model import register_name_field
-from iommi._web_compat import Template
 from iommi.query import (
     Query,
     Variable,

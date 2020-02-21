@@ -1,8 +1,13 @@
 import pytest
 
+from iommi.table import (
+    Column,
+    order_by_on_list,
+    Struct,
+    Table,
+)
 from tests.helpers import verify_table_html
 from tests.models import TFoo
-from iommi.table import Column, Table, Struct, order_by_on_list
 
 
 def test_sort_list():

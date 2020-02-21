@@ -4,15 +4,14 @@ from tri_struct import merged
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
-    Template,
     format_html,
     render_template,
+    Template,
 )
 from iommi.form import (
     Field,
     Form,
 )
-
 from .compat import SafeText
 from .helpers import req
 

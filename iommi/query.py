@@ -56,18 +56,10 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
+    MISSING,
     model_and_rows,
 )
-from iommi.part import request_data
-from iommi import (
-    MISSING,
-    Part,
-)
 from iommi.endpoint import path_join
-from iommi.member import (
-    collect_members,
-    bind_members,
-)
 from iommi.form import (
     bool_parse,
     Form,
@@ -78,6 +70,14 @@ from iommi.from_model import (
     get_name_field,
     member_from_model,
     NoRegisteredNameException,
+)
+from iommi.member import (
+    bind_members,
+    collect_members,
+)
+from iommi.part import (
+    Part,
+    request_data,
 )
 from iommi.traversable import (
     EvaluatedRefinable,
