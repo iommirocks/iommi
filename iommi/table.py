@@ -945,11 +945,26 @@ def bulk_delete__post_handler(table, form, **_):
     return p.render_to_response()
 
 
-# TODO: full Part
-class Paginator:
-    def __init__(self, *, django_paginator, table, adjacent_pages=6):
-        self.iommi_style = None
-        self._parent = table
+@no_copy_on_bind
+class Paginator(Traversable):
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    template: Union[str, Template] = EvaluatedRefinable()
+    container = Refinable()
+    page = Refinable()
+    active_item = Refinable()
+    item = Refinable()
+    link = Refinable()
+
+    @dispatch(
+        attrs=EMPTY,
+        container__attrs=EMPTY,
+        page__attrs=EMPTY,
+        active_item__attrs=EMPTY,
+        item__attrs=EMPTY,
+        link__attrs=EMPTY,
+    )
+    def __init__(self, *, django_paginator, table, adjacent_pages=6, **kwargs):
+        super(Paginator, self).__init__(**kwargs)
         self.paginator = django_paginator
         self.table: Table = table
         self.adjacent_pages = adjacent_pages
@@ -958,21 +973,16 @@ class Paginator:
         self.page_param_path = path_join(self.table.iommi_path, 'page')
         page = request.GET.get(self.page_param_path) if request else None
         self.current_page = int(page) if page else 1
-        self.attrs = Namespace()
-        self.container = Namespace(attrs=EMPTY)
-        self.page = Namespace(attrs=EMPTY)
-        self.active_item = Namespace(attrs=EMPTY)
-        self.item = Namespace(attrs=EMPTY)
-        self.link = Namespace(attrs=EMPTY)
-        self.template = None
 
-        apply_style(self)
-        self.attrs = evaluate_attrs(self)
+    def on_bind(self) -> None:
         self.container.attrs = evaluate_attrs(self.container)
         self.page.attrs = evaluate_attrs(self.page)
         self.active_item.attrs = evaluate_attrs(self.active_item)
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
+
+    def own_evaluate_parameters(self):
+        return dict(paginator=self)
 
     def get_paginated_rows(self):
         if self.paginator is None:
@@ -1404,6 +1414,8 @@ class Table(Part):
                 raise Http404
         else:
             self.paginator = Paginator(table=self, django_paginator=None)
+
+        self.paginator.bind(parent=self)
 
         self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
 
