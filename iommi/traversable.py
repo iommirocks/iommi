@@ -145,6 +145,10 @@ class Traversable(RefinableObject):
                         continue
                     assert False, f'Unable to set {k} on {result._name}'
 
+        # Unapplied config and styling has another chance of setting include to False
+        if include is not MISSING and result.include is False:
+            return None
+
         # We neeed to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict
         result._evaluate_parameters = {
