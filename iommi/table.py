@@ -721,7 +721,6 @@ class BoundRow(Traversable):
         return BoundCell(bound_row=self, column=column)
 
 
-# TODO: make this a Traversable
 class BoundCell(RefinableObject):
     url = Refinable()
     url_title = Refinable()
