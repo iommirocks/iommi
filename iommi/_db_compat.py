@@ -30,8 +30,10 @@ def setup_db_compat_django():
         DecimalField,
         EmailField,
         FileField,
+        FilePathField,
         FloatField,
         ForeignKey,
+        GenericIPAddressField,
         ImageField,
         IntegerField,
         ManyToManyField,
@@ -59,6 +61,8 @@ def setup_db_compat_django():
     register_factory(ManyToManyRel, factory=None)
     register_factory(ManyToManyField, shortcut_name='many_to_many')
     register_factory(ForeignKey, shortcut_name='foreign_key')
+    register_factory(GenericIPAddressField, shortcut_name='text')
+    register_factory(FilePathField, shortcut_name='text')
 
     # Column specific
     register_column_factory(BooleanField, shortcut_name='boolean')
