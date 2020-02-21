@@ -1,4 +1,10 @@
+import json
 from collections import defaultdict
+from pathlib import Path
+
+import iommi.part
+import iommi.style
+import iommi.traversable
 from django.http import HttpResponse
 from django.template import (
     RequestContext,
@@ -6,30 +12,30 @@ from django.template import (
 )
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-
-import iommi.part
-import iommi.style
-import iommi.traversable
 from iommi import (
     Action,
     Column,
+    html,
     Page,
     Table,
-    html,
-    base,
 )
 from iommi.admin import admin
 from iommi.form import (
+    choice_parse,
     Field,
     Form,
-    choice_parse,
 )
 from iommi.menu import (
-    MenuItem,
     Menu,
+    MenuItem,
 )
 from iommi.style import validate_styles
-from tri_declarative import get_members, Shortcut, is_shortcut, Namespace
+from tri_declarative import (
+    get_members,
+    is_shortcut,
+    Namespace,
+    Shortcut,
+)
 from tri_struct import Struct
 
 from .models import (
@@ -37,6 +43,9 @@ from .models import (
     Foo,
     TBar,
     TFoo,
+    Album,
+    Artist,
+    Track,
 )
 
 # Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
@@ -46,6 +55,20 @@ validate_styles()
 def ensure_objects():
     for i in range(100 - Foo.objects.count()):
         Foo.objects.create(name=f'X{i}', a=i, b=True)
+
+    if not Album.objects.exists():
+        with open(Path(__file__).parent.parent / 'scraped_data.json') as f:
+            artists = json.loads(f.read())
+
+        for artist_name, albums in artists.items():
+            artist, _ = Artist.objects.get_or_create(name=artist_name)
+            for album_name, album_data in albums.items():
+                album, _ = Album.objects.get_or_create(artist=artist, name=album_name, year=int(album_data['year']))
+                for track_name, duration in album_data['tracks']:
+                    Track.objects.get_or_create(album=album, name=track_name, duration=duration)
+
+
+ensure_objects()
 
 
 def index(request):

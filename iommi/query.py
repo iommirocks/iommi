@@ -134,7 +134,7 @@ def value_to_str_for_query(variable, v):
         if name_field is None:
             try:
                 name_field = get_name_field(model=type(v))
-            except NoRegisteredNameException as e:
+            except NoRegisteredNameException:
                 raise NoRegisteredNameException(f'{type(v).__name__} has no registered name field. Please register a name with register_name_field or specify name_field.')
         try:
             v = getattr(v, name_field)
@@ -558,6 +558,7 @@ class Query(Part):
                 )
             declared_fields[name] = field()
 
+        # noinspection PyCallingNonCallable
         self.form: Form = self.form(
             _name='form',
             _fields_dict=declared_fields,
