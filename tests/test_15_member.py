@@ -12,8 +12,6 @@ from iommi.traversable import Traversable
 
 
 class Fruit(Traversable):
-    include = True
-
     def __init__(self, taste=None, **kwargs):
         super(Fruit, self).__init__(**kwargs)
         self.taste = taste
@@ -36,45 +34,50 @@ def test_empty_collect():
 
 
 def test_collect_from_arg():
-    bucket = Basket(fruits__banana__taste="sweet")
-    assert bucket._declared_members.fruits.banana.taste == 'sweet'
+    basket = Basket(fruits__banana__taste="sweet")
+    assert basket._declared_members.fruits.banana.taste == 'sweet'
 
 
 def test_collect_from_declarative():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    bucket = MyBasket()
-    assert bucket._declared_members.fruits.orange.taste == 'sour'
+    basket = MyBasket()
+    assert basket._declared_members.fruits.orange.taste == 'sour'
 
 
 def test_collect_unapplied_config():
     class MyBasket(Basket):
         pear = Fruit()
 
-    bucket = MyBasket(fruits__pear__taste='meh')
-    assert bucket._unapplied_config == dict(fruits=dict(pear=dict(taste='meh')))
+    basket = MyBasket(fruits__pear__taste='meh')
+    assert basket._unapplied_config == dict(fruits=dict(pear=dict(taste='meh')))
+
+
+def test_empty_bind():
+    basket = Basket().bind()
+    assert basket.fruits == {}
 
 
 def test_bind_from_arg():
-    bucket = Basket(fruits__banana__taste="sweet").bind()
-    assert bucket.fruits.banana.taste == 'sweet'
+    basket = Basket(fruits__banana__taste="sweet").bind()
+    assert basket.fruits.banana.taste == 'sweet'
 
 
 def test_bind_from_declarative():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    bucket = MyBasket().bind()
-    assert bucket.fruits.orange.taste == 'sour'
+    basket = MyBasket().bind()
+    assert basket.fruits.orange.taste == 'sour'
 
 
 def test_bind_via_unapplied_config():
     class MyBasket(Basket):
         pear = Fruit()
 
-    bucket = MyBasket(fruits__pear__taste='meh').bind()
-    assert bucket.fruits.pear.taste == 'meh'
+    basket = MyBasket(fruits__pear__taste='meh').bind()
+    assert basket.fruits.pear.taste == 'meh'
 
     with pytest.raises(ValueError) as e:
         MyBasket(fruits__pear__color='green').bind()
