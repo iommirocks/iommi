@@ -23,11 +23,11 @@ def model_and_rows(model, rows):
     return model, rows
 
 
-def create_as_view_from_as_page(cls, name, *, kwargs, title, parts):
+def build_as_view_wrapper(*, target, cls, kwargs, name):
     def view_wrapper(request, **url_kwargs):
-        return getattr(cls(**kwargs), f'{name}_page')(title=title, parts=parts, **url_kwargs).bind(request=request).render_to_response()
+        return target(**url_kwargs).bind(request=request).render_to_response()
 
-    view_wrapper.__name__ = f'{cls.__name__}{repr(Namespace(kwargs))[len("Namespace"):]}.{name}_view'
+    view_wrapper.__name__ = f'{cls.__name__}{repr(Namespace(kwargs))[len("Namespace"):]}.{name}'
     view_wrapper.__doc__ = cls.__doc__
 
     return view_wrapper

@@ -24,6 +24,7 @@ from iommi.attrs import (
     Attrs,
     render_attrs,
 )
+from iommi.base import build_as_view_wrapper
 from iommi.debug import (
     endpoint__debug_tree,
     iommi_debug_on,
@@ -212,6 +213,18 @@ class Page(Part):
             rendered[part._name] = as_html(part=part, context=context)
 
         return render(rendered)
+
+    @classmethod
+    @dispatch(
+        parts=EMPTY,
+    )
+    def as_view(cls, *, title=None, parts=None, **kwargs):
+        return build_as_view_wrapper(
+            target=lambda: cls(title=title, parts=parts, **kwargs),
+            cls=cls,
+            kwargs=kwargs,
+            name='as_view',
+        )
 
 
 class Html:

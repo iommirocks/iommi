@@ -56,7 +56,7 @@ from iommi.action import (
 )
 from iommi.attrs import Attrs
 from iommi.base import (
-    create_as_view_from_as_page,
+    build_as_view_wrapper,
     evaluated_refinable,
 )
 from iommi.base import MISSING
@@ -1327,28 +1327,48 @@ class Form(Part):
         parts=EMPTY,
     )
     def as_create_or_edit_view(cls, *, title=None, parts=None, **kwargs):
-        return create_as_view_from_as_page(cls, 'as_create_or_edit', kwargs=kwargs, title=title, parts=parts)
+        return build_as_view_wrapper(
+            target=lambda: cls.as_create_or_edit_page(title=title, parts=parts, **kwargs),
+            cls=cls,
+            kwargs=kwargs,
+            name='as_create_or_edit_view',
+        )
 
     @classmethod
     @dispatch(
         parts=EMPTY,
     )
     def as_create_view(cls, *, title=None, parts=None, **kwargs):
-        return create_as_view_from_as_page(cls, 'as_create', kwargs=kwargs, title=title, parts=parts)
+        return build_as_view_wrapper(
+            target=lambda: cls.as_create_page(title=title, parts=parts, **kwargs),
+            cls=cls,
+            kwargs=kwargs,
+            name='as_create_view',
+        )
 
     @classmethod
     @dispatch(
         parts=EMPTY,
     )
     def as_edit_view(cls, *, title=None, parts=None, **kwargs):
-        return create_as_view_from_as_page(cls, 'as_edit', kwargs=kwargs, title=title, parts=parts)
+        return build_as_view_wrapper(
+            target=lambda: cls.as_edit_page(title=title, parts=parts, **kwargs),
+            cls=cls,
+            kwargs=kwargs,
+            name='as_edit_view',
+        )
 
     @classmethod
     @dispatch(
         parts=EMPTY,
     )
     def as_delete_view(cls, *, title=None, parts=None, **kwargs):
-        return create_as_view_from_as_page(cls, 'as_delete', kwargs=kwargs, title=title, parts=parts)
+        return build_as_view_wrapper(
+            target=lambda: cls.as_delete_page(title=title, parts=parts, **kwargs),
+            cls=cls,
+            kwargs=kwargs,
+            name='as_delete_view',
+        )
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):

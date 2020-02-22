@@ -75,7 +75,7 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
-    create_as_view_from_as_page,
+    build_as_view_wrapper,
     evaluated_refinable,
     MISSING,
     model_and_rows,
@@ -1679,5 +1679,10 @@ class Table(Part):
         parts=EMPTY,
     )
     def as_view(cls, *, title=None, parts=None, **kwargs):
-        return create_as_view_from_as_page(cls, 'as', kwargs=kwargs, title=title, parts=parts)
+        return build_as_view_wrapper(
+            target=lambda: cls(**kwargs).as_page(title=title, parts=parts),
+            cls=cls,
+            kwargs=kwargs,
+            name='as_view',
+        )
 
