@@ -2157,7 +2157,7 @@ def test_table_as_view():
         query_from_indexes=True,
     ).as_page().bind(request=req('get')).render_to_response().content
 
-    as_view_path = Table.as_view(auto__model=TFoo, query_from_indexes=True)(request=req('get')).content
+    as_view_path = Table(auto__model=TFoo, query_from_indexes=True).as_view()(request=req('get')).content
     assert render_to_response_path == as_view_path
 
 

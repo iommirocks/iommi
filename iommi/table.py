@@ -1673,15 +1673,14 @@ class Table(Part):
             parts=parts,
         )
 
-    @classmethod
     @dispatch(
         parts=EMPTY,
     )
-    def as_view(cls, *, title=None, parts=None, **kwargs):
+    def as_view(self, *, title=None, parts=None):
         return build_as_view_wrapper(
-            target=lambda: cls(**kwargs).as_page(title=title, parts=parts),
-            cls=cls,
-            kwargs=kwargs,
+            target=lambda: self.as_page(title=title, parts=parts),
+            cls=self.__class__,
+            kwargs={},
             name='as_view',
         )
 

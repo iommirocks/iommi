@@ -212,15 +212,11 @@ class Page(Part):
 
         return render(rendered)
 
-    @classmethod
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_view(cls, *, title=None, parts=None, **kwargs):
+    def as_view(self):
         return build_as_view_wrapper(
-            target=lambda: cls(title=title, parts=parts, **kwargs),
-            cls=cls,
-            kwargs=kwargs,
+            target=lambda: self,
+            cls=self.__class__,
+            kwargs={},
             name='as_view',
         )
 

@@ -1021,6 +1021,7 @@ class Field(Part):
 
 class FormAutoConfig(AutoConfig):
     instance = Refinable()
+    type = Refinable()  # one of 'create', 'edit', 'delete'
 
 
 @declarative(Field, '_fields_dict')
@@ -1255,6 +1256,7 @@ class Form(Part):
         extra__title=None,
     )
     def as_create_or_edit_page(cls, *, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
+        # TODO: this function should be inlined next to the auto handling in Form.__init__
         assert 'get_request' not in kwargs, "I'm afraid you can't do that Dave"
         if model is None and instance is not None:
             model = type(instance)
@@ -1322,51 +1324,47 @@ class Form(Part):
             **kwargs
         )
 
-    @classmethod
     @dispatch(
         parts=EMPTY,
     )
-    def as_create_or_edit_view(cls, *, title=None, parts=None, **kwargs):
+    def as_create_or_edit_view(self, *, title=None, parts=None, **kwargs):
         return build_as_view_wrapper(
-            target=lambda: cls.as_create_or_edit_page(title=title, parts=parts, **kwargs),
-            cls=cls,
-            kwargs=kwargs,
+            target=lambda: self.as_create_or_edit_page(title=title, parts=parts, **kwargs),
+            cls=self.__class__,
+            kwargs={},
             name='as_create_or_edit_view',
         )
 
-    @classmethod
     @dispatch(
         parts=EMPTY,
     )
-    def as_create_view(cls, *, title=None, parts=None, **kwargs):
+    def as_create_view(self, *, title=None, parts=None):
         return build_as_view_wrapper(
-            target=lambda: cls.as_create_page(title=title, parts=parts, **kwargs),
-            cls=cls,
-            kwargs=kwargs,
+            target=lambda: self.as_create_page(title=title, parts=parts),
+            cls=self.__class__,
+            kwargs={},
             name='as_create_view',
         )
 
-    @classmethod
     @dispatch(
         parts=EMPTY,
     )
-    def as_edit_view(cls, *, title=None, parts=None, **kwargs):
+    def as_edit_view(self, *, title=None, parts=None):
         return build_as_view_wrapper(
-            target=lambda: cls.as_edit_page(title=title, parts=parts, **kwargs),
-            cls=cls,
-            kwargs=kwargs,
+            target=lambda: self.as_edit_page(title=title, parts=parts),
+            cls=self.__class__,
+            kwargs={},
             name='as_edit_view',
         )
 
-    @classmethod
     @dispatch(
         parts=EMPTY,
     )
-    def as_delete_view(cls, *, title=None, parts=None, **kwargs):
+    def as_delete_view(self, *, title=None, parts=None):
         return build_as_view_wrapper(
-            target=lambda: cls.as_delete_page(title=title, parts=parts, **kwargs),
-            cls=cls,
-            kwargs=kwargs,
+            target=lambda: self.as_delete_page(title=title, parts=parts),
+            cls=self.__class__,
+            kwargs={},
             name='as_delete_view',
         )
 

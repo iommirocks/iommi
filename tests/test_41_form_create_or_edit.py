@@ -289,4 +289,4 @@ def test_create_or_edit_view_name():
     class MyForm(Form):
         pass
 
-    assert MyForm.as_create_or_edit_view(auto__model=Foo).__name__ == "MyForm(auto__model=<class 'tests.models.Foo'>).as_create_or_edit_view"
+    assert MyForm(auto__model=Foo).as_create_or_edit_view().__name__ == "MyForm().as_create_or_edit_view"
