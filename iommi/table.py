@@ -1379,7 +1379,7 @@ class Table(Part):
                 column.sortable = False
 
         if self.model:
-            self._setup_bulk_form()
+            self._setup_bulk_form_and_query()
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
 
@@ -1422,7 +1422,7 @@ class Table(Part):
 
         self._prepare_auto_rowspan()
 
-    def _setup_bulk_form(self):
+    def _setup_bulk_form_and_query(self):
         variables_unapplied_config = Struct()
         for name, column in self.columns.items():
             variable = setdefaults_path(
