@@ -1664,6 +1664,8 @@ class Table(Part):
         from iommi.page import (
             html,
         )
+        if title is None and self.model is not None:
+            title = self.model._meta.verbose_name
         unapplied_title_config = parts.pop('title', {})
         return self.get_meta().page_class(
             title=title,
