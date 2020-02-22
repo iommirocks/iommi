@@ -1111,7 +1111,6 @@ def endpoint__csv(table, **_):
     return response
 
 
-@no_copy_on_bind
 @declarative(Column, '_columns_dict')
 @with_meta
 class Table(Part):
@@ -1433,7 +1432,7 @@ class Table(Part):
             variables_unapplied_config[name] = variable
 
         self.query._unapplied_config.variables = variables_unapplied_config
-        self.query.bind(parent=self)
+        self.query = self.query.bind(parent=self)
         self._bound_members.query = self.query
 
         if self.query.form:
@@ -1458,7 +1457,7 @@ class Table(Part):
 
         self.bulk_form._unapplied_config.fields = bulk_fields_unapplied_config
 
-        self.bulk_form.bind(parent=self)
+        self.bulk_form = self.bulk_form.bind(parent=self)
         if self.bulk_form.actions:
             self._bound_members.bulk = self.bulk_form
         else:

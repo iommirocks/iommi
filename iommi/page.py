@@ -40,7 +40,6 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    no_copy_on_bind,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
@@ -152,7 +151,6 @@ class Fragment(Part):
         return dict(fragment=self)
 
 
-@no_copy_on_bind
 @with_meta
 @declarative(
     parameter='_parts_dict',

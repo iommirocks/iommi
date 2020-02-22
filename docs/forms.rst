@@ -92,7 +92,7 @@ change the behavior!). The above example is equivalent to:
             # show only for staff
             is_admin__include=lambda form, **_: form.get_request().user.is_staff,
         )
-        form.bind(request=request)
+        form = form.bind(request=request)
 
         # rest of view function...
 

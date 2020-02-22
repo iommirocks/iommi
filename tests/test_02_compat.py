@@ -61,7 +61,7 @@ def test_format_html3():
 
 def test_format_html4():
     form = Form(fields=dict(foo=Field()))
-    form.bind(request=req('get'))
+    form = form.bind(request=req('get'))
     actual = render_template(
         req('get'),
         Template('{{form}}'),

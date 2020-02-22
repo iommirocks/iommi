@@ -51,7 +51,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
 
     request = RequestFactory().get("/", query)
     if not table._is_bound:
-        table.bind(request=request)
+        table = table.bind(request=request)
 
     from django.contrib.auth.models import AnonymousUser
     request.user = AnonymousUser()

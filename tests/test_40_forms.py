@@ -89,7 +89,7 @@ def test_declaration_merge():
         bar = Field()
 
     form = MyForm()
-    form.bind(request=None)
+    form = form.bind(request=None)
 
     assert {'foo', 'bar'} == set(form.fields.keys())
 
@@ -491,7 +491,7 @@ def test_phone_field():
 
 def test_render_template_string():
     form = Form(fields__foo=Field(_name='foo', template=Template('{{ field.value }} {{ field.display_name }}')))
-    form.bind(request=req('get', foo='7'))
+    form = form.bind(request=req('get', foo='7'))
     assert form.fields.foo.__html__() == '7 Foo'
 
 
@@ -1497,7 +1497,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
         not_returning_anything = Field.integer()
 
     form = MyForm()
-    form.bind(request=req('get'))
+    form = form.bind(request=req('get'))
     actual = perform_ajax_dispatch(root=form, path='/fields/username/endpoints/choices', value='ar')
     assert actual == {
         'results': [
@@ -1554,7 +1554,7 @@ def test_ajax_namespacing():
 
     request = req('get')
     form = MyForm()
-    form.bind(request=request)
+    form = form.bind(request=request)
     assert 'bar' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/bar', value='ar')
     assert 'baaz' == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/baaz', value='ar')
 
@@ -1567,7 +1567,7 @@ def test_ajax_config_and_validate():
 
     request = req('get')
     form = MyForm()
-    form.bind(request=request)
+    form = form.bind(request=request)
     assert dict(
         name='foo',
     ) == perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/config', value=None)
@@ -1590,7 +1590,7 @@ def test_custom_endpoint():
             endpoints__foo__func = lambda value, **_: 'foo' + value
 
     form = MyForm()
-    form.bind(request=None)
+    form = form.bind(request=None)
     assert 'foobar' == perform_ajax_dispatch(root=form, path='/foo', value='bar')
 
 
@@ -1965,13 +1965,13 @@ def test_dunder_name_for_column():
         foo__a = Field()
 
     form = FooForm()
-    form.bind(request=None)
+    form = form.bind(request=None)
     assert list(form.fields.keys()) == ['foo', 'foo__a']
 
 
 def test_help_text_for_boolean_tristate():
     form = Form(auto__model=BooleanFromModelTestModel)
-    form.bind(request=req('get'))
+    form = form.bind(request=req('get'))
     assert '$$$$' in str(form)
 
 

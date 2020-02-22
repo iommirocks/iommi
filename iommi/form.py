@@ -58,8 +58,8 @@ from iommi.attrs import Attrs
 from iommi.base import (
     build_as_view_wrapper,
     evaluated_refinable,
+    MISSING,
 )
-from iommi.base import MISSING
 from iommi.error import Errors
 from iommi.from_model import (
     AutoConfig,
@@ -75,11 +75,12 @@ from iommi.page import (
     Fragment,
     Page,
 )
-from iommi.part import Part
-from iommi.part import request_data
+from iommi.part import (
+    Part,
+    request_data,
+)
 from iommi.traversable import (
     EvaluatedRefinable,
-    no_copy_on_bind,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -1022,7 +1023,6 @@ class FormAutoConfig(AutoConfig):
     instance = Refinable()
 
 
-@no_copy_on_bind
 @declarative(Field, '_fields_dict')
 @with_meta
 class Form(Part):

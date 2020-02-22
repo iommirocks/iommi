@@ -133,7 +133,7 @@ def test_kwarg_column_config_injection():
         foo = Column()
 
     table = MyTable(rows=[], columns__foo__extra__stuff="baz")
-    table.bind(request=None)
+    table = table.bind(request=None)
     assert 'baz' == table.columns['foo'].extra.stuff
 
 
@@ -161,7 +161,7 @@ def test_column_with_meta():
         bar = MyColumn.icon('history')
 
     table = MyTable(rows=[])
-    table.bind(request=None)
+    table = table.bind(request=None)
     assert not table.columns['foo'].sortable
     assert not table.columns['bar'].sortable
 
@@ -180,7 +180,7 @@ def test_django_table():
         foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__include=True, bulk__include=True, query__form__include=True)
 
     t = TestTable(rows=TBar.objects.all().order_by('pk'))
-    t.bind(request=req('get'))
+    t = t.bind(request=req('get'))
 
     assert list(t.columns['foo'].choices) == list(TFoo.objects.all())
 
@@ -932,7 +932,7 @@ def test_query():
             sortable = False
 
     t = TestTable(rows=TFoo.objects.all().order_by('pk'))
-    t.bind(request=req('get'))
+    t = t.bind(request=req('get'))
     assert t.query.variables.a.iommi_path == 'query/a'
     assert t.query.form.fields.a.iommi_path == 'a'
 
@@ -1255,7 +1255,7 @@ def test_auto_rowspan_and_render_twice(NoSortTable):
         </table>"""
 
     t = TestTable(rows=rows)
-    t.bind(request=req('get'))
+    t = t.bind(request=req('get'))
     verify_table_html(table=t, expected_html=expected)
     verify_table_html(table=t, expected_html=expected)
 
@@ -1380,12 +1380,12 @@ def test_multi_choice_queryset():
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(rows=TFoo.objects.all())
-    foo_table.bind(request=req('get'))
+    table = FooTable(rows=TFoo.objects.all())
+    table = table.bind(request=req('get'))
 
-    assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
-    assert repr(foo_table.query.form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(table.columns['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(table.query.form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
 
 
 @pytest.mark.django_db
@@ -1494,7 +1494,7 @@ def test_from_model():
         columns__a__display_name='Some a',
         columns__a__extra__stuff='Some stuff',
     )
-    t.bind(request=None)
+    t = t.bind(request=None)
     assert list(t._declared_members.columns.keys()) == ['id', 'a', 'b', 'select']
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
@@ -1599,7 +1599,7 @@ def test_ajax_data_endpoint():
         Struct(foo=1, bar=2),
         Struct(foo=3, bar=4),
     ])
-    table.bind(request=req('get'))
+    table = table.bind(request=req('get'))
 
     actual = perform_ajax_dispatch(root=table, path='/data', value='')
     expected = [dict(foo=1, bar=2), dict(foo=3, bar=4)]
@@ -1671,7 +1671,7 @@ def test_defaults():
         foo = Column()
 
     table = TestTable()
-    table.bind(request=None)
+    table = table.bind(request=None)
 
     col = table.columns.foo
     assert table.query is None
@@ -1708,17 +1708,17 @@ def test_ordering():
 
     # no ordering
     t = Table(auto__model=TFoo)
-    t.bind(request=req('get'))
+    t = t.bind(request=req('get'))
     assert not t.rows.query.order_by
 
     # ordering from GET parameter
     t = Table(auto__model=TFoo)
-    t.bind(request=req('get', order='a'))
+    t = t.bind(request=req('get', order='a'))
     assert list(t.rows.query.order_by) == ['a']
 
     # default ordering
     t = Table(auto__model=TFoo, default_sort_order='b')
-    t.bind(request=req('get', order='b'))
+    t = t.bind(request=req('get', order='b'))
     assert list(t.rows.query.order_by) == ['b']
 
 
@@ -1809,7 +1809,7 @@ def test_yield_rows():
             preprocess_rows = my_preprocess_rows
 
     table = MyTable(rows=TFoo.objects.all())
-    table.bind(request=None)
+    table = table.bind(request=None)
     results = list(table.bound_rows())
     assert len(results) == 2
     assert results[0].row == f
@@ -1826,7 +1826,7 @@ def test_error_on_invalid_variable_setup():
 
     table = MyTable()
     with pytest.raises(AssertionError):
-        table.bind(request=req('get'))
+        table = table.bind(request=req('get'))
 
 
 @pytest.mark.django_db
@@ -1899,7 +1899,7 @@ def test_column_merge():
             Struct(foo=1),
         ]
     )
-    table.bind(request=None)
+    table = table.bind(request=None)
     assert len(table.columns) == 1
     assert table.columns.foo._name == 'foo'
     for row in table.bound_rows():
@@ -1911,7 +1911,7 @@ def test_hide_named_column():
         foo = Column()
 
     table = MyTable(columns__foo__include=False, rows=[])
-    table.bind(request=None)
+    table = table.bind(request=None)
     assert len(table.columns) == 0
 
 
@@ -1920,11 +1920,11 @@ def test_override_doesnt_stick():
         foo = Column()
 
     table = MyTable(columns__foo__include=False, rows=[])
-    table.bind(request=None)
+    table = table.bind(request=None)
     assert len(table.columns) == 0
 
     table2 = MyTable(rows=[])
-    table2.bind(request=None)
+    table2 = table2.bind(request=None)
     assert len(table2.columns) == 1
 
 
@@ -1972,7 +1972,7 @@ def test_dunder_name_for_column():
         foo__a = Column(query__include=True, query__form__include=True)
 
     table = FooTable()
-    table.bind(request=None)
+    table = table.bind(request=None)
     assert list(table.columns.keys()) == ['foo', 'foo__a']
     assert list(table.query.variables.keys()) == ['foo', 'foo__a']
     assert list(table.query.form.fields.keys()) == ['foo', 'foo__a']
@@ -1985,7 +1985,7 @@ def test_render_column_attribute():
         c = Column(render_column=lambda column, **_: False)
 
     t = FooTable()
-    t.bind(request=None)
+    t = t.bind(request=None)
 
     assert list(t.rendered_columns.keys()) == ['a']
     assert [h.display_name for h in t.header_levels[0]] == ['A']
@@ -2046,7 +2046,7 @@ def test_bulk_namespaces_are_merged():
             include=True,
         ),
     )
-    t.bind(request=req('get'))
+    t = t.bind(request=req('get'))
     assert t.bulk_form.fields.a.initial == 3
     assert t.bulk_form.fields.a.display_name == '7'
 
@@ -2057,7 +2057,7 @@ def test_data_iommi_path():
         a = Column(group='foo')
 
     t = FooTable()
-    t.bind(request=None)
+    t = t.bind(request=None)
 
     expected_html = """
     <table class="table" data-endpoint="/tbody" data-iommi-path="">

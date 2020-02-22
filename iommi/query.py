@@ -81,7 +81,6 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    no_copy_on_bind,
 )
 
 
@@ -464,7 +463,6 @@ class QueryAutoConfig(AutoConfig):
     rows = Refinable()
 
 
-@no_copy_on_bind
 @declarative(Variable, '_variables_dict')
 @with_meta
 class Query(Part):
@@ -611,7 +609,7 @@ class Query(Part):
             fields_unapplied_config[name] = field
 
         self.form._unapplied_config.fields = fields_unapplied_config
-        self.form.bind(parent=self)
+        self.form = self.form.bind(parent=self)
 
         self._bound_members.form = self.form
 

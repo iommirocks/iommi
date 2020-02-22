@@ -26,7 +26,7 @@ def test_page_constructor():
     )
 
     assert ['h1', 'foo', 'bar'] == list(my_page._declared_members.parts.keys())
-    my_page.bind(request=None)
+    my_page = my_page.bind(request=None)
     assert ['h1', 'foo', 'bar'] == list(my_page.parts.keys())
 
 
@@ -41,7 +41,7 @@ def test_page_render():
     my_page = MyPage()
     request = req('get')
     request.user = Struct()
-    my_page.bind(request=request)
+    my_page = my_page.bind(request=request)
 
     response = my_page.render_to_response()
 

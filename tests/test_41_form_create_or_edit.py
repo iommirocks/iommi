@@ -31,7 +31,7 @@ def test_create_and_edit_object():
     p = Form.as_create_page(
         model=CreateOrEditObjectTest,
     )
-    p.bind(request=request)
+    p = p.bind(request=request)
     response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
     assert response['context']['csrf_token']
 
@@ -41,7 +41,7 @@ def test_create_and_edit_object():
         fields__f_float__initial=lambda form, field, **_: 2,
         template='<template name>',
     )
-    p.bind(request=request)
+    p = p.bind(request=request)
     response = p.parts.create.__html__(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
@@ -85,7 +85,7 @@ def test_create_and_edit_object():
         model=CreateOrEditObjectTest,
         on_save=on_save,  # just to check that we get called with the instance as argument
     )
-    p.bind(request=request)
+    p = p.bind(request=request)
     response = p.render_to_response()
     assert p.parts.create._request_data
     instance = CreateOrEditObjectTest.objects.get()
@@ -101,7 +101,7 @@ def test_create_and_edit_object():
     p = Form.as_edit_page(
         instance=instance,
     )
-    p.bind(request=request)
+    p = p.bind(request=request)
     response = p.parts.edit.__html__(
         render=lambda **kwargs: kwargs,
     )
@@ -124,7 +124,7 @@ def test_create_and_edit_object():
     p = Form.as_edit_page(
         instance=instance,
     )
-    p.bind(request=request)
+    p = p.bind(request=request)
     assert p.parts.edit.mode == FULL_FORM_FROM_REQUEST
     response = p.render_to_response()
     assert response.status_code == 302
@@ -141,7 +141,7 @@ def test_create_and_edit_object():
     p = Form.as_edit_page(
         instance=instance,
     )
-    p.bind(request=request)
+    p = p.bind(request=request)
     response = p.render_to_response()
     assert response.status_code == 302
     assert response['Location'] == '../../'

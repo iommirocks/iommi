@@ -92,7 +92,7 @@ def test_apply_checkbox_style():
         foo = Field.boolean()
 
     form = MyForm()
-    form.bind(request=None)
+    form = form.bind(request=None)
 
     assert get_style_for(form.fields.foo) == 'bootstrap'
     assert get_style_obj_for_object(style=get_style_for(form.fields.foo), obj=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
@@ -118,7 +118,7 @@ def test_last_win():
             template = 'override'
 
     form = MyForm()
-    form.bind(request=None)
+    form = form.bind(request=None)
 
     assert form.template == 'override'
 

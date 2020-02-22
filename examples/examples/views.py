@@ -139,7 +139,7 @@ def form_example_1(request):
         bar = Field()
 
     form = MyForm()
-    form.bind(request=request)
+    form = form.bind(request=request)
 
     message = mark_safe("\n".join(
         format_html(
