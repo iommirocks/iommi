@@ -1665,7 +1665,7 @@ class Table(Part):
             html,
         )
         if title is None and self.model is not None:
-            title = self.model._meta.verbose_name
+            title = self.model._meta.verbose_name_plural.title()
         unapplied_title_config = parts.pop('title', {})
         return self.get_meta().page_class(
             title=title,

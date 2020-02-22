@@ -180,5 +180,7 @@ def as_html(*, part: PartType, context):
     elif isinstance(part, Template):
         template = part
         return mark_safe(template.render(context=context))
-    else:
+    elif hasattr(part, '__html__'):
         return part.__html__(context=context)
+    else:
+        return str(part)
