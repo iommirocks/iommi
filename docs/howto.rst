@@ -254,10 +254,10 @@ Tables
 How do I customize the rendering of a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Table rendering can be customized on multiple levels. You pass a template with the :code:`template` argument, which
-is either a template name or a :code:`Template` object.
+Table rendering can be customized on multiple levels. You pass a template with the `template` argument, which
+is either a template name or a `Template` object.
 
-Customize the HTML attributes of the table tag via the :code:`attrs` argument. See attrs_.
+Customize the HTML attributes of the table tag via the `attrs` argument. See attrs_.
 
 To customize the row, see `How do I customize the rendering of a row?`_
 
@@ -331,7 +331,7 @@ See :doc:`registrations`.
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the :code:`after` argument. Let's start with a simple model:
+By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
 
 .. code:: python
 
@@ -346,7 +346,7 @@ If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, 
 
     Table(auto__model=Foo, columns__c__after=-1)
 
-:code:`-1` means the first, other numbers mean index. We can also put columns after another named column like so:
+`-1` means the first, other numbers mean index. We can also put columns after another named column like so:
 
 .. code:: python
 
@@ -359,7 +359,9 @@ There is a special value `LAST` (import from `tri_declarative`) to put something
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass the value :code:`query__include=True` to the column, to enable searching in the advanced query language. To also get searching for the column in the simple GUI filtering also pass :code:`query__form__include=True`:
+Pass the value `query__include=True` to the column, to enable searching
+in the advanced query language. To also get searching for the column in the
+simple GUI filtering also pass `query__form__include=True`:
 
 .. code:: python
 
@@ -369,12 +371,18 @@ Pass the value :code:`query__include=True` to the column, to enable searching in
         columns__a__query__form__include=True,
     )
 
+The `query` namespace here is used to configure a :doc:`Variable` so you can
+configure the behavior of the searching by passing parameters here.
+
+The `query__form` namespace is used to configure the :doc:`Field`, so here you
+can pass any argument to `Field` here to customize it.
+
 .. _attrs:
 
 How do I customize HTML attributes, CSS classes or CSS style specifications?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :code:`attrs` namespace has special handling to make it easy to customize. There are three main cases:
+The `attrs` namespace has special handling to make it easy to customize. There are three main cases:
 
 First the straight forward case where a key/value pair is rendered in the output:
 
@@ -392,14 +400,14 @@ Then there's a special handling for CSS classes:
 
 Note that the class names are sorted alphabetically on render.
 
-Lastly there is the special handling of :code:`style`:
+Lastly there is the special handling of `style`:
 
 .. code:: python
 
     >>> render_attrs(Namespace(style__font='Arial'))
     ' style="font: Arial"'
 
-If you need to add a style with :code:`-` in the name you have to do this:
+If you need to add a style with `-` in the name you have to do this:
 
 
 .. code:: python
@@ -428,32 +436,32 @@ How do I customize the rendering of a cell?
 
 You can customize the row rendering in two ways:
 
-- You can modify the html attributes via :code:`cell__attrs`. See the question on attrs_
+- You can modify the html attributes via `cell__attrs`. See the question on attrs_
 
-- Use :code:`cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object.
+- Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can customize the row rendering in two ways:
 
-- You can modify the html attributes via :code:`row__attrs`. See the question on attrs_
+- You can modify the html attributes via `row__attrs`. See the question on attrs_
 
-- Use :code:`row__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object.
+- Use `row__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can customize headers in two ways:
 
-- You can modify the html attributes via :code:`header__attrs`. See the question on attrs_
+- You can modify the html attributes via `header__attrs`. See the question on attrs_
 
-- Use :code:`header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a :code:`Template` object. The default is :code:`iommi/table/table_header_rows.html`.
+- Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
 
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set :code:`header_template` to :code:`None`.
+Set `header_template` to `None`.
 
 How do I add fields to a table that is generated from a model?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -463,7 +471,7 @@ See the question `How do I create a column based on computed data?`_
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Just pass :code:`include=False` to hide the column or :code:`include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
+Just pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
 
 .. code:: python
 
@@ -473,9 +481,9 @@ Just pass :code:`include=False` to hide the column or :code:`include=True` to sh
             lambda table, **_: table.get_request().GET.get('some_parameter') == 'hello!',
     )
 
-This will show the column :code:`a` only if the GET parameter :code:`some_parameter` is set to `hello!`.
+This will show the column `a` only if the GET parameter `some_parameter` is set to `hello!`.
 
-To be more precise, :code:`include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the :code:`render_column` parameter instead.
+To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -492,7 +500,7 @@ Here's a simple example that prints a table to stdout:
 How do I make a link in a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is such a common case that there's a special case for it: pass the :code:`url` and :code:`url_title` parameters:
+This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters:
 
 .. code:: python
 
@@ -516,7 +524,7 @@ Let's say we have two models:
         b = models.IntegerField()
         c = models.ForeignKey(Foo)
 
-we can build a table of :code:`Bar` that shows the data of `a` like this:
+we can build a table of `Bar` that shows the data of `a` like this:
 
 .. code:: python
 
@@ -530,7 +538,7 @@ we can build a table of :code:`Bar` that shows the data of `a` like this:
 How do I turn off sorting? (on a column or table wide)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To turn off column on a column pass it :code:`sortable=False` (you can also use a lambda here!):
+To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
 
 .. code:: python
 
@@ -551,7 +559,7 @@ and to turn it off on the entire table:
 How do I specify the title of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :code:`display_name` property of a column is displayed in the header.
+The `display_name` property of a column is displayed in the header.
 
 .. code:: python
 
@@ -588,7 +596,7 @@ The grouping only works if the columns are next to each other, otherwise you'll 
 How do I get rowspan on a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can manually set the rowspan attribute via :code:`row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: :code:`auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
+You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
 
 .. code:: python
 
@@ -596,6 +604,23 @@ You can manually set the rowspan attribute via :code:`row__attrs__rowspan` but t
         auto__model=Foo,
         columns__a__auto_rowspan=True,
     )
+    
+How do I enable bulk editing?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Editing multiple items at a time is easy in iommi with the built in bulk
+editing. Enable it for a columns by passing `bulk__include=True`:
+
+.. code:: python
+
+    Table(
+        auto__model=Foo,
+        columns__a__bulk=True,
+    )
+
+The bulk namespace here is used to configure a `Field` for the GUI so you
+can pass any parameter you can pass to `Field` there to customize the
+behavior and look of the bulk editing for the column. 
 
 How do I make a freetext search field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -610,14 +635,15 @@ If you want to filter based on a freetext query on one or more columns we've got
         columns__b__query__freetext=True,
     )
 
-(You don't need to enable querying with :code:`columns__b__query__include=True` first)
+(You don't need to enable querying with `columns__b__query__include=True` first)
 
-What is the difference between `attr` and `name`?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:code:`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use :code:`__`-separated paths for this: :code:`attr='foo__bar'` is functionally equivalent to :code:`cell__value=lambda row, **_: row.foo.bar`. Set :code:`attr` to :code:`None` to not read any attribute from the row.
+What is the difference between `attr` and `_name`?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:code:`name` is the name used internally. By default :code:`attr` is set to the value of :code:`name`. This name is used when accessing the column from :code:`Table.columns` and it's the name used in the GET parameter to sort by that column. This is a required field.
+`attr` is the attribute path of the value iommi reads from a row. In the simple case it's just the attribute name, but if you want to read the attribute of an attribute you can use `__`-separated paths for this: `attr='foo__bar'` is functionally equivalent to `cell__value=lambda row, **_: row.foo.bar`. Set `attr` to `None` to not read any attribute from the row.
+
+`_name` is the name used internally. By default `attr` is set to the value of `_name`. This name is used when accessing the column from `Table.columns` and it's the name used in the GET parameter to sort by that column. This is a required field.
 
 
 Queries

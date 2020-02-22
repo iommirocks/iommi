@@ -52,7 +52,7 @@ interpret its inputs. The default is `=`, meaning exact case insensitive match.
 
 If you have table of `Song` and a foreign key to `Album`, if you search for
 `album=Paranoid` iommi will by default create the Django query
-`Q(album__name='Paranoid')`. If the name field isn't called `name` you can
+`Q(album__name='Paranoid')`. If the name field isn't called `_name` you can
 register another name field with `register_name_field`, or if you want
 something other special for just this view you can use the `name_field`
 parameter to specify the name field to use. Note that you can use `pk` or

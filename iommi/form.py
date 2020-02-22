@@ -443,7 +443,7 @@ class Field(Part):
 
             Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
-        :param name: the name of the field. This is the key used to grab the data from the form dictionary (normally `request.GET` or `request.POST`)
+        :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
         :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
         :param parse: parse function. Default just returns the string input unchanged: `lambda form, field, string_value: string_value`
         :param initial: initial value of the field

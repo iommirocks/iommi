@@ -299,9 +299,11 @@ class Column(Part):
     )
     def __init__(self, header, **kwargs):
         """
-        :param name: the name of the column
+        :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-reorder-columns>`_ for an example.
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
-        :param display_name: the text of the header for this column. By default this is based on the `name` parameter so normally you won't need to specify it.
+        :param bulk: Namespace to configure bulk actions. See `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-enable-bulk-editing>`_ for an example and more information.
+        :param cell: Customize the cell, see See `howto on rendering <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-customize-the-rendering-of-a-cell>`_ and `howto on links <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-make-a-link-in-a-cell>`_
+        :param display_name: the text of the header for this column. By default this is based on the `_name` so normally you won't need to specify it.
         :param url: URL of the header. This should only be used if sorting is off.
         :param include: set this to `False` to hide the column
         :param sortable: set this to `False` to disable sorting on this column

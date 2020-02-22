@@ -20,8 +20,6 @@ import sys, os
 
 
 # Get the project root dir, which is the parent dir of this
-import iommi.part
-
 cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
 
@@ -41,6 +39,7 @@ from iommi.docs import generate_rst_docs
 import iommi.base
 import iommi.endpoint
 import iommi.traversable
+import iommi.part
 
 generate_rst_docs(
     '.',

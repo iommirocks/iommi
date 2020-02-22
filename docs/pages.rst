@@ -68,7 +68,7 @@ html is a little builder object to create simple elements. You just do
 instances, so the `html.h1('foo')` is the same as
 `Fragment('some text', tag='h1')`, which is itself a convenient short way to
 write `Fragment(children__text='some text', tag='h1')`. See `Fragment` for more
- available parameters.
+available parameters.
 
 
 Part
