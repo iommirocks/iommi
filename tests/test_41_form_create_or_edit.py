@@ -28,27 +28,26 @@ def test_create_and_edit_object():
     # 1. View create form
     request = req('get')
 
-    p = Form.as_create_page(
-        model=CreateOrEditObjectTest,
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
     )
-    p = p.bind(request=request)
-    response = p.parts.create.__html__(render__call_target=lambda **kwargs: kwargs)
+    form = form.bind(request=request)
+    response = form.__html__(render__call_target=lambda **kwargs: kwargs)
     assert response['context']['csrf_token']
 
-    p = Form.as_create_page(
-        model=CreateOrEditObjectTest,
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
         fields__f_int__initial=1,
         fields__f_float__initial=lambda form, field, **_: 2,
         template='<template name>',
     )
-    p = p.bind(request=request)
-    response = p.parts.create.__html__(
+    form = form.bind(request=request)
+    response = form.__html__(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
         render__call_target=lambda **kwargs: kwargs,
     )
 
-    form = p.parts.create
     assert form.extra.is_create is True
     assert response['context']['foo'] == 'FOO'
     assert response['context']['csrf_token']
@@ -81,13 +80,13 @@ def test_create_and_edit_object():
         assert isinstance(instance, CreateOrEditObjectTest)
         assert instance.pk is not None
 
-    p = Form.as_create_page(
-        model=CreateOrEditObjectTest,
-        on_save=on_save,  # just to check that we get called with the instance as argument
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
+        extra__on_save=on_save,  # just to check that we get called with the instance as argument
     )
-    p = p.bind(request=request)
-    response = p.render_to_response()
-    assert p.parts.create._request_data
+    form = form.bind(request=request)
+    response = form.render_to_response()
+    assert form._request_data
     instance = CreateOrEditObjectTest.objects.get()
     assert instance is not None
     assert instance.f_int == 3
@@ -98,14 +97,13 @@ def test_create_and_edit_object():
 
     # 3. View edit form
     request = req('get')
-    p = Form.as_edit_page(
-        instance=instance,
+    form = Form.edit(
+        auto__instance=instance,
     )
-    p = p.bind(request=request)
-    response = p.parts.edit.__html__(
+    form = form.bind(request=request)
+    response = form.__html__(
         render=lambda **kwargs: kwargs,
     )
-    form = p.parts.edit
     assert form.get_errors() == {}
     assert form.fields['f_int'].value == 3
     assert form.fields['f_float'].value == 5.1
@@ -121,12 +119,12 @@ def test_create_and_edit_object():
         '-submit': '',
         # Not sending a parameter in a POST is the same thing as false
     })
-    p = Form.as_edit_page(
-        instance=instance,
+    form = Form.edit(
+        auto__instance=instance,
     )
-    p = p.bind(request=request)
-    assert p.parts.edit.mode == FULL_FORM_FROM_REQUEST
-    response = p.render_to_response()
+    form = form.bind(request=request)
+    assert form.mode == FULL_FORM_FROM_REQUEST
+    response = form.render_to_response()
     assert response.status_code == 302
 
     assert response['Location'] == '../../'
@@ -138,11 +136,11 @@ def test_create_and_edit_object():
     assert not instance.f_bool
 
     # edit again, to check redirect
-    p = Form.as_edit_page(
-        instance=instance,
+    form = Form.edit(
+        auto__instance=instance,
     )
-    p = p.bind(request=request)
-    response = p.render_to_response()
+    form = form.bind(request=request)
+    response = form.render_to_response()
     assert response.status_code == 302
     assert response['Location'] == '../../'
 
@@ -163,15 +161,14 @@ def test_unique_constraint_violation():
         'f_bool': 'True',
         '-submit': '',
     })
-    Form.as_create_page(model=UniqueConstraintTest).bind(request=request).render_to_response()
+    Form.create(auto__model=UniqueConstraintTest).bind(request=request).render_to_response()
     assert UniqueConstraintTest.objects.all().count() == 1
 
-    p = Form.as_create_page(
-        model=UniqueConstraintTest,
+    form = Form.create(
+        auto__model=UniqueConstraintTest,
     ).bind(request=request)
-    p.render_to_response()
+    form.render_to_response()
 
-    form = p.parts.create
     assert form.is_valid() is False
     assert form.get_errors() == {'global': {'Unique constraint test with this F int, F float and F bool already exists.'}}
     assert UniqueConstraintTest.objects.all().count() == 1
@@ -187,8 +184,8 @@ def test_create_or_edit_object_dispatch():
     f2 = Foo.objects.create(foo=2)
     request = req('get', **{DISPATCH_PATH_SEPARATOR + 'choices': ''})
 
-    response = Form.as_create_page(
-        model=Bar,
+    response = Form.create(
+        auto__model=Bar,
         fields__foo__extra__endpoint_attr='foo',
         template='<template name>',
     ).bind(request=request).render_to_response()
@@ -212,11 +209,11 @@ def test_create_or_edit_object_validate_unique():
         '-submit': '',
     })
 
-    response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
+    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
     assert Baz.objects.filter(a=1, b=1).exists()
 
-    response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
+    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
@@ -225,7 +222,7 @@ def test_create_or_edit_object_validate_unique():
         'b': '2',  # <-- changed from 1
         '-submit': '',
     })
-    response = Form.as_create_page(model=Baz).bind(request=request).render_to_response()
+    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
     assert response.status_code == 302
     instance = Baz.objects.get(a=1, b=2)
 
@@ -235,7 +232,7 @@ def test_create_or_edit_object_validate_unique():
         '-submit': '',
     })
 
-    response = Form.as_edit_page(instance=instance).bind(request=request).render_to_response()
+    response = Form.edit(auto__instance=instance).bind(request=request).render_to_response()
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
@@ -247,7 +244,7 @@ def test_create_or_edit_object_full_template(name):
 
     request = req('get')
 
-    response = Form.as_create_page(model=Foo, name=name).bind(request=request).render_to_response()
+    response = Form.create(auto__model=Foo, name=name).bind(request=request).render_to_response()
     assert response.status_code == 200
 
     name = name or 'create'
@@ -289,4 +286,4 @@ def test_create_or_edit_view_name():
     class MyForm(Form):
         pass
 
-    assert MyForm(auto__model=Foo).as_create_or_edit_view().__name__ == "MyForm().as_create_or_edit_view"
+    assert MyForm(auto__model=Foo).as_view().__name__ == "MyForm().as_create_or_edit_view"

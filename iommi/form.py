@@ -1098,14 +1098,17 @@ class Form(Part):
             assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
             assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
             assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
-            model, instance, fields = self._from_model(
+            if auto.model is None:
+                auto.model = auto.instance.__class__
+
+            model, fields = self._from_model(
                 model=auto.model,
-                instance=auto.instance,
                 fields=fields,
                 include=auto.include,
                 exclude=auto.exclude,
                 additional=auto.additional,
             )
+            instance = auto.instance
 
         super(Form, self).__init__(model=model, **kwargs)
 
@@ -1171,9 +1174,9 @@ class Form(Part):
     @dispatch(
         fields=EMPTY,
     )
-    def _from_model(cls, model, *, fields, instance=None, include=None, exclude=None, additional=None):
+    def _from_model(cls, model, *, fields, include=None, exclude=None, additional=None):
         fields = cls.fields_from_model(model=model, include=include, exclude=exclude, additional=additional, fields=fields)
-        return model, instance, fields
+        return model, fields
 
     def is_target(self):
         return any(action.is_target() for action in self.actions.values())
