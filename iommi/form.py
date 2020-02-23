@@ -1019,6 +1019,20 @@ class Field(Part):
         return call_target(model_field=model_field, **kwargs)
 
 
+def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
+    if redirect_to is None:
+        if is_create:
+            redirect_to = "../"
+        else:
+            redirect_to = "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
+    return redirect(request=request, redirect_to=redirect_to, form=form)
+
+
+def delete_object__post_handler(form, **_):
+    form.instance.delete()
+    return HttpResponseRedirect('../..')
+
+
 class FormAutoConfig(AutoConfig):
     instance = Refinable()
     type = Refinable()  # one of 'create', 'edit', 'delete'
@@ -1248,136 +1262,48 @@ class Form(Part):
         return r
 
     @classmethod
-    @dispatch(
-        on_save=lambda **kwargs: None,  # pragma: no mutate
-        redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
-        redirect_to=None,
-        parts=EMPTY,
-        extra__title=None,
+    @class_shortcut(
+        extra__on_save=lambda **kwargs: None,  # pragma: no mutate
+        extra__redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
+        extra__redirect_to=None,
+        auto=EMPTY,
     )
-    def as_create_or_edit_page(cls, *, extra=None, model=None, instance=None, on_save=None, redirect=None, redirect_to=None, parts=None, name, title=None, **kwargs):
-        # TODO: this function should be inlined next to the auto handling in Form.__init__
-        assert 'get_request' not in kwargs, "I'm afraid you can't do that Dave"
-        if model is None and instance is not None:
-            model = type(instance)
-
-        if title is None:
-            title = '%s %s' % ('Create' if extra.is_create else 'Save', model._meta.verbose_name.replace('_', ' '))
-        extra.on_save = on_save
-        extra.redirect = redirect
-        extra.redirect_to = redirect_to
-
-        setdefaults_path(
-            kwargs,
-            actions__submit=dict(
-                attrs__value=title,
-            ),
-        )
-
-        from iommi.page import html
-        unapplied_title_config = parts.pop('title', {})
-        return cls.get_meta().page_class(
-            title=title,
-            parts={
-                'title': html.h1(title, **unapplied_title_config),
-                name: cls(extra=extra, auto__model=model, auto__instance=instance, **kwargs),
-                **parts
-            }
-        )
+    def op(cls, call_target, **kwargs):
+        # if title is None:
+        #     title = '%s %s' % ('Create' if extra.is_create else 'Save', model._meta.verbose_name.replace('_', ' '))
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='as_create_or_edit_page',
-        name='create',
+        call_target__attribute='op',
         extra__is_create=True,
         actions__submit__post_handler=create_object__post_handler,
     )
-    def as_create_page(cls, *, name, call_target=None, **kwargs):
-        return call_target(name=name or 'create', **kwargs)
+    def create(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='as_create_or_edit_page',
-        name='edit',
+        call_target__attribute='op',
         extra__is_create=False,
         actions__submit__post_handler=edit_object__post_handler,
     )
-    def as_edit_page(cls, *, name, call_target=None, instance, **kwargs):
-        return call_target(instance=instance, name=name or 'edit', **kwargs)
+    def edit(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='as_create_or_edit_page',
-        name='delete',
-        extra__is_create=False,
-        title='Delete',
+        call_target__attribute='op',
+        actions__submit__call_target__attribute='delete',
+        actions__submit__post_handler=delete_object__post_handler,
     )
-    def as_delete_page(cls, *, name, call_target=None, instance, **kwargs):
-        return call_target(
-            instance=instance,
-            name=name or 'delete',
-            attrs__method='post',
-            extra__title='Delete',
-            actions__submit__call_target__attribute='delete',
-            actions__submit__post_handler=delete_object__post_handler,
-            editable=False,
-            **kwargs
-        )
+    def delete(cls, call_target, **kwargs):
+        return call_target(**kwargs)
 
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_create_or_edit_view(self, *, title=None, parts=None, **kwargs):
+    def as_view(self, *, title=None, parts=None):
         return build_as_view_wrapper(
-            target=lambda: self.as_create_or_edit_page(title=title, parts=parts, **kwargs),
+            target=lambda: self,
             cls=self.__class__,
             kwargs={},
-            name='as_create_or_edit_view',
+            name='as_view',
         )
-
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_create_view(self, *, title=None, parts=None):
-        return build_as_view_wrapper(
-            target=lambda: self.as_create_page(title=title, parts=parts),
-            cls=self.__class__,
-            kwargs={},
-            name='as_create_view',
-        )
-
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_edit_view(self, *, title=None, parts=None):
-        return build_as_view_wrapper(
-            target=lambda: self.as_edit_page(title=title, parts=parts),
-            cls=self.__class__,
-            kwargs={},
-            name='as_edit_view',
-        )
-
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_delete_view(self, *, title=None, parts=None):
-        return build_as_view_wrapper(
-            target=lambda: self.as_delete_page(title=title, parts=parts),
-            cls=self.__class__,
-            kwargs={},
-            name='as_delete_view',
-        )
-
-
-def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
-    if redirect_to is None:
-        if is_create:
-            redirect_to = "../"
-        else:
-            redirect_to = "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
-    return redirect(request=request, redirect_to=redirect_to, form=form)
-
-
-def delete_object__post_handler(form, **_):
-    form.instance.delete()
-    return HttpResponseRedirect('../..')

@@ -17,7 +17,7 @@ urlpatterns = [
 
     url(r'^form_example_1/$', views.form_example_1, name='example_1'),
     url(r'^form_example_2/$', views.form_example_2, name='example_2'),
-    url(r'^form_example_2b/$', Form(auto__model=Foo).as_create_view(), name='example_2b'),
+    url(r'^form_example_2b/$', Form.create(auto__model=Foo).as_view(), name='example_2b'),
     url(r'^form_example_3/$', views.form_example_3, name='example_3'),
     url(r'^form_example_4/$', views.form_example_4, name='example_4'),
     url(r'^form_example_5/$', views.form_example_5, name='example_5'),
