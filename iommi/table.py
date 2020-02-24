@@ -111,7 +111,6 @@ from iommi.query import (
 from iommi.traversable import (
     evaluate_member,
     EvaluatedRefinable,
-    no_copy_on_bind,
     Traversable,
 )
 
@@ -944,7 +943,6 @@ def bulk_delete__post_handler(table, form, **_):
     return p.render_to_response()
 
 
-@no_copy_on_bind
 class Paginator(Traversable):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
@@ -1135,6 +1133,8 @@ class Table(Part):
     default_sort_order = Refinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
+    h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     row: RowConfig = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -1145,6 +1145,7 @@ class Table(Part):
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
     actions_template: Union[str, Template] = EvaluatedRefinable()
+
     member_class = Refinable()
     form_class: Type[Form] = Refinable()
     query_class: Type[Query] = Refinable()
@@ -1192,6 +1193,8 @@ class Table(Part):
         row__extra_evaluated=EMPTY,
         header__template='iommi/table/table_header_rows.html',
         paginator__call_target=Paginator,
+        h_tag__call_target=Fragment,
+        h_tag__tag=lambda table, **_: f'h{table.iommi_dunder_path.count("__")+1}',
 
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
@@ -1206,7 +1209,7 @@ class Table(Part):
 
         auto=EMPTY,
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=None, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1245,6 +1248,8 @@ class Table(Part):
                 exclude=auto.exclude,
                 additional=auto.additional,
             )
+            if title is None:
+                title = f'{model._meta.verbose_name_plural.title()}'
 
         assert isinstance(columns, dict)
 
@@ -1259,6 +1264,7 @@ class Table(Part):
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             bulk=bulk,
+            title=title,
             **kwargs
         )
 
@@ -1364,6 +1370,12 @@ class Table(Part):
         bind_members(self, name='actions')
         bind_members(self, name='columns')
         bind_members(self, name='endpoints')
+
+        self.title = evaluate_strict(self.title, **self._evaluate_parameters)
+        if self.title:
+            self.h_tag = self.h_tag(text=self.title).bind(parent=self)
+        else:
+            self.h_tag = ''
 
         self.header = self.header.bind(parent=self)
 
@@ -1656,29 +1668,9 @@ class Table(Part):
 
         return render(request=request, template=self.template, context=self.context)
 
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_page(self, *, title=None, parts=None):
-        from iommi.page import (
-            html,
-        )
-        if title is None and self.model is not None:
-            title = self.model._meta.verbose_name_plural.title()
-        unapplied_title_config = parts.pop('title', {})
-        return self.get_meta().page_class(
-            title=title,
-            parts__title=html.h1(title, **unapplied_title_config),
-            parts__table=self,
-            parts=parts,
-        )
-
-    @dispatch(
-        parts=EMPTY,
-    )
-    def as_view(self, *, title=None, parts=None):
+    def as_view(self):
         return build_as_view_wrapper(
-            target=lambda: self.as_page(title=title, parts=parts),
+            target=lambda: self,
             cls=self.__class__,
             kwargs={},
             name='as_view',

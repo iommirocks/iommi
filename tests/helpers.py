@@ -14,7 +14,6 @@ from iommi import (
 )
 from iommi.traversable import (
     Traversable,
-    no_copy_on_bind,
 )
 
 
@@ -89,7 +88,6 @@ def get_attrs(x, attrs):
     return {a: x.attrs.get(a) for a in attrs}
 
 
-@no_copy_on_bind
 class StubTraversable(Traversable):
     def __init__(self, *, _name, members=None):
         super(StubTraversable, self).__init__(_name=_name)

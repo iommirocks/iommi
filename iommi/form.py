@@ -1069,12 +1069,14 @@ class Form(Part):
     actions_template: Union[str, Template] = Refinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
+    h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
+    template: Union[str, Template] = EvaluatedRefinable()
 
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
-    template: Union[str, Template] = EvaluatedRefinable()
 
     class Meta:
         member_class = Field
@@ -1090,8 +1092,10 @@ class Form(Part):
         attrs__enctype='multipart/form-data',
         actions__submit__call_target__attribute='submit',
         auto=EMPTY,
+        h_tag__call_target=Fragment,
+        h_tag__tag=lambda form, **_: f'h{form.iommi_dunder_path.count("__")+1}',
     )
-    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model, auto, **kwargs):
+    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model, auto, title=None, **kwargs):
 
         if auto:
             auto = FormAutoConfig(**auto)
@@ -1109,8 +1113,15 @@ class Form(Part):
                 additional=auto.additional,
             )
             instance = auto.instance
+            if title is None and auto.type is not None:
+                title = f'{auto.type.title()} {model._meta.verbose_name}'
 
-        super(Form, self).__init__(model=model, **kwargs)
+                setdefaults_path(
+                    actions,
+                    submit__attrs__value=title,
+                )
+
+        super(Form, self).__init__(model=model, title=title, **kwargs)
 
         assert isinstance(fields, dict)
 
@@ -1128,6 +1139,12 @@ class Form(Part):
         self._valid = None
         request = self.get_request()
         self._request_data = request_data(request)
+
+        self.title = evaluate_strict(self.title, **self._evaluate_parameters)
+        if self.title:
+            self.h_tag = self.h_tag(text=self.title).bind(parent=self)
+        else:
+            self.h_tag = ''
 
         # Actions have to be bound first because is_target() needs it
         bind_members(self, name='actions')
@@ -1271,39 +1288,42 @@ class Form(Part):
         extra__redirect_to=None,
         auto=EMPTY,
     )
-    def op(cls, call_target, **kwargs):
+    def crud(cls, call_target, **kwargs):
         # if title is None:
         #     title = '%s %s' % ('Create' if extra.is_create else 'Save', model._meta.verbose_name.replace('_', ' '))
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='op',
+        call_target__attribute='crud',
         extra__is_create=True,
         actions__submit__post_handler=create_object__post_handler,
+        auto__type='create',
     )
     def create(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='op',
+        call_target__attribute='crud',
         extra__is_create=False,
         actions__submit__post_handler=edit_object__post_handler,
+        auto__type='edit',
     )
     def edit(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        call_target__attribute='op',
+        call_target__attribute='crud',
         actions__submit__call_target__attribute='delete',
         actions__submit__post_handler=delete_object__post_handler,
+        auto__type='delete',
     )
     def delete(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
-    def as_view(self, *, title=None, parts=None):
+    def as_view(self):
         return build_as_view_wrapper(
             target=lambda: self,
             cls=self.__class__,

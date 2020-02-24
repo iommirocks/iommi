@@ -17,7 +17,10 @@ from tri_declarative import (
     Shortcut,
 )
 
-from iommi import Action
+from iommi import (
+    Action,
+    Page,
+)
 from iommi._web_compat import Template
 from iommi.endpoint import (
     find_target,
@@ -1530,9 +1533,8 @@ def test_explicit_table_does_not_use_from_model():
             bulk__include=True,
         )
 
-    p = TestTable().as_page().bind(request=None)
-    assert 'table' in p.parts.keys()
-    assert list(p.parts.table._declared_members.columns.keys()) == ['foo']
+    t = TestTable().bind(request=None)
+    assert list(t._declared_members.columns.keys()) == ['foo']
 
 
 @pytest.mark.django_db
@@ -1540,9 +1542,8 @@ def test_from_model_implicit():
     class TestTable(Table):
         pass
 
-    p = TestTable(auto__rows=TBar.objects.all()).as_page().bind(request=None)
-    assert 'table' in p.parts.keys()
-    assert list(p.parts.table._declared_members.columns.keys()) == ['id', 'foo', 'c', 'select']
+    t = TestTable(auto__rows=TBar.objects.all()).bind(request=None)
+    assert list(t._declared_members.columns.keys()) == ['id', 'foo', 'c', 'select']
 
 
 @override_settings(DEBUG=True)
@@ -1565,7 +1566,14 @@ def test_ajax_endpoint():
         )
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
-    result = request_with_middleware(response=TestTable(rows=TBar.objects.all()).as_page(), data={'/parts/table/query/form/fields/foo/endpoints/choices': 'hopp'})
+    result = request_with_middleware(
+        response=Page(
+            parts__table=TestTable(
+                rows=TBar.objects.all()
+            ),
+        ),
+        data={'/parts/table/query/form/fields/foo/endpoints/choices': 'hopp'},
+    )
     assert json.loads(result.content) == {
         'results': [
             {'id': 2, 'text': 'Foo(42, Hopp)'},
@@ -1937,11 +1945,11 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
+        return Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True))
 
     from iommi import middleware
     m = middleware(get_response)
-    response = m(request=req('get', **{'/parts/table/query/form/fields/foo/endpoints/choices': ''}))
+    response = m(request=req('get', **{'/query/form/fields/foo/endpoints/choices': ''}))
 
     assert json.loads(response.content) == {
         'results': [
@@ -1956,11 +1964,11 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True)).as_page()
+    page = Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True))
     page.bind(request=None)
-    target = find_target(path='/parts/table/query/form/fields/foo/endpoints/choices', root=page)
+    target = find_target(path='/query/form/fields/foo/endpoints/choices', root=page)
     assert target.endpoint_path == '/choices'
-    assert target.iommi_dunder_path == 'parts__table__query__form__fields__foo__endpoints__choices'
+    assert target.iommi_dunder_path == 'query__form__fields__foo__endpoints__choices'
 
 
 def test_dunder_name_for_column():
@@ -2155,7 +2163,7 @@ def test_table_as_view():
     render_to_response_path = Table(
         auto__model=TFoo,
         query_from_indexes=True,
-    ).as_page().bind(request=req('get')).render_to_response().content
+    ).bind(request=req('get')).render_to_response().content
 
     as_view_path = Table(auto__model=TFoo, query_from_indexes=True).as_view()(request=req('get')).content
     assert render_to_response_path == as_view_path

@@ -12,7 +12,6 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.traversable import (
-    no_copy_on_bind,
     sort_after,
     Traversable,
 )
@@ -66,12 +65,15 @@ def bind_members(parent: Traversable, *, name: str) -> None:
         _name=name,
         _declared_members=parent._declared_members[name],
     )
+    # It's useful to be able to access these during bind
     setattr(parent, name, m._bound_members)
     setattr(parent._bound_members, name, m)
-    m.bind(parent=parent)
+    m = m.bind(parent=parent)
+    # ...and now we have the real object
+    setattr(parent, name, m._bound_members)
+    setattr(parent._bound_members, name, m)
 
 
-@no_copy_on_bind
 class Members(Traversable):
     """
     Internal iommi class that holds members of another class, for example the columns of a `Table` instance.

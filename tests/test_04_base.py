@@ -108,10 +108,10 @@ def test_find_target():
             foo=foo
         ),
     )
-    root.bind(request=None)
+    root = root.bind(request=None)
 
     target = find_target(path='/foo/bar', root=root)
-    assert target is bar
+    assert target._declared is bar
     assert build_long_path(target) == 'foo/bar'
 
 
@@ -129,7 +129,7 @@ def test_find_target_with_invalid_path():
             foo=foo
         ),
     )
-    root.bind(request=None)
+    root = root.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
         find_target(path='/foo/bar/baz', root=root)
@@ -213,7 +213,7 @@ def test_fragment():
 
 def test_perform_post_dispatch_error_message():
     target = StubTraversable(_name='root', members=Struct(foo=StubTraversable(_name='foo')))
-    target.bind(request=None)
+    target = target.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
         perform_post_dispatch(root=target, path='/foo', value='')
@@ -235,7 +235,7 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
             )
         )
     )
-    foo.bind(request=None)
+    foo = foo.bind(request=None)
 
     assert foo.iommi_path == ''
 

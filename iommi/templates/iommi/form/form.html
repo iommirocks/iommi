@@ -1,3 +1,5 @@
+{{ form.h_tag }}
+
 <form{{ form.attrs }}>{% if form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
 
     {% block before_fields %}{% endblock %}

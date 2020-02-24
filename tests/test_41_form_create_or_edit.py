@@ -238,16 +238,13 @@ def test_create_or_edit_object_validate_unique():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('name', [None, 'baz'])
-def test_create_or_edit_object_full_template(name):
+def test_create_or_edit_object_full_template():
     from tests.models import Foo
 
     request = req('get')
 
-    response = Form.create(auto__model=Foo, name=name).bind(request=request).render_to_response()
+    response = Form.create(auto__model=Foo).bind(request=request).render_to_response()
     assert response.status_code == 200
-
-    name = name or 'create'
 
     expected_html = f"""
 <html>
@@ -268,7 +265,7 @@ def test_create_or_edit_object_full_template(name):
                 </div>
             </div>
             <div class="links">
-                <input accesskey="s" name="{name}" type="submit" value="Create foo" name="-submit">
+                <input accesskey="s" name="create" type="submit" value="Create foo" name="-submit">
             </div>
         </form>
     </body>
@@ -286,4 +283,4 @@ def test_create_or_edit_view_name():
     class MyForm(Form):
         pass
 
-    assert MyForm(auto__model=Foo).as_view().__name__ == "MyForm().as_create_or_edit_view"
+    assert MyForm(auto__model=Foo).as_view().__name__ == "MyForm().as_view"

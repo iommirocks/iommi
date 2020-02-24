@@ -35,7 +35,7 @@ Bind
 
 "Bind" is when we take an abstract declaration of what we want and convert it into the "bound" concrete expression of that. It consists of these parts:
 
-1. Copy of the part if needed (the `@no_copy_on_bind` decarator is used to mark a class as not needing to be copied). For those that are copied we set a member `_declared` to point to the original definition if you need to refer to it for debugging purposes.
+1. Copy of the part. (We set a member `_declared` to point to the original definition if you need to refer to it for debugging purposes.)
 2. Set the `parent` and set `_is_bound` to `True`
 3. Style application
 4. Call the parts `on_bind` method

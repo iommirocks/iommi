@@ -47,6 +47,9 @@ _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'l
 
 
 def fragment__render(fragment, context):
+    if not fragment.include:
+        return ''
+
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:

@@ -21,11 +21,6 @@ from iommi.base import MISSING
 from iommi.style import apply_style
 
 
-def no_copy_on_bind(cls):
-    cls._no_copy_on_bind = True
-    return cls
-
-
 class EvaluatedRefinable(Refinable):
     pass
 
@@ -111,11 +106,8 @@ class Traversable(RefinableObject):
             if self._name is None:
                 self._name = 'root'
 
-        if hasattr(self, '_no_copy_on_bind'):
-            result = self
-        else:
-            result = copy.copy(self)
-            result._declared = self
+        result = copy.copy(self)
+        result._declared = self
 
         del self  # to prevent mistakes when changing the code below
 

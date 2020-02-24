@@ -61,8 +61,8 @@ When you've done the stuff above you can create a page with a table in it:
 .. code:: python
 
     def my_view(request):
-        return Table.as_page(
-            table__model=MyModel,
+        return Table(
+            auto__model=MyModel,
         )
 
 
@@ -188,7 +188,7 @@ And without the middleware it looks like:
             title = html.h1('Hello')
             div = html.div('Some text')
 
-        return render_or_respond(request=request, MyPage())
+        return MyPage().bind(request=request).render_to_response())
 
 or even more low level:
 
@@ -199,8 +199,7 @@ or even more low level:
             title = html.h1('Hello')
             div = html.div('Some text')
 
-        page = MyPage()
-        page.bind(request=request)
+        page = MyPage().bind(request=request)
         dispatch = do_dispatch(page)
         if dispatch:
             return dispatch

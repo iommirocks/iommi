@@ -96,8 +96,8 @@ def list_model(model, app, table):
             **{'table__columns__' + field.name + '__bulk__include': True},
         )
 
-    return kwargs.table().as_page(
-        title=f'{model._meta.verbose_name}',
+    return Page(
+        parts__table=kwargs.table(title=f'{model._meta.verbose_name}'),
         parts__header=admin_h1,
     )
 
