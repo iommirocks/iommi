@@ -34,7 +34,7 @@ from iommi.form import (
 from iommi.from_model import register_name_field
 from iommi.query import (
     Query,
-    Variable,
+    Filter,
 )
 from iommi.table import (
     Column,
@@ -180,7 +180,7 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), query__include=True, bulk__include=True, query__form__include=True)
+        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), filter__include=True, bulk__include=True, filter__field__include=True)
 
     t = TestTable(rows=TBar.objects.all().order_by('pk'))
     t = t.bind(request=req('get'))
@@ -911,7 +911,7 @@ def test_bulk_delete():
 @pytest.mark.django_db
 def test_invalid_syntax_query():
     class TestTable(Table):
-        a = Column.number(sortable=False, query__include=True)
+        a = Column.number(sortable=False, filter__include=True)
 
     adv_query_param = TestTable(model=TFoo).bind(request=req('get')).query.get_advanced_query_param()
 
@@ -928,15 +928,15 @@ def test_query():
     TFoo(a=4, b="bar").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, query__include=True, query__form__include=True)  # turn off sorting to not get the link with random query params
-        b = Column.substring(query__include=True, query__form__include=True)
+        a = Column.number(sortable=False, filter__include=True, filter__field__include=True)  # turn off sorting to not get the link with random query params
+        b = Column.substring(filter__include=True, filter__field__include=True)
 
         class Meta:
             sortable = False
 
     t = TestTable(rows=TFoo.objects.all().order_by('pk'))
     t = t.bind(request=req('get'))
-    assert t.query.variables.a.iommi_path == 'query/a'
+    assert t.query.filters.a.iommi_path == 'query/a'
     assert t.query.form.fields.a.iommi_path == 'a'
 
     rows = TFoo.objects.all().order_by('pk')
@@ -1107,8 +1107,8 @@ def test_template_string(NoSortTable):
 
         a = Column(
             cell__template=Template('Custom cell: {{ row.a }}'),
-            query__include=True,
-            query__form__include=True,
+            filter__include=True,
+            filter__field__include=True,
         )
 
     verify_table_html(
@@ -1352,7 +1352,7 @@ def test_choice_queryset():
     TFoo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(query__include=True, query__form__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
+        foo = Column.choice_queryset(filter__include=True, filter__field__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
 
         class Meta:
             model = TFoo
@@ -1378,7 +1378,7 @@ def test_multi_choice_queryset():
     TFoo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(query__include=True, query__form__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(filter__include=True, filter__field__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
             model = TFoo
@@ -1404,7 +1404,7 @@ def test_query_namespace_inject():
         Table(
             rows=[],
             model=TFoo,
-            columns__a=Column(_name='a', query__include=True, query__form__include=True),
+            columns__a=Column(_name='a', filter__include=True, filter__field__include=True),
             query__form__post_validation=post_validation,
         ).bind(
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
@@ -1413,31 +1413,31 @@ def test_query_namespace_inject():
 
 def test_float():
     x = Column.float()
-    assert getattr_path(x, 'query__call_target__attribute') == 'float'
+    assert getattr_path(x, 'filter__call_target__attribute') == 'float'
     assert getattr_path(x, 'bulk__call_target__attribute') == 'float'
 
 
 def test_integer():
     x = Column.integer()
-    assert getattr_path(x, 'query__call_target__attribute') == 'integer'
+    assert getattr_path(x, 'filter__call_target__attribute') == 'integer'
     assert getattr_path(x, 'bulk__call_target__attribute') == 'integer'
 
 
 def test_date():
     x = Column.date()
-    assert getattr_path(x, 'query__call_target__attribute') == 'date'
+    assert getattr_path(x, 'filter__call_target__attribute') == 'date'
     assert getattr_path(x, 'bulk__call_target__attribute') == 'date'
 
 
 def test_datetime():
     x = Column.datetime()
-    assert getattr_path(x, 'query__call_target__attribute') == 'datetime'
+    assert getattr_path(x, 'filter__call_target__attribute') == 'datetime'
     assert getattr_path(x, 'bulk__call_target__attribute') == 'datetime'
 
 
 def test_email():
     x = Column.email()
-    assert getattr_path(x, 'query__call_target__attribute') == 'email'
+    assert getattr_path(x, 'filter__call_target__attribute') == 'email'
     assert getattr_path(x, 'bulk__call_target__attribute') == 'email'
 
 
@@ -1527,9 +1527,9 @@ def test_explicit_table_does_not_use_from_model():
         foo = Column.choice_queryset(
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
-            query__form__extra__endpoint_attr='b',
-            query__include=True,
-            query__form__include=True,
+            filter__field__extra__endpoint_attr='b',
+            filter__include=True,
+            filter__field__include=True,
             bulk__include=True,
         )
 
@@ -1559,9 +1559,9 @@ def test_ajax_endpoint():
         foo = Column.choice_queryset(
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
-            query__form__extra__endpoint_attr='b',
-            query__include=True,
-            query__form__include=True,
+            filter__field__extra__endpoint_attr='b',
+            filter__include=True,
+            filter__field__include=True,
             bulk__include=True,
         )
 
@@ -1825,9 +1825,9 @@ def test_yield_rows():
 
 
 @pytest.mark.django_db
-def test_error_on_invalid_variable_setup():
+def test_error_on_invalid_filter_setup():
     class MyTable(Table):
-        c = Column(attr=None, query__include=True, query__form__include=True)
+        c = Column(attr=None, filter__include=True, filter__field__include=True)
 
         class Meta:
             model = TFoo
@@ -1852,10 +1852,10 @@ def test_from_model_with_inheritance():
         class Meta:
             member_class = MyField
 
-    class MyVariable(Variable):
+    class MyFilter(Filter):
         @classmethod
         @class_shortcut(
-            form__call_target__attribute='float',
+            field__call_target__attribute='float',
         )
         def float(cls, call_target=None, **kwargs):
             was_called['MyVariable.float'] += 1
@@ -1863,14 +1863,14 @@ def test_from_model_with_inheritance():
 
     class MyQuery(Query):
         class Meta:
-            member_class = MyVariable
+            member_class = MyFilter
             form_class = MyForm
 
     class MyColumn(Column):
         @classmethod
         @class_shortcut(
             call_target__attribute='number',
-            query__call_target__attribute='float',
+            filter__call_target__attribute='float',
             bulk__call_target__attribute='float',
         )
         def float(cls, call_target, **kwargs):
@@ -1886,8 +1886,8 @@ def test_from_model_with_inheritance():
     MyTable(
         auto__rows=FromModelWithInheritanceTest.objects.all(),
         auto__model=FromModelWithInheritanceTest,
-        columns__value__query__include=True,
-        columns__value__query__form__include=True,
+        columns__value__filter__include=True,
+        columns__value__filter__field__include=True,
         columns__value__bulk__include=True,
     ).bind(
         request=req('get'),
@@ -1945,7 +1945,7 @@ def test_new_style_ajax_dispatch():
 
     def get_response(request):
         del request
-        return Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True))
+        return Table(auto__model=TBar, columns__foo__filter=dict(include=True, field__include=True))
 
     from iommi import middleware
     m = middleware(get_response)
@@ -1964,7 +1964,7 @@ def test_new_style_ajax_dispatch():
 
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table(auto__model=TBar, columns__foo__query=dict(include=True, form__include=True))
+    page = Table(auto__model=TBar, columns__foo__filter=dict(include=True, field__include=True))
     page.bind(request=None)
     target = find_target(path='/query/form/fields/foo/endpoints/choices', root=page)
     assert target.endpoint_path == '/choices'
@@ -1976,13 +1976,13 @@ def test_dunder_name_for_column():
         class Meta:
             model = TBar
 
-        foo = Column(query__include=True, query__form__include=True)
-        foo__a = Column(query__include=True, query__form__include=True)
+        foo = Column(filter__include=True, filter__field__include=True)
+        foo__a = Column(filter__include=True, filter__field__include=True)
 
     table = FooTable()
     table = table.bind(request=None)
     assert list(table.columns.keys()) == ['foo', 'foo__a']
-    assert list(table.query.variables.keys()) == ['foo', 'foo__a']
+    assert list(table.query.filters.keys()) == ['foo', 'foo__a']
     assert list(table.query.form.fields.keys()) == ['foo', 'foo__a']
 
 
@@ -2040,7 +2040,7 @@ def test_shortcuts_map_to_form_and_query(name, shortcut):
         # shortcuts that in turn point to whitelisted ones are also whitelisted
         return
 
-    assert shortcut.dispatch.query.call_target.attribute == name
+    assert shortcut.dispatch.filter.call_target.attribute == name
     assert shortcut.dispatch.bulk.call_target.attribute == name
 
 
@@ -2154,7 +2154,7 @@ def test_query_from_indexes():
         auto__model=QueryFromIndexesTestModel,
         query_from_indexes=True,
     ).bind(request=req('get'))
-    assert list(t.query.variables.keys()) == ['b', 'c']
+    assert list(t.query.filters.keys()) == ['b', 'c']
     assert list(t.query.form.fields.keys()) == ['b', 'c']
 
 

@@ -281,13 +281,13 @@ def table_readme_example_2(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
-            query__include=True,  # put this field into the query language
-            query__form__include=True,  # put this field into the simple filtering GUI
+            filter__include=True,  # put this field into the query language
+            filter__field__include=True,  # put this field into the simple filtering GUI
         )
         c = Column(
             bulk__include=True,  # Enable bulk editing for this field
-            query__include=True,
-            query__form__include=True,
+            filter__include=True,
+            filter__field__include=True,
         )
 
     return BarTable(rows=TBar.objects.all(), page_size=20)
@@ -304,20 +304,20 @@ def table_kitchen_sink(request):
             model=TBar,
             field_name='b',
             bulk__include=True,
-            query__include=True,
-            query__form__include=True,
+            filter__include=True,
+            filter__field__include=True,
         )
         c = Column(bulk__include=True)  # The form is created automatically
 
         d = Column(
             display_name='Display name',
             attr__class__css_class=True,
-            url='url',
+            header__url='https://docs.iommi.rocks',
             sortable=False,
             group='Foo',
             auto_rowspan=True,
-            query__include=True,
-            query__form__include=True,
+            filter__include=True,
+            filter__field__include=True,
             cell__value=lambda row, **_: row.b.a // 3,
             cell__format=lambda value, **_: '- %s -' % value,
             cell__attrs__class={'text-center': True},
@@ -344,8 +344,8 @@ def table_kitchen_sink(request):
 
 def page_busy(request):
     class BusyPage(Page):
-        tfoo = Table(auto__model=TFoo, page_size=5, columns__name__query=dict(include=True, form__include=True))
-        tbar = Table(auto__model=TBar, page_size=5, columns__b__query=dict(include=True, form__include=True))
+        tfoo = Table(auto__model=TFoo, page_size=5, columns__name__query=dict(include=True, field__include=True))
+        tbar = Table(auto__model=TBar, page_size=5, columns__b__query=dict(include=True, field__include=True))
         create_tbar = Form.as_create_page(model=TBar)
 
     return BusyPage()
@@ -447,11 +447,11 @@ def iommi_admin(request, **kwargs):
     return admin(
         all_models__app__sessions__session__include=False,
         list_model__app__auth__user__table__columns=dict(
-            # groups__query=dict(include=True, form__include=True),
+            # groups__query=dict(include=True, field__include=True),
             # email__call_target__attribute='freetext_search',
             # username__call_target__attribute='freetext_search',
-            username__query__freetext=True,
-            username__query__include=True,
+            username__filter__freetext=True,
+            username__filter__include=True,
             # first__call_target__attribute='freetext',
             # last__call_target__attribute='freetext',
             password__include=False,

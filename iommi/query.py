@@ -107,15 +107,15 @@ Q_OPERATOR_BY_QUERY_OPERATOR = {
 
 FREETEXT_SEARCH_NAME = 'freetext'
 
-_variable_factory_by_django_field_type = {}
+_filter_factory_by_django_field_type = {}
 
 
-def register_variable_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name)
 
-    _variable_factory_by_django_field_type[django_field_class] = factory
+    _filter_factory_by_django_field_type[django_field_class] = factory
 
 
 def to_string_surrounded_by_quote(v):
@@ -123,13 +123,13 @@ def to_string_surrounded_by_quote(v):
     return '"%s"' % str_v.replace('"', '\\"')
 
 
-def value_to_str_for_query(variable, v):
+def value_to_str_for_query(filter, v):
     if type(v) == bool:
         return {True: '1', False: '0'}.get(v)
     if type(v) in (int, float):
         return str(v)
     if isinstance(v, Model):
-        name_field = variable.name_field
+        name_field = filter.name_field
         if name_field is None:
             try:
                 name_field = get_name_field(model=type(v))
@@ -142,7 +142,7 @@ def value_to_str_for_query(variable, v):
     return to_string_surrounded_by_quote(v)
 
 
-def build_query_expression(*, field, variable, value):
+def build_query_expression(*, field, filter, value):
     if isinstance(value, Model):
         try:
             # We ignore the return value on purpose here. We are after the raise.
@@ -150,46 +150,47 @@ def build_query_expression(*, field, variable, value):
         except NoRegisteredNameException:
             return f'{field._name}.pk={value.pk}'
 
-    return f'{field._name}{variable.query_operator_for_form}{value_to_str_for_query(variable, value)}'
+    return f'{field._name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
 
 
 def case_sensitive_query_operator_to_q_operator(op):
     return {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op]
 
 
-def choice_queryset_value_to_q(variable, op, value_string_or_f):
+def choice_queryset_value_to_q(filter, op, value_string_or_f):
     if op != '=':
-        raise QueryException(f'Invalid operator "{op}" for variable "{variable._name}"')
-    if variable.attr is None:
+        raise QueryException(f'Invalid operator "{op}" for filter "{filter._name}"')
+    if filter.attr is None:
         return Q()
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
-        return Q(**{variable.attr: None})
+        return Q(**{filter.attr: None})
     try:
-        instance = variable.form.choices.get(**{variable.name_field: str(value_string_or_f)})
+        instance = filter.field.choices.get(**{filter.name_field: str(value_string_or_f)})
     except MultipleObjectsReturned:
         raise QueryException(f'Found more than one object for name "{value_string_or_f}"')
     except ObjectDoesNotExist:
         return None
-    return Q(**{variable.attr + '__pk': instance.pk})
+    return Q(**{filter.attr + '__pk': instance.pk})
 
 
-def boolean_value_to_q(variable, op, value_string_or_f):
+def boolean_value_to_q(filter, op, value_string_or_f):
     if isinstance(value_string_or_f, str):
         value_string_or_f = bool_parse(value_string_or_f)
-    return Variable.value_to_q(variable, op, value_string_or_f)
+    # TODO: this doesn't respect the class hierarchy
+    return Filter.value_to_q(filter, op, value_string_or_f)
 
 
 @with_meta
-class Variable(Part):
+class Filter(Part):
     """
-    Class that describes a variable that you can search for.
+    Class that describes a filter that you can search for.
 
     See :doc:`Query` for more complete examples.
     """
 
     attr = EvaluatedRefinable()
-    form: Namespace = Refinable()
-    query_operator_for_form: str = EvaluatedRefinable()
+    field: Namespace = Refinable()
+    query_operator_for_field: str = EvaluatedRefinable()
     freetext = EvaluatedRefinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
@@ -198,22 +199,22 @@ class Variable(Part):
     unary = Refinable()
 
     @dispatch(
-        query_operator_for_form='=',
+        query_operator_for_field='=',
         attr=MISSING,
-        form=Namespace(
+        field=Namespace(
             include=False,
             required=False,
         ),
     )
     def __init__(self, **kwargs):
         """
-        Parameters with the prefix `form__` will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
+        Parameters with the prefix `field__` will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
 
-        :param form__include: set to `True` to display a GUI element for this variable in the basic style interface.
-        :param form__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
+        :param field__include: set to `True` to display a GUI element for this filter in the basic style interface.
+        :param field__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
         """
 
-        super(Variable, self).__init__(**kwargs)
+        super(Filter, self).__init__(**kwargs)
 
     def on_bind(self) -> None:
         if self.attr is MISSING:
@@ -223,7 +224,7 @@ class Variable(Part):
         self.model = evaluate(self.model, **self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
-        return dict(variable=self)
+        return dict(filter=self)
 
     @staticmethod
     @refinable
@@ -232,17 +233,17 @@ class Variable(Part):
 
     @staticmethod
     @refinable
-    def value_to_q(variable, op, value_string_or_f) -> Q:
-        if variable.attr is None:
+    def value_to_q(filter, op, value_string_or_f) -> Q:
+        if filter.attr is None:
             return Q()
         negated = False
         if op in ('!=', '!:'):
             negated = True
             op = op[1:]
         if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
-            r = Q(**{variable.attr: None})
+            r = Q(**{filter.attr: None})
         else:
-            r = Q(**{variable.attr + '__' + variable.query_operator_to_q_operator(op): value_string_or_f})
+            r = Q(**{filter.attr + '__' + filter.query_operator_to_q_operator(op): value_string_or_f})
         if negated:
             return ~r
         else:
@@ -253,7 +254,7 @@ class Variable(Part):
         return member_from_model(
             cls=cls,
             model=model,
-            factory_lookup=_variable_factory_by_django_field_type,
+            factory_lookup=_filter_factory_by_django_field_type,
             field_name=field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
@@ -261,7 +262,7 @@ class Variable(Part):
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='text',
+        field__call_target__attribute='text',
     )
     def text(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -275,7 +276,7 @@ class Variable(Part):
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='choice',
+        field__call_target__attribute='choice',
     )
     def choice(cls, call_target=None, **kwargs):
         """
@@ -283,13 +284,13 @@ class Variable(Part):
         :type choices: list
         """
         setdefaults_path(kwargs, dict(
-            form__choices=kwargs.get('choices'),
+            field__choices=kwargs.get('choices'),
         ))
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='multi_choice',
+        field__call_target__attribute='multi_choice',
     )
     def multi_choice(cls, call_target=None, **kwargs):
         """
@@ -297,13 +298,13 @@ class Variable(Part):
         :type choices: list
         """
         setdefaults_path(kwargs, dict(
-            form__choices=kwargs.get('choices'),
+            field__choices=kwargs.get('choices'),
         ))
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='choice_queryset',
+        field__call_target__attribute='choice_queryset',
         query_operator_to_q_operator=lambda op: 'exact',
         value_to_q=choice_queryset_value_to_q,
     )
@@ -316,8 +317,8 @@ class Variable(Part):
             kwargs['model'] = choices.model
 
         setdefaults_path(kwargs, dict(
-            form__choices=choices,
-            form__model=kwargs['model'],
+            field__choices=choices,
+            field__model=kwargs['model'],
             choices=choices,
         ))
         return call_target(**kwargs)
@@ -325,14 +326,14 @@ class Variable(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute="choice_queryset",
-        form__call_target__attribute='multi_choice_queryset',
+        field__call_target__attribute='multi_choice_queryset',
     )
     def multi_choice_queryset(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='boolean',
+        field__call_target__attribute='boolean',
         value_to_q=boolean_value_to_q,
         unary=True,
     )
@@ -341,7 +342,7 @@ class Variable(Part):
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='boolean_tristate',
+        field__call_target__attribute='boolean_tristate',
         value_to_q=boolean_value_to_q,
         unary=True,
     )
@@ -350,63 +351,63 @@ class Variable(Part):
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='integer',
+        field__call_target__attribute='integer',
     )
     def integer(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='float',
+        field__call_target__attribute='float',
     )
     def float(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='url',
+        field__call_target__attribute='url',
     )
     def url(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='time',
+        field__call_target__attribute='time',
     )
     def time(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='datetime',
+        field__call_target__attribute='datetime',
     )
     def datetime(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='date',
+        field__call_target__attribute='date',
     )
     def date(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='email',
+        field__call_target__attribute='email',
     )
     def email(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='decimal',
+        field__call_target__attribute='decimal',
     )
     def decimal(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        form__call_target__attribute='file',
+        field__call_target__attribute='file',
     )
     def file(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -414,7 +415,7 @@ class Variable(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
-        form__call_target__attribute='foreign_key',
+        field__call_target__attribute='foreign_key',
     )
     def foreign_key(cls, model_field, call_target, **kwargs):
         setdefaults_path(
@@ -426,7 +427,7 @@ class Variable(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='multi_choice_queryset',
-        form__call_target__attribute='many_to_many',
+        field__call_target__attribute='many_to_many',
     )
     def many_to_many(cls, call_target, model_field, **kwargs):
         setdefaults_path(
@@ -463,7 +464,7 @@ class QueryAutoConfig(AutoConfig):
     rows = Refinable()
 
 
-@declarative(Variable, '_variables_dict')
+@declarative(Filter, '_filters_dict')
 @with_meta
 class Query(Part):
     """
@@ -489,28 +490,28 @@ class Query(Part):
     form_class = Refinable()
 
     class Meta:
-        member_class = Variable
+        member_class = Filter
         form_class = Form
 
     @dispatch(
         endpoints__errors__func=default_endpoint__errors,
-        variables=EMPTY,
+        filters=EMPTY,
         auto=EMPTY,
     )
-    def __init__(self, *, model=None, rows=None, variables=None, _variables_dict=None, auto, **kwargs):
+    def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto, **kwargs):
         model, rows = model_and_rows(model, rows)
 
-        assert isinstance(variables, dict)
+        assert isinstance(filters, dict)
 
         if auto:
             auto = QueryAutoConfig(**auto)
-            assert not _variables_dict, "You can't have an auto generated Query AND a declarative Query at the same time"
+            assert not _filters_dict, "You can't have an auto generated Query AND a declarative Query at the same time"
             assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
             assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
-            model, rows, variables = self._from_model(
+            model, rows, filters = self._from_model(
                 model=auto.model,
                 rows=auto.rows,
-                variables=variables,
+                filters=filters,
                 include=auto.include,
                 exclude=auto.exclude,
                 additional=auto.additional,
@@ -531,7 +532,7 @@ class Query(Part):
             **kwargs
         )
 
-        collect_members(self, name='variables', items=variables, items_dict=_variables_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='filters', items=filters, items_dict=_filters_dict, cls=self.get_meta().member_class)
 
         field_class = self.get_meta().form_class.get_meta().member_class
 
@@ -543,15 +544,15 @@ class Query(Part):
             include=False,
         )
 
-        for name, variable in self._declared_members.variables.items():
-            if variable.attr is None:
+        for name, filter in self._declared_members.filters.items():
+            if filter.attr is None:
                 continue
             field = setdefaults_path(
                 Namespace(),
-                variable.form,
+                filter.field,
                 _name=name,
-                model_field=variable.model_field,
-                attr=name if variable.attr is MISSING else variable.attr,
+                model_field=filter.model_field,
+                attr=name if filter.attr is MISSING else filter.attr,
                 call_target__cls=field_class,
                 )
             declared_fields[name] = field()
@@ -566,14 +567,14 @@ class Query(Part):
         self._declared_members.form = self.form
 
         # Variables need to be at the end to not steal the short names
-        self._declared_members.variables = self._declared_members.pop('variables')
+        self._declared_members.filters = self._declared_members.pop('filters')
 
     @dispatch(
         render__call_target=render_template,
         context=EMPTY,
     )
     def __html__(self, *, context=None, render=None):
-        if not self._bound_members.variables._bound_members:
+        if not self._bound_members.filters._bound_members:
             return ''
 
         setdefaults_path(
@@ -587,24 +588,24 @@ class Query(Part):
         return render(request=self.get_request())
 
     def on_bind(self) -> None:
-        bind_members(self, name='variables')
+        bind_members(self, name='filters')
 
         request = self.get_request()
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
 
-        if any(v.freetext for v in self.variables.values()):
+        if any(v.freetext for v in self.filters.values()):
             self.form._declared_members.fields[FREETEXT_SEARCH_NAME].include = True
 
         fields_unapplied_config = Struct()
-        for name, variable in self.variables.items():
-            assert variable.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
+        for name, filter in self.filters.items():
+            assert filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
             field = setdefaults_path(
                 Namespace(),
                 _name=name,
-                attr=variable.attr,
-                model_field=variable.model_field,
+                attr=filter.attr,
+                model_field=filter.model_field,
             )
-            if not variable.include:
+            if not filter.include:
                 field.include = False
             fields_unapplied_config[name] = field
 
@@ -690,7 +691,7 @@ class Query(Part):
         The query language is a series of statements separated by AND or OR operators and parentheses can be used to group/provide
         precedence.
 
-        A statement is a combination of three strings "<variable> <operator> <value>" or "<variable> <operator> <variable>".
+        A statement is a combination of three strings "<filter> <operator> <value>" or "<filter> <operator> <filter>".
 
         A value can be a string, integer or a real(floating) number or a (ISO YYYY-MM-DD) date.
 
@@ -724,13 +725,13 @@ class Query(Part):
 
         # define query tokens
         identifier = Word(alphas, alphanums + '_$-').setName('identifier')
-        variable_name = delimitedList(identifier, '.', combine=True)
-        value_string = date_str | real_num | int_num | variable_name | quoted_string_excluding_quotes
+        filter_name = delimitedList(identifier, '.', combine=True)
+        value_string = date_str | real_num | int_num | filter_name | quoted_string_excluding_quotes
 
         # Define a where expression
         where_expression = Forward()
-        binary_operator_statement = (variable_name + binary_op + value_string).setParseAction(self._binary_op_to_q)
-        unary_operator_statement = (variable_name | (Char('!') + variable_name)).setParseAction(self._unary_op_to_q)
+        binary_operator_statement = (filter_name + binary_op + value_string).setParseAction(self._binary_op_to_q)
+        unary_operator_statement = (filter_name | (Char('!') + filter_name)).setParseAction(self._unary_op_to_q)
         free_text_statement = quotedString.copy().setParseAction(self._freetext_to_q)
         operator_statement = binary_operator_statement | free_text_statement | unary_operator_statement
         where_condition = Group(operator_statement | ('(' + where_expression + ')'))
@@ -743,64 +744,64 @@ class Query(Part):
 
     def _unary_op_to_q(self, token):
         if len(token) == 1:
-            (variable_name, ) = token
+            (filter_name, ) = token
             value = 'true'
         else:
-            (op, variable_name) = token
+            (op, filter_name) = token
             value = 'false'
             if op != '!':
-                raise QueryException(f'Unknown unary variable operator "{op}", available operators: !')
+                raise QueryException(f'Unknown unary filter operator "{op}", available operators: !')
 
-        variable = self.variables.get(variable_name.lower())
-        if variable:
-            if not variable.unary:
-                raise QueryException(f'"{variable_name}" is not a unary variable, you must use it like "{variable_name}=something"')
-            result = variable.value_to_q(variable=variable, op='=', value_string_or_f=value)
+        filter = self.filters.get(filter_name.lower())
+        if filter:
+            if not filter.unary:
+                raise QueryException(f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"')
+            result = filter.value_to_q(filter=filter, op='=', value_string_or_f=value)
             return result
-        raise QueryException(f'Unknown unary variable "{variable_name}", available variables: {list(self.variables.keys())}')
+        raise QueryException(f'Unknown unary filter "{filter_name}", available filters: {list(self.filters.keys())}')
 
     def _binary_op_to_q(self, token):
         """
-        Convert a parsed token of variable_name OPERATOR variable_name into a Q object
+        Convert a parsed token of filter_name OPERATOR filter_name into a Q object
         """
         assert self._is_bound
-        variable_name, op, value_string_or_variable_name = token
+        filter_name, op, value_string_or_filter_name = token
 
-        if variable_name.endswith('.pk'):
-            variable = self.variables.get(variable_name.lower()[:-len('.pk')])
+        if filter_name.endswith('.pk'):
+            filter = self.filters.get(filter_name.lower()[:-len('.pk')])
             if op != '=':
                 raise QueryException('Only = is supported for primary key lookup')
 
             try:
-                pk = int(value_string_or_variable_name)
+                pk = int(value_string_or_filter_name)
             except ValueError:
-                raise QueryException(f'Could not interpret {value_string_or_variable_name} as an integer')
+                raise QueryException(f'Could not interpret {value_string_or_filter_name} as an integer')
 
-            return Q(**{f'{variable.attr}__pk': pk})
+            return Q(**{f'{filter.attr}__pk': pk})
 
-        variable = self.variables.get(variable_name.lower())
-        if variable:
-            if isinstance(value_string_or_variable_name, str) and not isinstance(value_string_or_variable_name, StringValue) and value_string_or_variable_name.lower() in self.variables:
-                value_string_or_f = F(self.variables[value_string_or_variable_name.lower()].attr)
+        filter = self.filters.get(filter_name.lower())
+        if filter:
+            if isinstance(value_string_or_filter_name, str) and not isinstance(value_string_or_filter_name, StringValue) and value_string_or_filter_name.lower() in self.filters:
+                value_string_or_f = F(self.filters[value_string_or_filter_name.lower()].attr)
             else:
-                value_string_or_f = value_string_or_variable_name
-            result = variable.value_to_q(variable=variable, op=op, value_string_or_f=value_string_or_f)
+                value_string_or_f = value_string_or_filter_name
+            result = filter.value_to_q(filter=filter, op=op, value_string_or_f=value_string_or_f)
             if result is None:
-                raise QueryException(f'Unknown value "{value_string_or_f}" for variable "{variable._name}"')
+                raise QueryException(f'Unknown value "{value_string_or_f}" for filter "{filter._name}"')
             return result
-        raise QueryException(f'Unknown variable "{variable_name}", available variables: {list(self.variables.keys())}')
+        raise QueryException(f'Unknown filter "{filter_name}", available filters: {list(self.filters.keys())}')
 
     def _freetext_to_q(self, token):
-        assert any(v.freetext for v in self.variables.values())
+        assert any(v.freetext for v in self.filters.values())
         assert len(token) == 1
         token = token[0].strip('"')
 
         return reduce(
             operator.or_,
             [
-                Q(**{variable.attr + '__' + variable.query_operator_to_q_operator(':'): token})
-                for variable in self.variables.values()
-                if variable.freetext
+                Q(**{filter.attr + '__' + filter.query_operator_to_q_operator(':'): token})
+                for filter in self.filters.values()
+                if filter.freetext
             ]
         )
 
@@ -820,7 +821,7 @@ class Query(Part):
             def expr(field, is_list, value):
                 if is_list:
                     return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value]) + ')'
-                return build_query_expression(field=field, variable=self.variables[field._name], value=value)
+                return build_query_expression(field=field, filter=self.filters[field._name], value=value)
 
             result = [
                 expr(field, field.is_list, field.value)
@@ -833,9 +834,9 @@ class Query(Part):
                 if freetext:
                     result.append(
                         '(%s)' % ' or '.join([
-                            f'{variable._name}:{to_string_surrounded_by_quote(freetext)}'
-                            for variable in self.variables.values()
-                            if variable.freetext]
+                            f'{filter._name}:{to_string_surrounded_by_quote(freetext)}'
+                            for filter in self.filters.values()
+                            if filter.freetext]
                         )
                     )
             return ' and '.join(result)
@@ -854,21 +855,21 @@ class Query(Part):
 
     @classmethod
     @dispatch(
-        variables=EMPTY,
+        filters=EMPTY,
     )
-    def variables_from_model(cls, variables, **kwargs):
+    def filters_from_model(cls, filters, **kwargs):
         return create_members_from_model(
-            member_params_by_member_name=variables,
+            member_params_by_member_name=filters,
             default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
     @classmethod
     @dispatch(
-        variables=EMPTY,
+        filters=EMPTY,
     )
-    def _from_model(cls, *, rows=None, model=None, variables, include=None, exclude=None, additional=None):
+    def _from_model(cls, *, rows=None, model=None, filters, include=None, exclude=None, additional=None):
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        variables = cls.variables_from_model(model=model, include=include, exclude=exclude, additional=additional, variables=variables)
-        return model, rows, variables
+        filters = cls.filters_from_model(model=model, include=include, exclude=exclude, additional=additional, filters=filters)
+        return model, rows, filters

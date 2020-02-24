@@ -70,16 +70,16 @@ You can also create tables explicitly:
                 attr='b__a',
 
                 # put this field into the query language
-                query__include=True,
+                filter__include=True,
 
                 # put this field into the simple filtering GUI
-                query__form__include=True,
+                filter__field__include=True,
             )
             c = Column(
                 # Enable bulk editing for this field
                 bulk=True,
-                query__include=True,
-                query__form__include=True,
+                filter__include=True,
+                filter__field__include=True,
             )
 
         return BarTable(rows=Bar.objects.all())

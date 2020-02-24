@@ -1141,10 +1141,13 @@ class Form(Part):
         self._request_data = request_data(request)
 
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
-        if self.title:
-            self.h_tag = self.h_tag(text=self.title).bind(parent=self)
+        if isinstance(self.h_tag, Namespace):
+            if self.title:
+                self.h_tag = self.h_tag(text=self.title.capitalize()).bind(parent=self)
+            else:
+                self.h_tag = ''
         else:
-            self.h_tag = ''
+            self.h_tag = self.h_tag.bind(parent=self)
 
         # Actions have to be bound first because is_target() needs it
         bind_members(self, name='actions')

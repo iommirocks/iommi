@@ -416,7 +416,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         MenuItem,
         Query,
         Table,
-        Variable,
+        Filter,
     )
     from iommi.table import Paginator
     from iommi.menu import MenuBase
@@ -434,7 +434,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Paginator,
             Query,
             Table,
-            Variable,
+            Filter,
         ]
     if additional_classes is None:
         additional_classes = []

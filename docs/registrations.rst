@@ -14,7 +14,7 @@ To tell iommi how to handle your custom fields you have these options:
 
 * `register_factory`: register behavior for everything at once
 * `register_column_factory`: specific to `Column`
-* `register_variable_factory`: specific to `Variable`
+* `register_filter_factory`: specific to `Variable`
 * `register_field_factory`: specific to `Field`
 
 

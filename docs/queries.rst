@@ -47,7 +47,7 @@ to `case_sensitive_query_operator_to_q_operator`.
 iommi queries have a special form for filtering directly on pk, which can be
 very handy: `album.pk=3`.
 
-`query_operator_for_form` specifies what operation the simple form uses to
+`query_operator_for_field` specifies what operation the simple form uses to
 interpret its inputs. The default is `=`, meaning exact case insensitive match.
 
 If you have table of `Song` and a foreign key to `Album`, if you search for

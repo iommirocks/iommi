@@ -65,24 +65,24 @@ def test_dispatch_error_message_to_client():
         t1 = Table(
             auto__model=T1,
             columns__foo=dict(
-                query__include=True,
-                query__form__include=True,
+                filter__include=True,
+                filter__field__include=True,
             ),
             columns__bar=dict(
-                query__include=True,
-                query__form__include=True,
+                filter__include=True,
+                filter__field__include=True,
             ),
         )
 
         t2 = Table(
             auto__model=T2,
             columns__foo=dict(
-                query__include=True,
-                query__form__include=True,
+                filter__include=True,
+                filter__field__include=True,
             ),
             columns__bar=dict(
-                query__include=True,
-                query__form__include=True,
+                filter__include=True,
+                filter__field__include=True,
             ),
         )
 

@@ -359,22 +359,22 @@ There is a special value `LAST` (import from `tri_declarative`) to put something
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass the value `query__include=True` to the column, to enable searching
+Pass the value `filter__include=True` to the column, to enable searching
 in the advanced query language. To also get searching for the column in the
-simple GUI filtering also pass `query__form__include=True`:
+simple GUI filtering also pass `filter__field__include=True`:
 
 .. code:: python
 
     Table(
         auto__model=Foo,
-        columns__a__query__include=True,
-        columns__a__query__form__include=True,
+        columns__a__filter__include=True,
+        columns__a__filter__field__include=True,
     )
 
 The `query` namespace here is used to configure a :doc:`Variable` so you can
 configure the behavior of the searching by passing parameters here.
 
-The `query__form` namespace is used to configure the :doc:`Field`, so here you
+The `filter__field` namespace is used to configure the :doc:`Field`, so here you
 can pass any argument to `Field` here to customize it.
 
 .. _attrs:
@@ -631,11 +631,11 @@ If you want to filter based on a freetext query on one or more columns we've got
 
     Table(
         auto__model=Foo,
-        columns__a__query__freetext=True,
-        columns__b__query__freetext=True,
+        columns__a__filter__freetext=True,
+        columns__b__filter__freetext=True,
     )
 
-(You don't need to enable querying with `columns__b__query__include=True` first)
+(You don't need to enable querying with `columns__b__filter__include=True` first)
 
 
 What is the difference between `attr` and `_name`?
@@ -659,7 +659,7 @@ to `icontains`. You can specify another callable here:
 
     Table(
         auto__model=Song,
-        columns__album__query__query_operator_to_q_operator=lambda op: 'exact',
+        columns__album__filter__query_operator_to_q_operator=lambda op: 'exact',
     )
 
 The above will force the album name to always be looked up with case
@@ -672,6 +672,6 @@ How do I control what Q is produced?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For more advanced customization you can use `value_to_q`. It is a
-callable that takes `variable, op, value_string_or_f` and returns a
+callable that takes `filter, op, value_string_or_f` and returns a
 `Q` object. The default handles `__`, different operators, negation
 and special handling of when the user searches for `null`.

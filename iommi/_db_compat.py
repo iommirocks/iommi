@@ -9,17 +9,17 @@ def setup_db_compat():
 
 def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
     from iommi.form import register_field_factory
-    from iommi.query import register_variable_factory
+    from iommi.query import register_filter_factory
     from iommi.table import register_column_factory
 
     register_field_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
-    register_variable_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
+    register_filter_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
     register_column_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
 
 
 def setup_db_compat_django():
     from iommi.form import register_field_factory
-    from iommi.query import register_variable_factory
+    from iommi.query import register_filter_factory
     from iommi.table import register_column_factory
 
     from django.db.models import (
@@ -70,9 +70,9 @@ def setup_db_compat_django():
     register_column_factory(TextField, shortcut_name='text')
 
     # Variable specific
-    register_variable_factory(URLField, shortcut_name='url')
-    register_variable_factory(BooleanField, shortcut_name='boolean')
-    register_variable_factory(TextField, shortcut_name='text')
+    register_filter_factory(URLField, shortcut_name='url')
+    register_filter_factory(BooleanField, shortcut_name='boolean')
+    register_filter_factory(TextField, shortcut_name='text')
 
     # Field specific
     register_field_factory(ImageField, shortcut_name='image')

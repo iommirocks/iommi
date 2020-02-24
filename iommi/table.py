@@ -264,7 +264,7 @@ class Column(Part):
     model_field = Refinable()
     choices: Iterable = EvaluatedRefinable()
     bulk: Namespace = Refinable()
-    query: Namespace = Refinable()
+    filter: Namespace = Refinable()
     superheader = EvaluatedRefinable()
     header: Namespace = EvaluatedRefinable()
     data_retrieval_method = EvaluatedRefinable()
@@ -276,8 +276,8 @@ class Column(Part):
         sortable=True,
         auto_rowspan=False,
         bulk__include=False,
-        query__include=False,
-        query__form__include=False,
+        filter__include=False,
+        filter__field__include=False,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
@@ -298,8 +298,10 @@ class Column(Part):
     )
     def __init__(self, header, **kwargs):
         """
+        Parameters with the prefix `filter__` will be passed along downstream to the `Filter` instance if applicable. This can be used to tweak the filtering of a column.
+
         :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-reorder-columns>`_ for an example.
-        :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the variable name of the Column if you use the declarative style of creating tables.
+        :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the filter name of the Column if you use the declarative style of creating tables.
         :param bulk: Namespace to configure bulk actions. See `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-enable-bulk-editing>`_ for an example and more information.
         :param cell: Customize the cell, see See `howto on rendering <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-customize-the-rendering-of-a-cell>`_ and `howto on links <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-make-a-link-in-a-cell>`_
         :param display_name: the text of the header for this column. By default this is based on the `_name` so normally you won't need to specify it.
@@ -347,9 +349,9 @@ class Column(Part):
             self.bulk,
             attr=self.attr,
         )
-        self.query = setdefaults_path(
+        self.filter = setdefaults_path(
             Struct(),
-            self.query,
+            self.filter,
             attr=self.attr,
         )
         self.declared_column = self._declared
@@ -362,7 +364,7 @@ class Column(Part):
 
     @classmethod
     @dispatch(
-        query__call_target__attribute='from_model',
+        filter__call_target__attribute='from_model',
         bulk__call_target__attribute='from_model',
     )
     def from_model(cls, model, field_name=None, model_field=None, **kwargs):
@@ -476,7 +478,7 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        query__call_target__attribute='boolean',
+        filter__call_target__attribute='boolean',
         bulk__call_target__attribute='boolean',
         cell__format=lambda value, **_: mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else '',
     )
@@ -489,7 +491,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='boolean',
-        query__call_target__attribute='boolean_tristate',
+        filter__call_target__attribute='boolean_tristate',
     )
     def boolean_tristate(cls, call_target, **kwargs):
         return call_target(**kwargs)
@@ -497,13 +499,13 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         bulk__call_target__attribute='choice',
-        query__call_target__attribute='choice',
+        filter__call_target__attribute='choice',
     )
     def choice(cls, call_target=None, **kwargs):
         choices = kwargs['choices']
         setdefaults_path(kwargs, dict(
             bulk__choices=choices,
-            query__choices=choices,
+            filter__choices=choices,
         ))
         return call_target(**kwargs)
 
@@ -511,12 +513,12 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='choice',
         bulk__call_target__attribute='choice_queryset',
-        query__call_target__attribute='choice_queryset',
+        filter__call_target__attribute='choice_queryset',
     )
     def choice_queryset(cls, call_target=None, **kwargs):
         setdefaults_path(kwargs, dict(
             bulk__model=kwargs.get('model'),
-            query__model=kwargs.get('model'),
+            filter__model=kwargs.get('model'),
         ))
         return call_target(**kwargs)
 
@@ -524,12 +526,12 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='choice_queryset',
         bulk__call_target__attribute='multi_choice_queryset',
-        query__call_target__attribute='multi_choice_queryset',
+        filter__call_target__attribute='multi_choice_queryset',
     )
     def multi_choice_queryset(cls, call_target, **kwargs):
         setdefaults_path(kwargs, dict(
             bulk__model=kwargs.get('model'),
-            query__model=kwargs.get('model'),
+            filter__model=kwargs.get('model'),
         ))
         return call_target(**kwargs)
 
@@ -537,19 +539,19 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='choice',
         bulk__call_target__attribute='multi_choice',
-        query__call_target__attribute='multi_choice',
+        filter__call_target__attribute='multi_choice',
     )
     def multi_choice(cls, call_target, **kwargs):
         setdefaults_path(kwargs, dict(
             bulk__model=kwargs.get('model'),
-            query__model=kwargs.get('model'),
+            filter__model=kwargs.get('model'),
         ))
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
         bulk__call_target__attribute='text',
-        query__call_target__attribute='text',
+        filter__call_target__attribute='text',
     )
     def text(cls, call_target, **kwargs):
         return call_target(**kwargs)
@@ -575,7 +577,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='number',
-        query__call_target__attribute='float',
+        filter__call_target__attribute='float',
         bulk__call_target__attribute='float',
     )
     def float(cls, call_target, **kwargs):
@@ -584,7 +586,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='number',
-        query__call_target__attribute='integer',
+        filter__call_target__attribute='integer',
         bulk__call_target__attribute='integer',
     )
     def integer(cls, call_target, **kwargs):
@@ -592,15 +594,15 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        query__query_operator_for_form=':',
+        filter__query_operator_for_field=':',
     )
     def substring(cls, call_target, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
     @class_shortcut(
-        query__call_target__attribute='date',
-        query__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__call_target__attribute='date',
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='date',
     )
     def date(cls, call_target, **kwargs):
@@ -608,8 +610,8 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        query__call_target__attribute='datetime',
-        query__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__call_target__attribute='datetime',
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='datetime',
     )
     def datetime(cls, call_target, **kwargs):
@@ -617,8 +619,8 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        query__call_target__attribute='time',
-        query__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__call_target__attribute='time',
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='time',
     )
     def time(cls, call_target, **kwargs):
@@ -626,7 +628,7 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        query__call_target__attribute='email',
+        filter__call_target__attribute='email',
         bulk__call_target__attribute='email',
     )
     def email(cls, call_target, **kwargs):
@@ -635,7 +637,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         bulk__call_target__attribute='decimal',
-        query__call_target__attribute='decimal',
+        filter__call_target__attribute='decimal',
     )
     def decimal(cls, call_target, **kwargs):
         return call_target(**kwargs)
@@ -643,7 +645,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         bulk__call_target__attribute='file',
-        query__call_target__attribute='file',
+        filter__call_target__attribute='file',
         cell__format=lambda value, **_: str(value)
     )
     def file(cls, call_target, **kwargs):
@@ -653,7 +655,7 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='multi_choice_queryset',
         bulk__call_target__attribute='many_to_many',
-        query__call_target__attribute='many_to_many',
+        filter__call_target__attribute='many_to_many',
         cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
         data_retrieval_method=DataRetrievalMethods.prefetch,
         sortable=False,
@@ -671,7 +673,7 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='choice_queryset',
         bulk__call_target__attribute='foreign_key',
-        query__call_target__attribute='foreign_key',
+        filter__call_target__attribute='foreign_key',
         data_retrieval_method=DataRetrievalMethods.select,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
@@ -1287,29 +1289,29 @@ class Table(Part):
 
         if self.model:
             # Query
-            declared_variables = Struct()
+            declared_filters = Struct()
             for name, column in self._declared_members.columns.items():
-                variable = setdefaults_path(
+                filter = setdefaults_path(
                     Namespace(),
-                    column.query,
+                    column.filter,
                     call_target__cls=self.get_meta().query_class.get_meta().member_class,
                     model=self.model,
                     _name=name,
                     attr=name if column.attr is MISSING else column.attr,
-                    form__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                    field__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
                 )
-                if 'call_target' not in variable['call_target'] and variable['call_target'].get(
+                if 'call_target' not in filter['call_target'] and filter['call_target'].get(
                         'attribute') == 'from_model':
-                    variable['field_name'] = variable.attr
+                    filter['field_name'] = filter.attr
                 # Special case for automatic query config
                 if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
-                    variable.include = True
-                    variable.form.include = True
+                    filter.include = True
+                    filter.field.include = True
 
-                declared_variables[name] = variable()
+                declared_filters[name] = filter()
 
             self.query = self.get_meta().query_class(
-                _variables_dict=declared_variables,
+                _filters_dict=declared_filters,
                 _name='query',
                 **self.query_args
             )
@@ -1379,10 +1381,13 @@ class Table(Part):
         bind_members(self, name='endpoints')
 
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
-        if self.title:
-            self.h_tag = self.h_tag(text=self.title).bind(parent=self)
+        if isinstance(self.h_tag, Namespace):
+            if self.title:
+                self.h_tag = self.h_tag(text=self.title.capitalize()).bind(parent=self)
+            else:
+                self.h_tag = ''
         else:
-            self.h_tag = ''
+            self.h_tag = self.h_tag.bind(parent=self)
 
         self.header = self.header.bind(parent=self)
 
@@ -1441,16 +1446,16 @@ class Table(Part):
         self._prepare_auto_rowspan()
 
     def _setup_bulk_form_and_query(self):
-        variables_unapplied_config = Struct()
+        filters_unapplied_config = Struct()
         for name, column in self.columns.items():
-            variable = setdefaults_path(
+            filter = setdefaults_path(
                 Namespace(),
                 _name=name,
-                form__display_name=column.display_name,
+                field__display_name=column.display_name,
             )
-            variables_unapplied_config[name] = variable
+            filters_unapplied_config[name] = filter
 
-        self.query._unapplied_config.variables = variables_unapplied_config
+        self.query._unapplied_config.filters = filters_unapplied_config
         self.query = self.query.bind(parent=self)
         self._bound_members.query = self.query
 

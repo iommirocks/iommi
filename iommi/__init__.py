@@ -25,8 +25,8 @@ from iommi.page import (
 from iommi.part import Part
 from iommi.query import (
     Query,
-    register_variable_factory,
-    Variable,
+    register_filter_factory,
+    Filter,
 )
 from iommi.style import register_style
 from iommi.table import (
@@ -64,11 +64,11 @@ __all__ = [
     'Page',
     'Query',
     'Table',
-    'Variable',
+    'Filter',
     'LAST',
     'register_factory',
     'register_field_factory',
-    'register_variable_factory',
+    'register_filter_factory',
     'register_column_factory',
     'register_cell_formatter',
     'register_style',

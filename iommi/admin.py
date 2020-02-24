@@ -27,6 +27,7 @@ app_and_name_by_model = {
     for k, v in model_by_app_and_name.items()
 }
 
+# TODO: replace this with a proper Menu
 admin_h1 = html.h1(html.a('Admin', attrs__href='/iommi-admin/'), after=0)
 
 
@@ -66,7 +67,8 @@ def all_models(app, table, **kwargs):
     app=EMPTY,
     table__call_target__cls=Table,
 )
-def list_model(model, app, table):
+def list_model(app, table, auto):
+    model = auto.pop('model')
     app_name, model_name = app_and_name_by_model[model]
     kwargs = setdefaults_path(
         Namespace(),
@@ -78,6 +80,7 @@ def list_model(model, app, table):
                 edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
                 delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
             ),
+            **auto,
         ),
         table__actions=dict(
             create=dict(
@@ -105,12 +108,11 @@ def list_model(model, app, table):
 @dispatch(
     all_models__call_target=all_models,
     list_model__call_target=list_model,
-    create_object__call_target__attribute='as_create_page',
-    delete_object__call_target__attribute='as_delete_page',
-    edit_object__call_target__attribute='as_edit_page',
+    create_object__call_target__attribute='create',
+    delete_object__call_target__attribute='delete',
+    edit_object__call_target__attribute='edit',
     table__call_target__cls=Table,
     form__call_target__cls=Form,
-    form__parts__header=admin_h1,
     app_name=None,
     model_name=None,
     pk=None,
@@ -140,18 +142,18 @@ def admin(app_name, model_name, pk, command, all_models, list_model, create_obje
 
     if command is None:
         assert pk is None
-        return list_model(model=model, table=table)
+        return list_model(auto__model=model, table=table)
 
     if command == 'create':
         assert pk is None
-        return Namespace(create_object, form)(model=model)
+        return Namespace(create_object, form)(auto__model=model)
 
     instance = model.objects.get(pk=pk)
 
     if command == 'edit':
-        return Namespace(edit_object, form)(model=model, instance=instance)
+        return Namespace(edit_object, form)(auto__instance=instance)
 
     if command == 'delete':
-        return Namespace(delete_object, form)(model=model, instance=instance)
+        return Namespace(delete_object, form)(auto__instance=instance)
 
     assert False, 'unknown command %s' % command

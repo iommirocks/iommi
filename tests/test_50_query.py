@@ -30,7 +30,7 @@ from iommi.query import (
     Query,
     QueryException,
     value_to_str_for_query,
-    Variable,
+    Filter,
 )
 from tests.helpers import req
 from tests.models import (
@@ -50,9 +50,9 @@ from tests.models import (
 @pytest.fixture
 def MyTestQuery():
     class MyTestQuery(Query):
-        foo_name = Variable(attr='foo', freetext=True, form__include=True)
-        bar_name = Variable.case_sensitive(attr='bar', freetext=True, form__include=True)
-        baz_name = Variable(attr='baz')
+        foo_name = Filter(attr='foo', freetext=True, field__include=True)
+        bar_name = Filter.case_sensitive(attr='bar', freetext=True, field__include=True)
+        baz_name = Filter(attr='baz')
     return MyTestQuery
 
 
@@ -67,13 +67,13 @@ Q.__repr__ = lambda self: str(self)
 
 def test_include():
     class ShowQuery(Query):
-        foo = Variable()
-        bar = Variable(
-            include=lambda query, variable: query.get_request().GET['foo'] == 'include' and variable.extra.foo == 'include2',
+        foo = Filter()
+        bar = Filter(
+            include=lambda query, filter: query.get_request().GET['foo'] == 'include' and filter.extra.foo == 'include2',
             extra__foo='include2')
 
-    assert list(ShowQuery().bind(request=req('get', foo='hide')).variables.keys()) == ['foo']
-    assert list(ShowQuery().bind(request=req('get', foo='include')).variables.keys()) == ['foo', 'bar']
+    assert list(ShowQuery().bind(request=req('get', foo='hide')).filters.keys()) == ['foo']
+    assert list(ShowQuery().bind(request=req('get', foo='include')).filters.keys()) == ['foo', 'bar']
 
 
 def test_request_data():
@@ -91,9 +91,9 @@ def test_empty_string(MyTestQuery):
 def test_unknown_field(MyTestQuery):
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
-        query.parse_query_string('unknown_variable=1')
+        query.parse_query_string('unknown_filter=1')
 
-    assert 'Unknown variable "unknown_variable"' in str(e)
+    assert 'Unknown filter "unknown_filter"' in str(e)
     assert isinstance(e.value, QueryException)
 
 
@@ -156,7 +156,7 @@ def test_request_to_q_advanced(MyTestQuery):
 
 def test_request_to_q_simple(MyTestQuery):
     class Query2(MyTestQuery):
-        bazaar = Variable.boolean(attr='quux__bar__bazaar', form__include=True)
+        bazaar = Filter.boolean(attr='quux__bar__bazaar', field__include=True)
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
     assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
@@ -167,7 +167,7 @@ def test_request_to_q_simple(MyTestQuery):
 
 def test_boolean_parse():
     class MyQuery(Query):
-        foo = Variable.boolean()
+        foo = Filter.boolean()
 
     assert repr(MyQuery().bind(request=None).parse_query_string('foo=false')) == repr(Q(**{'foo__iexact': False}))
     assert repr(MyQuery().bind(request=None).parse_query_string('foo=true')) == repr(Q(**{'foo__iexact': True}))
@@ -175,7 +175,7 @@ def test_boolean_parse():
 
 def test_boolean_unary_op():
     class MyQuery(Query):
-        foo = Variable.boolean()
+        foo = Filter.boolean()
 
     assert repr(MyQuery().bind(request=None).parse_query_string('foo')) == repr(Q(**{'foo__iexact': True}))
     assert repr(MyQuery().bind(request=None).parse_query_string('!foo')) == repr(Q(**{'foo__iexact': False}))
@@ -183,7 +183,7 @@ def test_boolean_unary_op():
 
 def test_integer_request_to_q_simple():
     class Query2(Query):
-        bazaar = Variable.integer(attr='quux__bar__bazaar', form=Struct(include=True))
+        bazaar = Filter.integer(attr='quux__bar__bazaar', field=Struct(include=True))
 
     query2 = Query2().bind(request=req('get', bazaar='11'))
     assert repr(query2.get_q()) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
@@ -191,45 +191,45 @@ def test_integer_request_to_q_simple():
 
 def test_gui_is_not_required():
     class Query2(Query):
-        foo = Variable()
-    assert Query2.foo.form.required is False
+        foo = Filter()
+    assert Query2.foo.field.required is False
 
 
 def test_invalid_value():
     q = Query(
-        variables__bazaar=Variable.integer(
-            value_to_q=lambda variable, op, value_string_or_f: None
+        filters__bazaar=Filter.integer(
+            value_to_q=lambda filter, op, value_string_or_f: None
         ),
     ).bind(request=req('get'))
     request = req('get', **{q.get_advanced_query_param(): 'bazaar=asd'})
 
     query2 = Query(
-        variables__bazaar=Variable.integer(
-            value_to_q=lambda variable, op, value_string_or_f: None
+        filters__bazaar=Filter.integer(
+            value_to_q=lambda filter, op, value_string_or_f: None
         ),
     ).bind(request=request)
     with pytest.raises(QueryException) as e:
         query2.get_q()
-    assert 'Unknown value "asd" for variable "bazaar"' in str(e)
+    assert 'Unknown value "asd" for filter "bazaar"' in str(e)
 
 
-def test_invalid_variable():
+def test_invalid_filter():
     q = Query(
-        variables__bazaar=Variable(),
+        filters__bazaar=Filter(),
     ).bind(request=req('get'))
 
     query2 = Query(
-        variables__bazaar=Variable(),
+        filters__bazaar=Filter(),
     ).bind(request=req('get', **{q.get_advanced_query_param(): 'not_bazaar=asd'}))
     with pytest.raises(QueryException) as e:
         query2.get_q()
-    assert 'Unknown variable "not_bazaar"' in str(e)
+    assert 'Unknown filter "not_bazaar"' in str(e)
 
 
 def test_invalid_form_data():
 
     query2 = Query(
-        variables__bazaar=Variable.integer(attr='quux__bar__bazaar', form__include=True),
+        filters__bazaar=Filter.integer(attr='quux__bar__bazaar', field__include=True),
     ).bind(request=req('get', bazaar='asds'))
     assert query2.get_query_string() == ''
     assert repr(query2.get_q()) == repr(Q())
@@ -238,7 +238,7 @@ def test_invalid_form_data():
 def test_none_attr():
     with pytest.raises(AssertionError) as e:
         Query(
-            variables__bazaar=Variable(attr=None, form__include=True),
+            filters__bazaar=Filter(attr=None, field__include=True),
         ).bind(request=req('get', bazaar='foo'))
 
     assert str(e.value) == "bazaar cannot be a part of a query, it has no attr so we don't know what to search for"
@@ -292,9 +292,9 @@ def test_choice_queryset():
     Bar.objects.create(foo=foos[1])
 
     class Query2(Query):
-        foo = Variable.choice_queryset(
+        foo = Filter.choice_queryset(
             choices=Foo.objects.all(),
-            form__include=True,
+            field__include=True,
             name_field='foo')
 
     random_valid_obj = Foo.objects.all().order_by('?')[0]
@@ -319,7 +319,7 @@ def test_choice_queryset():
     assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
         query2.get_q()
-    assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
+    assert ('Unknown value "%s" for filter "foo"' % value_that_does_not_exist) in str(e)
 
     # test invalid ops
     valid_ops = ['=']
@@ -329,7 +329,7 @@ def test_choice_queryset():
         )
         with pytest.raises(QueryException) as e:
             query2.get_q()
-        assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
+        assert('Invalid operator "%s" for filter "foo"' % invalid_op) in str(e)
 
     # test a string with the contents "null"
     assert repr(query2.parse_query_string('foo="null"')) == repr(Q(foo=None))
@@ -349,9 +349,9 @@ def test_multi_choice_queryset():
     Bar.objects.create(foo=foos[1])
 
     class Query2(Query):
-        foo = Variable.multi_choice_queryset(
+        foo = Filter.multi_choice_queryset(
             choices=Foo.objects.all(),
-            form__include=True,
+            field__include=True,
             name_field='foo')
 
     random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
@@ -372,7 +372,7 @@ def test_multi_choice_queryset():
     assert Foo.objects.filter(foo=value_that_does_not_exist).count() == 0
     with pytest.raises(QueryException) as e:
         query2.get_q()
-    assert ('Unknown value "%s" for variable "foo"' % value_that_does_not_exist) in str(e)
+    assert ('Unknown value "%s" for filter "foo"' % value_that_does_not_exist) in str(e)
 
     # test invalid ops
     valid_ops = ['=']
@@ -380,31 +380,31 @@ def test_multi_choice_queryset():
         query2 = Query2().bind(request=req('get', **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.get_q()
-        assert('Invalid operator "%s" for variable "foo"' % invalid_op) in str(e)
+        assert('Invalid operator "%s" for filter "foo"' % invalid_op) in str(e)
 
 
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert list(t._declared_members.variables.keys()) == ['id', 'foo']
-    assert list(t.variables.keys()) == ['foo']
+    assert list(t._declared_members.filters.keys()) == ['id', 'foo']
+    assert list(t.filters.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert list(t._declared_members.variables.keys()) == ['id', 'foo']
-    assert list(t.variables.keys()) == ['foo']
+    assert list(t._declared_members.filters.keys()) == ['id', 'foo']
+    assert list(t.filters.keys()) == ['foo']
 
 
 def test_from_model_foreign_key():
     class MyQuery(Query):
         class Meta:
-            variables = Query.variables_from_model(model=Bar)
+            filters = Query.filters_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert list(t._declared_members.variables.keys()) == ['id', 'foo']
-    assert isinstance(t.variables['foo'].choices, QuerySet)
+    assert list(t._declared_members.filters.keys()) == ['id', 'foo']
+    assert isinstance(t.filters['foo'].choices, QuerySet)
 
 
 @pytest.mark.django_db
@@ -413,9 +413,9 @@ def test_endpoint_dispatch():
     x = EndPointDispatchModel.objects.create(name='bar')
 
     class MyQuery(Query):
-        foo = Variable.choice_queryset(
-            form__include=True,
-            form__attr='name',
+        foo = Filter.choice_queryset(
+            field__include=True,
+            field__attr='name',
             choices=EndPointDispatchModel.objects.all().order_by('id'),
         )
 
@@ -436,9 +436,9 @@ def test_endpoint_dispatch():
 
 def test_endpoint_dispatch_errors():
     class MyQuery(Query):
-        foo = Variable.choice(
-            form__include=True,
-            form__attr='name',
+        foo = Filter.choice(
+            field__include=True,
+            field__attr='name',
             choices=('a', 'b'),
         )
 
@@ -461,26 +461,26 @@ def test_endpoint_dispatch_errors():
     ) == {'fields': {'foo': ['q not in available choices']}}
 
 
-def test_variable_repr():
-    assert repr(Variable(_name='foo')) == '<iommi.query.Variable foo>'
+def test_filter_repr():
+    assert repr(Filter(_name='foo')) == '<iommi.query.Filter foo>'
 
 
 @pytest.mark.django_db
 def test_nice_error_message():
     with pytest.raises(NoRegisteredNameException) as e:
-        value_to_str_for_query(Variable(), NonStandardName(non_standard_name='foo'))
+        value_to_str_for_query(Filter(), NonStandardName(non_standard_name='foo'))
 
     assert str(e.value) == "NonStandardName has no registered name field. Please register a name with register_name_field or specify name_field."
 
     with pytest.raises(NoRegisteredNameException) as e:
-        value_to_str_for_query(Variable(name_field='custom_name_field'), NonStandardName(non_standard_name='foo'))
+        value_to_str_for_query(Filter(name_field='custom_name_field'), NonStandardName(non_standard_name='foo'))
 
     assert str(e.value) == "NonStandardName has no attribute custom_name_field. Please register a name with register_name_field or specify name_field."
 
 
 def test_escape_quote():
     class MyQuery(Query):
-        foo = Variable(form__include=True)
+        foo = Filter(field__include=True)
 
 
     query = MyQuery().bind(request=Struct(method='GET', GET={'foo': '"', '-': '-'}))
@@ -490,7 +490,7 @@ def test_escape_quote():
 
 def test_escape_quote_freetext():
     class MyQuery(Query):
-        foo = Variable(freetext=True)
+        foo = Filter(freetext=True)
 
 
     query = MyQuery().bind(request=Struct(method='GET', GET={FREETEXT_SEARCH_NAME: '"', '-': '-'}))
@@ -500,10 +500,10 @@ def test_escape_quote_freetext():
 
 def test_freetext_combined_with_other_stuff():
     class MyTestQuery(Query):
-        foo_name = Variable(attr='foo', freetext=True, form__include=True)
-        bar_name = Variable.case_sensitive(attr='bar', freetext=True, form__include=True)
+        foo_name = Filter(attr='foo', freetext=True, field__include=True)
+        bar_name = Filter.case_sensitive(attr='bar', freetext=True, field__include=True)
 
-        baz_name = Variable(attr='baz', form__include=True)
+        baz_name = Filter(attr='baz', field__include=True)
 
     expected = repr(Q(**{'baz__iexact': '123'}) & Q(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'})))
 
@@ -525,10 +525,10 @@ def test_from_model_with_inheritance():
         class Meta:
             member_class = MyField
 
-    class MyVariable(Variable):
+    class MyFilter(Filter):
         @classmethod
         @class_shortcut(
-            form__call_target__attribute='float',
+            field__call_target__attribute='float',
         )
         def float(cls, call_target=None, **kwargs):
             was_called['MyVariable.float'] += 1
@@ -536,12 +536,12 @@ def test_from_model_with_inheritance():
 
     class MyQuery(Query):
         class Meta:
-            member_class = MyVariable
+            member_class = MyFilter
             form_class = MyForm
 
     query = MyQuery(
         auto__model=FromModelWithInheritanceTest,
-        variables__value__form__include=True,
+        filters__value__field__include=True,
     )
     query.bind(request=req('get'))
 
@@ -551,42 +551,42 @@ def test_from_model_with_inheritance():
     }
 
 
-@pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Variable).items())
+@pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Filter).items())
 def test_shortcuts_map_to_form(name, shortcut):
     if name == 'case_sensitive':  # This has no equivalent in Field
         return
 
-    assert shortcut.dispatch.form.call_target.attribute == name
+    assert shortcut.dispatch.field.call_target.attribute == name
 
 
 @pytest.mark.django_db
-def test_all_variable_shortcuts():
-    class MyFancyVariable(Variable):
+def test_all_filter_shortcuts():
+    class MyFancyFilter(Filter):
         class Meta:
             extra__fancy = True
 
     class MyFancyQuery(Query):
         class Meta:
-            member_class = MyFancyVariable
+            member_class = MyFancyFilter
 
     all_shortcut_names = get_members(
-        cls=MyFancyVariable,
+        cls=MyFancyFilter,
         member_class=Shortcut,
         is_member=is_shortcut,
     ).keys()
 
     config = {
-        f'variables__variable_of_type_{t}__call_target__attribute': t
+        f'filters__filter_of_type_{t}__call_target__attribute': t
         for t in all_shortcut_names
     }
 
     type_specifics = Namespace(
-        variables__variable_of_type_choice__choices=[],
-        variables__variable_of_type_multi_choice__choices=[],
-        variables__variable_of_type_choice_queryset__choices=TFoo.objects.none(),
-        variables__variable_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
-        variables__variable_of_type_many_to_many__model_field=TBaz.foo.field,
-        variables__variable_of_type_foreign_key__model_field=TBar.foo.field,
+        filters__filter_of_type_choice__choices=[],
+        filters__filter_of_type_multi_choice__choices=[],
+        filters__filter_of_type_choice_queryset__choices=TFoo.objects.none(),
+        filters__filter_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
+        filters__filter_of_type_many_to_many__model_field=TBaz.foo.field,
+        filters__filter_of_type_foreign_key__model_field=TBar.foo.field,
     )
 
     query = MyFancyQuery(
@@ -596,6 +596,6 @@ def test_all_variable_shortcuts():
         request=req('get')
     )
 
-    for name, variable in query.variables.items():
-        assert variable.extra.get('fancy'), name
+    for name, filter in query.filters.items():
+        assert filter.extra.get('fancy'), name
 
