@@ -2208,3 +2208,17 @@ def test_all_column_shortcuts():
 
     for name, column in table.columns.items():
         assert column.extra.get('fancy'), name
+
+
+@pytest.mark.django_db
+def test_paginator_rendered():
+    TFoo.objects.create(a=17, b="Hej")
+    TFoo.objects.create(a=42, b="Hopp")
+
+    content = Table(
+        auto__model=TFoo,
+        query_from_indexes=True,
+        page_size=1,
+    ).bind(request=req('get')).render_to_response().content.decode()
+
+    assert 'aria-label="Pages"' in content

@@ -988,6 +988,7 @@ class Paginator(Traversable):
         return self.paginator.get_page(self.current_page).object_list
 
     def __html__(self):
+        assert self._is_bound
         if self.paginator is None:
             return ''
 
@@ -1427,7 +1428,7 @@ class Table(Part):
         else:
             self.paginator = Paginator(table=self, django_paginator=None)
 
-        self.paginator.bind(parent=self)
+        self.paginator = self.paginator.bind(parent=self)
 
         self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
 

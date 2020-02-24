@@ -136,7 +136,10 @@ test = Style(
     ),
     Column=dict(
         shortcuts__number__cell__attrs__class__rj=True,
-    )
+    ),
+    Paginator = dict(
+        template='iommi/table/bootstrap/paginator.html',
+    ),
 )
 
 bootstrap_base = Style(
