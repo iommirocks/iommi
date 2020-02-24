@@ -44,6 +44,7 @@ from iommi.table import (
     Table,
     yes_no_formatter,
 )
+from iommi.traversable import declared_members
 from tests.helpers import (
     req,
     request_with_middleware,
@@ -1498,7 +1499,7 @@ def test_from_model():
         columns__a__extra__stuff='Some stuff',
     )
     t = t.bind(request=None)
-    assert list(t._declared_members.columns.keys()) == ['id', 'a', 'b', 'select']
+    assert list(declared_members(t).columns.keys()) == ['id', 'a', 'b', 'select']
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
     assert 'Some stuff' == t.columns['a'].extra.stuff
@@ -1508,7 +1509,7 @@ def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
     ).bind(request=None)
-    assert list(t._declared_members.columns.keys()) == ['id', 'foo', 'c', 'select']
+    assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
@@ -1517,7 +1518,7 @@ def test_select_ordering():
         auto__model=TBar,
         columns__select__include=True,
     ).bind(request=None)
-    assert list(t._declared_members.columns.keys()) == ['id', 'foo', 'c', 'select']
+    assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
     assert list(t.columns.keys()) == ['select', 'foo', 'c']
 
 
@@ -1534,7 +1535,7 @@ def test_explicit_table_does_not_use_from_model():
         )
 
     t = TestTable().bind(request=None)
-    assert list(t._declared_members.columns.keys()) == ['foo']
+    assert list(declared_members(t).columns.keys()) == ['foo']
 
 
 @pytest.mark.django_db
@@ -1543,7 +1544,7 @@ def test_from_model_implicit():
         pass
 
     t = TestTable(auto__rows=TBar.objects.all()).bind(request=None)
-    assert list(t._declared_members.columns.keys()) == ['id', 'foo', 'c', 'select']
+    assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
 
 
 @override_settings(DEBUG=True)

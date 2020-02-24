@@ -20,7 +20,10 @@ from tri_declarative import (
 from iommi.attrs import Attrs
 from iommi.page import Fragment
 from iommi.part import Part
-from iommi.traversable import EvaluatedRefinable
+from iommi.traversable import (
+    EvaluatedRefinable,
+    get_parent,
+)
 
 
 class Action(Part):
@@ -61,7 +64,7 @@ class Action(Part):
         return f'-{self.iommi_path}'
 
     def is_target(self):
-        return self.own_target_marker() in self._parent._parent._request_data
+        return self.own_target_marker() in get_parent(get_parent(self))._request_data
 
     @dispatch(
         context=EMPTY,
@@ -134,8 +137,8 @@ def group_actions(actions: Dict[str, Action]):
             )
         ]
 
-        for _, _, group_actions in grouped_actions:
-            for action in group_actions:
+        for _, _, actions_in_group in grouped_actions:
+            for action in actions_in_group:
                 action.attrs.role = 'menuitem'
 
         actions_without_group = [

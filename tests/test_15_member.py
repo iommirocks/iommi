@@ -8,7 +8,10 @@ from iommi.member import (
     bind_members,
     collect_members,
 )
-from iommi.traversable import Traversable
+from iommi.traversable import (
+    Traversable,
+    declared_members,
+)
 
 
 class Fruit(Traversable):
@@ -30,12 +33,12 @@ class Basket(Traversable):
 
 
 def test_empty_collect():
-    assert Basket()._declared_members.fruits == {}
+    assert declared_members(Basket()).fruits == {}
 
 
 def test_collect_from_arg():
     basket = Basket(fruits__banana__taste="sweet")
-    assert basket._declared_members.fruits.banana.taste == 'sweet'
+    assert declared_members(basket).fruits.banana.taste == 'sweet'
 
 
 def test_collect_from_declarative():
@@ -43,7 +46,7 @@ def test_collect_from_declarative():
         orange = Fruit(taste='sour')
 
     basket = MyBasket()
-    assert basket._declared_members.fruits.orange.taste == 'sour'
+    assert declared_members(basket).fruits.orange.taste == 'sour'
 
 
 def test_collect_unapplied_config():

@@ -10,6 +10,7 @@ from iommi._web_compat import (
 )
 from iommi.attrs import Attrs
 from iommi.page import Fragment
+from iommi.traversable import declared_members
 from tests.helpers import (
     prettify,
     req,
@@ -25,7 +26,7 @@ def test_page_constructor():
         parts__bar=html.div()
     )
 
-    assert ['h1', 'foo', 'bar'] == list(my_page._declared_members.parts.keys())
+    assert ['h1', 'foo', 'bar'] == list(declared_members(my_page).parts.keys())
     my_page = my_page.bind(request=None)
     assert ['h1', 'foo', 'bar'] == list(my_page.parts.keys())
 
@@ -74,4 +75,4 @@ def test_promote_str_to_fragment_for_page():
         foo = 'asd'
 
     page = MyPage()
-    assert isinstance(page._declared_members.parts.foo, Fragment)
+    assert isinstance(declared_members(page).parts.foo, Fragment)

@@ -23,6 +23,7 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import MISSING
+from iommi.traversable import get_name
 
 
 def create_members_from_model(*, default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):
@@ -67,14 +68,14 @@ def create_members_from_model(*, default_factory, model, member_params_by_member
             if isinstance(foo, list):
                 members.extend(foo)
             else:
-                assert foo._name, "Fields must have a name attribute"
-                assert foo._name == field.name, f"Field {foo._name} has a name that doesn't match the model field it belongs to: {field.name}"
+                assert get_name(foo), "Fields must have a name attribute"
+                assert get_name(foo) == field.name, f"Field {foo._name} has a name that doesn't match the model field it belongs to: {field.name}"
                 members.append(foo)
 
     additional = {**member_params_by_member_name, **additional}
 
     all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
-    return Struct({x._name: x for x in all_members}, **additional)
+    return Struct({get_name(x): x for x in all_members}, **additional)
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):

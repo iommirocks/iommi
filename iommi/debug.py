@@ -13,6 +13,7 @@ from iommi.member import Members
 from iommi.traversable import (
     PathNotFoundException,
     Traversable,
+    declared_members,
 )
 
 
@@ -41,7 +42,7 @@ def endpoint__debug_tree(endpoint, **_):
             if name == 'parts':
                 member_type = 'Part'
             else:
-                member_type = type(list(node._declared_members.values())[0]).__name__
+                member_type = type(list(declared_members(node).values())[0]).__name__
             type_name = f'Members[{member_type}]'
 
         yield Struct(
@@ -59,7 +60,7 @@ def endpoint__debug_tree(endpoint, **_):
         elif isinstance(node, Traversable):
             children = [
                 (k, v if not node._bound_members or k not in node._bound_members else node._bound_members[k])
-                for k, v in node._declared_members.items()
+                for k, v in declared_members(node).items()
             ]
         else:
             assert False
@@ -106,7 +107,7 @@ def endpoint__debug_tree(endpoint, **_):
                 {% include "iommi/table/table.html" %}            
             """)
             sortable = False
-            row__attrs__class__included = lambda row, **_: row.included
+            row__attrs__class__included = (lambda row, **_: row.included)
 
         dunder_path = Column(
             cell__value=dunder_path__value,

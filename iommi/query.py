@@ -81,6 +81,8 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
+    declared_members,
+    set_declared_member,
 )
 
 
@@ -544,7 +546,7 @@ class Query(Part):
             include=False,
         )
 
-        for name, filter in self._declared_members.filters.items():
+        for name, filter in declared_members(self).filters.items():
             if filter.attr is None:
                 continue
             field = setdefaults_path(
@@ -564,10 +566,10 @@ class Query(Part):
             attrs__method='get',
             actions__submit__attrs__value='Filter',
         )
-        self._declared_members.form = self.form
+        declared_members(self).form = self.form
 
         # Variables need to be at the end to not steal the short names
-        self._declared_members.filters = self._declared_members.pop('filters')
+        set_declared_member(self, 'filters', declared_members(self).pop('filters'))
 
     @dispatch(
         render__call_target=render_template,
@@ -594,7 +596,7 @@ class Query(Part):
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
 
         if any(v.freetext for v in self.filters.values()):
-            self.form._declared_members.fields[FREETEXT_SEARCH_NAME].include = True
+            declared_members(self.form).fields[FREETEXT_SEARCH_NAME].include = True
 
         fields_unapplied_config = Struct()
         for name, filter in self.filters.items():

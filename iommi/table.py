@@ -112,6 +112,7 @@ from iommi.traversable import (
     evaluate_member,
     EvaluatedRefinable,
     Traversable,
+    declared_members,
 )
 
 LAST = LAST
@@ -1290,7 +1291,7 @@ class Table(Part):
         if self.model:
             # Query
             declared_filters = Struct()
-            for name, column in self._declared_members.columns.items():
+            for name, column in declared_members(self).columns.items():
                 filter = setdefaults_path(
                     Namespace(),
                     column.filter,
@@ -1315,13 +1316,13 @@ class Table(Part):
                 _name='query',
                 **self.query_args
             )
-            self._declared_members.query = self.query
+            declared_members(self).query = self.query
 
             # Bulk
             field_class = self.get_meta().form_class.get_meta().member_class
 
             declared_bulk_fields = Struct()
-            for name, column in self._declared_members.columns.items():
+            for name, column in declared_members(self).columns.items():
                 field = self.bulk.fields.pop(name, {})
 
                 if column.bulk.include:
@@ -1370,10 +1371,10 @@ class Table(Part):
                 **bulk
             )
 
-            self._declared_members.bulk = self.bulk_form
+            declared_members(self).bulk = self.bulk_form
 
         # Columns need to be at the end to not steal the short names
-        self._declared_members.columns = self._declared_members.pop('columns')
+        declared_members(self).columns = declared_members(self).pop('columns')
 
     def on_bind(self) -> None:
         bind_members(self, name='actions')

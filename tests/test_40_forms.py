@@ -58,6 +58,7 @@ from iommi.from_model import (
 from iommi.page import (
     Page,
 )
+from iommi.traversable import declared_members
 from .compat import RequestFactory
 from .helpers import (
     get_attrs,
@@ -388,7 +389,7 @@ def test_declared_fields():
     ).bind(
         request=req('get'),
     )
-    assert list(form._declared_members.fields.keys()) == ['foo', 'bar']
+    assert list(declared_members(form).fields.keys()) == ['foo', 'bar']
     assert list(form.fields.keys()) == ['foo']
 
 

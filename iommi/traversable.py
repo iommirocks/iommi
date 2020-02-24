@@ -1,15 +1,15 @@
 import copy
-from collections import defaultdict
 from typing import (
+    Any,
     Dict,
     List,
+    Union,
 )
 
 from tri_declarative import (
     dispatch,
     evaluate,
     evaluate_strict,
-    LAST,
     Namespace,
     Refinable,
     RefinableObject,
@@ -46,6 +46,10 @@ class Traversable(RefinableObject):
     _request = None
 
     iommi_style: str = EvaluatedRefinable()
+
+    _declared_members: Dict[str, 'Traversable']
+    _bound_members: Dict[str, 'Traversable']
+
 
     @dispatch
     def __init__(self, _name=None, **kwargs):
@@ -124,7 +128,7 @@ class Traversable(RefinableObject):
             for k, v in _unapplied_config.items():
                 if k == 'call_target':
                     continue
-                if k in result._declared_members:
+                if k in declared_members(result):
                     result._unapplied_config[k] = v
                     continue
                 # The Members class applies config itself, so this is for the rest of them
@@ -141,7 +145,7 @@ class Traversable(RefinableObject):
         # We neeed to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict
         result._evaluate_parameters = {
-            **(result._parent._evaluate_parameters if result._parent is not None else {}),
+            **(get_parent(result)._evaluate_parameters if result._parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
         result.on_bind()
@@ -170,6 +174,26 @@ class Traversable(RefinableObject):
             return self._parent.get_request()
 
 
+def declared_members(node: Traversable) -> Any:
+    # noinspection PyProtectedMember
+    return node._declared_members
+
+
+def set_declared_member(node: Traversable, name: str, value: Union[Any, Dict[str, Traversable]]):
+    # noinspection PyProtectedMember
+    node._declared_members[name] = value
+
+
+def get_parent(node: Traversable) -> Traversable:
+    # noinspection PyProtectedMember
+    return node._parent
+
+
+def get_name(node: Traversable) -> str:
+    # noinspection PyProtectedMember
+    return node._name
+
+
 def evaluate_members(obj, keys, **kwargs):
     for key in keys:
         evaluate_member(obj, key, **kwargs)
@@ -192,8 +216,8 @@ def evaluate_strict_container(c, **kwargs):
 
 
 def get_root(node: Traversable) -> Traversable:
-    while node._parent is not None:
-        node = node._parent
+    while get_parent(node) is not None:
+        node = get_parent(node)
     return node
 
 
@@ -217,12 +241,11 @@ def get_path_by_long_path(node):
 
 
 def build_long_path(node: Traversable) -> str:
-    def _traverse(node: Traversable) -> List[str]:
-        # noinspection PyProtectedMember
-        assert node._name is not None
-        if node._parent is None:
+    def _traverse(t: Traversable) -> List[str]:
+        assert get_name(t) is not None
+        if get_parent(t) is None:
             return []
-        return _traverse(node._parent) + [node._name]
+        return _traverse(get_parent(t)) + [get_name(t)]
 
     return '/'.join(_traverse(node))
 
@@ -255,7 +278,7 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                     assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
 
         if hasattr(node, '_declared_members'):
-            members = node._declared_members
+            members = declared_members(node)
         elif isinstance(node, dict):
             members = node
         else:
@@ -276,69 +299,3 @@ def build_long_path_by_path(root) -> Dict[str, str]:
     _traverse(root, [], [])
 
     return result
-
-
-def sort_after(d):
-    unmoved = []
-    to_be_moved_by_index = []
-    to_be_moved_by_name = defaultdict(list)
-    to_be_moved_last = []
-    for x in d.items():
-        after = getattr(x[1], 'after', None)
-        if after is None:
-            unmoved.append(x)
-        elif after is LAST:
-            to_be_moved_last.append(x)
-        elif isinstance(after, int):
-            to_be_moved_by_index.append(x)
-        else:
-            to_be_moved_by_name[x[1].after].append(x)
-
-    if len(unmoved) == len(d):
-        return d
-
-    to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x[1].after)  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
-
-    def place(x):
-        yield x
-        for y in to_be_moved_by_name.pop(x[0], []):
-            yield from place(y)
-
-    def traverse():
-        count = 0
-        while unmoved or to_be_moved_by_index:
-            while to_be_moved_by_index:
-                next_to_be_moved_by_index = to_be_moved_by_index[0]
-
-                next_by_position_index = next_to_be_moved_by_index[1].after
-                if count < next_by_position_index:  # pragma: no mutate (infinite loop when mutating < to <=)
-                    break  # pragma: no mutate (infinite loop when mutated to continue)
-
-                for x in place(next_to_be_moved_by_index):
-                    yield x
-                    count += 1  # pragma: no mutate
-
-                to_be_moved_by_index.pop(0)
-
-            if unmoved:
-                next_unmoved_and_its_children = place(unmoved.pop(0))
-                for x in next_unmoved_and_its_children:
-                    yield x
-                    count += 1  # pragma: no mutate
-
-        for x in to_be_moved_last:
-            yield from place(x)
-
-    result = list(traverse())
-
-    if to_be_moved_by_name:
-        available_names = "\n    ".join(sorted(list(d.keys())))
-        raise KeyError(f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} '
-                       f'but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} '
-                       f'not exist.\nAvailable names:\n    {available_names}')
-
-    d.clear()
-    d.update(dict(result))
-    return d
-
-

@@ -32,6 +32,7 @@ from iommi.query import (
     value_to_str_for_query,
     Filter,
 )
+from iommi.traversable import declared_members
 from tests.helpers import req
 from tests.models import (
     Bar,
@@ -386,14 +387,14 @@ def test_multi_choice_queryset():
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert list(t._declared_members.filters.keys()) == ['id', 'foo']
+    assert list(declared_members(t).filters.keys()) == ['id', 'foo']
     assert list(t.filters.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert list(t._declared_members.filters.keys()) == ['id', 'foo']
+    assert list(declared_members(t).filters.keys()) == ['id', 'foo']
     assert list(t.filters.keys()) == ['foo']
 
 
@@ -403,7 +404,7 @@ def test_from_model_foreign_key():
             filters = Query.filters_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert list(t._declared_members.filters.keys()) == ['id', 'foo']
+    assert list(declared_members(t).filters.keys()) == ['id', 'foo']
     assert isinstance(t.filters['foo'].choices, QuerySet)
 
 

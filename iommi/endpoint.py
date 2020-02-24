@@ -1,3 +1,5 @@
+from typing import Callable
+
 from tri_declarative import (
     dispatch,
     Refinable,
@@ -36,9 +38,9 @@ class Endpoint(Traversable):
     this page will respond to `?/echo=foo` by returning a json response `"foo"`.
     """
 
-    name = Refinable()
-    func = Refinable()
-    include = EvaluatedRefinable()
+    name: str = Refinable()
+    func: Callable = Refinable()
+    include: bool = EvaluatedRefinable()
 
     @dispatch(
         name=None,

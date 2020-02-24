@@ -12,9 +12,11 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.traversable import (
-    sort_after,
     Traversable,
+    set_declared_member,
+    declared_members,
 )
+from iommi.sort_after import sort_after
 
 FORBIDDEN_NAMES = {x for x in dir(Traversable)}
 
@@ -23,7 +25,7 @@ class ForbiddenNamesException(Exception):
     pass
 
 
-def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type) -> Dict[str, Any]:
+def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type):
     forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
@@ -57,13 +59,13 @@ def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[s
     if _unapplied_config:
         parent._unapplied_config[name] = _unapplied_config
 
-    parent._declared_members[name] = unbound_items
+    set_declared_member(parent, name, unbound_items)
 
 
 def bind_members(parent: Traversable, *, name: str) -> None:
     m = Members(
         _name=name,
-        _declared_members=parent._declared_members[name],
+        _declared_members=declared_members(parent)[name],
     )
     # It's useful to be able to access these during bind
     setattr(parent, name, m._bound_members)
