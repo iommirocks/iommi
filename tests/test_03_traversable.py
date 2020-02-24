@@ -110,3 +110,28 @@ def test_evil_names():
         ErrorMessages()
 
     assert str(e.value) == 'The names bind, get_request, iommi_path, iommi_style, on_bind, own_evaluate_parameters are reserved by iommi, please pick other names'
+
+
+def test_dunder_path_is_fully_qualified_and_skipping_root():
+    foo = StubTraversable(
+        _name='my_part3',
+        members=Struct(
+            my_part2=StubTraversable(
+                _name='my_part2',
+                members=Struct(
+                    my_part=StubTraversable(
+                        _name='my_part',
+                    )
+                )
+            )
+        )
+    )
+    foo = foo.bind(request=None)
+
+    assert foo.iommi_path == ''
+
+    assert foo._bound_members.my_part2.iommi_path == 'my_part2'
+    assert foo._bound_members.my_part2.iommi_dunder_path == 'my_part2'
+
+    assert foo._bound_members.my_part2._bound_members.my_part.iommi_path == 'my_part'
+    assert foo._bound_members.my_part2._bound_members.my_part.iommi_dunder_path == 'my_part2__my_part'

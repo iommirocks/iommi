@@ -50,7 +50,6 @@ class Traversable(RefinableObject):
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']
 
-
     @dispatch
     def __init__(self, _name=None, **kwargs):
         self._declared_members = Struct()
