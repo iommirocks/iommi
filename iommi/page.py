@@ -216,12 +216,7 @@ class Page(Part):
         return render(rendered)
 
     def as_view(self):
-        return build_as_view_wrapper(
-            target=lambda: self,
-            cls=self.__class__,
-            kwargs={},
-            name='as_view',
-        )
+        return build_as_view_wrapper(self)
 
 
 class Html:

@@ -23,12 +23,13 @@ def model_and_rows(model, rows):
     return model, rows
 
 
-def build_as_view_wrapper(*, target, cls, kwargs, name):
-    def view_wrapper(request, **url_kwargs):
-        return target(**url_kwargs).bind(request=request).render_to_response()
+def build_as_view_wrapper(target):
+    def view_wrapper(request, **url_params):
+        request.url_params = url_params
+        return target.bind(request=request).render_to_response()
 
-    view_wrapper.__name__ = f'{cls.__name__}{repr(Namespace(kwargs))[len("Namespace"):]}.{name}'
-    view_wrapper.__doc__ = cls.__doc__
+    view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
+    view_wrapper.__doc__ = target.__class__.__doc__
 
     return view_wrapper
 

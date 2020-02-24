@@ -675,10 +675,16 @@ class Column(Part):
         data_retrieval_method=DataRetrievalMethods.select,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
+        model = model_field.foreign_related_fields[0].model
+        if hasattr(model, 'get_absolute_url'):
+            setdefaults_path(
+                kwargs,
+                cell__url=lambda value, **_: value.get_absolute_url(),
+            )
         setdefaults_path(
             kwargs,
-            choices=model_field.foreign_related_fields[0].model.objects.all(),
-            model_field=model_field.foreign_related_fields[0].model,
+            choices=model.objects.all(),
+            model_field=model,
         )
         return call_target(**kwargs)
 
@@ -1670,10 +1676,5 @@ class Table(Part):
         return render(request=request, template=self.template, context=self.context)
 
     def as_view(self):
-        return build_as_view_wrapper(
-            target=lambda: self,
-            cls=self.__class__,
-            kwargs={},
-            name='as_view',
-        )
+        return build_as_view_wrapper(self)
 
