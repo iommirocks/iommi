@@ -1324,6 +1324,7 @@ class Form(Part):
         actions__submit__call_target__attribute='delete',
         actions__submit__post_handler=delete_object__post_handler,
         auto__type='delete',
+        editable=False,
     )
     def delete(cls, call_target, **kwargs):
         return call_target(**kwargs)
