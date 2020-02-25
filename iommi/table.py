@@ -1151,6 +1151,7 @@ class Table(Part):
     default_sort_order = Refinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
+    tag: str = EvaluatedRefinable()
     h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
     title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     row: RowConfig = EvaluatedRefinable()
@@ -1226,6 +1227,7 @@ class Table(Part):
         superheader__template='iommi/table/header.html',
 
         auto=EMPTY,
+        tag='table',
     )
     def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=None, **kwargs):
         """

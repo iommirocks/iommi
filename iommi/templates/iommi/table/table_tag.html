@@ -4,14 +4,14 @@
     {{ empty_message }}
 {% else %}
 
-    <table{{ table.attrs }}>
+    <{{ table.tag }}{{ table.attrs }}>
 
         {{ table.header }}
 
         <tbody>
             {{ table.tbody }}
         </tbody>
-    </table>
+    </{{ table.tag }}>
 
     {{ table.paginator }}
 
