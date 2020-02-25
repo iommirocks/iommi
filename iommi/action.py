@@ -54,12 +54,11 @@ class Action(Part):
 
     @dispatch(
         tag='a',
+        display_name=lambda action, **_: action._name.capitalize().replace('_', ' '),
+        attrs__class=EMPTY,
     )
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        if self.tag == 'input' and self.display_name:
-            assert False, "display_name is invalid on input tags. Maybe you want attrs__value if it's a button?"
 
     def own_target_marker(self):
         return f'-{self.iommi_path}'
@@ -77,7 +76,14 @@ class Action(Part):
         if self.template:
             return render_to_string(self.template, dict(**context, action=self))
         else:
-            return Fragment(self.display_name, tag=self.tag, attrs=self.attrs).__html__()
+            display_name = self.display_name
+            attrs = self.attrs
+            if self.tag == 'input':
+                if display_name and 'value' not in attrs:
+                    attrs = attrs.copy()
+                    attrs.value = self.display_name
+                display_name = None
+            return Fragment(display_name, tag=self.tag, attrs=attrs).__html__()
 
     @classmethod
     @class_shortcut(
@@ -91,7 +97,6 @@ class Action(Part):
         call_target__attribute='button',
         tag='input',
         attrs__type='submit',
-        attrs__value='Submit',
         attrs__accesskey='s',
         attrs__name=lambda action, **_: action.own_target_marker(),
     )

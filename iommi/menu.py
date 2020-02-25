@@ -85,7 +85,7 @@ class MenuItem(MenuBase):
     group: str = EvaluatedRefinable()
 
     @dispatch(
-        display_name=lambda menu_item, **_: menu_item._name.title().replace('_', ' '),
+        display_name=lambda menu_item, **_: menu_item._name.capitalize().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
         a__tag='a',

@@ -1668,17 +1668,17 @@ def test_render_template_template_object():
 def test_action_render():
     action = Action(display_name='Title', template='test_action_render.html').bind(request=req('get'))
     assert action.__html__().strip() == 'tag=a display_name=Title'
-    assert action.__html__() == action.__html__()  # used by jinja2
 
 
 def test_action_submit_render():
-    with pytest.raises(AssertionError):
-        # display_name is invalid on buttons, you must use attrs__value
-        Action.submit(display_name='Title')
+    action = Action.submit(display_name='Title').bind(request=req('get'))
+    assert action.__html__().strip() == '<input accesskey="s" name="-" type="submit" value="Title">'
+
+    action = Action.submit(attrs__value='Title').bind(request=req('get'))
+    assert action.__html__().strip() == '<input accesskey="s" name="-" type="submit" value="Title">'
 
     action = Action.submit(attrs__value='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.__html__().strip() == 'tag=input display_name=None accesskey="s" name="-" type="submit" value="Title"'
-    assert action.__html__() == action.__html__()  # used by jinja2
+    assert action.__html__().strip() == 'tag=input display_name=Root accesskey="s" name="-" type="submit" value="Title"'
 
 
 def test_action_repr():
