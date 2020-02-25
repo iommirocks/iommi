@@ -238,6 +238,12 @@ def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
 
     return conditional_escape(value)
 
+def default_cell__value(column, row, **kwargs):
+    if column.attr is None:
+        return None
+    else:
+        return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
+
 
 SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this)"></i>'
 
@@ -275,7 +281,7 @@ class Column(Part):
     @dispatch(
         attr=MISSING,
         sort_default_desc=False,
-        sortable=True,
+        sortable=lambda column, **_: column.attr is not None,
         auto_rowspan=False,
         bulk__include=False,
         filter__include=False,
@@ -283,7 +289,7 @@ class Column(Part):
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
-        cell__value=lambda column, row, **kwargs: getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs)),
+        cell__value=default_cell__value,
         cell__format=default_cell_formatter,
         cell__url=None,
         cell__url_title=None,
@@ -383,9 +389,9 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         display_name='',
-        sortable=False,
         cell__value=lambda table, **_: True,
         extra__icon_attrs__class=EMPTY,
+        attr=None,
     )
     def icon(cls, *args, call_target=None, **kwargs):
         """
