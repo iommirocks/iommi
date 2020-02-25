@@ -12,7 +12,10 @@ from iommi.page import (
     Fragment,
     Page,
 )
-from iommi.traversable import build_long_path_by_path
+from iommi.traversable import (
+    build_long_path_by_path,
+    bound_members,
+)
 from tests.helpers import (
     req,
     StubTraversable,
@@ -130,8 +133,8 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
 
     assert foo.iommi_path == ''
 
-    assert foo._bound_members.my_part2.iommi_path == 'my_part2'
-    assert foo._bound_members.my_part2.iommi_dunder_path == 'my_part2'
+    assert bound_members(foo).my_part2.iommi_path == 'my_part2'
+    assert bound_members(foo).my_part2.iommi_dunder_path == 'my_part2'
 
-    assert foo._bound_members.my_part2._bound_members.my_part.iommi_path == 'my_part'
-    assert foo._bound_members.my_part2._bound_members.my_part.iommi_dunder_path == 'my_part2__my_part'
+    assert bound_members(bound_members(foo).my_part2).my_part.iommi_path == 'my_part'
+    assert bound_members(bound_members(foo).my_part2).my_part.iommi_dunder_path == 'my_part2__my_part'

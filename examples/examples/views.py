@@ -344,9 +344,9 @@ def table_kitchen_sink(request):
 
 def page_busy(request):
     class BusyPage(Page):
-        tfoo = Table(auto__model=TFoo, page_size=5, columns__name__query=dict(include=True, field__include=True))
-        tbar = Table(auto__model=TBar, page_size=5, columns__b__query=dict(include=True, field__include=True))
-        create_tbar = Form.as_create_page(model=TBar)
+        tfoo = Table(auto__model=TFoo, page_size=5, columns__name__filter=dict(include=True, field__include=True))
+        tbar = Table(auto__model=TBar, page_size=5, columns__b__filter=dict(include=True, field__include=True))
+        create_tbar = Form.create(auto__model=TBar)
 
     return BusyPage()
 

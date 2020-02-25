@@ -83,6 +83,7 @@ from iommi.traversable import (
     EvaluatedRefinable,
     declared_members,
     set_declared_member,
+    bound_members,
 )
 
 
@@ -576,7 +577,7 @@ class Query(Part):
         context=EMPTY,
     )
     def __html__(self, *, context=None, render=None):
-        if not self._bound_members.filters._bound_members:
+        if not bound_members(self).filters._bound_members:
             return ''
 
         setdefaults_path(

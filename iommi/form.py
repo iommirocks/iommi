@@ -82,6 +82,7 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
+    bound_members,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -1175,7 +1176,7 @@ class Form(Part):
             self.get_request(),
             self.actions_template,
             dict(
-                actions=self._bound_members.actions,
+                actions=bound_members(self).actions,
                 non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 form=self,

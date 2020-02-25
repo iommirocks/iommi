@@ -114,6 +114,7 @@ from iommi.traversable import (
     EvaluatedRefinable,
     Traversable,
     declared_members,
+    bound_members,
 )
 
 LAST = LAST
@@ -1497,7 +1498,7 @@ class Table(Part):
 
             if 'select' in self.columns and self.columns.select.include is MISSING:
                 del self.columns['select']
-                assert 'select' not in self._bound_members['columns']._bound_members
+                assert 'select' not in bound_members(bound_members(self).columns)
 
     # property for jinja2 compatibility
     @property
@@ -1508,7 +1509,7 @@ class Table(Part):
             self.get_request(),
             self.actions_template,
             dict(
-                actions=self._bound_members.actions,
+                actions=bound_members(self).actions,
                 non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 table=self,

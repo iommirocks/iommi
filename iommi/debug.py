@@ -14,6 +14,7 @@ from iommi.traversable import (
     PathNotFoundException,
     Traversable,
     declared_members,
+    bound_members,
 )
 
 
@@ -59,7 +60,10 @@ def endpoint__debug_tree(endpoint, **_):
             children = list(node.items())
         elif isinstance(node, Traversable):
             children = [
-                (k, v if not node._bound_members or k not in node._bound_members else node._bound_members[k])
+                (
+                    k,
+                    bound_members(node).get(k, v)
+                )
                 for k, v in declared_members(node).items()
             ]
         else:

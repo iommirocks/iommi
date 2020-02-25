@@ -10,6 +10,7 @@ from iommi.traversable import (
     get_long_path_by_path,
     get_path_by_long_path,
     Traversable,
+    bound_members,
 )
 
 DISPATCH_PATH_SEPARATOR = '/'
@@ -85,7 +86,7 @@ def find_target(*, path, root):
     for part in long_path.split('/'):
         if part == '':
             continue
-        node = node._bound_members.get(part)
+        node = bound_members(node).get(part)
         assert node is not None, f'Failed to traverse long path {long_path}'
 
     return node

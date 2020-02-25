@@ -194,6 +194,11 @@ def get_name(node: Traversable) -> str:
     return node._name
 
 
+def bound_members(node: Traversable) -> Dict[str, Traversable]:
+    # noinspection PyProtectedMember
+    return node._bound_members if node._bound_members else {}
+
+
 def evaluate_members(obj, keys, **kwargs):
     for key in keys:
         evaluate_member(obj, key, **kwargs)
