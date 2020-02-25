@@ -1,6 +1,8 @@
 # discogs is pretty slow, be patient!
 
 import json
+from pathlib import Path
+
 from bs4 import BeautifulSoup
 import requests
 
@@ -13,8 +15,27 @@ base_url = 'https://www.discogs.com'
 result = dict()
 
 
-def scrape_album(tracks, url):
+def download_album_art(artist, title, url):
+    title = title.replace('/', '__')
+    directory = Path('album_art') / artist
+    directory.mkdir(parents=True, exist_ok=True)
+    if (directory / f'{title}.jpg').exists():
+        return
     soup = BeautifulSoup(session.get(base_url + url).content, "html.parser")
+    images = soup.select('#view_images img')
+    if not images:
+        return
+    image_url = images[0].attrs['src']
+    extension = Path(image_url).suffix
+    with open(directory / f'{title}{extension}', 'wb') as f:
+        f.write(session.get(image_url).content)
+
+
+def scrape_album(artist, album_title, tracks, url):
+    soup = BeautifulSoup(session.get(base_url + url).content, "html.parser")
+    # thumbnails = soup.select('.thumbnail_link')
+    # if thumbnails:
+    #     download_album_art(artist, album_title, thumbnails[0].attrs['href'])
 
     for row in soup.select('.tracklist_track'):
         title = row.find(class_='tracklist_track_title')
@@ -22,7 +43,8 @@ def scrape_album(tracks, url):
         if not title:
             continue
         duration = duration.text if duration else ''
-        tracks.append((title.text.strip(), duration.strip()))
+        title = title.text.strip()
+        tracks.append((title, duration.strip()))
 
 
 def scrape_artist(artist, url):
@@ -47,7 +69,7 @@ def scrape_artist(artist, url):
             year=year,
             tracks=tracks,
         )
-        scrape_album(tracks, album_url)
+        scrape_album(artist, title, tracks, album_url)
 
 
 scrape_artist('Django Reinhardt', '/artist/253481-Django-Reinhardt?filter_anv=0&subtype=Albums&type=Releases')
