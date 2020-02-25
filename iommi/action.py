@@ -1,3 +1,4 @@
+from copy import copy
 from itertools import groupby
 from typing import (
     Callable,
@@ -80,7 +81,7 @@ class Action(Part):
             attrs = self.attrs
             if self.tag == 'input':
                 if display_name and 'value' not in attrs:
-                    attrs = attrs.copy()
+                    attrs = copy(attrs)
                     attrs.value = self.display_name
                 display_name = None
             return Fragment(display_name, tag=self.tag, attrs=attrs).__html__()
