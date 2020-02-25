@@ -94,16 +94,6 @@ class Traversable(RefinableObject):
         assert parent is None or parent._is_bound
         assert not self._is_bound
 
-        if hasattr(self, 'include'):
-            include = evaluate_strict(self.include, **{
-                **(parent._evaluate_parameters if parent is not None else {}),
-                **self.own_evaluate_parameters(),
-            })
-            if not include:
-                return None
-        else:
-            include = MISSING
-
         if parent is None:
             self._request = request
             if self._name is None:
@@ -116,6 +106,17 @@ class Traversable(RefinableObject):
 
         result._parent = parent
         result._is_bound = True
+
+        if hasattr(result, 'include'):
+            include = evaluate_strict(result.include, **{
+                **(parent._evaluate_parameters if parent is not None else {}),
+                **result.own_evaluate_parameters(),
+            })
+            if not include:
+                return None
+        else:
+            include = MISSING
+
         if include is not MISSING:
             result.include = True
 
