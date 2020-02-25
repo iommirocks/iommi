@@ -1,5 +1,7 @@
 from django.template.utils import InvalidTemplateEngineError
 
+template_types = tuple()
+
 try:
     from django.core.exceptions import ValidationError
     from django.core.validators import validate_email, URLValidator
@@ -24,10 +26,12 @@ try:
     from django.conf import settings
     if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
         from django.template import Template as DjangoTemplate
+        template_types = template_types + (DjangoTemplate,)
     else:
         assert any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES)
         import jinja2
         from jinja2 import Template as JinjaTemplate
+        template_types = template_types + (JinjaTemplate,)
 
     class Template:
         def __init__(self, template_string):
@@ -39,6 +43,8 @@ try:
             else:
                 assert JinjaTemplate is not None
                 return JinjaTemplate(self.s).render(**context.flatten())
+
+    template_types = template_types + (Template,)
 
 
     def csrf(request):
@@ -66,12 +72,12 @@ try:
         @type template: str|django.template.Template|django.template.backends.django.Template
         @type context: dict
         """
-        from iommi._web_compat import Template
+        from iommi._web_compat import template_types
         if template is None:
             return ''
         elif isinstance(template, str):
             return mark_safe(render_to_string(template_name=template, context=context, request=request))
-        elif isinstance(template, Template):
+        elif isinstance(template, template_types):
             return mark_safe(template.render(context=RequestContext(request, context)))
         else:
             return mark_safe(template.render(context, request))
