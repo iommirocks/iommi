@@ -62,20 +62,6 @@ def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[s
     set_declared_member(parent, name, unbound_items)
 
 
-def bind_members(parent: Traversable, *, name: str) -> None:
-    m = Members(
-        _name=name,
-        _declared_members=declared_members(parent)[name],
-    )
-    # It's useful to be able to access these during bind
-    setattr(parent, name, m._bound_members)
-    setattr(parent._bound_members, name, m)
-    m = m.bind(parent=parent)
-    # ...and now we have the real object
-    setattr(parent, name, m._bound_members)
-    setattr(parent._bound_members, name, m)
-
-
 class Members(Traversable):
     """
     Internal iommi class that holds members of another class, for example the columns of a `Table` instance.
@@ -94,3 +80,17 @@ class Members(Traversable):
                 self._bound_members[key] = bound_member
 
         sort_after(self._bound_members)
+
+
+def bind_members(parent: Traversable, *, name: str, cls=Members) -> None:
+    m = cls(
+        _name=name,
+        _declared_members=declared_members(parent)[name],
+    )
+    # It's useful to be able to access these during bind
+    setattr(parent, name, m._bound_members)
+    setattr(parent._bound_members, name, m)
+    m = m.bind(parent=parent)
+    # ...and now we have the real object
+    setattr(parent, name, m._bound_members)
+    setattr(parent._bound_members, name, m)

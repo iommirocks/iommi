@@ -52,6 +52,7 @@ from iommi._web_compat import (
 )
 from iommi.action import (
     Action,
+    Actions,
     group_actions,
 )
 from iommi.attrs import Attrs
@@ -1150,7 +1151,7 @@ class Form(Part):
             self.h_tag = self.h_tag.bind(parent=self)
 
         # Actions have to be bound first because is_target() needs it
-        bind_members(self, name='actions')
+        bind_members(self, name='actions', cls=Actions)
 
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
@@ -1169,12 +1170,13 @@ class Form(Part):
     @property
     def render_actions(self):
         assert self._is_bound, 'The form has not been bound. You need to call bind() before you can render it.'
-        actions, grouped_actions = group_actions(self.actions)
+        non_grouped_actions, grouped_actions = group_actions(self.actions)
         return render_template(
             self.get_request(),
             self.actions_template,
             dict(
-                actions=actions,
+                actions=self._bound_members.actions,
+                non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 form=self,
             ))

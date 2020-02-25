@@ -68,6 +68,7 @@ from iommi._web_compat import (
 from iommi.action import (
     Action,
     group_actions,
+    Actions,
 )
 from iommi.attrs import (
     Attrs,
@@ -1377,7 +1378,7 @@ class Table(Part):
         declared_members(self).columns = declared_members(self).pop('columns')
 
     def on_bind(self) -> None:
-        bind_members(self, name='actions')
+        bind_members(self, name='actions', cls=Actions)
         bind_members(self, name='columns')
         bind_members(self, name='endpoints')
 
@@ -1495,12 +1496,14 @@ class Table(Part):
     # property for jinja2 compatibility
     @property
     def render_actions(self):
-        actions, grouped_actions = group_actions(self.actions)
+        assert self._is_bound, 'The table has not been bound. You need to call bind() before you can render it.'
+        non_grouped_actions, grouped_actions = group_actions(self.actions)
         return render_template(
             self.get_request(),
             self.actions_template,
             dict(
-                actions=actions,
+                actions=self._bound_members.actions,
+                non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 table=self,
             ))

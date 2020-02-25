@@ -110,6 +110,10 @@ base = Style(
     Query=dict(
         template='iommi/query/form.html',
     ),
+    Actions=dict(
+        tag='div',
+        attrs__class__links=True,
+    )
 )
 
 font_awesome_4 = Style(
@@ -421,9 +425,11 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     from iommi.table import Paginator
     from iommi.menu import MenuBase
     from iommi.error import Errors
+    from iommi.action import Actions
     if default_classes is None:
         default_classes = [
             Action,
+            Actions,
             Column,
             Errors,
             Field,

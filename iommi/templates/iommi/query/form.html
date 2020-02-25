@@ -8,10 +8,6 @@
             </tr>
             <tr>
                 <td>
-                    {# form-row align-items-center is bootstrap specific, ui form fields is semantic ui #}
-                    <div class="iommi_query_form_simple form-row align-items-center ui form fields">
-                        {{ query.form.render_fields }}
-                    </div>
                     <div class="iommi_query_form_advanced" style="display: none">
                         <input id="iommi_{{ query.iommi_dunder_path }}_query" name="{{ query.get_advanced_query_param }}" type="text" style="width:95%" data-query="{{ query.query_advanced_value }}"/>
                     </div>
@@ -37,12 +33,18 @@
                             <li>Search for an exact value containing space: field_name="value with space"</li>
                             <li>Containing a text: field_name:val</li>
                             <li>Exclude a value: field_name!=value</li>
-                            <li>You can also use <, >, <= and >= to find ranges of values: field_name<10</li>
+                            <li>You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: field_name&lt;10</li>
                         </ul>
                     </div>
                 </td>
             </tr>
         </table>
+
+        {# form-row align-items-center is bootstrap specific, ui form fields is semantic ui #}
+        <span class="iommi_query_form_simple form-row align-items-center ui form fields">
+            {{ query.form.render_fields }}
+        </span>
+
         {{ query.form.errors }}
 
         {% if query.query_error %}
@@ -74,9 +76,7 @@
             }
         </style>
 
-        <div class="submit">
-            {{ query.form.render_actions }}
-        </div>
+        {{ query.form.render_actions }}
    </form>
 </div>
 

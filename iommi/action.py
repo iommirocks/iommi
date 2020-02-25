@@ -18,6 +18,7 @@ from tri_declarative import (
 )
 
 from iommi.attrs import Attrs
+from iommi.member import Members
 from iommi.page import Fragment
 from iommi.part import Part
 from iommi.traversable import (
@@ -148,3 +149,14 @@ def group_actions(actions: Dict[str, Action]):
         ]
 
     return actions_without_group, grouped_actions
+
+
+class Actions(Members):
+    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    tag = EvaluatedRefinable()
+
+    @dispatch(
+        attrs__class=EMPTY,
+    )
+    def __init__(self, **kwargs):
+        super(Actions, self).__init__(**kwargs)

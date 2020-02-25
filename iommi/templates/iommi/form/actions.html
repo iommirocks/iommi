@@ -1,13 +1,13 @@
-{% if actions or grouped_actions %}
-    <div class="links">
-        {% for category, category_id, actions in grouped_actions %}
+{% if non_grouped_actions or grouped_actions %}
+    <{{ actions.tag }}{{ actions.attrs }}>
+        {% for category, category_id, actions_in_group in grouped_actions %}
             <div class="dropdown">
                 <a id="id_dropdown_{{ category_id }}" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="button button-primary">
                     {{ category }} <i class="fa fa-lg fa-caret-down"></i>
                 </a>
 
                 <ul class="dropdown-menu" role="menu" aria-labelledby="id_dropdown_{{ category }}">
-                    {% for action in actions %}
+                    {% for action in actions_in_group %}
                         <li role="presentation">
                             {{ action }}
                         </li>
@@ -16,8 +16,8 @@
             </div>
         {% endfor %}
 
-        {% for action in actions %}
+        {% for action in non_grouped_actions %}
             {{ action }}
         {% endfor %}
-    </div>
+    </{{ actions.tag }}>
 {% endif %}
