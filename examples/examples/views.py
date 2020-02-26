@@ -168,7 +168,7 @@ def form_example_1(request):
 
 def form_example_2(request):
     # NOTE: See urls.py for example 2b! This example is equivalent to this view, but is defined fully in views.py
-    return Form.as_create_page(model=Foo)
+    return Form.create(auto__model=Foo)
 
 
 def form_example_3(request):
@@ -190,8 +190,8 @@ def form_example_4(request):
 
 def form_example_5(request):
     ensure_objects()
-    return Form.as_create_page(
-        model=Bar,
+    return Form.create(
+        auto__model=Bar,
         fields__b__input__template='iommi/form/choice_select2.html',
         actions=dict(
             foo=Action.submit(attrs__value='Foo'),

@@ -77,7 +77,7 @@ You can also create tables explicitly:
             )
             c = Column(
                 # Enable bulk editing for this field
-                bulk=True,
+                bulk__include=True,
                 filter__include=True,
                 filter__field__include=True,
             )

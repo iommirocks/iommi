@@ -615,7 +615,7 @@ editing. Enable it for a columns by passing `bulk__include=True`:
 
     Table(
         auto__model=Foo,
-        columns__a__bulk=True,
+        columns__a__bulk__include=True,
     )
 
 The bulk namespace here is used to configure a `Field` for the GUI so you
