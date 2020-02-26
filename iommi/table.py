@@ -725,7 +725,7 @@ class BoundRow(Traversable):
             context = dict(bound_row=self, row=self.row, **self._parent.context)
             return render_template(self._parent.get_request(), self.template, context)
 
-        return format_html('<{}{}>{}</{}>', self.tag, self.attrs, mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self)), self.tag)
+        return Fragment(tag=self.tag, attrs=self.attrs, text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))).__html__()
 
     def __str__(self):
         return self.__html__()
@@ -789,7 +789,7 @@ class BoundCell(CellConfig):
             context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
-        return format_html('<{}{}>{}</{}>', self.tag, self.attrs, self.render_cell_contents(), self.tag)
+        return Fragment(tag=self.tag, attrs=self.attrs, text=self.render_cell_contents()).__html__()
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
