@@ -16,6 +16,7 @@ from tri_declarative import (
     EMPTY,
     Refinable,
     setdefaults_path,
+    with_meta,
 )
 
 from iommi.attrs import Attrs
@@ -28,6 +29,7 @@ from iommi.traversable import (
 )
 
 
+@with_meta
 class Action(Part):
     """
     The `Action` class describes buttons and links.
