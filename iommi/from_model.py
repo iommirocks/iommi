@@ -47,9 +47,16 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
             definition = setdefaults_path(
                 Namespace(),
                 definition_or_member,
-                call_target__attribute='from_model' if definition_or_member.get('attr', field_name) is not None else None,
+                # TODO: this should work, but there's a bug in tri.declarative, working around for now
+                # call_target__attribute='from_model' if definition_or_member.get('attr', field_name) is not None else None,
                 call_target__cls=member_class,
             )
+            if definition_or_member.get('attr', field_name) is not None:
+                setdefaults_path(
+                    definition,
+                    call_target__attribute='from_model',
+                )
+
             member = definition(
                 model=model,
                 field_name=definition_or_member.get('attr', field_name),

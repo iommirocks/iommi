@@ -707,6 +707,7 @@ class BoundRow(Traversable):
     """
     template: Union[str, Template] = EvaluatedRefinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    tag: str = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
 
@@ -724,7 +725,7 @@ class BoundRow(Traversable):
             context = dict(bound_row=self, row=self.row, **self._parent.context)
             return render_template(self._parent.get_request(), self.template, context)
 
-        return format_html('<tr{}>{}</tr>', self.attrs, mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self)))
+        return format_html('<{}{}>{}</{}>', self.tag, self.attrs, mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self)), self.tag)
 
     def __str__(self):
         return self.__html__()
@@ -738,20 +739,28 @@ class BoundRow(Traversable):
         return BoundCell(bound_row=self, column=column)
 
 
-class BoundCell(RefinableObject):
+class CellConfig(RefinableObject):
     url = Refinable()
     url_title = Refinable()
     attrs = Refinable()
+    tag = Refinable()
     template = Refinable()
     value = Refinable()
     contents = Refinable()
     format = Refinable()
     link = Refinable()
 
+    def as_dict(self):
+        return {k: getattr(self, k) for k in self.get_declared('refinable_members').keys()}
+
+
+class BoundCell(CellConfig):
+
     def __init__(self, bound_row: BoundRow, column):
         kwargs = setdefaults_path(
             Namespace(),
-            **column.cell,
+            column.cell,
+            column.table.cell,
         )
         super(BoundCell, self).__init__(**kwargs)
         self._name = 'cell'
@@ -780,7 +789,7 @@ class BoundCell(RefinableObject):
             context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
-        return format_html('<td{}>{}</td>', self.attrs, self.render_cell_contents())
+        return format_html('<{}{}>{}</{}>', self.tag, self.attrs, self.render_cell_contents(), self.tag)
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
@@ -840,12 +849,13 @@ class HeaderColumnConfig(Traversable):
 
 class RowConfig(RefinableObject):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    tag = Refinable()
     template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
 
     def as_dict(self):
-        return {k: getattr(self, k) for k, v in self.get_declared('refinable_members').items()}
+        return {k: getattr(self, k) for k in self.get_declared('refinable_members').keys()}
 
 
 class Header(object):
@@ -1156,6 +1166,7 @@ class Table(Part):
     h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
     title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     row: RowConfig = EvaluatedRefinable()
+    cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
@@ -1206,11 +1217,13 @@ class Table(Part):
         sortable=True,
         default_sort_order=None,
         template='iommi/table/table.html',
+        row__tag='tr',
         row__attrs__class=EMPTY,
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
         row__template=None,
         row__extra=EMPTY,
         row__extra_evaluated=EMPTY,
+        cell__tag='td',
         header__template='iommi/table/table_header_rows.html',
         paginator__call_target=Paginator,
         h_tag__call_target=Fragment,
@@ -1496,7 +1509,6 @@ class Table(Part):
             self._bound_members.bulk = self.bulk_form
         else:
             self.bulk_form = None
-
 
     # property for jinja2 compatibility
     @property
