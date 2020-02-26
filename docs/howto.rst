@@ -116,7 +116,7 @@ How do I say which fields to include when creating a form from a model?
 1. the `auto__include` parameter: this is a list of strings for members of the model to use to generate the form.
 2. the `auto__exclude` parameter: the inverse of `include`. If you use this the form gets all the fields from the model excluding the ones with names you supply in `exclude`.
 3. for more advanced usages you can also pass the `include` parameter to a specific field like `fields__my_field__include=True`. Here you can supply either a `bool` or a callable like `fields__my_field__include=lambda form, field, **_: form.get_request().user.is_staff`.
-4. you can also add fields that are not present in the model with the `auto__additional`. This is a `dict` from name to either a `Field` instance or a `dict` containing a definition of how to create a `Field`.
+4. you can also add fields that are not present in the model by passing configuration like `fields__foo__attr='bar__baz` (this means create a `Field` called `foo` that reads its data from `bar.baz`). You can either pass configuration data like that, or pass an entire `Field` instance.
 
 
 How do I supply a custom initial value?
@@ -303,11 +303,9 @@ And we want a computed column `square` that is the square of the value, then we 
 
     Table(
         auto__model=Foo,
-        auto__additional=dict(
-            square=Column(
-                # computed value:
-                cell__value=lambda row, **_: row.value * row.value,
-            )
+        column__square=Column(
+            # computed value:
+            cell__value=lambda row, **_: row.value * row.value,
         )
     )
 
@@ -315,11 +313,12 @@ or we could do:
 
 .. code:: python
 
-    Column(
-        name='square',
-        attr='value',
-        cell__format=lambda value, **: value * value,
-    )
+    Table(
+        auto__model=Foo,
+        column__square=Column(
+            attr='value',
+            cell__format=lambda value, **: value * value,
+        )
 
 This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
 
@@ -530,9 +529,7 @@ we can build a table of `Bar` that shows the data of `a` like this:
 
     Table(
         auto__model=Bar,
-        auto__additional=dict(
-            c__a=Column.from_model,
-        ),
+        columns__a__attr='c__a',
     )
 
 How do I turn off sorting? (on a column or table wide)

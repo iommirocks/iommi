@@ -271,6 +271,7 @@ class Column(Part):
     cell: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
+    field_name = Refinable()
     choices: Iterable = EvaluatedRefinable()
     bulk: Namespace = Refinable()
     filter: Namespace = Refinable()
@@ -753,7 +754,6 @@ class BoundCell(RefinableObject):
             **column.cell,
         )
         super(BoundCell, self).__init__(**kwargs)
-        assert column.include
         self._name = 'cell'
         self._parent = bound_row
 
@@ -938,6 +938,7 @@ def bulk_delete__post_handler(table, form, **_):
                 fields__confirmed=Field.hidden(initial='confirmed'),
                 actions__submit__include=False,
                 actions__delete=dict(
+                    attrs__name=table.bulk_form.actions.delete.attrs.name,
                     call_target__attribute='delete',
                     attrs__value='Yes, delete all!',
                     include=True,
@@ -1240,25 +1241,22 @@ class Table(Part):
         :param bulk_exclude: exclude filters to apply to the `QuerySet` before performing the bulk operation
         :param sortable: set this to `False` to turn off sorting for all columns
         """
-        select_config = setdefaults_path(
-            Namespace(),
-            columns.get('select', {}),
-            call_target__attribute='select',
-            attr=None,
-            _name='select',
-            after=-1,
-            include=MISSING,
-        )
-
-        select_column = select_config
+        select_conf = columns.get('select', {})
+        if 'select' not in _columns_dict and isinstance(select_conf, dict):
+            columns['select'] = setdefaults_path(
+                Namespace(),
+                select_conf,
+                call_target__attribute='select',
+                attr=None,
+                after=-1,
+                include=False,
+            )
 
         if auto:
             auto = TableAutoConfig(**auto)
             assert not _columns_dict, "You can't have an auto generated Table AND a declarative Table at the same time"
             assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
             assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
-            if 'select' not in auto.additional:
-                auto.additional['select'] = select_column
 
             model, rows, columns = self._from_model(
                 model=auto.model,
@@ -1266,7 +1264,6 @@ class Table(Part):
                 columns=columns,
                 include=auto.include,
                 exclude=auto.exclude,
-                additional=auto.additional,
             )
             if title is None:
                 title = f'{model._meta.verbose_name_plural.title()}'
@@ -1416,6 +1413,8 @@ class Table(Part):
             self._setup_bulk_form_and_query()
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
+        for c in self.rendered_columns.values():
+            assert c.include
 
         self._prepare_headers()
 
@@ -1498,9 +1497,6 @@ class Table(Part):
         else:
             self.bulk_form = None
 
-            if 'select' in self.columns and self.columns.select.include is MISSING:
-                del self.columns['select']
-                assert 'select' not in bound_members(bound_members(self).columns)
 
     # property for jinja2 compatibility
     @property
@@ -1638,8 +1634,8 @@ class Table(Part):
     )
     def columns_from_model(cls, columns, **kwargs):
         return create_members_from_model(
+            member_class=cls.get_meta().member_class,
             member_params_by_member_name=columns,
-            default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
@@ -1647,10 +1643,10 @@ class Table(Part):
     @dispatch(
         columns=EMPTY,
     )
-    def _from_model(cls, *, rows=None, model=None, columns=None, include=None, exclude=None, additional=None):
+    def _from_model(cls, *, rows=None, model=None, columns=None, include=None, exclude=None):
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, additional=additional, columns=columns)
+        columns = cls.columns_from_model(model=model, include=include, exclude=exclude, columns=columns)
         return model, rows, columns
 
     def bulk_queryset(self):

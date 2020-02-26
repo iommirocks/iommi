@@ -44,7 +44,10 @@ from iommi.table import (
     Table,
     yes_no_formatter,
 )
-from iommi.traversable import declared_members
+from iommi.traversable import (
+    declared_members,
+    bound_members,
+)
 from tests.helpers import (
     req,
     request_with_middleware,
@@ -1535,7 +1538,8 @@ def test_explicit_table_does_not_use_from_model():
         )
 
     t = TestTable().bind(request=None)
-    assert list(declared_members(t).columns.keys()) == ['foo']
+    assert list(declared_members(t).columns.keys()) == ['foo', 'select']
+    assert list(bound_members(t).columns._bound_members.keys()) == ['foo']
 
 
 @pytest.mark.django_db

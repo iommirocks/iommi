@@ -1,10 +1,23 @@
 from django.db.models import QuerySet
-from tri_declarative import (
-    Namespace,
-    refinable,
-)
+from tri_declarative import refinable
 
-MISSING = object()
+
+class UnknownMissingValueException(Exception):
+    pass
+
+
+class Missing:
+    def __bool__(self):
+        raise UnknownMissingValueException('MISSING is neither True nor False, is is unknown')
+
+    def __str__(self):
+        return 'MISSING'
+
+    def __repr__(self):
+        return str(self)
+
+
+MISSING = Missing()
 
 
 def evaluated_refinable(f):

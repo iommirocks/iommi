@@ -112,7 +112,7 @@ class Traversable(RefinableObject):
                 **(parent._evaluate_parameters if parent is not None else {}),
                 **result.own_evaluate_parameters(),
             })
-            if not include:
+            if include is False:
                 return None
         else:
             include = MISSING
@@ -141,6 +141,7 @@ class Traversable(RefinableObject):
         # Unapplied config and styling has another chance of setting include to False
         if include is not MISSING and result.include is False:
             return None
+        result.include = True  # include can be the falsy MISSING. Set it to False
 
         # We neeed to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict

@@ -173,18 +173,26 @@ def form_example_2(request):
 
 def form_example_3(request):
     ensure_objects()
-    return Form.as_edit_page(instance=Foo.objects.all().first())
+    return Form.edit(auto__instance=Foo.objects.all().first())
 
 
 def form_example_4(request):
     ensure_objects()
-    return Form.as_edit_page(
-        instance=Foo.objects.all().first(),
+    return Form.edit(
+        auto__instance=Foo.objects.all().first(),
         actions=dict(
             foo=Action.submit(attrs__value='Foo'),
             bar=Action.submit(attrs__value='Bar'),
             back=Action(display_name='Back to index', attrs__href='/'),
         )
+    )
+
+
+def form_example_3(request):
+    ensure_objects()
+    return Form.edit(
+        auto__instance=Track.objects.all().first(),
+        fields__foo__attr='album__artist',
     )
 
 

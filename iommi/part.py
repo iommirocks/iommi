@@ -61,8 +61,9 @@ class Part(Traversable):
         extra=EMPTY,
         include=True,
     )
-    def __init__(self, endpoints: Dict[str, Any] = None, **kwargs):
-        super(Part, self).__init__(**kwargs)
+    def __init__(self, *, endpoints: Dict[str, Any] = None, include, **kwargs):
+        assert include is MISSING or isinstance(include, bool) or callable(include)
+        super(Part, self).__init__(include=include, **kwargs)
         collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
 
         if iommi_debug_on():

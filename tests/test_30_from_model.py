@@ -30,29 +30,3 @@ def test_register_name_field_error():
         register_name_field(model=RegisterNameExceptionModel, name_field='foo')
 
     assert str(e.value) == 'Cannot register name "foo" for model RegisterNameExceptionModel. foo must be unique.'
-
-
-def test_create_members_from_model_error_overlapping_keys_include():
-    with pytest.raises(AssertionError) as e:
-        create_members_from_model(
-            default_factory=None,
-            model=None,
-            member_params_by_member_name=None,
-            include=['a'],
-            additional=dict(a=None),
-        )
-
-    assert str(e.value) == 'additional contains a which conflicts with the same name in include.'
-
-
-def test_create_members_from_model_error_overlapping_keys_exclude():
-    with pytest.raises(AssertionError) as e:
-        create_members_from_model(
-            default_factory=None,
-            model=None,
-            member_params_by_member_name=None,
-            exclude=['a'],
-            additional=dict(a=None),
-        )
-
-    assert str(e.value) == 'additional contains a which conflicts with the same name in exclude.'

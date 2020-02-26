@@ -76,12 +76,11 @@ def list_model(app, table, auto):
         table=table,
         table__auto=dict(
             model=model,
-            additional=dict(
-                edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
-                delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
-            ),
             **auto,
         ),
+        table__columns__select__include=True,
+        table__columns__edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
+        table__columns__delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
         table__actions=dict(
             create=dict(
                 display_name=f'Create {model._meta.verbose_name}',

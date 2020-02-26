@@ -402,6 +402,7 @@ class Field(Part):
     is_boolean: bool = EvaluatedRefinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
+    field_name = Refinable()
 
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
@@ -1112,7 +1113,6 @@ class Form(Part):
                 fields=fields,
                 include=auto.include,
                 exclude=auto.exclude,
-                additional=auto.additional,
             )
             instance = auto.instance
             if title is None and auto.type is not None:
@@ -1188,8 +1188,8 @@ class Form(Part):
     )
     def fields_from_model(cls, fields, **kwargs):
         return create_members_from_model(
+            member_class=cls.get_meta().member_class,
             member_params_by_member_name=fields,
-            default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
@@ -1197,8 +1197,8 @@ class Form(Part):
     @dispatch(
         fields=EMPTY,
     )
-    def _from_model(cls, model, *, fields, include=None, exclude=None, additional=None):
-        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, additional=additional, fields=fields)
+    def _from_model(cls, model, *, fields, include=None, exclude=None):
+        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, fields=fields)
         return model, fields
 
     def is_target(self):

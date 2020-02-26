@@ -96,12 +96,12 @@ change the behavior!). The above example is equivalent to:
 
         # rest of view function...
 
-or even better: use `Form.as_edit_page`:
+or even better: use `Form.edit`:
 
 .. code:: python
 
     def edit_user_view(request, username):
-        return Form.as_edit_page(
+        return Form.edit(
             model=User,
             instance=User.objects.get(username=username),
             username__is_valid=

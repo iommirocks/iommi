@@ -1,6 +1,4 @@
 from typing import (
-    Any,
-    Dict,
     Iterator,
     List,
     Type,
@@ -13,7 +11,6 @@ from django.db.models import (
 )
 from tri_declarative import (
     dispatch,
-    EMPTY,
     evaluate,
     Namespace,
     Refinable,
@@ -23,19 +20,9 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import MISSING
-from iommi.traversable import get_name
 
 
-def create_members_from_model(*, default_factory, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None, additional: Dict[str, Any] = None):
-    if additional is None:
-        additional = {}
-
-    for key in additional.keys():
-        if include is not None and key in include:
-            assert False, f"additional contains {key} which conflicts with the same name in include."
-        if exclude is not None and key in exclude:
-            assert False, f"additional contains {key} which conflicts with the same name in exclude."
-
+def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
     def should_include(name):
         if exclude is not None and name in exclude:
             return False
@@ -43,39 +30,44 @@ def create_members_from_model(*, default_factory, model, member_params_by_member
             return name in include
         return True
 
-    members = []
+    members = Struct()
 
     # Validate include/exclude parameters
     field_names = {x.name for x in get_fields(model)}
     if include:
-        not_existing = {x for x in include if x.partition('__')[0] not in field_names}
+        not_existing = {x for x in include if x not in field_names}
         assert not not_existing, 'You can only include fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
     if exclude:
         not_existing = {x for x in exclude if x not in field_names}
         assert not not_existing, 'You can only exclude fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
 
-    extra_includes = [x for x in include if '__' in x] if include else []
+    def create_declared_member(field_name):
+        definition_or_member = member_params_by_member_name.pop(field_name, {})
+        if isinstance(definition_or_member, dict):
+            definition = setdefaults_path(
+                Namespace(),
+                definition_or_member,
+                call_target__attribute='from_model' if definition_or_member.get('attr', field_name) is not None else None,
+                call_target__cls=member_class,
+            )
+            member = definition(
+                model=model,
+                field_name=definition_or_member.get('attr', field_name),
+            )
+        else:
+            member = definition_or_member
+        if member is None:
+            return
+        members[field_name] = member
 
     for field in get_fields(model):
         if should_include(field.name):
-            foo = member_params_by_member_name.pop(field.name, {})
-            if isinstance(foo, dict):
-                subkeys = Namespace(**foo)
-                subkeys.setdefault('call_target', default_factory)
-                foo = subkeys(_name=field.name, model=model, model_field=field)
-            if foo is None:
-                continue
-            if isinstance(foo, list):
-                members.extend(foo)
-            else:
-                assert get_name(foo), "Fields must have a name attribute"
-                assert get_name(foo) == field.name, f"Field {foo._name} has a name that doesn't match the model field it belongs to: {field.name}"
-                members.append(foo)
+            create_declared_member(field.name)
 
-    additional = {**member_params_by_member_name, **additional}
+    for field_name in list(member_params_by_member_name.keys()):
+        create_declared_member(field_name)
 
-    all_members = members + [default_factory(model=model, field_name=x) for x in extra_includes]
-    return Struct({get_name(x): x for x in all_members}, **additional)
+    return members
 
 
 def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
@@ -96,7 +88,6 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 factory_lookup_register_function=factory_lookup_register_function,
                 field_name=field_path_rest,
                 **kwargs)
-            result._name = field_name.replace('__', '_')
             result.attr = field_name
             return result
 
@@ -136,7 +127,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     else:
         kwargs.update(**defaults)
 
-    return factory(model_field=model_field, model=model, **kwargs)
+    return factory(model_field=model_field, field_name=field_name, model=model, **kwargs)
 
 
 def get_fields(model: Type[Model]) -> Iterator[DjangoField]:
@@ -190,10 +181,7 @@ class AutoConfig(RefinableObject):
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     include = Refinable()
     exclude = Refinable()
-    additional = Refinable()
 
-    @dispatch(
-        additional=EMPTY,
-    )
+    @dispatch
     def __init__(self, **kwargs):
         super(AutoConfig, self).__init__(**kwargs)

@@ -739,11 +739,13 @@ def test_help_text_from_model():
 def test_help_text_from_model2():
     from .models import Foo, Bar
     # simple integer field
-    assert Form(auto__model=Foo, include=['foo']).bind(request=req('get', foo='1')).fields.foo.help_text == 'foo_help_text'
+    form = Form(auto__model=Foo, auto__include=['foo']).bind(request=req('get', foo='1'))
+    assert form.fields.foo.model_field is Foo._meta.get_field('foo')
+    assert form.fields.foo.help_text == 'foo_help_text'
 
     # foreign key field
     Bar.objects.create(foo=Foo.objects.create(foo=1))
-    form = Form(auto__model=Bar, include=['foo']).bind(request=req('get'))
+    form = Form(auto__model=Bar, auto__include=['foo']).bind(request=req('get'))
     assert form.fields.foo.help_text == 'bar_help_text'
     assert form.fields.foo.model is Foo
 
@@ -1844,14 +1846,14 @@ def test_create_members_from_model_path():
 
     class BarForm(Form):
         class Meta:
-            fields = Form.fields_from_model(model=Bar, include=['foo__foo'])
+            fields__foo_foo__attr = 'foo__foo'
 
     bar = Bar.objects.create(foo=Foo.objects.create(foo=7))
-    form = BarForm(instance=bar).bind(request=req('get'))
+    form = BarForm(auto__instance=bar).bind(request=req('get'))
 
-    assert len(form.fields) == 1
     assert form.fields.foo_foo.attr == 'foo__foo'
     assert form.fields.foo_foo._name == 'foo_foo'
+    assert form.fields.foo_foo.model_field is Foo._meta.get_field('foo')
     assert form.fields.foo_foo.help_text == 'foo_help_text'
 
 

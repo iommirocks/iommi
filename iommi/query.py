@@ -197,6 +197,7 @@ class Filter(Part):
     freetext = EvaluatedRefinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
+    field_name = Refinable()
     choices = EvaluatedRefinable()
     name_field = Refinable()
     unary = Refinable()
@@ -517,7 +518,6 @@ class Query(Part):
                 filters=filters,
                 include=auto.include,
                 exclude=auto.exclude,
-                additional=auto.additional,
             )
 
         setdefaults_path(
@@ -862,8 +862,8 @@ class Query(Part):
     )
     def filters_from_model(cls, filters, **kwargs):
         return create_members_from_model(
+            member_class=cls.get_meta().member_class,
             member_params_by_member_name=filters,
-            default_factory=cls.get_meta().member_class.from_model,
             **kwargs
         )
 
@@ -871,8 +871,8 @@ class Query(Part):
     @dispatch(
         filters=EMPTY,
     )
-    def _from_model(cls, *, rows=None, model=None, filters, include=None, exclude=None, additional=None):
+    def _from_model(cls, *, rows=None, model=None, filters, include=None, exclude=None):
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "model or rows must be specified"
-        filters = cls.filters_from_model(model=model, include=include, exclude=exclude, additional=additional, filters=filters)
+        filters = cls.filters_from_model(model=model, include=include, exclude=exclude, filters=filters)
         return model, rows, filters
