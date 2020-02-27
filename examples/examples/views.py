@@ -160,7 +160,7 @@ def form_example_1(request):
         """).render(
             context=RequestContext(
                 request,
-                dict(form=form, message=message)
+                dict(title='Example 1', form=form, message=message)
             )
         ),
     )

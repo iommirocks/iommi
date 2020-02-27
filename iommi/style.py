@@ -222,11 +222,9 @@ bootstrap_base = Style(
     ),
     Query__form__iommi_style='bootstrap_horizontal',
     MenuBase=dict(
-        attrs__class__nav=True,
-        attrs__class={'nav-pills': True},
+        attrs__class={'navbar-nav': True},
         tag='ul',
     ),
-    Menu__attrs__class={'flex-column': True, 'nav': True, 'nav-pills': True},
     MenuItem=dict(
         tag='li',
         a__attrs__class={'nav-link': True},
