@@ -144,8 +144,9 @@ test = Style(
     Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
     ),
-    MenuBase=dict(
-        tag='ul',
+    Menu=dict(
+        tag='nav',
+        items_container__tag='ul'
     ),
     MenuItem=dict(
         tag='li',
@@ -221,9 +222,16 @@ bootstrap_base = Style(
         )
     ),
     Query__form__iommi_style='bootstrap_horizontal',
-    MenuBase=dict(
-        attrs__class={'navbar-nav': True},
-        tag='ul',
+    Menu=dict(
+        tag='nav',
+        attrs__class={
+            'navbar': True,
+            'navbar-expand-lg': True,
+            'navbar-dark': True,
+            'bg-primary': True,
+        },
+        items_container__attrs__class={'navbar-nav': True},
+        items_container__tag='ul'
     ),
     MenuItem=dict(
         tag='li',

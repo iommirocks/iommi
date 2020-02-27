@@ -164,9 +164,11 @@ class Menu(MenuBase):
             ),
         )
     """
+    items_container = Refinable()
 
     @dispatch(
-        sort=False
+        sort=False,
+        items_container=EMPTY,
     )
     def __init__(self, **kwargs):
         super(Menu, self).__init__(**kwargs)
@@ -180,14 +182,19 @@ class Menu(MenuBase):
         self.validate_and_set_active(current_path=self.get_request().path)
 
         self.fragment = Fragment(
+            _name=self._name,
             tag=self.tag,
             template=self.template,
             attrs=self.attrs,
+            children__items_container=Fragment(
+                **self.items_container,
+            )
         ).bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
+        items_container = self.fragment.children.items_container
         for name, item in self.sub_menu.items():
-            assert name not in self.fragment.children
-            self.fragment.children[name] = item
+            assert name not in items_container.children
+            items_container.children[name] = item
 
     def validate_and_set_active(self, current_path: str):
 
