@@ -14,6 +14,7 @@ from examples.models import (
     TFoo,
     Foo,
 )
+from iommi.admin import Admin
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
@@ -41,7 +42,7 @@ urlpatterns = [
     url(r'^all_field_sorts/$', views.all_field_sorts, name='all_field_sorts'),
     url(r'^all_column_sorts/$', views.all_column_sorts, name='all_column_sorts'),
 
-    url(r'^iommi-admin/', include(admin.urls)),
+    url(r'^iommi-admin/', include(Admin.urls())),
 
     url(r'^menu_test/$', views.menu_test, name='menu_test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

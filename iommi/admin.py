@@ -1,11 +1,15 @@
+from typing import Type
+
 from django.apps import apps
 from django.conf.urls import url
 from tri_declarative import (
-    dispatch,
+    class_shortcut,
     EMPTY,
     LAST,
     Namespace,
+    Refinable,
     setdefaults_path,
+    with_meta,
 )
 from tri_struct import Struct
 
@@ -16,6 +20,7 @@ from iommi import (
     Table,
 )
 from iommi.from_model import get_fields
+
 
 model_by_app_and_name = {
     (app_name, model_name): model
@@ -28,105 +33,174 @@ app_and_name_by_model = {
     for k, v in model_by_app_and_name.items()
 }
 
-admin_h1 = html.h1(html.a('Admin', attrs__href='/iommi-admin/'), after=0, _name='admin_h1')
 
+@with_meta
+class Admin(Page):
 
-@dispatch(
-    app=EMPTY,
-    table__call_target__cls=Table,
-)
-def all_models(request, app, table, **kwargs):
-    column_cls = table.call_target.cls.get_meta().member_class
+    class Meta:
+        table_class = Table
+        form_class = Form
 
-    def app_data():
-        for app_name, models in apps.all_models.items():
-            for name, cls in models.items():
-                if app.get(app_name, {}).get(name, {}).get('include', True):
-                    yield Struct(app_name=app_name, model_name=name, model=cls)
+    table_class: Type[Table] = Refinable()
+    form_class: Type[Form] = Refinable()
 
-    table = setdefaults_path(
-        table,
-        sortable=False,
-        rows=app_data(),
-        columns=dict(
-            app_name=column_cls(auto_rowspan=True),
-            model_name=column_cls(cell__url=lambda row, **_: '%s/%s/' % (row.app_name, row.model_name)),
+    header = html.h1(html.a('Admin', attrs__href='/iommi-admin/'), after=0)
+
+    @classmethod
+    @class_shortcut(
+        app=EMPTY,
+        table=EMPTY,
+    )
+    def all_models(cls, request, app, table, call_target=None, **kwargs):
+
+        def app_data():
+            for app_name, models in apps.all_models.items():
+                for name, model_cls in models.items():
+                    if app.get(app_name, {}).get(name, {}).get('include', True):
+                        yield Struct(app_name=app_name, model_name=name, model=model_cls)
+
+        table = setdefaults_path(
+            Namespace(),
+            table,
+            call_target__cls=cls.get_meta().table_class,
+            sortable=False,
+            rows=app_data(),
+            columns=dict(
+                app_name__auto_rowspan=True,
+                model_name__cell__url=lambda row, **_: '%s/%s/' % (row.app_name, row.model_name),
+            )
         )
+
+        return call_target(
+            title='Admin',
+            parts__title=html.h2('All models'),
+            parts__table=table(),
+            **kwargs
+        )
+
+    @classmethod
+    @class_shortcut(
+        app=EMPTY,
+        auto=EMPTY,
+        table=EMPTY,
     )
+    def list(cls, request, app_name, model_name, app, table, call_target=None, **kwargs):
+        model = apps.all_models[app_name][model_name]
+        app_name, model_name = app_and_name_by_model[model]
 
-    return Page(
-        title='Admin',
-        parts__header=admin_h1,
-        parts__title=html.h2('All models'),
-        parts__table=table(),
-        **kwargs
-    )
-
-
-@dispatch(
-    app=EMPTY,
-    table__call_target__cls=Table,
-    auto=EMPTY,
-)
-def list_model(request, app_name, model_name, app, table, auto):
-    model = apps.all_models[app_name][model_name]
-
-    app_name, model_name = app_and_name_by_model[model]
-    kwargs = setdefaults_path(
-        Namespace(),
-        app.get(app_name, {}).get(model_name, {}),
-        table=table,
-        table__auto=dict(
-            model=model,
-            **auto,
-        ),
-        table__columns__select__include=True,
-        table__columns__edit=dict(call_target__attribute='edit', after=0, cell__url=lambda row, **_: '%s/edit/' % row.pk),
-        table__columns__delete=dict(call_target__attribute='delete', after=LAST, cell__url=lambda row, **_: '%s/delete/' % row.pk),
-        table__actions=dict(
-            create=dict(
-                display_name=f'Create {model._meta.verbose_name}',
-                attrs__href='create/',
+        table = setdefaults_path(
+            Namespace(),
+            table,
+            call_target__cls=cls.get_meta().table_class,
+            title=f'{model._meta.verbose_name}',
+            auto__model=model,
+            columns=dict(
+                select__include=True,
+                edit=dict(
+                    call_target__attribute='edit',
+                    after=0,
+                    cell__url=lambda row, **_: '%s/edit/' % row.pk,
+                ),
+                delete=dict(
+                    call_target__attribute='delete',
+                    after=LAST,
+                    cell__url=lambda row, **_: '%s/delete/' % row.pk,
+                ),
             ),
-        ),
-        table__query_from_indexes=True,
-        table__bulk__actions__delete__include=True,
-        table__h_tag=admin_h1,
-    )
-    for field in get_fields(model):
-        if getattr(field, 'unique', False):
-            continue
-        setdefaults_path(
-            kwargs,
-            **{'table__columns__' + field.name + '__bulk__include': True},
+            actions=dict(
+                create=dict(
+                    display_name=f'Create {model._meta.verbose_name}',
+                    attrs__href='create/',
+                ),
+            ),
+            query_from_indexes=True,
+            bulk__actions__delete__include=True,
         )
 
-    return kwargs.table(title=f'{model._meta.verbose_name}')
+        kwargs = setdefaults_path(
+            Namespace(),
+            kwargs,
+            app.get(app_name, {}).get(model_name, {}),
+            table=table,
+            **{
+                'table__columns__' + field.name + '__bulk__include': True
+                for field in get_fields(model)
+                if not getattr(field, 'unique', False)
+            }
+        )
 
+        return call_target(parts=kwargs)
 
-def edit(request, app_name, model_name, pk):
-    model = apps.all_models[app_name][model_name]
-    instance = model.objects.get(pk=pk)
-    return Form.edit(auto__instance=instance, h_tag=admin_h1)
+    @classmethod
+    @class_shortcut(
+        form=EMPTY,
+    )
+    def create(cls, request, form, app_name, model_name, call_target=None, **kwargs):
+        model = apps.all_models[app_name][model_name]
 
+        form = setdefaults_path(
+            Namespace(),
+            form,
+            call_target__cls=cls.get_meta().form_class,
+            call_target__attribute='create',
+            auto__model=model,
+        )
 
-def create(request, app_name, model_name):
-    model = apps.all_models[app_name][model_name]
-    return Form.edit(auto__model=model, h_tag=admin_h1)
+        return call_target(
+            parts__form=form,
+            **kwargs,
+        )
 
+    @classmethod
+    @class_shortcut(
+        form=EMPTY,
+    )
+    def edit(cls, request, form, app_name, model_name, pk, call_target=None, **kwargs):
+        model = apps.all_models[app_name][model_name]
+        instance = model.objects.get(pk=pk)
 
-def delete(request, app_name, model_name, pk):
-    model = apps.all_models[app_name][model_name]
-    instance = model.objects.get(pk=pk)
-    return Form.delete(auto__instance=instance, h_tag=admin_h1)
+        form = setdefaults_path(
+            Namespace(),
+            form,
+            call_target__cls=cls.get_meta().form_class,
+            call_target__attribute='edit',
+            auto__instance=instance,
+        )
 
+        return call_target(
+            parts__form=form,
+            **kwargs,
+        )
 
-urls = Struct(
-    urlpatterns=[
-        url(r'^$', all_models),
-        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/$', list_model),
-        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/create/$', create),
-        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/edit/$', edit),
-        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/delete/$', delete),
-    ]
-)
+    @classmethod
+    @class_shortcut(
+        form=EMPTY,
+    )
+    def delete(cls, request, form, app_name, model_name, pk, call_target=None, **kwargs):
+        model = apps.all_models[app_name][model_name]
+        instance = model.objects.get(pk=pk)
+
+        form = setdefaults_path(
+            Namespace(),
+            form,
+            call_target__cls=cls.get_meta().form_class,
+            call_target__attribute='delete',
+            auto__instance=instance,
+        )
+
+        return call_target(
+            parts__form=form,
+            **kwargs,
+        )
+
+    @classmethod
+    def urls(cls):
+        return Struct(
+            urlpatterns=[
+                url(r'^$', cls.all_models),
+                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/$', cls.list),
+                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/create/$', cls.create),
+                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/edit/$', cls.edit),
+                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/delete/$', cls.delete),
+            ]
+        )
