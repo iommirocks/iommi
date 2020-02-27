@@ -67,7 +67,7 @@ def endpoint__debug_tree(endpoint, **_):
                 for k, v in declared_members(node).items()
             ]
         else:
-            assert False
+            return
 
         for k, v in children:
             yield from rows(v, name=k, path=path + [k])
