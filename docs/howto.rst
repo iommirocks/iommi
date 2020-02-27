@@ -601,7 +601,8 @@ You can manually set the rowspan attribute via `row__attrs__rowspan` but this is
         auto__model=Foo,
         columns__a__auto_rowspan=True,
     )
-    
+
+
 How do I enable bulk editing?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -613,11 +614,36 @@ editing. Enable it for a columns by passing `bulk__include=True`:
     Table(
         auto__model=Foo,
         columns__a__bulk__include=True,
+        columns__select__include=True,
     )
 
 The bulk namespace here is used to configure a `Field` for the GUI so you
 can pass any parameter you can pass to `Field` there to customize the
-behavior and look of the bulk editing for the column. 
+behavior and look of the bulk editing for the column.
+
+You also need to enable the select column, otherwise you can't select
+the columns you want to bulk edit.
+
+
+How do I enable bulk delete?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Editing multiple items at a time is easy in iommi with the built in bulk
+editing. Enable it for a columns by passing `bulk__include=True`:
+
+.. code:: python
+
+    Table(
+        auto__model=Foo,
+        actions__delete__include=True
+        columns__select__include=True,
+    )
+
+To enable the bulk delete, enable the `delete` action.
+
+You also need to enable the select column, otherwise you can't select
+the columns you want to delete.
+
 
 How do I make a freetext search field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
