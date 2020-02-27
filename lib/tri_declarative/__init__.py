@@ -468,8 +468,9 @@ class Namespace(Struct):
                 call_target.pop('cls', None)
             else:
                 # The default
-                if 'attribute' in call_target:
-                    call_target = getattr(call_target.cls, call_target.attribute)
+                attribute = call_target.get('attribute', None)
+                if attribute is not None:
+                    call_target = getattr(call_target.cls, attribute)
                 else:
                     call_target = call_target.cls
 
