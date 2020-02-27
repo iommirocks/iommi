@@ -30,7 +30,7 @@ def with_meta(class_to_decorate=None, add_init_kwargs=True):
         def get_extra_args_function(self):
             return {k: v for k, v in self.get_meta().items() if not k.startswith('_')}
 
-        add_args_to_init_call(class_to_decorate, get_extra_args_function)
+        add_args_to_init_call(class_to_decorate, get_extra_args_function, True)
 
     setattr(class_to_decorate, 'get_meta', classmethod(get_meta))
 
@@ -173,7 +173,7 @@ def get_declared(cls, parameter='members'):
     return getattr(cls, '_declarative_' + parameter, {})
 
 
-def add_args_to_init_call(cls, get_extra_args_function):
+def add_args_to_init_call(cls, get_extra_args_function, merge_namespaces=False):
     __init__orig = getattr(cls, '__init__')
 
     pos_arg_names = getattr(__init__orig, 'pos_arg_names', None)
@@ -184,7 +184,7 @@ def add_args_to_init_call(cls, get_extra_args_function):
     @functools.wraps(__init__orig, assigned=['__doc__'])
     def argument_injector_wrapper(self, *args, **kwargs):
         extra_kwargs = get_extra_args_function(self)
-        new_args, new_kwargs = inject_args(args, kwargs, extra_kwargs, pos_arg_names)
+        new_args, new_kwargs = inject_args(args, kwargs, extra_kwargs, pos_arg_names, merge_namespaces)
         __init__orig(self, *new_args, **new_kwargs)
 
     argument_injector_wrapper.pos_arg_names = pos_arg_names
@@ -203,7 +203,7 @@ def add_init_call_hook(cls, init_hook):
     setattr(cls, '__init__', init_hook_wrapper)
 
 
-def inject_args(args, kwargs, extra_args, pos_arg_names):
+def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
     new_kwargs = dict(extra_args)
     if pos_arg_names:
         if len(args) > len(pos_arg_names):
@@ -214,7 +214,7 @@ def inject_args(args, kwargs, extra_args, pos_arg_names):
         new_args = args
 
     for k, v in kwargs.items():
-        if isinstance(new_kwargs.get(k, None), Namespace):
+        if merge_namespaces and isinstance(new_kwargs.get(k, None), Namespace):
             new_kwargs[k] = Namespace(new_kwargs[k], v)
         else:
             new_kwargs[k] = v
