@@ -72,7 +72,6 @@ class Admin(Page):
         )
 
         return call_target(
-            title='Admin',
             parts__title=html.h2('All models'),
             parts__table=table(),
             **kwargs
@@ -81,7 +80,6 @@ class Admin(Page):
     @classmethod
     @class_shortcut(
         app=EMPTY,
-        auto=EMPTY,
         table=EMPTY,
     )
     def list(cls, request, app_name, model_name, app, table, call_target=None, **kwargs):
@@ -115,21 +113,18 @@ class Admin(Page):
             ),
             query_from_indexes=True,
             bulk__actions__delete__include=True,
-        )
-
-        kwargs = setdefaults_path(
-            Namespace(),
-            kwargs,
-            app.get(app_name, {}).get(model_name, {}),
-            table=table,
             **{
-                'table__columns__' + field.name + '__bulk__include': True
+                'columns__' + field.name + '__bulk__include': True
                 for field in get_fields(model)
                 if not getattr(field, 'unique', False)
-            }
+            },
         )
 
-        return call_target(parts=kwargs)
+        return call_target(
+            parts__table=table,
+            **app.get(app_name, {}).get(model_name, {}),
+            **kwargs,
+        )
 
     @classmethod
     @class_shortcut(
