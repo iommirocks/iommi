@@ -78,15 +78,15 @@ def test_evaluate_attrs_show_debug_paths():
 
 
 def test_render_simple_tag():
-    assert html.a('bar', attrs__href='foo').__html__() == '<a href="foo">bar</a>'
+    assert html.a('bar', attrs__href='foo').bind(parent=None).__html__() == '<a href="foo">bar</a>'
 
 
 def test_render_empty_tag():
-    assert html.br().__html__() == '<br>'
+    assert html.br().bind(parent=None).__html__() == '<br>'
 
 
 def test_fragment():
-    foo = html.h1('asd')
+    foo = html.h1('asd').bind(parent=None)
     assert foo.__html__() == '<h1>asd</h1>'
 
 

@@ -141,8 +141,15 @@ test = Style(
     Column=dict(
         shortcuts__number__cell__attrs__class__rj=True,
     ),
-    Paginator = dict(
+    Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
+    ),
+    MenuBase=dict(
+        tag='ul',
+    ),
+    MenuItem=dict(
+        tag='li',
+        a__attrs__class={'link': True},
     ),
 )
 

@@ -40,6 +40,8 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
+    Traversable,
+    evaluate_strict_container,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
@@ -124,7 +126,7 @@ class Fragment(Part):
         if text is not None:
             children = dict(text=text, **children)
 
-        self.children = children
+        collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):
         return format_html(
@@ -138,16 +140,23 @@ class Fragment(Part):
         return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
 
     def on_bind(self) -> None:
-        self.children = {
-            k: evaluate_strict(v, **self._evaluate_parameters)
-            for k, v in self.children.items()
-        }
+        bind_members(self, name='children', unknown_types_fall_through=True)
+
+        # Fragment children are special and they can be raw str/int etc but
+        # also callables. We need to evaluate them!
+        self.children = evaluate_strict_container(self.children, **self._evaluate_parameters)
+        self._bound_members.children._bound_members = self.children
+
 
     @dispatch(
         context=EMPTY,
         render=fragment__render,
     )
     def __html__(self, *, context=None, render=None):
+        context = {
+            **self._evaluate_parameters,
+            **context
+        }
         return render(fragment=self, context=context)
 
     def own_evaluate_parameters(self):

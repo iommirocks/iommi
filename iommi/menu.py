@@ -14,6 +14,8 @@ from tri_declarative import (
     EMPTY,
     Refinable,
     with_meta,
+    setdefaults_path,
+    Namespace,
 )
 from tri_struct import Struct
 
@@ -43,6 +45,7 @@ class MenuBase(Part):
     )
     def __init__(self, sub_menu, _sub_menu_dict=None, **kwargs):
         super(MenuBase, self).__init__(**kwargs)
+        self._active = False
 
         collect_members(
             self,
@@ -102,21 +105,37 @@ class MenuItem(MenuBase):
         if not self.url and not self.sub_menu:
             self.include = False
 
-        self.a = Fragment(
-            self.display_name,
-            attrs__href=self.url,
-            **self.a,
-        ).bind(parent=self)
-        self.fragment = Fragment(
+    def own_evaluate_parameters(self):
+        return dict(menu_item=self)
+
+    def __html__(self, *, context=None, render=None):
+        a = setdefaults_path(
+            Namespace(),
             self.a,
+            children__text=self.display_name,
+            attrs__href=self.url,
+            _name='a',
+        )
+        if self._active:
+            setdefaults_path(
+                a,
+                attrs__class__active=True,
+            )
+
+        fragment = Fragment(
+            children__a=a,
             tag=self.tag,
             template=self.template,
             attrs=self.attrs,
-            children=self.sub_menu,
-        ).bind(parent=self)
+            _name='fragment',
+        )
+        fragment = fragment.bind(parent=self)
+        # need to do this here because otherwise the sub menu will get get double bind
+        for name, item in self.sub_menu.items():
+            assert name not in self.fragment.children
+            fragment.children[name] = item
 
-    def __html__(self, *, context=None, render=None):
-        return self.fragment.__html__()
+        return fragment.__html__()
 
 
 class MenuException(Exception):
@@ -164,8 +183,11 @@ class Menu(MenuBase):
             tag=self.tag,
             template=self.template,
             attrs=self.attrs,
-            children=self.sub_menu,
         ).bind(parent=self)
+        # need to do this here because otherwise the sub menu will get get double bind
+        for name, item in self.sub_menu.items():
+            assert name not in self.fragment.children
+            self.fragment.children[name] = item
 
     def validate_and_set_active(self, current_path: str):
 
@@ -202,5 +224,4 @@ class Menu(MenuBase):
                     current_parts_matching = matching_parts
 
         if current:
-            current[0].a.attrs.setdefault('class', {})
-            current[0].a.attrs['class']['active'] = True
+            current[0]._active = True

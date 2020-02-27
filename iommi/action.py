@@ -86,7 +86,7 @@ class Action(Part):
                     attrs = copy(attrs)
                     attrs.value = self.display_name
                 display_name = None
-            return Fragment(display_name, tag=self.tag, attrs=attrs).__html__()
+            return Fragment(display_name, tag=self.tag, attrs=attrs).bind(parent=self).__html__()
 
     @classmethod
     @class_shortcut(

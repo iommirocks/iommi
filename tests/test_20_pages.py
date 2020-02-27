@@ -62,8 +62,8 @@ def test_page_render():
 
 
 def test_fragment__render__simple_cases():
-    assert format_html('{}', html.h1('foo')) == '<h1>foo</h1>'
-    assert format_html('{}', Fragment('foo<foo>')) == 'foo&lt;foo&gt;'
+    assert format_html('{}', html.h1('foo').bind(parent=None)) == '<h1>foo</h1>'
+    assert format_html('{}', Fragment('foo<foo>').bind(parent=None)) == 'foo&lt;foo&gt;'
 
 
 def test_fragment_repr():

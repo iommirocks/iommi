@@ -725,7 +725,7 @@ class BoundRow(Traversable):
             context = dict(bound_row=self, row=self.row, **self._parent.context)
             return render_template(self._parent.get_request(), self.template, context)
 
-        return Fragment(tag=self.tag, attrs=self.attrs, text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))).__html__()
+        return Fragment(tag=self.tag, attrs=self.attrs, text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))).bind(parent=self).__html__()
 
     def __str__(self):
         return self.__html__()
@@ -765,19 +765,22 @@ class BoundCell(CellConfig):
         super(BoundCell, self).__init__(**kwargs)
         self._name = 'cell'
         self._parent = bound_row
+        self._is_bound = True
+        self.iommi_style = None
+        self._unapplied_config = {}
 
         self.column = column
         self.bound_row = bound_row
         self.table = bound_row._parent
         self.row = bound_row.row
 
-        evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
+        self._evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
 
-        self.value = evaluate_strict(self.value, **evaluate_parameters)
-        evaluate_parameters['value'] = self.value
-        self.url = evaluate_strict(self.url, **evaluate_parameters)
-        self.attrs = evaluate_attrs(self, **evaluate_parameters)
-        self.url_title = evaluate_strict(self.url_title, **evaluate_parameters)
+        self.value = evaluate_strict(self.value, **self._evaluate_parameters)
+        self._evaluate_parameters['value'] = self.value
+        self.url = evaluate_strict(self.url, **self._evaluate_parameters)
+        self.attrs = evaluate_attrs(self, **self._evaluate_parameters)
+        self.url_title = evaluate_strict(self.url_title, **self._evaluate_parameters)
 
     @property
     def iommi_dunder_path(self):
@@ -789,7 +792,7 @@ class BoundCell(CellConfig):
             context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
-        return Fragment(tag=self.tag, attrs=self.attrs, text=self.render_cell_contents()).__html__()
+        return Fragment(tag=self.tag, attrs=self.attrs, text=self.render_cell_contents()).bind(parent=self).__html__()
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
@@ -993,6 +996,7 @@ class Paginator(Traversable):
         self.paginator = django_paginator
         self.table: Table = table
         self.adjacent_pages = adjacent_pages
+        self._name = 'paginator'
 
         request = self.table.get_request()
         self.page_param_path = path_join(self.table.iommi_path, 'page')
