@@ -62,7 +62,7 @@ from iommi._web_compat import (
     format_html,
     mark_safe,
     render_template,
-    smart_text,
+    smart_str,
     Template,
 )
 from iommi.action import (
@@ -1137,7 +1137,7 @@ def endpoint__csv(table, **_):
     response = FileResponse(f.getvalue(), 'text/csv')
 
     # RFC 2183, RFC 2184
-    response['Content-Disposition'] = smart_text("attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename)))
+    response['Content-Disposition'] = smart_str("attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename)))
     response['Last-Modified'] = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
     return response
 

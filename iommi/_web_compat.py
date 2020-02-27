@@ -182,6 +182,3 @@ except ImportError:  # pragma: no cover This flask support is a work in progress
 
     def mark_safe(s):
         return Markup(s)
-
-
-smart_text = smart_str
