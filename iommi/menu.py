@@ -232,3 +232,17 @@ class Menu(MenuBase):
 
         if current:
             current[0]._active = True
+
+
+class DebugMenu(Menu):
+    code = MenuItem()
+    tree = MenuItem(url='?/debug_tree')
+
+    class Meta:
+        attrs__style = {
+            'float': 'right',
+            'padding-left': '20px',
+        }
+        attrs__class = {
+            'flex-column': False,
+        }

@@ -249,6 +249,13 @@ bootstrap_base = Style(
     Errors=dict(
         attrs__class={'text-danger': True},
     ),
+    DebugMenu=dict(
+        attrs__class={
+            'bg-primary': False,
+            'navbar': False,
+            'navbar-dark': False,
+        }
+    )
 )
 
 bootstrap = Style(
@@ -436,7 +443,10 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         Filter,
     )
     from iommi.table import Paginator
-    from iommi.menu import MenuBase
+    from iommi.menu import (
+        MenuBase,
+        DebugMenu,
+    )
     from iommi.error import Errors
     from iommi.action import Actions
     if default_classes is None:
@@ -444,6 +454,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Action,
             Actions,
             Column,
+            DebugMenu,
             Errors,
             Field,
             Form,

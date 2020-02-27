@@ -11,10 +11,10 @@ from tri_struct import Struct
 from iommi._web_compat import Template
 from iommi.member import Members
 from iommi.traversable import (
+    bound_members,
+    declared_members,
     PathNotFoundException,
     Traversable,
-    declared_members,
-    bound_members,
 )
 
 
@@ -158,19 +158,5 @@ def iommi_debug_panel(part):
     if not source_url:
         return ''
 
-    from iommi import Menu, MenuItem
-
-    class DebugMenu(Menu):
-        code = MenuItem(url=source_url)
-        tree = MenuItem(url='?/debug_tree')
-
-        class Meta:
-            attrs__style = {
-                'float': 'right',
-                'padding-left': '20px',
-            }
-            attrs__class = {
-                'flex-column': False,
-            }
-
-    return DebugMenu().bind(request=part.get_request()).__html__()
+    from iommi.menu import DebugMenu
+    return DebugMenu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__()

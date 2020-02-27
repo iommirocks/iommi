@@ -21,7 +21,6 @@ from iommi import (
     Page,
     Table,
 )
-from iommi.admin import admin
 from iommi.form import (
     choice_parse,
     Field,
@@ -448,24 +447,6 @@ def all_column_sorts(request):
                 for t in selected_shortcuts
             })
     ))
-
-
-def iommi_admin(request, **kwargs):
-    del request
-    return admin(
-        all_models__app__sessions__session__include=False,
-        list_model__app__auth__user__table__columns=dict(
-            # groups__query=dict(include=True, field__include=True),
-            # email__call_target__attribute='freetext_search',
-            # username__call_target__attribute='freetext_search',
-            username__filter__freetext=True,
-            username__filter__include=True,
-            # first__call_target__attribute='freetext',
-            # last__call_target__attribute='freetext',
-            password__include=False,
-        ),
-        **kwargs,
-    )
 
 
 BASE_TEMPLATE_BY_STYLE = defaultdict(lambda: 'base.html')

@@ -1,8 +1,11 @@
 from django.conf import settings
 from django.conf.urls import url
 from django.conf.urls.static import static
+from django.urls import include
+
 import examples.views as views
 from iommi import (
+    admin,
     Table,
     Form,
 )
@@ -38,7 +41,7 @@ urlpatterns = [
     url(r'^all_field_sorts/$', views.all_field_sorts, name='all_field_sorts'),
     url(r'^all_column_sorts/$', views.all_column_sorts, name='all_column_sorts'),
 
-    url(r'^iommi-admin/(?P<app_name>\w+)?/?(?P<model_name>\w+)?/?(?P<pk>\d+)?/?(?P<command>\w+)?/?', views.iommi_admin, name='iommi-admin'),
+    url(r'^iommi-admin/', include(admin.urls)),
 
     url(r'^menu_test/$', views.menu_test, name='menu_test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

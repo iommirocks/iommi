@@ -1,4 +1,5 @@
 from django.apps import apps
+from django.conf.urls import url
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -27,15 +28,14 @@ app_and_name_by_model = {
     for k, v in model_by_app_and_name.items()
 }
 
-# TODO: replace this with a proper Menu
-admin_h1 = html.h1(html.a('Admin', attrs__href='/iommi-admin/'), after=0)
+admin_h1 = html.h1(html.a('Admin', attrs__href='/iommi-admin/'), after=0, _name='admin_h1')
 
 
 @dispatch(
     app=EMPTY,
-    table=EMPTY,
+    table__call_target__cls=Table,
 )
-def all_models(app, table, **kwargs):
+def all_models(request, app, table, **kwargs):
     column_cls = table.call_target.cls.get_meta().member_class
 
     def app_data():
@@ -66,9 +66,11 @@ def all_models(app, table, **kwargs):
 @dispatch(
     app=EMPTY,
     table__call_target__cls=Table,
+    auto=EMPTY,
 )
-def list_model(app, table, auto):
-    model = auto.pop('model')
+def list_model(request, app_name, model_name, app, table, auto):
+    model = apps.all_models[app_name][model_name]
+
     app_name, model_name = app_and_name_by_model[model]
     kwargs = setdefaults_path(
         Namespace(),
@@ -89,6 +91,7 @@ def list_model(app, table, auto):
         ),
         table__query_from_indexes=True,
         table__bulk__actions__delete__include=True,
+        table__h_tag=admin_h1,
     )
     for field in get_fields(model):
         if getattr(field, 'unique', False):
@@ -98,61 +101,32 @@ def list_model(app, table, auto):
             **{'table__columns__' + field.name + '__bulk__include': True},
         )
 
-    return Page(
-        parts__table=kwargs.table(title=f'{model._meta.verbose_name}'),
-        parts__header=admin_h1,
-    )
+    return kwargs.table(title=f'{model._meta.verbose_name}')
 
 
-@dispatch(
-    all_models__call_target=all_models,
-    list_model__call_target=list_model,
-    create_object__call_target__attribute='create',
-    delete_object__call_target__attribute='delete',
-    edit_object__call_target__attribute='edit',
-    table__call_target__cls=Table,
-    form__call_target__cls=Form,
-    app_name=None,
-    model_name=None,
-    pk=None,
-    command=None,
-)
-def admin(app_name, model_name, pk, command, all_models, list_model, create_object, edit_object, delete_object, table, form):
-
-    def check_kwargs(kw):
-        if not kw:
-            return
-
-        for app_name, model_names in kw.items():
-            assert app_name in apps.all_models
-            for model_name in model_names:
-                assert (app_name, model_name) in model_by_app_and_name, f"You supplied a config for {app_name, model_name}, but it doesn't exist!"
-
-    check_kwargs(all_models.get('app'))
-    check_kwargs(list_model.get('app'))
-    check_kwargs(create_object.get('app'))
-    check_kwargs(edit_object.get('app'))
-    check_kwargs(delete_object.get('app'))
-
-    if app_name is None and model_name is None:
-        return all_models(table=table)
-
+def edit(request, app_name, model_name, pk):
     model = apps.all_models[app_name][model_name]
-
-    if command is None:
-        assert pk is None
-        return list_model(auto__model=model, table=table)
-
-    if command == 'create':
-        assert pk is None
-        return Namespace(create_object, form)(auto__model=model)
-
     instance = model.objects.get(pk=pk)
+    return Form.edit(auto__instance=instance, h_tag=admin_h1)
 
-    if command == 'edit':
-        return Namespace(edit_object, form)(auto__instance=instance)
 
-    if command == 'delete':
-        return Namespace(delete_object, form)(auto__instance=instance)
+def create(request, app_name, model_name):
+    model = apps.all_models[app_name][model_name]
+    return Form.edit(auto__model=model, h_tag=admin_h1)
 
-    assert False, 'unknown command %s' % command
+
+def delete(request, app_name, model_name, pk):
+    model = apps.all_models[app_name][model_name]
+    instance = model.objects.get(pk=pk)
+    return Form.delete(auto__instance=instance, h_tag=admin_h1)
+
+
+urls = Struct(
+    urlpatterns=[
+        url(r'^$', all_models),
+        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/$', list_model),
+        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/create/$', create),
+        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/edit/$', edit),
+        url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/delete/$', delete),
+    ]
+)
