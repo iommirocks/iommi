@@ -1295,8 +1295,6 @@ class Form(Part):
         auto=EMPTY,
     )
     def crud(cls, call_target, **kwargs):
-        # if title is None:
-        #     title = '%s %s' % ('Create' if extra.is_create else 'Save', model._meta.verbose_name.replace('_', ' '))
         return call_target(**kwargs)
 
     @classmethod

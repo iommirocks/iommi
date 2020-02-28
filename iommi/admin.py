@@ -130,14 +130,16 @@ class Admin(Page):
     @class_shortcut(
         form=EMPTY,
     )
-    def create(cls, request, form, app_name, model_name, call_target=None, **kwargs):
+    def crud(cls, request, form, app_name, model_name, pk=None, call_target=None, **kwargs):
+        del request
         model = apps.all_models[app_name][model_name]
+        instance = model.objects.get(pk=pk) if pk is not None else None
 
         form = setdefaults_path(
             Namespace(),
             form,
             call_target__cls=cls.get_meta().form_class,
-            call_target__attribute='create',
+            auto__instance=instance,
             auto__model=model,
         )
 
@@ -148,45 +150,27 @@ class Admin(Page):
 
     @classmethod
     @class_shortcut(
-        form=EMPTY,
+        call_target__attribute='crud',
+        form__call_target__attribute='create',
     )
-    def edit(cls, request, form, app_name, model_name, pk, call_target=None, **kwargs):
-        model = apps.all_models[app_name][model_name]
-        instance = model.objects.get(pk=pk)
-
-        form = setdefaults_path(
-            Namespace(),
-            form,
-            call_target__cls=cls.get_meta().form_class,
-            call_target__attribute='edit',
-            auto__instance=instance,
-        )
-
-        return call_target(
-            parts__form=form,
-            **kwargs,
-        )
+    def create(cls, request, call_target, **kwargs):
+        return call_target(request=request, **kwargs)
 
     @classmethod
     @class_shortcut(
-        form=EMPTY,
+        call_target__attribute='crud',
+        form__call_target__attribute='edit',
     )
-    def delete(cls, request, form, app_name, model_name, pk, call_target=None, **kwargs):
-        model = apps.all_models[app_name][model_name]
-        instance = model.objects.get(pk=pk)
+    def edit(cls, request, call_target, **kwargs):
+        return call_target(request=request, **kwargs)
 
-        form = setdefaults_path(
-            Namespace(),
-            form,
-            call_target__cls=cls.get_meta().form_class,
-            call_target__attribute='delete',
-            auto__instance=instance,
-        )
-
-        return call_target(
-            parts__form=form,
-            **kwargs,
-        )
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='crud',
+        form__call_target__attribute='delete',
+    )
+    def delete(cls, request, call_target, **kwargs):
+        return call_target(request=request, **kwargs)
 
     @classmethod
     def urls(cls):
