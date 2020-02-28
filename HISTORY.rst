@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+5.2.0 (----------)
+------------------
+
+* The namespace merge is narrowed to only affect the @with_meta case.
+
+* Handle calling `Namespace` with `call_target__attribute=None`
+
+
 5.1.1 (2020-02-11)
 ------------------
 
