@@ -36,6 +36,6 @@ class Errors(set):
             template=self.template,
             children={
                 f'error_{i}': Fragment(error, tag='li')
-                for i, error in enumerate(self)
+                for i, error in enumerate(sorted(self))
             },
         ).bind(parent=self._parent).__html__()
