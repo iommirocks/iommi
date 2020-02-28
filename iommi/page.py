@@ -137,7 +137,7 @@ class Fragment(Part):
             ])
 
     def __repr__(self):
-        return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs)!r}>'
+        return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs) if self.attrs else None!r}>'
 
     def on_bind(self) -> None:
         bind_members(self, name='children', unknown_types_fall_through=True)
@@ -146,7 +146,6 @@ class Fragment(Part):
         # also callables. We need to evaluate them!
         self.children = evaluate_strict_container(self.children, **self._evaluate_parameters)
         self._bound_members.children._bound_members = self.children
-
 
     @dispatch(
         context=EMPTY,
@@ -196,7 +195,7 @@ class Page(Part):
 
         # First we have to up sample parts that aren't Part into Fragment
         def as_fragment_if_needed(k, v):
-            if not isinstance(v, Part):
+            if not isinstance(v, (dict, Traversable)):
                 return Fragment(v, _name=k)
             else:
                 return v

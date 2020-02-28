@@ -26,7 +26,7 @@ class Basket(Traversable):
     @dispatch
     def __init__(self, fruits=None, fruits_dict=None):
         super(Basket, self).__init__()
-        collect_members(parent=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit)
+        collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit)
 
     def on_bind(self):
         bind_members(parent=self, name='fruits')
@@ -121,3 +121,32 @@ def test_inclusion():
     ).bind()
 
     assert list(basket.fruits.keys()) == ['pear']
+
+
+def test_unapplied_config_does_not_remember_simple():
+    from iommi import Page
+    from iommi import html
+
+    class Admin(Page):
+        header = html.a('Admin')
+
+    a = Admin(parts__header__attrs__href='#foo#').bind()
+    b = Admin().bind()
+    assert '#foo#' in a.__html__()
+    assert '#foo#' not in b.__html__()
+
+
+@pytest.mark.skip("Currently b0rken")
+def test_unapplied_config_does_not_remember():
+    from iommi import Page
+    from iommi import html
+
+    class Admin(Page):
+        header = html.h1(children__link=html.a('Admin'))
+
+    a = Admin(parts__header__children__link__attrs__href='#foo#').bind()
+    b = Admin().bind()
+    assert Admin.header._unapplied_config == {}
+    assert b.parts.header._unapplied_config == {}
+    assert '#foo#' in a.__html__()
+    assert '#foo#' not in b.__html__()

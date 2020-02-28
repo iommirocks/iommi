@@ -26,7 +26,7 @@ class ForbiddenNamesException(Exception):
     pass
 
 
-def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
+def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
     forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
@@ -61,10 +61,9 @@ def collect_members(parent, *, name: str, items_dict: Dict = None, items: Dict[s
                 assert unknown_types_fall_through, f'I got {type(item)}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
-    if _unapplied_config:
-        parent._unapplied_config[name] = _unapplied_config
+    container._unapplied_config[name] = _unapplied_config
 
-    set_declared_member(parent, name, unbound_items)
+    set_declared_member(container, name, unbound_items)
 
 
 class Members(Traversable):

@@ -34,7 +34,6 @@ app_and_name_by_model = {
 }
 
 
-@with_meta
 class Admin(Page):
 
     class Meta:
@@ -44,7 +43,7 @@ class Admin(Page):
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
-    header = html.h1(html.a('Admin', attrs__href='/iommi-admin/'), after=0)
+    header = html.h1(children__link=html.a('Admin'), after=0)
 
     @classmethod
     @class_shortcut(
@@ -73,7 +72,7 @@ class Admin(Page):
 
         return call_target(
             parts__title=html.h2('All models'),
-            parts__table=table(),
+            parts__table=table,
             **kwargs
         )
 
@@ -122,6 +121,7 @@ class Admin(Page):
 
         return call_target(
             parts__table=table,
+            parts__header__children__link__attrs__href='../..',
             **app.get(app_name, {}).get(model_name, {}),
             **kwargs,
         )
