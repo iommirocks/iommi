@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.2.0 (----------)
+5.2.0 (2020-02-28)
 ------------------
 
 * The namespace merge is narrowed to only affect the @with_meta case.
