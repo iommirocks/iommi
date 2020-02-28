@@ -1,4 +1,7 @@
-from copy import copy
+from copy import (
+    copy,
+    deepcopy,
+)
 from typing import (
     Any,
     Dict,
@@ -7,17 +10,20 @@ from typing import (
 
 from tri_declarative import (
     dispatch,
+    flatten,
     Namespace,
+    RefinableObject,
     setdefaults_path,
 )
 from tri_struct import Struct
 
-from iommi.traversable import (
-    Traversable,
-    set_declared_member,
-    declared_members,
-)
 from iommi.sort_after import sort_after
+from iommi.traversable import (
+    declared_members,
+    set_declared_member,
+    Traversable,
+    dispatch2,
+)
 
 FORBIDDEN_NAMES = {x for x in dir(Traversable)}
 
@@ -61,7 +67,9 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                 assert unknown_types_fall_through, f'I got {type(item)}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
-    container._unapplied_config[name] = _unapplied_config
+    for k, v in Namespace(_unapplied_config).items():
+        unbound_items[k] = unbound_items[k].copy(v)
+        assert unbound_items[k]._name is not None
 
     set_declared_member(container, name, unbound_items)
 
@@ -71,7 +79,7 @@ class Members(Traversable):
     Internal iommi class that holds members of another class, for example the columns of a `Table` instance.
     """
 
-    @dispatch
+    @dispatch2
     def __init__(self, *, _declared_members, unknown_types_fall_through, **kwargs):
         super(Members, self).__init__(**kwargs)
         self._declared_members = _declared_members

@@ -11,6 +11,7 @@ from iommi.traversable import (
     get_path_by_long_path,
     Traversable,
     bound_members,
+    dispatch2,
 )
 
 DISPATCH_PATH_SEPARATOR = '/'
@@ -43,7 +44,7 @@ class Endpoint(Traversable):
     func: Callable = Refinable()
     include: bool = EvaluatedRefinable()
 
-    @dispatch(
+    @dispatch2(
         name=None,
         func=None,
         include=True,
@@ -115,8 +116,7 @@ def perform_post_dispatch(*, root, path, value):
     return target.post_handler(value=value, **target._evaluate_parameters)
 
 
-def path_join(prefix, name, separator=DISPATCH_PATH_SEPARATOR) -> str:
+def path_join(prefix, *args, separator=DISPATCH_PATH_SEPARATOR) -> str:
     if not prefix:
-        return name
-    else:
-        return prefix + separator + name
+        return separator.join(args)
+    return separator.join((prefix,) + args)

@@ -83,6 +83,7 @@ from iommi.part import (
 from iommi.traversable import (
     EvaluatedRefinable,
     bound_members,
+    dispatch2,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -414,7 +415,7 @@ class Field(Part):
     empty_label: str = EvaluatedRefinable()
     empty_choice_tuple = EvaluatedRefinable()
 
-    @dispatch(
+    @dispatch2(
         attr=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
@@ -772,7 +773,7 @@ class Field(Part):
         input__tag='textarea',
         input__attrs__type=None,
         input__attrs__value=None,
-        input__text=lambda field, **_: field.rendered_value,
+        input__children__text=lambda field, **_: field.rendered_value,
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -1086,7 +1087,7 @@ class Form(Part):
         action_class = Action
         page_class = Page
 
-    @dispatch(
+    @dispatch2(
         model=None,
         editable=True,
         fields=EMPTY,

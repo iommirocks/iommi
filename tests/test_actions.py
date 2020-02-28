@@ -11,7 +11,10 @@ from iommi.member import (
     collect_members,
     bind_members,
 )
-from iommi.traversable import Traversable
+from iommi.traversable import (
+    Traversable,
+    dispatch2,
+)
 from tests.helpers import prettify
 
 
@@ -80,7 +83,7 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Traversable):
-        @dispatch
+        @dispatch2
         def __init__(self, actions):
             super(ThingWithActions, self).__init__()
             collect_members(self, name='actions', items=actions, cls=MyFancyAction)

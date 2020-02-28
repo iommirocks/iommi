@@ -28,7 +28,10 @@ from iommi.member import (
 )
 from iommi.page import Fragment
 from iommi.part import Part
-from iommi.traversable import EvaluatedRefinable
+from iommi.traversable import (
+    EvaluatedRefinable,
+    dispatch2,
+)
 
 
 class MenuBase(Part):
@@ -38,7 +41,7 @@ class MenuBase(Part):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @dispatch(
+    @dispatch2(
         sort=True,
         sub_menu=EMPTY,
         attrs=EMPTY,
@@ -87,7 +90,7 @@ class MenuItem(MenuBase):
     regex: str = EvaluatedRefinable()
     group: str = EvaluatedRefinable()
 
-    @dispatch(
+    @dispatch2(
         display_name=lambda menu_item, **_: menu_item._name.capitalize().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
@@ -166,7 +169,7 @@ class Menu(MenuBase):
     """
     items_container = Refinable()
 
-    @dispatch(
+    @dispatch2(
         sort=False,
         items_container=EMPTY,
     )

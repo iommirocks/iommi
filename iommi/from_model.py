@@ -20,6 +20,7 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import MISSING
+from iommi.traversable import dispatch2
 
 
 def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
@@ -189,6 +190,6 @@ class AutoConfig(RefinableObject):
     include = Refinable()
     exclude = Refinable()
 
-    @dispatch
+    @dispatch2
     def __init__(self, **kwargs):
         super(AutoConfig, self).__init__(**kwargs)

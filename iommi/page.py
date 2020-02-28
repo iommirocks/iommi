@@ -42,6 +42,7 @@ from iommi.traversable import (
     EvaluatedRefinable,
     Traversable,
     evaluate_strict_container,
+    dispatch2,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
@@ -116,13 +117,16 @@ class Fragment(Part):
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @dispatch(
+    @dispatch2(
         tag=None,
         children=EMPTY,
+        attrs__class=EMPTY,
+        attrs__style=EMPTY,  # TODO: we need to set this everywhere where we set attrs__class=EMPTY right?
     )
     def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
 
+        # TODO: this special case should be inside the Html builder
         if text is not None:
             children = dict(text=text, **children)
 
@@ -175,7 +179,7 @@ class Page(Part):
     class Meta:
         member_class = Fragment
 
-    @dispatch(
+    @dispatch2(
         parts=EMPTY,
         endpoints__debug_tree=Namespace(
             include=lambda endpoint, **_: iommi_debug_on(),

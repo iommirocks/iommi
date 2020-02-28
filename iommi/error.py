@@ -4,10 +4,11 @@ from tri_declarative import (
 )
 
 from iommi.style import apply_style
+from iommi.traversable import dispatch2
 
 
 class Errors(set):
-    @dispatch(
+    @dispatch2(
         attrs=EMPTY,
     )
     def __init__(self, *, parent, attrs, errors=None, template=None):

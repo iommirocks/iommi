@@ -84,6 +84,7 @@ from iommi.traversable import (
     declared_members,
     set_declared_member,
     bound_members,
+    dispatch2,
 )
 
 
@@ -202,7 +203,7 @@ class Filter(Part):
     name_field = Refinable()
     unary = Refinable()
 
-    @dispatch(
+    @dispatch2(
         query_operator_for_field='=',
         attr=MISSING,
         field=Namespace(
@@ -497,7 +498,7 @@ class Query(Part):
         member_class = Filter
         form_class = Form
 
-    @dispatch(
+    @dispatch2(
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,
         auto=EMPTY,

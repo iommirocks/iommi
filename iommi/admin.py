@@ -43,7 +43,7 @@ class Admin(Page):
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
-    header = html.h1(children__link=html.a('Admin'), after=0)
+    header = html.h1(children__link=html.a(children__text='Admin'), after=0)
 
     @classmethod
     @class_shortcut(
@@ -152,6 +152,7 @@ class Admin(Page):
     @class_shortcut(
         call_target__attribute='crud',
         form__call_target__attribute='create',
+        parts__header__children__link__attrs__href='../../..',
     )
     def create(cls, request, call_target, **kwargs):
         return call_target(request=request, **kwargs)
@@ -160,6 +161,7 @@ class Admin(Page):
     @class_shortcut(
         call_target__attribute='crud',
         form__call_target__attribute='edit',
+        parts__header__children__link__attrs__href='../../../..',
     )
     def edit(cls, request, call_target, **kwargs):
         return call_target(request=request, **kwargs)
@@ -168,6 +170,7 @@ class Admin(Page):
     @class_shortcut(
         call_target__attribute='crud',
         form__call_target__attribute='delete',
+        parts__header__children__link__attrs__href='../../../..',
     )
     def delete(cls, request, call_target, **kwargs):
         return call_target(request=request, **kwargs)

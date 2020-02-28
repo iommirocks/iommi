@@ -115,6 +115,7 @@ from iommi.traversable import (
     Traversable,
     declared_members,
     bound_members,
+    dispatch2,
 )
 
 LAST = LAST
@@ -280,7 +281,7 @@ class Column(Part):
     data_retrieval_method = EvaluatedRefinable()
     render_column: bool = EvaluatedRefinable()
 
-    @dispatch(
+    @dispatch2(
         attr=MISSING,
         sort_default_desc=False,
         sortable=lambda column, **_: column.attr is not None,
@@ -862,7 +863,7 @@ class RowConfig(RefinableObject):
 
 
 class Header(object):
-    @dispatch(
+    @dispatch2(
     )
     def __init__(self, *, display_name, attrs, template, table, url=None, column=None, number_of_columns_in_group=None, index_in_group=None):
         self.table = table
@@ -983,7 +984,7 @@ class Paginator(Traversable):
     item = Refinable()
     link = Refinable()
 
-    @dispatch(
+    @dispatch2(
         attrs=EMPTY,
         container__attrs=EMPTY,
         page__attrs=EMPTY,
@@ -1214,7 +1215,7 @@ class Table(Part):
     def post_bulk_edit(table, queryset, updates):
         pass
 
-    @dispatch(
+    @dispatch2(
         columns=EMPTY,
         bulk_filter={},
         bulk_exclude={},

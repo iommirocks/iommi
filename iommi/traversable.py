@@ -1,4 +1,5 @@
 import copy
+import functools
 from typing import (
     Any,
     Dict,
@@ -13,6 +14,7 @@ from tri_declarative import (
     Namespace,
     Refinable,
     RefinableObject,
+    getattr_path,
 )
 from tri_struct import Struct
 
@@ -33,6 +35,25 @@ class PathNotFoundException(Exception):
     pass
 
 
+def dispatch2(*function, **defaults):
+    def decorator(f):
+        @functools.wraps(f)
+        def dispatch_defaults_wrapper(self, *args, **kwargs):
+            # We only need to save the params on the first level
+            if not hasattr(self, '_iommi_saved_params'):
+                self._iommi_saved_params = kwargs
+            return f(self, *args, **Namespace(defaults, kwargs))
+
+        dispatch_defaults_wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
+        return dispatch_defaults_wrapper
+
+    if function:
+        assert len(function) == 1
+        return decorator(function[0])
+
+    return decorator
+
+
 class Traversable(RefinableObject):
     """
     Abstract API for objects that have a place in the iommi path structure.
@@ -50,7 +71,7 @@ class Traversable(RefinableObject):
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']
 
-    @dispatch
+    @dispatch2
     def __init__(self, _name=None, **kwargs):
         self._declared_members = Struct()
         self._unapplied_config = Struct()
@@ -89,6 +110,23 @@ class Traversable(RefinableObject):
     def iommi_dunder_path(self) -> str:
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
+
+    def copy(self, unapplied_config):
+        result = Namespace()
+
+        for k, v in self._iommi_saved_params.items():
+            try:
+                foo = getattr_path(unapplied_config, k)
+            except AttributeError:
+                result[k] = v
+            else:
+                result[k] = v.copy(foo)
+
+        r = type(self)(**Namespace(unapplied_config, result))
+        if '__tri_declarative_shortcut_stack' in self.__dict__:
+            r.__dict__['__tri_declarative_shortcut_stack'] = self.__dict__['__tri_declarative_shortcut_stack']
+        r._name = self._name
+        return r
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound

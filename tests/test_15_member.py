@@ -2,6 +2,7 @@ import pytest
 from tri_declarative import (
     declarative,
     dispatch,
+    Refinable,
 )
 
 from iommi.member import (
@@ -11,6 +12,7 @@ from iommi.member import (
 from iommi.traversable import (
     Traversable,
     declared_members,
+    dispatch2,
 )
 
 
@@ -23,7 +25,7 @@ class Fruit(Traversable):
 @declarative(Fruit, 'fruits_dict')
 class Basket(Traversable):
 
-    @dispatch
+    @dispatch2
     def __init__(self, fruits=None, fruits_dict=None):
         super(Basket, self).__init__()
         collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit)
@@ -54,7 +56,7 @@ def test_collect_unapplied_config():
         pear = Fruit()
 
     basket = MyBasket(fruits__pear__taste='meh')
-    assert basket._unapplied_config == dict(fruits=dict(pear=dict(taste='meh')))
+    assert basket._declared_members.fruits.pear.taste == 'meh'
 
 
 def test_empty_bind():
@@ -82,15 +84,15 @@ def test_bind_via_unapplied_config():
     basket = MyBasket(fruits__pear__taste='meh').bind()
     assert basket.fruits.pear.taste == 'meh'
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(TypeError) as e:
         MyBasket(fruits__pear__color='green').bind()
 
-    assert str(e.value) == 'Unable to set color on pear'
+    assert str(e.value) == "'Fruit' object has no refinable attribute(s): color.\nAvailable attributes:\n    iommi_style"
 
 
 def test_ordering():
     class OrderFruit(Fruit):
-        after = None
+        after = Refinable()
 
     class MyBasket(Basket):
         banana = OrderFruit()
@@ -128,15 +130,14 @@ def test_unapplied_config_does_not_remember_simple():
     from iommi import html
 
     class Admin(Page):
-        header = html.a('Admin')
+        link = html.a('Admin')
 
-    a = Admin(parts__header__attrs__href='#foo#').bind()
+    a = Admin(parts__link__attrs__href='#foo#').bind()
     b = Admin().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
 
 
-@pytest.mark.skip("Currently b0rken")
 def test_unapplied_config_does_not_remember():
     from iommi import Page
     from iommi import html
