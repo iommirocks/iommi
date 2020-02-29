@@ -228,6 +228,12 @@ Pass a template name or a `Template` object:
     form = Form(
         auto__model=Foo,
         fields__bar__template='my_template.html',
+    )
+
+.. code:: python
+
+    form = Form(
+        auto__model=Foo,
         fields__bar__template=Template('{{ field.attrs }}'),
     )
 
@@ -243,9 +249,14 @@ Pass a template name or a `Template` object to the `input` namespace:
     form = Form(
         auto__model=Foo,
         fields__bar__input__template='my_template.html',
-        fields__bar__input__template=Template('{{ field.attrs }}'),
     )
 
+.. code:: python
+
+    form = Form(
+        auto__model=Foo,
+        fields__bar__input__template=Template('{{ field.attrs }}'),
+    )
 
 Tables
 ------
