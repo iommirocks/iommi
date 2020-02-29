@@ -1276,8 +1276,8 @@ class Table(Part):
         if auto:
             auto = TableAutoConfig(**auto)
             assert not _columns_dict, "You can't have an auto generated Table AND a declarative Table at the same time"
-            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
-            assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+            orig_model = model
+            orig_rows = rows
 
             model, rows, columns = self._from_model(
                 model=auto.model,
@@ -1286,6 +1286,9 @@ class Table(Part):
                 include=auto.include,
                 exclude=auto.exclude,
             )
+            assert orig_model is None or orig_model == model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
+            assert orig_rows is None or orig_rows.model == rows.row, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+
             if title is None:
                 title = f'{model._meta.verbose_name_plural.title()}'
 
