@@ -26,6 +26,7 @@ from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
     get_parent,
+    reinvokable,
 )
 
 
@@ -69,6 +70,7 @@ class Action(Part):
     def is_target(self):
         return self.own_target_marker() in get_parent(get_parent(self))._request_data
 
+    @reinvokable
     @dispatch(
         context=EMPTY,
         render=EMPTY,

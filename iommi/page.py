@@ -179,6 +179,7 @@ class Page(Part):
     class Meta:
         member_class = Fragment
 
+    @reinvokable
     @dispatch(
         parts=EMPTY,
         endpoints__debug_tree=Namespace(

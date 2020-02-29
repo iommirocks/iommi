@@ -1088,6 +1088,7 @@ class Form(Part):
         action_class = Action
         page_class = Page
 
+    @reinvokable
     @dispatch(
         model=None,
         editable=True,

@@ -41,6 +41,7 @@ class MenuBase(Part):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
+    @reinvokable
     @dispatch(
         sort=True,
         sub_menu=EMPTY,
@@ -170,6 +171,7 @@ class Menu(MenuBase):
     """
     items_container = Refinable()
 
+    @reinvokable
     @dispatch(
         sort=False,
         items_container=EMPTY,

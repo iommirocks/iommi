@@ -499,6 +499,7 @@ class Query(Part):
         member_class = Filter
         form_class = Form
 
+    @reinvokable
     @dispatch(
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,

@@ -1217,6 +1217,7 @@ class Table(Part):
     def post_bulk_edit(table, queryset, updates):
         pass
 
+    @reinvokable
     @dispatch(
         columns=EMPTY,
         bulk_filter={},
