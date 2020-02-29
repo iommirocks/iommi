@@ -11,10 +11,10 @@ from tri_declarative import (
     dispatch,
     evaluate,
     evaluate_strict,
+    getattr_path,
     Namespace,
     Refinable,
     RefinableObject,
-    getattr_path,
 )
 from tri_struct import Struct
 
@@ -35,23 +35,14 @@ class PathNotFoundException(Exception):
     pass
 
 
-def dispatch2(*function, **defaults):
-    def decorator(f):
-        @functools.wraps(f)
-        def dispatch_defaults_wrapper(self, *args, **kwargs):
-            # We only need to save the params on the first level
-            if not hasattr(self, '_iommi_saved_params'):
-                self._iommi_saved_params = kwargs
-            return f(self, *args, **Namespace(defaults, kwargs))
-
-        dispatch_defaults_wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
-        return dispatch_defaults_wrapper
-
-    if function:
-        assert len(function) == 1
-        return decorator(function[0])
-
-    return decorator
+def reinvokable(f):
+    @functools.wraps(f)
+    def reinvokable_wrapper(self, *args, **kwargs):
+        # We only need to save the params on the first level
+        if not hasattr(self, '_iommi_saved_params'):
+            self._iommi_saved_params = kwargs
+        return f(self, *args, **kwargs)
+    return reinvokable_wrapper
 
 
 class Traversable(RefinableObject):
@@ -71,10 +62,9 @@ class Traversable(RefinableObject):
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']
 
-    @dispatch2
+    @dispatch
     def __init__(self, _name=None, **kwargs):
         self._declared_members = Struct()
-        self._unapplied_config = Struct()
         self._bound_members = Struct()
         self._evaluate_parameters = None
         self._name = _name
@@ -111,22 +101,25 @@ class Traversable(RefinableObject):
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
 
-    def copy(self, unapplied_config):
-        result = Namespace()
-
+    def reinvoke(self, additional_kwargs):
+        assert hasattr(self, '_iommi_saved_params'), f'reinvoke() called on class with missing @reinvokable decorator: {self.__class__.__name__}'
+        kwargs = {}
         for k, v in self._iommi_saved_params.items():
             try:
-                foo = getattr_path(unapplied_config, k)
+                kwargs[k] = v.reinvoke(getattr_path(additional_kwargs, k))
             except AttributeError:
-                result[k] = v
-            else:
-                result[k] = v.copy(foo)
+                kwargs[k] = v
 
-        r = type(self)(**Namespace(unapplied_config, result))
-        if '__tri_declarative_shortcut_stack' in self.__dict__:
-            r.__dict__['__tri_declarative_shortcut_stack'] = self.__dict__['__tri_declarative_shortcut_stack']
-        r._name = self._name
-        return r
+        additional_kwargs.pop('call_target', None)
+
+        result = type(self)(**Namespace(additional_kwargs, kwargs))
+
+        result._name = self._name
+        __tri_declarative_shortcut_stack = getattr(self, '__tri_declarative_shortcut_stack', None)
+        if __tri_declarative_shortcut_stack is not None:
+            setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
+
+        return result
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
@@ -160,23 +153,7 @@ class Traversable(RefinableObject):
 
         apply_style(result)
 
-        from iommi.member import Members
-        if parent is not None:
-            _unapplied_config = parent._unapplied_config.get(result._name, {})
-            for k, v in _unapplied_config.items():
-                if k == 'call_target':
-                    continue
-                if k in declared_members(result):
-                    result._unapplied_config[k] = v
-                    continue
-                # The Members class applies config itself, so this is for the rest of them
-                if not isinstance(result, Members):
-                    if hasattr(result, k):
-                        setattr(result, k, v)
-                        continue
-                    raise ValueError(f'Unable to set {k} on {result._name}')
-
-        # Unapplied config and styling has another chance of setting include to False
+        # Styling has another chance of setting include to False
         if include is not MISSING and result.include is False:
             return None
         result.include = True  # include can be the falsy MISSING. Set it to False

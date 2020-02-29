@@ -67,8 +67,8 @@ from iommi._web_compat import (
 )
 from iommi.action import (
     Action,
-    group_actions,
     Actions,
+    group_actions,
 )
 from iommi.attrs import (
     Attrs,
@@ -110,12 +110,13 @@ from iommi.query import (
     QueryException,
 )
 from iommi.traversable import (
+    bound_members,
+    declared_members,
     evaluate_member,
     EvaluatedRefinable,
+    reinvokable,
+    set_declared_member,
     Traversable,
-    declared_members,
-    bound_members,
-    dispatch2,
 )
 
 LAST = LAST
@@ -281,7 +282,8 @@ class Column(Part):
     data_retrieval_method = EvaluatedRefinable()
     render_column: bool = EvaluatedRefinable()
 
-    @dispatch2(
+    @reinvokable
+    @dispatch(
         attr=MISSING,
         sort_default_desc=False,
         sortable=lambda column, **_: column.attr is not None,
@@ -863,7 +865,7 @@ class RowConfig(RefinableObject):
 
 
 class Header(object):
-    @dispatch2(
+    @dispatch(
     )
     def __init__(self, *, display_name, attrs, template, table, url=None, column=None, number_of_columns_in_group=None, index_in_group=None):
         self.table = table
@@ -984,7 +986,7 @@ class Paginator(Traversable):
     item = Refinable()
     link = Refinable()
 
-    @dispatch2(
+    @dispatch(
         attrs=EMPTY,
         container__attrs=EMPTY,
         page__attrs=EMPTY,
@@ -1215,7 +1217,7 @@ class Table(Part):
     def post_bulk_edit(table, queryset, updates):
         pass
 
-    @dispatch2(
+    @dispatch(
         columns=EMPTY,
         bulk_filter={},
         bulk_exclude={},
@@ -1315,7 +1317,7 @@ class Table(Part):
 
         if self.model:
             # Query
-            declared_filters = Struct()
+            filters = Struct()
             for name, column in declared_members(self).columns.items():
                 filter = setdefaults_path(
                     Namespace(),
@@ -1334,10 +1336,10 @@ class Table(Part):
                     filter.include = True
                     filter.field.include = True
 
-                declared_filters[name] = filter()
+                filters[name] = filter()
 
             self.query = self.get_meta().query_class(
-                _filters_dict=declared_filters,
+                _filters_dict=filters,
                 _name='query',
                 **self.query_args
             )
@@ -1474,16 +1476,15 @@ class Table(Part):
         self._prepare_auto_rowspan()
 
     def _setup_bulk_form_and_query(self):
-        filters_unapplied_config = Struct()
+        declared_filters = declared_members(self.query)['filters']
         for name, column in self.columns.items():
-            filter = setdefaults_path(
-                Namespace(),
-                _name=name,
-                field__display_name=column.display_name,
-            )
-            filters_unapplied_config[name] = filter
+            if name in declared_filters:
+                filter = Namespace(
+                    field__display_name=column.display_name,
+                )
+                declared_filters[name] = declared_filters[name].reinvoke(filter)
+        set_declared_member(self.query, 'filters', declared_filters)
 
-        self.query._unapplied_config.filters = filters_unapplied_config
         self.query = self.query.bind(parent=self)
         self._bound_members.query = self.query
 
@@ -1496,18 +1497,17 @@ class Table(Part):
             if q:
                 self.rows = self.rows.filter(q)
 
-        bulk_fields_unapplied_config = Struct()
+        declared_fields = declared_members(self.bulk_form)['fields']
         for name, column in self.columns.items():
-            field = setdefaults_path(
-                Namespace(),
-                column.bulk,
-                _name=name,
-                include=column.bulk.include,
-                display_name=column.display_name,
-            )
-            bulk_fields_unapplied_config[name] = field
-
-        self.bulk_form._unapplied_config.fields = bulk_fields_unapplied_config
+            if name in declared_fields:
+                field = setdefaults_path(
+                    Namespace(),
+                    column.bulk,
+                    include=column.bulk.include,
+                    display_name=column.display_name,
+                )
+                declared_fields[name] = declared_fields[name].reinvoke(field)
+        set_declared_member(self.bulk_form, 'fields', declared_fields)
 
         self.bulk_form = self.bulk_form.bind(parent=self)
         if self.bulk_form.actions:

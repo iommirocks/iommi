@@ -10,13 +10,14 @@ from iommi.member import (
     collect_members,
 )
 from iommi.traversable import (
-    Traversable,
     declared_members,
-    dispatch2,
+    Traversable,
+    reinvokable,
 )
 
 
 class Fruit(Traversable):
+    @reinvokable
     def __init__(self, taste=None, **kwargs):
         super(Fruit, self).__init__(**kwargs)
         self.taste = taste
@@ -25,7 +26,7 @@ class Fruit(Traversable):
 @declarative(Fruit, 'fruits_dict')
 class Basket(Traversable):
 
-    @dispatch2
+    @dispatch
     def __init__(self, fruits=None, fruits_dict=None):
         super(Basket, self).__init__()
         collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit)
@@ -109,6 +110,7 @@ def test_ordering():
 
 def test_inclusion():
     class IncludableFruit(Fruit):
+        @reinvokable
         def __init__(self, include=True, **kwargs):
             super(IncludableFruit, self).__init__(**kwargs)
             self.include = include
@@ -147,7 +149,5 @@ def test_unapplied_config_does_not_remember():
 
     a = Admin(parts__header__children__link__attrs__href='#foo#').bind()
     b = Admin().bind()
-    assert Admin.header._unapplied_config == {}
-    assert b.parts.header._unapplied_config == {}
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()

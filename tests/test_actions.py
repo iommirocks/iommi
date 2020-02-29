@@ -1,19 +1,17 @@
 from tri_declarative import (
-    get_members,
-    Shortcut,
-    is_shortcut,
     dispatch,
-    Namespace,
+    get_members,
+    is_shortcut,
+    Shortcut,
 )
 
 from iommi import Action
 from iommi.member import (
-    collect_members,
     bind_members,
+    collect_members,
 )
 from iommi.traversable import (
     Traversable,
-    dispatch2,
 )
 from tests.helpers import prettify
 
@@ -83,7 +81,7 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Traversable):
-        @dispatch2
+        @dispatch
         def __init__(self, actions):
             super(ThingWithActions, self).__init__()
             collect_members(self, name='actions', items=actions, cls=MyFancyAction)

@@ -6,12 +6,11 @@ from tri_declarative import (
 )
 
 from iommi.traversable import (
+    bound_members,
     EvaluatedRefinable,
     get_long_path_by_path,
     get_path_by_long_path,
     Traversable,
-    bound_members,
-    dispatch2,
 )
 
 DISPATCH_PATH_SEPARATOR = '/'
@@ -44,7 +43,7 @@ class Endpoint(Traversable):
     func: Callable = Refinable()
     include: bool = EvaluatedRefinable()
 
-    @dispatch2(
+    @dispatch(
         name=None,
         func=None,
         include=True,

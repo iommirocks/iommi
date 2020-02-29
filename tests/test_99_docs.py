@@ -8,7 +8,6 @@ from tri_declarative import (
 )
 
 from iommi.docs import _generate_rst_docs
-from iommi.traversable import dispatch2
 
 
 def test_generate_docs():
@@ -25,7 +24,7 @@ def test_generate_docs():
         some_other_thing = Refinable()
         empty_string_default = Refinable()
 
-        @dispatch2(
+        @dispatch(
             name='foo-name',
             description=lambda foo, bar: 'qwe',
             some_other_thing=some_callable,
@@ -189,7 +188,7 @@ def test_generate_docs_description_and_params_in_constructor():
 
         name = Refinable()
 
-        @dispatch2
+        @dispatch
         def __init__(self, **kwargs):
             """
             __init__ description
@@ -225,7 +224,7 @@ def test_generate_docs_kill_obscure_mutant():
     class Foo(RefinableObject):
         name = Refinable()
 
-        @dispatch2(
+        @dispatch(
             # this is to handle that mutmut mutates strip(',') to strip('XX,XX')
             name=lambda X: X,
         )

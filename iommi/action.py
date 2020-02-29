@@ -26,7 +26,6 @@ from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
     get_parent,
-    dispatch2,
 )
 
 
@@ -56,7 +55,7 @@ class Action(Part):
     display_name: str = EvaluatedRefinable()
     post_handler: Callable = Refinable()
 
-    @dispatch2(
+    @dispatch(
         tag='a',
         display_name=lambda action, **_: action._name.capitalize().replace('_', ' '),
         attrs__class=EMPTY,
@@ -164,7 +163,7 @@ class Actions(Members):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = EvaluatedRefinable()
 
-    @dispatch2(
+    @dispatch(
         attrs__class=EMPTY,
     )
     def __init__(self, **kwargs):

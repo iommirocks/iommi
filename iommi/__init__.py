@@ -24,9 +24,9 @@ from iommi.page import (
 )
 from iommi.part import Part
 from iommi.query import (
+    Filter,
     Query,
     register_filter_factory,
-    Filter,
 )
 from iommi.style import register_style
 from iommi.table import (

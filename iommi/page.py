@@ -10,7 +10,6 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    evaluate_strict,
     Namespace,
     Refinable,
     with_meta,
@@ -39,10 +38,10 @@ from iommi.part import (
     PartType,
 )
 from iommi.traversable import (
-    EvaluatedRefinable,
-    Traversable,
     evaluate_strict_container,
-    dispatch2,
+    EvaluatedRefinable,
+    reinvokable,
+    Traversable,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
@@ -117,7 +116,8 @@ class Fragment(Part):
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @dispatch2(
+    @reinvokable
+    @dispatch(
         tag=None,
         children=EMPTY,
         attrs__class=EMPTY,
@@ -179,7 +179,7 @@ class Page(Part):
     class Meta:
         member_class = Fragment
 
-    @dispatch2(
+    @dispatch(
         parts=EMPTY,
         endpoints__debug_tree=Namespace(
             include=lambda endpoint, **_: iommi_debug_on(),

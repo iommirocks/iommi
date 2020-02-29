@@ -12,10 +12,10 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    Refinable,
-    with_meta,
-    setdefaults_path,
     Namespace,
+    Refinable,
+    setdefaults_path,
+    with_meta,
 )
 from tri_struct import Struct
 
@@ -30,7 +30,7 @@ from iommi.page import Fragment
 from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
-    dispatch2,
+    reinvokable,
 )
 
 
@@ -41,7 +41,7 @@ class MenuBase(Part):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @dispatch2(
+    @dispatch(
         sort=True,
         sub_menu=EMPTY,
         attrs=EMPTY,
@@ -90,7 +90,8 @@ class MenuItem(MenuBase):
     regex: str = EvaluatedRefinable()
     group: str = EvaluatedRefinable()
 
-    @dispatch2(
+    @reinvokable
+    @dispatch(
         display_name=lambda menu_item, **_: menu_item._name.capitalize().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
@@ -169,7 +170,7 @@ class Menu(MenuBase):
     """
     items_container = Refinable()
 
-    @dispatch2(
+    @dispatch(
         sort=False,
         items_container=EMPTY,
     )

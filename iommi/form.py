@@ -81,9 +81,9 @@ from iommi.part import (
     request_data,
 )
 from iommi.traversable import (
-    EvaluatedRefinable,
     bound_members,
-    dispatch2,
+    EvaluatedRefinable,
+    reinvokable,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -415,7 +415,8 @@ class Field(Part):
     empty_label: str = EvaluatedRefinable()
     empty_choice_tuple = EvaluatedRefinable()
 
-    @dispatch2(
+    @reinvokable
+    @dispatch(
         attr=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
@@ -1087,7 +1088,7 @@ class Form(Part):
         action_class = Action
         page_class = Page
 
-    @dispatch2(
+    @dispatch(
         model=None,
         editable=True,
         fields=EMPTY,

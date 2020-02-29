@@ -9,7 +9,6 @@ from tri_declarative import (
     Namespace,
     Refinable,
     setdefaults_path,
-    with_meta,
 )
 from tri_struct import Struct
 
@@ -20,7 +19,6 @@ from iommi import (
     Table,
 )
 from iommi.from_model import get_fields
-
 
 model_by_app_and_name = {
     (app_name, model_name): model

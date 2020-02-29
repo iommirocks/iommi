@@ -80,11 +80,11 @@ from iommi.part import (
     request_data,
 )
 from iommi.traversable import (
-    EvaluatedRefinable,
-    declared_members,
-    set_declared_member,
     bound_members,
-    dispatch2,
+    declared_members,
+    EvaluatedRefinable,
+    reinvokable,
+    set_declared_member,
 )
 
 
@@ -203,7 +203,8 @@ class Filter(Part):
     name_field = Refinable()
     unary = Refinable()
 
-    @dispatch2(
+    @reinvokable
+    @dispatch(
         query_operator_for_field='=',
         attr=MISSING,
         field=Namespace(
@@ -498,7 +499,7 @@ class Query(Part):
         member_class = Filter
         form_class = Form
 
-    @dispatch2(
+    @dispatch(
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,
         auto=EMPTY,
@@ -600,20 +601,20 @@ class Query(Part):
         if any(v.freetext for v in self.filters.values()):
             declared_members(self.form).fields[FREETEXT_SEARCH_NAME].include = True
 
-        fields_unapplied_config = Struct()
+        declared_fields = declared_members(self.form)['fields']
         for name, filter in self.filters.items():
             assert filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
-            field = setdefaults_path(
-                Namespace(),
-                _name=name,
-                attr=filter.attr,
-                model_field=filter.model_field,
-            )
-            if not filter.include:
-                field.include = False
-            fields_unapplied_config[name] = field
-
-        self.form._unapplied_config.fields = fields_unapplied_config
+            if name in declared_fields:
+                field = setdefaults_path(
+                    Namespace(),
+                    _name=name,
+                    attr=filter.attr,
+                    model_field=filter.model_field,
+                )
+                if not filter.include:
+                    field.include = False
+                declared_fields[name] = declared_fields[name].reinvoke(field)
+        set_declared_member(self.form, 'fields', declared_fields)
         self.form = self.form.bind(parent=self)
 
         self._bound_members.form = self.form

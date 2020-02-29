@@ -39,8 +39,8 @@ from iommi.member import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
+    reinvokable,
     Traversable,
-    dispatch2,
 )
 
 DEFAULT_BASE_TEMPLATE = 'base.html'
@@ -58,7 +58,8 @@ class Part(Traversable):
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     endpoints: Namespace = Refinable()
 
-    @dispatch2(
+    @reinvokable
+    @dispatch(
         extra=EMPTY,
         include=True,
     )
@@ -71,7 +72,7 @@ class Part(Traversable):
             import inspect
             self._instantiated_at_frame = inspect.currentframe().f_back
 
-    @dispatch2(
+    @dispatch(
         context=EMPTY,
         render=EMPTY,
     )

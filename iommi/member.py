@@ -1,6 +1,5 @@
 from copy import (
     copy,
-    deepcopy,
 )
 from typing import (
     Any,
@@ -10,9 +9,7 @@ from typing import (
 
 from tri_declarative import (
     dispatch,
-    flatten,
     Namespace,
-    RefinableObject,
     setdefaults_path,
 )
 from tri_struct import Struct
@@ -22,7 +19,6 @@ from iommi.traversable import (
     declared_members,
     set_declared_member,
     Traversable,
-    dispatch2,
 )
 
 FORBIDDEN_NAMES = {x for x in dir(Traversable)}
@@ -68,7 +64,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                 unbound_items[key] = item
 
     for k, v in Namespace(_unapplied_config).items():
-        unbound_items[k] = unbound_items[k].copy(v)
+        unbound_items[k] = unbound_items[k].reinvoke(v)
         assert unbound_items[k]._name is not None
 
     set_declared_member(container, name, unbound_items)
@@ -79,7 +75,7 @@ class Members(Traversable):
     Internal iommi class that holds members of another class, for example the columns of a `Table` instance.
     """
 
-    @dispatch2
+    @dispatch
     def __init__(self, *, _declared_members, unknown_types_fall_through, **kwargs):
         super(Members, self).__init__(**kwargs)
         self._declared_members = _declared_members
