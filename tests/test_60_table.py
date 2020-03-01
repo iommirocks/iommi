@@ -1107,7 +1107,7 @@ def test_template_string(NoSortTable):
             header__template = Template('What headers')
             query__template = Template('What filters')
 
-            row__template = Template('Oh, rows: {% for cell in bound_row %}{{ cell }}{% endfor %}')
+            row__template = Template('Oh, rows: {% for cell in cells %}{{ cell }}{% endfor %}')
 
         a = Column(
             cell__template=Template('Custom cell: {{ row.a }}'),
@@ -1455,7 +1455,7 @@ def test_extra():
 
 def test_row_extra():
     class TestTable(Table):
-        result = Column(cell__value=lambda bound_row, **_: bound_row.extra_evaluated.foo)
+        result = Column(cell__value=lambda cells, **_: cells.extra_evaluated.foo)
 
         class Meta:
             row__extra__foo = 7
@@ -1466,11 +1466,11 @@ def test_row_extra():
     ).bind(
         request=req('get'),
     )
-    bound_row = list(table.bound_rows())[0]
+    cells = list(table.cellss())[0]
 
-    assert bound_row.extra.foo == 7
-    assert bound_row.extra_evaluated.foo == 5 + 7
-    assert bound_row['result'].value == 5 + 7
+    assert cells.extra.foo == 7
+    assert cells.extra_evaluated.foo == 5 + 7
+    assert cells['result'].value == 5 + 7
 
 
 def test_row_extra_evaluated():
@@ -1478,7 +1478,7 @@ def test_row_extra_evaluated():
         return row.a + row.b
 
     class TestTable(Table):
-        result = Column(cell__value=lambda bound_row, **_: bound_row.extra_evaluated.foo)
+        result = Column(cell__value=lambda cells, **_: cells.extra_evaluated.foo)
 
         class Meta:
             row__extra__foo = some_callable
@@ -1489,10 +1489,10 @@ def test_row_extra_evaluated():
     ).bind(
         request=req('get'),
     )
-    bound_row = list(table.bound_rows())[0]
-    assert bound_row.extra.foo is some_callable
-    assert bound_row.extra_evaluated.foo == 5 + 7
-    assert bound_row['result'].value == 5 + 7
+    cells = list(table.cellss())[0]
+    assert cells.extra.foo is some_callable
+    assert cells.extra_evaluated.foo == 5 + 7
+    assert cells['result'].value == 5 + 7
 
 
 def test_from_model():
@@ -1603,7 +1603,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__data__func = lambda table, **_: [{cell.column._name: cell.value for cell in bound_row} for bound_row in table.bound_rows()]
+            endpoints__data__func = lambda table, **_: [{cell.column._name: cell.value for cell in cells} for cells in table.cellss()]
 
         foo = Column()
         bar = Column()
@@ -1649,9 +1649,9 @@ def test_table_iteration():
     assert [
         {
             bound_cell.column._name: bound_cell.value
-            for bound_cell in bound_row
+            for bound_cell in cells
         }
-        for bound_row in table.bound_rows()
+        for cells in table.cellss()
     ] == [
         dict(foo='a', bar=2),
         dict(foo='b', bar=3),
@@ -1823,7 +1823,7 @@ def test_yield_rows():
 
     table = MyTable(rows=TFoo.objects.all())
     table = table.bind(request=None)
-    results = list(table.bound_rows())
+    results = list(table.cellss())
     assert len(results) == 2
     assert results[0].row == f
     assert results[1].row == Struct(a=15)
@@ -1915,7 +1915,7 @@ def test_column_merge():
     table = table.bind(request=None)
     assert len(table.columns) == 1
     assert table.columns.foo._name == 'foo'
-    for row in table.bound_rows():
+    for row in table.cellss():
         assert row['foo'].value == 1
 
 

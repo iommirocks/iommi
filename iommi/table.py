@@ -325,7 +325,7 @@ class Column(Part):
         :param sort_default_desc: Set to `True` to make table sort link to sort descending first.
         :param group: string describing the group of the header. If this parameter is used the header of the table now has two rows. Consecutive identical groups on the first level of the header are joined in a nice way.
         :param auto_rowspan: enable automatic rowspan for this column. To join two cells with rowspan, just set this `auto_rowspan` to `True` and make those two cells output the same text and we'll handle the rest.
-        :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `column`, `bound_row`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
+        :param cell__template: name of a template file, or `Template` instance. Gets arguments: `table`, `column`, `cells`, `row` and `value`. Your own arguments should be sent in the 'extra' parameter.
         :param cell__value: string or callable that receives kw arguments: `table`, `column` and `row`. This is used to extract which data to display from the object.
         :param cell__format: string or callable that receives kw arguments: `table`, `column`, `row` and `value`. This is used to convert the extracted data to html output (use `mark_safe`) or a string.
         :param cell__attrs: dict of attr name to callables that receive kw arguments: `table`, `column`, `row` and `value`.
@@ -704,7 +704,7 @@ class Column(Part):
         return call_target(**kwargs)
 
 
-class BoundRow(Traversable):
+class Cells(Traversable):
     """
     Internal class used in row rendering
     """
@@ -715,17 +715,17 @@ class BoundRow(Traversable):
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
 
     def __init__(self, row, row_index, **kwargs):
-        super(BoundRow, self).__init__(_name='row', **kwargs)
-        assert not isinstance(row, BoundRow)
+        super(Cells, self).__init__(_name='row', **kwargs)
+        assert not isinstance(row, Cells)
         self.row: Any = row
         self.row_index = row_index
 
     def own_evaluate_parameters(self):
-        return dict(bound_row=self, row=self.row)
+        return dict(cells=self, row=self.row)
 
     def __html__(self):
         if self.template:
-            context = dict(bound_row=self, row=self.row, **self._parent.context)
+            context = dict(cells=self, row=self.row, **self._parent.context)
             return render_template(self._parent.get_request(), self.template, context)
 
         return Fragment(tag=self.tag, attrs=self.attrs, text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))).bind(parent=self).__html__()
@@ -735,11 +735,11 @@ class BoundRow(Traversable):
 
     def __iter__(self):
         for column in self._parent.rendered_columns.values():
-            yield BoundCell(bound_row=self, column=column)
+            yield BoundCell(cells=self, column=column)
 
     def __getitem__(self, name):
         column = self._parent.rendered_columns[name]
-        return BoundCell(bound_row=self, column=column)
+        return BoundCell(cells=self, column=column)
 
 
 class CellConfig(RefinableObject):
@@ -759,7 +759,7 @@ class CellConfig(RefinableObject):
 
 class BoundCell(CellConfig):
 
-    def __init__(self, bound_row: BoundRow, column):
+    def __init__(self, cells: Cells, column):
         kwargs = setdefaults_path(
             Namespace(),
             column.cell,
@@ -767,15 +767,15 @@ class BoundCell(CellConfig):
         )
         super(BoundCell, self).__init__(**kwargs)
         self._name = 'cell'
-        self._parent = bound_row
+        self._parent = cells
         self._is_bound = True
         self.iommi_style = None
         self._unapplied_config = {}
 
         self.column = column
-        self.bound_row = bound_row
-        self.table = bound_row._parent
-        self.row = bound_row.row
+        self.cells = cells
+        self.table = cells._parent
+        self.row = cells.row
 
         self._evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
 
@@ -792,7 +792,7 @@ class BoundCell(CellConfig):
     def __html__(self):
         cell__template = self.column.cell.template
         if cell__template:
-            context = dict(table=self.table, column=self.column, bound_row=self.bound_row, row=self.row, value=self.value, bound_cell=self)
+            context = dict(table=self.table, column=self.column, cells=self.cells, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
         return Fragment(tag=self.tag, attrs=self.attrs, text=self.render_cell_contents()).bind(parent=self).__html__()
@@ -820,7 +820,7 @@ class BoundCell(CellConfig):
         return self.__html__()
 
     def __repr__(self):
-        return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.bound_row.row}!r>"  # pragma: no cover
+        return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.cells.row}!r>"  # pragma: no cover
 
 
 class TemplateConfig(RefinableObject):
@@ -1115,13 +1115,13 @@ def endpoint__csv(table, **_):
         else:
             return value
 
-    def cell_value(bound_row, bound_column):
-        value = BoundCell(bound_row, bound_column).value
+    def cell_value(cells, bound_column):
+        value = BoundCell(cells, bound_column).value
         return bound_column.extra_evaluated.get('report_value', value)
 
     def rows():
-        for bound_row in table.bound_rows():
-            yield [cell_value(bound_row, bound_column) for bound_column in columns]
+        for cells in table.cellss():
+            yield [cell_value(cells, bound_column) for bound_column in columns]
 
     def write_csv_row(writer, row):
         row_strings = [smart_text2(value) for value in row]
@@ -1544,12 +1544,12 @@ class Table(Part):
                 rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
                 prev_value = no_value_set
                 prev_row = no_value_set
-                for bound_row in self.bound_rows():
-                    value = BoundCell(bound_row, column).value
+                for cells in self.cellss():
+                    value = BoundCell(cells, column).value
                     if prev_value != value:
-                        rowspan_by_row[id(bound_row.row)] = 1
+                        rowspan_by_row[id(cells.row)] = 1
                         prev_value = value
-                        prev_row = bound_row.row
+                        prev_row = cells.row
                     else:
                         rowspan_by_row[id(prev_row)] += 1
 
@@ -1639,15 +1639,15 @@ class Table(Part):
     def own_evaluate_parameters(self):
         return dict(table=self)
 
-    def bound_rows(self):
+    def cellss(self):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
-            yield BoundRow(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
+            yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     @property
     def tbody(self):
-        return mark_safe('\n'.join([bound_row.__html__() for bound_row in self.bound_rows()]))
+        return mark_safe('\n'.join([cells.__html__() for cells in self.cellss()]))
 
     @classmethod
     @dispatch(

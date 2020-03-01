@@ -459,6 +459,9 @@ You can customize the row rendering in two ways:
 
 - Use `row__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
+In templates you can access the raw row via `row`. This would typically be one of your model objects. You can also access the cells of the table via `cells`. A naive template for a row would be `<tr>{% for cell in cells %}<td>{{ cell }}{% endfor %}</tr>`. You can access specific cells by their column names like `{{ cells.artist }}`.
+
+
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
