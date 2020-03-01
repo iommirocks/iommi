@@ -289,12 +289,10 @@ def table_readme_example_2(request):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
         b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
             filter__include=True,  # put this field into the query language
-            filter__field__include=True,  # put this field into the simple filtering GUI
         )
         c = Column(
             bulk__include=True,  # Enable bulk editing for this field
             filter__include=True,
-            filter__field__include=True,
         )
 
     return BarTable(rows=TBar.objects.all(), page_size=20)
@@ -312,7 +310,6 @@ def table_kitchen_sink(request):
             field_name='b',
             bulk__include=True,
             filter__include=True,
-            filter__field__include=True,
         )
         c = Column(bulk__include=True)  # The form is created automatically
 
@@ -324,7 +321,6 @@ def table_kitchen_sink(request):
             group='Foo',
             auto_rowspan=True,
             filter__include=True,
-            filter__field__include=True,
             cell__value=lambda row, **_: row.b.a // 3,
             cell__format=lambda value, **_: '- %s -' % value,
             cell__attrs__class={'text-center': True},

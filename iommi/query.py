@@ -208,7 +208,7 @@ class Filter(Part):
         query_operator_for_field='=',
         attr=MISSING,
         field=Namespace(
-            include=False,
+            include=True,
             required=False,
         ),
     )
@@ -612,10 +612,13 @@ class Query(Part):
                     attr=filter.attr,
                     model_field=filter.model_field,
                 )
-                if not filter.include:
-                    field.include = False
                 declared_fields[name] = declared_fields[name].reinvoke(field)
         set_declared_member(self.form, 'fields', declared_fields)
+        for name, field in declared_fields.items():
+            if name == FREETEXT_SEARCH_NAME:
+                continue
+            if name not in self.filters:
+                field.include = False
         self.form = self.form.bind(parent=self)
 
         self._bound_members.form = self.form

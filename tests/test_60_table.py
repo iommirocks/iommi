@@ -184,7 +184,7 @@ def test_django_table():
     class TestTable(Table):
         foo__a = Column.number()
         foo__b = Column()
-        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), filter__include=True, bulk__include=True, filter__field__include=True)
+        foo = Column.choice_queryset(model=TFoo, choices=lambda table, **_: TFoo.objects.all(), filter__include=True, bulk__include=True)
 
     t = TestTable(rows=TBar.objects.all().order_by('pk'))
     t = t.bind(request=req('get'))
@@ -932,8 +932,8 @@ def test_query():
     TFoo(a=4, b="bar").save()
 
     class TestTable(Table):
-        a = Column.number(sortable=False, filter__include=True, filter__field__include=True)  # turn off sorting to not get the link with random query params
-        b = Column.substring(filter__include=True, filter__field__include=True)
+        a = Column.number(sortable=False, filter__include=True)  # turn off sorting to not get the link with random query params
+        b = Column.substring(filter__include=True)
 
         class Meta:
             sortable = False
@@ -1112,7 +1112,6 @@ def test_template_string(NoSortTable):
         a = Column(
             cell__template=Template('Custom cell: {{ row.a }}'),
             filter__include=True,
-            filter__field__include=True,
         )
 
     verify_table_html(
@@ -1356,7 +1355,7 @@ def test_choice_queryset():
     TFoo.objects.create(a=2)
 
     class FooTable(Table):
-        foo = Column.choice_queryset(filter__include=True, filter__field__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
+        foo = Column.choice_queryset(filter__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.filter(a=1))
 
         class Meta:
             model = TFoo
@@ -1382,7 +1381,7 @@ def test_multi_choice_queryset():
     TFoo.objects.create(a=4)
 
     class FooTable(Table):
-        foo = Column.multi_choice_queryset(filter__include=True, filter__field__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
+        foo = Column.multi_choice_queryset(filter__include=True, bulk__include=True, choices=lambda table, **_: TFoo.objects.exclude(a=3).exclude(a=4))
 
         class Meta:
             model = TFoo
@@ -1408,7 +1407,7 @@ def test_query_namespace_inject():
         Table(
             rows=[],
             model=TFoo,
-            columns__a=Column(_name='a', filter__include=True, filter__field__include=True),
+            columns__a=Column(_name='a', filter__include=True),
             query__form__post_validation=post_validation,
         ).bind(
             request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
@@ -1533,7 +1532,6 @@ def test_explicit_table_does_not_use_from_model():
             choices=lambda table, **_: TFoo.objects.all(),
             filter__field__extra__endpoint_attr='b',
             filter__include=True,
-            filter__field__include=True,
             bulk__include=True,
         )
 
@@ -1566,7 +1564,6 @@ def test_ajax_endpoint():
             choices=lambda table, **_: TFoo.objects.all(),
             filter__field__extra__endpoint_attr='b',
             filter__include=True,
-            filter__field__include=True,
             bulk__include=True,
         )
 
@@ -1832,7 +1829,7 @@ def test_yield_rows():
 @pytest.mark.django_db
 def test_error_on_invalid_filter_setup():
     class MyTable(Table):
-        c = Column(attr=None, filter__include=True, filter__field__include=True)
+        c = Column(attr=None, filter__include=True)
 
         class Meta:
             model = TFoo
@@ -1892,7 +1889,6 @@ def test_from_model_with_inheritance():
         auto__rows=FromModelWithInheritanceTest.objects.all(),
         auto__model=FromModelWithInheritanceTest,
         columns__value__filter__include=True,
-        columns__value__filter__field__include=True,
         columns__value__bulk__include=True,
     ).bind(
         request=req('get'),
@@ -1981,8 +1977,8 @@ def test_dunder_name_for_column():
         class Meta:
             model = TBar
 
-        foo = Column(filter__include=True, filter__field__include=True)
-        foo__a = Column(filter__include=True, filter__field__include=True)
+        foo = Column(filter__include=True)
+        foo__a = Column(filter__include=True)
 
     table = FooTable()
     table = table.bind(request=None)

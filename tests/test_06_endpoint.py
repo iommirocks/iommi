@@ -48,11 +48,9 @@ def test_dispatch_error_message_to_client():
             auto__model=T1,
             columns__foo=dict(
                 filter__include=True,
-                filter__field__include=True,
             ),
             columns__bar=dict(
                 filter__include=True,
-                filter__field__include=True,
             ),
         )
 
@@ -60,11 +58,9 @@ def test_dispatch_error_message_to_client():
             auto__model=T2,
             columns__foo=dict(
                 filter__include=True,
-                filter__field__include=True,
             ),
             columns__bar=dict(
                 filter__include=True,
-                filter__field__include=True,
             ),
         )
 

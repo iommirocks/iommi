@@ -370,15 +370,13 @@ How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass the value `filter__include=True` to the column, to enable searching
-in the advanced query language. To also get searching for the column in the
-simple GUI filtering also pass `filter__field__include=True`:
+in the advanced query language.
 
 .. code:: python
 
     Table(
         auto__model=Foo,
         columns__a__filter__include=True,
-        columns__a__filter__field__include=True,
     )
 
 The `query` namespace here is used to configure a :doc:`Variable` so you can
@@ -386,6 +384,10 @@ configure the behavior of the searching by passing parameters here.
 
 The `filter__field` namespace is used to configure the :doc:`Field`, so here you
 can pass any argument to `Field` here to customize it.
+
+If you just want to have the filter available in the advanced query language,
+you can turn off the field in the generated form by passing
+`filter__field__include=False`:
 
 .. _attrs:
 

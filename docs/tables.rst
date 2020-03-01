@@ -71,15 +71,11 @@ You can also create tables explicitly:
 
                 # put this field into the query language
                 filter__include=True,
-
-                # put this field into the simple filtering GUI
-                filter__field__include=True,
             )
             c = Column(
                 # Enable bulk editing for this field
                 bulk__include=True,
                 filter__include=True,
-                filter__field__include=True,
             )
 
         return BarTable(rows=Bar.objects.all())

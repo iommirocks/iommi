@@ -290,7 +290,6 @@ class Column(Part):
         auto_rowspan=False,
         bulk__include=False,
         filter__include=False,
-        filter__field__include=False,
         data_retrieval_method=DataRetrievalMethods.attribute_access,
         cell__template=None,
         cell__attrs=EMPTY,
@@ -1338,7 +1337,6 @@ class Table(Part):
                 # Special case for automatic query config
                 if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
                     filter.include = True
-                    filter.field.include = True
 
                 filters[name] = filter()
 
