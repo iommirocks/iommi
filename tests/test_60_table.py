@@ -2223,3 +2223,35 @@ def test_paginator_rendered():
     ).bind(request=req('get')).render_to_response().content.decode()
 
     assert 'aria-label="Pages"' in content
+
+
+@pytest.mark.django_db
+def test_reinvoke():
+    class MyTable(Table):
+        class Meta:
+            auto__model = TFoo
+
+    class MyPage(Page):
+        my_table = MyTable(columns__a__filter__include=True)
+
+    assert 'a' in MyPage().bind(request=req('get')).parts.my_table.query.filters
+    assert 'a' not in MyPage(parts__my_table__columns__a__filter__include=False).bind(request=req('get')).parts.my_table.query.filters
+
+
+@pytest.mark.django_db
+def test_reinvoke_2():
+    class MyTable(Table):
+        class Meta:
+            auto__model = TFoo
+            columns__a__filter__include = True
+
+    assert 'a' in MyTable().bind(request=req('get')).query.filters
+
+    class MyPage(Page):
+        my_table = MyTable()
+
+        class Meta:
+            parts__my_table__columns__a__filter__include = False
+
+    assert 'a' not in MyPage().bind(request=req('get')).parts.my_table.query.filters
+    assert 'a' in MyPage(parts__my_table__columns__a__filter__include=True).bind(request=req('get')).parts.my_table.query.filters
