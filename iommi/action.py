@@ -60,6 +60,7 @@ class Action(Part):
         tag='a',
         display_name=lambda action, **_: action._name.capitalize().replace('_', ' '),
         attrs__class=EMPTY,
+        attrs__style=EMPTY,
     )
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -167,6 +168,7 @@ class Actions(Members):
 
     @dispatch(
         attrs__class=EMPTY,
+        attrs__style=EMPTY,
     )
     def __init__(self, **kwargs):
         super(Actions, self).__init__(**kwargs)

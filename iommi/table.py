@@ -395,6 +395,7 @@ class Column(Part):
         display_name='',
         cell__value=lambda table, **_: True,
         extra__icon_attrs__class=EMPTY,
+        extra__icon_attrs__style=EMPTY,
         attr=None,
     )
     def icon(cls, *args, call_target=None, **kwargs):
@@ -1226,6 +1227,7 @@ class Table(Part):
         template='iommi/table/table.html',
         row__tag='tr',
         row__attrs__class=EMPTY,
+        row__attrs__style=EMPTY,
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
         row__template=None,
         row__extra=EMPTY,

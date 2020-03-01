@@ -420,6 +420,7 @@ class Field(Part):
         attr=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
+        attrs__style=EMPTY,
         parse_empty_string_as_none=True,
         required=True,
         is_list=False,

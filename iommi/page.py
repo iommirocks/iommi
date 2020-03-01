@@ -121,7 +121,7 @@ class Fragment(Part):
         tag=None,
         children=EMPTY,
         attrs__class=EMPTY,
-        attrs__style=EMPTY,  # TODO: we need to set this everywhere where we set attrs__class=EMPTY right?
+        attrs__style=EMPTY,
     )
     def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
