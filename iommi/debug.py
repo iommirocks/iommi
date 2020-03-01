@@ -143,18 +143,30 @@ def src_debug_url_builder(filename, lineno=None):
 
 def iommi_debug_panel(part):
     frame = part._instantiated_at_frame
-    source_url = None
+    filename = None
+    lineno = None
     for _ in range(100):
         frame = frame.f_back
-        module_name = frame.f_globals.get('__name__')
         if frame is None:
             break
+        module_name = frame.f_globals.get('__name__')
 
         if module_name in ('tri_declarative', 'iommi', ) or module_name.startswith('iommi.'):
             continue
-        source_url = src_debug_url_builder(frame.f_code.co_filename, frame.f_lineno)
+        filename = frame.f_code.co_filename
+        lineno = frame.f_lineno
         break
 
+    if filename is None or filename.endswith('urls.py'):
+        import inspect
+        if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
+            filename = inspect.getsourcefile(type(part))
+            lineno = inspect.getsourcelines(type(part))[-1]
+
+    if filename is None:
+        return ''
+
+    source_url = src_debug_url_builder(filename, lineno)
     if not source_url:
         return ''
 
