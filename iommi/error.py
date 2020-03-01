@@ -31,6 +31,7 @@ class Errors(set):
 
         from iommi.page import Fragment
         return Fragment(
+            _name='error',
             tag='ul',
             attrs=self.attrs,
             template=self.template,
