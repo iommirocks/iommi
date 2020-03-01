@@ -101,18 +101,26 @@ class Traversable(RefinableObject):
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
 
-    def reinvoke(self, additional_kwargs):
+    def reinvoke(self, additional_kwargs: Dict[str, Any]) -> "Traversable":
         assert hasattr(self, '_iommi_saved_params'), f'reinvoke() called on class with missing @reinvokable decorator: {self.__class__.__name__}'
         kwargs = {}
-        for k, v in self._iommi_saved_params.items():
+        for name, saved_param in self._iommi_saved_params.items():
             try:
-                kwargs[k] = v.reinvoke(getattr_path(additional_kwargs, k))
+                new_param = getattr_path(additional_kwargs, name)
             except AttributeError:
-                kwargs[k] = v
+                kwargs[name] = saved_param
+            else:
+                if hasattr(saved_param, 'reinvoke'):
+                    assert isinstance(new_param, dict)
+                    kwargs[name] = saved_param.reinvoke(new_param)
+                else:
+                    kwargs[name] = new_param
 
         additional_kwargs.pop('call_target', None)
 
-        result = type(self)(**Namespace(additional_kwargs, kwargs))
+        kwargs = Namespace(additional_kwargs, kwargs)  # Also include those keys not already in the original
+
+        result = type(self)(**kwargs)
 
         result._name = self._name
         __tri_declarative_shortcut_stack = getattr(self, '__tri_declarative_shortcut_stack', None)
