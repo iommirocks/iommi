@@ -144,25 +144,41 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
     assert bound_members(bound_members(foo).my_part2).my_part.iommi_dunder_path == 'my_part2__my_part'
 
 
-def test_reinvokable():
-    class MyReinvokable(Traversable):
-        @reinvokable
-        def __init__(self, **kwargs):
-            self.kwargs = kwargs
+class MyReinvokable(Traversable):
+    @reinvokable
+    def __init__(self, **kwargs):
+        self.kwargs = Struct(kwargs)
 
+
+def test_reinvokable():
     x = MyReinvokable(foo=17)
     x = x.reinvoke(dict(bar=42))
     assert x.kwargs == dict(foo=17, bar=42)
 
 
 def test_reinvokable_recurse():
-    class MyReinvokable(Traversable):
-        @reinvokable
-        def __init__(self, **kwargs):
-            self.kwargs = Struct(kwargs)
-
     x = MyReinvokable(foo=MyReinvokable(bar=17))
     x = x.reinvoke(Namespace(foo__bar=42))
 
     assert isinstance(x.kwargs.foo, MyReinvokable)
     assert x.kwargs.foo.kwargs == dict(bar=42)
+
+
+def test_reinvokable_recurse_retain_original():
+    x = MyReinvokable(
+        a=1,
+        foo=MyReinvokable(
+            b=2,
+            bar=MyReinvokable(
+                c=3,
+                baz=17
+            )
+        )
+    )
+    x = x.reinvoke(Namespace(foo__bar__baz=42))
+
+    assert isinstance(x.kwargs.foo, MyReinvokable)
+    assert x.kwargs.a == 1
+    assert x.kwargs.foo.kwargs.b == 2
+    assert x.kwargs.foo.kwargs.bar.kwargs.c == 3
+    assert x.kwargs.foo.kwargs.bar.kwargs.baz == 42
