@@ -73,11 +73,10 @@ class Part(Traversable):
             self._instantiated_at_frame = inspect.currentframe().f_back
 
     @dispatch(
-        context=EMPTY,
         render=EMPTY,
     )
     @abstractmethod
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         assert False, 'Not implemented'  # pragma: no cover
 
     def __str__(self):
@@ -140,27 +139,18 @@ class Part(Traversable):
 @dispatch(
     render=EMPTY,
 )
-def render_root(*, part, template_name=MISSING, content_block_name=MISSING, context=None, **render):
-    if context is None:
-        context = {}
-
+def render_root(*, part, template_name=MISSING, content_block_name=MISSING, **render):
     if template_name is MISSING:
         template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', DEFAULT_BASE_TEMPLATE)
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
-    content = part.__html__(context=context, **render)
-
-    assert 'content' not in context
-    context['content'] = content
-    if 'title' not in context:
-        context['title'] = getattr(part, 'title', '') or ''
-
-    if iommi_debug_on():
-        from iommi.debug import iommi_debug_panel
-        context['iommi_debug_panel'] = iommi_debug_panel(part)
-    else:
-        context['iommi_debug_panel'] = ''
+    from iommi.debug import iommi_debug_panel
+    context = dict(
+        content=part.__html__(**render),
+        title=getattr(part, 'title', '') or '',
+        iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else ''
+    )
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.get_request())
@@ -188,6 +178,6 @@ def as_html(*, part: PartType, context):
         template = part
         return mark_safe(template.render(context=context))
     elif hasattr(part, '__html__'):
-        return part.__html__(context=context)
+        return part.__html__()
     else:
         return str(part)

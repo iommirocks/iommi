@@ -73,14 +73,13 @@ class Action(Part):
 
     @reinvokable
     @dispatch(
-        context=EMPTY,
         render=EMPTY,
     )
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         assert not render
         assert self._is_bound
         if self.template:
-            return render_to_string(self.template, dict(**context, action=self))
+            return render_to_string(self.template, self._evaluate_parameters)
         else:
             display_name = self.display_name
             attrs = self.attrs

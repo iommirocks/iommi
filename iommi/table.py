@@ -726,8 +726,7 @@ class Cells(Traversable):
 
     def __html__(self):
         if self.template:
-            context = dict(cells=self, row=self.row, **self._parent.context)
-            return render_template(self._parent.get_request(), self.template, context)
+            return render_template(self._parent.get_request(), self.template, self._evaluate_parameters)
 
         return Fragment(tag=self.tag, attrs=self.attrs, text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))).bind(parent=self).__html__()
 
@@ -833,7 +832,7 @@ class HeaderConfig(Traversable):
     url = EvaluatedRefinable()
 
     def __html__(self):
-        return render_template(self.get_request(), self.template, self._parent.context)
+        return render_template(self.get_request(), self.template, self._parent._evaluate_parameters)
 
     def __str__(self):
         return self.__html__()
@@ -1675,32 +1674,25 @@ class Table(Part):
 
     @dispatch(
         render=render_template,
-        context=EMPTY,
     )
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         assert self._is_bound
 
-        if not context:
-            context = {}
-        else:
-            context = context.copy()
-
-        context['table'] = self
-        context['bulk_form'] = self.bulk_form
-        context['query'] = self.query
+        context = {'table': self, 'bulk_form': self.bulk_form, 'query': self.query}
 
         request = self.get_request()
 
         assert self.rows is not None
         context['paginator'] = self.paginator
 
-        self.context = context
+        # TODO: remove this?
+        # self.context = context
 
         if self.query and self.query.form and not self.query.form.is_valid():
             self.rows = None
             self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-        return render(request=request, template=self.template, context=self.context)
+        return render(request=request, template=self.template, context=context)
 
     def as_view(self):
         return build_as_view_wrapper(self)

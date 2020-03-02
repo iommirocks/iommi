@@ -733,15 +733,10 @@ class Field(Part):
             **kwargs)
 
     @dispatch(
-        context=EMPTY,
         render=EMPTY,
     )
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         assert not render
-        context = {
-            'form': self.form,
-            'field': self,
-        }
         if self.is_boolean:
             if 'checked' not in self.input.attrs and self.value:
                 self.input.attrs.checked = ''
@@ -754,7 +749,7 @@ class Field(Part):
             self.non_editable_input.children['text'] = self.rendered_value
             self.input = self.non_editable_input
 
-        return render_template(self.get_request(), self.template, context)
+        return render_template(self.get_request(), self.template, self._evaluate_parameters)
 
     @classmethod
     @class_shortcut(
@@ -1252,18 +1247,16 @@ class Form(Part):
 
     @dispatch(
         render__call_target=render_template,
-        context=EMPTY,
     )
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         setdefaults_path(
             render,
-            context=context,
             template=self.template,
+            context=self._evaluate_parameters.copy(),
         )
 
         request = self.get_request()
         render.context.update(csrf(request))
-        render.context['form'] = self
 
         return render(request=request)
 

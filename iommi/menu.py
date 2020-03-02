@@ -118,7 +118,7 @@ class MenuItem(MenuBase):
             r += '    ' + repr(items)
         return r
 
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         a = setdefaults_path(
             Namespace(),
             self.a,
@@ -185,7 +185,7 @@ class Menu(MenuBase):
         super(Menu, self).__init__(**kwargs)
         self.fragment = None
 
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         return self.fragment.__html__()
 
     def on_bind(self):

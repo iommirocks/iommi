@@ -152,15 +152,10 @@ class Fragment(Part):
         self._bound_members.children._bound_members = self.children
 
     @dispatch(
-        context=EMPTY,
         render=fragment__render,
     )
-    def __html__(self, *, context=None, render=None):
-        context = {
-            **self._evaluate_parameters,
-            **context
-        }
-        return render(fragment=self, context=context)
+    def __html__(self, *, render=None):
+        return render(fragment=self, context=self._evaluate_parameters)
 
     def own_evaluate_parameters(self):
         return dict(fragment=self)
@@ -217,14 +212,13 @@ class Page(Part):
         return dict(page=self)
 
     @dispatch(
-        context=EMPTY,
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
-    def __html__(self, *, context=None, render=None):
-        rendered = {}
-        for part in self.parts.values():
-            assert part._name not in context
-            rendered[part._name] = as_html(part=part, context=context)
+    def __html__(self, *, render=None):
+        rendered = {
+            name: as_html(part=part, context=self._evaluate_parameters)
+            for name, part in self.parts.items()
+        }
 
         return render(rendered)
 

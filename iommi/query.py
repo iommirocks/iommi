@@ -574,19 +574,16 @@ class Query(Part):
 
     @dispatch(
         render__call_target=render_template,
-        context=EMPTY,
     )
-    def __html__(self, *, context=None, render=None):
+    def __html__(self, *, render=None):
         if not bound_members(self).filters._bound_members:
             return ''
 
         setdefaults_path(
             render,
-            context=context,
+            context=self._evaluate_parameters,
             template=self.template,
         )
-
-        context['query'] = self
 
         return render(request=self.get_request())
 

@@ -16,7 +16,7 @@ class HighlightBrokenVariable:
         return True
 
     def __mod__(self, other):
-        raise Exception(f'Tried to render_part non-existent filter {other}')
+        raise Exception(f'Tried to render non-existent filter {other}')
 
 
 TEMPLATES = [

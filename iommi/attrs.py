@@ -87,7 +87,7 @@ class Attrs(Namespace):
         return self.__html__()
 
     # noinspection PyUnusedLocal
-    def __html__(self, *, context=None):
+    def __html__(self):
         return render_attrs(self)
 
 

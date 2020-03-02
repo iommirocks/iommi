@@ -24,8 +24,7 @@ class Errors(set):
     def __bool__(self):
         return len(self) != 0
 
-    # noinspection PyUnusedLocal
-    def __html__(self, *, context=None):
+    def __html__(self):
         if not self:
             return ''
 
