@@ -8,6 +8,7 @@ API documentation
    Column
    Endpoint
    Field
+   Filter
    Form
    Fragment
    Members
@@ -18,4 +19,3 @@ API documentation
    Query
    Table
    Traversable
-   Variable

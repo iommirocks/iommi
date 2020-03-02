@@ -174,7 +174,7 @@ How do I specify which model fields the search of a choice_queryset use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `Form.choice_queryset` defaults to using the registered name field to search.
-See :doc:`registration` for how to register one. If present it will default
+See :doc:`registrations` for how to register one. If present it will default
 to a model field `name`. You can override which attributes it uses for
 searching by specifing `extra__create_q_from_value`:
 
