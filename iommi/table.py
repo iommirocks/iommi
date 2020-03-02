@@ -241,6 +241,7 @@ def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
 
     return conditional_escape(value)
 
+
 def default_cell__value(column, row, **kwargs):
     if column.attr is None:
         return None
@@ -753,9 +754,6 @@ class CellConfig(RefinableObject):
     format = Refinable()
     link = Refinable()
 
-    def as_dict(self):
-        return {k: getattr(self, k) for k in self.get_declared('refinable_members').keys()}
-
 
 class BoundCell(CellConfig):
 
@@ -846,12 +844,6 @@ class HeaderColumnConfig(Traversable):
     template: Union[str, Template] = EvaluatedRefinable()
     url = EvaluatedRefinable()
 
-    def __html__(self):
-        return render_template(self.get_request(), self.template, self._parent.context)
-
-    def __str__(self):
-        return self.__html__()
-
 
 class RowConfig(RefinableObject):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -884,7 +876,7 @@ class Header(object):
         return render_template(self.table.get_request(), self.template, dict(header=self))
 
     def __repr__(self):
-        return '<Header: %s>' % ('superheader' if self.column is None else self.column._name)
+        return f'<Header: {"superheader" if self.column is None else self.column._name}>'
 
     @property
     def iommi_dunder_path(self):
@@ -1120,7 +1112,7 @@ def endpoint__csv(table, **_):
         return bound_column.extra_evaluated.get('report_value', value)
 
     def rows():
-        for cells in table.cellss():
+        for cells in table.cells_for_rows():
             yield [cell_value(cells, bound_column) for bound_column in columns]
 
     def write_csv_row(writer, row):
@@ -1544,7 +1536,7 @@ class Table(Part):
                 rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
                 prev_value = no_value_set
                 prev_row = no_value_set
-                for cells in self.cellss():
+                for cells in self.cells_for_rows():
                     value = BoundCell(cells, column).value
                     if prev_value != value:
                         rowspan_by_row[id(cells.row)] = 1
@@ -1639,7 +1631,7 @@ class Table(Part):
     def own_evaluate_parameters(self):
         return dict(table=self)
 
-    def cellss(self):
+    def cells_for_rows(self):
         assert self._is_bound
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
             row = self.preprocess_row(table=self, row=row)
@@ -1647,7 +1639,7 @@ class Table(Part):
 
     @property
     def tbody(self):
-        return mark_safe('\n'.join([cells.__html__() for cells in self.cellss()]))
+        return mark_safe('\n'.join([cells.__html__() for cells in self.cells_for_rows()]))
 
     @classmethod
     @dispatch(

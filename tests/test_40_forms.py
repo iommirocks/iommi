@@ -13,6 +13,7 @@ from io import (
 
 import pytest
 from bs4 import BeautifulSoup
+from django.db.models import Q
 from django.test import override_settings
 from tri_declarative import (
     class_shortcut,
@@ -1483,14 +1484,7 @@ def test_null_field_factory():
 @override_settings(DEBUG=True)
 @pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
-@pytest.mark.parametrize(
-    'kwargs', [
-        dict(extra__endpoint_attrs=['username']),
-        dict(extra__endpoint_attr='username'),
-        dict(),
-    ]
-)
-def test_choice_queryset_ajax_attrs_direct(kwargs):
+def test_choice_queryset_ajax_attrs_direct():
     from django.contrib.auth.models import User
 
     User.objects.create(username='foo')
@@ -1499,7 +1493,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
     class MyForm(Form):
         class Meta:
             _name = 'form_name'
-        username = Field.choice_queryset(choices=User.objects.all().order_by('username'), **kwargs)
+        username = Field.choice_queryset(choices=User.objects.all().order_by('username'))
         not_returning_anything = Field.integer()
 
     form = MyForm()
@@ -1520,14 +1514,7 @@ def test_choice_queryset_ajax_attrs_direct(kwargs):
 @pytest.mark.django_db
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 @pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results")
-@pytest.mark.parametrize(
-    'kwargs', [
-        dict(),
-        dict(fields__user__extra__endpoint_attrs=['username']),
-        dict(fields__user__extra__endpoint_attr='username'),
-    ]
-)
-def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
+def test_choice_queryset_ajax_attrs_foreign_key():
     from django.contrib.auth.models import User
     from django.db import models
     from django.db.models import CASCADE
@@ -1538,8 +1525,63 @@ def test_choice_queryset_ajax_attrs_foreign_key(kwargs):
     User.objects.create(username='foo')
     user2 = User.objects.create(username='bar')
 
-    form = Form(auto__model=FooModel, **kwargs).bind(request=req('get'))
+    form = Form(auto__model=FooModel).bind(request=req('get'))
     actual = perform_ajax_dispatch(root=form, path='/fields/user/endpoints/choices', value='ar')
+
+    assert actual == {
+        'results': [
+            {'id': user2.pk, 'text': smart_str(user2)}
+        ],
+        'pagination': {'more': False},
+        'page': 1,
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
+@pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results")
+def test_choice_queryset_ajax_one_past_the_end():
+    from django.contrib.auth.models import User
+    from django.db import models
+    from django.db.models import CASCADE
+
+    class FooModel(models.Model):
+        user = models.ForeignKey(User, on_delete=CASCADE)
+
+    form = Form(auto__model=FooModel).bind(request=req('get', page=2))
+    actual = perform_ajax_dispatch(root=form, path='/fields/user/endpoints/choices', value='ar')
+
+    assert actual == {
+        'results': [
+        ],
+        'pagination': {'more': False},
+        'page': 2,
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
+@pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results")
+def test_choice_queryset_ajax_custom_q():
+    from django.contrib.auth.models import User
+    from django.db import models
+    from django.db.models import CASCADE
+
+    class FooModel(models.Model):
+        user = models.ForeignKey(User, on_delete=CASCADE)
+
+    User.objects.create(username='foo', first_name='7')
+    user2 = User.objects.create(username='bar', first_name='11')
+
+    form = Form(
+        auto__model=FooModel,
+        fields__user__extra__create_q_from_value=lambda field, value, **_: Q(first_name='11')
+    ).bind(request=req('get'))
+    actual = perform_ajax_dispatch(
+        root=form,
+        path='/fields/user/endpoints/choices',
+        value="doesn't matter, since we hardcode value above",
+    )
 
     assert actual == {
         'results': [

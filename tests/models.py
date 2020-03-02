@@ -175,3 +175,19 @@ class QueryFromIndexesTestModel(Model):
     class Meta:
         ordering = ('pk',)
 
+
+class AutomaticUrl(Model):
+    a = IntegerField()
+
+    def __str__(self):
+        return 'the str of AutomaticUrl'
+
+    def get_absolute_url(self):
+        return 'url here!'
+
+
+class AutomaticUrl2(Model):
+    foo = ForeignKey(AutomaticUrl, on_delete=CASCADE)
+
+    class Meta:
+        ordering = ('pk',)

@@ -10,6 +10,7 @@ from iommi._web_compat import (
 )
 from iommi.attrs import Attrs
 from iommi.page import Fragment
+from iommi.part import as_html
 from iommi.traversable import declared_members
 from tests.helpers import (
     prettify,
@@ -76,3 +77,7 @@ def test_promote_str_to_fragment_for_page():
 
     page = MyPage()
     assert isinstance(declared_members(page).parts.foo, Fragment)
+
+
+def test_as_html_integer():
+    assert as_html(part=123, context={}) == '123'

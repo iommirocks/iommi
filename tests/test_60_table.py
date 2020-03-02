@@ -61,6 +61,8 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    AutomaticUrl,
+    AutomaticUrl2,
 )
 
 register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
@@ -1465,7 +1467,7 @@ def test_row_extra():
     ).bind(
         request=req('get'),
     )
-    cells = list(table.cellss())[0]
+    cells = list(table.cells_for_rows())[0]
 
     assert cells.extra.foo == 7
     assert cells.extra_evaluated.foo == 5 + 7
@@ -1488,7 +1490,7 @@ def test_row_extra_evaluated():
     ).bind(
         request=req('get'),
     )
-    cells = list(table.cellss())[0]
+    cells = list(table.cells_for_rows())[0]
     assert cells.extra.foo is some_callable
     assert cells.extra_evaluated.foo == 5 + 7
     assert cells['result'].value == 5 + 7
@@ -1530,7 +1532,6 @@ def test_explicit_table_does_not_use_from_model():
         foo = Column.choice_queryset(
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
-            filter__field__extra__endpoint_attr='b',
             filter__include=True,
             bulk__include=True,
         )
@@ -1562,7 +1563,6 @@ def test_ajax_endpoint():
         foo = Column.choice_queryset(
             model=TFoo,
             choices=lambda table, **_: TFoo.objects.all(),
-            filter__field__extra__endpoint_attr='b',
             filter__include=True,
             bulk__include=True,
         )
@@ -1600,7 +1600,7 @@ def test_ajax_endpoint_empty_response():
 def test_ajax_data_endpoint():
     class TestTable(Table):
         class Meta:
-            endpoints__data__func = lambda table, **_: [{cell.column._name: cell.value for cell in cells} for cells in table.cellss()]
+            endpoints__data__func = lambda table, **_: [{cell.column._name: cell.value for cell in cells} for cells in table.cells_for_rows()]
 
         foo = Column()
         bar = Column()
@@ -1648,7 +1648,7 @@ def test_table_iteration():
             bound_cell.column._name: bound_cell.value
             for bound_cell in cells
         }
-        for cells in table.cellss()
+        for cells in table.cells_for_rows()
     ] == [
         dict(foo='a', bar=2),
         dict(foo='b', bar=3),
@@ -1820,7 +1820,7 @@ def test_yield_rows():
 
     table = MyTable(rows=TFoo.objects.all())
     table = table.bind(request=None)
-    results = list(table.cellss())
+    results = list(table.cells_for_rows())
     assert len(results) == 2
     assert results[0].row == f
     assert results[1].row == Struct(a=15)
@@ -1911,7 +1911,7 @@ def test_column_merge():
     table = table.bind(request=None)
     assert len(table.columns) == 1
     assert table.columns.foo._name == 'foo'
-    for row in table.cellss():
+    for row in table.cells_for_rows():
         assert row['foo'].value == 1
 
 
@@ -2255,3 +2255,28 @@ def test_reinvoke_2():
 
     assert 'a' not in MyPage().bind(request=req('get')).parts.my_table.query.filters
     assert 'a' in MyPage(parts__my_table__columns__a__filter__include=True).bind(request=req('get')).parts.my_table.query.filters
+
+
+def test_cell_value_is_none_if_attr_is_none():
+    class MyTable(Table):
+        foo = Column(attr=None)
+
+    rows = [11]  # this would blow up if we tried to access pretty much any attribute from it
+
+    t = MyTable(rows=rows).bind(request=req('get'))
+    bound_rows = list(t.cells_for_rows())
+    assert len(bound_rows) == 1
+    cells = bound_rows[0]
+    assert cells['foo'].value is None
+
+
+@pytest.mark.django_db
+def test_automatic_url():
+    foo = AutomaticUrl.objects.create(a=7)
+    AutomaticUrl2.objects.create(foo=foo)
+
+    t = Table(auto__model=AutomaticUrl2).bind(request=req('get'))
+    bound_rows = list(t.cells_for_rows())
+    assert len(bound_rows) == 1
+    cells = bound_rows[0]
+    assert cells['foo'].__html__() == '<td><a href="url here!">the str of AutomaticUrl</a></td>'

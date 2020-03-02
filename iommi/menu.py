@@ -61,7 +61,7 @@ class MenuBase(Part):
         )
 
     def __repr__(self):
-        r = '%s -> %s\n' % (self._name, self.url)
+        r = f'{self._name}\n'
         for items in self.sub_menu.values():
             r += '    ' + repr(items)
         return r
@@ -100,7 +100,6 @@ class MenuItem(MenuBase):
     )
     def __init__(self, *, a, **kwargs):
         super(MenuItem, self).__init__(**kwargs)
-        self.fragment = None
         self.a = a
 
     def on_bind(self):
@@ -112,6 +111,12 @@ class MenuItem(MenuBase):
 
     def own_evaluate_parameters(self):
         return dict(menu_item=self)
+
+    def __repr__(self):
+        r = f'{self._name} -> {self.url}\n'
+        for items in self.sub_menu.values():
+            r += '    ' + repr(items)
+        return r
 
     def __html__(self, *, context=None, render=None):
         a = setdefaults_path(
@@ -137,7 +142,7 @@ class MenuItem(MenuBase):
         fragment = fragment.bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
         for name, item in self.sub_menu.items():
-            assert name not in self.fragment.children
+            assert name not in fragment.children
             fragment.children[name] = item
 
         return fragment.__html__()
@@ -207,7 +212,7 @@ class Menu(MenuBase):
         # verify there is no ambiguity for the MenuItems
         paths = set()
         for item in self.sub_menu.values():
-            if '://' in item.url:
+            if item.url is None or '://' in item.url:
                 continue
 
             path = urlparse(item.url).path
@@ -222,7 +227,7 @@ class Menu(MenuBase):
 
         items = [(item, urlparse(item.url)) for item in self.sub_menu.values()]
         for (item, parsed_url) in items:
-            if '://' in item.url:
+            if item.url is None or '://' in item.url:
                 continue
 
             if current_path.startswith(parsed_url.path):

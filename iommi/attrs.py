@@ -63,7 +63,8 @@ def render_attrs(attrs):
                     raise TypeError(f"Attributes can't be callable, you sent {value} for key {key}")
                 v = f'{value}'.replace('"', '&quot;')
                 yield f'{key}="{v}"'
-        return mark_safe(' %s' % ' '.join(parts()))
+        r = mark_safe(' %s' % ' '.join(parts()))
+        return '' if r == ' ' else r
     return ''
 
 

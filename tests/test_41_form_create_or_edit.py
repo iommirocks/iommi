@@ -186,7 +186,6 @@ def test_create_or_edit_object_dispatch():
 
     response = Form.create(
         auto__model=Bar,
-        fields__foo__extra__endpoint_attr='foo',
         template='<template name>',
     ).bind(request=request).render_to_response()
     assert json.loads(response.content) == {
@@ -284,3 +283,13 @@ def test_create_or_edit_view_name():
         pass
 
     assert MyForm(auto__model=Foo).as_view().__name__ == "MyForm.as_view"
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_full_template():
+    from tests.models import Foo
+
+    foo = Foo.objects.create(foo=7)
+    Form.delete(auto__instance=foo).bind(request=req('post', **{'-submit': ''})).render_to_response()
+    with pytest.raises(Foo.DoesNotExist):
+        foo.refresh_from_db()

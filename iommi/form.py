@@ -234,16 +234,17 @@ def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
         paginator = Paginator(choices, page_size)
         result = paginator.page(page)
         has_more = result.has_next()
-
-        return dict(
-            results=field.extra.model_from_choices(form, field, result),
-            page=page,
-            pagination=dict(
-                more=has_more,
-            ),
-        )
     except EmptyPage:
-        return dict(result=[])
+        result = []
+        has_more = False
+
+    return dict(
+        results=field.extra.model_from_choices(form, field, result),
+        page=page,
+        pagination=dict(
+            more=has_more,
+        ),
+    )
 
 
 def choice_queryset__extra__model_from_choices(form, field, choices):
@@ -261,7 +262,7 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 def choice_queryset__extra__filter_and_sort(field, value, **_):
     if not value:
         return field.choices
-    return field.choices.filter(Q((get_name_field(model=field.model) + '__icontains', value)))
+    return field.choices.filter(field.extra.create_q_from_value(field=field, value=value))
 
 
 def choice_queryset__parse(field, string_value, **_):
@@ -858,6 +859,7 @@ class Field(Part):
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
+        extra__create_q_from_value=lambda field, value, **_: Q((get_name_field(model=field.model) + '__icontains', value)),
     )
     def choice_queryset(cls, choices, call_target=None, **kwargs):
         if 'model' not in kwargs:

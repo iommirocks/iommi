@@ -182,6 +182,21 @@ def test_boolean_unary_op():
     assert repr(MyQuery().bind(request=None).parse_query_string('!foo')) == repr(Q(**{'foo__iexact': False}))
 
 
+def test_boolean_unary_op_error_messages():
+    class MyQuery(Query):
+        foo = Filter.integer()
+
+    with pytest.raises(QueryException) as e:
+        repr(MyQuery().bind(request=None).parse_query_string('foo'))
+
+    assert str(e.value) == '"foo" is not a unary filter, you must use it like "foo=something"'
+
+    with pytest.raises(QueryException) as e:
+        repr(MyQuery().bind(request=None).parse_query_string('bar'))
+
+    assert str(e.value) == 'Unknown unary filter "bar", available filters: foo'
+
+
 def test_integer_request_to_q_simple():
     class Query2(Query):
         bazaar = Filter.integer(attr='quux__bar__bazaar', field=Struct(include=True))
@@ -599,4 +614,25 @@ def test_all_filter_shortcuts():
 
     for name, filter in query.filters.items():
         assert filter.extra.get('fancy'), name
+
+
+def test_pk(MyTestQuery):
+    query = MyTestQuery().bind(request=None)
+    assert repr(query.parse_query_string('foo_name.pk=7')) == repr(Q(**{'foo__pk': 7}))
+
+
+def test_pk_error_message_1(MyTestQuery):
+    query = MyTestQuery().bind(request=None)
+    with pytest.raises(QueryException) as e:
+        query.parse_query_string('foo_name.pk=foo')
+
+    assert str(e.value) == 'Could not interpret foo as an integer'
+
+
+def test_pk_error_message_2(MyTestQuery):
+    query = MyTestQuery().bind(request=None)
+    with pytest.raises(QueryException) as e:
+        query.parse_query_string('foo_name.pk:7')
+
+    assert str(e.value) == 'Only = is supported for primary key lookup'
 

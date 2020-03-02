@@ -15,6 +15,10 @@ def test_render_class():
     assert render_attrs({'apa': True, 'bepa': '', 'cepa': None, 'class': dict(foo=False, bar=True, baz=True)}) == ' apa bepa="" class="bar baz"'
 
 
+def test_render_class_empty_special_case():
+    assert render_attrs({'class': dict()}) == ''
+
+
 def test_render_attrs_non_standard_types():
     assert render_attrs({'apa': True, 'bepa': '', 'cepa': None, 'class': 'bar baz'}) == ' apa bepa="" class="bar baz"'
 
@@ -89,7 +93,7 @@ def test_render_attrs_empty_class():
             class__foo=False,
             class__bar=False,
         )
-    ) == ' '
+    ) == ''
 
 
 def test_render_attrs_empty_style():
@@ -98,4 +102,4 @@ def test_render_attrs_empty_style():
             style__foo=None,
             style__bar=None,
         )
-    ) == ' '
+    ) == ''

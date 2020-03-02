@@ -446,10 +446,7 @@ class Filter(Part):
 
 
 class StringValue(str):
-    def __new__(cls, s):
-        if len(s) > 2 and s.startswith('"') and s.endswith('"'):
-            s = s[1:-1]
-        return super(StringValue, cls).__new__(cls, s)
+    pass
 
 
 def default_endpoint__errors(query, **_):
@@ -758,7 +755,7 @@ class Query(Part):
         else:
             (op, filter_name) = token
             value = 'false'
-            if op != '!':
+            if op != '!':  # pragma: no cover. You can't actually get here because you'll get a syntax error earlier
                 raise QueryException(f'Unknown unary filter operator "{op}", available operators: !')
 
         filter = self.filters.get(filter_name.lower())
@@ -767,7 +764,7 @@ class Query(Part):
                 raise QueryException(f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"')
             result = filter.value_to_q(filter=filter, op='=', value_string_or_f=value)
             return result
-        raise QueryException(f'Unknown unary filter "{filter_name}", available filters: {list(self.filters.keys())}')
+        raise QueryException(f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(self.filters.keys()))}')
 
     def _binary_op_to_q(self, token):
         """

@@ -174,6 +174,10 @@ class Traversable(RefinableObject):
         }
         result.on_bind()
 
+        # on_bind has a chance to hide itself
+        if result.include is False:
+            return None
+
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result._evaluate_parameters)
 
