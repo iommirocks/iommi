@@ -11,7 +11,7 @@ from tri_declarative import (
 from iommi import MISSING
 
 
-def generate_rst_docs(directory, classes):
+def generate_rst_docs(directory, classes):  # pragma: no cover - this is tested by rtd anyway
     """
     Generate documentation for tri.declarative APIs
 

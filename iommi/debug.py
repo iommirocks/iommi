@@ -77,7 +77,7 @@ def endpoint__debug_tree(endpoint, **_):
         Table,
     )
 
-    def dunder_path__value(row, **_):
+    def dunder_path__format(row, **_):
         if row.dunder_path is None:
             return ''
         prefix = row.dunder_path.rpartition('__')[0]
@@ -114,7 +114,8 @@ def endpoint__debug_tree(endpoint, **_):
             row__attrs__class__included = (lambda row, **_: row.included)
 
         dunder_path = Column(
-            cell__value=dunder_path__value,
+            cell__value=lambda row, **_: row.dunder_path,
+            cell__format=dunder_path__format,
         )
         path = Column()
         type = Column(
@@ -125,7 +126,7 @@ def endpoint__debug_tree(endpoint, **_):
     request = HttpRequest()
     request.method = 'GET'
 
-    return TreeTable(rows=rows(root)).bind(request=request).render_to_response()
+    return TreeTable(rows=rows(root)).bind(request=request)
 
 
 def local_debug_url_builder(filename, lineno):

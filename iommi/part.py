@@ -100,6 +100,10 @@ class Part(Traversable):
         def dispatch_response_handler(r):
             if isinstance(r, HttpResponseBase):
                 return r
+            elif isinstance(r, Part):
+                # We can't do r.bind(...).render_to_response() because then we recurse in here
+                # r also has to be bound already
+                return HttpResponse(render_root(part=r, **kwargs))
             else:
                 return HttpResponse(json.dumps(r), content_type='application/json')
 

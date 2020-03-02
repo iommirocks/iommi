@@ -100,7 +100,7 @@ def perform_ajax_dispatch(*, root, path, value):
     if getattr(target, 'endpoint_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
 
-    return target.endpoint_handler(value=value, **target._evaluate_parameters)
+    return target.endpoint_handler(root=root, value=value, **target._evaluate_parameters)
 
 
 def perform_post_dispatch(*, root, path, value):

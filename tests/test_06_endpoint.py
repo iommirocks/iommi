@@ -10,6 +10,7 @@ from iommi import (
     Page,
     Table,
     Part,
+    html,
 )
 from iommi.endpoint import (
     find_target,
@@ -131,7 +132,8 @@ def test_middleware_fallthrough_on_non_part():
 @override_settings(DEBUG=True)
 def test_dispatch_auto_json():
     class MyPart(Part):
-        def endpoint_handler(self, value, **_):
+        @staticmethod
+        def endpoint_handler(value, **_):
             return dict(a=1, b='asd', c=value)
 
     p = MyPart().bind(request=req('get', **{'/': '7'}))
@@ -142,12 +144,24 @@ def test_dispatch_auto_json():
 
 def test_dispatch_return_http_response():
     class MyPart(Part):
-        def endpoint_handler(self, value, **_):
+        @staticmethod
+        def endpoint_handler(value, **_):
             return HttpResponse(f'foo {value}')
 
     p = MyPart()
     r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
     assert r.content == b'foo 7'
+
+
+def test_dispatch_return_part():
+    class MyPart(Part):
+        @staticmethod
+        def endpoint_handler(root, value, **_):
+            return html.div('foo', attrs__class__bar=True).bind(parent=root)
+
+    p = MyPart()
+    r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
+    assert b'<div class="bar">foo</div>' in r.content
 
 
 def test_invalid_enpoint_path(settings):

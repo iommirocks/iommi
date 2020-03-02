@@ -1,7 +1,9 @@
+import pytest
 from django.test import override_settings
 from tri_declarative import Namespace
 from tri_struct import Struct
 
+from iommi import MISSING
 from iommi._web_compat import (
     format_html,
     mark_safe,
@@ -9,6 +11,7 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.attrs import evaluate_attrs
+from iommi.base import UnknownMissingValueException
 from iommi.page import (
     Fragment,
     html,
@@ -126,3 +129,14 @@ def test_fragment_with_tag():
 
 def test_fragment_with_two_children():
     assert Fragment('foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'
+
+
+def test_missing():
+    assert str(MISSING) == 'MISSING'
+    assert repr(MISSING) == 'MISSING'
+
+    with pytest.raises(UnknownMissingValueException) as e:
+        if MISSING:
+            pass
+
+    assert str(e.value) == 'MISSING is neither True nor False, is is unknown'
