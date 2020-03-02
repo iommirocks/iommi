@@ -16,3 +16,8 @@ def pytest_runtest_setup(item):
             import flask
         except ImportError:
             pytest.skip('test requires flask')
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(session, config, items):
+    items[:] = sorted(items, key=lambda x: x.fspath)
