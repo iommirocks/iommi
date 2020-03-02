@@ -14,7 +14,7 @@ To tell iommi how to handle your custom fields you have these options:
 
 * `register_factory`: register behavior for everything at once
 * `register_column_factory`: specific to `Column`
-* `register_filter_factory`: specific to `Variable`
+* `register_filter_factory`: specific to `Filter`
 * `register_field_factory`: specific to `Field`
 
 
@@ -27,7 +27,7 @@ You use the `register_factory` function to register your own factory. The simple
         shortcut_name='time'
     )
 
-When iommi then sees a Django `TimeField` it will call the `Column.time` shortcut to create a column, `Variable.time` to create a `Variable` and `Field.time` to create a field.
+When iommi then sees a Django `TimeField` it will call the `Column.time` shortcut to create a column, `Filter.time` to create a `Filter` and `Field.time` to create a field.
 
 I you need different behavior for the three classes you need to use the more specific registration functions.
 

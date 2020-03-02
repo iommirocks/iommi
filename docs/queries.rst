@@ -41,7 +41,7 @@ iommi tries to support what the user might intuitively write for searching
 boolean columns. It will interpret "n", "no", "0" (zero), "false", "f" and "off"
 as `false`  and the corresponding values for `true`.
 
-You can configure a `Variable` to be case sensitive by setting `query_operator_to_q_operator`
+You can configure a `Filter` to be case sensitive by setting `query_operator_to_q_operator`
 to `case_sensitive_query_operator_to_q_operator`.
 
 iommi queries have a special form for filtering directly on pk, which can be
@@ -68,10 +68,10 @@ for specific model in the advanced mode:
 .. code:: python
 
     class CarQuery(Query):
-        make = Variable.choice(
+        make = Filter.choice(
             choices=['Toyota', 'Volvo', 'Ford'],
             form_fields__include=True)  # Display this field in the simple style GUI
-        model = Variable.text()
+        model = Filter.text()
 
     def cars(request):
         query = CarQuery()

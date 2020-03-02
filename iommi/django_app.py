@@ -14,3 +14,19 @@ class IommiConfig(AppConfig):
         )
         register_name_field(model=User, name_field='username')
         register_name_field(model=Permission, name_field='codename')
+
+        from iommi import register_style
+        from iommi.style import (
+            base,
+            test,
+        )
+        from iommi.style_bootstrap import (
+            bootstrap,
+            bootstrap_horizontal,
+        )
+        from iommi.style_semantic_ui import semantic_ui
+        register_style('base', base)
+        register_style('test', test)
+        register_style('bootstrap', bootstrap)
+        register_style('bootstrap_horizontal', bootstrap_horizontal)
+        register_style('semantic_ui', semantic_ui)

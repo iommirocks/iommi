@@ -69,7 +69,7 @@ def setup_db_compat_django():
     register_column_factory(BooleanField, shortcut_name='boolean')
     register_column_factory(TextField, shortcut_name='text')
 
-    # Variable specific
+    # Filter specific
     register_filter_factory(URLField, shortcut_name='url')
     register_filter_factory(BooleanField, shortcut_name='boolean')
     register_filter_factory(TextField, shortcut_name='text')

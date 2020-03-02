@@ -2,7 +2,7 @@ test_file_by_source_file = {
     'iommi/__init__.py': None,
     'iommi/_web_compat.py': 'tests/test_02_compat.py',  # TODO split web and db compat in tests
     'iommi/_db_compat.py': 'tests/test_02_compat.py tests/test_30_from_model.py',  # TODO split web and db compat in tests
-    'iommi/action.py': 'tests/test_actions.py',
+    'iommi/action.py': 'tests/test_40_actions.py',
     'iommi/admin.py': 'tests/test_99_admin.py',
     'iommi/attrs.py': 'tests/test_05_attrs.py',
     'iommi/base.py': 'tests/test_04_base.py',
@@ -20,6 +20,8 @@ test_file_by_source_file = {
     'iommi/query.py': 'tests/test_50_query.py',
     'iommi/sort_after.py': 'tests/test_01_sort_after.py',
     'iommi/style.py': 'tests/test_10_style.py',
+    'iommi/style_bootstrap.py': None,
+    'iommi/style_semantic_ui.py': None,
     'iommi/table.py': 'tests/test_60_table.py tests/test_61_table_sort.py',
     'iommi/traversable.py': 'tests/test_03_traversable.py',
     'tests/helpers.py': 'tests/test_00_reindent.py',

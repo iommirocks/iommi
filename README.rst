@@ -36,18 +36,26 @@ Example:
 
 .. code:: python
 
-    def music_page(request):
-        class MusicPage(Page):
-            musicians = Table(
-                auto__model=Musician,
-            )
-            albums = Table(
-                auto__model=Album,
-            )
+    class IndexPage(Page):
+        title = html.h1('Supernaut')
+        welcome_text = 'This is a discography of the best acts in music!'
 
-        return MusicPage()
+        artists = Table(auto__model=Artist, page_size=5)
+        albums = Table(
+            auto__model=Album,
+            page_size=5,
+        )
+        tracks = Table(auto__model=Album, page_size=5)
 
-This creates a page with two separate tables, one for the model :code:`Musician` and one for the model :code:`Album`.
+
+    urlpatterns = [
+        path('', IndexPage().as_view()),
+    ]
+
+
+This creates a page with three separate tables, a header and some text:
+
+.. image:: docs/README-screenshot.png
 
 For more examples, see the `examples project <https://github.com/TriOptima/iommi/tree/master/examples/examples>`_.
 

@@ -396,7 +396,7 @@ in the advanced query language.
         columns__a__filter__include=True,
     )
 
-The `query` namespace here is used to configure a :doc:`Variable` so you can
+The `query` namespace here is used to configure a :doc:`Filter` so you can
 configure the behavior of the searching by passing parameters here.
 
 The `filter__field` namespace is used to configure the :doc:`Field`, so here you
@@ -708,7 +708,7 @@ Queries
 How do I override what operator is used for a query?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The member `query_operator_to_q_operator` for `Variable` is used to convert from e.g. `:`
+The member `query_operator_to_q_operator` for `Filter` is used to convert from e.g. `:`
 to `icontains`. You can specify another callable here:
 
 .. code:: python

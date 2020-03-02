@@ -476,8 +476,8 @@ class Query(Part):
     .. code:: python
 
         class CarQuery(Query):
-            make = Variable.choice(choices=['Toyota', 'Volvo', 'Ford])
-            model = Variable()
+            make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford])
+            model = Filter()
 
         query_set = Car.objects.filter(
             CarQuery().bind(request=request).get_q()
@@ -569,7 +569,7 @@ class Query(Part):
         )
         declared_members(self).form = self.form
 
-        # Variables need to be at the end to not steal the short names
+        # Filters need to be at the end to not steal the short names
         set_declared_member(self, 'filters', declared_members(self).pop('filters'))
 
     @dispatch(

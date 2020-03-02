@@ -132,13 +132,13 @@ instead of the corresponding ones from iommi:
             action_class = Action
 
 
-    class Variable(iommi.Variable):
+    class Filter(iommi.Filter):
         pass
 
 
     class Query(iommi.Query):
         class Meta:
-            member_class = Variable
+            member_class = Filter
             form_class = Form
 
 
