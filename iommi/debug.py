@@ -4,11 +4,13 @@ from os.path import (
 )
 
 from django.conf import settings
-from django.http import HttpRequest
-from django.utils.html import format_html
 from tri_struct import Struct
 
-from iommi._web_compat import Template
+from iommi._web_compat import (
+    format_html,
+    HttpRequest,
+    Template,
+)
 from iommi.member import Members
 from iommi.traversable import (
     bound_members,

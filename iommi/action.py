@@ -7,9 +7,6 @@ from typing import (
     Tuple,
 )
 
-from django.template.loader import render_to_string
-from django.utils.html import format_html
-from django.utils.text import slugify
 from tri_declarative import (
     class_shortcut,
     dispatch,
@@ -19,6 +16,11 @@ from tri_declarative import (
     with_meta,
 )
 
+from iommi._web_compat import (
+    render_to_string,
+    slugify,
+    format_html,
+)
 from iommi.attrs import Attrs
 from iommi.member import Members
 from iommi.page import Fragment

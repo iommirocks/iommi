@@ -6,7 +6,6 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.test import override_settings
-from django.utils.safestring import mark_safe
 from tri_declarative import (
     class_shortcut,
     get_members,
@@ -21,7 +20,10 @@ from iommi import (
     Action,
     Page,
 )
-from iommi._web_compat import Template
+from iommi._web_compat import (
+    mark_safe,
+    Template,
+)
 from iommi.endpoint import (
     find_target,
     InvalidEndpointPathException,

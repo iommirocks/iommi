@@ -20,7 +20,6 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from django.http import HttpResponseRedirect
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -49,6 +48,7 @@ from iommi._web_compat import (
     URLValidator,
     validate_email,
     ValidationError,
+    HttpResponseRedirect,
 )
 from iommi.action import (
     Action,

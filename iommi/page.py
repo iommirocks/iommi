@@ -5,7 +5,6 @@ from typing import (
     Union,
 )
 
-from django.utils.html import format_html
 from tri_declarative import (
     declarative,
     dispatch,
@@ -18,6 +17,7 @@ from tri_declarative import (
 from iommi._web_compat import (
     render_template,
     Template,
+    format_html,
 )
 from iommi.attrs import (
     Attrs,

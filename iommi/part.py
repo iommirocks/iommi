@@ -7,12 +7,7 @@ from typing import (
 )
 
 from django.conf import settings
-from django.http import (
-    HttpResponse,
-    QueryDict,
-)
-from django.http.response import HttpResponseBase
-from django.utils.safestring import mark_safe
+from django.http import QueryDict
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -23,6 +18,9 @@ from tri_declarative import (
 from iommi._web_compat import (
     get_template_from_string,
     Template,
+    mark_safe,
+    HttpResponse,
+    HttpResponseBase,
 )
 from iommi.base import MISSING
 from iommi.debug import iommi_debug_on

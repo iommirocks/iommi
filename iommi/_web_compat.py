@@ -19,6 +19,7 @@ try:
     from django.template.context_processors import csrf as csrf_
     from django.utils.safestring import mark_safe
     from django.http import HttpRequest
+    from django.http.response import HttpResponseBase
 
     DjangoTemplate = None
     JinjaTemplate = None
@@ -102,6 +103,8 @@ except ImportError:  # pragma: no cover This flask support is a work in progress
         @property
         def _headers(self):
             return {k.lower(): [v] for k, v in self.r.headers._list}
+
+    HttpResponseBase = HttpResponse
 
     class HttpRequest:
 

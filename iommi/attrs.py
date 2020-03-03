@@ -1,8 +1,9 @@
-from django.utils.safestring import mark_safe
 from tri_declarative import (
     evaluate_strict,
     Namespace,
 )
+
+from iommi._web_compat import mark_safe
 
 
 def evaluate_attrs(obj, **kwargs):

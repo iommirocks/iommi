@@ -7,7 +7,8 @@ from io import StringIO
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.http import HttpResponse
+
+from iommi._web_compat import HttpResponse
 
 MEDIA_PREFIXES = ['/static/']
 

@@ -9,12 +9,12 @@ from io import StringIO
 from itertools import groupby
 from typing import (
     Any,
+    Callable,
     Dict,
     Iterable,
     Optional,
     Type,
     Union,
-    Callable,
 )
 from urllib.parse import quote_plus
 
@@ -32,7 +32,6 @@ from django.db.models import (
 from django.http import (
     FileResponse,
     Http404,
-    HttpResponseRedirect,
 )
 from django.utils.encoding import (
     force_str,
@@ -61,6 +60,7 @@ from tri_struct import Struct
 
 from iommi._web_compat import (
     format_html,
+    HttpResponseRedirect,
     mark_safe,
     render_template,
     smart_str,
