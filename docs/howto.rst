@@ -421,11 +421,13 @@ Everything together:
 How do I customize the rendering of a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can customize the row rendering in two ways:
+You can customize the :doc:`Cell` rendering in several ways:
 
 - You can modify the html attributes via `cell__attrs`. See the question on attrs_
 
 - Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
+
+- Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -438,6 +440,7 @@ You can customize the row rendering in two ways:
 
 In templates you can access the raw row via `row`. This would typically be one of your model objects. You can also access the cells of the table via `cells`. A naive template for a row would be `<tr>{% for cell in cells %}<td>{{ cell }}{% endfor %}</tr>`. You can access specific cells by their column names like `{{ cells.artist }}`.
 
+To customize the cell, see `How do I customize the rendering of a cell?`_
 
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
