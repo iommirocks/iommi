@@ -18,6 +18,7 @@ Contents:
    queries
    forms
    registrations
+   admin
    howto
    api
    history

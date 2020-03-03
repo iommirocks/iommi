@@ -190,49 +190,7 @@ searching by specifing `extra__create_q_from_value`:
 How do I insert a CSS class or HTML attribute?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `attrs` namespace on `Field`, `Form`, `Header`, `Cell` and more is used to customize HTML attributes.
-
-.. code:: python
-
-    form = Form(
-        auto__model=Foo,
-        fields__foo__attrs__foo='bar',
-        fields__bar__after__class__bar=True,
-        fields__bar__after__style__baz='qwe,
-    )
-
-or more succinctly:
-
-.. code:: python
-
-    form = Form(
-        auto__model=Foo,
-        fields__foo__attrs=dict(
-            foo='bar',
-            class__bar=True,
-            style__baz='qwe,
-        )
-    )
-
-
-The thing to remember is that the basic namespace is a dict with key value
-pairs that gets projected out into the HTML, but there are two special cases
-for `style` and `class`. The example above will result in the following
-attributes on the field tag:
-
-.. code:: html
-
-   <div foo="bar" class="bar" style="baz: qwe">
-
-The values in these dicts can be callables:
-
-.. code:: python
-
-    form = Form(
-        auto__model=Foo,
-        fields__bar__after__class__bar=
-            lambda form, **_: form.get_request().user.is_staff,
-    )
+See :doc:`Attrs`.
 
 
 How do I override rendering of an entire field?

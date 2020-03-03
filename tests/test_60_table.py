@@ -2069,16 +2069,16 @@ def test_data_iommi_path():
     t = t.bind(request=None)
 
     expected_html = """
-    <table class="table" data-endpoint="/tbody" data-iommi-path="">
+    <table class="table" data-endpoint="/tbody" data-iommi-path="" data-iommi-type="FooTable">
         <thead>
             <tr>
-                <th class="superheader" colspan="1">
+                <th class="superheader" colspan="1" data-iommi-type="Header">
                     foo
                 </th>
             </tr>
 
             <tr>
-                <th class="first_column subheader" data-iommi-path="columns__a__header">
+                <th class="first_column subheader" data-iommi-path="columns__a__header" data-iommi-type="Header">
                     <a href="?order=a">
                         A
                     </a>
@@ -2086,8 +2086,8 @@ def test_data_iommi_path():
             </tr>
         </thead>
         <tbody>
-            <tr data-iommi-path="row">
-                <td data-iommi-path="columns__a__cell">
+            <tr data-iommi-path="row" data-iommi-type="Cells">
+                <td data-iommi-path="columns__a__cell" data-iommi-type="Cell">
                     1
                 </td>
             </tr>

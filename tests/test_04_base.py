@@ -75,6 +75,7 @@ def test_evaluate_attrs_show_debug_paths():
             'table': True,
         },
         'data-iommi-path': '<path here>',
+        'data-iommi-type': 'Struct',
     }
 
     assert actual == expected

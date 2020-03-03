@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Type,
     Union,
+    Callable,
 )
 from urllib.parse import quote_plus
 
@@ -313,9 +314,9 @@ class Column(Part):
         """
         Parameters with the prefix `filter__` will be passed along downstream to the `Filter` instance if applicable. This can be used to tweak the filtering of a column.
 
-        :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-reorder-columns>`_ for an example.
+        :param after: Set the order of columns, see the `howto on ordering <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-reorder-columns>`_ for an example.
         :param attr: What attribute to use, defaults to same as name. Follows django conventions to access properties of properties, so `foo__bar` is equivalent to the python code `foo.bar`. This parameter is based on the filter name of the Column if you use the declarative style of creating tables.
-        :param bulk: Namespace to configure bulk actions. See `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-enable-bulk-editing>`_ for an example and more information.
+        :param bulk: Namespace to configure bulk actions. See `howto on bulk editing <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-enable-bulk-editing>`_ for an example and more information.
         :param cell: Customize the cell, see See `howto on rendering <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-customize-the-rendering-of-a-cell>`_ and `howto on links <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-make-a-link-in-a-cell>`_
         :param display_name: the text of the header for this column. By default this is based on the `_name` so normally you won't need to specify it.
         :param url: URL of the header. This should only be used if sorting is off.
@@ -735,34 +736,35 @@ class Cells(Traversable):
 
     def __iter__(self):
         for column in self._parent.rendered_columns.values():
-            yield BoundCell(cells=self, column=column)
+            yield Cell(cells=self, column=column)
 
     def __getitem__(self, name):
         column = self._parent.rendered_columns[name]
-        return BoundCell(cells=self, column=column)
+        return Cell(cells=self, column=column)
 
 
 class CellConfig(RefinableObject):
-    url = Refinable()
-    url_title = Refinable()
-    attrs = Refinable()
-    tag = Refinable()
-    template = Refinable()
+    url: str = Refinable()
+    url_title: str = Refinable()
+    attrs: Attrs = Refinable()
+    tag: str = Refinable()
+    template: Union[str, Template] = Refinable()
     value = Refinable()
     contents = Refinable()
-    format = Refinable()
+    format: Callable = Refinable()
     link = Refinable()
 
 
-class BoundCell(CellConfig):
+class Cell(CellConfig):
 
+    @dispatch
     def __init__(self, cells: Cells, column):
         kwargs = setdefaults_path(
             Namespace(),
             column.cell,
             column.table.cell,
         )
-        super(BoundCell, self).__init__(**kwargs)
+        super(Cell, self).__init__(**kwargs)
         self._name = 'cell'
         self._parent = cells
         self._is_bound = True
@@ -1107,7 +1109,7 @@ def endpoint__csv(table, **_):
             return value
 
     def cell_value(cells, bound_column):
-        value = BoundCell(cells, bound_column).value
+        value = Cell(cells, bound_column).value
         return bound_column.extra_evaluated.get('report_value', value)
 
     def rows():
@@ -1406,7 +1408,7 @@ class Table(Part):
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
         if isinstance(self.h_tag, Namespace):
             if self.title:
-                self.h_tag = self.h_tag(text=self.title.capitalize()).bind(parent=self)
+                self.h_tag = self.h_tag(_name='h_tag', text=self.title.capitalize()).bind(parent=self)
             else:
                 self.h_tag = ''
         else:
@@ -1536,7 +1538,7 @@ class Table(Part):
                 prev_value = no_value_set
                 prev_row = no_value_set
                 for cells in self.cells_for_rows():
-                    value = BoundCell(cells, column).value
+                    value = Cell(cells, column).value
                     if prev_value != value:
                         rowspan_by_row[id(cells.row)] = 1
                         prev_value = value
@@ -1632,7 +1634,7 @@ class Table(Part):
 
     def cells_for_rows(self):
         assert self._is_bound
-        for i, row in enumerate(self.preprocess_rows(rows=self.rows, table=self)):
+        for i, row in enumerate(self.preprocess_rows(rows=self.rows, **self._evaluate_parameters)):
             row = self.preprocess_row(table=self, row=row)
             yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 

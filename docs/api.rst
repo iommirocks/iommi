@@ -5,6 +5,8 @@ API documentation
    :maxdepth: 2
 
    Action
+   Attrs
+   Cell
    Column
    Endpoint
    Field

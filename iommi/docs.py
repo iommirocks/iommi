@@ -1,4 +1,5 @@
 from textwrap import dedent
+from typing import get_type_hints
 
 from tri_declarative import (
     flatten,
@@ -11,13 +12,40 @@ from tri_declarative import (
 from iommi import MISSING
 
 
-def generate_rst_docs(directory, classes):  # pragma: no cover - this is tested by rtd anyway
+def get_default_classes():
+    import iommi
+    return [
+        iommi.Table,
+        iommi.Column,
+        iommi.Query,
+        iommi.Filter,
+        iommi.Form,
+        iommi.Fragment,
+        iommi.Field,
+        iommi.Action,
+        iommi.Page,
+        iommi.Menu,
+        iommi.MenuItem,
+
+        # Private-ish APIs
+        iommi.endpoint.Endpoint,
+        iommi.part.Part,
+        iommi.traversable.Traversable,
+        iommi.member.Members,
+        iommi.table.Cell,
+        iommi.attrs.Attrs,
+    ]
+
+
+def generate_rst_docs(directory, classes=None):  # pragma: no cover - this is tested by rtd anyway
     """
     Generate documentation for tri.declarative APIs
 
     :param directory: directory to write the .rst files into
     :param classes: list of classes to generate documentation for
     """
+    if classes is None:
+        classes = get_default_classes()
 
     doc_by_filename = _generate_rst_docs(classes=classes)  # pragma: no mutate
     for filename, doc in doc_by_filename:  # pragma: no mutate
@@ -78,6 +106,13 @@ def _generate_rst_docs(classes):
         class_doc = docstring_param_dict(c)
         constructor_doc = docstring_param_dict(c.__init__)
 
+        if c.__base__ in classes:
+            w(0, f'Base class: :doc:`{c.__base__.__name__}`')
+        else:
+            w(0, f'Base class: `{c.__base__.__name__}`')
+
+        w(0, '')
+
         if class_doc['text']:
             f.write(class_doc['text'])
             w(0, '')
@@ -91,18 +126,24 @@ def _generate_rst_docs(classes):
 
         w(0, '')
 
-        w(0, f'Base class: :doc:`{c.__base__.__name__} <{c.__base__.__name__}>`')
+        refinable_members = sorted(dict.items(get_namespace(c)))
+        if refinable_members:
+            section(1, 'Refinable members')
+            type_hints = get_type_hints(c)
+            for refinable, value in refinable_members:
+                w(0, '* `' + refinable + '`')
 
-        w(0, '')
+                if constructor_doc['params'].get(refinable):
+                    w(1, constructor_doc['params'][refinable])
+                    w(0, '')
+                type_hint = type_hints.get(refinable)
+                if type_hint and hasattr(type_hint, '__name__'):
+                    if type_hint in classes:
+                        w(1, f'Type: :doc:`{type_hint.__name__}`')
+                    else:
+                        w(1, f'Type: `{type_hint.__name__}`')
 
-        section(1, 'Refinable members')
-        for refinable, value in sorted(dict.items(get_namespace(c))):
-            w(0, '* `' + refinable + '`')
-
-            if constructor_doc['params'].get(refinable):
-                w(1, constructor_doc['params'][refinable])
-                w(0, '')
-        w(0, '')
+            w(0, '')
 
         defaults = Namespace()
         for refinable, value in sorted(get_namespace(c).items()):

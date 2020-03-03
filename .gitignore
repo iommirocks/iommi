@@ -146,6 +146,8 @@ docs/Part.rst
 docs/Page.rst
 docs/Traversable.rst
 docs/Fragment.rst
+docs/Attrs.rst
+docs/Cell.rst
 
 # tests
 results/

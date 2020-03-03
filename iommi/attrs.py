@@ -69,11 +69,58 @@ def render_attrs(attrs):
 
 
 class Attrs(Namespace):
+    """
+    The `attrs` namespace on `Field`, `Form`, `Header`, `Cell` and more is used to customize HTML attributes.
+
+    .. code:: python
+
+        form = Form(
+            auto__model=Foo,
+            fields__foo__attrs__foo='bar',
+            fields__bar__after__class__bar=True,
+            fields__bar__after__style__baz='qwe,
+        )
+
+    or more succinctly:
+
+    .. code:: python
+
+        form = Form(
+            auto__model=Foo,
+            fields__foo__attrs=dict(
+                foo='bar',
+                class__bar=True,
+                style__baz='qwe,
+            )
+        )
+
+
+    The thing to remember is that the basic namespace is a dict with key value
+    pairs that gets projected out into the HTML, but there are two special cases
+    for `style` and `class`. The example above will result in the following
+    attributes on the field tag:
+
+    .. code:: html
+
+       <div foo="bar" class="bar" style="baz: qwe">
+
+    The values in these dicts can be callables:
+
+    .. code:: python
+
+        form = Form(
+            auto__model=Foo,
+            fields__bar__after__class__bar=
+                lambda form, **_: form.get_request().user.is_staff,
+        )
+    """
+
     def __init__(self, parent, **attrs):
         from iommi.debug import iommi_debug_on
 
         if iommi_debug_on() and getattr(parent, '_name', None) is not None:
             attrs['data-iommi-path'] = parent.iommi_dunder_path
+            attrs['data-iommi-type'] = type(parent).__name__
 
         if 'style' in attrs and not attrs['style']:
             del attrs['style']

@@ -80,9 +80,9 @@ def test_generate_docs():
 Foo
 ===
 
-docstring for Foo
+Base class: `RefinableObject`
 
-Base class: :doc:`RefinableObject <RefinableObject>`
+docstring for Foo
 
 Refinable members
 -----------------
@@ -167,15 +167,15 @@ def test_generate_docs_empty_docstring():
 Foo
 ===
 
+Base class: `RefinableObject`
 
-Base class: :doc:`RefinableObject <RefinableObject>`
 
 Refinable members
 -----------------
 
 * `name`
-
 """
+    print(actual_doc)
 
     assert actual_doc.strip() == expected_doc.strip()
 
@@ -205,18 +205,18 @@ def test_generate_docs_description_and_params_in_constructor():
 Foo
 ===
 
+Base class: `RefinableObject`
+
 First description
 
 __init__ description
-
-Base class: :doc:`RefinableObject <RefinableObject>`
 
 Refinable members
 -----------------
 
 * `name`
-
 """
+    print(actual_doc)
     assert actual_doc.strip() == expected_doc.strip()
 
 
@@ -239,8 +239,8 @@ def test_generate_docs_kill_obscure_mutant():
 Foo
 ===
 
+Base class: `RefinableObject`
 
-Base class: :doc:`RefinableObject <RefinableObject>`
 
 Refinable members
 -----------------
@@ -252,7 +252,6 @@ Defaults
 
 * `name`
     * `lambda X: X`
-
 """
-
+    print(actual_doc)
     assert actual_doc.strip() == expected_doc.strip()

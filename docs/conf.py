@@ -33,36 +33,9 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 from django.conf import settings
 settings.configure()
 
-import iommi
-
 from iommi.docs import generate_rst_docs
-import iommi.base
-import iommi.endpoint
-import iommi.traversable
-import iommi.part
 
-generate_rst_docs(
-    '.',
-    [
-        iommi.Table,
-        iommi.Column,
-        iommi.Query,
-        iommi.Filter,
-        iommi.Form,
-        iommi.Fragment,
-        iommi.Field,
-        iommi.Action,
-        iommi.Page,
-        iommi.Menu,
-        iommi.MenuItem,
-
-        # Private-ish APIs
-        iommi.endpoint.Endpoint,
-        iommi.part.Part,
-        iommi.traversable.Traversable,
-        iommi.member.Members,
-    ],
-)
+generate_rst_docs('.')
 
 # -- General configuration -----------------------------------------------------
 
@@ -98,6 +71,7 @@ copyright = u'2020, Anders Hovmöller & Johan Lübcke'
 # built documents.
 #
 # The short X.Y version.
+import iommi
 version = iommi.__version__
 # The full version, including alpha/beta/rc tags.
 release = iommi.__version__
