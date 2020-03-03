@@ -11,6 +11,23 @@ body {
     display: none;
 }
 
+div.sphinxsidebar a {
+    border-bottom: none;
+    width: 100%;
+    display: inline-block;
+    padding-left: 2px;
+}
+
+div.sphinxsidebar a:hover {
+    border-right: 2px solid gray;
+    border-bottom: none;
+}
+
+div.sphinxsidebar a.current {
+    background: #eee;
+    border-right: 2px solid gray;
+}
+
 pre {
     padding: 7px 15px;
 }
