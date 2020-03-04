@@ -10,6 +10,7 @@ from iommi._web_compat import (
     format_html,
     HttpRequest,
     Template,
+    mark_safe,
 )
 from iommi.member import Members
 from iommi.traversable import (
@@ -174,5 +175,39 @@ def iommi_debug_panel(part):
     if not source_url:
         return ''
 
+    script = r"""
+        window.iommi_start_pick = function() {
+            window.iommi_pick_stack = [];
+
+            function update_toolbar() {
+                let toolbar = $('#iommi-pick-toolbar');
+                toolbar.empty();
+                toolbar.append('<div style="float: right" onclick="$(\'#iommi-pick-toolbar\').hide()">close</div>');
+                for (let i in window.iommi_pick_stack) {
+                    let x = window.iommi_pick_stack[i];
+                    toolbar.append('<div>' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>');
+                }
+            }
+        
+            $('*[data-iommi-path]').hover(
+                function() {
+                    this.style.border = '2px dotted #1084ff';
+                    window.iommi_pick_stack.push([$(this).attr('data-iommi-path'), $(this).attr('data-iommi-type')])
+                    update_toolbar();
+                },
+                function() {
+                    this.style.border = 'none';
+                    window.iommi_pick_stack.pop();
+                    update_toolbar();
+                }
+            ).click(function() {
+                if (window.iommi_pick_stack.length) {
+                    $('*[data-iommi-path]').off('mouseenter').off('mouseleave');
+                }
+            });
+            $('body').append('<div id="iommi-pick-toolbar" style="position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: black; padding: 4px; border-top: 2px solid #1084ff">');
+        };
+    """
+
     from iommi.menu import DebugMenu
-    return DebugMenu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__()
+    return DebugMenu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(f'<script>{script}</script>')

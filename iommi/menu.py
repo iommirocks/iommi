@@ -106,7 +106,7 @@ class MenuItem(MenuBase):
         super(MenuItem, self).on_bind()
 
         # If this is a section header, and all sub-parts are hidden, hide myself
-        if not self.url and not self.sub_menu:
+        if not self.url and self.sub_menu is not None and not self.sub_menu:
             self.include = False
 
     def own_evaluate_parameters(self):
@@ -212,7 +212,7 @@ class Menu(MenuBase):
         # verify there is no ambiguity for the MenuItems
         paths = set()
         for item in self.sub_menu.values():
-            if item.url is None or '://' in item.url:
+            if item.url is None or '://' in item.url or item.url.startswith('#'):
                 continue
 
             path = urlparse(item.url).path
@@ -248,6 +248,7 @@ class Menu(MenuBase):
 class DebugMenu(Menu):
     code = MenuItem()
     tree = MenuItem(url='?/debug_tree')
+    pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()')
 
     class Meta:
         attrs__style = {
