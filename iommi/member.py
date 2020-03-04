@@ -60,7 +60,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                     )
                     unbound_items[key] = item()
             else:
-                assert unknown_types_fall_through, f'I got {type(item)}, but I was expecting Traversable or dict'
+                assert unknown_types_fall_through, f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
     for k, v in Namespace(_unapplied_config).items():

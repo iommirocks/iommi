@@ -128,6 +128,8 @@ def endpoint__debug_tree(endpoint, **_):
 
     request = HttpRequest()
     request.method = 'GET'
+    if hasattr(root._request, 'user'):
+        request.user = root._request.user
 
     return TreeTable(rows=rows(root)).bind(request=request)
 

@@ -1244,6 +1244,8 @@ class Table(Part):
 
         auto=EMPTY,
         tag='table',
+        attrs__class=EMPTY,
+        attrs__style=EMPTY,
     )
     def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=None, **kwargs):
         """
