@@ -167,6 +167,9 @@ def get_name_field(*, model):
 
 def register_name_field(*, model, name_field, allow_non_unique=False):
     def validate_name_field(path, model):
+        if name_field in ('pk', 'id'):
+            return
+
         field = model._meta.get_field(path[0])
         if len(path) == 1:
             if allow_non_unique:

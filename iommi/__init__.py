@@ -35,6 +35,9 @@ from iommi.table import (
     register_column_factory,
     Table,
 )
+from iommi.from_model import (
+    register_name_field,
+)
 
 setup_db_compat()
 
@@ -72,6 +75,7 @@ __all__ = [
     'register_column_factory',
     'register_cell_formatter',
     'register_style',
+    'register_name_field',
 ]
 
 default_app_config = 'iommi.django_app.IommiConfig'

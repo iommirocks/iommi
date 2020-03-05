@@ -207,10 +207,8 @@ class Filter(Part):
     @dispatch(
         query_operator_for_field='=',
         attr=MISSING,
-        field=Namespace(
-            include=True,
-            required=False,
-        ),
+        field__required=False,
+        field__include=lambda query, field, **_: not query.filters.get(field._name).freetext,
     )
     def __init__(self, **kwargs):
         """

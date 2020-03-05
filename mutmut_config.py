@@ -25,6 +25,7 @@ test_file_by_source_file = {
     'iommi/table.py': 'tests/test_60_table.py tests/test_61_table_sort.py',
     'iommi/traversable.py': 'tests/test_03_traversable.py',
     'tests/helpers.py': 'tests/test_00_reindent.py',
+    'iommi/profiling.py': None,
 }
 
 

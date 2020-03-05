@@ -696,7 +696,7 @@ class Column(Part):
         if hasattr(model, 'get_absolute_url'):
             setdefaults_path(
                 kwargs,
-                cell__url=lambda value, **_: value.get_absolute_url(),
+                cell__url=lambda value, **_: value.get_absolute_url() if value is not None else None,
             )
         setdefaults_path(
             kwargs,
