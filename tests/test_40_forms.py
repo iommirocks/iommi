@@ -194,6 +194,19 @@ def test_custom_raw_data_list():
     assert form.fields.foo.value == ['this is custom raw data list']
 
 
+def test_custom_parsed_value():
+    def my_form_parsed_data(form, field, **_):
+        del form
+        del field
+        return 'this is custom parsed data'
+
+    class MyForm(Form):
+        foo = Field(parsed_data=my_form_parsed_data)
+
+    form = MyForm().bind(request=req('post', **{'-submit': ''}))
+    assert form.fields.foo.value == 'this is custom parsed data'
+
+
 def test_parse(MyTestForm):
     # The spaces in the data are there to check that we strip input
     form = MyTestForm().bind(

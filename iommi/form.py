@@ -390,6 +390,9 @@ class Field(Part):
     raw_data_list: List[str] = Refinable()  # raw_data_list is evaluated, but in a special way
 
     parse_empty_string_as_none: bool = EvaluatedRefinable()
+    # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
+    parsed_data: Any = Refinable()  # parsed_data is evaluated, but in a special way so gets no EvaluatedRefinable type
+
     initial: Any = Refinable()  # initial is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
@@ -476,9 +479,6 @@ class Field(Part):
 
         super(Field, self).__init__(**kwargs)
 
-        # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
-        self.parsed_data = None
-
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
 
@@ -559,12 +559,15 @@ class Field(Part):
         self.model = evaluate(self.model, **self._evaluate_parameters)
 
         self.choices = evaluate_strict(self.choices, **self._evaluate_parameters)
-        self.initial = evaluate_strict(self.initial, **self._evaluate_parameters)
 
+        self.initial = evaluate_strict(self.initial, **self._evaluate_parameters)
         self._read_initial()
+
         self._read_raw_data()
 
+        self.parsed_data = evaluate_strict(self.parsed_data, **self._evaluate_parameters)
         self._parse()
+
         self._validate()
 
         self.input = self.input.bind(parent=self)
@@ -574,6 +577,9 @@ class Field(Part):
         self.non_editable_input = self.non_editable_input.bind(parent=self)
 
     def _parse(self):
+        if self.parsed_data is not None:
+            return
+
         if not self.editable:
             return
 
