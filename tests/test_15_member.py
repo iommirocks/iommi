@@ -8,6 +8,7 @@ from tri_declarative import (
 from iommi.member import (
     bind_members,
     collect_members,
+    NotBoundYetException,
 )
 from iommi.traversable import (
     declared_members,
@@ -58,6 +59,25 @@ def test_collect_unapplied_config():
 
     basket = MyBasket(fruits__pear__taste='meh')
     assert basket._declared_members.fruits.pear.taste == 'meh'
+
+
+def test_unbound_error():
+    class MyBasket(Basket):
+        orange = Fruit(taste='sour')
+
+    expected = 'fruits of MyBasket is not bound, look in _declared_members[fruits] for the declared copy of this, or bind first'
+
+    basket = MyBasket()
+    assert repr(basket.fruits) == expected
+
+    with pytest.raises(NotBoundYetException) as e:
+        basket.fruits.items()
+
+    with pytest.raises(NotBoundYetException) as e2:
+        str(basket.fruits)
+
+    assert str(e.value) == str(e2.value)
+    assert str(e.value) == expected
 
 
 def test_empty_bind():

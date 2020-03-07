@@ -28,6 +28,25 @@ class ForbiddenNamesException(Exception):
     pass
 
 
+class NotBoundYetException(Exception):
+    pass
+
+
+class NotBoundYet:
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
+
+    def __repr__(self):
+        return f"{self.name} of {type(self.parent).__name__} is not bound, look in _declared_members[{self.name}] for the declared copy of this, or bind first"
+
+    def __str__(self):
+        raise NotBoundYetException(repr(self))
+
+    def __getattr__(self, item):
+        raise NotBoundYetException(repr(self))
+
+
 def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
     forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
     if forbidden_names:
@@ -68,6 +87,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
         assert unbound_items[k]._name is not None
 
     set_declared_member(container, name, unbound_items)
+    setattr(container, name, NotBoundYet(container, name))
 
 
 class Members(Traversable):
