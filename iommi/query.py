@@ -499,6 +499,7 @@ class Query(Part):
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,
         auto=EMPTY,
+        form__attrs={'data-iommi-errors': lambda query, **_: query.endpoints.errors.iommi_path}
     )
     def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto, **kwargs):
         model, rows = model_and_rows(model, rows)
@@ -611,11 +612,11 @@ class Query(Part):
                 continue
             if name not in self.filters:
                 field.include = False
-        self.form = self.form.bind(parent=self)
-
-        self._bound_members.form = self.form
 
         bind_members(self, name='endpoints')
+
+        self.form = self.form.bind(parent=self)
+        self._bound_members.form = self.form
 
     def own_evaluate_parameters(self):
         return dict(query=self)

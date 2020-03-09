@@ -47,11 +47,11 @@
 
         {{ query.form.errors }}
 
-        {% if query.query_error %}
-          <div class="iommi_query_error">
-              {{ query.query_error }}
-          </div>
-        {% endif %}
+        <div class="iommi_query_error">
+            {% if query.query_error %}
+                {{ query.query_error }}
+            {% endif %}
+        </div>
 
         <style type="text/css" scoped>
             .iommi_query_available_fields,

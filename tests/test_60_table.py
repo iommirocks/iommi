@@ -1124,7 +1124,7 @@ def test_template_string(NoSortTable):
         ),
         expected_html="""
         What filters
-        <div class="table-container">
+        <div class="iommi-table-container">
             <form action="." method="post">
                 <table class="table" data-endpoint="/tbody">
                     What headers
