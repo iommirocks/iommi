@@ -259,6 +259,16 @@ class DataRetrievalMethods(Enum):
     select = auto()
 
 
+def default_icon__cell__format(column, value, **_):
+    if not value or not column.extra.get('icon', None):
+        return column.display_name
+
+    attrs = column.extra.icon_attrs
+    attrs['class'][column.extra.icon_prefix + column.extra.icon] = True
+
+    return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
+
+
 @with_meta
 class Column(Part):
     """
@@ -396,6 +406,7 @@ class Column(Part):
     @class_shortcut(
         display_name='',
         cell__value=lambda table, **_: True,
+        cell__format=default_icon__cell__format,
         extra__icon_attrs__class=EMPTY,
         extra__icon_attrs__style=EMPTY,
         attr=None,
@@ -411,18 +422,6 @@ class Column(Part):
         if args:
             setdefaults_path(kwargs, dict(extra__icon=args[0]))
 
-        def icon_format(column, value, **_):
-            if not value or not column.extra.get('icon', None):
-                return column.display_name
-
-            attrs = column.extra.icon_attrs
-            attrs['class'][column.extra.icon_prefix + column.extra.icon] = True
-
-            return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
-
-        setdefaults_path(kwargs, dict(
-            cell__format=icon_format,
-        ))
         return call_target(**kwargs)
 
     @classmethod
