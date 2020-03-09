@@ -494,6 +494,7 @@ def is_shortcut(x):
 
 def class_shortcut(*args, **defaults):
     def decorator(__target__):
+        @functools.wraps(__target__)
         @shortcut
         @dispatch(
             **defaults
