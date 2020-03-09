@@ -16,6 +16,7 @@ from tri_declarative import (
     Refinable,
     setdefaults_path,
     with_meta,
+    evaluate_strict,
 )
 from tri_struct import Struct
 
@@ -45,7 +46,8 @@ class MenuBase(Part):
     @dispatch(
         sort=True,
         sub_menu=EMPTY,
-        attrs=EMPTY,
+        attrs__class=EMPTY,
+        attrs__style=EMPTY,
     )
     def __init__(self, sub_menu, _sub_menu_dict=None, **kwargs):
         super(MenuBase, self).__init__(**kwargs)
@@ -62,8 +64,9 @@ class MenuBase(Part):
 
     def __repr__(self):
         r = f'{self._name}\n'
-        for items in self.sub_menu.values():
-            r += '    ' + repr(items)
+        if self.sub_menu:
+            for items in self.sub_menu.values():
+                r += '    ' + repr(items)
         return r
 
     def on_bind(self):
@@ -87,23 +90,26 @@ class MenuItem(MenuBase):
     """
 
     display_name: str = EvaluatedRefinable()
-    url: str = EvaluatedRefinable()
+    url: str = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     regex: str = EvaluatedRefinable()
     group: str = EvaluatedRefinable()
+    a = Refinable()
+    active_class = Refinable()
 
     @reinvokable
     @dispatch(
         display_name=lambda menu_item, **_: menu_item._name.capitalize().replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
-        a__tag='a',
+        a=EMPTY,
     )
-    def __init__(self, *, a, **kwargs):
+    def __init__(self, **kwargs):
         super(MenuItem, self).__init__(**kwargs)
-        self.a = a
 
     def on_bind(self):
         super(MenuItem, self).on_bind()
+
+        self.url = evaluate_strict(self.url, **self._evaluate_parameters)
 
         # If this is a section header, and all sub-parts are hidden, hide myself
         if not self.url and self.sub_menu is not None and not self.sub_menu:
@@ -114,8 +120,9 @@ class MenuItem(MenuBase):
 
     def __repr__(self):
         r = f'{self._name} -> {self.url}\n'
-        for items in self.sub_menu.values():
-            r += '    ' + repr(items)
+        if self.sub_menu:
+            for items in self.sub_menu.values():
+                r += '    ' + repr(items)
         return r
 
     def __html__(self, *, render=None):
@@ -129,8 +136,11 @@ class MenuItem(MenuBase):
         if self._active:
             setdefaults_path(
                 a,
-                attrs__class__active=True,
+                attrs__class={self.active_class: True},
             )
+
+        if self.url is None and a.tag == 'a':
+            a.tag = None
 
         fragment = Fragment(
             children__a=a,
@@ -190,7 +200,6 @@ class Menu(MenuBase):
 
     def on_bind(self):
         super(Menu, self).on_bind()
-        self.validate_and_set_active(current_path=self.get_request().path)
 
         self.fragment = Fragment(
             _name=self._name,
@@ -207,42 +216,60 @@ class Menu(MenuBase):
             assert name not in items_container.children
             items_container.children[name] = item
 
-    def validate_and_set_active(self, current_path: str):
+        self.set_active(current_path=self.get_request().path)
 
+    def validate(self):
         # verify there is no ambiguity for the MenuItems
-        paths = set()
-        for item in self.sub_menu.values():
-            if item.url is None or '://' in item.url or item.url.startswith('#'):
-                continue
+        paths = {}
+        ambiguous = []
 
-            path = urlparse(item.url).path
-            if path in paths:
-                raise MenuException(f'MenuItem paths are ambiguous; several non-external MenuItems have the path: {path}')
+        def _validate(item):
+            for sub_item in item.sub_menu.values():
+                if sub_item.url is None or '://' in sub_item.url or sub_item.url.startswith('#'):
+                    continue
 
-            paths.add(path)
+                _validate(sub_item)
 
+                path = urlparse(sub_item.url).path
+                if path in paths:
+                    ambiguous.append((path, sub_item, paths[path]))
+
+                paths[path] = sub_item
+
+        _validate(self)
+        return ambiguous
+
+    def set_active(self, current_path: str):
         current = None
         current_parts_matching = 0
         path_parts = PurePosixPath(current_path).parts
 
-        items = [(item, urlparse(item.url)) for item in self.sub_menu.values()]
-        for (item, parsed_url) in items:
-            if item.url is None or '://' in item.url:
-                continue
+        def _set_active(item):
+            nonlocal current_parts_matching
+            nonlocal current
+            for sub_item in item.sub_menu.values():
+                if sub_item.url is None or '://' in sub_item.url:
+                    continue
 
-            if current_path.startswith(parsed_url.path):
-                parts = PurePosixPath(unquote(parsed_url.path)).parts
-                matching_parts = 0
-                for i in range(min(len(parts), len(path_parts))):
-                    if parts[i] is path_parts[i]:
-                        matching_parts += 1
+                _set_active(sub_item)
 
-                if matching_parts > current_parts_matching:
-                    current = (item, parsed_url)
-                    current_parts_matching = matching_parts
+                parsed_url = urlparse(sub_item.url).path
+
+                if current_path.startswith(parsed_url):
+                    parts = PurePosixPath(unquote(parsed_url)).parts
+                    matching_parts = 0
+                    for item in range(min(len(parts), len(path_parts))):
+                        if parts[item] is path_parts[item]:
+                            matching_parts += 1
+
+                    if matching_parts > current_parts_matching:
+                        current = sub_item
+                        current_parts_matching = matching_parts
+
+        _set_active(self)
 
         if current:
-            current[0]._active = True
+            current._active = True
 
 
 class DebugMenu(Menu):

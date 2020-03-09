@@ -28,4 +28,4 @@ def test_submenu():
 
     menu = MyMenu().bind(request=req('GET'))
     assert menu.sub_menu
-    assert menu.__html__() == '<nav><ul><li><a class="link">Sub menu</a><li><a class="link" href="/bar/">Bar</a></li><li><a class="link" href="/foo/">Foo</a></li></li></ul></nav>'
+    assert menu.__html__() == '<nav><ul><li>Sub menu<li><a class="link" href="/bar/">Bar</a></li><li><a class="link" href="/foo/">Foo</a></li></li></ul></nav>'

@@ -113,7 +113,11 @@ base = Style(
     Actions=dict(
         tag='div',
         attrs__class__links=True,
-    )
+    ),
+    MenuItem=dict(
+        a__tag='a',
+        active_class='active',
+    ),
 )
 
 font_awesome_4 = Style(
