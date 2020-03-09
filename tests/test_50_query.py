@@ -636,3 +636,14 @@ def test_pk_error_message_2(MyTestQuery):
 
     assert str(e.value) == 'Only = is supported for primary key lookup'
 
+
+def test_error_message_when_trying_freetext_via_advanced_query_when_no_freetext_field_exists():
+    class MyTestQuery(Query):
+        foo_name = Filter(attr='foo')
+
+    query = MyTestQuery().bind(request=None)
+
+    with pytest.raises(QueryException) as e:
+        query.parse_query_string('"freetext"')
+
+    assert str(e.value) == 'There are no freetext filters available'

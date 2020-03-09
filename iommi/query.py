@@ -793,7 +793,8 @@ class Query(Part):
         raise QueryException(f'Unknown filter "{filter_name}", available filters: {list(self.filters.keys())}')
 
     def _freetext_to_q(self, token):
-        assert any(v.freetext for v in self.filters.values())
+        if all(not v.freetext for v in self.filters.values()):
+            raise QueryException('There are no freetext filters available')
         assert len(token) == 1
         token = token[0].strip('"')
 
