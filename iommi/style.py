@@ -118,6 +118,16 @@ base = Style(
         a__tag='a',
         active_class='active',
     ),
+    DebugMenu=dict(
+        attrs__style=dict(
+            position='fixed',
+            bottom='0',
+            right='0',
+        ),
+        attrs__class={
+            'flex-column': False,
+        },
+    ),
 )
 
 font_awesome_4 = Style(

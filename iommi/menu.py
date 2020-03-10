@@ -276,12 +276,3 @@ class DebugMenu(Menu):
     code = MenuItem()
     tree = MenuItem(url='?/debug_tree')
     pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()')
-
-    class Meta:
-        attrs__style = {
-            'float': 'right',
-            'padding-left': '20px',
-        }
-        attrs__class = {
-            'flex-column': False,
-        }
