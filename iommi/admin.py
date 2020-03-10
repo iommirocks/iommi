@@ -191,11 +191,11 @@ class Admin(Page):
             call_target__cls=cls.get_meta().form_class,
             auto__instance=instance,
             auto__model=model,
-            call_target__attribute=type,
+            call_target__attribute=operation,
         )
 
         return call_target(
-            **{f'parts__{type}_{app_name}_{model_name}': form},
+            **{f'parts__{operation}_{app_name}_{model_name}': form},
             **kwargs,
         )
 
