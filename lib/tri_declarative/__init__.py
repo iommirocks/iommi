@@ -500,17 +500,31 @@ def class_shortcut(*args, **defaults):
         )
         def class_shortcut_wrapper(cls, *args, **kwargs):
             call_target = kwargs.pop('call_target', None)
+            cls = kwargs.pop('_target_cls', cls)
             if call_target is None:
                 setdefaults_path(
                     kwargs,
                     call_target__call_target__cls=cls,
                 )
             else:
-                setdefaults_path(
-                    kwargs,
-                    call_target__call_target=call_target,
-                    call_target__call_target__cls=cls,
-                )
+                if (
+                        isinstance(call_target, Namespace)
+                        and __target__.__name__ == call_target.get('attribute', None)
+                ):
+                    # Next call is to the same attribute name, but on the base class.
+                    # We need to retain the cls value for later use.
+                    setdefaults_path(
+                        kwargs,
+                        _target_cls=cls,
+                        call_target__call_target=call_target,
+                        call_target__call_target__cls=cls.__bases__[0]
+                    )
+                else:
+                    setdefaults_path(
+                        kwargs,
+                        call_target__call_target=call_target,
+                        call_target__call_target__cls=cls,
+                    )
 
             result = __target__(cls, *args, **kwargs)
 
