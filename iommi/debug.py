@@ -180,34 +180,52 @@ def iommi_debug_panel(part):
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];
+            
+            function create(html) {
+                let r = document.createElement('div');
+                r.innerHTML = html;
+                return r.firstChild;
+            }
 
             function update_toolbar() {
-                let toolbar = $('#iommi-pick-toolbar');
-                toolbar.empty();
-                toolbar.append('<div style="float: right" onclick="$(\'#iommi-pick-toolbar\').hide()">close</div>');
+                let toolbar = document.getElementById('iommi-pick-toolbar');
+                
+                while(toolbar.firstChild) {
+                    toolbar.removeChild(toolbar.firstChild);
+                }
+                
+                toolbar.append(create('<div style="float: right" onclick="document.getElementById(\'iommi-pick-toolbar\').remove()">close</div>'));
                 for (let i in window.iommi_pick_stack) {
                     let x = window.iommi_pick_stack[i];
-                    toolbar.append('<div>' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>');
+                    toolbar.append(create('<div>' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>'));
                 }
             }
         
-            $('*[data-iommi-path]').hover(
-                function() {
-                    this.style.border = '2px dotted #1084ff';
-                    window.iommi_pick_stack.push([$(this).attr('data-iommi-path'), $(this).attr('data-iommi-type')])
-                    update_toolbar();
-                },
-                function() {
-                    this.style.border = 'none';
-                    window.iommi_pick_stack.pop();
-                    update_toolbar();
-                }
-            ).click(function() {
+            let with_iommi_path = document.querySelector('*[data-iommi-path]');
+            
+            function mouseenter() {
+                this.style.border = '2px dotted #1084ff';
+                window.iommi_pick_stack.push([this.getAttribute('data-iommi-path'), this.getAttribute('data-iommi-type')])
+                update_toolbar();
+            }
+            function mouseleave() {
+                this.style.border = 'none';
+                window.iommi_pick_stack.pop();
+                update_toolbar();
+            }
+            
+            with_iommi_path.addEventListener('mouseenter', mouseenter);
+            with_iommi_path.addEventListener('mouseleave', mouseleave);
+            with_iommi_path.addEventListener('click', function() {
                 if (window.iommi_pick_stack.length) {
-                    $('*[data-iommi-path]').off('mouseenter').off('mouseleave');
+                    with_iommi_path.removeEventListener('mouseenter', mouseenter)
+                    with_iommi_path.removeEventListener('mouseleave', mouseleave)
                 }
             });
-            $('body').append('<div id="iommi-pick-toolbar" style="position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: black; padding: 4px; border-top: 2px solid #1084ff">');
+            
+            let toolbar = create('<div id="iommi-pick-toolbar" style="position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: black; padding: 4px; border-top: 2px solid #1084ff">');
+            
+            document.getElementsByTagName('body')[0].append(toolbar);
         };
     """
 
