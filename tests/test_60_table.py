@@ -707,7 +707,6 @@ def test_django_table_pagination():
         </table>""")
 
 
-@pytest.mark.skipif(django.VERSION[0] < 2, reason='This requires the new paginator API in django 2.0+')
 @pytest.mark.django_db
 def test_django_table_pagination_custom_paginator():
     for x in range(30):
@@ -731,7 +730,7 @@ def test_django_table_pagination_custom_paginator():
     verify_table_html(
         table=TestTable(
             rows=rows,
-            paginator=CustomPaginator,
+            paginator__django_paginator=CustomPaginator,
         ),
         expected_html="""
         <table class="table" data-endpoint="/tbody">
