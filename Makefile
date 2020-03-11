@@ -1,5 +1,7 @@
 .PHONY: clean-pyc clean-build docs clean lint test coverage docs dist tag release-check
 
+PYTHON ?= python
+
 help:
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
@@ -41,12 +43,12 @@ docs:
 	tox -e docs
 
 dist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel
+	$(PYTHON) setup.py sdist bdist_wheel
 	ls -l dist
 
 tag:
-	python setup.py tag
+	$(PYTHON) setup.py tag
 
 release-check:
-	python setup.py release_check
+	$(PYTHON) setup.py release_check
+
