@@ -751,7 +751,6 @@ class Field(Part):
                 self.input.attrs.value = self.rendered_value
 
         if not self.editable:
-            assert not self.non_editable_input.children
             self.non_editable_input.children['text'] = self.rendered_value
             self.input = self.non_editable_input
 
@@ -1122,7 +1121,7 @@ class Form(Part):
                 exclude=auto.exclude,
             )
             instance = auto.instance
-            if title is None and auto.type is not None:
+            if title is MISSING and auto.type is not None:
                 title = f'{auto.type.title()} {model._meta.verbose_name}'
 
                 setdefaults_path(

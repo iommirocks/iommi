@@ -7,6 +7,7 @@ from enum import (
 from functools import total_ordering
 from io import StringIO
 from itertools import groupby
+from math import ceil
 from typing import (
     Any,
     Callable,
@@ -119,6 +120,7 @@ from iommi.traversable import (
     reinvokable,
     set_declared_member,
     Traversable,
+    get_path_by_long_path,
 )
 
 LAST = LAST
@@ -974,20 +976,25 @@ class Paginator(Traversable):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
     container = Refinable()
-    page = Refinable()
+    page: int = Refinable()  # page is evaluated, but in a special way so gets no EvaluatedRefinable type
     active_item = Refinable()
     item = Refinable()
     link = Refinable()
+    adjacent_pages: int = Refinable()
+    min_page_size: int = Refinable()
+    number_of_pages: int = Refinable()  # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
+    count: int = Refinable()  # count is evaluated, but in a special way so gets no EvaluatedRefinable type
+    slice = Refinable()
 
     @dispatch(
+        adjacent_pages=6,
+        min_page_size=1,
+
         attrs__class=EMPTY,
         attrs__style=EMPTY,
 
         container__attrs__class=EMPTY,
         container__attrs__style=EMPTY,
-
-        page__attrs__class=EMPTY,
-        page__attrs__style=EMPTY,
 
         active_item__attrs__class=EMPTY,
         active_item__attrs__style=EMPTY,
@@ -997,99 +1004,119 @@ class Paginator(Traversable):
 
         link__attrs__class=EMPTY,
         link__attrs__style=EMPTY,
-    )
-    def __init__(self, *, django_paginator, table, adjacent_pages=6, current_page=None, **kwargs):
-        assert isinstance(kwargs['page'], dict), 'Maybe you meant to pass current_page?'
-        super(Paginator, self).__init__(**kwargs)
-        self.paginator = django_paginator
-        assert django_paginator is None or isinstance(django_paginator, DjangoPaginator)
-        self.table: Table = table
-        self.adjacent_pages = adjacent_pages
-        self._name = 'paginator'
-        self.context = None
 
-        request = self.table.get_request()
-        self.page_param_path = path_join(self.table.iommi_path, 'page')
-        if current_page is not None:
-            self.current_page = current_page
-        else:
-            page = request.GET.get(self.page_param_path) if request else None
-            self.current_page = int(page) if page else 1
+        page=1,
+
+        count=lambda rows, **_: rows.count() if isinstance(rows, QuerySet) else len(rows),
+        number_of_pages=lambda paginator, rows, **_: ceil(max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size),
+        slice=lambda top, bottom, rows, **_: rows[bottom:top],
+    )
+    def __init__(self, **kwargs):
+        super(Paginator, self).__init__(**kwargs)
+        self._name = 'page'
+        self.context = None
+        self.page_size = None
+        self.rows = None
 
     def on_bind(self) -> None:
+        request = self.get_request()
+        page_size = request.GET.get(self.iommi_path + '_size') if request else None
+        self.page_size = self._parent.page_size if page_size is None else int(page_size)
+
         self.attrs = evaluate_attrs(self)
         self.container.attrs = evaluate_attrs(self.container)
-        self.page.attrs = evaluate_attrs(self.page)
         self.active_item.attrs = evaluate_attrs(self.active_item)
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
 
-        request = self.table.get_request()
+        rows = self._parent.rows
+        evaluate_parameters = dict(
+            page_size=self.page_size,
+            rows=rows,
+            **self._evaluate_parameters,
+        )
 
-        if self.paginator is not None:
-            assert self.current_page != 0  # pages are 1-indexed!
-            num_pages = self.paginator.num_pages
-            foo = self.current_page
-            if foo <= self.adjacent_pages:
-                foo = self.adjacent_pages + 1
-            elif foo > num_pages - self.adjacent_pages:
-                foo = num_pages - self.adjacent_pages
-            page_numbers = [
-                n for n in
-                range(self.current_page - self.adjacent_pages, foo + self.adjacent_pages + 1)
-                if 0 < n <= num_pages
-            ]
-
-            get = request.GET.copy() if request is not None else {}
-
-            if self.page_param_path in get:
-                del get[self.page_param_path]
-
-            self.context = dict(
-                extra=get and (get.urlencode() + "&") or "",
-                page_numbers=page_numbers,
-                show_first=1 not in page_numbers,
-                show_last=num_pages not in page_numbers,
-            )
-
-            page_obj = self.paginator.get_page(self.current_page)
+        if self.page_size is None:
+            self.number_of_pages = 1
         else:
-            self.context = {}
-            page_obj = None
+            self.count = evaluate_strict(self.count, **evaluate_parameters) if rows is not None else 0
+            self.number_of_pages = evaluate_strict(self.number_of_pages, **evaluate_parameters)
 
+        page = request.GET.get(self.iommi_path) if request else None
+        page = evaluate_strict(self.page, **evaluate_parameters) if page is None else int(page)
+        self.page = page
+
+        if self.page > self.number_of_pages:
+            self.page = self.number_of_pages
+        elif self.page < 1:
+            self.page = 1
+
+        self.context = self._evaluate_parameters.copy()
+
+        if self.number_of_pages != 1:
+            bottom = (self.page - 1) * self.page_size
+            top = bottom + self.page_size
+            if top + self.min_page_size - 1 >= self.count:
+                top = self.count
+            paginated_rows = self.slice(**evaluate_parameters, bottom=bottom, top=top)
+            self.rows = paginated_rows
+        else:
+            self.rows = evaluate_parameters['rows']
+
+        foo = self.page
+        if foo <= self.adjacent_pages:
+            foo = self.adjacent_pages + 1
+        elif foo > self.number_of_pages - self.adjacent_pages:
+            foo = self.number_of_pages - self.adjacent_pages
+        page_numbers = [
+            n for n in
+            range(self.page - self.adjacent_pages, foo + self.adjacent_pages + 1)
+            if 0 < n <= self.number_of_pages
+        ]
+
+        get = request.GET.copy() if request is not None else {}
+
+        if self.iommi_path in get:
+            del get[self.iommi_path]
+
+        self.context.update(dict(
+            extra=get and (get.urlencode() + "&") or "",
+            page_numbers=page_numbers,
+            show_first=1 not in page_numbers,
+            show_last=self.number_of_pages not in page_numbers,
+        ))
+
+        has_next = self.page < self.number_of_pages
+        has_previous = self.page > 1
         self.context.update({
-            'page_param_path': self.page_param_path,
-            'is_paginated': self.paginator.num_pages > 1 if self.paginator is not None else False,
-            'results_per_page': self.table.page_size,
-            'has_next': page_obj.has_next() if page_obj else None,
-            'has_previous': page_obj.has_previous() if page_obj else False,
-            'next': page_obj.next_page_number() if page_obj and page_obj.has_next() else None,
-            'previous': page_obj.previous_page_number() if page_obj and page_obj.has_previous() else None,
-            'page': page_obj.number if page_obj else 1,
-            'pages': self.paginator.num_pages if self.paginator is not None else None,
-            'hits': self.paginator.count if self.paginator is not None else None,
+            'page_size': self._parent.page_size,
+            'has_next': has_next,
+            'has_previous': has_previous,
+            'next': self.page + 1 if has_next else None,
+            'previous': self.page - 1 if has_previous else None,
+            'page': self.page,
+            'pages': self.number_of_pages,
+            'hits': self.count,
             'paginator': self,
         })
 
     def own_evaluate_parameters(self):
         return dict(paginator=self)
 
-    def get_paginated_rows(self):
-        if self.paginator is None:
-            return self.table.rows
-
-        return self.paginator.get_page(self.current_page).object_list
+    def is_paginated(self):
+        assert self._is_bound
+        return self.number_of_pages == 1
 
     def __html__(self):
         assert self._is_bound
-        if self.paginator is None:
+        if self.page_size is None:
             return ''
 
-        if self.paginator.num_pages == 0:
+        if self.number_of_pages <= 1:
             return ''
 
         return render_template(
-            request=self.table.get_request(),
+            request=self.get_request(),
             template=self.template,
             context=self.context,
         )
@@ -1249,7 +1276,6 @@ class Table(Part):
         row__extra_evaluated=EMPTY,
         cell__tag='td',
         header__template='iommi/table/table_header_rows.html',
-        paginator__django_paginator=None,
         h_tag__call_target=Fragment,
         h_tag__tag=lambda table, **_: f'h{table.iommi_dunder_path.count("__")+1}',
 
@@ -1271,7 +1297,7 @@ class Table(Part):
 
         paginator__call_target=Paginator,
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=MISSING, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=MISSING, paginator, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1337,7 +1363,6 @@ class Table(Part):
 
         self.bulk_form: Form = None
         self.header_levels = None
-        self.is_paginated = False
 
         if self.model:
             # Query
@@ -1426,6 +1451,9 @@ class Table(Part):
         # Columns need to be at the end to not steal the short names
         declared_members(self).columns = declared_members(self).pop('columns')
 
+        self.paginator = paginator()
+        self._declared_members['page'] = self.paginator
+
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
         bind_members(self, name='columns')
@@ -1452,8 +1480,7 @@ class Table(Part):
             if not self.sortable:
                 column.sortable = False
 
-        if self.model:
-            self._setup_bulk_form_and_query()
+        self._setup_bulk_form_and_query()
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
         for c in self.rendered_columns.values():
@@ -1469,36 +1496,16 @@ class Table(Part):
             if select:
                 self.rows = self.rows.select_related(*select)
 
-        request = self.get_request()
-        if self.page_size and request and isinstance(self.rows, QuerySet) and self.paginator is not None:
-            try:
-                self.page_size = int(request.GET.get('page_size', self.page_size)) if request else self.page_size
-            except ValueError:
-                pass
-
-            if isinstance(self.paginator.django_paginator, type) and issubclass(self.paginator.django_paginator, DjangoPaginator):
-                django_paginator = self.paginator.pop('django_paginator')(self.rows, self.page_size)
-            elif isinstance(self.paginator.django_paginator, DjangoPaginator):
-                django_paginator = self.paginator.pop('django_paginator')
-            else:
-                assert isinstance(self.paginator, Namespace)
-                django_paginator = DjangoPaginator(self.rows, self.page_size)
-            self.paginator = self.paginator(table=self, django_paginator=django_paginator)
-
-            try:
-                self.rows = self.paginator.get_paginated_rows()
-            except (InvalidPage, ValueError):
-                raise Http404
-        else:
-            self.paginator = Paginator(table=self, django_paginator=None)
-
         self.paginator = self.paginator.bind(parent=self)
-
-        self.is_paginated = self.paginator.paginator.num_pages > 1 if self.paginator.paginator else False
-
+        self.rows = self.paginator.rows
         self._prepare_auto_rowspan()
 
     def _setup_bulk_form_and_query(self):
+        if not self.model:
+            self.bulk_form = None
+            self.query_form = None
+            return
+
         declared_filters = declared_members(self.query)['filters']
         for name, column in self.columns.items():
             if name in declared_filters:
@@ -1706,15 +1713,13 @@ class Table(Part):
     def __html__(self, *, render=None):
         assert self._is_bound
 
-        context = {'table': self, 'bulk_form': self.bulk_form, 'query': self.query}
-
         request = self.get_request()
 
         assert self.rows is not None
-        context['paginator'] = self.paginator
 
-        # TODO: remove this?
-        # self.context = context
+        context = self._evaluate_parameters.copy()
+        context['query'] = self.query
+        context['bulk_form'] = self.bulk_form
 
         if self.query and self.query.form and not self.query.form.is_valid():
             self.rows = None

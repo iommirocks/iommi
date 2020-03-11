@@ -24,6 +24,7 @@ def setup_db_compat_django():
 
     from django.db.models import (
         AutoField,
+        BinaryField,
         BooleanField,
         CharField,
         DateField,
@@ -64,6 +65,7 @@ def setup_db_compat_django():
     register_factory(ForeignKey, shortcut_name='foreign_key')
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
+    register_factory(BinaryField, factory=None)
 
     # Column specific
     register_column_factory(BooleanField, shortcut_name='boolean')

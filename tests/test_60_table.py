@@ -688,6 +688,25 @@ def test_django_table_pagination():
         b = Column(include=False)  # should still be able to filter on this though!
 
     verify_table_html(table=TestTable(rows=TFoo.objects.all().order_by('pk')),
+                      query=dict(page_size=2, page=1, query='b="foo"'),
+                      expected_html="""
+        <table class="table" data-endpoint="/tbody">
+            <thead>
+                <tr>
+                    <th class="first_column subheader"> A </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-pk="1">
+                    <td class="rj"> 0 </td>
+                </tr>
+                <tr data-pk="2">
+                    <td class="rj"> 1 </td>
+                </tr>
+            </tbody>
+        </table>""")
+
+    verify_table_html(table=TestTable(rows=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
         <table class="table" data-endpoint="/tbody">
@@ -705,50 +724,6 @@ def test_django_table_pagination():
                 </tr>
             </tbody>
         </table>""")
-
-
-@pytest.mark.django_db
-def test_django_table_pagination_custom_paginator():
-    for x in range(30):
-        TFoo(a=x, b="foo").save()
-
-    class TestTable(Table):
-        a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
-        b = Column(include=False)  # should still be able to filter on this though!
-
-    from django.core.paginator import Paginator
-
-    class CustomPaginator(Paginator):
-        def __init__(self, object_list, *_, **__):
-            super(CustomPaginator, self).__init__(object_list=object_list, per_page=2)
-
-        def get_page(self, number):
-            del number
-            return self.page(2)
-
-    rows = TFoo.objects.all().order_by('pk')
-    verify_table_html(
-        table=TestTable(
-            rows=rows,
-            paginator__django_paginator=CustomPaginator,
-        ),
-        expected_html="""
-        <table class="table" data-endpoint="/tbody">
-            <thead>
-                <tr>
-                    <th class="first_column subheader"> A </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr data-pk="3">
-                    <td class="rj"> 2 </td>
-                </tr>
-                <tr data-pk="4">
-                    <td class="rj"> 3 </td>
-                </tr>
-            </tbody>
-        </table>""")
-
 
 def test_actions(NoSortTable):
     class TestTable(NoSortTable):
@@ -1497,6 +1472,7 @@ def test_row_extra_evaluated():
     assert cells['result'].value == 5 + 7
 
 
+@pytest.mark.django_db
 def test_from_model():
     t = Table(
         auto__model=TFoo,
@@ -1510,6 +1486,7 @@ def test_from_model():
     assert 'Some stuff' == t.columns['a'].extra.stuff
 
 
+@pytest.mark.django_db
 def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
@@ -1518,6 +1495,7 @@ def test_from_model_foreign_key():
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
+@pytest.mark.django_db
 def test_select_ordering():
     t = Table(
         auto__model=TBar,
@@ -1964,6 +1942,7 @@ def test_new_style_ajax_dispatch():
     }
 
 
+@pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
     page = Table(auto__model=TBar, columns__foo__filter=dict(include=True, field__include=True))
@@ -1973,6 +1952,7 @@ def test_endpoint_path_of_nested_part():
     assert target.iommi_dunder_path == 'query__form__fields__foo__endpoints__choices'
 
 
+@pytest.mark.django_db
 def test_dunder_name_for_column():
     class FooTable(Table):
         class Meta:
@@ -2217,12 +2197,17 @@ def test_paginator_rendered():
     TFoo.objects.create(a=17, b="Hej")
     TFoo.objects.create(a=42, b="Hopp")
 
-    content = Table(
+    table = Table(
         auto__model=TFoo,
         query_from_indexes=True,
         page_size=1,
-    ).bind(request=req('get')).render_to_response().content.decode()
+    ).bind(request=req('get'))
+    assert table.paginator.page_size == 1
+    assert table.paginator.count == 2
+    assert table.paginator.number_of_pages == 2
+    content = table.render_to_response().content.decode()
 
+    print(content)
     assert 'aria-label="Pages"' in content
 
 

@@ -91,7 +91,6 @@ bootstrap_base = Style(
     Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
         container__attrs__class__pagination=True,
-        page__attrs__class={'page-link': True},
         active_item__attrs__class={'page-item': True, 'active': True},
         link__attrs__class={'page-link': True},
         item__attrs__class={'page-item': True},

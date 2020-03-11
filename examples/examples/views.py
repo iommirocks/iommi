@@ -2,12 +2,20 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from django.contrib.auth import (
+    login,
+    logout,
+)
+from django.contrib.auth.models import User
 from django.db import OperationalError
 
 import iommi.part
 import iommi.style
 import iommi.traversable
-from django.http import HttpResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseRedirect,
+)
 from django.template import (
     RequestContext,
     Template,
@@ -49,11 +57,25 @@ from .models import (
     Track,
 )
 
+
+def log_in(request):
+    login(request, User.objects.filter(is_staff=True).get())
+    return HttpResponseRedirect('/')
+
+
+def log_out(request):
+    logout(request)
+    return HttpResponseRedirect('/')
+
+
 # Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
 validate_styles()
 
 
 def ensure_objects():
+    if not User.objects.exists():
+        User.objects.create(username='admin', is_staff=True, first_name='Tony', last_name='Iommi')
+
     for i in range(100 - Foo.objects.count()):
         Foo.objects.create(name=f'X{i}', a=i, b=True)
 
@@ -84,6 +106,18 @@ def index(request):
 
     class IndexPage(Page):
         header = html.h1('iommi examples')
+
+        log_in = html.a(
+            'Log in',
+            attrs__href='/log_in/',
+            include=lambda fragment, **_: not fragment.get_request().user.is_authenticated,
+        )
+
+        log_out = html.a(
+            'Log out',
+            attrs__href='/log_out/',
+            include=lambda fragment, **_: fragment.get_request().user.is_authenticated,
+        )
 
         form_header = html.h2('Form examples')
 

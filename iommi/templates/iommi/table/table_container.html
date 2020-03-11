@@ -6,7 +6,7 @@
             el.click();
         });
 
-        var has_paginator = {% if table.is_paginated %}true{% else %}false{% endif %};
+        var has_paginator = {% if table.paginator.is_paginated %}true{% else %}false{% endif %};
 
         if (has_paginator) {
             if (tbody.querySelector('.select_all_pages_q') === null) {

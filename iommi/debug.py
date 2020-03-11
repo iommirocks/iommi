@@ -115,6 +115,7 @@ def endpoint__debug_tree(endpoint, **_):
             """)
             sortable = False
             row__attrs__class__included = (lambda row, **_: row.included)
+            page_size = None
 
         dunder_path = Column(
             cell__value=lambda row, **_: row.dunder_path,
@@ -176,7 +177,6 @@ def iommi_debug_panel(part):
     source_url = src_debug_url_builder(filename, lineno)
     if not source_url:
         return ''
-
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];
@@ -186,48 +186,83 @@ def iommi_debug_panel(part):
                 r.innerHTML = html;
                 return r.firstChild;
             }
+            
+            window.iommi_close_pick_toolbar = function() {
+                window.iommi_pick_stack.forEach(function(el) {
+                    el[3].style.backgroundColor = el[2];
+                });
+                document.getElementById('iommi-pick-toolbar').remove()
+            };
 
             function update_toolbar() {
                 let toolbar = document.getElementById('iommi-pick-toolbar');
+                if (!toolbar) {
+                    return;
+                }
                 
                 while(toolbar.firstChild) {
                     toolbar.removeChild(toolbar.firstChild);
                 }
                 
-                toolbar.append(create('<div style="float: right" onclick="document.getElementById(\'iommi-pick-toolbar\').remove()">close</div>'));
+                toolbar.append(create('<div style="float: right" onclick="iommi_close_pick_toolbar()">close</div>'));
                 for (let i in window.iommi_pick_stack) {
                     let x = window.iommi_pick_stack[i];
-                    toolbar.append(create('<div>' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>'));
+                    toolbar.append(create('<div style="background-color: ' + getColor(i) + '">' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>'));
                 }
             }
         
-            let with_iommi_path = document.querySelector('*[data-iommi-path]');
+            let with_iommi_path = document.querySelectorAll('*[data-iommi-path]');
+            let colors = [
+'rgb(255, 255, 191)',
+'rgb(254, 224, 139)',
+'rgb(253, 174,  97)',
+'rgb(244, 109,  67)',
+'rgb(213,  62,  79)',
+'rgb(158,   1,  66)',
+'rgb(230, 245, 152)',
+'rgb(171, 221, 164)',
+'rgb(102, 194, 165)',
+'rgb( 50, 136, 189)',
+'rgb( 94,  79, 162)',
+            ];
+            function getColor(index) {
+                return colors[Math.min(index, colors.length - 1)]
+            } 
             
             function mouseenter() {
-                this.style.border = '2px dotted #1084ff';
-                window.iommi_pick_stack.push([this.getAttribute('data-iommi-path'), this.getAttribute('data-iommi-type')])
+                window.iommi_pick_stack.push([this.getAttribute('data-iommi-path'), this.getAttribute('data-iommi-type'), this.style.backgroundColor, this])
+                this.style.backgroundColor = getColor(window.iommi_pick_stack.length-1);
                 update_toolbar();
             }
             function mouseleave() {
-                this.style.border = 'none';
-                window.iommi_pick_stack.pop();
-                update_toolbar();
+                if (window.iommi_pick_stack.length) {
+                    this.style.backgroundColor = window.iommi_pick_stack.pop()[2];
+                    update_toolbar();
+                }
+            }
+            function click() {
+                document.querySelectorAll('*[data-iommi-path]').forEach(function (e) {
+                    e.removeEventListener('mouseenter', mouseenter)
+                    e.removeEventListener('mouseleave', mouseleave)
+                    e.removeEventListener('click', click)
+                });
             }
             
-            with_iommi_path.addEventListener('mouseenter', mouseenter);
-            with_iommi_path.addEventListener('mouseleave', mouseleave);
-            with_iommi_path.addEventListener('click', function() {
-                if (window.iommi_pick_stack.length) {
-                    with_iommi_path.removeEventListener('mouseenter', mouseenter)
-                    with_iommi_path.removeEventListener('mouseleave', mouseleave)
-                }
+            with_iommi_path.forEach(function (e) {
+                e.addEventListener('mouseenter', mouseenter);
+                e.addEventListener('mouseleave', mouseleave);
+                setTimeout(function(){
+                    e.addEventListener('click', click);
+                });
             });
             
-            let toolbar = create('<div id="iommi-pick-toolbar" style="position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: black; padding: 4px; border-top: 2px solid #1084ff">');
+            
+            let toolbar = create('<div id="iommi-pick-toolbar" style="position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: black; padding: 4px; border-top: 2px solid #1084ff; z-index: 200">');
             
             document.getElementsByTagName('body')[0].append(toolbar);
         };
     """
+
 
     from iommi.menu import DebugMenu
     return DebugMenu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(f'<script>{script}</script>')

@@ -1,11 +1,13 @@
 from django.conf import settings
 from django.conf.urls import url
 from django.conf.urls.static import static
-from django.urls import include
+from django.urls import (
+    include,
+    path,
+)
 
 import examples.views as views
 from iommi import (
-    admin,
     Table,
     Form,
 )
@@ -18,6 +20,9 @@ from iommi.admin import Admin
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),
+
+    path('log_in/', views.log_in),
+    path('log_out/', views.log_out),
 
     url(r'^form_example_1/$', views.form_example_1, name='example_1'),
     url(r'^form_example_2/$', views.form_example_2, name='example_2'),

@@ -107,6 +107,9 @@ base = Style(
             ),
         )
     ),
+    Paginator=dict(
+        template='iommi/table/paginator.html',
+    ),
     Query=dict(
         template='iommi/query/form.html',
     ),
@@ -119,11 +122,19 @@ base = Style(
         active_class='active',
     ),
     DebugMenu=dict(
-        attrs__style=dict(
-            position='fixed',
-            bottom='0',
-            right='0',
-        ),
+        tag='nav',
+        items_container__tag='ul',
+        items_container__attrs__style={
+            'list-style': 'none',
+        },
+        attrs__style={
+            'position': 'fixed',
+            'bottom': '-1px',
+            'right': '-1px',
+            'background': 'white',
+            'border': '1px solid black',
+            'z-index': '100',
+        },
         attrs__class={
             'flex-column': False,
         },

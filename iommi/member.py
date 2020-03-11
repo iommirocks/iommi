@@ -43,7 +43,16 @@ class NotBoundYet:
     def __str__(self):
         raise NotBoundYetException(repr(self))
 
-    def __getattr__(self, item):
+    def __iter__(self):
+        raise NotBoundYetException(repr(self))
+
+    def values(self):
+        raise NotBoundYetException(repr(self))
+
+    def keys(self):
+        raise NotBoundYetException(repr(self))
+
+    def items(self):
         raise NotBoundYetException(repr(self))
 
 
