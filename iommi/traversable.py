@@ -103,10 +103,11 @@ class Traversable(RefinableObject):
 
     def reinvoke(self, additional_kwargs: Dict[str, Any]) -> "Traversable":
         assert hasattr(self, '_iommi_saved_params'), f'reinvoke() called on class with missing @reinvokable decorator: {self.__class__.__name__}'
+        additional_kwargs_namespace = Namespace(additional_kwargs)
         kwargs = {}
         for name, saved_param in self._iommi_saved_params.items():
             try:
-                new_param = getattr_path(additional_kwargs, name)
+                new_param = getattr_path(additional_kwargs_namespace, name)
             except AttributeError:
                 kwargs[name] = saved_param
             else:
@@ -116,9 +117,9 @@ class Traversable(RefinableObject):
                 else:
                     kwargs[name] = new_param
 
-        additional_kwargs.pop('call_target', None)
+        additional_kwargs_namespace.pop('call_target', None)
 
-        kwargs = Namespace(additional_kwargs, kwargs)  # Also include those keys not already in the original
+        kwargs = Namespace(additional_kwargs_namespace, kwargs)  # Also include those keys not already in the original
 
         result = type(self)(**kwargs)
 

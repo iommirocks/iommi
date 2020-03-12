@@ -182,3 +182,33 @@ def test_reinvokable_recurse_retain_original():
     assert x.kwargs.foo.kwargs.b == 2
     assert x.kwargs.foo.kwargs.bar.kwargs.c == 3
     assert x.kwargs.foo.kwargs.bar.kwargs.baz == 42
+
+
+def test_reinvoke_path():
+    class MyForm(Form):
+        my_field = Field.choice(
+            choices=[],
+        )
+
+    my_form = MyForm(
+        fields__my_field__choices=[1, 2, 3],
+    )
+
+    assert my_form.bind().fields.my_field.choices == [1, 2, 3]
+
+
+def test_reinvoke_dicts():
+    class MyForm(Form):
+        my_field = Field.choice(
+            choices=[],
+        )
+
+    my_form = MyForm(
+        fields=dict(
+            my_field=dict(
+                choices=[1, 2, 3],
+            ),
+        ),
+    )
+
+    assert my_form.bind().fields.my_field.choices == [1, 2, 3]

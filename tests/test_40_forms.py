@@ -2078,3 +2078,26 @@ def test_all_field_shortcuts():
 
     for name, field in form.fields.items():
         assert field.extra.get('fancy'), name
+
+
+@pytest.mark.skip('Fixes upstream in tri.declarative')
+def test_shortcut_to_subclass():
+    class MyField(Field):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute=None
+        )
+        def my_shortcut(cls, call_target=None, **kwargs):
+            return call_target(**kwargs)
+
+    assert isinstance(MyField.my_shortcut(), MyField)
+
+    class MyField(Field):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='my_shortcut',
+        )
+        def my_shortcut(cls, call_target=None, **kwargs):
+            return call_target(**kwargs)
+
+    assert isinstance(MyField.my_shortcut(choices=[]), MyField)
