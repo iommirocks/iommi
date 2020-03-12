@@ -108,6 +108,7 @@ base = Style(
         )
     ),
     Paginator=dict(
+        show_always=False,
         template='iommi/table/paginator.html',
     ),
     Query=dict(

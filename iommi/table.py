@@ -985,6 +985,7 @@ class Paginator(Traversable):
     number_of_pages: int = Refinable()  # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
     count: int = Refinable()  # count is evaluated, but in a special way so gets no EvaluatedRefinable type
     slice = Refinable()
+    show_always = Refinable()
 
     @dispatch(
         adjacent_pages=6,
@@ -1109,11 +1110,12 @@ class Paginator(Traversable):
 
     def __html__(self):
         assert self._is_bound
-        if self.page_size is None:
-            return ''
+        if not self.show_always:
+            if self.page_size is None:
+                return ''
 
-        if self.number_of_pages <= 1:
-            return ''
+            if self.number_of_pages <= 1:
+                return ''
 
         return render_template(
             request=self.get_request(),
