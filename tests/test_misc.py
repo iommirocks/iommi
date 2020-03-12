@@ -792,6 +792,66 @@ def test_class_shortcut_shortcut():
     assert Foo.shortcut2().kwargs == {'x': 17, 'y': 42}
 
 
+def test_shortcut_to_superclass():
+    class Foo:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        @classmethod
+        @class_shortcut(
+            x=17
+        )
+        def baz(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class Bar(Foo):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='baz',
+            y=42
+        )
+        def baz(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    result = Bar.baz()
+    assert result.kwargs == dict(x=17, y=42)
+    assert isinstance(result, Bar)
+
+
+def test_shortcut_to_superclass_two_calls():
+    class Foo:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        @classmethod
+        @class_shortcut(
+            z=4711
+        )
+        def buzz(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='buzz',
+            x=17
+        )
+        def baz(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class Bar(Foo):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='baz',
+            y=42
+        )
+        def baz(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    result = Bar.baz()
+    assert result.kwargs == dict(x=17, y=42, z=4711)
+    assert isinstance(result, Bar)
+
+
 def test_namespace_call():
     def bar(arg):
         return arg
@@ -815,6 +875,21 @@ def test_namespace_class_call():
         arg='arg'
     )
     assert f() == 'arg'
+
+
+def test_namespace_class_call_override_default():
+    class Foo:
+        @staticmethod
+        def bar(arg):
+            return arg
+
+    f = Namespace(
+        call_target__call_target=lambda arg: "not arg",
+        call_target__cls=Foo,
+        call_target__attribute='bar',
+        arg='arg'
+    )
+    assert f() == 'not arg'
 
 
 def test_namespace_call_attribute_missing():
