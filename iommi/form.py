@@ -1,5 +1,9 @@
 import re
-from datetime import datetime
+from datetime import (
+    datetime,
+    date,
+    time,
+)
 from decimal import (
     Decimal,
     InvalidOperation,
@@ -284,12 +288,14 @@ datetime_iso_formats = [
 
 
 def datetime_parse(string_value, **_):
+    if string_value.lower() == 'now':
+        return datetime.now()
     for iso_format in datetime_iso_formats:
         try:
             return datetime.strptime(string_value, iso_format)
         except ValueError:
             pass
-    raise ValidationError('Time data "%s" does not match any of the formats %s' % (string_value, ', '.join('"%s"' % x for x in datetime_iso_formats)))
+    raise ValidationError('Time data "%s" does not match any of the formats "now", %s' % (string_value, ', '.join('"%s"' % x for x in datetime_iso_formats)))
 
 
 def datetime_render_value(value, **_):
@@ -300,6 +306,8 @@ date_iso_format = '%Y-%m-%d'
 
 
 def date_parse(string_value, **_):
+    if string_value.lower() in ('now', 'today'):
+        return date.today()
     try:
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
@@ -314,6 +322,8 @@ time_iso_format = '%H:%M:%S'
 
 
 def time_parse(string_value, **_):
+    if string_value.lower() == 'now':
+        return datetime.now().time
     try:
         return datetime.strptime(string_value, time_iso_format).time()
     except ValueError as e:

@@ -4,6 +4,7 @@ from datetime import (
     date,
     datetime,
     time,
+    timedelta,
 )
 from decimal import Decimal
 from io import (
@@ -1935,12 +1936,13 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
 
 def test_datetime_parse():
     assert datetime_parse('2001-02-03 12') == datetime(2001, 2, 3, 12)
+    assert (datetime_parse('now') - datetime.now()) < timedelta(seconds=0.1)
 
     bad_date = '091223'
     with pytest.raises(ValidationError) as e:
         datetime_parse(bad_date)
 
-    expected = 'Time data "%s" does not match any of the formats %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))
+    expected = 'Time data "%s" does not match any of the formats "now", %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))
     assert expected == str(e.value) or [expected] == [str(x) for x in e.value]
 
 
