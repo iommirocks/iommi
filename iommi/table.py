@@ -1220,7 +1220,7 @@ class Table(Part):
     cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
-    rows = Refinable()
+    rows = Refinable()  # rows is evaluated, but in a special way so gets no EvaluatedRefinable type
     columns = Refinable()
     bulk: Namespace = EvaluatedRefinable()
     superheader: Namespace = Refinable()
@@ -1335,7 +1335,7 @@ class Table(Part):
                 exclude=auto.exclude,
             )
             assert orig_model is None or orig_model == model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
-            assert orig_rows is None or orig_rows.model == rows.row, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+            assert orig_rows is None, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
 
             if title is MISSING:
                 title = f'{model._meta.verbose_name_plural.title()}'
@@ -1476,6 +1476,7 @@ class Table(Part):
         self._prepare_sorting()
 
         evaluate_member(self, 'model', strict=False, **self._evaluate_parameters)
+        evaluate_member(self, 'rows', **self._evaluate_parameters)
 
         for column in self.columns.values():
             # Special case for entire table not sortable
