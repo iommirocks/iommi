@@ -274,3 +274,12 @@ def test_attrs_evaluated():
 
     f = Foo(attrs__foo=lambda x: x).bind(request=None)
     assert f.attrs.foo == 3
+
+
+def test_initial_setup():
+    t = Traversable()
+    assert t._name is None
+    assert t._parent is None
+    assert t._is_bound is False
+    assert t._request is None
+    assert t._evaluate_parameters is None
