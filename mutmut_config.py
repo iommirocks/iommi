@@ -39,4 +39,8 @@ def pre_mutation(context, **_):
         context.skip = True
         return
 
+    if '@functools.wraps' in context.current_source_line:
+        context.skip = True
+        return
+
     context.config.test_command += ' ' + spec

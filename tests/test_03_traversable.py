@@ -10,6 +10,7 @@ from iommi import (
     Form,
     Table,
 )
+from iommi.base import evaluated_refinable
 from iommi.page import (
     Fragment,
     Page,
@@ -212,3 +213,13 @@ def test_reinvoke_dicts():
     )
 
     assert my_form.bind().fields.my_field.choices == [1, 2, 3]
+
+
+def test_extra_evaluated_function():
+    class Foo(Traversable):
+        @evaluated_refinable
+        def foo():
+            return 1
+
+    f = Foo().bind(request=None)
+    assert f.foo == 1
