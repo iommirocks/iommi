@@ -1,8 +1,7 @@
 import re
 from datetime import (
-    datetime,
     date,
-    time,
+    datetime,
 )
 from decimal import (
     Decimal,
@@ -47,12 +46,12 @@ from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
     csrf,
     format_html,
+    HttpResponseRedirect,
     render_template,
     Template,
     URLValidator,
     validate_email,
     ValidationError,
-    HttpResponseRedirect,
 )
 from iommi.action import (
     Action,
@@ -78,6 +77,7 @@ from iommi.member import (
 )
 from iommi.page import (
     Fragment,
+    Header,
     Page,
 )
 from iommi.part import (
@@ -1111,8 +1111,7 @@ class Form(Part):
         attrs__enctype='multipart/form-data',
         actions__submit__call_target__attribute='submit',
         auto=EMPTY,
-        h_tag__call_target=Fragment,
-        h_tag__tag=lambda form, **_: f'h{form.iommi_dunder_path.count("__")+1}',
+        h_tag__call_target=Header,
     )
     def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model, auto, title=MISSING, **kwargs):
 

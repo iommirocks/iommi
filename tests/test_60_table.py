@@ -2053,13 +2053,13 @@ def test_data_iommi_path():
     <table class="table" data-endpoint="/tbody" data-iommi-path="" data-iommi-type="FooTable">
         <thead>
             <tr>
-                <th class="superheader" colspan="1" data-iommi-type="Header">
+                <th class="superheader" colspan="1" data-iommi-type="ColumnHeader">
                     foo
                 </th>
             </tr>
 
             <tr>
-                <th class="first_column subheader" data-iommi-path="columns__a__header" data-iommi-type="Header">
+                <th class="first_column subheader" data-iommi-path="columns__a__header" data-iommi-type="ColumnHeader">
                     <a href="?order=a">
                         A
                     </a>

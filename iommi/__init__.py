@@ -19,6 +19,7 @@ from iommi.menu import (
 )
 from iommi.page import (
     Fragment,
+    Header,
     html,
     Page,
 )
@@ -60,6 +61,7 @@ __all__ = [
     'Field',
     'Form',
     'Fragment',
+    'Header',
     'html',
     'Menu',
     'MenuItem',

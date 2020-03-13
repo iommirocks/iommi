@@ -13,11 +13,12 @@ API Reference
    Filter
    Form
    Fragment
+   Header
    Members
    Menu
    MenuItem
-   Part
    Page
+   Part
    Query
    Table
    Traversable

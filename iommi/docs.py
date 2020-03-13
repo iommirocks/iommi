@@ -26,6 +26,7 @@ def get_default_classes():
         iommi.Page,
         iommi.Menu,
         iommi.MenuItem,
+        iommi.Header,
 
         # Private-ish APIs
         iommi.endpoint.Endpoint,
@@ -33,6 +34,8 @@ def get_default_classes():
         iommi.traversable.Traversable,
         iommi.member.Members,
         iommi.table.Cell,
+        iommi.table.ColumnHeader,
+        iommi.table.HeaderConfig,
         iommi.attrs.Attrs,
     ]
 

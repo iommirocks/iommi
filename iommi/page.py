@@ -42,6 +42,7 @@ from iommi.traversable import (
     EvaluatedRefinable,
     reinvokable,
     Traversable,
+    get_root,
 )
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
@@ -159,6 +160,34 @@ class Fragment(Part):
 
     def own_evaluate_parameters(self):
         return dict(fragment=self)
+
+
+class Header(Fragment):
+    """
+    `Header` is a special fragment that automatically calculates its level.
+    This means that you will get `h1` for the top level, `h2` for the next level,
+    and so on. If you want a specific `h1`/`h2`/etc tag use `Fragment`.
+
+    The header level is only increased by the existence of `Header` objects,
+    so putting a manual `h1` somewhere won't make the next `Header` into a
+    `h2` tag.
+    """
+
+    def on_bind(self):
+        root = get_root(self)
+        if not hasattr(root, '_iommi_auto_header_set'):
+            root._iommi_auto_header_set = set()
+
+        real_level = self.iommi_dunder_path.count('__')
+        root._iommi_auto_header_set.add(real_level)
+
+        level = 0
+        for i in range(real_level+1):
+            if i in root._iommi_auto_header_set:
+                level += 1
+
+        self.tag = f'h{level}'
+        super(Header, self).on_bind()
 
 
 @with_meta

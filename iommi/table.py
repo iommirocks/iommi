@@ -106,6 +106,7 @@ from iommi.page import (
     Fragment,
     Page,
     Part,
+    Header,
 )
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
@@ -859,7 +860,12 @@ class RowConfig(RefinableObject):
         return {k: getattr(self, k) for k in self.get_declared('refinable_members').keys()}
 
 
-class Header(object):
+class ColumnHeader(object):
+    """
+    Internal class implementing a column header. For configuration options
+    read the docs for :doc:`HeaderConfig`.
+    """
+
     @dispatch(
     )
     def __init__(self, *, display_name, attrs, template, table, url=None, column=None, number_of_columns_in_group=None, index_in_group=None):
@@ -1278,8 +1284,7 @@ class Table(Part):
         row__extra_evaluated=EMPTY,
         cell__tag='td',
         header__template='iommi/table/table_header_rows.html',
-        h_tag__call_target=Fragment,
-        h_tag__tag=lambda table, **_: f'h{table.iommi_dunder_path.count("__")+1}',
+        h_tag__call_target=Header,
 
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
@@ -1635,7 +1640,7 @@ class Table(Part):
 
             number_of_columns_in_group = len(columns_in_group)
 
-            superheaders.append(Header(
+            superheaders.append(ColumnHeader(
                 display_name=group_name or '',
                 table=self,
                 attrs=self.superheader.attrs,
@@ -1645,7 +1650,7 @@ class Table(Part):
 
             for i, column in enumerate(columns_in_group):
                 subheaders.append(
-                    Header(
+                    ColumnHeader(
                         display_name=column.display_name,
                         table=self,
                         attrs=column.header.attrs,
