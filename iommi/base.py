@@ -1,5 +1,4 @@
 from django.db.models import QuerySet
-from tri_declarative import refinable
 
 
 class UnknownMissingValueException(Exception):
@@ -18,12 +17,6 @@ class Missing:
 
 
 MISSING = Missing()
-
-
-def evaluated_refinable(f):
-    f = refinable(f)
-    f.__iommi__evaluated = True
-    return f
 
 
 def model_and_rows(model, rows):

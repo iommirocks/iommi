@@ -15,6 +15,7 @@ from tri_declarative import (
     Namespace,
     Refinable,
     RefinableObject,
+    refinable,
 )
 from tri_struct import Struct
 
@@ -333,3 +334,9 @@ def build_long_path_by_path(root) -> Dict[str, str]:
     _traverse(root, [], [])
 
     return result
+
+
+def evaluated_refinable(f):
+    f = refinable(f)
+    f.__iommi__evaluated = True
+    return f

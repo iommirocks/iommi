@@ -61,7 +61,6 @@ from iommi.action import (
 from iommi.attrs import Attrs
 from iommi.base import (
     build_as_view_wrapper,
-    evaluated_refinable,
     MISSING,
 )
 from iommi.error import Errors
@@ -88,6 +87,7 @@ from iommi.traversable import (
     bound_members,
     EvaluatedRefinable,
     reinvokable,
+    evaluated_refinable,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called

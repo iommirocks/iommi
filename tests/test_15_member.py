@@ -9,6 +9,7 @@ from iommi.member import (
     bind_members,
     collect_members,
     NotBoundYetException,
+    ForbiddenNamesException,
 )
 from iommi.traversable import (
     declared_members,
@@ -126,6 +127,7 @@ def test_ordering():
     ).bind()
 
     assert list(basket.fruits.keys()) == ['orange', 'pear', 'banana']
+    assert basket._bound_members['fruits']._bound_members is basket.fruits
 
 
 def test_inclusion():
@@ -171,3 +173,26 @@ def test_unapplied_config_does_not_remember():
     b = Admin().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
+
+
+def test_forbidden_names():
+    class MyBasket(Basket):
+        _name = Fruit()
+        iommi_style = Fruit()
+
+    with pytest.raises(ForbiddenNamesException) as e:
+        MyBasket()
+
+    assert str(e.value) == 'The names _name, iommi_style are reserved by iommi, please pick other names'
+
+
+def test_collect_sets_name():
+    class MyBasket(Basket):
+        orange = Fruit(taste='sour')
+
+    basket = MyBasket()
+    assert declared_members(basket).fruits.orange._name == 'orange'
+
+
+    basket = MyBasket(fruits__orange=Fruit(taste='sour'))
+    assert declared_members(basket).fruits.orange._name == 'orange'

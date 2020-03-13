@@ -57,11 +57,12 @@ def render_attrs(attrs):
                         if not value:
                             continue
                     else:
-                        raise TypeError(f'Only the class and style attributes can be dicts, you sent {value}')
+                        raise TypeError(f'Only the class and style attributes can be dicts, you sent {value} for key {key}')
                 elif isinstance(value, (list, tuple)):
-                    raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value}")
+                    raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value} for key {key}")
                 elif callable(value):
-                    raise TypeError(f"Attributes can't be callable, you sent {value} for key {key}")
+                    from .docs import get_docs_callable_description
+                    raise TypeError(f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}")
                 v = f'{value}'.replace('"', '&quot;')
                 yield f'{key}="{v}"'
         r = mark_safe(' %s' % ' '.join(parts()))

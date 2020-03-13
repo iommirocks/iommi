@@ -1,6 +1,7 @@
 import pytest
 from tri_declarative import (
     Namespace,
+    Refinable,
 )
 from tri_struct import Struct
 
@@ -10,7 +11,6 @@ from iommi import (
     Form,
     Table,
 )
-from iommi.base import evaluated_refinable
 from iommi.page import (
     Fragment,
     Page,
@@ -20,6 +20,9 @@ from iommi.traversable import (
     build_long_path_by_path,
     reinvokable,
     Traversable,
+    evaluated_refinable,
+    evaluate_strict_container,
+    evaluate_member,
 )
 from tests.helpers import (
     req,
@@ -157,6 +160,14 @@ def test_reinvokable():
     assert x.kwargs == dict(foo=17, bar=42)
 
 
+def test_reinvokable_cache_is_respected():
+    x = MyReinvokable(foo=17)
+    x._iommi_saved_params == dict(foo=17)
+    x._iommi_saved_params['foo'] = 42
+    x = x.reinvoke(dict(bar=42))
+    assert x.kwargs == dict(foo=42, bar=42)
+
+
 def test_reinvokable_recurse():
     x = MyReinvokable(foo=MyReinvokable(bar=17))
     x = x.reinvoke(Namespace(foo__bar=42))
@@ -215,7 +226,7 @@ def test_reinvoke_dicts():
     assert my_form.bind().fields.my_field.choices == [1, 2, 3]
 
 
-def test_extra_evaluated_function():
+def test_evaluated_refinable_function():
     class Foo(Traversable):
         @evaluated_refinable
         def foo():
@@ -223,3 +234,43 @@ def test_extra_evaluated_function():
 
     f = Foo().bind(request=None)
     assert f.foo == 1
+
+
+def test_extra_evaluated():
+    class Foo(Traversable):
+        extra_evaluated = Refinable()
+
+        def own_evaluate_parameters(self):
+            return dict(x=3)
+
+    f = Foo(extra_evaluated__foo=lambda x: x).bind(request=None)
+    assert f.extra_evaluated.foo == 3
+
+
+def test_evaluate_strict_container():
+    assert evaluate_strict_container(Namespace(foo=1)) == Namespace(foo=1)
+    assert evaluate_strict_container(Namespace(foo=lambda foo: foo), foo=3) == Namespace(foo=3)
+
+
+def test_evaluate_member():
+    class Foo:
+        def __init__(self):
+            self.foo = lambda x: x
+
+    foo = Foo()
+    with pytest.raises(AssertionError):
+        evaluate_member(foo, 'foo')
+
+    evaluate_member(foo, 'foo', x=3)
+    assert foo.foo == 3
+
+
+def test_attrs_evaluated():
+    class Foo(Traversable):
+        attrs = Refinable()
+
+        def own_evaluate_parameters(self):
+            return dict(x=3)
+
+    f = Foo(attrs__foo=lambda x: x).bind(request=None)
+    assert f.attrs.foo == 3

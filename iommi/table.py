@@ -79,7 +79,6 @@ from iommi.attrs import (
 )
 from iommi.base import (
     build_as_view_wrapper,
-    evaluated_refinable,
     MISSING,
     model_and_rows,
 )
@@ -122,6 +121,7 @@ from iommi.traversable import (
     set_declared_member,
     Traversable,
     get_path_by_long_path,
+    evaluated_refinable,
 )
 
 LAST = LAST

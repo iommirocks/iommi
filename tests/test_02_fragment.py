@@ -1,8 +1,16 @@
+from django.template import RequestContext
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from tri_struct import Struct
+
 from iommi import (
     Fragment,
     Header,
+    html,
 )
-from iommi.traversable import get_root
+from iommi._web_compat import Template
+from iommi.part import as_html
+from tests.helpers import req
 
 
 def test_basic_render():
@@ -81,3 +89,49 @@ def test_auto_h_tag():
 
     # Sibling headers get the same level
     assert Fragment(Fragment(Header(Header('h2'), children__another=Header('another h2')))).bind(request=None).__html__() == '<h1><h2>h2</h2><h2>another h2</h2></h1>'
+
+
+def test_render_simple_tag():
+    assert html.a('bar', attrs__href='foo').bind(parent=None).__html__() == '<a href="foo">bar</a>'
+
+
+def test_render_empty_tag():
+    assert html.br().bind(parent=None).__html__() == '<br>'
+
+
+def test_fragment():
+    foo = html.h1('asd').bind(parent=None)
+    assert foo.__html__() == '<h1>asd</h1>'
+
+
+def test_as_html():
+    # str case
+    assert format_html('{}', as_html(part='foo', context={})) == 'foo'
+    assert format_html('{}', as_html(part='<foo>bar</foo>', context={})) == '&lt;foo&gt;bar&lt;/foo&gt;'
+    assert format_html('{}', as_html(part=mark_safe('<foo>bar</foo>'), context={})) == '<foo>bar</foo>'
+
+    # Template case
+    c = RequestContext(req('get'))
+    assert format_html('{}', as_html(part=Template('foo'), context=c)) == 'foo'
+    assert format_html('{}', as_html(part=Template('<foo>bar</foo>'), context=c)) == '<foo>bar</foo>'
+
+    # __html__ attribute case
+    assert format_html('{}', as_html(part=Struct(__html__=lambda: 'foo'), context={})) == 'foo'
+    assert format_html('{}', as_html(part=Struct(__html__=lambda: '<foo>bar</foo>'), context={})) == '&lt;foo&gt;bar&lt;/foo&gt;'
+    assert format_html('{}', as_html(part=Struct(__html__=lambda: mark_safe('<foo>bar</foo>')), context={})) == '<foo>bar</foo>'
+
+
+def test_html_builder():
+    assert html.h1('foo').bind(request=None).__html__() == '<h1>foo</h1>'
+
+
+def test_fragment_basic():
+    assert Fragment('foo').bind(request=None).__html__() == 'foo'
+
+
+def test_fragment_with_tag():
+    assert Fragment('foo', tag='h1').bind(request=None).__html__() == '<h1>foo</h1>'
+
+
+def test_fragment_with_two_children():
+    assert Fragment('foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'
