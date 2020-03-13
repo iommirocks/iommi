@@ -169,7 +169,7 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{filter.attr: None})
     try:
-        instance = filter.field.choices.get(**{filter.name_field: str(value_string_or_f)})
+        instance = filter.choices.get(**{filter.name_field: str(value_string_or_f)})
     except MultipleObjectsReturned:
         raise QueryException(f'Found more than one object for name "{value_string_or_f}"')
     except ObjectDoesNotExist:

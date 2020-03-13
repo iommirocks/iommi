@@ -148,6 +148,9 @@ docs/Traversable.rst
 docs/Fragment.rst
 docs/Attrs.rst
 docs/Cell.rst
+docs/ColumnHeader.rst
+docs/Header.rst
+docs/HeaderConfig.rst
 
 # tests
 results/
