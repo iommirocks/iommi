@@ -135,8 +135,9 @@ class Part(Traversable):
 
 @dispatch(
     render=EMPTY,
+    context=EMPTY,
 )
-def render_root(*, part, template_name=MISSING, content_block_name=MISSING, **render):
+def render_root(*, part, template_name=MISSING, content_block_name=MISSING, context, **render):
     if template_name is MISSING:
         template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', DEFAULT_BASE_TEMPLATE)
     if content_block_name is MISSING:
@@ -147,6 +148,7 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, **re
         content=part.__html__(**render),
         title=getattr(part, 'title', '') not in (None, MISSING) or '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
+        **context,
     )
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
