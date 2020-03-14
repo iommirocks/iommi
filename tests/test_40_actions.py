@@ -130,3 +130,7 @@ def test_display_name_to_value_attr():
 
 def test_display_name_to_value_attr_but_attr_overrides():
     assert Action.delete(display_name='foo', attrs__value='bar').bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="bar">'
+
+
+def test_lambda_tag():
+    assert Action(tag=lambda action, **_: 'foo', display_name='').bind(request=None).__html__() == '<foo></foo>'
