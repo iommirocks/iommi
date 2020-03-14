@@ -110,3 +110,23 @@ def test_all_action_shortcuts():
 
 def test_template():
     assert Action(template=Template('{{action.group}}'), group='foo').bind(request=None).__html__() == 'foo'
+
+
+def test_delete_action():
+    assert Action.delete().bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="Root">'
+
+
+def test_icon_action():
+    assert Action.icon('foo', display_name='dn').bind(request=None).__html__() == '<a><i class="fa fa-foo"></i> dn</a>'
+
+
+def test_icon_action_with_icon_classes():
+    assert Action.icon('foo', display_name='dn', icon_classes=['a', 'b']).bind(request=None).__html__() == '<a><i class="fa fa-foo fa-a fa-b"></i> dn</a>'
+
+
+def test_display_name_to_value_attr():
+    assert Action.delete(display_name='foo').bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="foo">'
+
+
+def test_display_name_to_value_attr_but_attr_overrides():
+    assert Action.delete(display_name='foo', attrs__value='bar').bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="bar">'
