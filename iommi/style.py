@@ -199,7 +199,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         )
         if invalid_class_names_str:
             invalid_class_names_str = 'Invalid class names:\n' + invalid_class_names_str
-        invalid_shortcut_names_str = '    \n'.join(
+        invalid_shortcut_names_str = '\n'.join(
             f'    Style: {style_name} - class: {cls_name} - shortcut: {shortcut_name}'
             for style_name, cls_name, shortcut_name in non_existent_shortcut_names
         )

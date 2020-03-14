@@ -146,7 +146,9 @@ def test_error_message_for_invalid_style():
 
     style = Style(
         ClassThatDoesNotExist__foo='',
+        ClassThatDoesNotExist2__foo='',
         Foo__shortcuts__does_not_exist__foo='',
+        Foo__shortcuts__does_not_exist2__foo='',
     )
 
     with pytest.raises(InvalidStyleConfigurationException) as e:
@@ -155,7 +157,9 @@ def test_error_message_for_invalid_style():
     assert str(e.value) == '''
 Invalid class names:
     Style: foo - class: ClassThatDoesNotExist
+    Style: foo - class: ClassThatDoesNotExist2
 
 Invalid shortcut names:
     Style: foo - class: Foo - shortcut: does_not_exist
+    Style: foo - class: Foo - shortcut: does_not_exist2
 '''.strip()
