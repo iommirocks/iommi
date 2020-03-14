@@ -1,8 +1,8 @@
 from iommi.style import (
     Style,
-    base,
-    font_awesome_4,
 )
+from iommi.style_font_awesome_4 import font_awesome_4
+from iommi.style_base import base
 
 bootstrap_base = Style(
     base,

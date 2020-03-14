@@ -16,6 +16,7 @@ from iommi.endpoint import (
     find_target,
     InvalidEndpointPathException,
     perform_post_dispatch,
+    path_join,
 )
 from iommi.part import request_data
 from iommi.traversable import build_long_path
@@ -191,6 +192,8 @@ def test_unsupported_request_method():
 def test_custom_endpoint_on_page():
     p = Page(endpoints__test__func=lambda value, **_: 7).bind(request=req('get', **{'/test': ''}))
 
+    assert p.endpoints.test.include is True
+    assert p.endpoints.test.endpoint_path == '/test'
     assert p.render_to_response().content == b'7'
 
 
@@ -202,3 +205,10 @@ def test_perform_post_dispatch_error_message():
         perform_post_dispatch(root=target, path='/foo', value='')
 
     assert str(e.value) == "Target <tests.helpers.StubTraversable foo (bound) path:'foo'> has no registered post_handler"
+
+
+def test_path_join():
+    assert path_join(None, 'foo') == 'foo'
+    assert path_join('', 'foo') == 'foo'
+    assert path_join('foo', 'bar') == 'foo/bar'
+    assert path_join('foo', 'bar', separator='#') == 'foo#bar'

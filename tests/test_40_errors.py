@@ -1,11 +1,12 @@
 from iommi import html
+from iommi._web_compat import Template
 from iommi.error import Errors
 
 
 def test_errors_rendering():
-    errors = Errors(parent=None, errors={'foo', 'bar'})
+    errors = Errors(parent=None, errors={'foo', 'bar'}, attrs__foo='foo')
     assert errors
-    assert errors.__html__() == '<ul><li>bar</li><li>foo</li></ul>'
+    assert errors.__html__() == '<ul foo="foo"><li>bar</li><li>foo</li></ul>'
 
 
 def test_errors_empty_rendering():
@@ -25,3 +26,9 @@ def test_error_render_in_debug(settings):
         '<li data-iommi-path="error__children__error_1" data-iommi-type="Fragment">foo</li>'
         '</ul>'
     )
+
+
+def test_errors_rendering_template():
+    errors = Errors(parent=None, errors={'foo', 'bar'}, template=Template('foo'))
+    assert errors
+    assert errors.__html__() == 'foo'

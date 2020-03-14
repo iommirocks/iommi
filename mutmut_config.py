@@ -20,6 +20,8 @@ test_file_by_source_file = {
     'iommi/query.py': 'tests/test_50_query.py',
     'iommi/sort_after.py': 'tests/test_01_sort_after.py',
     'iommi/style.py': 'tests/test_10_style.py',
+    'iommi/style_base.py': None,
+    'iommi/style_test.py': None,
     'iommi/style_bootstrap.py': None,
     'iommi/style_semantic_ui.py': None,
     'iommi/table.py': 'tests/test_60_table.py tests/test_61_table_sort.py',
