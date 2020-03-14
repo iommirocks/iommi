@@ -20,6 +20,7 @@ from iommi._web_compat import (
     render_to_string,
     slugify,
     format_html,
+    render_template,
 )
 from iommi.attrs import Attrs
 from iommi.member import Members
@@ -81,7 +82,7 @@ class Action(Part):
         assert not render
         assert self._is_bound
         if self.template:
-            return render_to_string(self.template, self._evaluate_parameters)
+            return render_template(self.get_request(), self.template, self._evaluate_parameters)
         else:
             display_name = self.display_name
             attrs = self.attrs

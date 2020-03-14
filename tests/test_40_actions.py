@@ -1,3 +1,4 @@
+from iommi._web_compat import Template
 from tri_declarative import (
     dispatch,
     get_members,
@@ -105,3 +106,7 @@ def test_all_action_shortcuts():
 
     for name, column in thing.actions.items():
         assert column.extra.get('fancy'), name
+
+
+def test_template():
+    assert Action(template=Template('{{action.group}}'), group='foo').bind(request=None).__html__() == 'foo'
