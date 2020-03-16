@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from django.db import models
 from django.http import HttpResponse
 from django.test import override_settings
 from tri_struct import Struct
@@ -25,22 +24,10 @@ from tests.helpers import (
     StubTraversable,
     req,
 )
-
-
-class T1(models.Model):
-    foo = models.CharField(max_length=255)
-    bar = models.CharField(max_length=255)
-
-    class Meta:
-        ordering = ('id',)
-
-
-class T2(models.Model):
-    foo = models.CharField(max_length=255)
-    bar = models.CharField(max_length=255)
-
-    class Meta:
-        ordering = ('id',)
+from tests.models import (
+    T1,
+    T2,
+)
 
 
 @pytest.mark.django_db

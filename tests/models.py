@@ -1,3 +1,4 @@
+from django.db import models
 from django.db.models import (
     BooleanField,
     CASCADE,
@@ -191,3 +192,19 @@ class AutomaticUrl2(Model):
 
     class Meta:
         ordering = ('pk',)
+
+
+class T1(models.Model):
+    foo = models.CharField(max_length=255)
+    bar = models.CharField(max_length=255)
+
+    class Meta:
+        ordering = ('id',)
+
+
+class T2(models.Model):
+    foo = models.CharField(max_length=255)
+    bar = models.CharField(max_length=255)
+
+    class Meta:
+        ordering = ('id',)
