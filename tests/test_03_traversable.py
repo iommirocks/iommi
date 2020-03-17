@@ -2,6 +2,7 @@ import pytest
 from tri_declarative import (
     Namespace,
     Refinable,
+    class_shortcut,
 )
 from tri_struct import Struct
 
@@ -224,6 +225,41 @@ def test_reinvoke_dicts():
     )
 
     assert my_form.bind().fields.my_field.choices == [1, 2, 3]
+
+
+def test_reinvoke_extra():
+    class MyForm(Form):
+        my_field = Field(
+            extra__foo=17,
+        )
+
+    f = MyForm(
+        fields__my_field__extra__bar=42
+    )
+
+    assert f.bind().fields.my_field.extra == dict(foo=17, bar=42)
+
+
+@pytest.mark.skip('Fails mysteriously')  # @TODO Fix...
+def test_reinvoke_extra_shortcut():
+    class MyField(Field):
+        @classmethod
+        @class_shortcut(
+            extra__buz=4711,
+        )
+        def shortcut(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class MyForm(Form):
+        my_field = MyField.shortcut(
+            extra__foo=17,
+        )
+
+    f = MyForm(
+        fields__my_field__extra__bar=42
+    )
+
+    assert f.bind().fields.my_field.extra == dict(foo=17, bar=42, buz=4711)
 
 
 def test_evaluated_refinable_function():
