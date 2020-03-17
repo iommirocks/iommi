@@ -54,33 +54,25 @@ def test_render_with_empty():
 
 
 def test_render_attrs_raises_for_some_common_pitfall_types():
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match="Only the class and style attributes can be dicts, you sent {'a': 1} for key foo"):
         render_attrs_test(dict(
             foo=dict(a=1)
         ))
 
-    assert str(e.value) == "Only the class and style attributes can be dicts, you sent {'a': 1} for key foo"
-
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match="Attributes can't be of type list, you sent \\[] for key foo"):
         render_attrs_test(dict(
             foo=[]
         ))
 
-    assert str(e.value) == "Attributes can't be of type list, you sent [] for key foo"
-
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match="Attributes can't be of type tuple, you sent \\(\\) for key foo"):
         render_attrs_test(dict(
             foo=tuple()
         ))
 
-    assert str(e.value) == "Attributes can't be of type tuple, you sent () for key foo"
-
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError, match="Attributes can't be callable, you sent foo=lambda foo: foo for key foo"):
         render_attrs(dict(
             foo=lambda foo: foo
         ))
-
-    assert re.match("Attributes can't be callable, you sent foo=lambda foo: foo for key foo", str(e.value))
 
 
 def test_render_attrs_quote():
