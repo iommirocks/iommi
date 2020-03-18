@@ -1,6 +1,5 @@
 import re
 
-from bs4 import BeautifulSoup
 from django.test import RequestFactory
 from tri_declarative import (
     dispatch,
@@ -38,6 +37,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     """
     Verify that the table renders to the expected markup, modulo formatting
     """
+    from bs4 import BeautifulSoup
     if find is None:
         find = dict(class_='table')
         if not expected_html.strip():
@@ -98,4 +98,5 @@ class StubTraversable(Traversable):
 
 
 def prettify(content):
+    from bs4 import BeautifulSoup
     return reindent(BeautifulSoup(content, 'html.parser').prettify().strip())
