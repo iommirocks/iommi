@@ -3,6 +3,7 @@ from tri_declarative import (
     Namespace,
     Refinable,
     class_shortcut,
+    dispatch,
 )
 from tri_struct import Struct
 
@@ -177,6 +178,28 @@ def test_reinvokable_recurse():
     assert x.kwargs.foo.kwargs == dict(bar=42)
 
 
+def test_reinvoke_namespace_merge():
+    class ReinvokableWithExtra(Traversable):
+        extra = Refinable()
+
+        @reinvokable
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+    assert ReinvokableWithExtra(
+        extra__foo=17
+    ).reinvoke(Namespace(
+        extra__bar=42
+    )).extra == dict(bar=42, foo=17)
+
+    # Try again with pre-Namespaced kwargs
+    assert ReinvokableWithExtra(
+        **Namespace(extra__foo=17)
+    ).reinvoke(Namespace(
+        extra__bar=42
+    )).extra == dict(bar=42, foo=17)
+
+
 def test_reinvokable_recurse_retain_original():
     x = MyReinvokable(
         a=1,
@@ -240,7 +263,6 @@ def test_reinvoke_extra():
     assert f.bind().fields.my_field.extra == dict(foo=17, bar=42)
 
 
-@pytest.mark.skip('Fails mysteriously')  # @TODO Fix...
 def test_reinvoke_extra_shortcut():
     class MyField(Field):
         @classmethod

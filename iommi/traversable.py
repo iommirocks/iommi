@@ -116,7 +116,10 @@ class Traversable(RefinableObject):
                     assert isinstance(new_param, dict)
                     kwargs[name] = saved_param.reinvoke(new_param)
                 else:
-                    kwargs[name] = new_param
+                    if isinstance(saved_param, Namespace):
+                        kwargs[name] = Namespace(saved_param, new_param)
+                    else:
+                        kwargs[name] = new_param
 
         additional_kwargs_namespace.pop('call_target', None)
 
