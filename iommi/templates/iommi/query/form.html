@@ -1,6 +1,6 @@
 <div id="iommi_{{ query.iommi_dunder_path }}">
     <form{{ query.form.attrs }}>
-        <a href="#" class="iommi_query_toggle_simple_mode" data-advanced_mode="simple">Switch to advanced search</a>
+        {{ query.advanced_simple_toggle }}
 
         <table style="width: 100%">
             <tr class="iommi_query_form_advanced" style="display: none">

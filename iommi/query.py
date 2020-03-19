@@ -51,6 +51,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+from iommi import Action
 from iommi._web_compat import (
     render_template,
     Template,
@@ -568,6 +569,15 @@ class Query(Part):
         )
         declared_members(self).form = self.form
 
+        self.advanced_simple_toggle = Action(
+            attrs__href='#',
+            attrs__class__iommi_query_toggle_simple_mode=True,
+            attrs={
+                'data-advanced-mode': 'simple'
+            },
+            display_name='Switch to advanced search',
+        )
+
         # Filters need to be at the end to not steal the short names
         set_declared_member(self, 'filters', declared_members(self).pop('filters'))
 
@@ -588,6 +598,7 @@ class Query(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='filters')
+        self.advanced_simple_toggle = self.advanced_simple_toggle.bind(parent=self)
 
         request = self.get_request()
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
