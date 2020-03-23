@@ -90,9 +90,9 @@
             var toggle_simple_mode = base.getElementsByClassName("iommi_query_toggle_simple_mode")[0];
             var simple = base.getElementsByClassName("iommi_query_form_simple")[0];
             var adv = base.getElementsByClassName("iommi_query_form_advanced");
-            if (toggle_simple_mode.getAttribute('data-advanced_mode') === 'simple') {
+            if (toggle_simple_mode.getAttribute('data-advanced-mode') === 'simple') {
                 q.value = q.getAttribute('data-query');
-                toggle_simple_mode.setAttribute('data-advanced_mode', 'advanced');
+                toggle_simple_mode.setAttribute('data-advanced-mode', 'advanced');
                 adv[0].style.display = '';
                 adv[1].style.display = '';
                 simple.style.display = 'none';
@@ -102,7 +102,7 @@
             else {
                 q.setAttribute('data-query', q.value);
                 q.value = '';
-                toggle_simple_mode.setAttribute('data-advanced_mode', 'simple');
+                toggle_simple_mode.setAttribute('data-advanced-mode', 'simple');
                 adv[0].style.display = 'none';
                 adv[1].style.display = 'none';
                 simple.style.display = '';
