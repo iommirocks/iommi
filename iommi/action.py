@@ -23,6 +23,7 @@ from iommi._web_compat import (
     render_template,
 )
 from iommi.attrs import Attrs
+from iommi.base import capitalize
 from iommi.member import Members
 from iommi.page import Fragment
 from iommi.part import Part
@@ -61,7 +62,7 @@ class Action(Part):
 
     @dispatch(
         tag='a',
-        display_name=lambda action, **_: action._name.capitalize().replace('_', ' '),
+        display_name=lambda action, **_: capitalize(action._name).replace('_', ' '),
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )

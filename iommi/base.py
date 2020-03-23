@@ -40,3 +40,6 @@ def build_as_view_wrapper(target):
     return view_wrapper
 
 
+def capitalize(s):
+    return s[0].upper() + s[1:] if s else s
+

@@ -92,7 +92,7 @@ def setup_db_compat_django():
 
 
 def field_defaults_factory(model_field):
-    from iommi.form import capitalize
+    from iommi.base import capitalize
     from django.db.models import BooleanField
     r = {}
     if hasattr(model_field, 'verbose_name'):

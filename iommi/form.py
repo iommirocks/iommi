@@ -62,6 +62,7 @@ from iommi.attrs import Attrs
 from iommi.base import (
     build_as_view_wrapper,
     MISSING,
+    capitalize,
 )
 from iommi.error import Errors
 from iommi.from_model import (
@@ -92,10 +93,6 @@ from iommi.traversable import (
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
-
-
-def capitalize(s):
-    return s[0].upper() + s[1:] if s else s
 
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
@@ -1160,7 +1157,7 @@ class Form(Part):
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
-                self.h_tag = self.h_tag(_name='h_tag', text=self.title.capitalize()).bind(parent=self)
+                self.h_tag = self.h_tag(_name='h_tag', text=capitalize(self.title)).bind(parent=self)
             else:
                 self.h_tag = ''
         else:

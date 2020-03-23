@@ -81,6 +81,7 @@ from iommi.base import (
     build_as_view_wrapper,
     MISSING,
     model_and_rows,
+    capitalize,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -363,7 +364,7 @@ class Column(Part):
     @staticmethod
     @evaluated_refinable
     def display_name(table, column, **_):
-        return force_str(column._name).rsplit('__', 1)[-1].replace("_", " ").capitalize()
+        return capitalize(force_str(column._name).rsplit('__', 1)[-1].replace("_", " "))
 
     def on_bind(self) -> None:
 
@@ -1469,7 +1470,7 @@ class Table(Part):
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
-                self.h_tag = self.h_tag(_name='h_tag', text=self.title.capitalize()).bind(parent=self)
+                self.h_tag = self.h_tag(_name='h_tag', text=capitalize(self.title)).bind(parent=self)
             else:
                 self.h_tag = ''
         else:

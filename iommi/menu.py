@@ -22,6 +22,7 @@ from tri_struct import Struct
 
 from iommi._web_compat import Template
 from iommi.attrs import Attrs
+from iommi.base import capitalize
 from iommi.endpoint import path_join
 from iommi.member import (
     bind_members,
@@ -98,7 +99,7 @@ class MenuItem(MenuBase):
 
     @reinvokable
     @dispatch(
-        display_name=lambda menu_item, **_: menu_item._name.capitalize().replace('_', ' '),
+        display_name=lambda menu_item, **_: capitalize(menu_item._name).replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
         a=EMPTY,
