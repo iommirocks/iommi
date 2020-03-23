@@ -178,11 +178,17 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
     return Q(**{filter.attr + '__pk': instance.pk})
 
 
+choice_queryset_value_to_q.iommi_needs_attr = True
+
+
 def boolean_value_to_q(filter, op, value_string_or_f):
     if isinstance(value_string_or_f, str):
         value_string_or_f = bool_parse(value_string_or_f)
     # TODO: this doesn't respect the class hierarchy
     return Filter.value_to_q(filter, op, value_string_or_f)
+
+
+boolean_value_to_q.iommi_needs_attr = True
 
 
 @with_meta
@@ -444,6 +450,9 @@ class Filter(Part):
         return call_target(model_field=model_field, **kwargs)
 
 
+Filter.value_to_q.iommi_needs_attr = True
+
+
 class StringValue(str):
     pass
 
@@ -608,7 +617,7 @@ class Query(Part):
 
         declared_fields = declared_members(self.form)['fields']
         for name, filter in self.filters.items():
-            assert filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for"
+            assert filter.attr or not getattr(filter.value_to_q, 'iommi_needs_attr', False), f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for"
             if name in declared_fields:
                 field = setdefaults_path(
                     Namespace(),

@@ -257,7 +257,7 @@ def test_none_attr():
             filters__bazaar=Filter(attr=None, field__include=True),
         ).bind(request=req('get', bazaar='foo'))
 
-    assert str(e.value) == "bazaar cannot be a part of a query, it has no attr so we don't know what to search for"
+    assert str(e.value) == "bazaar cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for"
 
 
 def test_request_to_q_freetext(MyTestQuery):
