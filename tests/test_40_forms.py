@@ -987,7 +987,7 @@ def test_form_from_model_error_message_include():
     with pytest.raises(AssertionError) as e:
         Form(auto__model=FormFromModelTest, auto__include=['does_not_exist', 'another_non_existant__sub', 'f_float']).bind(request=None)
 
-    assert 'You can only include fields that exist on the model: another_non_existant__sub, does_not_exist specified but does not exist' == str(e.value)
+    assert 'You can only include fields that exist on the model: another_non_existant__sub, does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id' == str(e.value)
 
 
 @pytest.mark.django_db
@@ -996,7 +996,7 @@ def test_form_from_model_error_message_exclude():
     with pytest.raises(AssertionError) as e:
         Form(auto__model=FormFromModelTest, auto__exclude=['does_not_exist', 'does_not_exist_2', 'f_float']).bind(request=None)
 
-    assert 'You can only exclude fields that exist on the model: does_not_exist, does_not_exist_2 specified but does not exist' == str(e.value)
+    assert 'You can only exclude fields that exist on the model: does_not_exist, does_not_exist_2 specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id' == str(e.value)
 
 
 @pytest.mark.django

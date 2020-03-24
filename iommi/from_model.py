@@ -36,10 +36,12 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
     field_names = {x.name for x in get_fields(model)}
     if include:
         not_existing = {x for x in include if x not in field_names}
-        assert not not_existing, 'You can only include fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
+        existing = "\n    ".join(sorted(field_names))
+        assert not not_existing, f'You can only include fields that exist on the model: {", ".join(sorted(not_existing))} specified but does not exist\nExisting fields:\n    {existing}'
     if exclude:
         not_existing = {x for x in exclude if x not in field_names}
-        assert not not_existing, 'You can only exclude fields that exist on the model: %s specified but does not exist' % ', '.join(sorted(not_existing))
+        existing = "\n    ".join(sorted(field_names))
+        assert not not_existing, f'You can only exclude fields that exist on the model: {", ".join(sorted(not_existing))} specified but does not exist\nExisting fields:\n    {existing}'
 
     def create_declared_member(field_name):
         definition_or_member = member_params_by_member_name.pop(field_name, {})
