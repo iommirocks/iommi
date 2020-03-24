@@ -7,11 +7,13 @@ from django.db.models import (
     CASCADE,
 )
 
+from iommi import Form
 from iommi.from_model import (
     get_name_field,
     NoRegisteredNameException,
     register_name_field,
 )
+from tests.models import FormFromModelTest
 
 
 def test_get_name_field_for_model_error():
@@ -55,3 +57,48 @@ def test_register_name_field_error_nested():
         register_name_field(model=RegisterNestedNameExceptionModel, name_field='foo__bar')
 
     assert str(e.value) == 'Cannot register name "foo__bar" for model AModel. bar must be unique.'
+
+
+def test_respect_include_ordering():
+    include = [
+        'f_bool',
+        'f_float',
+        'f_file',
+        'f_int',
+    ]
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__include=include,
+    )
+    assert list(f._declared_members.fields.keys()) == include
+
+
+def test_exclude():
+    f = Form(
+        auto__model=FormFromModelTest,
+        auto__exclude=[
+            'f_bool',
+            'f_int',
+        ],
+    )
+    assert list(f._declared_members.fields.keys()) == ['id', 'f_float', 'f_file', 'f_int_excluded']
+
+
+def test_include_not_existing_error():
+    with pytest.raises(AssertionError) as e:
+        Form(
+            auto__model=FormFromModelTest,
+            auto__include=['does_not_exist'],
+        )
+
+    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
+
+
+def test_exclude_not_existing_error():
+    with pytest.raises(AssertionError) as e:
+        Form(
+            auto__model=FormFromModelTest,
+            auto__exclude=['does_not_exist'],
+        )
+
+    assert str(e.value) == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'

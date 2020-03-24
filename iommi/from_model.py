@@ -76,6 +76,15 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
     for field_name in list(member_params_by_member_name.keys()):
         create_declared_member(field_name)
 
+    # We respect the order given by `include`
+    if include is not None:
+        def index(x):
+            try:
+                return include.index(x[0])
+            except ValueError:
+                return len(members) + 1  # last!
+        members = {k: v for k, v in sorted(members.items(), key=index)}
+
     return members
 
 
