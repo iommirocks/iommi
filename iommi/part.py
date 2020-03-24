@@ -143,10 +143,11 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
+    title = getattr(part, 'title', '')
     from iommi.debug import iommi_debug_panel
     context = dict(
         content=part.__html__(**render),
-        title=getattr(part, 'title', '') not in (None, MISSING) or '',
+        title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
         **context,
     )
