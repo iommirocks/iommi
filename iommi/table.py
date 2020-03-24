@@ -498,6 +498,7 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='boolean',
+        filter__field__call_target__attribute='boolean_tristate',
         bulk__call_target__attribute='boolean',
         cell__format=lambda value, **_: mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else '',
     )
