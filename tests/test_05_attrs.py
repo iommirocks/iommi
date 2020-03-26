@@ -226,3 +226,36 @@ def test_evaluate_attrs_hide_debug_paths():
     }
 
     assert actual == expected
+
+
+def test_render_attrs_none():
+    assert render_attrs(None) == ''
+
+
+def test_empty_class_and_style():
+    actual = evaluate_attrs(
+        Namespace(
+            attrs__class={},
+            attrs__style={},
+            _name='foo',
+        ),
+    )
+
+    expected = {
+    }
+
+    assert actual == expected
+
+
+def test_empty_class_and_style_and_another():
+    actual = render_attrs(
+        attrs={
+            'class': {},
+            'style': {},
+            'z': 'bar',
+        },
+    )
+
+    expected = ' z="bar"'
+
+    assert actual == expected
