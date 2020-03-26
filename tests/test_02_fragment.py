@@ -1,3 +1,4 @@
+import pytest
 from django.template import RequestContext
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -135,3 +136,13 @@ def test_fragment_with_tag():
 
 def test_fragment_with_two_children():
     assert Fragment('foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'
+
+
+def test_void_element():
+    for tag in ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']:
+        assert Fragment(tag=tag).bind(request=None).__html__() == f'<{tag}>'
+
+
+def test_void_element_error():
+    with pytest.raises(AssertionError):
+        assert html.br('foo').bind(request=None).__html__()
