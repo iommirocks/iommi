@@ -174,19 +174,20 @@ class Header(Fragment):
     """
 
     def on_bind(self):
-        root = get_root(self)
-        if not hasattr(root, '_iommi_auto_header_set'):
-            root._iommi_auto_header_set = set()
+        if self.tag is None:
+            root = get_root(self)
+            if not hasattr(root, '_iommi_auto_header_set'):
+                root._iommi_auto_header_set = set()
 
-        real_level = self.iommi_dunder_path.count('__')
-        root._iommi_auto_header_set.add(real_level)
+            real_level = self.iommi_dunder_path.count('__')
+            root._iommi_auto_header_set.add(real_level)
 
-        level = 0
-        for i in range(real_level+1):
-            if i in root._iommi_auto_header_set:
-                level += 1
+            level = 0
+            for i in range(real_level+1):
+                if i in root._iommi_auto_header_set:
+                    level += 1
 
-        self.tag = f'h{level}'
+            self.tag = f'h{level}'
         super(Header, self).on_bind()
 
 

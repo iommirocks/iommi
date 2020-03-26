@@ -53,12 +53,14 @@ from iommi.form import (
     register_field_factory,
     render_template,
     url_parse,
+    multi_choice_choice_to_option,
 )
 from iommi.from_model import (
     member_from_model,
 )
 from iommi.page import (
     Page,
+    html,
 )
 from iommi.traversable import declared_members
 from .compat import RequestFactory
@@ -2103,3 +2105,18 @@ def test_shortcut_to_subclass():
             return call_target(**kwargs)
 
     assert isinstance(MyField.my_shortcut(choices=[]), MyField)
+
+
+def test_multi_choice_choice_to_option():
+    field = Struct(
+        value=[1, 2],
+    )
+    assert multi_choice_choice_to_option(field, 1) == (1, '1', '1', True)
+    assert multi_choice_choice_to_option(field, 2) == (2, '2', '2', True)
+    assert multi_choice_choice_to_option(field, 3) == (3, '3', '3', False)
+
+
+def test_form_h_tag():
+    assert '<h1>$$$</h1>' in Form(title='$$$').bind(request=req('get')).__html__()
+    assert '<b>$$$</b>' in Form(title='$$$', h_tag__tag='b').bind(request=req('get')).__html__()
+    assert '<b>$$$</b>' in Form(h_tag=html.b('$$$')).bind(request=req('get')).__html__()

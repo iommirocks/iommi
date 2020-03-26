@@ -1,6 +1,7 @@
 test_file_by_source_file = {
     'iommi/__init__.py': None,
-    'iommi/_web_compat.py': 'tests/test_02_compat.py',  # TODO split web and db compat in tests
+    'iommi/_web_compat.py': None,  # need to skip this for now. many mutants here cause pytest-django to fail on load
+    # 'iommi/_web_compat.py': 'tests/test_02_compat.py',  # TODO split web and db compat in tests
     'iommi/_db_compat.py': 'tests/test_02_compat.py tests/test_30_from_model.py',  # TODO split web and db compat in tests
     'iommi/action.py': 'tests/test_40_actions.py',
     'iommi/admin.py': 'tests/test_99_admin.py',
