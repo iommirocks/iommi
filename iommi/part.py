@@ -74,7 +74,7 @@ class Part(Traversable):
     )
     @abstractmethod
     def __html__(self, *, render=None):
-        assert False, 'Not implemented'  # pragma: no cover
+        assert False, 'Not implemented'  # pragma: no cover, no mutate
 
     def __str__(self):
         assert self._is_bound, 'This object is unbound, you probably forgot to call `.bind(request=request)` on it'
