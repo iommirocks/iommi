@@ -27,6 +27,26 @@ def test_menu():
 """
 
 
+def test_set_active():
+    class MyMenu(Menu):
+        home = MenuItem(url='/')
+        artists = MenuItem()
+        albums = MenuItem()
+        external = MenuItem(url='http://example.com')
+        songs = MenuItem()
+
+    menu = MyMenu().bind(request=req('GET'))
+
+    menu.set_active('/')
+    assert menu.sub_menu.home._active is True
+
+    menu.set_active('/songs/')
+    assert menu.sub_menu.songs._active is True
+
+    menu.set_active('/not_in_menu/')
+    assert menu.sub_menu.home._active is True
+
+
 def test_submenu():
     class MyMenu(Menu):
         sub_menu = MenuItem(url=None, sub_menu=dict(bar=MenuItem(), foo=MenuItem(after=0)))
@@ -50,9 +70,10 @@ def test_template():
 
 def test_validation():
     class MyMenu(Menu):
-        sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
-        sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
-        sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+        sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')))
+        sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')))
+        sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')))
+        external = MenuItem(url='http://example.com')
 
     m = MyMenu().bind(request=req('get'))
     assert m.validate() == {

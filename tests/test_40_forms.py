@@ -924,23 +924,6 @@ def test_form_default_fields_from_model():
 
 @pytest.mark.django
 @pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
-def test_field_from_model_factory_error_message():
-    from django.db.models import Field as DjangoField, Model
-
-    class CustomField(DjangoField):
-        pass
-
-    class FooModel(Model):
-        foo = CustomField()
-
-    with pytest.raises(AssertionError) as error:
-        Field.from_model(FooModel, 'foo')
-
-    assert str(error.value) == "No factory for CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
-
-
-@pytest.mark.django
-@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
 def test_field_from_model_required():
     from django.db.models import TextField, Model
 

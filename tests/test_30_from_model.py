@@ -7,7 +7,10 @@ from django.db.models import (
     CASCADE,
 )
 
-from iommi import Form
+from iommi import (
+    Form,
+    Field,
+)
 from iommi.from_model import (
     get_name_field,
     NoRegisteredNameException,
@@ -88,10 +91,10 @@ def test_include_not_existing_error():
     with pytest.raises(AssertionError) as e:
         Form(
             auto__model=FormFromModelTest,
-            auto__include=['does_not_exist'],
+            auto__include=['does_not_exist', 'does_not_exist2'],
         )
 
-    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
+    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist, does_not_exist2 specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
 
 
 def test_exclude_not_existing_error():
@@ -102,3 +105,20 @@ def test_exclude_not_existing_error():
         )
 
     assert str(e.value) == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
+
+
+@pytest.mark.django
+@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
+def test_field_from_model_factory_error_message():
+    from django.db.models import Field as DjangoField, Model
+
+    class CustomField(DjangoField):
+        pass
+
+    class FooFromModelTestModel(Model):
+        foo = CustomField()
+
+    with pytest.raises(AssertionError) as error:
+        Field.from_model(FooFromModelTestModel, 'foo')
+
+    assert str(error.value) == "No factory for CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"

@@ -34,14 +34,15 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
 
     # Validate include/exclude parameters
     field_names = {x.name for x in get_fields(model)}
-    if include:
-        not_existing = {x for x in include if x not in field_names}
-        existing = "\n    ".join(sorted(field_names))
-        assert not not_existing, f'You can only include fields that exist on the model: {", ".join(sorted(not_existing))} specified but does not exist\nExisting fields:\n    {existing}'
-    if exclude:
-        not_existing = {x for x in exclude if x not in field_names}
-        existing = "\n    ".join(sorted(field_names))
-        assert not not_existing, f'You can only exclude fields that exist on the model: {", ".join(sorted(not_existing))} specified but does not exist\nExisting fields:\n    {existing}'
+
+    def check_list(l, name):
+        if l:
+            not_existing = {x for x in l if x not in field_names}
+            existing = "\n    ".join(sorted(field_names))
+            assert not not_existing, f'You can only {name} fields that exist on the model: {", ".join(sorted(not_existing))} specified but does not exist\nExisting fields:\n    {existing}'
+
+    check_list(include, 'include')
+    check_list(exclude, 'exclude')
 
     def create_declared_member(field_name):
         definition_or_member = member_params_by_member_name.pop(field_name, {})
