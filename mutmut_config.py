@@ -17,7 +17,7 @@ test_file_by_source_file = {
     'iommi/member.py': 'tests/test_15_member.py',
     'iommi/menu.py': 'tests/test_70_menu.py',
     'iommi/page.py': 'tests/test_20_pages.py tests/test_02_fragments.py',
-    'iommi/part.py': 'tests/test_20_pages.py',
+    'iommi/part.py': 'tests/test_20_pages.py tests/test_06_endpoint.py',
     'iommi/query.py': 'tests/test_50_query.py',
     'iommi/sort_after.py': 'tests/test_01_sort_after.py',
     'iommi/style.py': 'tests/test_10_style.py',
