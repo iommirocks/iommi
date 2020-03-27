@@ -79,9 +79,6 @@ class MenuBase(Part):
                 for item in sorted(self.sub_menu.values(), key=lambda x: x.display_name)
             })
 
-    def own_evaluate_parameters(self):
-        return dict(menu_item=self)
-
 
 class MenuItem(MenuBase):
     """
@@ -198,6 +195,9 @@ class Menu(MenuBase):
 
     def __html__(self, *, render=None):
         return self.fragment.__html__()
+
+    def own_evaluate_parameters(self):
+        return dict(menu=self)
 
     def on_bind(self):
         super(Menu, self).on_bind()
