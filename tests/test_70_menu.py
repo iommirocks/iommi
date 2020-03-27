@@ -48,11 +48,26 @@ def test_template():
     assert menu.__html__() == 'Foo'
 
 
-# def test_validation():
-#     class MyMenu(Menu):
-#         sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
-#         sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
-#         sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
-#
-#     m = MyMenu().bind(request=req('get'))
-#     assert [path for path, items, paths in m.validate()] == []
+def test_validation():
+    class MyMenu(Menu):
+        sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+        sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+        sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+
+    m = MyMenu().bind(request=req('get'))
+    assert m.validate() == {
+        '/bar/': [
+            'bar',
+            'sub_menu2/bar',
+            'sub_menu3/bar',
+        ],
+        'baz': [
+            'foo',
+            'sub_menu2/foo',
+            'sub_menu3/foo',
+        ],
+        'foo': [
+            'sub_menu1',
+            'sub_menu2',
+        ],
+    }

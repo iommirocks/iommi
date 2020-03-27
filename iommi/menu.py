@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import PurePosixPath
 from typing import (
     Dict,
@@ -221,8 +222,7 @@ class Menu(MenuBase):
 
     def validate(self):
         # verify there is no ambiguity for the MenuItems
-        paths = {}
-        ambiguous = []
+        paths = defaultdict(list)
 
         def _validate(item):
             for sub_item in item.sub_menu.values():
@@ -232,12 +232,11 @@ class Menu(MenuBase):
                 _validate(sub_item)
 
                 path = urlparse(sub_item.url).path
-                if path in paths:
-                    ambiguous.append((path, sub_item, paths[path]))
-
-                paths[path] = sub_item
+                paths[path].append(sub_item.iommi_path)
 
         _validate(self)
+
+        ambiguous = {k: v for k, v in paths.items() if len(v) > 1}
         return ambiguous
 
     def set_active(self, current_path: str):
