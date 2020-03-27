@@ -1,7 +1,6 @@
 import json
 from collections import defaultdict
 
-import django
 import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
@@ -35,8 +34,8 @@ from iommi.form import (
 )
 from iommi.from_model import register_name_field
 from iommi.query import (
-    Query,
     Filter,
+    Query,
 )
 from iommi.table import (
     Column,
@@ -47,8 +46,8 @@ from iommi.table import (
     yes_no_formatter,
 )
 from iommi.traversable import (
-    declared_members,
     bound_members,
+    declared_members,
 )
 from tests.helpers import (
     req,
@@ -56,6 +55,8 @@ from tests.helpers import (
     verify_table_html,
 )
 from tests.models import (
+    AutomaticUrl,
+    AutomaticUrl2,
     BooleanFromModelTestModel,
     CSVExportTestModel,
     FromModelWithInheritanceTest,
@@ -63,8 +64,6 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
-    AutomaticUrl,
-    AutomaticUrl2,
 )
 
 register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
@@ -432,7 +431,6 @@ def test_link(NoSortTable):
         </table>""")
 
 
-
 def test_cell__url_with_attr(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(cell__url='https://whereever', cell__url_title="whatever", cell__link__attrs__class__custom='custom')
@@ -724,48 +722,6 @@ def test_django_table_pagination():
                 </tr>
             </tbody>
         </table>""")
-
-def test_actions(NoSortTable):
-    class TestTable(NoSortTable):
-        foo = Column(header__attrs__title="Some title")
-
-        class Meta:
-            actions = dict(
-                a=Action(display_name='Foo', attrs__href='/foo/', include=lambda table, **_: table.rows is not rows),
-                b=Action(display_name='Bar', attrs__href='/bar/', include=lambda table, **_: table.rows is rows),
-                c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
-                d=dict(display_name='Qux', attrs__href='/bar/', group='Other'),
-                e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
-                f=Action.icon('icon_bar', icon_classes=['lg'], display_name='Icon bar', attrs__href='/icon_bar/'),
-                g=Action.icon('icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'),
-            )
-
-    rows = [Struct(foo="foo")]
-
-    verify_table_html(table=TestTable(rows=rows),
-                      find=dict(class_='links'),
-                      expected_html="""
-        <div class="links">
-            <div class="dropdown">
-                <a class="button button-primary" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button">
-                    Other <i class="fa fa-lg fa-caret-down" />
-                </a>
-                <ul aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
-                    <li role="presentation">
-                        <a href="/bar/" role="menuitem"> Baz </a>
-                    </li>
-                    <li role="presentation">
-                        <a href="/bar/" role="menuitem"> Qux </a>
-                    </li>
-                </ul>
-            </div>
-
-            <a href="/bar/"> Bar </a>
-
-            <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
-            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
-            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
-        </div>""")
 
 
 @pytest.mark.django_db

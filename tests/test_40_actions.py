@@ -1,3 +1,5 @@
+from tri_struct import Struct
+
 from iommi._web_compat import Template
 from tri_declarative import (
     dispatch,
@@ -6,7 +8,12 @@ from tri_declarative import (
     Shortcut,
 )
 
-from iommi import Action
+from iommi import (
+    Action,
+    Column,
+    Table,
+)
+from iommi.action import group_actions
 from iommi.member import (
     bind_members,
     collect_members,
@@ -14,7 +21,10 @@ from iommi.member import (
 from iommi.traversable import (
     Traversable,
 )
-from tests.helpers import prettify
+from tests.helpers import (
+    prettify,
+    verify_table_html,
+)
 
 
 def assert_renders(action, html):
@@ -134,3 +144,60 @@ def test_display_name_to_value_attr_but_attr_overrides():
 
 def test_lambda_tag():
     assert Action(tag=lambda action, **_: 'foo', display_name='').bind(request=None).__html__() == '<foo></foo>'
+
+
+def test_action_groups():
+    non_grouped, grouped = group_actions(dict(
+        a=Action(),
+        b=Action(),
+        c=Action(group='a'),
+        d=Action(group='a'),
+        e=Action(group='a'),
+        f=Action(group='b'),
+        g=Action(group='b'),
+    ))
+    assert len(non_grouped) == 2
+    assert len(grouped) == 2
+    assert len(grouped[0][2]) == 3
+    assert len(grouped[1][2]) == 2
+
+
+def test_actions():
+    class TestTable(Table):
+        foo = Column(header__attrs__title="Some title")
+
+        class Meta:
+            sortable = False
+            actions = dict(
+                a=Action(display_name='Foo', attrs__href='/foo/', include=lambda table, **_: table.rows is not rows),
+                b=Action(display_name='Bar', attrs__href='/bar/', include=lambda table, **_: table.rows is rows),
+                c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
+                d=dict(display_name='Qux', attrs__href='/bar/', group='Other'),
+                e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
+                f=Action.icon('icon_bar', icon_classes=['lg'], display_name='Icon bar', attrs__href='/icon_bar/'),
+                g=Action.icon('icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'),
+            )
+
+    rows = [Struct(foo="foo")]
+
+    verify_table_html(
+        table=TestTable(rows=rows),
+        find=dict(class_='links'),
+        expected_html="""
+        <div class="links">
+            <div class="btn-group">
+                <button class="btn btn-primary dropdown-toggle" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button" type="button">
+                    Other
+                </button>
+                <div aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
+                    <a class="dropdown-item" href="/bar/" role="menuitem"> Baz </a>
+                    <a class="dropdown-item" href="/bar/" role="menuitem"> Qux </a>
+                </div>
+            </div>
+
+            <a href="/bar/"> Bar </a>
+
+            <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
+            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
+            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
+        </div>""")

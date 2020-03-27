@@ -200,6 +200,7 @@ def test_evaluate_attrs_show_debug_paths():
         'class': {
             'table': True,
         },
+        'style': {},
         'data-iommi-path': '<path here>',
         'data-iommi-type': 'Struct',
     }
@@ -223,6 +224,7 @@ def test_evaluate_attrs_hide_debug_paths():
         'class': {
             'table': True,
         },
+        'style': {},
     }
 
     assert actual == expected
@@ -230,21 +232,6 @@ def test_evaluate_attrs_hide_debug_paths():
 
 def test_render_attrs_none():
     assert render_attrs(None) == ''
-
-
-def test_empty_class_and_style():
-    actual = evaluate_attrs(
-        Namespace(
-            attrs__class={},
-            attrs__style={},
-            _name='foo',
-        ),
-    )
-
-    expected = {
-    }
-
-    assert actual == expected
 
 
 def test_empty_class_and_style_and_another():

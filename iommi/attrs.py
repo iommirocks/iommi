@@ -124,12 +124,6 @@ class Attrs(Namespace):
             attrs['data-iommi-path'] = parent.iommi_dunder_path
             attrs['data-iommi-type'] = type(parent).__name__
 
-        if 'style' in attrs and not attrs['style']:
-            del attrs['style']
-
-        if 'class' in attrs and not attrs['class']:
-            del attrs['class']
-
         super(Attrs, self).__init__(attrs)
 
     def __str__(self):

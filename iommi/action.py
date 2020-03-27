@@ -17,10 +17,9 @@ from tri_declarative import (
 )
 
 from iommi._web_compat import (
-    render_to_string,
-    slugify,
     format_html,
     render_template,
+    slugify,
 )
 from iommi.attrs import Attrs
 from iommi.base import capitalize
@@ -138,32 +137,26 @@ class Action(Part):
 
 
 def group_actions(actions: Dict[str, Action]):
-    grouped_actions = []
-    actions_without_group = []
+    actions_with_group = (action for action in actions.values() if action.group is not None)
 
-    if actions is not None:
-        actions_with_group = (action for action in actions.values() if action.group is not None)
+    grouped_actions: List[Tuple[str, str, List[Action]]] = [
+        (group_name, slugify(group_name), list(actions_in_group))
+        for group_name, actions_in_group in groupby(
+            actions_with_group,
+            key=lambda l: l.group
+        )
+    ]
 
-        grouped_actions: List[Tuple[str, str, List[Action]]] = [
-            (group_name, slugify(group_name), list(actions_in_group))
-            for group_name, actions_in_group in groupby(
-                actions_with_group,
-                key=lambda l: l.group
-            )
-        ]
+    for _, _, actions_in_group in grouped_actions:
+        for action in actions_in_group:
+            action.attrs.role = 'menuitem'
+            action.attrs['class']['dropdown-item'] = True
 
-        for _, _, actions_in_group in grouped_actions:
-            for action in actions_in_group:
-                action.attrs.role = 'menuitem'
-                action.attrs['class']['dropdown-item'] = True
-                action.tag = 'a'
-
-        actions_without_group = [
-            action
-            for action in actions.values()
-            if action.group is None
-        ]
-
+    actions_without_group = [
+        action
+        for action in actions.values()
+        if action.group is None
+    ]
     return actions_without_group, grouped_actions
 
 
