@@ -46,3 +46,13 @@ def test_template():
         sub_menu=dict(foo=MenuItem())
     ).bind(request=req('get'))
     assert menu.__html__() == 'Foo'
+
+
+# def test_validation():
+#     class MyMenu(Menu):
+#         sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+#         sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+#         sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+#
+#     m = MyMenu().bind(request=req('get'))
+#     assert [path for path, items, paths in m.validate()] == []
