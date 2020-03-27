@@ -155,6 +155,8 @@ def group_actions(actions: Dict[str, Action]):
         for _, _, actions_in_group in grouped_actions:
             for action in actions_in_group:
                 action.attrs.role = 'menuitem'
+                action.attrs['class']['dropdown-item'] = True
+                action.tag = 'a'
 
         actions_without_group = [
             action
