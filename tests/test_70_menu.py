@@ -23,8 +23,7 @@ def test_menu():
 
     assert repr(menu) == """root
     home -> /
-    artists -> /artists/
-"""
+    artists -> /artists/"""
 
 
 def test_set_active():
