@@ -65,10 +65,10 @@ class MenuBase(Part):
         )
 
     def __repr__(self):
-        r = f'{self._name}\n'
+        r = f'{self._name}'
         if self.sub_menu:
             for items in self.sub_menu.values():
-                r += '    ' + repr(items)
+                r += ''.join([f'\n    {x}' for x in repr(items).split('\n')])
         return r
 
     def on_bind(self):
@@ -118,10 +118,10 @@ class MenuItem(MenuBase):
         return dict(menu_item=self)
 
     def __repr__(self):
-        r = f'{self._name} -> {self.url}\n'
+        r = f'{self._name} -> {self.url}'
         if self.sub_menu:
             for items in self.sub_menu.values():
-                r += '    ' + repr(items)
+                r += ''.join([f'\n    {x}' for x in repr(items).split('\n')])
         return r
 
     def __html__(self, *, render=None):

@@ -92,3 +92,24 @@ def test_validation():
             'sub_menu2',
         ],
     }
+
+
+def test_repr():
+    class MyMenu(Menu):
+        sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+        sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+        sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), foo=MenuItem(url='baz')))
+
+    menu = MyMenu().bind(request=req('get'))
+    actual = repr(menu)
+    expected = """root
+    sub_menu1 -> foo
+        bar -> /bar/
+        foo -> baz
+    sub_menu2 -> foo
+        bar -> /bar/
+        foo -> baz
+    sub_menu3 -> bar
+        bar -> /bar/
+        foo -> baz"""
+    assert actual == expected
