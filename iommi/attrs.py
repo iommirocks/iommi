@@ -32,42 +32,40 @@ def render_attrs(attrs):
     """
     Render HTML attributes, or return '' if no attributes needs to be rendered.
     """
-    if attrs is not None:
-        if not attrs:
-            return ''
+    if not attrs:
+        return ''
 
-        def parts():
-            for key, value in sorted(attrs.items()):
-                if value is None:
-                    continue
-                if value is True:
-                    yield f'{key}'
-                    continue
-                if isinstance(value, dict):
-                    if key == 'class':
-                        if not value:
-                            continue
-                        value = render_class(value)
-                        if not value:
-                            continue
-                    elif key == 'style':
-                        if not value:
-                            continue
-                        value = render_style(value)
-                        if not value:
-                            continue
-                    else:
-                        raise TypeError(f'Only the class and style attributes can be dicts, you sent {value} for key {key}')
-                elif isinstance(value, (list, tuple)):
-                    raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value} for key {key}")
-                elif callable(value):
-                    from .docs import get_docs_callable_description
-                    raise TypeError(f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}")
-                v = f'{value}'.replace('"', '&quot;')
-                yield f'{key}="{v}"'
-        r = mark_safe(' %s' % ' '.join(parts()))
-        return '' if r == ' ' else r
-    return ''
+    def parts():
+        for key, value in sorted(attrs.items()):
+            if value is None:
+                continue
+            if value is True:
+                yield f'{key}'
+                continue
+            if isinstance(value, dict):
+                if key == 'class':
+                    if not value:
+                        continue
+                    value = render_class(value)
+                    if not value:
+                        continue
+                elif key == 'style':
+                    if not value:
+                        continue
+                    value = render_style(value)
+                    if not value:
+                        continue
+                else:
+                    raise TypeError(f'Only the class and style attributes can be dicts, you sent {value} for key {key}')
+            elif isinstance(value, (list, tuple)):
+                raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value} for key {key}")
+            elif callable(value):
+                from .docs import get_docs_callable_description
+                raise TypeError(f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}")
+            v = f'{value}'.replace('"', '&quot;')
+            yield f'{key}="{v}"'
+    r = mark_safe(' %s' % ' '.join(parts()))
+    return '' if r == ' ' else r
 
 
 class Attrs(Namespace):
