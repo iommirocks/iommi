@@ -13,12 +13,12 @@ def evaluate_attrs(obj, **kwargs):
         **{
             'class': {
                 k: evaluate_strict(v, **kwargs)
-                for k, v in attrs.get('class', {}).items()
+                for k, v in evaluate_strict(attrs.get('class', {}), **kwargs).items()
             }
         },
         style={
             k: evaluate_strict(v, **kwargs)
-            for k, v in attrs.get('style', {}).items()
+            for k, v in evaluate_strict(attrs.get('style', {}), **kwargs).items()
         },
         **{
             k: evaluate_strict(v, **kwargs)

@@ -246,3 +246,27 @@ def test_empty_class_and_style_and_another():
     expected = ' z="bar"'
 
     assert actual == expected
+
+
+def test_class_style_callable():
+    actual = evaluate_attrs(
+        Namespace(
+            attrs__class=lambda foo: {'foo'+foo: True},
+            attrs__style=lambda foo: {'hey'+foo: 'yo'},
+            _name='foo',
+            iommi_dunder_path='<path here>',
+        ),
+        foo='bar',
+    )
+
+    expected = {
+        'class': {
+            'foobar': True,
+        },
+        'style': {
+            'heybar': 'yo',
+        },
+    }
+
+    assert actual == expected
+
