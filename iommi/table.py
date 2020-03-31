@@ -1330,7 +1330,6 @@ class Table(Part):
 
         if auto:
             auto = TableAutoConfig(**auto)
-            assert not _columns_dict, "You can't have an auto generated Table AND a declarative Table at the same time"
             orig_model = model
             orig_rows = rows
 
