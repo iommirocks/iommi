@@ -200,6 +200,7 @@ class Header(Fragment):
 class Page(Part):
     title: str = EvaluatedRefinable()
     member_class: Type[Fragment] = Refinable()
+    context = Refinable()  # context is evaluated, but in a special way so gets no EvaluatedRefinable type
 
     class Meta:
         member_class = Fragment
@@ -211,6 +212,7 @@ class Page(Part):
             include=lambda endpoint, **_: iommi_debug_on(),
             func=endpoint__debug_tree,
         ),
+        context=EMPTY,
     )
     def __init__(
         self,
@@ -237,6 +239,9 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
+        self.context = evaluate_strict_container(self.context or {}, **self._evaluate_parameters)
+        if self.context and self._parent != None:
+            assert False, 'context is only valid on the root page'
 
     def own_evaluate_parameters(self):
         return dict(page=self)

@@ -145,10 +145,12 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
 
     title = getattr(part, 'title', '')
     from iommi.debug import iommi_debug_panel
+    from iommi import Page
     context = dict(
         content=part.__html__(**render),
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
+        **(part.context if isinstance(part, Page) else {}),
         **context,
     )
 
