@@ -220,3 +220,17 @@ def test_namespaciness_override():
         foo__bar=17,
         foo__baz=42,
     )
+
+
+def test_meta_staticmethod():
+    @with_meta
+    class Foo:
+        class Meta:
+            @staticmethod
+            def foo(bar):
+                return bar
+
+        def __init__(self, **_):
+            pass
+
+    assert Foo().get_meta().foo(17) == 17

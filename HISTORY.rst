@@ -6,6 +6,8 @@ Changelog
 
 * Enable `@class_shortcut` to override baseclass shortcuts with the same name.
 
+* Fix `@with_meta` failing on method declarations with `@staticmethod` declaration
+
 
 5.2.0 (2020-02-28)
 ------------------
