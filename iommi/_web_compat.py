@@ -10,7 +10,11 @@ try:
         QueryDict,
     )
     from django.template import RequestContext
-    from django.template.loader import render_to_string
+    from django.template.loader import (
+        render_to_string,
+        get_template,
+    )
+    from django.template.exceptions import TemplateDoesNotExist
     from django.utils.html import format_html
     from django.utils.text import slugify
     from django.http import HttpResponseRedirect

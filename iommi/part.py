@@ -16,11 +16,13 @@ from tri_declarative import (
 )
 
 from iommi._web_compat import (
+    get_template,
     get_template_from_string,
-    Template,
-    mark_safe,
     HttpResponse,
     HttpResponseBase,
+    mark_safe,
+    Template,
+    TemplateDoesNotExist,
 )
 from iommi.base import MISSING
 from iommi.debug import iommi_debug_on
@@ -40,6 +42,7 @@ from iommi.traversable import (
     reinvokable,
     Traversable,
 )
+from iommi.style import get_style_for
 
 DEFAULT_BASE_TEMPLATE = 'base.html'
 DEFAULT_CONTENT_BLOCK = 'content'
@@ -153,6 +156,11 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )
+
+    try:
+        get_template(template_name)
+    except TemplateDoesNotExist:
+        template_name = f'iommi/base_{get_style_for(None)}.html'
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.get_request())

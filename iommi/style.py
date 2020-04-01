@@ -20,10 +20,11 @@ def apply_style(obj):
 
 
 def get_style_for(obj):
-    if obj.iommi_style is not None:
-        return obj.iommi_style
-    if obj._parent is not None:
-        return get_style_for(obj._parent)
+    if obj is not None:
+        if obj.iommi_style is not None:
+            return obj.iommi_style
+        if obj._parent is not None:
+            return get_style_for(obj._parent)
 
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
