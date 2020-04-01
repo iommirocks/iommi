@@ -26,6 +26,7 @@ def test_constructor():
         def __init__(self, foo):
             assert foo == 'bar'
 
+    # noinspection PyArgumentList
     Test()
 
 
@@ -52,6 +53,7 @@ def test_inheritance():
         def __init__(self, foo):
             assert foo == 'bar'
 
+    # noinspection PyArgumentList
     TestSubclass()
 
 
@@ -65,6 +67,7 @@ def test_inheritance_base():
         class Meta:
             foo = 'bar'
 
+    # noinspection PyArgumentList
     TestSubclass()
 
 
@@ -82,6 +85,7 @@ def test_inheritance_with_override():
         def __init__(self, foo):
             assert foo == 'baz'
 
+    # noinspection PyArgumentList
     TestSubclass()
 
 
@@ -98,6 +102,7 @@ def test_pos_arg_override():
             assert gapa == 'gapa'
             assert 'bar' in kwargs
 
+    # noinspection PyArgumentList
     Test('apa', gapa='gapa')
 
 
@@ -110,6 +115,7 @@ def test_args_get_by_pos():
         def __init__(self, foo):
             assert foo == 'foo'
 
+    # noinspection PyArgumentList
     Test()
 
 
@@ -160,6 +166,7 @@ def test_too_many_args_check():
             pass
 
     with pytest.raises(TypeError) as e:
+        # noinspection PyArgumentList
         Test('foo', 'bar')
 
     assert 'Too many positional arguments' == str(e.value)
@@ -175,6 +182,7 @@ def test_add_init_kwargs():
         def __init__(self, foo):
             assert 'bar' == foo
 
+    # noinspection PyArgumentList
     Test()
 
 

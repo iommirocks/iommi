@@ -399,6 +399,7 @@ def remove_show_recursive(item):
 
 
 class Namespace(Struct):
+    # noinspection PyMissingConstructor
     def __init__(self, *dicts, **kwargs):
         if dicts or kwargs:
             for mappings in list(dicts) + [kwargs]:
