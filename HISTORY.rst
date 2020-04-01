@@ -1,10 +1,18 @@
 Changelog
 ---------
 
-1.0.0 (2020-01-??)
+0.5.0 (2020-04-01)
 ~~~~~~~~~~~~~~~~~~
 
-* Initial release of iommi. This is a merge of the libraries tri.form, tri.query, and tri.table.
+* Include iommi/base_bootstrap.html and iommi/base_semantic_ui.html in package, and use them if no base.html is present. This improves the out of the box experience for new projects a lot
+
+* Support mixing of `auto__model`/`auto__row` based columns and declarative columns
+
+* Support attrs__class and attrs__style as callables
+
+* Added support for context namespace on Page, which is passed to the template when rendering (for now only available on the root page)
+
+* Fixed how we set title of bulk edit and delete buttons to make configuration more obvious
 
 
 0.4.0 (2020-03-30)
