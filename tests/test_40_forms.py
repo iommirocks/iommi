@@ -2020,13 +2020,10 @@ def test_all_field_shortcuts():
         assert field.extra.get('fancy'), name
 
 
-@pytest.mark.skip('Fixes upstream in tri.declarative')
 def test_shortcut_to_subclass():
     class MyField(Field):
         @classmethod
-        @class_shortcut(
-            call_target__attribute=None
-        )
+        @class_shortcut
         def my_shortcut(cls, call_target=None, **kwargs):
             return call_target(**kwargs)
 
@@ -2034,13 +2031,13 @@ def test_shortcut_to_subclass():
 
     class MyField(Field):
         @classmethod
-        @class_shortcut(
-            call_target__attribute='my_shortcut',
-        )
-        def my_shortcut(cls, call_target=None, **kwargs):
+        @class_shortcut
+        def choices(cls, call_target=None, **kwargs):
             return call_target(**kwargs)
 
-    assert isinstance(MyField.my_shortcut(choices=[]), MyField)
+    field = MyField.choice(choices=[])
+    assert isinstance(field, MyField)
+    assert field.empty_label == '---'
 
 
 def test_multi_choice_choice_to_option():
