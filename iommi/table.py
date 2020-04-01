@@ -1442,13 +1442,13 @@ class Table(Part):
                 _name='bulk',
                 actions__submit=dict(
                     post_handler=bulk__post_handler,
-                    attrs__value='Bulk change',
+                    display_name='Bulk change',
                     include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
                 ),
                 actions__delete=dict(
                     call_target__attribute='delete',
                     post_handler=bulk_delete__post_handler,
-                    attrs__value='Bulk delete',
+                    display_name='Bulk delete',
                     include=False,
                 ),
                 **bulk
