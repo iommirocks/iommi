@@ -8,7 +8,7 @@ iommi
     :target: https://codecov.io/gh/TriOptima/iommi
 
 
-iommi is a django-based framework for even higher abstraction and faster development than django itself.
+iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
 
 Major features:
 
