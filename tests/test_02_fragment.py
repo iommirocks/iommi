@@ -8,6 +8,7 @@ from iommi import (
     Fragment,
     Header,
     html,
+    Page,
 )
 from iommi._web_compat import Template
 from iommi.part import as_html
@@ -146,3 +147,13 @@ def test_void_element():
 def test_void_element_error():
     with pytest.raises(AssertionError):
         assert html.br('foo').bind(request=None).__html__()
+
+
+@pytest.skip('Broken right now')
+def test_override_attrs():
+    class MyPage(Page):
+       title = html.h1('Supernaut')
+
+    assert MyPage().bind().__html__() == '<h1>Supernaut</h1>'
+
+    assert MyPage(parts__title__attrs__class__foo=True).bind().__html__() == '<h1 class="foo">Supernaut</h1>'
