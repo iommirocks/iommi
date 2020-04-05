@@ -21,25 +21,25 @@ def test_basic_render():
 
 
 def test_render_multiple_children():
-    f = Fragment('foo', children__bar='bar').bind(request=None)
+    f = Fragment(children__foo='foo', children__bar='bar').bind(request=None)
     assert f.__html__() == 'foobar'
 
 
 def test_nested():
-    f = Fragment('foo', children__bar=Fragment('bar')).bind(request=None)
+    f = Fragment(children__foo='foo', children__bar=Fragment(children__bar='bar')).bind(request=None)
     assert f._is_bound
     assert f._bound_members.children._bound_members.bar._is_bound
     assert f.__html__() == 'foobar'
 
 
 def test_tag():
-    f = Fragment('foo', tag='div').bind(request=None)
+    f = Fragment(children__foo='foo', tag='div').bind(request=None)
     assert f.__html__() == '<div>foo</div>'
 
 
 def test_attrs():
     f = Fragment(
-        'foo',
+        children__foo='foo',
         tag='div',
         attrs__class__foo=True,
         attrs__style__foo='foo',
@@ -71,8 +71,8 @@ def test_nested_attrs_lambda():
 
 
 def test_nested_2():
-    nested = Fragment('bar')
-    f = Fragment('foo', children__bar=nested).bind(request=None)
+    nested = Fragment(children__bar='bar')
+    f = Fragment(children__foo='foo', children__bar=nested).bind(request=None)
     assert f._is_bound
     assert f._bound_members.children._bound_members.bar._is_bound
     assert not nested._is_bound
@@ -84,13 +84,35 @@ def test_auto_h_tag():
     assert Header().bind(request=None).tag == 'h1'
 
     # Nesting doesn't increase level
-    assert Fragment(Fragment(Header())).bind(request=None).__html__() == '<h1></h1>'
+    assert Fragment(
+        children__child=Fragment(
+            children__child=Header(),
+        )
+    ).bind(request=None).__html__() == '<h1></h1>'
 
     # A header on a level increases the level for the next header
-    assert Fragment(Fragment(Header(Header('h2')))).bind(request=None).__html__() == '<h1><h2>h2</h2></h1>'
+    assert Fragment(
+        children__child=Fragment(
+            children__child=Header(
+                children__child=Header(
+                    children__child='h2',
+                )
+            )
+        )
+    ).bind(request=None).__html__() == '<h1><h2>h2</h2></h1>'
 
     # Sibling headers get the same level
-    assert Fragment(Fragment(Header(Header('h2'), children__another=Header('another h2')))).bind(request=None).__html__() == '<h1><h2>h2</h2><h2>another h2</h2></h1>'
+    assert Fragment(
+        children__child=Fragment(
+            children__child=Header(
+                children__child=Header(
+                    children__child='h2'),
+                children__another=Header(
+                    children__child='another h2',
+                )
+            )
+        )
+    ).bind(request=None).__html__() == '<h1><h2>h2</h2><h2>another h2</h2></h1>'
 
 
 def test_render_simple_tag():
@@ -128,15 +150,15 @@ def test_html_builder():
 
 
 def test_fragment_basic():
-    assert Fragment('foo').bind(request=None).__html__() == 'foo'
+    assert Fragment(children__child='foo').bind(request=None).__html__() == 'foo'
 
 
 def test_fragment_with_tag():
-    assert Fragment('foo', tag='h1').bind(request=None).__html__() == '<h1>foo</h1>'
+    assert Fragment(children__child='foo', tag='h1').bind(request=None).__html__() == '<h1>foo</h1>'
 
 
 def test_fragment_with_two_children():
-    assert Fragment('foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'
+    assert Fragment(children__child='foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'
 
 
 def test_void_element():
@@ -151,7 +173,7 @@ def test_void_element_error():
 
 def test_override_attrs():
     class MyPage(Page):
-       title = html.h1('Supernaut')
+        title = html.h1('Supernaut')
 
     assert MyPage().bind().__html__() == '<h1>Supernaut</h1>'
 
@@ -160,7 +182,10 @@ def test_override_attrs():
 
 def test_override_attrs_explicit_fragment():
     class MyPage(Page):
-       title = Fragment(children__text='Supernaut', tag='h1')
+        title = Fragment(
+            tag='h1',
+            children__text='Supernaut',
+        )
 
     assert MyPage().bind().__html__() == '<h1>Supernaut</h1>'
 

@@ -89,7 +89,7 @@ class Fragment(Part):
 
     .. code:: python
 
-        h1 = Fragment('Tony', tag='h1')
+        h1 = Fragment(children__text='Tony', tag='h1')
 
     It's easiest to use via the html builder:
 
@@ -127,7 +127,7 @@ class Fragment(Part):
     def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
 
-        # TODO: this special case should be inside the Html builder
+        # TODO: this special case should be removed once Action doesn't use it
         if text is not None:
             children = dict(text=text, **children)
 
@@ -228,7 +228,7 @@ class Page(Part):
         # First we have to up sample parts that aren't Part into Fragment
         def as_fragment_if_needed(k, v):
             if not isinstance(v, (dict, Traversable)):
-                return Fragment(v, _name=k)
+                return Fragment(children__text=v, _name=k)
             else:
                 return v
 

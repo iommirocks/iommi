@@ -734,7 +734,14 @@ class Cells(Traversable):
         if self.template:
             return render_template(self._parent.get_request(), self.template, self._evaluate_parameters)
 
-        return Fragment(tag=self.tag, attrs=self.attrs, text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self))).bind(parent=self).__html__()
+        return Fragment(
+            tag=self.tag,
+            attrs=self.attrs,
+            text=mark_safe('\n'.join(
+                bound_cell.__html__()
+                for bound_cell in self
+            ))
+        ).bind(parent=self).__html__()
 
     def __str__(self):
         return self.__html__()
@@ -799,7 +806,11 @@ class Cell(CellConfig):
             context = dict(table=self.table, column=self.column, cells=self.cells, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
-        return Fragment(tag=self.tag, attrs=self.attrs, text=self.render_cell_contents()).bind(parent=self).__html__()
+        return Fragment(
+            tag=self.tag,
+            attrs=self.attrs,
+            text=self.render_cell_contents()
+        ).bind(parent=self).__html__()
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
@@ -809,7 +820,7 @@ class Cell(CellConfig):
             url_title = self.url_title
             # TODO: `url`, `url_title` and `link` is overly complex
             cell_contents = Fragment(
-                cell_contents,
+                children__content=cell_contents,
                 tag='a',
                 attrs__title=url_title,
                 attrs__href=url,
@@ -1470,7 +1481,10 @@ class Table(Part):
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
-                self.h_tag = self.h_tag(_name='h_tag', text=capitalize(self.title)).bind(parent=self)
+                self.h_tag = self.h_tag(
+                    _name='h_tag',
+                    text=capitalize(self.title)
+                ).bind(parent=self)
             else:
                 self.h_tag = ''
         else:
