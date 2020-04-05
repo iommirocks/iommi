@@ -16,7 +16,7 @@ from tests.helpers import req
 
 
 def test_basic_render():
-    f = Fragment('foo').bind(request=None)
+    f = Fragment(children__text='foo').bind(request=None)
     assert f.__html__() == 'foo'
 
 
@@ -149,10 +149,18 @@ def test_void_element_error():
         assert html.br('foo').bind(request=None).__html__()
 
 
-@pytest.skip('Broken right now')
 def test_override_attrs():
     class MyPage(Page):
        title = html.h1('Supernaut')
+
+    assert MyPage().bind().__html__() == '<h1>Supernaut</h1>'
+
+    assert MyPage(parts__title__attrs__class__foo=True).bind().__html__() == '<h1 class="foo">Supernaut</h1>'
+
+
+def test_override_attrs_explicit_fragment():
+    class MyPage(Page):
+       title = Fragment(children__text='Supernaut', tag='h1')
 
     assert MyPage().bind().__html__() == '<h1>Supernaut</h1>'
 

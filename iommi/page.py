@@ -263,8 +263,12 @@ class Page(Part):
 
 class Html:
     def __getattr__(self, tag):
-        def fragment_constructor(child: PartType = None, **kwargs):
-            return Fragment(child, tag=tag, **kwargs)
+        def fragment_constructor(child: PartType = None, children=None, **kwargs):
+            if isinstance(child, str):
+                children = dict(text=child, **(children or {}))
+
+            return Fragment(children=children, tag=tag, **kwargs)
+
         return fragment_constructor
 
 
