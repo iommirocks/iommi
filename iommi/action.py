@@ -34,7 +34,7 @@ from iommi.traversable import (
 
 
 @with_meta
-class Action(Part):
+class Action(Fragment):
     """
     The `Action` class describes buttons and links.
 
@@ -52,53 +52,38 @@ class Action(Part):
         Action.button(attrs__value='Button title!')
     """
 
-    tag: str = EvaluatedRefinable()
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     group: str = EvaluatedRefinable()
-    template = EvaluatedRefinable()
     display_name: str = EvaluatedRefinable()
     post_handler: Callable = Refinable()
 
     @dispatch(
         tag='a',
+        attrs=EMPTY,
+        children=EMPTY,
         display_name=lambda action, **_: capitalize(action._name).replace('_', ' '),
-        attrs__class=EMPTY,
-        attrs__style=EMPTY,
     )
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *, tag=None, attrs=None, children=None, display_name=None, **kwargs):
+        if tag == 'input':
+            if display_name and 'value' not in attrs:
+                attrs.value = display_name
+        else:
+            children['text'] = display_name
+        super().__init__(tag=tag, attrs=attrs, children=children, display_name=display_name, **kwargs)
+
+    def on_bind(self):
+        super().on_bind()
+
+    def own_evaluate_parameters(self):
+        return dict(action=self)
+
+    def __repr__(self):
+        return Part.__repr__(self)
 
     def own_target_marker(self):
         return f'-{self.iommi_path}'
 
     def is_target(self):
         return self.own_target_marker() in get_parent(get_parent(self))._request_data
-
-    @reinvokable
-    @dispatch(
-        render=EMPTY,
-    )
-    def __html__(self, *, render=None):
-        assert not render
-        assert self._is_bound
-        if self.template:
-            return render_template(self.get_request(), self.template, self._evaluate_parameters)
-
-        children = {}
-        attrs = self.attrs
-        if self.tag == 'input':
-            if self.display_name and 'value' not in attrs:
-                attrs = copy(attrs)
-                attrs.value = self.display_name
-        else:
-            children['text'] = self.display_name
-
-        return Fragment(
-            _name=self._name,
-            tag=self.tag,
-            attrs=attrs,
-            children=children,
-        ).bind(parent=self).__html__()
 
     @classmethod
     @class_shortcut(
@@ -138,9 +123,6 @@ class Action(Part):
             display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
         )
         return call_target(**kwargs)
-
-    def own_evaluate_parameters(self):
-        return dict(action=self)
 
 
 def group_actions(actions: Dict[str, Action]):

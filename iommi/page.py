@@ -137,7 +137,7 @@ class Fragment(Part):
             ])
 
     def __repr__(self):
-        return f'<Fragment tag:{self.tag} attrs:{dict(self.attrs) if self.attrs else None!r}>'
+        return f'<{self.__class__.__name__} tag:{self.tag} attrs:{dict(self.attrs) if self.attrs else None!r}>'
 
     def on_bind(self) -> None:
         bind_members(self, name='children', unknown_types_fall_through=True)
