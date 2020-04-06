@@ -737,7 +737,7 @@ class Cells(Traversable):
         return Fragment(
             tag=self.tag,
             attrs=self.attrs,
-            text=mark_safe('\n'.join(
+            children__text=mark_safe('\n'.join(
                 bound_cell.__html__()
                 for bound_cell in self
             ))
@@ -809,7 +809,7 @@ class Cell(CellConfig):
         return Fragment(
             tag=self.tag,
             attrs=self.attrs,
-            text=self.render_cell_contents()
+            children__content=self.render_cell_contents()
         ).bind(parent=self).__html__()
 
     def render_cell_contents(self):
@@ -820,10 +820,10 @@ class Cell(CellConfig):
             url_title = self.url_title
             # TODO: `url`, `url_title` and `link` is overly complex
             cell_contents = Fragment(
-                children__content=cell_contents,
                 tag='a',
                 attrs__title=url_title,
                 attrs__href=url,
+                children__content=cell_contents,
                 **self.link
             ).bind(parent=self.table).__html__()
         return cell_contents
@@ -1483,7 +1483,7 @@ class Table(Part):
             if self.title not in (None, MISSING):
                 self.h_tag = self.h_tag(
                     _name='h_tag',
-                    text=capitalize(self.title)
+                    children__text=capitalize(self.title)
                 ).bind(parent=self)
             else:
                 self.h_tag = ''

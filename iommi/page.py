@@ -126,11 +126,6 @@ class Fragment(Part):
     )
     def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
-
-        # TODO: this special case should be removed once Action doesn't use it
-        if text is not None:
-            children = dict(text=text, **children)
-
         collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):
@@ -264,10 +259,11 @@ class Page(Part):
 class Html:
     def __getattr__(self, tag):
         def fragment_constructor(child: PartType = None, children=None, **kwargs):
-            if isinstance(child, str):
-                children = dict(text=child, **(children or {}))
+            if child is not None:
+                children = children or {}
+                children['text'] = child
 
-            return Fragment(children=children, tag=tag, **kwargs)
+            return Fragment(tag=tag, children=children, **kwargs)
 
         return fragment_constructor
 

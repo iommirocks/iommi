@@ -1157,7 +1157,10 @@ class Form(Part):
         self.title = evaluate_strict(self.title, **self._evaluate_parameters)
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
-                self.h_tag = self.h_tag(_name='h_tag', text=capitalize(self.title)).bind(parent=self)
+                self.h_tag = self.h_tag(
+                    _name='h_tag',
+                    children__text=capitalize(self.title),
+                ).bind(parent=self)
             else:
                 self.h_tag = ''
         else:

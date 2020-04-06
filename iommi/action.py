@@ -83,21 +83,22 @@ class Action(Part):
         assert self._is_bound
         if self.template:
             return render_template(self.get_request(), self.template, self._evaluate_parameters)
+
+        children = {}
+        attrs = self.attrs
+        if self.tag == 'input':
+            if self.display_name and 'value' not in attrs:
+                attrs = copy(attrs)
+                attrs.value = self.display_name
         else:
-            display_name = self.display_name
-            attrs = self.attrs
-            if self.tag == 'input':
-                if display_name and 'value' not in attrs:
-                    attrs = copy(attrs)
-                    attrs.value = self.display_name
-                display_name = None
-            return Fragment(
-                # @TODO Why can this not be: children__text=display_name,
-                display_name,
-                _name=self._name,
-                tag=self.tag,
-                attrs=attrs,
-            ).bind(parent=self).__html__()
+            children['text'] = self.display_name
+
+        return Fragment(
+            _name=self._name,
+            tag=self.tag,
+            attrs=attrs,
+            children=children,
+        ).bind(parent=self).__html__()
 
     @classmethod
     @class_shortcut(
