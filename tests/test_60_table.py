@@ -1478,11 +1478,19 @@ def test_explicit_table_does_not_use_from_model():
 
 @pytest.mark.django_db
 def test_from_model_implicit():
-    class TestTable(Table):
-        pass
-
-    t = TestTable(auto__rows=TBar.objects.all()).bind(request=None)
+    t = Table(
+        auto__rows=TBar.objects.all()
+    ).bind(request=None)
     assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
+
+
+@pytest.mark.django_db
+def test_from_model_implicit_not_break_sorting():
+    t = Table(
+        auto__model=TBar,
+        rows=lambda table, **_: TBar.objects.all()
+    ).bind(request=None)
+    assert isinstance(t.rows, QuerySet)
 
 
 @override_settings(DEBUG=True)

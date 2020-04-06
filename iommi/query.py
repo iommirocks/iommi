@@ -512,22 +512,26 @@ class Query(Part):
         form__attrs={'data-iommi-errors': lambda query, **_: query.endpoints.errors.iommi_path}
     )
     def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto, **kwargs):
-        model, rows = model_and_rows(model, rows)
-
         assert isinstance(filters, dict)
 
         if auto:
             auto = QueryAutoConfig(**auto)
-            assert not _filters_dict, "You can't have an auto generated Query AND a declarative Query at the same time"
-            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
-            assert not rows, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
-            model, rows, filters = self._from_model(
+            auto_model, auto_rows, filters = self._from_model(
                 model=auto.model,
                 rows=auto.rows,
                 filters=filters,
                 include=auto.include,
                 exclude=auto.exclude,
             )
+
+            assert model is None, "You can't use the auto feature and explicitly pass model. " \
+                                  "Either pass auto__model, or we will set the model for you from auto__rows"
+            model = auto_model
+
+            if rows is None:
+                rows = auto_rows
+
+        model, rows = model_and_rows(model, rows)
 
         setdefaults_path(
             kwargs,
@@ -566,7 +570,7 @@ class Query(Part):
                 model_field=filter.model_field,
                 attr=name if filter.attr is MISSING else filter.attr,
                 call_target__cls=field_class,
-                )
+            )
             declared_fields[name] = field()
 
         # noinspection PyCallingNonCallable
@@ -766,7 +770,7 @@ class Query(Part):
 
     def _unary_op_to_q(self, token):
         if len(token) == 1:
-            (filter_name, ) = token
+            (filter_name,) = token
             value = 'true'
         else:
             (op, filter_name) = token
@@ -892,7 +896,12 @@ class Query(Part):
         filters=EMPTY,
     )
     def _from_model(cls, *, rows=None, model=None, filters, include=None, exclude=None):
+        assert rows is None or isinstance(rows, QuerySet), \
+            'auto__rows needs to be a QuerySet for filter generation to work. ' \
+            'If it needs to be a lambda, provide a model with auto__model for filter generation, ' \
+            'and pass the lambda as rows.'
+
         model, rows = model_and_rows(model, rows)
-        assert model is not None or rows is not None, "model or rows must be specified"
+        assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
         filters = cls.filters_from_model(model=model, include=include, exclude=exclude, filters=filters)
         return model, rows, filters

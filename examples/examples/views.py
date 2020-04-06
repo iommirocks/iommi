@@ -143,6 +143,8 @@ def index(request):
         table_links = mark_safe("""
         <a href="table_readme_example_1/">Example 1 from the README</a><br>
         <a href="table_readme_example_2/">Example 2 from the README</a><br>
+        <a href="table_auto_example_1/">Example 1 of auto table</a><br>
+        <a href="table_auto_example_2/">Example 2 of auto table</a><br>
         <a href="table_kitchen_sink/">Kitchen sink</a><br>
         <a href="table_as_view/">Table.as_view() example</a><br>
         """)
@@ -335,6 +337,19 @@ def table_readme_example_2(request):
         )
 
     return BarTable(rows=TBar.objects.all(), page_size=20)
+
+
+def table_auto_example_1(request):
+    return Table(
+        auto__model=Foo,
+    )
+
+
+def table_auto_example_2(request):
+    return Table(
+        auto__model=Foo,
+        rows=lambda table, **_: Foo.objects.all(),
+    )
 
 
 def table_kitchen_sink(request):

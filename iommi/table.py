@@ -952,7 +952,10 @@ def bulk_delete__post_handler(table, form, **_):
 
     queryset = table.bulk_queryset()
 
-    from iommi.page import Page, html
+    from iommi.page import (
+        Page,
+        html,
+    )
 
     class ConfirmPage(Page):
         title = html.h1(f'Are you sure you want to delete these {queryset.count()} items?')
@@ -1341,25 +1344,27 @@ class Table(Part):
 
         if auto:
             auto = TableAutoConfig(**auto)
-            orig_model = model
-            orig_rows = rows
-
-            model, rows, columns = self._from_model(
+            auto_model, auto_rows, columns = self._from_model(
                 model=auto.model,
                 rows=auto.rows,
                 columns=columns,
                 include=auto.include,
                 exclude=auto.exclude,
             )
-            assert orig_model is None or orig_model == model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__rows"
-            assert orig_rows is None, "You can't use the auto feature and explicitly pass rows. Either pass auto__rows, or we will set rows for you from auto__model (.objects.all())"
+
+            assert model is None, "You can't use the auto feature and explicitly pass model. " \
+                                  "Either pass auto__model, or we will set the model for you from auto__rows"
+            model = auto_model
+
+            if rows is None:
+                rows = auto_rows
 
             if title is MISSING:
                 title = f'{model._meta.verbose_name_plural.title()}'
 
-        assert isinstance(columns, dict)
-
         model, rows = model_and_rows(model, rows)
+
+        assert isinstance(columns, dict)
 
         self.columns = None
         self.rendered_columns = None
@@ -1493,10 +1498,10 @@ class Table(Part):
         self.header = self.header.bind(parent=self)
 
         evaluate_member(self, 'sortable', **self._evaluate_parameters)  # needs to be done first because _prepare_headers depends on it
-        self._prepare_sorting()
 
         evaluate_member(self, 'model', strict=False, **self._evaluate_parameters)
         evaluate_member(self, 'rows', **self._evaluate_parameters)
+        self._prepare_sorting()
 
         for column in self.columns.values():
             # Special case for entire table not sortable
@@ -1714,8 +1719,13 @@ class Table(Part):
         columns=EMPTY,
     )
     def _from_model(cls, *, rows=None, model=None, columns=None, include=None, exclude=None):
+        assert rows is None or isinstance(rows, QuerySet), \
+            'auto__rows needs to be a QuerySet for column generation to work' \
+            'If it needs to be a lambda, provide a model with auto__model for column generation, ' \
+            'and pass the lambda as rows.'
+
         model, rows = model_and_rows(model, rows)
-        assert model is not None or rows is not None, "model or rows must be specified"
+        assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude, columns=columns)
         return model, rows, columns
 
@@ -1752,4 +1762,3 @@ class Table(Part):
 
     def as_view(self):
         return build_as_view_wrapper(self)
-
