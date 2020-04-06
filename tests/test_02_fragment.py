@@ -149,6 +149,11 @@ def test_html_builder():
     assert html.h1('foo').bind(request=None).__html__() == '<h1>foo</h1>'
 
 
+def test_html_builder_multi_arg():
+    assert html.h1('foo', 'bar').bind(request=None).__html__() == '<h1>foobar</h1>'
+    assert html.h1('foo', html.p('bar')).bind(request=None).__html__() == '<h1>foo<p>bar</p></h1>'
+
+
 def test_fragment_basic():
     assert Fragment(children__child='foo').bind(request=None).__html__() == 'foo'
 

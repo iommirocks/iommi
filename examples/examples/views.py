@@ -102,7 +102,10 @@ def index(request):
     class AdminPage(Page):
         admin_header = html.h2('Admin example')
 
-        admin_a = html.a('Admin', attrs__href="iommi-admin/")
+        admin_a = html.p(
+            html.a('Admin', attrs__href="iommi-admin/"),
+            '(needs login)',
+        )
 
     class IndexPage(Page):
         header = html.h1('iommi examples')

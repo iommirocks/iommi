@@ -3,6 +3,7 @@ from typing import (
     Optional,
     Type,
     Union,
+    List,
 )
 
 from tri_declarative import (
@@ -258,10 +259,11 @@ class Page(Part):
 
 class Html:
     def __getattr__(self, tag):
-        def fragment_constructor(child: PartType = None, children=None, **kwargs):
-            if child is not None:
+        def fragment_constructor(*parts: List[PartType], children=None, **kwargs):
+            if parts is not None:
                 children = children or {}
-                children['text'] = child
+                for i, child in enumerate(parts):
+                    children[f'child{i if i>0 else ""}'] = child
 
             return Fragment(tag=tag, children=children, **kwargs)
 
