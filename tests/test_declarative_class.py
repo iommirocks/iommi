@@ -26,6 +26,7 @@ def test_find_members():
     class MyDeclarative(Declarative):
         foo = Member(foo='bar')
 
+    # noinspection PyArgumentList
     subject = MyDeclarative()
     assert subject.members == dict(foo=Member(foo='bar'))
 
@@ -48,14 +49,15 @@ def test_find_members_by_check_function():
         is_member=lambda x: x == "foo",
         sort_key=lambda x: x,
     )
-    class Declarative:
+    class MyDeclarative:
         foo = "foo"
         bar = "bar"
 
         def __init__(self, members):
             self.members = members
 
-    subject = Declarative()
+    # noinspection PyArgumentList
+    subject = MyDeclarative()
     assert dict(foo='foo') == subject.members
 
 
@@ -67,10 +69,27 @@ def test_required_parameter():
         e.value) == "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)"
 
 
+# noinspection PyUnusedLocal
 def test_find_member_fail_on_tuple():
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError) as e:
         class MyDeclarative(Declarative):
             foo = Member(foo='bar'),
+
+    assert str(e.value) == "'foo' is a one-tuple containing what we are looking for.  " \
+                           "Trailing comma much?  Don't... just don't."
+
+
+# noinspection PyUnusedLocal
+def test_find_member_fail_on_tuple_with_is_member_lambda():
+    with pytest.raises(TypeError) as e:
+        @declarative(
+            is_member=lambda obj: isinstance(obj, Member)
+        )
+        class MyDeclarative:
+            foo = Member(foo='bar'),
+
+    assert str(e.value) == "'foo' is a one-tuple containing what we are looking for.  " \
+                           "Trailing comma much?  Don't... just don't."
 
 
 def test_missing_ordering():
@@ -88,12 +107,13 @@ def test_constructor_injector_attribute_retention():
         return f
 
     @declarative(str, sort_key=lambda x: x)
-    class Declarative:
+    class MyDeclarative:
+        # noinspection PyUnusedLocal
         @my_wrapper
         def __init__(self, members):
-            super(Declarative, self).__init__()
+            super(MyDeclarative, self).__init__()
 
-    assert Declarative().__init__.my_attribute == 17
+    assert MyDeclarative().__init__.my_attribute == 17
 
 
 def test_constructor_init_hook_attribute_retention():
@@ -102,14 +122,14 @@ def test_constructor_init_hook_attribute_retention():
         return f
 
     @declarative(str, add_init_kwargs=False, sort_key=lambda x: x)
-    class Declarative:
+    class MyDeclarative:
         @my_wrapper
         def __init__(self):
             """foo"""
-            super(Declarative, self).__init__()
+            super(MyDeclarative, self).__init__()
 
-    assert Declarative().__init__.my_attribute == 17
-    assert Declarative.__init__.__doc__ == 'foo'
+    assert MyDeclarative().__init__.my_attribute == 17
+    assert MyDeclarative.__init__.__doc__ == 'foo'
 
 
 def test_sort_key():
@@ -121,6 +141,7 @@ def test_sort_key():
         def __init__(self, members):
             assert list(members.keys()) == ['b', 'a']
 
+    # noinspection PyArgumentList
     Ok()
 
 
@@ -131,6 +152,7 @@ def test_find_members_not_shadowed_by_meta():
         class Meta:
             pass
 
+    # noinspection PyArgumentList
     subject = MyDeclarative()
     assert subject.members == dict(foo=Member(foo='bar'))
 
@@ -142,6 +164,7 @@ def test_find_members_inherited():
     class MyDeclarativeSubclass(MyDeclarative):
         bar = Member(foo='baz')
 
+    # noinspection PyArgumentList
     subject = MyDeclarativeSubclass()
     assert list(subject.members.items()) == [
         ('foo', Member(foo='bar')),
@@ -192,23 +215,24 @@ def test_find_members_shadow():
 
 def test_member_attribute_naming():
     @declarative(Member, 'foo')
-    class Declarative:
+    class MyBaseDeclarative:
         def __init__(self, foo):
             self.foo = foo
 
-    class MyDeclarative(Declarative):
+    class MyDeclarative(MyBaseDeclarative):
         bar = Member(baz='buzz')
 
+    # noinspection PyArgumentList
     subject = MyDeclarative()
     assert subject.foo == dict(bar=Member(baz='buzz'))
 
 
 def test_string_members():
     @declarative(str, sort_key=lambda x: x)
-    class Declarative:
+    class MyDeclarative:
         foo = 'bar'
 
-    assert Declarative.get_declared() == dict(foo='bar')
+    assert MyDeclarative.get_declared() == dict(foo='bar')
 
 
 def test_declarative_and_meta():
@@ -224,6 +248,7 @@ def test_declarative_and_meta():
             assert members == dict(foo='foo')
             assert bar == 'bar'
 
+    # noinspection PyArgumentList
     Foo()
 
 
@@ -260,6 +285,7 @@ def test_declarative_and_meta_other_order():
             assert members == dict(foo='foo')
             assert bar == 'bar'
 
+    # noinspection PyArgumentList
     Foo()
 
 
@@ -274,6 +300,7 @@ def test_multiple_types():
             assert ints == dict(a=1)
             assert strs == dict(b='b')
 
+    # noinspection PyArgumentList
     Foo()
 
 
@@ -294,6 +321,7 @@ def test_multiple_types_inheritance():
 
         def __init__(self, strs):
             assert list(strs.items()) == [('b', 'b'), ('c', 'c')]
+            # noinspection PyArgumentList
             super(Bar, self).__init__()
 
     class Baz(Bar):
@@ -301,6 +329,7 @@ def test_multiple_types_inheritance():
         c = 'c'
 
         def __init__(self):
+            # noinspection PyArgumentList
             super(Baz, self).__init__()
 
     Baz()
@@ -314,12 +343,14 @@ def test_add_args_to_init_call():
 
     add_args_to_init_call(C, lambda self: dict(x=17))
 
+    # noinspection PyArgumentList
     c = C()
     assert c.x == 17
     assert c.y is None
 
     add_args_to_init_call(C, lambda self: dict(y=42))
 
+    # noinspection PyArgumentList
     c = C()
     assert c.x == 17
     assert c.y == 42
@@ -341,7 +372,9 @@ def test_copy_of_constructor_args():
         def __init__(self, members):
             members['x'].append('foo')
 
+    # noinspection PyArgumentList
     a = C()
+    # noinspection PyArgumentList
     C()
 
     assert a.x == ['foo']  # Only added once for each instance
@@ -352,10 +385,13 @@ def test_copy_of_attributes():
     class C:
         x = []
 
+        # noinspection PyUnusedLocal
         def __init__(self, members):
             pass
 
+    # noinspection PyArgumentList
     a = C()
+    # noinspection PyArgumentList
     b = C()
 
     a.x.append('bar')
@@ -445,15 +481,18 @@ def test_whitelist_dunder_weakref():
     class Foo:
         pass
 
+    # noinspection PyPep8Naming
     Bar = declarative(str)(Foo)
 
     assert Bar.__dict__ is not Foo.__dict__
+    # noinspection PyUnresolvedReferences
     assert Bar.__weakref__ is None or Bar.__weakref__ is not Foo.__weakref__
 
 
 def test_wrap_with_meta_preserves_doc_string():
     @with_meta
     class Foo(Struct):
+        # noinspection PyMissingConstructor
         def __init__(self):
             """foo"""
 

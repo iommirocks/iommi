@@ -79,16 +79,20 @@ def get_members(cls, member_class=None, is_member=None, sort_key=None, _paramete
         members.update(inherited_members)
 
     def generate_member_bindings():
+        def is_a_member(obj):
+            return (
+                    (member_class is not None and isinstance(obj, member_class))
+                    or (is_member is not None and is_member(obj))
+            )
+
         for name in cls.__dict__:
             if name.startswith('__'):
                 continue
             obj = getattr(cls, name)
-            if member_class is not None and isinstance(obj, member_class):
+            if is_a_member(obj):
                 yield name, obj
-            elif is_member is not None and is_member(obj):
-                yield name, obj
-            elif type(obj) is tuple and len(obj) == 1 and isinstance(obj[0], member_class):
-                raise TypeError("'%s' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't." % name)  # pragma: no mutate
+            elif type(obj) is tuple and len(obj) == 1 and is_a_member(obj[0]):
+                raise TypeError(f"'{name}' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't.")  # pragma: no mutate
 
     bindings = generate_member_bindings()
 
