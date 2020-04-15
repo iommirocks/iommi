@@ -852,6 +852,166 @@ def test_shortcut_to_superclass_two_calls():
     assert isinstance(result, Bar)
 
 
+@pytest.mark.skip('Does not work yet')
+def test_shortcut_inherit():
+    class Foo:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        @classmethod
+        @class_shortcut(
+            z=4711
+        )
+        def bar(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class Bar(Foo):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='bar',
+            x=17
+        )
+        def bar(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class Baz(Bar):
+        pass
+
+    result = Baz.bar()
+    assert result.kwargs == dict(x=17, z=4711)
+    assert isinstance(result, Bar)
+
+
+@pytest.mark.skip('Does not work yet')
+def test_shortcut_inherit_and_override():
+    class Foo:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        @classmethod
+        @class_shortcut(
+            z=4711
+        )
+        def bar(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class Bar(Foo):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='bar',
+            x=17
+        )
+        def bar(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class Baz(Bar):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='bar',
+            y=42
+        )
+        def bar(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    result = Baz.bar()
+    assert result.kwargs == dict(x=17, y=42, z=4711)
+    assert isinstance(result, Bar)
+
+
+def test_shortcut_choice():
+    class IommiField:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        @classmethod
+        @class_shortcut(
+            iommi_choice=True
+        )
+        def choice(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='choice',
+            iommi_choice_queryset=True
+        )
+        def choice_queryset(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    class ResolveField(IommiField):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='choice',
+            resolve_choice=True
+        )
+        def choice(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='choice_queryset',
+            resolve_choice_queryset=True
+        )
+        def choice_queryset(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    # These already work:
+    result = ResolveField.choice()
+    assert result.kwargs == dict(
+        resolve_choice=True,
+        iommi_choice=True,
+    )
+    assert isinstance(result, ResolveField)
+
+    result = ResolveField.choice_queryset()
+    assert result.kwargs == dict(
+        resolve_choice_queryset=True,
+        iommi_choice_queryset=True,
+        resolve_choice=True,
+        iommi_choice=True,
+    )
+    assert isinstance(result, ResolveField)
+
+    class ElmField(ResolveField):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='choice',
+            elm_choice=True
+        )
+        def choice(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='choice_queryset',
+            elm_choice_queryset=True
+        )
+        def choice_queryset(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    pytest.skip('Does not work yet')
+
+    # These traps in infinite recursion:
+    result = ElmField.choice()
+    assert result.kwargs == dict(
+        elm_choice=True,
+        resolve_choice=True,
+        iommi_choice=True,
+    )
+    assert isinstance(result, ElmField)
+
+    result = ElmField.choice_queryset()
+    assert result.kwargs == dict(
+        elm_choice_queryset=True,
+        resolve_choice_queryset=True,
+        iommi_choice_queryset=True,
+        elm_choice=True,
+        resolve_choice=True,
+        iommi_choice=True,
+    )
+    assert isinstance(result, ElmField)
+
+
 def test_namespace_call():
     def bar(arg):
         return arg
