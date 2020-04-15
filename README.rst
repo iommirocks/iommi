@@ -7,6 +7,8 @@ iommi
 .. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/TriOptima/iommi
 
+.. image:: https://repl.it/badge/github/boxed/iommi-repl.it
+    :target: https://repl.it/github/boxed/iommi-repl.it
 
 iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
 
