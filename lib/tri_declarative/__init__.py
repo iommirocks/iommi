@@ -41,7 +41,7 @@ from .util import (
 )
 from .with_meta import with_meta
 
-__version__ = '5.3.0'
+__version__ = '5.4.0'
 
 __all__ = [
     'class_shortcut',

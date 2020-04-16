@@ -1,10 +1,14 @@
 Changelog
 ---------
 
-5.4.0 (----------)
+5.4.0 (2020-04-16)
 ------------------
 
 * Minor bug fix on trailing comma explanation TypeException
+
+* Fix bug when nesting `@class_shortcut` with same name i sub classes
+
+* Refactor code to separate modules to get better stack traces
 
 
 5.3.0 (2020-04-01)
