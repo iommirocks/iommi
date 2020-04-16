@@ -248,10 +248,10 @@ class Menu(MenuBase):
             nonlocal current_parts_matching
             nonlocal current
             for sub_item in item.sub_menu.values():
+                _set_active(sub_item)
+
                 if sub_item.url is None or '://' in sub_item.url:
                     continue
-
-                _set_active(sub_item)
 
                 parsed_url = urlparse(sub_item.url).path
 

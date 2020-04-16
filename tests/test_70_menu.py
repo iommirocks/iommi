@@ -112,3 +112,12 @@ def test_repr():
         bar -> /bar/
         foo -> baz"""
     assert actual == expected
+
+
+def test_submenu_set_active():
+    class MyMenu(Menu):
+        qwe = MenuItem(url=None, sub_menu=dict(bar=MenuItem(), foo=MenuItem(after=0)))
+
+    menu = MyMenu().bind(request=req('GET'))
+    menu.set_active('/foo/')
+    assert menu.sub_menu.qwe.sub_menu.foo._active is True
