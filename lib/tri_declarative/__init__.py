@@ -524,29 +524,28 @@ def class_shortcut(*args, **defaults):
                 next_call_target_attribute = next_call_target.attribute
 
                 # We need to retain the cls value for later use (as _final_cls).
-                setdefaults_path(
-                    kwargs,
-                    _final_cls=cls,
-                    call_target__call_target__cls=next_call_target_cls,
-                    call_target__call_target__attribute=next_call_target_attribute,
+                setdefaults_path(kwargs, _final_cls=cls)
+
+                call_target_after_shortcut = Namespace(
+                    call_target__cls=next_call_target_cls,
+                    call_target__attribute=next_call_target_attribute,
                 )
+
             else:
                 next_call_target_cls = kwargs.pop('_final_cls', cls)
                 if next_call_target is None:
                     # No call_target specified in the decorator, just use the cls (or _final_cls from earlier)
-                    setdefaults_path(
-                        kwargs,
-                        call_target__call_target__cls=next_call_target_cls,
+                    call_target_after_shortcut = Namespace(
+                        call_target__cls=next_call_target_cls,
                     )
                 else:
                     # Merge decorator specified call_target with what final class we should have.
-                    setdefaults_path(
-                        kwargs,
-                        call_target__call_target=next_call_target,
-                        call_target__call_target__cls=next_call_target_cls,
+                    call_target_after_shortcut = Namespace(
+                        call_target=next_call_target,
+                        call_target__cls=next_call_target_cls,
                     )
 
-            result = __target__(cls, *args, **kwargs)
+            result = __target__(cls, *args, call_target=call_target_after_shortcut, **kwargs)
 
             shortcut_stack = [name] + getattr(result, '__tri_declarative_shortcut_stack', [])
             try:
