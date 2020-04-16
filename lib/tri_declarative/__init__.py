@@ -506,36 +506,48 @@ def class_shortcut(*args, **defaults):
             **defaults
         )
         def class_shortcut_wrapper(cls, *args, **kwargs):
-            call_target = kwargs.pop('call_target', None)
-            cls = kwargs.pop('_target_cls', cls)
-            if call_target is None:
-                setdefaults_path(
-                    kwargs,
-                    call_target__call_target__cls=cls,
+            name = __target__.__name__
+            next_call_target = kwargs.pop('call_target', None)
+
+            if (
+                isinstance(next_call_target, Namespace)
+                and name == next_call_target.get('attribute', None)
+            ):
+                # Next call is to the same attribute name, but on the base class.
+                initial_resolve = getattr(cls, name).__func__
+                # Loop until we find a super class implementation
+                base_class_candidate = cls
+                while getattr(base_class_candidate, name).__func__ == initial_resolve:
+                    base_class_candidate = base_class_candidate.__bases__[0]
+
+                next_call_target_cls = base_class_candidate
+                next_call_target_attribute = next_call_target.attribute
+
+                # We need to retain the cls value for later use (as _final_cls).
+                setdefaults_path(kwargs, _final_cls=cls)
+
+                call_target_after_shortcut = Namespace(
+                    call_target__cls=next_call_target_cls,
+                    call_target__attribute=next_call_target_attribute,
                 )
+
             else:
-                if (
-                        isinstance(call_target, Namespace)
-                        and __target__.__name__ == call_target.get('attribute', None)
-                ):
-                    # Next call is to the same attribute name, but on the base class.
-                    # We need to retain the cls value for later use.
-                    setdefaults_path(
-                        kwargs,
-                        _target_cls=cls,
-                        call_target__call_target=call_target,
-                        call_target__call_target__cls=cls.__bases__[0]
+                next_call_target_cls = kwargs.pop('_final_cls', cls)
+                if next_call_target is None:
+                    # No call_target specified in the decorator, just use the cls (or _final_cls from earlier)
+                    call_target_after_shortcut = Namespace(
+                        call_target__cls=next_call_target_cls,
                     )
                 else:
-                    setdefaults_path(
-                        kwargs,
-                        call_target__call_target=call_target,
-                        call_target__call_target__cls=cls,
+                    # Merge decorator specified call_target with what final class we should have.
+                    call_target_after_shortcut = Namespace(
+                        call_target=next_call_target,
+                        call_target__cls=next_call_target_cls,
                     )
 
-            result = __target__(cls, *args, **kwargs)
+            result = __target__(cls, *args, call_target=call_target_after_shortcut, **kwargs)
 
-            shortcut_stack = [__target__.__name__] + getattr(result, '__tri_declarative_shortcut_stack', [])
+            shortcut_stack = [name] + getattr(result, '__tri_declarative_shortcut_stack', [])
             try:
                 result.__tri_declarative_shortcut_stack = shortcut_stack
             except AttributeError:

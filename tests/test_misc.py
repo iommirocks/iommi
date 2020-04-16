@@ -852,7 +852,6 @@ def test_shortcut_to_superclass_two_calls():
     assert isinstance(result, Bar)
 
 
-@pytest.mark.skip('Does not work yet')
 def test_shortcut_inherit():
     class Foo:
         def __init__(self, **kwargs):
@@ -882,7 +881,6 @@ def test_shortcut_inherit():
     assert isinstance(result, Bar)
 
 
-@pytest.mark.skip('Does not work yet')
 def test_shortcut_inherit_and_override():
     class Foo:
         def __init__(self, **kwargs):
@@ -955,7 +953,6 @@ def test_shortcut_choice():
         def choice_queryset(cls, call_target, **kwargs):
             return call_target(**kwargs)
 
-    # These already work:
     result = ResolveField.choice()
     assert result.kwargs == dict(
         resolve_choice=True,
@@ -989,9 +986,6 @@ def test_shortcut_choice():
         def choice_queryset(cls, call_target, **kwargs):
             return call_target(**kwargs)
 
-    pytest.skip('Does not work yet')
-
-    # These traps in infinite recursion:
     result = ElmField.choice()
     assert result.kwargs == dict(
         elm_choice=True,
