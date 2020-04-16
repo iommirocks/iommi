@@ -613,7 +613,7 @@ def test_dispatch_store_arguments():
 
 
 def test_full_function_name():
-    assert full_function_name(setattr_path) == 'tri_declarative.setattr_path'
+    assert full_function_name(setattr_path) == 'tri_declarative.util.setattr_path'
 
 
 def test_dispatch_with_target():
