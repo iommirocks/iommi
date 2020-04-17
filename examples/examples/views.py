@@ -278,6 +278,9 @@ def form_kitchen(request):
     ensure_objects()
 
     def kitchen_form_post_handler(form, **_):
+        if not form.is_valid():
+            return
+
         values = form.apply(Struct())
         return HttpResponse(format_html("Kitchen values was {}", values))
 

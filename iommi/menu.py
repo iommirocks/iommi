@@ -81,6 +81,7 @@ class MenuBase(Part):
             })
 
 
+@with_meta
 class MenuItem(MenuBase):
     """
     Class that is used for the clickable menu items in a menu.
