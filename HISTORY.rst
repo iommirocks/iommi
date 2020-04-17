@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+0.6.0 (2020-04-17)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed an issue where fragments couldn't be customized later if built with the `html` builder
+
+* `Action` inherits from `Fragment`. This should be mostly transparent.
+
+* You can now pass multiple argument to `Fragment`/`html.foo()`. So `html.div('foo', 'bar')` is now valid and creates two child nodes `child0` and `child1`
+
+* Uncouple `auto__*` from `row` parameter. `auto__` only suggests a default. This avoids some confusion one could get if mixing `auto__rows`, `auto__models` and `rows` in some ways.
+
+* Fixed setting active on nested submenus where the parent had url None
+
+
 0.5.0 (2020-04-01)
 ~~~~~~~~~~~~~~~~~~
 
