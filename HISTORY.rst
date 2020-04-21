@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.6.1 (2020-04-21)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed tbody endpoint and added a div to make the endpoint easier to use
+
+
 0.6.0 (2020-04-17)
 ~~~~~~~~~~~~~~~~~~
 
