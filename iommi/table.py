@@ -1262,7 +1262,7 @@ class Table(Part):
         query_class = Query
         action_class = Action
         page_class = Page
-        endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='tri_table/table_container.html')})
+        endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='iommi/table/table_tag.html')})
         endpoints__csv__func = endpoint__csv
 
         attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.iommi_path, 'tbody')}
@@ -1743,7 +1743,7 @@ class Table(Part):
     @dispatch(
         render=render_template,
     )
-    def __html__(self, *, render=None):
+    def __html__(self, *, template=None, render=None):
         assert self._is_bound
 
         request = self.get_request()
@@ -1756,9 +1756,9 @@ class Table(Part):
 
         if self.query and self.query.form and not self.query.form.is_valid():
             self.rows = None
-            self.context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
+            context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
-        return render(request=request, template=self.template, context=context)
+        return render(request=request, template=template or self.template, context=context)
 
     def as_view(self):
         return build_as_view_wrapper(self)

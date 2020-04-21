@@ -4,15 +4,17 @@
     {{ empty_message }}
 {% else %}
 
-    <{{ table.tag }}{{ table.attrs }}>
+    <div class="iommi-table-plus-paginator">
+        <{{ table.tag }}{{ table.attrs }}>
 
-        {{ table.header }}
+            {{ table.header }}
 
-        <tbody>
-            {{ table.tbody }}
-        </tbody>
-    </{{ table.tag }}>
+            <tbody>
+                {{ table.tbody }}
+            </tbody>
+        </{{ table.tag }}>
 
-    {{ table.paginator }}
+        {{ table.paginator }}
+    </div>
 
 {% endif %}
