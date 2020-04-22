@@ -1265,7 +1265,9 @@ class Table(Part):
         endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='iommi/table/table_tag.html')})
         endpoints__csv__func = endpoint__csv
 
-        attrs = {'data-endpoint': lambda table, **_: DISPATCH_PREFIX + path_join(table.iommi_path, 'tbody')}
+        attrs = Namespace({
+            'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
+        })
 
     @staticmethod
     @refinable
