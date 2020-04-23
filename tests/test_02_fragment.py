@@ -145,6 +145,10 @@ def test_as_html():
     assert format_html('{}', as_html(part=Struct(__html__=lambda: mark_safe('<foo>bar</foo>')), context={})) == '<foo>bar</foo>'
 
 
+def test_default_text():
+    assert Fragment('foo').bind(request=None).__html__() == 'foo'
+
+
 def test_html_builder():
     assert html.h1('foo').bind(request=None).__html__() == '<h1>foo</h1>'
 

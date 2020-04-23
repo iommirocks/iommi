@@ -12,6 +12,7 @@ from tri_declarative import (
     EMPTY,
     Namespace,
     Refinable,
+    setdefaults_path,
     with_meta,
 )
 
@@ -127,6 +128,11 @@ class Fragment(Part):
     )
     def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
+        if text is not None:
+            setdefaults_path(
+                children,
+                text=text,
+            )
         collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):

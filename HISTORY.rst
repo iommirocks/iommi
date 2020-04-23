@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.6.3 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed default text argument to Fragment
+
+
 0.6.2 (2020-04-22)
 ~~~~~~~~~~~~~~~~~~
 

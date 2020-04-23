@@ -25,6 +25,7 @@ from django.utils.safestring import mark_safe
 from iommi import (
     Action,
     Column,
+    Header,
     html,
     Page,
     Table,
@@ -414,17 +415,10 @@ def page_busy(request):
 def all_field_sorts(request):
     some_choices = ['Foo', 'Bar', 'Baz']
     return Page(parts=dict(
-        header=html.h2('All sorts of fields'),
+        header=Header('All sorts of fields'),
         form=Form(
-            actions__submit__include=False,
-            fields__field_of_type_radio__choices=some_choices,
-            fields__field_of_type_choice__choices=some_choices,
-            fields__field_of_type_choice_queryset__choices=TFoo.objects.all(),
-            fields__field_of_type_multi_choice__choices=some_choices,
-            fields__field_of_type_multi_choice_queryset__choices=TBar.objects.all(),
-            fields__field_of_type_info__value="This is some information",
-            **{
-                f'fields__field_of_type_{t}__call_target__attribute': t
+            fields={
+                f'field_of_type_{t}__call_target__attribute': t
                 for t in get_members(
                     cls=Field,
                     member_class=Shortcut,
@@ -434,7 +428,16 @@ def all_field_sorts(request):
                     # These only work if we have an instance
                     'foreign_key',
                     'many_to_many']
-            })
+            },
+            fields__field_of_type_radio__choices=some_choices,
+            fields__field_of_type_choice__choices=some_choices,
+            fields__field_of_type_choice_queryset__choices=TFoo.objects.all(),
+            fields__field_of_type_multi_choice__choices=some_choices,
+            fields__field_of_type_multi_choice_queryset__choices=TBar.objects.all(),
+            fields__field_of_type_info__value="This is some information",
+
+            actions__submit__include=False,
+        )
     ))
 
 
@@ -488,17 +491,18 @@ def all_column_sorts(request):
     )
 
     return Page(parts=dict(
-        header=html.h2('All sorts of columns'),
+        header=Header('All sorts of columns'),
         form=ShortcutSelectorForm(),
         table=Table(
-            rows=[DummyRow(i) for i in range(10)],
-            **{
-                f'columns__column_of_type_{t}': dict(
+            columns={
+                f'column_of_type_{t}': dict(
                     type_specifics.get(t, {}),
                     call_target__attribute=t,
                 )
                 for t in selected_shortcuts
-            })
+            },
+            rows=[DummyRow(i) for i in range(10)],
+        )
     ))
 
 
