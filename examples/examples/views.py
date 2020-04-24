@@ -1,5 +1,9 @@
 import json
 from collections import defaultdict
+from datetime import (
+    date,
+    datetime,
+)
 from pathlib import Path
 
 from django.contrib.auth import (
@@ -418,7 +422,7 @@ def all_field_sorts(request):
         header=Header('All sorts of fields'),
         form=Form(
             fields={
-                f'field_of_type_{t}__call_target__attribute': t
+                f'{t}__call_target__attribute': t
                 for t in get_members(
                     cls=Field,
                     member_class=Shortcut,
@@ -429,12 +433,25 @@ def all_field_sorts(request):
                     'foreign_key',
                     'many_to_many']
             },
-            fields__field_of_type_radio__choices=some_choices,
-            fields__field_of_type_choice__choices=some_choices,
-            fields__field_of_type_choice_queryset__choices=TFoo.objects.all(),
-            fields__field_of_type_multi_choice__choices=some_choices,
-            fields__field_of_type_multi_choice_queryset__choices=TBar.objects.all(),
-            fields__field_of_type_info__value="This is some information",
+            fields__radio__choices=some_choices,
+            fields__choice__choices=some_choices,
+            fields__choice_queryset__choices=TFoo.objects.all(),
+            fields__multi_choice__choices=some_choices,
+            fields__multi_choice_queryset__choices=TBar.objects.all(),
+            fields__info__value="This is some information",
+            fields__text__initial='Text',
+            fields__textarea__initial='text area\nsecond row',
+            fields__integer__initial=3,
+            fields__float__initial=3.14,
+            fields__password__initial='abc123',
+            fields__boolean__initial=True,
+            fields__datetime__initial=datetime.now(),
+            fields__date__initial=date.today(),
+            fields__time__initial=datetime.now().time(),
+            fields__decimal__initial=3.14,
+            fields__url__initial='http://iommi.rocks',
+            fields__email__initial='example@example.com',
+            fields__phone_number__initial='+1 555 555',
 
             actions__submit__include=False,
         )

@@ -12,6 +12,8 @@ Changelog
 
 * Added header for bulk edit form in tables
 
+* Fixed textarea readonly when field is not editable
+
 
 0.6.2 (2020-04-22)
 ~~~~~~~~~~~~~~~~~~
