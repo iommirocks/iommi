@@ -2230,3 +2230,114 @@ def test_automatic_url():
     assert len(bound_rows) == 1
     cells = bound_rows[0]
     assert cells['foo'].__html__() == '<td><a href="url here!">the str of AutomaticUrl</a></td>'
+
+
+@pytest.mark.django_db
+def test_no_dispatch_parameter_in_sorting_or_pagination_links():
+    for x in range(4):
+        TFoo(a=x, b="foo").save()
+
+    class TestTable(Table):
+        a = Column.number()
+
+    verify_table_html(
+        find=dict(class_='iommi-table-plus-paginator'),
+        table=TestTable(rows=TFoo.objects.all().order_by('pk')),
+        query={'page_size': 2, 'page': 1, 'query': 'b="foo"'},
+        expected_html="""
+<div class="iommi-table-plus-paginator">
+    <table class="table" data-endpoint="/tbody">
+        <thead>
+            <tr>
+                <th class="first_column subheader">
+                    <a href="?page_size=2&amp;page=1&amp;query=b%3D%22foo%22&amp;order=a">
+                        A
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-pk="1">
+                <td class="rj">
+                    0
+                </td>
+            </tr>
+            <tr data-pk="2">
+                <td class="rj">
+                    1
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <nav aria-label="Pages">
+        <ul>
+            <li>
+                <a aria-label="Page 1" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1">
+                    1
+                </a>
+            </li>
+            <li>
+                <a aria-label="Page 2" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2">
+                    2
+                </a>
+            </li>
+            <li>
+                <a aria-label="Next Page" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2">
+                    &gt;
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+        """)
+
+    verify_table_html(
+        find=dict(class_='iommi-table-plus-paginator'),
+        table=TestTable(rows=TFoo.objects.all().order_by('pk')),
+        query={'page_size': 2, 'page': 1, 'query': 'b="foo"', '/tbody': ''},
+        expected_html="""
+<div class="iommi-table-plus-paginator">
+    <table class="table" data-endpoint="/tbody">
+        <thead>
+            <tr>
+                <th class="first_column subheader">
+                    <a href="?page_size=2&amp;page=1&amp;query=b%3D%22foo%22&amp;order=a">
+                        A
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-pk="1">
+                <td class="rj">
+                    0
+                </td>
+            </tr>
+            <tr data-pk="2">
+                <td class="rj">
+                    1
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <nav aria-label="Pages">
+        <ul>
+            <li>
+                <a aria-label="Page 1" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1">
+                    1
+                </a>
+            </li>
+            <li>
+                <a aria-label="Page 2" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2">
+                    2
+                </a>
+            </li>
+            <li>
+                <a aria-label="Next Page" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2">
+                    &gt;
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+""")
