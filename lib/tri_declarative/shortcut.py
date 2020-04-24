@@ -1,8 +1,11 @@
 import functools
 
+from .declarative import get_members
 from .dispatch import dispatch
-from .namespace import Namespace
-from .util import setdefaults_path
+from .namespace import (
+    Namespace,
+    setdefaults_path,
+)
 
 
 # This is just a marker class for declaring shortcuts, and later for collecting them
@@ -20,7 +23,7 @@ def is_shortcut(x):
     return isinstance(x, Shortcut) or getattr(x, 'shortcut', False)
 
 
-def class_shortcut(*args, **defaults):
+def class_shortcut(*decorator_args, **defaults):
     def decorator(__target__):
         @functools.wraps(__target__)
         @shortcut
@@ -80,9 +83,13 @@ def class_shortcut(*args, **defaults):
         class_shortcut_wrapper.__doc__ = __target__.__doc__
         return class_shortcut_wrapper
 
-    assert len(args) in (0, 1), "There are no (explicit) positional arguments to class_shortcut"  # pragma: no mutate
+    assert len(decorator_args) in (0, 1), "There are no (explicit) positional arguments to class_shortcut"  # pragma: no mutate
 
-    if len(args) == 1:
-        return decorator(args[0])
+    if len(decorator_args) == 1:
+        return decorator(decorator_args[0])
 
     return decorator
+
+
+def get_shortcuts_by_name(class_):
+    return dict(get_members(class_, member_class=Shortcut, is_member=is_shortcut))

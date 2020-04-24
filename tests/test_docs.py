@@ -96,7 +96,7 @@ Defaults
 * `name`
     * `foo-name`
 * `some_other_thing`
-    * `test_docs.some_callable`
+    * `tests.test_docs.some_callable`
 
 Shortcuts
 ---------

@@ -162,6 +162,7 @@ def test_too_many_args_check():
         class Meta:
             foo = 'foo'
 
+        # noinspection PyUnusedLocal
         def __init__(self, foo):
             pass
 
@@ -172,6 +173,7 @@ def test_too_many_args_check():
     assert 'Too many positional arguments' == str(e.value)
 
 
+# noinspection PyArgumentEqualDefault
 def test_add_init_kwargs():
     @with_meta(add_init_kwargs=True)
     class Test:

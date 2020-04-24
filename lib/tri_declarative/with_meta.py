@@ -1,7 +1,7 @@
 import functools
 
-from .util import add_args_to_init_call
 from .namespace import Namespace
+from .util import add_args_to_init_call
 
 
 def with_meta(class_to_decorate=None, add_init_kwargs=True):

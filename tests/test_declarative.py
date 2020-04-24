@@ -1,10 +1,12 @@
 import pytest
+from tri_struct import Struct
+
 from tri_declarative import (
-    add_args_to_init_call,
     declarative,
     with_meta,
 )
-from tri_struct import Struct
+from tri_declarative.declarative import get_members
+from tri_declarative.util import add_args_to_init_call
 
 
 class Member(Struct):
@@ -497,3 +499,10 @@ def test_wrap_with_meta_preserves_doc_string():
             """foo"""
 
     assert Foo.__init__.__doc__ == 'foo'
+
+
+def test_get_members_error_message():
+    with pytest.raises(TypeError) as e:
+        get_members(None)
+
+    assert str(e.value) == "get_members either needs a member_class parameter or an is_member check function (or both)"
