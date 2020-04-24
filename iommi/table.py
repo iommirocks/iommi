@@ -20,10 +20,6 @@ from typing import (
 from urllib.parse import quote_plus
 
 from django.conf import settings
-from django.core.paginator import (
-    InvalidPage,
-    Paginator as DjangoPaginator,
-)
 from django.db.models import (
     BooleanField,
     ManyToManyField,
@@ -32,7 +28,6 @@ from django.db.models import (
 )
 from django.http import (
     FileResponse,
-    Http404,
 )
 from django.utils.encoding import (
     force_str,
@@ -79,9 +74,9 @@ from iommi.attrs import (
 )
 from iommi.base import (
     build_as_view_wrapper,
+    capitalize,
     MISSING,
     model_and_rows,
-    capitalize,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -100,13 +95,12 @@ from iommi.from_model import (
 from iommi.member import (
     bind_members,
     collect_members,
-    NotBoundYet,
 )
 from iommi.page import (
     Fragment,
+    Header,
     Page,
     Part,
-    Header,
 )
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
@@ -117,12 +111,11 @@ from iommi.traversable import (
     bound_members,
     declared_members,
     evaluate_member,
+    evaluated_refinable,
     EvaluatedRefinable,
     reinvokable,
     set_declared_member,
     Traversable,
-    get_path_by_long_path,
-    evaluated_refinable,
 )
 
 LAST = LAST
@@ -144,6 +137,21 @@ ASCENDING = 'ascending'
 DEFAULT_PAGE_SIZE = 40
 
 
+def params_of_request(request):
+    if request is None:
+        return {}
+
+    params = request.GET.copy()
+
+    # There can be one dispatch parameter present, we need to filter out that
+    for param in params.keys():
+        if param.startswith(DISPATCH_PREFIX):
+            del params[param]
+            break
+
+    return params
+
+
 def prepare_headers(table):
     request = table.get_request()
     if request is None:
@@ -151,7 +159,7 @@ def prepare_headers(table):
 
     for name, column in table.rendered_columns.items():
         if column.sortable:
-            params = request.GET.copy()
+            params = params_of_request(request)
             param_path = path_join(table.iommi_path, 'order')
             order = request.GET.get(param_path, None)
             start_sort_desc = column.sort_default_desc
@@ -1097,7 +1105,7 @@ class Paginator(Traversable):
             if 0 < n <= self.number_of_pages
         ]
 
-        get = request.GET.copy() if request is not None else {}
+        get = params_of_request(request)
 
         if self.iommi_path in get:
             del get[self.iommi_path]

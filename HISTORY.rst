@@ -6,6 +6,8 @@ Changelog
 
 * Fixed default text argument to Fragment
 
+* Fixed issue where endpoint dispatch parameter was left over in the pagination and sorting links
+
 
 0.6.2 (2020-04-22)
 ~~~~~~~~~~~~~~~~~~
