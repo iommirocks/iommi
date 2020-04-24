@@ -1316,6 +1316,7 @@ class Table(Part):
         actions_template='iommi/form/actions.html',
         query=EMPTY,
         bulk__fields=EMPTY,
+        bulk__title='Bulk change',
         page_size=DEFAULT_PAGE_SIZE,
 
         endpoints=EMPTY,
