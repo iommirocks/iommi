@@ -784,6 +784,7 @@ class Field(Part):
         input__attrs__type=None,
         input__attrs__value=None,
         input__children__text=lambda field, **_: field.rendered_value,
+        input__attrs__readonly=lambda field, **_: True if field.editable is False else None,
     )
     def textarea(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

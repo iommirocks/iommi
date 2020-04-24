@@ -8,6 +8,8 @@ Changelog
 
 * Fixed issue where endpoint dispatch parameter was left over in the pagination and sorting links
 
+* Fixed textarea readonly when field is not editable
+
 
 0.6.2 (2020-04-22)
 ~~~~~~~~~~~~~~~~~~
