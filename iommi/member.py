@@ -88,12 +88,21 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                     )
                     unbound_items[key] = item()
             else:
-                assert unknown_types_fall_through, f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
+                assert unknown_types_fall_through or item is None, f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
     for k, v in Namespace(_unapplied_config).items():
         unbound_items[k] = unbound_items[k].reinvoke(v)
         assert unbound_items[k]._name is not None
+
+    to_delete = {
+        k
+        for k, v in unbound_items.items()
+        if v is None
+    }
+
+    for k in to_delete:
+        del unbound_items[k]
 
     set_declared_member(container, name, unbound_items)
     setattr(container, name, NotBoundYet(container, name))

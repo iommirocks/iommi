@@ -2,6 +2,7 @@ import pytest
 from tri_declarative import (
     declarative,
     dispatch,
+    EMPTY,
     Refinable,
 )
 
@@ -29,9 +30,9 @@ class Fruit(Traversable):
 class Basket(Traversable):
 
     @dispatch
-    def __init__(self, fruits=None, fruits_dict=None):
+    def __init__(self, fruits=None, fruits_dict=None, unknown_types_fall_through=False):
         super(Basket, self).__init__()
-        collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit)
+        collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit, unknown_types_fall_through=unknown_types_fall_through)
 
     def on_bind(self):
         bind_members(parent=self, name='fruits')
@@ -193,6 +194,13 @@ def test_collect_sets_name():
     basket = MyBasket()
     assert declared_members(basket).fruits.orange._name == 'orange'
 
-
     basket = MyBasket(fruits__orange=Fruit(taste='sour'))
     assert declared_members(basket).fruits.orange._name == 'orange'
+
+
+def test_none_members_should_be_discarded_after_being_allowed_through():
+    class MyBasket(Basket):
+        orange = Fruit(taste='sour')
+
+    basket = MyBasket(fruits__orange=None)
+    assert 'orange' not in declared_members(basket).fruits
