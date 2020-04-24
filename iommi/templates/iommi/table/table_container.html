@@ -36,6 +36,7 @@
     {% include 'iommi/table/table_tag.html' %}
 
 {% if bulk_form %}
+    {{ bulk_form.h_tag }}
     {{ bulk_form.errors }}
     {{ bulk_form.render_fields }}
     {{ bulk_form.render_actions }}

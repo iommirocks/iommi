@@ -8,6 +8,10 @@ Changelog
 
 * Fixed issue where endpoint dispatch parameter was left over in the pagination and sorting links
 
+* Parts that are None should not be collected. This affected the admin where it printed "None" below the "Admin" link.
+
+* Added header for bulk edit form in tables
+
 * Fixed textarea readonly when field is not editable
 
 
