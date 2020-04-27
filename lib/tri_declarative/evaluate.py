@@ -1,6 +1,6 @@
-from .util import signature_from_kwargs, get_signature
-from .namespace import Namespace
+import inspect
 
+from .namespace import Namespace
 
 _matches_cache = {}
 
@@ -63,6 +63,7 @@ def evaluate(func_or_value, __signature=None, __strict=False, **kwargs):
 
 
 def evaluate_strict(func_or_value, __signature=None, **kwargs):
+    # noinspection PyArgumentEqualDefault
     return evaluate(func_or_value, __signature=None, __strict=True, **kwargs)
 
 
@@ -87,4 +88,46 @@ def evaluate_recursive_strict(func_or_value, __signature=None, **kwargs):
     """
     Like `evaluate_recursive` but won't allow un-evaluated callables to slip through.
     """
+    # noinspection PyArgumentEqualDefault
     return evaluate_recursive(func_or_value, __signature=None, __strict=True, **kwargs)
+
+
+def get_signature(func):
+    """
+        :type func: Callable
+        :rtype: str
+    """
+    try:
+        return object.__getattribute__(func, '__tri_declarative_signature')
+    except AttributeError:
+        pass
+
+    try:
+        names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)
+    except TypeError:
+        return None
+
+    first_arg_index = 1 if inspect.ismethod(func) else 0  # Skip self argument on methods
+
+    number_of_defaults = len(defaults) if defaults else 0
+    if number_of_defaults > 0:
+        required = ','.join(sorted(names[first_arg_index:-number_of_defaults]))
+        optional = ','.join(sorted(names[-number_of_defaults:]))
+    else:
+        required = ','.join(sorted(names[first_arg_index:]))
+        optional = ''
+    wildcard = '*' if varkw is not None else ''
+
+    signature = '|'.join((required, optional, wildcard))
+    try:
+        object.__setattr__(func, '__tri_declarative_signature', signature)
+    except TypeError:
+        # For classes
+        type.__setattr__(func, '__tri_declarative_signature', signature)
+    except AttributeError:
+        pass
+    return signature
+
+
+def signature_from_kwargs(kwargs):
+    return ','.join(sorted(kwargs.keys()))

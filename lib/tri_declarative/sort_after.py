@@ -3,21 +3,21 @@ from collections import defaultdict
 LAST = object()
 
 
-def sort_after(l):
+def sort_after(items):
     unmoved = []
     to_be_moved_by_index = []
     to_be_moved_by_name = defaultdict(list)
     to_be_moved_last = []
-    for x in l:
-        after = getattr(x, 'after', None)
+    for item in items:
+        after = getattr(item, 'after', None)
         if after is None:
-            unmoved.append(x)
+            unmoved.append(item)
         elif after is LAST:
-            to_be_moved_last.append(x)
+            to_be_moved_last.append(item)
         elif isinstance(after, int):
-            to_be_moved_by_index.append(x)
+            to_be_moved_by_index.append(item)
         else:
-            to_be_moved_by_name[x.after].append(x)
+            to_be_moved_by_name[item.after].append(item)
 
     to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x.after)  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
 
@@ -52,7 +52,7 @@ def sort_after(l):
     result = list(traverse())
 
     if to_be_moved_by_name:
-        available_names = "\n   ".join(sorted([x.name for x in l]))
+        available_names = "\n   ".join(sorted([x.name for x in items]))
         raise KeyError(f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} not exist.\nAvailable names:\n    {available_names}')
 
     return result

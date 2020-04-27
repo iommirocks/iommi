@@ -1,4 +1,5 @@
 import pytest
+
 from tri_declarative import (
     declarative,
 )

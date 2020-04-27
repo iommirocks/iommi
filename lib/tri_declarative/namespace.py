@@ -1,4 +1,7 @@
-from tri_struct import Struct, Frozen
+from tri_struct import (
+    Frozen,
+    Struct,
+)
 
 
 class Namespace(Struct):
@@ -110,3 +113,37 @@ def flatten_items(namespace):
                 yield path, value
 
     return mappings(namespace, visited=[])
+
+
+# The first argument has a funky name to avoid name clashes with stuff in kwargs
+def setdefaults_path(__target__, *defaults, **kwargs):
+    args = [kwargs] + list(reversed(defaults)) + [__target__]
+    dict.update(__target__, Namespace(*args))
+    return __target__
+
+
+def getattr_path(obj, path):
+    """
+        Get an attribute path, as defined by a string separated by '__'.
+        getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
+        will short circuit to return None if something on the path is None.
+    """
+    path = path.split('__')
+    for name in path:
+        obj = getattr(obj, name)
+        if obj is None:
+            return None
+    return obj
+
+
+def setattr_path(obj, path, value):
+    """
+        Set an attribute path, as defined by a string separated by '__'.
+        setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
+    """
+    path = path.split('__')
+    o = obj
+    for name in path[:-1]:
+        o = getattr(o, name)
+    setattr(o, path[-1], value)
+    return obj

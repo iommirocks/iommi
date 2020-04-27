@@ -1,17 +1,21 @@
 import pytest
 
 from tri_declarative import (
+    class_shortcut,
     evaluate,
     evaluate_recursive,
-    filter_show_recursive,
-    get_signature,
-    matches,
-    remove_show_recursive,
-    evaluate_strict,
     evaluate_recursive_strict,
-    should_show,
-    get_callable_description,
+    evaluate_strict,
+    filter_show_recursive,
+    matches,
     Namespace,
+    remove_show_recursive,
+    Shortcut,
+    should_show,
+)
+from tri_declarative.evaluate import (
+    get_callable_description,
+    get_signature,
 )
 
 
@@ -74,13 +78,16 @@ def test_no_evaluate_kwargs_mismatch():
 
 
 def test_get_signature():
+    # noinspection PyUnusedLocal
     def f(a, b):
         pass
 
+    # noinspection PyUnusedLocal
     def f2(b, a):
         pass
 
     assert get_signature(lambda a, b: None) == get_signature(f2) == get_signature(f) == 'a,b||'
+    # noinspection PyUnresolvedReferences
     assert f.__tri_declarative_signature == 'a,b||'
 
 
@@ -92,10 +99,12 @@ def test_get_signature_fails_on_native():
 
 def test_get_signature_on_class():
     class Foo:
+        # noinspection PyUnusedLocal
         def __init__(self, a, b):
             pass
 
     assert 'a,b,self||' == get_signature(Foo)
+    # noinspection PyUnresolvedReferences
     assert 'a,b,self||' == Foo.__tri_declarative_signature
 
 
@@ -145,6 +154,7 @@ def test_match_special_case():
 
 
 def test_evaluate_extra_kwargs_with_defaults():
+    # noinspection PyUnusedLocal
     def f(x, y=17):
         return x
 
@@ -153,6 +163,7 @@ def test_evaluate_extra_kwargs_with_defaults():
 
 def test_evaluate_on_methods():
     class Foo:
+        # noinspection PyMethodMayBeStatic
         def bar(self, x):
             return x
 
@@ -168,6 +179,7 @@ def test_evaluate_on_methods():
 
 
 def test_early_return_from_get_signature():
+    # noinspection PyUnusedLocal
     def foo(a, b, c):
         pass
 
@@ -213,3 +225,57 @@ def test_get_callable_description_nested_lambda():
     description = get_callable_description(foo)
     assert description.startswith('`Namespace(bar=<function test_get_callable_description_nested_lambda.<locals>.<lambda> at')
     assert description.endswith('`')
+
+
+def test_get_signature_on_namespace_does_not_modify_its_contents():
+    foo = Namespace()
+    get_signature(foo)
+    assert str(foo) == 'Namespace()'
+
+
+def test_shortcut_chaining():
+    def endpoint(**kwargs):
+        return kwargs
+
+    foo = Shortcut(
+        call_target=endpoint,
+        tag='foo',
+    )
+    bar = Shortcut(
+        call_target=foo,
+        bar=1,
+
+        # these two will get popped off by Namespace.__call__, let's make sure they are!
+        call_target__cls='randomcrap',
+        call_target__attribute='randomcrap',
+    )
+
+    assert bar() == dict(tag='foo', bar=1)
+
+
+def test_class_shortcut__shortcut_stack():
+    class MyFoo:
+        @classmethod
+        @class_shortcut
+        def shortcut(cls, call_target):
+            return call_target()
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='shortcut'
+        )
+        def shortcut2(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    middle = Shortcut(call_target=MyFoo.shortcut2)
+
+    class MyOtherFoo(MyFoo):
+        @classmethod
+        @class_shortcut(
+            call_target=middle
+        )
+        def shortcut3(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    assert MyOtherFoo().shortcut2().__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut']
+    assert MyOtherFoo().shortcut3().__tri_declarative_shortcut_stack == ['shortcut3', 'shortcut2', 'shortcut']

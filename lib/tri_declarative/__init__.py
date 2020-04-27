@@ -1,11 +1,14 @@
-from .declarative import declarative
-from .declarative import get_declared
+from .declarative import (
+    declarative,
+    get_declared,
+    get_members,
+)
 from .dispatch import dispatch
 from .evaluate import (
     evaluate,
-    evaluate_strict,
     evaluate_recursive,
     evaluate_recursive_strict,
+    evaluate_strict,
     get_callable_description,
     matches,
 )
@@ -13,37 +16,33 @@ from .namespace import (
     EMPTY,
     flatten,
     flatten_items,
+    getattr_path,
     Namespace,
+    setattr_path,
+    setdefaults_path,
 )
 from .refinable import (
     refinable,
     Refinable,
-    RefinableObject
+    RefinableObject,
 )
 from .shortcut import (
     class_shortcut,
+    get_shortcuts_by_name,
     is_shortcut,
+    shortcut,
     Shortcut,
 )
 from .sort_after import (
     LAST,
-    sort_after
-)
-from .shortcut import shortcut
-from .util import (
-    add_args_to_init_call,
-    get_members,
-    get_signature,
-    getattr_path,
-    setattr_path,
-    setdefaults_path,
-    signature_from_kwargs,
+    sort_after,
 )
 from .with_meta import with_meta
 
 __version__ = '5.4.0'
 
 __all__ = [
+    'assert_kwargs_empty',
     'class_shortcut',
     'declarative',
     'dispatch',
@@ -56,8 +55,9 @@ __all__ = [
     'flatten',
     'flatten_items',
     'full_function_name',
-    'get_signature',
+    'get_shortcuts_by_name',
     'getattr_path',
+    'is_shortcut',
     'LAST',
     'matches',
     'Namespace',
@@ -67,6 +67,7 @@ __all__ = [
     'RefinableObject',
     'setattr_path',
     'setdefaults_path',
+    'shortcut',
     'Shortcut',
     'should_show',
     'sort_after',
@@ -131,10 +132,6 @@ def full_function_name(f):
     return '%s.%s' % (f.__module__, f.__name__)
 
 
-def get_shortcuts_by_name(class_):
-    return dict(get_members(class_, member_class=Shortcut, is_member=is_shortcut))
-
-
 def generate_rst_docs(directory, classes, missing_objects=None):  # pragma: no coverage
     """
     Generate documentation for tri.declarative APIs
@@ -150,6 +147,7 @@ def generate_rst_docs(directory, classes, missing_objects=None):  # pragma: no c
             f2.write(doc)  # pragma: no mutate
 
 
+# noinspection PyShadowingNames
 def _generate_rst_docs(classes, missing_objects=None):
     if missing_objects is None:
         missing_objects = tuple()
@@ -157,6 +155,7 @@ def _generate_rst_docs(classes, missing_objects=None):
     import re
 
     def docstring_param_dict(obj):
+        # noinspection PyShadowingNames
         doc = obj.__doc__
         if doc is None:
             return dict(text=None, params={})
@@ -168,6 +167,7 @@ def _generate_rst_docs(classes, missing_objects=None):
     def indent(levels, s):
         return (' ' * levels * 4) + s.strip()
 
+    # noinspection PyShadowingNames
     def get_namespace(c):
         return Namespace(
             {k: c.__init__.dispatch.get(k) for k, v in get_declared(c, 'refinable_members').items()})
@@ -209,6 +209,7 @@ def _generate_rst_docs(classes, missing_objects=None):
         w(0, '')
 
         section(1, 'Refinable members')
+        # noinspection PyCallByClass
         for refinable, value in sorted(dict.items(get_namespace(c))):
             w(0, '* `' + refinable + '`')
 
