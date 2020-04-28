@@ -2,7 +2,6 @@ import pytest
 from tri_declarative import (
     declarative,
     dispatch,
-    EMPTY,
     Refinable,
 )
 
@@ -60,6 +59,7 @@ def test_collect_unapplied_config():
         pear = Fruit()
 
     basket = MyBasket(fruits__pear__taste='meh')
+    # noinspection PyUnresolvedReferences
     assert basket._declared_members.fruits.pear.taste == 'meh'
 
 
@@ -174,6 +174,36 @@ def test_unapplied_config_does_not_remember():
     b = Admin().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
+
+
+def test_lazy_bind():
+    class ExplodingFruit(Fruit):
+        def on_bind(self):
+            raise Exception('Boom')
+
+    class MyBasket(Basket):
+        tasty_banana = Fruit(taste='sweet')
+        exploding_orange = ExplodingFruit(taste='strange')
+
+    my_basket = MyBasket().bind()
+    assert my_basket.fruits.tasty_banana.taste == 'sweet'
+
+    with pytest.raises(Exception) as e:
+        # noinspection PyStatementEffect
+        my_basket.fruits.exploding_orange
+    assert 'Boom' in str(e.value)
+
+
+def test_lazy_repr():
+    class MyBasket(Basket):
+        banana = Fruit(taste='sweet')
+        orange = Fruit(taste='strange')
+
+    my_basket = MyBasket().bind()
+    # noinspection PyStatementEffect
+    my_basket.fruits.banana
+    assert repr(my_basket.fruits) == '<MemberBinder: banana (bound), orange>'
+    assert str(my_basket.fruits) == '<MemberBinder: banana (bound), orange>'
 
 
 def test_forbidden_names():

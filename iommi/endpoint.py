@@ -83,8 +83,9 @@ def find_target(*, path, root):
     for part in long_path.split('/'):
         if part == '':
             continue
-        node = bound_members(node).get(part)
-        assert node is not None, f'Failed to traverse long path {long_path}'
+        next_node = bound_members(node).get(part)
+        assert next_node is not None, f'Failed to traverse long path {long_path}'
+        node = next_node
 
     return node
 

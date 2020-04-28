@@ -471,7 +471,6 @@ def test_textarea_field():
     assert form.fields.foo.rendered_value == 'test'
     rendered_form = str(form)
     foo = BeautifulSoup(rendered_form, 'html.parser').find(id='id_foo')
-    print(foo)
     assert foo.name == 'textarea', rendered_form
     assert get_attrs(foo, ['type']) == {'type': None}
     assert foo.text == 'test'
@@ -621,8 +620,6 @@ def test_radio_full_render():
     second = form.fields.foo.__html__()
     assert first == second
     actual = prettify(first)
-    print()
-    print(first)
     expected = prettify("""
 <div>
     <label for="id_foo">Foo</label>

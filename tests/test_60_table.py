@@ -1436,7 +1436,7 @@ def test_from_model():
         columns__a__extra__stuff='Some stuff',
     )
     t = t.bind(request=None)
-    assert list(declared_members(t).columns.keys()) == ['id', 'a', 'b', 'select']
+    assert list(declared_members(t).columns.keys()) == ['select', 'id', 'a', 'b']
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
     assert 'Some stuff' == t.columns['a'].extra.stuff
@@ -1447,7 +1447,7 @@ def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
     ).bind(request=None)
-    assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
+    assert list(declared_members(t).columns.keys()) == ['select', 'id', 'foo', 'c']
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
@@ -1457,7 +1457,7 @@ def test_select_ordering():
         auto__model=TBar,
         columns__select__include=True,
     ).bind(request=None)
-    assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
+    assert list(declared_members(t).columns.keys()) == ['select', 'id', 'foo', 'c']
     assert list(t.columns.keys()) == ['select', 'foo', 'c']
 
 
@@ -1472,7 +1472,7 @@ def test_explicit_table_does_not_use_from_model():
         )
 
     t = TestTable().bind(request=None)
-    assert list(declared_members(t).columns.keys()) == ['foo', 'select']
+    assert list(declared_members(t).columns.keys()) == ['select', 'foo']
     assert list(bound_members(t).columns._bound_members.keys()) == ['foo']
 
 
@@ -1481,7 +1481,7 @@ def test_from_model_implicit():
     t = Table(
         auto__rows=TBar.objects.all()
     ).bind(request=None)
-    assert list(declared_members(t).columns.keys()) == ['id', 'foo', 'c', 'select']
+    assert list(declared_members(t).columns.keys()) == ['select', 'id', 'foo', 'c']
 
 
 @pytest.mark.django_db
@@ -2170,7 +2170,6 @@ def test_paginator_rendered():
     assert table.paginator.number_of_pages == 2
     content = table.render_to_response().content.decode()
 
-    print(content)
     assert 'aria-label="Pages"' in content
 
 
