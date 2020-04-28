@@ -50,6 +50,9 @@ base = Style(
     Actions=dict(
         tag='div',
         attrs__class__links=True,
+        attrs__style={
+            'margin-top': '10px',
+        },
     ),
     MenuItem=dict(
         a__tag='a',
