@@ -171,7 +171,7 @@ class Traversable(RefinableObject):
             return None
         result.include = True  # include can be the falsy MISSING. Set it to False
 
-        # We neeed to recalculate evaluate_parameters here to not get the
+        # We need to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict
         result._evaluate_parameters = {
             **(get_parent(result)._evaluate_parameters if result._parent is not None else {}),

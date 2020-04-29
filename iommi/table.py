@@ -1136,7 +1136,7 @@ class Paginator(Traversable):
 
     def is_paginated(self):
         assert self._is_bound
-        return self.number_of_pages == 1
+        return self.number_of_pages > 1
 
     def __html__(self):
         assert self._is_bound
