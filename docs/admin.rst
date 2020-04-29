@@ -39,6 +39,21 @@ Now you have the iommi admin gui for your app!
 Customization
 ~~~~~~~~~~~~~
 
+Remove a model from the admin
+-----------------------------
+
+By default iommi displays all models of all apps. You can override this like:
+
+.. code:: python
+
+    class MyAdmin(Admin):
+        class Meta:
+            apps__sessions_session__include = False
+
+This turns off the admin of the Session table in the sessions app. This is
+actually the default already. But you can turn off any model you like here.
+
+
 Permissions
 -----------
 
