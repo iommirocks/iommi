@@ -74,9 +74,8 @@ the `Meta` class:
 
 The easiest way to find the path for configuration is to have
 `settings.IOMMI_DEBUG` turned on (by default on if `DEBUG` is on), and use
-"Inspect element" in your browser to find the `data-iommi-path` and
-`data-iommi-type` attributes. The first gives you the path to the node and the
-second gives you the iommi class to look at to get the specific option.
+the pick feature and click on the element. You'll get the path and also
+the type so you can click your way to the documentation for that class.
 
 In the example above the `data-iommi-path` would be
 `parts__all_models__columns__model_name__cell` and `data-iommi-type` is
