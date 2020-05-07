@@ -54,9 +54,6 @@ class Endpoint(Traversable):
     def on_bind(self) -> None:
         assert callable(self.func)
 
-    def endpoint_handler(self, value, **kwargs):
-        return self.func(value=value, **kwargs)
-
     @property
     def endpoint_path(self):
         return DISPATCH_PREFIX + self.iommi_path
@@ -97,10 +94,11 @@ def perform_ajax_dispatch(*, root, path, value):
 
     target = find_target(path=path, root=root)
 
-    if getattr(target, 'endpoint_handler', None) is None:
-        raise InvalidEndpointPathException(f'Target {target!r} has no registered endpoint_handler')
+    func = getattr(target, 'func', None)
+    if not isinstance(target, Endpoint) or func is None:
+        raise InvalidEndpointPathException(f'Target {target!r} is not a valid endpoint handler')
 
-    return target.endpoint_handler(root=root, value=value, **target._evaluate_parameters)
+    return func(root=root, value=value, **target._evaluate_parameters)
 
 
 def perform_post_dispatch(*, root, path, value):

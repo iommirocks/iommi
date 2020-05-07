@@ -3,6 +3,7 @@ import json
 import pytest
 from django.http import HttpResponse
 from django.test import override_settings
+from tri_declarative import with_meta
 from tri_struct import Struct
 
 from iommi import (
@@ -18,7 +19,10 @@ from iommi.endpoint import (
     path_join,
 )
 from iommi.part import request_data
-from iommi.traversable import build_long_path
+from iommi.traversable import (
+    build_long_path,
+    get_path_by_long_path,
+)
 from tests.helpers import (
     request_with_middleware,
     StubTraversable,
@@ -119,36 +123,34 @@ def test_middleware_fallthrough_on_non_part():
 
 @override_settings(DEBUG=True)
 def test_dispatch_auto_json():
+    @with_meta
     class MyPart(Part):
-        @staticmethod
-        def endpoint_handler(value, **_):
-            return dict(a=1, b='asd', c=value)
+        class Meta:
+            @staticmethod
+            def endpoints__foo__func(value, **_):
+                return dict(a=1, b='asd', c=value)
 
-    p = MyPart().bind(request=req('get', **{'/': '7'}))
+    p = MyPart(
+        endpoints__foo__func=lambda value, **_: dict(a=1, b='asd', c=value)
+    ).bind(request=req('get', **{'/foo': '7'}))
     r = p.render_to_response()
     assert r['Content-type'] == 'application/json'
     assert json.loads(r.content) == dict(a=1, b='asd', c='7')
 
 
 def test_dispatch_return_http_response():
-    class MyPart(Part):
-        @staticmethod
-        def endpoint_handler(value, **_):
-            return HttpResponse(f'foo {value}')
-
-    p = MyPart()
-    r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
+    p = Part(
+        endpoints__foo__func=lambda value, **_: HttpResponse(f'foo {value}')
+    )
+    r = p.bind(request=req('get', **{'/foo': '7'})).render_to_response()
     assert r.content == b'foo 7'
 
 
 def test_dispatch_return_part():
-    class MyPart(Part):
-        @staticmethod
-        def endpoint_handler(root, value, **_):
-            return html.div('foo', attrs__class__bar=True).bind(parent=root)
-
-    p = MyPart()
-    r = p.bind(request=req('get', **{'/': '7'})).render_to_response()
+    p = Part(
+        endpoints__foo__func=lambda root, value, **_: html.div('foo', attrs__class__bar=True).bind(parent=root)
+    )
+    r = p.bind(request=req('get', **{'/foo': '7'})).render_to_response()
     assert b'<div class="bar">foo</div>' in r.content
 
 
