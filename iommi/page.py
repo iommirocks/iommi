@@ -108,7 +108,7 @@ class Fragment(Part):
             header = html.h1(
                 'Hi!',
                 attrs__class__staff=
-                    lambda fragment, **_: fragment.get_request().user.is_staff,
+                    lambda request, **_: request.user.is_staff,
             )
 
     Rendering a `MyPage` will result in a `<h1>`, but if you do

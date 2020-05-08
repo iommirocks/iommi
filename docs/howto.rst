@@ -74,7 +74,7 @@ Pass a callable or `bool` to the `editable` member of the field:
     form = Form(
         auto__model=Foo,
         fields__foo__editable=
-            lambda field, form, **_: form.get_request().user.is_staff,
+            lambda request, **_: request.user.is_staff,
         fields__bar__editable=False,
     )
 
@@ -115,7 +115,7 @@ How do I say which fields to include when creating a form from a model?
 
 1. the `auto__include` parameter: this is a list of strings for members of the model to use to generate the form.
 2. the `auto__exclude` parameter: the inverse of `include`. If you use this the form gets all the fields from the model excluding the ones with names you supply in `exclude`.
-3. for more advanced usages you can also pass the `include` parameter to a specific field like `fields__my_field__include=True`. Here you can supply either a `bool` or a callable like `fields__my_field__include=lambda form, field, **_: form.get_request().user.is_staff`.
+3. for more advanced usages you can also pass the `include` parameter to a specific field like `fields__my_field__include=True`. Here you can supply either a `bool` or a callable like `fields__my_field__include=lambda request, **_: request.user.is_staff`.
 4. you can also add fields that are not present in the model by passing configuration like `fields__foo__attr='bar__baz` (this means create a `Field` called `foo` that reads its data from `bar.baz`). You can either pass configuration data like that, or pass an entire `Field` instance.
 
 
@@ -471,7 +471,7 @@ Just pass `include=False` to hide the column or `include=True` to show it. By de
     Table(
         auto__model=Foo,
         columns__a__include=
-            lambda table, **_: table.get_request().GET.get('some_parameter') == 'hello!',
+            lambda request, **_: request.GET.get('some_parameter') == 'hello!',
     )
 
 This will show the column `a` only if the GET parameter `some_parameter` is set to `hello!`.
