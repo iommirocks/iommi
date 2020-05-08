@@ -41,7 +41,6 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    evaluate,
     Namespace,
     Refinable,
     refinable,
@@ -61,6 +60,7 @@ from iommi.base import (
     model_and_rows,
 )
 from iommi.endpoint import path_join
+from iommi.evaluate import evaluate
 from iommi.form import (
     bool_parse,
     Form,

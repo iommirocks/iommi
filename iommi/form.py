@@ -28,8 +28,6 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    evaluate,
-    evaluate_strict,
     flatten,
     getattr_path,
     Namespace,
@@ -65,6 +63,10 @@ from iommi.base import (
     capitalize,
 )
 from iommi.error import Errors
+from iommi.evaluate import (
+    evaluate,
+    evaluate_strict,
+)
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,

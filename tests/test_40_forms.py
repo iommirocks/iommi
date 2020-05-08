@@ -167,9 +167,7 @@ def test_required_with_falsy_option():
 
 
 def test_custom_raw_data():
-    def my_form_raw_data(form, field, **_):
-        del form
-        del field
+    def my_form_raw_data(**_):
         return 'this is custom raw data'
 
     class MyForm(Form):
@@ -182,9 +180,7 @@ def test_custom_raw_data():
 def test_custom_raw_data_list():
     # This is useful for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
 
-    def my_form_raw_data_list(form, field, **_):
-        del form
-        del field
+    def my_form_raw_data_list(**_):
         return ['this is custom raw data list']
 
     class MyForm(Form):
@@ -198,9 +194,7 @@ def test_custom_raw_data_list():
 
 
 def test_custom_parsed_value():
-    def my_form_parsed_data(form, field, **_):
-        del form
-        del field
+    def my_form_parsed_data(**_):
         return 'this is custom parsed data'
 
     class MyForm(Form):
@@ -1743,8 +1737,7 @@ def test_include_prevents_read_from_instance():
 
 
 def test_choice_post_validation_not_overwritten():
-    def my_post_validation(field, **_):
-        del field
+    def my_post_validation(**_):
         raise Exception('foobar')
 
     class MyForm(Form):
