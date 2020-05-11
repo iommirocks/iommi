@@ -40,7 +40,6 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    evaluate,
     evaluate_strict,
     getattr_path,
     LAST,
@@ -82,6 +81,7 @@ from iommi.endpoint import (
     DISPATCH_PREFIX,
     path_join,
 )
+from iommi.evaluate import evaluate
 from iommi.form import (
     Field,
     Form,

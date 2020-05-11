@@ -1407,7 +1407,7 @@ def test_row_extra():
 
 
 def test_row_extra_evaluated():
-    def some_callable(table, row, **_):
+    def some_callable(row, **_):
         return row.a + row.b
 
     class TestTable(Table):
@@ -1710,8 +1710,7 @@ def test_many_to_many():
 def test_preprocess_row():
     TFoo.objects.create(a=1, b='d')
 
-    def preprocess(table, row, **_):
-        del table
+    def preprocess(row, **_):
         row.some_non_existent_property = 1
         return row
 

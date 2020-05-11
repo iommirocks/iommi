@@ -11,7 +11,6 @@ from django.db.models import (
 )
 from tri_declarative import (
     dispatch,
-    evaluate,
     Namespace,
     Refinable,
     RefinableObject,
@@ -20,6 +19,7 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import MISSING
+from iommi.evaluate import evaluate
 
 
 def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
@@ -128,7 +128,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
         return None
 
     # Not strict evaluate on purpose
-    factory = evaluate(factory, model_field=model_field, field_name=field_name)
+    factory = evaluate(factory, __match_empty=False, model_field=model_field, field_name=field_name)
 
     setdefaults_path(
         kwargs,

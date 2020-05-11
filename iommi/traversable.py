@@ -9,7 +9,6 @@ from typing import (
 
 from tri_declarative import (
     dispatch,
-    evaluate,
     evaluate_strict,
     getattr_path,
     Namespace,
@@ -21,6 +20,7 @@ from tri_struct import Struct
 
 from iommi.attrs import evaluate_attrs
 from iommi.base import MISSING
+from iommi.evaluate import evaluate
 from iommi.style import apply_style
 
 
