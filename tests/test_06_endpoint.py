@@ -201,3 +201,12 @@ def test_path_join():
     assert path_join('', 'foo') == 'foo'
     assert path_join('foo', 'bar') == 'foo/bar'
     assert path_join('foo', 'bar', separator='#') == 'foo#bar'
+
+
+def test_perform_post_with_no_dispatch_parameter():
+    target = Page().bind(request=req('post'))
+
+    with pytest.raises(AssertionError) as e:
+        target.render_to_response()
+
+    assert str(e.value) == 'This request was a POST, but there was no dispatch command present.'

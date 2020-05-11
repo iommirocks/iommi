@@ -776,7 +776,7 @@ def test_bulk_edit():
     TestTable(
         rows=TFoo.objects.all()
     ).bind(
-        request=req('post', pk_1='', pk_2='', **{'bulk/a': '', 'bulk/b': ''}),
+        request=req('post', pk_1='', pk_2='', **{'bulk/a': '', 'bulk/b': '', '-bulk/submit': ''}),
     ).render_to_response()
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
