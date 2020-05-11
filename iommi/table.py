@@ -56,6 +56,7 @@ from tri_struct import Struct
 
 from iommi._web_compat import (
     format_html,
+    HttpResponse,
     HttpResponseRedirect,
     mark_safe,
     render_template,
@@ -102,6 +103,7 @@ from iommi.page import (
     Page,
     Part,
 )
+from iommi.part import render_root
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
@@ -999,11 +1001,7 @@ def bulk_delete__post_handler(table, form, **_):
         queryset.delete()
         return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
-    # Now we need to pretend this is a GET so we don't search for a non-existent post target handler
-    request.GET = request.POST
-    request.method = 'GET'
-
-    return p.render_to_response()
+    return HttpResponse(render_root(part=p))
 
 
 class Paginator(Traversable):
