@@ -73,6 +73,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
     if items is not None:
         for key, item in items.items():
             if isinstance(item, Traversable):
+                # noinspection PyProtectedMember
                 assert not item._is_bound
                 item._name = key
                 unbound_items[key] = item
@@ -93,6 +94,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
 
     for k, v in Namespace(_unapplied_config).items():
         unbound_items[k] = unbound_items[k].reinvoke(v)
+        # noinspection PyProtectedMember
         assert unbound_items[k]._name is not None
 
     to_delete = {
@@ -103,6 +105,8 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
 
     for k in to_delete:
         del unbound_items[k]
+
+    sort_after(unbound_items)
 
     set_declared_member(container, name, unbound_items)
     setattr(container, name, NotBoundYet(container, name))
@@ -117,32 +121,97 @@ class Members(Traversable):
     def __init__(self, *, _declared_members, unknown_types_fall_through, **kwargs):
         super(Members, self).__init__(**kwargs)
         self._declared_members = _declared_members
-        self._bound_members = Struct()
         self._unknown_types_fall_through = unknown_types_fall_through
 
-    def on_bind(self) -> None:
-        for key, member in self._declared_members.items():
-            if self._unknown_types_fall_through and not hasattr(member, 'bind'):
-                self._bound_members[key] = copy(member)
-                continue
+    def on_bind(self):
+        self._bound_members = MemberBinder(self, self._declared_members, self._unknown_types_fall_through)
 
-            bound_member = member.bind(parent=self)
+
+# noinspection PyCallByClass
+class MemberBinder(dict):
+    def __init__(self, parent: Members, _declared_members: Dict[str, Traversable], _unknown_types_fall_through: bool):
+        if _unknown_types_fall_through:
+            bindable_names = []
+            for name, member in _declared_members.items():
+                if not hasattr(member, 'bind'):
+                    self[name] = copy(member)
+                    continue
+                bindable_names.append(name)
+        else:
+            bindable_names = list(_declared_members.keys())
+
+        object.__setattr__(self, '_parent', parent)
+        object.__setattr__(self, '_bindable_names', bindable_names)
+        object.__setattr__(self, '_declared_members', _declared_members)
+        super().__init__()
+
+    def __getattribute__(self, name):
+        _bindable_names = object.__getattribute__(self, '_bindable_names')
+        if name in _bindable_names:
+            return self[name]
+        return object.__getattribute__(self, name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __getitem__(self, name):
+        _force_bind(self, name)
+        return dict.__getitem__(self, name)
+
+    def get(self, name, *args):
+        _force_bind(self, name)
+        return dict.get(self, name, *args)
+
+    def values(self):
+        _force_bind_all(self)
+        return super().values()
+
+    def items(self):
+        _force_bind_all(self)
+        return super().items()
+
+    def keys(self):
+        _force_bind_all(self)
+        return super().keys()
+
+    def __repr__(self):
+        bound_members = list(dict.keys(self))
+        members = [
+            name + (' (bound)' if name in bound_members else '')
+            for name in object.__getattribute__(self, '_declared_members')
+        ]
+        return f'<{self.__class__.__name__}: {", ".join(members)}>'
+
+
+# noinspection PyCallByClass
+def _force_bind(member_binder: MemberBinder, name: str):
+    if name not in member_binder:
+
+        _parent = object.__getattribute__(member_binder, '_parent')
+        _bindable_names = object.__getattribute__(member_binder, '_bindable_names')
+        _declared_members = object.__getattribute__(member_binder, '_declared_members')
+
+        if name in _bindable_names:
+            bound_member = _declared_members[name].bind(parent=_parent)
             if bound_member is not None:
-                self._bound_members[key] = bound_member
-
-        sort_after(self._bound_members)
+                member_binder[name] = bound_member
 
 
+# noinspection PyCallByClass
+def _force_bind_all(member_binder: MemberBinder):
+    _bindable_names = object.__getattribute__(member_binder, '_bindable_names')
+    for name in _bindable_names:
+        _force_bind(member_binder, name)
+
+
+# noinspection PyProtectedMember
 def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False) -> None:
     m = cls(
         _name=name,
         _declared_members=declared_members(parent)[name],
         unknown_types_fall_through=unknown_types_fall_through,
     )
-    # It's useful to be able to access these during bind
-    setattr(parent, name, m._bound_members)
-    setattr(parent._bound_members, name, m)
     m = m.bind(parent=parent)
-    # ...and now we have the real object
-    setattr(parent, name, m._bound_members)
     setattr(parent._bound_members, name, m)
+    setattr(parent, name, m._bound_members)
+    #_force_bind_all(m._bound_members)

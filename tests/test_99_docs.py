@@ -150,7 +150,6 @@ Defaults
 * `description`
     * `qwe`
     """
-    print(actual_doc)
 
     assert actual_doc.strip() == expected_doc.strip()
 
@@ -175,7 +174,6 @@ Refinable members
 
 * `name`
 """
-    print(actual_doc)
 
     assert actual_doc.strip() == expected_doc.strip()
 
@@ -216,7 +214,6 @@ Refinable members
 
 * `name`
 """
-    print(actual_doc)
     assert actual_doc.strip() == expected_doc.strip()
 
 

@@ -67,6 +67,7 @@ __all__ = [
     'MenuItem',
     'middleware',
     'Page',
+    'Part',
     'Query',
     'Table',
     'Filter',

@@ -215,6 +215,13 @@ def declared_members(node: Traversable) -> Any:
 
 
 def set_declared_member(node: Traversable, name: str, value: Union[Any, Dict[str, Traversable]]):
+    root = get_root(node)
+    if (
+        hasattr(root, '_long_path_by_path')
+        or hasattr(root, '_path_by_long_path')
+    ):
+        print("### A disturbance in the force... The namespace has been recalculated!")
+        root._long_path_by_path = root._path_by_long_path = None
     # noinspection PyProtectedMember
     node._declared_members[name] = value
 
@@ -231,7 +238,7 @@ def get_name(node: Traversable) -> str:
 
 def bound_members(node: Traversable) -> Dict[str, Traversable]:
     # noinspection PyProtectedMember
-    return node._bound_members if node._bound_members else {}
+    return node._bound_members if node._bound_members is not None else {}
 
 
 def evaluate_members(obj, keys, **kwargs):

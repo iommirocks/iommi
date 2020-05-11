@@ -1516,9 +1516,10 @@ class Table(Part):
         evaluate_member(self, 'rows', **self._evaluate_parameters)
         self._prepare_sorting()
 
-        for column in self.columns.values():
-            # Special case for entire table not sortable
-            if not self.sortable:
+        if not self.sortable:
+            # TODO: we could do this on the unbound stuff instead. This is bad because it triggers _bind_all()
+            for column in self.columns.values():
+                # Special case for entire table not sortable
                 column.sortable = False
 
         self._setup_bulk_form_and_query()
@@ -1548,10 +1549,10 @@ class Table(Part):
             return
 
         declared_filters = declared_members(self.query)['filters']
-        for name, column in self.columns.items():
+        for name, column in declared_members(self)['columns'].items():
             if name in declared_filters:
                 filter = Namespace(
-                    field__display_name=column.display_name,
+                    field__display_name=lambda table, field, **_: table.columns[field._name].display_name,
                 )
                 declared_filters[name] = declared_filters[name].reinvoke(filter)
         set_declared_member(self.query, 'filters', declared_filters)
@@ -1569,13 +1570,13 @@ class Table(Part):
                 self.rows = self.rows.filter(q)
 
         declared_fields = declared_members(self.bulk_form)['fields']
-        for name, column in self.columns.items():
+        for name, column in declared_members(self)['columns'].items():
             if name in declared_fields:
                 field = setdefaults_path(
                     Namespace(),
                     column.bulk,
-                    include=column.bulk.include,
-                    display_name=column.display_name,
+                    include=lambda table, field, **_: table.columns[field._name].bulk.include,
+                    display_name=lambda table, field, **_: table.columns[field._name].display_name,
                 )
                 declared_fields[name] = declared_fields[name].reinvoke(field)
         set_declared_member(self.bulk_form, 'fields', declared_fields)

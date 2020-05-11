@@ -1295,6 +1295,7 @@ class Form(Part):
             field.write_to_instance(field, instance, field.value)
 
     def get_errors(self):
+        self.is_valid()
         r = {}
         if self.errors:
             r['global'] = self.errors

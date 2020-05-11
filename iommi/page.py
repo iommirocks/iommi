@@ -151,8 +151,9 @@ class Fragment(Part):
 
         # Fragment children are special and they can be raw str/int etc but
         # also callables. We need to evaluate them!
-        self.children = evaluate_strict_container(self.children, **self._evaluate_parameters)
-        self._bound_members.children._bound_members = self.children
+        children = evaluate_strict_container(self.children, **self._evaluate_parameters)
+        self.children.update(children)
+        self._bound_members.children._bound_members.update(children)
 
     @dispatch(
         render=fragment__render,

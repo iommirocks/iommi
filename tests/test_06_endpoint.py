@@ -7,6 +7,8 @@ from tri_declarative import with_meta
 from tri_struct import Struct
 
 from iommi import (
+    Field,
+    Form,
     Page,
     Table,
     Part,
@@ -184,6 +186,51 @@ def test_custom_endpoint_on_page():
     assert p.endpoints.test.include is True
     assert p.endpoints.test.endpoint_path == '/test'
     assert p.render_to_response().content == b'7'
+
+
+class ExplodingForm(Form):
+    def on_bind(self):
+        raise Exception('Boom')
+
+
+def test_post_not_trigger_bind():
+    p = Page(parts=dict(
+        form=Form(
+            fields__foo=Field(),
+        ),
+        exploding_form=ExplodingForm()
+    ))
+
+    p = p.bind(request=req('post', **{
+        '-': '',
+        'foo': 'bar',
+    }))
+
+    assert p.parts.form.fields.foo.value == 'bar'
+    with pytest.raises(Exception) as e:
+        # noinspection PyStatementEffect
+        p.parts.exploding_form
+    assert str(e.value) == 'Boom'
+
+
+def test_ajax_not_trigger_bind():
+    p = Page(parts=dict(
+        form=Form(
+            endpoints__foo__func=lambda value, **_: HttpResponse('bar'),
+        ),
+        exploding_form=ExplodingForm()
+    ))
+
+    p = p.bind(request=req('get', **{
+        '/foo': '',
+    }))
+
+    assert p.render_to_response().content == b'bar'
+
+    with pytest.raises(Exception) as e:
+        # noinspection PyStatementEffect
+        p.parts.exploding_form
+    assert str(e.value) == 'Boom'
 
 
 def test_perform_post_dispatch_error_message():

@@ -616,7 +616,8 @@ class Query(Part):
         request = self.get_request()
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
 
-        if any(v.freetext for v in self.filters.values()):
+        # TODO: should it be possible to have freetext as a callable? this code just treats callables as truthy
+        if any(f.freetext for f in declared_members(self)['filters'].values()):
             declared_members(self.form).fields[FREETEXT_SEARCH_NAME].include = True
 
         declared_fields = declared_members(self.form)['fields']
@@ -626,7 +627,7 @@ class Query(Part):
                 field = setdefaults_path(
                     Namespace(),
                     _name=name,
-                    attr=filter.attr,
+                    attr=lambda query, field, **_: query.filters[field._name].attr,
                     model_field=filter.model_field,
                 )
                 declared_fields[name] = declared_fields[name].reinvoke(field)
