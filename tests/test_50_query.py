@@ -70,7 +70,7 @@ def test_include():
     class ShowQuery(Query):
         foo = Filter()
         bar = Filter(
-            include=lambda query, filter: query.get_request().GET['foo'] == 'include' and filter.extra.foo == 'include2',
+            include=lambda query, filter, **_: query.get_request().GET['foo'] == 'include' and filter.extra.foo == 'include2',
             extra__foo='include2')
 
     assert list(ShowQuery().bind(request=req('get', foo='hide')).filters.keys()) == ['foo']

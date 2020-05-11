@@ -199,3 +199,15 @@ def test_override_attrs_explicit_fragment():
     assert MyPage().bind().__html__() == '<h1>Supernaut</h1>'
 
     assert MyPage(parts__title__attrs__class__foo=True).bind().__html__() == '<h1 class="foo">Supernaut</h1>'
+
+
+def test_request_in_evaluate_parameters():
+    request = req('get', foo=7)
+
+    class MyPage(Page):
+        title = Fragment(
+            tag='h1',
+            children__text=lambda request, **_: request.GET['foo'],
+        )
+
+    assert '<h1>7</h1>' in MyPage().bind(request=request).render_to_response().content.decode()

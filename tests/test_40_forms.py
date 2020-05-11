@@ -394,7 +394,7 @@ def test_apply():
 def test_include():
     assert list(Form(fields__foo=Field(include=True)).bind(request=req('get')).fields.keys()) == ['foo']
     assert list(Form(fields__foo=Field(include=False)).bind(request=req('get')).fields.keys()) == []
-    assert list(Form(fields__foo=Field(include=lambda form, field: False)).bind(request=req('get')).fields.keys()) == []
+    assert list(Form(fields__foo=Field(include=lambda form, field, **_: False)).bind(request=req('get')).fields.keys()) == []
 
 
 def test_declared_fields():

@@ -177,6 +177,8 @@ class Traversable(RefinableObject):
             **(get_parent(result)._evaluate_parameters if result._parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
+        if parent is None:
+            result._evaluate_parameters['request'] = request
         result.on_bind()
 
         # on_bind has a chance to hide itself

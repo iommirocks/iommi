@@ -518,7 +518,7 @@ def test_include(NoSortTable):
 
 
 def test_include_lambda(NoSortTable):
-    def include_callable(table, column):
+    def include_callable(table, column, **_):
         assert isinstance(table, TestTable)
         assert column._name == 'bar'
         return False

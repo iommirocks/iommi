@@ -111,7 +111,7 @@ class Attrs(Namespace):
         form = Form(
             auto__model=Foo,
             fields__bar__after__class__bar=
-                lambda form, **_: form.get_request().user.is_staff,
+                lambda request, **_: request.user.is_staff,
         )
     """
 

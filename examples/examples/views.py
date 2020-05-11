@@ -118,13 +118,13 @@ def index(request):
         log_in = html.a(
             'Log in',
             attrs__href='/log_in/',
-            include=lambda fragment, **_: not fragment.get_request().user.is_authenticated,
+            include=lambda request, **_: not request.user.is_authenticated,
         )
 
         log_out = html.a(
             'Log out',
             attrs__href='/log_out/',
-            include=lambda fragment, **_: fragment.get_request().user.is_authenticated,
+            include=lambda request, **_: request.user.is_authenticated,
         )
 
         form_header = html.h2('Form examples')
