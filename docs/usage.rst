@@ -54,7 +54,7 @@ When you've done the stuff above you can create a page with a table in it:
 
 .. code:: python
 
-    url(r'^table_as_view/$', Table.as_view(auto__model=MyModel)),
+    path('table_as_view/', Table.as_view(auto__model=MyModel)),
 
 ...or as a function based view:
 
@@ -215,4 +215,4 @@ This style also does not require the middleware:
         div = html.div('Some text')
 
     # urls.py:
-    url(r'^foo/$', MyPage.as_view()),
+    path(r'foo/', MyPage.as_view()),
