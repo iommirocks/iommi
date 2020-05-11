@@ -999,6 +999,10 @@ def bulk_delete__post_handler(table, form, **_):
         queryset.delete()
         return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
+    # Now we need to pretend this is a GET so we don't search for a non-existent post target handler
+    request.GET = request.POST
+    request.method = 'GET'
+
     return p.render_to_response()
 
 

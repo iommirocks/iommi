@@ -132,6 +132,9 @@ class Part(Traversable):
 
             if result is not None:
                 return dispatch_response_handler(result)
+        else:
+            if request.method == 'POST':
+                assert False, 'This request was a POST, but there was no dispatch command present.'
 
         return HttpResponse(render_root(part=self, **kwargs))
 
