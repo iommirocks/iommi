@@ -35,7 +35,7 @@ def get_callable_description(c):
         import inspect
         try:
             return 'lambda found at: `{}`'.format(inspect.getsource(c).strip())
-        except OSError:
+        except OSError:  # pragma: no cover
             pass
     return f'`{c}`'
 
@@ -54,7 +54,6 @@ def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True
                 and 'call_target' not in func_or_value
         ), "Evaluating {} didn't resolve it into a value but strict mode was active, " \
            "the signature doesn't match the given parameters. " \
-           "Note that you must match at least one keyword argument. " \
            "We had these arguments: {}".format(
             get_callable_description(func_or_value),
             ', '.join(kwargs.keys()),

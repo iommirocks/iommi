@@ -284,11 +284,11 @@ def test_reinvoke_extra_shortcut():
     assert f.bind().fields.my_field.extra == dict(foo=17, bar=42, buz=4711)
 
 
-@pytest.mark.skip('Broken right now as we require matching at least one argument if there are any')
 def test_evaluated_refinable_function():
     class Foo(Traversable):
+        @staticmethod
         @evaluated_refinable
-        def foo():
+        def foo(**_):
             return 1
 
     f = Foo().bind(request=None)

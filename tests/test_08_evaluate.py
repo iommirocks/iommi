@@ -6,9 +6,6 @@ from iommi.evaluate import (
     evaluate_strict,
     matches,
     Namespace,
-)
-
-from tri_declarative.evaluate import (
     get_callable_description,
     get_signature,
 )
@@ -136,7 +133,7 @@ def test_evaluate_strict():
     with pytest.raises(AssertionError) as e:
         evaluate_strict(lambda foo: 1, bar=2, baz=4)
 
-    assert str(e.value) == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active, the signature doesn't match the given parameters. Note that you must match at least one keyword argument. We had these arguments: bar, baz"
+    assert str(e.value) == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active, the signature doesn't match the given parameters. We had these arguments: bar, baz"
 
 
 def test_non_strict_evaluate():
