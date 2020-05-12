@@ -3,7 +3,6 @@ from tri_declarative import (
     Namespace,
     Refinable,
     class_shortcut,
-    dispatch,
 )
 from tri_struct import Struct
 
@@ -23,8 +22,6 @@ from iommi.traversable import (
     reinvokable,
     Traversable,
     evaluated_refinable,
-    evaluate_strict_container,
-    evaluate_member,
 )
 from tests.helpers import (
     req,
@@ -304,24 +301,6 @@ def test_extra_evaluated():
 
     f = Foo(extra_evaluated__foo=lambda x, **_: x).bind(request=None)
     assert f.extra_evaluated.foo == 3
-
-
-def test_evaluate_strict_container():
-    assert evaluate_strict_container(Namespace(foo=1)) == Namespace(foo=1)
-    assert evaluate_strict_container(Namespace(foo=lambda foo: foo), foo=3) == Namespace(foo=3)
-
-
-def test_evaluate_member():
-    class Foo:
-        def __init__(self):
-            self.foo = lambda x: x
-
-    foo = Foo()
-    with pytest.raises(AssertionError):
-        evaluate_member(foo, 'foo')
-
-    evaluate_member(foo, 'foo', x=3)
-    assert foo.foo == 3
 
 
 def test_attrs_evaluated():

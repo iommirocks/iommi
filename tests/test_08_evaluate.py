@@ -1,9 +1,11 @@
 import pytest
-
+from tri_declarative import Namespace
 
 from iommi.evaluate import (
     evaluate,
+    evaluate_member,
     evaluate_strict,
+    evaluate_strict_container,
     matches,
     Namespace,
     get_callable_description,
@@ -172,3 +174,21 @@ def test_match_empty():
     f = (lambda **_: 17)
     assert evaluate(f, x=1, __match_empty=False) is f
     assert evaluate(f, x=1, __match_empty=True) == 17
+
+
+def test_evaluate_strict_container():
+    assert evaluate_strict_container(Namespace(foo=1)) == Namespace(foo=1)
+    assert evaluate_strict_container(Namespace(foo=lambda foo: foo), foo=3) == Namespace(foo=3)
+
+
+def test_evaluate_member():
+    class Foo:
+        def __init__(self):
+            self.foo = lambda x: x
+
+    foo = Foo()
+    with pytest.raises(AssertionError):
+        evaluate_member(foo, 'foo')
+
+    evaluate_member(foo, 'foo', x=3)
+    assert foo.foo == 3

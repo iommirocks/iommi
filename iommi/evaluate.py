@@ -105,3 +105,24 @@ def get_signature(func):
 
 def signature_from_kwargs(kwargs):
     return ','.join(sorted(kwargs.keys()))
+
+
+def evaluate_members(obj, keys, **kwargs):
+    for key in keys:
+        evaluate_member(obj, key, **kwargs)
+
+
+def evaluate_member(obj, key, strict=True, **kwargs):
+    value = getattr(obj, key)
+    new_value = evaluate(value, __strict=strict, **kwargs)
+    if new_value is not value:
+        setattr(obj, key, new_value)
+
+
+def evaluate_strict_container(c, **kwargs):
+    return Namespace(
+        {
+            k: evaluate_strict(v, **kwargs)
+            for k, v in c.items()
+        }
+    )

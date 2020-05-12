@@ -1,9 +1,7 @@
-from tri_declarative import (
-    evaluate_strict,
-    Namespace,
-)
+from tri_declarative import Namespace
 
 from iommi._web_compat import mark_safe
+from iommi.evaluate import evaluate_strict
 
 
 def evaluate_attrs(obj, **kwargs):

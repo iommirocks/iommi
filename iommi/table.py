@@ -40,7 +40,6 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
-    evaluate_strict,
     getattr_path,
     LAST,
     Namespace,
@@ -82,7 +81,11 @@ from iommi.endpoint import (
     DISPATCH_PREFIX,
     path_join,
 )
-from iommi.evaluate import evaluate
+from iommi.evaluate import (
+    evaluate,
+    evaluate_member,
+    evaluate_strict,
+)
 from iommi.form import (
     Field,
     Form,
@@ -112,7 +115,6 @@ from iommi.query import (
 from iommi.traversable import (
     bound_members,
     declared_members,
-    evaluate_member,
     evaluated_refinable,
     EvaluatedRefinable,
     reinvokable,

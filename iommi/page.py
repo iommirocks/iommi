@@ -40,12 +40,12 @@ from iommi.part import (
     PartType,
 )
 from iommi.traversable import (
-    evaluate_strict_container,
     EvaluatedRefinable,
     reinvokable,
     Traversable,
     get_root,
 )
+from iommi.evaluate import evaluate_strict_container
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']

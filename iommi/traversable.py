@@ -9,18 +9,21 @@ from typing import (
 
 from tri_declarative import (
     dispatch,
-    evaluate_strict,
     getattr_path,
     Namespace,
     Refinable,
-    RefinableObject,
     refinable,
+    RefinableObject,
 )
 from tri_struct import Struct
 
 from iommi.attrs import evaluate_attrs
 from iommi.base import MISSING
-from iommi.evaluate import evaluate
+from iommi.evaluate import (
+    evaluate_members,
+    evaluate_strict,
+    evaluate_strict_container,
+)
 from iommi.style import apply_style
 
 
@@ -239,27 +242,6 @@ def get_name(node: Traversable) -> str:
 def bound_members(node: Traversable) -> Dict[str, Traversable]:
     # noinspection PyProtectedMember
     return node._bound_members if node._bound_members is not None else {}
-
-
-def evaluate_members(obj, keys, **kwargs):
-    for key in keys:
-        evaluate_member(obj, key, **kwargs)
-
-
-def evaluate_member(obj, key, strict=True, **kwargs):
-    value = getattr(obj, key)
-    new_value = evaluate(value, __strict=strict, **kwargs)
-    if new_value is not value:
-        setattr(obj, key, new_value)
-
-
-def evaluate_strict_container(c, **kwargs):
-    return Namespace(
-        {
-            k: evaluate_strict(v, **kwargs)
-            for k, v in c.items()
-        }
-    )
 
 
 def get_root(node: Traversable) -> Traversable:
