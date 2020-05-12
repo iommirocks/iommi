@@ -750,7 +750,7 @@ def test_display_name_callable():
     form = Form(
         auto__model=Foo,
         auto__include=['foo'],
-        fields__foo__display_name=lambda field, **_: sentinel,
+        fields__foo__display_name=lambda **_: sentinel,
     ).bind(request=req('get', foo='1'))
     assert sentinel in form.__html__()
 

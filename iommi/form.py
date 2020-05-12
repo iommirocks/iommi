@@ -421,12 +421,12 @@ class Field(Part):
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
 
-    choices: Callable[['Form', 'Field', str], List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
-    choice_to_option: Callable[['Form', 'Field', str], Tuple[Any, str, str, bool]] = Refinable()
+    choices: Callable[..., List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
+    choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()
     errors: Errors = Refinable()
 
     empty_label: str = EvaluatedRefinable()
-    empty_choice_tuple = EvaluatedRefinable()
+    empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()
 
     @reinvokable
     @dispatch(
@@ -1087,8 +1087,8 @@ class Form(Part):
     actions_template: Union[str, Template] = Refinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
-    h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
-    title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[Fragment, str] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    title: Union[Fragment, str] = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -1113,7 +1113,7 @@ class Form(Part):
         auto=EMPTY,
         h_tag__call_target=Header,
     )
-    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model, auto, title=MISSING, **kwargs):
+    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
 
         if auto:
             auto = FormAutoConfig(**auto)

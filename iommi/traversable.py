@@ -241,7 +241,7 @@ def get_name(node: Traversable) -> str:
 
 def bound_members(node: Traversable) -> Dict[str, Traversable]:
     # noinspection PyProtectedMember
-    return node._bound_members if node._bound_members is not None else {}
+    return node._bound_members if node._bound_members is not None else Struct()
 
 
 def get_root(node: Traversable) -> Traversable:
