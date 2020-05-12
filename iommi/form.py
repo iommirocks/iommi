@@ -582,7 +582,7 @@ class Field(Part):
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
         assert not self.label.children
-        self.label.children = dict(text=self.display_name)
+        self.label.children = dict(text=evaluate_strict(self.display_name, **self._evaluate_parameters))
         self.non_editable_input = self.non_editable_input.bind(parent=self)
 
     def _parse(self):

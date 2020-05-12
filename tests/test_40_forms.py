@@ -744,6 +744,18 @@ def test_help_text_from_model():
 
 
 @pytest.mark.django_db
+def test_display_name_callable():
+    from .models import Foo
+    sentinel = '#### foo ####'
+    form = Form(
+        auto__model=Foo,
+        auto__include=['foo'],
+        fields__foo__display_name=lambda field, **_: sentinel,
+    ).bind(request=req('get', foo='1'))
+    assert sentinel in form.__html__()
+
+
+@pytest.mark.django_db
 def test_help_text_from_model2():
     from .models import Foo, Bar
     # simple integer field
