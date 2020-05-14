@@ -161,7 +161,7 @@ def prepare_headers(table):
     if request is None:
         return
 
-    for name, column in table.rendered_columns.items():
+    for name, column in table.columns.items():
         if column.sortable:
             params = params_of_request(request)
             param_path = path_join(table.iommi_path, 'order')
@@ -759,11 +759,13 @@ class Cells(Traversable):
         return self.__html__()
 
     def __iter__(self):
-        for column in self._parent.rendered_columns.values():
+        for column in self._parent.columns.values():
+            if not column.render_column:
+                continue
             yield Cell(cells=self, column=column)
 
     def __getitem__(self, name):
-        column = self._parent.rendered_columns[name]
+        column = self._parent.columns[name]
         return Cell(cells=self, column=column)
 
 
@@ -1382,7 +1384,6 @@ class Table(Part):
         assert isinstance(columns, dict)
 
         self.columns = None
-        self.rendered_columns = None
 
         super(Table, self).__init__(
             model=model,
@@ -1528,10 +1529,6 @@ class Table(Part):
                 # Special case for entire table not sortable
                 column.sortable = False
 
-
-        self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
-        for c in self.rendered_columns.values():
-            assert c.include
         self._setup_query()
         self._setup_bulk_form()
 
@@ -1680,7 +1677,7 @@ class Table(Part):
         subheaders = []
 
         # The id(header) and stuff is to make None not be equal to None in the grouping
-        for _, group_iterator in groupby(self.rendered_columns.values(), key=lambda header: header.group or id(header)):
+        for _, group_iterator in groupby((x for x in self.columns.values() if x.render_column), key=lambda header: header.group or id(header)):
             columns_in_group = list(group_iterator)
             group_name = columns_in_group[0].group
 
