@@ -242,7 +242,6 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
-        self.context = evaluate_strict_container(self.context or {}, **self._evaluate_parameters)
         if self.context and self._parent != None:
             assert False, 'context is only valid on the root page'
 
@@ -253,6 +252,7 @@ class Page(Part):
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
     def __html__(self, *, render=None):
+        self.context = evaluate_strict_container(self.context or {}, **self._evaluate_parameters)
         rendered = {
             name: as_html(part=part, context=self._evaluate_parameters)
             for name, part in self.parts.items()

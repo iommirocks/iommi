@@ -1940,7 +1940,8 @@ def test_render_column_attribute():
     t = FooTable()
     t = t.bind(request=None)
 
-    assert list(t.rendered_columns.keys()) == ['a']
+    assert list(t.columns.keys()) == ['a', 'b', 'c']
+    assert [k for k, v in t.columns.items() if v.render_column] == ['a']
     assert [h.display_name for h in t.header_levels[0]] == ['A']
 
     expected_html = """

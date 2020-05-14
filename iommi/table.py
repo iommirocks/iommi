@@ -161,7 +161,7 @@ def prepare_headers(table):
     if request is None:
         return
 
-    for name, column in table.rendered_columns.items():
+    for name, column in table.columns.items():
         if column.sortable:
             params = params_of_request(request)
             param_path = path_join(table.iommi_path, 'order')
@@ -759,11 +759,13 @@ class Cells(Traversable):
         return self.__html__()
 
     def __iter__(self):
-        for column in self._parent.rendered_columns.values():
+        for column in self._parent.columns.values():
+            if not column.render_column:
+                continue
             yield Cell(cells=self, column=column)
 
     def __getitem__(self, name):
-        column = self._parent.rendered_columns[name]
+        column = self._parent.columns[name]
         return Cell(cells=self, column=column)
 
 
@@ -1382,7 +1384,6 @@ class Table(Part):
         assert isinstance(columns, dict)
 
         self.columns = None
-        self.rendered_columns = None
 
         super(Table, self).__init__(
             model=model,
@@ -1468,22 +1469,26 @@ class Table(Part):
                 input__attrs__class__all_pks=True,
             )
 
-            self.bulk_form = form_class(
-                _fields_dict=declared_bulk_fields,
-                _name='bulk',
-                actions__submit=dict(
-                    post_handler=bulk__post_handler,
-                    display_name='Bulk change',
-                    include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
-                ),
-                actions__delete=dict(
-                    call_target__attribute='delete',
-                    post_handler=bulk_delete__post_handler,
-                    display_name='Bulk delete',
-                    include=False,
-                ),
-                **bulk
-            )
+            # x.bulk.include can be a callable here. We treat that as truthy on purpose.
+            if any(x.bulk.include for x in declared_members(self).columns.values()) or 'actions' in self.bulk:
+                self.bulk_form = form_class(
+                    _fields_dict=declared_bulk_fields,
+                    _name='bulk',
+                    actions__submit=dict(
+                        post_handler=bulk__post_handler,
+                        display_name='Bulk change',
+                        include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
+                    ),
+                    actions__delete=dict(
+                        call_target__attribute='delete',
+                        post_handler=bulk_delete__post_handler,
+                        display_name='Bulk delete',
+                        include=False,
+                    ),
+                    **bulk
+                )
+            else:
+                self.bulk_form = None
 
             declared_members(self).bulk = self.bulk_form
 
@@ -1524,11 +1529,8 @@ class Table(Part):
                 # Special case for entire table not sortable
                 column.sortable = False
 
-        self._setup_bulk_form_and_query()
-
-        self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
-        for c in self.rendered_columns.values():
-            assert c.include
+        self._setup_query()
+        self._setup_bulk_form()
 
         self._prepare_headers()
 
@@ -1544,9 +1546,8 @@ class Table(Part):
         self.rows = self.paginator.rows
         self._prepare_auto_rowspan()
 
-    def _setup_bulk_form_and_query(self):
+    def _setup_query(self):
         if not self.model:
-            self.bulk_form = None
             self.query_form = None
             return
 
@@ -1571,23 +1572,29 @@ class Table(Part):
             if q:
                 self.rows = self.rows.filter(q)
 
-        declared_fields = declared_members(self.bulk_form)['fields']
-        for name, column in declared_members(self)['columns'].items():
-            if name in declared_fields:
-                field = setdefaults_path(
-                    Namespace(),
-                    column.bulk,
-                    include=lambda table, field, **_: table.columns[field._name].bulk.include,
-                    display_name=lambda table, field, **_: table.columns[field._name].display_name,
-                )
-                declared_fields[name] = declared_fields[name].reinvoke(field)
-        set_declared_member(self.bulk_form, 'fields', declared_fields)
-
-        self.bulk_form = self.bulk_form.bind(parent=self)
-        if self.bulk_form.actions:
-            self._bound_members.bulk = self.bulk_form
-        else:
+    def _setup_bulk_form(self):
+        if not self.model:
             self.bulk_form = None
+            return
+
+        if self.bulk_form is not None:
+            declared_fields = declared_members(self.bulk_form)['fields']
+            for name, column in declared_members(self)['columns'].items():
+                if name in declared_fields:
+                    field = setdefaults_path(
+                        Namespace(),
+                        column.bulk,
+                        include=lambda table, field, **_: table.columns[field._name].bulk.include,
+                        display_name=lambda table, field, **_: table.columns[field._name].display_name,
+                    )
+                    declared_fields[name] = declared_fields[name].reinvoke(field)
+            set_declared_member(self.bulk_form, 'fields', declared_fields)
+
+            self.bulk_form = self.bulk_form.bind(parent=self)
+            if self.bulk_form.actions:
+                self._bound_members.bulk = self.bulk_form
+            else:
+                self.bulk_form = None
 
     # property for jinja2 compatibility
     @property
@@ -1670,7 +1677,7 @@ class Table(Part):
         subheaders = []
 
         # The id(header) and stuff is to make None not be equal to None in the grouping
-        for _, group_iterator in groupby(self.rendered_columns.values(), key=lambda header: header.group or id(header)):
+        for _, group_iterator in groupby((x for x in self.columns.values() if x.render_column), key=lambda header: header.group or id(header)):
             columns_in_group = list(group_iterator)
             group_name = columns_in_group[0].group
 
