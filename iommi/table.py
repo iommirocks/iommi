@@ -1468,22 +1468,26 @@ class Table(Part):
                 input__attrs__class__all_pks=True,
             )
 
-            self.bulk_form = form_class(
-                _fields_dict=declared_bulk_fields,
-                _name='bulk',
-                actions__submit=dict(
-                    post_handler=bulk__post_handler,
-                    display_name='Bulk change',
-                    include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
-                ),
-                actions__delete=dict(
-                    call_target__attribute='delete',
-                    post_handler=bulk_delete__post_handler,
-                    display_name='Bulk delete',
-                    include=False,
-                ),
-                **bulk
-            )
+            # x.bulk.include can be a callable here. We treat that as truthy on purpose.
+            if any(x.bulk.include for x in declared_members(self).columns.values()) or 'actions' in self.bulk:
+                self.bulk_form = form_class(
+                    _fields_dict=declared_bulk_fields,
+                    _name='bulk',
+                    actions__submit=dict(
+                        post_handler=bulk__post_handler,
+                        display_name='Bulk change',
+                        include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
+                    ),
+                    actions__delete=dict(
+                        call_target__attribute='delete',
+                        post_handler=bulk_delete__post_handler,
+                        display_name='Bulk delete',
+                        include=False,
+                    ),
+                    **bulk
+                )
+            else:
+                self.bulk_form = None
 
             declared_members(self).bulk = self.bulk_form
 
@@ -1571,23 +1575,24 @@ class Table(Part):
             if q:
                 self.rows = self.rows.filter(q)
 
-        declared_fields = declared_members(self.bulk_form)['fields']
-        for name, column in declared_members(self)['columns'].items():
-            if name in declared_fields:
-                field = setdefaults_path(
-                    Namespace(),
-                    column.bulk,
-                    include=lambda table, field, **_: table.columns[field._name].bulk.include,
-                    display_name=lambda table, field, **_: table.columns[field._name].display_name,
-                )
-                declared_fields[name] = declared_fields[name].reinvoke(field)
-        set_declared_member(self.bulk_form, 'fields', declared_fields)
+        if self.bulk_form is not None:
+            declared_fields = declared_members(self.bulk_form)['fields']
+            for name, column in declared_members(self)['columns'].items():
+                if name in declared_fields:
+                    field = setdefaults_path(
+                        Namespace(),
+                        column.bulk,
+                        include=lambda table, field, **_: table.columns[field._name].bulk.include,
+                        display_name=lambda table, field, **_: table.columns[field._name].display_name,
+                    )
+                    declared_fields[name] = declared_fields[name].reinvoke(field)
+            set_declared_member(self.bulk_form, 'fields', declared_fields)
 
-        self.bulk_form = self.bulk_form.bind(parent=self)
-        if self.bulk_form.actions:
-            self._bound_members.bulk = self.bulk_form
-        else:
-            self.bulk_form = None
+            self.bulk_form = self.bulk_form.bind(parent=self)
+            if self.bulk_form.actions:
+                self._bound_members.bulk = self.bulk_form
+            else:
+                self.bulk_form = None
 
     # property for jinja2 compatibility
     @property
