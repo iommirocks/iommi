@@ -1528,11 +1528,12 @@ class Table(Part):
                 # Special case for entire table not sortable
                 column.sortable = False
 
-        self._setup_bulk_form_and_query()
 
         self.rendered_columns = Struct({name: column for name, column in self.columns.items() if column.render_column})
         for c in self.rendered_columns.values():
             assert c.include
+        self._setup_query()
+        self._setup_bulk_form()
 
         self._prepare_headers()
 
@@ -1548,9 +1549,8 @@ class Table(Part):
         self.rows = self.paginator.rows
         self._prepare_auto_rowspan()
 
-    def _setup_bulk_form_and_query(self):
+    def _setup_query(self):
         if not self.model:
-            self.bulk_form = None
             self.query_form = None
             return
 
@@ -1574,6 +1574,11 @@ class Table(Part):
                 pass
             if q:
                 self.rows = self.rows.filter(q)
+
+    def _setup_bulk_form(self):
+        if not self.model:
+            self.bulk_form = None
+            return
 
         if self.bulk_form is not None:
             declared_fields = declared_members(self.bulk_form)['fields']
