@@ -32,8 +32,11 @@ clean-docs:
 lint:
 	tox -e lint
 
-test:
+test-all:
 	tox --skip-missing-interpreters
+
+test:
+	hammett
 
 coverage:
 	tox -e coverage
@@ -58,3 +61,6 @@ venv:
 run-examples: venv
 	venv/bin/python examples/manage.py migrate
 	venv/bin/python examples/manage.py runserver
+
+test-live:
+	watchmedo shell-command --patterns="*.py" --command="python -m hammett" iommi tests

@@ -76,7 +76,11 @@ See :doc:`usage`.
 Running tests
 -------------
 
-You need tox installed then just :code:`make test`.
+We use hammett for tests, so `pip install hammett` then run `hammett`.
+
+There's a `make test-live` target for running tests interactively. You first need to `pip install watchdog pyyaml argh`.
+
+For running the full tests on all supported environments: install tox then :code:`make test-all`.
 
 
 License
