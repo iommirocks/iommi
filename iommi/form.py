@@ -80,9 +80,11 @@ from iommi.member import (
     collect_members,
 )
 from iommi.page import (
+    Page,
+)
+from iommi.fragment import (
     Fragment,
     Header,
-    Page,
 )
 from iommi.part import (
     Part,

@@ -28,7 +28,7 @@ class Errors(set):
         if not self:
             return ''
 
-        from iommi.page import Fragment
+        from iommi import Fragment
         return Fragment(
             _name='error',
             tag='ul',

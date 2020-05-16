@@ -2,15 +2,13 @@ from django.test import override_settings
 from tri_struct import Struct
 
 from iommi import (
+    Fragment,
     html,
     Page,
 )
 from iommi._web_compat import (
-    format_html,
     Template,
 )
-from iommi.attrs import Attrs
-from iommi.page import Fragment
 from iommi.part import as_html
 from iommi.traversable import declared_members
 from tests.helpers import (
@@ -61,15 +59,6 @@ def test_page_render():
     prettified_expected = prettify(expected_html)
     prettified_actual = prettify(response.content)
     assert prettified_expected == prettified_actual
-
-
-def test_fragment__render__simple_cases():
-    assert format_html('{}', html.h1('foo').bind(parent=None)) == '<h1>foo</h1>'
-    assert format_html('{}', Fragment(children__child='foo<foo>').bind(parent=None)) == 'foo&lt;foo&gt;'
-
-
-def test_fragment_repr():
-    assert repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'}))) == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
 
 
 def test_promote_str_to_fragment_for_page():

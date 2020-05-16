@@ -104,10 +104,13 @@ from iommi.member import (
     collect_members,
 )
 from iommi.page import (
-    Fragment,
-    Header,
     Page,
     Part,
+)
+from iommi import (
+    Fragment,
+    Header,
+    html,
 )
 from iommi.part import render_root
 from iommi.query import (
@@ -983,7 +986,6 @@ def bulk_delete__post_handler(table, form, **_):
 
     from iommi.page import (
         Page,
-        html,
     )
 
     class ConfirmPage(Page):

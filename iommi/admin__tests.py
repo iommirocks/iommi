@@ -3,8 +3,8 @@ from tri_struct import Struct
 
 from iommi.admin import Admin
 from iommi.base import values
-from .helpers import req
-from .models import Foo
+from tests.helpers import req
+from tests.models import Foo
 
 
 @pytest.mark.django_db

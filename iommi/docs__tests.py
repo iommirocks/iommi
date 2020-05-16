@@ -105,7 +105,7 @@ Defaults
 * `name`
     * `foo-name`
 * `some_other_thing`
-    * `tests.test_99_docs.some_callable`
+    * `iommi.docs__tests.some_callable`
 
 Shortcuts
 ---------
@@ -144,7 +144,7 @@ Defaults
 ++++++++
 
 * `call_target`
-    * `tests.test_99_docs.Foo`
+    * `iommi.docs__tests.Foo`
 * `name`
     * `baz`
 * `description`

@@ -1,3 +1,4 @@
+import json
 import re
 from collections import defaultdict
 from datetime import (
@@ -25,9 +26,15 @@ from tri_declarative import (
     setattr_path,
     Shortcut,
 )
-from tri_struct import Struct
+from tri_struct import (
+    merged,
+    Struct,
+)
 
-from iommi import Action
+from iommi import (
+    Action,
+    html,
+)
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (
     smart_str,
@@ -41,11 +48,13 @@ from iommi.base import (
     values,
 )
 from iommi.endpoint import (
+    DISPATCH_PATH_SEPARATOR,
     InvalidEndpointPathException,
     perform_ajax_dispatch,
 )
 from iommi.form import (
     bool_parse,
+    create_or_edit_object_redirect,
     datetime_iso_formats,
     datetime_parse,
     decimal_parse,
@@ -55,27 +64,27 @@ from iommi.form import (
     FULL_FORM_FROM_REQUEST,
     INITIALS_FROM_GET,
     int_parse,
+    multi_choice_choice_to_option,
     register_field_factory,
     render_template,
     url_parse,
-    multi_choice_choice_to_option,
 )
 from iommi.from_model import (
     member_from_model,
 )
 from iommi.page import (
     Page,
-    html,
 )
 from iommi.traversable import declared_members
-from .compat import RequestFactory
-from .helpers import (
+from tests.compat import RequestFactory
+from tests.helpers import (
     get_attrs,
     prettify,
     reindent,
+    remove_csrf,
     req,
 )
-from .models import (
+from tests.models import (
     Bar,
     BooleanFromModelTestModel,
     TBar,
@@ -753,7 +762,7 @@ def test_help_text_from_model():
 
 @pytest.mark.django_db
 def test_display_name_callable():
-    from .models import Foo
+    from tests.models import Foo
     sentinel = '#### foo ####'
     form = Form(
         auto__model=Foo,
@@ -765,7 +774,7 @@ def test_display_name_callable():
 
 @pytest.mark.django_db
 def test_help_text_from_model2():
-    from .models import Foo, Bar
+    from tests.models import Foo, Bar
     # simple integer field
     form = Form(auto__model=Foo, auto__include=['foo']).bind(request=req('get', foo='1'))
     assert form.fields.foo.model_field is Foo._meta.get_field('foo')
@@ -955,10 +964,10 @@ def test_field_from_model_required():
 def test_field_from_model_label():
     from django.db.models import TextField, Model
 
-    class FooModel(Model):
+    class FieldFromModelModel(Model):
         a = TextField(verbose_name='FOOO bar FOO')
 
-    assert Field.from_model(FooModel, 'a').display_name == 'FOOO bar FOO'
+    assert Field.from_model(FieldFromModelModel, 'a').display_name == 'FOOO bar FOO'
 
 
 @pytest.mark.django_db
@@ -1481,13 +1490,13 @@ def test_null_field_factory():
     class ShouldBeNullField(models.Field):
         pass
 
-    class FooModel(models.Model):
+    class NullFieldFactoryModel(models.Model):
         should_be_null = ShouldBeNullField()
         foo = models.IntegerField()
 
     register_field_factory(ShouldBeNullField, factory=None)
 
-    form = Form(auto__model=FooModel).bind(request=req('get'))
+    form = Form(auto__model=NullFieldFactoryModel).bind(request=req('get'))
     assert list(form.fields.keys()) == ['foo']
 
 
@@ -1529,13 +1538,13 @@ def test_choice_queryset_ajax_attrs_foreign_key():
     from django.db import models
     from django.db.models import CASCADE
 
-    class FooModel(models.Model):
+    class ChoiceQuerySetAjaxAttrsForeignKeyModel(models.Model):
         user = models.ForeignKey(User, on_delete=CASCADE)
 
     User.objects.create(username='foo')
     user2 = User.objects.create(username='bar')
 
-    form = Form(auto__model=FooModel).bind(request=req('get'))
+    form = Form(auto__model=ChoiceQuerySetAjaxAttrsForeignKeyModel).bind(request=req('get'))
     actual = perform_ajax_dispatch(root=form, path='/fields/user/endpoints/choices', value='ar')
 
     assert actual == {
@@ -1555,10 +1564,10 @@ def test_choice_queryset_ajax_one_past_the_end():
     from django.db import models
     from django.db.models import CASCADE
 
-    class FooModel(models.Model):
+    class ChoiceQuerySetAjaxOnePastTheEndModel(models.Model):
         user = models.ForeignKey(User, on_delete=CASCADE)
 
-    form = Form(auto__model=FooModel).bind(request=req('get', page=2))
+    form = Form(auto__model=ChoiceQuerySetAjaxOnePastTheEndModel).bind(request=req('get', page=2))
     actual = perform_ajax_dispatch(root=form, path='/fields/user/endpoints/choices', value='ar')
 
     assert actual == {
@@ -1577,14 +1586,14 @@ def test_choice_queryset_ajax_custom_q():
     from django.db import models
     from django.db.models import CASCADE
 
-    class FooModel(models.Model):
+    class ChoiceQuerySetAjaxCustomQModel(models.Model):
         user = models.ForeignKey(User, on_delete=CASCADE)
 
     User.objects.create(username='foo', first_name='7')
     user2 = User.objects.create(username='bar', first_name='11')
 
     form = Form(
-        auto__model=FooModel,
+        auto__model=ChoiceQuerySetAjaxCustomQModel,
         fields__user__extra__create_q_from_value=lambda field, value, **_: Q(first_name='11')
     ).bind(request=req('get'))
     actual = perform_ajax_dispatch(
@@ -1814,7 +1823,7 @@ def test_initial_set_earlier_than_evaluate_is_called():
 
 @pytest.mark.django_db
 def test_field_from_model_path():
-    from .models import Bar
+    from tests.models import Bar
 
     class FooForm(Form):
         baz = Field.from_model(Bar, 'foo__foo', help_text='another help text')
@@ -1849,7 +1858,7 @@ def test_field_from_model_subtype():
 
 @pytest.mark.django_db
 def test_create_members_from_model_path():
-    from .models import Foo, Bar
+    from tests.models import Foo, Bar
 
     class BarForm(Form):
         class Meta:
@@ -2063,3 +2072,286 @@ def test_form_h_tag():
     assert '<h1>$$$</h1>' in Form(title='$$$').bind(request=req('get')).__html__()
     assert '<b>$$$</b>' in Form(title='$$$', h_tag__tag='b').bind(request=req('get')).__html__()
     assert '<b>$$$</b>' in Form(h_tag=html.b('$$$')).bind(request=req('get')).__html__()
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_and_edit_object():
+    from tests.models import CreateOrEditObjectTest, Foo
+
+    assert CreateOrEditObjectTest.objects.all().count() == 0
+
+    # 1. View create form
+    request = req('get')
+
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
+    )
+    form = form.bind(request=request)
+    response = form.__html__(render__call_target=lambda **kwargs: kwargs)
+    assert response['context']['csrf_token']
+
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
+        fields__f_int__initial=1,
+        fields__f_float__initial=lambda form, field, **_: 2,
+        template='<template name>',
+    )
+    form = form.bind(request=request)
+    response = form.__html__(
+        render__context={'foo': 'FOO'},
+        render__foobarbaz='render__foobarbaz',
+        render__call_target=lambda **kwargs: kwargs,
+    )
+
+    assert form.extra.is_create is True
+    assert response['context']['foo'] == 'FOO'
+    assert response['context']['csrf_token']
+    assert response['foobarbaz'] == 'render__foobarbaz'
+    assert response['template'] == '<template name>'
+    assert form.mode is INITIALS_FROM_GET
+    assert form.fields['f_int'].initial == 1
+    assert form.fields['f_int'].errors == set()
+    assert form.fields['f_int'].value == 1
+    assert form.fields['f_float'].initial == 2
+    assert form.fields['f_float'].value == 2
+    assert form.fields['f_bool'].value is None
+    assert set(form.fields.keys()) == {'f_int', 'f_float', 'f_bool', 'f_foreign_key', 'f_many_to_many'}
+
+    # 2. Create
+    foo = Foo.objects.create(foo=7)
+
+    request = req('post', **{
+        'f_int': '3',
+        'f_float': '5.1',
+        'f_bool': 'True',
+        'f_foreign_key': str(foo.pk),
+        'f_many_to_many': [str(foo.pk)],
+        form.actions.submit.own_target_marker(): '',
+    })
+
+    def on_save(form, instance, **_):
+        # validate  that the arguments are what we expect
+        assert form.instance is instance
+        assert isinstance(instance, CreateOrEditObjectTest)
+        assert instance.pk is not None
+
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
+        extra__on_save=on_save,  # just to check that we get called with the instance as argument
+    )
+    form = form.bind(request=request)
+    response = form.render_to_response()
+    assert form._request_data
+    instance = CreateOrEditObjectTest.objects.get()
+    assert instance is not None
+    assert instance.f_int == 3
+    assert instance.f_float == 5.1
+    assert instance.f_bool is True
+    assert response.status_code == 302
+    assert response['Location'] == '../'
+
+    # 3. View edit form
+    request = req('get')
+    form = Form.edit(
+        auto__instance=instance,
+    )
+    form = form.bind(request=request)
+    response = form.__html__(
+        render=lambda **kwargs: kwargs,
+    )
+    assert form.get_errors() == {}
+    assert form.fields['f_int'].value == 3
+    assert form.fields['f_float'].value == 5.1
+    assert form.fields['f_bool'].value is True
+    assert response['context']['csrf_token']
+
+    # 4. Edit
+    request = req('POST', **{
+        'f_int': '7',
+        'f_float': '11.2',
+        'f_foreign_key': str(foo.pk),
+        'f_many_to_many': [str(foo.pk)],
+        '-submit': '',
+        # Not sending a parameter in a POST is the same thing as false
+    })
+    form = Form.edit(
+        auto__instance=instance,
+    )
+    form = form.bind(request=request)
+    assert form.mode == FULL_FORM_FROM_REQUEST
+    response = form.render_to_response()
+    assert response.status_code == 302
+
+    assert response['Location'] == '../../'
+
+    instance.refresh_from_db()
+    assert instance is not None
+    assert instance.f_int == 7
+    assert instance.f_float == 11.2
+    assert not instance.f_bool
+
+    # edit again, to check redirect
+    form = Form.edit(
+        auto__instance=instance,
+    )
+    form = form.bind(request=request)
+    response = form.render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == '../../'
+
+
+def test_redirect_default_case():
+    sentinel1, sentinel2, sentinel3, sentinel4 = object(), object(), object(), object()
+    expected = dict(redirect_to=sentinel2, request=sentinel3, form=sentinel4)
+    assert create_or_edit_object_redirect(**merged(expected, is_create=sentinel1, redirect=lambda **kwargs: kwargs)) == expected
+
+
+@pytest.mark.django_db
+def test_unique_constraint_violation():
+    from tests.models import UniqueConstraintTest
+
+    request = req('post', **{
+        'f_int': '3',
+        'f_float': '5.1',
+        'f_bool': 'True',
+        '-submit': '',
+    })
+    Form.create(auto__model=UniqueConstraintTest).bind(request=request).render_to_response()
+    assert UniqueConstraintTest.objects.all().count() == 1
+
+    form = Form.create(
+        auto__model=UniqueConstraintTest,
+    ).bind(request=request)
+    form.render_to_response()
+
+    assert form.is_valid() is False
+    assert form.get_errors() == {'global': {'Unique constraint test with this F int, F float and F bool already exists.'}}
+    assert UniqueConstraintTest.objects.all().count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results with an unordered")
+@override_settings(DEBUG=True)
+def test_create_or_edit_object_dispatch():
+    from tests.models import Bar, Foo
+
+    f1 = Foo.objects.create(foo=1)
+    f2 = Foo.objects.create(foo=2)
+    request = req('get', **{DISPATCH_PATH_SEPARATOR + 'choices': ''})
+
+    response = Form.create(
+        auto__model=Bar,
+        template='<template name>',
+    ).bind(request=request).render_to_response()
+    assert json.loads(response.content) == {
+        'results': [
+            {"text": str(f1), "id": f1.pk},
+            {"text": str(f2), "id": f2.pk},
+        ],
+        'pagination': {'more': False},
+        'page': 1,
+    }
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_validate_unique():
+    from tests.models import Baz
+
+    request = req('post', **{
+        'a': '1',
+        'b': '1',
+        '-submit': '',
+    })
+
+    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
+    assert response.status_code == 302
+    assert Baz.objects.filter(a=1, b=1).exists()
+
+    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
+    assert response.status_code == 200
+    assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
+
+    request = req('post', **{
+        'a': '1',
+        'b': '2',  # <-- changed from 1
+        '-submit': '',
+    })
+    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
+    assert response.status_code == 302
+    instance = Baz.objects.get(a=1, b=2)
+
+    request = req('post', **{
+        'a': '1',
+        'b': '1',  # <-- 1 again
+        '-submit': '',
+    })
+
+    response = Form.edit(auto__instance=instance).bind(request=request).render_to_response()
+    assert response.status_code == 200
+    assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_full_template():
+    from tests.models import Foo
+
+    request = req('get')
+
+    response = Form.create(auto__model=Foo).bind(request=request).render_to_response()
+    assert response.status_code == 200
+
+    expected_html = f"""
+<html>
+    <head>
+    </head>
+    <body>
+        <h1>
+            Create foo
+        </h1>
+        <form action="" enctype="multipart/form-data" method="post">
+            <div>
+                <label for="id_foo">
+                    Foo
+                </label>
+                <input id="id_foo" name="foo" type="text" value=""/>
+                <div class="helptext">
+                    foo_help_text
+                </div>
+            </div>
+            <div class="links">
+                <input accesskey="s" name="create" type="submit" value="Create foo" name="-submit">
+            </div>
+        </form>
+    </body>
+</html>
+
+    """
+    actual = prettify(remove_csrf(response.content.decode()))
+    expected = prettify(expected_html)
+    assert actual == expected
+
+
+def test_create_or_edit_view_name():
+    from tests.models import Foo
+
+    class MyForm(Form):
+        pass
+
+    assert MyForm(auto__model=Foo).as_view().__name__ == "MyForm.as_view"
+
+
+@pytest.mark.django_db
+def test_create_or_edit_object_full_template():
+    from tests.models import Foo
+
+    foo = Foo.objects.create(foo=7)
+    Form.delete(auto__instance=foo).bind(request=req('post', **{'-submit': ''})).render_to_response()
+    with pytest.raises(Foo.DoesNotExist):
+        foo.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_evil_names():
+    from tests.models import EvilNames
+    Form.create(auto__model=EvilNames).bind(request=req('post'))

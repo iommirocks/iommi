@@ -10,6 +10,7 @@ from iommi import (
     Page,
 )
 from iommi._web_compat import Template
+from iommi.attrs import Attrs
 from iommi.part import as_html
 from tests.helpers import req
 
@@ -214,3 +215,16 @@ def test_request_in_evaluate_parameters():
 
 def test_render_not_included_fragment():
     assert html.div('foo', include=False).bind(request=None) is None
+
+
+def test_fragment__render__simple_cases():
+    assert format_html('{}', html.h1('foo').bind(parent=None)) == '<h1>foo</h1>'
+    assert format_html('{}', Fragment(children__child='foo<foo>').bind(parent=None)) == 'foo&lt;foo&gt;'
+
+
+def test_fragment_repr():
+    assert repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'}))) == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
+
+
+def test_as_html_integer():
+    assert as_html(part=123, context={}) == '123'

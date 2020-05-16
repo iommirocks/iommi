@@ -33,7 +33,7 @@ from iommi.member import (
     bind_members,
     collect_members,
 )
-from iommi.page import Fragment
+from iommi import Fragment
 from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,

@@ -10,6 +10,7 @@ from iommi import (
     Column,
     Field,
     Form,
+    Fragment,
     Table,
 )
 from iommi.base import (
@@ -17,7 +18,6 @@ from iommi.base import (
     keys,
 )
 from iommi.page import (
-    Fragment,
     Page,
 )
 from iommi.traversable import (

@@ -9,6 +9,7 @@ from tri_declarative import (
     Namespace,
 )
 
+import iommi.fragment
 from iommi import MISSING
 from iommi.base import items
 
@@ -21,13 +22,13 @@ def get_default_classes():
         iommi.Query,
         iommi.Filter,
         iommi.Form,
-        iommi.Fragment,
+        iommi.fragment.Fragment,
         iommi.Field,
         iommi.Action,
         iommi.Page,
         iommi.Menu,
         iommi.MenuItem,
-        iommi.Header,
+        iommi.fragment.Header,
 
         # Private-ish APIs
         iommi.endpoint.Endpoint,

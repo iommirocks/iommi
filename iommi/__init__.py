@@ -13,14 +13,16 @@ from iommi.form import (
     Form,
     register_field_factory,
 )
+from iommi.fragment import (
+    Fragment,
+    Header,
+    html,
+)
 from iommi.menu import (
     Menu,
     MenuItem,
 )
 from iommi.page import (
-    Fragment,
-    Header,
-    html,
     Page,
 )
 from iommi.part import Part
@@ -60,9 +62,6 @@ __all__ = [
     'Column',
     'Field',
     'Form',
-    'Fragment',
-    'Header',
-    'html',
     'Menu',
     'MenuItem',
     'middleware',

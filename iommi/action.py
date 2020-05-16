@@ -1,4 +1,4 @@
-from copy import copy
+from itertools import groupby
 from itertools import groupby
 from typing import (
     Callable,
@@ -18,7 +18,6 @@ from tri_declarative import (
 
 from iommi._web_compat import (
     format_html,
-    render_template,
     slugify,
 )
 from iommi.attrs import Attrs
@@ -26,12 +25,11 @@ from iommi.base import (
     capitalize,
     values,
 )
+from iommi.fragment import Fragment
 from iommi.member import Members
-from iommi.page import Fragment
 from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
 )
 
 
