@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-0.6.3 (----------)
+0.7.0 (2020-05-22)
 ~~~~~~~~~~~~~~~~~~
 
 * Fixed default text argument to Fragment
@@ -13,6 +13,20 @@ Changelog
 * Added header for bulk edit form in tables
 
 * Fixed textarea readonly when field is not editable
+
+* Fixed is_paginated function on Paginator
+
+* Add request to evaluate parameters
+
+* Make evaluate and evaluate_recursive match even the **_ case by default
+
+* No dispatch command on a POST is invalid and will now produce an error
+
+* Lazy bind() on members. This is a performance fix.
+
+* Fixed bug where display_name could not be overridden with a lambda due to incorrect evaluate handling
+
+* Removed Table.rendered_columns container. You have to look at the columns and check if they have render_column=False
 
 
 0.6.2 (2020-04-22)

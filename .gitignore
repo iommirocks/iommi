@@ -157,3 +157,4 @@ results/
 .pytest_cache
 coverage.xml
 .testmondata
+.hammett-db
