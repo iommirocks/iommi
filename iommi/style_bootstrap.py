@@ -19,7 +19,7 @@ bootstrap_base = Style(
                     'form-group': False,
                     'form-check': True,
                 },
-                template='iommi/form/bootstrap/row_radio.html',
+                input__template='iommi/form/bootstrap/row_radio.html',
                 input__attrs__class={
                     'form-check-input': True,
                     'form-control': False,
