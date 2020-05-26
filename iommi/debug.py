@@ -159,7 +159,8 @@ def iommi_debug_panel(part):
         module_name = frame.f_globals.get('__name__')
 
         if not module_name.startswith('iommi.admin'):
-            if module_name in ('tri_declarative', 'iommi', ) or module_name.startswith('iommi.') or module_name.startswith('django.'):
+            base_module_name = module_name.partition('.')[0]
+            if base_module_name in ('tri_declarative', 'iommi', 'django'):
                 continue
         filename = frame.f_code.co_filename
         lineno = frame.f_lineno
