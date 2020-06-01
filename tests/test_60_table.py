@@ -1333,8 +1333,7 @@ def test_query_namespace_inject():
     class FooException(Exception):
         pass
 
-    def post_validation(form):
-        del form
+    def post_validation(**_):
         raise FooException()
 
     with pytest.raises(FooException):

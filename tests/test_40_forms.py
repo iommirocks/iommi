@@ -277,7 +277,7 @@ def test_parse(MyTestForm):
 
 
 def test_parse_errors(MyTestForm):
-    def post_validation(form):
+    def post_validation(form, **_):
         form.add_error('General snafu')
     form = MyTestForm(
         post_validation=post_validation,
@@ -1455,7 +1455,7 @@ def test_form_errors_function():
     class MyForm(Form):
         foo = Field(is_valid=lambda **_: (False, 'field error'))
 
-    def post_validation(form):
+    def post_validation(form, **_):
         form.add_error('global error')
 
     assert MyForm(
