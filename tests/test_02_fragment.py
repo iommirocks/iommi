@@ -1,5 +1,4 @@
 import pytest
-from django.template import RequestContext
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from tri_struct import Struct
@@ -135,9 +134,9 @@ def test_as_html():
     assert format_html('{}', as_html(part=mark_safe('<foo>bar</foo>'), context={})) == '<foo>bar</foo>'
 
     # Template case
-    c = RequestContext(req('get'))
-    assert format_html('{}', as_html(part=Template('foo'), context=c)) == 'foo'
-    assert format_html('{}', as_html(part=Template('<foo>bar</foo>'), context=c)) == '<foo>bar</foo>'
+    request = req('get')
+    assert format_html('{}', as_html(request=request, part=Template('foo'), context={})) == 'foo'
+    assert format_html('{}', as_html(request=request, part=Template('<foo>bar</foo>'), context={})) == '<foo>bar</foo>'
 
     # __html__ attribute case
     assert format_html('{}', as_html(part=Struct(__html__=lambda: 'foo'), context={})) == 'foo'
@@ -211,3 +210,7 @@ def test_request_in_evaluate_parameters():
         )
 
     assert '<h1>7</h1>' in MyPage().bind(request=request).render_to_response().content.decode()
+
+
+def test_render_not_included_fragment():
+    assert html.div('foo', include=False).bind(request=None) is None

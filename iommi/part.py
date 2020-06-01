@@ -184,12 +184,14 @@ def request_data(request):
         assert False, f'unsupported request method {request.method}'
 
 
-def as_html(*, part: PartType, context):
+def as_html(*, request=None, part: PartType, context):
     if isinstance(part, str):
         return part
     elif isinstance(part, Template):
+        from django.template import RequestContext
+        assert not isinstance(context, RequestContext)
         template = part
-        return mark_safe(template.render(context=context))
+        return mark_safe(template.render(context=RequestContext(request, context)))
     elif hasattr(part, '__html__'):
         return part.__html__()
     else:

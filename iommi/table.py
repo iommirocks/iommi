@@ -851,6 +851,13 @@ class Cell(CellConfig):
     def __repr__(self):
         return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.cells.row}!r>"  # pragma: no cover
 
+    def get_context(self):
+        return self._parent.get_context()
+
+    def get_request(self):
+        return self._parent.get_request()
+
+
 
 class TemplateConfig(RefinableObject):
     template: str = Refinable()
