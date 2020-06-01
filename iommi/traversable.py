@@ -60,6 +60,7 @@ class Traversable(RefinableObject):
     _parent = None
     _is_bound = False
     _request = None
+    context = None
 
     iommi_style: str = EvaluatedRefinable()
 
@@ -210,6 +211,12 @@ class Traversable(RefinableObject):
             return self._request
         else:
             return self._parent.get_request()
+
+    def get_context(self):
+        if self._parent is None:
+            return self.context or {}
+        else:
+            return self._parent.get_context()
 
 
 def declared_members(node: Traversable) -> Any:

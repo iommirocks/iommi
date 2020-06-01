@@ -7,6 +7,7 @@ from iommi import (
 )
 from iommi._web_compat import (
     format_html,
+    Template,
 )
 from iommi.attrs import Attrs
 from iommi.page import Fragment
@@ -81,3 +82,14 @@ def test_promote_str_to_fragment_for_page():
 
 def test_as_html_integer():
     assert as_html(part=123, context={}) == '123'
+
+
+def test_page_context():
+    class MyPage(Page):
+        part1 = Template('Template: {{foo}}\n')
+        part2 = html.div(template=Template('Template2: {{foo}}'))
+
+        class Meta:
+            context__foo = 'foo'
+
+    assert MyPage().bind(request=req('get')).__html__() == 'Template: foo\nTemplate2: foo'

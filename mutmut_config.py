@@ -16,7 +16,7 @@ test_file_by_source_file = {
     'iommi/from_model.py': 'tests/test_30_from_model.py',
     'iommi/member.py': 'tests/test_15_member.py',
     'iommi/menu.py': 'tests/test_70_menu.py',
-    'iommi/page.py': 'tests/test_20_pages.py tests/test_02_fragments.py',
+    'iommi/page.py': 'tests/test_20_pages.py tests/test_02_fragment.py',
     'iommi/part.py': 'tests/test_20_pages.py tests/test_06_endpoint.py',
     'iommi/query.py': 'tests/test_50_query.py',
     'iommi/sort_after.py': 'tests/test_01_sort_after.py',
@@ -29,6 +29,7 @@ test_file_by_source_file = {
     'iommi/table.py': 'tests/test_60_table.py tests/test_61_table_sort.py',
     'iommi/traversable.py': 'tests/test_03_traversable.py',
     'iommi/profiling.py': None,
+    'iommi/evaluate.py': 'tests/test_08_evaluate.py',
 }
 
 
@@ -42,7 +43,7 @@ def pre_mutation(context, **_):
         context.skip = True
         return
 
-    if '@functools.wraps' in context.current_source_line or '@dispatch' in context.current_source_line or '@abstractmethod' in context.current_source_line or '@reinvokable' in context.current_source_line:
+    if '@functools.wraps' in context.current_source_line or '@dispatch' in context.current_source_line or '@abstractmethod' in context.current_source_line or '@reinvokable' in context.current_source_line or 'Refinable()' in context.current_source_line:
         context.skip = True
         return
 

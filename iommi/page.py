@@ -6,6 +6,7 @@ from typing import (
     List,
 )
 
+from django.template import RequestContext
 from tri_declarative import (
     declarative,
     dispatch,
@@ -136,6 +137,7 @@ class Fragment(Part):
         collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):
+        assert not isinstance(context, RequestContext)
         return format_html(
             '{}' * len(self.children),
             *[
@@ -159,7 +161,11 @@ class Fragment(Part):
         render=fragment__render,
     )
     def __html__(self, *, render=None):
-        return render(fragment=self, context=self._evaluate_parameters)
+        assert self._is_bound
+        return render(
+            fragment=self,
+            context={**self.get_context(), **self._evaluate_parameters},
+        )
 
     def own_evaluate_parameters(self):
         return dict(fragment=self)
@@ -254,7 +260,7 @@ class Page(Part):
     def __html__(self, *, render=None):
         self.context = evaluate_strict_container(self.context or {}, **self._evaluate_parameters)
         rendered = {
-            name: as_html(part=part, context=self._evaluate_parameters)
+            name: as_html(request=self.get_request(), part=part, context=self._evaluate_parameters)
             for name, part in self.parts.items()
         }
 
