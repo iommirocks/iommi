@@ -622,15 +622,12 @@ the columns you want to bulk edit.
 How do I enable bulk delete?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Editing multiple items at a time is easy in iommi with the built in bulk
-editing. Enable it for a columns by passing `bulk__include=True`:
-
 .. code:: python
 
     Table(
         auto__model=Foo,
         columns__select__include=True,
-        actions__delete__include=True,
+        bulk__actions__delete__include=True,
     )
 
 To enable the bulk delete, enable the `delete` action.
@@ -655,7 +652,7 @@ handler:
     Table(
         auto__model=Foo,
         columns__select__include=True,
-        actions__my_action=Action.submit(
+        bulk__actions__my_action=Action.submit(
             post_handler=my_action_post_handler,
         )
     )
