@@ -607,8 +607,8 @@ editing. Enable it for a columns by passing `bulk__include=True`:
 
     Table(
         auto__model=Foo,
-        columns__a__bulk__include=True,
         columns__select__include=True,
+        columns__a__bulk__include=True,
     )
 
 The bulk namespace here is used to configure a `Field` for the GUI so you
@@ -629,14 +629,36 @@ editing. Enable it for a columns by passing `bulk__include=True`:
 
     Table(
         auto__model=Foo,
-        actions__delete__include=True
         columns__select__include=True,
+        actions__delete__include=True,
     )
 
 To enable the bulk delete, enable the `delete` action.
 
 You also need to enable the select column, otherwise you can't select
 the columns you want to delete.
+
+
+How do I make a custom bulk action?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need to first show the select column by passing
+`columns__select__include=True`, then define a submit `Action` with a post
+handler:
+
+.. code:: python
+    def my_action_post_handler(table, request, **_):
+        queryset = table.bulk_queryset()
+        queryset.update(spiral='architect')
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+    Table(
+        auto__model=Foo,
+        columns__select__include=True,
+        actions__my_action=Action.submit(
+            post_handler=my_action_post_handler,
+        )
+    )
 
 
 How do I make a freetext search field?
