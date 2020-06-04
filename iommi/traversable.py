@@ -91,6 +91,21 @@ class Traversable(RefinableObject):
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
 
+    def iommi_name(self) -> str:
+        return self._name
+
+    def iommi_parent(self) -> "Traversable":
+        return self._parent
+
+    def iommi_root(self) -> 'Traversable':
+        node = self
+        while node.iommi_parent() is not None:
+            node = node.iommi_parent()
+        return node
+
+    def iommi_bound_members(self) -> Dict[str, 'Traversable']:
+        return self._bound_members if self._bound_members is not None else Struct()
+
     @property
     def iommi_path(self) -> str:
         long_path = build_long_path(self)
@@ -178,7 +193,7 @@ class Traversable(RefinableObject):
         # We need to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict
         result._evaluate_parameters = {
-            **(get_parent(result)._evaluate_parameters if result._parent is not None else {}),
+            **(result.iommi_parent()._evaluate_parameters if result._parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
         if parent is None:
@@ -225,7 +240,7 @@ def declared_members(node: Traversable) -> Any:
 
 
 def set_declared_member(node: Traversable, name: str, value: Union[Any, Dict[str, Traversable]]):
-    root = get_root(node)
+    root = node.iommi_root()
     if (
         hasattr(root, '_long_path_by_path')
         or hasattr(root, '_path_by_long_path')
@@ -236,29 +251,8 @@ def set_declared_member(node: Traversable, name: str, value: Union[Any, Dict[str
     node._declared_members[name] = value
 
 
-def get_parent(node: Traversable) -> Traversable:
-    # noinspection PyProtectedMember
-    return node._parent
-
-
-def get_name(node: Traversable) -> str:
-    # noinspection PyProtectedMember
-    return node._name
-
-
-def bound_members(node: Traversable) -> Dict[str, Traversable]:
-    # noinspection PyProtectedMember
-    return node._bound_members if node._bound_members is not None else Struct()
-
-
-def get_root(node: Traversable) -> Traversable:
-    while get_parent(node) is not None:
-        node = get_parent(node)
-    return node
-
-
 def get_long_path_by_path(node):
-    root = get_root(node)
+    root = node.iommi_root()
     long_path_by_path = getattr(root, '_long_path_by_path', None)
     if long_path_by_path is None:
         long_path_by_path = build_long_path_by_path(root)
@@ -267,7 +261,7 @@ def get_long_path_by_path(node):
 
 
 def get_path_by_long_path(node):
-    root = get_root(node)
+    root = node.iommi_root()
     path_by_long_path = getattr(root, '_path_by_long_path', None)
     if path_by_long_path is None:
         long_path_by_path = get_long_path_by_path(root)
@@ -278,10 +272,10 @@ def get_path_by_long_path(node):
 
 def build_long_path(node: Traversable) -> str:
     def _traverse(t: Traversable) -> List[str]:
-        assert get_name(t) is not None
-        if get_parent(t) is None:
+        assert t.iommi_name() is not None
+        if t.iommi_parent() is None:
             return []
-        return _traverse(get_parent(t)) + [get_name(t)]
+        return _traverse(t.iommi_parent()) + [t.iommi_name()]
 
     return '/'.join(_traverse(node))
 

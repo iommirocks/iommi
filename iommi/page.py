@@ -44,7 +44,6 @@ from iommi.traversable import (
     EvaluatedRefinable,
     reinvokable,
     Traversable,
-    get_root,
 )
 from iommi.evaluate import evaluate_strict_container
 
@@ -184,7 +183,7 @@ class Header(Fragment):
 
     def on_bind(self):
         if self.tag is None:
-            root = get_root(self)
+            root = self.iommi_root()
             if not hasattr(root, '_iommi_auto_header_set'):
                 root._iommi_auto_header_set = set()
 

@@ -14,7 +14,6 @@ from iommi._web_compat import (
 )
 from iommi.member import Members
 from iommi.traversable import (
-    bound_members,
     declared_members,
     PathNotFoundException,
     Traversable,
@@ -65,7 +64,7 @@ def endpoint__debug_tree(endpoint, **_):
             children = [
                 (
                     k,
-                    bound_members(node).get(k, v)
+                    node.iommi_bound_members().get(k, v)
                 )
                 for k, v in declared_members(node).items()
             ]

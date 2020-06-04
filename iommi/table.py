@@ -113,7 +113,6 @@ from iommi.query import (
     QueryException,
 )
 from iommi.traversable import (
-    bound_members,
     declared_members,
     evaluated_refinable,
     EvaluatedRefinable,
@@ -1612,7 +1611,7 @@ class Table(Part):
             self.get_request(),
             self.actions_template,
             dict(
-                actions=bound_members(self).actions,
+                actions=self.iommi_bound_members().actions,
                 non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 table=self,
