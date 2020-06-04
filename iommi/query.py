@@ -274,6 +274,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='text',
+        query_operator_for_field=':',
     )
     def text(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
