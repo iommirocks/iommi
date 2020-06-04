@@ -231,7 +231,7 @@ class Filter(Part):
             self.attr = self._name
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self._evaluate_parameters)
+        self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(filter=self)
@@ -603,7 +603,7 @@ class Query(Part):
 
         setdefaults_path(
             render,
-            context=self._evaluate_parameters,
+            context=self.iommi_evaluate_parameters(),
             template=self.template,
         )
 

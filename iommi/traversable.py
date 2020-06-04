@@ -172,7 +172,7 @@ class Traversable(RefinableObject):
 
         if hasattr(result, 'include'):
             include = evaluate_strict(result.include, **{
-                **(parent._evaluate_parameters if parent is not None else {}),
+                **(parent.iommi_evaluate_parameters() if parent is not None else {}),
                 **result.own_evaluate_parameters(),
             })
             if include is False:
@@ -193,11 +193,11 @@ class Traversable(RefinableObject):
         # We need to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict
         result._evaluate_parameters = {
-            **(result.iommi_parent()._evaluate_parameters if result._parent is not None else {}),
+            **(result.iommi_parent().iommi_evaluate_parameters() if result._parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
         if parent is None:
-            result._evaluate_parameters['request'] = request
+            result.iommi_evaluate_parameters()['request'] = request
         result.on_bind()
 
         # on_bind has a chance to hide itself
@@ -205,13 +205,13 @@ class Traversable(RefinableObject):
             return None
 
         if hasattr(result, 'attrs'):
-            result.attrs = evaluate_attrs(result, **result._evaluate_parameters)
+            result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
         evaluated_attributes = [k for k, v in result.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
-        evaluate_members(result, evaluated_attributes, **result._evaluate_parameters)
+        evaluate_members(result, evaluated_attributes, **result.iommi_evaluate_parameters())
 
         if hasattr(result, 'extra_evaluated'):
-            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result._evaluate_parameters)
+            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result.iommi_evaluate_parameters())
 
         return result
 
@@ -220,6 +220,9 @@ class Traversable(RefinableObject):
 
     def own_evaluate_parameters(self):
         return {}
+
+    def iommi_evaluate_parameters(self):
+        return self._evaluate_parameters
 
     def get_request(self):
         if self._parent is None:

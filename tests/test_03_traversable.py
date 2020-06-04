@@ -319,4 +319,4 @@ def test_initial_setup():
     assert t._parent is None
     assert t._is_bound is False
     assert t._request is None
-    assert t._evaluate_parameters is None
+    assert t.iommi_evaluate_parameters() is None
