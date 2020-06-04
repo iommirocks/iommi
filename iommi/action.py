@@ -28,7 +28,6 @@ from iommi.page import Fragment
 from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
-    get_parent,
     reinvokable,
 )
 
@@ -83,7 +82,7 @@ class Action(Fragment):
         return f'-{self.iommi_path}'
 
     def is_target(self):
-        return self.own_target_marker() in get_parent(get_parent(self))._request_data
+        return self.own_target_marker() in self.iommi_parent().iommi_parent()._request_data
 
     @classmethod
     @class_shortcut(

@@ -17,7 +17,6 @@ from iommi.page import (
     Page,
 )
 from iommi.traversable import (
-    bound_members,
     build_long_path_by_path,
     reinvokable,
     Traversable,
@@ -140,11 +139,11 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
 
     assert foo.iommi_path == ''
 
-    assert bound_members(foo).my_part2.iommi_path == 'my_part2'
-    assert bound_members(foo).my_part2.iommi_dunder_path == 'my_part2'
+    assert foo.iommi_bound_members().my_part2.iommi_path == 'my_part2'
+    assert foo.iommi_bound_members().my_part2.iommi_dunder_path == 'my_part2'
 
-    assert bound_members(bound_members(foo).my_part2).my_part.iommi_path == 'my_part'
-    assert bound_members(bound_members(foo).my_part2).my_part.iommi_dunder_path == 'my_part2__my_part'
+    assert foo.iommi_bound_members().my_part2.iommi_bound_members().my_part.iommi_path == 'my_part'
+    assert foo.iommi_bound_members().my_part2.iommi_bound_members().my_part.iommi_dunder_path == 'my_part2__my_part'
 
 
 class MyReinvokable(Traversable):
