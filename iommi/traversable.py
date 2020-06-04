@@ -160,7 +160,7 @@ class Traversable(RefinableObject):
                 **(parent._evaluate_parameters if parent is not None else {}),
                 **result.own_evaluate_parameters(),
             })
-            if include is False:
+            if not bool(include):
                 return None
         else:
             include = MISSING
