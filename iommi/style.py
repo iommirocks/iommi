@@ -11,7 +11,7 @@ from tri_declarative import (
     RefinableObject,
 )
 
-DEFAULT_STYLE = 'bootstrap'
+DEFAULT_STYLE = 'foundation'
 
 
 def apply_style(obj):
