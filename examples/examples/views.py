@@ -466,9 +466,13 @@ class DummyRow:
         _, _, shortcut = attr.partition('column_of_type_')
         s = f'{shortcut} #{self.idx}'
         if shortcut == 'link':
-            return Struct(
-                get_absolute_url=lambda: '#',
-            )
+            class Link:
+                def get_absolute_url(self):
+                    return '#'
+
+                def __str__(self):
+                    return 'title'
+            return Link()
         return s
 
     @staticmethod
@@ -523,14 +527,10 @@ def all_column_sorts(request):
     ))
 
 
-BASE_TEMPLATE_BY_STYLE = defaultdict(lambda: 'base.html')
-BASE_TEMPLATE_BY_STYLE['semantic_ui'] = 'base_semantic_ui.html'
-
-
 def select_style_post_handler(form, **_):
     style = form.fields.style.value
     iommi.style.DEFAULT_STYLE = style
-    iommi.part.DEFAULT_BASE_TEMPLATE = BASE_TEMPLATE_BY_STYLE[style]
+    return HttpResponseRedirect('/')
 
 
 class StyleSelector(Form):
@@ -539,8 +539,9 @@ class StyleSelector(Form):
 
     style = Field.choice(
         choices=[
-            'bootstrap',
-            'semantic_ui',
+            k for k in
+            iommi.style._styles.keys()
+            if k not in ('test', 'base', 'bootstrap_horizontal')
         ],
         initial=lambda form, field, **_: iommi.style.DEFAULT_STYLE,
     )

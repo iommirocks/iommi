@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 
 from iommi.from_model import register_name_field
+from iommi.style import Style
 
 
 class IommiConfig(AppConfig):
@@ -23,8 +24,11 @@ class IommiConfig(AppConfig):
             bootstrap_horizontal,
         )
         from iommi.style_semantic_ui import semantic_ui
+        from iommi.style_foundation import foundation
         register_style('base', base)
         register_style('test', test)
         register_style('bootstrap', bootstrap)
         register_style('bootstrap_horizontal', bootstrap_horizontal)
         register_style('semantic_ui', semantic_ui)
+        register_style('water', Style(base))
+        register_style('foundation', foundation)
