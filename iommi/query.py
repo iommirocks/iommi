@@ -627,7 +627,7 @@ class Query(Part):
                 field = setdefaults_path(
                     Namespace(),
                     _name=name,
-                    attr=lambda query, field, **_: query.filters[field._name].attr,
+                    attr=name if filter.attr is MISSING else filter.attr,
                     model_field=filter.model_field,
                 )
                 declared_fields[name] = declared_fields[name].reinvoke(field)
