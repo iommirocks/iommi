@@ -397,7 +397,7 @@ class Column(Part):
         self.declared_column = self._declared
 
         # Not strict evaluate on purpose
-        self.model = evaluate(self.model, **self._evaluate_parameters)
+        self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
     def own_evaluate_parameters(self):
         return dict(column=self)
@@ -743,7 +743,7 @@ class Cells(Traversable):
 
     def __html__(self):
         if self.template:
-            return render_template(self._parent.get_request(), self.template, self._evaluate_parameters)
+            return render_template(self._parent.get_request(), self.template, self.iommi_evaluate_parameters())
 
         return Fragment(
             tag=self.tag,
@@ -801,7 +801,10 @@ class Cell(CellConfig):
         self.table = cells._parent
         self.row = cells.row
 
-        self._evaluate_parameters = {**self._parent._evaluate_parameters, 'column': column}
+        self._evaluate_parameters = {
+            **self._parent.iommi_evaluate_parameters(),
+            'column': column
+        }
 
         self.value = evaluate_strict(self.value, **self._evaluate_parameters)
         self._evaluate_parameters['value'] = self.value
@@ -812,6 +815,9 @@ class Cell(CellConfig):
     @property
     def iommi_dunder_path(self):
         return path_join(self.column.iommi_dunder_path, 'cell', separator='__')
+
+    def iommi_evaluate_parameters(self):
+        return self._evaluate_parameters
 
     def __html__(self):
         cell__template = self.column.cell.template
@@ -870,7 +876,7 @@ class HeaderConfig(Traversable):
     url = EvaluatedRefinable()
 
     def __html__(self):
-        return render_template(self.get_request(), self.template, self._parent._evaluate_parameters)
+        return render_template(self.get_request(), self.template, self._parent.iommi_evaluate_parameters())
 
     def __str__(self):
         return self.__html__()
@@ -1076,7 +1082,7 @@ class Paginator(Traversable):
         evaluate_parameters = dict(
             page_size=self.page_size,
             rows=rows,
-            **self._evaluate_parameters,
+            **self.iommi_evaluate_parameters(),
         )
 
         if self.page_size is None:
@@ -1094,7 +1100,7 @@ class Paginator(Traversable):
         elif self.page < 1:
             self.page = 1
 
-        self.context = self._evaluate_parameters.copy()
+        self.context = self.iommi_evaluate_parameters().copy()
 
         if self.number_of_pages != 1:
             bottom = (self.page - 1) * self.page_size
@@ -1509,7 +1515,7 @@ class Table(Part):
         bind_members(self, name='columns')
         bind_members(self, name='endpoints')
 
-        self.title = evaluate_strict(self.title, **self._evaluate_parameters)
+        self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
                 self.h_tag = self.h_tag(
@@ -1523,10 +1529,10 @@ class Table(Part):
 
         self.header = self.header.bind(parent=self)
 
-        evaluate_member(self, 'sortable', **self._evaluate_parameters)  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _prepare_headers depends on it
 
-        evaluate_member(self, 'model', strict=False, **self._evaluate_parameters)
-        evaluate_member(self, 'rows', **self._evaluate_parameters)
+        evaluate_member(self, 'model', strict=False, **self.iommi_evaluate_parameters())
+        evaluate_member(self, 'rows', **self.iommi_evaluate_parameters())
         self._prepare_sorting()
 
         if not self.sortable:
@@ -1724,7 +1730,7 @@ class Table(Part):
 
     def cells_for_rows(self):
         assert self._is_bound
-        for i, row in enumerate(self.preprocess_rows(rows=self.rows, **self._evaluate_parameters)):
+        for i, row in enumerate(self.preprocess_rows(rows=self.rows, **self.iommi_evaluate_parameters())):
             row = self.preprocess_row(table=self, row=row)
             yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
@@ -1779,7 +1785,7 @@ class Table(Part):
 
         assert self.rows is not None
 
-        context = self._evaluate_parameters.copy()
+        context = self.iommi_evaluate_parameters().copy()
         context['query'] = self.query
         context['bulk_form'] = self.bulk_form
 

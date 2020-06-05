@@ -34,7 +34,7 @@ def test_debug_tree(settings):
 
     root = MyPage().bind(request=req('get', **{'/debug_tree': '7'}))
     target = find_target(path='/debug_tree', root=root)
-    result = target.func(value='', **target._evaluate_parameters)
+    result = target.func(value='', **target.iommi_evaluate_parameters())
 
     assert isinstance(result, Table)
     tree = [

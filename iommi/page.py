@@ -58,7 +58,7 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.get_request(), fragment.template, {**context, **fragment._evaluate_parameters, rendered_children: rendered_children})
+        return render_template(fragment.get_request(), fragment.template, {**context, **fragment.iommi_evaluate_parameters(), rendered_children: rendered_children})
 
     is_void_element = fragment.tag in _void_elements
 
@@ -152,7 +152,7 @@ class Fragment(Part):
 
         # Fragment children are special and they can be raw str/int etc but
         # also callables. We need to evaluate them!
-        children = evaluate_strict_container(self.children, **self._evaluate_parameters)
+        children = evaluate_strict_container(self.children, **self.iommi_evaluate_parameters())
         self.children.update(children)
         self._bound_members.children._bound_members.update(children)
 
@@ -163,7 +163,7 @@ class Fragment(Part):
         assert self._is_bound
         return render(
             fragment=self,
-            context={**self.get_context(), **self._evaluate_parameters},
+            context={**self.get_context(), **self.iommi_evaluate_parameters()},
         )
 
     def own_evaluate_parameters(self):
@@ -257,9 +257,9 @@ class Page(Part):
         render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
     )
     def __html__(self, *, render=None):
-        self.context = evaluate_strict_container(self.context or {}, **self._evaluate_parameters)
+        self.context = evaluate_strict_container(self.context or {}, **self.iommi_evaluate_parameters())
         rendered = {
-            name: as_html(request=self.get_request(), part=part, context=self._evaluate_parameters)
+            name: as_html(request=self.get_request(), part=part, context=self.iommi_evaluate_parameters())
             for name, part in self.parts.items()
         }
 

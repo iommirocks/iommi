@@ -98,7 +98,7 @@ def perform_ajax_dispatch(*, root, path, value):
     if not isinstance(target, Endpoint) or func is None:
         raise InvalidEndpointPathException(f'Target {target!r} is not a valid endpoint handler')
 
-    return func(root=root, value=value, **target._evaluate_parameters)
+    return func(root=root, value=value, **target.iommi_evaluate_parameters())
 
 
 def perform_post_dispatch(*, root, path, value):
@@ -110,7 +110,7 @@ def perform_post_dispatch(*, root, path, value):
     if getattr(target, 'post_handler', None) is None:
         raise InvalidEndpointPathException(f'Target {target!r} has no registered post_handler')
 
-    return target.post_handler(value=value, **target._evaluate_parameters)
+    return target.post_handler(value=value, **target.iommi_evaluate_parameters())
 
 
 def path_join(prefix, *args, separator=DISPATCH_PATH_SEPARATOR) -> str:

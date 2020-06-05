@@ -109,7 +109,7 @@ class MenuItem(MenuBase):
     def on_bind(self):
         super(MenuItem, self).on_bind()
 
-        self.url = evaluate_strict(self.url, **self._evaluate_parameters)
+        self.url = evaluate_strict(self.url, **self.iommi_evaluate_parameters())
 
         # If this is a section header, and all sub-parts are hidden, hide myself
         if not self.url and self.sub_menu is not None and not self.sub_menu:
