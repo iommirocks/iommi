@@ -83,7 +83,7 @@ class Traversable(RefinableObject):
         n = f' {self._name}' if self._name is not None else ''
         b = ' (bound)' if self._is_bound else ''
         try:
-            p = f" path:'{self.iommi_path}'" if self._parent is not None else ""
+            p = f" path:'{self.iommi_path}'" if self.iommi_parent() is not None else ""
         except PathNotFoundException:
             p = ' path:<no path>'
         c = ''
@@ -196,7 +196,7 @@ class Traversable(RefinableObject):
         # We need to recalculate evaluate_parameters here to not get the
         # unbound stuff that was in the first round of this dict
         result._evaluate_parameters = {
-            **(result.iommi_parent().iommi_evaluate_parameters() if result._parent is not None else {}),
+            **(result.iommi_parent().iommi_evaluate_parameters() if result.iommi_parent() is not None else {}),
             **result.own_evaluate_parameters(),
         }
         if parent is None:
@@ -231,13 +231,13 @@ class Traversable(RefinableObject):
         if self._parent is None:
             return self._request
         else:
-            return self._parent.get_request()
+            return self.iommi_root().get_request()
 
     def get_context(self):
         if self._parent is None:
             return self.context or {}
         else:
-            return self._parent.get_context()
+            return self.iommi_parent().get_context()
 
 
 def declared_members(node: Traversable) -> Any:

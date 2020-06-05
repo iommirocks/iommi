@@ -102,9 +102,9 @@ class MenuItem(MenuBase):
 
     @reinvokable
     @dispatch(
-        display_name=lambda menu_item, **_: capitalize(menu_item._name).replace('_', ' '),
+        display_name=lambda menu_item, **_: capitalize(menu_item.iommi_name()).replace('_', ' '),
         regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
-        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item._parent, 'url', None), menu_item._name) + '/',
+        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name()) + '/',
         a=EMPTY,
     )
     def __init__(self, **kwargs):

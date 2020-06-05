@@ -319,8 +319,8 @@ def test_attrs_evaluated():
 
 def test_initial_setup():
     t = Traversable()
-    assert t._name is None
-    assert t._parent is None
+    assert t.iommi_name() is None
+    assert t.iommi_parent() is None
     assert t._is_bound is False
-    assert t._request is None
+    assert t.get_request() is None
     assert t.iommi_evaluate_parameters() is None
