@@ -317,7 +317,7 @@ def build_long_path_by_path(root) -> Dict[str, str]:
         else:
             return
 
-        for name, member in members.items():
+        for name, member in dict.items(members):
             if member:
                 _traverse(
                     member,

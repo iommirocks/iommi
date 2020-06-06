@@ -1224,7 +1224,7 @@ class Form(Part):
     def is_valid(self):
         if self._valid is None:
             self.validate()
-            for field in self.fields.values():
+            for field in dict.values(self.fields):
                 if field.errors:
                     self._valid = False
                     break
@@ -1233,7 +1233,7 @@ class Form(Part):
         return self._valid
 
     def validate(self):
-        for field in self.fields.values():
+        for field in dict.values(self.fields):
             field.post_validation(**field.iommi_evaluate_parameters())
         self.post_validation(**self.iommi_evaluate_parameters())
         return self

@@ -8,7 +8,7 @@ def sort_after(d):
     to_be_moved_by_index = []
     to_be_moved_by_name = defaultdict(list)
     to_be_moved_last = []
-    for x in d.items():
+    for x in dict.items(d):
         after = getattr(x[1], 'after', None)
         if after is None:
             unmoved.append(x)

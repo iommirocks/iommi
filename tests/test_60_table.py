@@ -2336,3 +2336,9 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
     </nav>
 </div>
 """)
+
+
+@pytest.mark.django_db
+def test_evil_names():
+    from tests.models import EvilNames
+    Table(auto__model=EvilNames)

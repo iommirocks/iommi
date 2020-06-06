@@ -57,7 +57,7 @@ class NotBoundYet:
 
 
 def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
-    forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
+    forbidden_names = FORBIDDEN_NAMES & (set(dict.keys(items_dict or {})) | set(dict.keys(items or {})))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
 
@@ -66,12 +66,12 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
     _unapplied_config = {}
 
     if items_dict is not None:
-        for key, x in items_dict.items():
+        for key, x in dict.items(items_dict):
             x._name = key
             unbound_items[key] = x
 
     if items is not None:
-        for key, item in items.items():
+        for key, item in dict.items(items):
             if isinstance(item, Traversable):
                 # noinspection PyProtectedMember
                 assert not item._is_bound
@@ -99,7 +99,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
 
     to_delete = {
         k
-        for k, v in unbound_items.items()
+        for k, v in dict.items(unbound_items)
         if v is None
     }
 
@@ -138,7 +138,7 @@ class MemberBinder(dict):
                     continue
                 bindable_names.append(name)
         else:
-            bindable_names = list(_declared_members.keys())
+            bindable_names = list(dict.keys(_declared_members))
 
         object.__setattr__(self, '_parent', parent)
         object.__setattr__(self, '_bindable_names', bindable_names)

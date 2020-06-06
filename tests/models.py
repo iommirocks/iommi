@@ -208,3 +208,12 @@ class T2(models.Model):
 
     class Meta:
         ordering = ('id',)
+
+
+class EvilNames(models.Model):
+    values = models.CharField(max_length=255)
+    keys = models.CharField(max_length=255)
+    items = models.CharField(max_length=255)
+
+    class Meta:
+        ordering = ('id',)

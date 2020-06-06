@@ -560,7 +560,7 @@ class Query(Part):
             include=False,
         )
 
-        for name, filter in declared_members(self).filters.items():
+        for name, filter in dict.items(declared_members(self).filters):
             if filter.attr is None:
                 continue
             field = setdefaults_path(

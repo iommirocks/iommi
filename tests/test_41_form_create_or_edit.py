@@ -293,3 +293,9 @@ def test_create_or_edit_object_full_template():
     Form.delete(auto__instance=foo).bind(request=req('post', **{'-submit': ''})).render_to_response()
     with pytest.raises(Foo.DoesNotExist):
         foo.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_evil_names():
+    from tests.models import EvilNames
+    Form.create(auto__model=EvilNames).bind(request=req('post'))

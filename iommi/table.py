@@ -1419,7 +1419,7 @@ class Table(Part):
         if self.model:
             # Query
             filters = Struct()
-            for name, column in declared_members(self).columns.items():
+            for name, column in dict.items(declared_members(self).columns):
                 filter = setdefaults_path(
                     Namespace(),
                     column.filter,
@@ -1449,7 +1449,7 @@ class Table(Part):
             field_class = self.get_meta().form_class.get_meta().member_class
 
             declared_bulk_fields = Struct()
-            for name, column in declared_members(self).columns.items():
+            for name, column in dict.items(declared_members(self).columns):
                 field = self.bulk.fields.pop(name, {})
 
                 if column.bulk.include:
@@ -1482,7 +1482,7 @@ class Table(Part):
             )
 
             # x.bulk.include can be a callable here. We treat that as truthy on purpose.
-            if any(x.bulk.include for x in declared_members(self).columns.values()) or 'actions' in self.bulk:
+            if any(x.bulk.include for x in dict.values(declared_members(self).columns)) or 'actions' in self.bulk:
                 self.bulk_form = form_class(
                     _fields_dict=declared_bulk_fields,
                     _name='bulk',
