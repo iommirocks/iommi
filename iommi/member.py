@@ -14,6 +14,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+from iommi.base import keys, items
 from iommi.sort_after import sort_after
 from iommi.traversable import (
     declared_members,
@@ -22,6 +23,9 @@ from iommi.traversable import (
 )
 
 FORBIDDEN_NAMES = {x for x in dir(Traversable)}
+
+# Need to use this in collect_members that has a local variable called items
+items_of = items
 
 
 class ForbiddenNamesException(Exception):
@@ -57,7 +61,7 @@ class NotBoundYet:
 
 
 def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
-    forbidden_names = FORBIDDEN_NAMES & (set((items_dict or {}).keys()) | set((items or {}).keys()))
+    forbidden_names = FORBIDDEN_NAMES & (set(keys(items_dict or {})) | set(keys(items or {})))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
 
@@ -66,12 +70,12 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
     _unapplied_config = {}
 
     if items_dict is not None:
-        for key, x in items_dict.items():
+        for key, x in items_of(items_dict):
             x._name = key
             unbound_items[key] = x
 
     if items is not None:
-        for key, item in items.items():
+        for key, item in items_of(items):
             if isinstance(item, Traversable):
                 # noinspection PyProtectedMember
                 assert not item._is_bound
@@ -92,14 +96,14 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                 assert unknown_types_fall_through or item is None, f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
-    for k, v in Namespace(_unapplied_config).items():
+    for k, v in items_of(Namespace(_unapplied_config)):
         unbound_items[k] = unbound_items[k].reinvoke(v)
         # noinspection PyProtectedMember
         assert unbound_items[k]._name is not None
 
     to_delete = {
         k
-        for k, v in unbound_items.items()
+        for k, v in items_of(unbound_items)
         if v is None
     }
 
@@ -132,13 +136,13 @@ class MemberBinder(dict):
     def __init__(self, parent: Members, _declared_members: Dict[str, Traversable], _unknown_types_fall_through: bool):
         if _unknown_types_fall_through:
             bindable_names = []
-            for name, member in _declared_members.items():
+            for name, member in items(_declared_members):
                 if not hasattr(member, 'bind'):
                     self[name] = copy(member)
                     continue
                 bindable_names.append(name)
         else:
-            bindable_names = list(_declared_members.keys())
+            bindable_names = list(keys(_declared_members))
 
         object.__setattr__(self, '_parent', parent)
         object.__setattr__(self, '_bindable_names', bindable_names)

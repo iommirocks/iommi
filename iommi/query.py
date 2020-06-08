@@ -56,8 +56,11 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.base import (
+    items,
+    keys,
     MISSING,
     model_and_rows,
+    values,
 )
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate
@@ -463,7 +466,7 @@ def default_endpoint__errors(query, **_):
         errors = query.form.get_errors()
         # These dicts contains sets that we don't want in the JSON response, so convert to list
         if 'fields' in errors:
-            errors['fields'] = {x: list(y) for x, y in errors['fields'].items()}
+            errors['fields'] = {x: list(y) for x, y in items(errors['fields'])}
         if 'global' in errors:
             errors['global'] = list(errors['global'])
         return errors
@@ -560,7 +563,7 @@ class Query(Part):
             include=False,
         )
 
-        for name, filter in declared_members(self).filters.items():
+        for name, filter in items(declared_members(self).filters):
             if filter.attr is None:
                 continue
             field = setdefaults_path(
@@ -617,11 +620,11 @@ class Query(Part):
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
 
         # TODO: should it be possible to have freetext as a callable? this code just treats callables as truthy
-        if any(f.freetext for f in declared_members(self)['filters'].values()):
+        if any(f.freetext for f in values(declared_members(self)['filters'])):
             declared_members(self.form).fields[FREETEXT_SEARCH_NAME].include = True
 
         declared_fields = declared_members(self.form)['fields']
-        for name, filter in self.filters.items():
+        for name, filter in items(self.filters):
             assert filter.attr or not getattr(filter.value_to_q, 'iommi_needs_attr', False), f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for"
             if name in declared_fields:
                 field = setdefaults_path(
@@ -632,7 +635,7 @@ class Query(Part):
                 )
                 declared_fields[name] = declared_fields[name].reinvoke(field)
         set_declared_member(self.form, 'fields', declared_fields)
-        for name, field in declared_fields.items():
+        for name, field in items(declared_fields):
             if name == FREETEXT_SEARCH_NAME:
                 continue
             if name not in self.filters:
@@ -785,7 +788,7 @@ class Query(Part):
                 raise QueryException(f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"')
             result = filter.value_to_q(filter=filter, op='=', value_string_or_f=value)
             return result
-        raise QueryException(f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(self.filters.keys()))}')
+        raise QueryException(f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(keys(self.filters)))}')
 
     def _binary_op_to_q(self, token):
         """
@@ -816,10 +819,10 @@ class Query(Part):
             if result is None:
                 raise QueryException(f'Unknown value "{value_string_or_f}" for filter "{filter._name}"')
             return result
-        raise QueryException(f'Unknown filter "{filter_name}", available filters: {list(self.filters.keys())}')
+        raise QueryException(f'Unknown filter "{filter_name}", available filters: {list(keys(self.filters))}')
 
     def _freetext_to_q(self, token):
-        if all(not v.freetext for v in self.filters.values()):
+        if all(not v.freetext for v in values(self.filters)):
             raise QueryException('There are no freetext filters available')
         assert len(token) == 1
         token = token[0].strip('"')
@@ -828,7 +831,7 @@ class Query(Part):
             operator.or_,
             [
                 Q(**{filter.attr + '__' + filter.query_operator_to_q_operator(':'): token})
-                for filter in self.filters.values()
+                for filter in values(self.filters)
                 if filter.freetext
             ]
         )
@@ -853,7 +856,7 @@ class Query(Part):
 
             result = [
                 expr(field, field.is_list, field.value)
-                for field in form.fields.values()
+                for field in values(form.fields)
                 if field._name != FREETEXT_SEARCH_NAME and field.value not in (None, '', [])
             ]
 
@@ -863,7 +866,7 @@ class Query(Part):
                     result.append(
                         '(%s)' % ' or '.join([
                             f'{filter._name}:{to_string_surrounded_by_quote(freetext)}'
-                            for filter in self.filters.values()
+                            for filter in values(self.filters)
                             if filter.freetext]
                         )
                     )

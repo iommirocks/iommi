@@ -21,13 +21,14 @@ from iommi import (
     Page,
     Table,
 )
+from iommi.base import items
 from iommi.from_model import get_fields
 from iommi.traversable import reinvokable
 
 model_by_app_and_name = {
     (app_name, model_name): model
-    for app_name, models in django_apps.all_models.items()
-    for model_name, model in models.items()
+    for app_name, models in items(django_apps.all_models)
+    for model_name, model in items(models)
 }
 
 
@@ -73,7 +74,7 @@ class Admin(Page):
         parts = {
             # Arguments that are not for us needs to be thrown on the ground
             k: None if should_throw_away(k, v) else v
-            for k, v in parts.items()
+            for k, v in items(parts)
         }
 
         super(Admin, self).__init__(parts=parts, **kwargs)
@@ -110,7 +111,7 @@ class Admin(Page):
             sortable=False,
             rows=[
                 Struct(app_name=app_name, model_name=model_name, model=model)
-                for (app_name, model_name), model in model_by_app_and_name.items()
+                for (app_name, model_name), model in items(model_by_app_and_name)
             ],
             preprocess_rows=preprocess_rows,
             columns=dict(

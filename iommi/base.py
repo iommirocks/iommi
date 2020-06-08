@@ -43,3 +43,15 @@ def build_as_view_wrapper(target):
 def capitalize(s):
     return s[0].upper() + s[1:] if s else s
 
+
+# Turns out len(x) is a good idea, and x.values() is a bad idea. Let's do it the way it should be done.
+def values(container):
+    return type(container).values(container)
+
+
+def items(container):
+    return type(container).items(container)
+
+
+def keys(container):
+    return type(container).keys(container)

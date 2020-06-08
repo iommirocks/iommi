@@ -35,6 +35,11 @@ from iommi._web_compat import (
     ValidationError,
 )
 from iommi.attrs import render_attrs
+from iommi.base import (
+    items,
+    keys,
+    values,
+)
 from iommi.endpoint import (
     InvalidEndpointPathException,
     perform_ajax_dispatch,
@@ -221,7 +226,7 @@ def test_parse(MyTestForm):
         }),
     )
 
-    assert [x.errors for x in form.fields.values()] == [set() for _ in form.fields.keys()]
+    assert [x.errors for x in values(form.fields)] == [set() for _ in keys(form.fields)]
     assert form.is_valid() is True
     assert form.fields['party'].parsed_data == 'ABC'
     assert form.fields['party'].value == 'ABC'
@@ -960,12 +965,12 @@ def test_field_from_model_label():
 def test_form_from_model_valid_form():
     from tests.models import FormFromModelTest
 
-    assert [x.value for x in Form(
+    assert [x.value for x in values(Form(
         auto__model=FormFromModelTest,
         auto__include=['f_int', 'f_float', 'f_bool'],
     ).bind(
         request=req('get', f_int='1', f_float='1.1', f_bool='true'),
-    ).fields.values()] == [
+    ).fields)] == [
         1,
         1.1,
         True
@@ -994,12 +999,12 @@ def test_form_from_model_error_message_exclude():
 def test_form_from_model_invalid_form():
     from tests.models import FormFromModelTest
 
-    actual_errors = [x.errors for x in Form(
+    actual_errors = [x.errors for x in values(Form(
         auto__model=FormFromModelTest,
         auto__exclude=['f_int_excluded'],
     ).bind(
         request=req('get', f_int='1.1', f_float='true', f_bool='asd', f_file='foo'),
-    ).fields.values()]
+    ).fields)]
 
     assert len(actual_errors) == 4
     assert {'could not convert string to float: true'} in actual_errors
@@ -1991,11 +1996,11 @@ def test_all_field_shortcuts():
         class Meta:
             member_class = MyFancyField
 
-    all_shortcut_names = get_members(
+    all_shortcut_names = keys(get_members(
         cls=MyFancyField,
         member_class=Shortcut,
         is_member=is_shortcut,
-    ).keys()
+    ))
 
     config = {
         f'fields__field_of_type_{t}__call_target__attribute': t
@@ -2021,7 +2026,7 @@ def test_all_field_shortcuts():
         request=req('get')
     )
 
-    for name, field in form.fields.items():
+    for name, field in items(form.fields):
         assert field.extra.get('fancy'), name
 
 

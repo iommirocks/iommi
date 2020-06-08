@@ -7,6 +7,7 @@ from tri_declarative import (
 )
 
 from iommi.attrs import render_attrs
+from iommi.base import items
 from iommi.style import (
     apply_style_recursively,
     get_style_for,
@@ -59,26 +60,26 @@ def test_style():
     )
 
     # First the unstyled case
-    assert B().items() == dict(foo=None, bar=None)
-    assert B.shortcut1().items() == dict(foo=None, bar=None)
-    assert B.shortcut2().items() == dict(foo=None, bar=None)
+    assert items(B()) == dict(foo=None, bar=None)
+    assert items(B.shortcut1()) == dict(foo=None, bar=None)
+    assert items(B.shortcut2()) == dict(foo=None, bar=None)
 
     # Now let's add the style
     b = B()
     apply_style_recursively(style_data=overrides.component(b), obj=b)
-    assert b.items() == dict(foo=5, bar=7)
+    assert items(b) == dict(foo=5, bar=7)
 
     b = B.shortcut1()
     assert overrides.component(b) == dict(foo=4, bar=7)
     assert b.__tri_declarative_shortcut_stack == ['shortcut1']
     apply_style_recursively(style_data=overrides.component(b), obj=b)
-    assert b.items() == dict(foo=4, bar=7)
+    assert items(b) == dict(foo=4, bar=7)
 
     b = B.shortcut2()
     assert b.__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
     assert overrides.component(b) == dict(foo=4, bar=7)
     apply_style_recursively(style_data=overrides.component(b), obj=b)
-    assert b.items() == dict(foo=4, bar=7)
+    assert items(b) == dict(foo=4, bar=7)
 
 
 def test_apply_checkbox_style():

@@ -12,6 +12,10 @@ from iommi import (
     Form,
     Table,
 )
+from iommi.base import (
+    items,
+    keys,
+)
 from iommi.page import (
     Fragment,
     Page,
@@ -58,8 +62,8 @@ def test_traverse():
         'buzz': 'foo/bar/buzz',
     }
     actual = build_long_path_by_path(root)
-    assert actual.items() == expected.items()
-    assert len(actual.keys()) == len(set(actual.keys()))
+    assert items(actual) == items(expected)
+    assert len(keys(actual)) == len(set(keys(actual)))
 
 
 @pytest.mark.django_db

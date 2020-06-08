@@ -59,8 +59,10 @@ from iommi.action import (
 from iommi.attrs import Attrs
 from iommi.base import (
     build_as_view_wrapper,
+    items,
     MISSING,
     capitalize,
+    values,
 )
 from iommi.error import Errors
 from iommi.evaluate import (
@@ -141,7 +143,7 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
         form.instance = form.model()
-        for field in form.fields.values():  # two phase save for creation in django, have to save main object before related stuff
+        for field in values(form.fields):  # two phase save for creation in django, have to save main object before related stuff
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
@@ -1219,12 +1221,12 @@ class Form(Part):
         return model, fields
 
     def is_target(self):
-        return any(action.is_target() for action in self.actions.values())
+        return any(action.is_target() for action in values(self.actions))
 
     def is_valid(self):
         if self._valid is None:
             self.validate()
-            for field in self.fields.values():
+            for field in values(self.fields):
                 if field.errors:
                     self._valid = False
                     break
@@ -1233,7 +1235,7 @@ class Form(Part):
         return self._valid
 
     def validate(self):
-        for field in self.fields.values():
+        for field in values(self.fields):
             field.post_validation(**field.iommi_evaluate_parameters())
         self.post_validation(**self.iommi_evaluate_parameters())
         return self
@@ -1250,12 +1252,12 @@ class Form(Part):
     @property
     def render_fields(self):
         r = []
-        for field in self.fields.values():
+        for field in values(self.fields):
             r.append(field.__html__())
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
-        own_field_paths = {f.iommi_path for f in self.fields.values()}
-        for k, v in self.get_request().GET.items():
+        own_field_paths = {f.iommi_path for f in values(self.fields)}
+        for k, v in items(self.get_request().GET):
             if k not in own_field_paths and not k.startswith('-'):
                 r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
@@ -1281,7 +1283,7 @@ class Form(Part):
         Write the new values specified in the form into the instance specified.
         """
         assert self.is_valid()
-        for field in self.fields.values():
+        for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         return instance
 
@@ -1298,7 +1300,7 @@ class Form(Part):
         r = {}
         if self.errors:
             r['global'] = self.errors
-        field_errors = {x._name: x.errors for x in self.fields.values() if x.errors}
+        field_errors = {x._name: x.errors for x in values(self.fields) if x.errors}
         if field_errors:
             r['fields'] = field_errors
         return r

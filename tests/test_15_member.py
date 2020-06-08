@@ -5,6 +5,7 @@ from tri_declarative import (
     Refinable,
 )
 
+from iommi.base import items
 from iommi.member import (
     bind_members,
     collect_members,
@@ -73,7 +74,7 @@ def test_unbound_error():
     assert repr(basket.fruits) == expected
 
     with pytest.raises(NotBoundYetException) as e:
-        basket.fruits.items()
+        items(basket.fruits)
 
     with pytest.raises(NotBoundYetException) as e2:
         str(basket.fruits)

@@ -22,7 +22,10 @@ from iommi._web_compat import (
     slugify,
 )
 from iommi.attrs import Attrs
-from iommi.base import capitalize
+from iommi.base import (
+    capitalize,
+    values,
+)
 from iommi.member import Members
 from iommi.page import Fragment
 from iommi.part import Part
@@ -125,7 +128,7 @@ class Action(Fragment):
 
 
 def group_actions(actions: Dict[str, Action]):
-    actions_with_group = (action for action in actions.values() if action.group is not None)
+    actions_with_group = (action for action in values(actions) if action.group is not None)
 
     grouped_actions: List[Tuple[str, str, List[Action]]] = [
         (group_name, slugify(group_name), list(actions_in_group))
@@ -142,7 +145,7 @@ def group_actions(actions: Dict[str, Action]):
 
     actions_without_group = [
         action
-        for action in actions.values()
+        for action in values(actions)
         if action.group is None
     ]
     return actions_without_group, grouped_actions

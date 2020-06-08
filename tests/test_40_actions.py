@@ -14,6 +14,10 @@ from iommi import (
     Table,
 )
 from iommi.action import group_actions
+from iommi.base import (
+    items,
+    keys,
+)
 from iommi.member import (
     bind_members,
     collect_members,
@@ -100,11 +104,11 @@ def test_all_action_shortcuts():
         def on_bind(self):
             bind_members(self, name='actions')
 
-    all_shortcut_names = get_members(
+    all_shortcut_names = keys(get_members(
         cls=MyFancyAction,
         member_class=Shortcut,
         is_member=is_shortcut,
-    ).keys()
+    ))
 
     thing = ThingWithActions(
         actions__action_of_type_icon__icon='flower',
@@ -114,7 +118,7 @@ def test_all_action_shortcuts():
         },
     ).bind()
 
-    for name, column in thing.actions.items():
+    for name, column in items(thing.actions):
         assert column.extra.get('fancy'), name
 
 

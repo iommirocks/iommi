@@ -18,7 +18,10 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.attrs import evaluate_attrs
-from iommi.base import MISSING
+from iommi.base import (
+    items,
+    MISSING,
+)
 from iommi.evaluate import (
     evaluate_members,
     evaluate_strict,
@@ -125,7 +128,7 @@ class Traversable(RefinableObject):
         assert hasattr(self, '_iommi_saved_params'), f'reinvoke() called on class with missing @reinvokable decorator: {self.__class__.__name__}'
         additional_kwargs_namespace = Namespace(additional_kwargs)
         kwargs = {}
-        for name, saved_param in self._iommi_saved_params.items():
+        for name, saved_param in items(self._iommi_saved_params):
             try:
                 new_param = getattr_path(additional_kwargs_namespace, name)
             except AttributeError:
@@ -207,7 +210,7 @@ class Traversable(RefinableObject):
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
-        evaluated_attributes = [k for k, v in result.get_declared('refinable_members').items() if is_evaluated_refinable(v)]
+        evaluated_attributes = [k for k, v in items(result.get_declared('refinable_members')) if is_evaluated_refinable(v)]
         evaluate_members(result, evaluated_attributes, **result.iommi_evaluate_parameters())
 
         if hasattr(result, 'extra_evaluated'):
@@ -268,7 +271,7 @@ def get_path_by_long_path(node):
     path_by_long_path = getattr(root, '_path_by_long_path', None)
     if path_by_long_path is None:
         long_path_by_path = get_long_path_by_path(root)
-        path_by_long_path = {v: k for k, v in long_path_by_path.items()}
+        path_by_long_path = {v: k for k, v in items(long_path_by_path)}
         root._path_by_long_path = path_by_long_path
     return path_by_long_path
 
@@ -317,7 +320,7 @@ def build_long_path_by_path(root) -> Dict[str, str]:
         else:
             return
 
-        for name, member in members.items():
+        for name, member in items(members):
             if member:
                 _traverse(
                     member,

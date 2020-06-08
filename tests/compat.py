@@ -1,3 +1,5 @@
+from iommi.base import items
+
 try:
     from django.utils.safestring import SafeText
     from django.test import RequestFactory
@@ -18,11 +20,11 @@ except ImportError:
             from iommi._web_compat import HttpRequest
 
             # We use the django style where headers are HTTP_
-            for k, v in headers.items():
+            for k, v in items(headers):
                 assert k.startswith('HTTP_')
 
             # ...but flask adds HTTP_ itself, so we have to cut them off here
-            headers = {k[len('HTTP_'):]: v for k, v in headers.items()}
+            headers = {k[len('HTTP_'):]: v for k, v in items(headers)}
 
             return HttpRequest(create_environ(path=url, query_string=params, method=method, data=body, headers=headers))
 

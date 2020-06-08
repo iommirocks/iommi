@@ -24,7 +24,10 @@ from iommi._web_compat import (
     Template,
     TemplateDoesNotExist,
 )
-from iommi.base import MISSING
+from iommi.base import (
+    items,
+    MISSING,
+)
 from iommi.debug import iommi_debug_on
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
@@ -119,7 +122,7 @@ class Part(Traversable):
         else:  # pragma: no cover
             assert False  # This has already been checked in request_data()
 
-        dispatch_commands = {key: value for key, value in req_data.items() if key.startswith(dispatch_prefix)}
+        dispatch_commands = {key: value for key, value in items(req_data) if key.startswith(dispatch_prefix)}
         assert len(dispatch_commands) in (0, 1), 'You can only have one or no dispatch commands'
         if dispatch_commands:
             dispatch_target, value = next(iter(dispatch_commands.items()))

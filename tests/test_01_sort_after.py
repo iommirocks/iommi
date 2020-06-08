@@ -2,6 +2,10 @@ import pytest
 from tri_declarative import LAST
 from tri_struct import Struct
 
+from iommi.base import (
+    keys,
+    values,
+)
 from iommi.sort_after import sort_after
 
 
@@ -106,9 +110,9 @@ def test_sort_after_indexes():
 
 
 def sorts_right(objects):
-    assert {y.expected_position for y in objects.values()} == set(range(len(objects))), "Borken test"
+    assert {y.expected_position for y in values(objects)} == set(range(len(objects))), "Borken test"
     sort_after(objects)
-    assert [x.expected_position for x in objects.values()] == list(range(len(objects))), objects.keys()
+    assert [x.expected_position for x in values(objects)] == list(range(len(objects))), keys(objects)
 
 
 def test_sort_after_points_to_nothing():

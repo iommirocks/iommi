@@ -34,6 +34,10 @@ from iommi import (
     Page,
     Table,
 )
+from iommi.base import (
+    items,
+    keys,
+)
 from iommi.form import (
     choice_parse,
     Field,
@@ -88,9 +92,9 @@ def ensure_objects():
         with open(Path(__file__).parent.parent / 'scraped_data.json') as f:
             artists = json.loads(f.read())
 
-        for artist_name, albums in artists.items():
+        for artist_name, albums in items(artists):
             artist, _ = Artist.objects.get_or_create(name=artist_name)
-            for album_name, album_data in albums.items():
+            for album_name, album_data in items(albums):
                 album, _ = Album.objects.get_or_create(artist=artist, name=album_name, year=int(album_data['year']))
                 for i, (track_name, duration) in enumerate(album_data['tracks']):
                     Track.objects.get_or_create(album=album, index=i+1, name=track_name, duration=duration)
@@ -423,11 +427,11 @@ def all_field_sorts(request):
         form=Form(
             fields={
                 f'{t}__call_target__attribute': t
-                for t in get_members(
+                for t in keys(get_members(
                     cls=Field,
                     member_class=Shortcut,
                     is_member=is_shortcut
-                ).keys()
+                ))
                 if t not in [
                     # These only work if we have an instance
                     'foreign_key',
@@ -487,11 +491,11 @@ class ShortcutSelectorForm(Form):
     shortcut = Field.multi_choice(
         choices=[
             t
-            for t in get_members(
+            for t in keys(get_members(
                 cls=Column,
                 member_class=Shortcut,
                 is_member=is_shortcut
-            ).keys()
+            ))
             if t not in [
                 'icon',
                 'foreign_key',
@@ -540,7 +544,7 @@ class StyleSelector(Form):
     style = Field.choice(
         choices=[
             k for k in
-            iommi.style._styles.keys()
+            keys(iommi.style._styles)
             if k not in ('test', 'base', 'bootstrap_horizontal')
         ],
         initial=lambda form, field, **_: iommi.style.DEFAULT_STYLE,

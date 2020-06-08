@@ -10,6 +10,7 @@ from tri_declarative import (
 )
 
 from iommi import MISSING
+from iommi.base import items
 
 
 def get_default_classes():
@@ -82,7 +83,7 @@ def _generate_rst_docs(classes):
     def get_namespace(c):
         return Namespace({
             k: c.__init__.dispatch.get(k)
-            for k, v in get_declared(c, 'refinable_members').items()
+            for k, v in items(get_declared(c, 'refinable_members'))
         })
 
     for c in classes:
@@ -192,7 +193,7 @@ def _generate_rst_docs(classes):
                 if defaults:
                     defaults = Namespace(defaults)
                     section(3, 'Defaults')
-                    for k, v in flatten(defaults).items():
+                    for k, v in items(flatten(defaults)):
                         v = default_description(v)
                         w(0, f'* `{k}`')
                         w(1, f'* `{v}`')

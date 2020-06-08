@@ -17,6 +17,10 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+from iommi.base import (
+    items,
+    keys,
+)
 from iommi.endpoint import perform_ajax_dispatch
 from iommi.form import (
     Field,
@@ -339,7 +343,7 @@ def test_choice_queryset():
 
     # test invalid ops
     valid_ops = ['=']
-    for invalid_op in [op for op in Q_OPERATOR_BY_QUERY_OPERATOR.keys() if op not in valid_ops]:
+    for invalid_op in [op for op in keys(Q_OPERATOR_BY_QUERY_OPERATOR) if op not in valid_ops]:
         query2 = Query2().bind(
             request=req('get', **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}),
         )
@@ -392,7 +396,7 @@ def test_multi_choice_queryset():
 
     # test invalid ops
     valid_ops = ['=']
-    for invalid_op in [op for op in Q_OPERATOR_BY_QUERY_OPERATOR.keys() if op not in valid_ops]:
+    for invalid_op in [op for op in keys(Q_OPERATOR_BY_QUERY_OPERATOR) if op not in valid_ops]:
         query2 = Query2().bind(request=req('get', **{'-': '-', query2.get_advanced_query_param(): 'foo%s%s' % (invalid_op, str(random_valid_obj.foo))}))
         with pytest.raises(QueryException) as e:
             query2.get_q()
@@ -585,11 +589,11 @@ def test_all_filter_shortcuts():
         class Meta:
             member_class = MyFancyFilter
 
-    all_shortcut_names = get_members(
+    all_shortcut_names = keys(get_members(
         cls=MyFancyFilter,
         member_class=Shortcut,
         is_member=is_shortcut,
-    ).keys()
+    ))
 
     config = {
         f'filters__filter_of_type_{t}__call_target__attribute': t
@@ -612,7 +616,7 @@ def test_all_filter_shortcuts():
         request=req('get')
     )
 
-    for name, filter in query.filters.items():
+    for name, filter in items(query.filters):
         assert filter.extra.get('fancy'), name
 
 

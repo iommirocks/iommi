@@ -11,6 +11,11 @@ from tri_declarative import (
     RefinableObject,
 )
 
+from iommi.base import (
+    items,
+    keys,
+)
+
 DEFAULT_STYLE = 'foundation'
 
 
@@ -45,7 +50,7 @@ def class_names_for(cls):
 
 def recursive_namespace(d):
     if isinstance(d, dict):
-        return Namespace({k: recursive_namespace(v) for k, v in d.items()})
+        return Namespace({k: recursive_namespace(v) for k, v in items(d)})
     else:
         return d
 
@@ -91,7 +96,7 @@ def apply_style_recursively(*, style_data, obj):
         obj.clear()
         obj.update(**result)
     else:
-        for k, v in style_data.items():
+        for k, v in items(style_data):
             if isinstance(v, dict):
                 apply_style_recursively(style_data=v, obj=getattr(obj, k))
             else:
@@ -175,21 +180,21 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
 
     # This will functionally merge separate trees of class inheritance. So it produces a list of all shortcuts on all classes called something.Field.
     shortcuts_available_by_class_name = defaultdict(set)
-    for cls_name, classes in classes_by_name.items():
+    for cls_name, classes in items(classes_by_name):
         for cls in classes:
             shortcuts_available_by_class_name[cls_name].update(get_shortcuts_by_name(cls).keys())
 
     invalid_class_names = []
     non_existent_shortcut_names = []
-    for style_name, style in styles.items():
-        for cls_name, config in style.config.items():
+    for style_name, style in items(styles):
+        for cls_name, config in items(style.config):
             # First validate the top level classes
             if cls_name not in classes_by_name:
                 invalid_class_names.append((style_name, cls_name))
                 continue
 
             # Then validate the shortcuts
-            for shortcut_name in config.get('shortcuts', {}).keys():
+            for shortcut_name in keys(config.get('shortcuts', {})):
                 if shortcut_name not in shortcuts_available_by_class_name[cls_name]:
                     non_existent_shortcut_names.append((style_name, cls_name, shortcut_name))
 

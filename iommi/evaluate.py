@@ -2,6 +2,11 @@ import inspect
 
 from tri_declarative import Namespace
 
+from iommi.base import (
+    items,
+    keys,
+)
+
 _matches_cache = {}
 
 
@@ -56,7 +61,7 @@ def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True
            "the signature doesn't match the given parameters. " \
            "We had these arguments: {}".format(
             get_callable_description(func_or_value),
-            ', '.join(kwargs.keys()),
+            ', '.join(keys(kwargs)),
         )
     return func_or_value
 
@@ -104,7 +109,7 @@ def get_signature(func):
 
 
 def signature_from_kwargs(kwargs):
-    return ','.join(sorted(kwargs.keys()))
+    return ','.join(sorted(keys(kwargs)))
 
 
 def evaluate_members(obj, keys, **kwargs):
@@ -123,6 +128,6 @@ def evaluate_strict_container(c, **kwargs):
     return Namespace(
         {
             k: evaluate_strict(v, **kwargs)
-            for k, v in c.items()
+            for k, v in items(c)
         }
     )

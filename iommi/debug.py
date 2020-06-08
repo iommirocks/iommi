@@ -12,6 +12,10 @@ from iommi._web_compat import (
     Template,
     mark_safe,
 )
+from iommi.base import (
+    items,
+    values,
+)
 from iommi.member import Members
 from iommi.traversable import (
     declared_members,
@@ -45,7 +49,7 @@ def endpoint__debug_tree(endpoint, **_):
             if name == 'parts':
                 member_type = 'Part'
             else:
-                member_type = type(list(declared_members(node).values())[0]).__name__
+                member_type = type(list(values(declared_members(node)))[0]).__name__
             type_name = f'Members[{member_type}]'
 
         yield Struct(
@@ -66,7 +70,7 @@ def endpoint__debug_tree(endpoint, **_):
                     k,
                     node.iommi_bound_members().get(k, v)
                 )
-                for k, v in declared_members(node).items()
+                for k, v in items(declared_members(node))
             ]
         else:
             return

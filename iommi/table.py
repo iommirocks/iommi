@@ -74,8 +74,11 @@ from iommi.attrs import (
 from iommi.base import (
     build_as_view_wrapper,
     capitalize,
+    items,
+    keys,
     MISSING,
     model_and_rows,
+    values,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -147,7 +150,7 @@ def params_of_request(request):
     params = request.GET.copy()
 
     # There can be one dispatch parameter present, we need to filter out that
-    for param in params.keys():
+    for param in keys(params):
         if param.startswith(DISPATCH_PREFIX):
             del params[param]
             break
@@ -160,7 +163,7 @@ def prepare_headers(table):
     if request is None:
         return
 
-    for name, column in table.columns.items():
+    for name, column in items(table.columns):
         if column.sortable:
             params = params_of_request(request)
             param_path = path_join(table.iommi_path, 'order')
@@ -758,7 +761,7 @@ class Cells(Traversable):
         return self.__html__()
 
     def __iter__(self):
-        for column in self._parent.columns.values():
+        for column in values(self._parent.columns):
             if not column.render_column:
                 continue
             yield Cell(cells=self, column=column)
@@ -896,7 +899,7 @@ class RowConfig(RefinableObject):
     extra_evaluated: Dict[str, Any] = Refinable()
 
     def as_dict(self):
-        return {k: getattr(self, k) for k in self.get_declared('refinable_members').keys()}
+        return {k: getattr(self, k) for k in keys(self.get_declared('refinable_members'))}
 
 
 class ColumnHeader(object):
@@ -941,7 +944,7 @@ def bulk__post_handler(table, form, **_):
 
     simple_updates = []
     m2m_updates = []
-    for field in form.fields.values():
+    for field in values(form.fields):
         if field.value is None:
             continue
         if field.value in ['', []]:
@@ -1180,8 +1183,8 @@ class TableAutoConfig(AutoConfig):
 
 
 def endpoint__csv(table, **_):
-    columns = [c for c in table.columns.values() if c.extra_evaluated.get('report_name')]
-    csv_safe_column_indexes = {i for i, c in enumerate(table.columns.values()) if 'csv_whitelist' in c.extra}
+    columns = [c for c in values(table.columns) if c.extra_evaluated.get('report_name')]
+    csv_safe_column_indexes = {i for i, c in enumerate(values(table.columns)) if 'csv_whitelist' in c.extra}
     assert columns, 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
     assert 'report_name' in table.extra_evaluated, 'To get CSV output you must specify extra_evaluated__report_name on the table'
     filename = table.extra_evaluated.report_name + '.csv'
@@ -1419,7 +1422,7 @@ class Table(Part):
         if self.model:
             # Query
             filters = Struct()
-            for name, column in declared_members(self).columns.items():
+            for name, column in items(declared_members(self).columns):
                 filter = setdefaults_path(
                     Namespace(),
                     column.filter,
@@ -1449,7 +1452,7 @@ class Table(Part):
             field_class = self.get_meta().form_class.get_meta().member_class
 
             declared_bulk_fields = Struct()
-            for name, column in declared_members(self).columns.items():
+            for name, column in items(declared_members(self).columns):
                 field = self.bulk.fields.pop(name, {})
 
                 if column.bulk.include:
@@ -1482,14 +1485,14 @@ class Table(Part):
             )
 
             # x.bulk.include can be a callable here. We treat that as truthy on purpose.
-            if any(x.bulk.include for x in declared_members(self).columns.values()) or 'actions' in self.bulk:
+            if any(x.bulk.include for x in values(declared_members(self).columns)) or 'actions' in self.bulk:
                 self.bulk_form = form_class(
                     _fields_dict=declared_bulk_fields,
                     _name='bulk',
                     actions__submit=dict(
                         post_handler=bulk__post_handler,
                         display_name='Bulk change',
-                        include=lambda table, **_: any(c.bulk.include for c in table.columns.values()),
+                        include=lambda table, **_: any(c.bulk.include for c in values(table.columns)),
                     ),
                     actions__delete=dict(
                         call_target__attribute='delete',
@@ -1537,7 +1540,7 @@ class Table(Part):
 
         if not self.sortable:
             # TODO: we could do this on the unbound stuff instead. This is bad because it triggers _bind_all()
-            for column in self.columns.values():
+            for column in values(self.columns):
                 # Special case for entire table not sortable
                 column.sortable = False
 
@@ -1547,8 +1550,8 @@ class Table(Part):
         self._prepare_headers()
 
         if isinstance(self.rows, QuerySet):
-            prefetch = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
-            select = [x.attr for x in self.columns.values() if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
+            prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
+            select = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
             if prefetch:
                 self.rows = self.rows.prefetch_related(*prefetch)
             if select:
@@ -1564,7 +1567,7 @@ class Table(Part):
             return
 
         declared_filters = declared_members(self.query)['filters']
-        for name, column in declared_members(self)['columns'].items():
+        for name, column in items(declared_members(self)['columns']):
             if name in declared_filters:
                 filter = Namespace(
                     field__display_name=lambda table, field, **_: table.columns[field._name].display_name,
@@ -1591,7 +1594,7 @@ class Table(Part):
 
         if self.bulk_form is not None:
             declared_fields = declared_members(self.bulk_form)['fields']
-            for name, column in declared_members(self)['columns'].items():
+            for name, column in items(declared_members(self)['columns']):
                 if name in declared_fields:
                     field = setdefaults_path(
                         Namespace(),
@@ -1624,7 +1627,7 @@ class Table(Part):
             ))
 
     def _prepare_auto_rowspan(self):
-        auto_rowspan_columns = [column for column in self.columns.values() if column.auto_rowspan]
+        auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
 
         if auto_rowspan_columns:
             self.rows = list(self.rows)
@@ -1663,7 +1666,7 @@ class Table(Part):
         if order is not None:
             is_desc = order[0] == '-'
             order_field = is_desc and order[1:] or order
-            tmp = [x for x in self.columns.values() if x._name == order_field]
+            tmp = [x for x in values(self.columns) if x._name == order_field]
             if len(tmp) == 0:
                 return  # Unidentified sort column
             sort_column = tmp[0]
@@ -1689,7 +1692,7 @@ class Table(Part):
         subheaders = []
 
         # The id(header) and stuff is to make None not be equal to None in the grouping
-        for _, group_iterator in groupby((x for x in self.columns.values() if x.render_column), key=lambda header: header.group or id(header)):
+        for _, group_iterator in groupby((x for x in values(self.columns) if x.render_column), key=lambda header: header.group or id(header)):
             columns_in_group = list(group_iterator)
             group_name = columns_in_group[0].group
 

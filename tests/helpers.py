@@ -11,6 +11,7 @@ from iommi import (
     Table,
     middleware,
 )
+from iommi.base import items
 from iommi.traversable import (
     Traversable,
 )
@@ -94,7 +95,7 @@ class StubTraversable(Traversable):
         self._declared_members = members or {}
 
     def on_bind(self):
-        self._bound_members = Struct({k: v.bind(parent=self) for k, v in self._declared_members.items()})
+        self._bound_members = Struct({k: v.bind(parent=self) for k, v in items(self._declared_members)})
 
 
 def prettify(content):

@@ -18,7 +18,11 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi.base import MISSING
+from iommi.base import (
+    items,
+    keys,
+    MISSING,
+)
 from iommi.evaluate import evaluate
 
 
@@ -74,7 +78,7 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
         if should_include(field.name):
             create_declared_member(field.name)
 
-    for field_name in list(member_params_by_member_name.keys()):
+    for field_name in list(keys(member_params_by_member_name)):
         create_declared_member(field_name)
 
     # We respect the order given by `include`
@@ -84,7 +88,7 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
                 return include.index(x[0])
             except ValueError:
                 return len(members) + 1  # last!
-        members = {k: v for k, v in sorted(members.items(), key=index)}
+        members = {k: v for k, v in sorted(items(members), key=index)}
 
     return members
 

@@ -22,7 +22,11 @@ from tri_struct import Struct
 
 from iommi._web_compat import Template
 from iommi.attrs import Attrs
-from iommi.base import capitalize
+from iommi.base import (
+    capitalize,
+    items,
+    values,
+)
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate_strict
 from iommi.member import (
@@ -67,7 +71,7 @@ class MenuBase(Part):
     def __repr__(self):
         r = f'{self._name}'
         if self.sub_menu:
-            for items in self.sub_menu.values():
+            for items in values(self.sub_menu):
                 r += ''.join([f'\n    {x}' for x in repr(items).split('\n')])
         return r
 
@@ -77,7 +81,7 @@ class MenuBase(Part):
         if self.sort:
             self.sub_menu = Struct({
                 item._name: item
-                for item in sorted(self.sub_menu.values(), key=lambda x: x.display_name)
+                for item in sorted(values(self.sub_menu), key=lambda x: x.display_name)
             })
 
 
@@ -121,7 +125,7 @@ class MenuItem(MenuBase):
     def __repr__(self):
         r = f'{self._name} -> {self.url}'
         if self.sub_menu:
-            for items in self.sub_menu.values():
+            for items in values(self.sub_menu):
                 r += ''.join([f'\n    {x}' for x in repr(items).split('\n')])
         return r
 
@@ -151,7 +155,7 @@ class MenuItem(MenuBase):
         )
         fragment = fragment.bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
-        for name, item in self.sub_menu.items():
+        for name, item in items(self.sub_menu):
             assert name not in fragment.children
             fragment.children[name] = item
 
@@ -215,7 +219,7 @@ class Menu(MenuBase):
         ).bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
         items_container = self.fragment.children.items_container
-        for name, item in self.sub_menu.items():
+        for name, item in items(self.sub_menu):
             assert name not in items_container.children
             items_container.children[name] = item
 
@@ -226,7 +230,7 @@ class Menu(MenuBase):
         paths = defaultdict(list)
 
         def _validate(item):
-            for sub_item in item.sub_menu.values():
+            for sub_item in values(item.sub_menu):
                 if sub_item.url is None or '://' in sub_item.url or sub_item.url.startswith('#'):
                     continue
 
@@ -237,7 +241,7 @@ class Menu(MenuBase):
 
         _validate(self)
 
-        ambiguous = {k: v for k, v in paths.items() if len(v) > 1}
+        ambiguous = {k: v for k, v in items(paths) if len(v) > 1}
         return ambiguous
 
     def set_active(self, current_path: str):
@@ -248,7 +252,7 @@ class Menu(MenuBase):
         def _set_active(item):
             nonlocal current_parts_matching
             nonlocal current
-            for sub_item in item.sub_menu.values():
+            for sub_item in values(item.sub_menu):
                 _set_active(sub_item)
 
                 if sub_item.url is None or '://' in sub_item.url:

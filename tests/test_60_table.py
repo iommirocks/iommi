@@ -23,6 +23,10 @@ from iommi._web_compat import (
     mark_safe,
     Template,
 )
+from iommi.base import (
+    items,
+    keys,
+)
 from iommi.endpoint import (
     find_target,
     InvalidEndpointPathException,
@@ -1937,7 +1941,7 @@ def test_render_column_attribute():
     t = t.bind(request=None)
 
     assert list(t.columns.keys()) == ['a', 'b', 'c']
-    assert [k for k, v in t.columns.items() if v.render_column] == ['a']
+    assert [k for k, v in items(t.columns) if v.render_column] == ['a']
     assert [h.display_name for h in t.header_levels[0]] == ['A']
 
     expected_html = """
@@ -2121,11 +2125,11 @@ def test_all_column_shortcuts():
         class Meta:
             member_class = MyFancyColumn
 
-    all_shortcut_names = get_members(
+    all_shortcut_names = keys(get_members(
         cls=MyFancyColumn,
         member_class=Shortcut,
         is_member=is_shortcut,
-    ).keys()
+    ))
 
     config = {
         f'columns__column_of_type_{t}__call_target__attribute': t
@@ -2148,7 +2152,7 @@ def test_all_column_shortcuts():
         request=req('get'),
     )
 
-    for name, column in table.columns.items():
+    for name, column in items(table.columns):
         assert column.extra.get('fancy'), name
 
 

@@ -26,7 +26,11 @@ from iommi.attrs import (
     Attrs,
     render_attrs,
 )
-from iommi.base import build_as_view_wrapper
+from iommi.base import (
+    build_as_view_wrapper,
+    items,
+    values,
+)
 from iommi.debug import (
     endpoint__debug_tree,
     iommi_debug_on,
@@ -141,7 +145,7 @@ class Fragment(Part):
             '{}' * len(self.children),
             *[
                 as_html(part=x, context=context)
-                for x in self.children.values()
+                for x in values(self.children)
             ])
 
     def __repr__(self):
@@ -240,8 +244,8 @@ class Page(Part):
             else:
                 return v
 
-        _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in _parts_dict.items()}
-        parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in parts.items()})
+        _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in items(_parts_dict)}
+        parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(parts)})
 
         collect_members(self, name='parts', items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class)
 
@@ -254,13 +258,13 @@ class Page(Part):
         return dict(page=self)
 
     @dispatch(
-        render=lambda rendered: format_html('{}' * len(rendered), *rendered.values())
+        render=lambda rendered: format_html('{}' * len(rendered), *values(rendered))
     )
     def __html__(self, *, render=None):
         self.context = evaluate_strict_container(self.context or {}, **self.iommi_evaluate_parameters())
         rendered = {
             name: as_html(request=self.get_request(), part=part, context=self.iommi_evaluate_parameters())
-            for name, part in self.parts.items()
+            for name, part in items(self.parts)
         }
 
         return render(rendered)

@@ -1,6 +1,7 @@
 from tri_declarative import Namespace
 
 from iommi._web_compat import mark_safe
+from iommi.base import items
 from iommi.evaluate import evaluate_strict
 
 
@@ -11,16 +12,16 @@ def evaluate_attrs(obj, **kwargs):
         **{
             'class': {
                 k: evaluate_strict(v, **kwargs)
-                for k, v in evaluate_strict(attrs.get('class', {}), **kwargs).items()
+                for k, v in items(evaluate_strict(attrs.get('class', {}), **kwargs))
             }
         },
         style={
             k: evaluate_strict(v, **kwargs)
-            for k, v in evaluate_strict(attrs.get('style', {}), **kwargs).items()
+            for k, v in items(evaluate_strict(attrs.get('style', {}), **kwargs))
         },
         **{
             k: evaluate_strict(v, **kwargs)
-            for k, v in attrs.items()
+            for k, v in items(attrs)
             if k not in ('class', 'style')
         },
     )
@@ -131,8 +132,8 @@ class Attrs(Namespace):
 
 
 def render_class(class_dict):
-    return ' '.join(sorted(name for name, flag in class_dict.items() if flag))
+    return ' '.join(sorted(name for name, flag in items(class_dict) if flag))
 
 
 def render_style(class_dict):
-    return '; '.join(sorted(f'{k}: {v}' for k, v in class_dict.items() if v))
+    return '; '.join(sorted(f'{k}: {v}' for k, v in items(class_dict) if v))

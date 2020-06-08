@@ -5,6 +5,7 @@ from tri_declarative import (
     Refinable,
 )
 
+from iommi.base import keys
 from iommi.traversable import (
     EvaluatedRefinable,
     get_long_path_by_path,
@@ -68,9 +69,9 @@ def find_target(*, path, root):
     long_path = get_long_path_by_path(root).get(p)
     if long_path is None:
         long_path = p
-        if long_path not in get_path_by_long_path(root).keys():
+        if long_path not in keys(get_path_by_long_path(root)):
             def format_paths(paths):
-                return '\n        '.join(["''" if not x else x for x in paths.keys()])
+                return '\n        '.join(["''" if not x else x for x in keys(paths)])
 
             raise InvalidEndpointPathException(
                 f"Given path {path} not found.\n"
