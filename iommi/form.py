@@ -76,6 +76,7 @@ from iommi.from_model import (
 from iommi.member import (
     bind_members,
     collect_members,
+    MemberBinder,
 )
 from iommi.page import (
     Fragment,
@@ -1233,7 +1234,7 @@ class Form(Part):
         return self._valid
 
     def validate(self):
-        for field in dict.values(self.fields):
+        for field in MemberBinder.values(self.fields):
             field.post_validation(**field.iommi_evaluate_parameters())
         self.post_validation(**self.iommi_evaluate_parameters())
         return self
