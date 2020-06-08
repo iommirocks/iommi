@@ -140,7 +140,7 @@ def test_required_choice():
     assert form.mode == FULL_FORM_FROM_REQUEST
 
     assert form.is_target()
-    assert form.is_valid() is False
+    assert form.is_valid() is False, form.get_errors()
     assert form.fields['c'].errors == {'This field is required'}
 
     class NotRequired(Form):
@@ -148,14 +148,14 @@ def test_required_choice():
 
     form = NotRequired().bind(request=req('post', **{'-submit': '', 'c': ''}))
     assert form.is_target()
-    assert form.is_valid()
+    assert form.is_valid(), form.get_errors()
     assert form.fields['c'].errors == set()
 
 
 def test_required(MyTestForm):
     form = MyTestForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_target()
-    assert form.is_valid() is False
+    assert form.is_valid() is False, form.get_errors()
     assert form.fields['a_date'].value is None
     assert form.fields['a_date'].errors == {'This field is required'}
 
@@ -227,7 +227,7 @@ def test_parse(MyTestForm):
     )
 
     assert [x.errors for x in values(form.fields)] == [set() for _ in keys(form.fields)]
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
     assert form.fields['party'].parsed_data == 'ABC'
     assert form.fields['party'].value == 'ABC'
 
@@ -301,7 +301,7 @@ def test_parse_errors(MyTestForm):
     )
 
     assert form.mode == FULL_FORM_FROM_REQUEST
-    assert form.is_valid() is False
+    assert form.is_valid() is False, form.get_errors()
 
     assert form.errors == {'General snafu'}
 
@@ -590,7 +590,7 @@ def test_heading():
 
 def test_info():
     form = Form(fields__foo=Field.info(value='#foo#')).bind(request=req('get'))
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
     assert '#foo#' in form.__html__()
 
 
@@ -1368,18 +1368,18 @@ def test_file():
 
     form = FooForm().bind(request=req('post', foo=fake_file))
     instance = Struct(foo=None)
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
 
     # Non-existent form entry should not overwrite data
     form = FooForm().bind(request=req('post', foo=''))
-    assert form.is_valid(), {x._name: x.errors for x in form.fields}
+    assert form.is_valid(), form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
 
     form = FooForm().bind(request=req('post'))
-    assert form.is_valid(), {x._name: x.errors for x in form.fields}
+    assert form.is_valid(), form.get_errors()
     form.apply(instance)
     assert instance.foo.file.getvalue() == b'1'
 
@@ -1405,7 +1405,7 @@ def test_mode_full_form_from_request():
 
     # empty POST
     form = FooForm().bind(request=req('post', **{'-submit': ''}))
-    assert form.is_valid() is False
+    assert form.is_valid() is False, form.get_errors()
     assert form.errors == set()
     assert form.fields.foo.errors == {'This field is required'}
     assert form.fields['bar'].errors == {'This field is required'}
@@ -1417,12 +1417,12 @@ def test_mode_full_form_from_request():
         'baz': 'false',
         '-submit': '',
     }))
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
     assert form.fields['baz'].value is False
 
     # all params in GET
     form = FooForm().bind(request=req('get', **{'-submit': ''}))
-    assert form.is_valid() is False
+    assert form.is_valid() is False, form.get_errors()
     assert form.fields.foo.errors == {'This field is required'}
     assert form.fields['bar'].errors == {'This field is required'}
     assert form.fields['baz'].errors == set()  # not present in POST request means false
@@ -1436,7 +1436,7 @@ def test_mode_full_form_from_request():
     assert not form.errors
     assert not form.fields.foo.errors
 
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
 
 
 def test_mode_initials_from_get():
@@ -1447,11 +1447,11 @@ def test_mode_initials_from_get():
 
     # empty GET
     form = FooForm().bind(request=req('get'))
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
 
     # initials from GET
     form = FooForm().bind(request=req('get', foo='foo_initial'))
-    assert form.is_valid() is True
+    assert form.is_valid() is True, form.get_errors()
     assert form.fields.foo.value == 'foo_initial'
 
     assert form.fields.foo.errors == set()

@@ -326,7 +326,7 @@ def test_choice_queryset():
     assert not form.is_valid()
     query2 = Query2().bind(request=req('get', **{'-': '-', 'foo': str(random_valid_obj.pk)}))
     form = query2.form
-    assert form.is_valid()
+    assert form.is_valid(), form.get_errors()
     assert set(form.fields['foo'].choices) == set(Foo.objects.all())
     q = query2.get_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk=random_valid_obj.pk))
@@ -381,7 +381,7 @@ def test_multi_choice_queryset():
     assert not form.is_valid()
     query2 = Query2().bind(request=req('get', **{'-': '-', 'foo': [str(random_valid_obj.pk), str(random_valid_obj2.pk)]}))
     form = query2.form
-    assert form.is_valid()
+    assert form.is_valid(), form.get_errors()
     assert set(form.fields['foo'].choices) == set(Foo.objects.all())
     q = query2.get_q()
     assert set(Bar.objects.filter(q)) == set(Bar.objects.filter(foo__pk__in=[random_valid_obj.pk, random_valid_obj2.pk]))

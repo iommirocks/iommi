@@ -169,7 +169,7 @@ def test_unique_constraint_violation():
     ).bind(request=request)
     form.render_to_response()
 
-    assert form.is_valid() is False
+    assert form.is_valid() is False, form.get_errors()
     assert form.get_errors() == {'global': {'Unique constraint test with this F int, F float and F bool already exists.'}}
     assert UniqueConstraintTest.objects.all().count() == 1
 
