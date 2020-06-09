@@ -23,7 +23,10 @@ from iommi.base import (
     keys,
     MISSING,
 )
-from iommi.evaluate import evaluate
+from iommi.evaluate import (
+    evaluate,
+    get_callable_description,
+)
 
 
 def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
@@ -172,7 +175,7 @@ def get_name_field(*, model):
         try:
             name_field = model._meta.get_field('name')
         except FieldDoesNotExist:
-            raise NoRegisteredNameException(f'{model.__name__} has no registered name field. Please register a name with register_name_field.')
+            raise NoRegisteredNameException(f'{model.__name__} has no registered name field. Please register a name with register_name_field.') from None
         if not name_field.unique:
             raise NoRegisteredNameException(
                 f"The model {model.__name__} has no registered name field. Please register a name with register_name_field. It has a field `name` but it's not unique in the database so we can't use that.")

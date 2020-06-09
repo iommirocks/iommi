@@ -16,6 +16,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from iommi.debug import iommi_debug_on
 from pyparsing import (
     alphanums,
     alphas,
@@ -136,16 +137,12 @@ def value_to_str_for_query(filter, v):
     if type(v) in (int, float):
         return str(v)
     if isinstance(v, Model):
+        model = type(v)
         name_field = filter.name_field
-        if name_field is None:
-            try:
-                name_field = get_name_field(model=type(v))
-            except NoRegisteredNameException:
-                raise NoRegisteredNameException(f'{type(v).__name__} has no registered name field. Please register a name with register_name_field or specify name_field.')
         try:
             v = getattr(v, name_field)
         except AttributeError:
-            raise NoRegisteredNameException(f'{type(v).__name__} has no attribute {name_field}. Please register a name with register_name_field or specify name_field.')
+            raise NoRegisteredNameException(f'{model.__name__} has no attribute {name_field}. Please register a name with register_name_field or specify name_field.')
     return to_string_surrounded_by_quote(v)
 
 
@@ -216,6 +213,7 @@ class Filter(Part):
     @dispatch(
         query_operator_for_field='=',
         attr=MISSING,
+        name_field=MISSING,
         field__required=False,
         field__include=lambda query, field, **_: not query.filters.get(field._name).freetext,
     )
@@ -235,6 +233,14 @@ class Filter(Part):
 
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
+
+        if self.model and self.include:
+            try:
+                self.name_field = get_name_field(model=self.model)
+            except NoRegisteredNameException:
+                self.name_field = 'pk'
+                if iommi_debug_on():
+                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_name_field.')
 
     def own_evaluate_parameters(self):
         return dict(filter=self)

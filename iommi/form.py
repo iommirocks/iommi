@@ -23,6 +23,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from iommi.debug import iommi_debug_on
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -74,6 +75,7 @@ from iommi.from_model import (
     create_members_from_model,
     get_name_field,
     member_from_model,
+    NoRegisteredNameException,
 )
 from iommi.member import (
     bind_members,
@@ -266,9 +268,10 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
+    # TODO: this filter should be smarter: prioritize exact match, then prefix, then contains
     if not value:
-        return field.choices
-    return field.choices.filter(field.extra.create_q_from_value(field=field, value=value))
+        return field.choices.order_by(field.name_field)
+    return field.choices.filter(field.extra.create_q_from_value(field=field, value=value)).order_by(field.name_field)
 
 
 def choice_queryset__parse(field, string_value, **_):
@@ -426,6 +429,7 @@ class Field(Part):
 
     choices: Callable[..., List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
     choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()
+    name_field = Refinable()
     errors: Errors = Refinable()
 
     empty_label: str = EvaluatedRefinable()
@@ -488,6 +492,10 @@ class Field(Part):
         :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
         """
+
+        model_field = kwargs.get('model_field')
+        if model_field and model_field.remote_field:
+            kwargs['model'] = model_field.remote_field.model
 
         super(Field, self).__init__(**kwargs)
 
@@ -587,6 +595,14 @@ class Field(Part):
         assert not self.label.children
         self.label.children = dict(text=evaluate_strict(self.display_name, **self.iommi_evaluate_parameters()))
         self.non_editable_input = self.non_editable_input.bind(parent=self)
+
+        if self.model and self.include:
+            try:
+                self.name_field = get_name_field(model=self.model)
+            except NoRegisteredNameException:
+                self.name_field = 'pk'
+                if iommi_debug_on():
+                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_name_field.')
 
     def _parse(self):
         if self.parsed_data is not None:
@@ -872,7 +888,7 @@ class Field(Part):
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
-        extra__create_q_from_value=lambda field, value, **_: Q((get_name_field(model=field.model) + '__icontains', value)),
+        extra__create_q_from_value=lambda field, value, **_: Q((field.name_field + '__icontains', value)),
     )
     def choice_queryset(cls, choices, call_target=None, **kwargs):
         if 'model' not in kwargs:
