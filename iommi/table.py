@@ -385,7 +385,7 @@ class Column(Part):
 
     def on_bind(self) -> None:
 
-        self.table = self._parent._parent
+        self.table = self.iommi_parent().iommi_parent()
 
         if self.attr is MISSING:
             self.attr = self._name
@@ -749,7 +749,7 @@ class Cells(Traversable):
 
     def __html__(self):
         if self.template:
-            return render_template(self._parent.get_request(), self.template, self.iommi_evaluate_parameters())
+            return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
 
         return Fragment(
             tag=self.tag,
@@ -764,13 +764,13 @@ class Cells(Traversable):
         return self.__html__()
 
     def __iter__(self):
-        for column in values(self._parent.columns):
+        for column in values(self.iommi_parent().columns):
             if not column.render_column:
                 continue
             yield Cell(cells=self, column=column)
 
     def __getitem__(self, name):
-        column = self._parent.columns[name]
+        column = self.iommi_parent().columns[name]
         return Cell(cells=self, column=column)
 
 
@@ -804,11 +804,11 @@ class Cell(CellConfig):
 
         self.column = column
         self.cells = cells
-        self.table = cells._parent
+        self.table = cells.iommi_parent()
         self.row = cells.row
 
         self._evaluate_parameters = {
-            **self._parent.iommi_evaluate_parameters(),
+            **self.cells.iommi_evaluate_parameters(),
             'column': column
         }
 
@@ -863,11 +863,10 @@ class Cell(CellConfig):
         return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.cells.row}!r>"  # pragma: no cover
 
     def get_context(self):
-        return self._parent.get_context()
+        return self.cells.get_context()
 
     def get_request(self):
-        return self._parent.get_request()
-
+        return self.cells.get_request()
 
 
 class TemplateConfig(RefinableObject):
@@ -882,7 +881,7 @@ class HeaderConfig(Traversable):
     url = EvaluatedRefinable()
 
     def __html__(self):
-        return render_template(self.get_request(), self.template, self._parent.iommi_evaluate_parameters())
+        return render_template(self.get_request(), self.template, self.iommi_parent().iommi_evaluate_parameters())
 
     def __str__(self):
         return self.__html__()
@@ -1075,7 +1074,7 @@ class Paginator(Traversable):
     def on_bind(self) -> None:
         request = self.get_request()
         page_size = request.GET.get(self.iommi_path + '_size') if request else None
-        self.page_size = self._parent.page_size if page_size is None else int(page_size)
+        self.page_size = self.iommi_parent().page_size if page_size is None else int(page_size)
 
         self.attrs = evaluate_attrs(self)
         self.container.attrs = evaluate_attrs(self.container)
@@ -1083,7 +1082,7 @@ class Paginator(Traversable):
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
 
-        rows = self._parent.rows
+        rows = self.iommi_parent().rows
         evaluate_parameters = dict(
             page_size=self.page_size,
             rows=rows,
@@ -1143,7 +1142,7 @@ class Paginator(Traversable):
         has_next = self.page < self.number_of_pages
         has_previous = self.page > 1
         self.context.update({
-            'page_size': self._parent.page_size,
+            'page_size': self.iommi_parent().page_size,
             'has_next': has_next,
             'has_previous': has_previous,
             'next': self.page + 1 if has_next else None,

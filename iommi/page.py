@@ -91,7 +91,7 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
-        if self.context and self._parent != None:
+        if self.context and self.iommi_parent() != None:
             assert False, 'context is only valid on the root page'
 
     def own_evaluate_parameters(self):

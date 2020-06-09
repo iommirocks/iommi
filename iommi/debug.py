@@ -29,7 +29,7 @@ def iommi_debug_on():
 
 
 def endpoint__debug_tree(endpoint, **_):
-    root = endpoint._parent._parent
+    root = endpoint.iommi_parent().iommi_parent()
     assert root._is_bound
 
     def rows(node, name='', path=None):

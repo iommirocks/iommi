@@ -506,7 +506,7 @@ class Field(Part):
 
     @property
     def form(self):
-        return self._parent._parent
+        return self.iommi_parent().iommi_parent()
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -556,7 +556,7 @@ class Field(Part):
     def on_bind(self) -> None:
         assert self.template
 
-        form = self._parent._parent
+        form = self.iommi_parent().iommi_parent()
         if self.attr is MISSING:
             self.attr = self._name
         if self.display_name is MISSING:
@@ -661,7 +661,7 @@ class Field(Part):
         return value
 
     def _read_initial(self):
-        form = self._parent._parent
+        form = self.iommi_parent().iommi_parent()
         if self.initial is MISSING and self.include and form.instance is not None:
             if self.attr:
                 initial = self.read_from_instance(self, form.instance)
@@ -678,7 +678,7 @@ class Field(Part):
             self.raw_data_list = evaluate_strict(self.raw_data_list, **self.iommi_evaluate_parameters())
             return
 
-        form = self._parent._parent
+        form = self.iommi_parent().iommi_parent()
 
         if self.is_list:
             if self.raw_data_list is not None:
@@ -719,11 +719,11 @@ class Field(Part):
 
         if self.is_list:
             return [
-                self.choice_to_option(form=self._parent, field=self, choice=v)
+                self.choice_to_option(form=self.iommi_parent(), field=self, choice=v)
                 for v in self.value
             ]
         else:
-            return [self.choice_to_option(form=self._parent, field=self, choice=self.value)]
+            return [self.choice_to_option(form=self.iommi_parent(), field=self, choice=self.value)]
 
     @property
     def choice_tuples(self):
