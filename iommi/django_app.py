@@ -17,7 +17,7 @@ class IommiConfig(AppConfig):
         register_name_field(model=Permission, name_field='codename')
 
         from iommi import register_style
-        from iommi.style_test import test
+        from iommi.style_test_base import test
         from iommi.style_base import base
         from iommi.style_bootstrap import (
             bootstrap,
