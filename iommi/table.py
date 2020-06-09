@@ -307,7 +307,7 @@ class Column(Part):
     cell: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
-    field_name = Refinable()
+    model_field_name = Refinable()
     choices: Iterable = EvaluatedRefinable()
     bulk: Namespace = Refinable()
     filter: Namespace = Refinable()
@@ -413,13 +413,13 @@ class Column(Part):
         filter__call_target__attribute='from_model',
         bulk__call_target__attribute='from_model',
     )
-    def from_model(cls, model, field_name=None, model_field=None, **kwargs):
+    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,
             factory_lookup=_column_factory_by_field_type,
             factory_lookup_register_function=register_column_factory,
-            field_name=field_name,
+            model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
             **kwargs)
@@ -1436,7 +1436,7 @@ class Table(Part):
                 )
                 if 'call_target' not in filter['call_target'] and filter['call_target'].get(
                         'attribute') == 'from_model':
-                    filter['field_name'] = filter.attr
+                    filter['model_field_name'] = filter.attr
                 # Special case for automatic query config
                 if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
                     filter.include = True
@@ -1473,7 +1473,7 @@ class Table(Part):
                     if isinstance(column.model_field, BooleanField):
                         field.call_target.attribute = 'boolean_tristate'
                     if 'call_target' not in field['call_target'] and field['call_target'].get('attribute') == 'from_model':
-                        field['field_name'] = field.attr
+                        field['model_field_name'] = field.attr
 
                     declared_bulk_fields[name] = field()
 

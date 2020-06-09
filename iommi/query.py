@@ -207,7 +207,7 @@ class Filter(Part):
     freetext = EvaluatedRefinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
-    field_name = Refinable()
+    model_field_name = Refinable()
     choices = EvaluatedRefinable()
     name_field = Refinable()
     unary = Refinable()
@@ -263,12 +263,12 @@ class Filter(Part):
             return r
 
     @classmethod
-    def from_model(cls, model, field_name=None, model_field=None, **kwargs):
+    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,
             factory_lookup=_filter_factory_by_django_field_type,
-            field_name=field_name,
+            model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},
             **kwargs)
