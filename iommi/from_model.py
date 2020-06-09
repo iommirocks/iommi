@@ -48,17 +48,17 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
     check_list(include, 'include')
     check_list(exclude, 'exclude')
 
-    def create_declared_member(field_name):
-        definition_or_member = member_params_by_member_name.pop(field_name, {})
+    def create_declared_member(model_field_name):
+        definition_or_member = member_params_by_member_name.pop(model_field_name, {})
         if isinstance(definition_or_member, dict):
             definition = setdefaults_path(
                 Namespace(),
                 definition_or_member,
                 # TODO: this should work, but there's a bug in tri.declarative, working around for now
-                # call_target__attribute='from_model' if definition_or_member.get('attr', field_name) is not None else None,
+                # call_target__attribute='from_model' if definition_or_member.get('attr', model_field_name) is not None else None,
                 call_target__cls=member_class,
             )
-            if definition_or_member.get('attr', field_name) is not None:
+            if definition_or_member.get('attr', model_field_name) is not None:
                 setdefaults_path(
                     definition,
                     call_target__attribute='from_model',
@@ -66,20 +66,20 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
 
             member = definition(
                 model=model,
-                field_name=definition_or_member.get('attr', field_name),
+                model_field_name=definition_or_member.get('attr', model_field_name),
             )
         else:
             member = definition_or_member
         if member is None:
             return
-        members[field_name] = member
+        members[model_field_name] = member
 
     for field in get_fields(model):
         if should_include(field.name):
             create_declared_member(field.name)
 
-    for field_name in list(keys(member_params_by_member_name)):
-        create_declared_member(field_name)
+    for model_field_name in list(keys(member_params_by_member_name)):
+        create_declared_member(model_field_name)
 
     # We respect the order given by `include`
     if include is not None:
@@ -93,11 +93,11 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
     return members
 
 
-def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, field_name=None, model_field=None, **kwargs):
+def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, model_field_name=None, model_field=None, **kwargs):
     if model_field is None:
-        assert field_name is not None, "Field can't be automatically created from model, you must specify it manually"
+        assert model_field_name is not None, "Field can't be automatically created from model, you must specify it manually"
 
-        sub_field_name, _, field_path_rest = field_name.partition('__')
+        sub_field_name, _, field_path_rest = model_field_name.partition('__')
 
         # noinspection PyProtectedMember
         model_field = model._meta.get_field(sub_field_name)
@@ -109,9 +109,9 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 factory_lookup=factory_lookup,
                 defaults_factory=defaults_factory,
                 factory_lookup_register_function=factory_lookup_register_function,
-                field_name=field_path_rest,
+                model_field_name=field_path_rest,
                 **kwargs)
-            result.attr = field_name
+            result.attr = model_field_name
             return result
 
     factory = factory_lookup.get(type(model_field), MISSING)
@@ -132,11 +132,11 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
         return None
 
     # Not strict evaluate on purpose
-    factory = evaluate(factory, __match_empty=False, model_field=model_field, field_name=field_name)
+    factory = evaluate(factory, __match_empty=False, model_field=model_field, model_field_name=model_field_name)
 
     setdefaults_path(
         kwargs,
-        _name=field_name,
+        _name=model_field_name,
         call_target__cls=cls,
     )
 
@@ -150,7 +150,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     else:
         kwargs.update(**defaults)
 
-    return factory(model_field=model_field, field_name=field_name, model=model, **kwargs)
+    return factory(model_field=model_field, model_field_name=model_field_name, model=model, **kwargs)
 
 
 def get_fields(model: Type[Model]) -> Iterator[DjangoField]:

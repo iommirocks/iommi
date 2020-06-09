@@ -754,7 +754,7 @@ def test_help_text_from_model():
 
     assert Form(
         model=Foo,
-        fields__foo=Field.from_model(model=Foo, field_name='foo'),
+        fields__foo=Field.from_model(model=Foo, model_field_name='foo'),
     ).bind(
         request=req('get', foo='1'),
     ).fields.foo.help_text == 'foo_help_text'
@@ -1851,7 +1851,7 @@ def test_field_from_model_subtype():
     class FromModelSubtype(models.Model):
         foo = Foo()
 
-    result = Field.from_model(model=FromModelSubtype, field_name='foo')
+    result = Field.from_model(model=FromModelSubtype, model_field_name='foo')
 
     assert result.parse is int_parse
 

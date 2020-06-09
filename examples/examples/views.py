@@ -373,7 +373,7 @@ def table_kitchen_sink(request):
 
         b = Column.from_model(
             model=TBar,
-            field_name='b',
+            model_field_name='b',
             bulk__include=True,
             filter__include=True,
         )

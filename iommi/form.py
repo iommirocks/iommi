@@ -419,7 +419,7 @@ class Field(Part):
     is_boolean: bool = EvaluatedRefinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
-    field_name = Refinable()
+    model_field_name = Refinable()
 
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
@@ -739,14 +739,14 @@ class Field(Part):
         return self._choice_tuples
 
     @classmethod
-    def from_model(cls, model, field_name=None, model_field=None, **kwargs):
+    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,
             factory_lookup=_field_factory_by_field_type,
             factory_lookup_register_function=register_field_factory,
             defaults_factory=field_defaults_factory,
-            field_name=field_name,
+            model_field_name=model_field_name,
             model_field=model_field,
             **kwargs)
 
