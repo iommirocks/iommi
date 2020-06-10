@@ -269,9 +269,11 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
     # TODO: this filter should be smarter: prioritize exact match, then prefix, then contains
+    choices = field.choices.order_by(field.name_field)
     if not value:
-        return field.choices.order_by(field.name_field)
-    return field.choices.filter(field.extra.create_q_from_value(field=field, value=value)).order_by(field.name_field)
+        return choices
+
+    return choices.filter(field.extra.create_q_from_value(field=field, value=value))
 
 
 def choice_queryset__parse(field, string_value, **_):
