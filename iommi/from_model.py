@@ -162,33 +162,35 @@ def get_fields(model: Type[Model]) -> Iterator[DjangoField]:
         yield field
 
 
-_name_fields_by_model = {}
+_search_fields_by_model = {}
 
 
-class NoRegisteredNameException(Exception):
+class NoRegisteredSearchFieldException(Exception):
     pass
 
 
-def get_name_field(*, model):
-    name_field = _name_fields_by_model.get(model, MISSING)
-    if name_field is MISSING:
+def get_search_fields(*, model):
+    search_fields = _search_fields_by_model.get(model, MISSING)
+    if search_fields is MISSING:
         try:
-            name_field = model._meta.get_field('name')
+            field = model._meta.get_field('name')
         except FieldDoesNotExist:
-            raise NoRegisteredNameException(f'{model.__name__} has no registered name field. Please register a name with register_name_field.') from None
-        if not name_field.unique:
-            raise NoRegisteredNameException(
-                f"The model {model.__name__} has no registered name field. Please register a name with register_name_field. It has a field `name` but it's not unique in the database so we can't use that.")
-        return 'name'
+            raise NoRegisteredSearchFieldException(f'{model.__name__} has no registered search fields. Please register a list of field names with register_search_fields.') from None
+        if not field.unique:
+            raise NoRegisteredSearchFieldException(f"The model {model.__name__} has no registered search fields. Please register a list of field names with register_search_fields. It has a field `name` but it's not unique in the database so we can't use that.")
+        return ['name']
 
-    return name_field
+    return search_fields
 
 
-def register_name_field(*, model, name_field, allow_non_unique=False):
-    def validate_name_field(path, model):
-        if name_field in ('pk', 'id'):
-            return
+class SearchFieldsAlreadyRegisteredException(Exception):
+    pass
 
+
+def register_search_fields(*, model, search_fields, allow_non_unique=False, overwrite=False):
+    assert isinstance(search_fields, (tuple, list))
+
+    def validate_name_field(search_field, path, model):
         field = model._meta.get_field(path[0])
         if len(path) == 1:
             if allow_non_unique:
@@ -198,12 +200,18 @@ def register_name_field(*, model, name_field, allow_non_unique=False):
                 for unique_together in model._meta.unique_together:
                     if path[0] in unique_together:
                         return
-                raise TypeError(f'Cannot register name "{name_field}" for model {model.__name__}. {path[0]} must be unique.')
+                raise TypeError(f'Cannot register search field "{search_field}" for model {model.__name__}. {path[0]} must be unique.')
         else:
-            validate_name_field(path[1:], field.remote_field.model)
+            validate_name_field(search_field, path[1:], field.remote_field.model)
 
-    validate_name_field(name_field.split('__'), model)
-    _name_fields_by_model[model] = name_field
+    for search_field in search_fields:
+        if search_field in ('pk', 'id'):
+            continue
+        validate_name_field(search_field, search_field.split('__'), model)
+
+    if model in _search_fields_by_model and not overwrite:
+        raise SearchFieldsAlreadyRegisteredException(f'Cannot register search fields for {model}, it already has registered search fields {_search_fields_by_model[model]}.\nTo overwrite the existing registration pass overwrite=True to register_search_fields().')
+    _search_fields_by_model[model] = search_fields
 
 
 class AutoConfig(RefinableObject):

@@ -60,15 +60,15 @@ iommi renders `bool`, `list`, `set`, `tuple`, `QuerySet` and any type that has a
 The callable you register gets the keyword arguments `value`, `table`, `column` and `row`.
 
 
-The name field of your Django models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The search fields of your Django models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When searching for an object with `Query` we need to know which field is the canonical name field. This enables the advanced query language to be `my_car_brand='toyota'` instead of `my_car_brand.pk=42` which is a lot nicer. iommi will automatically use a field called `name` if it exists and is unique. If you have another name field that is also unique you can register it like this:
+When searching for an object with `Query` we need to know which fields to use to find the object. This enables the advanced query language to be `my_car_brand='toyota'` instead of `my_car_brand.pk=42` which is a lot nicer. iommi will automatically use a field called `name` if it exists and is unique. If you have other fields you want iommi to use to find objects you can register it like this:
 
 
 .. code:: python
 
-    register_name_field(User, 'username')
+    register_search_fields(model=User, search_fields=['username'])
 
 On startup iommi registers just this one particular canonical name for you since you probably want it. Note also that you can can use `__` separated paths here if you have a one-to-one with another model where the name field exists.
 

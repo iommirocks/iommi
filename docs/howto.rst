@@ -173,18 +173,23 @@ If there are multiple fields with the same index or name the order of the fields
 How do I specify which model fields the search of a choice_queryset use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Form.choice_queryset` defaults to using the registered name field to search.
+`Form.choice_queryset` uses the registered search fields for filtering and ordering.
 See :doc:`registrations` for how to register one. If present it will default
-to a model field `name`. You can override which attributes it uses for
-searching by specifing `extra__create_q_from_value`:
+to a model field `name`.
+
+
+In special cases you can override which attributes it uses for
+searching by specifying `search_fields`:
 
 .. code:: python
 
     form = Form(
         auto__model=Foo,
-        fields__foo__create_q_from_value=lambda field, value, **_: Q(foo__icontains=value) | Q(bar__icontains=value),
+        fields__foo__search_fields=('foo', 'bar'),
     )
 
+This last method is discouraged though, because it might mean searching for the
+same type of model behaves differently in different parts of your application.
 
 
 How do I insert a CSS class or HTML attribute?

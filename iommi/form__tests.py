@@ -1578,39 +1578,6 @@ def test_choice_queryset_ajax_one_past_the_end():
     }
 
 
-@pytest.mark.django_db
-@pytest.mark.filterwarnings("ignore:Model 'tests.foomodel' was already registered")
-@pytest.mark.filterwarnings("ignore:Pagination may yield inconsistent results")
-def test_choice_queryset_ajax_custom_q():
-    from django.contrib.auth.models import User
-    from django.db import models
-    from django.db.models import CASCADE
-
-    class ChoiceQuerySetAjaxCustomQModel(models.Model):
-        user = models.ForeignKey(User, on_delete=CASCADE)
-
-    User.objects.create(username='foo', first_name='7')
-    user2 = User.objects.create(username='bar', first_name='11')
-
-    form = Form(
-        auto__model=ChoiceQuerySetAjaxCustomQModel,
-        fields__user__extra__create_q_from_value=lambda field, value, **_: Q(first_name='11')
-    ).bind(request=req('get'))
-    actual = perform_ajax_dispatch(
-        root=form,
-        path='/fields/user/endpoints/choices',
-        value="doesn't matter, since we hardcode value above",
-    )
-
-    assert actual == {
-        'results': [
-            {'id': user2.pk, 'text': smart_str(user2)}
-        ],
-        'pagination': {'more': False},
-        'page': 1,
-    }
-
-
 @override_settings(DEBUG=True)
 def test_ajax_namespacing():
     class MyForm(Form):

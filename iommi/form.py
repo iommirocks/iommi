@@ -7,6 +7,8 @@ from decimal import (
     Decimal,
     InvalidOperation,
 )
+from functools import reduce
+from operator import or_
 from typing import (
     Any,
     Callable,
@@ -19,9 +21,12 @@ from typing import (
 )
 
 from django.db.models import (
+    Case,
+    IntegerField,
     Model,
     Q,
     QuerySet,
+    When,
 )
 from iommi.debug import iommi_debug_on
 from tri_declarative import (
@@ -73,9 +78,9 @@ from iommi.evaluate import (
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
-    get_name_field,
+    get_search_fields,
     member_from_model,
-    NoRegisteredNameException,
+    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_members,
@@ -268,12 +273,25 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
-    # TODO: this filter should be smarter: prioritize exact match, then prefix, then contains
-    choices = field.choices.order_by(field.name_field)
     if not value:
-        return choices
+        return field.choices.order_by(*field.search_fields)
 
-    return choices.filter(field.extra.create_q_from_value(field=field, value=value))
+    q_objects = []
+
+    def create_q_objects(suffix):
+        q_objects.extend([
+            Q(**{search_field + suffix: value})
+            for search_field in field.search_fields]
+        )
+
+    create_q_objects(suffix='')
+    create_q_objects(suffix='__istartswith')
+    create_q_objects(suffix='__icontains')
+
+    when_clauses = [When(q, then=rank) for rank, q in enumerate(q_objects)]
+    choices = field.choices.annotate(iommi_ranking=Case(*when_clauses, default=len(q_objects) + 1, output_field=IntegerField()))
+
+    return choices.filter(reduce(or_, q_objects)).order_by('iommi_ranking', *field.search_fields)
 
 
 def choice_queryset__parse(field, string_value, **_):
@@ -431,7 +449,7 @@ class Field(Part):
 
     choices: Callable[..., List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
     choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()
-    name_field = Refinable()
+    search_fields = Refinable()
     errors: Errors = Refinable()
 
     empty_label: str = EvaluatedRefinable()
@@ -600,11 +618,11 @@ class Field(Part):
 
         if self.model and self.include:
             try:
-                self.name_field = get_name_field(model=self.model)
-            except NoRegisteredNameException:
-                self.name_field = 'pk'
+                self.search_fields = get_search_fields(model=self.model)
+            except NoRegisteredSearchFieldException:
+                self.search_fields = ['pk']
                 if iommi_debug_on():
-                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_name_field.')
+                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields.')
 
     def _parse(self):
         if self.parsed_data is not None:
@@ -890,7 +908,6 @@ class Field(Part):
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
-        extra__create_q_from_value=lambda field, value, **_: Q((field.name_field + '__icontains', value)),
     )
     def choice_queryset(cls, choices, call_target=None, **kwargs):
         if 'model' not in kwargs:
