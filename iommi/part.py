@@ -166,7 +166,7 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     try:
         get_template(template_name)
     except TemplateDoesNotExist:
-        template_name = f'iommi/base_{get_style_for(None)}.html'
+        template_name = f'iommi/base_{get_style_for(part)}.html'
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.get_request())
