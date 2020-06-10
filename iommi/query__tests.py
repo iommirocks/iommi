@@ -488,11 +488,6 @@ def test_filter_repr():
 @pytest.mark.django_db
 def test_nice_error_message():
     with pytest.raises(NoRegisteredNameException) as e:
-        value_to_str_for_query(Filter(), NonStandardName(non_standard_name='foo'))
-
-    assert str(e.value) == "NonStandardName has no registered name field. Please register a name with register_name_field or specify name_field."
-
-    with pytest.raises(NoRegisteredNameException) as e:
         value_to_str_for_query(Filter(name_field='custom_name_field'), NonStandardName(non_standard_name='foo'))
 
     assert str(e.value) == "NonStandardName has no attribute custom_name_field. Please register a name with register_name_field or specify name_field."
