@@ -22,7 +22,7 @@ from iommi.traversable import (
     Traversable,
 )
 
-FORBIDDEN_NAMES = {x for x in dir(Traversable)}
+FORBIDDEN_NAMES = {x for x in dir(Traversable)} - {'context'}
 
 # Need to use this in collect_members that has a local variable called items
 items_of = items
