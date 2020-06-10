@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
-from iommi.from_model import register_name_field
+from iommi.from_model import register_search_fields
 from iommi.style import Style
 
 
@@ -13,8 +13,8 @@ class IommiConfig(AppConfig):
             User,
             Permission,
         )
-        register_name_field(model=User, name_field='username')
-        register_name_field(model=Permission, name_field='codename')
+        register_search_fields(model=User, search_fields=['username'])
+        register_search_fields(model=Permission, search_fields=['codename'])
 
         from iommi import register_style
         from iommi.style_test_base import test

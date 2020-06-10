@@ -72,9 +72,9 @@ from iommi.form import (
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
-    get_name_field,
+    get_search_fields,
     member_from_model,
-    NoRegisteredNameException,
+    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_members,
@@ -138,11 +138,11 @@ def value_to_str_for_query(filter, v):
         return str(v)
     if isinstance(v, Model):
         model = type(v)
-        name_field = filter.name_field
+        search_field = filter.search_fields[0]
         try:
-            v = getattr(v, name_field)
+            v = getattr(v, search_field)
         except AttributeError:
-            raise NoRegisteredNameException(f'{model.__name__} has no attribute {name_field}. Please register a name with register_name_field or specify name_field.')
+            raise NoRegisteredSearchFieldException(f'{model.__name__} has no attribute {search_field}. Please register search fields with register_search_fields or specify search_fields.')
     return to_string_surrounded_by_quote(v)
 
 
@@ -150,8 +150,8 @@ def build_query_expression(*, field, filter, value):
     if isinstance(value, Model):
         try:
             # We ignore the return value on purpose here. We are after the raise.
-            get_name_field(model=type(value))
-        except NoRegisteredNameException:
+            get_search_fields(model=type(value))
+        except NoRegisteredSearchFieldException:
             return f'{field._name}.pk={value.pk}'
 
     return f'{field._name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
@@ -169,10 +169,15 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
     if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
         return Q(**{filter.attr: None})
     try:
-        instance = filter.choices.get(**{filter.name_field: str(value_string_or_f)})
+        instance = None
+        for search_field in filter.search_fields:
+            try:
+                instance = filter.choices.get(**{search_field: str(value_string_or_f)})
+            except ObjectDoesNotExist:
+                pass
     except MultipleObjectsReturned:
         raise QueryException(f'Found more than one object for name "{value_string_or_f}"')
-    except ObjectDoesNotExist:
+    if instance is None:
         return None
     return Q(**{filter.attr + '__pk': instance.pk})
 
@@ -206,14 +211,14 @@ class Filter(Part):
     model_field = Refinable()
     model_field_name = Refinable()
     choices = EvaluatedRefinable()
-    name_field = Refinable()
+    search_fields = Refinable()
     unary = Refinable()
 
     @reinvokable
     @dispatch(
         query_operator_for_field='=',
         attr=MISSING,
-        name_field=MISSING,
+        search_fields=MISSING,
         field__required=False,
         field__include=lambda query, field, **_: not query.filters.get(field._name).freetext,
     )
@@ -236,11 +241,11 @@ class Filter(Part):
 
         if self.model and self.include:
             try:
-                self.name_field = get_name_field(model=self.model)
-            except NoRegisteredNameException:
-                self.name_field = 'pk'
+                self.search_fields = get_search_fields(model=self.model)
+            except NoRegisteredSearchFieldException:
+                self.search_fields = ['pk']
                 if iommi_debug_on():
-                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_name_field.')
+                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields.')
 
     def own_evaluate_parameters(self):
         return dict(filter=self)

@@ -36,7 +36,7 @@ from iommi.form import (
     Field,
     Form,
 )
-from iommi.from_model import register_name_field
+from iommi.from_model import register_search_fields
 from iommi.query import (
     Filter,
     Query,
@@ -68,7 +68,7 @@ from tests.models import (
     TFoo,
 )
 
-register_name_field(model=TFoo, name_field='b', allow_non_unique=True)
+register_search_fields(model=TFoo, search_fields=['b'], allow_non_unique=True)
 
 
 def get_rows():

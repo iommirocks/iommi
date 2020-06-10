@@ -26,7 +26,7 @@ from iommi.form import (
     Field,
     Form,
 )
-from iommi.from_model import NoRegisteredNameException
+from iommi.from_model import NoRegisteredSearchFieldException
 from iommi.part import request_data
 from iommi.query import (
     FREETEXT_SEARCH_NAME,
@@ -315,7 +315,8 @@ def test_choice_queryset():
         foo = Filter.choice_queryset(
             choices=Foo.objects.all(),
             field__include=True,
-            name_field='foo')
+            search_fields=['foo'],
+        )
 
     random_valid_obj = Foo.objects.all().order_by('?')[0]
 
@@ -372,7 +373,8 @@ def test_multi_choice_queryset():
         foo = Filter.multi_choice_queryset(
             choices=Foo.objects.all(),
             field__include=True,
-            name_field='foo')
+            search_fields=['foo'],
+        )
 
     random_valid_obj, random_valid_obj2 = Foo.objects.all().order_by('?')[:2]
 
@@ -487,10 +489,10 @@ def test_filter_repr():
 
 @pytest.mark.django_db
 def test_nice_error_message():
-    with pytest.raises(NoRegisteredNameException) as e:
-        value_to_str_for_query(Filter(name_field='custom_name_field'), NonStandardName(non_standard_name='foo'))
+    with pytest.raises(NoRegisteredSearchFieldException) as e:
+        value_to_str_for_query(Filter(search_fields=['custom_name_field']), NonStandardName(non_standard_name='foo'))
 
-    assert str(e.value) == "NonStandardName has no attribute custom_name_field. Please register a name with register_name_field or specify name_field."
+    assert str(e.value) == "NonStandardName has no attribute custom_name_field. Please register search fields with register_search_fields or specify search_fields."
 
 
 def test_escape_quote():
