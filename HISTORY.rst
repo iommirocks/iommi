@@ -1,6 +1,28 @@
 Changelog
 ---------
 
+1.0.0 (2020-06-10)
+~~~~~~~~~~~~~~~~~~
+
+* Backwards incompatible: `register_search_fields` replaces `register_name_field`. This new system is a list of field names and not just a single field. There is also new searching and filtering behavior based on this that means you will get better search results
+
+* Backwards incompatible: `field_name` as used by model factories is replaced with `model_field_name`. If you used `register_factory` you will need to change this. The field names on `Column`, `Field` and `Filter` are also renamed.
+
+* Support fields named `keys`, `value` or `items` on Django models
+
+* Added basic styling support for CSS frameworks Water and Foundation
+
+* Fix include to make None mean False
+
+* Change Filter.text to search using icontains instead of iexact by default in the basic search mode
+
+* Change post_validation callback to receive standard evaluate parameters
+
+* Improved help text for queries
+
+* Field.radio was broken in the bootstrap style: it specified the input template as the template for the entire field, so the label got erased
+
+
 0.7.0 (2020-05-22)
 ~~~~~~~~~~~~~~~~~~
 
