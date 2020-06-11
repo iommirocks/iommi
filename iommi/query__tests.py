@@ -27,7 +27,6 @@ from iommi.form import (
     Form,
 )
 from iommi.from_model import NoRegisteredSearchFieldException
-from iommi.part import request_data
 from iommi.query import (
     FREETEXT_SEARCH_NAME,
     Q_OPERATOR_BY_QUERY_OPERATOR,
@@ -79,13 +78,6 @@ def test_include():
 
     assert list(ShowQuery().bind(request=req('get', foo='hide')).filters.keys()) == ['foo']
     assert list(ShowQuery().bind(request=req('get', foo='include')).filters.keys()) == ['foo', 'bar']
-
-
-def test_request_data():
-    r = Struct(method='POST', POST='POST', GET='GET')
-    assert request_data(r) == 'POST'
-    r.method = 'GET'
-    assert request_data(r) == 'GET'
 
 
 def test_empty_string(MyTestQuery):
