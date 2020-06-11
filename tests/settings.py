@@ -27,7 +27,10 @@ TEMPLATES = [
         'OPTIONS': {
             'debug': TEMPLATE_DEBUG,
             'string_if_invalid': HighlightBrokenVariable(),
-        }
+            'context_processors': [
+                'tests.context_processors.context_processor_is_called',
+            ],
+        },
     },
 ]
 

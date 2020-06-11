@@ -2,9 +2,11 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from tri_struct import Struct
 
+from iommi import Page
 from iommi._web_compat import Template
 from iommi.part import (
     as_html,
+    render_root,
     request_data,
 )
 from tests.helpers import req
@@ -36,3 +38,15 @@ def test_as_html():
 
 def test_as_html_integer():
     assert as_html(part=123, context={}) == '123'
+
+
+def test_context_processor_is_called_on_render_root():
+    part = Page(
+        context__root_part_context_variable='root_part_context_variable',
+    )
+    t = render_root(
+        part=part.bind(request=req('get')),
+        template_name='test_context_processor_is_called_on_render_root.html',
+        context=dict(my_context_variable='my_context_variable'),
+    )
+    assert t == 'context_processor_is_called\nroot_part_context_variable\nmy_context_variable\n'
