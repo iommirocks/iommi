@@ -36,7 +36,10 @@ class Namespace(Struct):
                 # Unable to promote to Namespace, just overwrite
                 self[key] = Namespace({rest_path: value})
         else:
-            if is_shortcut(existing):
+            if existing is None:
+                # This is a common case and checking for None is fast
+                self[key] = value
+            elif is_shortcut(existing):
                 # Avoid merging Shortcuts
                 self[key] = value
             elif isinstance(existing, dict):
