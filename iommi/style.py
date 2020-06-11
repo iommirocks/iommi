@@ -16,7 +16,7 @@ from iommi.base import (
     keys,
 )
 
-DEFAULT_STYLE = 'foundation'
+DEFAULT_STYLE = 'bootstrap'
 
 
 def apply_style(obj):
