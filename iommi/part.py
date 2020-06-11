@@ -147,8 +147,15 @@ class Part(Traversable):
     context=EMPTY,
 )
 def render_root(*, part, template_name=MISSING, content_block_name=MISSING, context, **render):
+    assert part._is_bound
     if template_name is MISSING:
         template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', DEFAULT_BASE_TEMPLATE)
+
+        try:
+            get_template(template_name)
+        except TemplateDoesNotExist:
+            template_name = f'iommi/base_{get_style_for(part)}.html'
+
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
@@ -162,11 +169,6 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )
-
-    try:
-        get_template(template_name)
-    except TemplateDoesNotExist:
-        template_name = f'iommi/base_{get_style_for(part)}.html'
 
     template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.get_request())
