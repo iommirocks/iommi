@@ -50,4 +50,3 @@ def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
             new_kwargs[k] = v
 
     return new_args, new_kwargs
-

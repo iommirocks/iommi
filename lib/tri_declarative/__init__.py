@@ -57,6 +57,7 @@ __all__ = [
     'full_function_name',
     'get_shortcuts_by_name',
     'getattr_path',
+    'get_members',
     'is_shortcut',
     'LAST',
     'matches',
@@ -210,18 +211,18 @@ def _generate_rst_docs(classes, missing_objects=None):
 
         section(1, 'Refinable members')
         # noinspection PyCallByClass
-        for refinable, value in sorted(dict.items(get_namespace(c))):
-            w(0, '* `' + refinable + '`')
+        for refinable_, value in sorted(dict.items(get_namespace(c))):
+            w(0, '* `' + refinable_ + '`')
 
-            if constructor_doc['params'].get(refinable):
-                w(1, constructor_doc['params'][refinable])
+            if constructor_doc['params'].get(refinable_):
+                w(1, constructor_doc['params'][refinable_])
                 w(0, '')
         w(0, '')
 
         defaults = Namespace()
-        for refinable, value in sorted(get_namespace(c).items()):
+        for refinable_, value in sorted(get_namespace(c).items()):
             if value not in (None,) + missing_objects:
-                defaults[refinable] = value
+                defaults[refinable_] = value
 
         if defaults:
             section(2, 'Defaults')
@@ -247,11 +248,11 @@ def _generate_rst_docs(classes, missing_objects=None):
         if shortcuts:
             section(1, 'Shortcuts')
 
-            for name, shortcut in sorted(shortcuts.items()):
+            for name, shortcut_ in sorted(shortcuts.items()):
                 section(2, f'`{name}`')
 
-                if shortcut.__doc__:
-                    doc = shortcut.__doc__
+                if shortcut_.__doc__:
+                    doc = shortcut_.__doc__
                     f.write(doc.strip())
                     w(0, '')
                     w(0, '')
