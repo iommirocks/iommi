@@ -2232,6 +2232,42 @@ def test_automatic_url():
     assert cells['foo'].__html__() == '<td><a href="url here!">the str of AutomaticUrl</a></td>'
 
 
+def test_icon_value():
+    class TestTable(Table):
+        foo = Column.icon(
+            extra__icon='foo',
+            cell__value=lambda row, **_: row.foo,
+        )
+        bar = Column.icon(
+            display_name='bar',
+            cell__value=lambda row, **_: row.foo,
+        )
+
+    rows = [
+        Struct(foo=False),
+        Struct(foo=True),
+    ]
+
+    verify_table_html(
+        table=TestTable(rows=rows),
+        find=dict(name='tbody'),
+        expected_html="""
+            <tbody>
+                <tr>
+                    <td> </td>
+                    <td> </td>
+                </tr>
+                <tr>
+                    <td>
+                        <i class="fa fa-foo fa-lg">
+                    </td>
+                    <td>
+                        bar
+                    </td>
+                </tr>
+            </tbody>
+        """)
+
 @pytest.mark.django_db
 def test_no_dispatch_parameter_in_sorting_or_pagination_links():
     for x in range(4):

@@ -282,7 +282,9 @@ class DataRetrievalMethods(Enum):
 
 
 def default_icon__cell__format(column, value, **_):
-    if not value or not column.extra.get('icon', None):
+    if not value:
+        return ''
+    if not column.extra.get('icon', None):
         return column.display_name
 
     attrs = column.extra.icon_attrs
