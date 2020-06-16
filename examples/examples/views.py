@@ -6,10 +6,7 @@ from datetime import (
 )
 from pathlib import Path
 
-from django.contrib.auth import (
-    login,
-    logout,
-)
+from django.contrib import auth
 from django.contrib.auth.models import User
 from django.db import OperationalError
 
@@ -67,13 +64,42 @@ from .models import (
 )
 
 
+class LoginForm(Form):
+    username = Field()
+    password = Field.password()
+
+    class Meta:
+        title = 'Login'
+
+        @staticmethod
+        def actions__submit__post_handler(form, **_):
+            if form.is_valid():
+                user = auth.authenticate(
+                    username=form.fields.username.value,
+                    password=form.fields.password.value,
+                )
+
+                if user is not None:
+                    request = form.get_request()
+                    auth.login(request, user)
+                    return HttpResponseRedirect(request.GET.get('next', '/'))
+
+                form.errors.add('Unknown username or password')
+
+
+class LoginPage(Page):
+    form = LoginForm()
+    set_focus = html.script(mark_safe(
+        'document.getElementById("id_username").focus();',
+    ))
+
+
 def log_in(request):
-    login(request, User.objects.filter(is_staff=True).get())
-    return HttpResponseRedirect('/')
+    return LoginPage()
 
 
 def log_out(request):
-    logout(request)
+    auth.logout(request)
     return HttpResponseRedirect('/')
 
 
@@ -111,14 +137,6 @@ def index(request):
     class AdminPage(Page):
         admin_header = html.h2('Admin example')
 
-        admin_a = html.p(
-            html.a('Admin', attrs__href="iommi-admin/"),
-            '(needs login)',
-        )
-
-    class IndexPage(Page):
-        header = html.h1('iommi examples')
-
         log_in = html.a(
             'Log in',
             attrs__href='/log_in/',
@@ -130,6 +148,16 @@ def index(request):
             attrs__href='/log_out/',
             include=lambda request, **_: request.user.is_authenticated,
         )
+
+        admin_a = html.p(
+            html.a(
+                'Admin (needs login)',
+                attrs__href=lambda request, **_: "iommi-admin/" if request.user.is_authenticated else None,
+            ),
+        )
+
+    class IndexPage(Page):
+        header = html.h1('iommi examples')
 
         form_header = html.h2('Form examples')
 
