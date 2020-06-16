@@ -16,6 +16,9 @@ base = Style(
                 input__attrs__value=None,
                 input__attrs__type=None,
             ),
+            multi_choice=dict(
+                input__template='iommi/form/choice_select2.html',
+            ),
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
             ),
