@@ -4,31 +4,32 @@ from tri_struct import (
 )
 
 
+def _get_type_of_namespace(dict_value):
+    if isinstance(dict_value, Namespace):
+        return type(dict_value)
+    else:
+        return Namespace
+
+
 class Namespace(Struct):
     # noinspection PyMissingConstructor
     def __init__(self, *dicts, **kwargs):
-        if dicts or kwargs:
-            for mappings in list(dicts) + [kwargs]:
-                for path, value in dict.items(mappings):
-                    self.setitem_path(path, value)
+        for mappings in dicts:
+            for path, value in dict.items(mappings):
+                self.setitem_path(path, value)
+        for path, value in dict.items(kwargs):
+            self.setitem_path(path, value)
 
     def setitem_path(self, path, value):
-        from .shortcut import is_shortcut
+        key, delimiter, rest_path = path.partition('__')
+        existing = Struct.get(self, key)
 
         if value is EMPTY:
             value = Namespace()
-        key, delimiter, rest_path = path.partition('__')
 
-        def get_type_of_namespace(dict_value):
-            if isinstance(dict_value, Namespace):
-                return type(dict_value)
-            else:
-                return Namespace
-
-        existing = Struct.get(self, key)
         if delimiter:
             if isinstance(existing, dict):
-                type_of_namespace = get_type_of_namespace(existing)
+                type_of_namespace = _get_type_of_namespace(existing)
                 self[key] = type_of_namespace(existing, {rest_path: value})
             elif callable(existing):
                 self[key] = Namespace(dict(call_target=existing), {rest_path: value})
@@ -39,11 +40,11 @@ class Namespace(Struct):
             if existing is None:
                 # This is a common case and checking for None is fast
                 self[key] = value
-            elif is_shortcut(existing):
+            elif getattr(existing, 'shortcut', False):
                 # Avoid merging Shortcuts
                 self[key] = value
             elif isinstance(existing, dict):
-                type_of_namespace = get_type_of_namespace(existing)
+                type_of_namespace = _get_type_of_namespace(existing)
                 if isinstance(value, dict):
                     self[key] = type_of_namespace(existing, value)
                 elif callable(value):
@@ -53,8 +54,8 @@ class Namespace(Struct):
                     self[key] = value
             elif callable(existing):
                 if isinstance(value, dict):
-                    type_of_namespace = get_type_of_namespace(value)
-                    self[key] = type_of_namespace(Namespace(call_target=existing), value)
+                    type_of_namespace = _get_type_of_namespace(value)
+                    self[key] = type_of_namespace(dict(call_target=existing), value)
                 else:
                     self[key] = value
             else:

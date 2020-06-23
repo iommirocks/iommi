@@ -10,7 +10,7 @@ from .namespace import (
 
 # This is just a marker class for declaring shortcuts, and later for collecting them
 class Shortcut(Namespace):
-    pass
+    shortcut = True
 
 
 # decorator
@@ -20,7 +20,7 @@ def shortcut(f):
 
 
 def is_shortcut(x):
-    return isinstance(x, Shortcut) or getattr(x, 'shortcut', False)
+    return getattr(x, 'shortcut', False)
 
 
 def class_shortcut(*decorator_args, **defaults):
