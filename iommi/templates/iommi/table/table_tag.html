@@ -1,6 +1,6 @@
-{% if not table.rows and invalid_form_message %}
+{% if not table.paginator.count and invalid_form_message %}
     {{ invalid_form_message }}
-{% elif not table.rows and empty_message %}
+{% elif not table.paginator.count and empty_message %}
     {{ empty_message }}
 {% else %}
 

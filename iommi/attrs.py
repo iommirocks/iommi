@@ -7,6 +7,12 @@ from iommi.evaluate import evaluate_strict
 
 def evaluate_attrs(obj, **kwargs):
     attrs = obj.attrs or {}
+
+    # Micro optimization
+    from iommi.debug import iommi_debug_on
+    if not attrs and not iommi_debug_on():
+        return ''
+
     return Attrs(
         obj,
         **{

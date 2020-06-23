@@ -833,11 +833,10 @@ class Cell(CellConfig):
             context = dict(table=self.table, column=self.column, cells=self.cells, row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
-        return Fragment(
-            tag=self.tag,
-            attrs=self.attrs,
-            children__content=self.render_cell_contents()
-        ).bind(parent=self).__html__()
+        if self.tag:
+            return format_html('<{}{}>{}</{}>', self.tag, self.attrs, self.render_cell_contents(), self.tag)
+        else:
+            return format_html('{}', self.render_cell_contents())
 
     def render_cell_contents(self):
         cell_contents = self.render_formatted()
