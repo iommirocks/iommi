@@ -1,6 +1,24 @@
 Changelog
 ---------
 
+1.0.1 (2020-06-24)
+~~~~~~~~~~~~~~~~~~
+
+* Optimizations
+
+* Use select2 as the default for multi_choice
+
+* Improved usability: Make icon column behavior on falsy values more guessable
+
+* Accidentally changed default style to foundation, change back to bootstrap
+
+* Improved usability: Don't fall back to default template name if the user specified an explicit template name: fail on TemplateNotFound
+
+* Style on root uses correct base template
+
+* Allow model fields called `context`
+
+
 1.0.0 (2020-06-10)
 ~~~~~~~~~~~~~~~~~~
 
