@@ -53,16 +53,17 @@ def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True
         callee_parameters = get_signature(func_or_value)
         if callee_parameters is not None and matches(__signature, callee_parameters, __match_empty):
             return func_or_value(**kwargs)
-    if __strict and callable(func_or_value):
-        assert (
-                isinstance(func_or_value, Namespace)
-                and 'call_target' not in func_or_value
-        ), "Evaluating {} didn't resolve it into a value but strict mode was active, " \
-           "the signature doesn't match the given parameters. " \
-           "We had these arguments: {}".format(
-            get_callable_description(func_or_value),
-            ', '.join(keys(kwargs)),
-        )
+
+        if __strict:
+            assert (
+                    isinstance(func_or_value, Namespace)
+                    and 'call_target' not in func_or_value
+            ), "Evaluating {} didn't resolve it into a value but strict mode was active, " \
+               "the signature doesn't match the given parameters. " \
+               "We had these arguments: {}".format(
+                get_callable_description(func_or_value),
+                ', '.join(keys(kwargs)),
+            )
     return func_or_value
 
 
