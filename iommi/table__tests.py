@@ -990,6 +990,45 @@ def test_cell_template(NoSortTable):
         </table>""")
 
 
+def test_no_cell_tag(NoSortTable):
+    class TestTable(NoSortTable):
+        foo = Column(cell__tag=None)
+
+    rows = [Struct(foo="sentinel")]
+
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
+        <table class="table" data-endpoint="/tbody">
+            <thead>
+                <tr><th class="first_column subheader"> Foo </th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    sentinel
+                </tr>
+            </tbody>
+        </table>""")
+
+
+def test_no_row_tag(NoSortTable):
+    class TestTable(NoSortTable):
+        foo = Column()
+
+        class Meta:
+            row__tag = None
+
+    rows = [Struct(foo="sentinel")]
+
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
+        <table class="table" data-endpoint="/tbody">
+            <thead>
+                <tr><th class="first_column subheader"> Foo </th></tr>
+            </thead>
+            <tbody>
+                <td>sentinel</td>
+            </tbody>
+        </table>""")
+
+
 def test_cell_format_escape(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column(cell__format=lambda value, **_: '<foo>')
