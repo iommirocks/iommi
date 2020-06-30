@@ -28,6 +28,11 @@ from django.db.models import (
     QuerySet,
     When,
 )
+
+from iommi.datetime_parsing import (
+    parse_relative_date,
+    parse_relative_datetime,
+)
 from iommi.debug import iommi_debug_on
 from tri_declarative import (
     class_shortcut,
@@ -111,7 +116,7 @@ FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The strin
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
 
 
-def bool_parse(string_value):
+def bool_parse(string_value, **_):
     s = string_value.lower()
     if s in ('1', 'true', 't', 'yes', 'y', 'on'):
         return True
@@ -313,14 +318,16 @@ datetime_iso_formats = [
 
 
 def datetime_parse(string_value, **_):
-    if string_value.lower() == 'now':
-        return datetime.now()
     for iso_format in datetime_iso_formats:
         try:
             return datetime.strptime(string_value, iso_format)
         except ValueError:
             pass
-    raise ValidationError('Time data "%s" does not match any of the formats "now", %s' % (string_value, ', '.join('"%s"' % x for x in datetime_iso_formats)))
+    result = parse_relative_datetime(string_value)
+    if result is None:
+        formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
+        raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"')
+    return result
 
 
 def datetime_render_value(value, **_):
@@ -331,39 +338,52 @@ date_iso_format = '%Y-%m-%d'
 
 
 def date_parse(string_value, **_):
-    if string_value.lower() in ('now', 'today'):
-        return date.today()
+    extra_information = ''
     try:
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
-        raise ValidationError(str(e))
+        if 'out of range' in str(e) or 'unconverted data remains' in str(e):
+            extra_information = ' (out of range)'
+
+    result = parse_relative_datetime(string_value)
+    if result is None:
+        formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
+        raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"{extra_information}')
+    return result.date()
 
 
 def date_render_value(value, **_):
     return value.strftime(date_iso_format) if value else ''
 
 
-time_iso_format = '%H:%M:%S'
+time_iso_formats = [
+    '%H:%M:%S',
+    '%H:%M',
+    '%H',
+]
 
 
 def time_parse(string_value, **_):
     if string_value.lower() == 'now':
-        return datetime.now().time
-    try:
-        return datetime.strptime(string_value, time_iso_format).time()
-    except ValueError as e:
-        raise ValidationError(str(e))
+        return datetime.now().time()
+    for time_iso_format in time_iso_formats:
+        try:
+            return datetime.strptime(string_value, time_iso_format).time()
+        except ValueError:
+            pass
+    formats = ', '.join('"%s"' % x for x in time_iso_formats)
+    raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now" or {formats}')
 
 
 def time_render_value(value, **_):
-    return value.strftime(time_iso_format) if value else ''
+    return value.strftime(time_iso_formats[0]) if value else ''
 
 
 def decimal_parse(string_value, **_):
     try:
         return Decimal(string_value)
     except InvalidOperation:
-        raise ValidationError("Invalid literal for Decimal: '%s'" % string_value)
+        raise ValidationError(f"Invalid literal for Decimal: '{string_value}'")
 
 
 def url_parse(string_value, **_):
@@ -400,6 +420,12 @@ def file__raw_data(form, field, **_):
     if field.iommi_path not in request.FILES:
         return None
     return request.FILES[field.iommi_path]
+
+
+def boolean_tristate__parse(string_value, **_):
+    if not string_value:
+        return None
+    return bool_parse(string_value)
 
 
 @with_meta
@@ -854,7 +880,7 @@ class Field(Part):
     # Boolean field. Tries hard to parse a boolean value from its input.
     @classmethod
     @class_shortcut(
-        parse=lambda string_value, **_: bool_parse(string_value),
+        parse=bool_parse,
         required=False,
         is_boolean=True,
     )
@@ -894,6 +920,7 @@ class Field(Part):
                 'Yes' if choice else 'No',
                 choice == field.value,
         ),
+        parse=boolean_tristate__parse,
         required=False,
     )
     def boolean_tristate(cls, call_target=None, **kwargs):
