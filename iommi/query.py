@@ -16,6 +16,8 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+
+from iommi.datetime_parsing import parse_relative_date
 from iommi.debug import iommi_debug_on
 from pyparsing import (
     alphanums,
@@ -32,6 +34,7 @@ from pyparsing import (
     Optional,
     ParseException,
     ParseResults,
+    printables,
     QuotedString,
     quotedString,
     Word,
@@ -55,6 +58,7 @@ from iommi import Action
 from iommi._web_compat import (
     render_template,
     Template,
+    ValidationError,
 )
 from iommi.base import (
     items,
@@ -67,7 +71,13 @@ from iommi.endpoint import path_join
 from iommi.evaluate import evaluate
 from iommi.form import (
     bool_parse,
+    boolean_tristate__parse,
+    date_parse,
+    datetime_parse,
+    float_parse,
     Form,
+    int_parse,
+    time_parse,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -185,16 +195,6 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
 choice_queryset_value_to_q.iommi_needs_attr = True
 
 
-def boolean_value_to_q(filter, op, value_string_or_f):
-    if isinstance(value_string_or_f, str):
-        value_string_or_f = bool_parse(value_string_or_f)
-    # TODO: this doesn't respect the class hierarchy
-    return Filter.value_to_q(filter, op, value_string_or_f)
-
-
-boolean_value_to_q.iommi_needs_attr = True
-
-
 @with_meta
 class Filter(Part):
     """
@@ -257,6 +257,11 @@ class Filter(Part):
 
     @staticmethod
     @refinable
+    def parse(string_value, **_):
+        return string_value
+
+    @staticmethod
+    @refinable
     def value_to_q(filter, op, value_string_or_f) -> Q:
         if filter.attr is None:
             return Q()
@@ -264,9 +269,12 @@ class Filter(Part):
         if op in ('!=', '!:'):
             negated = True
             op = op[1:]
-        if isinstance(value_string_or_f, str) and value_string_or_f.lower() == 'null':
+        is_str = isinstance(value_string_or_f, str)
+        if is_str and value_string_or_f.lower() == 'null':
             r = Q(**{filter.attr: None})
         else:
+            if is_str:
+                value_string_or_f = filter.parse(filter=filter, string_value=value_string_or_f, op=op)
             r = Q(**{filter.attr + '__' + filter.query_operator_to_q_operator(op): value_string_or_f})
         if negated:
             return ~r
@@ -359,7 +367,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='boolean',
-        value_to_q=boolean_value_to_q,
+        parse=bool_parse,
         unary=True,
     )
     def boolean(cls, call_target=None, **kwargs):
@@ -368,7 +376,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='boolean_tristate',
-        value_to_q=boolean_value_to_q,
+        parse=boolean_tristate__parse,
         unary=True,
     )
     def boolean_tristate(cls, call_target=None, **kwargs):
@@ -377,6 +385,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='integer',
+        parse=int_parse,
     )
     def integer(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -384,6 +393,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='float',
+        parse=float_parse,
     )
     def float(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -398,6 +408,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='time',
+        parse=time_parse,
     )
     def time(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -405,6 +416,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='datetime',
+        parse=datetime_parse,
     )
     def datetime(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -412,6 +424,7 @@ class Filter(Part):
     @classmethod
     @class_shortcut(
         field__call_target__attribute='date',
+        parse=date_parse,
     )
     def date(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -671,7 +684,7 @@ class Query(Part):
         parser = self._create_grammar()
         try:
             tokens = parser.parseString(query_string, parseAll=True)
-        except ParseException:
+        except ParseException as e:
             raise QueryException('Invalid syntax for query')
         return self._compile(tokens)
 
@@ -746,33 +759,18 @@ class Query(Part):
         quoted_string_excluding_quotes = QuotedString('"', escChar='\\').setParseAction(lambda token: StringValue(token[0]))
         and_ = Keyword('and', caseless=True)
         or_ = Keyword('or', caseless=True)
-        exponential_marker = CaselessLiteral('E')
         binary_op = oneOf('=> =< = < > >= <= : != !:', caseless=True).setResultsName('operator')
-        arith_sign = Word('+-', exact=1)
-        integer = Word(nums)
-
-        real_num = Combine(Optional(arith_sign) + (integer + '.' + Optional(integer) | ('.' + integer)) + Optional(exponential_marker + Optional(arith_sign) + integer)).setParseAction(lambda t: float(t[0]))
-        int_num = Combine(Optional(arith_sign) + integer + Optional(exponential_marker + Optional('+') + integer)).setParseAction(lambda t: int(t[0]))
-
-        def parse_date_str(token):
-            y, _, m, _, d = token
-            try:
-                date_object = date(*map(int, (y, m, d)))
-            except ValueError:
-                raise QueryException('Date %s-%s-%s is out of range' % (y, m, d))
-            return date_object
-
-        date_str = (integer('year') + '-' + integer('month') + '-' + integer('day')).setParseAction(parse_date_str)
 
         # define query tokens
-        identifier = Word(alphas, alphanums + '_$-').setName('identifier')
-        filter_name = delimitedList(identifier, '.', combine=True)
-        value_string = date_str | real_num | int_num | filter_name | quoted_string_excluding_quotes
+        identifier = Word(alphas, alphanums + '_$-.').setName('identifier')
+        raw_value_chars = alphanums + '_$-+/$%*;?@[]\\^`{}|~.'
+        raw_value = Word(raw_value_chars, raw_value_chars).setName('raw_value')
+        value_string = quoted_string_excluding_quotes | raw_value
 
         # Define a where expression
         where_expression = Forward()
-        binary_operator_statement = (filter_name + binary_op + value_string).setParseAction(self._binary_op_to_q)
-        unary_operator_statement = (filter_name | (Char('!') + filter_name)).setParseAction(self._unary_op_to_q)
+        binary_operator_statement = (identifier + binary_op + value_string).setParseAction(self._binary_op_to_q)
+        unary_operator_statement = (identifier | (Char('!') + identifier)).setParseAction(self._unary_op_to_q)
         free_text_statement = quotedString.copy().setParseAction(self._freetext_to_q)
         operator_statement = binary_operator_statement | free_text_statement | unary_operator_statement
         where_condition = Group(operator_statement | ('(' + where_expression + ')'))
@@ -826,7 +824,10 @@ class Query(Part):
                 value_string_or_f = F(self.filters[value_string_or_filter_name.lower()].attr)
             else:
                 value_string_or_f = value_string_or_filter_name
-            result = filter.value_to_q(filter=filter, op=op, value_string_or_f=value_string_or_f)
+            try:
+                result = filter.value_to_q(filter=filter, op=op, value_string_or_f=value_string_or_f)
+            except ValidationError as e:
+                raise QueryException(f'{e.message}')
             if result is None:
                 raise QueryException(f'Unknown value "{value_string_or_f}" for filter "{filter._name}"')
             return result

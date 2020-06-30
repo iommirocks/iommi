@@ -1,5 +1,9 @@
 from collections import defaultdict
-from datetime import date
+from datetime import (
+    date,
+    datetime,
+    time,
+)
 
 import pytest
 from django.db.models import (
@@ -7,6 +11,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from freezegun import freeze_time
 from tri_declarative import (
     class_shortcut,
     get_members,
@@ -105,23 +110,23 @@ def test_freetext(MyTestQuery):
 
 def test_or(MyTestQuery):
     query = MyTestQuery().bind(request=None)
-    assert repr(query.parse_query_string('foo_name="asd" or bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) | Q(**{'bar__exact': 7}))
+    assert repr(query.parse_query_string('foo_name="asd" or bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) | Q(**{'bar__exact': '7'}))
 
 
 def test_and(MyTestQuery):
     query = MyTestQuery().bind(request=None)
-    assert repr(query.parse_query_string('foo_name="asd" and bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7}))
+    assert repr(query.parse_query_string('foo_name="asd" and bar_name = 7')) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}))
 
 
 def test_negation(MyTestQuery):
     query = MyTestQuery().bind(request=None)
-    assert repr(query.parse_query_string('foo_name!:"asd" and bar_name != 7')) == repr(~Q(**{'foo__icontains': 'asd'}) & ~Q(**{'bar__exact': 7}))
+    assert repr(query.parse_query_string('foo_name!:"asd" and bar_name != 7')) == repr(~Q(**{'foo__icontains': 'asd'}) & ~Q(**{'bar__exact': '7'}))
 
 
 def test_precedence(MyTestQuery):
     query = MyTestQuery().bind(request=None)
-    assert repr(query.parse_query_string('foo_name="asd" and bar_name = 7 or baz_name = 11')) == repr((Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': 7})) | Q(**{'baz__iexact': 11}))
-    assert repr(query.parse_query_string('foo_name="asd" or bar_name = 7 and baz_name = 11')) == repr(Q(**{'foo__iexact': 'asd'}) | (Q(**{'bar__exact': 7})) & Q(**{'baz__iexact': 11}))
+    assert repr(query.parse_query_string('foo_name="asd" and bar_name = 7 or baz_name = 11')) == repr((Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'})) | Q(**{'baz__iexact': '11'}))
+    assert repr(query.parse_query_string('foo_name="asd" or bar_name = 7 and baz_name = 11')) == repr(Q(**{'foo__iexact': 'asd'}) | (Q(**{'bar__exact': '7'})) & Q(**{'baz__iexact': '11'}))
 
 
 @pytest.mark.parametrize('op,django_op', [
@@ -141,14 +146,14 @@ def test_ops(op, django_op, MyTestQuery):
 
 def test_parenthesis(MyTestQuery):
     query = MyTestQuery().bind(request=None)
-    assert repr(query.parse_query_string('foo_name="asd" and (bar_name = 7 or baz_name = 11)')) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
+    assert repr(query.parse_query_string('foo_name="asd" and (bar_name = 7 or baz_name = 11)')) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': '7'}) | Q(**{'baz__iexact': '11'})))
 
 
 def test_request_to_q_advanced(MyTestQuery):
 
     q = MyTestQuery().bind(request=req('get'))
     query = MyTestQuery().bind(request=req('get', **{q.get_advanced_query_param(): 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'}))
-    assert repr(query.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': 7}) | Q(**{'baz__iexact': 11})))
+    assert repr(query.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': '7'}) | Q(**{'baz__iexact': '11'})))
 
 
 def test_request_to_q_simple(MyTestQuery):
@@ -156,10 +161,10 @@ def test_request_to_q_simple(MyTestQuery):
         bazaar = Filter.boolean(attr='quux__bar__bazaar', field__include=True)
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
-    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 1}))
+    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': True}))
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'false'}))
-    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': 0}))
+    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': False}))
 
 
 def test_boolean_parse():
@@ -193,12 +198,39 @@ def test_boolean_unary_op_error_messages():
     assert str(e.value) == 'Unknown unary filter "bar", available filters: foo'
 
 
-def test_integer_request_to_q_simple():
-    class Query2(Query):
-        bazaar = Filter.integer(attr='quux__bar__bazaar', field=Struct(include=True))
+def query_str(query):
+    return repr(query).replace('FakeDate', 'datetime.date')
 
-    query2 = Query2().bind(request=req('get', bazaar='11'))
-    assert repr(query2.get_q()) == repr(Q(**{'quux__bar__bazaar__iexact': 11}))
+
+@pytest.mark.parametrize(
+    'shortcut, input, expected_parse', [
+        (Filter.integer, '11', 11),
+        (Filter.float, '11.5', 11.5),
+        (Filter.boolean, 'true', True),
+        (Filter.boolean, 'False', False),
+        (Filter.boolean_tristate, 'True', True),
+        (Filter.date, '2014-03-07', date(2014, 3, 7)),
+        (Filter.datetime, '2014-03-07 11:13', datetime(2014, 3, 7, 11, 13)),
+        (Filter.time, '11', time(11)),
+        (Filter.time, '11:13', time(11, 13)),
+        (Filter.time, '11:13:17', time(11, 13, 17)),
+    ]
+)
+def test_filter_parsing(shortcut, input, expected_parse):
+    class MyQuery(Query):
+        bazaar = shortcut(attr='quux__bar__bazaar')
+
+    query = MyQuery().bind(request=req('get', bazaar=input))
+    assert not query.form.get_errors(), query.form.get_errors()
+    assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__iexact': expected_parse}))
+
+
+def test_filter_parsing_boolean_tristate_empty():
+    class MyQuery(Query):
+        bazaar = Field.boolean_tristate(attr='quux__bar__bazaar')
+
+    query = MyQuery().bind(request=req('get', bazaar=''))
+    assert query_str(query.get_q()) == query_str(Q())
 
 
 def test_gui_is_not_required():
@@ -272,17 +304,33 @@ def test_null(MyTestQuery):
     assert repr(query.parse_query_string('foo_name=null')) == repr(Q(**{'foo': None}))
 
 
-def test_date(MyTestQuery):
-    query = MyTestQuery().bind(request=None)
-    assert repr(query.parse_query_string('foo_name=2014-03-07')) == repr(Q(**{'foo__iexact': date(2014, 3, 7)}))
+def test_date_out_of_range():
+    class MyTestQuery(Query):
+        foo = Filter.date()
 
-
-def test_date_out_of_range(MyTestQuery):
     query = MyTestQuery().bind(request=None)
     with pytest.raises(QueryException) as e:
-        query.parse_query_string('foo_name=2014-03-37')
+        query.parse_query_string('foo=2014-03-37')
 
     assert 'out of range' in str(e)
+
+
+def test_relative_date():
+    class MyTestQuery(Query):
+        foo = Filter.date()
+
+    with freeze_time('2014-03-07'):
+        query = MyTestQuery().bind(request=None)
+        assert repr(query.parse_query_string('foo > "3 days ago"')) == repr(Q(**{'foo__gt': date(2014, 3, 4)}))
+        assert repr(query.parse_query_string('foo > "-3d"')) == repr(Q(**{'foo__gt': date(2014, 3, 4)}))
+
+        with pytest.raises(QueryException) as e:
+            query.parse_query_string('foo < "700q"')
+        assert str(e.value) == '"700q" is not a valid relative date. 700 is too big (max is 166).'
+
+        with pytest.raises(QueryException) as e:
+            query.parse_query_string('foo < 700q')
+        assert str(e.value) == '"700q" is not a valid relative date. 700 is too big (max is 166).'
 
 
 def test_invalid_syntax(MyTestQuery):

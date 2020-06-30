@@ -17,6 +17,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.db.models import Q
 from django.test import override_settings
+from freezegun import freeze_time
 from tri_declarative import (
     class_shortcut,
     get_members,
@@ -67,6 +68,7 @@ from iommi.form import (
     multi_choice_choice_to_option,
     register_field_factory,
     render_template,
+    time_parse,
     url_parse,
 )
 from iommi.from_model import (
@@ -302,8 +304,8 @@ def test_parse_errors(MyTestForm):
             joined='foo',
             staff='foo',
             admin='foo',
-            a_date='fooasd',
-            a_time='asdasd',
+            a_date='foo',
+            a_time='bar',
             multi_choice_field=['q'],
             **{'-submit': ''}
         )),
@@ -335,14 +337,14 @@ def test_parse_errors(MyTestForm):
     assert form.fields['admin'].parsed_data is None
     assert form.fields['admin'].value is None
 
-    assert form.fields['a_date'].raw_data == 'fooasd'
-    assert_one_error_and_matches_reg_exp(form.fields['a_date'].errors, "time data u?'fooasd' does not match format u?'%Y-%m-%d'")
+    assert form.fields['a_date'].raw_data == 'foo'
+    assert_one_error_and_matches_reg_exp(form.fields['a_date'].errors, 'Time data "foo" does not match any of the formats.*')
     assert form.fields['a_date'].parsed_data is None
     assert form.fields['a_date'].value is None
     assert form.fields['a_date'].rendered_value == form.fields['a_date'].raw_data
 
-    assert form.fields['a_time'].raw_data == 'asdasd'
-    assert_one_error_and_matches_reg_exp(form.fields['a_time'].errors, "time data u?'asdasd' does not match format u?'%H:%M:%S'")
+    assert form.fields['a_time'].raw_data == 'bar'
+    assert_one_error_and_matches_reg_exp(form.fields['a_time'].errors, 'Time data "bar" does not match any of the formats.*')
     assert form.fields['a_time'].parsed_data is None
     assert form.fields['a_time'].value is None
 
@@ -498,7 +500,7 @@ def test_integer_field():
     assert Form(fields__foo=Field.integer(),).bind(request=req('get', foo=' 7  ')).fields.foo.parsed_data == 7
 
     actual_errors = Form(fields__foo=Field.integer()).bind(request=req('get', foo=' foo  ')).fields.foo.errors
-    assert_one_error_and_matches_reg_exp(actual_errors, r"invalid literal for int\(\) with base 10: u?'foo'")
+    assert_one_error_and_matches_reg_exp(actual_errors, r"invalid literal for int\(\) with base 10: 'foo'")
 
 
 def test_float_field():
@@ -1860,14 +1862,21 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
 
 def test_datetime_parse():
     assert datetime_parse('2001-02-03 12') == datetime(2001, 2, 3, 12)
-    assert (datetime_parse('now') - datetime.now()) < timedelta(seconds=0.1)
+
+    with freeze_time('2001-02-03 12:13:14'):
+        assert datetime_parse('now') == datetime(2001, 2, 3, 12, 13, 14)
+
+    with freeze_time('2001-02-03 12:13:14'):
+        assert datetime_parse('-2d') == datetime(2001, 2, 1, 12, 13, 14)
 
     bad_date = '091223'
     with pytest.raises(ValidationError) as e:
         datetime_parse(bad_date)
 
-    expected = 'Time data "%s" does not match any of the formats "now", %s' % (bad_date, ', '.join('"%s"' % x for x in datetime_iso_formats))
-    assert expected == str(e.value) or [expected] == [str(x) for x in e.value]
+    formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
+    expected = f'Time data "{bad_date}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"'
+    actual = e.value.message
+    assert expected == actual
 
 
 @pytest.mark.django_db
@@ -2322,3 +2331,8 @@ def test_create_or_edit_object_full_template():
 def test_evil_names():
     from tests.models import EvilNames
     Form.create(auto__model=EvilNames).bind(request=req('post'))
+
+
+def test_time_parse():
+    with freeze_time('2012-03-07 12:13:14'):
+        assert time_parse('now') == time(12, 13, 14)
