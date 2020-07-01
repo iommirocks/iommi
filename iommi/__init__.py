@@ -78,6 +78,7 @@ __all__ = [
     'register_cell_formatter',
     'register_style',
     'register_search_fields',
+    'html',
 ]
 
 default_app_config = 'iommi.django_app.IommiConfig'
