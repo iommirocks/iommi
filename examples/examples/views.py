@@ -4,6 +4,10 @@ from datetime import (
     datetime,
 )
 from pathlib import Path
+from typing import (
+    Dict,
+    Type,
+)
 
 import iommi.part
 import iommi.style
@@ -24,15 +28,18 @@ from django.utils.safestring import mark_safe
 from iommi import (
     Action,
     Column,
+    Fragment,
     Header,
     html,
     Page,
     Table,
 )
+from iommi._web_compat import template_types
 from iommi.base import (
     items,
     keys,
 )
+from iommi.evaluate import evaluate_strict
 from iommi.form import (
     choice_parse,
     Field,
@@ -44,10 +51,15 @@ from iommi.menu import (
 )
 from iommi.style import validate_styles
 from tri_declarative import (
+    declarative,
+    dispatch,
+    EMPTY,
     get_members,
     is_shortcut,
     Namespace,
+    Refinable,
     Shortcut,
+    with_meta,
 )
 from tri_struct import Struct
 
@@ -558,3 +570,76 @@ def menu_test(request):
         )
 
     return FooPage()
+
+
+from iommi.traversable import reinvokable, Traversable
+from iommi.part import PartType
+from iommi.member import collect_members
+
+
+@with_meta
+@declarative(
+    parameter='_children_dict',
+    is_member=lambda obj: isinstance(obj, (iommi.Part, str) + template_types),
+    sort_key=lambda x: 0,
+)
+class Component(Fragment):
+    member_class: Type[Fragment] = Refinable()
+
+    class Meta:
+        member_class = Fragment
+
+    @reinvokable
+    @dispatch(
+        children=EMPTY,
+    )
+    def __init__(
+            self,
+            *,
+            _children_dict: Dict[str, PartType] = None,
+            children: dict,
+            **kwargs
+    ):
+        super(Component, self).__init__(**kwargs)
+
+        self.children = {}  # This is just so that the repr can survive if it gets triggered before children is set properly
+
+        # First we have to up sample children that aren't Part into Fragment
+        def as_fragment_if_needed(k, v):
+            if not isinstance(v, (dict, Traversable)):
+                return Fragment(children__text=v, _name=k)
+            else:
+                return v
+
+        _children_dict = {k: as_fragment_if_needed(k, v) for k, v in items(_children_dict)}
+        children = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(children)})
+
+        collect_members(self, name='children', items=children, items_dict=_children_dict, cls=self.get_meta().member_class)
+
+    def own_evaluate_parameters(self):
+        assert False, 'You must implement own_evaluate_parameters on your component. Typically for a component Foo you will return dict(foo=self)'
+
+
+class Calendar(Component):
+    header = html.div('Calendar header', attrs__class__header=True)
+    body = html.div(
+        lambda calendar, **_: format_html("Today's date is <span>{}</span>", calendar.date),
+        attrs__class__body=True,
+    )
+
+    def __init__(self, date, **kwargs):
+        self.date = evaluate_strict(date, **self.own_evaluate_parameters())
+        super().__init__(**kwargs)
+
+    def own_evaluate_parameters(self):
+        return dict(calendar=self)
+
+    class Meta:
+        tag = 'div'
+        attrs__class = {'calendar-component': True}
+
+
+def calendar_test(request):
+    class MyPage(Page):
+        c2 = Calendar(date=lambda **_: date.today())
+    return MyPage()

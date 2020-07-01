@@ -48,4 +48,6 @@ urlpatterns = [
     path('iommi-admin/', include(Admin.urls())),
 
     path('menu_test/', views.menu_test, name='menu_test'),
+
+    path('calendar_test/', views.calendar_test, name='calendar_test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
