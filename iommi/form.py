@@ -1200,7 +1200,7 @@ class Form(Part):
 
                 setdefaults_path(
                     actions,
-                    submit__attrs__value=title,
+                    submit__display_name=title,
                 )
 
         super(Form, self).__init__(model=model, title=title, **kwargs)
