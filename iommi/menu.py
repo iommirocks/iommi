@@ -278,6 +278,6 @@ class Menu(MenuBase):
 
 
 class DebugMenu(Menu):
-    code = MenuItem()
-    tree = MenuItem(url='?/debug_tree')
-    pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()')
+    code = MenuItem(tag='li')
+    tree = MenuItem(url='?/debug_tree', tag='li')
+    pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
