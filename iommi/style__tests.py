@@ -13,9 +13,11 @@ from iommi.style import (
     get_style_for,
     get_style_obj_for_object,
     InvalidStyleConfigurationException,
+    register_style,
     Style,
     validate_styles,
 )
+from iommi.style_base import base
 
 
 def test_style():
@@ -164,3 +166,53 @@ Invalid shortcut names:
     Style: foo - class: Foo - shortcut: does_not_exist
     Style: foo - class: Foo - shortcut: does_not_exist2
 '''.strip()
+
+
+@pytest.mark.django_db
+def test_style_bulk_form():
+    from iommi import style
+    from iommi import Column, Table
+    from tests.models import Foo
+
+    register_style('my_style', Style(
+        base,
+        Table__bulk_form__attrs__class__foo=True,
+    ))
+
+    class MyTable(Table):
+        class Meta:
+            iommi_style = 'my_style'
+            model = Foo
+        bar = Column(bulk__include=True)
+
+    table = MyTable()
+    table = table.bind(request=None)
+
+    assert 'foo' in render_attrs(table.bulk_form.attrs)
+
+    del style._styles['my_style']
+
+
+@pytest.mark.skip(reason="Styling of bulk form broken")
+@pytest.mark.django_db
+def test_style_bulk_form_broken_on_no_form():
+    from iommi import style
+    from iommi import Table
+    from tests.models import Foo
+
+    register_style('my_style', Style(
+        base,
+        Table__bulk_form__attrs__class__foo=True,
+    ))
+
+    class MyTable(Table):
+        class Meta:
+            iommi_style = 'my_style'
+            model = Foo
+
+    table = MyTable()
+    table = table.bind(request=None)
+
+    assert 'foo' in render_attrs(table.bulk_form.attrs)
+
+    del style._styles['my_style']
