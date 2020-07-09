@@ -98,7 +98,9 @@ def apply_style_recursively(*, style_data, obj):
     else:
         for k, v in items(style_data):
             if isinstance(v, dict):
-                apply_style_recursively(style_data=v, obj=getattr(obj, k))
+                child = getattr(obj, k)
+                if child is not None:
+                    apply_style_recursively(style_data=v, obj=child)
             else:
                 attrib = getattr(obj, k, _no_attribute_sentinel)
                 if attrib is _no_attribute_sentinel:
