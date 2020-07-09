@@ -193,7 +193,6 @@ def test_style_bulk_form():
     del style._styles['my_style']
 
 
-@pytest.mark.skip(reason="Styling of bulk form broken")
 @pytest.mark.django_db
 def test_style_bulk_form_broken_on_no_form():
     from iommi import style
@@ -213,6 +212,6 @@ def test_style_bulk_form_broken_on_no_form():
     table = MyTable()
     table = table.bind(request=None)
 
-    assert 'foo' in render_attrs(table.bulk_form.attrs)
+    assert table.bulk_form is None
 
     del style._styles['my_style']
