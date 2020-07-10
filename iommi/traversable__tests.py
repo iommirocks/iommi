@@ -22,6 +22,7 @@ from iommi.page import (
 )
 from iommi.traversable import (
     build_long_path_by_path,
+    EvaluatedRefinable,
     reinvokable,
     Traversable,
     evaluated_refinable,
@@ -315,6 +316,14 @@ def test_attrs_evaluated():
 
     f = Foo(attrs__foo=lambda x, **_: x).bind(request=None)
     assert f.attrs.foo == 3
+
+
+def test_instance_in_eval_args():
+    class Foo(Traversable):
+        bar = EvaluatedRefinable()
+
+    f = Foo(bar=lambda instance, **_: instance).bind(request=None)
+    assert f.bar == f
 
 
 def test_initial_setup():
