@@ -173,11 +173,17 @@ class Traversable(RefinableObject):
         result._parent = parent
         result._is_bound = True
 
+        evaluate_parameters = {
+            'traversable': result,
+            **(parent.iommi_evaluate_parameters() if parent is not None else {}),
+            **result.own_evaluate_parameters(),
+        }
+        if parent is None:
+            evaluate_parameters['request'] = request
+        result._evaluate_parameters = evaluate_parameters
+
         if hasattr(result, 'include'):
-            include = evaluate_strict(result.include, **{
-                **(parent.iommi_evaluate_parameters() if parent is not None else {}),
-                **result.own_evaluate_parameters(),
-            })
+            include = evaluate_strict(result.include, **evaluate_parameters)
             if not bool(include):
                 return None
         else:
@@ -191,16 +197,8 @@ class Traversable(RefinableObject):
         # Styling has another chance of setting include to False
         if include is not MISSING and result.include is False:
             return None
-        result.include = True  # include can be the falsy MISSING. Set it to False
+        result.include = True
 
-        # We need to recalculate evaluate_parameters here to not get the
-        # unbound stuff that was in the first round of this dict
-        result._evaluate_parameters = {
-            **(result.iommi_parent().iommi_evaluate_parameters() if result.iommi_parent() is not None else {}),
-            **result.own_evaluate_parameters(),
-        }
-        if parent is None:
-            result.iommi_evaluate_parameters()['request'] = request
         result.on_bind()
 
         # on_bind has a chance to hide itself
@@ -211,10 +209,10 @@ class Traversable(RefinableObject):
             result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
         evaluated_attributes = [k for k, v in items(result.get_declared('refinable_members')) if is_evaluated_refinable(v)]
-        evaluate_members(result, evaluated_attributes, **result.iommi_evaluate_parameters())
+        evaluate_members(result, evaluated_attributes, **evaluate_parameters)
 
         if hasattr(result, 'extra_evaluated'):
-            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **result.iommi_evaluate_parameters())
+            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **evaluate_parameters)
 
         return result
 
