@@ -322,7 +322,7 @@ def test_instance_in_eval_args():
     class Foo(Traversable):
         bar = EvaluatedRefinable()
 
-    f = Foo(bar=lambda instance, **_: instance).bind(request=None)
+    f = Foo(bar=lambda traversable, **_: traversable).bind(request=None)
     assert f.bar == f
 
 

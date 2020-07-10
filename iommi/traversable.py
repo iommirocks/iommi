@@ -174,7 +174,7 @@ class Traversable(RefinableObject):
         result._is_bound = True
 
         evaluate_parameters = {
-            'instance': result,
+            'traversable': result,
             **(parent.iommi_evaluate_parameters() if parent is not None else {}),
             **result.own_evaluate_parameters(),
         }
