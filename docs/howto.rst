@@ -4,6 +4,16 @@ HOWTO
 .. contents::
     :local:
 
+.. imports
+    from iommi import *
+    from tests.helpers import req
+    from tests.models import *
+    from django.template import Template
+    from tri_declarative import Namespace
+    from iommi.attrs import render_attrs
+    from django.http import HttpResponseRedirect
+    from examples.models import Track
+
 General
 -------
 
@@ -47,6 +57,8 @@ editor by setting `IOMMI_DEBUG_URL_BUILDER` in settings:
 
 The `Tree` link will open the `?/debug_tree` page mentioned above.
 
+.. test
+    assert True  # Until I come up with a nice way to test this
 
 Forms
 -----
@@ -54,7 +66,7 @@ Forms
 How do I supply a custom parser for a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass a callable to the `parse_query_string` member of the field:
+Pass a callable to the `parse` member of the field:
 
 .. code:: python
 
@@ -63,6 +75,12 @@ Pass a callable to the `parse_query_string` member of the field:
         fields__foo__parse=
             lambda field, string_value, **_: int(string_value),
     )
+
+.. test
+
+    form = form.bind(request=req('get', foo='123abc'))
+    assert form.fields.foo.value == 123
+
 
 How do I make a field non-editable?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -308,8 +326,9 @@ or we could do:
         auto__model=Foo,
         column__square=Column(
             attr='value',
-            cell__format=lambda value, **: value * value,
+            cell__format=lambda value, **_: value * value,
         )
+    )
 
 This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
 
@@ -378,14 +397,14 @@ The `attrs` namespace has special handling to make it easy to customize. There a
 
 First the straight forward case where a key/value pair is rendered in the output:
 
-.. code:: python
+.. code:: python-doctest
 
     >>> render_attrs(Namespace(foo='bar'))
     ' foo="bar"'
 
 Then there's a special handling for CSS classes:
 
-.. code:: python
+.. code:: python-doctest
 
     >>> render_attrs(Namespace(class__foo=True, class__bar=True))
     ' class="bar foo"'
@@ -394,7 +413,7 @@ Note that the class names are sorted alphabetically on render.
 
 Lastly there is the special handling of `style`:
 
-.. code:: python
+.. code:: python-doctest
 
     >>> render_attrs(Namespace(style__font='Arial'))
     ' style="font: Arial"'
@@ -402,7 +421,7 @@ Lastly there is the special handling of `style`:
 If you need to add a style with `-` in the name you have to do this:
 
 
-.. code:: python
+.. code:: python-doctest
 
     >>> render_attrs(Namespace(**{'style__font-family': 'sans-serif'}))
     ' style="font-family: sans-serif"'
@@ -410,7 +429,7 @@ If you need to add a style with `-` in the name you have to do this:
 
 Everything together:
 
-.. code:: python
+.. code:: python-doctest
 
     >>> render_attrs(
     ...     Namespace(
@@ -488,12 +507,15 @@ How do I access table data programmatically (like for example to dump to json)?
 
 Here's a simple example that prints a table to stdout:
 
-.. code:: python
+.. test
+    table = Table(auto__model=Track).bind(request=req('get'))
 
+.. code:: python
     for row in table:
         for cell in row:
             print(cell.render_formatted(), end='')
         print()
+
 
 How do I make a link in a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -649,6 +671,7 @@ You need to first show the select column by passing
 handler:
 
 .. code:: python
+
     def my_action_post_handler(table, request, **_):
         queryset = table.bulk_queryset()
         queryset.update(spiral='architect')
@@ -699,7 +722,7 @@ to `icontains`. You can specify another callable here:
 .. code:: python
 
     Table(
-        auto__model=Song,
+        auto__model=Track,
         columns__album__filter__query_operator_to_q_operator=lambda op: 'exact',
     )
 
