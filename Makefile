@@ -44,6 +44,10 @@ coverage:
 docs:
 	tox -e docs
 
+test-docs:
+	python docs/make_docs_test_files.py
+	python -m pytest docs/test_docs.py --ds=docs.settings
+
 dist: clean
 	python setup.py sdist
 	python setup.py bdist_wheel

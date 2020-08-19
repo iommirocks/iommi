@@ -7,12 +7,14 @@ HOWTO
 .. imports
     from iommi import *
     from tests.helpers import req
-    from tests.models import *
     from django.template import Template
     from tri_declarative import Namespace
     from iommi.attrs import render_attrs
     from django.http import HttpResponseRedirect
-    from examples.models import Track
+    from django.db import models
+    from .models import Artist, Album, Track
+    import pytest
+    pytestmark = pytest.mark.django_db
 
 General
 -------
@@ -71,15 +73,16 @@ Pass a callable to the `parse` member of the field:
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__foo__parse=
-            lambda field, string_value, **_: int(string_value),
+        auto__model=Track,
+        fields__index__parse=
+            lambda field, string_value, **_: int(string_value[:-3]),
     )
 
 .. test
 
-    form = form.bind(request=req('get', foo='123abc'))
-    assert form.fields.foo.value == 123
+    form = form.bind(request=req('get', index='123abc'))
+    assert not form.get_errors()
+    assert form.fields.index.value == 123
 
 
 How do I make a field non-editable?
@@ -90,10 +93,10 @@ Pass a callable or `bool` to the `editable` member of the field:
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__foo__editable=
+        auto__model=Album,
+        fields__name__editable=
             lambda request, **_: request.user.is_staff,
-        fields__bar__editable=False,
+        fields__artist__editable=False,
     )
 
 How do I make an entire form non-editable?
@@ -104,7 +107,7 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
+        auto__model=Album,
         editable=False,
     )
 
@@ -116,15 +119,17 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__foo__is_valid=
+        auto__model=Album,
+        fields__name__is_valid=
             lambda form, field, parsed_data: (False, 'invalid!'),
     )
+
 
 How do I exclude a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `How do I say which fields to include when creating a form from a model?`_
+
 
 How do I say which fields to include when creating a form from a model?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -145,9 +150,9 @@ Pass a value or callable to the `initial` member:
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__foo__initial=7,
-        fields__bar__initial=lambda field, form, **_: 11,
+        auto__model=Album,
+        fields__name__initial='Paranoid',
+        fields__year__initial=lambda field, form, **_: 1970,
     )
 
 If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
@@ -160,9 +165,9 @@ Normally this will be handled automatically by looking at the model definition, 
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__foo__required=True,
-        fields__bar__required=lambda field, form, **_: True,
+        auto__model=Album,
+        fields__name__required=True,
+        fields__year__required=lambda field, form, **_: True,
     )
 
 
@@ -177,13 +182,13 @@ You can change the order in your model definitions as this is what iommi uses. I
     from tri_declarative import LAST
 
     form = Form(
-        auto__model=Foo,
-        fields__baz__after=LAST,
-        fields__bar__after='foo',
-        fields__foo__after=0,
+        auto__model=Album,
+        fields__name__after=LAST,
+        fields__year__after='artist',
+        fields__artist__after=0,
     )
 
-This will make the field order foo, bar, baz.
+This will make the field order `artist`, `year`, `name`.
 
 If there are multiple fields with the same index or name the order of the fields will be used to disambiguate.
 
@@ -202,8 +207,8 @@ searching by specifying `search_fields`:
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__foo__search_fields=('foo', 'bar'),
+        auto__model=Album,
+        fields__name__search_fields=('name', 'year'),
     )
 
 This last method is discouraged though, because it might mean searching for the
@@ -224,15 +229,15 @@ Pass a template name or a `Template` object:
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__bar__template='my_template.html',
+        auto__model=Album,
+        fields__year__template='my_template.html',
     )
 
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__bar__template=Template('{{ field.attrs }}'),
+        auto__model=Album,
+        fields__year__template=Template('{{ field.attrs }}'),
     )
 
 
@@ -245,15 +250,15 @@ Pass a template name or a `Template` object to the `input` namespace:
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__bar__input__template='my_template.html',
+        auto__model=Album,
+        fields__year__input__template='my_template.html',
     )
 
 .. code:: python
 
     form = Form(
-        auto__model=Foo,
-        fields__bar__input__template=Template('{{ field.attrs }}'),
+        auto__model=Album,
+        fields__year__input__template=Template('{{ field.attrs }}'),
     )
 
 Tables
@@ -281,7 +286,7 @@ Specify `page_size=None`:
 .. code:: python
 
     Table(
-        auto__model=Foo,
+        auto__model=Album,
         page_size=None,
     )
 
@@ -306,13 +311,17 @@ Let's say we have a model like this:
     class Foo(models.Model):
         value = models.IntegerField()
 
+.. test
+        class Meta:
+            app_label = 'docs_computed'
+
 And we want a computed column `square` that is the square of the value, then we can do:
 
 .. code:: python
 
     Table(
         auto__model=Foo,
-        column__square=Column(
+        columns__square=Column(
             # computed value:
             cell__value=lambda row, **_: row.value * row.value,
         )
@@ -324,7 +333,7 @@ or we could do:
 
     Table(
         auto__model=Foo,
-        column__square=Column(
+        columns__square=Column(
             attr='value',
             cell__format=lambda value, **_: value * value,
         )
@@ -348,6 +357,10 @@ By default the columns come in the order defined so if you have an explicit tabl
         a = models.IntegerField()
         b = models.IntegerField()
         c = models.IntegerField()
+
+.. test
+        class Meta:
+            app_label = 'docs_reorder'
 
 If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value `-1`:
 
@@ -374,8 +387,8 @@ in the advanced query language.
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__filter__include=True,
+        auto__model=Album,
+        columns__name__filter__include=True,
     )
 
 The `query` namespace here is used to configure a :doc:`Filter` so you can
@@ -493,12 +506,12 @@ Just pass `include=False` to hide the column or `include=True` to show it. By de
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__include=
+        auto__model=Album,
+        columns__name__include=
             lambda request, **_: request.GET.get('some_parameter') == 'hello!',
     )
 
-This will show the column `a` only if the GET parameter `some_parameter` is set to `hello!`.
+This will show the column `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
 To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
@@ -511,7 +524,7 @@ Here's a simple example that prints a table to stdout:
     table = Table(auto__model=Track).bind(request=req('get'))
 
 .. code:: python
-    for row in table:
+    for row in table.cells_for_rows():
         for cell in row:
             print(cell.render_formatted(), end='')
         print()
@@ -520,14 +533,13 @@ Here's a simple example that prints a table to stdout:
 How do I make a link in a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters:
+This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
 
 .. code:: python
 
     Column(
-        name='foo',
-        url='http://example.com',
-        url_title='go to example',
+        cell__url='http://example.com',
+        cell__url_title='go to example',
     )
 
 How do I access foreign key related data in a column?
@@ -540,9 +552,19 @@ Let's say we have two models:
     class Foo(models.Model):
         a = models.IntegerField()
 
+.. test
+        class Meta:
+            app_label = 'docs_fk'
+
+.. code:: python
+
     class Bar(models.Model):
         b = models.IntegerField()
-        c = models.ForeignKey(Foo)
+        c = models.ForeignKey(Foo, on_delete=models.CASCADE)
+
+.. test
+        class Meta:
+            app_label = 'docs_fk'
 
 we can build a table of `Bar` that shows the data of `a` like this:
 
@@ -561,8 +583,8 @@ To turn off column on a column pass it `sortable=False` (you can also use a lamb
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__sortable=False,
+        auto__model=Album,
+        columns__name__sortable=False,
     )
 
 and to turn it off on the entire table:
@@ -570,7 +592,7 @@ and to turn it off on the entire table:
 .. code:: python
 
     Table(
-        auto__model=Foo,
+        auto__model=Album,
         sortable=False,
     )
 
@@ -582,8 +604,8 @@ The `display_name` property of a column is displayed in the header.
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__display_name='header title',
+        auto__model=Album,
+        columns__name__display_name='header title',
     )
 
 How do I set the default sort order of a column to be descending instead of ascending?
@@ -592,8 +614,8 @@ How do I set the default sort order of a column to be descending instead of asce
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__sort_default_desc=True,  # or a lambda!
+        auto__model=Album,
+        columns__name__sort_default_desc=True,  # or a lambda!
     )
 
 
@@ -603,9 +625,9 @@ How do I group columns?
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__group='foo',
-        columns__b__group='foo',
+        auto__model=Album,
+        columns__name__group='foo',
+        columns__year__group='foo',
     )
 
 The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
@@ -619,8 +641,8 @@ You can manually set the rowspan attribute via `row__attrs__rowspan` but this is
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__auto_rowspan=True,
+        auto__model=Album,
+        columns__year__auto_rowspan=True,
     )
 
 
@@ -633,9 +655,9 @@ editing. Enable it for a columns by passing `bulk__include=True`:
 .. code:: python
 
     Table(
-        auto__model=Foo,
+        auto__model=Album,
         columns__select__include=True,
-        columns__a__bulk__include=True,
+        columns__year__bulk__include=True,
     )
 
 The bulk namespace here is used to configure a `Field` for the GUI so you
@@ -652,7 +674,7 @@ How do I enable bulk delete?
 .. code:: python
 
     Table(
-        auto__model=Foo,
+        auto__model=Album,
         columns__select__include=True,
         bulk__actions__delete__include=True,
     )
@@ -678,7 +700,7 @@ handler:
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
     Table(
-        auto__model=Foo,
+        auto__model=Album,
         columns__select__include=True,
         bulk__actions__my_action=Action.submit(
             post_handler=my_action_post_handler,
@@ -694,9 +716,9 @@ If you want to filter based on a freetext query on one or more columns we've got
 .. code:: python
 
     Table(
-        auto__model=Foo,
-        columns__a__filter__freetext=True,
-        columns__b__filter__freetext=True,
+        auto__model=Album,
+        columns__name__filter__freetext=True,
+        columns__year__filter__freetext=True,
     )
 
 (You don't need to enable querying with `columns__b__filter__include=True` first)
