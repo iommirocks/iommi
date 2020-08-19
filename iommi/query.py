@@ -579,7 +579,7 @@ class Query(Part):
         )
 
         for name, filter in items(declared_members(self).filters):
-            if filter.attr is None:
+            if filter.attr is None and getattr(filter.value_to_q, 'iommi_needs_attr', False):
                 continue
             field = setdefaults_path(
                 Namespace(),
