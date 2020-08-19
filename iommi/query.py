@@ -1,5 +1,4 @@
 import operator
-from datetime import date
 from functools import reduce
 from typing import (
     Type,
@@ -16,44 +15,6 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-
-from iommi.datetime_parsing import parse_relative_date
-from iommi.debug import iommi_debug_on
-from pyparsing import (
-    alphanums,
-    alphas,
-    CaselessLiteral,
-    Char,
-    Combine,
-    delimitedList,
-    Forward,
-    Group,
-    Keyword,
-    nums,
-    oneOf,
-    Optional,
-    ParseException,
-    ParseResults,
-    printables,
-    QuotedString,
-    quotedString,
-    Word,
-    ZeroOrMore,
-)
-from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
-    EMPTY,
-    Namespace,
-    Refinable,
-    refinable,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-)
-from tri_struct import Struct
-
 from iommi import Action
 from iommi._web_compat import (
     render_template,
@@ -67,6 +28,7 @@ from iommi.base import (
     model_and_rows,
     values,
 )
+from iommi.debug import iommi_debug_on
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate
 from iommi.form import (
@@ -100,6 +62,35 @@ from iommi.traversable import (
     reinvokable,
     set_declared_member,
 )
+from pyparsing import (
+    alphanums,
+    alphas,
+    Char,
+    Forward,
+    Group,
+    Keyword,
+    oneOf,
+    ParseException,
+    ParseResults,
+    QuotedString,
+    quotedString,
+    Word,
+    ZeroOrMore,
+)
+from tri_declarative import (
+    class_shortcut,
+    declarative,
+    dispatch,
+    EMPTY,
+    getattr_path,
+    Namespace,
+    Refinable,
+    refinable,
+    setdefaults_path,
+    Shortcut,
+    with_meta,
+)
+from tri_struct import Struct
 
 
 class QueryException(Exception):
@@ -150,7 +141,7 @@ def value_to_str_for_query(filter, v):
         model = type(v)
         search_field = filter.search_fields[0]
         try:
-            v = getattr(v, search_field)
+            v = getattr_path(v, search_field)
         except AttributeError:
             raise NoRegisteredSearchFieldException(f'{model.__name__} has no attribute {search_field}. Please register search fields with register_search_fields or specify search_fields.')
     return to_string_surrounded_by_quote(v)

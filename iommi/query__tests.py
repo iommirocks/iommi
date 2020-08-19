@@ -535,6 +535,12 @@ def test_nice_error_message():
     assert str(e.value) == "NonStandardName has no attribute custom_name_field. Please register search fields with register_search_fields or specify search_fields."
 
 
+@pytest.mark.django_db
+def test_value_to_str_for_query_dunder_path():
+    bar = Bar.objects.create(foo=Foo.objects.create(foo=1))
+    value_to_str_for_query(Filter(search_fields=['foo__foo']), bar)
+
+
 def test_escape_quote():
     class MyQuery(Query):
         foo = Filter(field__include=True)
