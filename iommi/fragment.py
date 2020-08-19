@@ -5,8 +5,6 @@ from typing import (
     Union,
 )
 
-from django.template import RequestContext
-from django.utils.html import format_html
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -16,6 +14,7 @@ from tri_declarative import (
 
 from iommi.part import Part
 from iommi._web_compat import (
+    format_html,
     render_template,
     Template,
 )
@@ -127,7 +126,6 @@ class Fragment(Part):
         collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):
-        assert not isinstance(context, RequestContext)
         return format_html(
             '{}' * len(self.children),
             *[

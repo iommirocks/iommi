@@ -19,7 +19,7 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
-from django.conf import settings
+from ._web_compat import settings
 from django.db.models import (
     BooleanField,
     ManyToManyField,

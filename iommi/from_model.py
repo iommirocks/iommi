@@ -23,10 +23,7 @@ from iommi.base import (
     keys,
     MISSING,
 )
-from iommi.evaluate import (
-    evaluate,
-    get_callable_description,
-)
+from iommi.evaluate import evaluate
 
 
 def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):

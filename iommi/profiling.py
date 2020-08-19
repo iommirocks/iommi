@@ -6,7 +6,7 @@ import subprocess
 from io import StringIO
 from tempfile import NamedTemporaryFile
 
-from django.conf import settings
+from ._web_compat import settings
 
 from iommi._web_compat import HttpResponse
 

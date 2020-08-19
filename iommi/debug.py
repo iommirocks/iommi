@@ -3,7 +3,7 @@ from os.path import (
     join,
 )
 
-from django.conf import settings
+from ._web_compat import settings
 from tri_struct import Struct
 
 from iommi._web_compat import (

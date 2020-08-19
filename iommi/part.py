@@ -6,8 +6,10 @@ from typing import (
     Union,
 )
 
-from django.conf import settings
-from django.http import QueryDict
+from ._web_compat import (
+    QueryDict,
+    settings,
+)
 from tri_declarative import (
     dispatch,
     EMPTY,

@@ -4,7 +4,7 @@ from typing import (
     Type,
 )
 
-from django.conf import settings
+from ._web_compat import settings
 from tri_declarative import (
     get_shortcuts_by_name,
     Namespace,
