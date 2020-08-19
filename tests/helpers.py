@@ -85,6 +85,18 @@ def req(method, **data):
     return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())('/', data=data)
 
 
+def user_req(method, **data):
+    request = req(method, **data)
+    request.user = Struct(is_staff=False)
+    return request
+
+
+def staff_req(method, **data):
+    request = req(method, **data)
+    request.user = Struct(is_staff=True)
+    return request
+
+
 def get_attrs(x, attrs):
     return {a: x.attrs.get(a) for a in attrs}
 

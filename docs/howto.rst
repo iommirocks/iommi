@@ -6,7 +6,7 @@ HOWTO
 
 .. imports
     from iommi import *
-    from tests.helpers import req
+    from tests.helpers import req, user_req, staff_req
     from django.template import Template
     from tri_declarative import Namespace
     from iommi.attrs import render_attrs
@@ -99,6 +99,17 @@ Pass a callable or `bool` to the `editable` member of the field:
         fields__artist__editable=False,
     )
 
+
+.. test
+    user_form = form.bind(request=user_req('get'))
+    assert user_form.fields.name.editable is False
+    assert user_form.fields.artist.editable is False
+
+    staff_form = form.bind(request=staff_req('get'))
+    assert staff_form.fields.name.editable is True
+    assert staff_form.fields.artist.editable is False
+
+
 How do I make an entire form non-editable?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -110,6 +121,13 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
         auto__model=Album,
         editable=False,
     )
+
+.. test
+
+    form = form.bind(request=req('get'))
+    assert form.fields.name.editable is False
+    assert form.fields.year.editable is False
+
 
 How do I supply a custom validator?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,6 +141,12 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
         fields__name__is_valid=
             lambda form, field, parsed_data: (False, 'invalid!'),
     )
+
+
+.. test
+
+    form = form.bind(request=req('get', name='foo'))
+    assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
 
 
 How do I exclude a field?
@@ -139,7 +163,7 @@ How do I say which fields to include when creating a form from a model?
 1. the `auto__include` parameter: this is a list of strings for members of the model to use to generate the form.
 2. the `auto__exclude` parameter: the inverse of `include`. If you use this the form gets all the fields from the model excluding the ones with names you supply in `exclude`.
 3. for more advanced usages you can also pass the `include` parameter to a specific field like `fields__my_field__include=True`. Here you can supply either a `bool` or a callable like `fields__my_field__include=lambda request, **_: request.user.is_staff`.
-4. you can also add fields that are not present in the model by passing configuration like `fields__foo__attr='bar__baz` (this means create a `Field` called `foo` that reads its data from `bar.baz`). You can either pass configuration data like that, or pass an entire `Field` instance.
+4. you can also add fields that are not present in the model by passing configuration like `fields__foo__attr='bar__baz'` (this means create a `Field` called `foo` that reads its data from `bar.baz`). You can either pass configuration data like that, or pass an entire `Field` instance.
 
 
 How do I supply a custom initial value?
@@ -154,6 +178,12 @@ Pass a value or callable to the `initial` member:
         fields__name__initial='Paranoid',
         fields__year__initial=lambda field, form, **_: 1970,
     )
+
+.. test
+
+    form = form.bind(request=req('get'))
+    assert form.fields.name.value == 'Paranoid'
+    assert form.fields.year.value == 1970
 
 If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
 
@@ -170,6 +200,11 @@ Normally this will be handled automatically by looking at the model definition, 
         fields__year__required=lambda field, form, **_: True,
     )
 
+.. test
+
+    form = form.bind(request=req('get'))
+    assert form.fields.name.required is True
+    assert form.fields.year.required is True
 
 
 How do I change the order of the fields?
@@ -187,6 +222,11 @@ You can change the order in your model definitions as this is what iommi uses. I
         fields__year__after='artist',
         fields__artist__after=0,
     )
+
+.. test
+
+    form = form.bind(request=req('get'))
+    assert list(form.fields.keys()) == ['artist', 'year', 'name']
 
 This will make the field order `artist`, `year`, `name`.
 
@@ -211,8 +251,8 @@ searching by specifying `search_fields`:
         fields__name__search_fields=('name', 'year'),
     )
 
-This last method is discouraged though, because it might mean searching for the
-same type of model behaves differently in different parts of your application.
+This last method is discouraged though, because it will mean searching behaves
+differently in different parts of your application for the same data.
 
 
 How do I insert a CSS class or HTML attribute?
