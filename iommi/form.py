@@ -1,8 +1,5 @@
 import re
-from datetime import (
-    date,
-    datetime,
-)
+from datetime import datetime
 from decimal import (
     Decimal,
     InvalidOperation,
@@ -345,11 +342,11 @@ def date_parse(string_value, **_):
         if 'out of range' in str(e) or 'unconverted data remains' in str(e):
             extra_information = ' (out of range)'
 
-    result = parse_relative_datetime(string_value)
+    result = parse_relative_date(string_value)
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
         raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"{extra_information}')
-    return result.date()
+    return result
 
 
 def date_render_value(value, **_):
