@@ -855,7 +855,12 @@ class Cell(CellConfig):
         return cell_contents
 
     def render_formatted(self):
-        return evaluate_strict(self.column.cell.format, table=self.table, column=self.column, row=self.row, value=self.value)
+        return evaluate_strict(
+            self.column.cell.format,
+            row=self.row,
+            value=self.value,
+            **self.column.iommi_evaluate_parameters()
+        )
 
     def __str__(self):
         return self.__html__()

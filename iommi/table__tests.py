@@ -1031,7 +1031,7 @@ def test_no_row_tag(NoSortTable):
 
 def test_cell_format_escape(NoSortTable):
     class TestTable(NoSortTable):
-        foo = Column(cell__format=lambda value, **_: '<foo>')
+        foo = Column(cell__format=lambda request, value, **_: '<foo>')
 
     rows = [Struct(foo="foo")]
 
