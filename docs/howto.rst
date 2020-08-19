@@ -341,6 +341,7 @@ Specify `page_size=None`:
 
 .. _How do I create a column based on computed data?:
 
+
 How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -381,10 +382,12 @@ or we could do:
 
 This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
 
+
 How do I get iommi tables to understand my Django ModelField subclasses?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See :doc:`registrations`.
+
 
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -418,6 +421,7 @@ this will put the columns in the order a, c, b.
 
 There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
 
+
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -442,6 +446,7 @@ you can turn off the field in the generated form by passing
 `filter__field__include=False`:
 
 .. _attrs:
+
 
 How do I customize HTML attributes, CSS classes or CSS style specifications?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -495,6 +500,7 @@ Everything together:
     ... )
     ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
+
 How do I customize the rendering of a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -505,6 +511,7 @@ You can customize the :doc:`Cell` rendering in several ways:
 - Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
 - Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
+
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -519,6 +526,7 @@ In templates you can access the raw row via `row`. This would typically be one o
 
 To customize the cell, see `How do I customize the rendering of a cell?`_
 
+
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -528,15 +536,18 @@ You can customize headers in two ways:
 
 - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
 
+
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Set `header_template` to `None`.
 
+
 How do I add fields to a table that is generated from a model?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See the question `How do I create a column based on computed data?`_
+
 
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -554,6 +565,7 @@ Just pass `include=False` to hide the column or `include=True` to show it. By de
 This will show the column `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
 To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
+
 
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
