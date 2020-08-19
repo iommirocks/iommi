@@ -288,6 +288,17 @@ def test_none_attr():
     assert str(e.value) == "bazaar cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for"
 
 
+def test_none_attr_with_value_to_q():
+    q = Query(
+        filters__bazaar=Filter(
+            attr=None,
+            value_to_q=lambda filter, op, value_string_or_f: Q(bazonk=value_string_or_f),
+            field__include=True,
+        ),
+    ).bind(request=req('get', bazaar='foo'))
+    assert q.get_q() == Q(bazonk='foo')
+
+
 def test_request_to_q_freetext(MyTestQuery):
 
     query = MyTestQuery().bind(request=req('get', **{FREETEXT_SEARCH_NAME: "asd"}))
