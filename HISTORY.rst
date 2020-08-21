@@ -1,6 +1,24 @@
 Changelog
 ---------
 
+1.0.2 (2020-08-21)
+~~~~~~~~~~~~~~~~~~
+
+* Support user inputted relative dates/datetimes
+
+* Support more time formats automatically
+
+* Introduced Filter.parse() which is a hook point for handling special parsing in the query language. The query language will no longer try to convert to integers, floats and dates for you. You have to specify a parse() method.
+
+* Added `traversable` key to evaluate parameters. Think of it like something similar to `self`.
+
+* `cell__format` now gets all evaluate parameters like you'd expect
+
+* Filters: If `attr` is `None` but you've specified `value_to_q` then your filter is now included
+
+* Various bug fixes
+
+
 1.0.1 (2020-06-24)
 ~~~~~~~~~~~~~~~~~~
 
