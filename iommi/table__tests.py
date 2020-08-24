@@ -196,8 +196,8 @@ def test_django_table():
 
     assert list(t.columns['foo'].choices) == list(TFoo.objects.all())
 
-    assert t.bulk_form._is_bound
-    assert list(t.bulk_form.fields['foo'].choices) == list(TFoo.objects.all())
+    assert t.bulk._is_bound
+    assert list(t.bulk.fields['foo'].choices) == list(TFoo.objects.all())
 
     assert t.query.form._is_bound
     assert list(t.query.form.fields['foo'].choices) == list(TFoo.objects.all())
@@ -764,7 +764,7 @@ def test_bulk_edit():
         request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
-    assert t.bulk_form._name == 'bulk'
+    assert t.bulk._name == 'bulk'
     t.render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
@@ -808,7 +808,7 @@ def test_bulk_edit_from_model_has_tristate_for_booleans():
         auto__model=BooleanFromModelTestModel,
         columns__b__bulk__include=True,
     ).bind(request=req('get'))
-    assert t.bulk_form.fields.b.__tri_declarative_shortcut_stack[0] == 'boolean_tristate'
+    assert t.bulk.fields.b.__tri_declarative_shortcut_stack[0] == 'boolean_tristate'
 
 
 @pytest.mark.django_db
@@ -1342,7 +1342,7 @@ def test_choice_queryset():
     )
 
     assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.filter(a=1))
-    assert repr(foo_table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
+    assert repr(foo_table.bulk.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
     assert repr(foo_table.query.form.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
 
 
@@ -1365,7 +1365,7 @@ def test_multi_choice_queryset():
     table = table.bind(request=req('get'))
 
     assert repr(table.columns['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
-    assert repr(table.bulk_form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
+    assert repr(table.bulk.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
     assert repr(table.query.form.fields['foo'].choices) == repr(TFoo.objects.exclude(a=3).exclude(a=4))
 
 
@@ -1668,7 +1668,7 @@ def test_defaults():
 
     col = table.columns.foo
     assert table.query is None
-    assert table.bulk_form is None
+    assert table.bulk is None
     assert not col.auto_rowspan
     assert not col.sort_default_desc
     assert col.sortable
@@ -2041,8 +2041,8 @@ def test_bulk_namespaces_are_merged():
         ),
     )
     t = t.bind(request=req('get'))
-    assert t.bulk_form.fields.a.initial == 3
-    assert t.bulk_form.fields.a.display_name == '7'
+    assert t.bulk.fields.a.initial == 3
+    assert t.bulk.fields.a.display_name == '7'
 
 
 @override_settings(IOMMI_DEBUG=True)

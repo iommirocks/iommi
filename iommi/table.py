@@ -1007,7 +1007,7 @@ def bulk_delete__post_handler(table, form, **_):
                 fields__confirmed=Field.hidden(initial='confirmed'),
                 actions__submit__include=False,
                 actions__delete=dict(
-                    attrs__name=table.bulk_form.actions.delete.attrs.name,
+                    attrs__name=table.bulk.actions.delete.attrs.name,
                     call_target__attribute='delete',
                     attrs__value='Yes, delete all!',
                     include=True,
@@ -1023,7 +1023,7 @@ def bulk_delete__post_handler(table, form, **_):
 
     p = ConfirmPage().bind(request=request)
 
-    if request.POST.get(p.parts.confirm.bulk_form.fields.confirmed.iommi_path) == 'confirmed':
+    if request.POST.get(p.parts.confirm.bulk.fields.confirmed.iommi_path) == 'confirmed':
         queryset.delete()
         return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
@@ -1280,7 +1280,7 @@ class Table(Part):
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()  # rows is evaluated, but in a special way so gets no EvaluatedRefinable type
     columns = Refinable()
-    bulk: Namespace = EvaluatedRefinable()
+    bulk: Optional[Form] = EvaluatedRefinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
@@ -1412,7 +1412,6 @@ class Table(Part):
             rows=rows,
             header=HeaderConfig(**header),
             row=RowConfig(**row),
-            bulk=bulk,
             title=title,
             **kwargs
         )
@@ -1423,7 +1422,7 @@ class Table(Part):
         self.query_args = query
         self.query: Query = None
 
-        self.bulk_form: Form = None
+        self.bulk = None
         self.header_levels = None
 
         if self.model:
@@ -1460,7 +1459,7 @@ class Table(Part):
 
             declared_bulk_fields = Struct()
             for name, column in items(declared_members(self).columns):
-                field = self.bulk.fields.pop(name, {})
+                field = bulk.fields.pop(name, {})
 
                 if column.bulk.include:
                     field = setdefaults_path(
@@ -1492,8 +1491,8 @@ class Table(Part):
             )
 
             # x.bulk.include can be a callable here. We treat that as truthy on purpose.
-            if any(x.bulk.include for x in values(declared_members(self).columns)) or 'actions' in self.bulk:
-                self.bulk_form = form_class(
+            if any(x.bulk.include for x in values(declared_members(self).columns)) or 'actions' in bulk:
+                self.bulk = form_class(
                     _fields_dict=declared_bulk_fields,
                     _name='bulk',
                     actions__submit=dict(
@@ -1509,10 +1508,8 @@ class Table(Part):
                     ),
                     **bulk
                 )
-            else:
-                self.bulk_form = None
 
-            declared_members(self).bulk = self.bulk_form
+            declared_members(self).bulk = self.bulk
 
         # Columns need to be at the end to not steal the short names
         declared_members(self).columns = declared_members(self).pop('columns')
@@ -1539,7 +1536,7 @@ class Table(Part):
 
         self.header = self.header.bind(parent=self)
 
-        evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _prepare_headers depends on it
+        evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _bind_headers depends on it
 
         evaluate_member(self, 'model', strict=False, **self.iommi_evaluate_parameters())
         evaluate_member(self, 'rows', **self.iommi_evaluate_parameters())
@@ -1551,10 +1548,9 @@ class Table(Part):
                 # Special case for entire table not sortable
                 column.sortable = False
 
-        self._setup_query()
-        self._setup_bulk_form()
-
-        self._prepare_headers()
+        self._bind_query()
+        self._bind_bulk_form()
+        self._bind_headers()
 
         if isinstance(self.rows, QuerySet):
             prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
@@ -1568,7 +1564,7 @@ class Table(Part):
         self.rows = self.paginator.rows
         self._prepare_auto_rowspan()
 
-    def _setup_query(self):
+    def _bind_query(self):
         if not self.model:
             self.query_form = None
             return
@@ -1594,13 +1590,13 @@ class Table(Part):
             if q:
                 self.rows = self.rows.filter(q)
 
-    def _setup_bulk_form(self):
+    def _bind_bulk_form(self):
         if not self.model:
-            self.bulk_form = None
+            self.bulk = None
             return
 
-        if self.bulk_form is not None:
-            declared_fields = declared_members(self.bulk_form)['fields']
+        if self.bulk is not None:
+            declared_fields = declared_members(self.bulk)['fields']
             for name, column in items(declared_members(self)['columns']):
                 if name in declared_fields:
                     field = setdefaults_path(
@@ -1610,13 +1606,13 @@ class Table(Part):
                         display_name=lambda table, field, **_: table.columns[field._name].display_name,
                     )
                     declared_fields[name] = declared_fields[name].reinvoke(field)
-            set_declared_member(self.bulk_form, 'fields', declared_fields)
+            set_declared_member(self.bulk, 'fields', declared_fields)
 
-            self.bulk_form = self.bulk_form.bind(parent=self)
-            if self.bulk_form.actions:
-                self._bound_members.bulk = self.bulk_form
+            self.bulk = self.bulk.bind(parent=self)
+            if self.bulk.actions:
+                self._bound_members.bulk = self.bulk
             else:
-                self.bulk_form = None
+                self.bulk = None
 
     # property for jinja2 compatibility
     @property
@@ -1692,7 +1688,7 @@ class Table(Part):
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.rows = self.rows.order_by(*order_args)
 
-    def _prepare_headers(self):
+    def _bind_headers(self):
         prepare_headers(self)
 
         superheaders = []
@@ -1796,8 +1792,6 @@ class Table(Part):
         assert self.rows is not None
 
         context = self.iommi_evaluate_parameters().copy()
-        context['query'] = self.query
-        context['bulk_form'] = self.bulk_form
 
         if self.query and self.query.form and not self.query.form.is_valid():
             self.rows = None
