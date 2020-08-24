@@ -29,22 +29,22 @@
     }
 </script>
 
-{% if bulk_form %}
-<form{{ bulk_form.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
+{% if table.bulk %}
+<form{{ table.bulk.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 {% endif %}
 
     {% include 'iommi/table/table_tag.html' %}
 
-{% if bulk_form %}
-    {{ bulk_form.h_tag }}
-    {{ bulk_form.errors }}
-    {{ bulk_form.render_fields }}
-    {{ bulk_form.render_actions }}
+{% if table.bulk %}
+    {{ table.bulk.h_tag }}
+    {{ table.bulk.errors }}
+    {{ table.bulk.render_fields }}
+    {{ table.bulk.render_actions }}
 {% endif %}
 
     {{ table.render_actions }}
 
-{% if bulk_form %}
+{% if table.bulk %}
 </form>
 {% endif %}
 

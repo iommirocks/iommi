@@ -176,7 +176,7 @@ def test_style_bulk_form():
 
     register_style('my_style', Style(
         base,
-        Table__bulk_form__attrs__class__foo=True,
+        Table__bulk__attrs__class__foo=True,
     ))
 
     class MyTable(Table):
@@ -188,7 +188,7 @@ def test_style_bulk_form():
     table = MyTable()
     table = table.bind(request=None)
 
-    assert 'foo' in render_attrs(table.bulk_form.attrs)
+    assert 'foo' in render_attrs(table.bulk.attrs)
 
     del style._styles['my_style']
 
@@ -201,7 +201,7 @@ def test_style_bulk_form_broken_on_no_form():
 
     register_style('my_style', Style(
         base,
-        Table__bulk_form__attrs__class__foo=True,
+        Table__bulk__attrs__class__foo=True,
     ))
 
     class MyTable(Table):
@@ -212,6 +212,6 @@ def test_style_bulk_form_broken_on_no_form():
     table = MyTable()
     table = table.bind(request=None)
 
-    assert table.bulk_form is None
+    assert table.bulk is None
 
     del style._styles['my_style']
