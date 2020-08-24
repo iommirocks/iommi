@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+1.0.3 (2020-08-24)
+~~~~~~~~~~~~~~~~~~
+
+* Changed `Table.bulk_form` to `Table.bulk`. The old name was a mistake as the name was always `bulk`. This meant that styling didn't work like you expected and the pick feature also lead you down the wrong path.
+
+
 1.0.2 (2020-08-21)
 ~~~~~~~~~~~~~~~~~~
 
