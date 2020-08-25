@@ -34,9 +34,19 @@ Say I have some models:
         def __str__(self):
             return 'Foo: %s' % self.a
 
+.. test
+        class Meta:
+            app_label = 'docs_tables'
+
+.. code:: python
+
     class Bar(models.Model):
         b = models.ForeignKey(Foo, on_delete=models.CASCADE)
         c = models.CharField(max_length=255)
+
+.. test
+        class Meta:
+            app_label = 'docs_tables'
 
 Now I can display a list of `Bar` in a table like this:
 

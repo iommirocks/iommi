@@ -1,8 +1,22 @@
 import os
+import sys
 from glob import glob
 from pathlib import Path
 
 base_dir = Path(__file__).parent
+
+os.makedirs(base_dir / '_generated_tests', exist_ok=True)
+
+sys.path.insert(0, base_dir.parent)
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
+
+from django.conf import settings
+settings.configure()
+
+from iommi.docs import generate_rst_docs
+
+generate_rst_docs(str(base_dir))
 
 
 def build_test_file_from_rst(filename):
@@ -48,7 +62,7 @@ def build_test_file_from_rst(filename):
         '`': None,
     })
 
-    with open(base_dir / f'test_{filename.partition(os.path.sep)[-1].partition(".")[0]}.py', 'w') as f:
+    with open(base_dir / '_generated_tests' / f'test_{filename.partition(os.path.sep)[-1].partition(".")[0]}.py', 'w') as f:
         f.write('''
 from iommi import *
 from iommi.admin import Admin
@@ -58,7 +72,7 @@ from django.urls import (
 )
 from django.db import models
 from tests.helpers import req, user_req, staff_req
-from .models import *
+from docs.models import *
 request = req('get')
 '''.lstrip())
         

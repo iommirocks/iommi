@@ -45,8 +45,7 @@ docs:
 	tox -e docs
 
 test-docs:
-	python docs/make_docs_test_files.py
-	python -m pytest docs/test_*.py --ds=docs.settings
+	tox -e docs-tests
 
 dist: clean
 	python setup.py sdist

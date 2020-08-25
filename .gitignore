@@ -160,4 +160,4 @@ coverage.xml
 .hammett-db
 
 # These are machine generated files
-docs/test_*.py
+docs/_generated_tests/test_*.py
