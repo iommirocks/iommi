@@ -1,16 +1,16 @@
 from typing import Type
 
 from django.apps import apps as django_apps
-from django.conf.urls import url
 from django.http import Http404
+from django.urls import path
 from tri_declarative import (
     class_shortcut,
+    dispatch,
     EMPTY,
     LAST,
     Namespace,
     Refinable,
     setdefaults_path,
-    dispatch,
     with_meta,
 )
 from tri_struct import Struct
@@ -231,10 +231,10 @@ class Admin(Page):
     def urls(cls):
         return Struct(
             urlpatterns=[
-                url(r'^$', cls.all_models),
-                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/$', cls.list),
-                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/create/$', cls.create),
-                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/edit/$', cls.edit),
-                url(r'^(?P<app_name>\w+)/(?P<model_name>\w+)/(?P<pk>\d+)/delete/$', cls.delete),
+                path(r'', cls.all_models),
+                path(r'<app_name>/<model_name>/', cls.list),
+                path(r'<app_name>/<model_name>/create/', cls.create),
+                path(r'<app_name>/<model_name>/<int:pk>/edit/', cls.edit),
+                path(r'<app_name>/<model_name>/<int:pk>/delete/', cls.delete),
             ]
         )
