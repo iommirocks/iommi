@@ -37,3 +37,28 @@ class Track(models.Model):
     class Meta:
         ordering = ('index',)
         app_label = 'docs'
+
+
+class Musician(models.Model):
+    name = models.CharField(max_length=255, db_index=True)
+    instrument = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name',)
+        app_label = 'docs'
+
+
+class Car(models.Model):
+    name = models.CharField(max_length=255, db_index=True)
+    make = models.CharField(max_length=255)
+    model = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name',)
+        app_label = 'docs'

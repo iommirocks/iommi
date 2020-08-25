@@ -1,3 +1,7 @@
+.. imports
+    from django.contrib.auth.models import User
+
+
 Registrations
 =============
 
@@ -20,6 +24,10 @@ To tell iommi how to handle your custom fields you have these options:
 
 You use the `register_factory` function to register your own factory. The simplest way is:
 
+.. test
+    class TimeField:
+        pass
+
 .. code:: python
 
     register_factory(
@@ -34,6 +42,9 @@ I you need different behavior for the three classes you need to use the more spe
 You can also register `None` to tell iommi to just ignore the field type whenever it sees it.
 
 For more advanced behavior you can pass a `Shortcut` instance or a callable that returns a shortcut. This is the iommi definition for booleans:
+
+.. test
+    from django.db.models.fields import BooleanField
 
 
 .. code:: python
@@ -53,6 +64,10 @@ Rendering of your custom types in a table
 
 iommi renders `bool`, `list`, `set`, `tuple`, `QuerySet` and any type that has a `__html__` method with special logic to make it look nice in a table. If you have a type where you can't or don't want to implement a `__html__` method (or you want more complex rendering) you can plug into this system yourself with `register_cell_formatter`:
 
+.. test
+    class MyType:
+        pass
+
 .. code:: python
 
     register_cell_formatter(MyType, lambda value, **_: f'hello {value}')
@@ -68,7 +83,7 @@ When searching for an object with `Query` we need to know which fields to use to
 
 .. code:: python
 
-    register_search_fields(model=User, search_fields=['username'])
+    register_search_fields(model=Album, search_fields=['year'], allow_non_unique=True)
 
 On startup iommi registers just this one particular canonical name for you since you probably want it. Note also that you can can use `__` separated paths here if you have a one-to-one with another model where the name field exists.
 

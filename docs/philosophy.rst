@@ -1,3 +1,15 @@
+.. imports
+
+    class BogusClass:
+        def __init__(self, **kwargs):
+            pass
+
+    Car = BogusClass
+    InternalCombustionEngine = BogusClass
+    ElectricEngine = BogusClass
+    SequentialGearbox = BogusClass
+
+
 Philosophy
 ==========
 
@@ -47,6 +59,10 @@ let's say you want to create a `Car` with an electric engine. In standard
 OOP the `Car` constructor might take an `engine` parameter so you'll end up
 with something like:
 
+.. test
+    class ElectricEngine:
+        pass
+
 .. code:: python
 
     car = Car(engine=ElectricEngine())
@@ -67,6 +83,7 @@ to configure a small thing but keep all the defaults this can become noisy:
             doors=4,
             make='toyota'
             # ...and on and on!...
+        )
     )
 
 Now it's impossible to see the intent of the programmer: which of all those
@@ -74,7 +91,7 @@ options was the single thing they wanted to change and which are copy paste
 of the defaults? Turns out in this case it was just the `clutch_type`! We
 would like to write:
 
-.. code:: python
+.. code:: imaginary-python
 
     car = Car(engine.gearbox.clutch_type='double')
 
@@ -217,8 +234,8 @@ that was automatically generated we can write:
 .. code:: python
 
     Form(
-        auto__model=Foo,
-        fields__a_field__input__attrs__style__font='helvetica')
+        auto__model=Album,
+        fields__year__input__attrs__style__font='helvetica')
 
 See also `Everything has a name`_
 

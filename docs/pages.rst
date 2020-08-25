@@ -1,3 +1,7 @@
+.. imports
+    from iommi.fragment import Fragment
+    from iommi._web_compat import Template
+
 Pages
 =====
 
@@ -37,11 +41,15 @@ The `Page` class is used to compose pages. If you have installed the iommi
 middleware you can also return them directly from your views. They accept
 `str`, `Part` and Django `Template` types:
 
+..test
+    class MyOtherPage(Page):
+        pass
+
 .. code:: python
 
     class MyPage(Page):
         # Using the html builder to create a tag safely
-        h1 = html.h1('Welcome!)
+        h1 = html.h1('Welcome!')
 
         # If you write an html tag in here it will be
         # treated as unsafe and escaped by Django like normal
@@ -51,7 +59,7 @@ middleware you can also return them directly from your views. They accept
         some_other_page = MyOtherPage()
 
         # Table and Form are Part types
-        my_table = Table(auto__model=Foo)
+        my_table = Table(auto__model=Artist)
 
         # Django template
         other_stuff = Template('<div>{{ foo }}</div>')

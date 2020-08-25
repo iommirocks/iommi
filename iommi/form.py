@@ -1140,7 +1140,7 @@ class Form(Part):
             fields=dict(
                 a=Field(),
                 b=Field.email(),
-            ]
+            ),
         ).bind(request=request)
 
     See tri.declarative docs for more on this dual style of declaration.

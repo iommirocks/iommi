@@ -1,3 +1,8 @@
+.. imports
+    import pytest
+    pytestmark = pytest.mark.django_db
+
+
 Usage
 =====
 
@@ -15,7 +20,7 @@ Add `iommi` to installed apps:
 .. code:: python
 
     INSTALLED_APPS = [
-        ...
+        # [...]
         'iommi',
     ]
 
@@ -24,7 +29,7 @@ Add iommi's middleware:
 .. code:: python
 
     MIDDLEWARE = [
-        ...
+        # [...]
         'iommi.middleware',
     ]
 
@@ -54,7 +59,7 @@ When you've done the stuff above you can create a page with a table in it:
 
 .. code:: python
 
-    path('table_as_view/', Table.as_view(auto__model=MyModel)),
+    path('table_as_view/', Table(auto__model=Artist).as_view()),
 
 ...or as a function based view:
 
@@ -62,7 +67,7 @@ When you've done the stuff above you can create a page with a table in it:
 
     def my_view(request):
         return Table(
-            auto__model=MyModel,
+            auto__model=Artist,
         )
 
 
@@ -75,7 +80,7 @@ When you've done the stuff above you can create a page with a table in it:
         another_column = Column.date()
 
 
-    my_table = MyTable(request=request, rows=MyModel.objects.all())
+    my_table = MyTable(rows=Artist.objects.all()).bind(request=request)
 
 and then you can render it in your template:
 
@@ -188,7 +193,7 @@ And without the middleware it looks like:
             title = html.h1('Hello')
             div = html.div('Some text')
 
-        return MyPage().bind(request=request).render_to_response())
+        return MyPage().bind(request=request).render_to_response()
 
 or even more low level:
 
@@ -215,4 +220,4 @@ This style also does not require the middleware:
         div = html.div('Some text')
 
     # urls.py:
-    path(r'foo/', MyPage.as_view()),
+    path(r'foo/', MyPage().as_view()),

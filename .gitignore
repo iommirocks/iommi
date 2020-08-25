@@ -159,5 +159,5 @@ coverage.xml
 .testmondata
 .hammett-db
 
-# This is a machine generated file
-docs/test_docs.py
+# These are machine generated files
+docs/test_*.py

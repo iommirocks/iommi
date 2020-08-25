@@ -68,9 +68,7 @@ for specific model in the advanced mode:
 .. code:: python
 
     class CarQuery(Query):
-        make = Filter.choice(
-            choices=['Toyota', 'Volvo', 'Ford'],
-            form_fields__include=True)  # Display this field in the simple style GUI
+        make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])
         model = Filter.text()
 
     def cars(request):
@@ -108,7 +106,7 @@ Programmatically call the search API:
 
 .. code:: python
 
-    query = CarQuery()
+    query = CarQuery().bind(request=request)
     cars_query_set = query.parse_query_string(
         'make=Toyota and (make=1991 or make=1992)'
     )

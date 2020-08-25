@@ -1,20 +1,18 @@
+.. imports
+    from tests.helpers import req, user_req, staff_req
+    from django.template import Template
+    from tri_declarative import Namespace
+    from iommi.attrs import render_attrs
+    from django.http import HttpResponseRedirect
+    import pytest
+    pytestmark = pytest.mark.django_db
+
 HOWTO
 =====
 
 .. contents::
     :local:
 
-.. imports
-    from iommi import *
-    from tests.helpers import req, user_req, staff_req
-    from django.template import Template
-    from tri_declarative import Namespace
-    from iommi.attrs import render_attrs
-    from django.http import HttpResponseRedirect
-    from django.db import models
-    from .models import Artist, Album, Track
-    import pytest
-    pytestmark = pytest.mark.django_db
 
 General
 -------
@@ -576,6 +574,7 @@ Here's a simple example that prints a table to stdout:
     table = Table(auto__model=Track).bind(request=req('get'))
 
 .. code:: python
+
     for row in table.cells_for_rows():
         for cell in row:
             print(cell.render_formatted(), end='')

@@ -46,7 +46,7 @@ docs:
 
 test-docs:
 	python docs/make_docs_test_files.py
-	python -m pytest docs/test_docs.py --ds=docs.settings
+	python -m pytest docs/test_*.py --ds=docs.settings
 
 dist: clean
 	python setup.py sdist

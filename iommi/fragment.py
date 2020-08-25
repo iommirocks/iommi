@@ -79,6 +79,9 @@ class Fragment(Part):
     """
     `Fragment` is a class used to build small HTML fragments that plug into iommis structure.
 
+    .. test
+        from iommi.fragment import Fragment
+
     .. code:: python
 
         h1 = Fragment(children__text='Tony', tag='h1')

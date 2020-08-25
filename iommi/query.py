@@ -502,7 +502,7 @@ class Query(Part):
     .. code:: python
 
         class CarQuery(Query):
-            make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford])
+            make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])
             model = Filter()
 
         query_set = Car.objects.filter(

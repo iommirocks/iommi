@@ -80,10 +80,10 @@ class Attrs(Namespace):
     .. code:: python
 
         form = Form(
-            auto__model=Foo,
-            fields__foo__attrs__foo='bar',
-            fields__bar__after__class__bar=True,
-            fields__bar__after__style__baz='qwe,
+            auto__model=Album,
+            fields__artist__attrs__foo='bar',
+            fields__name__attrs__class__bar=True,
+            fields__name__attrs__style__baz='qwe',
         )
 
     or more succinctly:
@@ -91,11 +91,11 @@ class Attrs(Namespace):
     .. code:: python
 
         form = Form(
-            auto__model=Foo,
-            fields__foo__attrs=dict(
-                foo='bar',
+            auto__model=Album,
+            fields__artist__attrs__foo='bar',
+            fields__name__attrs=dict(
                 class__bar=True,
-                style__baz='qwe,
+                style__baz='qwe',
             )
         )
 
@@ -114,8 +114,8 @@ class Attrs(Namespace):
     .. code:: python
 
         form = Form(
-            auto__model=Foo,
-            fields__bar__after__class__bar=
+            auto__model=Album,
+            fields__name__attrs__class__bar=
                 lambda request, **_: request.user.is_staff,
         )
     """

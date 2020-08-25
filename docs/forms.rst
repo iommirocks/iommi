@@ -1,3 +1,7 @@
+.. imports
+    from django.contrib.auth.models import User
+    from iommi._web_compat import HttpResponseRedirect, RequestContext, render
+
 Forms
 =====
 
@@ -29,16 +33,16 @@ You can either create a subclass of `Form`...
         is_admin = Field.boolean(
             # show only for staff
             include=lambda request, **_: request.user.is_staff,
-            label_template='tweak_label_tag.html')
+            label__template='tweak_label_tag.html')
 
     def edit_user_view(request, username):
         form = UserForm(request=request)
 
         user = User.objects.get(username=username)
-        if form.is_valid() and get_request.method == 'POST':
+        if form.is_valid() and request.method == 'POST':
             form.apply(user)
             user.save()
-            return HttpRedirect('..')
+            return HttpResponseRedirect('..')
 
         return render(
             template_name='edit_user.html',
@@ -69,9 +73,9 @@ or just instantiate a `Form` with a `Field` list and use it directly:
             is_admin=Field.boolean(
                 # show only for staff
                 include=lambda request, **_: request.user.is_staff,
-                label_template='tweak_label_tag.html',
+                label__template='tweak_label_tag.html',
             ),
-        ])
+        ))
 
         # rest of view function...
 
@@ -88,7 +92,7 @@ change the behavior!). The above example is equivalent to:
             # we are fine with the defaults
             username__is_valid=
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
-            is_admin__label_template='tweak_label_tag.html',
+            is_admin__label__template='tweak_label_tag.html',
             # show only for staff
             is_admin__include=lambda request, **_: request.user.is_staff,
         )
@@ -106,7 +110,7 @@ or even better: use `Form.edit`:
             instance=User.objects.get(username=username),
             username__is_valid=
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
-            is_admin__label_template='tweak_label_tag.html',
+            is_admin__label__template='tweak_label_tag.html',
             # show only for staff
             is_admin__include=lambda request, **_: request.user.is_staff,
         )
