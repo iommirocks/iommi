@@ -1,6 +1,9 @@
 import pytest
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from tri_struct import Struct
 
+from iommi import Page
 from iommi.admin import Admin
 from iommi.base import values
 from tests.helpers import req
@@ -68,3 +71,26 @@ def test_delete():
     p.render_to_response()
     assert Foo.objects.count() == 0
 
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('is_authenticated', [True, False])
+@pytest.mark.parametrize('view,kwargs', [
+    (Admin.all_models, dict()),
+    (Admin.list, dict(app_name='tests', model_name='foo')),
+    (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
+    (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
+])
+def test_redirect_to_login(settings, is_authenticated, view, kwargs):
+    settings.ROOT_URLCONF = Admin.urls()
+    if 'pk' in kwargs:
+        Foo.objects.create(pk=kwargs['pk'], foo=1)
+    request = req('get')
+    request.user = Struct(is_staff=True, is_authenticated=is_authenticated)
+
+    result = view(request=request, **kwargs)
+
+    if not is_authenticated:
+        assert isinstance(result, HttpResponseRedirect)
+        assert result.url == '/login/?next=%2F'
+    else:
+        assert isinstance(result, Admin)
