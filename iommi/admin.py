@@ -1,8 +1,18 @@
+from functools import wraps
 from typing import Type
+from urllib.parse import urlencode
 
 from django.apps import apps as django_apps
-from django.http import Http404
-from django.urls import path
+from django.contrib import auth
+from django.http import (
+    Http404,
+    HttpResponseRedirect,
+)
+from django.urls import (
+    path,
+    reverse,
+)
+from django.utils.safestring import mark_safe
 from tri_declarative import (
     class_shortcut,
     dispatch,
@@ -16,6 +26,7 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi import (
+    Field,
     Form,
     html,
     Page,
@@ -30,6 +41,16 @@ model_by_app_and_name = {
     for app_name, models in items(django_apps.all_models)
     for model_name, model in items(models)
 }
+
+
+def require_login(view):
+    @wraps(view)
+    def wrapper(cls, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(f'{reverse(cls.login)}?{urlencode(dict(next=request.path))}')
+
+        return view(cls, request, *args, **kwargs)
+    return wrapper
 
 
 @with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
@@ -92,6 +113,7 @@ class Admin(Page):
     @class_shortcut(
         table=EMPTY,
     )
+    @require_login
     def all_models(cls, request, table, call_target=None, **kwargs):
         if not cls.has_permission(request, operation='all_models'):
             raise Http404()
@@ -130,6 +152,7 @@ class Admin(Page):
     @class_shortcut(
         table=EMPTY,
     )
+    @require_login
     def list(cls, request, app_name, model_name, table, call_target=None, **kwargs):
         model = django_apps.all_models[app_name][model_name]
 
@@ -179,6 +202,7 @@ class Admin(Page):
     @class_shortcut(
         form=EMPTY,
     )
+    @require_login
     def crud(cls, request, operation, form, app_name, model_name, pk=None, call_target=None, **kwargs):
         model = django_apps.all_models[app_name][model_name]
         instance = model.objects.get(pk=pk) if pk is not None else None
@@ -228,13 +252,54 @@ class Admin(Page):
         return call_target(request=request, **kwargs)
 
     @classmethod
+    def login(cls, request):
+        return LoginPage()
+
+    @classmethod
+    def logout(cls, request):
+        auth.logout(request)
+        return HttpResponseRedirect('/')
+
+    @classmethod
     def urls(cls):
         return Struct(
             urlpatterns=[
-                path(r'', cls.all_models),
-                path(r'<app_name>/<model_name>/', cls.list),
-                path(r'<app_name>/<model_name>/create/', cls.create),
-                path(r'<app_name>/<model_name>/<int:pk>/edit/', cls.edit),
-                path(r'<app_name>/<model_name>/<int:pk>/delete/', cls.delete),
+                path('', cls.all_models),
+                path('<app_name>/<model_name>/', cls.list),
+                path('<app_name>/<model_name>/create/', cls.create),
+                path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit),
+                path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete),
+                path('login/', cls.login),
+                path('logout/', cls.logout),
             ]
         )
+
+
+class LoginForm(Form):
+    username = Field()
+    password = Field.password()
+
+    class Meta:
+        title = 'Login'
+
+        @staticmethod
+        def actions__submit__post_handler(form, **_):
+            if form.is_valid():
+                user = auth.authenticate(
+                    username=form.fields.username.value,
+                    password=form.fields.password.value,
+                )
+
+                if user is not None:
+                    request = form.get_request()
+                    auth.login(request, user)
+                    return HttpResponseRedirect(request.GET.get('next', '/'))
+
+                form.errors.add('Unknown username or password')
+
+
+class LoginPage(Page):
+    form = LoginForm()
+    set_focus = html.script(mark_safe(
+        'document.getElementById("id_username").focus();',
+    ))

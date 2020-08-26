@@ -6,7 +6,6 @@ from datetime import (
 )
 from pathlib import Path
 
-from django.contrib import auth
 from django.contrib.auth.models import User
 from django.db import OperationalError
 
@@ -63,46 +62,6 @@ from .models import (
     Track,
 )
 
-
-class LoginForm(Form):
-    username = Field()
-    password = Field.password()
-
-    class Meta:
-        title = 'Login'
-
-        @staticmethod
-        def actions__submit__post_handler(form, **_):
-            if form.is_valid():
-                user = auth.authenticate(
-                    username=form.fields.username.value,
-                    password=form.fields.password.value,
-                )
-
-                if user is not None:
-                    request = form.get_request()
-                    auth.login(request, user)
-                    return HttpResponseRedirect(request.GET.get('next', '/'))
-
-                form.errors.add('Unknown username or password')
-
-
-class LoginPage(Page):
-    form = LoginForm()
-    set_focus = html.script(mark_safe(
-        'document.getElementById("id_username").focus();',
-    ))
-
-
-def log_in(request):
-    return LoginPage()
-
-
-def log_out(request):
-    auth.logout(request)
-    return HttpResponseRedirect('/')
-
-
 # Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
 validate_styles()
 
@@ -137,23 +96,23 @@ def index(request):
     class AdminPage(Page):
         admin_header = html.h2('Admin example')
 
+        admin_a = html.p(
+            html.a(
+                'Admin',
+                attrs__href="iommi-admin/",
+            ),
+        )
+
         log_in = html.a(
             'Log in',
-            attrs__href='/log_in/',
+            attrs__href='/iommi-admin/login/?next=/',
             include=lambda request, **_: not request.user.is_authenticated,
         )
 
         log_out = html.a(
             'Log out',
-            attrs__href='/log_out/',
+            attrs__href='/iommi-admin/logout/',
             include=lambda request, **_: request.user.is_authenticated,
-        )
-
-        admin_a = html.p(
-            html.a(
-                'Admin (needs login)',
-                attrs__href=lambda request, **_: "iommi-admin/" if request.user.is_authenticated else None,
-            ),
         )
 
     class IndexPage(Page):

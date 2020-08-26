@@ -20,9 +20,6 @@ from iommi.admin import Admin
 urlpatterns = [
     path('', views.index, name='index'),
 
-    path('log_in/', views.log_in),
-    path('log_out/', views.log_out),
-
     path('form_example_1/', views.form_example_1, name='example_1'),
     path('form_example_2/', views.form_example_2, name='example_2'),
     path('form_example_2b/', Form.create(auto__model=Foo).as_view(), name='example_2b'),
