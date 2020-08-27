@@ -1,9 +1,7 @@
 import pytest
 from django.http import HttpResponseRedirect
-from django.urls import reverse
 from tri_struct import Struct
 
-from iommi import Page
 from iommi.admin import Admin
 from iommi.base import values
 from tests.helpers import req

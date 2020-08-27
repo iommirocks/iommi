@@ -1109,7 +1109,10 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
 
 
 def delete_object__post_handler(form, **_):
-    form.instance.delete()
+    instance = form.instance
+    form.extra.on_delete(form=form, instance=instance)
+    if instance.id is not None:  # Check if already deleted by the callback
+        instance.delete()
     return HttpResponseRedirect('../..')
 
 
@@ -1369,6 +1372,7 @@ class Form(Part):
     @classmethod
     @class_shortcut(
         extra__on_save=lambda **kwargs: None,  # pragma: no mutate
+        extra__on_delete=lambda **kwargs: None,  # pragma: no mutate
         extra__redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
         extra__redirect_to=None,
         auto=EMPTY,

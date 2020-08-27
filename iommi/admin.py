@@ -3,7 +3,10 @@ from typing import Type
 from urllib.parse import urlencode
 
 from django.apps import apps as django_apps
-from django.contrib import auth
+from django.contrib import (
+    auth,
+    messages,
+)
 from django.http import (
     Http404,
     HttpResponseRedirect,
@@ -28,6 +31,7 @@ from tri_struct import Struct
 from iommi import (
     Field,
     Form,
+    Fragment,
     html,
     Page,
     Table,
@@ -53,6 +57,24 @@ def require_login(view):
     return wrapper
 
 
+@with_meta
+class Messages(Fragment):
+    class Meta:
+        tag = 'div'
+
+    def on_bind(self) -> None:
+        super().on_bind()
+        ms = messages.get_messages(self.get_request())
+        if ms:
+            self.children.update({
+                f'message{i}': Fragment(
+                    tag='div',
+                    text=f'{m}',
+                ).bind(parent=self)
+                for i, m in enumerate(ms)
+            })
+
+
 @with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
 class Admin(Page):
 
@@ -60,6 +82,7 @@ class Admin(Page):
         table_class = Table
         form_class = Form
         apps__sessions_session__include = False
+        parts__messages = Messages()
         parts__list_auth_user__columns__password__include = False
 
     table_class: Type[Table] = Refinable()
@@ -210,6 +233,14 @@ class Admin(Page):
         if not cls.has_permission(request, operation=operation, model=model, instance=instance):
             raise Http404()
 
+        def on_save(form, instance, **_):
+            message = f'{form.model._meta.verbose_name.capitalize()} {instance} was ' + ('created' if form.extra.is_create else 'updated')
+            messages.add_message(request, messages.INFO, message, fail_silently=True)
+
+        def on_delete(form, instance, **_):
+            message = f'{form.model._meta.verbose_name.capitalize()} {instance} was deleted'
+            messages.add_message(request, messages.INFO, message, fail_silently=True)
+
         form = setdefaults_path(
             Namespace(),
             form,
@@ -217,6 +248,8 @@ class Admin(Page):
             auto__instance=instance,
             auto__model=model,
             call_target__attribute=operation,
+            extra__on_save=on_save,
+            extra__on_delete=on_delete,
         )
 
         return call_target(
