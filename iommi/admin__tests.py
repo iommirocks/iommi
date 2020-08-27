@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 from django.http import HttpResponseRedirect
 from tri_struct import Struct
@@ -27,7 +29,8 @@ def test_all_models():
 
 
 @pytest.mark.django_db
-def test_create():
+@mock.patch('iommi.admin.messages')
+def test_create(mock_messages):
     request = req('get')
     request.user = Struct(is_staff=True, is_authenticated=True)
     c = Admin.create(request=request, app_name='tests', model_name='foo')
@@ -39,11 +42,20 @@ def test_create():
     assert p.parts.create_tests_foo.is_valid()
     p.render_to_response()
     assert Foo.objects.count() == 1
-    assert Foo.objects.get().foo == 7
+    f = Foo.objects.get()
+    assert f.foo == 7
+
+    mock_messages.add_message.assert_called_with(
+        request,
+        mock_messages.INFO,
+        f'Foo {f} was created',
+        fail_silently=True
+    )
 
 
 @pytest.mark.django_db
-def test_edit():
+@mock.patch('iommi.admin.messages')
+def test_edit(mock_messages):
     request = req('get')
     request.user = Struct(is_staff=True, is_authenticated=True)
     assert Foo.objects.count() == 0
@@ -55,9 +67,17 @@ def test_edit():
     p.render_to_response()
     assert Foo.objects.get().foo == 11
 
+    mock_messages.add_message.assert_called_with(
+        request,
+        mock_messages.INFO,
+        f'Foo {f} was updated',
+        fail_silently=True
+    )
+
 
 @pytest.mark.django_db
-def test_delete():
+@mock.patch('iommi.admin.messages')
+def test_delete(mock_messages):
     request = req('get')
     request.user = Struct(is_staff=True, is_authenticated=True)
     assert Foo.objects.count() == 0
@@ -68,6 +88,13 @@ def test_delete():
     assert p.parts.delete_tests_foo.is_valid()
     p.render_to_response()
     assert Foo.objects.count() == 0
+
+    mock_messages.add_message.assert_called_with(
+        request,
+        mock_messages.INFO,
+        f'Foo {f} was deleted',
+        fail_silently=True
+    )
 
 
 @pytest.mark.django_db
