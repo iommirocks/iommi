@@ -2,6 +2,10 @@ from unittest import mock
 
 import pytest
 from django.http import HttpResponseRedirect
+from django.urls import (
+    include,
+    path,
+)
 from tri_struct import Struct
 
 from iommi.admin import Admin
@@ -97,6 +101,11 @@ def test_delete(mock_messages):
     )
 
 
+urlpatterns = [
+    path('', include(Admin.urls())),
+]
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize('is_authenticated', [True, False])
 @pytest.mark.parametrize('view,kwargs', [
@@ -106,7 +115,7 @@ def test_delete(mock_messages):
     (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
 ])
 def test_redirect_to_login(settings, is_authenticated, view, kwargs):
-    settings.ROOT_URLCONF = Admin.urls()
+    settings.ROOT_URLCONF = __name__
     if 'pk' in kwargs:
         Foo.objects.create(pk=kwargs['pk'], foo=1)
     request = req('get')
