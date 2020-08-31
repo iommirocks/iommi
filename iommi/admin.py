@@ -1,3 +1,4 @@
+import functools
 from functools import wraps
 from typing import Type
 from urllib.parse import urlencode
@@ -76,6 +77,37 @@ class Messages(Fragment):
             })
 
 
+def collect_config(module):
+    try:
+        __import__(module.__name__ + '.iommi_admin')
+        config_module = module.iommi_admin
+    except ImportError:
+        return None
+
+    try:
+        meta = config_module.Meta
+    except AttributeError:
+        return None
+
+    return {k: v for k, v in meta.__dict__.items() if not k.startswith('_')}
+
+
+def read_config(f):
+    @functools.wraps(f)
+    def read_config_wrapper(self, *args, **kwargs):
+        from django.apps import apps
+
+        configs = []
+        for app_name, app in apps.app_configs.items():
+            c = collect_config(app.module)
+            if c is not None:
+                configs.append(c)
+
+        return f(self, *args, **Namespace(*configs, kwargs))
+
+    return read_config_wrapper
+
+
 @with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
 class Admin(Page):
 
@@ -85,13 +117,25 @@ class Admin(Page):
         apps__auth_user__include = True
         apps__auth_group__include = True
         parts__messages = Messages()
-        parts__list_auth_user__columns__password__include = False
+        parts__list_auth_user = dict(
+            auto__include = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
+            columns=dict(
+                username__filter__freetext=True,
+                email__filter__freetext=True,
+                first_name__filter__freetext=True,
+                last_name__filter__freetext=True,
+                is_staff__filter__include=True,
+                is_active__filter__include=True,
+                is_superuser__filter__include=True,
+            ),
+        )
 
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
     apps: Namespace = Refinable()  # Global configuration on apps level
 
+    @read_config
     @reinvokable
     @dispatch(
         apps=EMPTY,
