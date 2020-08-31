@@ -21,7 +21,7 @@ DEFAULT_STYLE = 'bootstrap'
 
 def apply_style(obj):
     style = get_style_obj_for_object(style=get_style_for(obj), obj=obj)
-    apply_style_recursively(style_data=style, obj=obj)
+    return apply_style_recursively(style_data=style, obj=obj)
 
 
 def get_style_for(obj):
@@ -91,6 +91,11 @@ _no_attribute_sentinel = object()
 
 
 def apply_style_recursively(*, style_data, obj):
+    from iommi.member import NotBoundYet, MemberBinder
+    if isinstance(obj, NotBoundYet):
+        return style_data
+
+    rest_style = Namespace()
     if isinstance(obj, dict):
         result = Namespace(style_data, obj)
         obj.clear()
@@ -99,14 +104,19 @@ def apply_style_recursively(*, style_data, obj):
         for k, v in items(style_data):
             if isinstance(v, dict):
                 child = getattr(obj, k)
+                if isinstance(child, MemberBinder):
+                    child = obj._bound_members[k]
                 if child is not None:
-                    apply_style_recursively(style_data=v, obj=child)
+                    rest = apply_style_recursively(style_data=v, obj=child)
+                    if rest:
+                        rest_style[k] = rest
             else:
                 attrib = getattr(obj, k, _no_attribute_sentinel)
                 if attrib is _no_attribute_sentinel:
                     raise InvalidStyleConfigurationException(f'Object {obj!r} has no attribute {k} which the style tried to set.')
                 if attrib is None:
                     setattr(obj, k, v)
+    return rest_style
 
 
 def get_style_obj_for_object(style, obj):

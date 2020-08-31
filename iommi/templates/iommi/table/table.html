@@ -1,7 +1,15 @@
 {{ table.h_tag }}
 
+{% if not table.actions_below %}
+    {{ table.render_actions }}
+{% endif %}
+
 {% if table.query %}{{ table.query }}{% endif %}
 
 <div class="iommi-table-container">
     {% include 'iommi/table/table_container.html' %}
 </div>
+
+{% if table.actions_below %}
+    {{ table.render_actions }}
+{% endif %}

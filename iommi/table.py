@@ -1285,6 +1285,7 @@ class Table(Part):
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
     actions_template: Union[str, Template] = EvaluatedRefinable()
+    actions_below: bool = EvaluatedRefinable()
 
     member_class = Refinable()
     form_class: Type[Form] = Refinable()
@@ -1342,6 +1343,7 @@ class Table(Part):
 
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
+        actions_below=False,
         query=EMPTY,
         bulk__fields=EMPTY,
         bulk__title='Bulk change',

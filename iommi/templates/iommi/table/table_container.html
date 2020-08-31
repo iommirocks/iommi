@@ -35,16 +35,13 @@
 
     {% include 'iommi/table/table_tag.html' %}
 
-{% if table.bulk %}
-    {{ table.bulk.h_tag }}
-    {{ table.bulk.errors }}
-    {{ table.bulk.render_fields }}
-    {{ table.bulk.render_actions }}
-{% endif %}
-
-    {{ table.render_actions }}
+    {% if table.bulk %}
+        {{ table.bulk.h_tag }}
+        {{ table.bulk.errors }}
+        {{ table.bulk.render_fields }}
+        {{ table.bulk.render_actions }}
+    {% endif %}
 
 {% if table.bulk %}
 </form>
 {% endif %}
-
