@@ -9,9 +9,16 @@
 
             {{ table.header }}
 
-            <tbody>
+            {% if table.tbody_tag %}
+            <{{ table.tbody_tag }}>
+            {% endif %}
+
                 {{ table.tbody }}
-            </tbody>
+
+            {% if table.tbody_tag %}
+            </{{ table.tbody_tag }}>
+            {% endif %}
+
         </{{ table.tag }}>
 
         {{ table.paginator }}

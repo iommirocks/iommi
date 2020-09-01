@@ -6,9 +6,7 @@
 
 {% if table.query %}{{ table.query }}{% endif %}
 
-<div class="iommi-table-container">
-    {% include 'iommi/table/table_container.html' %}
-</div>
+{{ table.container }}
 
 {% if table.actions_below %}
     {{ table.render_actions }}

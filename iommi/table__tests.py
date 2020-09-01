@@ -2070,7 +2070,7 @@ def test_data_iommi_path():
                 </th>
             </tr>
         </thead>
-        <tbody>
+        <tbody data-iommi-path="tbody" data-iommi-type="Fragment">
             <tr data-iommi-path="row" data-iommi-type="Cells">
                 <td data-iommi-path="columns__a__cell" data-iommi-type="Cell">
                     1

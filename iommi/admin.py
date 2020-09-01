@@ -129,11 +129,14 @@ class Admin(Page):
                 is_superuser__filter__include=True,
             ),
         )
+        iommi_style = 'django_admin'
 
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
     apps: Namespace = Refinable()  # Global configuration on apps level
+
+    header = html.h1(children__link=html.a(children__text='Admin'), after=0)
 
     @read_config
     @reinvokable
@@ -176,8 +179,6 @@ class Admin(Page):
     @staticmethod
     def has_permission(request, operation, model=None, instance=None):
         return request.user.is_staff
-
-    header = html.h1(children__link=html.a(children__text='Admin'), after=0)
 
     def own_evaluate_parameters(self):
         return dict(admin=self, **super(Admin, self).own_evaluate_parameters())

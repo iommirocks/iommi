@@ -18,18 +18,14 @@ from tests.models import Foo
 def test_bulk_edit_for_non_unique():
     request = req('get')
     request.user = Struct(is_staff=True, is_authenticated=True)
-    p = Admin.list(request=request, app_name='tests', model_name='adminunique')
+    p = Admin.list(
+        request=request,
+        app_name='tests',
+        model_name='adminunique',
+        parts__list_tests_adminunique__columns__foo__bulk__include=True,
+    )
     p = p.bind(request=request)
     assert [x._name for x in values(p.parts.list_tests_adminunique.columns) if x.bulk.include] == ['foo']
-
-
-@pytest.mark.django_db
-def test_all_models():
-    request = req('get')
-    request.user = Struct(is_staff=True, is_authenticated=True)
-    p = Admin.all_models(request=request)
-    p = p.bind(request=request)
-    assert list(p.parts.all_models.columns.keys()) == ['app_name', 'model_name']
 
 
 @pytest.mark.django_db
