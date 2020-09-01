@@ -162,7 +162,16 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
-    title = getattr(part, 'title', '')
+    title = getattr(part, 'title', None)
+
+    if title is None:
+        parts = getattr(part, 'parts', None)
+        if parts is not None:
+            for p in parts.values():
+                title = getattr(p, 'title', None)
+                if title is not None:
+                    break
+
     from iommi.debug import iommi_debug_panel
     from iommi import Page
     context = dict(
