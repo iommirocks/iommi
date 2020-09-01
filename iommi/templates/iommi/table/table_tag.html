@@ -5,7 +5,7 @@
 {% else %}
 
     <div class="iommi-table-plus-paginator">
-        <{{ table.tag }}{{ table.attrs }}>
+        {{ table.iommi_open_tag }}
 
             {{ table.header }}
 
@@ -19,7 +19,7 @@
             </{{ table.tbody_tag }}>
             {% endif %}
 
-        </{{ table.tag }}>
+        {{ table.iommi_close_tag }}
 
         {{ table.paginator }}
     </div>

@@ -1259,7 +1259,7 @@ class _Lazy_tbody:
 
 @declarative(Column, '_columns_dict')
 @with_meta
-class Table(Part):
+class Table(Part, Tag):
     """
     Describe a table. Example:
 
@@ -1539,16 +1539,17 @@ class Table(Part):
         self.paginator = paginator()
         self._declared_members['page'] = self.paginator
 
-    @staticmethod
-    @dispatch(
+    @classmethod
+    @class_shortcut(
+        extra__buz=4711,
         tag='div',
         tbody__tag='div',
         cell__tag=None,
         row__tag='div',
         header__template=None,
     )
-    def div(**kwargs):
-        return Table(**kwargs)
+    def div(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
 
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
