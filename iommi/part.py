@@ -9,6 +9,7 @@ from typing import (
 from ._web_compat import (
     QueryDict,
     settings,
+    template_types,
 )
 from tri_declarative import (
     dispatch,
@@ -161,7 +162,16 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
     if content_block_name is MISSING:
         content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
 
-    title = getattr(part, 'title', '')
+    title = getattr(part, 'title', None)
+
+    if title is None:
+        parts = getattr(part, 'parts', None)
+        if parts is not None:
+            for p in parts.values():
+                title = getattr(p, 'title', None)
+                if title is not None:
+                    break
+
     from iommi.debug import iommi_debug_panel
     from iommi import Page
     context = dict(
@@ -194,7 +204,7 @@ def request_data(request):
 def as_html(*, request=None, part: PartType, context):
     if isinstance(part, str):
         return part
-    elif isinstance(part, Template):
+    elif isinstance(part, template_types):
         from django.template import RequestContext
         assert not isinstance(context, RequestContext)
         template = part

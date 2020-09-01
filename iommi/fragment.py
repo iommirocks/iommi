@@ -52,6 +52,7 @@ def fragment__render(fragment, context):
 
     is_void_element = fragment.tag in _void_elements
 
+
     if fragment.tag:
         if rendered_children:
             assert not is_void_element
@@ -75,7 +76,21 @@ def fragment__render(fragment, context):
         )
 
 
-class Fragment(Part):
+class Tag:
+    def iommi_open_tag(self):
+        if self.tag is None:
+            return ''
+        else:
+            return format_html('<{}{}>', self.tag, self.attrs)
+
+    def iommi_close_tag(self):
+        if self.tag is None:
+            return ''
+        else:
+            return format_html('</{}>', self.tag)
+
+
+class Fragment(Part, Tag):
     """
     `Fragment` is a class used to build small HTML fragments that plug into iommis structure.
 
@@ -129,10 +144,11 @@ class Fragment(Part):
         collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):
+        request = self.get_request()
         return format_html(
             '{}' * len(self.children),
             *[
-                as_html(part=x, context=context)
+                as_html(part=x, context=context, request=request)
                 for x in values(self.children)
             ])
 

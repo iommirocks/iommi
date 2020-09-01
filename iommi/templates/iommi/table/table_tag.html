@@ -5,14 +5,21 @@
 {% else %}
 
     <div class="iommi-table-plus-paginator">
-        <{{ table.tag }}{{ table.attrs }}>
+        {{ table.iommi_open_tag }}
 
             {{ table.header }}
 
-            <tbody>
+            {% if table.tbody_tag %}
+            <{{ table.tbody_tag }}>
+            {% endif %}
+
                 {{ table.tbody }}
-            </tbody>
-        </{{ table.tag }}>
+
+            {% if table.tbody_tag %}
+            </{{ table.tbody_tag }}>
+            {% endif %}
+
+        {{ table.iommi_close_tag }}
 
         {{ table.paginator }}
     </div>

@@ -1,3 +1,4 @@
+import functools
 from functools import wraps
 from typing import Type
 from urllib.parse import urlencode
@@ -37,7 +38,6 @@ from iommi import (
     Table,
 )
 from iommi.base import items
-from iommi.from_model import get_fields
 from iommi.traversable import reinvokable
 
 model_by_app_and_name = {
@@ -45,6 +45,8 @@ model_by_app_and_name = {
     for app_name, models in items(django_apps.all_models)
     for model_name, model in items(models)
 }
+
+joined_app_name_and_model = {f'{app_name}_{model_name}' for app_name, model_name in model_by_app_and_name.keys()}
 
 
 def require_login(view):
@@ -75,27 +77,78 @@ class Messages(Fragment):
             })
 
 
+def collect_config(module):
+    try:
+        __import__(module.__name__ + '.iommi_admin')
+        config_module = module.iommi_admin
+    except ImportError:
+        return None
+
+    try:
+        meta = config_module.Meta
+    except AttributeError:
+        return None
+
+    return {k: v for k, v in meta.__dict__.items() if not k.startswith('_')}
+
+
+def read_config(f):
+    @functools.wraps(f)
+    def read_config_wrapper(self, *args, **kwargs):
+        from django.apps import apps
+
+        configs = []
+        for app_name, app in apps.app_configs.items():
+            c = collect_config(app.module)
+            if c is not None:
+                configs.append(c)
+
+        return f(self, *args, **Namespace(*configs, kwargs))
+
+    return read_config_wrapper
+
+
 @with_meta  # we need @with_meta again here to make sure this constructor gets all the meta arguments first
 class Admin(Page):
 
     class Meta:
         table_class = Table
         form_class = Form
-        apps__sessions_session__include = False
+        apps__auth_user__include = True
+        apps__auth_group__include = True
         parts__messages = Messages()
-        parts__list_auth_user__columns__password__include = False
+        parts__list_auth_user = dict(
+            auto__include = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
+            columns=dict(
+                username__filter__freetext=True,
+                email__filter__freetext=True,
+                first_name__filter__freetext=True,
+                last_name__filter__freetext=True,
+                is_staff__filter__include=True,
+                is_active__filter__include=True,
+                is_superuser__filter__include=True,
+            ),
+        )
+        iommi_style = 'django_admin'
 
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
     apps: Namespace = Refinable()  # Global configuration on apps level
 
+    header = html.h1(children__link=html.a(children__text='Admin'), after=0)
+
+    @read_config
     @reinvokable
     @dispatch(
         apps=EMPTY,
         parts=EMPTY,
     )
-    def __init__(self, parts, **kwargs):
+    def __init__(self, parts, apps, **kwargs):
+        # Validate apps params
+        for k in apps.keys():
+            assert k in joined_app_name_and_model, joined_app_name_and_model
+
         def should_throw_away(k, v):
             if isinstance(v, Namespace) and 'call_target' in v:
                 return False
@@ -121,13 +174,11 @@ class Admin(Page):
             for k, v in items(parts)
         }
 
-        super(Admin, self).__init__(parts=parts, **kwargs)
+        super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
 
     @staticmethod
     def has_permission(request, operation, model=None, instance=None):
         return request.user.is_staff
-
-    header = html.h1(children__link=html.a(children__text='Admin'), after=0)
 
     def own_evaluate_parameters(self):
         return dict(admin=self, **super(Admin, self).own_evaluate_parameters())
@@ -145,7 +196,7 @@ class Admin(Page):
             return [
                 row
                 for row in rows
-                if admin.apps.get(f'{row.app_name}_{row.model_name}', {}).get('include', True)
+                if admin.apps.get(f'{row.app_name}_{row.model_name}', {}).get('include', False)
             ]
 
         table = setdefaults_path(
@@ -155,14 +206,14 @@ class Admin(Page):
             call_target__cls=cls.get_meta().table_class,
             sortable=False,
             rows=[
-                Struct(app_name=app_name, model_name=model_name, model=model)
+                Struct(app_name=app_name, name=model._meta.verbose_name, model_name=model_name, model=model)
                 for (app_name, model_name), model in items(model_by_app_and_name)
             ],
             preprocess_rows=preprocess_rows,
             columns=dict(
                 app_name__auto_rowspan=True,
                 app_name__after=0,
-                model_name__cell__url=lambda row, **_: '%s/%s/' % (row.app_name, row.model_name),
+                name__cell__url=lambda row, **_: '%s/%s/' % (row.app_name, row.model_name),
             ),
         )
 
@@ -208,11 +259,6 @@ class Admin(Page):
             ),
             query_from_indexes=True,
             bulk__actions__delete__include=True,
-            **{
-                'columns__' + field.name + '__bulk__include': True
-                for field in get_fields(model)
-                if not getattr(field, 'unique', False)
-            },
         )
 
         return call_target(

@@ -27,7 +27,10 @@ from iommi.evaluate import (
     evaluate_strict,
     evaluate_strict_container,
 )
-from iommi.style import apply_style
+from iommi.style import (
+    apply_style,
+    apply_style_recursively,
+)
 
 
 class EvaluatedRefinable(Refinable):
@@ -65,7 +68,7 @@ class Traversable(RefinableObject):
     _request = None
     context = None
 
-    iommi_style: str = EvaluatedRefinable()
+    iommi_style: str = Refinable()
 
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']
@@ -192,7 +195,7 @@ class Traversable(RefinableObject):
         if include is not MISSING:
             result.include = True
 
-        apply_style(result)
+        rest_of_style = apply_style(result)
 
         # Styling has another chance of setting include to False
         if include is not MISSING and result.include is False:
@@ -200,6 +203,10 @@ class Traversable(RefinableObject):
         result.include = True
 
         result.on_bind()
+
+        if rest_of_style:
+            rest = apply_style_recursively(style_data=rest_of_style, obj=result)
+            assert not rest, f'There is still styling data left for {result}: {rest_of_style}'
 
         # on_bind has a chance to hide itself
         if result.include is False:

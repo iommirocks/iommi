@@ -19,6 +19,8 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
+from iommi.fragment import Tag
+
 from ._web_compat import settings
 from django.db.models import (
     BooleanField,
@@ -730,7 +732,7 @@ class Column(Part):
         return call_target(**kwargs)
 
 
-class Cells(Traversable):
+class Cells(Traversable, Tag):
     """
     Internal class used in row rendering
     """
@@ -776,7 +778,7 @@ class Cells(Traversable):
         return Cell(cells=self, column=column)
 
 
-class CellConfig(RefinableObject):
+class CellConfig(RefinableObject, Tag):
     url: str = Refinable()
     url_title: str = Refinable()
     attrs: Attrs = Refinable()
@@ -899,7 +901,7 @@ class HeaderColumnConfig(Traversable):
     url = EvaluatedRefinable()
 
 
-class RowConfig(RefinableObject):
+class RowConfig(RefinableObject, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = Refinable()
     template: Union[str, Template] = Refinable()
@@ -1247,9 +1249,17 @@ def endpoint__csv(table, **_):
     return response
 
 
+class _Lazy_tbody:
+    def __init__(self, table):
+        self.table = table
+
+    def __html__(self):
+        return mark_safe('\n'.join([cells.__html__() for cells in self.table.cells_for_rows()]))
+
+
 @declarative(Column, '_columns_dict')
 @with_meta
-class Table(Part):
+class Table(Part, Tag):
     """
     Describe a table. Example:
 
@@ -1285,6 +1295,10 @@ class Table(Part):
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
     actions_template: Union[str, Template] = EvaluatedRefinable()
+    actions_below: bool = EvaluatedRefinable()
+    tbody: Fragment = EvaluatedRefinable()
+    container: Fragment = EvaluatedRefinable()
+    outer: Fragment = EvaluatedRefinable()
 
     member_class = Refinable()
     form_class: Type[Form] = Refinable()
@@ -1329,6 +1343,13 @@ class Table(Part):
         sortable=True,
         default_sort_order=None,
         template='iommi/table/table.html',
+        tbody__call_target=Fragment,
+        tbody__tag='tbody',
+        container__tag='div',
+        container__attrs__class={'iommi-table-container': True},
+        container__children__text__template='iommi/table/table_container.html',
+        container__call_target=Fragment,
+        outer__call_target=Fragment,
         row__tag='tr',
         row__attrs__class=EMPTY,
         row__attrs__style=EMPTY,
@@ -1342,6 +1363,7 @@ class Table(Part):
 
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
+        actions_below=False,
         query=EMPTY,
         bulk__fields=EMPTY,
         bulk__title='Bulk change',
@@ -1517,6 +1539,18 @@ class Table(Part):
         self.paginator = paginator()
         self._declared_members['page'] = self.paginator
 
+    @classmethod
+    @class_shortcut(
+        extra__buz=4711,
+        tag='div',
+        tbody__tag='div',
+        cell__tag=None,
+        row__tag='div',
+        header__template=None,
+    )
+    def div(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
         bind_members(self, name='columns')
@@ -1534,6 +1568,10 @@ class Table(Part):
         else:
             self.h_tag = self.h_tag.bind(parent=self)
 
+        self.tbody = self.tbody(_name='tbody').bind(parent=self)
+        self.container = self.container(_name='container').bind(parent=self)
+        self.outer = self.outer(_name='outer').bind(parent=self)
+        self.tbody.children.text = _Lazy_tbody(self)
         self.header = self.header.bind(parent=self)
 
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _bind_headers depends on it
@@ -1739,10 +1777,6 @@ class Table(Part):
         for i, row in enumerate(self.preprocess_rows(rows=self.rows, **self.iommi_evaluate_parameters())):
             row = self.preprocess_row(table=self, row=row)
             yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
-
-    @property
-    def tbody(self):
-        return mark_safe('\n'.join([cells.__html__() for cells in self.cells_for_rows()]))
 
     @classmethod
     @dispatch(
