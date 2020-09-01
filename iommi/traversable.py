@@ -68,7 +68,7 @@ class Traversable(RefinableObject):
     _request = None
     context = None
 
-    iommi_style: str = EvaluatedRefinable()
+    iommi_style: str = Refinable()
 
     _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']

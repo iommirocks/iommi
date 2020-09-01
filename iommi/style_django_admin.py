@@ -18,7 +18,7 @@ django_admin = Style(
         aligned=True,
     ),
     Table__actions__attrs__class={'object-tools': True},
-    Admin__header__attrs__id='header',  # TODO: why doesn't this work anymore?
+    Admin__parts__header__attrs__id='header',
 )
 
 
