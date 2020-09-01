@@ -80,6 +80,8 @@ class Page(Part):
 
         # First we have to up sample parts that aren't Part into Fragment
         def as_fragment_if_needed(k, v):
+            if v is None:
+                return None
             if not isinstance(v, (dict, Traversable)):
                 return Fragment(children__text=v, _name=k)
             else:
