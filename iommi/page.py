@@ -16,6 +16,7 @@ from iommi.fragment import Fragment
 from iommi._web_compat import (
     Template,
     format_html,
+    template_types,
 )
 from iommi.base import (
     build_as_view_wrapper,
@@ -46,7 +47,7 @@ from iommi.evaluate import evaluate_strict_container
 @with_meta
 @declarative(
     parameter='_parts_dict',
-    is_member=lambda obj: isinstance(obj, (Part, str, Template)),
+    is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
     sort_key=lambda x: 0,
 )
 class Page(Part):

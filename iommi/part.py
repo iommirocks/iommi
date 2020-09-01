@@ -9,6 +9,7 @@ from typing import (
 from ._web_compat import (
     QueryDict,
     settings,
+    template_types,
 )
 from tri_declarative import (
     dispatch,
@@ -194,7 +195,7 @@ def request_data(request):
 def as_html(*, request=None, part: PartType, context):
     if isinstance(part, str):
         return part
-    elif isinstance(part, Template):
+    elif isinstance(part, template_types):
         from django.template import RequestContext
         assert not isinstance(context, RequestContext)
         template = part
