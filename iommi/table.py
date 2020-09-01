@@ -19,6 +19,8 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
+from iommi.fragment import Tag
+
 from ._web_compat import settings
 from django.db.models import (
     BooleanField,
@@ -730,7 +732,7 @@ class Column(Part):
         return call_target(**kwargs)
 
 
-class Cells(Traversable):
+class Cells(Traversable, Tag):
     """
     Internal class used in row rendering
     """
@@ -776,7 +778,7 @@ class Cells(Traversable):
         return Cell(cells=self, column=column)
 
 
-class CellConfig(RefinableObject):
+class CellConfig(RefinableObject, Tag):
     url: str = Refinable()
     url_title: str = Refinable()
     attrs: Attrs = Refinable()
@@ -899,7 +901,7 @@ class HeaderColumnConfig(Traversable):
     url = EvaluatedRefinable()
 
 
-class RowConfig(RefinableObject):
+class RowConfig(RefinableObject, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = Refinable()
     template: Union[str, Template] = Refinable()
@@ -1296,6 +1298,7 @@ class Table(Part):
     actions_below: bool = EvaluatedRefinable()
     tbody: Fragment = EvaluatedRefinable()
     container: Fragment = EvaluatedRefinable()
+    outer: Fragment = EvaluatedRefinable()
 
     member_class = Refinable()
     form_class: Type[Form] = Refinable()
@@ -1346,6 +1349,7 @@ class Table(Part):
         container__attrs__class={'iommi-table-container': True},
         container__children__text__template='iommi/table/table_container.html',
         container__call_target=Fragment,
+        outer__call_target=Fragment,
         row__tag='tr',
         row__attrs__class=EMPTY,
         row__attrs__style=EMPTY,
@@ -1565,6 +1569,7 @@ class Table(Part):
 
         self.tbody = self.tbody(_name='tbody').bind(parent=self)
         self.container = self.container(_name='container').bind(parent=self)
+        self.outer = self.outer(_name='outer').bind(parent=self)
         self.tbody.children.text = _Lazy_tbody(self)
         self.header = self.header.bind(parent=self)
 

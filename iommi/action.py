@@ -25,7 +25,10 @@ from iommi.base import (
     capitalize,
     values,
 )
-from iommi.fragment import Fragment
+from iommi.fragment import (
+    Fragment,
+    Tag,
+)
 from iommi.member import Members
 from iommi.part import Part
 from iommi.traversable import (
@@ -149,7 +152,7 @@ def group_actions(actions: Dict[str, Action]):
     return actions_without_group, grouped_actions
 
 
-class Actions(Members):
+class Actions(Members, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = EvaluatedRefinable()
 

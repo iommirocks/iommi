@@ -29,6 +29,7 @@ from iommi.base import (
 )
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate_strict
+from iommi.fragment import Tag
 from iommi.member import (
     bind_members,
     collect_members,
@@ -41,7 +42,7 @@ from iommi.traversable import (
 )
 
 
-class MenuBase(Part):
+class MenuBase(Part, Tag):
     tag: str = EvaluatedRefinable()
     sort: bool = EvaluatedRefinable()  # only applies for submenu items
     sub_menu: Dict = Refinable()

@@ -1,5 +1,5 @@
 {% if non_grouped_actions or grouped_actions %}
-    <{{ actions.tag }}{{ actions.attrs }}>
+    {{ actions.iommi_open_tag }}
         {% for category, category_id, actions_in_group in grouped_actions %}
             <div class="btn-group">
                 <button id="id_dropdown_{{ category_id }}" role="button" data-toggle="dropdown" data-target="#" href="/page.html" class="btn btn-primary dropdown-toggle" type="button">
@@ -17,5 +17,5 @@
         {% for action in non_grouped_actions %}
             {{ action }}
         {% endfor %}
-    </{{ actions.tag }}>
+    {{ actions.iommi_close_tag }}
 {% endif %}

@@ -76,7 +76,21 @@ def fragment__render(fragment, context):
         )
 
 
-class Fragment(Part):
+class Tag:
+    def iommi_open_tag(self):
+        if self.tag is None:
+            return ''
+        else:
+            return format_html('<{}{}>', self.tag, self.attrs)
+
+    def iommi_close_tag(self):
+        if self.tag is None:
+            return ''
+        else:
+            return format_html('</{}>', self.tag)
+
+
+class Fragment(Part, Tag):
     """
     `Fragment` is a class used to build small HTML fragments that plug into iommis structure.
 

@@ -1,3 +1,5 @@
+{{ table.outer.iommi_open_tag }}
+
 {{ table.h_tag }}
 
 {% if not table.actions_below %}
@@ -11,3 +13,5 @@
 {% if table.actions_below %}
     {{ table.render_actions }}
 {% endif %}
+
+{{ table.outer.iommi_end_tag }}

@@ -17,7 +17,11 @@ django_admin = Style(
     Form__attrs__class=dict(
         aligned=True,
     ),
+    Form__attrs__id='content',
     Table__actions__attrs__class={'object-tools': True},
+    Table__outer__tag='div',
+    Table__outer__attrs__id='content',
+    Table__bulk__attrs__id=None,
     Admin__parts__header__attrs__id='header',
 )
 
