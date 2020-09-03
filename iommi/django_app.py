@@ -24,7 +24,7 @@ class IommiConfig(AppConfig):
             bootstrap_horizontal,
         )
         from iommi.style_semantic_ui import semantic_ui
-        from iommi.style_foundation import foundation
+        from iommi.style_foundation import foundation, foundation_horizontal
         from iommi.style_django_admin import django_admin, django_admin_horizontal
         register_style('base', base)
         register_style('test', test)
@@ -33,5 +33,6 @@ class IommiConfig(AppConfig):
         register_style('semantic_ui', semantic_ui)
         register_style('water', Style(base))
         register_style('foundation', foundation)
+        register_style('foundation_horizontal', foundation_horizontal)
         register_style('django_admin', django_admin)
         register_style('django_admin_horizontal', django_admin_horizontal)
