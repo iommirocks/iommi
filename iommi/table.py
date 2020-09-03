@@ -19,9 +19,6 @@ from typing import (
 )
 from urllib.parse import quote_plus
 
-from iommi.fragment import Tag
-
-from ._web_compat import settings
 from django.db.models import (
     BooleanField,
     ManyToManyField,
@@ -31,9 +28,14 @@ from django.db.models import (
 from django.http import (
     FileResponse,
 )
+from django.template.defaultfilters import (
+    date,
+    time,
+)
 from django.utils.encoding import (
     force_str,
 )
+from django.utils.formats import date_format
 from django.utils.html import (
     conditional_escape,
 )
@@ -54,6 +56,11 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+from iommi import (
+    Fragment,
+    Header,
+    html,
+)
 from iommi._web_compat import (
     format_html,
     HttpResponse,
@@ -95,6 +102,7 @@ from iommi.form import (
     Field,
     Form,
 )
+from iommi.fragment import Tag
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
@@ -108,11 +116,6 @@ from iommi.member import (
 from iommi.page import (
     Page,
     Part,
-)
-from iommi import (
-    Fragment,
-    Header,
-    html,
 )
 from iommi.part import render_root
 from iommi.query import (
@@ -128,6 +131,7 @@ from iommi.traversable import (
     set_declared_member,
     Traversable,
 )
+from ._web_compat import settings
 
 LAST = LAST
 
@@ -239,12 +243,23 @@ def list_formatter(value, **_):
     return ', '.join([conditional_escape(x) for x in value])
 
 
+def datetime_formatter(value, **_):
+    return date_format(value, format='DATETIME_FORMAT')
+
+
+def time_formatter(value, **_):
+    return date_format(value, format='TIME_FORMAT')
+
+
 _cell_formatters = {
     bool: yes_no_formatter,
     tuple: list_formatter,
     list: list_formatter,
     set: list_formatter,
-    QuerySet: lambda value, **_: list_formatter(list(value))
+    QuerySet: lambda value, **_: list_formatter(list(value)),
+    datetime: datetime_formatter,
+    date: datetime_formatter,
+    time: time_formatter,
 }
 
 
