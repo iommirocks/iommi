@@ -1,5 +1,10 @@
 import json
 from collections import defaultdict
+from datetime import (
+    date,
+    datetime,
+    time,
+)
 
 import pytest
 from django.db.models import QuerySet
@@ -1276,6 +1281,9 @@ def test_default_formatters(NoSortTable):
         Struct(foo=SomeType()),
         Struct(foo=TFoo.objects.all()),
         Struct(foo=None),
+        Struct(foo=datetime(2020, 1, 2, 3, 4, 5)),
+        Struct(foo=date(2020, 1, 2)),
+        Struct(foo=time(3, 4, 5)),
     ]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
@@ -1317,6 +1325,15 @@ def test_default_formatters(NoSortTable):
                 <tr>
                     <td>
                     </td>
+                </tr>
+                <tr>
+                    <td>Jan. 2, 2020, 3:04 a.m.</td>
+                </tr>
+                <tr>
+                    <td>2020-01-02</td>
+                </tr>
+                <tr>
+                    <td>03:04:05</td>
                 </tr>
             </tbody>
         </table>""")

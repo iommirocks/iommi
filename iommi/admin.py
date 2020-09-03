@@ -118,7 +118,7 @@ class Admin(Page):
         apps__auth_group__include = True
         parts__messages = Messages()
         parts__list_auth_user = dict(
-            auto__include = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
+            auto__include=['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
             columns=dict(
                 username__filter__freetext=True,
                 email__filter__freetext=True,
@@ -129,7 +129,6 @@ class Admin(Page):
                 is_superuser__filter__include=True,
             ),
         )
-        iommi_style = 'django_admin'
 
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
