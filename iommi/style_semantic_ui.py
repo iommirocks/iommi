@@ -24,6 +24,11 @@ semantic_ui_base = Style(
         attrs__class__field=True,
         template='iommi/form/semantic_ui/row.html',
         errors__template='iommi/form/semantic_ui/errors.html',
+        help__attrs__class=dict(
+            ui=True,
+            pointing=True,
+            label=True,
+        )
     ),
     Action=dict(
         shortcuts=dict(
@@ -63,7 +68,10 @@ semantic_ui_base = Style(
     ),
     Query__form__attrs__class__fields=True,
     Menu=dict(
-        attrs__class=dict(ui=True, menu=True, vertical=True),
+        attrs__class=dict(
+            ui=True,
+            menu=True,
+        ),
         tag='div',
     ),
     MenuItem__a__attrs__class__item=True,

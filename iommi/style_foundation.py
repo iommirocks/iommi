@@ -16,9 +16,15 @@ foundation = Style(
     Menu=dict(
         tag='nav',
         items_container__attrs__class={'menu': True},
-        items_container__tag='ul'
+        items_container__tag='ul',
+        attrs__class={'top-bar': True},
     ),
     MenuItem=dict(
         tag='li',
     ),
+    Column=dict(
+        shortcuts=dict(
+            delete__cell__link__attrs__class=dict(alert=True, button=True,)
+        )
+    )
 )

@@ -236,7 +236,7 @@ class Filter(Part):
             except NoRegisteredSearchFieldException:
                 self.search_fields = ['pk']
                 if iommi_debug_on():
-                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields.')
+                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}')
 
     def own_evaluate_parameters(self):
         return dict(filter=self)
@@ -647,6 +647,7 @@ class Query(Part):
                     _name=name,
                     attr=name if filter.attr is MISSING else filter.attr,
                     model_field=filter.model_field,
+                    help__include=False,
                 )
                 declared_fields[name] = declared_fields[name].reinvoke(field)
         set_declared_member(self.form, 'fields', declared_fields)

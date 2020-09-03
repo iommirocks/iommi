@@ -821,6 +821,7 @@ class Cell(CellConfig):
         self.url = evaluate_strict(self.url, **self._evaluate_parameters)
         self.attrs = evaluate_attrs(self, **self._evaluate_parameters)
         self.url_title = evaluate_strict(self.url_title, **self._evaluate_parameters)
+        self.tag = evaluate_strict(self.tag, **self._evaluate_parameters)
 
     @property
     def iommi_dunder_path(self):

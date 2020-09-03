@@ -2,9 +2,7 @@
     <div class="ui toggle checkbox">
     {{ field.input }}
     {{ field.label }}
-    {% if field.help_text %}
-        <div class="ui pointing label">{{ field.help_text }}</div>
-    {% endif %}
+    {{ field.help }}
     {{ field.errors }}
     </div>
 </div>

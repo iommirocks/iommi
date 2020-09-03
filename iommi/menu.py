@@ -198,33 +198,30 @@ class Menu(MenuBase):
     )
     def __init__(self, **kwargs):
         super(Menu, self).__init__(**kwargs)
-        self.fragment = None
 
     def __html__(self, *, render=None):
-        return self.fragment.__html__()
-
-    def own_evaluate_parameters(self):
-        return dict(menu=self)
-
-    def on_bind(self):
-        super(Menu, self).on_bind()
-
-        self.fragment = Fragment(
+        fragment = Fragment(
             _name=self._name,
             tag=self.tag,
             template=self.template,
-            attrs=self.attrs,
             children__items_container=Fragment(
                 **self.items_container,
             )
         ).bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
-        items_container = self.fragment.children.items_container
+        items_container = fragment.children.items_container
         for name, item in items(self.sub_menu):
             assert name not in items_container.children
             items_container.children[name] = item
 
         self.set_active(current_path=self.get_request().path)
+
+        # If we pass attrs to the fragment in on_bind, styling can't be applied, so we do this thing instead.
+        fragment.attrs = self.attrs
+        return fragment.__html__()
+
+    def own_evaluate_parameters(self):
+        return dict(menu=self)
 
     def validate(self):
         # verify there is no ambiguity for the MenuItems

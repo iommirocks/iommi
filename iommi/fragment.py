@@ -55,7 +55,7 @@ def fragment__render(fragment, context):
 
     if fragment.tag:
         if rendered_children:
-            assert not is_void_element
+            assert not is_void_element, f'{fragment.tag} is a void element, but it has children: {rendered_children}'
             return format_html(
                 '<{tag}{attrs}>{children}</{tag}>',
                 tag=fragment.tag,
@@ -205,6 +205,10 @@ class Header(Fragment):
 
             self.tag = f'h{level}'
         super(Header, self).on_bind()
+
+
+class Container(Fragment):
+    pass
 
 
 class Html:
