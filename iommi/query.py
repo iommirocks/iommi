@@ -230,7 +230,7 @@ class Filter(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
-        if self.model and self.include:
+        if self.model and self.include and self.attr:
             try:
                 self.search_fields = get_search_fields(model=self.model)
             except NoRegisteredSearchFieldException:
