@@ -644,8 +644,11 @@ class Field(Part):
 
         self.help = self.help.bind(parent=self)
         if self.help is not None:
-            self.help.children = dict(text=evaluate_strict(self.help_text, **self.iommi_evaluate_parameters()))
+            help_text = evaluate_strict(self.help_text, **self.iommi_evaluate_parameters())
+            self.help.children = dict(text=help_text)
         else:
+            help_text = ''
+        if not help_text:
             # To render cleanly in templates:
             self.help = ''
 

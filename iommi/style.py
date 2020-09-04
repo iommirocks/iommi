@@ -176,6 +176,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     from iommi.error import Errors
     from iommi.action import Actions
     from iommi.admin import Admin
+    from iommi.fragment import Container
     if default_classes is None:
         default_classes = [
             Action,
@@ -193,6 +194,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Table,
             Filter,
             Admin,
+            Container,
         ]
     if additional_classes is None:
         additional_classes = []

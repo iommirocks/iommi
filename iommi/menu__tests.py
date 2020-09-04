@@ -16,7 +16,7 @@ def test_menu():
 
     menu = MyMenu().bind(request=req('GET'))
     assert menu._active is False
-    assert menu.sub_menu
+    assert menu.sub_menu is not None
     assert menu.sub_menu.home._active is True
     assert menu.sub_menu.artists.regex == '^/artists/'
     assert menu.__html__() == '<nav><ul><li><a class="active link" href="/">Home</a></li><li><a class="link" href="/artists/">Artists</a></li></ul></nav>'
@@ -51,7 +51,7 @@ def test_submenu():
         sub_menu = MenuItem(url=None, sub_menu=dict(bar=MenuItem(), foo=MenuItem(after=0)))
 
     menu = MyMenu().bind(request=req('GET'))
-    assert menu.sub_menu
+    assert menu.sub_menu is not None
     assert menu.__html__() == '<nav><ul><li>Sub menu<li><a class="link" href="/bar/">Bar</a></li><li><a class="link" href="/foo/">Foo</a></li></li></ul></nav>'
 
 

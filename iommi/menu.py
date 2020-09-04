@@ -214,11 +214,13 @@ class Menu(MenuBase):
             assert name not in items_container.children
             items_container.children[name] = item
 
-        self.set_active(current_path=self.get_request().path)
-
         # If we pass attrs to the fragment in on_bind, styling can't be applied, so we do this thing instead.
         fragment.attrs = self.attrs
         return fragment.__html__()
+
+    def on_bind(self):
+        super(Menu, self).on_bind()
+        self.set_active(current_path=self.get_request().path)
 
     def own_evaluate_parameters(self):
         return dict(menu=self)
