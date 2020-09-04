@@ -34,19 +34,26 @@ from iommi import (
     Form,
     Fragment,
     html,
+    Menu,
+    MenuItem,
     Page,
     Table,
 )
-from iommi.base import items
+from iommi.base import items, values
 from iommi.traversable import reinvokable
 
-model_by_app_and_name = {
-    (app_name, model_name): model
+
+app_verbose_name_by_label = {
+    config.label: config.verbose_name
+    for config in values(django_apps.app_configs)
+}
+
+
+joined_app_name_and_model = {
+    f'{app_name}_{model_name}'
     for app_name, models in items(django_apps.all_models)
     for model_name, model in items(models)
 }
-
-joined_app_name_and_model = {f'{app_name}_{model_name}' for app_name, model_name in model_by_app_and_name.keys()}
 
 
 def require_login(view):
@@ -135,7 +142,13 @@ class Admin(Page):
 
     apps: Namespace = Refinable()  # Global configuration on apps level
 
-    header = html.h1(children__link=html.a(children__text='Admin'), after=0)
+    menu = Menu(
+        sub_menu=dict(
+            root=MenuItem(url='/iommi-admin/', display_name='iommi administration'),
+            # change_password=MenuItem(url='/iommi-admin/change_password/'),
+            logout=MenuItem(url='/iommi-admin/logout/'),
+        ),
+    )
 
     @read_config
     @reinvokable
@@ -185,18 +198,38 @@ class Admin(Page):
     @classmethod
     @class_shortcut(
         table=EMPTY,
+        table__call_target__attribute='div',
     )
     @require_login
     def all_models(cls, request, table, call_target=None, **kwargs):
         if not cls.has_permission(request, operation='all_models'):
             raise Http404()
 
-        def preprocess_rows(admin, rows, **_):
-            return [
-                row
-                for row in rows
-                if admin.apps.get(f'{row.app_name}_{row.model_name}', {}).get('include', False)
-            ]
+        def rows(admin, **_):
+
+            for app_name, models in items(django_apps.all_models):
+                has_yielded_header = False
+
+                for model_name, model in items(models):
+                    if not admin.apps.get(f'{app_name}_{model_name}', {}).get('include', False):
+                        continue
+
+                    if not has_yielded_header:
+                        yield Struct(
+                            name=app_verbose_name_by_label[app_name],
+                            verbose_app_name=app_verbose_name_by_label[app_name],
+                            url=None,
+                            tag='h2',
+                        )
+                        has_yielded_header = True
+
+                    yield Struct(
+                        verbose_app_name=app_verbose_name_by_label[app_name],
+                        app_name=app_name,
+                        name=model._meta.verbose_name_plural.capitalize(),
+                        url='%s/%s/' % (app_name, model_name),
+                        tag=None,
+                    )
 
         table = setdefaults_path(
             Namespace(),
@@ -204,15 +237,13 @@ class Admin(Page):
             title='All models',
             call_target__cls=cls.get_meta().table_class,
             sortable=False,
-            rows=[
-                Struct(app_name=app_name, name=model._meta.verbose_name, model_name=model_name, model=model)
-                for (app_name, model_name), model in items(model_by_app_and_name)
-            ],
-            preprocess_rows=preprocess_rows,
-            columns=dict(
-                app_name__auto_rowspan=True,
-                app_name__after=0,
-                name__cell__url=lambda row, **_: '%s/%s/' % (row.app_name, row.model_name),
+            rows=rows,
+            header__template=None,
+            page_size=None,
+            columns__name=dict(
+                cell__url=lambda row, **_: row.url,
+                display_name='',
+                cell__tag=lambda row, **_: row.tag,
             ),
         )
 

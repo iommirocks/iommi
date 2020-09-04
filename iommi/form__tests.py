@@ -434,7 +434,6 @@ def test_non_editable():
         <div>
             <label for="id_foo">Foo</label>
             <span custom="7" id="id_foo" name="foo">11</span>
-            <div class="helptext"></div>
         </div>
     """)
 
@@ -452,7 +451,6 @@ def test_editable():
         <div>
             <label for="id_foo">Foo</label>
             <input custom="7" id="id_foo" name="foo" type="text" value="11"/>
-            <div class="helptext"></div>
         </div>
     """)
 
@@ -648,8 +646,6 @@ def test_radio_full_render():
         <input type="radio" value="a" name="foo" id="id_foo_1"  id="id_foo" name="foo" checked/>
         <label for="id_foo_1">a</label>
 
-        <div class="helptext"></div>
-        
     </div>
 
     <div>
@@ -657,8 +653,6 @@ def test_radio_full_render():
         <input type="radio" value="b" name="foo" id="id_foo_2"  id="id_foo" name="foo" />
         <label for="id_foo_2">b</label>
 
-        <div class="helptext"></div>
-        
     </div>
 
     <div>
@@ -666,13 +660,8 @@ def test_radio_full_render():
         <input type="radio" value="c" name="foo" id="id_foo_3"  id="id_foo" name="foo" />
         <label for="id_foo_3">c</label>
 
-        <div class="helptext"></div>
-        
     </div>
 
-
-    <div class="helptext"></div>
-    
 </div>
 
     """)
@@ -1646,8 +1635,6 @@ def test_render():
                     Bar
                 </label>
                 <input id="id_bar" name="bar" type="text" value="">
-                <div class="helptext">
-                </div>
             </div>
             <div class="links">
                 <input accesskey="s" name="-submit" type="submit" value="Submit">

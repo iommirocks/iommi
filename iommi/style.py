@@ -62,6 +62,8 @@ class Style:
 
     def component(self, obj):
         result = Namespace()
+
+        # TODO: is this wrong? Should it take classes first, then loop through shortcuts?
         for class_name in class_names_for(type(obj)):
             if class_name in self.config:
                 config = Namespace(self.config.get(class_name, {}))
@@ -84,7 +86,14 @@ def register_style(name, conf):
 
 
 def get_style(name):
-    return _styles[name]
+    try:
+        return _styles[name]
+    except KeyError:
+        style_names = "\n    ".join(_styles.keys())
+        raise Exception(f'''No registered style {name}. Register a style with register_style(). 
+
+Available styles:
+    {style_names}''') from None
 
 
 _no_attribute_sentinel = object()
@@ -167,6 +176,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     from iommi.error import Errors
     from iommi.action import Actions
     from iommi.admin import Admin
+    from iommi.fragment import Container
     if default_classes is None:
         default_classes = [
             Action,
@@ -184,6 +194,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Table,
             Filter,
             Admin,
+            Container,
         ]
     if additional_classes is None:
         additional_classes = []

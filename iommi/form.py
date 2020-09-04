@@ -460,6 +460,7 @@ class Field(Part):
     input: Fragment = Refinable()
     label: Fragment = Refinable()
     non_editable_input: Fragment = Refinable()
+    help: Fragment = Refinable()
 
     is_list: bool = EvaluatedRefinable()
     is_boolean: bool = EvaluatedRefinable()
@@ -495,6 +496,7 @@ class Field(Part):
         errors=EMPTY,
         label__call_target=Fragment,
         label__attrs__for=default_input_id,
+        help__call_target=Fragment,
         input__call_target=Fragment,
         input__attrs__id=default_input_id,
         input__attrs__name=lambda field, **_: field.iommi_path,
@@ -554,6 +556,7 @@ class Field(Part):
         })()
         self.input = self.input(_name='input')
         self.label = self.label(_name='label')
+        self.help = self.help(_name='help')
 
     @property
     def form(self):
@@ -639,13 +642,23 @@ class Field(Part):
         self.label.children = dict(text=evaluate_strict(self.display_name, **self.iommi_evaluate_parameters()))
         self.non_editable_input = self.non_editable_input.bind(parent=self)
 
+        self.help = self.help.bind(parent=self)
+        if self.help is not None:
+            help_text = evaluate_strict(self.help_text, **self.iommi_evaluate_parameters())
+            self.help.children = dict(text=help_text)
+        else:
+            help_text = ''
+        if not help_text:
+            # To render cleanly in templates:
+            self.help = ''
+
         if self.model and self.include:
             try:
                 self.search_fields = get_search_fields(model=self.model)
             except NoRegisteredSearchFieldException:
                 self.search_fields = ['pk']
                 if iommi_debug_on():
-                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields.')
+                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}.')
 
     def _parse(self):
         if self.parsed_data is not None:

@@ -33,6 +33,8 @@ base = Style(
         input__tag='input',
         label__tag='label',
         non_editable_input__tag='span',
+        help__attrs__class__helptext=True,
+        help__tag='div',
         template='iommi/form/row.html',
         errors__template='iommi/form/errors.html',
     ),

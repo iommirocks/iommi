@@ -3,7 +3,7 @@
         <input type="radio" value="{{ choice.1 }}" name="{{ field.iommi_path }}" id="{{ field.input.attrs.id }}_{{ choice.4 }}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
         <label for="{{ field.input.attrs.id }}_{{ choice.4 }}">{{ choice.2 }}</label>
 
-        <div class="helptext">{{ field.help_text }}</div>
+        {{ field.help }}
         {{ field.errors }}
     </div>
 {% endfor %}

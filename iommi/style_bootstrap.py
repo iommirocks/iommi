@@ -6,6 +6,14 @@ from iommi.style_base import base
 
 bootstrap_base = Style(
     base,
+    Container=dict(
+        tag='div',
+        attrs__class={
+            'container': True,
+            'mt-5': True,
+            'pt-5': True,
+        },
+    ),
     Field=dict(
         shortcuts=dict(
             boolean=dict(
@@ -35,6 +43,10 @@ bootstrap_base = Style(
         errors__attrs__class={'invalid-feedback': True},
         template='iommi/form/bootstrap/row.html',
         errors__template='iommi/form/bootstrap/errors.html',
+        help__attrs__class={
+            'form-text': True,
+            'text-muted': True,
+        },
     ),
     Action=dict(
         shortcuts=dict(
@@ -104,7 +116,15 @@ bootstrap_base = Style(
             'navbar': False,
             'navbar-dark': False,
         }
-    )
+    ),
+    Admin=dict(
+        parts__menu=dict(
+            # tag='foo',   # TODO: This styling is ignored. We should be able to do this.
+            attrs__class={
+                'fixed-top': True,
+            },
+        ),
+    ),
 )
 bootstrap = Style(
     bootstrap_base,

@@ -174,7 +174,10 @@ def render_root(*, part, template_name=MISSING, content_block_name=MISSING, cont
 
     from iommi.debug import iommi_debug_panel
     from iommi import Page
+    from iommi.fragment import Container
+
     context = dict(
+        container=Container(_name='Container').bind(parent=part),
         content=part.__html__(**render),
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
