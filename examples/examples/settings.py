@@ -47,7 +47,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -55,7 +55,14 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'iommi',
     'examples',
-)
+]
+
+try:
+    import django_pycharm_breakpoint
+except ImportError:
+    pass
+else:
+    INSTALLED_APPS += ['django_pycharm_breakpoint']
 
 
 MIDDLEWARE = [
