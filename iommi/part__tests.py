@@ -2,13 +2,18 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from tri_struct import Struct
 
-from iommi import Page
+from iommi import (
+    Page,
+    register_style,
+)
 from iommi._web_compat import Template
 from iommi.part import (
     as_html,
     render_root,
     request_data,
 )
+from iommi.style import Style
+from iommi.style_base import base
 from tests.helpers import req
 
 
@@ -41,12 +46,20 @@ def test_as_html_integer():
 
 
 def test_context_processor_is_called_on_render_root():
+    style_name = 'test_context_processor_is_called_on_render_root'
+    style = Style(
+        base,
+        base_template='test_context_processor_is_called_on_render_root.html',
+    )
+    register_style(style_name, style)
+
     part = Page(
         context__root_part_context_variable='root_part_context_variable',
+        iommi_style=style_name,
     )
+
     t = render_root(
         part=part.bind(request=req('get')),
-        template_name='test_context_processor_is_called_on_render_root.html',
         context=dict(my_context_variable='my_context_variable'),
     )
     assert t == 'context_processor_is_called\nroot_part_context_variable\nmy_context_variable\n'

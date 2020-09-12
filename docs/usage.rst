@@ -42,7 +42,7 @@ By default iommi uses a very basic bootstrap base template. You can override it 
 
     my_style = Style(
         bootstrap,
-        template_name='base.html'
+        base_template='base.html'
     )
     register_style('my_style', my_style)
 

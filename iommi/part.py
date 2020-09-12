@@ -156,7 +156,7 @@ def render_root(*, part, context, **render):
     template_name = root_style.base_template
     content_block_name = root_style.content_block
 
-    assert template_name, f"{root_style_name} doesn't have a template_name defined"
+    assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
 
     title = getattr(part, 'title', None)
