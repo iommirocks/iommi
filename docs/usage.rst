@@ -33,19 +33,29 @@ Add iommi's middleware:
         'iommi.middleware',
     ]
 
-If your base template isn't called `base.html` you need to specify it:
+By default iommi uses a very basic bootstrap base template. You can override it by declaring your own style:
 
 .. code:: python
 
-    IOMMI_BASE_TEMPLATE = 'my_base.html'
+    from iommi import register_style
+    from iommi.style_bootstrap import bootstrap
 
-(The base template is the one containing your `<html>` tag and has `{% block content %}`.)
+    my_style = Style(
+        bootstrap,
+        template_name='base.html'
+    )
+    register_style('my_style', my_style)
 
-If your content block in your base template isn't called `content` you need to specify it:
+
+and then setting
 
 .. code:: python
 
-    IOMMI_CONTENT_BLOCK = 'main_stuff'
+    IOMMI_DEFAULT_STYLE = 'my_style'
+
+in your `settings.py`.
+
+If you want to put your content somewhere else than a block called `content` you can specify `content_block='main'` in your style definition.
 
 
 Basic usage

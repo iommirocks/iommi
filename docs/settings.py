@@ -104,7 +104,3 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 IOMMI_DEBUG = True
-
-
-# IOMMI_BASE_TEMPLATE = 'base_semantic_ui.html'
-# IOMMI_DEFAULT_STYLE = 'semantic_ui'
