@@ -20,16 +20,16 @@ DEFAULT_STYLE = 'bootstrap'
 
 
 def apply_style(obj):
-    style_data = get_style_data_for_object(style=get_style_for(obj), obj=obj)
+    style_data = get_style_data_for_object(style_name=get_style_name_for(obj), obj=obj)
     return apply_style_recursively(style_data=style_data, obj=obj)
 
 
-def get_style_for(obj):
+def get_style_name_for(obj):
     if obj is not None:
         if obj.iommi_style is not None:
             return obj.iommi_style
         if obj._parent is not None:
-            return get_style_for(obj._parent)
+            return get_style_name_for(obj._parent)
 
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
@@ -56,8 +56,23 @@ def recursive_namespace(d):
 
 
 class Style:
-    def __init__(self, *bases, **kwargs):
+    def __init__(self, *bases, base_template=None, content_block=None, **kwargs):
         self.name = None
+
+        self.base_template = base_template
+        if not self.base_template:
+            for base in reversed(bases):
+                if base.base_template:
+                    self.base_template = base.base_template
+                    break
+
+        self.content_block = content_block
+        if not self.content_block:
+            for base in reversed(bases):
+                if base.content_block:
+                    self.content_block = base.content_block
+                    break
+
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj):
@@ -135,8 +150,8 @@ def apply_style_recursively(*, style_data, obj):
     return rest_style
 
 
-def get_style_data_for_object(style, obj):
-    return get_style(style).component(obj)
+def get_style_data_for_object(style_name, obj):
+    return get_style(style_name).component(obj)
 
 
 class InvalidStyleConfigurationException(Exception):

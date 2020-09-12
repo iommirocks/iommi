@@ -7,6 +7,7 @@ from iommi.style_base import base
 foundation_base = Style(
     base,
     font_awesome_4,
+    base_template='iommi/base_foundation.html',
     Action=dict(
         shortcuts=dict(
             button__attrs__class__button=True,

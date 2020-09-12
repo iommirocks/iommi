@@ -48,10 +48,10 @@ from iommi.traversable import (
     reinvokable,
     Traversable,
 )
-from iommi.style import get_style_for
-
-DEFAULT_BASE_TEMPLATE = 'base.html'
-DEFAULT_CONTENT_BLOCK = 'content'
+from iommi.style import (
+    get_style,
+    get_style_name_for,
+)
 
 
 class Part(Traversable):
@@ -149,18 +149,15 @@ class Part(Traversable):
     render=EMPTY,
     context=EMPTY,
 )
-def render_root(*, part, template_name=MISSING, content_block_name=MISSING, context, **render):
+def render_root(*, part, context, **render):
     assert part._is_bound
-    if template_name is MISSING:
-        template_name = getattr(settings, 'IOMMI_BASE_TEMPLATE', DEFAULT_BASE_TEMPLATE)
+    root_style_name = get_style_name_for(part)
+    root_style = get_style(root_style_name)
+    template_name = root_style.base_template
+    content_block_name = root_style.content_block
 
-        try:
-            get_template(template_name)
-        except TemplateDoesNotExist:
-            template_name = f'iommi/base_{get_style_for(part)}.html'
-
-    if content_block_name is MISSING:
-        content_block_name = getattr(settings, 'IOMMI_CONTENT_BLOCK', DEFAULT_CONTENT_BLOCK)
+    assert template_name, f"{root_style_name} doesn't have a template_name defined"
+    assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
 
     title = getattr(part, 'title', None)
 

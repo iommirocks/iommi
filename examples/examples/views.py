@@ -186,7 +186,7 @@ def form_example_1(request):
 
     return HttpResponse(
         Template("""
-            {% extends "base.html" %} 
+            {% extends "iommi/base_test.html" %} 
             {% block content %}
                 {{ form }} 
                 {{ message }} 
