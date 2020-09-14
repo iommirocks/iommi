@@ -1,6 +1,7 @@
 from iommi.style import Style
 
 base = Style(
+    content_block='content',
     Form=dict(
         template='iommi/form/form.html',
         actions_template='iommi/form/actions.html',

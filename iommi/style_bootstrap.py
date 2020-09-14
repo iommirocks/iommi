@@ -6,6 +6,7 @@ from iommi.style_base import base
 
 bootstrap_base = Style(
     base,
+    base_template='iommi/base_bootstrap.html',
     Container=dict(
         tag='div',
         attrs__class={

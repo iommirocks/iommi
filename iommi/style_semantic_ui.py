@@ -6,6 +6,7 @@ from iommi.style_base import base
 
 semantic_ui_base = Style(
     base,
+    base_template='iommi/base_semantic_ui.html',
     Form=dict(
         attrs__class=dict(
             ui=True,
