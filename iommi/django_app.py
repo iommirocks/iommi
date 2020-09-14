@@ -31,7 +31,7 @@ class IommiConfig(AppConfig):
         register_style('bootstrap', bootstrap)
         register_style('bootstrap_horizontal', bootstrap_horizontal)
         register_style('semantic_ui', semantic_ui)
-        register_style('water', Style(base))
+        register_style('water', Style(base, base_template='iommi/base_water.html'))
         register_style('foundation', foundation)
         register_style('foundation_horizontal', foundation_horizontal)
         register_style('django_admin', django_admin)

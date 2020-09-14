@@ -2,22 +2,16 @@
     <form{{ query.form.attrs }}>
         {{ query.advanced_simple_toggle }}
 
-        <table style="width: 100%">
-            <tr class="iommi_query_form_advanced" style="display: none">
-                <td><label for="iommi_{{ query.iommi_dunder_path }}_query">Search query:</label></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="iommi_query_form_advanced" style="display: none">
-                        <input id="iommi_{{ query.iommi_dunder_path }}_query" name="{{ query.get_advanced_query_param }}" type="text" style="width:95%" data-query="{{ query.query_advanced_value }}"/>
-                    </div>
-                </td>
-                <td class="iommi_query_toggle_help" style="display: none">
+        <div style="width: 100%">
+            <div class="iommi_query_form_advanced" style="display: none">
+                <label for="iommi_{{ query.iommi_dunder_path }}_query">Search query:</label>
+                <input id="iommi_{{ query.iommi_dunder_path }}_query" name="{{ query.get_advanced_query_param }}" type="text" style="width:70%" data-query="{{ query.query_advanced_value }}"/>
+
+                <div class="iommi_query_toggle_help">
                     <span>Show help</span> <i class="fa fa-chevron-down"></i>
-                </td>
-            </tr>
-            <tr>
-                <td class="iommi_query_help" style="display: none">
+                </div>
+
+                <div class="iommi_query_help" style="display: none">
                     <div class="iommi_query_available_fields">
                         <h3>Available fields</h3>
                         <ul>
@@ -38,9 +32,9 @@
                             <li>You can filter for relative dates: field_name < "10 days ago". Supported fields are days, months, years, quarters and weekdays. They can be negative and abbreviated from "10 days ago" to "-10d".</li>
                         </ul>
                     </div>
-                </td>
-            </tr>
-        </table>
+                </div>
+            </div>
+        </div>
 
         {# form-row align-items-center is bootstrap specific, ui form fields is semantic ui, grid-x is foundation #}
         <span class="iommi_query_form_simple form-row align-items-center ui form fields grid-x grid-padding-x">
@@ -61,6 +55,14 @@
                 display: inline-block;
                 vertical-align: top;
                 margin-right: 10px;
+                max-width: 45%;
+            }
+            .iommi_query_available_fields {
+                padding-right: 20px;
+            }
+            .iommi_query_available_fields ul,
+            .iommi_query_available_query_commands ul {
+
             }
             .iommi_query_toggle_help,
             .iommi_query_help {
@@ -91,12 +93,11 @@
         function toggle_simple_advanced() {
             var toggle_simple_mode = base.getElementsByClassName("iommi_query_toggle_simple_mode")[0];
             var simple = base.getElementsByClassName("iommi_query_form_simple")[0];
-            var adv = base.getElementsByClassName("iommi_query_form_advanced");
+            var adv = base.getElementsByClassName("iommi_query_form_advanced")[0];
             if (toggle_simple_mode.getAttribute('data-advanced-mode') === 'simple') {
                 q.value = q.getAttribute('data-query');
                 toggle_simple_mode.setAttribute('data-advanced-mode', 'advanced');
-                adv[0].style.display = '';
-                adv[1].style.display = '';
+                adv.style.display = '';
                 simple.style.display = 'none';
                 toggle_simple_mode.innerHTML = 'Switch to basic search';
                 help.style.display = '';
@@ -105,8 +106,7 @@
                 q.setAttribute('data-query', q.value);
                 q.value = '';
                 toggle_simple_mode.setAttribute('data-advanced-mode', 'simple');
-                adv[0].style.display = 'none';
-                adv[1].style.display = 'none';
+                adv.style.display = 'none';
                 simple.style.display = '';
                 toggle_simple_mode.innerHTML = 'Switch to advanced search';
                 help.style.display = 'none';
