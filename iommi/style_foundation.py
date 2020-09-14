@@ -29,6 +29,11 @@ foundation_base = Style(
         ),
     ),
     Query__form__iommi_style='foundation_horizontal',
+    Paginator=dict(
+        template='iommi/table/bootstrap/paginator.html',
+        container__attrs__class__pagination=True,
+        active_item__attrs__class={'current': True},
+    ),
 )
 
 
