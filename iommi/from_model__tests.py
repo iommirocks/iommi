@@ -33,10 +33,10 @@ def test_get_name_field_for_model_error_non_unique():
     class NoRegisteredNameException2Model(Model):
         name = IntegerField()
 
-    with pytest.raises(NoRegisteredSearchFieldException) as e:
+    with pytest.warns(Warning) as records:
         get_search_fields(model=NoRegisteredNameException2Model)
 
-    assert str(e.value) == "The model NoRegisteredNameException2Model has no registered search fields. Please register a list of field names with register_search_fields. It has a field `name` but it's not unique in the database so we can't use that."
+    assert str(records[0].message) == "The model NoRegisteredNameException2Model is using the default `name` field as a search field, but it's not unique. You can register_search_field(..., =unique=False) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names."
 
 
 def test_register_search_fields_error():
