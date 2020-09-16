@@ -1,3 +1,4 @@
+import warnings
 from typing import (
     Iterator,
     List,
@@ -174,7 +175,7 @@ def get_search_fields(*, model):
         except FieldDoesNotExist:
             raise NoRegisteredSearchFieldException(f'{model.__name__} has no registered search fields. Please register a list of field names with register_search_fields.') from None
         if not field.unique:
-            raise NoRegisteredSearchFieldException(f"The model {model.__name__} has no registered search fields. Please register a list of field names with register_search_fields. It has a field `name` but it's not unique in the database so we can't use that.")
+            warnings.warn(f"The model {model.__name__} is using the default `name` field as a search field, but it's not unique. You can register_search_field(..., =unique=False) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names.")
         return ['name']
 
     return search_fields
