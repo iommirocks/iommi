@@ -142,11 +142,17 @@ def _generate_rst_docs(classes):
                     w(1, constructor_doc['params'][refinable])
                     w(0, '')
                 type_hint = type_hints.get(refinable)
-                if type_hint and hasattr(type_hint, '__name__'):
-                    if type_hint in classes:
-                        w(1, f'Type: :doc:`{type_hint.__name__}`')
+                if type_hint:
+                    name = str(type_hint)
+                    if name.startswith('typing.'):
+                        name = name.replace('typing.', '')
                     else:
-                        w(1, f'Type: `{type_hint.__name__}`')
+                        name = type_hint.__name__
+
+                    if type_hint in classes:
+                        w(1, f'Type: :doc:`{name}`')
+                    else:
+                        w(1, f'Type: `{name}`')
 
             w(0, '')
 

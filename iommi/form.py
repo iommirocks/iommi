@@ -517,25 +517,26 @@ class Field(Part):
 
         :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
         :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
-        :param parse: parse function. Default just returns the string input unchanged: `lambda form, field, string_value: string_value`
-        :param initial: initial value of the field
-        :param attr: the attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Defaults to same as name
-        :param attrs: a dict containing any custom html attributes to be sent to the `input__template`.
-        :param display_name: the text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
+        :param parse: Parse function. Default just returns the string input unchanged: `lambda form, field, string_value: string_value`
+        :param initial: Initial value of the field
+        :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Defaults to same as name
+        :param attrs: A dict containing any custom html attributes to be sent to the `input__template`.
+        :param display_name: The text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
         :param template: django template filename for the entire row. Normally you shouldn't need to override on this level. Prefer overriding `input__template`, `label__template` or `error__template` as needed.
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: `None`
-        :param input__template: django template filename for the template for just the input control.
-        :param label__template: django template filename for the template for just the label tab.
-        :param errors__template: django template filename for the template for just the errors output. Default: `'iommi/form/errors.html'`
-        :param required: if the field is a required field. Default: `True`
+        :param input__template: Django template filename for the template for just the input control.
+        :param label__template: Django template filename for the template for just the label tab.
+        :param errors__template: Django template filename for the template for just the errors output. Default: `'iommi/form/errors.html'`
+        :param required: If the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
         :param editable: Default: `True`
-        :param strip_input: runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
-        :param render_value: render the parsed and validated value into a string. Default just converts to unicode: `lambda form, field, value: unicode(value)`
-        :param is_list: interpret request data as a list (can NOT be a callable). Default: `False``
-        :param read_from_instance: callback to retrieve value from edited instance. Invoked with parameters field and instance.
-        :param write_to_instance: callback to write value to instance. Invoked with parameters field, instance and value.
+        :param strip_input: Runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
+        :param render_value: Render the parsed and validated value into a string. Default just converts to unicode: `lambda form, field, value: unicode(value)`
+        :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False``
+        :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
+        :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
+        :param choice_to_option: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
         """
 
         model_field = kwargs.get('model_field')
