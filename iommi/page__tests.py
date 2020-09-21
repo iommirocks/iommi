@@ -47,8 +47,11 @@ def test_page_render():
     response = my_page.render_to_response()
 
     expected_html = '''
+        <!DOCTYPE html>
         <html>
-            <head></head>
+            <head>
+                <title></title>
+            </head>
             <body>
                  <h1> Foo </h1>
                  <div> bar bar </div>
