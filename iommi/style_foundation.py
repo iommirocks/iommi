@@ -8,6 +8,12 @@ foundation_base = Style(
     base,
     font_awesome_4,
     base_template='iommi/base_foundation.html',
+    Container=dict(
+        tag='div',
+        attrs__class={
+            'grid-container': True,
+        },
+    ),
     Action=dict(
         shortcuts=dict(
             button__attrs__class__button=True,

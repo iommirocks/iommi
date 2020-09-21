@@ -151,6 +151,7 @@ docs/Cell.rst
 docs/ColumnHeader.rst
 docs/Header.rst
 docs/HeaderConfig.rst
+docs/Container.rst
 
 # tests
 results/
