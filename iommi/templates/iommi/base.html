@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+    {% block iommi_head_contents %}{% endblock %}
+</head>
+<body>
+    {% block iommi_top %}{% endblock %}
+
+    {{ container.iommi_open_tag }}
+        {% block content %}{% endblock %}
+    {{ container.iommi_close_tag }}
+
+    {% block iommi_bottom %}{% endblock %}
+</body>
+</html>

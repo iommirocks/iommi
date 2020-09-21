@@ -208,6 +208,9 @@ class Header(Fragment):
 
 
 class Container(Fragment):
+    """
+    The main container for iommi. This class is useful when you want to apply styling or change the tag of what iommi produces for its content inside your body tag.
+    """
     pass
 
 

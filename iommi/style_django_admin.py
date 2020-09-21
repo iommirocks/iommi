@@ -7,6 +7,12 @@ from iommi.style_base import base
 django_admin_base = Style(
     base,
     font_awesome_4,
+    Container=dict(
+        tag='div',
+        attrs__class={
+            'container': True,
+        },
+    ),
     base_template='iommi/base_django_admin.html',
     Table__attrs__id='changelist',
     Query__form__iommi_style='django_admin_horizontal',

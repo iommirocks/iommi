@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
+{% extends "iommi/base.html" %}
+
+{% block iommi_head_contents %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
 
     <script
@@ -11,8 +11,4 @@
     {# Select2 #}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
-</head>
-<body>
-    {% block content %}{% endblock %}
-</body>
-</html>
+{% endblock %}
