@@ -39,6 +39,8 @@ def get_default_classes():
         iommi.table.ColumnHeader,
         iommi.table.HeaderConfig,
         iommi.attrs.Attrs,
+        iommi.table.ColumnHeader,
+        iommi.fragment.Container,
     ]
 
 
