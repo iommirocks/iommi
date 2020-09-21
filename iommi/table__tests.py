@@ -68,6 +68,7 @@ from tests.models import (
     CSVExportTestModel,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
+    SortKeyOnForeignKeyB,
     TBar,
     TBaz,
     TFoo,
@@ -2855,3 +2856,9 @@ def test_sort_django_table_from_model():
       </tbody>
     </table>
     """)
+
+
+@pytest.mark.django_db
+def test_default_sort_key_on_foreign_key():
+    table = Table(auto__model=SortKeyOnForeignKeyB).bind(request=req('get'))
+    assert table.columns.remote.sort_key == 'remote__name'

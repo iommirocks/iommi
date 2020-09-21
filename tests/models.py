@@ -217,3 +217,11 @@ class EvilNames(models.Model):
 
     class Meta:
         ordering = ('id',)
+
+
+class SortKeyOnForeignKeyA(models.Model):
+    name = models.CharField(max_length=255, db_index=True, unique=True)
+
+
+class SortKeyOnForeignKeyB(models.Model):
+    remote = models.ForeignKey(SortKeyOnForeignKeyA, on_delete=models.CASCADE)

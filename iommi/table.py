@@ -107,7 +107,9 @@ from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
     get_fields,
+    get_search_fields,
     member_from_model,
+    NoRegisteredSearchFieldException,
 )
 from iommi.member import (
     bind_members,
@@ -308,6 +310,17 @@ def default_icon__cell__format(column, value, **_):
     attrs['class'][column.extra.icon_prefix + column.extra.icon] = True
 
     return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
+
+
+def foreign_key__sort_key(column, **_):
+    if column.model:
+        try:
+            sort_columns = get_search_fields(model=column.model_field)
+            return f'{column.attr}__{sort_columns[0]}'
+        except NoRegisteredSearchFieldException:
+            pass
+
+    return column.attr
 
 
 @with_meta
@@ -731,6 +744,7 @@ class Column(Part):
         bulk__call_target__attribute='foreign_key',
         filter__call_target__attribute='foreign_key',
         data_retrieval_method=DataRetrievalMethods.select,
+        sort_key=foreign_key__sort_key,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
         model = model_field.foreign_related_fields[0].model
@@ -1735,7 +1749,7 @@ class Table(Part, Tag):
                     order_by_on_list(self.rows, order_args[0], is_desc)
                 else:
                     if not settings.DEBUG:
-                        # We should crash on invalid sort commands in DEV, but just ignore in PROD
+                        # We should crash on invalid sort commands in development, but just ignore in production
                         # noinspection PyProtectedMember
                         valid_sort_fields = {x.name for x in get_fields(self.model)}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
