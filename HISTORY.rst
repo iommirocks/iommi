@@ -1,6 +1,59 @@
 Changelog
 ---------
 
+2.0.0 (2020-09-22)
+~~~~~~~~~~~~~~~~~~
+
+* BACKWARDS INCOMPATIBLE: `Style` not must take a `base_template` argument. This replaces the setting `IOMMI_BASE_TEMPLATE`.
+
+* BACKWARDS INCOMPATIBLE: `IOMMI_CONTENT_BLOCK` is removed. Replaced byt the `content_block` setting for `Style`.
+
+* Allow table rows to be provided from a generator. (Disabling paginator)
+
+* Added blocks (`iommi_head_contents`, `iommi_top`, and `iommi_bottom`) as useful hook points to add custom data in the templates if you don't need a totally new template but want to just customize a little bit.
+
+* The default sort_key on a Column.foreign_key now looks at the searchable field of the remote field ('name' by default). This means by default sorting will mostly be more what you expect.
+
+* Changed the error from get_search_field() for non-unique name to a warning.
+
+* Removed <table> for layout in query advanced/simple stuff.
+
+* Don't warn for missing register_search_fields when attr=None
+
+* Set admin to bootstrap by default.
+
+* Added form for changing password. Used by the admin but also usable from your code.
+
+* Added form for login. Used by the admin but also usable from your code.
+
+* Fixed foundation styling for query form.
+
+* Introduced `Field.help`. This is the fragment that renders the help text for a `Field`. This means you can now style and customize this part of forms more easily. For example set a CSS class: `Field(help__attrs__class__foo='foo'`.
+
+* Use django default date and time formatting in tables.
+
+* New shortcut for `Table`: `Table.div` for when you want to render a `Table` as a bunch of divs. This is useful because a `Table` is really a view model of a sequence of stuff, not just a `<table>`.
+
+* Possibility to set `Actions.tag` to `None` to not get a wrapping html tag.
+
+* Added `Table.outer` as a tag you can style that encompasses the entire table part.
+
+* Moved `Form.h_tag` rendering inside the form tag to make it stylable as a coherent whole.
+
+* Grab html title from first part if no title is given explicitly. This means you'll get the `<title>` tag filled more often by what you expect automatically.
+
+* `Template` instances are now collected properly by `Part`.
+
+* Read admin config from modules.
+
+* The Admin is now opt in, not opt out.
+
+* The admin is now MUCH prettier and better.
+
+* Actions for `Table` are now rendered above the table by default. Set `actions_below` to `True` to render them the old way.
+
+* Many misc improvements
+
 1.0.3 (2020-08-24)
 ~~~~~~~~~~~~~~~~~~
 
