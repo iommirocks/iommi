@@ -305,6 +305,37 @@ def test_output():
         """)
 
 
+def test_generator():
+    class TestTable(Table):
+        foo = Column()
+        bar = Column()
+
+    rows = (x for x in [
+        Struct(foo="foo", bar="bar")
+    ])
+
+    verify_table_html(table=TestTable(rows=rows), expected_html="""
+        <table class="table" data-endpoint="/tbody">
+            <thead>
+                <tr>
+                    <th class="first_column subheader">
+                        <a href="?order=foo"> Foo </a>
+                    </th>
+                    <th class="first_column subheader">
+                        <a href="?order=bar"> Bar </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td> foo </td>
+                    <td> bar </td>
+                </tr>
+            </tbody>
+        </table>
+        """)
+
+
 def test_name_traversal():
     class TestTable(Table):
         foo__bar = Column(sortable=False)

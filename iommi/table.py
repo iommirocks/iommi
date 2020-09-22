@@ -1062,6 +1062,15 @@ def bulk_delete__post_handler(table, form, **_):
     return HttpResponse(render_root(part=p))
 
 
+def paginator__count(rows, **_):
+    if isinstance(rows, QuerySet):
+        return rows.count()
+    try:
+        return len(rows)
+    except TypeError:
+        return None
+
+
 class Paginator(Traversable):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
@@ -1098,7 +1107,7 @@ class Paginator(Traversable):
 
         page=1,
 
-        count=lambda rows, **_: rows.count() if isinstance(rows, QuerySet) else len(rows),
+        count=paginator__count,
         number_of_pages=lambda paginator, rows, **_: ceil(max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
     )
@@ -1131,7 +1140,10 @@ class Paginator(Traversable):
             self.number_of_pages = 1
         else:
             self.count = evaluate_strict(self.count, **evaluate_parameters) if rows is not None else 0
-            self.number_of_pages = evaluate_strict(self.number_of_pages, **evaluate_parameters)
+            if self.count is None:
+                self.number_of_pages = 1
+            else:
+                self.number_of_pages = evaluate_strict(self.number_of_pages, **evaluate_parameters)
 
         page = request.GET.get(self.iommi_path) if request else None
         page = evaluate_strict(self.page, **evaluate_parameters) if page is None else int(page)
