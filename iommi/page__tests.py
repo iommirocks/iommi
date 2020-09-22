@@ -35,6 +35,11 @@ def test_page_constructor():
     MIDDLEWARE_CLASSES=[],
 )
 def test_page_render():
+    # Working around some weird issue with pypy3+django3.0
+    from django.conf import settings
+    settings.DEBUG = False
+    # end workaround
+
     class MyPage(Page):
         header = html.h1('Foo')
         body = html.div('bar bar')

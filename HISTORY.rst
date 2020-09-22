@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+
+2.0.1 (2020-09-22)
+~~~~~~~~~~~~~~~~~~
+
+* `delete_object__post_handler` accessed `instance.id` which might be valid. It should have accessed `instance.pk` which is always valid.
+
+
 2.0.0 (2020-09-22)
 ~~~~~~~~~~~~~~~~~~
 
