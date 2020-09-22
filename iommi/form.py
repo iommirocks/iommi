@@ -1125,7 +1125,7 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
 def delete_object__post_handler(form, **_):
     instance = form.instance
     form.extra.on_delete(form=form, instance=instance)
-    if instance.id is not None:  # Check if already deleted by the callback
+    if instance.pk is not None:  # Check if already deleted by the callback
         instance.delete()
     return HttpResponseRedirect('../..')
 
