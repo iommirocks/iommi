@@ -26,8 +26,6 @@ Examples
 
 .. test
     user = User.objects.create(username='foo')
-    request = req('get')
-    request.user = user
 
 
 You can either create a subclass of `Form`...
@@ -63,7 +61,7 @@ You can either create a subclass of `Form`...
 
 .. test
 
-    edit_user_view(request, user.username)
+    edit_user_view(user_req('get'), user.username)
     post_request = req('post', name='foo', username='demo_', is_staff='1')
     post_request.user = user
     edit_user_view(post_request, user.username)
@@ -104,7 +102,7 @@ or just instantiate a `Form` with a `Field` dict and use it directly:
 
 .. test
         return form
-    edit_user_view(request, user.username)
+    edit_user_view(user_req('get'), user.username)
 
 
 You can also generate forms from Django models automatically (but still
@@ -129,7 +127,7 @@ change the behavior!). The above example is equivalent to:
 
 .. test
         return form
-    edit_user_view(request, user.username)
+    edit_user_view(user_req('get'), user.username)
 
 
 or even better: use `Form.edit`:
@@ -148,7 +146,7 @@ or even better: use `Form.edit`:
         # no html template! iommi has a nice default for you :P
 
 .. test
-    edit_user_view(request, user.username)
+    edit_user_view(user_req('get'), user.username)
 
 iommi pre-packages sets of defaults for common field types as 'shortcuts'.
 Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.

@@ -77,9 +77,7 @@ overriding `has_permission`:
 
 .. test
     assert Admin.has_permission  # validate that we haven't changed the API of Admin too badly
-    request = req('get')
-    request.user = User.objects.create(username='foo', is_staff=True)
-    assert MyAdmin.has_permission(request, None, None, None)
+    assert MyAdmin.has_permission(staff_req('get'), None, None, None)
 
 `operation` is one of `create`, `edit`, `delete`, `list` and `all_models`. The
 `model` parameter will be given for create/edit/delete/list, and instance will

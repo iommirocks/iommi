@@ -87,13 +87,13 @@ def req(method, **data):
 
 def user_req(method, **data):
     request = req(method, **data)
-    request.user = Struct(is_staff=False)
+    request.user = Struct(is_staff=False, is_authenticated=True)
     return request
 
 
 def staff_req(method, **data):
     request = req(method, **data)
-    request.user = Struct(is_staff=True)
+    request.user = Struct(is_staff=True, is_authenticated=True)
     return request
 
 

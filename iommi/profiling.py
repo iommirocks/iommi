@@ -33,7 +33,10 @@ class ProfileMiddleware:
             if request.path.startswith(prefix):
                 request.profiler_disabled = True
                 break
-        if not request.profiler_disabled and (settings.DEBUG or request.user.is_staff) and 'prof' in request.GET:
+
+        user = getattr(request, 'user', None)
+
+        if not request.profiler_disabled and user is not None and (settings.DEBUG or request.user.is_staff) and 'prof' in request.GET:
             self.prof = cProfile.Profile()
             self.prof.enable()
 

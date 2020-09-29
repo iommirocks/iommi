@@ -10,14 +10,16 @@ from tri_struct import Struct
 
 from iommi.admin import Admin
 from iommi.base import values
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    staff_req,
+)
 from tests.models import Foo
 
 
 @pytest.mark.django_db
 def test_bulk_edit_for_non_unique():
-    request = req('get')
-    request.user = Struct(is_staff=True, is_authenticated=True)
+    request = staff_req('get')
     p = Admin.list(
         request=request,
         app_name='tests',
@@ -31,13 +33,14 @@ def test_bulk_edit_for_non_unique():
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
 def test_create(mock_messages):
-    request = req('get')
-    request.user = Struct(is_staff=True, is_authenticated=True)
+    request = staff_req('get')
     c = Admin.create(request=request, app_name='tests', model_name='foo')
     p = c.bind(request=request)
     assert list(p.parts.create_tests_foo.fields.keys()) == ['foo']
 
     assert Foo.objects.count() == 0
+
+    # TODO: this shouldn't actually work! Should be staff_req!!!!
     p = c.bind(request=req('post', foo=7, **{'-submit': ''}))
     assert p.parts.create_tests_foo.is_valid()
     p.render_to_response()
@@ -56,8 +59,7 @@ def test_create(mock_messages):
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
 def test_edit(mock_messages):
-    request = req('get')
-    request.user = Struct(is_staff=True, is_authenticated=True)
+    request = staff_req('get')
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
 
@@ -78,8 +80,7 @@ def test_edit(mock_messages):
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
 def test_delete(mock_messages):
-    request = req('get')
-    request.user = Struct(is_staff=True, is_authenticated=True)
+    request = staff_req('get')
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
 

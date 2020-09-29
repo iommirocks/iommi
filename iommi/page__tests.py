@@ -14,6 +14,7 @@ from iommi.traversable import declared_members
 from tests.helpers import (
     prettify,
     req,
+    user_req,
 )
 
 
@@ -45,9 +46,7 @@ def test_page_render():
         body = html.div('bar bar')
 
     my_page = MyPage()
-    request = req('get')
-    request.user = Struct()
-    my_page = my_page.bind(request=request)
+    my_page = my_page.bind(request=user_req('get'))
 
     response = my_page.render_to_response()
 
