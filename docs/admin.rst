@@ -1,3 +1,8 @@
+.. imports
+    from django.contrib.auth.models import User
+    import pytest
+    pytestmark = pytest.mark.django_db
+
 Admin
 =====
 
@@ -69,6 +74,12 @@ overriding `has_permission`:
         def has_permission(request, operation, model=None, instance=None):
             # This is the default implementation
             return request.user.is_staff
+
+.. test
+    assert Admin.has_permission  # validate that we haven't changed the API of Admin too badly
+    request = req('get')
+    request.user = User.objects.create(username='foo', is_staff=True)
+    assert MyAdmin.has_permission(request, None, None, None)
 
 `operation` is one of `create`, `edit`, `delete`, `list` and `all_models`. The
 `model` parameter will be given for create/edit/delete/list, and instance will

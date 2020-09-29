@@ -712,24 +712,6 @@ def test_choice_not_required():
     assert MyForm().bind(request=req('post', **{'foo': '', '-': ''})).fields.foo.value is None
 
 
-# def test_choice_default_parser():
-#
-#     class MyThing(object):
-#         def __init__(self, name):
-#             self.name = name
-#
-#         def __str__(self):
-#             return self.name
-#
-#     a, b, c = MyThing('a'), MyThing('b'), MyThing('c')
-#
-#     class MyForm(Form):
-#         foo = Field.choice(choices=[a, b, c])
-#
-#     assert MyForm(request=req('post', **{'foo': 'b', '-': ''})).fields.foo.value is b
-#     assert MyForm(request=req('post', **{'foo': 'fisk', '-': ''})).fields.foo.errors == {'fisk not in available choices'}
-
-
 def test_multi_choice():
     soup = BeautifulSoup(Form(
         fields__foo=Field.multi_choice(choices=['a'])

@@ -1,6 +1,8 @@
 .. imports
     from django.contrib.auth.models import User
     from iommi._web_compat import HttpResponseRedirect, RequestContext, render
+    import pytest
+    pytestmark = pytest.mark.django_db
 
 Forms
 =====
@@ -19,24 +21,34 @@ Read the full documentation and the :doc:`howto` for more.
 .. contents::
     :local:
 
-Example
--------
+Examples
+--------
+
+.. test
+    user = User.objects.create(username='foo')
+    request = req('get')
+    request.user = user
+
 
 You can either create a subclass of `Form`...
+
+.. todo
+    Would be good if these things were tested...
+    These examples are a bit of a mess... the good examples at the bottom and the manual stuff at the top
 
 .. code:: python
 
     class UserForm(Form):
         name = Field.text()
         username = Field.text(
-            is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'))
-        is_admin = Field.boolean(
+            is_valid=lambda parsed_data, **_: (parsed_data.startswith('demo_'), 'neeeds to start with demo_'))
+        is_staff = Field.boolean(
             # show only for staff
             include=lambda request, **_: request.user.is_staff,
             label__template='tweak_label_tag.html')
 
     def edit_user_view(request, username):
-        form = UserForm(request=request)
+        form = UserForm().bind(request=request)
 
         user = User.objects.get(username=username)
         if form.is_valid() and request.method == 'POST':
@@ -45,8 +57,19 @@ You can either create a subclass of `Form`...
             return HttpResponseRedirect('..')
 
         return render(
+            request=request,
             template_name='edit_user.html',
-            context_instance=RequestContext(request, {'form': form}))
+            context={'form': form})
+
+.. test
+
+    edit_user_view(request, user.username)
+    post_request = req('post', name='foo', username='demo_', is_staff='1')
+    post_request.user = user
+    edit_user_view(post_request, user.username)
+    # restore the username
+    user.username = 'foo'
+    user.save()
 
 .. code:: html
 
@@ -60,7 +83,7 @@ You can either create a subclass of `Form`...
       <input type="submit" value="Save" />
     </form>
 
-or just instantiate a `Form` with a `Field` list and use it directly:
+or just instantiate a `Form` with a `Field` dict and use it directly:
 
 .. code:: python
 
@@ -70,7 +93,7 @@ or just instantiate a `Form` with a `Field` list and use it directly:
                 is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'),
             ),
             username=Field.text(),
-            is_admin=Field.boolean(
+            is_staff=Field.boolean(
                 # show only for staff
                 include=lambda request, **_: request.user.is_staff,
                 label__template='tweak_label_tag.html',
@@ -78,6 +101,10 @@ or just instantiate a `Form` with a `Field` list and use it directly:
         ))
 
         # rest of view function...
+
+.. test
+        return form
+    edit_user_view(request, user.username)
 
 
 You can also generate forms from Django models automatically (but still
@@ -90,15 +117,20 @@ change the behavior!). The above example is equivalent to:
             auto__model=User,
             # the field 'name' is generated automatically and
             # we are fine with the defaults
-            username__is_valid=
+            fields__username__is_valid=
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
-            is_admin__label__template='tweak_label_tag.html',
+            fields__is_staff__label__template='tweak_label_tag.html',
             # show only for staff
-            is_admin__include=lambda request, **_: request.user.is_staff,
+            fields__is_staff__include=lambda request, **_: request.user.is_staff,
         )
         form = form.bind(request=request)
 
         # rest of view function...
+
+.. test
+        return form
+    edit_user_view(request, user.username)
+
 
 or even better: use `Form.edit`:
 
@@ -106,15 +138,17 @@ or even better: use `Form.edit`:
 
     def edit_user_view(request, username):
         return Form.edit(
-            model=User,
-            instance=User.objects.get(username=username),
-            username__is_valid=
+            auto__instance=User.objects.get(username=username),
+            fields__username__is_valid=
                 lambda parsed_data, **_: parsed_data.startswith('demo_'),
-            is_admin__label__template='tweak_label_tag.html',
+            fields__is_staff__label__template='tweak_label_tag.html',
             # show only for staff
-            is_admin__include=lambda request, **_: request.user.is_staff,
+            fields__is_staff__include=lambda request, **_: request.user.is_staff,
         )
         # no html template! iommi has a nice default for you :P
+
+.. test
+    edit_user_view(request, user.username)
 
 iommi pre-packages sets of defaults for common field types as 'shortcuts'.
 Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.

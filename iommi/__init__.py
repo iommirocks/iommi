@@ -31,7 +31,10 @@ from iommi.query import (
     Query,
     register_filter_factory,
 )
-from iommi.style import register_style
+from iommi.style import (
+    register_style,
+    Style,
+)
 from iommi.table import (
     Column,
     register_cell_formatter,
@@ -78,6 +81,7 @@ __all__ = [
     'register_cell_formatter',
     'register_style',
     'register_search_fields',
+    'Style',
     'html',
 ]
 

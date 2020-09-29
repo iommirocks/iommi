@@ -1,3 +1,9 @@
+.. imports
+    from django.shortcuts import render
+    import pytest
+    pytestmark = pytest.mark.django_db
+
+
 Queries
 =======
 
@@ -31,11 +37,11 @@ after what they want. Searching songs can look like this:
     album=Paranoid AND lyrics:"have the power"
 
 This will find the song War Pigs, as it's from the album Paranoid and
-the lyrics contains the text "have the power".   The query language supports
+the lyrics contains the text "have the power". The query language supports
 `AND` and `OR`, parenthesis and the operations `<`, `<=`, `>`, `>=` for
 numerical values, and `=` for all values which is an exact case insensitive
 match. You can exclude with `!=`. As the example above shows `:` is used for
-case insensitive "contains" queries, and the inverse of that is `!:`
+case insensitive "contains" queries, and the inverse of that is `!:`.
 
 iommi tries to support what the user might intuitively write for searching
 boolean columns. It will interpret "n", "no", "0" (zero), "false", "f" and "off"
@@ -72,10 +78,10 @@ for specific model in the advanced mode:
         model = Filter.text()
 
     def cars(request):
-        query = CarQuery()
-        query.bind(request=request)
+        query = CarQuery().bind(request=request)
         cars_query_set = query.get_q()
         return render(
+            request=request,
             template_name='cars.html',
             context={
                 'query': query,
@@ -83,6 +89,8 @@ for specific model in the advanced mode:
             },
         )
 
+.. test
+    cars(req('get'))
 
 .. code:: html
 

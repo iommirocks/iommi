@@ -1,6 +1,8 @@
 .. imports
     from iommi.fragment import Fragment
     from iommi._web_compat import Template
+    import pytest
+    pytestmark = pytest.mark.django_db
 
 Pages
 =====
@@ -29,6 +31,10 @@ Example
             create_user = Form.create(auto__model=User)
 
         return MyPage()
+
+.. test
+    request = req('get')
+    my_view(request).bind(request=request).render_to_response()
 
 
 This creates a page with an h1 tag, a table of users and a form to create a

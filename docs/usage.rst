@@ -1,6 +1,7 @@
 .. imports
     import pytest
     pytestmark = pytest.mark.django_db
+    from iommi import Style
 
 
 Usage
@@ -80,6 +81,8 @@ When you've done the stuff above you can create a page with a table in it:
             auto__model=Artist,
         )
 
+.. test
+    my_view(req('get'))
 
 ...or create a table the declarative and explicit way:
 
@@ -106,10 +109,17 @@ Or you can compose a page with two tables:
 
     def my_page(request):
         class MyPage(Page):
-            foos = Table(auto__model=Foo)
-            bars = Table(auto__model=Bar)
+            artists = Table(auto__model=Artist)
+            albums = Table(auto__model=Album)
 
         return MyPage()
+
+.. test
+    my_page(req('get'))
+
+Instead of using a function based view like above you can add a page it to a path like this:
+
+
 
 
 Production use
@@ -194,6 +204,9 @@ middleware. With middleware it looks like this:
 
         return MyPage()
 
+.. test
+    my_page(req('get'))
+
 And without the middleware it looks like:
 
 .. code:: python
@@ -205,23 +218,11 @@ And without the middleware it looks like:
 
         return MyPage().bind(request=request).render_to_response()
 
-or even more low level:
-
-.. code:: python
-
-    def my_page(request):
-        class MyPage(Page):
-            title = html.h1('Hello')
-            div = html.div('Some text')
-
-        page = MyPage().bind(request=request)
-        dispatch = do_dispatch(page)
-        if dispatch:
-            return dispatch
-        return page.render_to_response()
+.. test
+    my_page(req('get'))
 
 
-This style also does not require the middleware:
+You can also do the same thing like this and avoid the view:
 
 .. code:: python
 
