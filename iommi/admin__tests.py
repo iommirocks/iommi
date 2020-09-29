@@ -1,18 +1,28 @@
 from unittest import mock
 
 import pytest
-from django.http import HttpResponseRedirect
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.http import (
+    Http404,
+    HttpResponseRedirect,
+)
 from django.urls import (
     include,
     path,
 )
 from tri_struct import Struct
 
-from iommi.admin import Admin
+from iommi.admin import (
+    Admin,
+    collect_config,
+    Messages,
+)
 from iommi.base import values
 from tests.helpers import (
     req,
     staff_req,
+    user_req,
 )
 from tests.models import Foo
 
@@ -125,3 +135,31 @@ def test_redirect_to_login(settings, is_authenticated, view, kwargs):
         assert result.url == '/login/?next=%2F'
     else:
         assert isinstance(result, Admin)
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('view,kwargs', [
+    (Admin.all_models, dict()),
+    (Admin.list, dict(app_name='tests', model_name='foo')),
+    (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
+    (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
+])
+def test_404_for_non_staff(settings, view, kwargs):
+    settings.ROOT_URLCONF = __name__
+    if 'pk' in kwargs:
+        Foo.objects.create(pk=kwargs['pk'], foo=1)
+    request = user_req('get')
+
+    with pytest.raises(Http404):
+        view(request=request, **kwargs)
+
+
+def test_messages():
+    request = req('get')
+    message = 'test message'
+    request._messages = [message]
+    assert message in Messages().bind(request=request).__html__()
+
+
+def test_all_models():
+    request = staff_req('get')
+    assert 'Authentication' in Admin.all_models(request=request).bind(request=request).render_to_response().content.decode()
