@@ -1,0 +1,9 @@
+    <!-- edit_user.html -->
+    <form action="" method="post">{% csrf_token %}
+      <div>
+        <table>
+          {{ form }}
+        </table>
+      </div>
+      <input type="submit" value="Save" />
+    </form>

@@ -1,2 +1,5 @@
 [run]
 branch = False
+include=
+    iommi/*
+    docs/_generated_tests/*

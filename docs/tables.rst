@@ -1,3 +1,6 @@
+.. imports
+    def fill_dummy_data(): pass
+
 Tables
 ======
 
@@ -32,11 +35,12 @@ Say I have some models:
         a = models.IntegerField()
 
         def __str__(self):
-            return 'Foo: %s' % self.a
+            return f'Foo: {self.a}'
 
 .. test
         class Meta:
             app_label = 'docs_tables'
+    assert str(Foo(a=7)) == 'Foo: 7'
 
 .. code:: python
 
@@ -55,6 +59,10 @@ Now I can display a list of `Bar` in a table like this:
     def my_view(request):
         return Table(auto__model=Bar)
 
+.. test
+    my_view(req('get'))
+
+
 This automatically creates a table with pagination and sorting. If you pass
 `query_from_indexes=True` you will get filters for all the model fields
 that have database indexes. This filtering system includes an advanced filter
@@ -68,27 +76,27 @@ You can also create tables explicitly:
 
 .. code:: python
 
-    def readme_example_2(request):
-        fill_dummy_data()
-
-        class BarTable(Table):
+    def albums(request):
+        class AlbumTable(Table):
             # Shortcut for creating checkboxes to select rows
             select = Column.select()
 
-            # Show "a" from "b". This works for plain old objects too.
-            a = Column.number(
-                attr='b__a',
+            # Show the name field from Artist. This works for plain old objects too.
+            artist_name = Column.number(
+                attr='artist__name',
 
                 # put this field into the query language
                 filter__include=True,
             )
-            c = Column(
+            year = Column(
                 # Enable bulk editing for this field
                 bulk__include=True,
-                filter__include=True,
             )
 
-        return BarTable(rows=Bar.objects.all())
+        return AlbumTable(rows=Artist.objects.all())
+
+.. test
+    albums(req('get'))
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 
@@ -98,7 +106,7 @@ Table of plain python objects
 
 .. code:: python
 
-    def readme_example_1(request):
+    def plain_objs_view(request):
         # Say I have a class...
         class Foo(object):
             def __init__(self, i):
@@ -107,7 +115,7 @@ Table of plain python objects
                 self.c = (i, 1, 2, 3, 4)
 
         # and a list of them
-        foos = [Foo(i) for i in xrange(4)]
+        foos = [Foo(i) for i in range(4)]
 
         # I can declare a table:
         class FooTable(Table):
@@ -128,6 +136,9 @@ Table of plain python objects
 
         # now to get an HTML table:
         return FooTable(rows=foos)
+
+.. test
+    plain_objs_view(req('get'))
 
 And this is what you get:
 

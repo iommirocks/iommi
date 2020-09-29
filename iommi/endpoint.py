@@ -33,8 +33,14 @@ class Endpoint(Traversable):
         def my_view(request):
             return Page(
                 parts__h1=html.h1('Hi!'),
-                endpoint__echo__func=lambda value, **_: value,
+                endpoints__echo__func=lambda value, **_: value,
             )
+
+    .. test
+        import json
+        request = req('get', **{'/echo': 'foo'})
+        response = my_view(request).bind(request=request).render_to_response()
+        assert json.loads(response.content) == 'foo'
 
     this page will respond to `?/echo=foo` by returning a json response `"foo"`.
     """

@@ -571,7 +571,8 @@ How do I access table data programmatically (like for example to dump to json)?
 Here's a simple example that prints a table to stdout:
 
 .. test
-    table = Table(auto__model=Track).bind(request=req('get'))
+    Artist.objects.create(name='foo')
+    table = Table(auto__model=Artist).bind(request=req('get'))
 
 .. code:: python
 
@@ -747,16 +748,23 @@ handler:
 
     def my_action_post_handler(table, request, **_):
         queryset = table.bulk_queryset()
-        queryset.update(spiral='architect')
+        queryset.update(name='Paranoid')
         return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
-    Table(
+    t = Table(
         auto__model=Album,
         columns__select__include=True,
         bulk__actions__my_action=Action.submit(
             post_handler=my_action_post_handler,
         )
     )
+
+.. test
+    artist = Artist.objects.create(name='Black Sabbath')
+    album = Album.objects.create(artist=artist, name='foo', year=1970)
+    r = t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
+    album.refresh_from_db()
+    assert album.name == 'Paranoid'
 
 
 How do I make a freetext search field?
