@@ -1,8 +1,6 @@
 from unittest import mock
 
 import pytest
-from django.contrib import messages
-from django.contrib.auth.models import User
 from django.http import (
     Http404,
     HttpResponseRedirect,
@@ -15,7 +13,6 @@ from tri_struct import Struct
 
 from iommi.admin import (
     Admin,
-    collect_config,
     Messages,
 )
 from iommi.base import values
@@ -42,7 +39,9 @@ def test_bulk_edit_for_non_unique():
 
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
-def test_create(mock_messages):
+def test_create(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
+
     request = staff_req('get')
     c = Admin.create(request=request, app_name='tests', model_name='foo')
     p = c.bind(request=request)
@@ -50,10 +49,23 @@ def test_create(mock_messages):
 
     assert Foo.objects.count() == 0
 
-    # TODO: this shouldn't actually work! Should be staff_req!!!!
-    p = c.bind(request=req('post', foo=7, **{'-submit': ''}))
+    # Check access control for not logged in
+    request = req('post', foo=7, **{'-submit': ''})
+    assert isinstance(Admin.create(request=request, app_name='tests', model_name='foo'), HttpResponseRedirect)
+    assert Foo.objects.count() == 0
+
+    # Check access control for not staff
+    request = user_req('post', foo=7, **{'-submit': ''})
+    with pytest.raises(Http404):
+        Admin.create(request=request, app_name='tests', model_name='foo')
+
+    # Now for real
+    request = staff_req('post', foo=7, **{'-submit': ''})
+    c = Admin.create(request=request, app_name='tests', model_name='foo')
+    p = c.bind(request=staff_req('post', foo=7, **{'-submit': ''}))
     assert p.parts.create_tests_foo.is_valid()
     p.render_to_response()
+
     assert Foo.objects.count() == 1
     f = Foo.objects.get()
     assert f.foo == 7
@@ -135,6 +147,7 @@ def test_redirect_to_login(settings, is_authenticated, view, kwargs):
         assert result.url == '/login/?next=%2F'
     else:
         assert isinstance(result, Admin)
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('view,kwargs', [

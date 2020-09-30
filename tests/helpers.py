@@ -81,8 +81,14 @@ def request_with_middleware(*, response, data):
     return m(request=RequestFactory().get('/', data=data))
 
 
-def req(method, **data):
+def no_auth_middleware_req(method, **data):
     return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())('/', data=data)
+
+
+def req(method, **data):
+    request = no_auth_middleware_req(method, **data)
+    request.user = Struct(is_staff=False, is_authenticated=False)
+    return request
 
 
 def user_req(method, **data):
