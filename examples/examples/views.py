@@ -6,6 +6,7 @@ from datetime import (
 )
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import OperationalError
 
@@ -520,7 +521,7 @@ def all_column_sorts(request):
 
 def select_style_post_handler(form, **_):
     style = form.fields.style.value
-    iommi.style.DEFAULT_STYLE = style
+    settings.IOMMI_DEFAULT_STYLE = style
     return HttpResponseRedirect('/')
 
 
