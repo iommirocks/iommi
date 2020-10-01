@@ -105,4 +105,4 @@ def test_invalid_context_specified():
         root = Root().bind(request=None)
         _force_bind_all(root.parts)
 
-    assert str(e.value) == 'Context is only valid on the root page'
+    assert str(e.value) == 'The context property is only valid on the root page'

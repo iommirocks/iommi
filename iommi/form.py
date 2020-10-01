@@ -986,6 +986,8 @@ class Field(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice',
+        input__attrs__id=None,
+        extra_evaluated__id=default_input_id,
     )
     def radio(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

@@ -643,21 +643,21 @@ def test_radio_full_render():
     
     <div>
         
-        <input type="radio" value="a" name="foo" id="id_foo_1"  id="id_foo" name="foo" checked/>
+        <input type="radio" value="a" name="foo" id="id_foo_1" name="foo" checked/>
         <label for="id_foo_1">a</label>
 
     </div>
 
     <div>
         
-        <input type="radio" value="b" name="foo" id="id_foo_2"  id="id_foo" name="foo" />
+        <input type="radio" value="b" name="foo" id="id_foo_2" name="foo" />
         <label for="id_foo_2">b</label>
 
     </div>
 
     <div>
         
-        <input type="radio" value="c" name="foo" id="id_foo_3"  id="id_foo" name="foo" />
+        <input type="radio" value="c" name="foo" id="id_foo_3" name="foo" />
         <label for="id_foo_3">c</label>
 
     </div>
