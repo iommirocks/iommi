@@ -10,6 +10,7 @@ from iommi.attrs import render_attrs
 from iommi.base import items
 from iommi.style import (
     apply_style_recursively,
+    get_style,
     get_style_name_for,
     get_style_data_for_object,
     InvalidStyleConfigurationException,
@@ -215,3 +216,10 @@ def test_style_bulk_form_broken_on_no_form():
     assert table.bulk is None
 
     del style._styles['my_style']
+
+
+def test_get_style_error():
+    with pytest.raises(Exception) as e:
+        get_style('does_not_exist')
+
+    assert str(e.value).startswith('No registered style does_not_exist. Register a style with register_style().')

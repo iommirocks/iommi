@@ -1,3 +1,4 @@
+import pytest
 from django.test import override_settings
 from tri_struct import Struct
 
@@ -9,6 +10,7 @@ from iommi import (
 from iommi._web_compat import (
     Template,
 )
+from iommi.member import _force_bind_all
 from iommi.part import as_html
 from iommi.traversable import declared_members
 from tests.helpers import (
@@ -89,3 +91,18 @@ def test_page_context():
             context__foo = 'foo'
 
     assert MyPage().bind(request=req('get')).__html__() == 'Template: foo\nTemplate2: foo'
+
+
+def test_invalid_context_specified():
+    class Nested(Page):
+        class Meta:
+            context__foo = 1
+
+    class Root(Page):
+        nested = Nested()
+
+    with pytest.raises(AssertionError) as e:
+        root = Root().bind(request=None)
+        _force_bind_all(root.parts)
+
+    assert str(e.value) == 'Context is only valid on the root page'

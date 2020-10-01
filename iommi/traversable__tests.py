@@ -333,3 +333,22 @@ def test_initial_setup():
     assert t._is_bound is False
     assert t.get_request() is None
     assert t.iommi_evaluate_parameters() is None
+
+
+def test_traversable_repr():
+
+    bar = StubTraversable(_name='bar')
+    foo = StubTraversable(
+        _name='foo',
+        members=Struct(
+            bar=bar,
+        ),
+    )
+
+    assert repr(foo) == '<tests.helpers.StubTraversable foo>'
+    assert repr(bar) == '<tests.helpers.StubTraversable bar>'
+
+    foo = foo.bind(request=None)
+
+    assert repr(foo) == "<tests.helpers.StubTraversable foo (bound) members:['bar']>"
+    assert repr(foo._bound_members.bar) == "<tests.helpers.StubTraversable bar (bound) path:'bar'>"

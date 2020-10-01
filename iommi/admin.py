@@ -16,7 +16,6 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.urls import (
-    include,
     path,
     reverse,
 )
@@ -64,7 +63,7 @@ joined_app_name_and_model = {
 def require_login(view):
     @wraps(view)
     def wrapper(cls, request, *args, **kwargs):
-        if not request.user.is_authenticated:
+        if not getattr(request, 'user', None) or not request.user.is_authenticated:
             return HttpResponseRedirect(f'{reverse(Auth.login)}?{urlencode(dict(next=request.path))}')
 
         return view(cls, request, *args, **kwargs)
@@ -435,15 +434,15 @@ class LoginPage(Page):
 
 
 def current_password__is_valid(form, parsed_data, **_):
-    return (True, None) if check_password(parsed_data, form.get_request().user.password) else (False, 'Unknown password')
+    return (True, None) if check_password(parsed_data, form.get_request().user.password) else (False, 'Incorrect password')
 
 
 def new_password__is_valid(form, parsed_data, **_):
     try:
         validate_password(parsed_data, form.get_request().user)
-        return (True, None)
+        return True, None
     except ValidationError as e:
-        return (False, f'{e}')
+        return False, ','.join(e)
 
 
 def confirm_password__is_valid(form, parsed_data, **_):
@@ -463,7 +462,7 @@ class ChangePasswordForm(Form):
                 return HttpResponseRedirect('..')
 
     current_password = Field.password(is_valid=current_password__is_valid)
-    new_password = Field.password()
+    new_password = Field.password(is_valid=new_password__is_valid)
     confirm_password = Field.password(is_valid=confirm_password__is_valid)
 
 

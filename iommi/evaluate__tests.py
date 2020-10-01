@@ -1,21 +1,21 @@
 import pytest
-from tri_declarative import Namespace
 
 from iommi.evaluate import (
     evaluate,
     evaluate_member,
     evaluate_strict,
     evaluate_strict_container,
-    matches,
-    Namespace,
     get_callable_description,
     get_signature,
+    matches,
+    Namespace,
 )
 
 
 def test_no_evaluate_kwargs_mismatch():
+    # noinspection PyUnusedLocal
     def f(x):
-        return x * 2
+        assert False  # pragma: no cover
 
     assert evaluate(f) is f
     assert evaluate(f, y=1) is f
@@ -24,11 +24,11 @@ def test_no_evaluate_kwargs_mismatch():
 def test_get_signature():
     # noinspection PyUnusedLocal
     def f(a, b):
-        pass
+        assert False  # pragma: no cover
 
     # noinspection PyUnusedLocal
     def f2(b, a):
-        pass
+        assert False  # pragma: no cover
 
     assert get_signature(lambda a, b: None) == get_signature(f2) == get_signature(f) == 'a,b||'
     # noinspection PyUnresolvedReferences
@@ -45,7 +45,7 @@ def test_get_signature_on_class():
     class Foo:
         # noinspection PyUnusedLocal
         def __init__(self, a, b):
-            pass
+            assert False  # pragma: no cover
 
     assert 'a,b,self||' == get_signature(Foo)
     # noinspection PyUnresolvedReferences
@@ -125,7 +125,7 @@ def test_evaluate_on_methods():
 def test_early_return_from_get_signature():
     # noinspection PyUnusedLocal
     def foo(a, b, c):
-        pass
+        assert False  # pragma: no cover
 
     object.__setattr__(foo, '__tri_declarative_signature', 'foobar')
     assert get_signature(foo) == 'foobar'
@@ -149,7 +149,7 @@ def test_non_strict_evaluate():
 def test_get_callable_description():
     # noinspection PyUnusedLocal
     def foo(a, b, c, *, bar, **kwargs):
-        pass
+        assert False  # pragma: no cover
 
     description = get_callable_description(foo)
     assert description.startswith('`<function test_get_callable_description.<locals>.foo at')

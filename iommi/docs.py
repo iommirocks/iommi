@@ -28,6 +28,7 @@ def get_default_classes():
         iommi.Page,
         iommi.Menu,
         iommi.MenuItem,
+        iommi.Style,
         iommi.fragment.Header,
 
         # Private-ish APIs

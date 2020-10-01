@@ -3,7 +3,9 @@
 import cProfile
 import os
 import subprocess
+import sys
 from io import StringIO
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from ._web_compat import settings
@@ -11,6 +13,18 @@ from ._web_compat import settings
 from iommi._web_compat import HttpResponse
 
 MEDIA_PREFIXES = ['/static/']
+
+_dot_search_paths = [
+    '/usr/bin/dot',
+    '/usr/local/bin/dot',
+]
+
+
+def get_dot_path():
+    for p in _dot_search_paths:
+        if os.path.exists(p):
+            return p
+    return None
 
 
 class ProfileMiddleware:
@@ -61,14 +75,17 @@ class ProfileMiddleware:
                     ps.stream = stats_dump
                     ps.dump_stats(stats_dump.name)
 
-                    gprof2dot_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin', 'profiling', 'gprof2dot.py')
-                    gprof2dot = subprocess.Popen(('python', gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE)
+                    gprof2dot_path = Path(sys.executable).parent / 'gprof2dot'
+                    if not gprof2dot_path.exists():
+                        raise Exception('gprof2dot not found. Please install it to use the graph feature.')
+
+                    gprof2dot = subprocess.Popen((sys.executable, gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE)
 
                     response['Content-Type'] = 'image/svg+xml'
-                    if os.path.exists('/usr/bin/dot'):
-                        response.content = subprocess.check_output(('/usr/bin/dot', '-Tsvg'), stdin=gprof2dot.stdout)
-                    elif os.path.exists('/usr/local/bin/dot'):
-                        response.content = subprocess.check_output(('/usr/local/bin/dot', '-Tsvg'), stdin=gprof2dot.stdout)
+
+                    dot_path = get_dot_path()
+                    if dot_path:
+                        response.content = subprocess.check_output((dot_path, '-Tsvg'), stdin=gprof2dot.stdout)
                     else:
                         response['Content-Type'] = 'text/plain'
                         response['Content-Disposition'] = "attachment; filename=gprof2dot-graph.txt"

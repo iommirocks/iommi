@@ -1,8 +1,13 @@
 import pytest
+from tri_struct import Struct
 
 from iommi import (
     Page,
     Table,
+)
+from iommi.debug import (
+    dunder_path__format,
+    local_debug_url_builder,
 )
 from iommi.endpoint import find_target
 from tests.helpers import req
@@ -58,3 +63,19 @@ parts__nested__parts__foo__endpoints, None, Members, True
 parts__nested__parts__foo__children, None, Members[str], True
 parts__nested__parts__foo__children__text, None, str, False"""
     assert '\n'.join(tree) == expected
+
+
+def test_dunder_path__format():
+    assert dunder_path__format(row=Struct(dunder_path=None)) == ''
+    assert dunder_path__format(row=Struct(dunder_path='foo', name='foo')) == '<span class="full-path"></span>foo'
+    assert dunder_path__format(row=Struct(dunder_path='foo__bar', name='bar')) == '<span class="full-path">foo__</span>bar'
+
+
+def test_local_debug_url_builder(settings):
+    settings.BASE_DIR = 'BASE_DIR'
+    assert local_debug_url_builder('/foo.txt', None) == 'pycharm://open?file=/foo.txt'
+    assert local_debug_url_builder('/foo.txt', 10) == 'pycharm://open?file=/foo.txt&line=10'
+    assert local_debug_url_builder('foo.txt', 10) == 'pycharm://open?file=BASE_DIR/foo.txt&line=10'
+
+    settings.IOMMI_DEBUG_URL_MAPPING = ['BASE_DIR', 'ANOTHER']
+    assert local_debug_url_builder('foo.txt', 10) == 'pycharm://open?file=ANOTHER/foo.txt&line=10'

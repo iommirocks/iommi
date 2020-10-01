@@ -28,6 +28,18 @@ def iommi_debug_on():
     return getattr(settings, 'IOMMI_DEBUG', settings.DEBUG)
 
 
+def dunder_path__format(row, **_):
+    if row.dunder_path is None:
+        return ''
+    prefix = row.dunder_path.rpartition('__')[0]
+    return format_html(
+        '<span class="full-path">{prefix}{separator}</span>{name}',
+        prefix=prefix,
+        separator='__' if prefix else '',
+        name=row.name
+    )
+
+
 def endpoint__debug_tree(endpoint, **_):
     root = endpoint.iommi_parent().iommi_parent()
     assert root._is_bound
@@ -83,17 +95,6 @@ def endpoint__debug_tree(endpoint, **_):
         Table,
     )
 
-    def dunder_path__format(row, **_):
-        if row.dunder_path is None:
-            return ''
-        prefix = row.dunder_path.rpartition('__')[0]
-        return format_html(
-            '<span class="full-path">{prefix}{separator}</span>{name}',
-            prefix=prefix,
-            separator='__' if prefix else '',
-            name=row.name
-        )
-
     class TreeTable(Table):
         class Meta:
             template = Template("""
@@ -141,8 +142,8 @@ def endpoint__debug_tree(endpoint, **_):
 def local_debug_url_builder(filename, lineno):
     if not isabs(filename):
         filename = join(settings.BASE_DIR, filename)
-    if hasattr(settings, 'DEBUG_URL_MAPPING'):
-        filename = filename.replace(*settings.DEBUG_URL_MAPPING)
+    if hasattr(settings, 'IOMMI_DEBUG_URL_MAPPING'):
+        filename = filename.replace(*settings.IOMMI_DEBUG_URL_MAPPING)
     return "pycharm://open?file=%s" % (filename,) + ('' if lineno is None else "&line=%d" % (lineno,))
 
 

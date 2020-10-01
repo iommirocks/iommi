@@ -16,7 +16,7 @@ def test_missing():
 
     with pytest.raises(UnknownMissingValueException) as e:
         if MISSING:
-            pass
+            pass  # pragma: no cover
 
     assert str(e.value) == 'MISSING is neither True nor False, is is unknown'
 

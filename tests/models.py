@@ -26,7 +26,7 @@ class Foo(Model):
     foo = IntegerField(help_text='foo_help_text')
 
     def __repr__(self):
-        return 'Foo pk: %s' % self.pk
+        return f'Foo pk: {self.pk}'  # pragma: no cover
 
 
 class Bar(Model):

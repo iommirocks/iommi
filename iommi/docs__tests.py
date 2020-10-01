@@ -1,3 +1,5 @@
+from typing import Dict
+
 from tri_declarative import (
     class_shortcut,
     dispatch,
@@ -7,12 +9,16 @@ from tri_declarative import (
     Shortcut,
 )
 
-from iommi.docs import _generate_rst_docs
+from iommi import Fragment
+from iommi.docs import (
+    _generate_rst_docs,
+    get_default_classes,
+)
 
 
 def test_generate_docs():
     def some_callable():
-        pass
+        pass  # pragma: no cover
 
     class Foo(RefinableObject):
         """
@@ -34,17 +40,17 @@ def test_generate_docs():
             """
             :param name: description of the name field
             """
-            super(Foo, self).__init__()
+            super(Foo, self).__init__()  # pragma: no cover
 
         @staticmethod
         @refinable
         def refinable_func(field, instance, value):
-            pass
+            pass  # pragma: no cover
 
         @classmethod
         @class_shortcut
         def shortcut1(cls):
-            return cls()
+            return cls()  # pragma: no cover
 
         @classmethod
         @class_shortcut(
@@ -52,7 +58,7 @@ def test_generate_docs():
         )
         def shortcut2(cls, call_target):
             """shortcut2 docstring"""
-            return call_target()
+            return call_target()  # pragma: no cover
 
         @classmethod
         @class_shortcut(
@@ -64,7 +70,7 @@ def test_generate_docs():
 
             :param call_target: something something call_target
             """
-            return call_target()
+            return call_target()  # pragma: no cover
 
     Foo.shortcut4 = Shortcut(
         call_target=Foo,
@@ -195,7 +201,7 @@ def test_generate_docs_description_and_params_in_constructor():
             """
             super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
-    (actual_filename, actual_doc), = list(_generate_rst_docs(classes=[Foo]))
+    (actual_filename, actual_doc), (_, _) = list(_generate_rst_docs(classes=[Foo, RefinableObject]))
 
     assert actual_filename == '/Foo.rst'
 
@@ -203,7 +209,7 @@ def test_generate_docs_description_and_params_in_constructor():
 Foo
 ===
 
-Base class: `RefinableObject`
+Base class: :doc:`RefinableObject`
 
 First description
 
@@ -249,6 +255,46 @@ Defaults
 
 * `name`
     * `lambda X: X`
+"""
+    print(actual_doc)
+    assert actual_doc.strip() == expected_doc.strip()
+
+
+def test_default_classes():
+    default_classes = {x.__name__ for x in get_default_classes() if isinstance(x, type)}
+
+    import iommi
+    classes_in_all = {x for x in iommi.__all__ if isinstance(getattr(iommi, x), type)}
+
+    assert (classes_in_all - default_classes) == set()
+
+
+def test_type_annotations():
+    class Foo(RefinableObject):
+        a: int = Refinable()
+        b: Dict = Refinable()
+        c: Fragment = Refinable()
+
+    (actual_filename, actual_doc), (_, _) = list(_generate_rst_docs(classes=[Foo, Fragment]))
+
+    assert actual_filename == '/Foo.rst'
+
+    expected_doc = """
+Foo
+===
+
+Base class: `RefinableObject`
+
+
+Refinable members
+-----------------
+
+* `a`
+    Type: `int`
+* `b`
+    Type: `Dict`
+* `c`
+    Type: :doc:`Fragment`
 """
     print(actual_doc)
     assert actual_doc.strip() == expected_doc.strip()

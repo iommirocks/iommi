@@ -8,6 +8,7 @@ from iommi import (
     Page,
 )
 from iommi.attrs import Attrs
+from iommi.fragment import fragment__render
 from tests.helpers import req
 
 
@@ -199,6 +200,8 @@ def test_render_not_included_fragment():
 def test_fragment__render__simple_cases():
     assert format_html('{}', html.h1('foo').bind(parent=None)) == '<h1>foo</h1>'
     assert format_html('{}', Fragment(children__child='foo<foo>').bind(parent=None)) == 'foo&lt;foo&gt;'
+
+    assert fragment__render(Fragment(include=False), {}) == ''
 
 
 def test_fragment_repr():

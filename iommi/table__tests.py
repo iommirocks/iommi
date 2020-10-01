@@ -49,6 +49,7 @@ from iommi.query import (
 from iommi.table import (
     Column,
     order_by_on_list,
+    Paginator,
     register_cell_formatter,
     SELECT_DISPLAY_NAME,
     Struct,
@@ -1296,7 +1297,7 @@ def test_default_formatters(NoSortTable):
 
     class SomeType(object):
         def __str__(self):
-            return 'this should not end up in the table'
+            return 'this should not end up in the table'  # pragma: no cover
 
     register_cell_formatter(SomeType, lambda value, **_: 'sentinel')
 
@@ -2261,6 +2262,13 @@ def test_paginator_rendered():
     content = table.render_to_response().content.decode()
 
     assert 'aria-label="Pages"' in content
+
+
+def test_paginator_clamping():
+    t = Table(page_size=1, rows=list(range(10)))
+    assert t.bind(request=req('get', page='0')).paginator.page == 1
+    assert t.bind(request=req('get', page='3')).paginator.page == 3
+    assert t.bind(request=req('get', page='11')).paginator.page == 10
 
 
 @pytest.mark.django_db

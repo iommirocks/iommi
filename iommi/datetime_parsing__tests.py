@@ -38,6 +38,7 @@ def frozen_time():
         ('2000 weeks', '"2000 weeks" is not a valid relative date. 2000 is too big (max is 1999).'),
         ('500 months', '"500 months" is not a valid relative date. 500 is too big (max is 499).'),
         ('500 quarters', '"500 quarters" is not a valid relative date. 500 is too big (max is 166).'),
+        ('400 years', '"400 years" is not a valid relative date. 400 is too big (max is 399).'),
     ]
 )
 def test_parse_relative_date_error_conditions(value, message):
@@ -90,3 +91,11 @@ def test_parse_relative_date_weekdays():
 
     with freezegun.freeze_time('2018-02-03'):  # a saturday
         assert parse_relative_date('1 weekday') == (date.today() + timedelta(days=2))
+
+
+def test_parse_relative_date_month_overflow():
+    assert parse_relative_date('1 month', start_date=date(2018, 1, 31)) == date(2018, 2, 28)
+
+
+def test_parse_relative_date_leap_year_overflow():
+    assert parse_relative_date('1 year', start_date=date(2020, 2, 29)) == date(2021, 2, 28)

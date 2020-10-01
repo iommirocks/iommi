@@ -65,6 +65,7 @@ __all__ = [
     'Column',
     'Field',
     'Form',
+    'Fragment',
     'Menu',
     'MenuItem',
     'middleware',

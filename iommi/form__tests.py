@@ -1989,7 +1989,7 @@ def test_shortcut_to_subclass():
         @classmethod
         @class_shortcut
         def my_shortcut(cls, call_target=None, **kwargs):
-            return call_target(**kwargs)
+            return call_target(**kwargs)  # pragma: no cover: we aren't testing that this shortcut is implemented correctly
 
     assert isinstance(MyField.my_shortcut(), MyField)
 
@@ -1997,7 +1997,7 @@ def test_shortcut_to_subclass():
         @classmethod
         @class_shortcut
         def choices(cls, call_target=None, **kwargs):
-            return call_target(**kwargs)
+            return call_target(**kwargs)  # pragma: no cover: we aren't testing that this shortcut is implemented correctly
 
     field = MyField.choice(choices=[])
     assert isinstance(field, MyField)
@@ -2238,7 +2238,7 @@ def test_create_or_edit_object_validate_unique():
 
 
 @pytest.mark.django_db
-def test_create_or_edit_object_full_template():
+def test_create_or_edit_object_full_template_1():
     from tests.models import Foo
 
     request = req('get')
@@ -2247,14 +2247,18 @@ def test_create_or_edit_object_full_template():
     assert response.status_code == 200
 
     expected_html = f"""
+<!DOCTYPE html>
 <html>
     <head>
+        <title>
+            Create foo
+        </title>
     </head>
     <body>
-        <h1>
-            Create foo
-        </h1>
         <form action="" enctype="multipart/form-data" method="post">
+            <h1>
+                Create foo
+            </h1>
             <div>
                 <label for="id_foo">
                     Foo
@@ -2287,7 +2291,7 @@ def test_create_or_edit_view_name():
 
 
 @pytest.mark.django_db
-def test_create_or_edit_object_full_template():
+def test_create_or_edit_object_full_template_2():
     from tests.models import Foo
 
     foo = Foo.objects.create(foo=7)

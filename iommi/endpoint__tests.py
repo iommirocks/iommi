@@ -132,9 +132,7 @@ def test_dispatch_auto_json():
             def endpoints__foo__func(value, **_):
                 return dict(a=1, b='asd', c=value)
 
-    p = MyPart(
-        endpoints__foo__func=lambda value, **_: dict(a=1, b='asd', c=value)
-    ).bind(request=req('get', **{'/foo': '7'}))
+    p = MyPart().bind(request=req('get', **{'/foo': '7'}))
     r = p.render_to_response()
     assert r['Content-type'] == 'application/json'
     assert json.loads(r.content) == dict(a=1, b='asd', c='7')

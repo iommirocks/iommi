@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from django.contrib.auth.models import User
 from django.http import (
     Http404,
     HttpResponseRedirect,
@@ -22,6 +23,11 @@ from tests.helpers import (
     user_req,
 )
 from tests.models import Foo
+
+
+urlpatterns = [
+    path('', include(Admin.urls())),
+]
 
 
 @pytest.mark.django_db
@@ -120,11 +126,6 @@ def test_delete(mock_messages):
     )
 
 
-urlpatterns = [
-    path('', include(Admin.urls())),
-]
-
-
 @pytest.mark.django_db
 @pytest.mark.parametrize('is_authenticated', [True, False])
 @pytest.mark.parametrize('view,kwargs', [
@@ -176,3 +177,69 @@ def test_messages():
 def test_all_models():
     request = staff_req('get')
     assert 'Authentication' in Admin.all_models(request=request).bind(request=request).render_to_response().content.decode()
+
+
+@pytest.mark.django_db
+def test_login_to_admin(settings, client):
+    settings.ROOT_URLCONF = __name__
+    response = client.get('/')
+    assert isinstance(response, HttpResponseRedirect)
+    assert '/login/' in response.url
+
+    User.objects.create_user(username='staff', password='password', is_staff=True)
+
+    response = client.post(response.url, data={'username': 'staff', 'password': 'bad password', '-submit': ''})
+    assert 'Unknown username or password' in response.content.decode()
+
+    response = client.post('/login/', data={'username': 'staff', 'password': 'password', '-submit': ''})
+    assert isinstance(response, HttpResponseRedirect)
+    assert 'All models' in client.get('/').content.decode()
+
+    client.get('/logout/')
+    assert client.get('/').status_code == 302
+
+
+@pytest.mark.django_db
+def test_change_password(settings, admin_client, admin_user):
+    settings.ROOT_URLCONF = __name__
+    settings.AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+            'OPTIONS': {
+                'min_length': 3,
+            }
+        },
+    ]
+
+    old_password = 'password'
+    assert admin_user.check_password(old_password)
+
+    response = admin_client.get('/change_password/')
+    assert response.status_code == 200
+
+    new_password = 'new_password'
+
+    def data(p=new_password):
+        return {
+            '-submit': '',
+            'new_password': p,
+            'confirm_password': p,
+        }
+
+    # Try to change without knowing the old password
+    response = admin_client.post('/change_password/', data={'current_password': 'incorrect old password', **data()})
+    admin_user.refresh_from_db()
+    assert 'Incorrect password' in response.content.decode()
+    assert admin_user.check_password('password')
+
+    # Try to change the password to something super weak
+    response = admin_client.post('/change_password/', data={'current_password': old_password, **data('q')})
+    assert 'This password is too short' in response.content.decode()
+    admin_user.refresh_from_db()
+    assert admin_user.check_password(old_password)
+
+    # Now change the password
+    admin_client.post('/change_password/', data={'current_password': old_password, **data()})
+    admin_user.refresh_from_db()
+    assert admin_user.check_password(new_password)
+
