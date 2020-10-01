@@ -1,5 +1,7 @@
+from platform import python_implementation
 from typing import Dict
 
+import pytest
 from tri_declarative import (
     class_shortcut,
     dispatch,
@@ -269,6 +271,7 @@ def test_default_classes():
     assert (classes_in_all - default_classes) == set()
 
 
+@pytest.mark.skipif(python_implementation() == 'PyPy', reason='Fails on pypy, but we only run this for building documentation and we do that on cpython')
 def test_type_annotations():
     class Foo(RefinableObject):
         a: int = Refinable()

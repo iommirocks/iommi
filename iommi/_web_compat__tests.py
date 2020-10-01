@@ -1,6 +1,4 @@
-import pytest
 from django.template import RequestContext
-from tri_struct import merged
 
 from iommi._web_compat import (
     format_html,
