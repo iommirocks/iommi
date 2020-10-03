@@ -5,7 +5,6 @@ from datetime import (
     date,
     datetime,
     time,
-    timedelta,
 )
 from decimal import Decimal
 from io import (
@@ -15,7 +14,6 @@ from io import (
 
 import pytest
 from bs4 import BeautifulSoup
-from django.db.models import Q
 from django.test import override_settings
 from freezegun import freeze_time
 from tri_declarative import (
@@ -60,6 +58,7 @@ from iommi.form import (
     datetime_parse,
     decimal_parse,
     Field,
+    find_unique_prefixes,
     float_parse,
     Form,
     FULL_FORM_FROM_REQUEST,
@@ -963,18 +962,32 @@ def test_form_from_model_valid_form():
 def test_form_from_model_error_message_include():
     from tests.models import FormFromModelTest
     with pytest.raises(AssertionError) as e:
-        Form(auto__model=FormFromModelTest, auto__include=['does_not_exist', 'another_non_existant__sub', 'f_float']).bind(request=None)
+        Form(auto__model=FormFromModelTest, auto__include=['does_not_exist', 'f_float']).bind(request=None)
 
-    assert 'You can only include fields that exist on the model: another_non_existant__sub, does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id' == str(e.value)
+    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\n' \
+                           'Existing fields:\n' \
+                           '    f_bool\n' \
+                           '    f_file\n' \
+                           '    f_float\n' \
+                           '    f_int\n' \
+                           '    f_int_excluded\n' \
+                           '    id'
 
 
 @pytest.mark.django_db
 def test_form_from_model_error_message_exclude():
     from tests.models import FormFromModelTest
     with pytest.raises(AssertionError) as e:
-        Form(auto__model=FormFromModelTest, auto__exclude=['does_not_exist', 'does_not_exist_2', 'f_float']).bind(request=None)
+        Form(auto__model=FormFromModelTest, auto__exclude=['does_not_exist', 'f_float']).bind(request=None)
 
-    assert 'You can only exclude fields that exist on the model: does_not_exist, does_not_exist_2 specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id' == str(e.value)
+    assert str(e.value) == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\n' \
+                           'Existing fields:\n' \
+                           '    f_bool\n' \
+                           '    f_file\n' \
+                           '    f_float\n' \
+                           '    f_int\n' \
+                           '    f_int_excluded\n' \
+                           '    id'
 
 
 @pytest.mark.django
@@ -1826,7 +1839,7 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
     with pytest.raises(AssertionError) as e:
         Field.choice_queryset(choices=[])
 
-    assert 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field' == str(e.value)
+    assert str(e.value) == 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 
 
 def test_datetime_parse():
@@ -1845,7 +1858,7 @@ def test_datetime_parse():
     formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
     expected = f'Time data "{bad_date}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"'
     actual = e.value.message
-    assert expected == actual
+    assert actual == expected
 
 
 @pytest.mark.django_db
@@ -2146,6 +2159,54 @@ def test_create_and_edit_object():
     assert response['Location'] == '../../'
 
 
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_edit_object_foreign_related_attribute():
+    from tests.models import CreateOrEditObjectTest, Foo
+
+    instance = CreateOrEditObjectTest.objects.create(
+        f_foreign_key=Foo.objects.create(
+            foo=17,
+        ),
+        f_int=0,
+        f_float=0.0,
+        f_bool=False,
+    )
+
+    request = req('get')
+    form = Form.edit(
+        auto__instance=instance,
+        auto__include=['f_foreign_key__foo']
+    )
+
+    form = form.bind(request=request)
+    response = form.__html__(
+        render=lambda **kwargs: kwargs,
+    )
+    assert form.get_errors() == {}
+    assert form.fields['f_foreign_key_foo'].value == 17
+    assert response['context']['csrf_token']
+
+    request = req('POST', **{
+        'f_foreign_key_foo': str(42),
+        '-submit': '',
+    })
+    form = Form.edit(
+        auto__instance=instance,
+        auto__include=['f_foreign_key__foo']
+    )
+    form = form.bind(request=request)
+    assert form.mode == FULL_FORM_FROM_REQUEST
+    response = form.render_to_response()
+    assert response.status_code == 302
+
+    assert response['Location'] == '../../'
+
+    instance.refresh_from_db()
+    assert instance is not None
+    assert instance.f_foreign_key.foo == 42
+
+
 def test_redirect_default_case():
     sentinel1, sentinel2, sentinel3, sentinel4 = object(), object(), object(), object()
     expected = dict(redirect_to=sentinel2, request=sentinel3, form=sentinel4)
@@ -2309,3 +2370,18 @@ def test_evil_names():
 def test_time_parse():
     with freeze_time('2012-03-07 12:13:14'):
         assert time_parse('now') == time(12, 13, 14)
+
+
+@pytest.mark.parametrize(
+    'attributes, result',
+    [
+        (['foo', 'bar'], ['']),
+        (['foo', 'bar__boink'], ['', 'bar']),
+        (['foo', 'bar__boink__bink'], ['', 'bar', 'bar__boink']),
+        (['foo', 'bar__boink__bink'], ['', 'bar', 'bar__boink']),
+        (['foo__hej', 'foo__hopp', 'bar__bink', 'bar__boink'], ['bar', 'foo']),
+        (['fisk', 'foo__hej', 'foo__hopp', 'bar__bink', 'bar__boink'], ['', 'bar', 'foo']),
+    ]
+)
+def test_find_prefixes(attributes, result):
+    assert find_unique_prefixes(attributes) == result

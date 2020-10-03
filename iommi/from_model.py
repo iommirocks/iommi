@@ -20,7 +20,6 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import (
-    items,
     keys,
     MISSING,
 )
@@ -28,33 +27,19 @@ from iommi.evaluate import evaluate
 
 
 def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
-    def should_include(name):
-        if exclude is not None and name in exclude:
-            return False
-        if include is not None:
-            return name in include
-        return True
-
     members = Struct()
 
-    # Validate include/exclude parameters
-    field_names = {x.name for x in get_fields(model)}
-
-    def check_list(l, name):
-        if l:
-            not_existing = {x for x in l if x not in field_names}
-            existing = "\n    ".join(sorted(field_names))
-            assert not not_existing, f'You can only {name} fields that exist on the model: {", ".join(sorted(not_existing))} specified but does not exist\nExisting fields:\n    {existing}'
-
-    check_list(include, 'include')
-    check_list(exclude, 'exclude')
+    check_list(model, include, 'include')
+    check_list(model, exclude, 'exclude')
 
     def create_declared_member(model_field_name):
         definition_or_member = member_params_by_member_name.pop(model_field_name, {})
+        name = model_field_name.replace('__', '_')
         if isinstance(definition_or_member, dict):
             definition = setdefaults_path(
                 Namespace(),
                 definition_or_member,
+                _name=name,
                 # TODO: this should work, but there's a bug in tri.declarative, working around for now
                 # call_target__attribute='from_model' if definition_or_member.get('attr', model_field_name) is not None else None,
                 call_target__cls=member_class,
@@ -73,23 +58,17 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
             member = definition_or_member
         if member is None:
             return
-        members[model_field_name] = member
+        members[name] = member
 
-    for field in get_fields(model):
-        if should_include(field.name):
-            create_declared_member(field.name)
+    model_field_names = include if include is not None else [field.name for field in get_fields(model)]
+
+    for model_field_name in model_field_names:
+        if exclude is not None and model_field_name in exclude:
+            continue
+        create_declared_member(model_field_name)
 
     for model_field_name in list(keys(member_params_by_member_name)):
         create_declared_member(model_field_name)
-
-    # We respect the order given by `include`
-    if include is not None:
-        def index(x):
-            try:
-                return include.index(x[0])
-            except ValueError:
-                return len(members) + 1  # last!
-        members = {k: v for k, v in sorted(items(members), key=index)}
 
     return members
 
@@ -158,6 +137,52 @@ def get_fields(model: Type[Model]) -> Iterator[DjangoField]:
     # noinspection PyProtectedMember
     for field in model._meta.get_fields():
         yield field
+
+
+def get_field(model: Type[Model], field_name: str) -> DjangoField:
+    # noinspection PyProtectedMember
+    return model._meta.get_field(field_name)
+
+
+def get_field_path(model, path):
+    def _get_field_path(current_model, sub_path):
+        first, _, rest = sub_path.partition('__')
+        field = get_field(current_model, first)
+        if not rest:
+            return field
+        else:
+            return get_field_path(field.remote_field.model, rest)
+
+    try:
+        return _get_field_path(model, path)
+    except FieldDoesNotExist as e:
+        raise FieldDoesNotExist(f"{model._meta.object_name} has no field with path '{path}'") from e
+
+
+def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
+
+    def existing_alternatives(missing_path):
+        prefix = []
+        current_model = model
+        for part in missing_path.split('__'):
+            try:
+                current_model = get_field(current_model, part).remote_field.model
+            except FieldDoesNotExist:
+                return sorted(
+                    '__'.join(prefix + [field.name])
+                    for field in get_fields(current_model)
+                )
+            else:
+                prefix.append(part)
+
+    if paths:
+        for path in paths:
+            try:
+                get_field_path(model, path)
+            except FieldDoesNotExist:
+                assert False,  f'You can only {operation} fields that exist on the model: {path} specified but does not exist\n' \
+                               f'Existing fields:\n' \
+                               f'    ' + '\n    '.join(existing_alternatives(path))
 
 
 _search_fields_by_model = {}

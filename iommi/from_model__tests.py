@@ -12,6 +12,7 @@ from iommi import (
     Field,
 )
 from iommi.from_model import (
+    get_field_path,
     get_search_fields,
     NoRegisteredSearchFieldException,
     register_search_fields,
@@ -91,10 +92,10 @@ def test_include_not_existing_error():
     with pytest.raises(AssertionError) as e:
         Form(
             auto__model=FormFromModelTest,
-            auto__include=['does_not_exist', 'does_not_exist2'],
+            auto__include=['does_not_exist'],
         )
 
-    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist, does_not_exist2 specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
+    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
 
 
 def test_exclude_not_existing_error():
@@ -122,3 +123,42 @@ def test_field_from_model_factory_error_message():
         Field.from_model(FooFromModelTestModel, 'foo')
 
     assert str(error.value) == "No factory for CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
+
+
+class OtherModel(Model):
+    bar = CharField()
+
+
+class SomeModel(Model):
+    foo = ForeignKey(OtherModel, on_delete=CASCADE)
+
+
+def test_from_model():
+
+    f = Form(
+        auto__model=SomeModel,
+        auto__include=['foo__bar'],
+    )
+
+    declared_fields = f._declared_members.fields
+    assert list(declared_fields.keys()) == ['foo_bar']
+    assert declared_fields['foo_bar'].attr == 'foo__bar'
+
+
+def test_from_model_missing_subfield():
+    with pytest.raises(Exception) as e:
+        Form(
+            auto__model=SomeModel,
+            auto__include=['foo__barf'],
+        )
+    assert str(e.value) == '''\
+You can only include fields that exist on the model: foo__barf specified but does not exist
+Existing fields:
+    foo__bar
+    foo__id
+    foo__somemodel'''
+
+
+def test_get_field_path():
+    assert get_field_path(SomeModel, 'foo__bar') == OtherModel._meta.get_field('bar')
+    assert get_field_path(OtherModel, 'bar') == OtherModel._meta.get_field('bar')
