@@ -150,6 +150,16 @@ def edit_object__post_handler(*, form, **kwargs):
     return create_or_edit_object__post_handler(form=form, is_create=False, **kwargs)
 
 
+def find_unique_prefixes(attributes):
+    result = set()
+    for attribute in attributes:
+        prefix, _, _ = attribute.rpartition('__')
+        parts = prefix.split('__')
+        for i in range(len(parts)):
+            result.add(tuple(parts[:i+1]))
+    return ['__'.join(p) for p in sorted(sorted(result), key=len)]
+
+
 def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
@@ -180,7 +190,12 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
             form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
     if form.is_valid():
-        form.instance.save()
+        attributes = filter(None, [f.attr for f in form.fields.values()])
+        for prefix in find_unique_prefixes(attributes):
+            model_object = form.instance
+            if prefix:  # Might be ''
+                model_object = getattr_path(model_object, prefix)
+            model_object.save()
 
         form.extra.on_save(form=form, instance=form.instance)
 
