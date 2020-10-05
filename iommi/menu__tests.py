@@ -1,3 +1,7 @@
+from django.urls import (
+    path,
+    reverse_lazy,
+)
 from iommi import (
     Menu,
     MenuItem,
@@ -5,6 +9,15 @@ from iommi import (
 from iommi._web_compat import Template
 from iommi.menu import DebugMenu
 from tests.helpers import req
+
+
+def dummy_view(request):
+    pass  # pragma: no cover
+
+
+urlpatterns = [
+    path('reverse_lazy_test', dummy_view, name='reverse-lazy-test'),
+]
 
 
 def test_menu():
@@ -121,3 +134,17 @@ def test_submenu_set_active():
     menu = MyMenu().bind(request=req('GET'))
     menu.set_active('/foo/')
     assert menu.sub_menu.qwe.sub_menu.foo._active is True
+
+
+def test_reverse_lazy(settings):
+    settings.ROOT_URLCONF = __name__
+
+    class MyMenu(Menu):
+        foo = MenuItem(url=reverse_lazy('reverse-lazy-test'))
+
+    menu = MyMenu().bind(request=req('GET'))
+
+    assert menu.sub_menu.foo.url == '/reverse_lazy_test'
+
+    # This shouldn't raise
+    str(menu)

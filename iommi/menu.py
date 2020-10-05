@@ -104,7 +104,7 @@ class MenuItem(MenuBase):
     @reinvokable
     @dispatch(
         display_name=lambda menu_item, **_: capitalize(menu_item.iommi_name()).replace('_', ' '),
-        regex=lambda menu_item, **_: '^' + menu_item.url if menu_item.url else None,
+        regex=lambda menu_item, **_: '^' + str(menu_item.url) if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name()) + '/',
         a=EMPTY,
     )
@@ -258,7 +258,7 @@ class Menu(MenuBase):
                 if sub_item.url is None or '://' in sub_item.url:
                     continue
 
-                parsed_url = urlparse(sub_item.url).path
+                parsed_url = urlparse(str(sub_item.url)).path
 
                 if current_path.startswith(parsed_url):
                     parts = PurePosixPath(unquote(parsed_url)).parts
