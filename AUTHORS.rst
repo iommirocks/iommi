@@ -20,3 +20,4 @@ Credits
 * Andreas Rasmusson <andreas.rasmusson@trioptima.com>
 * Martin Barksten <martin.barksten@trioptima.com>
 * Rasmus Spiegelberg <rasmus.spiegelberg@trioptima.com>
+* Benedikt Grundmann <benedikt.grundmann@gmail.com>
