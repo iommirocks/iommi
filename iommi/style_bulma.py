@@ -94,6 +94,7 @@ bulma_base = Style(
         tag='nav',
     ),
     MenuItem__a__attrs__class={'navbar-item': True},
+    MenuItem__active_class='is-active',
     DebugMenu=dict(
         tag='aside',
         attrs__class={
