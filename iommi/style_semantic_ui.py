@@ -77,7 +77,16 @@ semantic_ui_base = Style(
             ),
         )
     ),
-    Query__form__attrs__class__fields=True,
+    Query=dict(
+        form__attrs__class__fields=True,
+        form_container=dict(
+            tag='span',
+            attrs__class={
+                'ui form': True,
+                'fields': True,
+            },
+        ),
+    ),
     Menu=dict(
         attrs__class=dict(
             ui=True,

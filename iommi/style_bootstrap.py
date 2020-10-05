@@ -83,7 +83,16 @@ bootstrap_base = Style(
             ),
         )
     ),
-    Query__form__iommi_style='bootstrap_horizontal',
+    Query=dict(
+        form__iommi_style='bootstrap_horizontal',
+        form_container=dict(
+            tag='span',
+            attrs__class={
+                'form-row': True,
+                'align-items-center': True,
+            },
+        ),
+    ),
     Menu=dict(
         tag='nav',
         attrs__class={

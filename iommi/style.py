@@ -172,27 +172,28 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
     validate. By default it will validate all registered styles. This
     parameter is primarily used by tests.
     """
-    from iommi import (
-        Action,
-        Column,
-        Field,
-        Form,
-        Menu,
-        MenuItem,
-        Query,
-        Table,
-        Filter,
-    )
-    from iommi.table import Paginator
-    from iommi.menu import (
-        MenuBase,
-        DebugMenu,
-    )
-    from iommi.error import Errors
-    from iommi.action import Actions
-    from iommi.admin import Admin
-    from iommi.fragment import Container
     if default_classes is None:
+        from iommi import (
+            Action,
+            Column,
+            Field,
+            Form,
+            Menu,
+            MenuItem,
+            Query,
+            Table,
+            Filter,
+        )
+        from iommi.table import Paginator
+        from iommi.menu import (
+            MenuBase,
+            DebugMenu,
+        )
+        from iommi.error import Errors
+        from iommi.action import Actions
+        from iommi.admin import Admin
+        from iommi.fragment import Container
+        from iommi.fragment import Header
         default_classes = [
             Action,
             Actions,
@@ -210,6 +211,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Filter,
             Admin,
             Container,
+            Header,
         ]
     if additional_classes is None:
         additional_classes = []

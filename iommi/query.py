@@ -15,7 +15,10 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from iommi import Action
+from iommi import (
+    Action,
+    Fragment,
+)
 from iommi._web_compat import (
     render_template,
     Template,
@@ -514,6 +517,7 @@ class Query(Part):
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
     template: Union[str, Template] = EvaluatedRefinable()
+    form_container: Fragment = EvaluatedRefinable()
 
     member_class = Refinable()
     form_class = Refinable()
@@ -527,7 +531,10 @@ class Query(Part):
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,
         auto=EMPTY,
-        form__attrs={'data-iommi-errors': lambda query, **_: query.endpoints.errors.iommi_path}
+        form__attrs={'data-iommi-errors': lambda query, **_: query.endpoints.errors.iommi_path},
+        form_container__call_target=Fragment,
+        form_container__tag='span',
+        form_container__attrs__class__iommi_query_form_simple=True,
     )
     def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto, **kwargs):
         assert isinstance(filters, dict)
@@ -609,6 +616,8 @@ class Query(Part):
             display_name='Switch to advanced search',
         )
 
+        self.form_container = self.form_container()
+
         # Filters need to be at the end to not steal the short names
         set_declared_member(self, 'filters', declared_members(self).pop('filters'))
 
@@ -661,6 +670,8 @@ class Query(Part):
 
         self.form = self.form.bind(parent=self)
         self._bound_members.form = self.form
+
+        self.form_container = self.form_container.bind(parent=self)
 
     def own_evaluate_parameters(self):
         return dict(query=self)

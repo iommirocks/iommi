@@ -36,6 +36,7 @@ from iommi import (
     Field,
     Form,
     Fragment,
+    Header,
     html,
     Menu,
     MenuItem,
@@ -224,7 +225,7 @@ class Admin(Page):
                             name=app_verbose_name_by_label[app_name],
                             verbose_app_name=app_verbose_name_by_label[app_name],
                             url=None,
-                            tag='h2',
+                            format=lambda row, table, **_: Header(row.name, _name='invalid_name').bind(parent=table).__html__()
                         )
                         has_yielded_header = True
 
@@ -233,7 +234,7 @@ class Admin(Page):
                         app_name=app_name,
                         name=model._meta.verbose_name_plural.capitalize(),
                         url='%s/%s/' % (app_name, model_name),
-                        tag=None,
+                        format=lambda row, **_: row.name,
                     )
 
         table = setdefaults_path(
@@ -248,7 +249,7 @@ class Admin(Page):
             columns__name=dict(
                 cell__url=lambda row, **_: row.url,
                 display_name='',
-                cell__tag=lambda row, **_: row.tag,
+                cell__format=lambda row, **kwargs: row.format(row=row, **kwargs),
             ),
         )
 

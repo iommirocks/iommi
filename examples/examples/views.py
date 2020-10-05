@@ -1,18 +1,16 @@
 import json
-from collections import defaultdict
 from datetime import (
     date,
     datetime,
 )
 from pathlib import Path
 
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.db import OperationalError
-
 import iommi.part
 import iommi.style
 import iommi.traversable
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import OperationalError
 from django.http import (
     HttpResponse,
     HttpResponseRedirect,
@@ -54,12 +52,12 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from .models import (
+    Album,
+    Artist,
     Bar,
     Foo,
     TBar,
     TFoo,
-    Album,
-    Artist,
     Track,
 )
 
@@ -95,7 +93,7 @@ except OperationalError:
 
 def index(request):
     class AdminPage(Page):
-        admin_header = html.h2('Admin example')
+        admin_header = Header('Admin example')
 
         admin_a = html.p(
             html.a(
@@ -117,9 +115,9 @@ def index(request):
         )
 
     class IndexPage(Page):
-        header = html.h1('iommi examples')
+        header = Header('iommi examples')
 
-        form_header = html.h2('Form examples')
+        form_header = Header('Form examples')
 
         # We can create html fragments...
         f_a_1 = html.a('Example 1: echo submitted data', attrs__href="form_example_1/")
@@ -134,7 +132,7 @@ def index(request):
         f_b_5 = html.br()
         f_a_k = html.a('Kitchen sink', attrs__href="form_kitchen/")
 
-        table_header = html.h2('Table examples')
+        table_header = Header('Table examples')
 
         # ...or just throw a big chunk of html in here
         table_links = mark_safe("""
@@ -146,7 +144,7 @@ def index(request):
         <a href="table_as_view/">Table.as_view() example</a><br>
         """)
 
-        page_header = html.h2('Page examples')
+        page_header = Header('Page examples')
 
         page_links = mark_safe("""
         <a href="page_busy/">A busy page with lots of stuff</a><br>
@@ -154,9 +152,9 @@ def index(request):
         <a href="all_column_sorts">Show different type of table column types</a>
         """)
 
+        menu_header = Header('Menu examples')
+
         menu_examples = mark_safe("""
-        <h2>Menu examples</h2>
-        
         <a href="menu_test/">A menu example</a><br>
         """)
 
@@ -262,6 +260,8 @@ class KitchenForm(Form):
     textarea = Field.textarea(initial='initial value')
 
     radio = Field.radio(choices=['foo!!_"', 'bar', 'baz'])
+
+    checkbox = Field.boolean()
 
 
 class SinkForm(Form):
@@ -393,6 +393,7 @@ def table_kitchen_sink(request):
         )
 
         class Meta:
+            title = 'Kitchen sink'
             _name = 'bar'
             page_size = 20
 

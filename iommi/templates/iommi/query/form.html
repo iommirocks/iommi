@@ -36,10 +36,9 @@
             </div>
         </div>
 
-        {# form-row align-items-center is bootstrap specific, ui form fields is semantic ui, grid-x is foundation #}
-        <span class="iommi_query_form_simple form-row align-items-center ui form fields grid-x grid-padding-x">
+        {{ query.form_container.iommi_open_tag }}
             {{ query.form.render_fields }}
-        </span>
+        {{ query.form_container.iommi_close_tag }}
 
         {{ query.form.errors }}
 

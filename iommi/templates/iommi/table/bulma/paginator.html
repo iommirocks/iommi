@@ -1,0 +1,36 @@
+<nav aria-label="Pages" class="pagination">
+    {% if has_previous %}
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous }}" aria-label="Previous Page" class="pagination-previous">Previous</a>
+    {% endif %}
+    {% if has_next %}
+        <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next }}" aria-label="Next Page" class="pagination-next">Next page</a>
+{% endif %}
+
+    <ul class="pagination-list">
+        {% if show_first %}
+            <li>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page" class="pagination-link">1</a>
+            </li>
+        {% endif %}
+
+        {% for num in page_numbers %}
+            {% if forloop.first and num > 2 %}
+                 <li><span class="pagination-ellipsis">&hellip;</span></li>
+            {% endif %}
+            <li>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num }}" aria-label="Page {{ num }}" class="pagination-link {% if num == page %}is-current{% endif %}">{{ num }}</a>
+            </li>
+            {% if forloop.last and num < pages|add:"-1" %}
+                 <li><span class="pagination-ellipsis">&hellip;</span></li>
+            {% endif %}
+        {% endfor %}
+
+
+        {% if show_last %}
+            <li>
+                <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages }}" aria-label="Last Page" class="pagination-link">{{pages}}</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+

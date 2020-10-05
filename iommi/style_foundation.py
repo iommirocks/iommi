@@ -34,7 +34,16 @@ foundation_base = Style(
             delete__cell__link__attrs__class=dict(alert=True, button=True,)
         ),
     ),
-    Query__form__iommi_style='foundation_horizontal',
+    Query=dict(
+        form__iommi_style='foundation_horizontal',
+        form_container=dict(
+            tag='span',
+            attrs__class={
+                'grid-x': True,
+                'grid-padding-x': True,
+            },
+        ),
+    ),
     Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
         container__attrs__class__pagination=True,

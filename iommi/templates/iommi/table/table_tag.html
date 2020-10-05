@@ -9,15 +9,7 @@
 
             {{ table.header }}
 
-            {% if table.tbody_tag %}
-            <{{ table.tbody_tag }}>
-            {% endif %}
-
-                {{ table.tbody }}
-
-            {% if table.tbody_tag %}
-            </{{ table.tbody_tag }}>
-            {% endif %}
+            {{ table.tbody }}
 
         {{ table.iommi_close_tag }}
 
