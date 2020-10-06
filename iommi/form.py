@@ -67,6 +67,7 @@ from iommi.action import (
 from iommi.attrs import Attrs
 from iommi.base import (
     build_as_view_wrapper,
+    get_display_name,
     items,
     MISSING,
     capitalize,
@@ -630,7 +631,7 @@ class Field(Part):
         if self.attr is MISSING:
             self.attr = self._name
         if self.display_name is MISSING:
-            self.display_name = capitalize(self._name).replace('_', ' ') if self._name else ''
+            self.display_name = get_display_name(self)
 
         self.errors = Errors(parent=self, **self.errors)
 
