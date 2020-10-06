@@ -2,12 +2,14 @@ import pytest
 
 from iommi import MISSING
 from iommi.base import (
+    get_display_name,
     UnknownMissingValueException,
     build_as_view_wrapper,
     capitalize,
     model_and_rows,
 )
 from tests.models import Foo
+from tri_struct import Struct
 
 
 def test_missing():
@@ -46,3 +48,17 @@ def test_model_and_rows():
     orig_rows = Foo.objects.filter(foo=2)
     model, rows = model_and_rows(model=None, rows=orig_rows)
     assert model is Foo and rows is orig_rows
+
+
+def test_get_display_name():
+    mock = Struct(_name='foo_bar_TLA')
+    assert get_display_name(mock) == 'Foo bar TLA'
+
+    mock.model_field = Struct()
+    assert get_display_name(mock) == 'Foo bar TLA'
+
+    mock.model_field.verbose_name = None
+    assert get_display_name(mock) == 'Foo bar TLA'
+
+    mock.model_field.verbose_name = 'some other THING'
+    assert get_display_name(mock) == 'Some other THING'

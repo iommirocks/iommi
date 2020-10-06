@@ -20,6 +20,7 @@ from django.urls import (
     reverse,
 )
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext
 from tri_declarative import (
     class_shortcut,
     dispatch,
@@ -150,9 +151,9 @@ class Admin(Page):
 
     menu = Menu(
         sub_menu=dict(
-            root=MenuItem(url='/iommi-admin/', display_name='iommi administration'),
-            change_password=MenuItem(url='/iommi-admin/change_password/'),
-            logout=MenuItem(url='/iommi-admin/logout/'),
+            root=MenuItem(url='/iommi-admin/', display_name=gettext('iommi administration')),
+            change_password=MenuItem(url='/iommi-admin/change_password/', display_name=gettext('Change password')),
+            logout=MenuItem(url='/iommi-admin/logout/', display_name=gettext('Logout')),
         ),
     )
 
@@ -240,7 +241,7 @@ class Admin(Page):
         table = setdefaults_path(
             Namespace(),
             table,
-            title='All models',
+            title=gettext('All models'),
             call_target__cls=cls.get_meta().table_class,
             sortable=False,
             rows=rows,
@@ -289,7 +290,7 @@ class Admin(Page):
             ),
             actions=dict(
                 create=dict(
-                    display_name=f'Create {model._meta.verbose_name}',
+                    display_name=gettext('Create %(model_name)s') % dict(model_name=model._meta.verbose_name),
                     attrs__href='create/',
                 ),
             ),
@@ -409,7 +410,7 @@ class LoginForm(Form):
     password = Field.password()
 
     class Meta:
-        title = 'Login'
+        title = gettext('Login')
 
         @staticmethod
         def actions__submit__post_handler(form, **_):
@@ -424,7 +425,7 @@ class LoginForm(Form):
                     auth.login(request, user)
                     return HttpResponseRedirect(request.GET.get('next', '/'))
 
-                form.errors.add('Unknown username or password')
+                form.errors.add(gettext('Unknown username or password'))
 
 
 class LoginPage(Page):
@@ -435,7 +436,7 @@ class LoginPage(Page):
 
 
 def current_password__is_valid(form, parsed_data, **_):
-    return (True, None) if check_password(parsed_data, form.get_request().user.password) else (False, 'Incorrect password')
+    return (True, None) if check_password(parsed_data, form.get_request().user.password) else (False, gettext('Incorrect password'))
 
 
 def new_password__is_valid(form, parsed_data, **_):
@@ -447,12 +448,12 @@ def new_password__is_valid(form, parsed_data, **_):
 
 
 def confirm_password__is_valid(form, parsed_data, **_):
-    return (True, None) if parsed_data == form.fields.new_password.value else (False, 'New passwords does not match')
+    return (True, None) if parsed_data == form.fields.new_password.value else (False, gettext('New passwords does not match'))
 
 
 class ChangePasswordForm(Form):
     class Meta:
-        title = 'Change password'
+        title = gettext('Change password')
 
         @staticmethod
         def actions__submit__post_handler(form, request, **_):
@@ -462,9 +463,9 @@ class ChangePasswordForm(Form):
                 user.save()
                 return HttpResponseRedirect('..')
 
-    current_password = Field.password(is_valid=current_password__is_valid)
-    new_password = Field.password(is_valid=new_password__is_valid)
-    confirm_password = Field.password(is_valid=confirm_password__is_valid)
+    current_password = Field.password(is_valid=current_password__is_valid, display_name=gettext('Current password'))
+    new_password = Field.password(is_valid=new_password__is_valid, display_name=gettext('New password'))
+    confirm_password = Field.password(is_valid=confirm_password__is_valid, display_name=gettext('Confirm password'))
 
 
 class ChangePasswordPage(Page):

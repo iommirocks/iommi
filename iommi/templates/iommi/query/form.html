@@ -1,19 +1,20 @@
+{% load i18n %}
 <div id="iommi_{{ query.iommi_dunder_path }}">
     <form{{ query.form.attrs }}>
         {{ query.advanced_simple_toggle }}
 
         <div style="width: 100%">
             <div class="iommi_query_form_advanced" style="display: none">
-                <label for="iommi_{{ query.iommi_dunder_path }}_query">Search query:</label>
+                <label for="iommi_{{ query.iommi_dunder_path }}_query">{% blocktrans %}Search query{% endblocktrans %}:</label>
                 <input id="iommi_{{ query.iommi_dunder_path }}_query" name="{{ query.get_advanced_query_param }}" type="text" style="width:70%" data-query="{{ query.query_advanced_value }}"/>
 
                 <div class="iommi_query_toggle_help">
-                    <span>Show help</span> <i class="fa fa-chevron-down"></i>
+                    <span>{% blocktrans %}Show help{% endblocktrans %}</span> <i class="fa fa-chevron-down"></i>
                 </div>
 
                 <div class="iommi_query_help" style="display: none">
                     <div class="iommi_query_available_fields">
-                        <h3>Available fields</h3>
+                        <h3>{% blocktrans %}Available fields{% endblocktrans %}</h3>
                         <ul>
                             {% for name in query.filters %}
                                 <li>{{ name }}</li>
@@ -21,15 +22,15 @@
                         </ul>
                     </div>
                     <div class="iommi_query_available_query_commands">
-                        <h3>Queries</h3>
-                        <ul>
-                            <li>Search for an exact value: field_name=value</li>
-                            <li>Search for an exact value containing space: field_name="value with space"</li>
-                            <li>Containing a text: field_name:val</li>
-                            <li>Exclude a value: field_name!=value</li>
-                            <li>You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: field_name&lt;10</li>
-                            <li>To search for dates, use ISO8601 format: field_name>1969-07-20</li>
-                            <li>You can filter for relative dates: field_name < "10 days ago". Supported fields are days, months, years, quarters and weekdays. They can be negative and abbreviated from "10 days ago" to "-10d".</li>
+                        <h3>{% blocktrans %}Queries{% endblocktrans %}</h3>
+                        <ul>                         
+                            <li>{% blocktrans %}Search for an exact value: field_name=value{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Search for an exact value containing space: field_name="value with space"{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Containing a text: field_name:val{% endblocktrans %}</li>
+                            <li>{% blocktrans %}Exclude a value: field_name!=value{% endblocktrans %}</li>
+                            <li>{% blocktrans %}You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: field_name&lt;10{% endblocktrans %}</li>
+                            <li>{% blocktrans %}To search for dates, use ISO8601 format: field_name>1969-07-20{% endblocktrans %}</li>
+                            <li>{% blocktrans %}You can filter for relative dates: field_name < "10 days ago". Supported fields are days, months, years, quarters and weekdays. They can be negative and abbreviated from "10 days ago" to "-10d".{% endblocktrans %}</li>
                         </ul>
                     </div>
                 </div>
@@ -98,7 +99,7 @@
                 toggle_simple_mode.setAttribute('data-advanced-mode', 'advanced');
                 adv.style.display = '';
                 simple.style.display = 'none';
-                toggle_simple_mode.innerHTML = 'Switch to basic search';
+                toggle_simple_mode.innerHTML = '{% blocktrans %}Switch to basic search{% endblocktrans %}';
                 help.style.display = '';
             }
             else {
@@ -107,7 +108,7 @@
                 toggle_simple_mode.setAttribute('data-advanced-mode', 'simple');
                 adv.style.display = 'none';
                 simple.style.display = '';
-                toggle_simple_mode.innerHTML = 'Switch to advanced search';
+                toggle_simple_mode.innerHTML = '{% blocktrans %}Switch to advanced search{% endblocktrans %}';
                 help.style.display = 'none';
                 if (help.style.display === '') {
                     toggle_help();
@@ -123,13 +124,13 @@
                 help_text.style.display = '';
                 icon.classList.remove('fa-chevron-down');
                 icon.classList.add('fa-chevron-up');
-                help.querySelector('span').innerText = 'Hide help';
+                help.querySelector('span').innerText = '{% blocktrans %}Hide help{% endblocktrans %}';
             }
             else {
                 help_text.style.display = 'none';
                 icon.classList.remove('fa-chevron-up');
                 icon.classList.add('fa-chevron-down');
-                help.querySelector('span').innerText = 'Show help';
+                help.querySelector('span').innerText = '{% blocktrans %}Show help{% endblocktrans %}';
             }
         }
 

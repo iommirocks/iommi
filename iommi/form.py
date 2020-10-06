@@ -25,6 +25,7 @@ from django.db.models import (
     QuerySet,
     When,
 )
+from django.utils.translation import gettext
 
 from iommi.datetime_parsing import (
     parse_relative_date,
@@ -1228,7 +1229,7 @@ class Form(Part):
             )
             instance = auto.instance
             if title is MISSING and auto.type is not None:
-                title = f'{auto.type.title()} {model._meta.verbose_name}'
+                title = f'{gettext(auto.type.title())} {model._meta.verbose_name}'
 
                 setdefaults_path(
                     actions,

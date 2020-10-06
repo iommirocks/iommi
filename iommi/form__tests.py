@@ -1695,7 +1695,7 @@ def test_action_submit_render():
     assert action.__html__().strip() == '<input accesskey="s" name="-" type="submit" value="Title">'
 
     action = Action.submit(attrs__value='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.__html__().strip() == 'tag=input display_name=Root accesskey="s" name="-" type="submit" value="Title"'
+    assert action.__html__().strip() == 'tag=input display_name=Submit accesskey="s" name="-" type="submit" value="Title"'
 
 
 def test_action_repr():
