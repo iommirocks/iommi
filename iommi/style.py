@@ -100,6 +100,11 @@ def register_style(name, conf):
     _styles[name] = conf
 
 
+def unregister_style(name):
+    assert name in _styles
+    del _styles[name]
+
+
 def get_style(name):
     try:
         return _styles[name]

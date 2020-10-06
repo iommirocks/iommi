@@ -11,7 +11,7 @@ from iommi import (
     Field,
     Form,
     Fragment,
-    Table,
+    Table, register_style, Style, MenuItem, Menu,
 )
 from iommi.base import (
     items,
@@ -20,6 +20,7 @@ from iommi.base import (
 from iommi.page import (
     Page,
 )
+from iommi.style import unregister_style
 from iommi.traversable import (
     build_long_path_by_path,
     EvaluatedRefinable,
@@ -352,3 +353,57 @@ def test_traversable_repr():
 
     assert repr(foo) == "<tests.helpers.StubTraversable foo (bound) members:['bar']>"
     assert repr(foo._bound_members.bar) == "<tests.helpers.StubTraversable bar (bound) path:'bar'>"
+
+
+@pytest.mark.skip('Fails due to styles beeing applied too soon')
+def test_apply_style_not_affecting_definition(settings):
+    register_style('my_style', Style(
+        Fragment__attrs__class__foo=True,
+    ))
+
+    register_style('other_style', Style(
+        Fragment__attrs__class__bar=True,
+    ))
+
+    definition = Fragment()
+
+    settings.IOMMI_DEFAULT_STYLE = 'my_style'
+    fragment = definition.bind(request=None)
+    assert fragment.attrs['class'] == dict(foo=True)
+
+    settings.IOMMI_DEFAULT_STYLE = 'other_style'
+    fragment = definition.bind(request=None)
+    assert fragment.attrs['class'] == dict(bar=True)
+
+    unregister_style('my_style')
+    unregister_style('other_style')
+
+
+@pytest.mark.skip('Fails due to styles beeing applied too soon')
+def test_apply_style_not_affecting_definition_2():
+    register_style('foo_style', Style(
+        MenuItem__attrs__class__foo=True,
+    ))
+
+    register_style('bar_style', Style(
+        MenuItem__attrs__class__bar=True,
+    ))
+
+    class MyPage(Page):
+        menu = Menu(
+            sub_menu=dict(
+                root=MenuItem()
+            )
+        )
+
+    class OtherPage(Page):
+        menu = MyPage.menu
+
+    page = MyPage(iommi_style='foo_style').bind(request=Struct(path=''))
+    assert page.parts.menu.sub_menu.root.attrs['class'] == dict(foo=True)
+
+    page = OtherPage(iommi_style='bar_style').bind(request=Struct(path=''))
+    assert page.parts.menu.sub_menu.root.attrs['class'] == dict(bar=True)
+
+    unregister_style('foo_style')
+    unregister_style('bar_style')
