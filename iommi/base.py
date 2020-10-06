@@ -1,4 +1,5 @@
 from django.db.models import QuerySet
+from django.utils.encoding import force_str
 
 
 class UnknownMissingValueException(Exception):
@@ -55,3 +56,12 @@ def items(container):
 
 def keys(container):
     return type(container).keys(container)
+
+
+def get_display_name(part):
+    try:
+        if part.model_field.verbose_name:
+            return capitalize(part.model_field.verbose_name)
+    except AttributeError:
+        pass
+    return capitalize(force_str(part._name).rsplit('__', 1)[-1].replace("_", " "))

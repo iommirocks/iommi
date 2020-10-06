@@ -83,6 +83,7 @@ from iommi.attrs import (
 from iommi.base import (
     build_as_view_wrapper,
     capitalize,
+    get_display_name,
     items,
     keys,
     MISSING,
@@ -413,7 +414,7 @@ class Column(Part):
     @staticmethod
     @evaluated_refinable
     def display_name(table, column, **_):
-        return capitalize(force_str(column._name).rsplit('__', 1)[-1].replace("_", " "))
+        return get_display_name(column)
 
     def on_bind(self) -> None:
 
