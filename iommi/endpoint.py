@@ -90,7 +90,7 @@ def find_target(*, path, root):
         if part == '':
             continue
         next_node = node.iommi_bound_members().get(part)
-        assert next_node is not None, f'Failed to traverse long path {long_path}'
+        assert next_node is not None, f"Failed to traverse long path '{long_path}' (No bound value for '{part}')"
         node = next_node
 
     return node

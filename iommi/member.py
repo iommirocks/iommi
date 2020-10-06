@@ -215,6 +215,7 @@ def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_f
         _declared_members=declared_members(parent)[name],
         unknown_types_fall_through=unknown_types_fall_through,
     )
+    assert parent._is_bound
     m = m.bind(parent=parent)
     setattr(parent._bound_members, name, m)
     setattr(parent, name, m._bound_members)

@@ -1998,9 +1998,14 @@ def test_new_style_ajax_dispatch():
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_endpoint_path_of_nested_part():
-    page = Table(auto__model=TBar, columns__foo__filter=dict(include=True, field__include=True))
-    page.bind(request=None)
-    target = find_target(path='/query/form/fields/foo/endpoints/choices', root=page)
+    table = Table(
+        auto__model=TBar,
+        columns__foo__filter=dict(
+            include=True,
+            field__include=True,
+        )
+    ).bind(request=None)
+    target = find_target(path='/query/form/fields/foo/endpoints/choices', root=table)
     assert target.endpoint_path == '/choices'
     assert target.iommi_dunder_path == 'query__form__fields__foo__endpoints__choices'
 

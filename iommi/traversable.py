@@ -76,7 +76,7 @@ class Traversable(RefinableObject):
     @dispatch
     def __init__(self, _name=None, **kwargs):
         self._declared_members = Struct()
-        self._bound_members = Struct()
+        self._bound_members = None
         self._evaluate_parameters = None
         self._name = _name
 
@@ -90,10 +90,9 @@ class Traversable(RefinableObject):
         except PathNotFoundException:
             p = ' path:<no path>'
         c = ''
-        if self._is_bound and hasattr(self, '_bound_members'):
-            members = self._bound_members
-            if members:
-                c = f" members:{list(members.keys())!r}"
+        if self._is_bound:
+            if self._bound_members:
+                c = f" members:{list(self._bound_members.keys())!r}"
 
         return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
 
@@ -174,6 +173,7 @@ class Traversable(RefinableObject):
         del self  # to prevent mistakes when changing the code below
 
         result._parent = parent
+        result._bound_members = Struct()
         result._is_bound = True
 
         evaluate_parameters = {
