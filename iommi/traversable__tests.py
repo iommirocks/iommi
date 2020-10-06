@@ -355,7 +355,6 @@ def test_traversable_repr():
     assert repr(foo._bound_members.bar) == "<tests.helpers.StubTraversable bar (bound) path:'bar'>"
 
 
-@pytest.mark.skip('Fails due to styles beeing applied too soon')
 def test_apply_style_not_affecting_definition(settings):
     register_style('my_style', Style(
         Fragment__attrs__class__foo=True,
@@ -379,7 +378,6 @@ def test_apply_style_not_affecting_definition(settings):
     unregister_style('other_style')
 
 
-@pytest.mark.skip('Fails due to styles beeing applied too soon')
 def test_apply_style_not_affecting_definition_2():
     register_style('foo_style', Style(
         MenuItem__attrs__class__foo=True,

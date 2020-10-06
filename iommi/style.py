@@ -1,5 +1,7 @@
 from collections import defaultdict
 from typing import (
+    Any,
+    Dict,
     List,
     Type,
 )
@@ -8,7 +10,9 @@ from ._web_compat import settings
 from tri_declarative import (
     dispatch,
     EMPTY,
+    flatten,
     get_shortcuts_by_name,
+    getattr_path,
     Namespace,
     RefinableObject,
     setdefaults_path,
@@ -22,19 +26,27 @@ from iommi.base import (
 DEFAULT_STYLE = 'bootstrap'
 
 
-def apply_style(obj):
-    style_data = get_style_data_for_object(style_name=get_style_name_for(obj), obj=obj)
-    return apply_style_recursively(style_data=style_data, obj=obj)
-
-
-def get_style_name_for(obj):
-    if obj is not None:
+def get_iommi_style_name(obj: Any) -> str:
+    while obj is not None:
         if obj.iommi_style is not None:
             return obj.iommi_style
-        if obj._parent is not None:
-            return get_style_name_for(obj._parent)
-
+        obj = obj.iommi_parent()
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
+
+
+def apply_style(style_name: str, obj: Any) -> Any:
+    style_data = get_style_data_for_object(style_name=style_name, obj=obj)
+    return apply_style_data(style_data, obj)
+
+
+def apply_style_data(style_data: Namespace, obj: Any) -> Any:
+    if not style_data:
+        return obj
+    _iommi_saved_params = getattr(obj, '_iommi_saved_params', None)
+    if _iommi_saved_params is None:
+        print(f'Missing out of {style_data} for {type(obj)}')
+        return obj
+    return reinvoke_new_defaults(obj, style_data)
 
 
 def _style_name_for_class(cls):
@@ -123,43 +135,41 @@ Available styles:
     {style_names}''') from None
 
 
-_no_attribute_sentinel = object()
+def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
+    assert hasattr(obj, '_iommi_saved_params'), f'reinvoke_new_defaults() called on class with missing @reinvokable decorator: {obj.__class__.__name__}'
+    additional_kwargs_namespace = Namespace(additional_kwargs)
 
-
-def apply_style_recursively(*, style_data, obj):
-    from iommi.member import NotBoundYet, MemberBinder, Members
-    if isinstance(obj, NotBoundYet):
-        return style_data
-
-    rest_style = Namespace()
-    if isinstance(obj, dict):
-        result = Namespace(style_data, obj)
-        obj.clear()
-        obj.update(**result)
-    else:
-        for k, v in items(style_data):
-            if isinstance(v, dict):
-                if isinstance(obj, Members):
-                    try:
-                        child = obj._bound_members[k]
-                    except KeyError:
-                        child = getattr(obj, k)
-                else:
-                    child = getattr(obj, k)
-
-                if isinstance(child, MemberBinder):
-                    child = obj._bound_members[k]
-                if child is not None:
-                    rest = apply_style_recursively(style_data=v, obj=child)
-                    if rest:
-                        rest_style[k] = rest
+    kwargs = Namespace(additional_kwargs_namespace)
+    for name, saved_param in items(obj._iommi_saved_params):
+        try:
+            new_param = getattr_path(additional_kwargs_namespace, name)
+        except AttributeError:
+            kwargs[name] = saved_param
+        else:
+            if hasattr(saved_param, '_iommi_saved_params'):
+                assert isinstance(new_param, dict)
+                kwargs[name] = reinvoke_new_defaults(saved_param, new_param)
             else:
-                attrib = getattr(obj, k, _no_attribute_sentinel)
-                if attrib is _no_attribute_sentinel:
-                    raise InvalidStyleConfigurationException(f'Object {obj!r} has no attribute {k} which the style tried to set.')
-                if attrib is None:
-                    setattr(obj, k, v)
-    return rest_style
+                if isinstance(saved_param, Namespace):
+                    kwargs[name] = Namespace(new_param, saved_param)
+                else:
+                    kwargs[name] = saved_param
+
+    additional_kwargs_namespace.pop('call_target', None)
+
+    try:
+        result = type(obj)(**kwargs)
+    except TypeError as e:
+        raise InvalidStyleConfigurationException(
+            f'Object {obj!r} could not be updated with style configuration {flatten(additional_kwargs_namespace)}'
+        ) from e
+
+    result._name = obj._name
+    __tri_declarative_shortcut_stack = getattr(obj, '__tri_declarative_shortcut_stack', None)
+    if __tri_declarative_shortcut_stack is not None:
+        setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
+
+    return result
 
 
 def get_style_data_for_object(style_name, obj):

@@ -92,6 +92,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 model_field_name=field_path_rest,
                 **kwargs)
             result.attr = model_field_name
+            result._iommi_saved_params['attr'] = model_field_name
             return result
 
     factory = factory_lookup.get(type(model_field), MISSING)

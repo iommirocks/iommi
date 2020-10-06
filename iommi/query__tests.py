@@ -74,6 +74,15 @@ F.__repr__ = f_repr
 Q.__repr__ = lambda self: str(self)
 
 
+def test_include_trivial():
+    class AQuery(Query):
+        foo = Filter(
+            include=False,
+        )
+
+    assert list(AQuery().bind().filters.keys()) == []
+
+
 def test_include():
     class ShowQuery(Query):
         foo = Filter()
@@ -620,8 +629,8 @@ def test_from_model_with_inheritance():
     query.bind(request=req('get'))
 
     assert was_called == {
-        'MyField.float': 1,
-        'MyVariable.float': 1,
+        'MyField.float': 2,
+        'MyVariable.float': 2,
     }
 
 

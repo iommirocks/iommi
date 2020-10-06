@@ -216,7 +216,7 @@ class Filter(Part):
         attr=MISSING,
         search_fields=MISSING,
         field__required=False,
-        field__include=lambda query, field, **_: not query.filters.get(field._name).freetext,
+        field__include=lambda query, field, **_: not query.filters.get(field._name, Struct(freetext=False)).freetext,
     )
     def __init__(self, **kwargs):
         """
@@ -648,6 +648,7 @@ class Query(Part):
         # TODO: should it be possible to have freetext as a callable? this code just treats callables as truthy
         if any(f.freetext for f in values(declared_members(self)['filters'])):
             declared_members(self.form).fields[FREETEXT_SEARCH_NAME].include = True
+            declared_members(self.form).fields[FREETEXT_SEARCH_NAME]._iommi_saved_params['include'] = True
 
         declared_fields = declared_members(self.form)['fields']
         for name, filter in items(self.filters):
@@ -667,6 +668,7 @@ class Query(Part):
                 continue
             if name not in self.filters:
                 field.include = False
+                field._iommi_saved_params['include'] = False
 
         bind_members(self, name='endpoints')
 

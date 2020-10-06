@@ -1,17 +1,16 @@
 import pytest
 from tri_declarative import (
     class_shortcut,
+    dispatch,
     Namespace,
     Refinable,
-    RefinableObject,
 )
 
 from iommi.attrs import render_attrs
 from iommi.base import items
 from iommi.style import (
-    apply_style_recursively,
+    apply_style_data,
     get_style,
-    get_style_name_for,
     get_style_data_for_object,
     InvalidStyleConfigurationException,
     register_style,
@@ -19,10 +18,20 @@ from iommi.style import (
     validate_styles,
 )
 from iommi.style_base import base
+from iommi.traversable import (
+    get_iommi_style_name,
+    reinvokable,
+    Traversable,
+)
 
 
 def test_style():
-    class A(RefinableObject):
+    class A(Traversable):
+        @dispatch
+        @reinvokable
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
         foo = Refinable()
         bar = Refinable()
 
@@ -35,6 +44,11 @@ def test_style():
             return dict(foo=self.foo, bar=self.bar)
 
     class B(A):
+        @dispatch
+        @reinvokable
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
         @classmethod
         @class_shortcut(
             call_target__attribute='shortcut1'
@@ -69,19 +83,19 @@ def test_style():
 
     # Now let's add the style
     b = B()
-    apply_style_recursively(style_data=overrides.component(b), obj=b)
+    b = apply_style_data(style_data=overrides.component(b), obj=b)
     assert items(b) == dict(foo=5, bar=7)
 
     b = B.shortcut1()
     assert overrides.component(b) == dict(foo=4, bar=7)
     assert b.__tri_declarative_shortcut_stack == ['shortcut1']
-    apply_style_recursively(style_data=overrides.component(b), obj=b)
+    b = apply_style_data(style_data=overrides.component(b), obj=b)
     assert items(b) == dict(foo=4, bar=7)
 
     b = B.shortcut2()
     assert b.__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
     assert overrides.component(b) == dict(foo=4, bar=7)
-    apply_style_recursively(style_data=overrides.component(b), obj=b)
+    b = apply_style_data(style_data=overrides.component(b), obj=b)
     assert items(b) == dict(foo=4, bar=7)
 
 
@@ -98,18 +112,18 @@ def test_apply_checkbox_style():
     form = MyForm()
     form = form.bind(request=None)
 
-    assert get_style_name_for(form.fields.foo) == 'bootstrap'
-    assert get_style_data_for_object(style_name=get_style_name_for(form.fields.foo), obj=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
+    assert get_iommi_style_name(form.fields.foo) == 'bootstrap'
+    assert get_style_data_for_object(style_name='bootstrap', obj=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
     assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label" for="id_foo"'
 
 
-def test_apply_style_recursively_does_not_overwrite():
+def test_apply_style_data_does_not_overwrite():
     foo = Namespace(bar__template='specified')
     style = Namespace(bar__template='style_template')
 
-    apply_style_recursively(style_data=style, obj=foo)
+    foo = apply_style_data(style_data=style, obj=foo)
     assert foo == Namespace(bar__template='specified')
 
 
@@ -133,15 +147,19 @@ def test_validate_default_styles():
 
 def test_error_when_trying_to_style_non_existent_attribute():
     class Foo:
+        @reinvokable
+        def __init__(self):
+            pass
+
         def __repr__(self):
             return '<Foo>'
 
     style = Namespace(something_that_does_not_exist='!!!')
 
     with pytest.raises(InvalidStyleConfigurationException) as e:
-        apply_style_recursively(style_data=style, obj=Foo())
+        apply_style_data(style_data=style, obj=Foo())
 
-    assert str(e.value) == 'Object <Foo> has no attribute something_that_does_not_exist which the style tried to set.'
+    assert str(e.value) == "Object <Foo> could not be updated with style configuration {'something_that_does_not_exist': '!!!'}"
 
 
 def test_error_message_for_invalid_style():

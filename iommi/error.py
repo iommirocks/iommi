@@ -3,20 +3,26 @@ from tri_declarative import (
     EMPTY,
 )
 
-from iommi.style import apply_style
+from iommi.style import (
+    apply_style,
+    get_iommi_style_name,
+)
+from iommi.traversable import (
+    reinvokable,
+)
 
 
 class Errors(set):
     @dispatch(
         attrs=EMPTY,
     )
+    @reinvokable
     def __init__(self, *, parent, attrs, errors=None, template=None):
         super(Errors, self).__init__(errors or [])
         self._parent = parent
         self.attrs = attrs
         self.template = template
         self.iommi_style = None
-        apply_style(self)
 
     def __str__(self):
         return self.__html__()

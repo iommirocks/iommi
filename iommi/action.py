@@ -32,7 +32,7 @@ from iommi.fragment import (
 from iommi.member import Members
 from iommi.part import Part
 from iommi.traversable import (
-    EvaluatedRefinable,
+    EvaluatedRefinable, reinvokable,
 )
 
 
@@ -65,6 +65,7 @@ class Action(Fragment):
         children=EMPTY,
         display_name=lambda action, **_: capitalize(action._name).replace('_', ' '),
     )
+    @reinvokable
     def __init__(self, *, tag=None, attrs=None, children=None, display_name=None, **kwargs):
         if tag == 'input':
             if display_name and 'value' not in attrs:
@@ -161,5 +162,6 @@ class Actions(Members, Tag):
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )
+    @reinvokable
     def __init__(self, **kwargs):
         super(Actions, self).__init__(**kwargs)

@@ -1773,6 +1773,16 @@ def test_initial_set_earlier_than_evaluate_is_called():
 
 
 @pytest.mark.django_db
+def test_field_from_model_path_minimal():
+    from tests.models import Bar
+
+    class FooForm(Form):
+        baz = Field.from_model(Bar, 'foo__foo', help_text='another help text')
+
+    assert FooForm().bind(request=req('get', baz='1')).fields.baz.attr == 'foo__foo'
+
+
+@pytest.mark.django_db
 def test_field_from_model_path():
     from tests.models import Bar
 
@@ -1884,7 +1894,7 @@ def test_from_model_with_inheritance():
     )
 
     assert was_called == {
-        'MyField.float': 1,
+        'MyField.float': 2,
     }
 
 

@@ -1111,6 +1111,7 @@ class Paginator(Traversable):
         number_of_pages=lambda paginator, rows, **_: ceil(max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
     )
+    @reinvokable
     def __init__(self, **kwargs):
         super(Paginator, self).__init__(**kwargs)
         self._name = 'page'
