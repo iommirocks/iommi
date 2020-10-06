@@ -235,3 +235,14 @@ def test_none_members_should_be_discarded_after_being_allowed_through():
 
     basket = MyBasket(fruits__orange=None)
     assert 'orange' not in declared_members(basket).fruits
+
+
+def test_bind_not_reorder():
+    class MyBasket(Basket):
+        banana = Fruit(taste='sweet')
+        orange = Fruit(taste='strange')
+
+    my_basket = MyBasket().bind()
+    # noinspection PyStatementEffect
+    my_basket.fruits.orange
+    assert list(my_basket.fruits.keys()) == ['banana', 'orange']

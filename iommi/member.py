@@ -198,14 +198,24 @@ def _force_bind(member_binder: MemberBinder, name: str):
         if name in _bindable_names:
             bound_member = _declared_members[name].bind(parent=_parent)
             if bound_member is not None:
-                member_binder[name] = bound_member
+                bound_members = dict.copy(member_binder)
+                dict.clear(member_binder)  # re-insert values in dict to retain ordering
+                dict.update(
+                    member_binder,
+                    (
+                        (k, bound_member if k == name else bound_members[k])
+                        for k in dict.keys(_declared_members)
+                        if k == name or k in bound_members
+                    )
+                )
 
 
 # noinspection PyCallByClass
 def _force_bind_all(member_binder: MemberBinder):
     _bindable_names = object.__getattribute__(member_binder, '_bindable_names')
     for name in _bindable_names:
-        _force_bind(member_binder, name)
+        if name not in member_binder:
+            _force_bind(member_binder, name)
 
 
 # noinspection PyProtectedMember
