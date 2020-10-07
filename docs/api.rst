@@ -20,5 +20,6 @@ API Reference
    Page
    Part
    Query
+   Style
    Table
    Traversable
