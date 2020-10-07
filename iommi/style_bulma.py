@@ -3,9 +3,33 @@ from iommi.style import (
 )
 from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
+from iommi.fragment import html
+from django.utils.safestring import mark_safe
+
+bulma_css = html.link(attrs__rel="stylesheet",
+                      attrs__href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css")
+
+navburger_script = html.script(
+    children__text=mark_safe(r"""
+    $(document).ready(function() {
+          // Check for click events on the navbar burger icon
+          $(".navbar-burger").click(function() {
+
+              // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+              $(".navbar-burger").toggleClass("is-active");
+              $(".navbar-menu").toggleClass("is-active");
+
+          });
+    });
+    """)
+)
 
 bulma_base = Style(
     base,
+    assets=[
+        bulma_css,
+        navburger_script
+    ],
     base_template='iommi/base_bulma.html',
     Header__attrs__class={
         'title': True,

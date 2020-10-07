@@ -56,7 +56,7 @@ def recursive_namespace(d):
 
 
 class Style:
-    def __init__(self, *bases, base_template=None, content_block=None, **kwargs):
+    def __init__(self, *bases, base_template=None, content_block=None, assets=[], **kwargs):
         self.name = None
 
         self.base_template = base_template
@@ -72,6 +72,10 @@ class Style:
                 if base.content_block:
                     self.content_block = base.content_block
                     break
+
+        self.assets = assets.copy()
+        for b in bases:
+            self.assets.extend(b.assets)
 
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 

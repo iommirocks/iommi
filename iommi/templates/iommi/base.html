@@ -3,6 +3,9 @@
 <head>
     <title>{% block title %}{{ title }}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}
+    {% for asset in assets %}
+      {{asset}}
+    {% endfor %}
 </head>
 <body>
     {% block iommi_top %}{% endblock %}
