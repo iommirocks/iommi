@@ -42,7 +42,6 @@ bulma_base = Style(
         template='iommi/form/bulma/row.html',
         label__attrs__class__label=True,
         input__attrs__class__input=True,
-        errors__template='iommi/form/bulma/errors.html',
         help__attrs__class=dict(
             help=True,
         )
@@ -105,6 +104,10 @@ bulma_base = Style(
     Paginator=dict(
         template='iommi/table/bulma/paginator.html',
     ),
+    Errors__attrs__class={
+        'help': True,
+        'is-danger': True,
+    },
 )
 bulma = Style(
     bulma_base,

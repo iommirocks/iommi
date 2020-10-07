@@ -543,7 +543,6 @@ class Field(Part):
         :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: `None`
         :param input__template: Django template filename for the template for just the input control.
         :param label__template: Django template filename for the template for just the label tab.
-        :param errors__template: Django template filename for the template for just the errors output. Default: `'iommi/form/errors.html'`
         :param required: If the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
