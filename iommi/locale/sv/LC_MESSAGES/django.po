@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-07 08:39+0200\n"
+"POT-Creation-Date: 2020-10-07 10:38+0200\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -59,6 +59,27 @@ msgstr "Nytt lösenord"
 #: admin.py:468
 msgid "Confirm password"
 msgstr "Repetera lösenord"
+
+#: form.py:1155
+msgid "create"
+msgstr "skapa"
+
+#: form.py:1156
+msgid "edit"
+msgstr "ändra"
+
+#: form.py:1157
+msgid "delete"
+msgstr "radera"
+
+#: form.py:1240
+#, python-format
+msgid "%(crud_type)s %(model_name)s"
+msgstr "%(crud_type)s %(model_name)s"
+
+#: form.py:1244
+msgid "Save"
+msgstr "Spara"
 
 #: query.py:585
 msgid "Search"

@@ -1149,6 +1149,14 @@ def delete_object__post_handler(form, **_):
     return HttpResponseRedirect('../..')
 
 
+# noinspection PyUnreachableCode
+if False:
+    # These are needed to make makemessages collect these strings
+    gettext('create')
+    gettext('edit')
+    gettext('delete')
+
+
 class FormAutoConfig(AutoConfig):
     instance = Refinable()
     type = Refinable()  # one of 'create', 'edit', 'delete'
@@ -1229,11 +1237,11 @@ class Form(Part):
             )
             instance = auto.instance
             if title is MISSING and auto.type is not None:
-                title = f'{gettext(auto.type.title())} {model._meta.verbose_name}'
+                title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(crud_type=gettext(auto.type), model_name=model._meta.verbose_name))
 
                 setdefaults_path(
                     actions,
-                    submit__display_name=title,
+                    submit__display_name=gettext('Save') if auto.type == 'edit' else capitalize(gettext(auto.type)),
                 )
 
         super(Form, self).__init__(model=model, title=title, **kwargs)
