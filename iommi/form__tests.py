@@ -2330,7 +2330,7 @@ def test_create_or_edit_object_full_template_1():
                 </div>
             </div>
             <div class="links">
-                <input accesskey="s" name="create" type="submit" value="Create foo" name="-submit">
+                <input accesskey="s" name="create" type="submit" value="Create" name="-submit">
             </div>
         </form>
     </body>
