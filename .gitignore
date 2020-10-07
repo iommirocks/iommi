@@ -113,9 +113,6 @@ pip-log.txt
 testreport.xml
 htmlcov
 
-# Translations
-*.mo
-
 # Mr Developer
 .mr.developer.cfg
 .project

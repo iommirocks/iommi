@@ -15,6 +15,8 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from django.utils.translation import gettext
+
 from iommi import (
     Action,
     Fragment,
@@ -580,7 +582,7 @@ class Query(Part):
         declared_fields = Struct()
         declared_fields[FREETEXT_SEARCH_NAME] = field_class(
             _name=FREETEXT_SEARCH_NAME,
-            display_name='Search',
+            display_name=gettext('Search'),
             required=False,
             include=False,
         )
@@ -603,7 +605,7 @@ class Query(Part):
             _name='form',
             _fields_dict=declared_fields,
             attrs__method='get',
-            actions__submit__attrs__value='Filter',
+            actions__submit__display_name=gettext('Filter'),
         )
         declared_members(self).form = self.form
 
@@ -613,7 +615,7 @@ class Query(Part):
             attrs={
                 'data-advanced-mode': 'simple'
             },
-            display_name='Switch to advanced search',
+            display_name=gettext('Switch to advanced search'),
         )
 
         self.form_container = self.form_container()

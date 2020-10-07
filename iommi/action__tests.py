@@ -74,7 +74,7 @@ def test_render_button():
 
 
 def test_render_submit():
-    submit = Action.submit(_name='do_it').bind()
+    submit = Action.submit(display_name='Do it').bind()
     assert_renders(submit, '''
        <input accesskey="s" name="-" type="submit" value="Do it"/>
     ''')
@@ -127,7 +127,7 @@ def test_template():
 
 
 def test_delete_action():
-    assert Action.delete().bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="Root">'
+    assert Action.delete().bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="Submit">'
 
 
 def test_icon_action():

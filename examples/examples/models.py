@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext as _
 
 
 class Foo(models.Model):
@@ -30,7 +31,7 @@ class UploadModel(models.Model):
 
 
 class Artist(models.Model):
-    name = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255, db_index=True, verbose_name=_('artist'))
 
     def __str__(self):
         return self.name

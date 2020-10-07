@@ -32,13 +32,12 @@ from django.template.defaultfilters import (
     date,
     time,
 )
-from django.utils.encoding import (
-    force_str,
-)
 from django.utils.formats import date_format
 from django.utils.html import (
     conditional_escape,
 )
+from django.utils.translation import gettext_lazy
+
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -413,8 +412,8 @@ class Column(Part):
 
     @staticmethod
     @evaluated_refinable
-    def display_name(table, column, **_):
-        return get_display_name(column)
+    def display_name(traversable, **_):
+        return get_display_name(traversable)
 
     def on_bind(self) -> None:
 
@@ -483,7 +482,7 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'edit/',
-        display_name='Edit'
+        display_name=gettext_lazy('Edit'),
     )
     def edit(cls, call_target=None, **kwargs):
         """
@@ -495,7 +494,7 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'delete/',
-        display_name='Delete'
+        display_name=gettext_lazy('Delete'),
     )
     def delete(cls, call_target=None, **kwargs):
         """
@@ -508,7 +507,7 @@ class Column(Part):
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'download/',
         cell__value=lambda row, **_: getattr(row, 'pk', False),
-        display_name='Download'
+        display_name=gettext_lazy('Download'),
     )
     def download(cls, call_target=None, **kwargs):
         """
@@ -520,7 +519,7 @@ class Column(Part):
     @class_shortcut(
         call_target__attribute='icon',
         cell__url=lambda row, **_: row.get_absolute_url() + 'run/',
-        display_name='Run',
+        display_name=gettext_lazy('Run'),
     )
     def run(cls, call_target=None, **kwargs):
         """
@@ -1409,7 +1408,7 @@ class Table(Part, Tag):
         actions_below=False,
         query=EMPTY,
         bulk__fields=EMPTY,
-        bulk__title='Bulk change',
+        bulk__title=gettext_lazy('Bulk change'),
         page_size=DEFAULT_PAGE_SIZE,
 
         endpoints=EMPTY,
@@ -1502,6 +1501,7 @@ class Table(Part, Tag):
                     _name=name,
                     attr=name if column.attr is MISSING else column.attr,
                     field__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
+                    field__display_name=column.display_name,
                 )
                 if 'call_target' not in filter['call_target'] and filter['call_target'].get(
                         'attribute') == 'from_model':
@@ -1537,6 +1537,7 @@ class Table(Part, Tag):
                         required=False,
                         empty_choice_tuple=(None, '', '---', True),
                         parse_empty_string_as_none=True,
+                        display_name=column.display_name,
                         **field
                     )
                     if isinstance(column.model_field, BooleanField):
@@ -1562,13 +1563,13 @@ class Table(Part, Tag):
                     _name='bulk',
                     actions__submit=dict(
                         post_handler=bulk__post_handler,
-                        display_name='Bulk change',
+                        display_name=gettext_lazy('Bulk change'),
                         include=lambda table, **_: any(c.bulk.include for c in values(table.columns)),
                     ),
                     actions__delete=dict(
                         call_target__attribute='delete',
                         post_handler=bulk_delete__post_handler,
-                        display_name='Bulk delete',
+                        display_name=gettext_lazy('Bulk delete'),
                         include=False,
                     ),
                     **bulk

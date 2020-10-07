@@ -1,11 +1,11 @@
 from itertools import groupby
-from itertools import groupby
 from typing import (
     Callable,
     Dict,
     List,
     Tuple,
 )
+from django.utils.translation import gettext_lazy
 
 from tri_declarative import (
     class_shortcut,
@@ -102,6 +102,7 @@ class Action(Fragment):
         attrs__type='submit',
         attrs__accesskey='s',
         attrs__name=lambda action, **_: action.own_target_marker(),
+        display_name=gettext_lazy('Submit'),
     )
     def submit(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
