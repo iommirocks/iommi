@@ -1,0 +1,174 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-10-07 09:37+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: iommi/action.py:105
+msgid "Submit"
+msgstr "Absenden"
+
+#: iommi/admin.py:154
+msgid "iommi administration"
+msgstr "iommi Verwaltung"
+
+#: iommi/admin.py:155 iommi/admin.py:456
+msgid "Change password"
+msgstr "Passwort ändern"
+
+#: iommi/admin.py:156
+msgid "Logout"
+msgstr "Abmelden"
+
+#: iommi/admin.py:244
+msgid "All models"
+msgstr "Alle Modelle"
+
+#: iommi/admin.py:293
+#, python-format
+msgid "Create %(model_name)s"
+msgstr "%(model_name)s anlegen"
+
+#: iommi/admin.py:413
+msgid "Login"
+msgstr "Anmelden"
+
+#: iommi/admin.py:428
+msgid "Unknown username or password"
+msgstr "Unbekannter Benutzername oder ungültiges Passwort"
+
+#: iommi/admin.py:439
+msgid "Incorrect password"
+msgstr "Passwort ungültig"
+
+#: iommi/admin.py:451
+msgid "New passwords does not match"
+msgstr "Neue Passwörter nicht gleich"
+
+#: iommi/admin.py:466
+msgid "Current password"
+msgstr "Aktuelles Passwort"
+
+#: iommi/admin.py:467
+msgid "New password"
+msgstr "Neues Passwort"
+
+#: iommi/admin.py:468
+msgid "Confirm password"
+msgstr "Passwort bestätigen"
+
+#: iommi/query.py:585
+msgid "Search"
+msgstr "Suche"
+
+#: iommi/query.py:608
+msgid "Filter"
+msgstr "Filtern"
+
+#: iommi/query.py:618 iommi/templates/iommi/query/form.html:111
+msgid "Switch to advanced search"
+msgstr "Zur erweiterten Suchfunktion"
+
+#: iommi/table.py:485
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: iommi/table.py:497
+msgid "Delete"
+msgstr "Löschen"
+
+#: iommi/table.py:510
+msgid "Download"
+msgstr "Herunterladen"
+
+#: iommi/table.py:522
+msgid "Run"
+msgstr "Ausführen"
+
+#: iommi/table.py:1411 iommi/table.py:1566
+msgid "Bulk change"
+msgstr "Massenänderung"
+
+#: iommi/table.py:1572
+msgid "Bulk delete"
+msgstr "Massenlöschen"
+
+#: iommi/templates/iommi/query/form.html:8
+msgid "Search query"
+msgstr "Suchanfrage"
+
+#: iommi/templates/iommi/query/form.html:12
+#: iommi/templates/iommi/query/form.html:133
+msgid "Show help"
+msgstr "Hilfe einblenden"
+
+#: iommi/templates/iommi/query/form.html:17
+msgid "Available fields"
+msgstr "Verfügbare Felder"
+
+#: iommi/templates/iommi/query/form.html:25
+msgid "Queries"
+msgstr "Suchanfragen"
+
+#: iommi/templates/iommi/query/form.html:27
+msgid "Search for an exact value: field_name=value"
+msgstr "Exakte Suche: feld_name=wert"
+
+#: iommi/templates/iommi/query/form.html:28
+msgid ""
+"Search for an exact value containing space: field_name=\"value with space\""
+msgstr ""
+"Exakte Suche mit Lehrzeichen im Wert: feld_name=\"Wert mit Lehrzeichen\""
+
+#: iommi/templates/iommi/query/form.html:29
+msgid "Containing a text: field_name:val"
+msgstr "Zeichenfolge enthält: feld_name=wer"
+
+#: iommi/templates/iommi/query/form.html:30
+msgid "Exclude a value: field_name!=value"
+msgstr "Einen Wert ausschließen: feld_name!=Wert"
+
+#: iommi/templates/iommi/query/form.html:31
+msgid ""
+"You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: "
+"field_name&lt;10"
+msgstr ""
+"&lt;, &gt;, &lt;= und &gt;= können benutzt werden um Bereiche zu finden:"
+"feld_name&lt;10"
+
+#: iommi/templates/iommi/query/form.html:32
+msgid "To search for dates, use ISO8601 format: field_name>1969-07-20"
+msgstr ""
+"Um nach Zeiträumen zu suchen, benutze das IO8601 Format: feld_name>1969-07-20"
+
+#: iommi/templates/iommi/query/form.html:33
+msgid ""
+"You can filter for relative dates: field_name < \"10 days ago\". Supported "
+"fields are days, months, years, quarters and weekdays. They can be negative "
+"and abbreviated from \"10 days ago\" to \"-10d\"."
+msgstr ""
+"Man kann auch nach Zeitpunkten relativ zum heutigen Tag suchen: feld_name < "
+"\"10 days ago\".  Unterstützte Zeitspannen sind days, months, years, "
+"quarters and weekdays. Sie können auch negativ sein \"10 days ago\" und "
+"abgekürzt werden \"-10d\"."
+
+#: iommi/templates/iommi/query/form.html:102
+msgid "Switch to basic search"
+msgstr "Zurück zur Standardsuchfunktion"
+
+#: iommi/templates/iommi/query/form.html:127
+msgid "Hide help"
+msgstr "Hilfe ausblenden"
