@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-07 12:21+0200\n"
+"POT-Creation-Date: 2020-10-07 13:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -72,23 +72,20 @@ msgstr "Passwort bestätigen"
 
 #: iommi/form.py:1155
 msgid "create"
-msgstr "Anlegen"
+msgstr "anlegen"
 
 #: iommi/form.py:1156
 msgid "edit"
-msgstr "Bearbeiten"
+msgstr "bearbeiten"
 
 #: iommi/form.py:1157
-#, fuzzy
-#| msgid "Delete"
 msgid "delete"
-msgstr "Löschen"
+msgstr "löschen"
 
 #: iommi/form.py:1240
-#, fuzzy, python-format
-#| msgid "Create %(model_name)s"
+#, python-format
 msgid "%(crud_type)s %(model_name)s"
-msgstr "%(model_name)s anlegen"
+msgstr "%(model_name)s %(crud_type)s"
 
 #: iommi/form.py:1244
 msgid "Save"
