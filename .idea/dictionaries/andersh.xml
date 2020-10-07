@@ -2,6 +2,7 @@
   <dictionary name="andersh">
     <words>
       <w>callables</w>
+      <w>datetimes</w>
       <w>dunder</w>
       <w>icontains</w>
       <w>iommi</w>

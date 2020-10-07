@@ -11,9 +11,9 @@ Changelog
 2.0.0 (2020-09-22)
 ~~~~~~~~~~~~~~~~~~
 
-* BACKWARDS INCOMPATIBLE: `Style` not must take a `base_template` argument. This replaces the setting `IOMMI_BASE_TEMPLATE`.
+* BACKWARDS INCOMPATIBLE: `Style` must now take a `base_template` argument. This replaces the setting `IOMMI_BASE_TEMPLATE`.
 
-* BACKWARDS INCOMPATIBLE: `IOMMI_CONTENT_BLOCK` is removed. Replaced byt the `content_block` setting for `Style`.
+* BACKWARDS INCOMPATIBLE: `IOMMI_CONTENT_BLOCK` is removed. Replaced by the `content_block` setting for `Style`.
 
 * Allow table rows to be provided from a generator. (Disabling paginator)
 
