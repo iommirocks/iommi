@@ -80,7 +80,7 @@ class Style:
                     break
 
         self.assets = setdefaults_path(
-            *(base.assets for base in bases),
+            *(base.assets for base in reversed(bases)),
             assets,
         )
 
