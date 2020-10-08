@@ -151,9 +151,9 @@ class Admin(Page):
 
     menu = Menu(
         sub_menu=dict(
-            root=MenuItem(url='/iommi-admin/', display_name=gettext('iommi administration')),
-            change_password=MenuItem(url='/iommi-admin/change_password/', display_name=gettext('Change password')),
-            logout=MenuItem(url='/iommi-admin/logout/', display_name=gettext('Logout')),
+            root=MenuItem(url=lambda **_: reverse(Admin.all_models), display_name=gettext('iommi administration')),
+            change_password=MenuItem(url=lambda **_: reverse(Auth.change_password), display_name=gettext('Change password')),
+            logout=MenuItem(url=lambda **_: reverse(Auth.logout), display_name=gettext('Logout')),
         ),
     )
 
