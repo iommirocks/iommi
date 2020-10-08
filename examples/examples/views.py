@@ -536,7 +536,7 @@ class StyleSelector(Form):
             keys(iommi.style._styles)
             if k not in ('test', 'base', 'bootstrap_horizontal')
         ],
-        initial=lambda form, field, **_: iommi.style.DEFAULT_STYLE,
+        initial=lambda form, field, **_: getattr(settings, 'IOMMI_DEFAULT_STYLE', iommi.style.DEFAULT_STYLE),
     )
 
 
