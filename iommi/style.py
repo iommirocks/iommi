@@ -6,9 +6,12 @@ from typing import (
 
 from ._web_compat import settings
 from tri_declarative import (
+    dispatch,
+    EMPTY,
     get_shortcuts_by_name,
     Namespace,
     RefinableObject,
+    setdefaults_path,
 )
 
 from iommi.base import (
@@ -56,7 +59,10 @@ def recursive_namespace(d):
 
 
 class Style:
-    def __init__(self, *bases, base_template=None, content_block=None, assets=[], **kwargs):
+    @dispatch(
+        assets=EMPTY,
+    )
+    def __init__(self, *bases, base_template=None, content_block=None, assets=None, **kwargs):
         self.name = None
 
         self.base_template = base_template
@@ -73,9 +79,10 @@ class Style:
                     self.content_block = base.content_block
                     break
 
-        self.assets = assets.copy()
-        for b in bases:
-            self.assets.extend(b.assets)
+        self.assets = setdefaults_path(
+            *(base.assets for base in bases),
+            assets,
+        )
 
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 

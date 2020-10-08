@@ -3,8 +3,8 @@
 <head>
     <title>{% block title %}{{ title }}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}
-    {% for asset in assets %}
-      {{asset}}
+    {% for asset in assets.values %}
+      {{ asset }}
     {% endfor %}
 </head>
 <body>

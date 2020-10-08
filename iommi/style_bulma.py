@@ -6,10 +6,8 @@ from iommi.style_base import base
 from iommi.fragment import html
 from django.utils.safestring import mark_safe
 
-bulma_css = html.link(attrs__rel="stylesheet",
-                      attrs__href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css")
 
-navburger_script = html.script(
+_js = html.script(
     children__text=mark_safe(r"""
     $(document).ready(function() {
           // Check for click events on the navbar burger icon
@@ -26,10 +24,13 @@ navburger_script = html.script(
 
 bulma_base = Style(
     base,
-    assets=[
-        bulma_css,
-        navburger_script
-    ],
+    assets=dict(
+        css=html.link(
+            attrs__rel='stylesheet',
+            attrs__href='https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css',
+        ),
+        js=_js,
+    ),
     base_template='iommi/base_bulma.html',
     Header__attrs__class={
         'title': True,

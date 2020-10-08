@@ -17,6 +17,12 @@ from examples.models import (
 )
 from iommi.admin import Admin
 
+
+class MyAdmin(Admin):
+    class Meta:
+        iommi_style = 'bulma'
+
+
 urlpatterns = [
     path('', views.index, name='index'),
 
@@ -45,7 +51,7 @@ urlpatterns = [
     path('all_field_sorts/', views.all_field_sorts, name='all_field_sorts'),
     path('all_column_sorts/', views.all_column_sorts, name='all_column_sorts'),
 
-    path('iommi-admin/', include(Admin.urls())),
+    path('iommi-admin/', include(MyAdmin.urls())),
 
     path('menu_test/', views.menu_test, name='menu_test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
