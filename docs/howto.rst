@@ -80,6 +80,7 @@ for your site.
 Which you can use like this:
 
 .. code:: python
+
     def index(request):
         class IndexPage(BasePage):
             body = ...
@@ -91,6 +92,7 @@ parts (and most of the time it doesn't matter if you use the class Member or the
 keyword arguments to init syntax):
 
 .. code:: python
+
     def index(request):
         class IndexPage(BasePage):
             title = html.img(attrs=dict(src="...", alt="..."))
@@ -99,7 +101,8 @@ keyword arguments to init syntax):
 In the above we replaced the title and removed the subtitle element completely.  The
 latter of which shows one of the gotchas as only ``str``, ``Part`` and the django 
 template types are gathered into the parts structure when a ``Part`` class definition 
-is processed.  As ``None`` is not an instance of those types, you can only remove it using the keyword argument syntax.
+is processed.  As ``None`` is not an instance of those types, you can only remove
+elements using the keyword argument syntax.
 
 How do I set the title of my page?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,11 +110,13 @@ How do I set the title of my page?
 As in the text shown in the browser status bar?  
 
 .. code:: python
+
     return Page(title="The title in the browser")
 
 Note that this is different from 
 
 .. code:: python
+
     class MyPage(Page):
         title = html.h1("A header element in the dom") 
     return MyPage()
@@ -119,6 +124,7 @@ Note that this is different from
 Which is equivalent to:
 
 .. code:: python
+
     return Page(parts__title=html.h1("A header element in the dom"))
 
 
@@ -126,6 +132,7 @@ How do I specify the context used when a Template is rendered?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: python
+
     def index(request):
         context = { 'today' : datetime.date.today() }
         class MyPage(Page):
