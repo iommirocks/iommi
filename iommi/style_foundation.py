@@ -1,3 +1,4 @@
+from iommi import html
 from iommi.style import (
     Style,
 )
@@ -7,7 +8,17 @@ from iommi.style_base import base
 foundation_base = Style(
     base,
     font_awesome_4,
-    base_template='iommi/base_foundation.html',
+    assets=dict(
+        css=html.link(
+            attrs=dict(
+                rel='stylesheet',
+                href='https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css',
+                integrity='sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=',
+                crossorigin='anonymous',
+            ),
+        ),
+        js=html.script(attrs__src='https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/js/foundation.min.js'),
+    ),
     Container=dict(
         tag='div',
         attrs__class={

@@ -10,6 +10,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from pathlib import Path
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.admin',
     'iommi',
     'examples',
 ]
@@ -111,3 +114,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 IOMMI_DEBUG = True
+
+STATIC_ROOT = Path(__file__).parent

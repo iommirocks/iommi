@@ -52,6 +52,7 @@ from iommi.style import (
     get_style,
     get_style_name_for,
 )
+from .sort_after import sort_after
 
 
 class Part(Traversable):
@@ -155,6 +156,10 @@ def render_root(*, part, context, **render):
     root_style = get_style(root_style_name)
     template_name = root_style.base_template
     content_block_name = root_style.content_block
+    style_assets = {
+        k: v.bind(request=part.get_request())
+        for k, v in root_style.assets.items()
+    }
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
@@ -178,11 +183,14 @@ def render_root(*, part, context, **render):
         content=part.__html__(**render),
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
+        assets=sort_after(style_assets),
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )
 
-    template_string = '{% extends "' + template_name + '" %} {% block ' + content_block_name + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
+    template_string = '{% extends "' + template_name + '" %} {% block ' + \
+        content_block_name + \
+        ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     return get_template_from_string(template_string).render(context=context, request=part.get_request())
 
 

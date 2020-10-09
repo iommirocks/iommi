@@ -4,6 +4,7 @@ from django.urls import (
     include,
     path,
 )
+from django.contrib import admin
 
 import examples.views as views
 from examples.models import (
@@ -14,6 +15,13 @@ from iommi import (
     Form,
     Table,
 )
+from iommi.admin import Admin
+
+
+class MyAdmin(Admin):
+    class Meta:
+        iommi_style = 'bulma'
+
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -46,4 +54,6 @@ urlpatterns = [
     path('iommi-admin/', include(views.ExampleAdmin.urls())),
 
     path('menu_test/', views.menu_test, name='menu_test'),
+
+    path('admin/', admin.site.urls),  # This is mostly to make the django_admin style available
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

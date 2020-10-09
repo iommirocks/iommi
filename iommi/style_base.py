@@ -1,7 +1,23 @@
+from iommi import html
 from iommi.style import Style
 
 base = Style(
+    base_template='iommi/base.html',
     content_block='content',
+    assets=dict(
+        jquery=html.script(
+            attrs=dict(
+                src='https://code.jquery.com/jquery-3.4.1.js',
+                integrity='sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=',
+                crossorigin='anonymous',
+            ),
+            after=-1,
+        ),
+        select2_js=html.link(
+            attrs__href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
+            attrs__rel='stylesheet',
+        ),
+    ),
     Form=dict(
         template='iommi/form/form.html',
         actions_template='iommi/form/actions.html',
