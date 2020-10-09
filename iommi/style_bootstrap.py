@@ -7,7 +7,6 @@ from iommi.style_base import base
 
 bootstrap_base = Style(
     base,
-    base_template='iommi/base_bootstrap.html',
     assets=dict(
         css=html.link(
             attrs=dict(

@@ -2,6 +2,7 @@ from iommi import html
 from iommi.style import Style
 
 base = Style(
+    base_template='iommi/base.html',
     content_block='content',
     assets=dict(
         jquery=html.script(

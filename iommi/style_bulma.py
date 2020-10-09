@@ -31,7 +31,6 @@ bulma_base = Style(
         ),
         js=_js,
     ),
-    base_template='iommi/base_bulma.html',
     Header__attrs__class={
         'title': True,
         'is-1': lambda fragment, **_: fragment.tag == 'h1',

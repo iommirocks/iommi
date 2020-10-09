@@ -1,3 +1,4 @@
+from iommi import html
 from iommi.style import (
     Style,
 )
@@ -6,7 +7,23 @@ from iommi.style_base import base
 
 semantic_ui_base = Style(
     base,
-    base_template='iommi/base_semantic_ui.html',
+    assets=dict(
+        css=html.link(
+            attrs=dict(
+                rel='stylesheet',
+                href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css',
+                integrity='sha256-9mbkOfVho3ZPXfM7W8sV2SndrGDuh7wuyLjtsWeTI1Q=',
+                crossorigin='anonymous',
+            ),
+        ),
+        js=html.script(
+            attrs=dict(
+                src='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js',
+                integrity='sha256-t8GepnyPmw9t+foMh3mKNvcorqNHamSKtKRxxpUEgFI=',
+                crossorigin='anonymous',
+            ),
+        ),
+    ),
     Container=dict(
         tag='div',
         attrs__class={

@@ -4,6 +4,7 @@ from django.urls import (
     include,
     path,
 )
+from django.contrib import admin
 
 import examples.views as views
 from iommi import (
@@ -54,4 +55,6 @@ urlpatterns = [
     path('iommi-admin/', include(MyAdmin.urls())),
 
     path('menu_test/', views.menu_test, name='menu_test'),
+
+    path('admin/', admin.site.urls),  # This is mostly to make the django_admin style available
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

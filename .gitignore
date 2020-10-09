@@ -160,3 +160,5 @@ coverage.xml
 
 # These are machine generated files
 docs/_generated_tests/test_*.py
+
+examples/examples/admin/
