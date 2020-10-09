@@ -46,6 +46,10 @@ div.body h3.pun {
 
 }
 
+li a {
+    vertical-align: text-top;
+}
+
 @media screen and (max-width: 875px) {
 
     .mobile-logo {
