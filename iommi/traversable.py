@@ -94,7 +94,7 @@ class Traversable(RefinableObject):
             if self._bound_members:
                 c = f" members:{list(self._bound_members.keys())!r}"
 
-        return f'<{type(self).__module__}.{type(self).__name__}{n}{b}{p}{c}>'
+        return f'<{type(self).__module__}.{type(self).__name__} {n}{b}{p}{c}>'
 
     def iommi_name(self) -> str:
         return self._name

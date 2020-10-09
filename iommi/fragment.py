@@ -52,7 +52,6 @@ def fragment__render(fragment, context):
 
     is_void_element = fragment.tag in _void_elements
 
-
     if fragment.tag:
         if rendered_children:
             assert not is_void_element, f'{fragment.tag} is a void element, but it has children: {rendered_children}'
