@@ -31,7 +31,8 @@ urlpatterns = [
 
 
 @pytest.mark.django_db
-def test_bulk_edit_for_non_unique():
+def test_bulk_edit_for_non_unique(settings):
+    settings.ROOT_URLCONF = __name__
     request = staff_req('get')
     p = Admin.list(
         request=request,
@@ -86,7 +87,8 @@ def test_create(mock_messages, settings):
 
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
-def test_edit(mock_messages):
+def test_edit(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
     request = staff_req('get')
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
@@ -107,7 +109,8 @@ def test_edit(mock_messages):
 
 @pytest.mark.django_db
 @mock.patch('iommi.admin.messages')
-def test_delete(mock_messages):
+def test_delete(mock_messages, settings):
+    settings.ROOT_URLCONF = __name__
     request = staff_req('get')
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
@@ -174,7 +177,8 @@ def test_messages():
     assert message in Messages().bind(request=request).__html__()
 
 
-def test_all_models():
+def test_all_models(settings):
+    settings.ROOT_URLCONF = __name__
     request = staff_req('get')
     assert 'Authentication' in Admin.all_models(request=request).bind(request=request).render_to_response().content.decode()
 
