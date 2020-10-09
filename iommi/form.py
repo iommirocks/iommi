@@ -442,6 +442,13 @@ def boolean_tristate__parse(string_value, **_):
     return bool_parse(string_value)
 
 
+def render_fragment(fragment):
+    if fragment is None:
+        return ''
+
+    return str(fragment)
+
+
 @with_meta
 class Field(Part):
     """
@@ -456,6 +463,7 @@ class Field(Part):
 
     """
 
+    tag: str = EvaluatedRefinable()
     attr: str = EvaluatedRefinable()
     display_name: str = EvaluatedRefinable()
 
@@ -498,6 +506,7 @@ class Field(Part):
 
     @reinvokable
     @dispatch(
+        tag=None,
         attr=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
@@ -625,8 +634,6 @@ class Field(Part):
         setattr_path(instance, field.attr, value)
 
     def on_bind(self) -> None:
-        assert self.template
-
         form = self.iommi_parent().iommi_parent()
         if self.attr is MISSING:
             self.attr = self._name
@@ -655,8 +662,12 @@ class Field(Part):
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
-        assert not self.label.children
-        self.label.children = dict(text=evaluate_strict(self.display_name, **self.iommi_evaluate_parameters()))
+        if self.label is not None:
+            assert not self.label.children
+            self.label.children = dict(text=evaluate_strict(self.display_name, **self.iommi_evaluate_parameters()))
+        if self.display_name is None:
+            self.label = None
+
         self.non_editable_input = self.non_editable_input.bind(parent=self)
 
         self.help = self.help.bind(parent=self)
@@ -855,7 +866,20 @@ class Field(Part):
             self.non_editable_input.children['text'] = self.rendered_value
             self.input = self.non_editable_input
 
-        return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
+        if self.template:
+            return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
+
+        return Fragment(
+            _name=self._name,
+            tag=self.tag,
+            attrs=self.attrs,
+            children=dict(
+                label=render_fragment(self.label),
+                input=render_fragment(self.input),
+                help=render_fragment(self.help),
+                errors=render_fragment(self.errors),
+            ),
+        ).bind(parent=self._parent).__html__()
 
     @classmethod
     @class_shortcut(

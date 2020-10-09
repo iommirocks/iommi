@@ -33,7 +33,6 @@ semantic_ui_base = Style(
             ),
         ),
         attrs__class__field=True,
-        template='iommi/form/semantic_ui/row.html',
         help__attrs__class=dict(
             ui=True,
             pointing=True,

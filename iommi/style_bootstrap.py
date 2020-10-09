@@ -42,7 +42,6 @@ bootstrap_base = Style(
             'is-invalid': lambda field, **_: bool(field.errors),
         },
         errors__attrs__class={'invalid-feedback': True},
-        template='iommi/form/bootstrap/row.html',
         help__attrs__class={
             'form-text': True,
             'text-muted': True,

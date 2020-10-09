@@ -39,7 +39,7 @@ bulma_base = Style(
             ),
         ),
         attrs__class__field=True,
-        template='iommi/form/bulma/row.html',
+        template='iommi/form/bulma/field.html',
         label__attrs__class__label=True,
         input__attrs__class__input=True,
         help__attrs__class=dict(
