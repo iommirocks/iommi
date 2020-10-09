@@ -56,7 +56,8 @@ programmer should (if at all possible) be an error with a very good
 error message telling them how to fix the problem.
 
 To accomplish this we:
-- don't override use object oriented style overriding, instead preferring [refining](https://kodare.net/2018/06/25/refinableobject-object-orientation-refined.html)
+
+- don't override use object oriented style overriding, instead preferring `refining <https://kodare.net/2018/06/25/refinableobject-object-orientation-refined.html>`_
 - show you the valid values when you supply an invalid one, one per line and in alphabetical order
 - detect common mistakes we've made and have helpful error messages telling you what to do or why you can't do that thing
 
