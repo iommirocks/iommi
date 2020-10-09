@@ -7,9 +7,7 @@ from iommi.style import (
     apply_style,
     get_iommi_style_name,
 )
-from iommi.traversable import (
-    reinvokable,
-)
+from iommi.reinvokable import reinvokable
 
 
 class Errors(set):

@@ -22,6 +22,7 @@ from iommi.base import (
     items,
     keys,
 )
+from iommi.reinvokable import is_reinvokable
 
 DEFAULT_STYLE = 'bootstrap'
 
@@ -42,8 +43,7 @@ def apply_style(style_name: str, obj: Any) -> Any:
 def apply_style_data(style_data: Namespace, obj: Any) -> Any:
     if not style_data:
         return obj
-    _iommi_saved_params = getattr(obj, '_iommi_saved_params', None)
-    if _iommi_saved_params is None:
+    if not is_reinvokable(obj):
         print(f'Missing out of {style_data} for {type(obj)}')
         return obj
     return reinvoke_new_defaults(obj, style_data)
@@ -136,7 +136,7 @@ Available styles:
 
 
 def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
-    assert hasattr(obj, '_iommi_saved_params'), f'reinvoke_new_defaults() called on class with missing @reinvokable decorator: {obj.__class__.__name__}'
+    assert is_reinvokable(obj), f'reinvoke_new_defaults() called on object with missing @reinvokable constructor decorator: {obj!r}'
     additional_kwargs_namespace = Namespace(additional_kwargs)
 
     kwargs = Namespace(additional_kwargs_namespace)
@@ -146,7 +146,7 @@ def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
         except AttributeError:
             kwargs[name] = saved_param
         else:
-            if hasattr(saved_param, '_iommi_saved_params'):
+            if is_reinvokable(saved_param):
                 assert isinstance(new_param, dict)
                 kwargs[name] = reinvoke_new_defaults(saved_param, new_param)
             else:

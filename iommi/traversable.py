@@ -1,5 +1,4 @@
 import copy
-import functools
 from typing import (
     Any,
     Dict,
@@ -42,16 +41,6 @@ def is_evaluated_refinable(x):
 
 class PathNotFoundException(Exception):
     pass
-
-
-def reinvokable(f):
-    @functools.wraps(f)
-    def reinvokable_wrapper(self, *args, **kwargs):
-        # We only need to save the params on the first level
-        if not hasattr(self, '_iommi_saved_params'):
-            self._iommi_saved_params = kwargs
-        return f(self, *args, **kwargs)
-    return reinvokable_wrapper
 
 
 class Traversable(RefinableObject):
@@ -126,37 +115,6 @@ class Traversable(RefinableObject):
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
 
-    def reinvoke(self, additional_kwargs: Dict[str, Any]) -> "Traversable":
-        assert hasattr(self, '_iommi_saved_params'), f'reinvoke() called on class with missing @reinvokable decorator: {self.__class__.__name__}'
-        additional_kwargs_namespace = Namespace(additional_kwargs)
-        kwargs = {}
-        for name, saved_param in items(self._iommi_saved_params):
-            try:
-                new_param = getattr_path(additional_kwargs_namespace, name)
-            except AttributeError:
-                kwargs[name] = saved_param
-            else:
-                if hasattr(saved_param, 'reinvoke'):
-                    assert isinstance(new_param, dict)
-                    kwargs[name] = saved_param.reinvoke(new_param)
-                else:
-                    if isinstance(saved_param, Namespace):
-                        kwargs[name] = Namespace(saved_param, new_param)
-                    else:
-                        kwargs[name] = new_param
-
-        additional_kwargs_namespace.pop('call_target', None)
-
-        kwargs = Namespace(additional_kwargs_namespace, kwargs)  # Also include those keys not already in the original
-
-        result = type(self)(**kwargs)
-
-        result._name = self._name
-        __tri_declarative_shortcut_stack = getattr(self, '__tri_declarative_shortcut_stack', None)
-        if __tri_declarative_shortcut_stack is not None:
-            setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
-
-        return result
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound

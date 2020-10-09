@@ -48,7 +48,7 @@ from iommi.base import (
     items,
     values,
 )
-from iommi.traversable import reinvokable
+from iommi.reinvokable import reinvokable
 
 app_verbose_name_by_label = {
     config.label: config.verbose_name

@@ -129,9 +129,12 @@ from iommi.traversable import (
     declared_members,
     evaluated_refinable,
     EvaluatedRefinable,
-    reinvokable,
     set_declared_member,
     Traversable,
+)
+from .reinvokable import (
+    reinvokable,
+    reinvoke,
 )
 from ._web_compat import settings
 
@@ -1658,7 +1661,7 @@ class Table(Part, Tag):
                 filter = Namespace(
                     field__display_name=lambda table, field, **_: table.columns[field._name].display_name,
                 )
-                declared_filters[name] = declared_filters[name].reinvoke(filter)
+                declared_filters[name] = reinvoke(declared_filters[name], filter)
         set_declared_member(self.query, 'filters', declared_filters)
 
         self.query = self.query.bind(parent=self)
@@ -1688,7 +1691,7 @@ class Table(Part, Tag):
                         include=lambda table, field, **_: table.columns[field._name].bulk.include,
                         display_name=lambda table, field, **_: table.columns[field._name].display_name,
                     )
-                    declared_fields[name] = declared_fields[name].reinvoke(field)
+                    declared_fields[name] = reinvoke(declared_fields[name], field)
             set_declared_member(self.bulk, 'fields', declared_fields)
 
             self.bulk = self.bulk.bind(parent=self)

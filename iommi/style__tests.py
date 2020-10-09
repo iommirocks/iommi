@@ -20,9 +20,9 @@ from iommi.style import (
 from iommi.style_base import base
 from iommi.traversable import (
     get_iommi_style_name,
-    reinvokable,
     Traversable,
 )
+from iommi.reinvokable import reinvokable
 
 
 def test_style():

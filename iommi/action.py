@@ -32,8 +32,9 @@ from iommi.fragment import (
 from iommi.member import Members
 from iommi.part import Part
 from iommi.traversable import (
-    EvaluatedRefinable, reinvokable,
+    EvaluatedRefinable,
 )
+from iommi.reinvokable import reinvokable
 
 
 @with_meta

@@ -34,8 +34,8 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
 )
+from iommi.reinvokable import reinvokable
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 _void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']

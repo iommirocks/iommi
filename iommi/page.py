@@ -38,9 +38,9 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
     Traversable,
 )
+from iommi.reinvokable import reinvokable
 from iommi.evaluate import evaluate_strict_container
 
 

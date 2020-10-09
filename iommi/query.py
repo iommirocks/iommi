@@ -64,8 +64,11 @@ from iommi.part import (
 from iommi.traversable import (
     declared_members,
     EvaluatedRefinable,
-    reinvokable,
     set_declared_member,
+)
+from iommi.reinvokable import (
+    reinvokable,
+    reinvoke,
 )
 from pyparsing import (
     alphanums,
@@ -661,7 +664,7 @@ class Query(Part):
                     model_field=filter.model_field,
                     help__include=False,
                 )
-                declared_fields[name] = declared_fields[name].reinvoke(field)
+                declared_fields[name] = reinvoke(declared_fields[name], field)
         set_declared_member(self.form, 'fields', declared_fields)
         for name, field in items(declared_fields):
             if name == FREETEXT_SEARCH_NAME:

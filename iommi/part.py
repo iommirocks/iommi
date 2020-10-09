@@ -45,9 +45,9 @@ from iommi.member import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
     Traversable,
 )
+from .reinvokable import reinvokable
 from iommi.style import (
     get_iommi_style_name,
     get_style,
