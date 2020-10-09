@@ -52,7 +52,6 @@ base = Style(
         help__attrs__class__helptext=True,
         help__tag='div',
         template='iommi/form/row.html',
-        errors__template='iommi/form/errors.html',
     ),
     Column=dict(
         shortcuts=dict(

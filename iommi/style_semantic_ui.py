@@ -34,7 +34,6 @@ semantic_ui_base = Style(
         ),
         attrs__class__field=True,
         template='iommi/form/semantic_ui/row.html',
-        errors__template='iommi/form/semantic_ui/errors.html',
         help__attrs__class=dict(
             ui=True,
             pointing=True,
@@ -107,6 +106,11 @@ semantic_ui_base = Style(
             item=True,
             active=True,
         )
+    ),
+    Errors__attrs__class=dict(
+        ui=True,
+        error=True,
+        message=True,
     ),
 )
 semantic_ui = Style(

@@ -6,16 +6,14 @@ from django.urls import (
 )
 
 import examples.views as views
-from iommi import (
-    Table,
-    Form,
-)
-
 from examples.models import (
-    TFoo,
     Foo,
+    TFoo,
 )
-from iommi.admin import Admin
+from iommi import (
+    Form,
+    Table,
+)
 
 
 class MyAdmin(Admin):
@@ -51,7 +49,7 @@ urlpatterns = [
     path('all_field_sorts/', views.all_field_sorts, name='all_field_sorts'),
     path('all_column_sorts/', views.all_column_sorts, name='all_column_sorts'),
 
-    path('iommi-admin/', include(MyAdmin.urls())),
+    path('iommi-admin/', include(views.ExampleAdmin.urls())),
 
     path('menu_test/', views.menu_test, name='menu_test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
