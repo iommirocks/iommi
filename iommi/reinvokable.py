@@ -57,3 +57,11 @@ def reinvoke(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
         setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
 
     return result
+
+
+def set_and_remember_for_reinvoke(obj, **kwargs):
+    assert is_reinvokable(obj)
+    for k, v in items(kwargs):
+        setattr(obj, k, v)
+        # noinspection PyProtectedMember
+        obj._iommi_saved_params[k] = v

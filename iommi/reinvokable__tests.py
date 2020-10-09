@@ -11,6 +11,7 @@ from iommi import (
 from iommi.reinvokable import (
     reinvokable,
     reinvoke,
+    set_and_remember_for_reinvoke,
 )
 
 
@@ -28,10 +29,13 @@ def test_reinvokable():
     assert x.kwargs == dict(foo=17, bar=42)
 
 
-def test_reinvokable_cache_is_respected():
+def test_set_and_remember_for_reinvoke():
     x = MyReinvokable(foo=17)
-    x._iommi_saved_params == dict(foo=17)
-    x._iommi_saved_params['foo'] = 42
+    assert x._iommi_saved_params == dict(foo=17)
+    assert x.kwargs.foo == 17
+
+    set_and_remember_for_reinvoke(x, foo=42)
+    assert x.foo == 42
     x = reinvoke(x, dict(bar=42))
     assert x.kwargs == dict(foo=42, bar=42)
 
@@ -155,3 +159,4 @@ def test_reinvoke_extra_shortcut():
     )
 
     assert f.bind().fields.my_field.extra == dict(foo=17, bar=42, buz=4711)
+

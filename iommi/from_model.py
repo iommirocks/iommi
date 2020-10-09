@@ -24,6 +24,7 @@ from iommi.base import (
     MISSING,
 )
 from iommi.evaluate import evaluate
+from iommi.reinvokable import set_and_remember_for_reinvoke
 
 
 def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
@@ -91,8 +92,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 factory_lookup_register_function=factory_lookup_register_function,
                 model_field_name=field_path_rest,
                 **kwargs)
-            result.attr = model_field_name
-            result._iommi_saved_params['attr'] = model_field_name
+            set_and_remember_for_reinvoke(result, attr=model_field_name)
             return result
 
     factory = factory_lookup.get(type(model_field), MISSING)

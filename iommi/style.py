@@ -6,7 +6,6 @@ from typing import (
     Type,
 )
 
-from ._web_compat import settings
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -15,7 +14,6 @@ from tri_declarative import (
     getattr_path,
     Namespace,
     RefinableObject,
-    setdefaults_path,
 )
 
 from iommi.base import (
@@ -23,6 +21,7 @@ from iommi.base import (
     keys,
 )
 from iommi.reinvokable import is_reinvokable
+from ._web_compat import settings
 
 DEFAULT_STYLE = 'bootstrap'
 
