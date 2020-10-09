@@ -83,18 +83,19 @@ class Traversable(RefinableObject):
         super(Traversable, self).__init__(**kwargs)
 
     def __repr__(self):
-        n = f' {self._name}' if self._name is not None else ''
-        b = ' (bound)' if self._is_bound else ''
+        n = f'{self._name}' if self._name is not None else ''
+        b = '(bound)' if self._is_bound else ''
         try:
-            p = f" path:'{self.iommi_path}'" if self.iommi_parent() is not None else ""
+            p = f"path:'{self.iommi_path}'" if self.iommi_parent() is not None else ''
         except PathNotFoundException:
-            p = ' path:<no path>'
+            p = 'path:<no path>'
         c = ''
         if self._is_bound:
             if self._bound_members:
-                c = f" members:{list(self._bound_members.keys())!r}"
+                c = f'members:{list(self._bound_members.keys())!r}'
 
-        return f'<{type(self).__module__}.{type(self).__name__} {n}{b}{p}{c}>'
+        description = (' ' + ' '.join(x for x in ('', n, b, p, c) if x)).rstrip()
+        return f'<{type(self).__module__}.{type(self).__name__}{description}>'
 
     def iommi_name(self) -> str:
         return self._name
