@@ -41,11 +41,11 @@ django_admin = Style(
         aligned=True,
     ),
     Form__attrs__id='content',
-    Table__actions__attrs__class={'object-tools': True},
+    # Table__actions__attrs__class={'object-tools': True},
     Table__outer__tag='div',
     Table__outer__attrs__id='content',
     Table__bulk__attrs__id=None,
-    Admin__parts__menu__attrs__id='header',
+    # Admin__parts__menu__attrs__id='header',
     Menu__tag='nav',
 )
 

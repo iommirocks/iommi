@@ -5,7 +5,9 @@ from tri_declarative import (
     Namespace,
     Refinable,
 )
+from tri_struct import Struct
 
+from iommi import Table
 from iommi.attrs import render_attrs
 from iommi.base import items
 from iommi.style import (
@@ -14,6 +16,7 @@ from iommi.style import (
     get_style_data_for_object,
     InvalidStyleConfigurationException,
     register_style,
+    reinvoke_new_defaults,
     Style,
     validate_styles,
 )
@@ -241,3 +244,29 @@ def test_get_style_error():
         get_style('does_not_exist')
 
     assert str(e.value).startswith('No registered style does_not_exist. Register a style with register_style().')
+
+
+class MyReinvokable:
+    _name = None
+
+    @reinvokable
+    def __init__(self, **kwargs):
+        self.kwargs = Struct(kwargs)
+
+
+def test_reinvokable_new_defaults_recurse():
+    x = MyReinvokable(foo=MyReinvokable(bar=17))
+    x = reinvoke_new_defaults(x, Namespace(foo__bar=42, foo__baz=43))
+
+    assert isinstance(x.kwargs.foo, MyReinvokable)
+    assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
+
+
+@pytest.mark.skip('Broken since there is no way to set things on the countainer of Action')
+def test_set_class_on_actions_container():
+    t = Table()
+    style_data = Namespace(
+        actions__attrs__class={'object-tools': True},
+    )
+    reinvoke_new_defaults(t, style_data)
+
