@@ -85,7 +85,7 @@ Which you can use like this:
             body = ...
         return IndexPage(parts__subtitle__children__text="Still rocking...")
 
-Here you can see that ``Part``s (``Page``s are themselves ``Part``s) form a tree and the direct children are gathered in the ``parts`` namespace.  Here we overwrote a leaf of
+Here you can see that ``Part`` s (``Page`` s are themselves ``Part`` s) form a tree and the direct children are gathered in the ``parts`` namespace.  Here we overwrote a leaf of
 an existing namespace, but you can equally add new elements or replace bigger 
 parts (and most of the time it doesn't matter if you use the class Member or the 
 keyword arguments to init syntax):
