@@ -39,6 +39,30 @@ The philosophy has these main parts:
 .. contents::
     :local:
 
+
+No silent mistakes
+---------------------
+
+Systems that fail silently is the worst. Like when you try to render a
+value in a django template and you just get silence instead of an error telling
+you you misspelled the variable name. Or when you define a `clean_albumm` method
+that never gets called because you misspelled "album" (or worse if you renamed
+album to record!). Or silent changes to behavior because you upgraded a library
+and your overridden method isn't called because they renamed the function in
+the class you inherited from.
+
+In iommi we have an explicit design goal that all mistakes made by the
+programmer should (if at all possible) be an error with a very good
+error message telling them how to fix the problem.
+
+To accomplish this we:
+- don't override use object oriented style overriding, instead preferring [refining](https://kodare.net/2018/06/25/refinableobject-object-orientation-refined.html)
+- show you the valid values when you supply an invalid one, one per line and in alphabetical order
+- detect common mistakes we've made and have helpful error messages telling you what to do or why you can't do that thing
+
+We love Django, but it does silently fail in many places. In iommi we try our hardest to never let you get stuck with silence as your only company.
+
+
 Everything has a name
 ---------------------
 
@@ -91,9 +115,15 @@ options was the single thing they wanted to change and which are copy paste
 of the defaults? Turns out in this case it was just the `clutch_type`! We
 would like to write:
 
-.. code:: imaginary-python
+.. test
+    """
+
+.. code:: python
 
     car = Car(engine.gearbox.clutch_type='double')
+
+.. test
+    """
 
 but pythons syntax doesn't allow this. So instead we use `__`:
 
