@@ -139,6 +139,15 @@ How do I specify the context used when a Template is rendered?
             body = Template("""A django template was rendered on {{today}}.""")
         return MyPage(context=context)
 
+You can use the full power of ``tri_declarative`` to construct the context.  This
+not only makes the above shorter, but also makes it easy to write abstractions that
+can be extended later:
+
+.. code:: python
+
+    return Page(body = Template(...), context__today=datetime.date.today())
+
+
 Forms
 -----
 
