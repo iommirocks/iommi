@@ -60,6 +60,78 @@ The `Tree` link will open the `?/debug_tree` page mentioned above.
 .. test
     assert True  # Until I come up with a nice way to test this
 
+
+Parts & Pages
+-------------
+
+How do I override part of a part/page? 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is all just *standard* tri_declarative magic.  But as you are likely new to it 
+this might take a while to get used to. Let's say you created yourself a master template 
+for your site.
+
+.. code:: python
+
+    class BasePage(Page):
+        title = html.h1(attrs__class={'title':True, 'is-1':True}, "My awesome webpage")
+        subtitle = html.h1(attrs__class={'subtitle':True, 'is-3':True}, "It rocks")
+
+Which you can use like this:
+
+.. code:: python
+    def index(request):
+        class IndexPage(BasePage):
+            body = ...
+        return IndexPage(parts__subtitle__children__text="Still rocking...")
+
+Here you can see that ``Part``s (``Page``s are themselves ``Part``s) form a tree and the direct children are gathered in the ``parts`` namespace.  Here we overwrote a leaf of
+an existing namespace, but you can equally add new elements or replace bigger 
+parts (and most of the time it doesn't matter if you use the class Member or the 
+keyword arguments to init syntax):
+
+.. code:: python
+    def index(request):
+        class IndexPage(BasePage):
+            title = html.img(attrs=dict(src="...", alt="..."))
+        return IndexPage(parts__subtitle=None)
+
+In the above we replaced the title and removed the subtitle element completely.  The
+latter of which shows one of the gotchas as only ``str``, ``Part`` and the django 
+template types are gathered into the parts structure when a ``Part`` class definition 
+is processed.  As ``None`` is not an instance of those types, you can only remove it using the keyword argument syntax.
+
+How do I set the title of my page?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As in the text shown in the browser status bar?  
+
+.. code:: python
+    return Page(title="The title in the browser")
+
+Note that this is different from 
+
+.. code:: python
+    class MyPage(Page):
+        title = html.h1("A header element in the dom") 
+    return MyPage()
+
+Which is equivalent to:
+
+.. code:: python
+    return Page(parts__title=html.h1("A header element in the dom"))
+
+
+How do I specify the context used when a Template is rendered?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+    def index(request):
+        context = { 'today' : datetime.date.today() }
+        class MyPage(Page):
+            body = Template("""A django template was rendered on {{today}}.""")
+        return MyPage(context=context)
+
 Forms
 -----
 
