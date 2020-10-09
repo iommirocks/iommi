@@ -79,12 +79,7 @@ class Style:
                     self.content_block = base.content_block
                     break
 
-        self.assets = setdefaults_path(
-            Namespace(),
-            *(base.assets for base in reversed(bases)),
-            assets,
-        )
-
+        self.assets = {k: v for k, v in Namespace(*(base.assets for base in bases), assets).items() if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj):
