@@ -1,6 +1,25 @@
 Changelog
 ---------
 
+2.1.0 (2020-10-07)
+~~~~~~~~~~~~~~~~~~
+
+* Internationalization! iommi now has i18n support and ships with English, German and Swedish languages out of the box. We welcome more translations.
+
+* Out of the box support for the Bulma CSS framework
+
+* Make `auto__include` specifications allow foreign key paths
+
+* By default we now grab display_name from the model fields verbose_name (if applicable)
+
+* Sometimes you got reordering of parts when doing a post to a form for example, this is now fixed
+
+* The `traversable` argument to lambdas is now the leaf and not the root. This was a bug.
+
+* Support `reverse_lazy` as url argument to MenuItem
+
+* Two id attributes were rendered on the input tags in forms (thanks Benedikt Grundmann for reporting!)
+
 
 2.0.1 (2020-09-22)
 ~~~~~~~~~~~~~~~~~~

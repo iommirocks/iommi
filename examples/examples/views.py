@@ -5,29 +5,43 @@ from datetime import (
 )
 from pathlib import Path
 
-import iommi.part
-import iommi.style
-import iommi.traversable
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import OperationalError
 from django.http import (
     HttpResponse,
-    HttpResponseRedirect,
 )
 from django.template import (
     RequestContext,
     Template,
 )
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from tri_declarative import (
+    get_members,
+    is_shortcut,
+    LAST,
+    Namespace,
+    Shortcut,
+)
+from tri_struct import Struct
+
+import iommi.part
+import iommi.style
+import iommi.traversable
 from iommi import (
     Action,
     Column,
+    Fragment,
     Header,
     html,
     Page,
     Table,
+)
+from iommi.admin import (
+    Admin,
+    Auth,
 )
 from iommi.base import (
     items,
@@ -43,14 +57,6 @@ from iommi.menu import (
     MenuItem,
 )
 from iommi.style import validate_styles
-from tri_declarative import (
-    get_members,
-    is_shortcut,
-    Namespace,
-    Shortcut,
-)
-from tri_struct import Struct
-
 from .models import (
     Album,
     Artist,
@@ -520,23 +526,20 @@ def all_column_sorts(request):
     ))
 
 
-def select_style_post_handler(form, **_):
-    style = form.fields.style.value
-    settings.IOMMI_DEFAULT_STYLE = style
-    return HttpResponseRedirect('/')
-
-
 class StyleSelector(Form):
     class Meta:
-        actions__submit__post_handler = select_style_post_handler
+        @staticmethod
+        def actions__submit__post_handler(request, form, **_):
+            style = form.fields.style.value
+            settings.IOMMI_DEFAULT_STYLE = style
 
     style = Field.choice(
         choices=[
             k for k in
             keys(iommi.style._styles)
-            if k not in ('test', 'base', 'bootstrap_horizontal')
+            if k not in ('test', 'base') and not k.endswith('_horizontal')
         ],
-        initial=lambda form, field, **_: iommi.style.DEFAULT_STYLE,
+        initial=lambda form, field, **_: getattr(settings, 'IOMMI_DEFAULT_STYLE', iommi.style.DEFAULT_STYLE),
     )
 
 
@@ -558,3 +561,22 @@ def menu_test(request):
         )
 
     return FooPage()
+
+
+class ExampleAdmin(Admin):
+    class Meta:
+        iommi_style = None
+        parts__menu__sub_menu = dict(
+            home=MenuItem(url='/'),
+            admin=MenuItem(url=lambda **_: reverse(ExampleAdmin.all_models)),
+            change_password=MenuItem(url=lambda **_: reverse(Auth.change_password)),
+            logout=MenuItem(url=lambda **_: reverse(Auth.logout)),
+        )
+
+        parts__footer = Fragment(
+            after=LAST,
+            children=dict(
+                hr=html.hr(),
+                style=StyleSelector(title='Change iommi style'),
+            )
+        )

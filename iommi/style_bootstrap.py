@@ -63,10 +63,10 @@ bootstrap_base = Style(
         },
         input__attrs__class={
             'form-control': True,
+            'is-invalid': lambda field, **_: bool(field.errors),
         },
         errors__attrs__class={'invalid-feedback': True},
         template='iommi/form/bootstrap/row.html',
-        errors__template='iommi/form/bootstrap/errors.html',
         help__attrs__class={
             'form-text': True,
             'text-muted': True,
@@ -158,6 +158,7 @@ bootstrap_base = Style(
             },
         ),
     ),
+    Errors__attrs__class={'with-errors': True},
 )
 bootstrap = Style(
     bootstrap_base,

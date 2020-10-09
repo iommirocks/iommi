@@ -11,8 +11,8 @@ sys.path.insert(0, base_dir.parent)
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 
-from django.conf import settings
-settings.configure()
+from django import setup
+setup()
 
 from iommi.docs import generate_rst_docs
 
