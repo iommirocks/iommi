@@ -94,7 +94,11 @@ request = req('get')
                     f.write('\n')
                     current_line += 1
 
-                f.write(line)
+                if line.strip() == 'return':
+                    # A little hack to turn some return statements like "if not form.is_valid(): return" into non-covered
+                    f.write(line.rstrip() + '  # pragma: no cover\n')
+                else:
+                    f.write(line)
                 current_line += 1
             if not section['code'] and func_name:
                 f.write('    pass\n')

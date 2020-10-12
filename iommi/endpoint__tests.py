@@ -59,7 +59,7 @@ def test_dispatch_error_message_to_client():
             ),
         )
 
-    response = request_with_middleware(response=MyPage(), data={'/qwe': ''})
+    response = request_with_middleware(MyPage(), req('get', **{'/qwe': ''}))
     data = json.loads(response.content)
     assert data == dict(error='Invalid endpoint path')
 
@@ -120,7 +120,7 @@ def test_find_target_with_invalid_path():
 
 def test_middleware_fallthrough_on_non_part():
     sentinel = object()
-    assert request_with_middleware(response=sentinel, data={}) is sentinel
+    assert request_with_middleware(sentinel, req('get')) is sentinel
 
 
 @override_settings(DEBUG=True)

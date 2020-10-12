@@ -1602,12 +1602,12 @@ def test_ajax_endpoint():
 
     # This test could also have been made with perform_ajax_dispatch directly, but it's nice to have a test that tests more of the code path
     result = request_with_middleware(
-        response=Page(
+        Page(
             parts__table=TestTable(
                 rows=TBar.objects.all()
             ),
         ),
-        data={'/parts/table/query/form/fields/foo/endpoints/choices': 'hopp'},
+        req('get', **{'/parts/table/query/form/fields/foo/endpoints/choices': 'hopp'}),
     )
     assert json.loads(result.content) == {
         'results': [

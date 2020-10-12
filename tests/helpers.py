@@ -72,13 +72,13 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     assert prettified_actual == prettified_expected
 
 
-def request_with_middleware(*, response, data):
+def request_with_middleware(response, request):
     def get_response(request):
         del request
         return response
 
     m = middleware(get_response)
-    return m(request=RequestFactory().get('/', data=data))
+    return m(request=request)
 
 
 def no_auth_middleware_req(method, **data):

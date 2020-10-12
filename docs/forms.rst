@@ -21,113 +21,157 @@ Read the full documentation and the :doc:`howto` for more.
 .. contents::
     :local:
 
-Examples
---------
 
-.. test
-    user = User.objects.create(username='foo')
+iommi pre-packages sets of defaults for common field types as 'shortcuts'.
+Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.
+The full list of shortcuts can be found in the
+`API documentation for Field <api.html#iommi.Field>`_.
+
+iommi also comes with full edit, create and delete views. See below for an example of `Form.edit`.
 
 
-You can either create a subclass of `Form`...
+Declarative forms
+-----------------
 
-.. todo
-    Would be good if these things were tested...
-    These examples are a bit of a mess... the good examples at the bottom and the manual stuff at the top
+You can create forms declaratively, similar to Django forms. There are some important differences between iommi forms and Django forms in this mode, maybe the most important being that in iommi you can pass a callable as a parameter to late evaluate what the value of something is. This coupled with the `include` flag that is used to totally remove or turn on a part (most commonly an entire field), as we've done for the `is_staff` field in this example:
+
 
 .. code:: python
 
     class UserForm(Form):
-        name = Field.text()
+        first_name = Field.text()
         username = Field.text(
-            is_valid=lambda parsed_data, **_: (parsed_data.startswith('demo_'), 'neeeds to start with demo_'))
+            is_valid=lambda parsed_data, **_: (
+                parsed_data.startswith('demo_'),
+                'needs to start with demo_')
+           )
         is_staff = Field.boolean(
             # show only for staff
             include=lambda request, **_: request.user.is_staff,
-            label__template='tweak_label_tag.html')
+            label__template='tweak_label_tag.html',
+        )
+
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                if not form.is_valid():
+                    return
+
+                form.apply(user)
+                user.save()
+                return HttpResponseRedirect('..')
 
     def edit_user_view(request, username):
-        form = UserForm().bind(request=request)
-
         user = User.objects.get(username=username)
-        if form.is_valid() and request.method == 'POST':
-            form.apply(user)
-            user.save()
-            return HttpResponseRedirect('..')
-
-        return render(
-            request=request,
-            template_name='edit_user.html',
-            context={'form': form})
+        return UserForm(instance=user)
 
 .. test
 
-    edit_user_view(user_req('get'), user.username)
-    post_request = req('post', name='foo', username='demo_', is_staff='1')
+    user = User.objects.create(username='foo')
+
+    post_request = req('post', first_name='foo', username='demo_', is_staff='1', **{'-submit': ''})
     post_request.user = user
-    edit_user_view(post_request, user.username)
-    # restore the username
-    user.username = 'foo'
-    user.save()
 
-.. code:: html
+    f = edit_user_view(post_request, user.username).bind(request=post_request)
+    f.render_to_response()
+    assert not f.get_errors()
 
-    <!-- edit_user.html -->
-    <form action="" method="post">{% csrf_token %}
-      <div>
-        <table>
-          {{ form }}
-        </table>
-      </div>
-      <input type="submit" value="Save" />
-    </form>
 
-or just instantiate a `Form` with a `Field` dict and use it directly:
+Note that we don't need any template here.
+
+
+Programmatic forms
+------------------
+
+The declarative style is very readable, but sometimes you don't know until runtime what the form should look like. In iommi forms creating forms programmatically is easy (and equivalent to doing it the declarative way:
+
 
 .. code:: python
 
-    def edit_user_view(request, username):
-        form = Form(fields=dict(
-            name=Field.text(
-                is_valid=lambda parsed_data, **_: parsed_data.startswith('demo_'),
-            ),
-            username=Field.text(),
-            is_staff=Field.boolean(
-                # show only for staff
-                include=lambda request, **_: request.user.is_staff,
-                label__template='tweak_label_tag.html',
-            ),
-        ))
+    def edit_user_save_post_handler(form, **_):
+        if not form.is_valid():
+            return
 
-        # rest of view function...
+        form.apply(user)
+        user.save()
+        return HttpResponseRedirect('..')
+
+    def edit_user_view(request, username):
+        return Form(
+            fields=dict(
+                first_name=Field.text(),
+                username=Field.text(
+                    is_valid=lambda parsed_data, **_: (
+                        parsed_data.startswith('demo_'),
+                        'needs to start with demo_'
+                    ),
+                ),
+                is_staff=Field.boolean(
+                    # show only for staff
+                    include=lambda request, **_: request.user.is_staff,
+                    label__template='tweak_label_tag.html',
+                ),
+            ),
+            actions__submit__post_handler=edit_user_save_post_handler,
+        )
 
 .. test
-        return form
-    edit_user_view(user_req('get'), user.username)
 
+    user = User.objects.create(username='foo')
+    edit_user_view(user_req('get'), user.username).bind(request=user_req('get'))
+    post_request = req('post', first_name='foo', username='demo_foo', is_staff='1', **{'-submit': ''})
+    post_request.user = user
+    f = edit_user_view(post_request, user.username).bind(request=post_request)
+    f.render_to_response()
+    assert not f.get_errors()
+
+
+Fully automatic forms
+---------------------
 
 You can also generate forms from Django models automatically (but still
-change the behavior!). The above example is equivalent to:
+customize the behavior!). The above example is equivalent to:
+
+.. test
+
+    def edit_user_save_post_handler(form, **_):
+        if not form.is_valid():
+            return
+
+        form.apply(user)
+        user.save()
+        return HttpResponseRedirect('..')
 
 .. code:: python
 
     def edit_user_view(request, username):
-        form = Form(
+        return Form(
             auto__model=User,
-            # the field 'name' is generated automatically and
+            # the field 'first_name' is generated automatically and
             # we are fine with the defaults
             fields__username__is_valid=
-                lambda parsed_data, **_: parsed_data.startswith('demo_'),
+                lambda parsed_data, **_: (
+                    parsed_data.startswith('demo_'),
+                    'needs to start with demo_'
+                ),
             fields__is_staff__label__template='tweak_label_tag.html',
             # show only for staff
             fields__is_staff__include=lambda request, **_: request.user.is_staff,
+            actions__submit__post_handler=edit_user_save_post_handler,
         )
-        form = form.bind(request=request)
-
-        # rest of view function...
 
 .. test
-        return form
+
+    user = User.objects.create(username='foo')
     edit_user_view(user_req('get'), user.username)
+    post_request = req('post', first_name='foo', last_name='example', username='demo_foo', email='foo@example.com', is_staff='1', date_joined='2020-01-01 12:02:10', password='asd', **{'-submit': ''})
+    post_request.user = user
+    f = edit_user_view(post_request, user.username).bind(request=post_request)
+    f.render_to_response()
+    assert not f.get_errors()
+    # restore the username for the next test below
+    user.username = 'foo'
+    user.save()
 
 
 or even better: use `Form.edit`:
@@ -138,18 +182,23 @@ or even better: use `Form.edit`:
         return Form.edit(
             auto__instance=User.objects.get(username=username),
             fields__username__is_valid=
-                lambda parsed_data, **_: parsed_data.startswith('demo_'),
+                lambda parsed_data, **_: (
+                    parsed_data.startswith('demo_'),
+                    'needs to start with demo_'
+                ),
             fields__is_staff__label__template='tweak_label_tag.html',
             # show only for staff
             fields__is_staff__include=lambda request, **_: request.user.is_staff,
         )
-        # no html template! iommi has a nice default for you :P
 
 .. test
     edit_user_view(user_req('get'), user.username)
+    post_request = req('post', first_name='foo', last_name='example', username='demo_foo', email='foo@example.com', is_staff='1', date_joined='2020-01-01 12:02:10', password='asd', **{'-submit': ''})
+    post_request.user = user
+    f = edit_user_view(post_request, user.username).bind(request=post_request)
+    f.render_to_response()
+    assert not f.get_errors()
 
-iommi pre-packages sets of defaults for common field types as 'shortcuts'.
-Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.
-The full list of shortcuts can be found in the
-`API documentation for Field <api.html#iommi.Field>`_.
+
+In this case the default behavior for the post handler for `Form.edit` is a save function like the one we had to define ourselves in the previous example.
 
