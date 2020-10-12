@@ -43,15 +43,15 @@ def build_test_file_from_rst(filename):
         elif line.startswith('    '):
             if type_of_block == 'code:: pycon':
                 if line.strip().startswith('>>>'):
-                    current_section['code'].append(line.replace('>>>', 'tmp ='))
+                    current_section['code'].append((line.replace('>>>', 'tmp ='), i))
                 elif line.strip().startswith('...'):
-                    current_section['code'].append(line.replace('...', ''))
+                    current_section['code'].append((line.replace('...', ''), i))
                 else:
-                    current_section['code'].append('    assert tmp == ' + line.strip(' '))
+                    current_section['code'].append(('    assert tmp == ' + line.strip(' '), i))
             elif type_of_block in ('code:: python', 'test'):
-                current_section['code'].append(line)
+                current_section['code'].append((line, i))
             elif type_of_block == 'imports':
-                current_section['code'].append(line[4:])  # 4: is to dedent one level
+                current_section['code'].append((line[4:], i))  # 4: is to dedent one level
 
     func_trans = str.maketrans({
         '?': None,
@@ -63,7 +63,7 @@ def build_test_file_from_rst(filename):
     })
 
     with open(base_dir / '_generated_tests' / f'test_{filename.partition(os.path.sep)[-1].partition(".")[0]}.py', 'w') as f:
-        f.write('''
+        setup = '''
 from iommi import *
 from iommi.admin import Admin
 from django.urls import (
@@ -74,15 +74,28 @@ from django.db import models
 from tests.helpers import req, user_req, staff_req
 from docs.models import *
 request = req('get')
-'''.lstrip())
-        
+'''.strip()
+        f.write(setup)
+        f.write('\n')
+
+        current_line = setup.count('\n') + 3
+
         for section in sections:
             if section['header']:
                 func_name = section['header'].strip().translate(func_trans).lower().partition('(')[0]
-                f.write(f'\n\ndef test_{func_name}():\n')
+                def_line = f'\n\ndef test_{func_name}():\n'
+                f.write(def_line)
+                current_line += def_line.count('\n')
             else:
                 func_name = None
-            f.writelines(section['code'])
+            for line, line_number in section['code']:
+                # This stuff is to make the line numbers align between .rst and test_*.py files.
+                while line_number > current_line:
+                    f.write('\n')
+                    current_line += 1
+
+                f.write(line)
+                current_line += 1
             if not section['code'] and func_name:
                 f.write('    pass\n')
 
