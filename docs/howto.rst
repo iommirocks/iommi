@@ -4,6 +4,7 @@
     from tri_declarative import Namespace
     from iommi.attrs import render_attrs
     from django.http import HttpResponseRedirect
+    from datetime import date
     import pytest
     pytestmark = pytest.mark.django_db
 
@@ -67,15 +68,15 @@ Parts & Pages
 How do I override part of a part/page? 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is all just *standard* tri_declarative magic.  But as you are likely new to it 
+This is all just *standard* tri.declarative magic.  But as you are likely new to it
 this might take a while to get used to. Let's say you created yourself a master template 
 for your site.
 
 .. code:: python
 
     class BasePage(Page):
-        title = html.h1(attrs__class={'title':True, 'is-1':True}, "My awesome webpage")
-        subtitle = html.h1(attrs__class={'subtitle':True, 'is-3':True}, "It rocks")
+        title = html.h1('My awesome webpage')
+        subtitle = html.h2('It rocks')
 
 Which you can use like this:
 
@@ -84,10 +85,14 @@ Which you can use like this:
     def index(request):
         class IndexPage(BasePage):
             body = ...
-        return IndexPage(parts__subtitle__children__text="Still rocking...")
+        return IndexPage(parts__subtitle__children__text='Still rocking...')
 
-Here you can see that ``Part`` s (``Page`` s are themselves ``Part`` s) form a tree and the direct children are gathered in the ``parts`` namespace.  Here we overwrote a leaf of
-an existing namespace, but you can equally add new elements or replace bigger 
+.. test
+
+    index(req('get'))
+
+Here you can see that `Part` s (`Page` s are themselves `Part` s) form a tree and the direct children are gathered in the `parts` namespace.  Here we overwrote a leaf of
+an existing namespace, but you can also add new elements or replace bigger
 parts (and most of the time it doesn't matter if you use the class Member or the 
 keyword arguments to init syntax):
 
@@ -95,37 +100,42 @@ keyword arguments to init syntax):
 
     def index(request):
         class IndexPage(BasePage):
-            title = html.img(attrs=dict(src="...", alt="..."))
+            title = html.img(attrs=dict(src='...', alt='...'))
         return IndexPage(parts__subtitle=None)
 
-In the above we replaced the title and removed the subtitle element completely.  The
-latter of which shows one of the gotchas as only ``str``, ``Part`` and the django 
-template types are gathered into the parts structure when a ``Part`` class definition 
-is processed.  As ``None`` is not an instance of those types, you can only remove
-elements using the keyword argument syntax.
+.. test
+
+    index(req('get'))
+
+In the above we replaced the title and removed the subtitle element completely. The
+latter of which shows one of the gotchas as only `str`, `Part` and the django
+template types are gathered into the parts structure when a `Part` class definition
+is processed.  As `None` is not an instance of those types, you can remove things
+by setting their value to `None`.
+
 
 How do I set the title of my page?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As in the text shown in the browser status bar?  
+As in the text shown in the browser status bar?
 
 .. code:: python
 
-    return Page(title="The title in the browser")
+    Page(title='The title in the browser')
 
-Note that this is different from 
+Note that this is different from
 
 .. code:: python
 
     class MyPage(Page):
-        title = html.h1("A header element in the dom") 
-    return MyPage()
+        title = html.h1('A header element in the dom')
+    MyPage()
 
 Which is equivalent to:
 
 .. code:: python
 
-    return Page(parts__title=html.h1("A header element in the dom"))
+    Page(parts__title=html.h1('A header element in the dom'))
 
 
 How do I specify the context used when a Template is rendered?
@@ -134,18 +144,25 @@ How do I specify the context used when a Template is rendered?
 .. code:: python
 
     def index(request):
-        context = { 'today' : datetime.date.today() }
+        context = {'today' : date.today()}
         class MyPage(Page):
             body = Template("""A django template was rendered on {{today}}.""")
         return MyPage(context=context)
 
-You can use the full power of ``tri_declarative`` to construct the context.  This
+.. test
+
+    index(req('get'))
+
+You can use the full power of `tri.declarative` to construct the context.  This
 not only makes the above shorter, but also makes it easy to write abstractions that
 can be extended later:
 
 .. code:: python
 
-    return Page(body = Template(...), context__today=datetime.date.today())
+    Page(
+        parts__body=Template("""A django template was rendered on {{today}}."""),
+        context__today=date.today(),
+    )
 
 
 Forms

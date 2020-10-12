@@ -32,7 +32,7 @@ def build_test_file_from_rst(filename):
     type_of_block = None
     for i, line in enumerate(lines):
         if line[:4] in ('~~~~', '====', '----', '^^^^'):
-            header = lines[i-1].replace(':', '').replace('.', 'dot').replace("'", '')
+            header = lines[i-1].replace(':', '').replace('.', 'dot').replace("'", '').replace('&', '')
             current_section = dict(header=header, code=[])
             sections.append(current_section)
             type_of_block = None
