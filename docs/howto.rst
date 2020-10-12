@@ -541,14 +541,14 @@ The `attrs` namespace has special handling to make it easy to customize. There a
 
 First the straight forward case where a key/value pair is rendered in the output:
 
-.. code:: python-doctest
+.. code:: pycon
 
     >>> render_attrs(Namespace(foo='bar'))
     ' foo="bar"'
 
 Then there's a special handling for CSS classes:
 
-.. code:: python-doctest
+.. code:: pycon
 
     >>> render_attrs(Namespace(class__foo=True, class__bar=True))
     ' class="bar foo"'
@@ -557,7 +557,7 @@ Note that the class names are sorted alphabetically on render.
 
 Lastly there is the special handling of `style`:
 
-.. code:: python-doctest
+.. code:: pycon
 
     >>> render_attrs(Namespace(style__font='Arial'))
     ' style="font: Arial"'
@@ -565,7 +565,7 @@ Lastly there is the special handling of `style`:
 If you need to add a style with `-` in the name you have to do this:
 
 
-.. code:: python-doctest
+.. code:: pycon
 
     >>> render_attrs(Namespace(**{'style__font-family': 'sans-serif'}))
     ' style="font-family: sans-serif"'
@@ -573,7 +573,7 @@ If you need to add a style with `-` in the name you have to do this:
 
 Everything together:
 
-.. code:: python-doctest
+.. code:: pycon
 
     >>> render_attrs(
     ...     Namespace(

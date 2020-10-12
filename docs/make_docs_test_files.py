@@ -41,7 +41,7 @@ def build_test_file_from_rst(filename):
             type_of_block = line[2:].strip()
 
         elif line.startswith('    '):
-            if type_of_block == 'code:: python-doctest':
+            if type_of_block == 'code:: pycon':
                 if line.strip().startswith('>>>'):
                     current_section['code'].append(line.replace('>>>', 'tmp ='))
                 elif line.strip().startswith('...'):
