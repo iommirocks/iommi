@@ -1465,6 +1465,9 @@ class Table(Part, Tag):
             if title is MISSING:
                 title = f'{model._meta.verbose_name_plural.title()}'
 
+        if title is MISSING:
+            title = None
+
         model, rows = model_and_rows(model, rows)
 
         assert isinstance(columns, dict)

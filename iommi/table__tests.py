@@ -2906,3 +2906,10 @@ def test_sort_django_table_from_model():
 def test_default_sort_key_on_foreign_key():
     table = Table(auto__model=SortKeyOnForeignKeyB).bind(request=req('get'))
     assert table.columns.remote.sort_key == 'remote__name'
+
+
+def test_title_default_to_none():
+    table = Table(rows=[]).bind(request=req('get'))
+    assert table.title is None
+
+    assert 'None' not in str(table)
