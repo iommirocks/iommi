@@ -202,3 +202,56 @@ or even better: use `Form.edit`:
 
 In this case the default behavior for the post handler for `Form.edit` is a save function like the one we had to define ourselves in the previous example.
 
+
+Post handlers
+-------------
+
+In the simplest cases, like in a create form, you only have one post handler.
+You can do this yourself in the classic Django way:
+
+.. test
+
+    request = req('post', foo='foo', **{'-submit': True})
+    form = Form(fields__foo=Field()).bind(request=request)
+    assert not form.get_errors()
+
+    def do_your_thing():
+        pass
+
+.. code:: python
+
+    if form.is_valid() and request.method == 'POST':
+        do_your_thing()
+
+This is fine. But what if you have two buttons? What if you have two forms?
+What if there are two forms, one with two submit buttons, and a table with a
+bulk action? Suddenly writing the if statement above becomes very difficult.
+Post handlers in iommi handle this for you. iommi makes sure that the parts
+compose cleanly and the right action is called.
+
+By default for create/edit/delete forms you get one post handler by the name
+`submit`. Adding more is easy:
+
+.. test
+
+    # This test is a bit silly as User doesn't have a "disabled" property, but the docs don't say what type is actually here, so let's play along :P
+    instance = User.objects.create(username='foo')
+
+.. code:: python
+
+    def disable_action(form, **_):
+        form.instance.disabled = True
+        form.instance.save()
+        return HttpResponseRedirect('.')
+
+    form = Form.edit(
+        auto__instance=instance,
+        actions__disable__post_handler=disable_action,
+    )
+
+
+.. test
+
+    request = req('post', username='foo', **{'-disable': True})
+    form.bind(request=request).render_to_response()
+
