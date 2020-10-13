@@ -260,4 +260,5 @@ Post handlers can return a few different things:
 
 - a `HttpResponse` object which will get returned all the way up the stack
 - a *bound* `Part` of some kind. This could be a `Table`, `Form`, `Page`, etc. This is rendered into a `HttpResponse`
+- `None` will result in the page being rendered like normal
 - everything else iommi will attempt to json encode and return as a json response
