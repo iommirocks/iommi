@@ -348,6 +348,7 @@ def table_readme_example_2(request):
 def table_auto_example_1(request):
     return Table(
         auto__model=Foo,
+        columns__name__filter__freetext=True
     )
 
 
