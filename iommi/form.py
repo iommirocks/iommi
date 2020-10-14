@@ -1044,6 +1044,7 @@ class Field(Part):
     @class_shortcut(
         parse=date_parse,
         render_value=date_render_value,
+        input__attrs__type='date'
     )
     def date(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

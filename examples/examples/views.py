@@ -269,6 +269,8 @@ class KitchenForm(Form):
 
     checkbox = Field.boolean()
 
+    date = Field.date()
+
 
 class SinkForm(Form):
     class Meta:
