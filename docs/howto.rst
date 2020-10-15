@@ -881,11 +881,15 @@ If you want to filter based on a freetext query on one or more columns we've got
 
     Table(
         auto__model=Album,
-        columns__name__filter__freetext=True,
+        columns__name__filter=dict(
+            freetext=True,
+            include=True,
+        ),
         columns__year__filter__freetext=True,
+        columns__year__filter__include=True,
     )
 
-(You don't need to enable querying with `columns__b__filter__include=True` first)
+This will display one search box to search both `year` and `name` columns.
 
 
 What is the difference between `attr` and `_name`?
