@@ -534,7 +534,7 @@ class Column(Part):
     @class_shortcut(
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
-        filter__is_valid_filter=lambda **_: True,
+        filter__is_valid_filter=lambda **_: (True, ''),
         filter__field__include=False,
     )
     def select(cls, checkbox_name='pk', checked=lambda row, **_: False, call_target=None, **kwargs):

@@ -195,8 +195,12 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
 choice_queryset_value_to_q.iommi_needs_attr = True
 
 
-def default_filter_is_valid_filter(name, filter, **_):
-    assert filter.attr or not getattr(filter.value_to_q, 'iommi_needs_attr', False), f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway set check_filterable=False (filter__check_filterable=False for a Column)"
+def default_filter__is_valid_filter(name, filter, **_):
+    return filter.attr or filter.value_to_q, f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (None, '') (filter__is_valid_filter=lambda **_: None for a Column)"
+
+
+def choice_queryset__is_valid_filter(name, filter, **_):
+    return filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (None, '') (filter__is_valid_filter=lambda **_: None for a Column)"
 
 
 @with_meta
@@ -227,7 +231,7 @@ class Filter(Part):
         field__required=False,
         # TODO: this isn't right, freetext can be a callable
         field__include=lambda query, field, **_: not query.filters._declared_members.get(field._name, Struct(freetext=False)).freetext,
-        is_valid_filter=default_filter_is_valid_filter,
+        is_valid_filter=default_filter__is_valid_filter,
     )
     def __init__(self, **kwargs):
         """
@@ -347,7 +351,7 @@ class Filter(Part):
         field__call_target__attribute='choice_queryset',
         query_operator_to_q_operator=lambda op: 'exact',
         value_to_q=choice_queryset_value_to_q,
-        is_valid_filter=choice_queryset_is_valid_filter,
+        is_valid_filter=choice_queryset__is_valid_filter,
     )
     def choice_queryset(cls, choices: QuerySet, call_target=None, **kwargs):
         """
@@ -663,7 +667,8 @@ class Query(Part):
 
         declared_fields = declared_members(self.form)['fields']
         for name, filter in items(self.filters):
-            filter.is_valid_filter(name=name, filter=filter)
+            is_valid, message = filter.is_valid_filter(name=name, filter=filter)
+            assert is_valid, message
             if name in declared_fields:
                 field = setdefaults_path(
                     Namespace(),
