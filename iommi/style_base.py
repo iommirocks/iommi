@@ -39,6 +39,7 @@ base = Style(
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
             ),
+            date__input__attrs__type='date',
             radio=dict(
                 input__template='iommi/form/radio.html',
             ),
