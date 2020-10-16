@@ -90,8 +90,8 @@ class Part(Traversable):
         assert self._is_bound, 'This object is unbound, you probably forgot to call `.bind(request=request)` on it'
         return self.__html__()
 
-    def bind(self, *, parent=None, request=None):
-        result = super(Part, self).bind(parent=parent, request=request)
+    def bind(self, *, parent=None, request=None, _name=None):
+        result = super(Part, self).bind(parent=parent, request=request, _name=_name)
         if result is None:
             return None
         del self

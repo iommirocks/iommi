@@ -197,7 +197,7 @@ def _force_bind(member_binder: MemberBinder, name: str):
         _declared_members = object.__getattribute__(member_binder, '_declared_members')
 
         if name in _bindable_names:
-            bound_member = _declared_members[name].bind(parent=_parent)
+            bound_member = _declared_members[name].bind(parent=_parent, _name=name)
             if bound_member is not None:
                 bound_members = dict.copy(member_binder)
                 dict.clear(member_binder)  # re-insert values in dict to retain ordering

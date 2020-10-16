@@ -534,6 +534,8 @@ class Column(Part):
     @class_shortcut(
         display_name=mark_safe(SELECT_DISPLAY_NAME),
         sortable=False,
+        filter__is_valid_filter=lambda **_: True,
+        filter__field__include=False,
     )
     def select(cls, checkbox_name='pk', checked=lambda row, **_: False, call_target=None, **kwargs):
         """
@@ -1623,7 +1625,7 @@ class Table(Part, Tag):
         self.container = self.container(_name='container').bind(parent=self)
         self.outer = self.outer(_name='outer').bind(parent=self)
         self.tbody.children.text = _Lazy_tbody(self)
-        self.header = self.header.bind(parent=self)
+        self.header = self.header.bind(parent=self, _name='header')
 
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _bind_headers depends on it
 

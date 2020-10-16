@@ -195,6 +195,10 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
 choice_queryset_value_to_q.iommi_needs_attr = True
 
 
+def default_filter_is_valid_filter(name, filter, **_):
+    assert filter.attr or not getattr(filter.value_to_q, 'iommi_needs_attr', False), f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway set check_filterable=False (filter__check_filterable=False for a Column)"
+
+
 @with_meta
 class Filter(Part):
     """
@@ -213,6 +217,7 @@ class Filter(Part):
     choices = EvaluatedRefinable()
     search_fields = Refinable()
     unary = Refinable()
+    is_valid_filter = Refinable()
 
     @reinvokable
     @dispatch(
@@ -220,7 +225,9 @@ class Filter(Part):
         attr=MISSING,
         search_fields=MISSING,
         field__required=False,
-        field__include=lambda query, field, **_: not query.filters.get(field._name, Struct(freetext=False)).freetext,
+        # TODO: this isn't right, freetext can be a callable
+        field__include=lambda query, field, **_: not query.filters._declared_members.get(field._name, Struct(freetext=False)).freetext,
+        is_valid_filter=default_filter_is_valid_filter,
     )
     def __init__(self, **kwargs):
         """
@@ -340,6 +347,7 @@ class Filter(Part):
         field__call_target__attribute='choice_queryset',
         query_operator_to_q_operator=lambda op: 'exact',
         value_to_q=choice_queryset_value_to_q,
+        is_valid_filter=choice_queryset_is_valid_filter,
     )
     def choice_queryset(cls, choices: QuerySet, call_target=None, **kwargs):
         """
@@ -589,11 +597,10 @@ class Query(Part):
             display_name=gettext('Search'),
             required=False,
             include=False,
+            help__include=False,
         )
 
         for name, filter in items(declared_members(self).filters):
-            if filter.attr is None and getattr(filter.value_to_q, 'iommi_needs_attr', False):
-                continue
             field = setdefaults_path(
                 Namespace(),
                 filter.field,
@@ -601,6 +608,7 @@ class Query(Part):
                 model_field=filter.model_field,
                 attr=name if filter.attr is MISSING else filter.attr,
                 call_target__cls=field_class,
+                help__include=False,
             )
             declared_fields[name] = field()
 
@@ -644,7 +652,7 @@ class Query(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='filters')
-        self.advanced_simple_toggle = self.advanced_simple_toggle.bind(parent=self)
+        self.advanced_simple_toggle = self.advanced_simple_toggle.bind(parent=self, _name='advanced_simple_toggle')
 
         request = self.get_request()
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
@@ -655,7 +663,7 @@ class Query(Part):
 
         declared_fields = declared_members(self.form)['fields']
         for name, filter in items(self.filters):
-            assert filter.attr or not getattr(filter.value_to_q, 'iommi_needs_attr', False), f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for"
+            filter.is_valid_filter(name=name, filter=filter)
             if name in declared_fields:
                 field = setdefaults_path(
                     Namespace(),
@@ -666,10 +674,14 @@ class Query(Part):
                 )
                 declared_fields[name] = reinvoke(declared_fields[name], field)
         set_declared_member(self.form, 'fields', declared_fields)
+
+        # Remove fields from the form that correspond to non-included filters
+        declared_filters = declared_members(self)['filters']
         for name, field in items(declared_fields):
             if name == FREETEXT_SEARCH_NAME:
                 continue
-            if name not in self.filters:
+            # We need to check if it's in declared_filters first, otherwise we remove any injected fields
+            if name in declared_filters and name not in self.filters:
                 set_and_remember_for_reinvoke(field, include=False)
 
         bind_members(self, name='endpoints')
@@ -677,7 +689,7 @@ class Query(Part):
         self.form = self.form.bind(parent=self)
         self._bound_members.form = self.form
 
-        self.form_container = self.form_container.bind(parent=self)
+        self.form_container = self.form_container.bind(parent=self, _name='form_container')
 
     def own_evaluate_parameters(self):
         return dict(query=self)
