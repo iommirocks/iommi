@@ -1,5 +1,4 @@
 import copy
-import functools
 from typing import (
     Any,
     Dict,
@@ -20,7 +19,6 @@ from tri_struct import Struct
 from iommi.attrs import evaluate_attrs
 from iommi.base import (
     items,
-    MISSING,
 )
 from iommi.evaluate import (
     evaluate_members,
@@ -29,7 +27,7 @@ from iommi.evaluate import (
 )
 from iommi.style import (
     apply_style,
-    apply_style_recursively,
+    get_iommi_style_name,
 )
 
 
@@ -43,16 +41,6 @@ def is_evaluated_refinable(x):
 
 class PathNotFoundException(Exception):
     pass
-
-
-def reinvokable(f):
-    @functools.wraps(f)
-    def reinvokable_wrapper(self, *args, **kwargs):
-        # We only need to save the params on the first level
-        if not hasattr(self, '_iommi_saved_params'):
-            self._iommi_saved_params = kwargs
-        return f(self, *args, **kwargs)
-    return reinvokable_wrapper
 
 
 class Traversable(RefinableObject):
@@ -127,51 +115,27 @@ class Traversable(RefinableObject):
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
 
-    def reinvoke(self, additional_kwargs: Dict[str, Any]) -> "Traversable":
-        assert hasattr(self, '_iommi_saved_params'), f'reinvoke() called on class with missing @reinvokable decorator: {self.__class__.__name__}'
-        additional_kwargs_namespace = Namespace(additional_kwargs)
-        kwargs = {}
-        for name, saved_param in items(self._iommi_saved_params):
-            try:
-                new_param = getattr_path(additional_kwargs_namespace, name)
-            except AttributeError:
-                kwargs[name] = saved_param
-            else:
-                if hasattr(saved_param, 'reinvoke'):
-                    assert isinstance(new_param, dict)
-                    kwargs[name] = saved_param.reinvoke(new_param)
-                else:
-                    if isinstance(saved_param, Namespace):
-                        kwargs[name] = Namespace(saved_param, new_param)
-                    else:
-                        kwargs[name] = new_param
-
-        additional_kwargs_namespace.pop('call_target', None)
-
-        kwargs = Namespace(additional_kwargs_namespace, kwargs)  # Also include those keys not already in the original
-
-        result = type(self)(**kwargs)
-
-        result._name = self._name
-        __tri_declarative_shortcut_stack = getattr(self, '__tri_declarative_shortcut_stack', None)
-        if __tri_declarative_shortcut_stack is not None:
-            setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
-
-        return result
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
         assert not self._is_bound
 
-        if parent is None:
-            self._request = request
-            if self._name is None:
-                self._name = 'root'
-
         result = copy.copy(self)
+
+        if parent:
+            iommi_style = get_iommi_style_name(parent)
+        else:
+            iommi_style = get_iommi_style_name(self)
+
+        result = apply_style(iommi_style, result)
         result._declared = self
 
         del self  # to prevent mistakes when changing the code below
+
+        if parent is None:
+            result._request = request
+            if result._name is None:
+                result._name = 'root'
 
         result._parent = parent
         result._bound_members = Struct()
@@ -190,24 +154,10 @@ class Traversable(RefinableObject):
             include = evaluate_strict(result.include, **evaluate_parameters)
             if not bool(include):
                 return None
-        else:
-            include = MISSING
 
-        if include is not MISSING:
-            result.include = True
-
-        rest_of_style = apply_style(result)
-
-        # Styling has another chance of setting include to False
-        if include is not MISSING and result.include is False:
-            return None
         result.include = True
 
         result.on_bind()
-
-        if rest_of_style:
-            rest = apply_style_recursively(style_data=rest_of_style, obj=result)
-            assert not rest, f'There is still styling data left for {result}: {rest_of_style}'
 
         # on_bind has a chance to hide itself
         if result.include is False:

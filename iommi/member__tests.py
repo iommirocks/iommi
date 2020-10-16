@@ -15,8 +15,8 @@ from iommi.member import (
 from iommi.traversable import (
     declared_members,
     Traversable,
-    reinvokable,
 )
+from iommi.reinvokable import reinvokable
 
 
 class Fruit(Traversable):

@@ -103,9 +103,9 @@ from iommi.part import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
     evaluated_refinable,
 )
+from iommi.reinvokable import reinvokable
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True

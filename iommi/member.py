@@ -15,6 +15,7 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import keys, items
+from iommi.reinvokable import reinvoke
 from iommi.sort_after import sort_after
 from iommi.traversable import (
     declared_members,
@@ -97,7 +98,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                 unbound_items[key] = item
 
     for k, v in items_of(Namespace(_unapplied_config)):
-        unbound_items[k] = unbound_items[k].reinvoke(v)
+        unbound_items[k] = reinvoke(unbound_items[k], v)
         # noinspection PyProtectedMember
         assert unbound_items[k]._name is not None
 

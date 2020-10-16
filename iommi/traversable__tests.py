@@ -2,7 +2,6 @@ import pytest
 from tri_declarative import (
     Namespace,
     Refinable,
-    class_shortcut,
 )
 from tri_struct import Struct
 
@@ -24,7 +23,6 @@ from iommi.style import unregister_style
 from iommi.traversable import (
     build_long_path_by_path,
     EvaluatedRefinable,
-    reinvokable,
     Traversable,
     evaluated_refinable,
 )
@@ -152,140 +150,6 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
     assert foo.iommi_bound_members().my_part2.iommi_bound_members().my_part.iommi_dunder_path == 'my_part2__my_part'
 
 
-class MyReinvokable(Traversable):
-    @reinvokable
-    def __init__(self, **kwargs):
-        self.kwargs = Struct(kwargs)
-
-
-def test_reinvokable():
-    x = MyReinvokable(foo=17)
-    x = x.reinvoke(dict(bar=42))
-    assert x.kwargs == dict(foo=17, bar=42)
-
-
-def test_reinvokable_cache_is_respected():
-    x = MyReinvokable(foo=17)
-    x._iommi_saved_params == dict(foo=17)
-    x._iommi_saved_params['foo'] = 42
-    x = x.reinvoke(dict(bar=42))
-    assert x.kwargs == dict(foo=42, bar=42)
-
-
-def test_reinvokable_recurse():
-    x = MyReinvokable(foo=MyReinvokable(bar=17))
-    x = x.reinvoke(Namespace(foo__bar=42))
-
-    assert isinstance(x.kwargs.foo, MyReinvokable)
-    assert x.kwargs.foo.kwargs == dict(bar=42)
-
-
-def test_reinvoke_namespace_merge():
-    class ReinvokableWithExtra(Traversable):
-        extra = Refinable()
-
-        @reinvokable
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-
-    assert ReinvokableWithExtra(
-        extra__foo=17
-    ).reinvoke(Namespace(
-        extra__bar=42
-    )).extra == dict(bar=42, foo=17)
-
-    # Try again with pre-Namespaced kwargs
-    assert ReinvokableWithExtra(
-        **Namespace(extra__foo=17)
-    ).reinvoke(Namespace(
-        extra__bar=42
-    )).extra == dict(bar=42, foo=17)
-
-
-def test_reinvokable_recurse_retain_original():
-    x = MyReinvokable(
-        a=1,
-        foo=MyReinvokable(
-            b=2,
-            bar=MyReinvokable(
-                c=3,
-                baz=17
-            )
-        )
-    )
-    x = x.reinvoke(Namespace(foo__bar__baz=42))
-
-    assert isinstance(x.kwargs.foo, MyReinvokable)
-    assert x.kwargs.a == 1
-    assert x.kwargs.foo.kwargs.b == 2
-    assert x.kwargs.foo.kwargs.bar.kwargs.c == 3
-    assert x.kwargs.foo.kwargs.bar.kwargs.baz == 42
-
-
-def test_reinvoke_path():
-    class MyForm(Form):
-        my_field = Field.choice(
-            choices=[],
-        )
-
-    my_form = MyForm(
-        fields__my_field__choices=[1, 2, 3],
-    )
-
-    assert my_form.bind().fields.my_field.choices == [1, 2, 3]
-
-
-def test_reinvoke_dicts():
-    class MyForm(Form):
-        my_field = Field.choice(
-            choices=[],
-        )
-
-    my_form = MyForm(
-        fields=dict(
-            my_field=dict(
-                choices=[1, 2, 3],
-            ),
-        ),
-    )
-
-    assert my_form.bind().fields.my_field.choices == [1, 2, 3]
-
-
-def test_reinvoke_extra():
-    class MyForm(Form):
-        my_field = Field(
-            extra__foo=17,
-        )
-
-    f = MyForm(
-        fields__my_field__extra__bar=42
-    )
-
-    assert f.bind().fields.my_field.extra == dict(foo=17, bar=42)
-
-
-def test_reinvoke_extra_shortcut():
-    class MyField(Field):
-        @classmethod
-        @class_shortcut(
-            extra__buz=4711,
-        )
-        def shortcut(cls, call_target, **kwargs):
-            return call_target(**kwargs)
-
-    class MyForm(Form):
-        my_field = MyField.shortcut(
-            extra__foo=17,
-        )
-
-    f = MyForm(
-        fields__my_field__extra__bar=42
-    )
-
-    assert f.bind().fields.my_field.extra == dict(foo=17, bar=42, buz=4711)
-
-
 def test_evaluated_refinable_function():
     class Foo(Traversable):
         @staticmethod
@@ -355,7 +219,6 @@ def test_traversable_repr():
     assert repr(foo._bound_members.bar) == "<tests.helpers.StubTraversable bar (bound) path:'bar'>"
 
 
-@pytest.mark.skip('Fails due to styles beeing applied too soon')
 def test_apply_style_not_affecting_definition(settings):
     register_style('my_style', Style(
         Fragment__attrs__class__foo=True,
@@ -379,7 +242,6 @@ def test_apply_style_not_affecting_definition(settings):
     unregister_style('other_style')
 
 
-@pytest.mark.skip('Fails due to styles beeing applied too soon')
 def test_apply_style_not_affecting_definition_2():
     register_style('foo_style', Style(
         MenuItem__attrs__class__foo=True,

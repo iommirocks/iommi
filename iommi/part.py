@@ -45,12 +45,12 @@ from iommi.member import (
 )
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
     Traversable,
 )
+from .reinvokable import reinvokable
 from iommi.style import (
+    get_iommi_style_name,
     get_style,
-    get_style_name_for,
 )
 from .sort_after import sort_after
 
@@ -152,7 +152,7 @@ class Part(Traversable):
 )
 def render_root(*, part, context, **render):
     assert part._is_bound
-    root_style_name = get_style_name_for(part)
+    root_style_name = get_iommi_style_name(part)
     root_style = get_style(root_style_name)
     template_name = root_style.base_template
     content_block_name = root_style.content_block

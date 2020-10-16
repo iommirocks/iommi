@@ -1927,9 +1927,9 @@ def test_from_model_with_inheritance():
     )
 
     assert was_called == {
-        'MyField.float': 2,
-        'MyVariable.float': 1,
-        'MyColumn.float': 1,
+        'MyField.float': 5,
+        'MyVariable.float': 2,
+        'MyColumn.float': 2,
     }
 
 

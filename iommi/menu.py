@@ -38,8 +38,8 @@ from iommi import Fragment
 from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
-    reinvokable,
 )
+from iommi.reinvokable import reinvokable
 
 
 class MenuBase(Part, Tag):

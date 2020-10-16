@@ -64,8 +64,12 @@ from iommi.part import (
 from iommi.traversable import (
     declared_members,
     EvaluatedRefinable,
-    reinvokable,
     set_declared_member,
+)
+from iommi.reinvokable import (
+    reinvokable,
+    reinvoke,
+    set_and_remember_for_reinvoke,
 )
 from pyparsing import (
     alphanums,
@@ -216,7 +220,7 @@ class Filter(Part):
         attr=MISSING,
         search_fields=MISSING,
         field__required=False,
-        field__include=lambda query, field, **_: not query.filters.get(field._name).freetext,
+        field__include=lambda query, field, **_: not query.filters.get(field._name, Struct(freetext=False)).freetext,
     )
     def __init__(self, **kwargs):
         """
@@ -647,7 +651,7 @@ class Query(Part):
 
         # TODO: should it be possible to have freetext as a callable? this code just treats callables as truthy
         if any(f.freetext for f in values(declared_members(self)['filters'])):
-            declared_members(self.form).fields[FREETEXT_SEARCH_NAME].include = True
+            set_and_remember_for_reinvoke(declared_members(self.form).fields[FREETEXT_SEARCH_NAME], include=True)
 
         declared_fields = declared_members(self.form)['fields']
         for name, filter in items(self.filters):
@@ -660,13 +664,13 @@ class Query(Part):
                     model_field=filter.model_field,
                     help__include=False,
                 )
-                declared_fields[name] = declared_fields[name].reinvoke(field)
+                declared_fields[name] = reinvoke(declared_fields[name], field)
         set_declared_member(self.form, 'fields', declared_fields)
         for name, field in items(declared_fields):
             if name == FREETEXT_SEARCH_NAME:
                 continue
             if name not in self.filters:
-                field.include = False
+                set_and_remember_for_reinvoke(field, include=False)
 
         bind_members(self, name='endpoints')
 
