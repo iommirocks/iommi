@@ -415,11 +415,11 @@ uses).
 .. code:: python
     my_style = Style(iommi.style_bootstrap.style, Field__shortcuts__date__input__attrs_type='date')
 
-When you do that you will get Englisch language relative date parsing 
-(e.g. "yesterday, 3 days ago") for free, because iommi used to use a 
+When you do that you will get English language relative date parsing 
+(e.g. "yesterday", "3 days ago") for free, because iommi used to use a 
 text based input control and the parser is applied no matter what 
 (its just that when using the default date picker control it will 
-always only see ISO-8601 dates).
+always only see ISO-8601 dates). 
 
 Tables
 ------
