@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+2.2.0 (2020-10-16)
+~~~~~~~~~~~~~~~~~~
+
+* Fix so that style application does not alter definitions destructively. This could lead to some strange behavior if you tried to switch between styles, and it could leak over definitions between things you would not expect.
+
+* The title of `Table` is `None` when there is no model
+
+* Assets as first class concept. You can now insert asset definitions into your style with `assets__js=...` instead of defining a `base_template`. This change also removes the base templates for all the built in styles as they are now obsolete.
+
+* Made it easy to hide the label of a Field by setting `display_name=None`, or `include=False`
+
 2.1.0 (2020-10-07)
 ~~~~~~~~~~~~~~~~~~
 
