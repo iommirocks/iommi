@@ -1625,7 +1625,7 @@ class Table(Part, Tag):
         self.container = self.container(_name='container').bind(parent=self)
         self.outer = self.outer(_name='outer').bind(parent=self)
         self.tbody.children.text = _Lazy_tbody(self)
-        self.header = self.header.bind(parent=self, _name='header')
+        self.header = self.header.bind(parent=self)
 
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _bind_headers depends on it
 

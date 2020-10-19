@@ -554,7 +554,7 @@ class Query(Part):
         form_container__tag='span',
         form_container__attrs__class__iommi_query_form_simple=True,
     )
-    def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto, **kwargs):
+    def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto=None, **kwargs):
         assert isinstance(filters, dict)
 
         if auto:
@@ -632,9 +632,10 @@ class Query(Part):
                 'data-advanced-mode': 'simple'
             },
             display_name=gettext('Switch to advanced search'),
+            _name='advanced_simple_toggle',
         )
 
-        self.form_container = self.form_container()
+        self.form_container = self.form_container(_name='form_container')
 
         # Filters need to be at the end to not steal the short names
         set_declared_member(self, 'filters', declared_members(self).pop('filters'))
@@ -656,7 +657,7 @@ class Query(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='filters')
-        self.advanced_simple_toggle = self.advanced_simple_toggle.bind(parent=self, _name='advanced_simple_toggle')
+        self.advanced_simple_toggle = self.advanced_simple_toggle.bind(parent=self)
 
         request = self.get_request()
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
@@ -694,7 +695,7 @@ class Query(Part):
         self.form = self.form.bind(parent=self)
         self._bound_members.form = self.form
 
-        self.form_container = self.form_container.bind(parent=self, _name='form_container')
+        self.form_container = self.form_container.bind(parent=self)
 
     def own_evaluate_parameters(self):
         return dict(query=self)
