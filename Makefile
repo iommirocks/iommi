@@ -36,7 +36,7 @@ test-all:
 	tox --skip-missing-interpreters
 
 test:
-	hammett
+	pytest
 
 coverage:
 	tox -e coverage
