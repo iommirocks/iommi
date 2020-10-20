@@ -1,5 +1,9 @@
 import csv
-from datetime import datetime
+from datetime import (
+    datetime,
+    time,
+    date,
+)
 from enum import (
     auto,
     Enum,
@@ -27,10 +31,6 @@ from django.db.models import (
 )
 from django.http import (
     FileResponse,
-)
-from django.template.defaultfilters import (
-    date,
-    time,
 )
 from django.utils.formats import date_format
 from django.utils.html import (
@@ -252,6 +252,10 @@ def datetime_formatter(value, **_):
     return date_format(value, format='DATETIME_FORMAT')
 
 
+def date_formatter(value, **_):
+    return date_format(value, format='DATE_FORMAT')
+
+
 def time_formatter(value, **_):
     return date_format(value, format='TIME_FORMAT')
 
@@ -263,23 +267,28 @@ _cell_formatters = {
     set: list_formatter,
     QuerySet: lambda value, **_: list_formatter(list(value)),
     datetime: datetime_formatter,
-    date: datetime_formatter,
+    date: date_formatter,
     time: time_formatter,
 }
+
+_cell_formatters_types = tuple(_cell_formatters.keys())
 
 
 def register_cell_formatter(type_or_class, formatter):
     """
     Register a default formatter for a type. A formatter is a function that takes four keyword arguments: table, column, row, value
     """
-    global _cell_formatters
+    global _cell_formatters, _cell_formatters_types
     _cell_formatters[type_or_class] = formatter
+    _cell_formatters_types = tuple(_cell_formatters.keys())
 
 
 def default_cell_formatter(table: 'Table', column: 'Column', row, value, **_):
-    formatter = _cell_formatters.get(type(value))
-    if formatter:
-        value = formatter(table=table, column=column, row=row, value=value)
+    if isinstance(value, _cell_formatters_types):
+        for type_, formatter in _cell_formatters.items():
+            if isinstance(value, type_):
+                value = formatter(table=table, column=column, row=row, value=value)
+                break
 
     if value is None:
         return ''

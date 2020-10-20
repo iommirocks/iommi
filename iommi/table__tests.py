@@ -10,16 +10,6 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.test import override_settings
-from tri_declarative import (
-    class_shortcut,
-    get_members,
-    get_shortcuts_by_name,
-    getattr_path,
-    is_shortcut,
-    Namespace,
-    Shortcut,
-)
-
 from iommi import (
     Action,
     Page,
@@ -48,8 +38,9 @@ from iommi.query import (
 )
 from iommi.table import (
     Column,
+    datetime_formatter,
+    default_cell_formatter,
     order_by_on_list,
-    Paginator,
     register_cell_formatter,
     SELECT_DISPLAY_NAME,
     Struct,
@@ -73,6 +64,15 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+)
+from tri_declarative import (
+    class_shortcut,
+    get_members,
+    get_shortcuts_by_name,
+    getattr_path,
+    is_shortcut,
+    Namespace,
+    Shortcut,
 )
 
 register_search_fields(model=TFoo, search_fields=['b'], allow_non_unique=True)
@@ -1306,6 +1306,9 @@ def test_default_formatters(NoSortTable):
     TFoo(a=1, b="3").save()
     TFoo(a=2, b="5").save()
 
+    dt = datetime(2020, 1, 2, 3, 4, 5)
+    assert datetime_formatter(dt, format='DATETIME_FORMAT') == 'datetime: Jan. 2, 2020, 3:04 a.m.'
+
     rows = [
         Struct(foo=1),
         Struct(foo=True),
@@ -1314,7 +1317,7 @@ def test_default_formatters(NoSortTable):
         Struct(foo=SomeType()),
         Struct(foo=TFoo.objects.all()),
         Struct(foo=None),
-        Struct(foo=datetime(2020, 1, 2, 3, 4, 5)),
+        Struct(foo=dt),
         Struct(foo=date(2020, 1, 2)),
         Struct(foo=time(3, 4, 5)),
     ]
@@ -1360,13 +1363,13 @@ def test_default_formatters(NoSortTable):
                     </td>
                 </tr>
                 <tr>
-                    <td>Jan. 2, 2020, 3:04 a.m.</td>
+                    <td>datetime: Jan. 2, 2020, 3:04 a.m.</td>
                 </tr>
                 <tr>
-                    <td>2020-01-02</td>
+                    <td>date: Jan. 2, 2020</td>
                 </tr>
                 <tr>
-                    <td>03:04:05</td>
+                    <td>time: 3:04 a.m.</td>
                 </tr>
             </tbody>
         </table>""")
