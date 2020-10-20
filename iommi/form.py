@@ -499,7 +499,7 @@ class Field(Part):
 
     choices: Callable[..., List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
     choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()
-    choice_to_optgroup: Optional[Callable[[Any], str]] = Refinable()
+    choice_to_optgroup: Optional[Callable[..., Optional[str]]] = Refinable()
     search_fields = Refinable()
     errors: Errors = Refinable()
 
@@ -565,7 +565,7 @@ class Field(Part):
         :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
         :param choice_to_option: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
-        :param choice_to_optgroup Callback to generate the optgroup for the given choice.  choice -> string|None where None means that value should not be grouped.
+        :param choice_to_optgroup Callback to generate the optgroup for the given choice.  It will get the keywoard argument `choice`. It should return None if the choice should not be grouped.
         """
 
         model_field = kwargs.get('model_field')
@@ -576,8 +576,6 @@ class Field(Part):
 
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
-
-        self._choice_tuples = None
 
         self.non_editable_input = Namespace({
             **flatten(self.input),
@@ -831,18 +829,13 @@ class Field(Part):
 
     @property
     def choice_tuples(self):
-        # Why does this cache exist?  choice_tuples is only called once to render
-        # the form element isn't it?
-        if self._choice_tuples is not None:
-            return self._choice_tuples
-
-        self._choice_tuples = []
+        result = []
         if not self.required and not self.is_list:
-            self._choice_tuples.append(self.empty_choice_tuple + (0,))
+            result.append(self.empty_choice_tuple + (0,))
         for i, choice in enumerate(self.choices):
-            self._choice_tuples.append(self.choice_to_option(form=self.form, field=self, choice=choice) + (i + 1,))
+            result.append(self.choice_to_option(form=self.form, field=self, choice=choice) + (i + 1,))
 
-        return self._choice_tuples
+        return result
 
     @property
     def grouped_choice_tuples(self):
@@ -855,7 +848,7 @@ class Field(Part):
             groups.append((current_group_name, current_group))
             for choice_tuple in self.choice_tuples:
                 choice = choice_tuple[0]
-                group_name = self.choice_to_optgroup(choice)
+                group_name = self.choice_to_optgroup(choice=choice, **self.iommi_evaluate_parameters())
                 if current_group_name != group_name:
                     current_group_name = group_name
                     current_group = []

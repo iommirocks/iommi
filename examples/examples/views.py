@@ -275,8 +275,8 @@ class KitchenForm(Form):
 
     choice_with_groups = Field.choice(
         choices=['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'X'],
-        choice_to_optgroup=lambda choice: choice[0] if choice[0].islower(
-        ) else None
+        choice_to_optgroup=lambda choice, **_:
+            choice[0] if choice[0].islower() else None
     )
 
 
