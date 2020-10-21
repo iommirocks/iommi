@@ -1,5 +1,13 @@
 <select{{ field.input.attrs }}>
-    {% for choice in field.choice_tuples %}
-        <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %}>{{ choice.2 }}</option>
+    {% for optgroup, choice_tuples in field.grouped_choice_tuples %}
+        {% if optgroup %}
+            <optgroup label="{{optgroup}}">
+        {% endif %}
+            {% for choice in choice_tuples %}
+                <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %}>{{ choice.2 }}</option>
+            {% endfor %}
+        {% if optgroup %}
+            </optgroup>
+        {% endif %}
     {% endfor %}
 </select>
