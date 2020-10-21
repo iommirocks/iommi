@@ -115,7 +115,6 @@ class Traversable(RefinableObject):
         assert self._is_bound
         return build_long_path(self).replace('/', '__')
 
-
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
         assert not self._is_bound

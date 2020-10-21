@@ -195,6 +195,14 @@ def choice_queryset_value_to_q(filter, op, value_string_or_f):
 choice_queryset_value_to_q.iommi_needs_attr = True
 
 
+def default_filter__is_valid_filter(name, filter, **_):
+    return filter.attr or filter.value_to_q, f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (None, '') (filter__is_valid_filter=lambda **_: None for a Column)"
+
+
+def choice_queryset__is_valid_filter(name, filter, **_):
+    return filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (None, '') (filter__is_valid_filter=lambda **_: None for a Column)"
+
+
 @with_meta
 class Filter(Part):
     """
@@ -213,6 +221,7 @@ class Filter(Part):
     choices = EvaluatedRefinable()
     search_fields = Refinable()
     unary = Refinable()
+    is_valid_filter = Refinable()
 
     @reinvokable
     @dispatch(
@@ -220,7 +229,9 @@ class Filter(Part):
         attr=MISSING,
         search_fields=MISSING,
         field__required=False,
-        field__include=lambda query, field, **_: not query.filters.get(field._name, Struct(freetext=False)).freetext,
+        # TODO: this isn't right, freetext can be a callable
+        field__include=lambda query, field, **_: not query.filters._declared_members.get(field._name, Struct(freetext=False)).freetext,
+        is_valid_filter=default_filter__is_valid_filter,
     )
     def __init__(self, **kwargs):
         """
@@ -340,6 +351,7 @@ class Filter(Part):
         field__call_target__attribute='choice_queryset',
         query_operator_to_q_operator=lambda op: 'exact',
         value_to_q=choice_queryset_value_to_q,
+        is_valid_filter=choice_queryset__is_valid_filter,
     )
     def choice_queryset(cls, choices: QuerySet, call_target=None, **kwargs):
         """
@@ -542,7 +554,7 @@ class Query(Part):
         form_container__tag='span',
         form_container__attrs__class__iommi_query_form_simple=True,
     )
-    def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto, **kwargs):
+    def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto=None, **kwargs):
         assert isinstance(filters, dict)
 
         if auto:
@@ -589,11 +601,10 @@ class Query(Part):
             display_name=gettext('Search'),
             required=False,
             include=False,
+            help__include=False,
         )
 
         for name, filter in items(declared_members(self).filters):
-            if filter.attr is None and getattr(filter.value_to_q, 'iommi_needs_attr', False):
-                continue
             field = setdefaults_path(
                 Namespace(),
                 filter.field,
@@ -601,6 +612,7 @@ class Query(Part):
                 model_field=filter.model_field,
                 attr=name if filter.attr is MISSING else filter.attr,
                 call_target__cls=field_class,
+                help__include=False,
             )
             declared_fields[name] = field()
 
@@ -620,9 +632,10 @@ class Query(Part):
                 'data-advanced-mode': 'simple'
             },
             display_name=gettext('Switch to advanced search'),
+            _name='advanced_simple_toggle',
         )
 
-        self.form_container = self.form_container()
+        self.form_container = self.form_container(_name='form_container')
 
         # Filters need to be at the end to not steal the short names
         set_declared_member(self, 'filters', declared_members(self).pop('filters'))
@@ -655,7 +668,8 @@ class Query(Part):
 
         declared_fields = declared_members(self.form)['fields']
         for name, filter in items(self.filters):
-            assert filter.attr or not getattr(filter.value_to_q, 'iommi_needs_attr', False), f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for"
+            is_valid, message = filter.is_valid_filter(name=name, filter=filter)
+            assert is_valid, message
             if name in declared_fields:
                 field = setdefaults_path(
                     Namespace(),
@@ -666,10 +680,14 @@ class Query(Part):
                 )
                 declared_fields[name] = reinvoke(declared_fields[name], field)
         set_declared_member(self.form, 'fields', declared_fields)
+
+        # Remove fields from the form that correspond to non-included filters
+        declared_filters = declared_members(self)['filters']
         for name, field in items(declared_fields):
             if name == FREETEXT_SEARCH_NAME:
                 continue
-            if name not in self.filters:
+            # We need to check if it's in declared_filters first, otherwise we remove any injected fields
+            if name in declared_filters and name not in self.filters:
                 set_and_remember_for_reinvoke(field, include=False)
 
         bind_members(self, name='endpoints')
