@@ -191,10 +191,10 @@ def form_example_1(request):
 
     return HttpResponse(
         Template("""
-            {% extends "iommi/base_test.html" %} 
+            {% extends "iommi/base.html" %}
             {% block content %}
-                {{ form }} 
-                {{ message }} 
+                {{ form }}
+                {{ message }}
             {% endblock %}
         """).render(
             context=RequestContext(
