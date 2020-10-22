@@ -406,8 +406,8 @@ class Auth:
 
 
 class LoginForm(Form):
-    username = Field()
-    password = Field.password()
+    username = Field(display_name=gettext('Username'))
+    password = Field.password(display_name=gettext('Password'))
 
     class Meta:
         title = gettext('Login')
