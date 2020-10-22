@@ -53,7 +53,9 @@ def middleware(get_response):
 
         response = get_response(request)
         if isinstance(response, Part):
-            return response.bind(request=request).render_to_response()
+            if not response._is_bound:
+                response = response.bind(request=request)
+            return response.render_to_response()
         else:
             return response
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-06 16:00+0200\n"
+"POT-Creation-Date: 2020-10-23 15:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,3 +17,115 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: examples/form_examples.py:38
+msgid "Use much like a django form"
+msgstr ""
+
+#: examples/menu_examples.py:20
+msgid "A sample menu"
+msgstr ""
+
+#: examples/models.py:34 examples/models.py:49 examples/models.py:66
+msgid "name"
+msgstr ""
+
+#: examples/models.py:41 examples/models.py:50
+msgid "artist"
+msgstr ""
+
+#: examples/models.py:42
+msgid "artists"
+msgstr ""
+
+#: examples/models.py:51
+msgid "year"
+msgstr ""
+
+#: examples/models.py:58 examples/models.py:68
+msgid "album"
+msgstr ""
+
+#: examples/models.py:59
+msgid "albums"
+msgstr ""
+
+#: examples/models.py:67
+msgid "index"
+msgstr ""
+
+#: examples/models.py:69
+msgid "duration"
+msgstr ""
+
+#: examples/models.py:76
+msgid "track"
+msgstr ""
+
+#: examples/models.py:77
+msgid "tracks"
+msgstr ""
+
+#: examples/page_examples.py:26
+msgid "Standard example"
+msgstr ""
+
+#: examples/page_examples.py:32
+msgid "View with some calculation to do before making the page"
+msgstr ""
+
+#: examples/page_examples.py:42
+msgid "Further specializing an already defined page"
+msgstr ""
+
+#: examples/page_examples.py:51
+msgid "Busy page with different components"
+msgstr ""
+
+#: examples/supernaut.py:30
+msgid "Home"
+msgstr ""
+
+#: examples/supernaut.py:31
+msgid "Artists"
+msgstr ""
+
+#: examples/supernaut.py:32
+msgid "Albums"
+msgstr ""
+
+#: examples/supernaut.py:33
+msgid "Tracks"
+msgstr ""
+
+#: examples/supernaut.py:62
+msgid "Create album"
+msgstr ""
+
+#: examples/supernaut.py:78
+msgid "Supernaut"
+msgstr ""
+
+#: examples/supernaut.py:79
+msgid "This is a discography of the best acts in music!"
+msgstr ""
+
+#: examples/table_examples.py:29
+msgid "Readme example 1"
+msgstr ""
+
+#: examples/table_examples.py:52
+msgid "Readme example 2"
+msgstr ""
+
+#: examples/table_examples.py:67
+msgid "Auto from model example 1"
+msgstr ""
+
+#: examples/table_examples.py:74
+msgid "Auto from model example 2"
+msgstr ""
+
+#: examples/table_examples.py:82
+msgid "Kitchen sink example"
+msgstr ""
