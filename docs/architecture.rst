@@ -1,3 +1,9 @@
+.. imports
+
+    import pytest
+    pytestmark = pytest.mark.django_db
+
+
 Architecture
 ============
 
@@ -112,3 +118,97 @@ This is really useful for the `Table` class as it means we can expose the full
 feature set of the underling `Query` and `Form` classes by just
 dispatching keyword arguments downstream. It also enables us to bundle
 commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.
+
+
+Evaluate
+--------
+
+.. comment
+
+    TODO: add this a table of contents somewhere
+
+To customize iommi you can pass functions/lambdas in many places. This makes it super easy and fast to customize things, but how does this all work? Let's start with a concrete example:
+
+.. test
+    Artist.objects.create(name='Dio')
+
+    t = (
+
+.. code:: python
+
+    Table(
+        auto__model=Artist,
+        columns__name__cell__format=lambda value, **_: f'{value} !!!',
+    )
+
+
+.. test
+
+    )
+
+    t = t.bind(request=req('get'))
+    data = [
+        [cell.render_cell_contents() for cell in cells]
+        for cells in t.cells_for_rows()
+    ]
+    assert data == [['Dio !!!']]
+
+
+This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious question here is: what other keyword arguments besides `value` do I get? In this case you get:
+
+
+.. test
+
+    kwargs = {}
+
+    t = Table(
+        auto__model=Artist,
+        columns__name__cell__format=lambda **format_kwargs: kwargs.update(format_kwargs),
+    )
+    str(t.bind(request=req('get')))  # trigger render
+
+    expected = """
+
+.. code:: python
+
+    request        WSGIRequest
+    table          Table
+    column         Column
+    traversable    Column
+    value          str
+    row            Artist
+
+.. test
+
+    """.strip().split('\n')
+    expected = dict(
+        x.strip().replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').split(' ')
+        for x in expected
+    )
+
+    assert {k: type(v).__name__ for k, v in kwargs.items()} == expected
+
+
+The general idea here that you should get all useful objects up the tree and as they are named it becomes easy to understand what is happening when reading these functions. If you have an iommi object you can call the method `iommi_evaluate_parameters()` on it to retrieve this dict.
+
+`traversable` is exactly the same object as `column`. It's the general name of the closest object (or the leaf) for that callback. You can think of it as similar to `self`. This is useful for creating functions that you can use for `Field`, `Column`, and `Filter`; as the keyword argument `traversable` is the same, but they will get `field`, `column`, and `filter` as the specific keyword arguments. Prefer the specific name if possible since it makes the code more readable.
+
+
+
+.. note::
+
+    It is a good idea to always give your callbacks `**_` even if you match all keyword arguments. We don't consider adding keyword arguments a breaking change so additional keyword arguments can be added at any time.
+
+
+Evaluate - under the hood
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are three functions that handle the evaluation of callables into values when needed. All of these pass values straight through, which is why you can write e.g. `display_name='Artist'` instead of having to write lambdas for simple values.
+
+- `evaluate`: evaluates non-strict, which means it will allow functions that don't match the given signature to pass through
+- `evaluate_strict`: evaluates strictly, which means functions that don't match the given signature will be an error
+- `evaluate_strict_container`: used for evaluating all the values of a dict
+
+Each object in the tree declares what it adds to the evaluate parameters with a method `own_evaluate_parameters`. For example `Table` adds just one argument `table` which is itself. The method `iommi_evaluate_parameters` gives you all the evaluate parameters up the tree from where you are.
+
+There are two special cases: `traversable` which is the leaf node, and `request` which is the http request object.

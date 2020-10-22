@@ -410,10 +410,14 @@ How do I change how fields are rendered everywhere in my project?
 Define a custom style and override the appropriate fields.  For
 example here is how you could change `Field.date` to use a text
 based input control (as opposed to the date picker that `input type='date'`
-uses).  
+uses).
+
+.. test
+    from iommi.style_bootstrap import bootstrap
 
 .. code:: python
-    my_style = Style(iommi.style_bootstrap.style, Field__shortcuts__date__input__attrs_type='date')
+
+    my_style = Style(bootstrap, Field__shortcuts__date__input__attrs_type='date')
 
 When you do that you will get English language relative date parsing 
 (e.g. "yesterday", "3 days ago") for free, because iommi used to use a 

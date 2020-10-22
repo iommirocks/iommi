@@ -160,13 +160,10 @@ but for the more dynamic case we can write:
             lambda request, **_: 'guitar' if request.is_staff else 'tambourine',
     )
 
-The rule here is that the callable has to match at least one argument of those
-we supply. In this case you have `form`, and `field` accessible. If you don't
+In this case you have e.g. `form`, and `field` accessible. If you don't
 know which arguments you can use, you can write whatever and you will get an
 error message telling you what arguments are available.
 
-The reason we don't allow you to match a function that takes just `**` is
-because we've found that this becomes very error prone and confusing.
 
 Late binding
 ------------

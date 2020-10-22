@@ -63,6 +63,13 @@ def build_test_file_from_rst(filename):
     })
 
     with open(base_dir / '_generated_tests' / f'test_{filename.partition(os.path.sep)[-1].partition(".")[0]}.py', 'w') as f:
+        current_line = 0
+
+        def write(s):
+            f.write(s)
+            nonlocal current_line
+            current_line += s.count('\n')
+
         setup = '''
 from iommi import *
 from iommi.admin import Admin
@@ -74,34 +81,30 @@ from django.db import models
 from tests.helpers import req, user_req, staff_req
 from docs.models import *
 request = req('get')
-'''.strip()
-        f.write(setup)
-        f.write('\n')
-
-        current_line = setup.count('\n') + 3
+'''.strip() + '\n'
+        write(setup)
+        write('\n')
 
         for section in sections:
             if section['header']:
                 func_name = section['header'].strip().translate(func_trans).lower().partition('(')[0]
                 def_line = f'\n\ndef test_{func_name}():\n'
-                f.write(def_line)
-                current_line += def_line.count('\n')
+                write(def_line)
             else:
                 func_name = None
             for line, line_number in section['code']:
                 # This stuff is to make the line numbers align between .rst and test_*.py files.
                 while line_number > current_line:
-                    f.write('\n')
-                    current_line += 1
+                    write('\n')
 
                 if line.strip() == 'return':
                     # A little hack to turn some return statements like "if not form.is_valid(): return" into non-covered
-                    f.write(line.rstrip() + '  # pragma: no cover\n')
+                    write(line.rstrip() + '  # pragma: no cover\n')
                 else:
-                    f.write(line)
-                current_line += 1
+                    write(line)
+
             if not section['code'] and func_name:
-                f.write('    pass\n')
+                write('    pass\n')
 
 
 for x in glob(str(base_dir / '*.rst')):
