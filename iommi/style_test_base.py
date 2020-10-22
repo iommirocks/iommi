@@ -8,6 +8,7 @@ test = Style(
     assets=dict(
         jquery=None,
         select2_js=None,
+        select2_css=None,
         icons=None,
     ),
     Field=dict(
