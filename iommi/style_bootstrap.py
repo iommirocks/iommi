@@ -73,13 +73,19 @@ bootstrap_base = Style(
     ),
     Action=dict(
         shortcuts=dict(
+            # In bootstrap one must choose a button style (secondary, success, ...)
+            # otherwise the styling is roughly identical to text.
             button__attrs__class={
                 'btn': True,
+                'btn-secondary': True,
+            },
+            primary__attrs__class={
                 'btn-primary': True,
+                'btn-secondary': False,
             },
             delete__attrs__class={
-                'btn-primary': False,
                 'btn-danger': True,
+                'btn-secondary': False,
             },
         ),
     ),

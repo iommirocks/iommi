@@ -1256,7 +1256,7 @@ class Form(Part):
         attrs__action='',
         attrs__method='post',
         attrs__enctype='multipart/form-data',
-        actions__submit__call_target__attribute='submit',
+        actions__submit__call_target__attribute='primary',
         auto=EMPTY,
         h_tag__call_target=Header,
     )

@@ -62,6 +62,7 @@ semantic_ui_base = Style(
                 'ui': True,
                 'button': True,
             },
+            primary__attrs__class__primary=True,
             delete__attrs__class__negative=True,
         ),
     ),

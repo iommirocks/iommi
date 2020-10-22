@@ -72,12 +72,16 @@ bulma_base = Style(
     ),
     Action=dict(
         shortcuts=dict(
+            # In bulma the most neutral button styling is button, which
+            # gets you a button that's just an outline.
             button__attrs__class={
                 'button': True,
             },
             delete__attrs__class={
-                'button': True,
                 'is-danger': True,
+            },
+            primary__attrs__class={
+                'is-primary': True,
             },
         ),
     ),

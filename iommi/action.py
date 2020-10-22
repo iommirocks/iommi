@@ -54,6 +54,20 @@ class Action(Fragment):
 
         # Button
         Action.button(attrs__value='Button title!')
+
+        # A submit button
+        Action.submit(display_name='Do this')
+
+        # The primary submit button on a form, unnecessary
+        # most of the time as a form includes a submit
+        # button by default.
+        Action.primary()
+
+        # A button styled as primary but not using
+        # the submit html element, but the button
+        # element.
+        Action.primary(call_target__attribute='button')
+
     """
 
     group: str = EvaluatedRefinable()
@@ -107,6 +121,13 @@ class Action(Fragment):
         display_name=gettext_lazy('Submit'),
     )
     def submit(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='submit',
+    )
+    def primary(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod

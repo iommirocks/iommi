@@ -1437,6 +1437,10 @@ class Table(Part, Tag):
         attrs__style=EMPTY,
 
         paginator__call_target=Paginator,
+        # The filter action on a table will often not be the primary
+        # action button on the page.  So let's use the secondary
+        # style
+        query__form__actions__submit__call_target=Action.button
     )
     def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=MISSING, paginator, **kwargs):
         """

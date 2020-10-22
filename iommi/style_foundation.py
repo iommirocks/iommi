@@ -28,7 +28,11 @@ foundation_base = Style(
     Action=dict(
         shortcuts=dict(
             button__attrs__class__button=True,
+            button__attrs__class__secondary=True,
+            primary__attrs__class__primary=True,
+            primary__attrs__class__secondary=False,
             delete__attrs__class__alert=True,
+            delete__attrs__class__secondary=False,
         ),
     ),
     Menu=dict(
