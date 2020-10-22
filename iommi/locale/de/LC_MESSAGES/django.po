@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-07 13:24+0200\n"
+"POT-Creation-Date: 2020-10-22 15:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,10 +193,10 @@ msgstr ""
 "quarters and weekdays. Sie können auch negativ sein \"10 days ago\" und "
 "abgekürzt werden \"-10d\"."
 
-#: iommi/templates/iommi/query/form.html:102
+#: templates/iommi/query/form.html:102
 msgid "Switch to basic search"
 msgstr "Zurück zur Standardsuchfunktion"
 
-#: iommi/templates/iommi/query/form.html:127
+#: templates/iommi/query/form.html:127
 msgid "Hide help"
 msgstr "Hilfe ausblenden"
