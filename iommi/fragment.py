@@ -48,7 +48,7 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.get_request(), fragment.template, {**context, **fragment.iommi_evaluate_parameters(), rendered_children: rendered_children})
+        return render_template(fragment.get_request(), fragment.template, dict(**context, **fragment.iommi_evaluate_parameters(), rendered_children=rendered_children))
 
     is_void_element = fragment.tag in _void_elements
 
@@ -170,7 +170,7 @@ class Fragment(Part, Tag):
         assert self._is_bound
         return render(
             fragment=self,
-            context={**self.get_context(), **self.iommi_evaluate_parameters()},
+            context=self.get_context(),
         )
 
     def own_evaluate_parameters(self):
