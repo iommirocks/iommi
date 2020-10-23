@@ -13,9 +13,14 @@ base = Style(
             ),
             after=-1,
         ),
-        select2_js=html.link(
-            attrs__href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
-            attrs__rel='stylesheet',
+        select2_js=html.script(
+            attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
+        ),
+        select2_css=html.link(
+            attrs=dict(
+                href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
+                rel='stylesheet',
+            )
         ),
     ),
     Form=dict(
