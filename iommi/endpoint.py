@@ -43,6 +43,9 @@ class Endpoint(Traversable):
         assert json.loads(response.content) == 'foo'
 
     this page will respond to `?/echo=foo` by returning a json response `"foo"`.
+
+    An endpoint can return an HttpResponse directly, a `Part` which is rendered for you,
+    and everything else we try to dump to json for you.
     """
 
     name: str = Refinable()
