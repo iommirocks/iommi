@@ -7,3 +7,4 @@ include requirements.txt
 exclude tests/*
 exclude iommi/*__tests.py
 recursive-include iommi/templates *
+recursive-include iommi/locale *
