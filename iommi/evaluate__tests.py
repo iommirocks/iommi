@@ -63,6 +63,13 @@ def test_evaluate_subset_parameters():
     assert evaluate(f, x=17, y=42) == 17
 
 
+def test_evaluate_no_explicit_parameters():
+    def f(**_):
+        return 17
+
+    assert evaluate(f, y=42) == 17
+
+
 def test_match_caching():
     assert matches("a,b", "a,b||")
     assert matches("a,b", "a||*")
