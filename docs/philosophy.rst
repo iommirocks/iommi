@@ -22,7 +22,8 @@ you can reuse those abstractions with small tweaks *without having to
 change the abstraction to enable this*. If you have code that creates
 a complex page with tables, forms, and help text fragments in several places,
 then you should be able to reuse that but with a single line of code
-change to change a single small detail of that page.
+make a change to a single small detail of that page, like adding a CSS
+class somewhere.
 
 In standard APIs you often have to copy paste the entire page and make
 a small change. This hides the difference between the two pages because you
@@ -43,9 +44,9 @@ The philosophy has these main parts:
 No silent mistakes
 ---------------------
 
-Systems that fail silently is the worst. Like when you try to render a
+Systems that fail silently are the worst. Like when you try to render a
 value in a django template and you just get silence instead of an error telling
-you you misspelled the variable name. Or when you define a `clean_albumm` method
+you that you misspelled the variable name. Or when you define a `clean_albumm` method
 that never gets called because you misspelled "album" (or worse if you renamed
 album to record!). Or silent changes to behavior because you upgraded a library
 and your overridden method isn't called because they renamed the function in
@@ -57,7 +58,7 @@ error message telling them how to fix the problem.
 
 To accomplish this we:
 
-- don't override use object oriented style overriding, instead preferring `refining <https://kodare.net/2018/06/25/refinableobject-object-orientation-refined.html>`_
+- don't override using standard object oriented overriding, instead preferring `refining <https://kodare.net/2018/06/25/refinableobject-object-orientation-refined.html>`_
 - show you the valid values when you supply an invalid one, one per line and in alphabetical order
 - detect common mistakes we've made and have helpful error messages telling you what to do or why you can't do that thing
 
@@ -235,8 +236,8 @@ share functionality and in fact we think this hinders composability and hides
 lack of customizability.
 
 A shortcut is a bunch of config (and sometimes a tiny bit of code) that also
-has a name. We use these instead of writing `Field` subclasses. The names of
-these shortcuts is also used by the style system to determine what rules to
+has a name. We use these instead of writing e.g. `Field` subclasses. The names of
+these shortcuts are also used by the style system to determine what rules to
 apply.
 
 An important difference between a traditional class and a shortcut is that the
@@ -248,7 +249,7 @@ Single point customization with no boilerplate
 ----------------------------------------------
 
 GUIs consists of layers of abstraction like a form containing fields,
-fields containing input tags, and a button. But to customize the input tag of
+fields containing input tags, and a button. But in traditional APIs, to customize the input tag of
 a form field row you must subclass several classes even for very trivial
 things. Often trivial things also requires copy pasting a template and making
 a minor change. This leads to lots of code that basically does nothing and it
@@ -256,7 +257,7 @@ a minor change. This leads to lots of code that basically does nothing and it
 it that is just copy paste or boilerplate.
 
 In iommi we strive to avoid this by enabling one-off customizations with
-*no overhead*. To set a CSS style on a specific input field inside a form
+*no boilerplate*. To set a CSS style on a specific input field inside a form
 that was automatically generated we can write:
 
 .. code:: python
@@ -282,6 +283,7 @@ of the classes in iommi. This is your place to put whatever you want in order
 to extend iommi for a general feature or just some simple one-off customization
 for a single view. We also have `extra_evaluated` that is similar but values
 here are evaluated (see
-`Callables for advanced usage, values for the simple cases`_)   All Part
-derived classes have `extra` and `extra_evaluated` namespaces, for example:
-Page, Column, Table, Field, Form, and Action.
+`Callables for advanced usage, values for the simple cases`_)
+
+All Part derived classes have `extra` and `extra_evaluated` namespaces, for example:
+`Page`, `Column`, `Table`, `Field`, `Form`, and `Action`.
