@@ -115,4 +115,4 @@ USE_TZ = True
 STATIC_URL = '/static/'
 IOMMI_DEBUG = True
 
-STATIC_ROOT = Path(__file__).parent
+STATIC_ROOT = Path(__file__).parent.joinpath('static')

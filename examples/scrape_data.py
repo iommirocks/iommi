@@ -14,10 +14,12 @@ base_url = 'https://www.discogs.com'
 
 result = dict()
 
+basedir = Path(__file__).parent
+
 
 def download_album_art(artist, title, url):
     title = title.replace('/', '__')
-    directory = Path('album_art') / artist
+    directory = basedir.joinpath('examples/static/album_art') / artist
     directory.mkdir(parents=True, exist_ok=True)
     if (directory / f'{title}.jpg').exists():
         return
@@ -33,9 +35,9 @@ def download_album_art(artist, title, url):
 
 def scrape_album(artist, album_title, tracks, url):
     soup = BeautifulSoup(session.get(base_url + url).content, "html.parser")
-    # thumbnails = soup.select('.thumbnail_link')
-    # if thumbnails:
-    #     download_album_art(artist, album_title, thumbnails[0].attrs['href'])
+    thumbnails = soup.select('.thumbnail_link')
+    if thumbnails:
+        download_album_art(artist, album_title, thumbnails[0].attrs['href'])
 
     for row in soup.select('.tracklist_track'):
         title = row.find(class_='tracklist_track_title')
@@ -72,13 +74,19 @@ def scrape_artist(artist, url):
         scrape_album(artist, title, tracks, album_url)
 
 
-scrape_artist('Django Reinhardt', '/artist/253481-Django-Reinhardt?filter_anv=0&subtype=Albums&type=Releases')
-scrape_artist('Quintette Du Hot Club De France', '/artist/355185-Quintette-Du-Hot-Club-De-France?filter_anv=0&subtype=Albums&type=Releases')
-scrape_artist('Black Sabbath', '/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&filter_anv=0&subtype=Albums&type=Releases&page=1&layout=sm')
-scrape_artist('Dio', '/artist/252122-Dio-2?filter_anv=0&subtype=Albums&type=Releases')
-scrape_artist('Ozzy Osbourne', '/artist/59770-Ozzy-Osbourne?filter_anv=0&subtype=Albums&type=Releases')
-scrape_artist('Tony Iommi', '/artist/253791-Tony-Iommi?filter_anv=0&subtype=Albums&type=Releases')
-scrape_artist('Radiohead', '/artist/3840-Radiohead?filter_anv=0&subtype=Albums&type=Releases')
+def scrape_data():
+    print('### Scraping artist and album data')
+    scrape_artist('Django Reinhardt', '/artist/253481-Django-Reinhardt?filter_anv=0&subtype=Albums&type=Releases')
+    scrape_artist('Quintette Du Hot Club De France', '/artist/355185-Quintette-Du-Hot-Club-De-France?filter_anv=0&subtype=Albums&type=Releases')
+    scrape_artist('Black Sabbath', '/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&filter_anv=0&subtype=Albums&type=Releases&page=1&layout=sm')
+    scrape_artist('Dio', '/artist/252122-Dio-2?filter_anv=0&subtype=Albums&type=Releases')
+    scrape_artist('Ozzy Osbourne', '/artist/59770-Ozzy-Osbourne?filter_anv=0&subtype=Albums&type=Releases')
+    scrape_artist('Tony Iommi', '/artist/253791-Tony-Iommi?filter_anv=0&subtype=Albums&type=Releases')
+    scrape_artist('Radiohead', '/artist/3840-Radiohead?filter_anv=0&subtype=Albums&type=Releases')
 
-with open('scraped_data.json', 'w') as f:
-    json.dump(result, f)
+    with open(basedir.joinpath('scraped_data.json'), 'w') as f:
+        json.dump(result, f)
+
+
+if __name__ == '__main__':
+    scrape_data()
