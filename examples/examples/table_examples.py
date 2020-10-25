@@ -15,6 +15,7 @@ from examples.views import (
     ExamplesPage,
 )
 from iommi import (
+    Page,
     Action,
     Column,
     html,
@@ -137,6 +138,14 @@ example_6_view = Table(
 example_6_view = example('Table expressed directly as a view function')(example_6_view)
 
 
+@example(gettext('Two tables on the same page'))
+def table_two(request):
+    return Page(
+        parts__table_1=Table(auto__model=Foo, columns__a__filter__include=True),
+        parts__table_2=Table(auto__model=TBar, columns__b__filter__include=True)
+    )
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Table examples')
 
@@ -165,4 +174,5 @@ urlpatterns = [
     path('example_4/', table_auto_example_2, name='readme_example_2'),
     path('example_5/', table_kitchen_sink, name='kitchen_sink'),
     path('example_6/', example_6_view),
+    path('example_7/', table_two),
 ]

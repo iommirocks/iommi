@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-22 15:47+0200\n"
+"POT-Creation-Date: 2020-10-25 14:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,159 +17,159 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: action.py:121
+#: iommi/action.py:121
 msgid "Submit"
 msgstr "Absenden"
 
-#: admin.py:154
+#: iommi/admin.py:154
 msgid "iommi administration"
 msgstr "iommi Verwaltung"
 
-#: admin.py:155 admin.py:456
+#: iommi/admin.py:155 iommi/admin.py:456
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: admin.py:156
+#: iommi/admin.py:156
 msgid "Logout"
 msgstr "Abmelden"
 
-#: admin.py:244
+#: iommi/admin.py:244
 msgid "All models"
 msgstr "Alle Modelle"
 
-#: admin.py:293
+#: iommi/admin.py:293
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "%(model_name)s anlegen"
 
-#: admin.py:409
+#: iommi/admin.py:409
 msgid "Username"
 msgstr "Benutzername"
 
-#: admin.py:410
+#: iommi/admin.py:410
 msgid "Password"
 msgstr "Passwort"
 
-#: admin.py:413
+#: iommi/admin.py:413
 msgid "Login"
 msgstr "Anmelden"
 
-#: admin.py:428
+#: iommi/admin.py:428
 msgid "Unknown username or password"
 msgstr "Unbekannter Benutzername oder ungültiges Passwort"
 
-#: admin.py:439
+#: iommi/admin.py:439
 msgid "Incorrect password"
 msgstr "Passwort ungültig"
 
-#: admin.py:451
+#: iommi/admin.py:451
 msgid "New passwords does not match"
 msgstr "Neue Passwörter nicht gleich"
 
-#: admin.py:466
+#: iommi/admin.py:466
 msgid "Current password"
 msgstr "Aktuelles Passwort"
 
-#: admin.py:467
+#: iommi/admin.py:467
 msgid "New password"
 msgstr "Neues Passwort"
 
-#: admin.py:468
+#: iommi/admin.py:468
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: form.py:1196
+#: iommi/form.py:1196
 msgid "create"
 msgstr "anlegen"
 
-#: form.py:1197
+#: iommi/form.py:1197
 msgid "edit"
 msgstr "bearbeiten"
 
-#: form.py:1198
+#: iommi/form.py:1198
 msgid "delete"
 msgstr "löschen"
 
-#: form.py:1281
+#: iommi/form.py:1281
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(model_name)s %(crud_type)s"
 
-#: form.py:1285
+#: iommi/form.py:1285
 msgid "Save"
 msgstr "Speichern"
 
-#: query.py:601
+#: iommi/query.py:601
 msgid "Search"
 msgstr "Suche"
 
-#: query.py:624
+#: iommi/query.py:624
 msgid "Filter"
 msgstr "Filtern"
 
-#: query.py:634 templates/iommi/query/form.html:111
+#: iommi/query.py:634
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion"
 
-#: table.py:497
+#: iommi/table.py:497
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: table.py:509
+#: iommi/table.py:509
 msgid "Delete"
 msgstr "Löschen"
 
-#: table.py:522
+#: iommi/table.py:522
 msgid "Download"
 msgstr "Herunterladen"
 
-#: table.py:534
+#: iommi/table.py:534
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1426 table.py:1588
+#: iommi/table.py:1491 iommi/table.py:1653
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1594
+#: iommi/table.py:1659
 msgid "Bulk delete"
 msgstr "Massenlöschen"
 
-#: templates/iommi/query/form.html:8
+#: iommi/templates/iommi/query/form.html:8
 msgid "Search query"
 msgstr "Suchanfrage"
 
-#: templates/iommi/query/form.html:12 templates/iommi/query/form.html:133
+#: iommi/templates/iommi/query/form.html:12
 msgid "Show help"
 msgstr "Hilfe einblenden"
 
-#: templates/iommi/query/form.html:17
+#: iommi/templates/iommi/query/form.html:17
 msgid "Available fields"
 msgstr "Verfügbare Felder"
 
-#: templates/iommi/query/form.html:25
+#: iommi/templates/iommi/query/form.html:25
 msgid "Queries"
 msgstr "Suchanfragen"
 
-#: templates/iommi/query/form.html:27
+#: iommi/templates/iommi/query/form.html:27
 msgid "Search for an exact value: field_name=value"
 msgstr "Exakte Suche: feld_name=wert"
 
-#: templates/iommi/query/form.html:28
+#: iommi/templates/iommi/query/form.html:28
 msgid ""
 "Search for an exact value containing space: field_name=\"value with space\""
 msgstr ""
 "Exakte Suche mit Lehrzeichen im Wert: feld_name=\"Wert mit Lehrzeichen\""
 
-#: templates/iommi/query/form.html:29
+#: iommi/templates/iommi/query/form.html:29
 msgid "Containing a text: field_name:val"
 msgstr "Zeichenfolge enthält: feld_name=wer"
 
-#: templates/iommi/query/form.html:30
+#: iommi/templates/iommi/query/form.html:30
 msgid "Exclude a value: field_name!=value"
 msgstr "Einen Wert ausschließen: feld_name!=Wert"
 
-#: templates/iommi/query/form.html:31
+#: iommi/templates/iommi/query/form.html:31
 msgid ""
 "You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: "
 "field_name&lt;10"
@@ -177,12 +177,12 @@ msgstr ""
 "&lt;, &gt;, &lt;= und &gt;= können benutzt werden um Bereiche zu finden:"
 "feld_name&lt;10"
 
-#: templates/iommi/query/form.html:32
+#: iommi/templates/iommi/query/form.html:32
 msgid "To search for dates, use ISO8601 format: field_name>1969-07-20"
 msgstr ""
 "Um nach Zeiträumen zu suchen, benutze das IO8601 Format: feld_name>1969-07-20"
 
-#: templates/iommi/query/form.html:33
+#: iommi/templates/iommi/query/form.html:33
 msgid ""
 "You can filter for relative dates: field_name < \"10 days ago\". Supported "
 "fields are days, months, years, quarters and weekdays. They can be negative "
@@ -193,10 +193,8 @@ msgstr ""
 "quarters and weekdays. Sie können auch negativ sein \"10 days ago\" und "
 "abgekürzt werden \"-10d\"."
 
-#: templates/iommi/query/form.html:102
-msgid "Switch to basic search"
-msgstr "Zurück zur Standardsuchfunktion"
+#~ msgid "Switch to basic search"
+#~ msgstr "Zurück zur Standardsuchfunktion"
 
-#: templates/iommi/query/form.html:127
-msgid "Hide help"
-msgstr "Hilfe ausblenden"
+#~ msgid "Hide help"
+#~ msgstr "Hilfe ausblenden"

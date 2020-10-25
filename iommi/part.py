@@ -1,3 +1,4 @@
+import itertools
 import json
 from abc import abstractmethod
 from typing import (
@@ -42,6 +43,7 @@ from iommi.endpoint import (
 from iommi.member import (
     bind_members,
     collect_members,
+    Members
 )
 from iommi.traversable import (
     EvaluatedRefinable,
@@ -65,15 +67,21 @@ class Part(Traversable):
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     endpoints: Namespace = Refinable()
+    assets: Namespace = Refinable()
 
     @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
+        assets=EMPTY,
     )
-    def __init__(self, *, endpoints: Dict[str, Any] = None, include, **kwargs):
+    def __init__(self, *, endpoints: Dict[str, Any] = None, include, assets=None, **kwargs):
         super(Part, self).__init__(include=include, **kwargs)
         collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
+        # What I would love to do here is collect all my childrens assets, but I think
+        # I can't do that before my children are properly bound.  So instead I store
+        # only my own assets in assets and later do a grand collecting exercise
+        self.assets = {k: v for k, v in Namespace({}, assets).items() if v is not None}
 
         if iommi_debug_on():
             import inspect
@@ -97,6 +105,25 @@ class Part(Traversable):
         del self
         bind_members(result, name='endpoints')
         return result
+
+    def all_assets(self) -> Namespace:
+        """Return this parts assets as well as all assets used by its children."""
+        assert self._is_bound
+        # TODO: In this implementation only parts can have assets, traversables can not.
+        # But for that to work in the current implementation it must further be true
+        # that only parts can contain parts (and other traversables other than Members do not).
+        # I believe that is correct, but one could envision a system where asset
+        # collection is part of traversable.  Thoughts?
+
+        def get_assets(t):
+            if isinstance(t, Part):
+                return Namespace(t.assets, *(get_assets(m) for m in t.iommi_bound_members().values()))
+            elif isinstance(t, Members):
+                return Namespace(*(get_assets(m) for m in t.iommi_bound_members().values()))
+            else:
+                return Namespace()
+
+        return get_assets(self)
 
     @dispatch
     def render_to_response(self, **kwargs):
@@ -156,9 +183,13 @@ def render_root(*, part, context, **render):
     root_style = get_style(root_style_name)
     template_name = root_style.base_template
     content_block_name = root_style.content_block
+    # Is this the right order?  That is should assets from the parts or from the style
+    # take precedence (aka override each other when the name is identical).  I mean ideally
+    # overriding only happens for deduplication (e.g. the same component is used
+    # multiple times on the same page).
     style_assets = {
         k: v.bind(request=part.get_request())
-        for k, v in root_style.assets.items()
+        for k, v in itertools.chain(root_style.assets.items(), part.all_assets().items())
     }
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
