@@ -1,6 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
-from django.shortcuts import get_object_or_404
 from django.template import Template
 from django.urls import (
     path,
@@ -11,7 +8,6 @@ from iommi import (
     Action,
     Column,
     Form,
-    get_current_request,
     Header,
     html,
     Menu,
@@ -19,7 +15,6 @@ from iommi import (
     Page,
     Table,
 )
-from iommi.from_model import get_search_fields
 from iommi.path_converter import register_path_converter
 from .models import (
     Album,
@@ -146,13 +141,13 @@ urlpatterns = [
     path('artists/', ArtistTable(auto__model=Artist).as_view()),
     path('tracks/', TrackTable(auto__model=Track).as_view()),
 
-    path('artist/<artist:artist>/', ArtistPage().as_view()),
-    path('artist/<artist:artist>/<album:album>/', AlbumPage().as_view()),
-    path('artist/<artist:artist>/<album:album>/edit/', Form.edit(
+    path('artist/<artist>/', ArtistPage().as_view()),
+    path('artist/<artist>/<album>/', AlbumPage().as_view()),
+    path('artist/<artist>/<album>/edit/', Form.edit(
         auto__model=Album,
         instance=lambda url_params, **_: url_params.album,
     ).as_view()),
-    path('artist/<artist:artist>/<album:album>/delete/', Form.delete(
+    path('artist/<artist>/<album>/delete/', Form.delete(
         auto__model=Album,
         instance=lambda url_params, **_: url_params.album,
     ).as_view()),

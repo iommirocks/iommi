@@ -1276,7 +1276,8 @@ class Form(Part):
                 include=auto.include,
                 exclude=auto.exclude,
             )
-            instance = auto.instance
+            if auto.instance is not None:
+                instance = auto.instance
             if title is MISSING and auto.type is not None:
                 title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(crud_type=gettext(auto.type), model_name=model._meta.verbose_name))
 
@@ -1303,6 +1304,8 @@ class Form(Part):
         self._valid = None
         request = self.get_request()
         self._request_data = request_data(request)
+
+        self.instance = evaluate_strict(self.instance, **self.iommi_evaluate_parameters())
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         if isinstance(self.h_tag, Namespace):

@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
 from django.utils.encoding import force_str
+from tri_struct import Struct
 
 
 class UnknownMissingValueException(Exception):
@@ -31,8 +32,12 @@ def model_and_rows(model, rows):
 
 
 def build_as_view_wrapper(target):
+    from iommi.path_converter import parse_url_params
+
     def view_wrapper(request, **url_params):
-        request.url_params.update(url_params)
+        # Note that parse_url_params mutates request.iommi_url_params
+        request.iommi_url_params = Struct(url_params)
+        parse_url_params(request=request)
         return target.bind(request=request).render_to_response()
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
