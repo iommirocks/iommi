@@ -1,6 +1,9 @@
 __version__ = '2.2.0'
 
 from tri_declarative import LAST
+import threading
+
+from tri_struct import Struct
 
 from iommi._db_compat import (
     register_factory,
@@ -48,9 +51,22 @@ from iommi.from_model import (
 setup_db_compat()
 
 
+# TODO: move this somewhere?
+_thread_locals = threading.local()
+
+
+def get_current_request():
+    return getattr(_thread_locals, 'request', None)
+
+
+def set_current_request(request):
+    _thread_locals.request = request
+    request.url_params = Struct()
+
+
 def middleware(get_response):
     def iommi_middleware(request):
-
+        set_current_request(request)
         response = get_response(request)
         if isinstance(response, Part):
             if not response._is_bound:

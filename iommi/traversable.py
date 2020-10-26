@@ -147,6 +147,7 @@ class Traversable(RefinableObject):
         }
         if parent is None:
             evaluate_parameters['request'] = request
+            evaluate_parameters['url_params'] = Struct(request.url_params)
         result._evaluate_parameters = evaluate_parameters
 
         if hasattr(result, 'include'):

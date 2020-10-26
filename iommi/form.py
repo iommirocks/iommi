@@ -1266,7 +1266,7 @@ class Form(Part):
             auto = FormAutoConfig(**auto)
             assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
             assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
-            assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
+            # assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
             if auto.model is None:
                 auto.model = auto.instance.__class__
 

@@ -32,7 +32,7 @@ def model_and_rows(model, rows):
 
 def build_as_view_wrapper(target):
     def view_wrapper(request, **url_params):
-        request.url_params = url_params
+        request.url_params.update(url_params)
         return target.bind(request=request).render_to_response()
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
