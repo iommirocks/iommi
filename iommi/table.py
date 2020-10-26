@@ -1861,7 +1861,7 @@ class Table(Part, Tag):
     )
     def _from_model(cls, *, rows=None, model=None, columns=None, include=None, exclude=None):
         assert rows is None or isinstance(rows, QuerySet), \
-            'auto__rows needs to be a QuerySet for column generation to work' \
+            'auto__rows needs to be a QuerySet for column generation to work. ' \
             'If it needs to be a lambda, provide a model with auto__model for column generation, ' \
             'and pass the lambda as rows.'
 
