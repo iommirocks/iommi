@@ -38,6 +38,13 @@ class NotBoundYetException(Exception):
 
 
 class NotBoundYet:
+    """
+    This class is used to make debugging easier. Before the members are bound,
+    this class is used as a sentinel so you get some feedback on where you
+    should be looking instead. Without this class I was constantly confused why
+    stuff was empty and spent lots of time trying to figure that out.
+    """
+
     def __init__(self, parent, name):
         self.parent = parent
         self.name = name
@@ -62,6 +69,27 @@ class NotBoundYet:
 
 
 def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
+    """
+    This function is used to collect and merge data from the constructor
+    argument, the declared members, and other config into one data structure.
+    `bind_members` is then used at bind time to recursively bind the nested
+    parts.
+
+    Example:
+
+    .. code:: python
+
+        class ArtistTable(Table):
+            instrument = Column()  # <- declared member
+
+        MyTable(
+            columns__name=Column(),  # <- constructor argument
+            columns__instrument__after='name',  # <- inserted config for a declared member
+        )
+
+    In this example the resulting table will have two columns `instrument` and
+    `name`, with `instrument` after name even though it was declared before.
+    """
     forbidden_names = FORBIDDEN_NAMES & (set(keys(items_dict or {})) | set(keys(items or {})))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
@@ -221,6 +249,10 @@ def _force_bind_all(member_binder: MemberBinder):
 
 # noinspection PyProtectedMember
 def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False) -> None:
+    """
+    This is the companion function to `collect_members`. It is used at bind
+    time to recursively (and lazily) bind the parts of a container.
+    """
     m = cls(
         _name=name,
         _declared_members=declared_members(parent)[name],
@@ -230,4 +262,3 @@ def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_f
     m = m.bind(parent=parent)
     setattr(parent._bound_members, name, m)
     setattr(parent, name, m._bound_members)
-    #_force_bind_all(m._bound_members)
