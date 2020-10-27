@@ -1,23 +1,22 @@
-from iommi import html
 from iommi.style import (
     Style,
 )
 from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
+from iommi.asset import Asset
 
 foundation_base = Style(
     base,
     font_awesome_4,
     assets=dict(
-        css=html.link(
+        css=Asset.css(
             attrs=dict(
-                rel='stylesheet',
                 href='https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css',
                 integrity='sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=',
                 crossorigin='anonymous',
             ),
         ),
-        js=html.script(attrs__src='https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/js/foundation.min.js'),
+        js=Asset.js(attrs__src='https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/js/foundation.min.js'),
     ),
     Container=dict(
         tag='div',

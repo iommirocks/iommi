@@ -1,11 +1,11 @@
-from iommi import html
 from iommi.style import Style
+from iommi.asset import Asset
 
 base = Style(
     base_template='iommi/base.html',
     content_block='content',
     assets=dict(
-        jquery=html.script(
+        jquery=Asset.js(
             attrs=dict(
                 src='https://code.jquery.com/jquery-3.4.1.js',
                 integrity='sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=',
@@ -13,13 +13,12 @@ base = Style(
             ),
             after=-1,
         ),
-        select2_js=html.script(
+        select2_js=Asset.js(
             attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
         ),
-        select2_css=html.link(
+        select2_css=Asset.js(
             attrs=dict(
                 href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
-                rel='stylesheet',
             )
         ),
     ),

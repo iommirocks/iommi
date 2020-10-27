@@ -74,6 +74,8 @@ class Style:
         assets=EMPTY,
     )
     def __init__(self, *bases, base_template=None, content_block=None, assets=None, **kwargs):
+        from iommi.asset import Asset
+
         self.name = None
 
         self.base_template = base_template
@@ -90,7 +92,8 @@ class Style:
                     self.content_block = base.content_block
                     break
 
-        self.assets = {k: v for k, v in Namespace(*(base.assets for base in bases), assets).items() if v is not None}
+        self.assets = {k: (Asset(**v) if isinstance(v, Namespace) else v)
+                       for k, v in Namespace(*(base.assets for base in bases), assets).items() if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj):
@@ -135,7 +138,8 @@ Available styles:
 
 
 def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
-    assert is_reinvokable(obj), f'reinvoke_new_defaults() called on object with missing @reinvokable constructor decorator: {obj!r}'
+    assert is_reinvokable(
+        obj), f'reinvoke_new_defaults() called on object with missing @reinvokable constructor decorator: {obj!r}'
     additional_kwargs_namespace = Namespace(additional_kwargs)
 
     kwargs = Namespace(additional_kwargs_namespace)
