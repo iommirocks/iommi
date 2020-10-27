@@ -67,3 +67,13 @@ run-examples: venv
 
 test-live:
 	watchmedo shell-command --patterns="*.py" --command="python -m hammett" iommi tests
+
+
+makemessages:
+	(cd iommi && django-admin makemessages -a)
+	(cd examples && django-admin makemessages -a)
+
+
+compilemessages:
+	(cd iommi && django-admin compilemessages -a)
+	(cd examples && django-admin compilemessages -a)

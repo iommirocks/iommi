@@ -29,39 +29,28 @@ FORBIDDEN_NAMES = {x for x in dir(Traversable)} - {'context'}
 items_of = items
 
 
-class ForbiddenNamesException(Exception):
-    pass
-
-
-class NotBoundYetException(Exception):
-    pass
-
-
-class NotBoundYet:
-    def __init__(self, parent, name):
-        self.parent = parent
-        self.name = name
-
-    def __repr__(self):
-        return f"{self.name} of {type(self.parent).__name__} is not bound, look in _declared_members[{self.name}] for the declared copy of this, or bind first"
-
-    def __str__(self):
-        raise NotBoundYetException(repr(self))
-
-    def __iter__(self):
-        raise NotBoundYetException(repr(self))
-
-    def values(self):
-        raise NotBoundYetException(repr(self))
-
-    def keys(self):
-        raise NotBoundYetException(repr(self))
-
-    def items(self):
-        raise NotBoundYetException(repr(self))
-
-
 def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
+    """
+    This function is used to collect and merge data from the constructor
+    argument, the declared members, and other config into one data structure.
+    `bind_members` is then used at bind time to recursively bind the nested
+    parts.
+
+    Example:
+
+    .. code:: python
+
+        class ArtistTable(Table):
+            instrument = Column()  # <- declared member
+
+        MyTable(
+            columns__name=Column(),  # <- constructor argument
+            columns__instrument__after='name',  # <- inserted config for a declared member
+        )
+
+    In this example the resulting table will have two columns `instrument` and
+    `name`, with `instrument` after name even though it was declared before.
+    """
     forbidden_names = FORBIDDEN_NAMES & (set(keys(items_dict or {})) | set(keys(items or {})))
     if forbidden_names:
         raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
@@ -130,6 +119,62 @@ class Members(Traversable):
 
     def on_bind(self):
         self._bound_members = MemberBinder(self, self._declared_members, self._unknown_types_fall_through)
+
+
+# noinspection PyProtectedMember
+def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False) -> None:
+    """
+    This is the companion function to `collect_members`. It is used at bind
+    time to recursively (and lazily) bind the parts of a container.
+    """
+    m = cls(
+        _name=name,
+        _declared_members=declared_members(parent)[name],
+        unknown_types_fall_through=unknown_types_fall_through,
+    )
+    assert parent._is_bound
+    m = m.bind(parent=parent)
+    setattr(parent._bound_members, name, m)
+    setattr(parent, name, m._bound_members)
+
+
+class ForbiddenNamesException(Exception):
+    pass
+
+
+class NotBoundYetException(Exception):
+    pass
+
+
+class NotBoundYet:
+    """
+    This class is used to make debugging easier. Before the members are bound,
+    this class is used as a sentinel so you get some feedback on where you
+    should be looking instead. Without this class I was constantly confused why
+    stuff was empty and spent lots of time trying to figure that out.
+    """
+
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
+
+    def __repr__(self):
+        return f"{self.name} of {type(self.parent).__name__} is not bound, look in _declared_members[{self.name}] for the declared copy of this, or bind first"
+
+    def __str__(self):
+        raise NotBoundYetException(repr(self))
+
+    def __iter__(self):
+        raise NotBoundYetException(repr(self))
+
+    def values(self):
+        raise NotBoundYetException(repr(self))
+
+    def keys(self):
+        raise NotBoundYetException(repr(self))
+
+    def items(self):
+        raise NotBoundYetException(repr(self))
 
 
 # noinspection PyCallByClass
@@ -217,17 +262,3 @@ def _force_bind_all(member_binder: MemberBinder):
     for name in _bindable_names:
         if name not in member_binder:
             _force_bind(member_binder, name)
-
-
-# noinspection PyProtectedMember
-def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False) -> None:
-    m = cls(
-        _name=name,
-        _declared_members=declared_members(parent)[name],
-        unknown_types_fall_through=unknown_types_fall_through,
-    )
-    assert parent._is_bound
-    m = m.bind(parent=parent)
-    setattr(parent._bound_members, name, m)
-    setattr(parent, name, m._bound_members)
-    #_force_bind_all(m._bound_members)

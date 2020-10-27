@@ -48,12 +48,10 @@ class Endpoint(Traversable):
     and everything else we try to dump to json for you.
     """
 
-    name: str = Refinable()
     func: Callable = Refinable()
     include: bool = EvaluatedRefinable()
 
     @dispatch(
-        name=None,
         func=None,
         include=True,
     )
