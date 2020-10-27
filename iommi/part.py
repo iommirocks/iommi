@@ -146,6 +146,25 @@ class Part(Traversable):
         return HttpResponse(render_root(part=self, **kwargs))
 
 
+def get_title(part):
+    from iommi import Header
+    if isinstance(part, Header):
+        for text in part.children.values():
+            return text
+
+    title = getattr(part, 'title', None)
+
+    if title is None:
+        parts = getattr(part, 'parts', None)
+        if parts is not None:
+            for p in parts.values():
+                title = get_title(p)
+                if title is not None:
+                    break
+
+    return title
+
+
 @dispatch(
     render=EMPTY,
     context=EMPTY,
@@ -164,15 +183,7 @@ def render_root(*, part, context, **render):
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
 
-    title = getattr(part, 'title', None)
-
-    if title is None:
-        parts = getattr(part, 'parts', None)
-        if parts is not None:
-            for p in parts.values():
-                title = getattr(p, 'title', None)
-                if title is not None:
-                    break
+    title = get_title(part)
 
     from iommi.debug import iommi_debug_panel
     from iommi import Page
