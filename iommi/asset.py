@@ -43,7 +43,7 @@ class Asset(Fragment):
     @classmethod
     @class_shortcut(
         tag='link',
-        rel='stylesheet',
+        attrs__rel='stylesheet',
     )
     def css(cls, call_target=None, **kwargs):
         """
