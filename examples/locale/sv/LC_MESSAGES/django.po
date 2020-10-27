@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-25 14:47+0100\n"
+"POT-Creation-Date: 2020-10-27 14:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,115 +18,118 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: examples/examples/form_examples.py:38
+#: examples/form_examples.py:38
 msgid "Use much like a django form"
 msgstr ""
 
-#: examples/examples/menu_examples.py:20
+#: examples/menu_examples.py:20
 msgid "A sample menu"
 msgstr ""
 
-#: examples/examples/models.py:34 examples/examples/models.py:49
-#: examples/examples/models.py:66
+#: examples/models.py:34 examples/models.py:49 examples/models.py:66
 msgid "name"
 msgstr ""
 
-#: examples/examples/models.py:41 examples/examples/models.py:50
+#: examples/models.py:41 examples/models.py:50
 msgid "artist"
 msgstr ""
 
-#: examples/examples/models.py:42
+#: examples/models.py:42
 msgid "artists"
 msgstr ""
 
-#: examples/examples/models.py:51
+#: examples/models.py:51
 msgid "year"
 msgstr ""
 
-#: examples/examples/models.py:58 examples/examples/models.py:68
+#: examples/models.py:58 examples/models.py:68
 msgid "album"
 msgstr ""
 
-#: examples/examples/models.py:59
+#: examples/models.py:59
 msgid "albums"
 msgstr ""
 
-#: examples/examples/models.py:67
+#: examples/models.py:67
 msgid "index"
 msgstr ""
 
-#: examples/examples/models.py:69
+#: examples/models.py:69
 msgid "duration"
 msgstr ""
 
-#: examples/examples/models.py:76
+#: examples/models.py:76
 msgid "track"
 msgstr ""
 
-#: examples/examples/models.py:77
+#: examples/models.py:77
 msgid "tracks"
 msgstr ""
 
-#: examples/examples/page_examples.py:26
+#: examples/page_examples.py:26
 msgid "Standard example"
 msgstr ""
 
-#: examples/examples/page_examples.py:32
+#: examples/page_examples.py:32
 msgid "View with some calculation to do before making the page"
 msgstr ""
 
-#: examples/examples/page_examples.py:42
+#: examples/page_examples.py:42
 msgid "Further specializing an already defined page"
 msgstr ""
 
-#: examples/examples/page_examples.py:51
+#: examples/page_examples.py:51
 msgid "Busy page with different components"
 msgstr ""
 
-#: examples/examples/supernaut.py:30
+#: examples/supernaut.py:30
 msgid "Home"
 msgstr ""
 
-#: examples/examples/supernaut.py:31
+#: examples/supernaut.py:31
 msgid "Artists"
 msgstr ""
 
-#: examples/examples/supernaut.py:32
+#: examples/supernaut.py:32
 msgid "Albums"
 msgstr ""
 
-#: examples/examples/supernaut.py:33
+#: examples/supernaut.py:33
 msgid "Tracks"
 msgstr ""
 
-#: examples/examples/supernaut.py:62
+#: examples/supernaut.py:62
 msgid "Create album"
 msgstr ""
 
-#: examples/examples/supernaut.py:78
+#: examples/supernaut.py:78
 msgid "Supernaut"
 msgstr ""
 
-#: examples/examples/supernaut.py:79
+#: examples/supernaut.py:79
 msgid "This is a discography of the best acts in music!"
 msgstr ""
 
-#: examples/examples/table_examples.py:29
+#: examples/table_examples.py:30
 msgid "Readme example 1"
 msgstr ""
 
-#: examples/examples/table_examples.py:52
+#: examples/table_examples.py:53
 msgid "Readme example 2"
 msgstr ""
 
-#: examples/examples/table_examples.py:67
+#: examples/table_examples.py:68
 msgid "Auto from model example 1"
 msgstr ""
 
-#: examples/examples/table_examples.py:74
+#: examples/table_examples.py:75
 msgid "Auto from model example 2"
 msgstr ""
 
-#: examples/examples/table_examples.py:82
+#: examples/table_examples.py:83
 msgid "Kitchen sink example"
+msgstr ""
+
+#: examples/table_examples.py:141
+msgid "Two tables on the same page"
 msgstr ""
