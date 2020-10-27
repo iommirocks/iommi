@@ -102,7 +102,7 @@ class Part(Traversable):
             return None
         del self
         bind_members(result, name='endpoints')
-        bind_members(result, name='assets', lazy=False)
+        bind_members(result, name='assets')
         return result
 
     @dispatch

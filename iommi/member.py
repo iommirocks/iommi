@@ -122,10 +122,10 @@ class Members(Traversable):
 
 
 # noinspection PyProtectedMember
-def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False, lazy=True) -> None:
+def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False) -> None:
     """
     This is the companion function to `collect_members`. It is used at bind
-    time to recursively (and by default lazily) bind the parts of a container.
+    time to recursively and lazily(!) bind the parts of a container.
     """
     m = cls(
         _name=name,
@@ -136,8 +136,6 @@ def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_f
     m = m.bind(parent=parent)
     setattr(parent._bound_members, name, m)
     setattr(parent, name, m._bound_members)
-    if not lazy:
-        _force_bind_all(m._bound_members)
 
 
 class ForbiddenNamesException(Exception):
