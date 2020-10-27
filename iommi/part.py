@@ -40,6 +40,9 @@ from iommi.endpoint import (
     perform_ajax_dispatch,
     perform_post_dispatch,
 )
+from iommi.asset import (
+    Asset,
+)
 from iommi.member import (
     bind_members,
     collect_members,
@@ -67,21 +70,23 @@ class Part(Traversable):
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     endpoints: Namespace = Refinable()
+    # Only the assets used by this part
     assets: Namespace = Refinable()
+
+    # All assets is set for the root asset only in the bind phase
+    # it then includes both this parts assets as well as all
+    # its childrens assets
+    all_assets: Namespace = Namespace()
 
     @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
-        assets=EMPTY,
     )
-    def __init__(self, *, endpoints: Dict[str, Any] = None, include, assets=None, **kwargs):
+    def __init__(self, *, endpoints: Dict[str, Any] = None, assets: Dict[str, Any] = None, include, **kwargs):
         super(Part, self).__init__(include=include, **kwargs)
         collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
-        # What I would love to do here is collect all my childrens assets, but I think
-        # I can't do that before my children are properly bound.  So instead I store
-        # only my own assets in assets and later do a grand collecting exercise
-        self.assets = {k: v for k, v in Namespace({}, assets).items() if v is not None}
+        collect_members(self, name='assets', items=assets, cls=Asset)
 
         if iommi_debug_on():
             import inspect
@@ -104,26 +109,10 @@ class Part(Traversable):
             return None
         del self
         bind_members(result, name='endpoints')
+        bind_members(result, name='assets')
+        # This is necessary to force the members to actually bind
+        result.assets.items()
         return result
-
-    def all_assets(self) -> Namespace:
-        """Return this parts assets as well as all assets used by its children."""
-        assert self._is_bound
-        # TODO: In this implementation only parts can have assets, traversables can not.
-        # But for that to work in the current implementation it must further be true
-        # that only parts can contain parts (and other traversables other than Members do not).
-        # I believe that is correct, but one could envision a system where asset
-        # collection is part of traversable.  Thoughts?
-
-        def get_assets(t):
-            if isinstance(t, Part):
-                return Namespace(t.assets, *(get_assets(m) for m in t.iommi_bound_members().values()))
-            elif isinstance(t, Members):
-                return Namespace(*(get_assets(m) for m in t.iommi_bound_members().values()))
-            else:
-                return Namespace()
-
-        return get_assets(self)
 
     @dispatch
     def render_to_response(self, **kwargs):
@@ -183,14 +172,19 @@ def render_root(*, part, context, **render):
     root_style = get_style(root_style_name)
     template_name = root_style.base_template
     content_block_name = root_style.content_block
-    # Is this the right order?  That is should assets from the parts or from the style
-    # take precedence (aka override each other when the name is identical).  I mean ideally
-    # overriding only happens for deduplication (e.g. the same component is used
-    # multiple times on the same page).
-    style_assets = {
+
+    # Render early so that all the binds are forced before we look at all_assets,
+    # which is populated by side-effect in Asset.on_bind
+    content = part.__html__(**render)
+
+    all_assets = {
         k: v.bind(request=part.get_request())
-        for k, v in itertools.chain(root_style.assets.items(), part.all_assets().items())
+        for k, v in root_style.assets.items()
     }
+
+    all_assets.update({k: v for k, v in part.all_assets.items()})
+
+    #        itertools.chain(root_style.assets.items(), part.all_assets().items())
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
@@ -211,10 +205,10 @@ def render_root(*, part, context, **render):
 
     context = dict(
         container=Container(_name='Container').bind(parent=part),
-        content=part.__html__(**render),
+        content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
-        assets=sort_after(style_assets),
+        assets=sort_after(all_assets),
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )

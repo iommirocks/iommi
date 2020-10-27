@@ -1314,102 +1314,6 @@ class _Lazy_tbody:
         return mark_safe('\n'.join([cells.__html__() for cells in self.table.cells_for_rows()]))
 
 
-# TODO: I tried to do query_form_toggle_script = get_template("query_form_register_query_toggles") and
-# have that big literal in a script file.  But when this file is evaluated the django template loader
-# not ready... What's the best way to fix that?
-query_form_toggle_script = html.script(Template(r"""
-    {% load i18n %}
-    function iommi_register_query_toggles(query_iommi_dunder_path) {
-        var base = document.getElementById('iommi_' + query_iommi_dunder_path);
-        var q = document.getElementById('iommi_' + query_iommi_dunder_path + '_query');
-        var help = base.getElementsByClassName('iommi_query_toggle_help')[0];
-
-        function toggle_simple_advanced() {
-            var toggle_simple_mode = base.getElementsByClassName("iommi_query_toggle_simple_mode")[0];
-            var simple = base.getElementsByClassName("iommi_query_form_simple")[0];
-            var adv = base.getElementsByClassName("iommi_query_form_advanced")[0];
-            if (toggle_simple_mode.getAttribute('data-advanced-mode') === 'simple') {
-                q.value = q.getAttribute('data-query');
-                toggle_simple_mode.setAttribute('data-advanced-mode', 'advanced');
-                adv.style.display = '';
-                simple.style.display = 'none';
-                toggle_simple_mode.innerHTML = '{% blocktrans %}Switch to basic search{% endblocktrans %}';
-                help.style.display = '';
-            }
-            else {
-                q.setAttribute('data-query', q.value);
-                q.value = '';
-                toggle_simple_mode.setAttribute('data-advanced-mode', 'simple');
-                adv.style.display = 'none';
-                simple.style.display = '';
-                toggle_simple_mode.innerHTML = '{% blocktrans %}Switch to advanced search{% endblocktrans %}';
-                help.style.display = 'none';
-                if (help.style.display === '') {
-                    toggle_help();
-                }
-            }
-            return false;
-        }
-
-        function toggle_help() {
-            var icon = help.querySelector('i');
-            var help_text = base.getElementsByClassName('iommi_query_help')[0];
-            if (icon.classList.contains('fa-chevron-down')) {
-                help_text.style.display = '';
-                icon.classList.remove('fa-chevron-down');
-                icon.classList.add('fa-chevron-up');
-                help.querySelector('span').innerText = '{% blocktrans %}Hide help{% endblocktrans %}';
-            }
-            else {
-                help_text.style.display = 'none';
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-                help.querySelector('span').innerText = '{% blocktrans %}Show help{% endblocktrans %}';
-            }
-        }
-
-        if (q.getAttribute('data-query') !== '') {
-            toggle_simple_advanced();
-        }
-
-        base.getElementsByClassName("iommi_query_toggle_simple_mode")[0].addEventListener('click', toggle_simple_advanced);
-        help.addEventListener('click', toggle_help);
-    }
-"""))
-
-
-table_js_select_all = html.script(Template(r"""
-    function iommi_table_js_select_all(base) {
-        // 4 times parentNode to go from i -> th -> tr -> table
-        var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
-        Array.prototype.forEach.call(tbody.querySelectorAll('.checkbox'), function(el, i) {
-            el.click();
-        });
-
-        var has_paginator = {% if table.paginator.is_paginated %}true{% else %}false{% endif %};
-
-        if (has_paginator) {
-            if (tbody.querySelector('.select_all_pages_q') === null) {
-                tbody.querySelector('tr').insertAdjacentHTML('beforebegin', '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="iommi_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
-                )
-            }
-            else {
-                tbody.querySelector('.select_all_pages_q').parentNode.parentNode.removeChild(tbody.querySelector('.select_all_pages_q').parentNode);
-                var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
-                form.querySelector('.all_pks').value = 0;
-            }
-        }
-    }
-
-    function iommi_table_js_select_all_pages(base) {
-        var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
-        var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
-        tbody.querySelector('.select_all_pages_q').textContent = 'All items selected';
-        form.querySelector('.all_pks').value = 1;
-    }
-"""))
-
-
 @declarative(Column, '_columns_dict')
 @with_meta
 class Table(Part, Tag):
@@ -1460,8 +1364,8 @@ class Table(Part, Tag):
     page_class: Type[Page] = Refinable()
 
     class Meta:
-        assets__query_form_toggle_script = query_form_toggle_script
-        assets__table_js_select_all = table_js_select_all
+        assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
+        assets__table_js_select_all__template = "iommi/table/js_select_all.html"
         member_class = Column
         form_class = Form
         query_class = Query
