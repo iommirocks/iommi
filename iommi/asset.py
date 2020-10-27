@@ -27,7 +27,6 @@ class Asset(Traversable):
     Because assets have names (`Everything has a name`), assets with the same name will
     automatically get deduplicated.
     """
-    name: str = Refinable()
     template: Union[str, Template, None] = Refinable()
     include: bool = EvaluatedRefinable()
 
