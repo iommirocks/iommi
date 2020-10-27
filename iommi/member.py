@@ -125,7 +125,7 @@ class Members(Traversable):
 def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False, lazy=True) -> None:
     """
     This is the companion function to `collect_members`. It is used at bind
-    time to recursively (and by default lazily) bind the parts of a container.
+    time to recursively (and by default lazily(!)) bind the parts of a container.
     """
     m = cls(
         _name=name,
