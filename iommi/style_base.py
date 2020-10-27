@@ -1,6 +1,17 @@
 from iommi.style import Style
 from iommi.asset import Asset
 
+select2_assets = dict(
+    select2_js=Asset.js(
+        attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
+    ),
+    select2_css=Asset.css(
+        attrs=dict(
+            href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
+        )
+    ),
+)
+
 base = Style(
     base_template='iommi/base.html',
     content_block='content',
@@ -12,14 +23,6 @@ base = Style(
                 crossorigin='anonymous',
             ),
             after=-1,
-        ),
-        select2_js=Asset.js(
-            attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
-        ),
-        select2_css=Asset.js(
-            attrs=dict(
-                href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
-            )
         ),
     ),
     Form=dict(
@@ -39,9 +42,11 @@ base = Style(
             ),
             multi_choice=dict(
                 input__template='iommi/form/choice_select2.html',
+                assets=select2_assets,
             ),
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
+                assets=select2_assets,
             ),
             date__input__attrs__type='date',
             radio=dict(
