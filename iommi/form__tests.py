@@ -138,7 +138,7 @@ def MyTestForm():
 
 def test_field_repr():
     assert repr(Field(_name='foo')) == "<iommi.form.Field foo>"
-    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' members:['endpoints']>"
+    assert repr(Form(fields__foo=Field()).bind(request=None).fields.foo) == "<iommi.form.Field foo (bound) path:'foo' members:['endpoints', 'assets']>"
 
 
 def test_required_choice():

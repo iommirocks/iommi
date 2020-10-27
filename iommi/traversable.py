@@ -135,6 +135,7 @@ class Traversable(RefinableObject):
             result._request = request
             if result._name is None:
                 result._name = 'root'
+            result._iommi_collected_assets = {}
 
         result._parent = parent
         result._bound_members = Struct()

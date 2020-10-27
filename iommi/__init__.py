@@ -44,6 +44,7 @@ from iommi.table import (
 from iommi.from_model import (
     register_search_fields,
 )
+from iommi.asset import Asset
 
 setup_db_compat()
 
@@ -64,6 +65,7 @@ def middleware(get_response):
 
 __all__ = [
     'Action',
+    'Asset',
     'Column',
     'Field',
     'Form',

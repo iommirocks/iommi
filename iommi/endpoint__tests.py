@@ -148,10 +148,14 @@ def test_dispatch_return_http_response():
 
 def test_dispatch_return_part():
     p = Part(
-        endpoints__foo__func=lambda root, value, **_: html.div('foo', attrs__class__bar=True).bind(parent=root)
+        endpoints__foo__func=lambda request, **_: html.div('foo', attrs__class__bar=True).bind(request=request),
+        endpoints__bar__func = lambda request, **_: html.div('bar', attrs__class__baz=True),
     )
     r = p.bind(request=req('get', **{'/foo': '7'})).render_to_response()
     assert b'<div class="bar">foo</div>' in r.content
+
+    r = p.bind(request=req('get', **{'/bar': '7'})).render_to_response()
+    assert b'<div class="baz">bar</div>' in r.content
 
 
 def test_invalid_enpoint_path(settings):

@@ -40,13 +40,9 @@ from iommi.endpoint import (
     perform_ajax_dispatch,
     perform_post_dispatch,
 )
-from iommi.asset import (
-    Asset,
-)
 from iommi.member import (
     bind_members,
     collect_members,
-    Members
 )
 from iommi.traversable import (
     EvaluatedRefinable,
@@ -73,17 +69,14 @@ class Part(Traversable):
     # Only the assets used by this part
     assets: Namespace = Refinable()
 
-    # All assets is set for the root asset only in the bind phase
-    # it then includes both this parts assets as well as all
-    # its childrens assets
-    all_assets: Namespace = Namespace()
-
     @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
     )
     def __init__(self, *, endpoints: Dict[str, Any] = None, assets: Dict[str, Any] = None, include, **kwargs):
+        from iommi.asset import Asset
+
         super(Part, self).__init__(include=include, **kwargs)
         collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
         collect_members(self, name='assets', items=assets, cls=Asset)
@@ -123,8 +116,8 @@ class Part(Traversable):
             if isinstance(r, HttpResponseBase):
                 return r
             elif isinstance(r, Part):
-                # We can't do r.bind(...).render_to_response() because then we recurse in here
-                # r also has to be bound already
+                if not r._is_bound:
+                    r = r.bind(request=request)
                 return HttpResponse(render_root(part=r, **kwargs))
             else:
                 return HttpResponse(json.dumps(r), content_type='application/json')
@@ -201,9 +194,7 @@ def render_root(*, part, context, **render):
         for k, v in root_style.assets.items()
     }
 
-    all_assets.update({k: v for k, v in part.all_assets.items()})
-
-    #        itertools.chain(root_style.assets.items(), part.all_assets().items())
+    all_assets.update({k: v for k, v in part._iommi_collected_assets.items()})
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
