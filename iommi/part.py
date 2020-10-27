@@ -102,9 +102,7 @@ class Part(Traversable):
             return None
         del self
         bind_members(result, name='endpoints')
-        bind_members(result, name='assets')
-        # This is necessary to force the members to actually bind
-        result.assets.items()
+        bind_members(result, name='assets', lazy=False)
         return result
 
     @dispatch
@@ -189,12 +187,14 @@ def render_root(*, part, context, **render):
     # which is populated by side-effect in Asset.on_bind
     content = part.__html__(**render)
 
+    # First grab all assets from the root of the style
     all_assets = {
         k: v.bind(request=part.get_request())
         for k, v in root_style.assets.items()
     }
 
-    all_assets.update({k: v for k, v in part._iommi_collected_assets.items()})
+    # ...then merge the assets from the part
+    all_assets.update(part._iommi_collected_assets)
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
