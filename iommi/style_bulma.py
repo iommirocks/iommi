@@ -70,6 +70,10 @@ bulma_base = Style(
             help=True,
         )
     ),
+    Actions=dict(
+        tag="div",
+        attrs__class={'links': False, 'buttons': True}
+    ),
     Action=dict(
         shortcuts=dict(
             # In bulma the most neutral button styling is button, which
