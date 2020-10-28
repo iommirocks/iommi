@@ -125,7 +125,11 @@ def test_apply_checkbox_style():
     form = form.bind(request=None)
 
     assert get_iommi_style_name(form.fields.foo) == 'bootstrap'
-    assert get_style_data_for_object(style_name='bootstrap', obj=form.fields.foo)['attrs'] == {'class': {'form-group': True, 'form-check': True}}
+    assert get_style_data_for_object(
+        style_name='bootstrap',
+        obj=form.fields.foo,
+        is_root=False,
+    )['attrs'] == {'class': {'form-group': True, 'form-check': True}}
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
     assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label" for="id_foo"'

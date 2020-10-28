@@ -122,11 +122,13 @@ class Traversable(RefinableObject):
         result = copy.copy(self)
 
         if parent:
+            is_root = False
             iommi_style = get_iommi_style_name(parent)
         else:
+            is_root = True
             iommi_style = get_iommi_style_name(self)
 
-        result = apply_style(iommi_style, result)
+        result = apply_style(iommi_style, result, is_root)
         result._declared = self
 
         del self  # to prevent mistakes when changing the code below

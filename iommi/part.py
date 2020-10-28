@@ -1,4 +1,3 @@
-import itertools
 import json
 from abc import abstractmethod
 from typing import (
@@ -7,11 +6,6 @@ from typing import (
     Union,
 )
 
-from ._web_compat import (
-    QueryDict,
-    settings,
-    template_types,
-)
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -20,13 +14,11 @@ from tri_declarative import (
 )
 
 from iommi._web_compat import (
-    get_template,
     get_template_from_string,
     HttpResponse,
     HttpResponseBase,
     mark_safe,
     Template,
-    TemplateDoesNotExist,
 )
 from iommi.base import (
     items,
@@ -44,15 +36,20 @@ from iommi.member import (
     bind_members,
     collect_members,
 )
-from iommi.traversable import (
-    EvaluatedRefinable,
-    Traversable,
-)
-from .reinvokable import reinvokable
 from iommi.style import (
     get_iommi_style_name,
     get_style,
 )
+from iommi.traversable import (
+    EvaluatedRefinable,
+    Traversable,
+)
+from ._web_compat import (
+    QueryDict,
+    settings,
+    template_types,
+)
+from .reinvokable import reinvokable
 from .sort_after import sort_after
 
 
@@ -187,14 +184,9 @@ def render_root(*, part, context, **render):
     # which is populated by side-effect in Asset.on_bind
     content = part.__html__(**render)
 
-    # First grab all assets from the root of the style
-    all_assets = {
-        k: v.bind(request=part.get_request())
-        for k, v in root_style.assets.items()
-    }
-
-    # ...then merge the assets from the part
-    all_assets.update(part._iommi_collected_assets)
+    all_assets = {}
+    all_assets.update(part.assets)  # Assets put here by the styles (That might not have been Asset instances)
+    all_assets.update(part._iommi_collected_assets)  # Assets put here by child Parts being traversed
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"

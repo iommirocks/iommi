@@ -3,10 +3,6 @@ from tri_declarative import (
     EMPTY,
 )
 
-from iommi.style import (
-    apply_style,
-    get_iommi_style_name,
-)
 from iommi.reinvokable import reinvokable
 
 

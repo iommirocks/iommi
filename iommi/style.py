@@ -34,8 +34,8 @@ def get_iommi_style_name(obj: Any) -> str:
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
 
-def apply_style(style_name: str, obj: Any) -> Any:
-    style_data = get_style_data_for_object(style_name=style_name, obj=obj)
+def apply_style(style_name: str, obj: Any, is_root) -> Any:
+    style_data = get_style_data_for_object(style_name=style_name, obj=obj, is_root=is_root)
     return apply_style_data(style_data, obj)
 
 
@@ -74,8 +74,6 @@ class Style:
         assets=EMPTY,
     )
     def __init__(self, *bases, base_template=None, content_block=None, assets=None, **kwargs):
-        from iommi.asset import Asset
-
         self.name = None
 
         self.base_template = base_template
@@ -92,12 +90,14 @@ class Style:
                     self.content_block = base.content_block
                     break
 
-        self.assets = {k: (Asset(**v) if isinstance(v, Namespace) else v)
-                       for k, v in Namespace(*(base.assets for base in bases), assets).items() if v is not None}
+        self.assets = {k: v for k, v in Namespace(*(base.assets for base in bases), assets).items() if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
-    def component(self, obj):
+    def component(self, obj, is_root=False):
         result = Namespace()
+
+        if self.assets and is_root:
+            result.assets = self.assets
 
         # TODO: is this wrong? Should it take classes first, then loop through shortcuts?
         for class_name in class_names_for(type(obj)):
@@ -175,8 +175,8 @@ def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
     return result
 
 
-def get_style_data_for_object(style_name, obj):
-    return get_style(style_name).component(obj)
+def get_style_data_for_object(style_name, obj, is_root):
+    return get_style(style_name).component(obj, is_root)
 
 
 class InvalidStyleConfigurationException(Exception):
