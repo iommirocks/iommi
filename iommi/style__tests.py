@@ -7,9 +7,14 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi import Table
+from iommi import (
+    Asset,
+    Page,
+    Table,
+)
 from iommi.attrs import render_attrs
 from iommi.base import items
+from iommi.reinvokable import reinvokable
 from iommi.style import (
     apply_style_data,
     get_style,
@@ -21,11 +26,15 @@ from iommi.style import (
     validate_styles,
 )
 from iommi.style_base import base
+from iommi.style_test_base import test
 from iommi.traversable import (
     get_iommi_style_name,
     Traversable,
 )
-from iommi.reinvokable import reinvokable
+from tests.helpers import (
+    prettify,
+    req,
+)
 
 
 def test_style():
@@ -269,4 +278,67 @@ def test_set_class_on_actions_container():
         actions__attrs__class={'object-tools': True},
     )
     reinvoke_new_defaults(t, style_data)
+
+
+def test_assets_render_from_style():
+    from iommi import style
+
+    register_style('my_style', Style(
+        test,
+        assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
+    ))
+
+    class MyPage(Page):
+        class Meta:
+            iommi_style = 'my_style'
+
+    expected = prettify('''
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title/>
+                <link href='http://foo.bar/baz' rel="stylesheet"/>
+            </head>
+            <body/>
+        </html>
+    ''')
+    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+    assert actual == expected
+
+    del style._styles['my_style']
+
+
+def test_assets_render_from_bulma_style():
+    class MyPage(Page):
+        class Meta:
+            iommi_style = 'bulma'
+
+    expected = prettify('''\
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title></title>
+                <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js"></script>
+                <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" rel="stylesheet">
+                <script>
+    $(document).ready(function() {
+          // Check for click events on the navbar burger icon
+          $(".navbar-burger").click(function() {
+
+              // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+              $(".navbar-burger").toggleClass("is-active");
+              $(".navbar-menu").toggleClass("is-active");
+
+          });
+    });
+</script>
+                <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+            </head>
+            <body>
+                <div class="container main"/>
+            </body>
+        </html>
+    ''')
+    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+    assert actual == expected
 
