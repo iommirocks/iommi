@@ -9,6 +9,7 @@ from tri_struct import Struct
 
 from iommi import (
     Asset,
+    html,
     Page,
     Table,
 )
@@ -302,6 +303,34 @@ def test_assets_render_from_style():
             <head>
                 <title/>
                 <link href='http://foo.bar/baz' rel="stylesheet"/>
+            </head>
+            <body/>
+        </html>
+    ''')
+    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+    assert actual == expected
+
+    del style._styles['my_style']
+
+
+def test_assets_render_any_fragment_from_style():
+    from iommi import style
+
+    register_style('my_style', Style(
+        test,
+        assets__an_asset=html.span(attrs__href='http://foo.bar/baz'),
+    ))
+
+    class MyPage(Page):
+        class Meta:
+            iommi_style = 'my_style'
+
+    expected = prettify('''
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title/>
+                <span href='http://foo.bar/baz'/>
             </head>
             <body/>
         </html>

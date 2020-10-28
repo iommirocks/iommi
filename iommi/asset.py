@@ -16,12 +16,6 @@ class Asset(Fragment):
     each other, resulting in only one asset with a given name being rendered.
     """
 
-    def on_bind(self) -> None:
-        super().on_bind()
-        # Write the assets into the root part's all_assets, so that when that is rendered
-        # all the assets are in one place
-        self.iommi_root()._iommi_collected_assets[self.iommi_name()] = self
-
     @classmethod
     @class_shortcut(
         tag='script',

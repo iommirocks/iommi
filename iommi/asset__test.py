@@ -1,5 +1,6 @@
 from iommi import (
     Asset,
+    Fragment,
     html,
     Page,
 )
@@ -55,6 +56,29 @@ def test_assets_render_once():
             <body>
                 <div> foo </div>
                 <div> bar </div>
+            </body>
+        </html>
+    ''')
+    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+    assert actual == expected
+
+
+def test_assets_render_any_fragment():
+    class MyPage(Page):
+        foo = html.div(
+            'foo',
+            assets__my_asset=html.span(attrs__href='http://foo.bar/baz')
+        )
+
+    expected = prettify('''
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title/>
+                <span href='http://foo.bar/baz'/>
+            </head>
+            <body>
+                <div> foo </div>
             </body>
         </html>
     ''')

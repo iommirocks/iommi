@@ -99,7 +99,9 @@ class Part(Traversable):
             return None
         del self
         bind_members(result, name='endpoints')
-        bind_members(result, name='assets', lazy=False)  # Force not lazy, since Asset on_bind has the side effect of adding itself to the root
+        bind_members(result, name='assets', lazy=False)
+        result.iommi_root()._iommi_collected_assets.update(result.assets)
+
         return result
 
     @dispatch
