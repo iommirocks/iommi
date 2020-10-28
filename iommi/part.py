@@ -183,12 +183,10 @@ def render_root(*, part, context, **render):
     content_block_name = root_style.content_block
 
     # Render early so that all the binds are forced before we look at all_assets,
-    # which is populated by side-effect in Asset.on_bind
+    # since they are populated as a side-effect
     content = part.__html__(**render)
 
-    all_assets = {}
-    all_assets.update(part.assets)  # Assets put here by the styles (That might not have been Asset instances)
-    all_assets.update(part._iommi_collected_assets)  # Assets put here by child Parts being traversed
+    assets = sort_after(part._iommi_collected_assets)
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
@@ -204,7 +202,7 @@ def render_root(*, part, context, **render):
         content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
-        assets=sort_after(all_assets),
+        assets=assets,
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )

@@ -32,6 +32,7 @@ from iommi import (
     Page,
     Table,
 )
+from iommi._web_compat import HttpResponseRedirect
 from iommi.admin import (
     Admin,
     Auth,
@@ -110,6 +111,7 @@ class StyleSelector(Form):
         def actions__submit__post_handler(request, form, **_):
             style = form.fields.style.value
             settings.IOMMI_DEFAULT_STYLE = style
+            return HttpResponseRedirect(request.get_full_path())
 
     style = Field.choice(
         choices=[
