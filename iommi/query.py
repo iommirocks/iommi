@@ -171,6 +171,12 @@ def case_sensitive_query_operator_to_q_operator(op):
     return {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op]
 
 
+def boolean__query_operator_to_q_operator(op):
+    if op != '=':
+        raise QueryException(f'Invalid operator "{op}" for boolean filter. The only valid operator is "=".')
+    return 'exact'
+
+
 def choice_queryset_value_to_q(filter, op, value_string_or_f):
     if op != '=':
         raise QueryException(f'Invalid operator "{op}" for filter "{filter._name}"')
@@ -381,6 +387,7 @@ class Filter(Part):
         field__call_target__attribute='boolean',
         parse=bool_parse,
         unary=True,
+        query_operator_to_q_operator=boolean__query_operator_to_q_operator,
     )
     def boolean(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
@@ -389,6 +396,7 @@ class Filter(Part):
     @class_shortcut(
         field__call_target__attribute='boolean_tristate',
         parse=boolean_tristate__parse,
+        query_operator_to_q_operator=boolean__query_operator_to_q_operator,
         unary=True,
     )
     def boolean_tristate(cls, call_target=None, **kwargs):

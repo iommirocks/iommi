@@ -44,6 +44,7 @@ from iommi.traversable import declared_members
 from tests.helpers import req
 from tests.models import (
     Bar,
+    BooleanFromModelTestModel,
     EndPointDispatchModel,
     Foo,
     FromModelWithInheritanceTest,
@@ -165,31 +166,53 @@ def test_request_to_q_advanced(MyTestQuery):
     assert repr(query.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & (Q(**{'bar__exact': '7'}) | Q(**{'baz__iexact': '11'})))
 
 
+@pytest.mark.django_db
+def test_boolean_filter():
+    for i in range(3):
+        BooleanFromModelTestModel.objects.create(b=True)
+
+    for i in range(5):
+        BooleanFromModelTestModel.objects.create(b=False)
+
+    assert BooleanFromModelTestModel.objects.filter(Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', b='1')).get_q()).count() == 3
+    assert BooleanFromModelTestModel.objects.filter(Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', b='0')).get_q()).count() == 5
+
+    with pytest.raises(QueryException) as e:
+        Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', **{'-query': 'b>0'})).get_q()
+
+    assert str(e.value) == 'Invalid operator ">" for boolean filter. The only valid operator is "=".'
+
+    with pytest.raises(ValueError) as e:
+        Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', **{'-query': 'b=9'})).get_q()
+
+    assert str(e.value) == '9 is not a valid boolean value'
+
+
 def test_request_to_q_simple(MyTestQuery):
     class Query2(MyTestQuery):
         bazaar = Filter.boolean(attr='quux__bar__bazaar', field__include=True)
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
-    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': True}))
+    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__exact': True}))
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'false'}))
-    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__iexact': False}))
+    assert repr(query2.get_q()) == repr(Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__exact': False}))
 
 
 def test_boolean_parse():
     class MyQuery(Query):
         foo = Filter.boolean()
 
-    assert repr(MyQuery().bind(request=None).parse_query_string('foo=false')) == repr(Q(**{'foo__iexact': False}))
-    assert repr(MyQuery().bind(request=None).parse_query_string('foo=true')) == repr(Q(**{'foo__iexact': True}))
+    assert repr(MyQuery().bind(request=None).parse_query_string('foo=false')) == repr(Q(**{'foo__exact': False}))
+    assert repr(MyQuery().bind(request=None).parse_query_string('foo=true')) == repr(Q(**{'foo__exact': True}))
 
 
 def test_boolean_unary_op():
     class MyQuery(Query):
         foo = Filter.boolean()
 
-    assert repr(MyQuery().bind(request=None).parse_query_string('foo')) == repr(Q(**{'foo__iexact': True}))
-    assert repr(MyQuery().bind(request=None).parse_query_string('!foo')) == repr(Q(**{'foo__iexact': False}))
+    assert repr(MyQuery().bind(request=None).parse_query_string('foo')) == repr(Q(**{'foo__exact': True}))
+    assert repr(MyQuery().bind(request=None).parse_query_string('!foo')) == repr(Q(**{'foo__exact': False}))
 
 
 def test_boolean_unary_op_error_messages():
@@ -215,9 +238,6 @@ def query_str(query):
     'shortcut, input, expected_parse', [
         (Filter.integer, '11', 11),
         (Filter.float, '11.5', 11.5),
-        (Filter.boolean, 'true', True),
-        (Filter.boolean, 'False', False),
-        (Filter.boolean_tristate, 'True', True),
         (Filter.date, '2014-03-07', date(2014, 3, 7)),
         (Filter.datetime, '2014-03-07 11:13', datetime(2014, 3, 7, 11, 13)),
         (Filter.time, '11', time(11)),
@@ -225,13 +245,29 @@ def query_str(query):
         (Filter.time, '11:13:17', time(11, 13, 17)),
     ]
 )
-def test_filter_parsing(shortcut, input, expected_parse):
+def test_filter_parsing_simple(shortcut, input, expected_parse):
     class MyQuery(Query):
         bazaar = shortcut(attr='quux__bar__bazaar')
 
     query = MyQuery().bind(request=req('get', bazaar=input))
     assert not query.form.get_errors(), query.form.get_errors()
     assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__iexact': expected_parse}))
+
+
+@pytest.mark.parametrize(
+    'shortcut, input, expected_parse', [
+        (Filter.boolean, 'true', True),
+        (Filter.boolean, 'False', False),
+        (Filter.boolean_tristate, 'True', True),
+    ]
+)
+def test_filter_parsing_boolean(shortcut, input, expected_parse):
+    class MyQuery(Query):
+        bazaar = shortcut(attr='quux__bar__bazaar')
+
+    query = MyQuery().bind(request=req('get', bazaar=input))
+    assert not query.form.get_errors(), query.form.get_errors()
+    assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__exact': expected_parse}))
 
 
 def test_filter_parsing_boolean_tristate_empty():
