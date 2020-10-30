@@ -1364,6 +1364,8 @@ class Table(Part, Tag):
     page_class: Type[Page] = Refinable()
 
     class Meta:
+        assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
+        assets__table_js_select_all__template = "iommi/table/js_select_all.html"
         member_class = Column
         form_class = Form
         query_class = Query

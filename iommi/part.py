@@ -6,11 +6,6 @@ from typing import (
     Union,
 )
 
-from ._web_compat import (
-    QueryDict,
-    settings,
-    template_types,
-)
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -19,13 +14,11 @@ from tri_declarative import (
 )
 
 from iommi._web_compat import (
-    get_template,
     get_template_from_string,
     HttpResponse,
     HttpResponseBase,
     mark_safe,
     Template,
-    TemplateDoesNotExist,
 )
 from iommi.base import (
     items,
@@ -43,15 +36,20 @@ from iommi.member import (
     bind_members,
     collect_members,
 )
-from iommi.traversable import (
-    EvaluatedRefinable,
-    Traversable,
-)
-from .reinvokable import reinvokable
 from iommi.style import (
     get_iommi_style_name,
     get_style,
 )
+from iommi.traversable import (
+    EvaluatedRefinable,
+    Traversable,
+)
+from ._web_compat import (
+    QueryDict,
+    settings,
+    template_types,
+)
+from .reinvokable import reinvokable
 from .sort_after import sort_after
 
 
@@ -65,15 +63,20 @@ class Part(Traversable):
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     endpoints: Namespace = Refinable()
+    # Only the assets used by this part
+    assets: Namespace = Refinable()
 
     @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
     )
-    def __init__(self, *, endpoints: Dict[str, Any] = None, include, **kwargs):
+    def __init__(self, *, endpoints: Dict[str, Any] = None, assets: Dict[str, Any] = None, include, **kwargs):
+        from iommi.asset import Asset
+
         super(Part, self).__init__(include=include, **kwargs)
         collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
+        collect_members(self, name='assets', items=assets, cls=Asset)
 
         if iommi_debug_on():
             import inspect
@@ -96,6 +99,9 @@ class Part(Traversable):
             return None
         del self
         bind_members(result, name='endpoints')
+        bind_members(result, name='assets', lazy=False)
+        result.iommi_root()._iommi_collected_assets.update(result.assets)
+
         return result
 
     @dispatch
@@ -107,8 +113,8 @@ class Part(Traversable):
             if isinstance(r, HttpResponseBase):
                 return r
             elif isinstance(r, Part):
-                # We can't do r.bind(...).render_to_response() because then we recurse in here
-                # r also has to be bound already
+                if not r._is_bound:
+                    r = r.bind(request=request)
                 return HttpResponse(render_root(part=r, **kwargs))
             else:
                 return HttpResponse(json.dumps(r), content_type='application/json')
@@ -175,10 +181,12 @@ def render_root(*, part, context, **render):
     root_style = get_style(root_style_name)
     template_name = root_style.base_template
     content_block_name = root_style.content_block
-    style_assets = {
-        k: v.bind(request=part.get_request())
-        for k, v in root_style.assets.items()
-    }
+
+    # Render early so that all the binds are forced before we look at all_assets,
+    # since they are populated as a side-effect
+    content = part.__html__(**render)
+
+    assets = sort_after(part._iommi_collected_assets)
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
@@ -191,10 +199,10 @@ def render_root(*, part, context, **render):
 
     context = dict(
         container=Container(_name='Container').bind(parent=part),
-        content=part.__html__(**render),
+        content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() else '',
-        assets=sort_after(style_assets),
+        assets=assets,
         **(part.context if isinstance(part, Page) else {}),
         **context,
     )

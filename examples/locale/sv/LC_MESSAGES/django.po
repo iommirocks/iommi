@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-23 15:27+0200\n"
+"POT-Creation-Date: 2020-10-27 14:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,22 +110,26 @@ msgstr ""
 msgid "This is a discography of the best acts in music!"
 msgstr ""
 
-#: examples/table_examples.py:29
+#: examples/table_examples.py:30
 msgid "Readme example 1"
 msgstr ""
 
-#: examples/table_examples.py:52
+#: examples/table_examples.py:53
 msgid "Readme example 2"
 msgstr ""
 
-#: examples/table_examples.py:67
+#: examples/table_examples.py:68
 msgid "Auto from model example 1"
 msgstr ""
 
-#: examples/table_examples.py:74
+#: examples/table_examples.py:75
 msgid "Auto from model example 2"
 msgstr ""
 
-#: examples/table_examples.py:82
+#: examples/table_examples.py:83
 msgid "Kitchen sink example"
+msgstr ""
+
+#: examples/table_examples.py:141
+msgid "Two tables on the same page"
 msgstr ""

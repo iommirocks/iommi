@@ -1,34 +1,3 @@
-<script>
-    function iommi_table_js_select_all(base) {
-        // 4 times parentNode to go from i -> th -> tr -> table
-        var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
-        Array.prototype.forEach.call(tbody.querySelectorAll('.checkbox'), function(el, i) {
-            el.click();
-        });
-
-        var has_paginator = {% if table.paginator.is_paginated %}true{% else %}false{% endif %};
-
-        if (has_paginator) {
-            if (tbody.querySelector('.select_all_pages_q') === null) {
-                tbody.querySelector('tr').insertAdjacentHTML('beforebegin', '<tr><td colspan="99" style="text-align: center" class="select_all_pages_q">All items on this page are selected. <a onclick="iommi_table_js_select_all_pages(this)" href="#">Select all items</a></td></tr>'
-                )
-            }
-            else {
-                tbody.querySelector('.select_all_pages_q').parentNode.parentNode.removeChild(tbody.querySelector('.select_all_pages_q').parentNode);
-                var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
-                form.querySelector('.all_pks').value = 0;
-            }
-        }
-    }
-
-    function iommi_table_js_select_all_pages(base) {
-        var form = base.parentNode.parentNode.parentNode.parentNode.parentNode;
-        var tbody = base.parentNode.parentNode.parentNode.parentNode.querySelector('tbody');
-        tbody.querySelector('.select_all_pages_q').textContent = 'All items selected';
-        form.querySelector('.all_pks').value = 1;
-    }
-</script>
-
 {% if table.bulk %}
 <form{{ table.bulk.attrs }}><input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>
 {% endif %}

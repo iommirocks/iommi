@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-22 15:47+0200\n"
+"POT-Creation-Date: 2020-10-27 14:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -107,7 +107,7 @@ msgstr "Suche"
 msgid "Filter"
 msgstr "Filtern"
 
-#: query.py:634 templates/iommi/query/form.html:111
+#: query.py:634 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion"
 
@@ -127,11 +127,11 @@ msgstr "Herunterladen"
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1426 table.py:1588
+#: table.py:1428 table.py:1590
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1594
+#: table.py:1596
 msgid "Bulk delete"
 msgstr "Massenlöschen"
 
@@ -139,7 +139,8 @@ msgstr "Massenlöschen"
 msgid "Search query"
 msgstr "Suchanfrage"
 
-#: templates/iommi/query/form.html:12 templates/iommi/query/form.html:133
+#: templates/iommi/query/form.html:12
+#: templates/iommi/query/form_toggle_script.html:48
 msgid "Show help"
 msgstr "Hilfe einblenden"
 
@@ -193,10 +194,10 @@ msgstr ""
 "quarters and weekdays. Sie können auch negativ sein \"10 days ago\" und "
 "abgekürzt werden \"-10d\"."
 
-#: templates/iommi/query/form.html:102
+#: templates/iommi/query/form_toggle_script.html:17
 msgid "Switch to basic search"
 msgstr "Zurück zur Standardsuchfunktion"
 
-#: templates/iommi/query/form.html:127
+#: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
 msgstr "Hilfe ausblenden"

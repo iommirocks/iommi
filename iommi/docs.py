@@ -30,6 +30,7 @@ def get_default_classes():
         iommi.MenuItem,
         iommi.Style,
         iommi.fragment.Header,
+        iommi.Asset,
 
         # Private-ish APIs
         iommi.endpoint.Endpoint,

@@ -122,11 +122,13 @@ class Traversable(RefinableObject):
         result = copy.copy(self)
 
         if parent:
+            is_root = False
             iommi_style = get_iommi_style_name(parent)
         else:
+            is_root = True
             iommi_style = get_iommi_style_name(self)
 
-        result = apply_style(iommi_style, result)
+        result = apply_style(iommi_style, result, is_root)
         result._declared = self
 
         del self  # to prevent mistakes when changing the code below
@@ -135,6 +137,7 @@ class Traversable(RefinableObject):
             result._request = request
             if result._name is None:
                 result._name = 'root'
+            result._iommi_collected_assets = {}
 
         result._parent = parent
         result._bound_members = Struct()
