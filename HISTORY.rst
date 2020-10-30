@@ -1,6 +1,33 @@
 Changelog
 ---------
 
+
+2.3.0 (2020-10-30)
+~~~~~~~~~~~~~~~~~~
+
+* Every part can now have assets that are added to the assets of the style and included in the head. This is particularly useful for bundling small pieces of javascript or css with the components that need them and thereby gets us closer to being able to write truly self contained "component.  As a proof of concept I did so for the tables javascript parts. The naming takes care of deduplication of assets.
+
+* Only include select2 assets when needed (possible because of the point above)
+
+* Filtering on booleans was very broken. It always returned empty querysets and didn't produce errors when you tried to do stuff like `my_boolean<3`
+
+* iommi will now grab the root page title from the text from `Header` instances in addition to `Part.title`
+
+* Render date fields as such
+
+* Fixed date and time formatting
+
+* Support for optgroups in forms
+
+* Make it possible to insert fields into the form of a query, and filters into a query
+
+* Differentiate between primary and other actions. This should make iommi pages look more in line with the majority of design systems. If you have a custom style you probably want to add a style definition for `Action.primary`.
+
+* Fixed a case of a silent overwrite that could be surprising. This was found during reading the code and has never happened to us in practice.
+
+* Style fixes for bulma
+
+
 2.2.0 (2020-10-16)
 ~~~~~~~~~~~~~~~~~~
 
@@ -11,6 +38,7 @@ Changelog
 * Assets as first class concept. You can now insert asset definitions into your style with `assets__js=...` instead of defining a `base_template`. This change also removes the base templates for all the built in styles as they are now obsolete.
 
 * Made it easy to hide the label of a Field by setting `display_name=None`, or `include=False`
+
 
 2.1.0 (2020-10-07)
 ~~~~~~~~~~~~~~~~~~
@@ -90,6 +118,7 @@ Changelog
 * Actions for `Table` are now rendered above the table by default. Set `actions_below` to `True` to render them the old way.
 
 * Many misc improvements
+
 
 1.0.3 (2020-08-24)
 ~~~~~~~~~~~~~~~~~~
