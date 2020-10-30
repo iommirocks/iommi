@@ -5,11 +5,13 @@ Changelog
 2.3.0 (2020-10-30)
 ~~~~~~~~~~~~~~~~~~
 
-* Every part can now have assets that are added to the assets of the style and included in the head. This is particularly useful for bundling small pieces of javascript or css with the components that need them and thereby gets us closer to being able to write truly self contained "component.  As a proof of concept I did so for the tables javascript parts. The naming takes care of deduplication of assets.
+* Every part can now have assets that are added to the assets of the style and included in the head. This is particularly useful for bundling small pieces of javascript or css with the components that need them and thereby gets us closer to being able to write truly self contained "component".  As a proof of concept I did so for the tables javascript parts. The naming takes care of deduplication of assets.
 
 * Only include select2 assets when needed (possible because of the point above)
 
 * Filtering on booleans was very broken. It always returned empty querysets and didn't produce errors when you tried to do stuff like `my_boolean<3`
+
+* It's now possible to configure stuff on the freetext field of a query
 
 * iommi will now grab the root page title from the text from `Header` instances in addition to `Part.title`
 
