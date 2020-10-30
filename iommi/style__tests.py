@@ -9,7 +9,7 @@ from tri_struct import Struct
 
 from iommi import (
     Asset,
-    html,
+    Fragment,
     Page,
     Table,
 )
@@ -24,6 +24,7 @@ from iommi.style import (
     register_style,
     reinvoke_new_defaults,
     Style,
+    unregister_style,
     validate_styles,
 )
 from iommi.style_base import base
@@ -206,7 +207,6 @@ Invalid shortcut names:
 
 @pytest.mark.django_db
 def test_style_bulk_form():
-    from iommi import style
     from iommi import Column, Table
     from tests.models import Foo
 
@@ -226,12 +226,11 @@ def test_style_bulk_form():
 
     assert 'foo' in render_attrs(table.bulk.attrs)
 
-    del style._styles['my_style']
+    unregister_style('my_style')
 
 
 @pytest.mark.django_db
 def test_style_bulk_form_broken_on_no_form():
-    from iommi import style
     from iommi import Table
     from tests.models import Foo
 
@@ -250,7 +249,7 @@ def test_style_bulk_form_broken_on_no_form():
 
     assert table.bulk is None
 
-    del style._styles['my_style']
+    unregister_style('my_style')
 
 
 def test_get_style_error():
@@ -286,8 +285,6 @@ def test_set_class_on_actions_container():
 
 
 def test_assets_render_from_style():
-    from iommi import style
-
     register_style('my_style', Style(
         test,
         assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
@@ -310,15 +307,13 @@ def test_assets_render_from_style():
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
 
-    del style._styles['my_style']
+    unregister_style('my_style')
 
 
 def test_assets_render_any_fragment_from_style():
-    from iommi import style
-
     register_style('my_style', Style(
         test,
-        assets__an_asset=html.span(attrs__href='http://foo.bar/baz'),
+        assets__an_asset=Fragment('This is a fragment!'),
     ))
 
     class MyPage(Page):
@@ -330,7 +325,7 @@ def test_assets_render_any_fragment_from_style():
         <html>
             <head>
                 <title/>
-                <span href='http://foo.bar/baz'/>
+                This is a fragment!
             </head>
             <body/>
         </html>
@@ -338,7 +333,7 @@ def test_assets_render_any_fragment_from_style():
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
 
-    del style._styles['my_style']
+    unregister_style('my_style')
 
 
 def test_assets_render_from_bulma_style():

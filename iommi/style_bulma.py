@@ -1,13 +1,14 @@
+from django.utils.safestring import mark_safe
+
+from iommi import Fragment
+from iommi.asset import Asset
 from iommi.style import (
     Style,
 )
-from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
-from iommi.asset import Asset
-from django.template import Template
+from iommi.style_font_awesome_4 import font_awesome_4
 
-
-navbar_burger_click_js = Template("""
+navbar_burger_click_js = Fragment(mark_safe("""\
 <script>
     $(document).ready(function() {
           // Check for click events on the navbar burger icon
@@ -20,7 +21,7 @@ navbar_burger_click_js = Template("""
           });
     });
 </script>
-""")
+"""))
 
 bulma_base = Style(
     base,
@@ -28,7 +29,7 @@ bulma_base = Style(
         css=Asset.css(
             attrs__href='https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css',
         ),
-        navbar_burger_click_js__template=navbar_burger_click_js,
+        navbar_burger_click_js=navbar_burger_click_js,
     ),
     Header__attrs__class={
         'title': True,

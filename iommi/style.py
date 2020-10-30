@@ -143,8 +143,8 @@ Available styles:
 
 
 def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
-    assert is_reinvokable(
-        obj), f'reinvoke_new_defaults() called on object with missing @reinvokable constructor decorator: {obj!r}'
+    assert is_reinvokable(obj), f'reinvoke_new_defaults() called on object with ' \
+                                f'missing @reinvokable constructor decorator: {obj!r}'
     additional_kwargs_namespace = Namespace(additional_kwargs)
 
     kwargs = Namespace(additional_kwargs_namespace)
