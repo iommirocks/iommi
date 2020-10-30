@@ -927,6 +927,23 @@ def test_query_form_freetext__exclude_label():
 
 
 @pytest.mark.django_db
+def test_query_form_foo__exclude_label():
+    # As of right now this test does not pass!  But I claim it should.
+    class TestTable(Table):
+        b = Column(filter__include=True)
+
+        class Meta:
+            query__form__fields__b__label__include = False
+
+    expected_html = """
+        <span class="iommi_query_form_simple">
+            <div><input id="id_b" name="b" type="text" value=""></div>
+        </span>
+    """
+    verify_table_html(table=TestTable(rows=TFoo.objects.all()[:1]), find=dict(class_="iommi_query_form_simple"), expected_html=expected_html)
+
+
+@pytest.mark.django_db
 def test_query():
     assert TFoo.objects.all().count() == 0
 
