@@ -1,4 +1,5 @@
 import operator
+from copy import deepcopy
 from functools import reduce
 from typing import (
     Type,
@@ -593,6 +594,11 @@ class Query(Part):
         self.query_advanced_value = None
         self.query_error = None
 
+        # It's not safe to modify kwargs deeply! reinvoke() is evil.
+        freetext_config = kwargs.get('form', {}).get('fields', {}).get('freetext', {})
+        kwargs = deepcopy(kwargs)
+        kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
+
         super(Query, self).__init__(
             model=model,
             rows=rows,
@@ -610,6 +616,7 @@ class Query(Part):
             required=False,
             include=False,
             help__include=False,
+            **freetext_config
         )
 
         for name, filter in items(declared_members(self).filters):
