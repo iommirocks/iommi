@@ -1143,7 +1143,7 @@ class Paginator(Traversable):
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
 
-        rows = self.iommi_parent().filtered_rows
+        rows = self.iommi_parent().sorted_and_filtered_rows
         evaluate_parameters = dict(
             page_size=self.page_size,
             rows=rows,
@@ -1344,7 +1344,7 @@ class Table(Part, Tag):
     cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
-    rows = Refinable()  # rows is evaluated, but in a special way so gets no EvaluatedRefinable type
+    initial_rows = Refinable()  # initial_rows is evaluated, but in a special way so gets no EvaluatedRefinable type
     columns = Refinable()
     bulk: Optional[Form] = EvaluatedRefinable()
     superheader: Namespace = Refinable()
@@ -1498,12 +1498,17 @@ class Table(Part, Tag):
 
         super(Table, self).__init__(
             model=model,
-            rows=rows,
+            initial_rows=rows,
             header=HeaderConfig(**header),
             row=RowConfig(**row),
             title=title,
             **kwargs
         )
+
+        # In bind initial_rows will be used to set these 3 (in that order)
+        self.sorted_rows = None
+        self.sorted_and_filtered_rows = None
+        self.visible_rows = None
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
@@ -1620,6 +1625,23 @@ class Table(Part, Tag):
     def div(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
+    @property
+    def rows(self):
+        """Legacy API: if self is fully bound return the rows that are
+           displayed on the screen.  Otherwise return as far as we got
+           in the refinement process from initial_rows -> visible_rows.
+
+           You are probably better off using `visible_rows` or
+           `initial_rows` directly.
+        """
+        if self.visible_rows is not None:
+            return self.visible_rows
+        if self.sorted_and_filtered_rows is not None:
+            return self.sorted_and_filtered_rows
+        if self.sorted_rows is not None:
+            return self.sorted_rows
+        return self.initial_rows
+
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
         bind_members(self, name='columns')
@@ -1646,7 +1668,7 @@ class Table(Part, Tag):
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _bind_headers depends on it
 
         evaluate_member(self, 'model', strict=False, **self.iommi_evaluate_parameters())
-        evaluate_member(self, 'rows', **self.iommi_evaluate_parameters())
+        evaluate_member(self, 'initial_rows', **self.iommi_evaluate_parameters())
         self._prepare_sorting()
 
         if not self.sortable:
@@ -1659,16 +1681,16 @@ class Table(Part, Tag):
         self._bind_bulk_form()
         self._bind_headers()
 
-        if isinstance(self.filtered_rows, QuerySet):
+        if isinstance(self.sorted_and_filtered_rows, QuerySet):
             prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
             select = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
             if prefetch:
-                self.filtered_rows = self.filtered_rows.prefetch_related(*prefetch)
+                self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
             if select:
-                self.filtered_rows = self.filtered_rows.select_related(*select)
+                self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.select_related(*select)
 
         self.paginator = self.paginator.bind(parent=self)
-        # The effect of the paginator is to define what subset of filtered_rows is
+        # The effect of the paginator is to define what subset of sorted_and_filtered_rows is
         # visible on the screen.
         self.visible_rows = self.paginator.rows
         self._prepare_auto_rowspan()
@@ -1676,8 +1698,8 @@ class Table(Part, Tag):
     def _bind_query(self):
         """ Bind the query form and apply it.
 
-            self.filtered_rows = filtered_by_query_form(self.sorted_rows) """
-        self.filtered_rows = self.sorted_rows
+            self.sorted_and_filtered_rows = filtered_by_query_form(self.sorted_rows) """
+        self.sorted_and_filtered_rows = self.sorted_rows
         if not self.model:
             self.query_form = None
             return
@@ -1701,7 +1723,7 @@ class Table(Part, Tag):
             except QueryException:
                 pass
             if q:
-                self.filtered_rows = self.sorted_rows.filter(q)
+                self.sorted_and_filtered_rows = self.sorted_rows.filter(q)
 
     def _bind_bulk_form(self):
         if not self.model:
@@ -1776,11 +1798,11 @@ class Table(Part, Tag):
     def _prepare_sorting(self):
         """Sort all the rows.
 
-           self.sorted_rows = sorted(self.rows)
+           self.sorted_rows = sorted(self.initial_rows)
         """
-        # TODO: Presumably filtering is cheaper than sorting, so maybe we should
+        # TODO: Sorting less values is faster then sorting more values, so we should
         # filter first and then sort.
-        self.sorted_rows = self.rows
+        self.sorted_rows = self.initial_rows
         request = self.get_request()
         if request is None:
             return
@@ -1798,7 +1820,7 @@ class Table(Part, Tag):
 
             if sort_column.sortable:
                 if isinstance(self.rows, list):
-                    self.sorted_rows = ordered_by_on_list(self.rows, order_args[0], is_desc)
+                    self.sorted_rows = ordered_by_on_list(self.initial_rows, order_args[0], is_desc)
                 else:
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in development, but just ignore in production
@@ -1806,7 +1828,7 @@ class Table(Part, Tag):
                         valid_sort_fields = {x.name for x in get_fields(self.model)}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
-                    self.sorted_rows = self.rows.order_by(*order_args)
+                    self.sorted_rows = self.initial_rows.order_by(*order_args)
 
     def _bind_headers(self):
         prepare_headers(self)
