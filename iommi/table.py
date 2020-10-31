@@ -211,18 +211,17 @@ class MinType(object):
 MIN = MinType()
 
 
-def order_by_on_list(objects, order_field, is_desc=False):
+def ordered_by_on_list(objects, order_field, is_desc=False):
     """
     Utility function to sort objects django-style even for non-query set collections
 
     :param objects: list of objects to sort
     :param order_field: field name, follows django conventions, so `foo__bar` means `foo.bar`, can be a callable.
     :param is_desc: reverse the sorting
-    :return:
+    :return: a sorted sequence
     """
     if callable(order_field):
-        objects.sort(key=order_field, reverse=is_desc)
-        return
+        return sorted(objects, key=order_field, reverse=is_desc)
 
     def order_key(x):
         v = getattr_path(x, order_field)
@@ -230,7 +229,7 @@ def order_by_on_list(objects, order_field, is_desc=False):
             return MIN
         return v
 
-    objects.sort(key=order_key, reverse=is_desc)
+    return sorted(objects, key=order_key, reverse=is_desc)
 
 
 def yes_no_formatter(value, **_):
@@ -1144,7 +1143,7 @@ class Paginator(Traversable):
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
 
-        rows = self.iommi_parent().rows
+        rows = self.iommi_parent().filtered_rows
         evaluate_parameters = dict(
             page_size=self.page_size,
             rows=rows,
@@ -1381,11 +1380,13 @@ class Table(Part, Tag):
     @staticmethod
     @refinable
     def preprocess_rows(rows, **_):
+        # TODO: Should we rename this into prepocess_visible_rows ?
         return rows
 
     @staticmethod
     @refinable
     def preprocess_row(table, row, **_):
+        # TODO: Should we rename this into prepocess_visible_row ?
         del table
         return row
 
@@ -1658,19 +1659,25 @@ class Table(Part, Tag):
         self._bind_bulk_form()
         self._bind_headers()
 
-        if isinstance(self.rows, QuerySet):
+        if isinstance(self.filtered_rows, QuerySet):
             prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
             select = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
             if prefetch:
-                self.rows = self.rows.prefetch_related(*prefetch)
+                self.filtered_rows = self.filtered_rows.prefetch_related(*prefetch)
             if select:
-                self.rows = self.rows.select_related(*select)
+                self.filtered_rows = self.filtered_rows.select_related(*select)
 
         self.paginator = self.paginator.bind(parent=self)
-        self.rows = self.paginator.rows
+        # The effect of the paginator is to define what subset of filtered_rows is
+        # visible on the screen.
+        self.visible_rows = self.paginator.rows
         self._prepare_auto_rowspan()
 
     def _bind_query(self):
+        """ Bind the query form and apply it.
+
+            self.filtered_rows = filtered_by_query_form(self.sorted_rows) """
+        self.filtered_rows = self.sorted_rows
         if not self.model:
             self.query_form = None
             return
@@ -1694,7 +1701,7 @@ class Table(Part, Tag):
             except QueryException:
                 pass
             if q:
-                self.rows = self.rows.filter(q)
+                self.filtered_rows = self.sorted_rows.filter(q)
 
     def _bind_bulk_form(self):
         if not self.model:
@@ -1739,7 +1746,7 @@ class Table(Part, Tag):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
 
         if auto_rowspan_columns:
-            self.rows = list(self.rows)
+            self.visible_rows = list(self.visible_rows)
             no_value_set = object()
             for column in auto_rowspan_columns:
                 rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
@@ -1767,6 +1774,13 @@ class Table(Part, Tag):
                 column.cell.attrs['style']['display'] = auto_rowspan_style
 
     def _prepare_sorting(self):
+        """Sort all the rows.
+
+           self.sorted_rows = sorted(self.rows)
+        """
+        # TODO: Presumably filtering is cheaper than sorting, so maybe we should
+        # filter first and then sort.
+        self.sorted_rows = self.rows
         request = self.get_request()
         if request is None:
             return
@@ -1784,7 +1798,7 @@ class Table(Part, Tag):
 
             if sort_column.sortable:
                 if isinstance(self.rows, list):
-                    order_by_on_list(self.rows, order_args[0], is_desc)
+                    self.sorted_rows = ordered_by_on_list(self.rows, order_args[0], is_desc)
                 else:
                     if not settings.DEBUG:
                         # We should crash on invalid sort commands in development, but just ignore in production
@@ -1792,7 +1806,7 @@ class Table(Part, Tag):
                         valid_sort_fields = {x.name for x in get_fields(self.model)}
                         order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
-                    self.rows = self.rows.order_by(*order_args)
+                    self.sorted_rows = self.rows.order_by(*order_args)
 
     def _bind_headers(self):
         prepare_headers(self)
@@ -1841,8 +1855,9 @@ class Table(Part, Tag):
         return dict(table=self)
 
     def cells_for_rows(self):
+        """Yield a Cells instance for each visible row on the screen."""
         assert self._is_bound
-        for i, row in enumerate(self.preprocess_rows(rows=self.rows, **self.iommi_evaluate_parameters())):
+        for i, row in enumerate(self.preprocess_rows(rows=self.visible_rows, **self.iommi_evaluate_parameters())):
             row = self.preprocess_row(table=self, row=row)
             yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
@@ -1891,12 +1906,13 @@ class Table(Part, Tag):
 
         request = self.get_request()
 
-        assert self.rows is not None
+        assert self.visible_rows is not None
 
         context = self.iommi_evaluate_parameters().copy()
 
         if self.query and self.query.form and not self.query.form.is_valid():
-            self.rows = None
+            # Why None?  Shouldn't this rather be [] ?
+            self.visible_rows = None
             context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
 
         return render(request=request, template=template or self.template, context=context)
