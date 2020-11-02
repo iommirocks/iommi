@@ -887,6 +887,52 @@ def test_bulk_delete():
 
 
 @pytest.mark.django_db
+def test_bulk_delete_all_uses_original_rows():
+    TFoo.objects.create(a=1, b='a')
+    TFoo.objects.create(a=2, b='b')
+    TFoo.objects.create(a=3, b='a')
+    table = Table(
+        rows=TFoo.objects.all().filter(b='a'),
+        page_size=1,
+        bulk__actions__delete__include=True,
+    )
+
+    t = table.bind(request=req('post', _all_pks_='1', **{'-delete': ''}))
+
+    assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
+
+    t = table.bind(request=req('post', _all_pks_='1', confirmed='confirmed', **{'-delete': ''}))
+    response = t.render_to_response()
+
+    assert response.status_code == 302, response.content.decode()
+    # Deleting all should not have touched objects in TFoo that were not in rows.
+    assert list(TFoo.objects.all().order_by('a').values_list('a', flat=True)) == [2]
+
+
+@pytest.mark.django_db
+def test_bulk_delete_all_respects_query():
+    TFoo.objects.create(a=1, b='a')
+    TFoo.objects.create(a=2, b='b')
+    TFoo.objects.create(a=3, b='a')
+    table = Table(
+        auto__model=TFoo,
+        page_size=1,
+        bulk__actions__delete__include=True,
+        columns__b__filter__include=True,
+    )
+    t = table.bind(request=req('post', b='a', _all_pks_='1', **{'-delete': ''}))
+
+    assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
+
+    t = table.bind(request=req('post', b='a', _all_pks_='1', confirmed='confirmed', **{'-delete': ''}))
+    response = t.render_to_response()
+
+    assert response.status_code == 302, response.content.decode()
+    # Deleting all should not have touched objects in TFoo that were filtered out.
+    assert list(TFoo.objects.all().order_by('a').values_list('a', flat=True)) == [2]
+
+
+@pytest.mark.django_db
 def test_invalid_syntax_query():
     class TestTable(Table):
         a = Column.number(sortable=False, filter__include=True)

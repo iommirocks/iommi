@@ -1910,7 +1910,7 @@ class Table(Part, Tag):
         return model, rows, columns
 
     def bulk_queryset(self):
-        queryset = self.model.objects.all() \
+        queryset = self.sorted_and_filtered_rows \
             .filter(**self.bulk_filter) \
             .exclude(**self.bulk_exclude)
 
