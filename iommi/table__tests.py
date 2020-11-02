@@ -708,7 +708,7 @@ def test_column_presets(NoSortTable):
                     <td> <a href="http://yada/delete/"> <i class="fa fa-lg fa-trash-o"/> Delete </a> </td>
                     <td> <a href="http://yada/download/"> <i class="fa fa-download fa-lg"/> Download </a> </td>
                     <td> <a href="http://yada/run/"> Run </a> </td>
-                    <td> <input class="checkbox" name="pk_123" type="checkbox"/> </td> <td> <i class="fa fa-check" title="Yes" /> </td>
+                    <td> <input class="checkbox" name="pk_0" type="checkbox"/> </td> <td> <i class="fa fa-check" title="Yes" /> </td>
                     <td> <a href="http://yadahada/"> Yadahada name </a> </td>
                     <td class="rj"> 123 </td>
                 </tr>
