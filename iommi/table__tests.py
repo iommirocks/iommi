@@ -42,7 +42,7 @@ from iommi.table import (
     default_cell_formatter,
     ordered_by_on_list,
     register_cell_formatter,
-    SELECT_DISPLAY_NAME,
+    make_select_display_name,
     Struct,
     Table,
     yes_no_formatter,
@@ -684,7 +684,9 @@ def test_column_presets(NoSortTable):
             number=123
         )
     ]
-    verify_table_html(table=TestTable(rows=rows), expected_html="""
+    table = TestTable(rows=rows)
+
+    verify_table_html(table=table, expected_html="""
         <table class="table" data-endpoint="/tbody">
             <thead>
                 <tr>
@@ -713,7 +715,7 @@ def test_column_presets(NoSortTable):
                     <td class="rj"> 123 </td>
                 </tr>
             </tbody>
-        </table>""".format(SELECT_DISPLAY_NAME))
+        </table>""".format(make_select_display_name(table)))
 
 
 @pytest.mark.django_db

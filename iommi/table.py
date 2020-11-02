@@ -302,7 +302,9 @@ def default_cell__value(column, row, **kwargs):
         return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
 
 
-SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this)"></i>'
+def make_select_display_name(table, **_):
+    has_paginator = 'true' if table.paginator.is_paginated else 'false'
+    return mark_safe(f'<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, {has_paginator})"></i>')
 
 
 class DataRetrievalMethods(Enum):
@@ -540,7 +542,7 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        display_name=mark_safe(SELECT_DISPLAY_NAME),
+        display_name=make_select_display_name,
         sortable=False,
         filter__is_valid_filter=lambda **_: (True, ''),
         filter__field__include=False,
@@ -1548,6 +1550,15 @@ class Table(Part, Tag):
         self.bulk = None
         self.header_levels = None
 
+        def add_hidden_all_pks_field(declared_bulk_fields):
+            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
+                _name='_all_pks_',
+                attr=None,
+                initial='0',
+                required=False,
+                input__attrs__class__all_pks=True,
+            )
+
         form_class = self.get_meta().form_class
         if self.model:
             # Query
@@ -1607,13 +1618,7 @@ class Table(Part, Tag):
 
                     declared_bulk_fields[name] = field()
 
-            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
-                _name='_all_pks_',
-                attr=None,
-                initial='0',
-                required=False,
-                input__attrs__class__all_pks=True,
-            )
+            add_hidden_all_pks_field(declared_bulk_fields)
 
             # x.bulk.include can be a callable here. We treat that as truthy on purpose.
             if any(x.bulk.include for x in values(declared_members(self).columns)) or 'actions' in bulk:
@@ -1638,18 +1643,18 @@ class Table(Part, Tag):
 
         if not self.model and not self.bulk and 'actions' in bulk:
             # Support custom 'bulk' actions even when there is no model
-            # I should probably have some code here that complains if the config
-            # has any values that aren't supported (that is anything that looks
-            # like the user wants the builtin bulk change or bulk delete working
-            # on rows that are not querysets).
+            if any(x.bulk.include for x in values(declared_members(self).columns)):
+                assert False, "The builtin bulk actions only work on querysets."
+            declared_bulk_fields = Struct()
+            add_hidden_all_pks_field(declared_bulk_fields)
             self.bulk = form_class(
                 _name='bulk',
+                _fields_dict=declared_bulk_fields,
                 # We don't want form's default submit button unless somebody
                 # explicitly added it again.
                 actions__submit=bulk['actions'].get('submit', None),
                 **bulk
             )
-            # No idea what the next line does.
             declared_members(self).bulk = self.bulk
 
         # Columns need to be at the end to not steal the short names
