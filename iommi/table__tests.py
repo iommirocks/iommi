@@ -40,7 +40,7 @@ from iommi.table import (
     Column,
     datetime_formatter,
     default_cell_formatter,
-    order_by_on_list,
+    ordered_by_on_list,
     register_cell_formatter,
     SELECT_DISPLAY_NAME,
     Struct,
@@ -1844,17 +1844,17 @@ def test_ordering():
     # no ordering
     t = Table(auto__model=TFoo)
     t = t.bind(request=req('get'))
-    assert not t.rows.query.order_by
+    assert not t.sorted_rows.query.order_by
 
     # ordering from GET parameter
     t = Table(auto__model=TFoo)
     t = t.bind(request=req('get', order='a'))
-    assert list(t.rows.query.order_by) == ['a']
+    assert list(t.sorted_rows.query.order_by) == ['a']
 
     # default ordering
     t = Table(auto__model=TFoo, default_sort_order='b')
     t = t.bind(request=req('get', order='b'))
-    assert list(t.rows.query.order_by) == ['b']
+    assert list(t.sorted_rows.query.order_by) == ['b']
 
 
 @pytest.mark.django_db
@@ -2878,11 +2878,10 @@ def test_order_by_on_list_nested():
         Struct(foo=Struct(bar='a')),
     ]
 
-    sorted_rows = rows[:]
-    order_by_on_list(sorted_rows, 'foo__bar')
+    sorted_rows = ordered_by_on_list(rows, 'foo__bar')
     assert sorted_rows == list(reversed(rows))
 
-    order_by_on_list(sorted_rows, lambda x: x.foo.bar)
+    sorted_rows = ordered_by_on_list(rows, lambda x: x.foo.bar)
     assert sorted_rows == list(reversed(rows))
 
 
