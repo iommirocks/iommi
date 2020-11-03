@@ -135,6 +135,13 @@ class TBar(Model):
         ordering = ('pk',)
 
 
+class TBar2(Model):
+    bar = ForeignKey(TBar, on_delete=CASCADE)
+
+    class Meta:
+        ordering = ('pk',)
+
+
 class TBaz(Model):
     foo = ManyToManyField(TFoo)
 

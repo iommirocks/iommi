@@ -326,7 +326,7 @@ def default_icon__cell__format(column, value, **_):
 def foreign_key__sort_key(column, **_):
     if column.model:
         try:
-            sort_columns = get_search_fields(model=column.model_field)
+            sort_columns = get_search_fields(model=column.model_field.model)
             return f'{column.attr}__{sort_columns[0]}'
         except NoRegisteredSearchFieldException:
             pass
@@ -760,16 +760,17 @@ class Column(Part):
         sort_key=foreign_key__sort_key,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
-        model = model_field.foreign_related_fields[0].model
-        if hasattr(model, 'get_absolute_url'):
+        model_field = model_field.foreign_related_fields[0]
+        if hasattr(model_field.model, 'get_absolute_url'):
             setdefaults_path(
                 kwargs,
                 cell__url=lambda value, **_: value.get_absolute_url() if value is not None else None,
             )
         setdefaults_path(
             kwargs,
-            choices=model.objects.all(),
-            model_field=model,
+            choices=model_field.model.objects.all(),
+            model_field=model_field,
+            model=model_field.model,
         )
         return call_target(**kwargs)
 
@@ -1522,20 +1523,23 @@ class Table(Part, Tag):
         if self.model:
             # Query
             filters = Struct()
+
+            field_class = self.get_meta().query_class.get_meta().member_class
+
             for name, column in items(declared_members(self).columns):
+                # TODO: bulk does this, shouldn't this code also do it: `filter = query.fields.pop(name, {})` and then send that into the setdefaults_path below?
+
                 filter = setdefaults_path(
                     Namespace(),
                     column.filter,
-                    call_target__cls=self.get_meta().query_class.get_meta().member_class,
+                    call_target__cls=field_class,
                     model=self.model,
+                    model_field_name=column.model_field_name,
                     _name=name,
                     attr=name if column.attr is MISSING else column.attr,
                     field__call_target__cls=self.get_meta().query_class.get_meta().form_class.get_meta().member_class,
                     field__display_name=column.display_name,
                 )
-                if 'call_target' not in filter['call_target'] and filter['call_target'].get(
-                        'attribute') == 'from_model':
-                    filter['model_field_name'] = filter.attr
                 # Special case for automatic query config
                 if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
                     filter.include = True
@@ -1545,6 +1549,7 @@ class Table(Part, Tag):
             self.query = self.get_meta().query_class(
                 _filters_dict=filters,
                 _name='query',
+                model=self.model,
                 **self.query_args
             )
             declared_members(self).query = self.query
@@ -1562,6 +1567,7 @@ class Table(Part, Tag):
                         column.bulk,
                         call_target__cls=field_class,
                         model=self.model,
+                        model_field_name=column.model_field_name,
                         _name=name,
                         attr=name if column.attr is MISSING else column.attr,
                         required=False,
@@ -1572,8 +1578,6 @@ class Table(Part, Tag):
                     )
                     if isinstance(column.model_field, BooleanField):
                         field.call_target.attribute = 'boolean_tristate'
-                    if 'call_target' not in field['call_target'] and field['call_target'].get('attribute') == 'from_model':
-                        field['model_field_name'] = field.attr
 
                     declared_bulk_fields[name] = field()
 
@@ -1591,6 +1595,7 @@ class Table(Part, Tag):
                 self.bulk = form_class(
                     _fields_dict=declared_bulk_fields,
                     _name='bulk',
+                    model=self.model,
                     actions__submit=dict(
                         post_handler=bulk__post_handler,
                         display_name=gettext_lazy('Bulk change'),

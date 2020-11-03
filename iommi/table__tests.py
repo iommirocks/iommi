@@ -62,6 +62,7 @@ from tests.models import (
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
     TBar,
+    TBar2,
     TBaz,
     TFoo,
 )
@@ -3055,3 +3056,19 @@ def test_insert_field_into_query_form():
     ).bind(request=req('get'))
 
     assert 'not_in_t_foo' in keys(table.query.form.fields)
+
+
+@pytest.mark.django_db
+def test_auto_model_dunder_path():
+    tfoo = TFoo.objects.create(a=1, b='2')
+    tbar = TBar.objects.create(foo=tfoo, c=True)
+    TBar2.objects.create(bar=tbar)
+
+    table = Table(
+        auto__model=TBar2,
+        auto__include=['bar__foo'],
+        # columns__bar_foo__bulk__include=True,
+    ).bind(request=req('get'))
+
+    assert 'bar_foo' in keys(table.columns)
+    table.__html__()
