@@ -1,5 +1,4 @@
 import operator
-from copy import deepcopy
 from functools import reduce
 from typing import (
     Type,
@@ -596,8 +595,23 @@ class Query(Part):
 
         # It's not safe to modify kwargs deeply! reinvoke() is evil.
         freetext_config = kwargs.get('form', {}).get('fields', {}).get('freetext', {})
-        kwargs = deepcopy(kwargs)
-        kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
+        # We originally had this line here
+        # kwargs = deepcopy(kwargs)
+        # And then removed the freetext_config from kwargs
+        # BUT doing that means two bad things:
+        #   a) Python is a language with side-effects, and one could point in one of
+        #      the values (that is leaves of the namespace) something one wants to
+        #      mutate from some other place later, and if that value get's deep copied
+        #      all hell can break loose...
+        #   b) Not everything can be deepcopied.  And indeed in production a user
+        #      hit a place where a not pickle-able object was contained in one of
+        #      the copied places.
+        # So instead we do the below:
+        if 'form' in kwargs and 'fields' in kwargs['form'] and 'freetext' in kwargs['form']['fields']:
+            kwargs = kwargs.copy()
+            kwargs['form'] = kwargs['form'].copy()
+            kwargs['form']['fields'] = kwargs['form']['fields'].copy()
+            kwargs['form']['fields'].pop('freetext')
 
         super(Query, self).__init__(
             model=model,
