@@ -1,4 +1,5 @@
 from django.urls import path
+from django.http import HttpResponseRedirect
 from django.utils.translation import gettext
 
 from examples import (
@@ -146,6 +147,40 @@ def table_two(request):
     )
 
 
+@example(gettext('post handlers on lists'))
+def table_post_handler_on_lists(request):
+    class Foo(object):
+        def __init__(self, i):
+            self.a = i
+            self.b = 'foo %s' % (i % 3)
+            self.c = (i, 1, 2, 3, 4)
+
+        def __str__(self):
+            return f"{self.a} {self.b} {self.c}"
+
+    foos = [Foo(i) for i in range(4)]
+
+    def bulk__actions__print__post_handler(table, request, **_):
+        for row in table.selection():
+            print(row)
+        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+
+    class FooTable(Table):
+        # I can add checkboxes to each row
+        s = Column.select()
+        a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
+        b = Column()
+        c = Column(cell__format=lambda value, **_: value[-1])  # Display the last value of the tuple
+        sum_c = Column(cell__value=lambda row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
+
+        class Meta:
+            page_size = 3
+            # And register a button that will get the selection passed in its post_handler
+            bulk__actions__print = Action.primary(display_name='print me', post_handler=bulk__actions__print__post_handler)
+
+    return FooTable(rows=foos)
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Table examples')
 
@@ -175,4 +210,5 @@ urlpatterns = [
     path('example_5/', table_kitchen_sink, name='kitchen_sink'),
     path('example_6/', example_6_view),
     path('example_7/', table_two),
+    path('example_8/', table_post_handler_on_lists),
 ]

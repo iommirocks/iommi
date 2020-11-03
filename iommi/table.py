@@ -302,7 +302,9 @@ def default_cell__value(column, row, **kwargs):
         return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
 
 
-SELECT_DISPLAY_NAME = '<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this)"></i>'
+def make_select_display_name(table, **_):
+    has_paginator = 'true' if table.paginator.is_paginated else 'false'
+    return mark_safe(f'<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, {has_paginator})"></i>')
 
 
 class DataRetrievalMethods(Enum):
@@ -540,7 +542,7 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        display_name=mark_safe(SELECT_DISPLAY_NAME),
+        display_name=make_select_display_name,
         sortable=False,
         filter__is_valid_filter=lambda **_: (True, ''),
         filter__field__include=False,
@@ -549,11 +551,35 @@ class Column(Part):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
+        To implement a custom post handler that operates on the selected rows, do
+
+         .. code:: python
+
+            def my_handler(table):
+                rows = table.selection()
+                # rows will either be a queryset, or a list of elements
+                # matching the type of rows of the table
+                ...
+
+            Table(.... ,
+                bulk__actions=Action.submit(post_handler=my_handler)
+            )
+
         :param checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
         """
+        def cell__value(row, table, cells, **kwargs):
+            checked_str = ' checked' if evaluate_strict(checked, row=row, **kwargs) else ''
+            if isinstance(table.rows, QuerySet):
+                row_id = row.pk
+            else:
+                # row_index is the visible row number
+                # See selection() for the code that does the lookup
+                row_id = cells.row_index
+            return mark_safe(f'<input type="checkbox"{checked_str} class="checkbox" name="{checkbox_name}_{row_id}" />')
+
         setdefaults_path(kwargs, dict(
-            cell__value=lambda row, **kwargs: mark_safe('<input type="checkbox"%s class="checkbox" name="%s_%s" />' % (' checked' if evaluate_strict(checked, row=row, **kwargs) else '', checkbox_name, row.pk)),
+            cell__value=cell__value
         ))
         return call_target(**kwargs)
 
@@ -684,7 +710,8 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='date',
-        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact',
+                                                         ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='date',
     )
     def date(cls, call_target, **kwargs):
@@ -693,7 +720,8 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='datetime',
-        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact',
+                                                         ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='datetime',
     )
     def datetime(cls, call_target, **kwargs):
@@ -702,7 +730,8 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='time',
-        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact',
+                                                         ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='time',
     )
     def time(cls, call_target, **kwargs):
@@ -876,7 +905,8 @@ class Cell(CellConfig):
     def __html__(self):
         cell__template = self.column.cell.template
         if cell__template:
-            context = dict(table=self.table, column=self.column, cells=self.cells, row=self.row, value=self.value, bound_cell=self)
+            context = dict(table=self.table, column=self.column, cells=self.cells,
+                           row=self.row, value=self.value, bound_cell=self)
             return render_template(self.table.get_request(), cell__template, context)
 
         if self.tag:
@@ -1122,7 +1152,8 @@ class Paginator(Traversable):
         page=1,
 
         count=paginator__count,
-        number_of_pages=lambda paginator, rows, **_: ceil(max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size),
+        number_of_pages=lambda paginator, rows, **_: ceil(max(1, (paginator.count -
+                                                                  (paginator.min_page_size - 1))) / paginator.page_size),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
     )
     @reinvokable
@@ -1520,6 +1551,16 @@ class Table(Part, Tag):
         self.bulk = None
         self.header_levels = None
 
+        def add_hidden_all_pks_field(declared_bulk_fields):
+            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
+                _name='_all_pks_',
+                attr=None,
+                initial='0',
+                required=False,
+                input__attrs__class__all_pks=True,
+            )
+
+        form_class = self.get_meta().form_class
         if self.model:
             # Query
             filters = Struct()
@@ -1581,14 +1622,7 @@ class Table(Part, Tag):
 
                     declared_bulk_fields[name] = field()
 
-            form_class = self.get_meta().form_class
-            declared_bulk_fields._all_pks_ = form_class.get_meta().member_class.hidden(
-                _name='_all_pks_',
-                attr=None,
-                initial='0',
-                required=False,
-                input__attrs__class__all_pks=True,
-            )
+            add_hidden_all_pks_field(declared_bulk_fields)
 
             # x.bulk.include can be a callable here. We treat that as truthy on purpose.
             if any(x.bulk.include for x in values(declared_members(self).columns)) or 'actions' in bulk:
@@ -1610,6 +1644,22 @@ class Table(Part, Tag):
                     **bulk
                 )
 
+            declared_members(self).bulk = self.bulk
+
+        if not self.model and not self.bulk and 'actions' in bulk:
+            # Support custom 'bulk' actions even when there is no model
+            if any(x.bulk.include for x in values(declared_members(self).columns)):
+                assert False, "The builtin bulk actions only work on querysets."
+            declared_bulk_fields = Struct()
+            add_hidden_all_pks_field(declared_bulk_fields)
+            self.bulk = form_class(
+                _name='bulk',
+                _fields_dict=declared_bulk_fields,
+                # We don't want form's default submit button unless somebody
+                # explicitly added it again.
+                actions__submit=bulk['actions'].get('submit', None),
+                **bulk
+            )
             declared_members(self).bulk = self.bulk
 
         # Columns need to be at the end to not steal the short names
@@ -1670,7 +1720,8 @@ class Table(Part, Tag):
         self.tbody.children.text = _Lazy_tbody(self)
         self.header = self.header.bind(parent=self)
 
-        evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())  # needs to be done first because _bind_headers depends on it
+        # needs to be done first because _bind_headers depends on it
+        evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())
 
         evaluate_member(self, 'model', strict=False, **self.iommi_evaluate_parameters())
         evaluate_member(self, 'initial_rows', **self.iommi_evaluate_parameters())
@@ -1687,7 +1738,8 @@ class Table(Part, Tag):
         self._bind_headers()
 
         if isinstance(self.sorted_and_filtered_rows, QuerySet):
-            prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr]
+            prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method ==
+                        DataRetrievalMethods.prefetch and x.attr]
             select = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
             if prefetch:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
@@ -1731,10 +1783,6 @@ class Table(Part, Tag):
                 self.sorted_and_filtered_rows = self.sorted_rows.filter(q)
 
     def _bind_bulk_form(self):
-        if not self.model:
-            self.bulk = None
-            return
-
         if self.bulk is not None:
             declared_fields = declared_members(self.bulk)['fields']
             for name, column in items(declared_members(self)['columns']):
@@ -1914,16 +1962,42 @@ class Table(Part, Tag):
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude, columns=columns)
         return model, rows, columns
 
+    def _selection_identifiers(self):
+        """Return a list of identifiers of the selected rows.  Or 'all' if all
+           sorted_and_filtered_rows are selected."""
+        if self.get_request().POST.get('_all_pks_') == '1':
+            return 'all'
+        else:
+            return [key[len('pk_'):] for key in self.get_request().POST if key.startswith('pk_')]
+
+    def selection(self):
+        """Return the selected rows.
+
+           For use in post_handlers. It's a queryset if rows is a querset and a list otherwise.
+           Unlike bulk_queryset neither bulk_filter nor bulk_exclude are applied.
+        """
+        identifiers = self._selection_identifiers()
+        if identifiers == 'all':
+            print('inside all', self.sorted_and_filtered_rows)
+            return self.sorted_and_filtered_rows
+        else:
+            if isinstance(self.sorted_and_filtered_rows, QuerySet):
+                return self.sorted_and_filtered_rows.filter(pk__in=identifiers)
+            else:
+                identifiers = frozenset([int(i) for i in identifiers])
+                return [row for ndx, row in enumerate(self.visible_rows) if ndx in identifiers]
+
     def bulk_queryset(self):
-        queryset = self.sorted_and_filtered_rows \
+        """Return the querset that contains only the selected rows with
+           bulk_filter and bulk_exclude applied.
+
+           For use in post_handlers.  Only valid when rows was a queryset.
+        """
+        assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
+
+        return self.selection() \
             .filter(**self.bulk_filter) \
             .exclude(**self.bulk_exclude)
-
-        if self.get_request().POST.get('_all_pks_') == '1':
-            return queryset
-        else:
-            pks = [key[len('pk_'):] for key in self.get_request().POST if key.startswith('pk_')]
-            return queryset.filter(pk__in=pks)
 
     @dispatch(
         render=render_template,
