@@ -1,7 +1,12 @@
 import pytest
 from tri_declarative import (
+    class_shortcut,
+    declarative,
+    dispatch,
+    EMPTY,
     Namespace,
     Refinable,
+    with_meta,
 )
 from tri_struct import Struct
 
@@ -10,21 +15,30 @@ from iommi import (
     Field,
     Form,
     Fragment,
-    Table, register_style, Style, MenuItem, Menu,
+    Menu,
+    MenuItem,
+    register_style,
+    Style,
+    Table,
 )
 from iommi.base import (
     items,
     keys,
 )
+from iommi.member import (
+    bind_members,
+    collect_members,
+)
 from iommi.page import (
     Page,
 )
+from iommi.reinvokable import reinvokable
 from iommi.style import unregister_style
 from iommi.traversable import (
     build_long_path_by_path,
+    evaluated_refinable,
     EvaluatedRefinable,
     Traversable,
-    evaluated_refinable,
 )
 from tests.helpers import (
     req,
@@ -201,7 +215,6 @@ def test_initial_setup():
 
 
 def test_traversable_repr():
-
     bar = StubTraversable(_name='bar')
     foo = StubTraversable(
         _name='foo',
@@ -269,3 +282,90 @@ def test_apply_style_not_affecting_definition_2():
 
     unregister_style('foo_style')
     unregister_style('bar_style')
+
+
+def test_get_config():
+    register_style('fruit_style', Style(
+        Fruit__attrs__class__style=True,
+    ))
+
+    class Fruit(Traversable):
+        attrs = Refinable()
+
+        @reinvokable
+        @dispatch(
+            attrs__class__fruit=True,
+        )
+        def __init__(self, **kwargs):
+            super(Fruit, self).__init__(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            attrs__class__some_fruit=True,
+        )
+        def some_fruit(cls, *, call_target=None, **kwargs):
+            return call_target(**kwargs)
+
+    class SubFruit(Fruit):
+        @reinvokable
+        @dispatch(
+            attrs__class__sub_fruit=True,
+        )
+        def __init__(self, **kwargs):
+            super(SubFruit, self).__init__(**kwargs)
+
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='some_fruit',
+            attrs__class__sub_some_fruit=True,
+        )
+        def some_fruit(cls, *, call_target=None, **kwargs):
+            return call_target(**kwargs)
+
+    @declarative(Fruit, '_fruits_dict')
+    @with_meta
+    class Basket(Traversable):
+        fruits = Refinable()
+
+        class Meta:
+            fruits__banana__attrs__class__basket = True
+
+        @dispatch(
+            fruits=EMPTY,
+        )
+        def __init__(self, *, _fruits_dict, fruits, **kwargs):
+            super(Basket, self).__init__(**kwargs)
+            collect_members(self, name='fruits', items_dict=_fruits_dict, items=fruits, cls=Fruit)
+
+        def on_bind(self) -> None:
+            bind_members(self, name='fruits')
+
+    class SubBasket(Basket):
+        class Meta:
+            fruits__banana__attrs__class__sub_basket = True
+            iommi_style = 'fruit_style'
+
+    class MyBasket(SubBasket):
+        banana = SubFruit.some_fruit(
+            attrs__class__my_basket_fruit_invoke=True,
+        )
+
+    basket = MyBasket(
+        fruits__banana__attrs__class__my_basket_invoke=True
+    ).bind(
+        request=None
+    )
+
+    assert list(basket.fruits.banana.attrs['class'].keys()) == [
+        'fruit',
+        'sub_fruit',
+        'style',
+        'basket',
+        'sub_basket',
+        'my_basket_invoke',
+        'some_fruit',
+        'sub_some_fruit',
+        'my_basket_fruit_invoke',
+    ]
+
+    unregister_style('fruit_style')
