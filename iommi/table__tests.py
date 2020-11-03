@@ -936,6 +936,40 @@ def test_bulk_delete_all_respects_query():
 
 
 @pytest.mark.django_db
+def test_bulk_custom_action_on_list():
+    class Row:
+        def __init__(self, name):
+            self.name = name
+
+        def __eq__(self, other):
+            return self.name == other.name
+
+    selected = []
+
+    def my_handler(table, **_):
+        nonlocal selected
+        selected = table.selection()
+
+    table = Table(
+        page_size=None,
+        rows=[
+            Row('Kaa'),
+            Row('Nagini'),
+            Row('Mrs. Plithiver'),
+        ],
+        columns__name=Column(),
+        bulk__actions__my_handler=Action.submit(post_handler=my_handler)
+    )
+    expected_html = """<div class="links">
+         <input accesskey="s" name="-my_handler" type="submit" value="Submit">
+    </div>"""
+    verify_table_html(table=table.bind(request=req('get')), expected_html=expected_html, find=dict(class_="links"))
+    response = table.bind(request=req('post', pk_1='on', **{'-my_handler': ''})).render_to_response()
+    assert response.status_code == 200, response.content.decode()
+    assert selected == [Row(name='Nagini')]
+
+
+@pytest.mark.django_db
 def test_invalid_syntax_query():
     class TestTable(Table):
         a = Column.number(sortable=False, filter__include=True)
