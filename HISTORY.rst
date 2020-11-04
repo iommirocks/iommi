@@ -1,6 +1,25 @@
 Changelog
 ---------
 
+2.4.0 (2020-11-04)
+~~~~~~~~~~~~~~~~~~
+
+* The given `rows` queryset and filtering were not respected for the "Select all rows" bulk feature. This could produce some pretty bad bugs!
+
+* Support custom bulk post_handlers on lists and not just querysets
+
+* `Table` has a few new members:
+    - `initial_rows`: the rows you pass (or that gets created by `auto__model`) is stored unchanged here
+    - `sorted_rows`: `initial_rows` + sorting applied
+    - `sorted_and_filtered_rows`: `sorted_rows` + filtering applied
+    - `visible_rows`: `sorted_and_filtered_rows` + pagination applied
+    - `rows`: this is now a property and will map to the old behavior which is the "most applied" member that exists
+
+
+* Fixed passing dunder paths to `auto__include`. You got a weird crash if the target of the path was a foreign key. There are still issues to be resolved adjacent to this, but the base case now works.
+
+* Fixed the "select all" feature for pages with multiple tables.
+
 
 2.3.0 (2020-10-30)
 ~~~~~~~~~~~~~~~~~~
