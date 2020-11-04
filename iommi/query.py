@@ -911,7 +911,7 @@ class Query(Part):
             result = [
                 expr(field, field.is_list, field.value)
                 for field in values(form.fields)
-                if field._name != FREETEXT_SEARCH_NAME and field.value not in (None, '', [])
+                if field._name != FREETEXT_SEARCH_NAME and field._name in self.filters and field.value not in (None, '', [])
             ]
 
             if FREETEXT_SEARCH_NAME in form.fields:
