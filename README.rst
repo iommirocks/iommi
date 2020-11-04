@@ -10,6 +10,10 @@ iommi
 .. image:: https://repl.it/badge/github/boxed/iommi-repl.it
     :target: https://repl.it/github/boxed/iommi-repl.it
 
+.. image:: https://img.shields.io/discord/773470009795018763
+    :target: https://discord.gg/ZyYRYhf7Pd
+
+
 iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
 
 Major features:
