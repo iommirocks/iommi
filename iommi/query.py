@@ -98,6 +98,7 @@ from tri_declarative import (
     setdefaults_path,
     Shortcut,
     with_meta,
+    flatten
 )
 from tri_struct import Struct
 
@@ -589,7 +590,6 @@ class Query(Part):
             form__call_target=self.get_meta().form_class,
         )
 
-        self._form = None
         self.query_advanced_value = None
         self.query_error = None
 
@@ -606,12 +606,11 @@ class Query(Part):
         #   b) Not everything can be deepcopied.  And indeed in production a user
         #      hit a place where a not pickle-able object was contained in one of
         #      the copied places.
-        # So instead we do the below:
+        # So instead we do the below (the if just to avoid copying the namespace when we are
+        # not touching it).
         if 'form' in kwargs and 'fields' in kwargs['form'] and 'freetext' in kwargs['form']['fields']:
-            kwargs = kwargs.copy()
-            kwargs['form'] = kwargs['form'].copy()
-            kwargs['form']['fields'] = kwargs['form']['fields'].copy()
-            kwargs['form']['fields'].pop('freetext')
+            kwargs = Namespace(flatten(Namespace(kwargs)))
+            freetext_config = kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
 
         super(Query, self).__init__(
             model=model,
