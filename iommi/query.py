@@ -593,22 +593,14 @@ class Query(Part):
         self.query_advanced_value = None
         self.query_error = None
 
-        # It's not safe to modify kwargs deeply! reinvoke() is evil.
+        # Here we need to remove the freetext config from kwargs because we want to
+        # handle it differently from the other fields.
+        # BUT It's not safe to modify kwargs deeply! Because reinvoke() is evil:
+        # It will call init again with the same kwargs + whatever additional kwargs
+        # might have come from a parent or styling info.
         freetext_config = kwargs.get('form', {}).get('fields', {}).get('freetext', {})
-        # We originally had this line here
-        # kwargs = deepcopy(kwargs)
-        # And then removed the freetext_config from kwargs
-        # BUT doing that means two bad things:
-        #   a) Python is a language with side-effects, and one could point in one of
-        #      the values (that is leaves of the namespace) something one wants to
-        #      mutate from some other place later, and if that value get's deep copied
-        #      all hell can break loose...
-        #   b) Not everything can be deepcopied.  And indeed in production a user
-        #      hit a place where a not pickle-able object was contained in one of
-        #      the copied places.
-        # So instead we do the below (the if just to avoid copying the namespace when we are
-        # not touching it).
         if 'form' in kwargs and 'fields' in kwargs['form'] and 'freetext' in kwargs['form']['fields']:
+            # copy (just) the namespace so we can safely remove freetext from it
             kwargs = Namespace(flatten(Namespace(kwargs)))
             freetext_config = kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
 
