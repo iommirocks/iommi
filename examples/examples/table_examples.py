@@ -21,6 +21,7 @@ from iommi import (
     Column,
     html,
     Table,
+    Field,
 )
 
 examples = []
@@ -181,6 +182,18 @@ def table_post_handler_on_lists(request):
     return FooTable(rows=foos)
 
 
+@example(gettext('You can have extra fields in your form that the query will ignore'))
+def extra_fields(request):
+    class FooTable(Table):
+        name = Column(filter__include=True)
+
+    table = FooTable(rows=Foo.objects.all(),
+                     query__form__fields__my_extra_field=Field(attr=None, initial="Hello World")
+                     ).bind(request=request)
+    print(table.query.form.fields.my_extra_field.value)
+    return table
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Table examples')
 
@@ -211,4 +224,5 @@ urlpatterns = [
     path('example_6/', example_6_view),
     path('example_7/', table_two),
     path('example_8/', table_post_handler_on_lists),
+    path('example_9/', extra_fields),
 ]
