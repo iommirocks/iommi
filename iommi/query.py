@@ -1,5 +1,4 @@
 import operator
-from copy import deepcopy
 from functools import reduce
 from typing import (
     Type,
@@ -99,6 +98,7 @@ from tri_declarative import (
     setdefaults_path,
     Shortcut,
     with_meta,
+    flatten
 )
 from tri_struct import Struct
 
@@ -590,14 +590,19 @@ class Query(Part):
             form__call_target=self.get_meta().form_class,
         )
 
-        self._form = None
         self.query_advanced_value = None
         self.query_error = None
 
-        # It's not safe to modify kwargs deeply! reinvoke() is evil.
+        # Here we need to remove the freetext config from kwargs because we want to
+        # handle it differently from the other fields.
+        # BUT It's not safe to modify kwargs deeply! Because reinvoke() is evil:
+        # It will call init again with the same kwargs + whatever additional kwargs
+        # might have come from a parent or styling info.
         freetext_config = kwargs.get('form', {}).get('fields', {}).get('freetext', {})
-        kwargs = deepcopy(kwargs)
-        kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
+        if 'form' in kwargs and 'fields' in kwargs['form'] and 'freetext' in kwargs['form']['fields']:
+            # copy (just) the namespace so we can safely remove freetext from it
+            kwargs = Namespace(flatten(Namespace(kwargs)))
+            freetext_config = kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
 
         super(Query, self).__init__(
             model=model,
