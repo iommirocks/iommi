@@ -294,10 +294,13 @@ Refinable members
 
 * `a`
     Type: `int`
+    
 * `b`
     Type: `Dict`
+    
 * `c`
     Type: :doc:`Fragment`
+    
 """
     print(actual_doc)
     assert actual_doc.strip() == expected_doc.strip()
