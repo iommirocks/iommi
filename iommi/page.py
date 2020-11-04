@@ -51,6 +51,12 @@ from iommi.evaluate import evaluate_strict_container
     sort_key=lambda x: 0,
 )
 class Page(Part):
+    """
+    A page is used to compose iommi parts into a bigger whole.
+
+    See the `howto <https://docs.iommi.rocks/en/latest/howto.html#parts-pages>`_ for example usages.
+    """
+
     title: str = EvaluatedRefinable()
     member_class: Type[Fragment] = Refinable()
     context = Refinable()  # context is evaluated, but in a special way so gets no EvaluatedRefinable type

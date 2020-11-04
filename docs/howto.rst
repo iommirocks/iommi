@@ -113,6 +113,7 @@ template types are gathered into the parts structure when a `Part` class definit
 is processed.  As `None` is not an instance of those types, you can remove things
 by setting their value to `None`.
 
+.. _Page.title:
 
 How do I set the title of my page?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +138,8 @@ Which is equivalent to:
 
     Page(parts__title=html.h1('A header element in the dom'))
 
+
+.. _Page.context:
 
 How do I specify the context used when a Template is rendered?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,6 +171,8 @@ can be extended later:
 Forms
 -----
 
+.. _Field.parse:
+
 How do I supply a custom parser for a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -187,6 +192,8 @@ Pass a callable to the `parse` member of the field:
     assert not form.get_errors()
     assert form.fields.index.value == 123
 
+
+.. _Field.editable:
 
 How do I make a field non-editable?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,6 +220,8 @@ Pass a callable or `bool` to the `editable` member of the field:
     assert staff_form.fields.artist.editable is False
 
 
+.. _Form.editable:
+
 How do I make an entire form non-editable?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -231,6 +240,8 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
     assert form.fields.name.editable is False
     assert form.fields.year.editable is False
 
+
+.. _Field.is_valid:
 
 How do I supply a custom validator?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -269,6 +280,8 @@ How do I say which fields to include when creating a form from a model?
 4. you can also add fields that are not present in the model by passing configuration like `fields__foo__attr='bar__baz'` (this means create a `Field` called `foo` that reads its data from `bar.baz`). You can either pass configuration data like that, or pass an entire `Field` instance.
 
 
+.. _Field.initial:
+
 How do I supply a custom initial value?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -291,6 +304,8 @@ Pass a value or callable to the `initial` member:
 If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
 
 
+.. _Field.required:
+
 How do I set if a field is required?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Normally this will be handled automatically by looking at the model definition, but sometimes you want a form to be more strict than the model. Pass a `bool` or a callable to the `required` member:
@@ -309,6 +324,8 @@ Normally this will be handled automatically by looking at the model definition, 
     assert form.fields.name.required is True
     assert form.fields.year.required is True
 
+
+.. _Field.after:
 
 How do I change the order of the fields?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -335,6 +352,8 @@ This will make the field order `artist`, `year`, `name`.
 
 If there are multiple fields with the same index or name the order of the fields will be used to disambiguate.
 
+
+.. _Field.search_fields:
 
 How do I specify which model fields the search of a choice_queryset use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -364,6 +383,8 @@ How do I insert a CSS class or HTML attribute?
 See :doc:`Attrs`.
 
 
+.. _Field.template:
+
 How do I override rendering of an entire field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -383,6 +404,8 @@ Pass a template name or a `Template` object:
         fields__year__template=Template('{{ field.attrs }}'),
     )
 
+
+.. _Field.input:
 
 How do I override rendering of the input field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -425,9 +448,9 @@ text based input control and the parser is applied no matter what
 (its just that when using the default date picker control it will 
 always only see ISO-8601 dates). 
 
+
 Tables
 ------
-
 
 How do I customize the rendering of a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -441,6 +464,8 @@ To customize the row, see `How do I customize the rendering of a row?`_
 
 To customize the cell, see `How do I customize the rendering of a cell?`_
 
+
+.. _Table.page_size:
 
 How do you turn off pagination?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -463,8 +488,34 @@ Specify `page_size=None`:
             page_size = None
 
 
-.. _How do I create a column based on computed data?:
+.. _Table.cell:
 
+How do I customize the rendering of a cell?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can customize the :doc:`Cell` rendering in several ways:
+
+- You can modify the html attributes via `cell__attrs`. See the question on attrs_
+
+- Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
+
+- Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
+
+
+How do I make a link in a cell?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
+
+.. code:: python
+
+    Column(
+        cell__url='http://example.com',
+        cell__url_title='go to example',
+    )
+
+
+.. _How do I create a column based on computed data?:
 
 How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -513,6 +564,8 @@ How do I get iommi tables to understand my Django ModelField subclasses?
 See :doc:`registrations`.
 
 
+.. _Column.after:
+
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -546,6 +599,8 @@ this will put the columns in the order a, c, b.
 There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
 
 
+.. _Column.filter:
+
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -569,8 +624,36 @@ If you just want to have the filter available in the advanced query language,
 you can turn off the field in the generated form by passing
 `filter__field__include=False`:
 
-.. _attrs:
 
+.. _Filter.freetext:
+
+How do I make a freetext search field?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
+
+.. code:: python
+
+    Table(
+        auto__model=Album,
+        columns__name__filter=dict(
+            freetext=True,
+            include=True,
+        ),
+        columns__year__filter__freetext=True,
+        columns__year__filter__include=True,
+    )
+
+
+This will display one search box to search both `year` and `name` columns.
+
+.. _Table.attrs:
+
+.. _Form.attrs:
+
+.. _Field.attrs:
+
+.. _attrs:
 
 How do I customize HTML attributes, CSS classes or CSS style specifications?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -625,17 +708,7 @@ Everything together:
     ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
 
-How do I customize the rendering of a cell?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can customize the :doc:`Cell` rendering in several ways:
-
-- You can modify the html attributes via `cell__attrs`. See the question on attrs_
-
-- Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
-
-- Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
-
+.. _Table.row:
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -650,6 +723,7 @@ In templates you can access the raw row via `row`. This would typically be one o
 
 To customize the cell, see `How do I customize the rendering of a cell?`_
 
+.. _Column.header:
 
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -661,10 +735,12 @@ You can customize headers in two ways:
 - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
 
 
+.. _Table.header:
+
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set `header_template` to `None`.
+Set `header__template` to `None`.
 
 
 How do I add fields to a table that is generated from a model?
@@ -672,6 +748,8 @@ How do I add fields to a table that is generated from a model?
 
 See the question `How do I create a column based on computed data?`_
 
+
+.. _Column.include:
 
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -691,6 +769,8 @@ This will show the column `name` only if the GET parameter `some_parameter` is s
 To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
 
+.. _Table.cells_for_rows
+
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -708,17 +788,7 @@ Here's a simple example that prints a table to stdout:
         print()
 
 
-How do I make a link in a cell?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
-
-.. code:: python
-
-    Column(
-        cell__url='http://example.com',
-        cell__url_title='go to example',
-    )
+.. _Column.attr:
 
 How do I access foreign key related data in a column?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -753,6 +823,10 @@ we can build a table of `Bar` that shows the data of `a` like this:
         columns__a__attr='c__a',
     )
 
+.. _Table.sortable:
+
+.. _Column.sortable:
+
 How do I turn off sorting? (on a column or table wide)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -774,6 +848,8 @@ and to turn it off on the entire table:
         sortable=False,
     )
 
+.. _Column.display_name:
+
 How do I specify the title of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -786,6 +862,8 @@ The `display_name` property of a column is displayed in the header.
         columns__name__display_name='header title',
     )
 
+.. _Column.sort_default_desc:
+
 How do I set the default sort order of a column to be descending instead of ascending?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -796,6 +874,8 @@ How do I set the default sort order of a column to be descending instead of asce
         columns__name__sort_default_desc=True,  # or a lambda!
     )
 
+
+.. _Column.group:
 
 How do I group columns?
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -811,6 +891,8 @@ How do I group columns?
 The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
 
 
+.. _Column.auto_rowspan:
+
 How do I get rowspan on a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -823,6 +905,8 @@ You can manually set the rowspan attribute via `row__attrs__rowspan` but this is
         columns__year__auto_rowspan=True,
     )
 
+
+.. _Column.bulk:
 
 How do I enable bulk editing?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -845,6 +929,8 @@ behavior and look of the bulk editing for the column.
 You also need to enable the select column, otherwise you can't select
 the columns you want to bulk edit.
 
+
+.. _Table.bulk:
 
 How do I enable bulk delete?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -893,26 +979,6 @@ handler:
     assert album.name == 'Paranoid'
 
 
-How do I make a freetext search field?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
-
-.. code:: python
-
-    Table(
-        auto__model=Album,
-        columns__name__filter=dict(
-            freetext=True,
-            include=True,
-        ),
-        columns__year__filter__freetext=True,
-        columns__year__filter__include=True,
-    )
-
-This will display one search box to search both `year` and `name` columns.
-
-
 What is the difference between `attr` and `_name`?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -923,6 +989,8 @@ What is the difference between `attr` and `_name`?
 
 Queries
 -------
+
+.. _Filter.query_operator_to_q_operator:
 
 How do I override what operator is used for a query?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -942,6 +1010,8 @@ sensitive match even if the user types `album<Paranoid` in the
 advanced query language. Use this feature with caution!
 
 See also `How do I control what Q is produced?`_
+
+.. _Filter.value_to_q:
 
 How do I control what Q is produced?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

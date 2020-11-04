@@ -1,3 +1,4 @@
+from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
 
@@ -9,9 +10,42 @@ from tri_declarative import (
     Namespace,
 )
 
-import iommi.fragment
 from iommi import MISSING
 from iommi.base import items
+
+
+def read_howto_links():
+    with open(Path(__file__).parent.parent / 'docs' / 'howto.rst') as f:
+        return parse_howto_links(f.readlines())
+
+
+def parse_howto_links(lines):
+    link_marker = '.. _'
+    anchors = [
+        line.strip()[len(link_marker):].rstrip(':')
+        for line in lines
+        if line.startswith(link_marker)
+    ]
+
+    # TODO: validate that we only have anchors once
+
+    return {
+        x for x in anchors
+        if not x.endswith('?')
+    }
+
+
+def validate_howto_links(howto_links):
+    class_by_name = {
+        x.__name__: x
+        for x in get_default_classes()
+    }
+
+    for link in howto_links:
+        if '.' in link:
+            class_name, _, refinable_name = link.partition('.')
+            assert class_name in class_by_name, f'{class_name} was not found in default_classes'
+            getattr(class_by_name[class_name], refinable_name)
 
 
 def get_default_classes():
@@ -71,6 +105,10 @@ def get_docs_callable_description(c):
 
 def _generate_rst_docs(classes):
     import re
+
+    howto_links = read_howto_links()
+    validate_howto_links(howto_links)
+    # TODO: validate that all howto_links are actually linked somewhere. For example ".. _Column.cells_for_rows" isn't right now.
 
     def docstring_param_dict(obj):
         doc = obj.__doc__
@@ -157,6 +195,12 @@ def _generate_rst_docs(classes):
                         w(1, f'Type: :doc:`{name}`')
                     else:
                         w(1, f'Type: `{name}`')
+                    w(1, '')
+
+                if f'{c.__name__}.{refinable}' in howto_links:
+                    ref_name = f'{c.__name__}.{refinable}'.lower()
+                    w(1, f'HOWTO: :ref:`{ref_name}`')
+                    w(1, '')
 
             w(0, '')
 

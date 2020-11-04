@@ -222,7 +222,7 @@ Changelog
 
 * Add request to evaluate parameters
 
-* Make evaluate and evaluate_recursive match even the **_ case by default
+* Make evaluate and evaluate_recursive match even the `**_` case by default
 
 * No dispatch command on a POST is invalid and will now produce an error
 
