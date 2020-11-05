@@ -15,9 +15,9 @@ script: python -m pytest
 jobs:
   include:
     - stage: test
-      python: "3.7"
+      python: "3.8"
       before_install: pip install tox
-      script: tox -e $(tox -l | grep py37 | xargs | tr ' ' ',')
+      script: tox -e $(tox -l | grep py38 | xargs | tr ' ' ',')
       dist: xenial
 
     - python: pypy3
@@ -26,7 +26,7 @@ jobs:
       dist: xenial
 
     - stage: coverage
-      python: "3.7"
+      python: "3.8"
       before_install: python -m pip install codecov pytest-cov django pytest-django
       script: python -m pytest --cov
       after_success: codecov
