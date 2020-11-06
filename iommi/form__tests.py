@@ -356,6 +356,59 @@ def test_parse_errors(MyTestForm):
         form.apply(Struct())
 
 
+def test_post_validation_and_error_checking():
+    timeline = []
+
+    def capture_timeline(form):
+        timeline.append(
+            dict(
+                is_valid=form.is_valid(),
+                errors=form.get_errors(),
+            )
+        )
+
+    def first__post_validation(form, field, **_):
+        capture_timeline(form)
+        field.add_error('first error')
+
+    def second__post_validation(form, field, **_):
+        capture_timeline(form)
+        field.add_error('second error')
+
+    def form__post_validation(form, **_):
+        capture_timeline(form)
+        form.add_error('global error')
+
+    class MyForm(Form):
+        first = Field(post_validation=first__post_validation)
+        second = Field(post_validation=second__post_validation)
+
+        class Meta:
+            post_validation = form__post_validation
+
+    form = MyForm().bind(request=req('get'))
+    capture_timeline(form)
+
+    assert timeline == [
+        {
+            'is_valid': True,
+            'errors': {}
+        },
+        {
+            'is_valid': False,
+            'errors': {'fields': {'first': {'first error'}}}
+        },
+        {
+            'is_valid': False,
+            'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}}
+        },
+        {
+            'is_valid': False,
+            'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}, 'global': {'global error'}}
+        },
+    ]
+
+
 def test_initial_from_instance():
     assert Form(
         instance=Struct(a=Struct(b=7)),
