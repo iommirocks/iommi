@@ -217,8 +217,8 @@ def default_endpoints__config(field: 'Field', **_) -> dict:
 
 def default_endpoints__validate(field: 'Field', **_) -> dict:
     return dict(
-        valid=not bool(field.errors),
-        errors=list(field.errors),
+        valid=not bool(field._errors),
+        errors=list(field._errors),
     )
 
 
@@ -589,6 +589,7 @@ class Field(Part):
         self.input = self.input(_name='input')
         self.label = self.label(_name='label')
         self.help = self.help(_name='help')
+        self._errors: Set[str] = set()
 
     @property
     def form(self):
@@ -641,7 +642,7 @@ class Field(Part):
 
     def add_error(self, msg):
         assert msg
-        self.errors.add(msg)
+        self._errors.add(msg)
         self.form._valid = False
 
     def on_bind(self) -> None:
@@ -749,7 +750,7 @@ class Field(Part):
 
         if not self.errors:
             if form.mode is FULL_FORM_FROM_REQUEST and self.required and value in [None, '']:
-                self.errors.add('This field is required')
+                self.add_error('This field is required')
             else:
                 self.value = value
 
@@ -764,8 +765,7 @@ class Field(Part):
             if not isinstance(error, set):
                 error = {error}
             for e in error:
-                assert error != ''
-                self.errors.add(e)
+                self.add_error(e)
         return value
 
     def _read_initial(self):
@@ -1243,6 +1243,7 @@ class Form(Part):
     h_tag: Union[Fragment, str] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
     title: Union[Fragment, str] = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
+    errors: Errors = Refinable()
 
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     member_class: Type[Field] = Refinable()
@@ -1264,6 +1265,7 @@ class Form(Part):
         attrs__enctype='multipart/form-data',
         actions__submit__call_target__attribute='primary',
         auto=EMPTY,
+        errors=EMPTY,
         h_tag__call_target=Header,
     )
     def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
@@ -1296,7 +1298,7 @@ class Form(Part):
         assert isinstance(fields, dict)
 
         self.fields = None
-        self.errors: Set[str] = set()
+        self._errors: Set[str] = set()
         self._valid = None
         self.instance = instance
         self.mode = INITIALS_FROM_GET
@@ -1332,9 +1334,9 @@ class Form(Part):
         bind_members(self, name='fields')
         bind_members(self, name='endpoints')
 
-        self.is_valid()
+        self.errors = Errors(parent=self, **self.errors)
 
-        self.errors = Errors(parent=self, errors=self.errors)
+        self.is_valid()
 
     def own_evaluate_parameters(self):
         return dict(form=self)
@@ -1405,7 +1407,7 @@ class Form(Part):
 
     def add_error(self, msg):
         assert msg
-        self.errors.add(msg)
+        self._errors.add(msg)
         self._valid = False
 
     # property for jinja2 compatibility
@@ -1458,9 +1460,9 @@ class Form(Part):
     def get_errors(self):
         self.is_valid()
         r = {}
-        if self.errors:
-            r['global'] = self.errors
-        field_errors = {x._name: x.errors for x in values(self.fields) if x.errors}
+        if self._errors:
+            r['global'] = self._errors
+        field_errors = {x._name: x._errors for x in values(self.fields) if x._errors}
         if field_errors:
             r['fields'] = field_errors
         return r

@@ -6,13 +6,12 @@ from tri_declarative import (
 from iommi.reinvokable import reinvokable
 
 
-class Errors(set):
+class Errors:
     @dispatch(
         attrs=EMPTY,
     )
     @reinvokable
-    def __init__(self, *, parent, attrs, errors=None, template=None):
-        super(Errors, self).__init__(errors or [])
+    def __init__(self, *, parent, attrs, template=None):
         self._parent = parent
         self.attrs = attrs
         self.template = template
@@ -22,13 +21,16 @@ class Errors(set):
         return self.__html__()
 
     def __bool__(self):
-        return len(self) != 0
+        # This function is needed because we want to be able to do {% if foo.errors %} in templates
+        # noinspection PyProtectedMember
+        return len(self._parent._errors) != 0
 
     def __html__(self):
         if not self:
             return ''
 
         from iommi import Fragment
+        # noinspection PyProtectedMember
         return Fragment(
             _name='error',
             tag='ul',
@@ -39,6 +41,6 @@ class Errors(set):
                     tag='li',
                     children__text=error,
                 )
-                for i, error in enumerate(sorted(self))
+                for i, error in enumerate(sorted(self._parent._errors))
             },
         ).bind(parent=self._parent).__html__()

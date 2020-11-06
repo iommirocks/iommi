@@ -151,7 +151,7 @@ def test_required_choice():
 
     assert form.is_target()
     assert form.is_valid() is False, form.get_errors()
-    assert form.fields['c'].errors == {'This field is required'}
+    assert form.fields['c']._errors == {'This field is required'}
 
     class NotRequired(Form):
         c = Field.choice(choices=[1, 2, 3], required=False)
@@ -159,7 +159,7 @@ def test_required_choice():
     form = NotRequired().bind(request=req('post', **{'-submit': '', 'c': ''}))
     assert form.is_target()
     assert form.is_valid(), form.get_errors()
-    assert form.fields['c'].errors == set()
+    assert form.fields['c']._errors == set()
 
 
 def test_required(MyTestForm):
@@ -167,7 +167,7 @@ def test_required(MyTestForm):
     assert form.is_target()
     assert form.is_valid() is False, form.get_errors()
     assert form.fields['a_date'].value is None
-    assert form.fields['a_date'].errors == {'This field is required'}
+    assert form.fields['a_date']._errors == {'This field is required'}
 
 
 def test_required_with_falsy_option():
@@ -178,7 +178,7 @@ def test_required_with_falsy_option():
         )
     form = MyForm().bind(request=req('post', **{'foo': '0', '-submit': ''}))
     assert form.fields.foo.value == 0
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
 
 
 def test_custom_raw_data():
@@ -236,7 +236,7 @@ def test_parse(MyTestForm):
         }),
     )
 
-    assert [x.errors for x in values(form.fields)] == [set() for _ in keys(form.fields)]
+    assert [x._errors for x in values(form.fields)] == [set() for _ in keys(form.fields)]
     assert form.is_valid() is True, form.get_errors()
     assert form.fields['party'].parsed_data == 'ABC'
     assert form.fields['party'].value == 'ABC'
@@ -272,7 +272,7 @@ def test_parse(MyTestForm):
     assert form.fields['multi_choice_field'].parsed_data == ['a', 'b']
     assert form.fields['multi_choice_field'].value == ['a', 'b']
     assert form.fields['multi_choice_field'].is_list
-    assert not form.fields['multi_choice_field'].errors
+    assert not form.fields['multi_choice_field']._errors
     assert form.fields['multi_choice_field'].rendered_value == 'a, b'
 
     instance = Struct(contact=Struct())
@@ -313,18 +313,18 @@ def test_parse_errors(MyTestForm):
     assert form.mode == FULL_FORM_FROM_REQUEST
     assert form.is_valid() is False, form.get_errors()
 
-    assert form.errors == {'General snafu'}
+    assert form._errors == {'General snafu'}
 
     assert form.fields['party'].parsed_data == 'foo'
-    assert form.fields['party'].errors == {'foo not in available choices'}
+    assert form.fields['party']._errors == {'foo not in available choices'}
     assert form.fields['party'].value is None
 
     assert form.fields['username'].parsed_data == 'bar_foo'
-    assert form.fields['username'].errors == {'Username must begin with "foo_"'}
+    assert form.fields['username']._errors == {'Username must begin with "foo_"'}
     assert form.fields['username'].value is None
 
     assert form.fields['joined'].raw_data == 'foo'
-    assert_one_error_and_matches_reg_exp(form.fields['joined'].errors, 'Time data "foo" does not match any of the formats .*')
+    assert_one_error_and_matches_reg_exp(form.fields['joined']._errors, 'Time data "foo" does not match any of the formats .*')
     assert form.fields['joined'].parsed_data is None
     assert form.fields['joined'].value is None
 
@@ -337,18 +337,18 @@ def test_parse_errors(MyTestForm):
     assert form.fields['admin'].value is None
 
     assert form.fields['a_date'].raw_data == 'foo'
-    assert_one_error_and_matches_reg_exp(form.fields['a_date'].errors, 'Time data "foo" does not match any of the formats.*')
+    assert_one_error_and_matches_reg_exp(form.fields['a_date']._errors, 'Time data "foo" does not match any of the formats.*')
     assert form.fields['a_date'].parsed_data is None
     assert form.fields['a_date'].value is None
     assert form.fields['a_date'].rendered_value == form.fields['a_date'].raw_data
 
     assert form.fields['a_time'].raw_data == 'bar'
-    assert_one_error_and_matches_reg_exp(form.fields['a_time'].errors, 'Time data "bar" does not match any of the formats.*')
+    assert_one_error_and_matches_reg_exp(form.fields['a_time']._errors, 'Time data "bar" does not match any of the formats.*')
     assert form.fields['a_time'].parsed_data is None
     assert form.fields['a_time'].value is None
 
     assert form.fields['multi_choice_field'].raw_data_list == ['q']
-    assert_one_error_and_matches_reg_exp(form.fields['multi_choice_field'].errors, "q not in available choices")
+    assert_one_error_and_matches_reg_exp(form.fields['multi_choice_field']._errors, "q not in available choices")
     assert form.fields['multi_choice_field'].parsed_data == ['q']
     assert form.fields['multi_choice_field'].value is None
 
@@ -549,22 +549,22 @@ def test_textarea_field():
 def test_integer_field():
     assert Form(fields__foo=Field.integer(),).bind(request=req('get', foo=' 7  ')).fields.foo.parsed_data == 7
 
-    actual_errors = Form(fields__foo=Field.integer()).bind(request=req('get', foo=' foo  ')).fields.foo.errors
+    actual_errors = Form(fields__foo=Field.integer()).bind(request=req('get', foo=' foo  ')).fields.foo._errors
     assert_one_error_and_matches_reg_exp(actual_errors, r"invalid literal for int\(\) with base 10: 'foo'")
 
 
 def test_float_field():
     assert Form(fields__foo=Field.float()).bind(request=req('get', foo=' 7.3  ')).fields.foo.parsed_data == 7.3
-    assert Form(fields__foo=Field.float()).bind(request=req('get', foo=' foo  ')).fields.foo.errors == {"could not convert string to float: foo"}
+    assert Form(fields__foo=Field.float()).bind(request=req('get', foo=' foo  ')).fields.foo._errors == {"could not convert string to float: foo"}
 
 
 def test_email_field():
-    assert Form(fields__foo=Field.email()).bind(request=req('get', foo=' 5  ')).fields.foo.errors == {u'Enter a valid email address.'}
+    assert Form(fields__foo=Field.email()).bind(request=req('get', foo=' 5  ')).fields.foo._errors == {u'Enter a valid email address.'}
     assert Form(fields__foo=Field.email()).bind(request=req('get', foo='foo@example.com')).is_valid()
 
 
 def test_phone_field():
-    assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo=' asdasd  ')).fields.foo.errors == {u'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'}
+    assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo=' asdasd  ')).fields.foo._errors == {u'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'}
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo='+1 (212) 123 4567')).is_valid()
     assert Form(fields__foo=Field.phone_number()).bind(request=req('get', foo='+46 70 123 123')).is_valid()
 
@@ -824,11 +824,11 @@ def test_multi_choice_queryset():
         foo = Field.multi_choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
-    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo.errors == {'User matching query does not exist.'}
-    assert MyForm().bind(request=req('get', foo=[smart_str(user2.pk), smart_str(user3.pk)])).fields.foo.errors == {'User matching query does not exist.'}
+    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo._errors == {'User matching query does not exist.'}
+    assert MyForm().bind(request=req('get', foo=[smart_str(user2.pk), smart_str(user3.pk)])).fields.foo._errors == {'User matching query does not exist.'}
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
     result = form.__html__()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
@@ -845,10 +845,10 @@ def test_choice_queryset():
         foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
 
     assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
-    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo.errors == {'User matching query does not exist.'}
+    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo._errors == {'User matching query does not exist.'}
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
     result = form.__html__()
     assert str(BeautifulSoup(result, "html.parser").select('#id_foo')[0]) == '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
 
@@ -864,14 +864,14 @@ def test_choice_queryset_do_not_cache():
 
     # There is just one user, check that we get it
     form = MyForm().bind(request=req('get'))
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
 
     assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
 
     # Now create a new queryset, check that we get two!
     User.objects.create(username='foo2')
     form = MyForm().bind(request=req('get'))
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
     assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
 
 
@@ -885,7 +885,7 @@ def test_choice_queryset_do_not_look_up_by_default():
         foo = Field.choice_queryset(attr=None, choices=User.objects.all())
 
     form = MyForm().bind(request=req('get'))
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
 
     # The list should be empty because options are retrieved via ajax when needed
     assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == '<select id="id_foo" name="foo">\n</select>'
@@ -894,7 +894,7 @@ def test_choice_queryset_do_not_look_up_by_default():
     # Now check that it renders the selected value
     form = MyForm(fields__foo__initial=user).bind(request=req('get'))
     assert form.fields.foo.value == user
-    assert form.fields.foo.errors == set()
+    assert form.fields.foo._errors == set()
 
     assert form.fields.foo.input.template is not None
 
@@ -1047,7 +1047,7 @@ def test_form_from_model_error_message_exclude():
 def test_form_from_model_invalid_form():
     from tests.models import FormFromModelTest
 
-    actual_errors = [x.errors for x in values(Form(
+    actual_errors = [x._errors for x in values(Form(
         auto__model=FormFromModelTest,
         auto__exclude=['f_int_excluded'],
     ).bind(
@@ -1454,10 +1454,10 @@ def test_mode_full_form_from_request():
     # empty POST
     form = FooForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_valid() is False, form.get_errors()
-    assert form.errors == set()
-    assert form.fields.foo.errors == {'This field is required'}
-    assert form.fields['bar'].errors == {'This field is required'}
-    assert form.fields['baz'].errors == set()  # not present in POST request means false
+    assert form._errors == set()
+    assert form.fields.foo._errors == {'This field is required'}
+    assert form.fields['bar']._errors == {'This field is required'}
+    assert form.fields['baz']._errors == set()  # not present in POST request means false
 
     form = FooForm().bind(request=req('post', **{
         'foo': 'x',
@@ -1471,9 +1471,9 @@ def test_mode_full_form_from_request():
     # all params in GET
     form = FooForm().bind(request=req('get', **{'-submit': ''}))
     assert form.is_valid() is False, form.get_errors()
-    assert form.fields.foo.errors == {'This field is required'}
-    assert form.fields['bar'].errors == {'This field is required'}
-    assert form.fields['baz'].errors == set()  # not present in POST request means false
+    assert form.fields.foo._errors == {'This field is required'}
+    assert form.fields['bar']._errors == {'This field is required'}
+    assert form.fields['baz']._errors == set()  # not present in POST request means false
 
     form = FooForm().bind(request=req('get', **{
         'foo': 'x',
@@ -1481,8 +1481,8 @@ def test_mode_full_form_from_request():
         'baz': 'on',
         '-submit': '',
     }))
-    assert not form.errors
-    assert not form.fields.foo.errors
+    assert not form._errors
+    assert not form.fields.foo._errors
 
     assert form.is_valid() is True, form.get_errors()
 
@@ -1502,9 +1502,9 @@ def test_mode_initials_from_get():
     assert form.is_valid() is True, form.get_errors()
     assert form.fields.foo.value == 'foo_initial'
 
-    assert form.fields.foo.errors == set()
-    assert form.fields['bar'].errors == set()
-    assert form.fields['baz'].errors == set()
+    assert form.fields.foo._errors == set()
+    assert form.fields['bar']._errors == set()
+    assert form.fields['baz']._errors == set()
 
 
 def test_form_errors_function():
@@ -1636,7 +1636,7 @@ def test_ajax_namespacing():
 def test_ajax_config_and_validate():
     class MyForm(Form):
         foo = Field()
-        bar = Field(post_validation=lambda field, **_: field.errors.add('FAIL'))
+        bar = Field(post_validation=lambda field, **_: field.add_error('FAIL'))
 
     request = req('get')
     form = MyForm()
@@ -2132,7 +2132,7 @@ def test_create_and_edit_object():
     assert response['template'] == '<template name>'
     assert form.mode is INITIALS_FROM_GET
     assert form.fields['f_int'].initial == 1
-    assert form.fields['f_int'].errors == set()
+    assert form.fields['f_int']._errors == set()
     assert form.fields['f_int'].value == 1
     assert form.fields['f_float'].initial == 2
     assert form.fields['f_float'].value == 2

@@ -425,7 +425,7 @@ class LoginForm(Form):
                     auth.login(request, user)
                     return HttpResponseRedirect(request.GET.get('next', '/'))
 
-                form.errors.add(gettext('Unknown username or password'))
+                form.add_error(gettext('Unknown username or password'))
 
 
 class LoginPage(Page):
