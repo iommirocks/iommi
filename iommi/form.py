@@ -1,4 +1,5 @@
 import re
+from contextlib import contextmanager
 from datetime import datetime
 from decimal import (
     Decimal,
@@ -116,6 +117,15 @@ FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The strin
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
 
 
+@contextmanager
+def validation_errors_reported_on(obj):
+    try:
+        yield
+    except ValidationError as e:
+        for msg in e.messages:
+            obj.add_error(msg)
+
+
 def bool_parse(string_value, **_):
     s = string_value.lower()
     if s in ('1', 'true', 't', 'yes', 'y', 'on'):
@@ -171,11 +181,8 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
-    try:
+    with validation_errors_reported_on(form):
         form.instance.validate_unique()
-    except ValidationError as e:
-        form.errors.update(set(e.messages))
-        form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
     if not form.is_valid():
         return
@@ -186,11 +193,8 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     form.apply(form.instance)
 
     if not is_create:
-        try:
+        with validation_errors_reported_on(form):
             form.instance.validate_unique()
-        except ValidationError as e:
-            form.errors.update(set(e.messages))
-            form._valid = False  # pragma: no mutate. False here is faster, but setting it to None is also fine, it just means _valid will be calculated the next time form.is_valid() is called
 
     if form.is_valid():
         attributes = filter(None, [f.attr for f in form.fields.values()])
@@ -635,6 +639,11 @@ class Field(Part):
     def write_to_instance(field: 'Field', instance: Any, value: Any) -> None:
         setattr_path(instance, field.attr, value)
 
+    def add_error(self, msg):
+        assert msg
+        self.errors.add(msg)
+        self.form._valid = False
+
     def on_bind(self) -> None:
         form = self.iommi_parent().iommi_parent()
         if self.attr is MISSING:
@@ -716,16 +725,13 @@ class Field(Part):
                 self.parsed_data = None
 
     def _parse_raw_value(self, raw_data):
-        try:
-            return self.parse(form=self.form, field=self, string_value=raw_data)
-        except ValueError as e:
-            assert str(e) != ''
-            self.errors.add(str(e))
-        except ValidationError as e:
-            for message in e.messages:
-                msg = "%s" % message
+        with validation_errors_reported_on(self):
+            try:
+                return self.parse(form=self.form, field=self, string_value=raw_data)
+            except ValueError as e:
+                msg = str(e)
                 assert msg != ''
-                self.errors.add(msg)
+                self.add_error(msg)
 
     def _validate(self):
         form = self.form
@@ -1307,6 +1313,7 @@ class Form(Part):
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
+                # noinspection PyCallingNonCallable
                 self.h_tag = self.h_tag(
                     _name='h_tag',
                     children__text=capitalize(self.title),
@@ -1371,19 +1378,24 @@ class Form(Part):
 
     def is_valid(self):
         if self._valid is None:
+            self._valid = True
             self.validate()
-            for field in values(self.fields):
-                if field.errors:
-                    self._valid = False
-                    break
-            else:
-                self._valid = not self.errors
+            if self.errors:
+                self._valid = False
+            if self._valid:
+                for field in values(self.fields):
+                    if field.errors:
+                        self._valid = False
+                        break
         return self._valid
 
     def validate(self):
         for field in values(self.fields):
-            field.post_validation(**field.iommi_evaluate_parameters())
-        self.post_validation(**self.iommi_evaluate_parameters())
+            with validation_errors_reported_on(field):
+                field.post_validation(**field.iommi_evaluate_parameters())
+
+        with validation_errors_reported_on(self):
+            self.post_validation(**self.iommi_evaluate_parameters())
         return self
 
     @staticmethod
@@ -1392,7 +1404,9 @@ class Form(Part):
         pass
 
     def add_error(self, msg):
+        assert msg
         self.errors.add(msg)
+        self._valid = False
 
     # property for jinja2 compatibility
     @property
