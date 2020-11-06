@@ -92,12 +92,13 @@ The declarative style is very readable, but sometimes you don't know until runti
         if not form.is_valid():
             return
 
-        form.apply(user)
-        user.save()
+        form.apply(form.instance)
+        form.instance.save()
         return HttpResponseRedirect('..')
 
     def edit_user_view(request, username):
         return Form(
+            instance=User.objects.get(username=username),
             fields=dict(
                 first_name=Field.text(),
                 username=Field.text(
@@ -138,15 +139,15 @@ customize the behavior!). The above example is equivalent to:
         if not form.is_valid():
             return
 
-        form.apply(user)
-        user.save()
+        form.apply(form.instance)
+        form.instance.save()
         return HttpResponseRedirect('..')
 
 .. code:: python
 
     def edit_user_view(request, username):
         return Form(
-            auto__model=User,
+            auto__instance=User.objects.get(username=username),
             # the field 'first_name' is generated automatically and
             # we are fine with the defaults
             fields__username__is_valid=
@@ -169,6 +170,8 @@ customize the behavior!). The above example is equivalent to:
     f = edit_user_view(post_request, user.username).bind(request=post_request)
     f.render_to_response()
     assert not f.get_errors()
+    user.refresh_from_db()
+    assert user.username == 'demo_foo'
     # restore the username for the next test below
     user.username = 'foo'
     user.save()

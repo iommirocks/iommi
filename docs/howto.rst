@@ -820,7 +820,7 @@ we can build a table of `Bar` that shows the data of `a` like this:
 
     Table(
         auto__model=Bar,
-        columns__a__attr='c__a',
+        columns__a=Column(attr='c__a'),
     )
 
 .. _Table.sortable:
