@@ -262,6 +262,10 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
     form = form.bind(request=req('get', name='foo'))
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
 
+How do I validate multiple fields together?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Refine the `post_validation` hook on the `form`.  It is run after all the individual fields have passed validation. In there you can call `form.add_error`.
 
 How do I exclude a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
