@@ -176,7 +176,7 @@ def find_unique_prefixes(attributes):
 def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
-        form.instance = form.model()
+        form.instance = evaluate(form.extra.new_instance, **form.iommi_evaluate_parameters())
         for field in values(form.fields):  # two phase save for creation in django, have to save main object before related stuff
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
@@ -1482,6 +1482,7 @@ class Form(Part):
     @class_shortcut(
         call_target__attribute='crud',
         extra__is_create=True,
+        extra__new_instance=lambda form, **_: form.model(),
         actions__submit__post_handler=create_object__post_handler,
         auto__type='create',
     )

@@ -91,6 +91,8 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    CreateOrEditObjectTest,
+    Foo,
 )
 
 
@@ -2097,18 +2099,12 @@ def test_form_h_tag():
 
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
-def test_create_and_edit_object():
-    from tests.models import CreateOrEditObjectTest, Foo
-
-    assert CreateOrEditObjectTest.objects.all().count() == 0
-
-    # 1. View create form
-    request = req('get')
-
+def test_render_create_object():
     form = Form.create(
         auto__model=CreateOrEditObjectTest,
+    ).bind(
+        request=req('get'),
     )
-    form = form.bind(request=request)
     response = form.__html__(render__call_target=lambda **kwargs: kwargs)
     assert response['context']['csrf_token']
 
@@ -2117,8 +2113,9 @@ def test_create_and_edit_object():
         fields__f_int__initial=1,
         fields__f_float__initial=lambda form, field, **_: 2,
         template='<template name>',
+    ).bind(
+        request=req('get'),
     )
-    form = form.bind(request=request)
     response = form.__html__(
         render__context={'foo': 'FOO'},
         render__foobarbaz='render__foobarbaz',
@@ -2139,29 +2136,29 @@ def test_create_and_edit_object():
     assert form.fields['f_bool'].value is None
     assert set(form.fields.keys()) == {'f_int', 'f_float', 'f_bool', 'f_foreign_key', 'f_many_to_many'}
 
-    # 2. Create
-    foo = Foo.objects.create(foo=7)
 
-    request = req('post', **{
-        'f_int': '3',
-        'f_float': '5.1',
-        'f_bool': 'True',
-        'f_foreign_key': str(foo.pk),
-        'f_many_to_many': [str(foo.pk)],
-        form.actions.submit.own_target_marker(): '',
-    })
-
-    def on_save(form, instance, **_):
-        # validate  that the arguments are what we expect
-        assert form.instance is instance
-        assert isinstance(instance, CreateOrEditObjectTest)
-        assert instance.pk is not None
-
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_object():
+    a_foo = Foo.objects.create(foo=7)
     form = Form.create(
         auto__model=CreateOrEditObjectTest,
-        extra__on_save=on_save,  # just to check that we get called with the instance as argument
     )
-    form = form.bind(request=request)
+
+    target_marker = form.bind(
+        request=req('get'),
+    ).actions.submit.own_target_marker()
+
+    form = form.bind(
+        request=req('post', **{
+            'f_int': '3',
+            'f_float': '5.1',
+            'f_bool': 'True',
+            'f_foreign_key': str(a_foo.pk),
+            'f_many_to_many': [str(a_foo.pk)],
+            target_marker: '',
+        }),
+    )
     response = form.render_to_response()
     assert form._request_data
     instance = CreateOrEditObjectTest.objects.get()
@@ -2172,7 +2169,59 @@ def test_create_and_edit_object():
     assert response.status_code == 302
     assert response['Location'] == '../'
 
-    # 3. View edit form
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_create_object_callbacks():
+    a_foo = Foo.objects.create(foo=7)
+    invoked = []
+
+    def on_save(form, instance, **_):
+        # validate  that the arguments are what we expect
+        assert form.instance is instance
+        assert isinstance(instance, CreateOrEditObjectTest)
+        assert instance.pk is not None
+        invoked.append('on_save')
+
+    def new_instance(form, **_):
+        invoked.append('new_instance')
+        return form.model(f_bool=True)
+
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
+        auto__exclude=['f_bool'],
+        extra__on_save=on_save,
+        extra__new_instance=new_instance,
+    )
+
+    target_marker = form.bind(
+        request=req('get'),
+    ).actions.submit.own_target_marker()
+
+    form.bind(
+        request=req('post', **{
+            'f_int': '3',
+            'f_float': '5.1',
+            'f_foreign_key': str(a_foo.pk),
+            'f_many_to_many': [str(a_foo.pk)],
+            target_marker: '',
+        }),
+    ).render_to_response()
+
+    instance = CreateOrEditObjectTest.objects.get()
+    assert instance is not None
+    assert instance.f_bool is True
+
+    assert invoked == ['new_instance', 'on_save']
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_edit_object():
+    a_foo = Foo.objects.create(foo=7)
+    instance = CreateOrEditObjectTest.objects.create(f_int=3, f_float=5.1, f_bool=True, f_foreign_key=a_foo)
+    instance.save()
+
     request = req('get')
     form = Form.edit(
         auto__instance=instance,
@@ -2187,12 +2236,11 @@ def test_create_and_edit_object():
     assert form.fields['f_bool'].value is True
     assert response['context']['csrf_token']
 
-    # 4. Edit
     request = req('POST', **{
         'f_int': '7',
         'f_float': '11.2',
-        'f_foreign_key': str(foo.pk),
-        'f_many_to_many': [str(foo.pk)],
+        'f_foreign_key': str(a_foo.pk),
+        'f_many_to_many': [],
         '-submit': '',
         # Not sending a parameter in a POST is the same thing as false
     })
