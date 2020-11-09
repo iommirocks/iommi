@@ -1,0 +1,12 @@
+[run]
+branch = False
+include=
+    iommi/*
+omit=
+    iommi/*__tests.py
+    iommi/*flask.py
+    iommi/docs.py
+    iommi/profiling.py
+
+[report]
+precision=2
