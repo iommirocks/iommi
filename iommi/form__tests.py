@@ -2176,6 +2176,15 @@ def test_create_object_callbacks():
     a_foo = Foo.objects.create(foo=7)
     invoked = []
 
+    def pre_save_all_but_related_fields(**_):
+        invoked.append('pre_save_all_but_related_fields')
+
+    def on_save_all_but_related_fields(**_):
+        invoked.append('on_save_all_but_related_fields')
+
+    def pre_save(**_):
+        invoked.append('pre_save')
+
     def on_save(form, instance, **_):
         # validate  that the arguments are what we expect
         assert form.instance is instance
@@ -2190,6 +2199,9 @@ def test_create_object_callbacks():
     form = Form.create(
         auto__model=CreateOrEditObjectTest,
         auto__exclude=['f_bool'],
+        extra__pre_save_all_but_related_fields=pre_save_all_but_related_fields,
+        extra__on_save_all_but_related_fields=on_save_all_but_related_fields,
+        extra__pre_save=pre_save,
         extra__on_save=on_save,
         extra__new_instance=new_instance,
     )
@@ -2212,7 +2224,9 @@ def test_create_object_callbacks():
     assert instance is not None
     assert instance.f_bool is True
 
-    assert invoked == ['new_instance', 'on_save']
+    assert invoked == [
+        'new_instance', 'pre_save_all_but_related_fields', 'on_save_all_but_related_fields', 'pre_save', 'on_save'
+    ]
 
 
 @pytest.mark.django_db

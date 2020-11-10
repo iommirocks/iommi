@@ -188,7 +188,9 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
         return
 
     if is_create:  # two phase save for creation in django...
+        form.extra.pre_save_all_but_related_fields(instance=form.instance, **form.iommi_evaluate_parameters())
         form.instance.save()
+        form.extra.on_save_all_but_related_fields(instance=form.instance, **form.iommi_evaluate_parameters())
 
     form.apply(form.instance)
 
@@ -198,13 +200,14 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
 
     if form.is_valid():
         attributes = filter(None, [f.attr for f in form.fields.values()])
+
+        form.extra.pre_save(instance=form.instance, **form.iommi_evaluate_parameters())
         for prefix in find_unique_prefixes(attributes):
             model_object = form.instance
             if prefix:  # Might be ''
                 model_object = getattr_path(model_object, prefix)
             model_object.save()
-
-        form.extra.on_save(form=form, instance=form.instance)
+        form.extra.on_save(instance=form.instance, **form.iommi_evaluate_parameters())
 
         return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form)
 
@@ -1190,7 +1193,7 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
 
 def delete_object__post_handler(form, **_):
     instance = form.instance
-    form.extra.on_delete(form=form, instance=instance)
+    form.extra.on_delete(instance=form.instance, **form.iommi_evaluate_parameters())
     if instance.pk is not None:  # Check if already deleted by the callback
         instance.delete()
     return HttpResponseRedirect('../..')
@@ -1469,6 +1472,9 @@ class Form(Part):
 
     @classmethod
     @class_shortcut(
+        extra__pre_save_all_but_related_fields=lambda **kwargs: None,  # pragma: no mutate
+        extra__on_save_all_but_related_fields=lambda **kwargs: None,  # pragma: no mutate
+        extra__pre_save=lambda **kwargs: None,  # pragma: no mutate
         extra__on_save=lambda **kwargs: None,  # pragma: no mutate
         extra__on_delete=lambda **kwargs: None,  # pragma: no mutate
         extra__redirect=lambda redirect_to, **_: HttpResponseRedirect(redirect_to),
