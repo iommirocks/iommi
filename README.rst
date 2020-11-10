@@ -1,8 +1,8 @@
 iommi
 =====
 
-.. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
-    :target: https://travis-ci.org/TriOptima/iommi
+.. image:: https://github.com/TriOptima/iommi/workflows/tests/badge.svg
+    :target: https://github.com/TriOptima/iommi/actions?query=workflow%3Atests+branch%3Amaster
 
 .. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/TriOptima/iommi
