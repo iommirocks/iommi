@@ -2160,14 +2160,21 @@ def test_dunder_name_for_column():
     assert list(table.query.form.fields.keys()) == ['foo', 'foo__a']
 
 
+@pytest.mark.django_db
 def test_render_column_attribute():
     class FooTable(Table):
+        class Meta:
+            model = TBar
+
         a = Column()
         b = Column(render_column=False)
         c = Column(render_column=lambda column, **_: False)
+        d = Column(filter__include=True, include=False)
 
     t = FooTable()
     t = t.bind(request=None)
+
+    assert not keys(t.query.filters)
 
     assert list(t.columns.keys()) == ['a', 'b', 'c']
     assert [k for k, v in items(t.columns) if v.render_column] == ['a']
