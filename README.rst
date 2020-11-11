@@ -3,7 +3,7 @@ iommi
 
 .. raw:: html
 
-    <p class="mobile-logo" align="center" style="max-width:300px;"><a href="#"><img class="logo" src="https://docs.iommi.rocks/en/latest/_static/logo.svg" alt="iommi" style="max-width: 200px" width: 300></a></p>
+    <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://docs.iommi.rocks/en/latest/_static/logo.svg" alt="iommi" style="max-width: 200px" width=300></a></p>
 
     <h3 class="pun">Your first pick for a django power cord</h3>
 
