@@ -3,18 +3,24 @@ iommi
 
 .. raw:: html
 
-    <p class="mobile-logo"><a href="#"><img class="logo" src="_static/logo.svg" alt="Logo"></a></p>
+    <p class="mobile-logo"><a href="#"><img class="logo" src="https://docs.iommi.rocks/en/latest/_static/logo.svg" alt="Logo" style="max-width: 200px"></a></p>
 
     <h3 class="pun">Your first pick for a django power cord</h3>
 
-.. image:: https://travis-ci.org/TriOptima/iommi.svg?branch=master
-    :target: https://travis-ci.org/TriOptima/iommi
+.. image:: https://github.com/TriOptima/iommi/workflows/tests/badge.svg
+    :target: https://github.com/TriOptima/iommi/actions?query=workflow%3Atests+branch%3Amaster
 
 .. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/TriOptima/iommi
 
+.. image:: https://repl.it/badge/github/boxed/iommi-repl.it
+    :target: https://repl.it/github/boxed/iommi-repl.it
 
-iommi is a django-based framework for even higher abstraction and faster development than django itself.
+.. image:: https://img.shields.io/discord/773470009795018763
+    :target: https://discord.gg/ZyYRYhf7Pd
+
+
+iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
 
 Major features:
 
@@ -35,8 +41,7 @@ All the components are written with the same philosophy of:
 * Single point customization with *no* boilerplate
 * Escape hatches included
 
-See :doc:`philosophy` for explanations of all these.
-
+See :doc:`philosophy <philosophy>` for explanations of all these.
 
 Example:
 
@@ -70,7 +75,7 @@ For more examples, see the `examples project <https://github.com/TriOptima/iommi
 Usage
 ------
 
-See :doc:`usage`.
+See :doc:`usage <usage>`.
 
 
 Running tests

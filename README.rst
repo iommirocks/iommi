@@ -1,6 +1,12 @@
 iommi
 =====
 
+.. raw:: html
+
+    <p class="mobile-logo"><a href="#"><img class="logo" src="https://docs.iommi.rocks/en/latest/_static/logo.svg" alt="Logo" style="max-width: 200px"></a></p>
+
+    <h3 class="pun">Your first pick for a django power cord</h3>
+
 .. image:: https://github.com/TriOptima/iommi/workflows/tests/badge.svg
     :target: https://github.com/TriOptima/iommi/actions?query=workflow%3Atests+branch%3Amaster
 
