@@ -20,7 +20,10 @@ from iommi.base import (
     items,
     keys,
 )
-from iommi.reinvokable import is_reinvokable
+from iommi.reinvokable import (
+    is_reinvokable,
+    retain_special_cases,
+)
 from ._web_compat import settings
 
 DEFAULT_STYLE = 'bootstrap'
@@ -172,11 +175,7 @@ def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
             f'Object {obj!r} could not be updated with style configuration {flatten(additional_kwargs_namespace)}'
         ) from e
 
-    result._name = obj._name
-    __tri_declarative_shortcut_stack = getattr(obj, '__tri_declarative_shortcut_stack', None)
-    if __tri_declarative_shortcut_stack is not None:
-        setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
-
+    retain_special_cases(obj, result)
     return result
 
 
