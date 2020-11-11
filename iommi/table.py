@@ -1733,6 +1733,16 @@ class Table(Part, Tag):
                 # Special case for entire table not sortable
                 column.sortable = False
 
+        # If the column is not included, the down stream query filters and bulk fields should also be gone
+        declared_query_filters = self._declared_members.query._declared_members.filters if self._declared_members.get('query') is not None else {}
+        declared_bulk_fields = self._declared_members.bulk._declared_members.fields if self._declared_members.get('bulk') is not None else {}
+        for name, column in items(self._declared_members.columns):
+            if column.include is False:
+                if name in declared_query_filters:
+                    declared_query_filters[name].include = False
+                if name in declared_bulk_fields:
+                    declared_bulk_fields[name].include = False
+
         self._bind_query()
         self._bind_bulk_form()
         self._bind_headers()
