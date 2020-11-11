@@ -51,12 +51,20 @@ def reinvoke(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
 
     result = type(obj)(**kwargs)
 
-    result._name = obj._name
-    __tri_declarative_shortcut_stack = getattr(obj, '__tri_declarative_shortcut_stack', None)
-    if __tri_declarative_shortcut_stack is not None:
-        setattr(result, '__tri_declarative_shortcut_stack', __tri_declarative_shortcut_stack)
-
+    retain_special_cases(obj, result)
     return result
+
+
+def retain_special_cases(obj, result):
+    special_cases = [
+        '_name',
+        '__tri_declarative_shortcut_stack',
+        '_instantiated_at_frame'
+    ]
+    for special_case in special_cases:
+        value = getattr(obj, special_case, None)
+        if value is not None:
+            setattr(result, special_case, value)
 
 
 def set_and_remember_for_reinvoke(obj, **kwargs):
