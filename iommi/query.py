@@ -203,11 +203,11 @@ choice_queryset_value_to_q.iommi_needs_attr = True
 
 
 def default_filter__is_valid_filter(name, filter, **_):
-    return filter.attr or filter.value_to_q, f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (None, '') (filter__is_valid_filter=lambda **_: None for a Column)"
+    return filter.attr or filter.value_to_q, f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)"
 
 
 def choice_queryset__is_valid_filter(name, filter, **_):
-    return filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (None, '') (filter__is_valid_filter=lambda **_: None for a Column)"
+    return filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)"
 
 
 @with_meta
