@@ -1,6 +1,3 @@
-iommi
-=====
-
 .. raw:: html
 
     <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://docs.iommi.rocks/en/latest/_static/logo.svg" alt="iommi" style="max-width: 200px" width=300></a></p>

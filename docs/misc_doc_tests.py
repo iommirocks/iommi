@@ -15,7 +15,7 @@ repo_readme = repo_readme.replace('https://docs.iommi.rocks/en/latest/', '').rep
 
 exit_code = 0
 
-for line in unified_diff(repo_readme.split('\n')[:-6], docs_readme.split('\n'), fromfile='README.rst', tofile='docs/README.rst'):
+for line in unified_diff(repo_readme.split('\n')[3:-6], docs_readme.split('\n')[4:], fromfile='README.rst', tofile='docs/README.rst'):
     print(line)
     exit_code = 1
 
