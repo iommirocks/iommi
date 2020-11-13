@@ -20,7 +20,7 @@ def evaluate_attrs(obj, **kwargs):
 
 or
 
-    field__class=**{'foo-bar': true}"""
+    field__class={'foo-bar': true}"""
 
     styles = evaluate_strict(attrs.get('style', {}), **kwargs)
 
@@ -29,7 +29,7 @@ or
 
     or
 
-        field__style=**{'background-color': 'blue'}"""
+        field__style={'background-color': 'blue'}"""
 
     return Attrs(
         obj,
