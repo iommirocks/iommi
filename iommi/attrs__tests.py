@@ -1,5 +1,3 @@
-import re
-
 import pytest
 from django.test import override_settings
 from tri_declarative import Namespace
@@ -270,3 +268,16 @@ def test_class_style_callable():
 
     assert actual == expected
 
+
+def test_error_message_for_str_in_style():
+    with pytest.raises(AssertionError) as e:
+        evaluate_attrs(Namespace(attrs__style='display: none'))
+
+    assert str(e.value).startswith('CSS styles')
+
+
+def test_error_message_for_str_in_class():
+    with pytest.raises(AssertionError) as e:
+        evaluate_attrs(Namespace(attrs__class='foo bar'))
+
+    assert str(e.value).startswith('CSS classes')

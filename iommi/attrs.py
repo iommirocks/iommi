@@ -13,17 +13,35 @@ def evaluate_attrs(obj, **kwargs):
     if not attrs and not iommi_debug_on():
         return ''
 
+    classes = evaluate_strict(attrs.get('class', {}), **kwargs)
+
+    assert not isinstance(classes, str), """CSS classes needs to be specified as dicts, not as strings. So you want something like:
+    field__class__foo=True
+
+or
+
+    field__class={'foo-bar': true}"""
+
+    styles = evaluate_strict(attrs.get('style', {}), **kwargs)
+
+    assert not isinstance(styles, str), """CSS styles needs to be specified as dicts, not as strings. So you want something like:
+        field__style__display='none'
+
+    or
+
+        field__style={'background-color': 'blue'}"""
+
     return Attrs(
         obj,
         **{
             'class': {
                 k: evaluate_strict(v, **kwargs)
-                for k, v in items(evaluate_strict(attrs.get('class', {}), **kwargs))
+                for k, v in items(classes)
             }
         },
         style={
             k: evaluate_strict(v, **kwargs)
-            for k, v in items(evaluate_strict(attrs.get('style', {}), **kwargs))
+            for k, v in items(styles)
         },
         **{
             k: evaluate_strict(v, **kwargs)
