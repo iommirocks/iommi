@@ -1,7 +1,7 @@
-{% if not table.paginator.count and invalid_form_message %}
-    {{ invalid_form_message }}
-{% elif not table.paginator.count and empty_message %}
-    {{ empty_message }}
+{% if not table.query.form.is_valid and table.invalid_form_message %}
+    {{ table.invalid_form_message }}
+{% elif not table.paginator.count and table.empty_message %}
+    {{ table.empty_message }}
 {% else %}
 
     <div class="iommi-table-plus-paginator">

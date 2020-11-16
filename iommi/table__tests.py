@@ -3115,3 +3115,25 @@ def test_auto_model_dunder_path():
 
     assert 'bar_foo' in keys(table.columns)
     table.__html__()
+
+
+@pytest.mark.django_db
+def test_invalid_form_message():
+    invalid_form_message = 'Seventh Star'
+    t = Table(
+        auto__model=TBar,
+        columns__foo__filter__include=True,
+        invalid_form_message=invalid_form_message,
+    ).bind(request=req('get', foo=11))  # 11 isn't in valid choices!
+    assert invalid_form_message in t.__html__()
+
+
+@pytest.mark.django_db
+def test_empty_message():
+    empty_message = 'Destruction of the empty spaces was my one and only crime'
+    t = Table(
+        auto__model=TBar,
+        columns__foo__filter__include=True,
+        empty_message=empty_message,
+    ).bind(request=req('get'))
+    assert empty_message in t.__html__()
