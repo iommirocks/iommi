@@ -113,7 +113,7 @@ msgstr "Zur erweiterten Suchfunktion"
 
 #: style_base.py:109
 msgid "No results found"
-msgstr ""
+msgstr "Suche erfolglos"
 
 #: table.py:498
 msgid "Edit"

@@ -20,15 +20,15 @@ msgstr ""
 
 #: examples/form_examples.py:38
 msgid "Use much like a django form"
-msgstr ""
+msgstr "Benutze es wie eine Django Form"
 
 #: examples/menu_examples.py:20
 msgid "A sample menu"
-msgstr ""
+msgstr "Ein Beispielmenü"
 
 #: examples/models.py:34 examples/models.py:49 examples/models.py:66
 msgid "name"
-msgstr ""
+msgstr "Name"
 
 #: examples/models.py:41 examples/models.py:50
 msgid "artist"
@@ -42,51 +42,51 @@ msgstr "Künstler"
 
 #: examples/models.py:51
 msgid "year"
-msgstr ""
+msgstr "Jahr"
 
 #: examples/models.py:58 examples/models.py:68
 msgid "album"
-msgstr ""
+msgstr "Album"
 
 #: examples/models.py:59
 msgid "albums"
-msgstr ""
+msgstr "Albums"
 
 #: examples/models.py:67
 msgid "index"
-msgstr ""
+msgstr "Index"
 
 #: examples/models.py:69
 msgid "duration"
-msgstr ""
+msgstr "Dauer"
 
 #: examples/models.py:76
 msgid "track"
-msgstr ""
+msgstr "Titel"
 
 #: examples/models.py:77
 msgid "tracks"
-msgstr ""
+msgstr "Titel"
 
 #: examples/page_examples.py:26
 msgid "Standard example"
-msgstr ""
+msgstr "Standardbeispiel"
 
 #: examples/page_examples.py:32
 msgid "View with some calculation to do before making the page"
-msgstr ""
+msgstr "View die Berechnungen macht vor die Seite angezeigt wird."
 
 #: examples/page_examples.py:42
 msgid "Further specializing an already defined page"
-msgstr ""
+msgstr "Nachträgliches spezialisieren einer Seite"
 
 #: examples/page_examples.py:51
 msgid "Busy page with different components"
-msgstr ""
+msgstr "Seite mit vielen verschiedenen Komponenten"
 
 #: examples/supernaut.py:30
 msgid "Home"
-msgstr ""
+msgstr "Home"
 
 #: examples/supernaut.py:31
 #, fuzzy
@@ -96,52 +96,52 @@ msgstr "Künstler"
 
 #: examples/supernaut.py:32
 msgid "Albums"
-msgstr ""
+msgstr "Alben"
 
 #: examples/supernaut.py:33
 msgid "Tracks"
-msgstr ""
+msgstr "Titel"
 
 #: examples/supernaut.py:62
 msgid "Create album"
-msgstr ""
+msgstr "Album anlegen"
 
 #: examples/supernaut.py:78
 msgid "Supernaut"
-msgstr ""
+msgstr "Supernaut"
 
 #: examples/supernaut.py:79
 msgid "This is a discography of the best acts in music!"
-msgstr ""
+msgstr "Eine Diskographie der besten Bands"
 
 #: examples/table_examples.py:32
 msgid "Readme example 1"
-msgstr ""
+msgstr "Readme Beispiel 1"
 
 #: examples/table_examples.py:55
 msgid "Readme example 2"
-msgstr ""
+msgstr "Readme Beispiel 2"
 
 #: examples/table_examples.py:70
 msgid "Auto from model example 1"
-msgstr ""
+msgstr "Automatisch vom Model Beispiel 1"
 
 #: examples/table_examples.py:77
 msgid "Auto from model example 2"
-msgstr ""
+msgstr "Automatisch vom Model Beispiel 2"
 
 #: examples/table_examples.py:85
 msgid "Kitchen sink example"
-msgstr ""
+msgstr "Beispiel für alles auf einmal"
 
 #: examples/table_examples.py:143
 msgid "Two tables on the same page"
-msgstr ""
+msgstr "Zwei Tabellen auf derselben Seite"
 
 #: examples/table_examples.py:151
 msgid "post handlers on lists"
-msgstr ""
+msgstr "Post handler für Listen"
 
 #: examples/table_examples.py:185
 msgid "You can have extra fields in your form that the query will ignore"
-msgstr ""
+msgstr "Man kann Felder im Formular haben, die von der Abfrage ignoriert werden"
