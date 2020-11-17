@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-27 14:05+0100\n"
+"POT-Creation-Date: 2020-11-16 14:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,60 +78,64 @@ msgstr "Neues Passwort"
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: form.py:1196
+#: form.py:1205
 msgid "create"
 msgstr "anlegen"
 
-#: form.py:1197
+#: form.py:1206
 msgid "edit"
 msgstr "bearbeiten"
 
-#: form.py:1198
+#: form.py:1207
 msgid "delete"
 msgstr "löschen"
 
-#: form.py:1281
+#: form.py:1292
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(model_name)s %(crud_type)s"
 
-#: form.py:1285
+#: form.py:1296
 msgid "Save"
 msgstr "Speichern"
 
-#: query.py:601
+#: query.py:620
 msgid "Search"
 msgstr "Suche"
 
-#: query.py:624
+#: query.py:644
 msgid "Filter"
 msgstr "Filtern"
 
-#: query.py:634 templates/iommi/query/form_toggle_script.html:26
+#: query.py:654 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion"
 
-#: table.py:497
+#: style_base.py:109
+msgid "No results found"
+msgstr "Suche erfolglos"
+
+#: table.py:498
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: table.py:509
+#: table.py:510
 msgid "Delete"
 msgstr "Löschen"
 
-#: table.py:522
+#: table.py:523
 msgid "Download"
 msgstr "Herunterladen"
 
-#: table.py:534
+#: table.py:535
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1428 table.py:1590
+#: table.py:1464 table.py:1638
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1596
+#: table.py:1644
 msgid "Bulk delete"
 msgstr "Massenlöschen"
 

@@ -1,3 +1,4 @@
+from iommi._web_compat import mark_safe
 from iommi.style import Style
 from iommi.fragment import html
 

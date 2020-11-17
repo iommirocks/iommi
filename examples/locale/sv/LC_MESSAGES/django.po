@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-27 14:05+0100\n"
+"POT-Creation-Date: 2020-11-16 14:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,26 +110,34 @@ msgstr ""
 msgid "This is a discography of the best acts in music!"
 msgstr ""
 
-#: examples/table_examples.py:30
+#: examples/table_examples.py:32
 msgid "Readme example 1"
 msgstr ""
 
-#: examples/table_examples.py:53
+#: examples/table_examples.py:55
 msgid "Readme example 2"
 msgstr ""
 
-#: examples/table_examples.py:68
+#: examples/table_examples.py:70
 msgid "Auto from model example 1"
 msgstr ""
 
-#: examples/table_examples.py:75
+#: examples/table_examples.py:77
 msgid "Auto from model example 2"
 msgstr ""
 
-#: examples/table_examples.py:83
+#: examples/table_examples.py:85
 msgid "Kitchen sink example"
 msgstr ""
 
-#: examples/table_examples.py:141
+#: examples/table_examples.py:143
 msgid "Two tables on the same page"
+msgstr ""
+
+#: examples/table_examples.py:151
+msgid "post handlers on lists"
+msgstr ""
+
+#: examples/table_examples.py:185
+msgid "You can have extra fields in your form that the query will ignore"
 msgstr ""

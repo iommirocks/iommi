@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy
+
 from iommi.style import Style
 from iommi.asset import Asset
 
