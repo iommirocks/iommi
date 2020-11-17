@@ -287,6 +287,14 @@ def test_apply_style_not_affecting_definition_2():
 def test_get_config():
     register_style('fruit_style', Style(
         Fruit__attrs__class__style=True,
+        Fruit__attrs__class__style_rm_in_subfruit=True,  # To show that classes take precedence over style
+        # BUT THEY DON'T which is odd as tri_declarative docs claim that writing
+        # class Foo(Bar):
+        #    bar=buzzel
+        # is equivalent to
+        # Bar(parts__bar=buzzel)
+        # So I claim this is a mistake and styles should either always take precedence or never.
+        Fruit__attrs__class__style_rm_in_invoke=True,  # To show that invoke takes precedence over style
     ))
 
     class Fruit(Traversable):
@@ -295,6 +303,7 @@ def test_get_config():
         @reinvokable
         @dispatch(
             attrs__class__fruit=True,
+            attrs__class__fruit_rm_in_invoke=True,  # To show that instance takes precedence
         )
         def __init__(self, **kwargs):
             super(Fruit, self).__init__(**kwargs)
@@ -310,6 +319,7 @@ def test_get_config():
         @reinvokable
         @dispatch(
             attrs__class__sub_fruit=True,
+            attrs__class__style_rm_in_subfruit=False,
         )
         def __init__(self, **kwargs):
             super(SubFruit, self).__init__(**kwargs)
@@ -351,21 +361,26 @@ def test_get_config():
         )
 
     basket = MyBasket(
-        fruits__banana__attrs__class__my_basket_invoke=True
+        fruits__banana__attrs__class__my_basket_invoke=True,
+        fruits__banana__attrs__class__fruit_rm_in_invoke=False,
+        fruits__banana__attrs__class__style_rm_in_invoke=False,
     ).bind(
         request=None
     )
 
-    assert list(basket.fruits.banana.attrs['class'].keys()) == [
-        'fruit',
-        'sub_fruit',
-        'style',
-        'basket',
-        'sub_basket',
-        'my_basket_invoke',
-        'some_fruit',
-        'sub_some_fruit',
-        'my_basket_fruit_invoke',
+    assert sorted(list(basket.fruits.banana.attrs['class'].items()), key=lambda x: x[0]) == [
+        ('basket', True),
+        ('fruit', True),
+        ('fruit_rm_in_invoke', False),
+        ('my_basket_fruit_invoke', True),
+        ('my_basket_invoke', True),
+        ('some_fruit', True),
+        ('style', True),
+        ('style_rm_in_invoke', False),
+        ('style_rm_in_subfruit', False),  # <<< This fails
+        ('sub_basket', True),
+        ('sub_fruit', True),
+        ('sub_some_fruit', True),
     ]
 
     unregister_style('fruit_style')
