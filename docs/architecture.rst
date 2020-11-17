@@ -1,5 +1,6 @@
 .. imports
 
+    from tri_declarative import class_shortcut
     import pytest
     pytestmark = pytest.mark.django_db
 
@@ -212,3 +213,85 @@ There are three functions that handle the evaluation of callables into values wh
 Each object in the tree declares what it adds to the evaluate parameters with a method `own_evaluate_parameters`. For example `Table` adds just one argument `table` which is itself. The method `iommi_evaluate_parameters` gives you all the evaluate parameters up the tree from where you are.
 
 There are two special cases: `traversable` which is the leaf node, and `request` which is the http request object.
+
+
+Overriding and precedence
+-------------------------
+
+`Single point customization with no boilerplate <https://docs.iommi.rocks/en/latest/philosophy.html#single-point-customization-with-no-boilerplate>`_ requires the user to be able customize on many different levels of abstraction. Customization is accomplished by either inserting a value, or by overriding an existing value. Progressive examples of overriding follows below to illustrate what the precedence rules are. The basic stack is this:
+
+- Style
+- declared
+- `class Meta`
+- shortcut
+- constructor argument
+
+Where the more specific are lower down on the list.
+
+The simplest thing might be a `Page` with no config:
+
+.. test
+
+    request = req('get')
+
+.. code:: pycon
+
+    >>> str(Page().bind(request=request))
+    ''
+
+Then we create and apply a style:
+
+.. code:: pycon
+
+    >>> register_style('precedence', Style(Page__parts__foo=html.div('from style')))
+    >>> str(Page(iommi_style='precedence').bind(request=request))
+    '<div>from style</div>'
+
+Styles should be the weakest, so let's create something a bit stronger: declared stuff.
+
+.. code:: pycon
+
+    >>> class MyPage(Page):
+    ...     foo = html.div('from declaration')
+    ...     class Meta:
+    ...         iommi_style = 'precedence'
+    ...
+    >>> str(MyPage().bind(request=request))
+    '<div>from declaration</div>'
+
+
+Next on the list is `class Meta`:
+
+.. code:: pycon
+
+    >>> class MyPage2(MyPage):
+    ...     class Meta:
+    ...         parts__foo = html.div('from class Meta')
+    ...
+    >>> str(MyPage2().bind(request=request))
+    '<div>from class Meta</div>'
+
+Next is shortcuts:
+
+.. code:: pycon
+
+    >>> class MyPage3(MyPage):
+    ...     @classmethod
+    ...     @class_shortcut(
+    ...         parts__foo=html.div('from shortcut')
+    ...     )
+    ...     def shortcut(cls, call_target, **kwargs):
+    ...         return call_target(**kwargs)
+    ...
+    >>> str(MyPage3.shortcut().bind(request=request))
+    '<div>from shortcut</div>'
+
+And lastly constructor arguments:
+
+.. code:: pycon
+
+    >>> str(MyPage3.shortcut(
+    ...     parts__foo=html.div('from constructor call')
+    ... ).bind(request=request))
+    ...
+    '<div>from constructor call</div>'

@@ -43,7 +43,7 @@ def build_test_file_from_rst(filename):
         elif line.startswith('    '):
             if type_of_block == 'code:: pycon':
                 if line.strip().startswith('>>>'):
-                    current_section['code'].append((line.replace('>>>', 'tmp ='), i))
+                    current_section['code'].append((line.replace('>>>', 'tmp =').replace('tmp = class ', 'class '), i))
                 elif line.strip().startswith('...'):
                     current_section['code'].append((line.replace('...', ''), i))
                 else:
@@ -107,6 +107,13 @@ request = req('get')
                 write('    pass\n')
 
 
-for x in glob(str(base_dir / '*.rst')):
+if sys.argv == 2:
+    pattern = sys.argv[1]
+else:
+    pattern = ''
+
+pattern += '*.rst'
+
+for x in glob(str(base_dir / pattern)):
     build_test_file_from_rst(x)
 
