@@ -127,7 +127,6 @@ class Fragment(Part, Tag):
     template: Union[str, Template] = EvaluatedRefinable()
 
     @dispatch(
-        tag=None,
         children=EMPTY,
         attrs__class=EMPTY,
         attrs__style=EMPTY,
