@@ -300,11 +300,11 @@ def test_get_config():
     class Fruit(Traversable):
         attrs = Refinable()
 
-        @reinvokable
         @dispatch(
             attrs__class__fruit=True,
             attrs__class__fruit_rm_in_invoke=True,  # To show that instance takes precedence
         )
+        @reinvokable
         def __init__(self, **kwargs):
             super(Fruit, self).__init__(**kwargs)
 
@@ -316,11 +316,11 @@ def test_get_config():
             return call_target(**kwargs)
 
     class SubFruit(Fruit):
-        @reinvokable
         @dispatch(
             attrs__class__sub_fruit=True,
             attrs__class__style_rm_in_subfruit=False,
         )
+        @reinvokable
         def __init__(self, **kwargs):
             super(SubFruit, self).__init__(**kwargs)
 

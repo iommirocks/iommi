@@ -68,11 +68,11 @@ class Part(Traversable):
     # Only the assets used by this part
     assets: Namespace = Refinable()
 
-    @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
     )
+    @reinvokable
     def __init__(self, *, endpoints: Dict[str, Any] = None, assets: Dict[str, Any] = None, include, **kwargs):
         from iommi.asset import Asset
 

@@ -158,11 +158,11 @@ class Admin(Page):
     )
 
     @read_config
-    @reinvokable
     @dispatch(
         apps=EMPTY,
         parts=EMPTY,
     )
+    @reinvokable
     def __init__(self, parts, apps, **kwargs):
         # Validate apps params
         for k in apps.keys():

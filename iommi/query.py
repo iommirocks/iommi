@@ -230,7 +230,6 @@ class Filter(Part):
     unary = Refinable()
     is_valid_filter = Refinable()
 
-    @reinvokable
     @dispatch(
         query_operator_for_field='=',
         attr=MISSING,
@@ -240,6 +239,7 @@ class Filter(Part):
         field__include=lambda query, field, **_: not query.filters._declared_members.get(field._name, Struct(freetext=False)).freetext,
         is_valid_filter=default_filter__is_valid_filter,
     )
+    @reinvokable
     def __init__(self, **kwargs):
         """
         Parameters with the prefix `field__` will be passed along downstream to the `Field` instance if applicable. This can be used to tweak the basic style interface.
@@ -553,7 +553,6 @@ class Query(Part):
         member_class = Filter
         form_class = Form
 
-    @reinvokable
     @dispatch(
         endpoints__errors__func=default_endpoint__errors,
         filters=EMPTY,
@@ -563,6 +562,7 @@ class Query(Part):
         form_container__tag='span',
         form_container__attrs__class__iommi_query_form_simple=True,
     )
+    @reinvokable
     def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto=None, **kwargs):
         assert isinstance(filters, dict)
 

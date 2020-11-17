@@ -49,13 +49,13 @@ class MenuBase(Part, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         sort=True,
         sub_menu=EMPTY,
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )
+    @reinvokable
     def __init__(self, sub_menu, _sub_menu_dict=None, **kwargs):
         super(MenuBase, self).__init__(**kwargs)
         self._active = False
@@ -101,13 +101,13 @@ class MenuItem(MenuBase):
     a = Refinable()
     active_class = Refinable()
 
-    @reinvokable
     @dispatch(
         display_name=lambda menu_item, **_: capitalize(menu_item.iommi_name()).replace('_', ' '),
         regex=lambda menu_item, **_: '^' + str(menu_item.url) if menu_item.url else None,
         url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name()) + '/',
         a=EMPTY,
     )
+    @reinvokable
     def __init__(self, **kwargs):
         super(MenuItem, self).__init__(**kwargs)
 
@@ -191,11 +191,11 @@ class Menu(MenuBase):
     """
     items_container = Refinable()
 
-    @reinvokable
     @dispatch(
         sort=False,
         items_container=EMPTY,
     )
+    @reinvokable
     def __init__(self, **kwargs):
         super(Menu, self).__init__(**kwargs)
 

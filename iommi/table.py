@@ -361,7 +361,6 @@ class Column(Part):
     data_retrieval_method = EvaluatedRefinable()
     render_column: bool = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         attr=MISSING,
         sort_default_desc=False,
@@ -387,6 +386,7 @@ class Column(Part):
         header__url=None,
         render_column=True,
     )
+    @reinvokable
     def __init__(self, header, **kwargs):
         """
         Parameters with the prefix `filter__` will be passed along downstream to the `Filter` instance if applicable. This can be used to tweak the filtering of a column.
@@ -1427,7 +1427,6 @@ class Table(Part, Tag):
     def post_bulk_edit(table, queryset, updates):
         pass
 
-    @reinvokable
     @dispatch(
         columns=EMPTY,
         bulk_filter={},
@@ -1477,6 +1476,7 @@ class Table(Part, Tag):
         # style
         query__form__actions__submit__call_target=Action.button
     )
+    @reinvokable
     def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=MISSING, paginator, **kwargs):
         """
         :param rows: a list or QuerySet of objects

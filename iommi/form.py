@@ -513,9 +513,7 @@ class Field(Part):
     empty_label: str = EvaluatedRefinable()
     empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
-        tag=None,
         attr=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
@@ -541,6 +539,7 @@ class Field(Part):
         initial=MISSING,
         choice_to_optgroup=None,
     )
+    @reinvokable
     def __init__(self, **kwargs):
         """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
@@ -1258,7 +1257,6 @@ class Form(Part):
         action_class = Action
         page_class = Page
 
-    @reinvokable
     @dispatch(
         model=None,
         editable=True,
@@ -1271,6 +1269,7 @@ class Form(Part):
         errors=EMPTY,
         h_tag__call_target=Header,
     )
+    @reinvokable
     def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
 
         if auto:

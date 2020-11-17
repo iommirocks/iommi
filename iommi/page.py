@@ -64,7 +64,6 @@ class Page(Part):
     class Meta:
         member_class = Fragment
 
-    @reinvokable
     @dispatch(
         parts=EMPTY,
         endpoints__debug_tree=Namespace(
@@ -73,6 +72,7 @@ class Page(Part):
         ),
         context=EMPTY,
     )
+    @reinvokable
     def __init__(
         self,
         *,
