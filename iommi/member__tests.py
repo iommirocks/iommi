@@ -1,10 +1,18 @@
 import pytest
 from tri_declarative import (
+    class_shortcut,
     declarative,
     dispatch,
     Refinable,
 )
 
+from iommi import (
+    Fragment,
+    html,
+    Page,
+    register_style,
+    Style,
+)
 from iommi.base import items
 from iommi.member import (
     bind_members,
@@ -17,6 +25,7 @@ from iommi.traversable import (
     Traversable,
 )
 from iommi.reinvokable import reinvokable
+from tests.helpers import req
 
 
 class Fruit(Traversable):
@@ -168,13 +177,46 @@ def test_unapplied_config_does_not_remember():
     from iommi import Page
     from iommi import html
 
-    class Admin(Page):
-        header = html.h1(children__link=html.a('Admin'))
+    class MyPage(Page):
+        header = html.h1(children__link=html.a('Link text'))
 
-    a = Admin(parts__header__children__link__attrs__href='#foo#').bind()
-    b = Admin().bind()
+    a = MyPage(parts__header__children__link__attrs__href='#foo#').bind()
+    b = MyPage().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
+
+
+def test_overriding_and_precedence():
+    register_style('precedence', Style(Page__parts__foo=html.div('from style')))
+    assert str(Page(iommi_style='precedence').bind()) == '<div>from style</div>'
+
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+
+    assert str(MyPage().bind()) == '<div>from declaration</div>'
+
+    class MyPage2(MyPage):
+        class Meta:
+            parts__foo = html.div('from class Meta')
+
+    assert str(MyPage2().bind()) == '<div>from class Meta</div>'
+
+    class MyPage3(MyPage):
+        @classmethod
+        @class_shortcut(
+            parts__foo=html.div('from shortcut')
+        )
+        def shortcut(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    assert str(MyPage3.shortcut().bind()) == '<div>from shortcut</div>'
+
+    assert str(MyPage3.shortcut(
+        parts__foo=html.div('from constructor call')
+    ).bind()) == '<div>from constructor call</div>'
 
 
 def test_lazy_bind():

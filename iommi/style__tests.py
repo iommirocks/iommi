@@ -262,6 +262,7 @@ def test_get_style_error():
 class MyReinvokable:
     _name = None
 
+    @dispatch
     @reinvokable
     def __init__(self, **kwargs):
         self.kwargs = Struct(kwargs)
@@ -273,6 +274,15 @@ def test_reinvokable_new_defaults_recurse():
 
     assert isinstance(x.kwargs.foo, MyReinvokable)
     assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
+
+
+@pytest.mark.skip
+def test_reinvokable_new_defaults_recurse2():
+    x = MyReinvokable(foo__fooka=MyReinvokable(bar=17))
+    x = reinvoke_new_defaults(x, Namespace(foo__fooka__bar=42, foo__fooka__baz=43))
+
+    assert isinstance(x.kwargs.foo.fooka, MyReinvokable)
+    assert x.kwargs.foo.fooka.kwargs == dict(bar=17, baz=43)
 
 
 @pytest.mark.skip('Broken since there is no way to set things on the countainer of Action')
