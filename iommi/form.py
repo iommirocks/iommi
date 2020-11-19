@@ -817,6 +817,9 @@ class Field(Part):
     def own_evaluate_parameters(self):
         return dict(field=self)
 
+    def get_errors(self):
+        return self._errors
+
     @property
     def rendered_value(self):
         if self.errors:
@@ -1465,7 +1468,7 @@ class Form(Part):
         r = {}
         if self._errors:
             r['global'] = self._errors
-        field_errors = {x._name: x._errors for x in values(self.fields) if x._errors}
+        field_errors = {x._name: x.get_errors() for x in values(self.fields) if x.get_errors()}
         if field_errors:
             r['fields'] = field_errors
         return r
