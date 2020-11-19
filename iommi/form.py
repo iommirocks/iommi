@@ -92,6 +92,7 @@ from iommi.fragment import (
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
+    get_field,
     get_search_fields,
     member_from_model,
     NoRegisteredSearchFieldException,
@@ -103,6 +104,11 @@ from iommi.member import (
 from iommi.page import (
     Page,
 )
+from iommi.fragment import (
+    Fragment,
+    Header,
+    Tag,
+)
 from iommi.part import (
     Part,
     request_data,
@@ -111,6 +117,8 @@ from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     evaluated_refinable,
     EvaluatedRefinable,
+    evaluated_refinable,
+    set_declared_member,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -606,8 +614,11 @@ class Field(Part, Tag):
             }
         )()
         self.input = self.input(_name='input')
+        set_declared_member(self, 'input', self.input)
         self.label = self.label(_name='label')
+        set_declared_member(self, 'label', self.label)
         self.help = self.help(_name='help')
+        set_declared_member(self, 'help', self.help)
         self._errors: Set[str] = set()
 
     @property
@@ -1217,6 +1228,77 @@ class Field(Part, Tag):
         )
         return call_target(model_field=model_field, **kwargs)
 
+    @classmethod
+    @class_shortcut(
+        nested_table__title=None,
+    )
+    def formset(cls, form, *, call_target=None, **kwargs):
+        call_target = FormsetField
+        return call_target(**kwargs, form=form)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='formset',
+        nested_table=EMPTY,
+    )
+    def formset_reverse_foreign_key(cls, nested_table, model, model_field_name, call_target=None, **kwargs):
+        model_field = get_field(model, model_field_name)
+        nested_table = setdefaults_path(
+            Namespace(),
+            nested_table,
+            auto__model=model_field.field.model,
+            rows=lambda form, table, **_: getattr(form.instance, model_field_name).all(),
+            **{f'columns__{model_field.remote_field.name}__include': False},  # Remove the back reference
+        )
+        return call_target(nested_table=nested_table, model=model, model_field_name=model_field_name, **kwargs)
+
+
+class FormsetField(Field):
+    nested_table = Refinable()
+
+    @dispatch(
+        nested_table__actions__submit__include=False,
+        nested_table__attrs__action=None,
+        nested_table__attrs__enctype=None,
+        nested_table__attrs__method=None,
+        input__template=Template('{{ field.nested_table }}'),
+    )
+    def __init__(self, *, form, **kwargs):
+        from iommi.table import Table, Column
+        from iommi.endpoint import path_join
+
+        class FieldColumn(Column):
+            class Meta:
+                cell__format = lambda column, row, value, **_: format_html('<input style="width: 100%" name="{}" value="{}">', path_join(column.iommi_path, str(row.pk) or 'dummy'), value)
+
+        class DummyRow:
+            def __getattr__(self, item):
+                return ''
+
+        # TODO: we should be able to pass member_class to Table() and not need a subclass here, but this currently doesn't work
+        class FormTable(Table):
+            class Meta:
+                member_class = FieldColumn
+
+                preprocess_rows = lambda rows, **_: list(rows) + [DummyRow()]
+
+        kwargs = setdefaults_path(
+            Namespace(),
+            kwargs,
+            nested_table__call_target=FormTable,
+        )
+        super().__init__(**kwargs)
+
+        self.nested_table = self.nested_table(_name='nested_table')
+        set_declared_member(self, 'nested_table', self.nested_table)
+
+    def on_bind(self) -> None:
+        super().on_bind()
+        self.nested_table = self.nested_table.bind(parent=self)
+
+    # TODO: parse, is_valid, write_to_instance
+    # TODO: empty row w/ js to duplicate it
+
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
     if redirect_to is None:
@@ -1258,7 +1340,7 @@ class FormAutoConfig(AutoConfig):
 
 @declarative(Part, '_fields_dict')
 @with_meta
-class Form(Part):
+class Form(Part, Tag):
     """
     Describe a Form. Example:
 
@@ -1322,6 +1404,7 @@ class Form(Part):
 
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
+    tag: str = EvaluatedRefinable()
     attr: str = (
         EvaluatedRefinable()
     )  # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
@@ -1420,8 +1503,8 @@ class Form(Part):
         self.mode = INITIALS_FROM_GET
         self.parent_form = None
 
-        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
-        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='actions', items=actions, cls=self.action_class)
+        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.member_class)
 
     def on_bind(self) -> None:
         self._valid = None

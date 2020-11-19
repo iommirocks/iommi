@@ -1,5 +1,4 @@
-<{{form.form_tag}}{{ form.attrs }}>{% if not form.is_nested_form and form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
-
+{{ form.iommi_open_tag }}{% if not form.is_nested_form and form.attrs.method == 'post' %}<input type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}"/>{% endif %}
     {{ form.h_tag }}
 
     {% block before_fields %}{% endblock %}
@@ -12,4 +11,4 @@
     {% if not form.is_nested_form %}
     {{ form.render_actions }}
     {% endif %}
-</{{form.form_tag}}>
+{{ form.iommi_close_tag }}

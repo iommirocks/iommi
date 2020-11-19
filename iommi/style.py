@@ -309,6 +309,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         from iommi.admin import Admin
         from iommi.fragment import Container
         from iommi.fragment import Header
+        from iommi.form import FormsetField
         from iommi.live_edit import LiveEditPage
 
         default_classes = [
@@ -329,6 +330,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Admin,
             Container,
             Header,
+            FormsetField,
             LiveEditPage,
         ]
     if additional_classes is None:

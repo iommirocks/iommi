@@ -90,7 +90,7 @@ class Page(Part):
         _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in items(_parts_dict)}
         parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(parts)})
 
-        collect_members(self, name='parts', items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='parts', items=parts, items_dict=_parts_dict, cls=self.member_class)
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')

@@ -1605,8 +1605,8 @@ class Table(Part, Tag):
         self.sorted_and_filtered_rows = None
         self.visible_rows = None
 
-        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
-        collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='actions', items=actions, cls=self.action_class)
+        collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.member_class)
         collect_members(self, name='parts', items=parts, cls=Fragment)
 
         self.query_args = query
