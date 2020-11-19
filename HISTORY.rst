@@ -1,6 +1,33 @@
 Changelog
 ---------
 
+
+2.5.0 (2020-11-19)
+~~~~~~~~~~~~~~~~~~
+
+* include=False on a Column should imply not generating the query filter and bulk field. If you want to not render a column but still want the filters, use the render_column=False feature
+
+* Added callbacks for saving a form: `extra__pre_save_all_but_related_fields`, `extra__on_save_all_but_related_fields`, `extra__pre_save`
+
+* Added `extra__new_instance` callback to `Form.create` for custom object creation
+
+* The errors list has been changed. You should always use `add_error()` to add an error on a `Field` or a `Form`
+
+* It is now possible to call `is_valid()` and `get_errors()` and get what you expect from `post_validation` on `Field` and `Form`
+
+* Query forms can now have additional fields, that are ignored by the filter handling code (when you want to do additional filtering outside of the query logic)
+
+* Bug fixes with state leaking between binds
+
+* Fixed jump to code
+
+* Improved error message for `is_valid_filter`
+
+* Added a nice error message if you try to shoot in `style` or `class` as raw strings
+
+* Fixed empty table message, and invalid query form messages
+
+
 2.4.0 (2020-11-04)
 ~~~~~~~~~~~~~~~~~~
 
