@@ -40,9 +40,6 @@
         let element = $("#{{ field.input.attrs.id }}").closest('form')[0];
 
         {# Fire a non-jquery event so that ajax_enhance.html gets the event  #}
-        let event = document.createEvent("HTMLEvents");
-        event.initEvent("change", true, true);
-        event.eventName = "change";
-        element.dispatchEvent(event);
+        element.dispatchEvent(new Event('change'));
     });
 </script>
