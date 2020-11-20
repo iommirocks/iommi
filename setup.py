@@ -5,8 +5,11 @@ import re
 from setuptools import setup, find_packages, Command
 from io import open
 
-readme = open('README.rst', encoding='utf8').read()
+readme = open('README.rst', encoding='utf8').readlines()
 
+assert 'Your first pick for a django power cord' in readme[4]
+
+readme = ''.join(['iommi\n', '=====\n'] + readme[5:])
 
 def read_reqs(name):
     with open(os.path.join(os.path.dirname(__file__), name), encoding='utf8') as f:

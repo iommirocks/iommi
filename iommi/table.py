@@ -1394,6 +1394,9 @@ class Table(Part, Tag):
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
 
+    empty_message: str = Refinable()
+    invalid_form_message: str = Refinable()
+
     class Meta:
         assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
         assets__table_js_select_all__template = "iommi/table/js_select_all.html"
@@ -1942,7 +1945,8 @@ class Table(Part, Tag):
     def cells_for_rows(self):
         """Yield a Cells instance for each visible row on the screen."""
         assert self._is_bound
-        for i, row in enumerate(self.preprocess_rows(rows=self.visible_rows, **self.iommi_evaluate_parameters())):
+        rows = self.preprocess_rows(rows=self.visible_rows, **self.iommi_evaluate_parameters())
+        for i, row in enumerate(rows):
             row = self.preprocess_row(table=self, row=row)
             yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
@@ -2022,9 +2026,8 @@ class Table(Part, Tag):
         context = self.iommi_evaluate_parameters().copy()
 
         if self.query and self.query.form and not self.query.form.is_valid():
-            # Why None?  Shouldn't this rather be [] ?
-            self.visible_rows = None
-            context['invalid_form_message'] = mark_safe('<i class="fa fa-meh-o fa-5x" aria-hidden="true"></i>')
+            self.visible_rows = []
+            self.paginator.count = 0
 
         return render(request=request, template=template or self.template, context=context)
 
