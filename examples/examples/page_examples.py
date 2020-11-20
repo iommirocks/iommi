@@ -68,8 +68,8 @@ class IndexPage(ExamplesPage):
 
 urlpatterns = [
     path('', IndexPage().as_view()),
-    path('example_1', HelloWorldPage().as_view()),
-    path('example_2', page_view_example_2),
-    path('example_3', page_view_example_3),
-    path('example_4', page_view_example_4),
+    path('example_1/', HelloWorldPage().as_view()),
+    path('example_2/', page_view_example_2),
+    path('example_3/', page_view_example_3),
+    path('example_4/', page_view_example_4),
 ]
