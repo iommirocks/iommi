@@ -340,6 +340,7 @@ def test_assets_render_from_bulma_style():
     class MyPage(Page):
         class Meta:
             iommi_style = 'bulma'
+            assets__axios = None
 
     expected = prettify('''\
         <!DOCTYPE html>
