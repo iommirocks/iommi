@@ -991,6 +991,7 @@ class Field(Part):
         empty_label='---',
         is_valid=choice_is_valid,
         choice_to_option=choice_choice_to_option,
+        input__attrs__multiple=lambda field, **_: True if field.is_list else None,
         parse=choice_parse,
     )
     def choice(cls, call_target=None, **kwargs):
@@ -1052,7 +1053,6 @@ class Field(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice',
-        input__attrs__multiple=True,
         is_list=True,
     )
     def multi_choice(cls, call_target=None, **kwargs):
@@ -1061,7 +1061,6 @@ class Field(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
-        input__attrs__multiple=True,
         is_list=True,
     )
     def multi_choice_queryset(cls, call_target=None, **kwargs):
