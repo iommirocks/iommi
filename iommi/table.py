@@ -1430,6 +1430,8 @@ class Table(Part, Tag):
     def post_bulk_edit(table, queryset, updates):
         pass
 
+    # @TODO The @reinvokable decorator should go after @dispatch.
+    @reinvokable
     @dispatch(
         columns=EMPTY,
         bulk_filter={},
@@ -1479,7 +1481,6 @@ class Table(Part, Tag):
         # style
         query__form__actions__submit__call_target=Action.button
     )
-    @reinvokable
     def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=MISSING, paginator, **kwargs):
         """
         :param rows: a list or QuerySet of objects

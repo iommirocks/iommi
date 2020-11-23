@@ -186,6 +186,7 @@ def test_unapplied_config_does_not_remember():
     assert '#foo#' not in b.__html__()
 
 
+@pytest.mark.skip
 def test_overriding_and_precedence():
     register_style('precedence', Style(Page__parts__foo=html.div('from style')))
     assert str(Page(iommi_style='precedence').bind()) == '<div>from style</div>'

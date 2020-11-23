@@ -91,7 +91,7 @@ def form_example_2(request):
 @example(gettext(("Endpoints using ajax need no extra url entry")))
 def form_example_3(request):
     class TrackForm(Form):
-        artist = Field.choice_queryset(choices=Track.objects.all())
+        track = Field.choice_queryset(choices=Track.objects.all())
 
     return TrackForm(
         actions__submit__include=False,

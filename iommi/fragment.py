@@ -126,12 +126,13 @@ class Fragment(Part, Tag):
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
+    # @TODO The @reinvokable decorator should go after @dispatch.
+    @reinvokable
     @dispatch(
         children=EMPTY,
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )
-    @reinvokable
     def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
         super(Fragment, self).__init__(**kwargs)
         if text is not None:
