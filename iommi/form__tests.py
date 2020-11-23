@@ -2091,6 +2091,43 @@ def test_multi_choice_choice_to_option():
     assert multi_choice_choice_to_option(field, 3) == (3, '3', '3', False)
 
 
+def test_multi_choice_choice_to_option_empty_values():
+    field = Struct(
+        value=[],
+    )
+    assert multi_choice_choice_to_option(field, 1) == (1, '1', '1', False)
+    assert multi_choice_choice_to_option(field, 2) == (2, '2', '2', False)
+    assert multi_choice_choice_to_option(field, 3) == (3, '3', '3', False)
+
+
+def test_multi_choice_choice_tuples():
+    class MyForm(Form):
+        foo = Field.multi_choice(
+            choices=list('abc'),
+            initial=list('b'),
+        )
+
+    assert MyForm().bind().fields.foo.choice_tuples == [
+        ('a', 'a', 'a', False, 1),
+        ('b', 'b', 'b', True, 2),
+        ('c', 'c', 'c', False, 3)
+    ]
+
+
+def test_multi_choice_choice_tuples_empty_initial():
+    class MyForm(Form):
+        foo = Field.multi_choice(
+            choices=list('abc'),
+            initial=[],
+        )
+
+    assert MyForm().bind().fields.foo.choice_tuples == [
+        ('a', 'a', 'a', False, 1),
+        ('b', 'b', 'b', False, 2),
+        ('c', 'c', 'c', False, 3)
+    ]
+
+
 def test_form_h_tag():
     assert '<h1>$$$</h1>' in Form(title='$$$').bind(request=req('get')).__html__()
     assert '<b>$$$</b>' in Form(title='$$$', h_tag__tag='b').bind(request=req('get')).__html__()
