@@ -86,7 +86,7 @@ def table_auto_example_2(request):
 def table_kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
-        b__a = Column.number()  # Show "a" from "b". This works for plain old objects too.
+        b__a = Column.number(filter__include=True)  # Show "a" from "b". This works for plain old objects too.
 
         b = Column.from_model(
             model=TBar,
@@ -98,12 +98,10 @@ def table_kitchen_sink(request):
 
         d = Column(
             display_name='Display name',
-            attr__class__css_class=True,
             header__url='https://docs.iommi.rocks',
             sortable=False,
             group='Foo',
             auto_rowspan=True,
-            filter__include=True,
             cell__value=lambda row, **_: row.b.a // 3,
             cell__format=lambda value, **_: '- %s -' % value,
             cell__attrs__class={'text-center': True},

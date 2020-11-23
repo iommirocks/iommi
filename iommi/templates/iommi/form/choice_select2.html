@@ -18,7 +18,8 @@
 
 <script type="text/javascript">
     var id_field = "#{{ field.input.attrs.id }}";
-    $(id_field).select2({
+    var f = $(id_field);
+    f.select2({
         placeholder: '{{ field.input.extra.placeholder }}',
         {% if field.endpoints.choices %}
             ajax: {
@@ -26,7 +27,7 @@
                 dataType: "json",
                 data: function (params) {
                     return {
-                        '{{ field.endpoints.choices.endpoint_path }}': params.term || '', // search term
+                        '{{ field.endpoints.choices.endpoint_path }}': params.term || '', {# search term #}
                         page: params.page || 1
                     };
                 }
@@ -34,5 +35,11 @@
         {% endif %}
         allowClear: true,
         multiple: {% if field.is_list %}true{% else %}false{% endif %}
+    });
+    f.on('change', function(e) {
+        let element = $("#{{ field.input.attrs.id }}").closest('form')[0];
+
+        {# Fire a non-jquery event so that ajax_enhance.html gets the event  #}
+        element.dispatchEvent(new Event('change'));
     });
 </script>

@@ -1,5 +1,3 @@
-from django.utils.translation import gettext_lazy
-
 from iommi.style import Style
 from iommi.asset import Asset
 
@@ -22,6 +20,14 @@ base = Style(
             attrs=dict(
                 src='https://code.jquery.com/jquery-3.4.1.js',
                 integrity='sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=',
+                crossorigin='anonymous',
+            ),
+            after=-1,
+        ),
+        axios=Asset.js(
+            attrs=dict(
+                src='https://cdn.jsdelivr.net/npm/axios@0.21.0/dist/axios.min.js',
+                integrity='sha256-OPn1YfcEh9W2pwF1iSS+yDk099tYj+plSrCS6Esa9NA=',
                 crossorigin='anonymous',
             ),
             after=-1,
@@ -79,6 +85,8 @@ base = Style(
     ),
     Query=dict(
         template='iommi/query/form.html',
+        assets__ajax_enhance__template='iommi/query/ajax_enhance.html',
+        form__attrs__class__iommi_filter=True,
     ),
     Actions=dict(
         tag='div',

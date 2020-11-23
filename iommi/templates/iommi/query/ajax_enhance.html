@@ -1,0 +1,181 @@
+<script>
+
+let iommiTableCall;
+
+let Axios = axios;
+
+function updateURL(params) {
+    window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
+}
+
+function debounce(func, wait) {
+    let timeout;
+
+    return (...args) => {
+        const fn = () => func.apply(this, args);
+
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(), wait);
+    };
+}
+
+async function validateForm(params, form) {
+    const iommiErrorsPath = form.getAttribute('data-iommi-errors');
+    try {
+        const {
+            data: { global, fields },
+        } = await Axios.get(`?${params.toString()}&/${iommiErrorsPath}`, {
+            cancelToken: iommiTableCall.token,
+        });
+
+        const globalErrors = form.parentNode.querySelector('.iommi_query_error');
+        if (global) {
+            globalErrors.querySelectorAll('span').innerHTML = global.join(', ');
+            globalErrors.classList.remove('hidden');
+        } else {
+            globalErrors.classList.add('hidden');
+        }
+
+        if (fields) {
+            Object.keys(fields).forEach(key => {
+                // Mark the field as invalid
+                document.getElementById(key).setAttribute('invalid', '');
+                // Clear all previous errors
+                document
+                    .getElementById(`id_error_${key}`)
+                    .parentElement.querySelectorAll('.t-error')
+                    .remove();
+
+                fields[key].forEach(x => {
+                    const error = document.createElement('div');
+                    error.classList.add('t-error');
+                    error.innerHTML = x;
+                    document.getElementById(`id_error_${key}`).parentElement.appendChild(error);
+                });
+            });
+        }
+    } catch (err) {
+        if (!Axios.isCancel(err)) {
+            throw err;
+        }
+    }
+}
+
+
+function showSpinner(isLoading, container) {
+    {# TODO: implement this thing #}
+    if (isLoading) {
+        {#window.showLoadingIndicator(container, 't-big');#}
+    } else {
+        {#window.removeLoadingIndicator(container);#}
+    }
+}
+
+async function populate(form) {
+    // Cancel previous request in progress
+    if (iommiTableCall) {
+        iommiTableCall.cancel('Overridden by another request');
+    }
+
+    iommiTableCall = Axios.CancelToken.source();
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+    const container = form.parentNode.parentNode.querySelector('.iommi-table-plus-paginator');
+
+    updateURL(params);
+    validateForm(params, form);
+    showSpinner(true, container);
+    const paginator = container.parentNode.querySelector('trids-paginator');
+    if (paginator) {
+        paginator.remove();
+    }
+
+    const iommiTbodyPath = container.querySelector('table').getAttribute('data-endpoint');
+
+    try {
+        const {
+            data: { html },
+        } = await Axios.get(`?${params.toString()}&${iommiTbodyPath}`, {
+            cancelToken: iommiTableCall.token,
+        });
+
+        // We have to remove each child before setting innerHTML since disconnectedCallback
+        // is not fired on the children using IE11
+        let child = container.firstElementChild;
+        while (child) {
+            container.removeChild(child);
+            child = container.firstElementChild;
+        }
+
+        container.innerHTML = html;
+    } catch (err) {
+        if (!Axios.isCancel(err)) {
+            const errors = form.querySelector('.iommi_query_error');
+            errors.innerHTML = err;
+        }
+    } finally {
+        showSpinner(false, container);
+    }
+}
+
+function hasSameData(prevData, newData) {
+    return (
+        [...newData].every(([key, value]) => prevData.get(key) === value) &&
+        [...prevData].every(([key, value]) => newData.get(key) === value)
+    );
+}
+
+function enhance(form) {
+    form.setAttribute('autocomplete', 'off');
+    const debouncedPopulate = debounce(populate, 400);
+
+    const container = form.parentNode.parentNode.querySelector('.iommi-table-plus-paginator');
+
+    let prevData = new FormData(form);
+    const onChange = e => {
+        const formData = new FormData(form);
+        if (hasSameData(prevData, formData)) {
+            return;
+        }
+        prevData = formData;
+
+        if (e.target.getAttribute('type') === 'text') {
+            if (e.type === 'change') {
+                // change event fire when the input loses focus. We have already
+                // populated the form on the input event so ignore it
+                return;
+            }
+            showSpinner(true, container);
+            // delay ajax request for free text
+            debouncedPopulate(form, e.target);
+        } else {
+            // select2 elements have hidden inputs when they update GUI should respond immediately
+            // same goes for checkboxes
+            populate(form);
+        }
+    };
+    ['change', 'input', 'switch-mode'].forEach(eventType => {
+        form.addEventListener(eventType, onChange);
+    });
+
+    form.parentNode
+        .getElementsByClassName('iommi_query_toggle_simple_mode')[0]
+        .addEventListener('click', () => {
+            const event = new CustomEvent('switch-mode', { bubbles: true });
+            form.dispatchEvent(event);
+        });
+
+    Array.from(form.getElementsByClassName('select2')).forEach(s => {
+        s.addEventListener('change', onChange);
+     });
+
+    form.querySelector('.links button').remove();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.iommi_filter').forEach(form => enhance(form));
+});
+
+
+</script>
