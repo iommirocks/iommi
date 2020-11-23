@@ -66,6 +66,13 @@ bulma_base = Style(
         template='iommi/form/bulma/field.html',
         label__attrs__class__label=True,
         input__attrs__class__input=True,
+        input__attrs__class={
+            'is-danger': lambda field, **_: bool(field.errors),
+        },
+        errors__attrs__class={
+            'is-danger': True,
+            'help': True,
+        },
         help__attrs__class=dict(
             help=True,
         )
