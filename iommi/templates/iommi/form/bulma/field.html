@@ -3,6 +3,8 @@
     <div class="control">
     {{ field.input }}
     </div>
-    {{ field.help }}
+    {% if field.help %}
+        {{ field.help }}
+    {% endif %}
     {{ field.errors }}
 </{{ field.tag }}>
