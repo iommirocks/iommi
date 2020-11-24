@@ -29,6 +29,14 @@ Make is possible to have two Column.select. Maybe set the name of the column as 
 
 "compile" step for creating an optimized row view model extractor: compile away evaluate when applicable. We can know at Table creation time if the row and cell attrs are static. If so we can render them once. 
 
+Get rid of reinvoke/reinvoke_new_defaults and avoid the merge of different sets of parameter (from styles, shorcuts or kwargs) until bind.
+
+Separate crud shortcuts to a separate beast than Form. (So that callbacks and what not don't need to pollute all Form instances)
+
+Fix docs that show priority of config
+
+Maybe revise inheritance semantics: should class Meta on subclass override shortcut on parent? It doesn't now.
+
 
 ## Docs
 
