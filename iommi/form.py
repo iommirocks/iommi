@@ -243,7 +243,19 @@ def choice_is_valid(field, parsed_data, **_):
 
 def choice_choice_to_option(form, field, choice):
     del form
-    return choice, "%s" % choice, "%s" % choice, choice == field.value
+    return (
+        choice,
+        "%s" % choice,
+        "%s" % choice,
+        (
+            choice == field.value
+            if not field.is_list
+            else (
+                    field.value is not None
+                    and choice in field.value
+            )
+        )
+    )
 
 
 def choice_parse(form, field, string_value):
@@ -329,7 +341,19 @@ def choice_queryset__parse(field, string_value, **_):
 
 
 def choice_queryset__choice_to_option(field, choice, **_):
-    return choice, choice.pk, "%s" % choice, choice == field.value
+    return (
+        choice,
+        choice.pk,
+        "%s" % choice,
+        (
+            choice == field.value
+            if not field.is_list
+            else (
+                    field.value is not None
+                    and choice in field.value
+            )
+        )
+    )
 
 
 datetime_iso_formats = [
@@ -423,14 +447,6 @@ def email_parse(string_value, **_):
 
 def phone_number_is_valid(parsed_data, **_):
     return re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
-
-
-def multi_choice_choice_to_option(field, choice, **_):
-    return choice, "%s" % choice, "%s" % choice, field.value and choice in field.value
-
-
-def multi_choice_queryset_choice_to_option(field, choice, **_):
-    return choice, choice.pk, "%s" % choice, field.value and choice in field.value
 
 
 def default_input_id(field, **_):
@@ -975,6 +991,7 @@ class Field(Part):
         empty_label='---',
         is_valid=choice_is_valid,
         choice_to_option=choice_choice_to_option,
+        input__attrs__multiple=lambda field, **_: True if field.is_list else None,
         parse=choice_parse,
     )
     def choice(cls, call_target=None, **kwargs):
@@ -1036,8 +1053,6 @@ class Field(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice',
-        input__attrs__multiple=True,
-        choice_to_option=multi_choice_choice_to_option,
         is_list=True,
     )
     def multi_choice(cls, call_target=None, **kwargs):
@@ -1046,8 +1061,6 @@ class Field(Part):
     @classmethod
     @class_shortcut(
         call_target__attribute='choice_queryset',
-        input__attrs__multiple=True,
-        choice_to_option=multi_choice_queryset_choice_to_option,
         is_list=True,
     )
     def multi_choice_queryset(cls, call_target=None, **kwargs):

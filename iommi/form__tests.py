@@ -53,6 +53,7 @@ from iommi.endpoint import (
 )
 from iommi.form import (
     bool_parse,
+    choice_choice_to_option,
     create_or_edit_object_redirect,
     datetime_iso_formats,
     datetime_parse,
@@ -64,7 +65,6 @@ from iommi.form import (
     FULL_FORM_FROM_REQUEST,
     INITIALS_FROM_GET,
     int_parse,
-    multi_choice_choice_to_option,
     register_field_factory,
     render_template,
     time_parse,
@@ -2083,12 +2083,53 @@ def test_shortcut_to_subclass():
 
 
 def test_multi_choice_choice_to_option():
+    form = Struct()
     field = Struct(
         value=[1, 2],
+        is_list=True,
     )
-    assert multi_choice_choice_to_option(field, 1) == (1, '1', '1', True)
-    assert multi_choice_choice_to_option(field, 2) == (2, '2', '2', True)
-    assert multi_choice_choice_to_option(field, 3) == (3, '3', '3', False)
+    assert choice_choice_to_option(form, field, 1) == (1, '1', '1', True)
+    assert choice_choice_to_option(form, field, 2) == (2, '2', '2', True)
+    assert choice_choice_to_option(form, field, 3) == (3, '3', '3', False)
+
+
+def test_multi_choice_choice_to_option_empty_values():
+    form = Struct()
+    field = Struct(
+        value=[],
+        is_list=True,
+    )
+    assert choice_choice_to_option(form, field, 1) == (1, '1', '1', False)
+    assert choice_choice_to_option(form, field, 2) == (2, '2', '2', False)
+    assert choice_choice_to_option(form, field, 3) == (3, '3', '3', False)
+
+
+def test_multi_choice_choice_tuples():
+    class MyForm(Form):
+        foo = Field.multi_choice(
+            choices=list('abc'),
+            initial=list('b'),
+        )
+
+    assert MyForm().bind().fields.foo.choice_tuples == [
+        ('a', 'a', 'a', False, 1),
+        ('b', 'b', 'b', True, 2),
+        ('c', 'c', 'c', False, 3)
+    ]
+
+
+def test_multi_choice_choice_tuples_empty_initial():
+    class MyForm(Form):
+        foo = Field.multi_choice(
+            choices=list('abc'),
+            initial=[],
+        )
+
+    assert MyForm().bind().fields.foo.choice_tuples == [
+        ('a', 'a', 'a', False, 1),
+        ('b', 'b', 'b', False, 2),
+        ('c', 'c', 'c', False, 3)
+    ]
 
 
 def test_form_h_tag():
