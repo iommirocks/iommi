@@ -1410,18 +1410,22 @@ class Table(Part, Tag):
 
         attrs = Namespace({
             'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
+            'data-iommi-id': lambda table, **_: table.iommi_path,
         })
+
+        query__form__attrs = {'data-iommi-id-of-table': lambda table, **_: table.iommi_path}
+
 
     @staticmethod
     @refinable
     def preprocess_rows(rows, **_):
-        # TODO: Should we rename this into prepocess_visible_rows ?
+        # TODO: Should we rename this into preprocess_visible_rows ?
         return rows
 
     @staticmethod
     @refinable
     def preprocess_row(table, row, **_):
-        # TODO: Should we rename this into prepocess_visible_row ?
+        # TODO: Should we rename this into preprocess_visible_row ?
         del table
         return row
 

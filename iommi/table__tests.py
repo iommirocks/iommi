@@ -114,7 +114,7 @@ def declarative_table():
 def test_render_impl(table_builder):
     table = table_builder()
     verify_table_html(table=table, expected_html="""
-        <table class="another_class table" data-endpoint="/tbody" id="table_id">
+        <table class="another_class table" data-endpoint="/tbody" data-iommi-id="" id="table_id">
             <thead>
                 <tr>
                     <th class="first_column subheader">
@@ -211,7 +211,7 @@ def test_django_table():
     assert list(t.query.form.fields['foo'].choices) == list(TFoo.objects.all())
 
     verify_table_html(table=t, expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader">
@@ -274,7 +274,7 @@ def test_output():
     ]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="foo table" data-endpoint="/tbody" id="table_id">
+        <table class="foo table" data-endpoint="/tbody" data-iommi-id="" id="table_id">
             <thead>
                 <tr>
                     <th class="superheader" colspan="1"> </th>
@@ -317,7 +317,7 @@ def test_generator():
     ])
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader">
@@ -345,7 +345,7 @@ def test_name_traversal():
     rows = [Struct(foo=Struct(bar="bar"))]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Bar </th>
@@ -372,7 +372,7 @@ def test_name_traversal():
 #     rows = [('a', 'b', 'c')]
 #
 #     verify_table_html(TestTable(rows=rows), """
-#         <table class="table" data-endpoint="/tbody">
+#         <table class="table" data-endpoint="/tbody" data-iommi-id="">
 #             <thead>
 #                 <tr>
 #                     <th class="first_column subheader"> A </th>
@@ -401,7 +401,7 @@ def test_name_traversal():
 #     rows = [{'a': 'a', 'b': 'b', 'c': 'c'}]
 #
 #     verify_table_html(TestTable(rows=rows), """
-#         <table class="table" data-endpoint="/tbody">
+#         <table class="table" data-endpoint="/tbody" data-iommi-id="">
 #              <thead>
 #                  <tr>
 #                      <th class="first_column subheader"> A </th>
@@ -434,7 +434,7 @@ def test_display_name(NoSortTable):
     rows = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Bar </th>
@@ -456,7 +456,7 @@ def test_link(NoSortTable):
     rows = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Foo </th>
@@ -479,7 +479,7 @@ def test_cell__url_with_attr(NoSortTable):
     rows = [Struct(foo='foo', bar=Struct(get_absolute_url=lambda: '/get/absolute/url/result'))]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader"> Foo </th>
@@ -503,7 +503,7 @@ def test_css_class(NoSortTable):
     rows = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr>
                 <th class="first_column some_class subheader"> Foo </th>
@@ -524,7 +524,7 @@ def test_header_url(NoSortTable):
     rows = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr><th class="first_column subheader">
                 <a href="/some/url"> Foo </a>
@@ -546,7 +546,7 @@ def test_include(NoSortTable):
     rows = [Struct(foo="foo", bar="bar")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
@@ -571,7 +571,7 @@ def test_include_lambda(NoSortTable):
     rows = [Struct(foo="foo", bar="bar")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr><th class="first_column subheader"> Foo </th></tr>
         </thead>
@@ -591,7 +591,7 @@ def test_attr(NoSortTable):
     rows = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr>
                 <th class="first_column subheader"> Foo </th>
@@ -618,7 +618,7 @@ def test_attrs(NoSortTable):
         yada = Column()
 
     verify_table_html(table=TestTable(rows=[Struct(yada=1), Struct(yada=2)]), expected_html="""
-        <table class="classy table" data-endpoint="/tbody" foo="bar">
+        <table class="classy table" data-endpoint="/tbody" data-iommi-id="" foo="bar">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Yada </th>
@@ -647,7 +647,7 @@ def test_attrs_new_syntax(NoSortTable):
         yada = Column()
 
     verify_table_html(table=TestTable(rows=[Struct(yada=1), Struct(yada=2)]), expected_html="""
-        <table class="classy table" data-endpoint="/tbody" foo="bar">
+        <table class="classy table" data-endpoint="/tbody" data-iommi-id="" foo="bar">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Yada </th>
@@ -688,7 +688,7 @@ def test_column_presets(NoSortTable):
     table = TestTable(rows=rows)
 
     verify_table_html(table=table, expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader" />
@@ -731,7 +731,7 @@ def test_django_table_pagination():
     verify_table_html(table=TestTable(rows=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=1, query='b="foo"'),
                       expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader"> A </th>
@@ -750,7 +750,7 @@ def test_django_table_pagination():
     verify_table_html(table=TestTable(rows=TFoo.objects.all().order_by('pk')),
                       query=dict(page_size=2, page=2, query='b="foo"'),
                       expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                     <th class="first_column subheader"> A </th>
@@ -1146,7 +1146,7 @@ def test_cell_template(NoSortTable):
     rows = [Struct(foo="sentinel")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1165,7 +1165,7 @@ def test_no_cell_tag(NoSortTable):
     rows = [Struct(foo="sentinel")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1187,7 +1187,7 @@ def test_no_row_tag(NoSortTable):
     rows = [Struct(foo="sentinel")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1204,7 +1204,7 @@ def test_cell_format_escape(NoSortTable):
     rows = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-            <table class="table" data-endpoint="/tbody">
+            <table class="table" data-endpoint="/tbody" data-iommi-id="">
                 <thead>
                     <tr><th class="first_column subheader"> Foo </th></tr>
                 </thead>
@@ -1225,7 +1225,7 @@ def test_cell_format_no_escape(NoSortTable):
     rows = [Struct(foo="foo")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-            <table class="table" data-endpoint="/tbody">
+            <table class="table" data-endpoint="/tbody" data-iommi-id="">
                 <thead>
                     <tr><th class="first_column subheader"> Foo </th></tr>
                 </thead>
@@ -1265,7 +1265,7 @@ def test_template_string(NoSortTable):
         What filters
         <div class="iommi-table-container">
             <form action="." method="post">
-                <table class="table" data-endpoint="/tbody">
+                <table class="table" data-endpoint="/tbody" data-iommi-id="">
                     What headers
                     <tbody>
                         Oh, rows: Custom cell: 1
@@ -1285,7 +1285,7 @@ def test_cell_template_string(NoSortTable):
     rows = [Struct(foo="sentinel")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1307,7 +1307,7 @@ def test_no_header_template(NoSortTable):
     rows = [Struct(foo="bar")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <tbody>
                 <tr>
                     <td>
@@ -1329,7 +1329,7 @@ def test_row_template(NoSortTable):
     rows = [Struct(foo="sentinel", bar="schmentinel")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr>
                   <th class="first_column subheader"> Foo </th>
@@ -1357,7 +1357,7 @@ def test_cell_lambda(NoSortTable):
     rows = [Struct(sentinel3="sentinel3")]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Sentinel2 </th></tr>
             </thead>
@@ -1383,7 +1383,7 @@ def test_auto_rowspan_and_render_twice(NoSortTable):
     ]
 
     expected = """
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1453,7 +1453,7 @@ def test_default_formatters(NoSortTable):
     ]
 
     verify_table_html(table=TestTable(rows=rows), expected_html="""
-        <table class="table" data-endpoint="/tbody">
+        <table class="table" data-endpoint="/tbody" data-iommi-id="">
             <thead>
                 <tr><th class="first_column subheader"> Foo </th></tr>
             </thead>
@@ -1908,7 +1908,7 @@ def test_many_to_many():
     f2.tbaz_set.add(baz)
 
     expected_html = """
-<table class="table" data-endpoint="/tbody">
+<table class="table" data-endpoint="/tbody" data-iommi-id="">
     <thead>
         <tr>
             <th class="first_column subheader">
@@ -1945,7 +1945,7 @@ def test_preprocess_row():
             rows = TFoo.objects.all().order_by('pk')
 
     expected_html = """
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr>
                 <th class="first_column subheader">
@@ -2181,7 +2181,7 @@ def test_render_column_attribute():
     assert [h.display_name for h in t.header_levels[0]] == ['A']
 
     expected_html = """
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr>
                 <th class="first_column subheader">
@@ -2250,7 +2250,7 @@ def test_data_iommi_path():
     t = t.bind(request=None)
 
     expected_html = """
-    <table class="table" data-endpoint="/tbody" data-iommi-path="" data-iommi-type="FooTable">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="" data-iommi-path="" data-iommi-type="FooTable">
         <thead>
             <tr>
                 <th class="superheader" colspan="1" data-iommi-type="ColumnHeader">
@@ -2524,7 +2524,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
         query={'page_size': 2, 'page': 1, 'query': 'b="foo"'},
         expected_html="""
 <div class="iommi-table-plus-paginator">
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr>
                 <th class="first_column subheader">
@@ -2575,7 +2575,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
         query={'page_size': 2, 'page': 1, 'query': 'b="foo"', '/tbody': ''},
         expected_html="""
 <div class="iommi-table-plus-paginator">
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
             <tr>
                 <th class="first_column subheader">
@@ -2643,7 +2643,7 @@ def test_sort_list():
         table=TestTable(rows=rows),
         query=dict(order='bar'),
         expected_html="""\
-      <table class="table" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -2676,7 +2676,7 @@ def test_sort_list():
         table=TestTable(rows=rows),
         query=dict(order='-bar'),
         expected_html="""\
-      <table class="table" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -2725,7 +2725,7 @@ def test_sort_with_name():
         table=table,
         query={'order': 'bar'},
         expected_html="""\
-      <table class="table" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -2770,7 +2770,7 @@ def test_sort_list_with_none_values():
         table=TestTable(rows=rows),
         query=dict(order='bar'),
         expected_html="""\
-      <table class="table" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -2817,7 +2817,7 @@ def test_sort_list_bad_parameter():
     verify_table_html(table=TestTable(rows=rows),
                       query=dict(order='barfology'),
                       expected_html="""\
-      <table class="table" data-endpoint="/tbody">
+      <table class="table" data-endpoint="/tbody" data-iommi-id="">
         <thead>
           <tr>
             <th class="first_column subheader">
@@ -2857,7 +2857,7 @@ def test_sort_django_table():
         table=TestTable(rows=TFoo.objects.all()),
         query=dict(order='a'),
         expected_html="""\
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
       <thead>
         <tr>
           <th class="ascending first_column sorted subheader">
@@ -2890,7 +2890,7 @@ def test_sort_django_table():
         table=TestTable(rows=TFoo.objects.all()),
         query=dict(order='-a'),
         expected_html="""\
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
       <thead>
         <tr>
           <th class="descending first_column sorted subheader">
@@ -3013,7 +3013,7 @@ def test_sort_django_table_from_model():
         table__auto__rows=TFoo.objects.all(),
         query=dict(order='a'),
         expected_html="""\
-    <table class="table" data-endpoint="/tbody">
+    <table class="table" data-endpoint="/tbody" data-iommi-id="">
       <thead>
         <tr>
           <th class="ascending first_column sorted subheader">

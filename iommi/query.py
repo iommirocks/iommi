@@ -641,8 +641,10 @@ class Query(Part):
             _name='form',
             _fields_dict=declared_fields,
             attrs__method='get',
-            actions__submit__display_name=gettext('Filter'),
-            actions__submit__attrs__class__iommi_submit_filter_button=True,
+            actions__submit=dict(
+                attrs={'data-iommi-filter-button': ''},
+                display_name=gettext('Filter'),
+            ),
         )
         declared_members(self).form = self.form
 
