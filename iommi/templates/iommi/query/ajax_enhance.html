@@ -82,7 +82,7 @@ async function iommi_query_populate(form) {
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
 
-    let table = document.querySelector(`[data-iommi-id=${form.getAttribute('data-iommi-id-of-table')}]`)
+    let table = document.querySelector(`[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`)
     const container = table.parentNode;
 
     iommi_update_URL(params);
@@ -129,7 +129,7 @@ function iommi_has_same_data(prevData, newData) {
 }
 
 function iommi_enhance_form(form) {
-    let table = document.querySelector(`[data-iommi-id=${form.getAttribute('data-iommi-id-of-table')}]`)
+    let table = document.querySelector(`[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`)
     const container = table.parentNode;
 
     form.setAttribute('autocomplete', 'off');
