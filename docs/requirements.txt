@@ -1,4 +1,5 @@
 sphinx
 alabaster
 Django
+freezegun
 -r../requirements.txt
