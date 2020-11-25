@@ -4,11 +4,11 @@ let iommiTableCall;
 
 let Axios = axios;
 
-function updateURL(params) {
+function iommi_update_URL(params) {
     window.history.replaceState(null, null, `${window.location.pathname}?${params.toString()}`);
 }
 
-function debounce(func, wait) {
+function iommi_debounce(func, wait) {
     let timeout;
 
     return (...args) => {
@@ -19,7 +19,7 @@ function debounce(func, wait) {
     };
 }
 
-async function validateForm(params, form) {
+async function iommi_validate_form(params, form) {
     const iommiErrorsPath = form.getAttribute('data-iommi-errors');
     try {
         const {
@@ -62,7 +62,7 @@ async function validateForm(params, form) {
 }
 
 
-function showSpinner(isLoading, container) {
+function iommi_show_spinner(isLoading, container) {
     {# TODO: implement this thing #}
     if (isLoading) {
         {#window.showLoadingIndicator(container, 't-big');#}
@@ -71,7 +71,7 @@ function showSpinner(isLoading, container) {
     }
 }
 
-async function populate(form) {
+async function iommi_query_populate(form) {
     // Cancel previous request in progress
     if (iommiTableCall) {
         iommiTableCall.cancel('Overridden by another request');
@@ -81,12 +81,14 @@ async function populate(form) {
 
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
-    const container = form.parentNode.parentNode.querySelector('.iommi-table-plus-paginator');
 
-    updateURL(params);
-    validateForm(params, form);
-    showSpinner(true, container);
-    const paginator = container.parentNode.querySelector('trids-paginator');
+    let table = document.querySelector(`[data-iommi-id=${form.getAttribute('data-iommi-id-of-table')}]`)
+    const container = table.parentNode;
+
+    iommi_update_URL(params);
+    iommi_validate_form(params, form);
+    iommi_show_spinner(true, container);
+    const paginator = container.parentNode.querySelector('trids-paginator');  {# TODO! trids is wrong!  #}
     if (paginator) {
         paginator.remove();
     }
@@ -115,27 +117,29 @@ async function populate(form) {
             errors.innerHTML = err;
         }
     } finally {
-        showSpinner(false, container);
+        iommi_show_spinner(false, container);
     }
 }
 
-function hasSameData(prevData, newData) {
+function iommi_has_same_data(prevData, newData) {
     return (
         [...newData].every(([key, value]) => prevData.get(key) === value) &&
         [...prevData].every(([key, value]) => newData.get(key) === value)
     );
 }
 
-function enhance(form) {
-    form.setAttribute('autocomplete', 'off');
-    const debouncedPopulate = debounce(populate, 400);
+function iommi_enhance_form(form) {
+    let table = document.querySelector(`[data-iommi-id=${form.getAttribute('data-iommi-id-of-table')}]`)
+    const container = table.parentNode;
 
-    const container = form.parentNode.parentNode.querySelector('.iommi-table-plus-paginator');
+    form.setAttribute('autocomplete', 'off');
+    const debouncedPopulate = iommi_debounce(iommi_query_populate, 400);
+
 
     let prevData = new FormData(form);
     const onChange = e => {
         const formData = new FormData(form);
-        if (hasSameData(prevData, formData)) {
+        if (iommi_has_same_data(prevData, formData)) {
             return;
         }
         prevData = formData;
@@ -146,13 +150,13 @@ function enhance(form) {
                 // populated the form on the input event so ignore it
                 return;
             }
-            showSpinner(true, container);
+            iommi_show_spinner(true, container);
             // delay ajax request for free text
             debouncedPopulate(form, e.target);
         } else {
             // select2 elements have hidden inputs when they update GUI should respond immediately
             // same goes for checkboxes
-            populate(form);
+            iommi_query_populate(form, container);
         }
     };
     ['change', 'input', 'switch-mode'].forEach(eventType => {
@@ -170,11 +174,11 @@ function enhance(form) {
         s.addEventListener('change', onChange);
      });
 
-    form.querySelector('.iommi_submit_filter_button').remove();
+    form.querySelector('[data-iommi-filter-button]').remove();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.iommi_filter').forEach(form => enhance(form));
+    document.querySelectorAll('.iommi_filter').forEach(form => iommi_enhance_form(form));
 });
 
 
