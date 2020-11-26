@@ -117,8 +117,7 @@ bulma_base = Style(
         ),
     ),
     Query__form=dict(
-        iommi_style='bulma_horizontal',
-        attrs__class__content=True,
+        iommi_style='bulma_query_form',
     ),
     Query__form_container=dict(
         tag='span',
@@ -153,11 +152,11 @@ bulma = Style(
     font_awesome_4,
 )
 
-bulma_horizontal = Style(
+
+bulma_query_form = Style(
     bulma,
     Field=dict(
         attrs__class={
-            'is-horizontal': True,
             'mr-4': True,
         },
         label__attrs__class={
