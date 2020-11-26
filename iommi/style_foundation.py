@@ -63,6 +63,9 @@ foundation_base = Style(
         container__attrs__class__pagination=True,
         active_item__attrs__class={'current': True},
     ),
+    Errors=dict(
+        attrs__class=dict(callout=True, alert=True),
+    ),
 )
 
 

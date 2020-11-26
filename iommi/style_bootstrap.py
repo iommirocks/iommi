@@ -64,7 +64,6 @@ bootstrap_base = Style(
             'form-control': True,
             'is-invalid': lambda field, **_: bool(field.errors),
         },
-        errors__attrs__class={'invalid-feedback': True},
         help__attrs__class={
             'form-text': True,
             'text-muted': True,
@@ -181,7 +180,6 @@ bootstrap_horizontal = Style(
             'col-sm-3': True,
             'my-1': True,
         },
-        errors__attrs__class={'invalid-feedback': True},
         errors__template='iommi/form/bootstrap/errors.html',
     ),
     Form__attrs__class={
