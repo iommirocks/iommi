@@ -59,7 +59,7 @@ class AlbumTable(Table):
         columns__delete = Column.delete(
             include=lambda request, **_: request.user.is_staff,
         )
-        actions__create_album = Action(attrs__href='/albums/create/', display_name=_('Create album'))
+        actions__create_album = Action(attrs__href='/supernaut/albums/create/', display_name=_('Create album'))
 
 
 class ArtistTable(Table):

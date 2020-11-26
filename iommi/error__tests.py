@@ -34,7 +34,7 @@ def test_error_render_in_debug(settings):
     errors = Errors(parent=parent)
     assert errors
     assert errors.__html__() == (
-        '<ul data-iommi-path="error" data-iommi-type="Fragment">'
+        '<ul data-iommi-path="error" data-iommi-type="Errors">'
         '<li data-iommi-path="error__children__error_0" data-iommi-type="Fragment">bar</li>'
         '<li data-iommi-path="error__children__error_1" data-iommi-type="Fragment">foo</li>'
         '</ul>'

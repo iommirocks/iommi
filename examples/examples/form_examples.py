@@ -201,6 +201,25 @@ def form_example_8(request):
     return FruitForm()
 
 
+@example(gettext(("Error messages")))
+def form_example_error_messages(request):
+    def form_error_messages(form, **_):
+        form.add_error(gettext('Global error message 1'))
+        form.add_error(gettext('Global error message 2'))
+
+    def field_error_messages(field, **_):
+        field.add_error(gettext('Field error message 1'))
+        field.add_error(gettext('Field error message 2'))
+
+    return Form(
+        title=gettext('Error messages'),
+        auto__model=Artist,
+        post_validation=form_error_messages,
+        fields__name__post_validation=field_error_messages,
+        actions__submit__include=False,
+    )
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -210,7 +229,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_8',
+        after='example_9',
     )
 
     class Meta:
@@ -227,5 +246,6 @@ urlpatterns = [
     path('example_6/', form_example_6),
     path('example_7/', form_example_7),
     path('example_8/', form_example_8),
+    path('example_9/', form_example_error_messages),
     path('all_fields/', all_field_sorts),
 ]

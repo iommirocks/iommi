@@ -30,8 +30,14 @@ class Errors:
             return ''
 
         from iommi import Fragment
+
+        # We want the style system to treat this fragment like it's Errors, and
+        # since it matches on the name of the class, inheritance here is enough
+        class Errors(Fragment):
+            pass
+
         # noinspection PyProtectedMember
-        return Fragment(
+        return Errors(
             _name='error',
             tag='ul',
             attrs=self.attrs,
