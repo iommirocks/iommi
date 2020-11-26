@@ -523,6 +523,9 @@ class QueryAutoConfig(AutoConfig):
     rows = Refinable()
 
 
+class Advanced(Fragment):
+    pass
+
 @declarative(Filter, '_filters_dict')
 @with_meta
 class Query(Part):
@@ -541,6 +544,7 @@ class Query(Part):
     """
 
     form: Namespace = Refinable()
+    advanced: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
     template: Union[str, Template] = EvaluatedRefinable()
@@ -562,6 +566,7 @@ class Query(Part):
         form_container__call_target=Fragment,
         form_container__tag='span',
         form_container__attrs__class__iommi_query_form_simple=True,
+        advanced__call_target=Advanced,
     )
     def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto=None, **kwargs):
         assert isinstance(filters, dict)
@@ -648,6 +653,9 @@ class Query(Part):
         )
         declared_members(self).form = self.form
 
+        self.advanced = self.advanced()
+        declared_members(self).advanced = self.advanced
+
         self.advanced_simple_toggle = Action(
             attrs__href='#',
             attrs__class__iommi_query_toggle_simple_mode=True,
@@ -717,6 +725,9 @@ class Query(Part):
 
         self.form = self.form.bind(parent=self)
         self._bound_members.form = self.form
+
+        self.advanced = self.advanced.bind(parent=self)
+        self._bound_members.advanced = self.advanced
 
         self.form_container = self.form_container.bind(parent=self)
 
