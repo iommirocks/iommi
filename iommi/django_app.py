@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 
 from iommi.from_model import register_search_fields
-from iommi.style import Style
 
 
 class IommiConfig(AppConfig):
@@ -27,11 +26,11 @@ class IommiConfig(AppConfig):
         from iommi.style_foundation import foundation, foundation_horizontal
         from iommi.style_django_admin import django_admin, django_admin_horizontal
         from iommi.style_water import water
-        from iommi.style_bulma import bulma, bulma_horizontal
+        from iommi.style_bulma import bulma, bulma_query_form
         register_style('base', base)
         register_style('test', test)
         register_style('bulma', bulma)
-        register_style('bulma_horizontal', bulma_horizontal)
+        register_style('bulma_query_form', bulma_query_form)
         register_style('bootstrap', bootstrap)
         register_style('bootstrap_horizontal', bootstrap_horizontal)
         register_style('semantic_ui', semantic_ui)

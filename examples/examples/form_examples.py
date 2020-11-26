@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.template import (
     RequestContext,
@@ -174,6 +175,32 @@ def form_example_7(request):
     return KitchenPage()
 
 
+@example(gettext(("Custom validation for all fields in a form")))
+def form_example_8(request):
+    class FruitForm(Form):
+        class Meta:
+            @staticmethod
+            def post_validation(form, **_):
+                # Notice that post_validation is run, even if there are invalid fields
+                # hence the 'or' below
+                if (form.fields.name.value or '').lower() == "tomato" and form.fields.color.value == "Blue":
+                    # Or alternatively call form.add_error
+                    raise ValidationError("Tomatoes are not blue")
+
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                if form.is_valid():
+                    return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+
+        name = Field()
+        amount = Field.integer()
+        color = Field.choice(
+            choices=['Red', 'Green', 'Blue'],
+        )
+
+    return FruitForm()
+
+
 @example(gettext(("Error messages")))
 def form_example_error_messages(request):
     def form_error_messages(form, **_):
@@ -202,7 +229,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_7',
+        after='example_9',
     )
 
     class Meta:
@@ -218,6 +245,7 @@ urlpatterns = [
     path('example_5/', form_example_5),
     path('example_6/', form_example_6),
     path('example_7/', form_example_7),
-    path('example_8/', form_example_error_messages),
+    path('example_8/', form_example_8),
+    path('example_9/', form_example_error_messages),
     path('all_fields/', all_field_sorts),
 ]
