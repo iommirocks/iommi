@@ -666,6 +666,11 @@ class Field(Part):
 
     def on_bind(self) -> None:
         form = self.form
+        assert form is not None, "Each field needs a form."
+
+        # Todo think about Field's include
+        form.all_fields[self._name] = self
+
         if self.attr is MISSING:
             self.attr = self._name
         if self.display_name is MISSING:
@@ -1350,7 +1355,8 @@ class Form(Part):
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
 
-        bind_members(self, name='fields')
+        self.all_fields = Namespace()
+        bind_members(self, name='fields', lazy=False)
         bind_members(self, name='endpoints')
 
         self.errors = Errors(parent=self, **self.errors)
@@ -1404,14 +1410,14 @@ class Form(Part):
             if self.errors:
                 self._valid = False
             if self._valid:
-                for field in values(self.fields):
+                for field in values(self.all_fields):
                     if field.errors:
                         self._valid = False
                         break
         return self._valid
 
     def validate(self):
-        for field in values(self.fields):
+        for field in values(self.all_fields):
             with validation_errors_reported_on(field):
                 field.post_validation(**field.iommi_evaluate_parameters())
 
@@ -1464,7 +1470,7 @@ class Form(Part):
         Write the new values specified in the form into the instance specified.
         """
         assert self.is_valid()
-        for field in values(self.fields):
+        for field in values(self.all_fields):
             self.apply_field(instance=instance, field=field)
         return instance
 
@@ -1481,7 +1487,7 @@ class Form(Part):
         r = {}
         if self._errors:
             r['global'] = self._errors
-        field_errors = {x._name: x.get_errors() for x in values(self.fields) if x.get_errors()}
+        field_errors = {x._name: x.get_errors() for x in values(self.all_fields) if x.get_errors()}
         if field_errors:
             r['fields'] = field_errors
         return r

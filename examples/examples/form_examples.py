@@ -220,6 +220,37 @@ def form_example_error_messages(request):
     )
 
 
+@example(gettext("Form children do not need to be all fields"))
+def form_example_children_that_are_not_fields(request):
+    def on_submit(form, **_):
+        if not form.is_valid():
+            return
+        return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+
+    def post_validation(form, **_):
+        if form.all_fields.f1.value is not None and form.all_fields.f2.value is not None and form.all_fields.f3.value is not None:
+            if form.all_fields.f1.value + form.all_fields.f2.value != form.all_fields.f3.value:
+                form.add_error("Calculate again!")
+
+    return Form(
+        iommi_style="bulma",
+        title="Children that are not fields",
+        fields__name=Field(),
+        fields__color=Field.choice(choices=['Red', 'Green', 'Blue']),
+        fields__in_box=html.div(
+            children__f1=Field.integer(attrs__class__column=True),
+            children__plus=html.span("+", attrs__class={'column': True, 'is-narrow': True}),
+            children__f2=Field.integer(attrs__class__column=True,),
+            children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
+            children__f3=Field.integer(attrs__class_column=True),
+            iommi_style="bulma_query_form",
+            attrs__class={'box': True, 'columns': True, 'is-vcentered': True}
+        ),
+        post_validation=post_validation,
+        actions__submit__post_handler=on_submit
+    )
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -229,7 +260,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_9',
+        after='example_10',
     )
 
     class Meta:
@@ -247,5 +278,6 @@ urlpatterns = [
     path('example_7/', form_example_7),
     path('example_8/', form_example_8),
     path('example_9/', form_example_error_messages),
+    path('example_10/', form_example_children_that_are_not_fields),
     path('all_fields/', all_field_sorts),
 ]
