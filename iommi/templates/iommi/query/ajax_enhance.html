@@ -158,12 +158,13 @@ function iommi_enhance_form(form) {
         form.addEventListener(eventType, onChange);
     });
 
-    form.parentNode
-        .getElementsByClassName('iommi_query_toggle_simple_mode')[0]
-        .addEventListener('click', () => {
+    const elements = form.parentNode.getElementsByClassName('iommi_query_toggle_simple_mode');
+    if (elements.length > 0) {
+        elements[0].addEventListener('click', () => {
             const event = new CustomEvent('switch-mode', { bubbles: true });
             form.dispatchEvent(event);
         });
+    }
 
     Array.from(form.getElementsByClassName('select2')).forEach(s => {
         s.addEventListener('change', onChange);

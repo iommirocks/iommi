@@ -85,6 +85,7 @@ base = Style(
     ),
     Query=dict(
         template='iommi/query/form.html',
+        advanced__template='iommi/query/advanced.html',
         assets__ajax_enhance__template='iommi/query/ajax_enhance.html',
         form__attrs__class__iommi_filter=True,
     ),

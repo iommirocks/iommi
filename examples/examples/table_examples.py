@@ -141,8 +141,17 @@ example_6_view = example('Table expressed directly as a view function')(example_
 @example(gettext('Two tables on the same page'))
 def table_two(request):
     return Page(
-        parts__table_1=Table(auto__model=Foo, columns__a__filter__include=True),
-        parts__table_2=Table(auto__model=TBar, columns__b__filter__include=True)
+        parts__table_1=Table(
+            auto__model=Foo,
+            columns__a__filter__include=True,
+            page_size=5,
+        ),
+        parts__table_2=Table(
+            auto__model=TBar,
+            columns__b__filter__include=True,
+            page_size=5,
+            query__advanced__include=False,
+        )
     )
 
 
