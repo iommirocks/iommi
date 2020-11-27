@@ -75,5 +75,5 @@ makemessages:
 
 
 compilemessages:
-	(cd iommi && django-admin compilemessages -a)
-	(cd examples && django-admin compilemessages -a)
+	(cd iommi && django-admin compilemessages)
+	(cd examples && django-admin compilemessages)
