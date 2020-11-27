@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 14:33+0100\n"
+"POT-Creation-Date: 2020-11-27 16:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,42 +78,38 @@ msgstr "Neues Passwort"
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: form.py:1205
+#: form.py:1221
 msgid "create"
 msgstr "anlegen"
 
-#: form.py:1206
+#: form.py:1222
 msgid "edit"
 msgstr "bearbeiten"
 
-#: form.py:1207
+#: form.py:1223
 msgid "delete"
 msgstr "löschen"
 
-#: form.py:1292
+#: form.py:1308
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(model_name)s %(crud_type)s"
 
-#: form.py:1296
+#: form.py:1312
 msgid "Save"
 msgstr "Speichern"
 
-#: query.py:620
-msgid "Search"
-msgstr "Suche"
-
-#: query.py:644
-msgid "Filter"
-msgstr "Filtern"
-
-#: query.py:654 templates/iommi/query/form_toggle_script.html:26
+#: query.py:545 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion"
 
-#: style_base.py:109
-msgid "No results found"
-msgstr "Suche erfolglos"
+#: query.py:650
+msgid "Search"
+msgstr "Suche"
+
+#: query.py:676
+msgid "Filter"
+msgstr "Filtern"
 
 #: table.py:498
 msgid "Edit"
@@ -131,50 +127,50 @@ msgstr "Herunterladen"
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1464 table.py:1638
+#: table.py:1468 table.py:1642
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1644
+#: table.py:1648
 msgid "Bulk delete"
 msgstr "Massenlöschen"
 
-#: templates/iommi/query/form.html:8
+#: templates/iommi/query/advanced.html:5
 msgid "Search query"
 msgstr "Suchanfrage"
 
-#: templates/iommi/query/form.html:12
+#: templates/iommi/query/advanced.html:9
 #: templates/iommi/query/form_toggle_script.html:48
 msgid "Show help"
 msgstr "Hilfe einblenden"
 
-#: templates/iommi/query/form.html:17
+#: templates/iommi/query/advanced.html:14
 msgid "Available fields"
 msgstr "Verfügbare Felder"
 
-#: templates/iommi/query/form.html:25
+#: templates/iommi/query/advanced.html:22
 msgid "Queries"
 msgstr "Suchanfragen"
 
-#: templates/iommi/query/form.html:27
+#: templates/iommi/query/advanced.html:24
 msgid "Search for an exact value: field_name=value"
 msgstr "Exakte Suche: feld_name=wert"
 
-#: templates/iommi/query/form.html:28
+#: templates/iommi/query/advanced.html:25
 msgid ""
 "Search for an exact value containing space: field_name=\"value with space\""
 msgstr ""
 "Exakte Suche mit Lehrzeichen im Wert: feld_name=\"Wert mit Lehrzeichen\""
 
-#: templates/iommi/query/form.html:29
+#: templates/iommi/query/advanced.html:26
 msgid "Containing a text: field_name:val"
 msgstr "Zeichenfolge enthält: feld_name=wer"
 
-#: templates/iommi/query/form.html:30
+#: templates/iommi/query/advanced.html:27
 msgid "Exclude a value: field_name!=value"
 msgstr "Einen Wert ausschließen: feld_name!=Wert"
 
-#: templates/iommi/query/form.html:31
+#: templates/iommi/query/advanced.html:28
 msgid ""
 "You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: "
 "field_name&lt;10"
@@ -182,12 +178,12 @@ msgstr ""
 "&lt;, &gt;, &lt;= und &gt;= können benutzt werden um Bereiche zu finden:"
 "feld_name&lt;10"
 
-#: templates/iommi/query/form.html:32
+#: templates/iommi/query/advanced.html:29
 msgid "To search for dates, use ISO8601 format: field_name>1969-07-20"
 msgstr ""
 "Um nach Zeiträumen zu suchen, benutze das IO8601 Format: feld_name>1969-07-20"
 
-#: templates/iommi/query/form.html:33
+#: templates/iommi/query/advanced.html:30
 msgid ""
 "You can filter for relative dates: field_name < \"10 days ago\". Supported "
 "fields are days, months, years, quarters and weekdays. They can be negative "
@@ -205,3 +201,6 @@ msgstr "Zurück zur Standardsuchfunktion"
 #: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
 msgstr "Hilfe ausblenden"
+
+#~ msgid "No results found"
+#~ msgstr "Suche erfolglos"
