@@ -251,6 +251,40 @@ def form_example_children_that_are_not_fields(request):
     )
 
 
+@example(gettext("Form children do not need to be all fields -- declarative"))
+def form_example_children_that_are_not_fields_declarative(request):
+    def on_submit(form, **_):
+        if not form.is_valid():
+            return
+        return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+
+    def post_valid(form, **_):
+        if form.fields.f1.value is not None and form.fields.f2.value is not None and form.fields.f3.value is not None:
+            if form.fields.f1.value + form.fields.f2.value != form.fields.f3.value:
+                form.add_error("Calculate again!")
+
+    class MyForm(Form):
+        name = Field()
+        color = Field.choice(choices=['Red', 'Green', 'Blue'])
+        in_a_box = html.div(
+            children__f1=Field.integer(attrs__class__column=True),
+            children__plus=html.span("+", attrs__class={'column': True, 'is-narrow': True}),
+            children__f2=Field.integer(attrs__class__column=True,),
+            children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
+            children__f3=Field.integer(attrs__class_column=True),
+            iommi_style="bulma_query_form",
+            attrs__class={'box': True, 'columns': True, 'is-vcentered': True}
+        )
+
+        class Meta:
+            iommi_style = "bulma"
+            title = "Children that are not fields"
+            post_validation = post_valid
+            actions__submit__post_handler = on_submit
+
+    return MyForm()
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -260,7 +294,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_10',
+        after='example_11',
     )
 
     class Meta:
@@ -279,5 +313,6 @@ urlpatterns = [
     path('example_8/', form_example_8),
     path('example_9/', form_example_error_messages),
     path('example_10/', form_example_children_that_are_not_fields),
+    path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('all_fields/', all_field_sorts),
 ]

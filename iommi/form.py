@@ -1233,7 +1233,7 @@ class FormAutoConfig(AutoConfig):
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
 
-@declarative(Field, '_fields_dict')
+@declarative(Part, '_fields_dict')
 @with_meta
 class Form(Part):
     """
