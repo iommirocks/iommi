@@ -1770,11 +1770,13 @@ class Table(Part, Tag):
         self._prepare_auto_rowspan()
 
     def _bind_query(self):
-        """ Bind the query form and apply it.
-
-            self.sorted_and_filtered_rows = filtered_by_query_form(self.sorted_rows) """
+        """
+        Bind the query form and apply it.
+        """
         self.sorted_and_filtered_rows = self.sorted_rows
-        self.query_form = None
+
+        if self.query is None:
+            return
 
         declared_filters = declared_members(self.query)['filters']
         for name, column in items(declared_members(self)['columns']):
@@ -1788,7 +1790,7 @@ class Table(Part, Tag):
         self.query = self.query.bind(parent=self)
         self._bound_members.query = self.query
 
-        self.filtered_and_sorted_rows = self.query.filter(query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters())
+        self.sorted_and_filtered_rows = self.query.filter(query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters())
 
     def _bind_bulk_form(self):
         if self.bulk is not None:
