@@ -1359,6 +1359,10 @@ class Form(Part):
         bind_members(self, name='fields', lazy=False)
         bind_members(self, name='endpoints')
 
+        self.parts = self.fields
+        self.fields = self.all_fields
+        del self.all_fields
+
         self.errors = Errors(parent=self, **self.errors)
 
         self.is_valid()
@@ -1410,14 +1414,14 @@ class Form(Part):
             if self.errors:
                 self._valid = False
             if self._valid:
-                for field in values(self.all_fields):
+                for field in values(self.fields):
                     if field.errors:
                         self._valid = False
                         break
         return self._valid
 
     def validate(self):
-        for field in values(self.all_fields):
+        for field in values(self.fields):
             with validation_errors_reported_on(field):
                 field.post_validation(**field.iommi_evaluate_parameters())
 
@@ -1438,9 +1442,10 @@ class Form(Part):
     # property for jinja2 compatibility
     @property
     def render_fields(self):
+        assert self._is_bound, "the form must be bound, otherwise self.parts will not be defined"
         r = []
-        for field in values(self.fields):
-            r.append(field.__html__())
+        for part in values(self.parts):
+            r.append(part.__html__())
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}
@@ -1470,7 +1475,7 @@ class Form(Part):
         Write the new values specified in the form into the instance specified.
         """
         assert self.is_valid()
-        for field in values(self.all_fields):
+        for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         return instance
 
@@ -1487,7 +1492,7 @@ class Form(Part):
         r = {}
         if self._errors:
             r['global'] = self._errors
-        field_errors = {x._name: x.get_errors() for x in values(self.all_fields) if x.get_errors()}
+        field_errors = {x._name: x.get_errors() for x in values(self.fields) if x.get_errors()}
         if field_errors:
             r['fields'] = field_errors
         return r

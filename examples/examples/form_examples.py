@@ -228,8 +228,8 @@ def form_example_children_that_are_not_fields(request):
         return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
 
     def post_validation(form, **_):
-        if form.all_fields.f1.value is not None and form.all_fields.f2.value is not None and form.all_fields.f3.value is not None:
-            if form.all_fields.f1.value + form.all_fields.f2.value != form.all_fields.f3.value:
+        if form.fields.f1.value is not None and form.fields.f2.value is not None and form.fields.f3.value is not None:
+            if form.fields.f1.value + form.fields.f2.value != form.fields.f3.value:
                 form.add_error("Calculate again!")
 
     return Form(
