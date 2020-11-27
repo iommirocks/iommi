@@ -1463,7 +1463,7 @@ class Form(Part):
         """
         Write the new values specified in the form into the instance specified.
         """
-        assert self.is_valid()
+        assert self.is_valid(), f'errors: {self.get_errors()}'
         for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         return instance

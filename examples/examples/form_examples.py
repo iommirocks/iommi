@@ -164,6 +164,9 @@ def form_example_7(request):
         return HttpResponse(format_html("Kitchen values was {}", values))
 
     def sink_form_post_handler(form, **_):
+        if not form.is_valid():
+            return
+
         values = form.apply(Struct())
         return HttpResponse(format_html("Sink values from form {} was {}", form._name, values))
 
