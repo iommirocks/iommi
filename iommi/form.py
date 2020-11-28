@@ -1478,7 +1478,7 @@ class Form(Part):
             field.write_to_instance(field, instance, field.value)
 
     def get_errors(self):
-        self.is_valid()
+        assert self._is_bound
         r = {}
         if self._errors:
             r['global'] = self._errors
