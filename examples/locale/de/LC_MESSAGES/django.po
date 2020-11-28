@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 14:33+0100\n"
+"POT-Creation-Date: 2020-11-27 16:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,9 +18,29 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: examples/form_examples.py:38
+#: examples/form_examples.py:39
 msgid "Use much like a django form"
 msgstr "Benutze es wie eine Django Form"
+
+#: examples/form_examples.py:207
+msgid "Global error message 1"
+msgstr ""
+
+#: examples/form_examples.py:208
+msgid "Global error message 2"
+msgstr ""
+
+#: examples/form_examples.py:211
+msgid "Field error message 1"
+msgstr ""
+
+#: examples/form_examples.py:212
+msgid "Field error message 2"
+msgstr ""
+
+#: examples/form_examples.py:215
+msgid "Error messages"
+msgstr ""
 
 #: examples/menu_examples.py:20
 msgid "A sample menu"
@@ -134,14 +154,15 @@ msgstr "Automatisch vom Model Beispiel 2"
 msgid "Kitchen sink example"
 msgstr "Beispiel für alles auf einmal"
 
-#: examples/table_examples.py:143
+#: examples/table_examples.py:141
 msgid "Two tables on the same page"
 msgstr "Zwei Tabellen auf derselben Seite"
 
-#: examples/table_examples.py:151
+#: examples/table_examples.py:158
 msgid "post handlers on lists"
 msgstr "Post handler für Listen"
 
-#: examples/table_examples.py:185
+#: examples/table_examples.py:192
 msgid "You can have extra fields in your form that the query will ignore"
-msgstr "Man kann Felder im Formular haben, die von der Abfrage ignoriert werden"
+msgstr ""
+"Man kann Felder im Formular haben, die von der Abfrage ignoriert werden"

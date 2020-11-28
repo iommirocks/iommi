@@ -1,0 +1,41 @@
+{% load i18n %}
+{{ query.advanced.toggle }}
+<div style="width: 100%">
+    <div class="iommi_query_form_advanced" style="display: none">
+        <label for="iommi_{{ query.iommi_dunder_path }}_query">{% blocktrans %}Search query{% endblocktrans %}:</label>
+        <input id="iommi_{{ query.iommi_dunder_path }}_query" name="{{ query.get_advanced_query_param }}" type="text" style="width:70%" data-query="{{ query.query_advanced_value }}"/>
+
+        <div class="iommi_query_toggle_help">
+            <span>{% blocktrans %}Show help{% endblocktrans %}</span> <i class="fa fa-chevron-down"></i>
+        </div>
+
+        <div class="iommi_query_help" style="display: none">
+            <div class="iommi_query_available_fields">
+                <h3>{% blocktrans %}Available fields{% endblocktrans %}</h3>
+                <ul>
+                    {% for name in query.filters %}
+                        <li>{{ name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="iommi_query_available_query_commands">
+                <h3>{% blocktrans %}Queries{% endblocktrans %}</h3>
+                <ul>
+                    <li>{% blocktrans %}Search for an exact value: field_name=value{% endblocktrans %}</li>
+                    <li>{% blocktrans %}Search for an exact value containing space: field_name="value with space"{% endblocktrans %}</li>
+                    <li>{% blocktrans %}Containing a text: field_name:val{% endblocktrans %}</li>
+                    <li>{% blocktrans %}Exclude a value: field_name!=value{% endblocktrans %}</li>
+                    <li>{% blocktrans %}You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: field_name&lt;10{% endblocktrans %}</li>
+                    <li>{% blocktrans %}To search for dates, use ISO8601 format: field_name>1969-07-20{% endblocktrans %}</li>
+                    <li>{% blocktrans %}You can filter for relative dates: field_name < "10 days ago". Supported fields are days, months, years, quarters and weekdays. They can be negative and abbreviated from "10 days ago" to "-10d".{% endblocktrans %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        iommi_register_query_toggles('{{ query.iommi_dunder_path }}');
+    });
+</script>

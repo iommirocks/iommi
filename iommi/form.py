@@ -1365,7 +1365,7 @@ class Form(Part):
 
         self.errors = Errors(parent=self, **self.errors)
 
-        self.is_valid()
+        self.validate()
 
     def own_evaluate_parameters(self):
         return dict(form=self)
@@ -1408,19 +1408,20 @@ class Form(Part):
         return any(action.is_target() for action in values(self.actions))
 
     def is_valid(self):
-        if self._valid is None:
-            self._valid = True
-            self.validate()
-            if self.errors:
-                self._valid = False
-            if self._valid:
-                for field in values(self.fields):
-                    if field.errors:
-                        self._valid = False
-                        break
+        """Is the form valid?  Can be called inside forms post_validation hook to determine if the
+           individual fields were all valid."""
+        assert self._is_bound, "Is valid can only be called on bound forms"
+        assert self._valid is not None, "Internal error: Once a form is bound we should know if it is valid or not"
         return self._valid
 
     def validate(self):
+        # When validate is called at the end of bind, self._valid will be either
+        # False becaues a field's add_error was called during the fields bind.
+        # Or it will still be None.  In that latter case set it to True here,
+        # so that we can call is_valid inside post_validation hook to check if
+        # everything up until this point was valid.
+        if self._valid is None:
+            self._valid = True
         for field in values(self.fields):
             with validation_errors_reported_on(field):
                 field.post_validation(**field.iommi_evaluate_parameters())
@@ -1474,7 +1475,7 @@ class Form(Part):
         """
         Write the new values specified in the form into the instance specified.
         """
-        assert self.is_valid()
+        assert self.is_valid(), f'errors: {self.get_errors()}'
         for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         return instance
@@ -1488,7 +1489,7 @@ class Form(Part):
             field.write_to_instance(field, instance, field.value)
 
     def get_errors(self):
-        self.is_valid()
+        assert self._is_bound
         r = {}
         if self._errors:
             r['global'] = self._errors

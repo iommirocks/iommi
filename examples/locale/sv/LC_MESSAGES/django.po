@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 14:33+0100\n"
+"POT-Creation-Date: 2020-11-27 16:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,8 +18,28 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: examples/form_examples.py:38
+#: examples/form_examples.py:39
 msgid "Use much like a django form"
+msgstr ""
+
+#: examples/form_examples.py:207
+msgid "Global error message 1"
+msgstr ""
+
+#: examples/form_examples.py:208
+msgid "Global error message 2"
+msgstr ""
+
+#: examples/form_examples.py:211
+msgid "Field error message 1"
+msgstr ""
+
+#: examples/form_examples.py:212
+msgid "Field error message 2"
+msgstr ""
+
+#: examples/form_examples.py:215
+msgid "Error messages"
 msgstr ""
 
 #: examples/menu_examples.py:20
@@ -130,14 +150,14 @@ msgstr ""
 msgid "Kitchen sink example"
 msgstr ""
 
-#: examples/table_examples.py:143
+#: examples/table_examples.py:141
 msgid "Two tables on the same page"
 msgstr ""
 
-#: examples/table_examples.py:151
+#: examples/table_examples.py:158
 msgid "post handlers on lists"
 msgstr ""
 
-#: examples/table_examples.py:185
+#: examples/table_examples.py:192
 msgid "You can have extra fields in your form that the query will ignore"
 msgstr ""

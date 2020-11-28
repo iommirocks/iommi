@@ -523,6 +523,34 @@ class QueryAutoConfig(AutoConfig):
     rows = Refinable()
 
 
+class Advanced(Fragment):
+    toggle: Namespace = Refinable()
+
+    @dispatch(
+        toggle=EMPTY
+    )
+    @reinvokable
+    def __init__(self, **kwargs):
+        super(Advanced, self).__init__(**kwargs)
+
+        toggle = setdefaults_path(
+            Namespace(),
+            self.toggle,
+            call_target=Action,
+            attrs__href='#',
+            attrs__class__iommi_query_toggle_simple_mode=True,
+            attrs={
+                'data-advanced-mode': 'simple'
+            },
+            display_name=gettext('Switch to advanced search'),
+        )
+        self.toggle = declared_members(self).toggle = toggle()
+
+    def on_bind(self) -> None:
+        super(Advanced, self).on_bind()
+        self.toggle = self._bound_members.toggle = self.toggle.bind(parent=self)
+
+
 @declarative(Filter, '_filters_dict')
 @with_meta
 class Query(Part):
@@ -541,6 +569,7 @@ class Query(Part):
     """
 
     form: Namespace = Refinable()
+    advanced: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     rows = Refinable()
     template: Union[str, Template] = EvaluatedRefinable()
@@ -562,6 +591,7 @@ class Query(Part):
         form_container__call_target=Fragment,
         form_container__tag='span',
         form_container__attrs__class__iommi_query_form_simple=True,
+        advanced__call_target=Advanced,
     )
     def __init__(self, *, model=None, rows=None, filters=None, _filters_dict=None, auto=None, **kwargs):
         assert isinstance(filters, dict)
@@ -648,15 +678,7 @@ class Query(Part):
         )
         declared_members(self).form = self.form
 
-        self.advanced_simple_toggle = Action(
-            attrs__href='#',
-            attrs__class__iommi_query_toggle_simple_mode=True,
-            attrs={
-                'data-advanced-mode': 'simple'
-            },
-            display_name=gettext('Switch to advanced search'),
-            _name='advanced_simple_toggle',
-        )
+        self.advanced = declared_members(self).advanced = self.advanced()
 
         self.form_container = self.form_container(_name='form_container')
 
@@ -680,7 +702,6 @@ class Query(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='filters')
-        self.advanced_simple_toggle = self.advanced_simple_toggle.bind(parent=self)
 
         request = self.get_request()
         self.query_advanced_value = request_data(request).get(self.get_advanced_query_param(), '') if request else ''
@@ -717,6 +738,8 @@ class Query(Part):
 
         self.form = self.form.bind(parent=self)
         self._bound_members.form = self.form
+
+        self.advanced = self._bound_members.advanced = self.advanced.bind(parent=self)
 
         self.form_container = self.form_container.bind(parent=self)
 
