@@ -1251,7 +1251,7 @@ class Form(Part):
 
     .. code:: python
 
-        form = MyForm(
+        form = Form(
             fields=dict(
                 a=Field(),
                 b=Field.email(),
@@ -1259,6 +1259,39 @@ class Form(Part):
         ).bind(request=request)
 
     See tri.declarative docs for more on this dual style of declaration.
+
+    In the common case the fields namespace will contain only instances of `Field`, but
+    iommi actually supports arbitrary `Part`s (except other `Form`s).  For example:
+
+    .. code:: python
+
+        form = Form(
+            fields = dict(
+                # Display a and b inside a box
+                box = html.div(
+                    attrs__class__box=True,
+                    children__a = Field()
+                    children__b = Field.email()
+                ),
+                # And c regularly
+                c = Field()
+            )
+        )
+
+    So that writing the application logic (e.g. validation and post handlers) is independent
+    of minor changes to the layout, after bind the `fields` namespace of the form will contain
+    only instances of `Field` keyed by their `_name` independently of how deep they are in the
+    hierarchy.  That is given the above a appropriate post_handler would be
+
+    .. code:: python
+
+        def post_handler(form, **_):
+            if not form.is_valid():
+                return
+
+            print(form.fields.a.value, form.fields.b.value, form.fields.c.value)
+            # And not
+            # print(form.fields.box.a.value, form.fields.box.b.value, form.fields.c.value)
 """
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
