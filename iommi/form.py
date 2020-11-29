@@ -1270,7 +1270,7 @@ class Form(Part):
                 # Display a and b inside a box
                 box = html.div(
                     attrs__class__box=True,
-                    children__a = Field()
+                    children__a = Field(),
                     children__b = Field.email()
                 ),
                 # And c regularly
