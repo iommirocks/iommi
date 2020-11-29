@@ -668,7 +668,6 @@ class Field(Part):
         form = self.form
         assert form is not None, "Each field needs a form."
 
-        # Todo think about Field's include
         form.all_fields[self._name] = self
 
         if self.attr is MISSING:
