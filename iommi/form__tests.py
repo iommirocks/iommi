@@ -2018,7 +2018,13 @@ def test_help_text_for_boolean_tristate():
     assert '$$$$' in str(form)
 
 
-def test_form_actions_exclude():
+def test_form_actions_exclude_baseline():
+    """This just shows that normally forms contain one default action."""
+    form = Form().bind(request=req('get'))
+    assert list(keys(form.actions)) == ["submit"]
+
+
+def test_form_actions_exclude_simple():
     form = Form(actions=None).bind(request=req('get'))
     assert form.actions == {}
 
@@ -2036,7 +2042,8 @@ def test_form_actions_exclude_later_should_work():
         class Meta:
             actions__magic__display_name = "A magic button"
 
-    form = MyForm(actions=None).bind(request=req('get'))
+    form = MyForm(actions=None)
+    form = form.bind(request=req('get'))
     assert form.actions == {}
 
 
