@@ -77,6 +77,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'iommi.middleware',
+    'iommi.profiling.ProfileMiddleware',
 ]
 
 
