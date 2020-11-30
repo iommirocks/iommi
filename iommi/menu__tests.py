@@ -69,7 +69,7 @@ def test_submenu():
 
 
 def test_debug_menu():
-    assert DebugMenu().bind(request=req('get')).__html__() == '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100"><ul style="list-style: none"><li><a class="link" href="/code/">Code</a></li><li><a class="link" href="?/debug_tree">Tree</a></li><li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li></ul></nav>'
+    assert DebugMenu().bind(request=req('get')).__html__() == '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100"><ul style="list-style: none"><li><a class="link" href="/code/">Code</a></li><li><a class="link" href="?/debug_tree">Tree</a></li><li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li><li><a class="link" href="?_iommi_live_edit">Edit</a></li></ul></nav>'
 
 
 def test_template():

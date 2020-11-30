@@ -37,6 +37,7 @@ def build_as_view_wrapper(target):
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
     view_wrapper.__doc__ = target.__class__.__doc__
+    view_wrapper.__iommi_target__ = target
 
     return view_wrapper
 

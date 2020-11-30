@@ -48,7 +48,7 @@ Tutorial for how to build a site
 
 Admin customization how to
 
-"How to create your own iommi component": own_evaluate_parameters, on_bind, collect_members/bind_members, Refinable, EvaluatedRefinable, __html__
+"How to create your own iommi component": own_evaluate_parameters, on_bind, collect_members/bind_members, Refinable, EvaluatedRefinable, `__html__`
 
 
 Document the assumed URL schema
