@@ -2018,6 +2018,19 @@ def test_help_text_for_boolean_tristate():
     assert '$$$$' in str(form)
 
 
+def test_form_with_excluded_actions_none():
+    form = Form(actions=None).bind(request=req('get'))
+    assert form.actions == {}
+
+
+def test_form_with_excluded_actions_meta_none():
+    class MyForm(Form):
+        class Meta:
+            actions = None
+    form = MyForm(actions__submit__post_handler=lambda form, **_: None).bind(request=req('get'))
+    assert form.actions == {}
+
+
 @pytest.mark.django_db
 def test_all_field_shortcuts():
     class MyFancyField(Field):

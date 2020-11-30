@@ -134,10 +134,15 @@ def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_f
     )
     assert parent._is_bound
     m = m.bind(parent=parent)
-    setattr(parent._bound_members, name, m)
-    setattr(parent, name, m._bound_members)
-    if not lazy:
-        _force_bind_all(m._bound_members)
+    if m is None:
+        d = {}
+        setattr(parent._bound_members, name, d)
+        setattr(parent, name, d)
+    else:
+        setattr(parent._bound_members, name, m)
+        setattr(parent, name, m._bound_members)
+        if not lazy:
+            _force_bind_all(m._bound_members)
 
 
 class ForbiddenNamesException(Exception):
