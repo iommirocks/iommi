@@ -2018,16 +2018,25 @@ def test_help_text_for_boolean_tristate():
     assert '$$$$' in str(form)
 
 
-def test_form_with_excluded_actions_none():
+def test_form_actions_exclude():
     form = Form(actions=None).bind(request=req('get'))
     assert form.actions == {}
 
 
-def test_form_with_excluded_actions_meta_none():
+def test_form_actions_exclude_in_meta_should_not_exclude():
     class MyForm(Form):
         class Meta:
             actions = None
     form = MyForm(actions__submit__post_handler=lambda form, **_: None).bind(request=req('get'))
+    assert len(form.actions) == 1
+
+
+def test_form_actions_exclude_later_should_work():
+    class MyForm(Form):
+        class Meta:
+            actions__magic__display_name = "A magic button"
+
+    form = MyForm(actions=None).bind(request=req('get'))
     assert form.actions == {}
 
 
