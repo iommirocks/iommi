@@ -53,6 +53,8 @@ Admin customization how to
 
 Document the assumed URL schema
 
+Document Query.filter and Query.postprocess
+
 
 ## Nice to have
 
