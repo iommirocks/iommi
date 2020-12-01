@@ -49,16 +49,18 @@ from iommi.asset import Asset
 setup_db_compat()
 
 
+def render_if_needed(request, response):
+    if isinstance(response, Part):
+        if not response._is_bound:
+            response = response.bind(request=request)
+        return response.render_to_response()
+    else:
+        return response
+
+
 def middleware(get_response):
     def iommi_middleware(request):
-
-        response = get_response(request)
-        if isinstance(response, Part):
-            if not response._is_bound:
-                response = response.bind(request=request)
-            return response.render_to_response()
-        else:
-            return response
+        return render_if_needed(request, get_response(request))
 
     return iommi_middleware
 

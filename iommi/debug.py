@@ -152,7 +152,7 @@ def src_debug_url_builder(filename, lineno=None):
     return debug_url_builder(filename, lineno)
 
 
-def iommi_debug_panel(part):
+def filename_and_line_num_from_part(part):
     frame = part._instantiated_at_frame
     filename = None
     lineno = None
@@ -169,6 +169,11 @@ def iommi_debug_panel(part):
         filename = frame.f_code.co_filename
         lineno = frame.f_lineno
         break
+    return filename, lineno
+
+
+def iommi_debug_panel(part):
+    filename, lineno = filename_and_line_num_from_part(part)
 
     if filename is None or filename.endswith('urls.py'):
         import inspect

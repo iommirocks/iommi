@@ -281,3 +281,4 @@ class DebugMenu(Menu):
     code = MenuItem(tag='li')
     tree = MenuItem(url='?/debug_tree', tag='li')
     pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
+    edit = MenuItem(url='?_iommi_live_edit', tag='li')
