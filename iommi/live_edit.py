@@ -99,7 +99,11 @@ def live_edit_view(request, view_func):
         except Exception as e:
             return HttpResponse(json.dumps(dict(error=str(e))))
 
-    return Page(
+    # This class exists just to provide a way to style the page
+    class LiveEditPage(Page):
+        pass
+
+    return LiveEditPage(
         assets__code_editor=Asset.js(
             attrs=dict(
                 src='https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js',
