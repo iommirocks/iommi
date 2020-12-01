@@ -44,8 +44,12 @@ def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
         new_args = args
 
     for k, v in kwargs.items():
-        if merge_namespaces and isinstance(new_kwargs.get(k, None), Namespace):
-            new_kwargs[k] = Namespace(new_kwargs[k], v)
+        new_value = new_kwargs.get(k, None)
+        if merge_namespaces and isinstance(new_value, Namespace):
+            if v is not None:
+                new_kwargs[k] = Namespace(new_value, v)
+            else:
+                new_kwargs[k] = None
         else:
             new_kwargs[k] = v
 

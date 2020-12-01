@@ -232,6 +232,66 @@ def test_namespaciness_override():
     )
 
 
+def test_semantics_after_none_from_meta():
+    @with_meta
+    class MyForm:
+        class Meta:
+            actions = None
+
+        @dispatch
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = MyForm(actions__magic__display_name="A magic button")
+    assert form.kwargs == Namespace(actions__magic__display_name="A magic button")
+
+
+def test_none_semantics_over_meta():
+    @with_meta
+    class MyForm:
+        class Meta:
+            actions__magic__display_name = "A magic button"
+
+        @dispatch
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = MyForm(actions=None)
+    assert form.kwargs == Namespace(actions=None)
+
+
+def test_dispatch_semantics_after_none_from_meta():
+    @with_meta
+    class MyForm:
+        class Meta:
+            actions = None
+
+        @dispatch(
+            actions__magic__display_name="A magic button"
+        )
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = MyForm()
+    assert form.kwargs == Namespace(actions=None)
+
+
+def test_dispatch_none_semantics_after_meta():
+    @with_meta
+    class MyForm:
+        class Meta:
+            actions__magic__display_name = "A magic button"
+
+        @dispatch(
+            actions=None
+        )
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = MyForm()
+    assert form.kwargs == Namespace(actions__magic__display_name="A magic button")
+
+
 def test_meta_staticmethod():
     @with_meta
     class Foo:
