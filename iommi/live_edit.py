@@ -9,7 +9,6 @@ from tri_struct import Struct
 from iommi import *
 from iommi import render_if_needed
 from iommi._web_compat import mark_safe
-from tests.helpers import req
 import parso
 
 orig_reload = autoreload.trigger_reload
@@ -75,7 +74,7 @@ def live_edit_view(request, view_func):
             local_variables = {}
             exec(code, view_func.__globals__, local_variables)
             assert len(local_variables) == 1
-            request = req('get')
+            request.method = 'GET'
             response = list(local_variables.values())[0](request)
             response = render_if_needed(request, response)
             final_result = HttpResponse(json.dumps(dict(page=response.content.decode())))
