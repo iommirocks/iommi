@@ -292,6 +292,46 @@ def test_dispatch_none_semantics_after_meta():
     assert form.kwargs == Namespace(actions__magic__display_name="A magic button")
 
 
+def test_dispatch_none_semantics_after_superclass_meta():
+    @with_meta
+    class MyForm:
+        class Meta:
+            actions__magic__display_name = "A magic button"
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+    class SubForm(MyForm):
+        @dispatch(
+            actions=None
+        )
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = SubForm()
+    assert form.kwargs == Namespace(actions=None)
+
+
+def test_dispatch_semantics_after_none_superclass_meta():
+    @with_meta
+    class MyForm:
+        class Meta:
+            actions = None
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+    class SubForm(MyForm):
+        @dispatch(
+            actions__magic__display_name="A magic button"
+        )
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = SubForm()
+    assert form.kwargs == Namespace(actions__magic__display_name="A magic button")
+
+
 def test_meta_staticmethod():
     @with_meta
     class Foo:

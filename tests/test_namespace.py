@@ -2,14 +2,12 @@ import pytest
 from tri_struct import Struct
 
 from tri_declarative import (
-    dispatch,
     EMPTY,
     flatten,
     getattr_path,
     Namespace,
     setattr_path,
     setdefaults_path,
-    with_meta,
 )
 
 
