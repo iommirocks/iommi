@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2.6.1 (2020-12-01)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed live editing to work when distributing iommi
+
+
 2.6.0 (2020-12-01)
 ~~~~~~~~~~~~~~~~~~
 
