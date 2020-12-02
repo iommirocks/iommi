@@ -294,6 +294,32 @@ def form_example_children_that_are_not_fields_declarative(request):
     return MyForm()
 
 
+@example(gettext("Nested forms"))
+def form_example_basic_nesting(request):
+    def on_submit(form, **_):
+        if not form.is_valid():
+            return
+        return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+
+    class Person(Form):
+        name = Field()
+        year_of_birth = Field.integer()
+
+        class Meta:
+            attrs__class__box = True
+            actions__submit__include = False
+
+    class PartnerShip(Form):
+        person1 = Person()
+        person2 = Person()
+
+        class Meta:
+            actions__submit__post_handler = on_submit
+            iommi_style = "bulma"
+
+    return PartnerShip()
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -303,7 +329,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_11',
+        after='example_12',
     )
 
     class Meta:
@@ -323,5 +349,8 @@ urlpatterns = [
     path('example_9/', form_example_error_messages),
     path('example_10/', form_example_children_that_are_not_fields),
     path('example_11/', form_example_children_that_are_not_fields_declarative),
+    path('example_12/', form_example_basic_nesting),
     path('all_fields/', all_field_sorts),
+
+
 ]
