@@ -471,3 +471,11 @@ def test_empty_marker_is_immutable():
     assert isinstance(EMPTY, Namespace)
     with pytest.raises(TypeError):
         EMPTY['foo'] = 'bar'
+
+
+def test_none_semantics():
+    assert Namespace(Namespace(foo=None), foo__bar='baz') == Namespace(foo__bar='baz')
+
+
+def test_none_overwrite_semantics():
+    assert Namespace(Namespace(foo__bar='baz'), foo=None) == Namespace(foo=None)

@@ -84,3 +84,27 @@ def test_dispatch_with_target():
         return a + b + c + x + y
 
     assert foo('1', '2', '3', bar__quux__title='7', baz__a='A', baz__b='B', baz__c='C') == '1235X7ABC'
+
+
+def test_semantics_after_none_from_meta():
+    class MyForm:
+        @dispatch(
+            actions=None
+        )
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = MyForm(actions__magic__display_name="A magic button")
+    assert form.kwargs == Namespace(actions__magic__display_name="A magic button")
+
+
+def test_none_semantics_over_meta():
+    class MyForm:
+        @dispatch(
+            actions__magic__display_name="A magic button"
+        )
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    form = MyForm(actions=None)
+    assert form.kwargs == Namespace(actions=None)
