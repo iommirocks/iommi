@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.6.0 (2020-12-02)
+------------------
+
+* Fix corner case of class Meta failing to merge with None namespace values
+
+
 5.5.0 (2020-08-21)
 ------------------
 
