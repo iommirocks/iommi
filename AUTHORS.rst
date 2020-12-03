@@ -2,8 +2,8 @@
 Credits
 =======
 
-* Johan Lübcke <johan.lubcke@trioptima.com>
-* Anders Hovmöller <anders.hovmoller@trioptima.com>
+* Johan Lübcke <johan@lubcke.se>
+* Anders Hovmöller <boxed@killingar.net>
 * Maren Leithe
 * Fredrik Westermark <fredrik.westermark@trioptima.com>
 * Tore Lundqvist <tore.lundqvist@trioptima.com>

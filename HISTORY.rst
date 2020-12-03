@@ -1,6 +1,33 @@
 Changelog
 ---------
 
+2.6.1 (2020-12-01)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed live editing to work when distributing iommi
+
+
+2.6.0 (2020-12-01)
+~~~~~~~~~~~~~~~~~~
+
+* Live editing of function based views in DEBUG. Works for both iommi views and normal django views.
+
+* Added ajax enhanced table filtering
+
+* You can now turn off the advanced mode on queries: `Table(query__advanced__include=False)`
+
+* `Query` has two new refinables: `filter` and `post_process`. These are hook points if you need to further customize what query is generated.
+
+* Enable profiling when DEBUG mode is on, even if you're not staff
+
+* Fixed multiselect on empty list
+
+* Added missing `get_errors()` member function on `Field`
+
+* Fixed select2 widget when the base url do not end with `/`
+
+* Styling fixes. Primarily for bulma.
+
 
 2.5.0 (2020-11-19)
 ~~~~~~~~~~~~~~~~~~

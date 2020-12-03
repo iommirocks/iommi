@@ -129,11 +129,15 @@ def MyTestForm():
         )
         joined = Field.datetime(attr='contact__joined')
         a_date = Field.date()
-        in_div = html.div(children__a_time=Field.time(), children__staff = Field.boolean())
+        in_div = html.div(
+            children__a_time=Field.time(),
+            children__staff=Field.boolean(),
+        )
         admin = Field.boolean()
         manages = Field.multi_choice(choices=['DEF', 'KTH', 'LIU'], required=False)
         not_editable = Field.text(initial='Some non-editable text', editable=False)
         multi_choice_field = Field.multi_choice(choices=['a', 'b', 'c', 'd'], required=False)
+
     return MyTestForm
 
 

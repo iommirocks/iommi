@@ -612,7 +612,7 @@ class Field(Part):
 
     @property
     def form(self):
-        return self.iommi_parent().iommi_evaluate_parameters()['form']
+        return self.iommi_evaluate_parameters()['form']
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -1280,7 +1280,7 @@ class Form(Part):
     So that writing the application logic (e.g. validation and post handlers) is independent
     of minor changes to the layout, after bind the `fields` namespace of the form will contain
     only instances of `Field` keyed by their `_name` independently of how deep they are in the
-    hierarchy.  That is given the above a appropriate post_handler would be
+    hierarchy. Given the above, an appropriate post_handler would be:
 
     .. code:: python
 
@@ -1289,7 +1289,7 @@ class Form(Part):
                 return
 
             print(form.fields.a.value, form.fields.b.value, form.fields.c.value)
-            # And not
+            # And not:
             # print(form.fields.box.a.value, form.fields.box.b.value, form.fields.c.value)
 """
     actions: Namespace = Refinable()

@@ -27,16 +27,20 @@ def get_dot_path():
     return None
 
 
+def should_profile(request):
+    disabled = getattr(request, 'profiler_disabled', True)
+    is_staff = hasattr(request, 'user') and request.user.is_staff
+
+    return 'prof' in request.GET and ((not disabled and is_staff) or settings.DEBUG)
+
+
 class ProfileMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.prof = None
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
-        disabled = getattr(request, 'profiler_disabled', True)
-        is_staff = hasattr(request, 'user') and request.user.is_staff
-
-        if 'prof' in request.GET and not disabled and is_staff:
+        if should_profile(request):
             return self.prof.runcall(callback, request, *callback_args, **callback_kwargs)
 
     def __call__(self, request):
@@ -56,10 +60,7 @@ class ProfileMiddleware:
 
         response = self.get_response(request)
 
-        disabled = getattr(request, 'profiler_disabled', True)
-        is_staff = hasattr(request, 'user') and request.user.is_staff
-
-        if 'prof' in request.GET and not disabled and is_staff:
+        if should_profile(request):
             response = HttpResponse()
             self.prof.disable()
 

@@ -743,6 +743,28 @@ class Query(Part):
 
         self.form_container = self.form_container.bind(parent=self)
 
+    @staticmethod
+    @refinable
+    def filter(query, rows, **_):
+        if query.form:
+            q = None
+            try:
+                q = query.get_q()
+            except QueryException:
+                pass
+            if q:
+                rows = rows.filter(q)
+
+        return query.postprocess(
+            rows=rows,
+            **query.iommi_evaluate_parameters()
+        )
+
+    @staticmethod
+    @refinable
+    def postprocess(rows, **_):
+        return rows
+
     def own_evaluate_parameters(self):
         return dict(query=self)
 
