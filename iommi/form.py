@@ -612,7 +612,7 @@ class Field(Part):
 
     @property
     def form(self):
-        return self.iommi_parent().iommi_evaluate_parameters()['form']
+        return self.iommi_evaluate_parameters()['form']
 
     # noinspection PyUnusedLocal
     @staticmethod
