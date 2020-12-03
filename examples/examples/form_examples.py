@@ -184,9 +184,14 @@ def form_example_8(request):
         class Meta:
             @staticmethod
             def post_validation(form, **_):
-                # Notice that post_validation is run, even if there are invalid fields
-                # hence the 'or' below
-                if (form.fields.name.value or '').lower() == "tomato" and form.fields.color.value == "Blue":
+                # Notice that post_validation is run, even if there are invalid fields,
+                # so you either have to check that fields that you are interested in
+                # are not None, or alternatively if you only want to run your validation if all fields
+                # passed their individual checks you can just call form.is_valid (see below).
+                # BUT when form.is_valid is called outside of a Form's post_validation
+                # handler its result includes errors caused by the post_validation (as you
+                # would expect).
+                if form.is_valid() and form.fields.name.value == "tomato" and form.fields.color.value == "Blue":
                     # Or alternatively call form.add_error
                     raise ValidationError("Tomatoes are not blue")
 
@@ -223,6 +228,71 @@ def form_example_error_messages(request):
     )
 
 
+@example(gettext("Form children do not need to be all fields"))
+def form_example_children_that_are_not_fields(request):
+    def on_submit(form, **_):
+        if not form.is_valid():
+            return
+        return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+
+    def post_validation(form, **_):
+        if form.fields.f1.value is not None and form.fields.f2.value is not None and form.fields.f3.value is not None:
+            if form.fields.f1.value + form.fields.f2.value != form.fields.f3.value:
+                form.add_error("Calculate again!")
+
+    return Form(
+        iommi_style="bulma",
+        title="Children that are not fields",
+        fields__name=Field(),
+        fields__color=Field.choice(choices=['Red', 'Green', 'Blue']),
+        fields__in_box=html.div(
+            children__f1=Field.integer(attrs__class__column=True),
+            children__plus=html.span("+", attrs__class={'column': True, 'is-narrow': True}),
+            children__f2=Field.integer(attrs__class__column=True,),
+            children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
+            children__f3=Field.integer(attrs__class_column=True),
+            iommi_style="bulma_query_form",
+            attrs__class={'box': True, 'columns': True, 'is-vcentered': True}
+        ),
+        post_validation=post_validation,
+        actions__submit__post_handler=on_submit
+    )
+
+
+@example(gettext("Form children do not need to be all fields -- declarative"))
+def form_example_children_that_are_not_fields_declarative(request):
+    def on_submit(form, **_):
+        if not form.is_valid():
+            return
+        return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+
+    def post_valid(form, **_):
+        if form.fields.f1.value is not None and form.fields.f2.value is not None and form.fields.f3.value is not None:
+            if form.fields.f1.value + form.fields.f2.value != form.fields.f3.value:
+                form.add_error("Calculate again!")
+
+    class MyForm(Form):
+        name = Field()
+        color = Field.choice(choices=['Red', 'Green', 'Blue'])
+        in_a_box = html.div(
+            children__f1=Field.integer(attrs__class__column=True),
+            children__plus=html.span("+", attrs__class={'column': True, 'is-narrow': True}),
+            children__f2=Field.integer(attrs__class__column=True,),
+            children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
+            children__f3=Field.integer(attrs__class_column=True),
+            iommi_style="bulma_query_form",
+            attrs__class={'box': True, 'columns': True, 'is-vcentered': True}
+        )
+
+        class Meta:
+            iommi_style = "bulma"
+            title = "Children that are not fields"
+            post_validation = post_valid
+            actions__submit__post_handler = on_submit
+
+    return MyForm()
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -232,7 +302,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_9',
+        after='example_11',
     )
 
     class Meta:
@@ -250,5 +320,7 @@ urlpatterns = [
     path('example_7/', form_example_7),
     path('example_8/', form_example_8),
     path('example_9/', form_example_error_messages),
+    path('example_10/', form_example_children_that_are_not_fields),
+    path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('all_fields/', all_field_sorts),
 ]

@@ -612,7 +612,7 @@ class Field(Part):
 
     @property
     def form(self):
-        return self.iommi_parent().iommi_evaluate_parameters()['form']
+        return self.iommi_evaluate_parameters()['form']
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -666,6 +666,10 @@ class Field(Part):
 
     def on_bind(self) -> None:
         form = self.form
+        assert form is not None, "Each field needs a form."
+
+        form.all_fields[self._name] = self
+
         if self.attr is MISSING:
             self.attr = self._name
         if self.display_name is MISSING:
@@ -1228,7 +1232,7 @@ class FormAutoConfig(AutoConfig):
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
 
-@declarative(Field, '_fields_dict')
+@declarative(Part, '_fields_dict')
 @with_meta
 class Form(Part):
     """
@@ -1246,7 +1250,7 @@ class Form(Part):
 
     .. code:: python
 
-        form = MyForm(
+        form = Form(
             fields=dict(
                 a=Field(),
                 b=Field.email(),
@@ -1254,6 +1258,39 @@ class Form(Part):
         ).bind(request=request)
 
     See tri.declarative docs for more on this dual style of declaration.
+
+    In the common case the fields namespace will contain only instances of `Field`, but
+    iommi actually supports arbitrary `Part`s (except other `Form`s).  For example:
+
+    .. code:: python
+
+        form = Form(
+            fields = dict(
+                # Display a and b inside a box
+                box = html.div(
+                    attrs__class__box=True,
+                    children__a = Field(),
+                    children__b = Field.email()
+                ),
+                # And c regularly
+                c = Field()
+            )
+        )
+
+    So that writing the application logic (e.g. validation and post handlers) is independent
+    of minor changes to the layout, after bind the `fields` namespace of the form will contain
+    only instances of `Field` keyed by their `_name` independently of how deep they are in the
+    hierarchy. Given the above, an appropriate post_handler would be:
+
+    .. code:: python
+
+        def post_handler(form, **_):
+            if not form.is_valid():
+                return
+
+            print(form.fields.a.value, form.fields.b.value, form.fields.c.value)
+            # And not:
+            # print(form.fields.box.a.value, form.fields.box.b.value, form.fields.c.value)
 """
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
@@ -1350,8 +1387,13 @@ class Form(Part):
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
 
-        bind_members(self, name='fields')
+        self.all_fields = Namespace()
+        bind_members(self, name='fields', lazy=False)
         bind_members(self, name='endpoints')
+
+        self.parts = self.fields
+        self.fields = self.all_fields
+        del self.all_fields
 
         self.errors = Errors(parent=self, **self.errors)
 
@@ -1433,9 +1475,10 @@ class Form(Part):
     # property for jinja2 compatibility
     @property
     def render_fields(self):
+        assert self._is_bound, "the form must be bound, otherwise self.parts will not be defined"
         r = []
-        for field in values(self.fields):
-            r.append(field.__html__())
+        for part in values(self.parts):
+            r.append(part.__html__())
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}
