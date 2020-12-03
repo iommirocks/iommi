@@ -299,7 +299,7 @@ def form_example_basic_nesting(request):
     def on_submit(form, **_):
         if not form.is_valid():
             return
-        return html.pre(f"You posted: {form.apply(Struct())}").bind(request=request)
+        return html.pre(f"You posted: {form.apply(Struct(person1=Struct(), person2=Struct()))}").bind(request=request)
 
     class Person(Form):
         name = Field()

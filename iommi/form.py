@@ -1294,6 +1294,7 @@ class Form(Part):
 """
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
+    attr: str = EvaluatedRefinable()  # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
     h_tag: Union[Fragment, str] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
@@ -1316,6 +1317,7 @@ class Form(Part):
         model=None,
         editable=True,
         fields=EMPTY,
+        attr=MISSING,
         attrs__action='',
         attrs__method='post',
         attrs__enctype='multipart/form-data',
@@ -1324,7 +1326,7 @@ class Form(Part):
         errors=EMPTY,
         h_tag__call_target=Header,
     )
-    def __init__(self, *, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
+    def __init__(self, *, attr=None, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
 
         if auto:
             auto = FormAutoConfig(**auto)
@@ -1353,6 +1355,7 @@ class Form(Part):
 
         assert isinstance(fields, dict)
 
+        self.attr = attr
         self.fields = None
         self._errors: Set[str] = set()
         self._valid = None
@@ -1375,6 +1378,10 @@ class Form(Part):
             self.parent_form = self.iommi_parent().iommi_evaluate_parameters().get('form', None)
             if self.parent_form is not None:
                 self.parent_form.nested_forms[self._name] = self
+            if self.attr is MISSING:
+                self.attr = self._name
+        else:
+            assert self.attr is MISSING, "Set Form.attr only if the form is nested in another form."
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         if isinstance(self.h_tag, Namespace):
@@ -1548,8 +1555,9 @@ class Form(Part):
         for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         for nested_form in values(self.nested_forms):
-            # Todo: Add a refinable attribute to extract the instance
-            nested_form.apply(instance=instance)
+            # TODO: Add a refinable method that does the below so people
+            # can update this.
+            nested_form.apply(instance=getattr_path(instance, nested_form.attr))
 
         return instance
 
