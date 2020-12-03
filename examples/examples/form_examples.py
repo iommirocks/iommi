@@ -184,10 +184,9 @@ def form_example_8(request):
         class Meta:
             @staticmethod
             def post_validation(form, **_):
-                # Notice that post_validation is run, even if there are invalid fields
-                # So you either have to check that fields that you are interested in
-                # are not None
-                # Or alternatively if you ony want to run your validation if all fields
+                # Notice that post_validation is run, even if there are invalid fields,
+                # so you either have to check that fields that you are interested in
+                # are not None, or alternatively if you only want to run your validation if all fields
                 # passed their individual checks you can just call form.is_valid (see below).
                 # BUT when form.is_valid is called outside of a Form's post_validation
                 # handler its result includes errors caused by the post_validation (as you
