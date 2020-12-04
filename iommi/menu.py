@@ -40,6 +40,7 @@ from iommi.traversable import (
     EvaluatedRefinable,
 )
 from iommi.reinvokable import reinvokable
+from iommi._web_compat import settings
 
 
 class MenuBase(Part, Tag):
@@ -281,4 +282,5 @@ class DebugMenu(Menu):
     code = MenuItem(tag='li')
     tree = MenuItem(url='?/debug_tree', tag='li')
     pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
-    edit = MenuItem(url='?_iommi_live_edit', tag='li')
+    edit = MenuItem(url='?_iommi_live_edit', tag='li', include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE)
+    profile = MenuItem(url='?prof', tag='li', include=lambda **_: 'iommi.profiling.ProfileMiddleware' in settings.MIDDLEWARE)
