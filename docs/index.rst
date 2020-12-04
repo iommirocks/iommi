@@ -18,6 +18,7 @@ Contents:
    queries
    forms
    registrations
+   dev_tools
    admin
    howto
    api

@@ -31,7 +31,7 @@ def should_profile(request):
     disabled = getattr(request, 'profiler_disabled', True)
     is_staff = hasattr(request, 'user') and request.user.is_staff
 
-    return 'prof' in request.GET and ((not disabled and is_staff) or settings.DEBUG)
+    return '_iommi_prof' in request.GET and ((not disabled and is_staff) or settings.DEBUG)
 
 
 class Middleware:
@@ -52,9 +52,7 @@ class Middleware:
                 request.profiler_disabled = True
                 break
 
-        user = getattr(request, 'user', None)
-
-        if not request.profiler_disabled and user is not None and (settings.DEBUG or request.user.is_staff) and 'prof' in request.GET:
+        if should_profile(request):
             self.prof = cProfile.Profile()
             self.prof.enable()
 
@@ -66,7 +64,7 @@ class Middleware:
 
             import pstats
             s = StringIO()
-            ps = pstats.Stats(self.prof, stream=s).sort_stats(request.GET.get('prof') or 'cumulative')
+            ps = pstats.Stats(self.prof, stream=s).sort_stats(request.GET.get('_iommi_prof') or 'cumulative')
             ps.print_stats()
 
             stats_str = s.getvalue()
@@ -104,7 +102,7 @@ class Middleware:
                     return f'{pre} {post}'
 
                 for line in stats_str.split("\n")[:limit]:
-                    should_bold = settings.BASE_DIR in line and '/site-packages/' not in line or '/tri/' in line
+                    should_bold = settings.BASE_DIR in line and '/site-packages/' not in line
                     line = line.replace(settings.BASE_DIR, '')
                     line = strip_extra_path(line, '/site-packages')
                     line = strip_extra_path(line, '/Python.framework/Versions')
