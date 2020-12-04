@@ -536,6 +536,7 @@ class Advanced(Fragment):
         toggle = setdefaults_path(
             Namespace(),
             self.toggle,
+            _name='toggle',
             call_target=Action,
             attrs__href='#',
             attrs__class__iommi_query_toggle_simple_mode=True,
@@ -678,7 +679,7 @@ class Query(Part):
         )
         declared_members(self).form = self.form
 
-        self.advanced = declared_members(self).advanced = self.advanced()
+        self.advanced = declared_members(self).advanced = self.advanced(_name='advanced')
 
         self.form_container = self.form_container(_name='form_container')
 
