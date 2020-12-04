@@ -65,8 +65,6 @@ def live_edit_view(request, view_func):
 
     if request.method == 'POST':
         try:
-
-            # indent all the code once
             code = request.POST['data'].replace('\t', '    ')
             if is_unix_line_endings:
                 code = code.replace('\r\n', '\n')
