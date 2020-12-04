@@ -50,7 +50,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django_fastdev',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -60,6 +59,13 @@ INSTALLED_APPS = [
     'iommi',
     'examples',
 ]
+
+try:
+    import django_fastdev
+except ImportError:
+    pass
+else:
+    INSTALLED_APPS += ['django_fastdev']
 
 try:
     import django_pycharm_breakpoint
