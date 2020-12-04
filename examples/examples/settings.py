@@ -77,6 +77,7 @@ else:
 
 MIDDLEWARE = [
     'iommi.live_edit.Middleware',
+    'iommi.sql_trace.SQLTraceMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -125,3 +126,19 @@ STATIC_URL = '/static/'
 IOMMI_DEBUG = True
 
 STATIC_ROOT = Path(__file__).parent.joinpath('static')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
+SQL_DEBUG = 'worst'
