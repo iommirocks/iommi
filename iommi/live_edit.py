@@ -11,7 +11,7 @@ from iommi import render_if_needed
 from iommi._web_compat import mark_safe
 import parso
 
-orig_reload = autoreload.trigger_reload
+orig_reload = getattr(autoreload, 'trigger_reload', None)
 
 
 class Middleware:
@@ -83,13 +83,15 @@ def live_edit_view(request, view_func):
 
             ast_of_old_code.children[:] = ast_of_new_code.children
 
-            # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
-            def restore_auto_reload(filename):
-                from django.utils import autoreload
-                print('Skipped reload')
-                autoreload.trigger_reload = orig_reload
+            # This only works in django 2.2+
+            if orig_reload is not None:
+                # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
+                def restore_auto_reload(filename):
+                    from django.utils import autoreload
+                    print('Skipped reload')
+                    autoreload.trigger_reload = orig_reload
 
-            autoreload.trigger_reload = restore_auto_reload
+                autoreload.trigger_reload = restore_auto_reload
 
             new_code = ast_of_entire_file.get_code()
             with open(filename, 'w') as f:
