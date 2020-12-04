@@ -153,6 +153,9 @@ class Part(Traversable):
 
         return HttpResponse(render_root(part=self, **kwargs))
 
+    def iommi_collected_assets(self):
+        return sort_after(self.iommi_root()._iommi_collected_assets)
+
 
 def get_title(part):
     from iommi import Header
@@ -188,7 +191,7 @@ def render_root(*, part, context, **render):
     # since they are populated as a side-effect
     content = part.__html__(**render)
 
-    assets = sort_after(part._iommi_collected_assets)
+    assets = part.iommi_collected_assets()
 
     assert template_name, f"{root_style_name} doesn't have a base_template defined"
     assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
