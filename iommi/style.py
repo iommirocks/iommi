@@ -14,6 +14,7 @@ from tri_declarative import (
     getattr_path,
     Namespace,
     RefinableObject,
+    setdefaults_path,
 )
 
 from iommi.base import (
@@ -76,7 +77,7 @@ class Style:
     @dispatch(
         root=EMPTY,
     )
-    def __init__(self, *bases, base_template=None, content_block=None, root=None, **kwargs):
+    def __init__(self, *bases, base_template=None, content_block=None, assets=None, root=None, **kwargs):
         self.name = None
 
         self.base_template = base_template
@@ -92,6 +93,13 @@ class Style:
                 if base.content_block:
                     self.content_block = base.content_block
                     break
+
+        if assets:
+            from iommi.debug import iommi_debug_on
+            if iommi_debug_on():
+                print("Warning: The preferred way to add top level assets config to a Style is via the root argument. "
+                      "I.e. assets__* becomes root__assets__*")
+            setdefaults_path(root, assets=assets)
 
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
