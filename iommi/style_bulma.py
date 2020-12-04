@@ -25,7 +25,7 @@ navbar_burger_click_js = Fragment(mark_safe("""\
 
 bulma_base = Style(
     base,
-    assets=dict(
+    root__assets=dict(
         css=Asset.css(
             attrs__href='https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css',
         ),

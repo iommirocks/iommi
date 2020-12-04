@@ -7,7 +7,7 @@ from iommi.style_base import base
 
 semantic_ui_base = Style(
     base,
-    assets=dict(
+    root__assets=dict(
         css=html.link(
             attrs=dict(
                 rel='stylesheet',

@@ -74,9 +74,9 @@ def recursive_namespace(d):
 
 class Style:
     @dispatch(
-        assets=EMPTY,
+        root=EMPTY,
     )
-    def __init__(self, *bases, base_template=None, content_block=None, assets=None, **kwargs):
+    def __init__(self, *bases, base_template=None, content_block=None, root=None, **kwargs):
         self.name = None
 
         self.base_template = base_template
@@ -93,7 +93,7 @@ class Style:
                     self.content_block = base.content_block
                     break
 
-        self.assets = {k: v for k, v in Namespace(*(base.assets for base in bases), assets).items() if v is not None}
+        self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
 
     def component(self, obj, is_root=False):
@@ -104,9 +104,6 @@ class Style:
         """
         result = Namespace()
 
-        if self.assets and is_root:
-            result.assets = self.assets
-
         # TODO: is this wrong? Should it take classes first, then loop through shortcuts?
         for class_name in class_names_for(type(obj)):
             if class_name in self.config:
@@ -116,6 +113,10 @@ class Style:
 
                 for shortcut_name in reversed(getattr(obj, '__tri_declarative_shortcut_stack', [])):
                     result = Namespace(result, shortcuts_config.get(shortcut_name, {}))
+
+        if is_root:
+            result = Namespace(result, self.root)
+
         return result
 
 

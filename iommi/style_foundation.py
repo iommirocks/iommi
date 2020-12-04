@@ -8,7 +8,7 @@ from iommi.asset import Asset
 foundation_base = Style(
     base,
     font_awesome_4,
-    assets=dict(
+    root__assets=dict(
         css=Asset.css(
             attrs=dict(
                 href='https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css',

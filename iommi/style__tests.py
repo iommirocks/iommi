@@ -287,7 +287,7 @@ def test_set_class_on_actions_container():
 def test_assets_render_from_style():
     register_style('my_style', Style(
         test,
-        assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
+        root__assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
     ))
 
     class MyPage(Page):
@@ -313,7 +313,7 @@ def test_assets_render_from_style():
 def test_assets_render_any_fragment_from_style():
     register_style('my_style', Style(
         test,
-        assets__an_asset=Fragment('This is a fragment!'),
+        root__assets__an_asset=Fragment('This is a fragment!'),
     ))
 
     class MyPage(Page):

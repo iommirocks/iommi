@@ -57,8 +57,7 @@ parts__bar__assets, None, Members, True
 parts__bar__children, None, Members[str], True
 parts__bar__children__text, None, str, False
 parts__nested, nested, NestedPage, True
-parts__nested__endpoints, None, Members[Endpoint], True
-parts__nested__endpoints__debug_tree, nested/debug_tree, Endpoint, True
+parts__nested__endpoints, None, Members, True
 parts__nested__assets, None, Members, True
 parts__nested__parts, None, Members[Part], True
 parts__nested__parts__foo, foo, Fragment, True

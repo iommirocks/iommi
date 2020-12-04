@@ -24,7 +24,10 @@ from iommi.base import (
     items,
     MISSING,
 )
-from iommi.debug import iommi_debug_on
+from iommi.debug import (
+    endpoint__debug_tree,
+    iommi_debug_on,
+)
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     Endpoint,
