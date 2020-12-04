@@ -34,7 +34,7 @@ def should_profile(request):
     return 'prof' in request.GET and ((not disabled and is_staff) or settings.DEBUG)
 
 
-class ProfileMiddleware:
+class Middleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.prof = None

@@ -4,7 +4,7 @@ import pytest
 
 from iommi.profiling import (
     get_dot_path,
-    ProfileMiddleware,
+    Middleware,
 )
 from tests.helpers import (
     req,
@@ -19,7 +19,7 @@ class Sentinel:
 
 sentinel = Sentinel()
 sentinel.user = None
-middleware = ProfileMiddleware(lambda request: sentinel)
+middleware = Middleware(lambda request: sentinel)
 
 
 def test_profiler_no_access():
@@ -29,7 +29,7 @@ def test_profiler_no_access():
 
 
 def test_profiler_plain():
-    middleware = ProfileMiddleware(lambda request: sentinel)
+    middleware = Middleware(lambda request: sentinel)
     assert 'white-space: nowrap' in middleware(staff_req('get', prof='')).content.decode()
 
 

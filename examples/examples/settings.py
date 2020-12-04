@@ -77,7 +77,7 @@ else:
 
 MIDDLEWARE = [
     'iommi.live_edit.Middleware',
-    'iommi.sql_trace.SQLTraceMiddleware',
+    'iommi.sql_trace.Middleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -86,7 +86,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'iommi.middleware',
-    'iommi.profiling.ProfileMiddleware',
+    'iommi.profiling.Middleware',
 ]
 
 
