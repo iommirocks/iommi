@@ -8,7 +8,7 @@ from iommi.style_base import base
 django_admin_base = Style(
     base,
     font_awesome_4,
-    assets=dict(
+    root__assets=dict(
         css_base=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/base.css")),
         css_login=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/login.css")),
         css_forms=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/forms.css")),

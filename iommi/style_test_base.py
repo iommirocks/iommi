@@ -5,7 +5,7 @@ from iommi.style_font_awesome_4 import font_awesome_4
 test = Style(
     base,
     font_awesome_4,
-    assets=dict(
+    root__assets=dict(
         jquery=None,
         select2_js=None,
         select2_css=None,

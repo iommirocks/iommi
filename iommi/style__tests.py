@@ -287,12 +287,8 @@ def test_set_class_on_actions_container():
 def test_assets_render_from_style():
     register_style('my_style', Style(
         test,
-        assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
+        root__assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
     ))
-
-    class MyPage(Page):
-        class Meta:
-            iommi_style = 'my_style'
 
     expected = prettify('''
         <!DOCTYPE html>
@@ -304,7 +300,33 @@ def test_assets_render_from_style():
             <body/>
         </html>
     ''')
-    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+    actual = prettify(
+        Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content
+    )
+    assert actual == expected
+
+    unregister_style('my_style')
+
+
+def test_deprecated_assets_style():
+    register_style('my_style', Style(
+        test,
+        assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
+    ))
+
+    expected = prettify('''
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title/>
+                <link href='http://foo.bar/baz' rel="stylesheet"/>
+            </head>
+            <body/>
+        </html>
+    ''')
+    actual = prettify(
+        Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content
+    )
     assert actual == expected
 
     unregister_style('my_style')
@@ -313,7 +335,7 @@ def test_assets_render_from_style():
 def test_assets_render_any_fragment_from_style():
     register_style('my_style', Style(
         test,
-        assets__an_asset=Fragment('This is a fragment!'),
+        root__assets__an_asset=Fragment('This is a fragment!'),
     ))
 
     class MyPage(Page):

@@ -7,7 +7,7 @@ from iommi.asset import Asset
 
 bootstrap_base = Style(
     base,
-    assets=dict(
+    root__assets=dict(
         css=Asset.css(
             attrs=dict(
                 href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css',

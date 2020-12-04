@@ -41,7 +41,7 @@ def dunder_path__format(row, **_):
 
 
 def endpoint__debug_tree(endpoint, **_):
-    root = endpoint.iommi_parent().iommi_parent()
+    root = endpoint.iommi_root()
     assert root._is_bound
 
     def rows(node, name='', path=None):
@@ -64,16 +64,7 @@ def endpoint__debug_tree(endpoint, **_):
                 member_type = type(list(values(declared_members(node)))[0]).__name__
             type_name = f'Members[{member_type}]'
 
-        yield Struct(
-            name=name,
-            obj=node,
-            type=type_name,
-            base_type=base_type_name,
-            path=p,
-            dunder_path='__'.join(path),
-            included=is_bound
-        )
-
+        children = []
         if isinstance(node, dict):
             children = list(node.items())
         elif isinstance(node, Traversable):
@@ -84,8 +75,19 @@ def endpoint__debug_tree(endpoint, **_):
                 )
                 for k, v in items(declared_members(node))
             ]
-        else:
+
+        if (isinstance(node, Members) or isinstance(node, dict)) and not children:
             return
+
+        yield Struct(
+            name=name,
+            obj=node,
+            type=type_name,
+            base_type=base_type_name,
+            path=p,
+            dunder_path='__'.join(path),
+            included=is_bound
+        )
 
         for k, v in children:
             yield from rows(v, name=k, path=path + [k])
