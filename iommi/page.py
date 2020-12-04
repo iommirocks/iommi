@@ -12,9 +12,7 @@ from tri_declarative import (
     with_meta,
 )
 
-from iommi.fragment import Fragment
 from iommi._web_compat import (
-    Template,
     format_html,
     template_types,
 )
@@ -23,10 +21,8 @@ from iommi.base import (
     items,
     values,
 )
-from iommi.debug import (
-    endpoint__debug_tree,
-    iommi_debug_on,
-)
+from iommi.evaluate import evaluate_strict_container
+from iommi.fragment import Fragment
 from iommi.member import (
     bind_members,
     collect_members,
@@ -36,12 +32,11 @@ from iommi.part import (
     Part,
     PartType,
 )
+from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     EvaluatedRefinable,
     Traversable,
 )
-from iommi.reinvokable import reinvokable
-from iommi.evaluate import evaluate_strict_container
 
 
 @with_meta
@@ -67,10 +62,6 @@ class Page(Part):
     @reinvokable
     @dispatch(
         parts=EMPTY,
-        endpoints__debug_tree=Namespace(
-            include=lambda endpoint, **_: iommi_debug_on(),
-            func=endpoint__debug_tree,
-        ),
         context=EMPTY,
     )
     def __init__(

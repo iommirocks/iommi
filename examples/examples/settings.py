@@ -50,7 +50,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django_fastdev',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -62,6 +61,13 @@ INSTALLED_APPS = [
 ]
 
 try:
+    import django_fastdev
+except ImportError:
+    pass
+else:
+    INSTALLED_APPS += ['django_fastdev']
+
+try:
     import django_pycharm_breakpoint
 except ImportError:
     pass
@@ -71,6 +77,7 @@ else:
 
 MIDDLEWARE = [
     'iommi.live_edit.Middleware',
+    'iommi.sql_trace.SQLTraceMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -119,3 +126,19 @@ STATIC_URL = '/static/'
 IOMMI_DEBUG = True
 
 STATIC_ROOT = Path(__file__).parent.joinpath('static')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
+SQL_DEBUG = 'worst'

@@ -57,15 +57,23 @@ def form_example_1(request):
 
     return HttpResponse(
         Template("""
-            {% extends "iommi/base.html" %} 
-            {% block content %}
-                {{ form }} 
-                {{ message }} 
-            {% endblock %}
+            <html>
+                <head>
+                    {% for asset in form.iommi_collected_assets.values %}
+                         {{ asset }}
+                    {% endfor %}
+                <body>
+                    {{ form }}
+                    {{ message }}
+                </body>
+            </html>
         """).render(
             context=RequestContext(
                 request,
-                dict(title='Example 1', form=form, message=message)
+                dict(
+                    form=form,
+                    message=message
+                )
             )
         ),
     )

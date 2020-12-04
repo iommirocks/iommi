@@ -140,6 +140,7 @@ class Fragment(Part, Tag):
                 children,
                 text=text,
             )
+        self._iommi_saved_params['text'] = text
         collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):

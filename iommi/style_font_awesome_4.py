@@ -3,7 +3,7 @@ from iommi.style import Style
 from iommi.fragment import html
 
 font_awesome_4 = Style(
-    assets__icons=html.link(
+    root__assets__icons=html.link(
         attrs__rel="stylesheet",
         attrs__href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css",
     ),
