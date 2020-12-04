@@ -38,6 +38,20 @@ log = logging.getLogger('db')
 SQL = 11
 addLevelName(SQL, 'SQL')
 
+SQL_DEBUG_LEVEL_ALL = 'all'
+SQL_DEBUG_LEVEL_ALL_WITH_STACKS = 'stacks'
+SQL_DEBUG_LEVEL_WORST = 'worst'
+
+
+SQL_DEBUG_LEVELS = {
+    SQL_DEBUG_LEVEL_ALL,
+    SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
+    SQL_DEBUG_LEVEL_WORST,
+    None,
+}
+
+assert getattr(settings, 'SQL_DEBUG', None) in SQL_DEBUG_LEVELS, f'SQL_DEBUG must be one of: {SQL_DEBUG_LEVELS}'
+
 
 class SQLTraceMiddleware:
     def __init__(self, get_response):
@@ -188,11 +202,10 @@ def set_sql_debug(new_state, validate=True):
 
 
 def get_sql_debug():
-    """ :rtype: bool """
     result = getattr(state, 'sql_debug', None)
     if result is not None:
         return result
-    return getattr(settings, 'SQL_DEBUG', False)
+    return getattr(settings, 'SQL_DEBUG', None)
 
 
 @contextmanager
@@ -206,23 +219,6 @@ def no_sql_debug():
     set_sql_debug(False)
     yield
     set_sql_debug(old_state)
-
-
-SQL_DEBUG_LEVEL_ALL = 'all'
-SQL_DEBUG_LEVEL_ALL_WITH_STACKS = 'stacks'
-SQL_DEBUG_LEVEL_WORST = 'worst'
-
-
-SQL_DEBUG_LEVELS = {
-    SQL_DEBUG_LEVEL_ALL,
-    SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
-    SQL_DEBUG_LEVEL_WORST,
-    False,
-}
-
-settings.SQL_DEBUG = getattr(settings, 'SQL_DEBUG', False)
-
-assert settings.SQL_DEBUG in SQL_DEBUG_LEVELS, f'SQL_DEBUG must be one of: {SQL_DEBUG_LEVELS}'
 
 
 def sql_debug(msg, extra):
@@ -278,10 +274,16 @@ def sql_debug_format_stack_trace(frame):
     base_path = os.path.abspath(os.path.join(settings.BASE_DIR, '..')) + "/"
     msg = []
     skip_template_code = False
-    for line in itertools.dropwhile(lambda l: ('/lib/python' in l
-                                               or "django/core" in l
-                                               or 'pydev/pydevd' in l
-                                               or 'gunicorn' in l), lines):
+
+    def skip_line(line):
+        return (
+            '/lib/python' in line
+            or 'django/core' in line
+            or 'pydev/pydevd' in line
+            or 'gunicorn' in line
+        )
+
+    for line in itertools.dropwhile(skip_line, lines):
         match = re.match(r' *File "(.*)", line (\d+), in (.*)\n +(.*)\n', line)
         if not match:
             continue
@@ -398,4 +400,3 @@ def make_debug_cursor(self, cursor):
 
 
 BaseDatabaseWrapper.make_debug_cursor = make_debug_cursor
-# BaseDatabaseWrapper.make_cursor = make_debug_cursor
