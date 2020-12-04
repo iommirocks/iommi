@@ -1885,11 +1885,6 @@ class Table(Part, Tag):
                 if isinstance(self.rows, list):
                     self.sorted_rows = ordered_by_on_list(self.initial_rows, order_args[0], is_desc)
                 else:
-                    if not settings.DEBUG:
-                        # We should crash on invalid sort commands in development, but just ignore in production
-                        # noinspection PyProtectedMember
-                        valid_sort_fields = {x.name for x in get_fields(self.model)}
-                        order_args = [order_arg for order_arg in order_args if order_arg.split('__', 1)[0] in valid_sort_fields]
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.sorted_rows = self.initial_rows.order_by(*order_args)
 
