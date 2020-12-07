@@ -327,6 +327,34 @@ def form_example_basic_nesting(request):
     return PartnerShip()
 
 
+@example(gettext("Scores"))
+def form_example_scores(request):
+    def inc(form, **_):
+        print(form.score.value)
+        return
+
+    class Counter(Form):
+        name = Field()
+        score = Field.number()
+        actions__submit__include = False
+        actions__increase = Action.submit(display_name="+", post_handler=inc)
+
+    def finish(form, **_):
+        scores = []
+        for f in form.nested_forms:
+            scores.append([f.fields.name.value, f.fields.score.value])
+        scores.sort(key=lambda r: r[1])
+        return Table(
+            columns__name=Column(display_name="Name", cell__value=lambda row, **_: row[0]),
+            columns__score=Column.number(display_name="Score", cell__value=lambda row, **_: row[1])
+        )
+
+    return Form(
+        fields__counter0=Counter(),
+        fields__counter1=Counter(),
+        actions__submit__post_handler=finish)
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -357,6 +385,7 @@ urlpatterns = [
     path('example_10/', form_example_children_that_are_not_fields),
     path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('example_12/', form_example_basic_nesting),
+    path('example_13/', form_example_scores),
     path('all_fields/', all_field_sorts),
 
 
