@@ -63,6 +63,9 @@ def live_edit_view(request, view_func):
 
     ast_of_old_code = find_function(name=view_func.__name__, node=ast_of_entire_file)
 
+    flow_direction = request.GET.get('_iommi_live_edit') or 'column'
+    assert flow_direction in ('column', 'row')
+
     if request.method == 'POST':
         try:
             code = request.POST['data'].replace('\t', '    ')
@@ -129,7 +132,7 @@ def live_edit_view(request, view_func):
 
             .container {
                 display: flex;
-                flex-flow: column;
+                flex-flow: <<flow_direction>>;
                 height: 100%;
             }
 
@@ -142,7 +145,7 @@ def live_edit_view(request, view_func):
             nav {
                 display: none;
             }
-            '''
+            '''.replace('<<flow_direction>>', flow_direction)
         ),
 
         parts__result=html.iframe(attrs__id='result'),
