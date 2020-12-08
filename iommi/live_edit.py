@@ -42,8 +42,9 @@ class Middleware:
 
 
 def find_function(*, name, node):
-    if getattr(node, 'name', Struct(value=None)).value == name:
-        return node
+    if node.type == 'funcdef':
+        if getattr(node, 'name', Struct(value=None)).value == name:
+            return node
     for child_node in getattr(node, 'children', []):
         r = find_function(node=child_node, name=name)
         if r is not None:
@@ -141,9 +142,6 @@ def live_edit_view(request, view_func):
             }
             .container #editor {
                 flex: 2 1 auto;
-            }
-            nav {
-                display: none;
             }
             '''.replace('<<flow_direction>>', flow_direction)
         ),
