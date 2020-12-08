@@ -1380,6 +1380,8 @@ class Form(Part):
                 self.parent_form.nested_forms[self._name] = self
             if self.attr is MISSING:
                 self.attr = self._name
+            if self.instance is None and self.parent_form.instance is not None:
+                self.instance = getattr(self.parent_form.instance, self.attr)
         else:
             assert self.attr is MISSING, "Set Form.attr only if the form is nested in another form."
 
@@ -1473,8 +1475,12 @@ class Form(Part):
         return False
 
     def is_valid(self):
-        """Is the form valid?  Can be called inside forms post_validation hook to determine if the
-           individual fields were all valid."""
+        """Is the form valid?
+
+        Can be called inside forms post_validation hook to determine if the individual fields were all valid.
+        For a form that includes nested forms, is valid is True if and only if all the nested forms
+        are valid.  BUT for a nested form the status of its sibling and paren form are not relevant.
+        """
         assert self._is_bound, "Is valid can only be called on bound forms"
         assert self._valid is not None, "Internal error: Once a form is bound we should know if it is valid or not"
         return self._valid
@@ -1556,7 +1562,7 @@ class Form(Part):
             self.apply_field(instance=instance, field=field)
         for nested_form in values(self.nested_forms):
             # TODO: Add a refinable method that does the below so people
-            # can update this.
+            # can change this
             nested_form.apply(instance=getattr_path(instance, nested_form.attr))
 
         return instance
