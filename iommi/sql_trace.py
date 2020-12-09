@@ -53,7 +53,7 @@ SQL_DEBUG_LEVELS = {
 assert getattr(settings, 'SQL_DEBUG', None) in SQL_DEBUG_LEVELS, f'SQL_DEBUG must be one of: {SQL_DEBUG_LEVELS}'
 
 
-class SQLTraceMiddleware:
+class Middleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.prof = None
