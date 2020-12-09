@@ -134,10 +134,6 @@ def test_icon_action():
     assert Action.icon('foo', display_name='dn').bind(request=None).__html__() == '<a><i class="fa fa-foo"></i> dn</a>'
 
 
-def test_icon_action_with_icon_classes():
-    assert Action.icon('foo', display_name='dn', icon_classes=['a', 'b']).bind(request=None).__html__() == '<a><i class="fa fa-foo fa-a fa-b"></i> dn</a>'
-
-
 def test_display_name_to_value_attr():
     assert Action.delete(display_name='foo').bind(request=None).__html__() == '<button accesskey="s" name="-">foo</button>'
 
@@ -174,8 +170,6 @@ def test_actions():
                 c=Action(display_name='Baz', attrs__href='/bar/', group='Other'),
                 d=dict(display_name='Qux', attrs__href='/bar/', group='Other'),
                 e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
-                f=Action.icon('icon_bar', icon_classes=['lg'], display_name='Icon bar', attrs__href='/icon_bar/'),
-                g=Action.icon('icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'),
             )
 
     rows = [Struct(foo="foo")]
@@ -198,6 +192,4 @@ def test_actions():
             <a href="/bar/"> Bar </a>
 
             <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
-            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
-            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
         </div>""")

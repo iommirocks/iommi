@@ -133,16 +133,11 @@ class Action(Fragment):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        icon_classes=[],
-    )
-    def icon(cls, icon, *, display_name=None, call_target=None, icon_classes=None, **kwargs):
-        icon_classes_str = ' '.join(['fa-' + icon_class for icon_class in icon_classes]) if icon_classes else ''
-        if icon_classes_str:
-            icon_classes_str = ' ' + icon_classes_str
+    @class_shortcut()
+    def icon(cls, icon, *, display_name=None, call_target=None, **kwargs):
         setdefaults_path(
             kwargs,
-            display_name=format_html('<i class="fa fa-{}{}"></i> {}', icon, icon_classes_str, display_name),
+            display_name=format_html('<i class="fa fa-{}"></i> {}', icon, display_name),
         )
         return call_target(**kwargs)
 
