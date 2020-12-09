@@ -87,6 +87,7 @@ from tests.helpers import (
 from tests.models import (
     Bar,
     BooleanFromModelTestModel,
+    ChoicesModel,
     TBar,
     TBaz,
     TFoo,
@@ -2531,3 +2532,12 @@ def test_time_parse():
 )
 def test_find_prefixes(attributes, result):
     assert find_unique_prefixes(attributes) == result
+
+
+@pytest.mark.django_db
+def test_choices_in_char_field_model():
+    form = Form.edit(auto__model=ChoicesModel).bind(request=req('get'))
+    assert form.fields.color.choices == [x[0] for x in ChoicesModel.CHOICES]
+
+    value, display_name = ChoicesModel.CHOICES[0]
+    assert form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == display_name
