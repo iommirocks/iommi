@@ -1690,7 +1690,7 @@ def test_render():
                 <input id="id_bar" name="bar" type="text" value="">
             </div>
             <div class="links">
-                <input accesskey="s" name="-submit" type="submit" value="Submit">
+                <button accesskey="s" name="-submit">Submit</button>
             </div>
         </form>
     """
@@ -1747,13 +1747,7 @@ def test_action_render():
 
 def test_action_submit_render():
     action = Action.submit(display_name='Title').bind(request=req('get'))
-    assert action.__html__().strip() == '<input accesskey="s" name="-" type="submit" value="Title">'
-
-    action = Action.submit(attrs__value='Title').bind(request=req('get'))
-    assert action.__html__().strip() == '<input accesskey="s" name="-" type="submit" value="Title">'
-
-    action = Action.submit(attrs__value='Title', template='test_action_render.html').bind(request=req('get'))
-    assert action.__html__().strip() == 'tag=input display_name=Submit accesskey="s" name="-" type="submit" value="Title"'
+    assert action.__html__().strip() == '<button accesskey="s" name="-">Title</button>'
 
 
 def test_action_repr():
@@ -2477,7 +2471,7 @@ def test_create_or_edit_object_full_template_1():
                 </div>
             </div>
             <div class="links">
-                <input accesskey="s" name="create" type="submit" value="Create" name="-submit">
+                <button accesskey="s" name="-submit">Create</button>
             </div>
         </form>
     </body>

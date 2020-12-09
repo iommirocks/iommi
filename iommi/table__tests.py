@@ -790,7 +790,7 @@ def test_bulk_edit():
         request=req('get'),
     ).__html__()
     assert '<form action="" enctype="multipart/form-data" method="post">' in result, result
-    assert '<input accesskey="s" name="-bulk/submit" type="submit" value="Bulk change">' in result, result
+    assert '<button accesskey="s" name="-bulk/submit">Bulk change</button>' in result, result
 
     def post_bulk_edit(table, queryset, updates, **_):
         assert isinstance(table, TestTable)
@@ -961,7 +961,7 @@ def test_bulk_custom_action_on_list():
         bulk__actions__my_handler=Action.submit(post_handler=my_handler)
     )
     expected_html = """<div class="links">
-         <input accesskey="s" name="-my_handler" type="submit" value="Submit">
+         <button accesskey="s" name="-my_handler">Submit</button>
     </div>"""
     verify_table_html(table=table.bind(request=req('get')), expected_html=expected_html, find=dict(class_="links"))
     response = table.bind(request=req('post', pk_1='on', **{'-my_handler': ''})).render_to_response()

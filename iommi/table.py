@@ -1085,7 +1085,7 @@ def bulk_delete__post_handler(table, form, **_):
                 actions__delete=dict(
                     attrs__name=table.bulk.actions.delete.attrs.name,
                     call_target__attribute='delete',
-                    attrs__value='Yes, delete all!',
+                    display_name='Yes, delete all!',
                     include=True,
                 ),
             ),
