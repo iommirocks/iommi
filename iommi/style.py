@@ -38,6 +38,10 @@ def get_iommi_style_name(obj: Any) -> str:
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
 
+def get_iommi_style(obj: Any) -> 'Style':
+    return get_style(get_iommi_style_name(obj))
+
+
 def apply_style(style_name: str, obj: Any, is_root) -> Any:
     style_data = get_style_data_for_object(style_name=style_name, obj=obj, is_root=is_root)
     return apply_style_data(style_data, obj)
@@ -77,8 +81,16 @@ class Style:
     @dispatch(
         root=EMPTY,
     )
-    def __init__(self, *bases, base_template=None, content_block=None, assets=None, root=None, **kwargs):
+    def __init__(self, *bases, base_template=None, content_block=None, assets=None, root=None, icon_formatter=None, **kwargs):
         self.name = None
+        self.icon_formatter = icon_formatter
+        if not self.icon_formatter:
+            for base in reversed(bases):
+                if base.icon_formatter:
+                    self.icon_formatter = base.icon_formatter
+                    break
+        if self.icon_formatter is None:
+            self.icon_formatter = lambda **_: ''
 
         self.base_template = base_template
         if not self.base_template:

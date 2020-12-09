@@ -313,16 +313,15 @@ class DataRetrievalMethods(Enum):
     select = auto()
 
 
-def default_icon__cell__format(column, value, **_):
+def default_icon__cell__format(icon_formatter, traversable, value, **_):
     if not value:
         return ''
-    if not column.extra.get('icon', None):
-        return column.display_name
+    if not traversable.extra.get('icon', None):
+        return traversable.display_name
 
-    attrs = column.extra.icon_attrs
-    attrs['class'][column.extra.icon_prefix + column.extra.icon] = True
+    attrs = Attrs(parent=traversable, **traversable.extra.icon_attrs)
 
-    return format_html('<i{}></i> {}', render_attrs(attrs), column.display_name)
+    return format_html('{} {}', icon_formatter(name=traversable.extra.icon, attrs=attrs), traversable.display_name)
 
 
 def foreign_key__sort_key(column, **_):

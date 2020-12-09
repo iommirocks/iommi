@@ -27,6 +27,7 @@ from iommi.evaluate import (
 )
 from iommi.style import (
     apply_style,
+    get_iommi_style,
     get_iommi_style_name,
 )
 
@@ -150,6 +151,8 @@ class Traversable(RefinableObject):
         }
         if parent is None:
             evaluate_parameters['request'] = request
+            evaluate_parameters['icon_formatter'] = get_iommi_style(result).icon_formatter
+
         result._evaluate_parameters = evaluate_parameters
 
         if hasattr(result, 'include'):

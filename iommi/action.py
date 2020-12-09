@@ -37,6 +37,15 @@ from iommi.traversable import (
 from iommi.reinvokable import reinvokable
 
 
+def default_icon__display_name(icon_formatter, traversable, **_):
+    if not traversable.extra.get('icon', None):
+        return traversable.display_name
+
+    attrs = Attrs(parent=traversable, **traversable.extra.icon_attrs)
+
+    return format_html('{} {}', icon_formatter(name=traversable.extra.icon, attrs=traversable.extra.icon_attrs), traversable.extra.display_name)
+
+
 @with_meta
 class Action(Fragment):
     """
@@ -133,11 +142,15 @@ class Action(Fragment):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut()
+    @class_shortcut(
+        extra__icon_attrs=EMPTY,
+    )
     def icon(cls, icon, *, display_name=None, call_target=None, **kwargs):
         setdefaults_path(
             kwargs,
-            display_name=format_html('<i class="fa fa-{}"></i> {}', icon, display_name),
+            extra__icon=icon,
+            extra__display_name=display_name,
+            display_name=default_icon__display_name,
         )
         return call_target(**kwargs)
 

@@ -171,12 +171,13 @@ This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious
 
 .. code:: python
 
-    request        WSGIRequest
-    table          Table
-    column         Column
-    traversable    Column
-    value          str
-    row            Artist
+    request          WSGIRequest
+    table            Table
+    column           Column
+    traversable      Column
+    value            str
+    row              Artist
+    icon_formatter   function
 
 .. test
 
