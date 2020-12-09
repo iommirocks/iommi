@@ -157,15 +157,15 @@ def value_to_str_for_query(filter, v):
     return to_string_surrounded_by_quote(v)
 
 
-def build_query_expression(*, field, filter, value):
+def build_query_expression(*, filter, value):
     if isinstance(value, Model):
         try:
             # We ignore the return value on purpose here. We are after the raise.
             get_search_fields(model=type(value))
         except NoRegisteredSearchFieldException:
-            return f'{field._name}.pk={value.pk}'
+            return f'{filter.query_name}.pk={value.pk}'
 
-    return f'{field._name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
+    return f'{filter.query_name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
 
 
 def case_sensitive_query_operator_to_q_operator(op):
@@ -229,6 +229,7 @@ class Filter(Part):
     search_fields = Refinable()
     unary = Refinable()
     is_valid_filter = Refinable()
+    query_name = EvaluatedRefinable()
 
     @reinvokable
     @dispatch(
@@ -239,6 +240,7 @@ class Filter(Part):
         # TODO: this isn't right, freetext can be a callable
         field__include=lambda query, field, **_: not query.filters._declared_members.get(field._name, Struct(freetext=False)).freetext,
         is_valid_filter=default_filter__is_valid_filter,
+        query_name=lambda filter, **_: filter.iommi_name(),
     )
     def __init__(self, **kwargs):
         """
@@ -744,6 +746,11 @@ class Query(Part):
 
         self.form_container = self.form_container.bind(parent=self)
 
+        self.filter_name_by_query_name = {
+            x.query_name: name
+            for name, x in items(self.filters)
+        }
+
     @staticmethod
     @refinable
     def filter(query, rows, **_):
@@ -900,10 +907,22 @@ class Query(Part):
         Convert a parsed token of filter_name OPERATOR filter_name into a Q object
         """
         assert self._is_bound
-        filter_name, op, value_string_or_filter_name = token
+        query_name, op, value_string_or_filter_name = token
 
-        if filter_name.endswith('.pk'):
-            filter = self.filters.get(filter_name.lower()[:-len('.pk')])
+        pk_lookup = False
+        if query_name.endswith('.pk'):
+            query_name = query_name[:-len('.pk')]
+            pk_lookup = True
+
+        filter_name = self.filter_name_by_query_name.get(query_name)
+        if filter_name is None:
+            raise QueryException(f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}')
+
+        filter = self.filters.get(filter_name.lower())
+        if filter is None:
+            raise QueryException(f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}')
+
+        if pk_lookup:
             if op != '=':
                 raise QueryException('Only = is supported for primary key lookup')
 
@@ -914,20 +933,17 @@ class Query(Part):
 
             return Q(**{f'{filter.attr}__pk': pk})
 
-        filter = self.filters.get(filter_name.lower())
-        if filter:
-            if isinstance(value_string_or_filter_name, str) and not isinstance(value_string_or_filter_name, StringValue) and value_string_or_filter_name.lower() in self.filters:
-                value_string_or_f = F(self.filters[value_string_or_filter_name.lower()].attr)
-            else:
-                value_string_or_f = value_string_or_filter_name
-            try:
-                result = filter.value_to_q(filter=filter, op=op, value_string_or_f=value_string_or_f)
-            except ValidationError as e:
-                raise QueryException(f'{e.message}')
-            if result is None:
-                raise QueryException(f'Unknown value "{value_string_or_f}" for filter "{filter._name}"')
-            return result
-        raise QueryException(f'Unknown filter "{filter_name}", available filters: {list(keys(self.filters))}')
+        if isinstance(value_string_or_filter_name, str) and not isinstance(value_string_or_filter_name, StringValue) and value_string_or_filter_name.lower() in self.filters:
+            value_string_or_f = F(self.filters[value_string_or_filter_name.lower()].attr)
+        else:
+            value_string_or_f = value_string_or_filter_name
+        try:
+            result = filter.value_to_q(filter=filter, op=op, value_string_or_f=value_string_or_f)
+        except ValidationError as e:
+            raise QueryException(f'{e.message}')
+        if result is None:
+            raise QueryException(f'Unknown value "{value_string_or_f}" for filter "{query_name}"')
+        return result
 
     def _freetext_to_q(self, token):
         if all(not v.freetext for v in values(self.filters)):
@@ -960,7 +976,7 @@ class Query(Part):
             def expr(field, is_list, value):
                 if is_list:
                     return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value]) + ')'
-                return build_query_expression(field=field, filter=self.filters[field._name], value=value)
+                return build_query_expression(filter=self.filters[field._name], value=value)
 
             result = [
                 expr(field, field.is_list, field.value)
@@ -973,7 +989,7 @@ class Query(Part):
                 if freetext:
                     result.append(
                         '(%s)' % ' or '.join([
-                            f'{filter._name}:{to_string_surrounded_by_quote(freetext)}'
+                            f'{filter.query_name}:{to_string_surrounded_by_quote(freetext)}'
                             for filter in values(self.filters)
                             if filter.freetext]
                         )

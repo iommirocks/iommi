@@ -751,3 +751,10 @@ def test_error_message_when_trying_freetext_via_advanced_query_when_no_freetext_
         query.parse_query_string('"freetext"')
 
     assert str(e.value) == 'There are no freetext filters available'
+
+
+def test_custom_query_name(MyTestQuery):
+    query = MyTestQuery(filters__foo_name__query_name='bar').bind(request=None)
+    assert repr(query.parse_query_string('bar=7')) == repr(Q(**{'foo__iexact': '7'}))
+    assert repr(query.parse_query_string('bar.pk=7')) == repr(Q(**{'foo__pk': 7}))
+
