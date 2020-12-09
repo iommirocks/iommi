@@ -47,7 +47,6 @@ def setup_db_compat_django():
         UUIDField,
     )
 
-    # The order here is significant because of inheritance structure. More specific must be below less specific.
     def char_field_factory(model_field, **_):
         if not model_field.choices:
             return Shortcut(call_target__attribute='text')
@@ -60,6 +59,7 @@ def setup_db_compat_django():
             choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice]
         )
 
+    # The order here is significant because of inheritance structure. More specific must be below less specific.
     register_factory(CharField, factory=char_field_factory)
     register_factory(UUIDField, shortcut_name='text')
     register_factory(TimeField, shortcut_name='time')
