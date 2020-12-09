@@ -1381,7 +1381,7 @@ class Form(Part):
             if self.attr is MISSING:
                 self.attr = self._name
             if self.instance is None and self.parent_form.instance is not None:
-                self.instance = getattr(self.parent_form.instance, self.attr)
+                self.instance = getattr_path(self.parent_form.instance, self.attr)
         else:
             assert self.attr is MISSING, "Set Form.attr only if the form is nested in another form."
 
