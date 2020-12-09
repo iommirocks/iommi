@@ -1979,7 +1979,7 @@ class Table(Part, Tag):
     def selection(self):
         """Return the selected rows.
 
-           For use in post_handlers. It's a queryset if rows is a querset and a list otherwise.
+           For use in post_handlers. It's a queryset if rows is a queryset and a list otherwise.
            Unlike bulk_queryset neither bulk_filter nor bulk_exclude are applied.
         """
         identifiers = self._selection_identifiers()
@@ -1994,7 +1994,7 @@ class Table(Part, Tag):
                 return [row for ndx, row in enumerate(self.visible_rows) if ndx in identifiers]
 
     def bulk_queryset(self):
-        """Return the querset that contains only the selected rows with
+        """Return the queryset that contains only the selected rows with
            bulk_filter and bulk_exclude applied.
 
            For use in post_handlers.  Only valid when rows was a queryset.

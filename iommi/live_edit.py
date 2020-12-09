@@ -42,8 +42,9 @@ class Middleware:
 
 
 def find_function(*, name, node):
-    if getattr(node, 'name', Struct(value=None)).value == name:
-        return node
+    if node.type == 'funcdef':
+        if getattr(node, 'name', Struct(value=None)).value == name:
+            return node
     for child_node in getattr(node, 'children', []):
         r = find_function(node=child_node, name=name)
         if r is not None:
@@ -62,6 +63,9 @@ def live_edit_view(request, view_func):
     is_unix_line_endings = '\r\n' not in entire_file
 
     ast_of_old_code = find_function(name=view_func.__name__, node=ast_of_entire_file)
+
+    flow_direction = request.GET.get('_iommi_live_edit') or 'column'
+    assert flow_direction in ('column', 'row')
 
     if request.method == 'POST':
         try:
@@ -123,35 +127,29 @@ def live_edit_view(request, view_func):
 
             html,
             body {
-              height: 100%;
-              margin: 0;
+                height: 100%;
+                margin: 0;
             }
 
             .container {
-              display: flex;
-              flex-flow: column;
-              height: 100%;
+                display: flex;
+                flex-flow: <<flow_direction>>;
+                height: 100%;
             }
 
             .container iframe {
-              flex: 5 1 auto;
+                flex: 1 1 auto;
             }
-            .container div {
-              flex: 1 1 auto;
+            .container #editor {
+                flex: 2 1 auto;
             }
-            nav {
-                display: none;
-            }
-            '''
+            '''.replace('<<flow_direction>>', flow_direction)
         ),
 
-        parts__result=html.iframe(attrs__id='result', attrs__style=dict(width='100%', height='400px')),
+        parts__result=html.iframe(attrs__id='result'),
         parts__editor=html.div(
             ast_of_old_code.get_code(),
-            attrs=dict(
-                style__height='500px',
-                id='editor',
-            ),
+            attrs__id='editor',
         ),
 
         parts__script=html.script(mark_safe('''
@@ -181,6 +179,7 @@ def live_edit_view(request, view_func):
             });
             let foo = await response.json();
             if (foo.page) {
+                // TODO: get scroll position and restore it
                 document.getElementById('result').srcdoc = foo.page;
             }
         }
@@ -192,6 +191,7 @@ def live_edit_view(request, view_func):
 
         editor.session.on('change', foo);
         editor.setFontSize(14);
+        editor.session.setUseWrapMode(true);
         
         foo();
         ''')),

@@ -151,7 +151,12 @@ bootstrap_base = Style(
             'bg-primary': False,
             'navbar': False,
             'navbar-dark': False,
-        }
+        },
+        items_container__attrs__class={
+            'pl-0': True,
+            'mb-0': True,
+            'small': True,
+        },
     ),
     Admin=dict(
         parts__menu=dict(
