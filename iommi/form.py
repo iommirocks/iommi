@@ -1,4 +1,5 @@
 import re
+import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from decimal import (
@@ -241,26 +242,9 @@ def choice_is_valid(field, parsed_data, **_):
     return parsed_data in field.choices, f'{parsed_data} not in available choices'
 
 
-def choice_choice_to_option(form, field, choice):
-    del form
-    return (
-        choice,
-        "%s" % choice,
-        "%s" % choice,
-        (
-            choice == field.value
-            if not field.is_list
-            else (
-                    field.value is not None
-                    and choice in field.value
-            )
-        )
-    )
-
-
 def choice_parse(form, field, string_value):
     for c in field.choices:
-        option = field.choice_to_option(form=form, field=field, choice=c)
+        option = field._choice_to_option_shim(form=form, field=field, choice=c)
         if option[1] == string_value:
             return option[0]
 
@@ -302,7 +286,7 @@ def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
 def choice_queryset__extra__model_from_choices(form, field, choices):
     def traverse():
         for choice in choices:
-            option = field.choice_to_option(form=form, field=field, choice=choice)
+            option = field._choice_to_option_shim(form=form, field=field, choice=choice)
             yield Struct(
                 id=option[1],
                 text=option[2],
@@ -338,22 +322,6 @@ def choice_queryset__parse(field, string_value, **_):
         return field.choices.get(pk=string_value) if string_value else None
     except field.model.DoesNotExist as e:
         raise ValidationError(str(e))
-
-
-def choice_queryset__choice_to_option(field, choice, **_):
-    return (
-        choice,
-        choice.pk,
-        "%s" % choice,
-        (
-            choice == field.value
-            if not field.is_list
-            else (
-                    field.value is not None
-                    and choice in field.value
-            )
-        )
-    )
 
 
 datetime_iso_formats = [
@@ -521,13 +489,16 @@ class Field(Part):
     strip_input: bool = EvaluatedRefinable()
 
     choices: Callable[..., List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
-    choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()
+    choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()  # deprecated, replaced by the two below:
+    choice_id_formatter: Callable[..., str] = Refinable()
+    choice_display_name_formatter: Callable[..., str] = Refinable()
     choice_to_optgroup: Optional[Callable[..., Optional[str]]] = Refinable()
+    empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()  # deprecated: the formatters should be able to handle None
+
     search_fields = Refinable()
     errors: Errors = Refinable()
 
     empty_label: str = EvaluatedRefinable()
-    empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()
 
     @reinvokable
     @dispatch(
@@ -556,6 +527,8 @@ class Field(Part):
         non_editable_input__attrs__type=None,
         initial=MISSING,
         choice_to_optgroup=None,
+        choice_id_formatter=lambda choice, **_: '%s' % choice,
+        choice_display_name_formatter=lambda choice, **_: '%s' % choice,
     )
     def __init__(self, **kwargs):
         """
@@ -587,7 +560,7 @@ class Field(Part):
         :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False``
         :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
-        :param choice_to_option: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
+        :param choice_to_option: DEPRECATED: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
         :param choice_to_optgroup Callback to generate the optgroup for the given choice.  It will get the keywoard argument `choice`. It should return None if the choice should not be grouped.
         """
 
@@ -846,6 +819,24 @@ class Field(Part):
             return self.raw_data
         return self.render_value(form=self.form, field=self, value=self.value)
 
+    def _choice_to_option_shim(self, form, field, choice):
+        if self.choice_to_option is not None:
+            warnings.warn('Field.choice_to_option is deprecated. It was too complicated and did too much, and has been replaced with choice_id_formatter, choice_display_name_formatter, and choice_is_selected. You normally just want to override choice_display_name_formatter and leave the others as their default.', category=DeprecationWarning)
+            return self.choice_to_option(form=form, field=field, choice=choice)
+
+        if not field.is_list:
+            is_selected = choice == field.value
+        else:
+            is_selected = field.value is not None and choice in field.value
+
+        # The legacy structure is `(choice, id, display_name, is_selected)`
+        return (
+            choice,
+            self.choice_id_formatter(choice=choice, **self.iommi_evaluate_parameters()),
+            self.choice_display_name_formatter(choice=choice, **self.iommi_evaluate_parameters()),
+            is_selected,
+        )
+
     @property
     def choice_to_options_selected(self):
         if self.value is None:
@@ -853,11 +844,11 @@ class Field(Part):
 
         if self.is_list:
             return [
-                self.choice_to_option(form=self.form, field=self, choice=v)
+                self._choice_to_option_shim(form=self.form, field=self, choice=v)
                 for v in self.value
             ]
         else:
-            return [self.choice_to_option(form=self.form, field=self, choice=self.value)]
+            return [self._choice_to_option_shim(form=self.form, field=self, choice=self.value)]
 
     @property
     def choice_tuples(self):
@@ -865,7 +856,7 @@ class Field(Part):
         if not self.required and not self.is_list:
             result.append(self.empty_choice_tuple + (0,))
         for i, choice in enumerate(self.choices):
-            result.append(self.choice_to_option(form=self.form, field=self, choice=choice) + (i + 1,))
+            result.append(self._choice_to_option_shim(form=self.form, field=self, choice=choice) + (i + 1,))
 
         return result
 
@@ -994,7 +985,6 @@ class Field(Part):
         is_list=False,
         empty_label='---',
         is_valid=choice_is_valid,
-        choice_to_option=choice_choice_to_option,
         input__attrs__multiple=lambda field, **_: True if field.is_list else None,
         parse=choice_parse,
     )
@@ -1016,12 +1006,8 @@ class Field(Part):
     @class_shortcut(
         call_target__attribute="choice",
         choices=[True, False],
-        choice_to_option=lambda form, field, choice, **_: (
-                choice,
-                'true' if choice else 'false',
-                'Yes' if choice else 'No',
-                choice == field.value,
-        ),
+        choice_id_formatter=lambda choice, **_: 'true' if choice else 'false',
+        choice_display_name_formatter=lambda choice, **_: 'Yes' if choice else 'No',
         parse=boolean_tristate__parse,
         required=False,
     )
@@ -1032,7 +1018,7 @@ class Field(Part):
     @class_shortcut(
         call_target__attribute="choice",
         parse=choice_queryset__parse,
-        choice_to_option=choice_queryset__choice_to_option,
+        choice_id_formatter=lambda choice, **_: choice.pk,
         endpoints__choices__func=choice_queryset__endpoint_handler,
         is_valid=choice_queryset__is_valid,
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,

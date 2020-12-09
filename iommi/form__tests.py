@@ -53,7 +53,6 @@ from iommi.endpoint import (
 )
 from iommi.form import (
     bool_parse,
-    choice_choice_to_option,
     create_or_edit_object_redirect,
     datetime_iso_formats,
     datetime_parse,
@@ -2083,28 +2082,6 @@ def test_shortcut_to_subclass():
     field = MyField.choice(choices=[])
     assert isinstance(field, MyField)
     assert field.empty_label == '---'
-
-
-def test_multi_choice_choice_to_option():
-    form = Struct()
-    field = Struct(
-        value=[1, 2],
-        is_list=True,
-    )
-    assert choice_choice_to_option(form, field, 1) == (1, '1', '1', True)
-    assert choice_choice_to_option(form, field, 2) == (2, '2', '2', True)
-    assert choice_choice_to_option(form, field, 3) == (3, '3', '3', False)
-
-
-def test_multi_choice_choice_to_option_empty_values():
-    form = Struct()
-    field = Struct(
-        value=[],
-        is_list=True,
-    )
-    assert choice_choice_to_option(form, field, 1) == (1, '1', '1', False)
-    assert choice_choice_to_option(form, field, 2) == (2, '2', '2', False)
-    assert choice_choice_to_option(form, field, 3) == (3, '3', '3', False)
 
 
 def test_multi_choice_choice_tuples():
