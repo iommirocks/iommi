@@ -232,3 +232,8 @@ class SortKeyOnForeignKeyA(models.Model):
 
 class SortKeyOnForeignKeyB(models.Model):
     remote = models.ForeignKey(SortKeyOnForeignKeyA, on_delete=models.CASCADE)
+
+
+class ChoicesModel(models.Model):
+    CHOICES = [('purple', 'Purple'), ('orange', 'Orange')]
+    color = models.CharField(choices=CHOICES, max_length=255)
