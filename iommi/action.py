@@ -53,7 +53,7 @@ class Action(Fragment):
         Action.icon('edit', attrs__href="edit/")
 
         # Button
-        Action.button(attrs__value='Button title!')
+        Action.button(display_name='Button title!')
 
         # A submit button
         Action.submit(display_name='Do this')
@@ -62,11 +62,6 @@ class Action(Fragment):
         # most of the time as a form includes a submit
         # button by default.
         Action.primary()
-
-        # A button styled as primary but not using
-        # the submit html element, but the button
-        # element.
-        Action.primary(call_target__attribute='button')
 
     """
 
@@ -87,6 +82,8 @@ class Action(Fragment):
                 attrs.value = display_name
         else:
             children['text'] = display_name
+            if tag == 'button' and 'value' in attrs:
+                assert False, 'You passed attrs__value, but you should pass display_name'
         super().__init__(tag=tag, attrs=attrs, children=children, display_name=display_name, **kwargs)
 
     def on_bind(self):
@@ -114,8 +111,6 @@ class Action(Fragment):
     @classmethod
     @class_shortcut(
         call_target__attribute='button',
-        tag='input',
-        attrs__type='submit',
         attrs__accesskey='s',
         attrs__name=lambda action, **_: action.own_target_marker(),
         display_name=gettext_lazy('Submit'),

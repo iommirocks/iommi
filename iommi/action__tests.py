@@ -76,7 +76,7 @@ def test_render_button():
 def test_render_submit():
     submit = Action.submit(display_name='Do it').bind()
     assert_renders(submit, '''
-       <input accesskey="s" name="-" type="submit" value="Do it"/>
+       <button accesskey="s" name="-">Do it</button>
     ''')
 
 
@@ -127,7 +127,7 @@ def test_template():
 
 
 def test_delete_action():
-    assert Action.delete().bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="Submit">'
+    assert Action.delete().bind(request=None).__html__() == '<button accesskey="s" name="-">Submit</button>'
 
 
 def test_icon_action():
@@ -139,11 +139,7 @@ def test_icon_action_with_icon_classes():
 
 
 def test_display_name_to_value_attr():
-    assert Action.delete(display_name='foo').bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="foo">'
-
-
-def test_display_name_to_value_attr_but_attr_overrides():
-    assert Action.delete(display_name='foo', attrs__value='bar').bind(request=None).__html__() == '<input accesskey="s" name="-" type="submit" value="bar">'
+    assert Action.delete(display_name='foo').bind(request=None).__html__() == '<button accesskey="s" name="-">foo</button>'
 
 
 def test_lambda_tag():

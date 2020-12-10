@@ -275,7 +275,7 @@ def test_reinvokable_new_defaults_recurse():
     assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
 
 
-@pytest.mark.skip('Broken since there is no way to set things on the countainer of Action')
+@pytest.mark.skip('Broken since there is no way to set things on the container of Action')
 def test_set_class_on_actions_container():
     t = Table()
     style_data = Namespace(
