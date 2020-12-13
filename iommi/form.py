@@ -170,7 +170,7 @@ def find_unique_prefixes(attributes):
         prefix, _, _ = attribute.rpartition('__')
         parts = prefix.split('__')
         for i in range(len(parts)):
-            result.add(tuple(parts[:i+1]))
+            result.add(tuple(parts[:i + 1]))
     return ['__'.join(p) for p in sorted(sorted(result), key=len)]
 
 
@@ -255,7 +255,7 @@ def choice_parse(form, field, string_value):
 
 
 def choice_queryset__is_valid(field, parsed_data, **_):
-    return field.choices.filter(pk=parsed_data.pk).exists(), f'{field.raw_data or ", ".join(field.raw_data_list)} not in available choices'
+    return field.choices.filter(pk=parsed_data.pk).exists(), f'{", ".join(field.raw_data) if field.is_list else field.raw_data} not in available choices'
 
 
 def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
@@ -449,7 +449,7 @@ class Field(Part):
     See :doc:`Form` for more complete examples.
 
     The life cycle of the data is:
-        1. `raw_data`/`raw_data_list`: will be set if the corresponding key is present in the HTTP request
+        1. `raw_data`: will be set if the corresponding key is present in the HTTP request
         2. `parsed_data`: set if parsing is successful, which only happens if the previous step succeeded
         3. `value`: set if validation is successful, which only happens if the previous step succeeded
 
@@ -462,7 +462,6 @@ class Field(Part):
     # raw_data/raw_data contains the strings grabbed directly from the request data
     # It is useful that they are evaluated for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
     raw_data: str = Refinable()  # raw_data is evaluated, but in a special way
-    raw_data_list: List[str] = Refinable()  # raw_data_list is evaluated, but in a special way
 
     parse_empty_string_as_none: bool = EvaluatedRefinable()
     # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
@@ -488,12 +487,14 @@ class Field(Part):
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
 
-    choices: Callable[..., List[Any]] = Refinable()  # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
+    # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
+    choices: Callable[..., List[Any]] = Refinable()
     choice_to_option: Callable[..., Tuple[Any, str, str, bool]] = Refinable()  # deprecated, replaced by the two below:
     choice_id_formatter: Callable[..., str] = Refinable()
     choice_display_name_formatter: Callable[..., str] = Refinable()
     choice_to_optgroup: Optional[Callable[..., Optional[str]]] = Refinable()
-    empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()  # deprecated: the formatters should be able to handle None
+    # deprecated: the formatters should be able to handle None
+    empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()
 
     search_fields = Refinable()
     errors: Errors = Refinable()
@@ -703,12 +704,12 @@ class Field(Part):
         if not self.editable:
             return
 
-        if self.form.mode is INITIALS_FROM_GET and self.raw_data is None and self.raw_data_list is None:
+        if self.form.mode is INITIALS_FROM_GET and self.raw_data is None:
             return
 
         if self.is_list:
-            if self.raw_data_list is not None:
-                self.parsed_data = [self._parse_raw_value(x) for x in self.raw_data_list]
+            if self.raw_data is not None:
+                self.parsed_data = [self._parse_raw_value(x) for x in self.raw_data]
             else:
                 self.parsed_data = None
         elif self.is_boolean:
@@ -732,7 +733,7 @@ class Field(Part):
 
     def _validate(self):
         form = self.form
-        if (not self.editable) or (form.mode is INITIALS_FROM_GET and self.raw_data is None and not self.raw_data_list):
+        if (not self.editable) or (form.mode is INITIALS_FROM_GET and (self.raw_data is None or (self.raw_data == [] and self.is_list))):
             self.value = self.initial
             return
 
@@ -778,28 +779,25 @@ class Field(Part):
         if self.raw_data is not None:
             self.raw_data = evaluate_strict(self.raw_data, **self.iommi_evaluate_parameters())
             return
-        if self.raw_data_list is not None:
-            self.raw_data_list = evaluate_strict(self.raw_data_list, **self.iommi_evaluate_parameters())
-            return
 
         form = self.form
 
         if self.is_list:
-            if self.raw_data_list is not None:
+            if self.raw_data is not None:
                 return
             try:
                 # django and similar
                 # noinspection PyUnresolvedReferences
-                raw_data_list = form._request_data.getlist(self.iommi_path)
+                raw_data = form._request_data.getlist(self.iommi_path)
             except AttributeError:  # pragma: no cover
                 # werkzeug and similar
-                raw_data_list = form._request_data.get(self.iommi_path)
+                raw_data = form._request_data.get(self.iommi_path)
 
-            if raw_data_list and self.strip_input:
-                raw_data_list = [x.strip() for x in raw_data_list]
+            if raw_data and self.strip_input:
+                raw_data = [x.strip() for x in raw_data]
 
-            if raw_data_list is not None:
-                self.raw_data_list = raw_data_list
+            if raw_data is not None:
+                self.raw_data = raw_data
         else:
             if self.raw_data is not None:
                 return
@@ -1035,7 +1033,8 @@ class Field(Part):
 
         setdefaults_path(
             kwargs,
-            choices=(lambda form, **_: choices.all()) if isinstance(choices, QuerySet) else choices,  # clone the QuerySet if needed
+            choices=(lambda form, **_: choices.all()) if isinstance(choices,
+                                                                    QuerySet) else choices,  # clone the QuerySet if needed
         )
 
         return call_target(**kwargs)
@@ -1328,7 +1327,8 @@ class Form(Part):
             )
             instance = auto.instance
             if title is MISSING and auto.type is not None:
-                title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(crud_type=gettext(auto.type), model_name=model._meta.verbose_name))
+                title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(
+                    crud_type=gettext(auto.type), model_name=model._meta.verbose_name))
 
                 setdefaults_path(
                     actions,
