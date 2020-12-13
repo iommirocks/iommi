@@ -776,15 +776,15 @@ class Field(Part):
             self.initial = None
 
     def _read_raw_data(self):
+        # The client might have refined raw_data.  If so evaluate it.
         if self.raw_data is not None:
             self.raw_data = evaluate_strict(self.raw_data, **self.iommi_evaluate_parameters())
             return
 
+        # Otherwise get it from the request
         form = self.form
 
         if self.is_list:
-            if self.raw_data is not None:
-                return
             try:
                 # django and similar
                 # noinspection PyUnresolvedReferences
@@ -799,8 +799,6 @@ class Field(Part):
             if raw_data is not None:
                 self.raw_data = raw_data
         else:
-            if self.raw_data is not None:
-                return
             self.raw_data = form._request_data.get(self.iommi_path)
             if self.raw_data and self.strip_input:
                 self.raw_data = self.raw_data.strip()
