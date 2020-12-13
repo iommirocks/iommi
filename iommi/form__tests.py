@@ -200,12 +200,12 @@ def test_custom_raw_data():
 def test_custom_raw_data_list():
     # This is useful for example when doing file upload. In that case the data is on request.FILES, not request.POST so we can use this to grab it from there
 
-    def my_form_raw_data_list(**_):
+    def my_form_raw_data(**_):
         return ['this is custom raw data list']
 
     class MyForm(Form):
         foo = Field(
-            raw_data_list=my_form_raw_data_list,
+            raw_data=my_form_raw_data,
             is_list=True,
         )
 
@@ -261,7 +261,7 @@ def test_parse(MyTestForm):
     assert form.fields['admin'].parsed_data is False
     assert form.fields['admin'].value is False
 
-    assert form.fields['manages'].raw_data_list == ['DEF', 'KTH']
+    assert form.fields['manages'].raw_data == ['DEF', 'KTH']
     assert form.fields['manages'].parsed_data == ['DEF', 'KTH']
     assert form.fields['manages'].value == ['DEF', 'KTH']
 
@@ -273,7 +273,7 @@ def test_parse(MyTestForm):
     assert form.fields['a_time'].parsed_data == time(1, 2, 3)
     assert form.fields['a_time'].value == time(1, 2, 3)
 
-    assert form.fields['multi_choice_field'].raw_data_list == ['a', 'b']
+    assert form.fields['multi_choice_field'].raw_data == ['a', 'b']
     assert form.fields['multi_choice_field'].parsed_data == ['a', 'b']
     assert form.fields['multi_choice_field'].value == ['a', 'b']
     assert form.fields['multi_choice_field'].is_list
@@ -352,7 +352,7 @@ def test_parse_errors(MyTestForm):
     assert form.fields['a_time'].parsed_data is None
     assert form.fields['a_time'].value is None
 
-    assert form.fields['multi_choice_field'].raw_data_list == ['q']
+    assert form.fields['multi_choice_field'].raw_data == ['q']
     assert_one_error_and_matches_reg_exp(form.fields['multi_choice_field']._errors, "q not in available choices")
     assert form.fields['multi_choice_field'].parsed_data == ['q']
     assert form.fields['multi_choice_field'].value is None
@@ -1270,7 +1270,7 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             assert not form.get_errors(), 'input: %s' % raw
             f = form.fields.foo
             if f.is_list:
-                assert f.raw_data_list == raw
+                assert f.raw_data == raw
                 assert f.value == initial
                 if initial:
                     assert [type(x) for x in f.value] == [type(x) for x in initial]
