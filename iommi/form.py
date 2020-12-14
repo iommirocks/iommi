@@ -662,12 +662,15 @@ class Field(Part):
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
         self._read_initial()
 
-        self._read_raw_data()
+        if not self.editable:
+            self.value = self.initial
+        else:
+            self._read_raw_data()
 
-        self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
-        self._parse()
+            self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
+            self._parse()
 
-        self._validate()
+            self._validate()
 
         self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
@@ -701,9 +704,6 @@ class Field(Part):
         if self.parsed_data is not None:
             return
 
-        if not self.editable:
-            return
-
         if self.form.mode is INITIALS_FROM_GET and self.raw_data is None:
             return
 
@@ -733,7 +733,7 @@ class Field(Part):
 
     def _validate(self):
         form = self.form
-        if (not self.editable) or (form.mode is INITIALS_FROM_GET and (self.raw_data is None or (self.raw_data == [] and self.is_list))):
+        if form.mode is INITIALS_FROM_GET and (self.raw_data is None or (self.raw_data == [] and self.is_list)):
             self.value = self.initial
             return
 
