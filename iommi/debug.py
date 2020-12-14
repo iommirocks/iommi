@@ -1,4 +1,6 @@
 from os.path import (
+    basename,
+    dirname,
     isabs,
     join,
 )
@@ -156,22 +158,34 @@ def src_debug_url_builder(filename, lineno=None):
 
 def filename_and_line_num_from_part(part):
     frame = part._instantiated_at_frame
-    filename = None
-    lineno = None
+
+    import os
+    env_path = dirname(os.__file__)
+
     for _ in range(100):
         frame = frame.f_back
         if frame is None:
             break
         module_name = frame.f_globals.get('__name__')
 
-        if not module_name.startswith('iommi.admin'):
-            base_module_name = module_name.partition('.')[0]
-            if base_module_name in ('tri_declarative', 'iommi', 'django'):
-                continue
-        filename = frame.f_code.co_filename
-        lineno = frame.f_lineno
-        break
-    return filename, lineno
+        if module_name.startswith('iommi.admin'):
+            continue
+
+        if module_name.startswith('_pydev_bundle.'):
+            continue
+
+        base_module_name = module_name.partition('.')[0]
+        if base_module_name in ('tri_declarative', 'iommi', 'django', ):
+            continue
+
+        if frame.f_code.co_filename.startswith(env_path):
+            continue
+
+        if frame.f_code.co_filename == '<string>':
+            continue
+
+        return frame.f_code.co_filename, frame.f_lineno
+    return None, None
 
 
 def iommi_debug_panel(part):
@@ -183,12 +197,10 @@ def iommi_debug_panel(part):
             filename = inspect.getsourcefile(type(part))
             lineno = inspect.getsourcelines(type(part))[-1]
 
-    if filename is None:
-        return ''
-
-    source_url = src_debug_url_builder(filename, lineno)
-    if not source_url:
-        return ''
+    if filename is not None:
+        source_url = src_debug_url_builder(filename, lineno)
+    else:
+        source_url = None
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];

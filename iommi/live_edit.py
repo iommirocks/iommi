@@ -41,6 +41,12 @@ class Middleware:
             return live_edit_view(request, callback)
 
 
+def include_decorators(node):
+    while node.parent.type == 'decorated':
+        node = node.parent
+    return node
+
+
 def find_function(*, name, node):
     if node.type == 'funcdef':
         if getattr(node, 'name', Struct(value=None)).value == name:
@@ -48,7 +54,7 @@ def find_function(*, name, node):
     for child_node in getattr(node, 'children', []):
         r = find_function(node=child_node, name=name)
         if r is not None:
-            return r
+            return include_decorators(r)
     return None
 
 
