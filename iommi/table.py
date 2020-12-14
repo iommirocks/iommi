@@ -1057,7 +1057,7 @@ def bulk__post_handler(table, form, **_):
                 getattr(obj, field.attr).set(field.value)
             obj.save()
 
-    table.post_bulk_edit(table=table, queryset=queryset, updates=updates)
+    table.post_bulk_edit(queryset=queryset, updates=updates, **table.iommi_evaluate_parameters())
 
     return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
@@ -1435,7 +1435,7 @@ class Table(Part, Tag):
 
     @staticmethod
     @refinable
-    def post_bulk_edit(table, queryset, updates):
+    def post_bulk_edit(table, queryset, updates, **_):
         pass
 
     @reinvokable
