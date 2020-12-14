@@ -418,6 +418,9 @@ class Column(Part):
         self.sort_direction: str = None
         self.table = None
 
+    def __html__(self, *, render=None):
+        assert False, "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"
+
     @staticmethod
     @evaluated_refinable
     def sort_key(table, column, **_):
@@ -1054,7 +1057,7 @@ def bulk__post_handler(table, form, **_):
                 getattr(obj, field.attr).set(field.value)
             obj.save()
 
-    table.post_bulk_edit(table=table, queryset=queryset, updates=updates)
+    table.post_bulk_edit(queryset=queryset, updates=updates, **table.iommi_evaluate_parameters())
 
     return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
 
@@ -1379,6 +1382,7 @@ class Table(Part, Tag):
     initial_rows = Refinable()  # initial_rows is evaluated, but in a special way so gets no EvaluatedRefinable type
     columns = Refinable()
     bulk: Optional[Form] = EvaluatedRefinable()
+    bulk_container: Fragment = Refinable()
     superheader: Namespace = Refinable()
     paginator: Paginator = Refinable()
     page_size: int = EvaluatedRefinable()
@@ -1431,7 +1435,7 @@ class Table(Part, Tag):
 
     @staticmethod
     @refinable
-    def post_bulk_edit(table, queryset, updates):
+    def post_bulk_edit(table, queryset, updates, **_):
         pass
 
     @reinvokable
@@ -1466,6 +1470,7 @@ class Table(Part, Tag):
         query=EMPTY,
         bulk__fields=EMPTY,
         bulk__title=gettext_lazy('Bulk change'),
+        bulk_container__call_target=Fragment,
         page_size=DEFAULT_PAGE_SIZE,
 
         endpoints=EMPTY,
@@ -1674,6 +1679,7 @@ class Table(Part, Tag):
 
         self.paginator = paginator()
         self._declared_members['page'] = self.paginator
+        self.bulk_container = self.bulk_container(_name='bulk_container')
 
     @classmethod
     @class_shortcut(
@@ -1768,6 +1774,8 @@ class Table(Part, Tag):
         # visible on the screen.
         self.visible_rows = self.paginator.rows
         self._prepare_auto_rowspan()
+
+        self.bulk_container = self.bulk_container.bind(parent=self)
 
     def _bind_query(self):
         """

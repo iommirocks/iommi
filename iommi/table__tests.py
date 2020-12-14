@@ -853,6 +853,17 @@ def test_bulk_edit_from_model_has_tristate_for_booleans():
 
 
 @pytest.mark.django_db
+def test_bulk_edit_container():
+    t = Table(
+        auto__model=BooleanFromModelTestModel,
+        columns__b__bulk__include=True,
+        bulk_container__tag='megatag',
+        bulk_container__attrs__class__foo=True,
+    ).bind(request=req('get'))
+    assert '<megatag class="foo">' in str(t)
+
+
+@pytest.mark.django_db
 def test_bulk_edit_for_m2m_relations():
     f1 = TFoo.objects.create(a=1, b='a')
     f2 = TFoo.objects.create(a=2, b='b')
