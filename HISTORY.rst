@@ -1,6 +1,44 @@
 Changelog
 ---------
 
+2.7.0 (2020-12-14)
+~~~~~~~~~~~~~~~~~~
+
+* A `Form` can now contain non-`Field` parts. Iterate over everything to render with `form.parts` and all the fields to be validated with `form.fields`. Fields that are not direct children are also collected, so you can easily add extra structure by wrapping a bunch of fields in a `html.div` for example.
+
+* Support Django's `CharField.choices` feature
+
+* You can now customize the name shown in the advanced search via `Filter.query_name`
+
+* Form submit buttons (`Actions.submit`) are now rendered as `<button>` not as `<input type="submit">`.
+
+* Added SQL trace feature
+
+* You can now apply styles on the root object. Example: `root__assets__my_asset=Asset(...)`
+
+* Edit button only present in debug menu when the edit middleware is installed
+
+* Added profile button to debug menu
+
+* Make collected assets more accessible when rendering iommi in your own templating environment: you can now access them on the iommi objects: `my_iommi_obj.iommi_collected_assets()`
+
+* Removed broken validation of sort columns. This validation prevented sorting on annotations which was very confusing as it worked in debug mode
+
+* Make it possible to target the live edit page with styles (via `LiveEditPage`)
+
+* The live edit view can be flipped between horizontal and vertical layouts
+
+* The debug tree view is slimmed down (by not including endpoints and assets on lots of things)
+
+* `Field.raw_data_list` is removed. You can know if it's a list or not by checking `is_list`, so `raw_data` covers the uses cases.
+
+* Include decorators in live edit
+
+* The debug jump to code feature should work for some more scenarios, and it will not display if it has no good guess.
+
+* DEPRECATED: `Field.choice_to_option`. This is replaced by `choice_id_formatter` and `choice_display_name_formatter`
+
+
 2.6.1 (2020-12-01)
 ~~~~~~~~~~~~~~~~~~
 
