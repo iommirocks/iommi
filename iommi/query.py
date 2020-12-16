@@ -336,6 +336,7 @@ class Filter(Part):
         Field that has one value out of a set.
         :type choices: list
         """
+        assert 'choices' in kwargs, 'To use Filter.choice, you must pass the choices list'
         setdefaults_path(kwargs, dict(
             field__choices=kwargs.get('choices'),
         ))

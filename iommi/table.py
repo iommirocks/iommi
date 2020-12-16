@@ -613,6 +613,7 @@ class Column(Part):
         filter__call_target__attribute='choice',
     )
     def choice(cls, call_target=None, **kwargs):
+        assert 'choices' in kwargs, 'To use Column.choice, you must pass the choices list'
         choices = kwargs['choices']
         setdefaults_path(kwargs, dict(
             bulk__choices=choices,

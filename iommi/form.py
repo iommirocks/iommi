@@ -989,7 +989,7 @@ class Field(Part):
         Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
         :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
         """
-        assert 'choices' in kwargs
+        assert 'choices' in kwargs, 'To use Field.choice, you must pass the choices list'
 
         setdefaults_path(
             kwargs,
