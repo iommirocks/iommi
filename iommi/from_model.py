@@ -50,6 +50,11 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
                     definition,
                     call_target__attribute='from_model',
                 )
+            if include is not None and name in include:
+                setdefaults_path(
+                    definition,
+                    include=True,
+                )
 
             member = definition(
                 model=model,
@@ -81,7 +86,7 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
         sub_field_name, _, field_path_rest = model_field_name.partition('__')
 
         # noinspection PyProtectedMember
-        model_field = model._meta.get_field(sub_field_name)
+        model_field = get_field(model, sub_field_name)
 
         if field_path_rest:
             result = member_from_model(
@@ -141,6 +146,9 @@ def get_fields(model: Type[Model]) -> Iterator[DjangoField]:
 
 
 def get_field(model: Type[Model], field_name: str) -> DjangoField:
+    if field_name == 'pk':
+        return model._meta.auto_field
+
     # noinspection PyProtectedMember
     return model._meta.get_field(field_name)
 
@@ -170,8 +178,11 @@ def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
                 current_model = get_field(current_model, part).remote_field.model
             except FieldDoesNotExist:
                 return sorted(
-                    '__'.join(prefix + [field.name])
-                    for field in get_fields(current_model)
+                    [
+                        '__'.join(prefix + [field.name])
+                        for field in get_fields(current_model)
+                    ] +
+                    ['__'.join(prefix + ['pk'])]
                 )
             else:
                 prefix.append(part)

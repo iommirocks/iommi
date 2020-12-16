@@ -95,7 +95,7 @@ def test_include_not_existing_error():
             auto__include=['does_not_exist'],
         )
 
-    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
+    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id\n    pk'
 
 
 def test_exclude_not_existing_error():
@@ -105,7 +105,7 @@ def test_exclude_not_existing_error():
             auto__exclude=['does_not_exist'],
         )
 
-    assert str(e.value) == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id'
+    assert str(e.value) == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id\n    pk'
 
 
 @pytest.mark.django
@@ -156,6 +156,7 @@ You can only include fields that exist on the model: foo__barf specified but doe
 Existing fields:
     foo__bar
     foo__id
+    foo__pk
     foo__somemodel'''
 
 

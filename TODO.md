@@ -6,8 +6,6 @@ examples.iommi.rocks
 
 https for iommi.rocks redirect
 
-auto__include/exclude should accept id/pk. And it should say it accepts them in the error message "You can only include fields that exist on the model..."
-
 A nice API to manually handle ajax/post dispatch
 
 Formsets

@@ -3173,3 +3173,12 @@ def test_column_include_false_excludes_bulk_and_filter():
     assert set(t.query.filters.keys()) == {'c'}
     assert set(t.query.form.fields.keys()) == {'c'}
     assert set(t.bulk.fields.keys()) == {'_all_pks_', 'c'}
+
+
+@pytest.mark.django_db
+def test_auto_model_include_pk():
+    t = Table(
+        auto__model=TBar,
+        auto__include=['pk'],
+    ).bind(request=req('get'))
+    assert 'pk' in t.columns

@@ -1029,7 +1029,8 @@ def test_form_from_model_error_message_include():
                            '    f_float\n' \
                            '    f_int\n' \
                            '    f_int_excluded\n' \
-                           '    id'
+                           '    id\n' \
+                           '    pk'
 
 
 @pytest.mark.django_db
@@ -1045,7 +1046,8 @@ def test_form_from_model_error_message_exclude():
                            '    f_float\n' \
                            '    f_int\n' \
                            '    f_int_excluded\n' \
-                           '    id'
+                           '    id\n' \
+                           '    pk'
 
 
 @pytest.mark.django
