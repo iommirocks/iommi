@@ -275,6 +275,24 @@ def test_reinvokable_new_defaults_recurse():
     assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
 
 
+def test_reinvoke_new_default_change_shortcut():
+    class ReinvokableWithShortcut(MyReinvokable):
+        @classmethod
+        @class_shortcut
+        def shortcut(cls, call_target=None, **kwargs):
+            kwargs['shortcut_was_here'] = True
+            return call_target(**kwargs)
+
+    assert reinvoke_new_defaults(
+        ReinvokableWithShortcut(),
+        dict(
+            call_target__attribute='shortcut',
+            foo='bar',
+        )
+    ).kwargs == dict(foo='bar', shortcut_was_here=True)
+
+
+
 @pytest.mark.skip('Broken since there is no way to set things on the container of Action')
 def test_set_class_on_actions_container():
     t = Table()

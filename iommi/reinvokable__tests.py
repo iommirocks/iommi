@@ -160,3 +160,19 @@ def test_reinvoke_extra_shortcut():
 
     assert f.bind().fields.my_field.extra == dict(foo=17, bar=42, buz=4711)
 
+
+def test_reinvoke_change_shortcut():
+    class ReinvokableWithShortcut(MyReinvokable):
+        @classmethod
+        @class_shortcut
+        def shortcut(cls, call_target=None, **kwargs):
+            kwargs['shortcut_was_here'] = True
+            return call_target(**kwargs)
+
+    assert reinvoke(
+        ReinvokableWithShortcut(),
+        dict(
+            call_target__attribute='shortcut',
+            foo='bar',
+        )
+    ).kwargs == dict(foo='bar', shortcut_was_here=True)
