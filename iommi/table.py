@@ -135,6 +135,7 @@ from iommi.traversable import (
 from .reinvokable import (
     reinvokable,
     reinvoke,
+    set_and_remember_for_reinvoke,
 )
 from ._web_compat import settings
 
@@ -1748,23 +1749,30 @@ class Table(Part, Tag):
                 column.sortable = False
 
         # If the column is not included, the down stream query filters and bulk fields should also be gone
-        declared_query_filters = self._declared_members.query._declared_members.filters if self._declared_members.get('query') is not None else {}
-        declared_bulk_fields = self._declared_members.bulk._declared_members.fields if self._declared_members.get('bulk') is not None else {}
+        declared_query_filters = declared_members(self.query)['filters'] if self._declared_members.get('query') is not None else {}
+        declared_bulk_fields = declared_members(self.bulk)['fields'] if self._declared_members.get('bulk') is not None else {}
         for name, column in items(self._declared_members.columns):
-            if column.include is False:
+            if name not in keys(self.columns):
                 if name in declared_query_filters:
-                    declared_query_filters[name].include = False
+                    set_and_remember_for_reinvoke(declared_query_filters[name], include=False)
                 if name in declared_bulk_fields:
-                    declared_bulk_fields[name].include = False
+                    set_and_remember_for_reinvoke(declared_bulk_fields[name], include=False)
 
         self._bind_query()
         self._bind_bulk_form()
         self._bind_headers()
 
         if isinstance(self.sorted_and_filtered_rows, QuerySet):
-            prefetch = [x.attr for x in values(self.columns) if x.data_retrieval_method ==
-                        DataRetrievalMethods.prefetch and x.attr]
-            select = [x.attr for x in values(self.columns) if x.data_retrieval_method == DataRetrievalMethods.select and x.attr]
+            prefetch = [
+                x.attr
+                for x in values(self.columns)
+                if x.data_retrieval_method == DataRetrievalMethods.prefetch and x.attr
+            ]
+            select = [
+                x.attr
+                for x in values(self.columns)
+                if x.data_retrieval_method == DataRetrievalMethods.select and x.attr
+            ]
             if prefetch:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
             if select:
@@ -1802,24 +1810,25 @@ class Table(Part, Tag):
         self.sorted_and_filtered_rows = self.query.filter(query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters())
 
     def _bind_bulk_form(self):
-        if self.bulk is not None:
-            declared_fields = declared_members(self.bulk)['fields']
-            for name, column in items(declared_members(self)['columns']):
-                if name in declared_fields:
-                    field = setdefaults_path(
-                        Namespace(),
-                        column.bulk,
-                        include=lambda table, field, **_: table.columns[field._name].bulk.include,
-                        display_name=lambda table, field, **_: table.columns[field._name].display_name,
-                    )
-                    declared_fields[name] = reinvoke(declared_fields[name], field)
-            set_declared_member(self.bulk, 'fields', declared_fields)
+        if self.bulk is None:
+            return
 
-            self.bulk = self.bulk.bind(parent=self)
-            if self.bulk.actions:
-                self._bound_members.bulk = self.bulk
-            else:
-                self.bulk = None
+        declared_fields = declared_members(self.bulk)['fields']
+        for name, column in items(declared_members(self)['columns']):
+            if name in declared_fields:
+                field = setdefaults_path(
+                    Namespace(),
+                    column.bulk,
+                    display_name=lambda table, field, **_: table.columns[field._name].display_name,
+                )
+                declared_fields[name] = reinvoke(declared_fields[name], field)
+        set_declared_member(self.bulk, 'fields', declared_fields)
+
+        self.bulk = self.bulk.bind(parent=self)
+        if self.bulk.actions:
+            self._bound_members.bulk = self.bulk
+        else:
+            self.bulk = None
 
     # property for jinja2 compatibility
     @property

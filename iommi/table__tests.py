@@ -3148,3 +3148,28 @@ def test_empty_message():
         empty_message=empty_message,
     ).bind(request=req('get'))
     assert empty_message in t.__html__()
+
+
+@pytest.mark.django_db
+def test_column_include_false_excludes_bulk_and_filter():
+    class MyTable(Table):
+        foo = Column(
+            include=lambda **_: False,
+            filter__include=True,
+            bulk__include=True,
+        )
+
+        c = Column(
+            filter__include=True,
+            bulk__include=True,
+        )
+
+        class Meta:
+            model = TBar
+
+    t = MyTable().bind(request=req('get'))
+
+    assert 'foo' not in t.columns
+    assert set(t.query.filters.keys()) == {'c'}
+    assert set(t.query.form.fields.keys()) == {'c'}
+    assert set(t.bulk.fields.keys()) == {'_all_pks_', 'c'}
