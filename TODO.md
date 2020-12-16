@@ -6,20 +6,15 @@ examples.iommi.rocks
 
 https for iommi.rocks redirect
 
-style application should be driven by bind, not force recursion on unbound children.
-
 auto__include/exclude should accept id/pk. And it should say it accepts them in the error message "You can only include fields that exist on the model..."
 
 A nice API to manually handle ajax/post dispatch
-
-port enhance_iommi_with_ajax from <redacted trioptima production system>
 
 Formsets
 
 json endpoints for table contents, paginator. General purpose end point for accessing any part of a part?
 
 No imports to django outside _*_compat, statically checked in CI. flask.current_app.config == django.conf.settings
-
 
 fiddle.iommi.rocks would be damn cool - just redirect to a repl.it session?
 
@@ -33,12 +28,12 @@ Get rid of reinvoke/reinvoke_new_defaults and avoid the merge of different sets 
 
 Separate crud shortcuts to a separate beast than Form. (So that callbacks and what not don't need to pollute all Form instances)
 
-Fix docs that show priority of config
-
 Maybe revise inheritance semantics: should class Meta on subclass override shortcut on parent? It doesn't now.
 
 
 ## Docs
+
+Fix docs that show priority of config
 
 API reference for free functions
 
