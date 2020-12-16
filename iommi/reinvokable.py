@@ -45,11 +45,18 @@ def reinvoke(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
                 else:
                     kwargs[name] = new_param
 
-    additional_kwargs_namespace.pop('call_target', None)
-
     kwargs = Namespace(additional_kwargs_namespace, kwargs)  # Also include those keys not already in the original
 
-    result = type(obj)(**kwargs)
+    call_target = kwargs.pop('call_target', None)
+    if call_target is not None:
+        kwargs['call_target'] = Namespace(
+            call_target,
+            cls=type(obj),
+        )
+    else:
+        kwargs['call_target'] = type(obj)
+
+    result = kwargs()
 
     retain_special_cases(obj, result)
     return result

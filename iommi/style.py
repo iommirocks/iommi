@@ -175,10 +175,17 @@ def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
                 else:
                     kwargs[name] = saved_param
 
-    additional_kwargs_namespace.pop('call_target', None)
-
     try:
-        result = type(obj)(**kwargs)
+        call_target = kwargs.pop('call_target', None)
+        if call_target is not None:
+            kwargs['call_target'] = Namespace(
+                call_target,
+                cls=type(obj)
+            )
+        else:
+            kwargs['call_target'] = type(obj)
+
+        result = kwargs()
     except TypeError as e:
         raise InvalidStyleConfigurationException(
             f'Object {obj!r} could not be updated with style configuration {flatten(additional_kwargs_namespace)}'
