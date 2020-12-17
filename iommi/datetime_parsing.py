@@ -23,7 +23,7 @@ def parse_relative_date(s, start_date=None):
     quarter_symbols = ['q', 'quarter', 'quarters']
     year_symbols = ['y', 'yr', 'year', 'years']
     period_symbols = weekday_symbols + day_symbols + week_symbols + month_symbols + quarter_symbols + year_symbols
-    neg = False
+    neg = False  # pragma: no mutate
     period = period.lower()
     if period in ('today', 'now'):
         period = '0d'
@@ -45,16 +45,16 @@ def parse_relative_date(s, start_date=None):
         if period.endswith(symbol):
             period = period[:-len(symbol)]
             sym = symbol
-            break
+            break  # pragma: no mutate optimization
     d = None
-    if sym:
+    if sym is not None:
         try:
             count = int(period)
         except ValueError:
             raise ValidationError(f'"{s}" is not a valid relative date. "{period}" is not an integer.')
         if neg:
             count = -count
-        if start_date:
+        if start_date is not None:
             today = start_date
         else:
             today = date.today()
@@ -77,42 +77,51 @@ def parse_relative_date(s, start_date=None):
             if count >= 500:
                 raise ValidationError(f'"{s}" is not a valid relative date. {count} is too big (max is 499).')
             month += count
-            if month < 1 or month > 12:
+            if month < 1 or month > 12:  # pragma: no mutate as this causes timeouts
                 (y, m) = divmod(month - 1, 12)
-                year += y
+                year += y  # pragma: no mutate as this causes timeouts
                 month = m + 1
-            valid = False
+            valid = False  # pragma: no mutate
             while not valid:
                 try:
                     d = date(year, month, day)
-                    valid = True
+                    valid = True  # pragma: no mutate as this causes timeouts
                 except ValueError:
-                    day -= 1
+                    day -= 1  # pragma: no mutate as this causes timeouts
 
         elif sym in year_symbols:
             if count >= 400:
                 raise ValidationError(f'"{s}" is not a valid relative date. {count} is too big (max is 399).')
-            year += count
-            valid = False
+            year += count  # pragma: no mutate as this causes timeouts
+            valid = False  # pragma: no mutate
             while not valid:
                 try:
                     d = date(year, month, day)
-                    valid = True
+                    valid = True  # pragma: no mutate as this causes timeouts
                 except ValueError:
-                    day -= 1
+                    day -= 1  # pragma: no mutate as this causes timeouts
         elif sym in weekday_symbols:
-            weeks, days = divmod(count, 5)
-            d = today
-            weekday = d.weekday()
-            if weekday in [5, 6]:
-                d -= timedelta(days=weekday - 4)
-                weekday = 4
-            if weeks:
-                d += timedelta(days=weeks * 7)
-            if days:
-                d += timedelta(days=days)
-            new_weekday = d.weekday()
-            if new_weekday in [5, 6] or new_weekday < weekday:
-                d += timedelta(days=2)
+            if count >= 0:  # pragma: no mutate
+                weeks, days = divmod(count, 5)
+                d = date.today()
+                if weeks:
+                    d += timedelta(days=weeks * 7)
+                while days:
+                    d += timedelta(days=1)
+                    if d.weekday() in [5, 6]:
+                        continue
+                    days -= 1  # pragma: no mutate
+            else:
+                count = -count
+                assert count > 0  # pragma: no mutate
+                weeks, days = divmod(count, 5)
+                d = date.today()
+                if weeks:
+                    d -= timedelta(days=weeks * 7)
+                while days:
+                    d -= timedelta(days=1)
+                    if d.weekday() in [5, 6]:
+                        continue
+                    days -= 1  # pragma: no mutate
 
     return d
