@@ -1376,7 +1376,7 @@ class Table(Part, Tag):
     template: Union[str, Template] = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
     h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
-    title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
+    title: str = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     row: RowConfig = EvaluatedRefinable()
     cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
