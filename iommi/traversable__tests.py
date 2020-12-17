@@ -99,7 +99,7 @@ def test_traverse_on_iommi():
             ),
         )
 
-    page = MyPage(_name='root')
+    page = MyPage()
 
     actual = build_long_path_by_path(page)
     assert len(actual.keys()) == len(set(actual.keys()))
@@ -112,6 +112,8 @@ def test_traverse_on_iommi():
     assert page.parts.a_table.query.form.iommi_path == 'form'
     assert page.parts.a_table.query.form.fields.fusk.iommi_path == 'fusk'
     assert page.parts.a_table.columns.fusk.iommi_path == 'a_table/fusk'
+    assert page._name == 'root'
+    assert set(keys(page.iommi_evaluate_parameters())) == {'traversable', 'page', 'request'}
 
 
 def test_evil_names_that_work():
