@@ -55,6 +55,7 @@ from iommi.form import (
     bool_parse,
     create_or_edit_object_redirect,
     datetime_iso_formats,
+    date_parse,
     datetime_parse,
     decimal_parse,
     Field,
@@ -96,10 +97,10 @@ from tests.models import (
 )
 
 
-def assert_one_error_and_matches_reg_exp(errors, reg_exp):
-    error = list(errors)[0]
-    assert len(errors) == 1
-    assert re.search(reg_exp, error)
+def assert_errors_and_matches_reg_exp(errors, reg_exp, count=1):
+    assert len(errors) == count
+    for error in errors:
+        assert re.search(reg_exp, error)
 
 
 def test_declaration_merge():
@@ -310,7 +311,7 @@ def test_parse_errors(MyTestForm):
             admin='foo',
             a_date='foo',
             a_time='bar',
-            multi_choice_field=['q'],
+            multi_choice_field=['q', 'w'],
             **{'-submit': ''}
         )),
     )
@@ -329,7 +330,7 @@ def test_parse_errors(MyTestForm):
     assert form.fields['username'].value is None
 
     assert form.fields['joined'].raw_data == 'foo'
-    assert_one_error_and_matches_reg_exp(form.fields['joined']._errors, 'Time data "foo" does not match any of the formats .*')
+    assert_errors_and_matches_reg_exp(form.fields['joined']._errors, 'Time data "foo" does not match any of the formats .*')
     assert form.fields['joined'].parsed_data is None
     assert form.fields['joined'].value is None
 
@@ -342,19 +343,19 @@ def test_parse_errors(MyTestForm):
     assert form.fields['admin'].value is None
 
     assert form.fields['a_date'].raw_data == 'foo'
-    assert_one_error_and_matches_reg_exp(form.fields['a_date']._errors, 'Time data "foo" does not match any of the formats.*')
+    assert_errors_and_matches_reg_exp(form.fields['a_date']._errors, 'Time data "foo" does not match any of the formats.*')
     assert form.fields['a_date'].parsed_data is None
     assert form.fields['a_date'].value is None
     assert form.fields['a_date'].rendered_value == form.fields['a_date'].raw_data
 
     assert form.fields['a_time'].raw_data == 'bar'
-    assert_one_error_and_matches_reg_exp(form.fields['a_time']._errors, 'Time data "bar" does not match any of the formats.*')
+    assert_errors_and_matches_reg_exp(form.fields['a_time']._errors, 'Time data "bar" does not match any of the formats.*')
     assert form.fields['a_time'].parsed_data is None
     assert form.fields['a_time'].value is None
 
-    assert form.fields['multi_choice_field'].raw_data == ['q']
-    assert_one_error_and_matches_reg_exp(form.fields['multi_choice_field']._errors, "q not in available choices")
-    assert form.fields['multi_choice_field'].parsed_data == ['q']
+    assert form.fields['multi_choice_field'].raw_data == ['q', 'w']
+    assert_errors_and_matches_reg_exp(form.fields['multi_choice_field']._errors, "[qw] not in available choices", count=2)
+    assert form.fields['multi_choice_field'].parsed_data == ['q', 'w']
     assert form.fields['multi_choice_field'].value is None
 
     with pytest.raises(AssertionError):
@@ -555,7 +556,7 @@ def test_integer_field():
     assert Form(fields__foo=Field.integer(),).bind(request=req('get', foo=' 7  ')).fields.foo.parsed_data == 7
 
     actual_errors = Form(fields__foo=Field.integer()).bind(request=req('get', foo=' foo  ')).fields.foo._errors
-    assert_one_error_and_matches_reg_exp(actual_errors, r"invalid literal for int\(\) with base 10: 'foo'")
+    assert_errors_and_matches_reg_exp(actual_errors, r"invalid literal for int\(\) with base 10: 'foo'")
 
 
 def test_float_field():
@@ -1289,10 +1290,25 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             assert not form.get_errors()
             assert form.fields.foo.rendered_value == normalized
 
+    def test_parse():
+        for raw, parsed in raw_and_parsed_data_tuples:
+            form = Form(
+                fields__foo=shortcut(required=True, ),
+            ).bind(
+                request=req('get', foo=raw),
+            )
+            assert not form.get_errors(), 'input: %s' % raw
+            f = form.fields.foo
+            assert f.raw_data == raw
+            if parsed is None and f.is_list:
+                parsed = []
+            assert f.parsed_data == parsed
+
     test_roundtrip_from_raw_string_to_initial()
     test_empty_string_data()
     test_empty_data()
     test_normalizing()
+    test_parse()
 
     if is_list:
         test_roundtrip_from_initial_to_raw_string_list()
@@ -2535,3 +2551,19 @@ def test_choices_in_char_field_model():
 
     value, display_name = ChoicesModel.CHOICES[0]
     assert form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == display_name
+
+
+def test_date_parse():
+    with pytest.raises(ValidationError) as e:
+        date_parse(string_value='2020-01-60')
+
+    assert str(e.value.args[0]) == 'Time data "2020-01-60" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
+
+
+    with pytest.raises(ValidationError) as e:
+        date_parse(string_value='2020-01-031')
+
+    assert str(e.value.args[0]) == 'Time data "2020-01-031" does not match any of the formats "now", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H", and is not a relative date like "2d" or "2 weeks ago" (out of range)'
+
+    assert date_parse('2020-01-02') == date(2020, 1, 2)
+    assert date_parse('today') == date.today()
