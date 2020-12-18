@@ -57,6 +57,7 @@ IOMMI_DEFAULT_STYLE = 'test'
 
 MIDDLEWARE = [
     'iommi.live_edit.Middleware',
+    'iommi.sql_trace.Middleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
