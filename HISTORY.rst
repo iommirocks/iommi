@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-5.7.0 (----------)
+5.7.0 (2020-12-18)
 ------------------
 
 * Make getattr_path more in line with the standard library getattr semantics

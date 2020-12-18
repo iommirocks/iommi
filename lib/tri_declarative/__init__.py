@@ -39,7 +39,7 @@ from .sort_after import (
 )
 from .with_meta import with_meta
 
-__version__ = '5.6.0'
+__version__ = '5.7.0'
 
 __all__ = [
     'assert_kwargs_empty',
