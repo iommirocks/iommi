@@ -126,18 +126,35 @@ def setdefaults_path(__target__, *defaults, **kwargs):
     return __target__
 
 
-def getattr_path(obj, path):
+_MISSING = object()
+
+
+def getattr_path(obj, path, default=_MISSING):
     """
         Get an attribute path, as defined by a string separated by '__'.
         getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
         will short circuit to return None if something on the path is None.
+        If no default value is provided AttributeError is raised if an attribute
+        is missing somewhere along the path. If a default value is provided that
+        value is returned.
     """
-    path = path.split('__')
-    for name in path:
-        obj = getattr(obj, name)
-        if obj is None:
+    if path == '':
+        return obj
+    current = obj
+    parts = path.split('__')
+    for name in parts:
+        if default is _MISSING:
+            try:
+                current = getattr(current, name)
+            except AttributeError as e:
+                raise AttributeError(f"'{type(obj).__name__}' object has no attribute path '{path}', since {e}")
+        else:
+            current = getattr(current, name, _MISSING)
+            if current is _MISSING:
+                return default
+        if current is None:
             return None
-    return obj
+    return current
 
 
 def setattr_path(obj, path, value):

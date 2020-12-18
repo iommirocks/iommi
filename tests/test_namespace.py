@@ -38,6 +38,31 @@ def test_getattr_path_and_setattr_path():
     assert foo.bar is None
 
 
+def test_getattr_empty_path():
+    obj = object()
+    assert getattr_path(obj, '') is obj
+
+
+def test_getattr_missing_attribute():
+    obj = object()
+
+    with pytest.raises(AttributeError) as e:
+        getattr_path(obj, 'foo')
+    assert str(e.value) == "'object' object has no attribute path 'foo', since 'object' object has no attribute 'foo'"
+
+    with pytest.raises(AttributeError) as e:
+        getattr_path(Struct(foo=object()), 'foo__bar')
+    assert str(e.value) == "'Struct' object has no attribute path 'foo__bar', since 'object' object has no attribute 'bar'"
+
+
+def test_getattr_default():
+    assert getattr_path(object(), 'foo', 17) == 17
+    assert getattr_path(Struct(foo=object()), 'foo__bar', 42) == 42
+
+    assert getattr_path(object(), 'foo', default=17) == 17
+    assert getattr_path(Struct(foo=object()), 'foo__bar', default=42) == 42
+
+
 def test_setdefaults_path_1():
     assert setdefaults_path(dict(), x=17) == dict(x=17)
 

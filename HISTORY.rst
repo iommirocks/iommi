@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+5.7.0 (----------)
+------------------
+
+* Make getattr_path more in line with the standard library getattr semantics
+
+  If a default value is provided, return that on missing attributes
+
+  If no default value is given, give a more detailed error message of what was missing
+
+* Added the special case of the empty path returning the object
+
+
 5.6.0 (2020-12-02)
 ------------------
 
