@@ -1578,7 +1578,7 @@ def test_query_namespace_inject():
             columns__a=Column(_name='a', filter__include=True),
             query__form__post_validation=post_validation,
         ).bind(
-            request=Struct(method='POST', POST={'-': '-'}, GET=Struct(urlencode=lambda: '')),
+            request=Struct(method='POST', POST={'-submit': '-'}, GET=Struct(urlencode=lambda: '')),
         )
 
 

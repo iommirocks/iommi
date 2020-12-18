@@ -362,12 +362,13 @@ def test_parse_errors(MyTestForm):
         form.apply(Struct())
 
 
-def test_post_validation_and_error_checking():
+def test_post_validation_and_error_checking_initial():
     timeline = []
 
     def capture_timeline(form):
         timeline.append(
             dict(
+                mode=form.mode,
                 is_valid=form.is_valid(),
                 errors=form.get_errors(),
             )
@@ -397,23 +398,81 @@ def test_post_validation_and_error_checking():
 
     assert timeline == [
         {
+            'mode': 'initials_from_get',
             'is_valid': True,
             'errors': {}
         },
         {
+            'mode': 'initials_from_get',
             'is_valid': False,
             'errors': {'fields': {'first': {'first error'}}}
         },
         {
+            'mode': 'initials_from_get',
+            'is_valid': False,
+            'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}}
+        },
+    ]
+
+def test_post_validation_and_error_checking_full():
+    timeline = []
+
+    def capture_timeline(form):
+        timeline.append(
+            dict(
+                mode=form.mode,
+                is_valid=form.is_valid(),
+                errors=form.get_errors(),
+            )
+        )
+
+    def first__post_validation(form, field, **_):
+        capture_timeline(form)
+        field.add_error('first error')
+
+    def second__post_validation(form, field, **_):
+        capture_timeline(form)
+        field.add_error('second error')
+
+    def form__post_validation(form, **_):
+        capture_timeline(form)
+        form.add_error('global error')
+
+    class MyForm(Form):
+        first = Field(post_validation=first__post_validation)
+        second = Field(post_validation=second__post_validation)
+
+        class Meta:
+            post_validation = form__post_validation
+
+            def actions__submit__post_handler(form, **_):
+                return form
+
+    form = MyForm().bind(request=req('post', **{'-submit': '', 'first': 'First', 'second': 'Second'}))
+    capture_timeline(form)
+
+    assert timeline == [
+        {
+            'mode': 'full_form_from_request',
+            'is_valid': True,
+            'errors': {}
+        },
+        {
+            'mode': 'full_form_from_request',
+            'is_valid': False,
+            'errors': {'fields': {'first': {'first error'}}}
+        },
+        {
+            'mode': 'full_form_from_request',
             'is_valid': False,
             'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}}
         },
         {
+            'mode': 'full_form_from_request',
             'is_valid': False,
             'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}, 'global': {'global error'}}
         },
     ]
-
 
 def test_initial_from_instance():
     assert Form(
@@ -1538,7 +1597,7 @@ def test_form_errors_function():
     assert MyForm(
         post_validation=post_validation,
     ).bind(
-        request=req('post', **{'-': '', 'foo': 'asd'}),
+        request=req('post', **{'-submit': '', 'foo': 'asd'}),
     ).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
 
 
