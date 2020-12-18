@@ -1271,14 +1271,12 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
             )
             assert not form.get_errors(), 'input: %s' % raw
             f = form.fields.foo
+            assert f.raw_data == raw
+            assert f.value == initial
             if f.is_list:
-                assert f.raw_data == raw
-                assert f.value == initial
                 if initial:
                     assert [type(x) for x in f.value] == [type(x) for x in initial]
             else:
-                assert f.raw_data == raw
-                assert f.value == initial
                 assert type(f.value) == type(initial)
 
     def test_normalizing():
