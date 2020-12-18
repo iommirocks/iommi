@@ -1442,8 +1442,9 @@ class Form(Part):
             with validation_errors_reported_on(field):
                 field.post_validation(**field.iommi_evaluate_parameters())
 
-        with validation_errors_reported_on(self):
-            self.post_validation(**self.iommi_evaluate_parameters())
+        if self.mode is FULL_FORM_FROM_REQUEST:
+            with validation_errors_reported_on(self):
+                self.post_validation(**self.iommi_evaluate_parameters())
         return self
 
     @staticmethod
