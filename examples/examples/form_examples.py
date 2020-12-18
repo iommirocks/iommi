@@ -301,6 +301,40 @@ def form_example_children_that_are_not_fields_declarative(request):
     return MyForm()
 
 
+@example(gettext("Nested forms -- to abstract out behaviour and create complex 'fields'."))
+def form_example_nested_forms(request):
+    """Here we have two fields first_day, last_day and want to abstract
+       out the validation behaviour.  Maybe because we have several
+       different forms that that edit different models that all have
+       a first_day and a last_day field."""
+    class DateRangeField(Form):
+        first_day = Field.date()
+        last_day = Field.date()
+
+        class Meta:
+            @staticmethod
+            def post_validation(form, **_):
+                print("post validation", form.is_valid())
+                if form.is_valid():
+                    if form.fields.first_day.value > form.fields.last_day.value:
+                        form.add_error("First day must be <= last day")
+
+            actions__submit__include = False
+
+    class MyForm(Form):
+        event = Field()
+        # attr='' => instance.first_day, instance.last_day instead of instance.when.first_day, instance.when.last_day
+        when = DateRangeField(attr='')
+
+    def submit(form, **_):
+        print("submit handler")
+        if not form.is_valid():
+            return
+        return html.pre(f"You posted {form.apply(Struct())}").bind(request=request)
+
+    return MyForm(actions__submit__post_handler=submit)
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -310,7 +344,7 @@ class IndexPage(ExamplesPage):
             attrs__href='all_fields',
         ),
         html.br(),
-        after='example_11',
+        after='example_12',
     )
 
     class Meta:
@@ -330,5 +364,6 @@ urlpatterns = [
     path('example_9/', form_example_error_messages),
     path('example_10/', form_example_children_that_are_not_fields),
     path('example_11/', form_example_children_that_are_not_fields_declarative),
+    path('example_12/', form_example_nested_forms),
     path('all_fields/', all_field_sorts),
 ]
