@@ -5,7 +5,6 @@ import os
 import re
 import sys
 import threading
-import traceback
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import (
@@ -101,7 +100,7 @@ class Middleware:
                         sql %= safe_unicode_literal(x['params'])
 
                     result.append(f'<a name="query_{i}">')
-                    result.append(format_sql(sql, fat_arrow=False, duration=x['duration']))
+                    result.append(format_sql(sql, duration=x['duration']))
                     result.append('\n\n')
                 result.append('</pre>')
                 return HttpResponse(''.join(result))
@@ -121,7 +120,7 @@ def colorize(text, fg, bold=False):
         return text
 
 
-def format_sql(text, record=None, width=60, fat_arrow=True, duration=None):
+def format_sql(text, record=None, width=60, duration=None):
     BASE_COLORS = {
         'SELECT': 'green',
         'INSERT': 'magenta',
@@ -152,9 +151,6 @@ def format_sql(text, record=None, width=60, fat_arrow=True, duration=None):
                     using = getattr(record, 'using', None)
                     if using == 'read-only':
                         fg = 'white'
-                    if not short and fat_arrow:
-                        yield format_html('<span>{}<br>&nbsp;</span>', colorize('===>', fg=fg))
-                        column = 2
                 if not short:
                     if token in ('AND', 'OR', 'LEFT', 'INNER', 'FROM', 'WHERE', 'ORDER', 'LIMIT'):
                         yield format_html('<span><br>&nbsp;</span>')
