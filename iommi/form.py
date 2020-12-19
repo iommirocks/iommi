@@ -1506,8 +1506,7 @@ class Form(Part):
 
     def add_error(self, msg):
         assert msg
-        if self.mode is FULL_FORM_FROM_REQUEST:
-            self._errors.add(msg)
+        self._errors.add(msg)
         self._valid = False
 
     # property for jinja2 compatibility
