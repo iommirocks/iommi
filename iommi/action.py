@@ -58,11 +58,36 @@ class Action(Fragment):
         # A submit button
         Action.submit(display_name='Do this')
 
-        # The primary submit button on a form, unnecessary
-        # most of the time as a form includes a submit
-        # button by default.
+        # The primary submit button on a form.
         Action.primary()
 
+        # Notice that because forms
+        # with a single primary submit button are so common, iommi assumes
+        # that if you have a action called submit and do NOT explicitly
+        # specify the action that it is a primary action.  This is only
+        # done for the action called submit, inside the Forms actions
+        # Namespace.
+        #
+        # For that reason this works:
+
+        class MyForm(Form):
+            class Meta:
+                @staticmethod
+                def actions__submit__post_handler(form, **_):
+                    if not form.is_valid():
+                        return
+
+                    ...
+
+        # and is roughly equivalent to
+
+        def on_submit(form, **_):
+            if not form.is_valid():
+                return
+
+        class MyForm(Form):
+            class Meta:
+                actions__submit__post_handler = Action.primary(post_handler=on_submit)
     """
 
     group: str = EvaluatedRefinable()

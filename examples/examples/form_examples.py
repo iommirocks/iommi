@@ -102,12 +102,10 @@ def form_example_3(request):
     class TrackForm(Form):
         artist = Field.choice_queryset(choices=Track.objects.all())
 
-    return TrackForm(
-        actions__submit__include=False,
-    )
+    return TrackForm()
 
 
-@example(gettext(("Create create forms from database models")))
+@example(gettext(("Create forms from database models")))
 def form_example_4(request):
     return Form.create(auto__model=Artist)
 
@@ -231,8 +229,7 @@ def form_example_error_messages(request):
         title=gettext('Error messages'),
         auto__model=Artist,
         post_validation=form_error_messages,
-        fields__name__post_validation=field_error_messages,
-        actions__submit__include=False,
+        fields__name__post_validation=field_error_messages
     )
 
 

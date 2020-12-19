@@ -1,4 +1,5 @@
 import itertools
+import linecache
 import logging
 import os
 import re
@@ -41,13 +42,13 @@ addLevelName(SQL, 'SQL')
 SQL_DEBUG_LEVEL_ALL = 'all'
 SQL_DEBUG_LEVEL_ALL_WITH_STACKS = 'stacks'
 SQL_DEBUG_LEVEL_WORST = 'worst'
-
+SQL_DEBUG_LEVEL_OFF = None
 
 SQL_DEBUG_LEVELS = {
     SQL_DEBUG_LEVEL_ALL,
     SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
     SQL_DEBUG_LEVEL_WORST,
-    None,
+    SQL_DEBUG_LEVEL_OFF,
 }
 
 assert getattr(settings, 'SQL_DEBUG', None) in SQL_DEBUG_LEVELS, f'SQL_DEBUG must be one of: {SQL_DEBUG_LEVELS}'
@@ -60,17 +61,20 @@ class Middleware:
 
     def __call__(self, request):
         set_current_request(request)
+        sql_trace = request.GET.get('_iommi_sql_trace')
+        request.sql_debug_log = []
 
         response = self.get_response(request)
 
         if not settings.DEBUG and not request.user.is_staff:
             return response
 
-        sql_trace = request.GET.get('sql_trace')
+        sql_debug_last_call(response)
+
         if sql_trace is not None:
             sql_debug_log = getattr(request, 'sql_debug_log', None)
-            if sql_debug_log:
-                total_duration = sum(x['duration'] for x in sql_debug_log)
+            if sql_debug_log is not None:
+                total_duration = float(sum(x['duration'] for x in sql_debug_log))
                 result = [
                     '<style> a, span { box-sizing: border-box; } </style>',
                     f'{len(sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
@@ -86,6 +90,7 @@ class Middleware:
                 for k, group in itertools.groupby(sql_debug_log, key=lambda x: x['sql']):
                     duration = sum(x["duration"] for x in group)
                     proportion = duration / total_duration * 100
+                    k = k.replace('>', '&gt;')
                     result.append(f'<span style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{duration:.3}s, like {k}"></span>')
 
                 result.append('<p></p><pre>')
@@ -147,8 +152,6 @@ def format_sql(text, record=None, width=60, fat_arrow=True, duration=None):
                     using = getattr(record, 'using', None)
                     if using == 'read-only':
                         fg = 'white'
-                    if using == 'vertica':
-                        fg = 'blue'
                     if not short and fat_arrow:
                         yield format_html('<span>{}<br>&nbsp;</span>', colorize('===>', fg=fg))
                         column = 2
@@ -172,22 +175,22 @@ def format_sql(text, record=None, width=60, fat_arrow=True, duration=None):
     return format_html('<span>' + ('{}' * len(tokens)) + '</span>', *tokens)
 
 
-def safe_unicode_literal(params):
-    if params is None:
+def safe_unicode_literal(obj):
+    if obj is None:
         return 'NULL'
 
-    if isinstance(params, (list, tuple)):
-        return tuple([safe_unicode_literal(x) for x in params])
-    elif isinstance(params, (float, int)):
-        return repr(params)
-    elif isinstance(params, (date, datetime)):
-        return repr(params.isoformat())
-    elif isinstance(params, dict):
-        return dict((k, safe_unicode_literal(v)) for k, v in params.items())
-    elif isinstance(params, bytes):
-        return repr(params.decode(errors="replace"))
+    if isinstance(obj, (list, tuple)):
+        return tuple([safe_unicode_literal(x) for x in obj])
+    elif isinstance(obj, (float, int)):
+        return repr(obj)
+    elif isinstance(obj, (date, datetime)):
+        return repr(obj.isoformat())
+    elif isinstance(obj, dict):
+        return dict((k, safe_unicode_literal(v)) for k, v in obj.items())
+    elif isinstance(obj, bytes):
+        return repr(obj.decode(errors="replace"))
     else:
-        return repr(params)
+        return repr(obj)
 
 
 state = threading.local()
@@ -216,12 +219,12 @@ def no_sql_debug():
     This is useful inside the sql debug implementation to avoid infinite recursion.
     """
     old_state = get_sql_debug()
-    set_sql_debug(False)
+    set_sql_debug(SQL_DEBUG_LEVEL_OFF)
     yield
     set_sql_debug(old_state)
 
 
-def sql_debug(msg, extra):
+def sql_debug(msg, **extra):
     if get_sql_debug():
         if 'sql' not in extra:
             # If we don't do this we'll end up with infinite recursion back here
@@ -269,25 +272,25 @@ def sql_debug_total_time():
 
 
 def sql_debug_format_stack_trace(frame):
-    lines = traceback.format_stack(frame)
-
     base_path = os.path.abspath(os.path.join(settings.BASE_DIR, '..')) + "/"
     msg = []
     skip_template_code = False
 
-    def skip_line(line):
+    def skip_line(frame):
+        filename = frame.f_code.co_filename
         return (
-            '/lib/python' in line
-            or 'django/core' in line
-            or 'pydev/pydevd' in line
-            or 'gunicorn' in line
+            '/lib/python' in filename
+            or 'django/core' in filename
+            or 'pydev/pydevd' in filename
+            or 'gunicorn' in filename
         )
 
-    for line in itertools.dropwhile(skip_line, lines):
-        match = re.match(r' *File "(.*)", line (\d+), in (.*)\n +(.*)\n', line)
-        if not match:
+    while frame:
+        if skip_line(frame):
+            frame = frame.f_back
             continue
-        file_name, line, fn, context = match.groups()
+
+        file_name, line, fn = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
 
         file_name = file_name.replace(base_path, '')
         extra = ''
@@ -296,7 +299,7 @@ def sql_debug_format_stack_trace(frame):
             while f.f_back and 'bit' not in f.f_locals:
                 f = f.f_back
             if 'bit' in f.f_locals:
-                extra = colored('(looking up: %s) ' % f.f_locals['bit'], color='red')
+                extra = colored(f'(looking up: {f.f_locals["bit"]}) ', color='red')
         elif "django/template" in file_name:
             if skip_template_code:
                 continue
@@ -304,7 +307,12 @@ def sql_debug_format_stack_trace(frame):
         elif skip_template_code:
             skip_template_code = False
 
-        msg.append('  File "%s", line %s, in %s => %s%s' % (file_name, line, fn, extra, context.strip()))
+        if not extra:
+            extra = linecache.getline(file_name, line)
+
+        msg.append(f'  File "{file_name}", line {line}, in {fn} => {extra.strip()}')
+
+        frame = frame.f_back
 
     stack = "\n".join(msg[-20:]).rstrip()
     return stack
@@ -328,9 +336,9 @@ def sql_debug_last_call(response):
             for stack_trace, logs in stacks.items()
         ])
         # Print the worst offenders
-        number_of_offenders = getattr(settings, 'SQL_DEBUG_4_NUMBER_OF_OFFENDERS', 3)
-        query_cutoff = getattr(settings, 'SQL_DEBUG_4_QUERY_CUTOFF', 4)
-        num_suspicious = getattr(settings, 'SQL_DEBUG_4_SUSPICIOUS_CUTOFF', 3)
+        number_of_offenders = getattr(settings, 'SQL_DEBUG_WORST_NUMBER_OF_OFFENDERS', 3)
+        query_cutoff = getattr(settings, 'SQL_DEBUG_WORST_QUERY_CUTOFF', 4)
+        num_suspicious = getattr(settings, 'SQL_DEBUG_WORST_SUSPICIOUS_CUTOFF', 3)
         for count, _, logs in highscore[-number_of_offenders:]:
             if count > num_suspicious:  # 3 times is ok-ish, more is suspicious
                 sql_debug(f'------ {count} times: -------', bold=True)
@@ -353,7 +361,7 @@ def sql_debug_last_call(response):
         duration = '-'
         if hasattr(request, '_start_time'):
             duration = f'{(datetime.now() - request._start_time).total_seconds():.3f}s'
-        log.debug(f'{request.get_full_path()} -> {response.status_code}', fg='magenta', duration=duration)
+        sql_debug(f'{request.get_full_path()} -> {response.status_code}', fg='magenta', duration=duration)
 
     set_sql_debug(None)
 

@@ -1304,7 +1304,7 @@ class Form(Part):
         attrs__action='',
         attrs__method='post',
         attrs__enctype='multipart/form-data',
-        actions__submit__call_target__attribute='primary',
+        actions=EMPTY,
         auto=EMPTY,
         errors=EMPTY,
         h_tag__call_target=Header,
@@ -1335,6 +1335,17 @@ class Form(Part):
                     submit__display_name=gettext('Save') if auto.type == 'edit' else capitalize(gettext(auto.type)),
                 )
 
+        # Submit is special.
+        # We used to have an automatic action submit button.  Now we instead if something is inj
+        # the actions submit space assume you want to define it as a primary button (unless you
+        # explicitely specify differently). That way we get no button if you don't explicitely opt
+        # into it, by either directly defining something inside the submit namespace or using
+        # Form.edit/delete/...
+        if 'submit' in actions:
+            setdefaults_path(
+                actions,
+                submit__call_target__attribute='primary'
+            )
         super(Form, self).__init__(model=model, title=title, **kwargs)
 
         assert isinstance(fields, dict)
