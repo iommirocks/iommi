@@ -139,6 +139,11 @@ def MyTestForm():
         not_editable = Field.text(initial='Some non-editable text', editable=False)
         multi_choice_field = Field.multi_choice(choices=['a', 'b', 'c', 'd'], required=False)
 
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                pass
+
     return MyTestForm
 
 
@@ -151,6 +156,11 @@ def test_required_choice():
     class Required(Form):
         c = Field.choice(choices=[1, 2, 3])
 
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                pass
+
     form = Required().bind(request=req('post', **{'-submit': ''}))
 
     assert form.mode == FULL_FORM_FROM_REQUEST
@@ -161,6 +171,11 @@ def test_required_choice():
 
     class NotRequired(Form):
         c = Field.choice(choices=[1, 2, 3], required=False)
+
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                pass
 
     form = NotRequired().bind(request=req('post', **{'-submit': '', 'c': ''}))
     assert form.is_target()
@@ -220,6 +235,10 @@ def test_custom_parsed_value():
 
     class MyForm(Form):
         foo = Field(parsed_data=my_form_parsed_data)
+
+        class Meta:
+            def actions__submit__post_handler(form, **_):
+                pass
 
     form = MyForm().bind(request=req('post', **{'-submit': ''}))
     assert form.fields.foo.value == 'this is custom parsed data'
@@ -1475,15 +1494,18 @@ def test_boolean_initial_true():
         bar=Field(required=False),
     )
 
+    def submit(form, **_):
+        pass
+
     form = Form(fields=fields).bind(request=req('get'))
     assert form.fields.foo.value is True
 
     # If there are arguments, but not for key foo it means checkbox for foo has been unchecked.
     # Field foo should therefore be false.
-    form = Form(fields=fields).bind(request=RequestFactory().get('/', dict(bar='baz', **{'-submit': ''})))
+    form = Form(fields=fields, actions__submit__post_handler=submit).bind(request=RequestFactory().get('/', dict(bar='baz', **{'-submit': ''})))
     assert form.fields.foo.value is False
 
-    form = Form(fields=fields).bind(request=RequestFactory().get('/', dict(foo='on', bar='baz', **{'-submit': ''})))
+    form = Form(fields=fields, actions__submit__post_handler=submit).bind(request=RequestFactory().get('/', dict(foo='on', bar='baz', **{'-submit': ''})))
     assert form.fields.foo.value is True
 
 
@@ -1530,6 +1552,11 @@ def test_mode_full_form_from_request():
         foo = Field(required=True)
         bar = Field(required=True)
         baz = Field.boolean(initial=True)
+
+        class Meta:
+            @classmethod
+            def actions__submit__post_handler(form, **_):
+                pass
 
     # empty POST
     form = FooForm().bind(request=req('post', **{'-submit': ''}))
@@ -1590,6 +1617,10 @@ def test_mode_initials_from_get():
 def test_form_errors_function():
     class MyForm(Form):
         foo = Field(is_valid=lambda **_: (False, 'field error'))
+
+        class Meta:
+            def actions__submit__post_handler(form, **_):
+                pass
 
     def post_validation(form, **_):
         form.add_error('global error')
@@ -1752,9 +1783,13 @@ def remove_csrf(html_code):
     return re.sub(csrf_regex, '', html_code)
 
 
-def test_render():
+def test_render_with_action():
     class MyForm(Form):
         bar = Field()
+
+        class Meta:
+            def actions__submit__post_handler(form, **_):
+                pass
 
     expected_html = """
         <form action="" enctype="multipart/form-data" method="post">
@@ -1766,6 +1801,27 @@ def test_render():
             </div>
             <div class="links">
                 <button accesskey="s" name="-submit">Submit</button>
+            </div>
+        </form>
+    """
+
+    actual_html = remove_csrf(MyForm().bind(request=req('get')).__html__())
+    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
+    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
+    assert prettified_actual == prettified_expected
+
+
+def test_render_without_actions():
+    class MyForm(Form):
+        bar = Field()
+
+    expected_html = """
+        <form action="" enctype="multipart/form-data" method="post">
+            <div>
+                <label for="id_bar">
+                    Bar
+                </label>
+                <input id="id_bar" name="bar" type="text" value="">
             </div>
         </form>
     """
