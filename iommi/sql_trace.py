@@ -61,7 +61,7 @@ class Middleware:
     def __call__(self, request):
         set_current_request(request)
         sql_trace = request.GET.get('_iommi_sql_trace')
-        request.sql_debug_log = []
+        request.iommi_sql_debug_log = []
 
         response = self.get_response(request)
 
@@ -71,22 +71,22 @@ class Middleware:
         sql_debug_last_call(response)
 
         if sql_trace is not None:
-            sql_debug_log = getattr(request, 'sql_debug_log', None)
-            if sql_debug_log is not None:
-                total_duration = float(sum(x['duration'] for x in sql_debug_log))
+            iommi_sql_debug_log = getattr(request, 'iommi_sql_debug_log', None)
+            if iommi_sql_debug_log is not None:
+                total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
                 result = [
                     '<style> a, span { box-sizing: border-box; } </style>',
-                    f'{len(sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
+                    f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
                 ]
 
                 color = '#4f4fff'
-                for i, x in enumerate(sql_debug_log):
+                for i, x in enumerate(iommi_sql_debug_log):
                     proportion = x["duration"] / total_duration * 100
                     result.append(f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>')
 
                 result.append('<br>By group:<br>')
 
-                for k, group in itertools.groupby(sql_debug_log, key=lambda x: x['sql']):
+                for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
                     duration = sum(x["duration"] for x in group)
                     proportion = duration / total_duration * 100
                     k = k.replace('>', '&gt;')
@@ -94,7 +94,7 @@ class Middleware:
 
                 result.append('<p></p><pre>')
 
-                for i, x in enumerate(sql_debug_log):
+                for i, x in enumerate(iommi_sql_debug_log):
                     sql = x['sql']
                     if x['params']:
                         sql %= safe_unicode_literal(x['params'])
@@ -232,9 +232,9 @@ def sql_debug_log_to_request(**data):
     request = get_current_request()
     if request is not None:
         try:
-            request.sql_debug_log.append(data)
+            request.iommi_sql_debug_log.append(data)
         except AttributeError:
-            request.sql_debug_log = [data]
+            request.iommi_sql_debug_log = [data]
 
     level = get_sql_debug()
     if level is False or level == SQL_DEBUG_LEVEL_WORST:
@@ -260,7 +260,7 @@ def sql_debug_trace_sql(sql, params=None, **kwargs):
 
 def sql_debug_total_time():
     try:
-        log = get_current_request().sql_debug_log
+        log = get_current_request().iommi_sql_debug_log
     except AttributeError:
         return None
 
@@ -314,17 +314,17 @@ def sql_debug_format_stack_trace(frame):
     return stack
 
 
-def fill_stacks(sql_debug_log):
-    for x in sql_debug_log:
+def fill_stacks(iommi_sql_debug_log):
+    for x in iommi_sql_debug_log:
         x['stack'] = sql_debug_format_stack_trace(x['frame'])
 
 
 def sql_debug_last_call(response):
     request = get_current_request()
-    if get_sql_debug() == SQL_DEBUG_LEVEL_WORST and hasattr(request, 'sql_debug_log'):  # hasattr check because process_request might not be called in case of an early redirect
+    if get_sql_debug() == SQL_DEBUG_LEVEL_WORST and hasattr(request, 'iommi_sql_debug_log'):  # hasattr check because process_request might not be called in case of an early redirect
         stacks = defaultdict(list)
-        fill_stacks(request.sql_debug_log)
-        for x in request.sql_debug_log:
+        fill_stacks(request.iommi_sql_debug_log)
+        for x in request.iommi_sql_debug_log:
             stacks[x['sql']].append(x)
 
         highscore = sorted([
@@ -344,7 +344,7 @@ def sql_debug_last_call(response):
                 if len(logs) > query_cutoff:
                     sql_debug(f'... and {len(logs) - query_cutoff:d} more unique statements\n')
         queries_per_using = defaultdict(int)
-        for x in request.sql_debug_log:
+        for x in request.iommi_sql_debug_log:
             queries_per_using[x['using']] += 1
 
         sql_debug(f'Total number of SQL statements: {sum(queries_per_using.values())}, {queries_per_using.get("read-only")} read-only, {queries_per_using.get("summary")} summary\n')
