@@ -105,7 +105,7 @@ def form_example_3(request):
     return TrackForm()
 
 
-@example(gettext(("Create create forms from database models")))
+@example(gettext(("Create forms from database models")))
 def form_example_4(request):
     return Form.create(auto__model=Artist)
 
