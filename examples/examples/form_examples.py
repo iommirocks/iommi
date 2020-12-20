@@ -18,6 +18,7 @@ from examples import (
 )
 from examples.models import (
     Artist,
+    Album,
     Track,
 )
 from examples.views import (
@@ -324,19 +325,19 @@ def form_example_nested_forms(request):
         # attr='' => instance.first_day, instance.last_day instead of instance.when.first_day, instance.when.last_day
         when = DateRangeField(attr='')
 
-    def submit(form, **_):
-        print("submit handler")
-        if not form.is_valid():
-            return
-        return html.pre(f"You posted {form.apply(Struct())}").bind(request=request)
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                if not form.is_valid():
+                    return
+                return html.pre(f"You posted {form.apply(Struct())}").bind(request=request)
 
     today = datetime.date.today()
     return Page(
         parts__title1=Header("Without instance"),
-        parts__form1=MyForm(actions__submit__post_handler=submit),
+        parts__form1=MyForm(),
         parts__title2=Header("With instance"),
-        parts__form2=MyForm(actions__submit__post_handler=submit,
-                            instance=Struct(first_day=today, last_day=today, event="Party"))
+        parts__form2=MyForm(instance=Struct(first_day=today, last_day=today, event="Party"))
     )
 
 
