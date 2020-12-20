@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.template import (
@@ -26,6 +28,7 @@ from iommi import (
     Action,
     Field,
     Form,
+    Header,
     html,
     Page,
 )
@@ -316,8 +319,6 @@ def form_example_nested_forms(request):
                     if form.fields.first_day.value > form.fields.last_day.value:
                         form.add_error("First day must be <= last day")
 
-            actions__submit__include = False
-
     class MyForm(Form):
         event = Field()
         # attr='' => instance.first_day, instance.last_day instead of instance.when.first_day, instance.when.last_day
@@ -329,7 +330,14 @@ def form_example_nested_forms(request):
             return
         return html.pre(f"You posted {form.apply(Struct())}").bind(request=request)
 
-    return MyForm(actions__submit__post_handler=submit)
+    today = datetime.date.today()
+    return Page(
+        parts__title1=Header("Without instance"),
+        parts__form1=MyForm(actions__submit__post_handler=submit),
+        parts__title2=Header("With instance"),
+        parts__form2=MyForm(actions__submit__post_handler=submit,
+                            instance=Struct(first_day=today, last_day=today, event="Party"))
+    )
 
 
 class IndexPage(ExamplesPage):
