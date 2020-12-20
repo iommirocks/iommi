@@ -1378,7 +1378,7 @@ class Form(Part):
         else:
             assert self.attr is MISSING, "Set Form.attr only if the form is nested in another form."
 
-        if self.instance is None and self.parent_form is not None:
+        if self.instance is None and self.parent_form is not None and self.parent_form.instance is not None:
             self.instance = self.read_nested_form_from_instance(self, self.parent_form.instance)
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
@@ -1579,7 +1579,7 @@ class Form(Part):
         if form.attr == '':
             return instance
         else:
-            return None if instance is None else getattr_path(instance, form.attr)
+            return getattr_path(instance, form.attr)
 
     @staticmethod
     def apply_field(instance, field):
