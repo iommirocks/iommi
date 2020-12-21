@@ -229,6 +229,17 @@ def test_custom_raw_data_list():
     assert form.fields.foo.value == ['this is custom raw data list']
 
 
+def test_custom_raw_data_none():
+    def my_form_raw_data(**_):
+        return None
+
+    class MyForm(Form):
+        foo = Field(raw_data=my_form_raw_data)
+
+    form = MyForm().bind(request=req('post', **{'-submit': '', 'foo': 'bar'}))
+    assert form.fields.foo.value == 'bar'
+
+
 def test_custom_parsed_value():
     def my_form_parsed_data(**_):
         return 'this is custom parsed data'
@@ -242,6 +253,21 @@ def test_custom_parsed_value():
 
     form = MyForm().bind(request=req('post', **{'-submit': ''}))
     assert form.fields.foo.value == 'this is custom parsed data'
+
+
+def test_custom_parsed_value_none():
+    def my_form_parsed_data(**_):
+        return None
+
+    class MyForm(Form):
+        foo = Field(parsed_data=my_form_parsed_data)
+
+        class Meta:
+            def actions__submit__post_handler(form, **_):
+                pass
+
+    form = MyForm().bind(request=req('post', **{'-submit': '', 'foo': 'bar'}))
+    assert form.fields.foo.value == 'bar'
 
 
 def test_parse(MyTestForm):
