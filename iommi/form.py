@@ -779,7 +779,8 @@ class Field(Part):
         # The client might have refined raw_data.  If so evaluate it.
         if self.raw_data is not None:
             self.raw_data = evaluate_strict(self.raw_data, **self.iommi_evaluate_parameters())
-            return
+            if self.raw_data is not None:
+                return
 
         # Otherwise get it from the request
         form = self.form
