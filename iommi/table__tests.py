@@ -10,10 +10,20 @@ import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
 from django.test import override_settings
+from tri_declarative import (
+    class_shortcut,
+    get_members,
+    get_shortcuts_by_name,
+    getattr_path,
+    is_shortcut,
+    Namespace,
+    Shortcut,
+)
+
 from iommi import (
     Action,
-    Page,
     html,
+    Page,
 )
 from iommi._web_compat import (
     mark_safe,
@@ -37,13 +47,15 @@ from iommi.query import (
     Filter,
     Query,
 )
+from iommi.sql_trace import (
+    set_sql_debug,
+    SQL_DEBUG_LEVEL_ALL,
+)
 from iommi.table import (
     Column,
     datetime_formatter,
-    default_cell_formatter,
     ordered_by_on_list,
     register_cell_formatter,
-    make_select_display_name,
     Struct,
     Table,
     yes_no_formatter,
@@ -67,15 +79,6 @@ from tests.models import (
     TBar2,
     TBaz,
     TFoo,
-)
-from tri_declarative import (
-    class_shortcut,
-    get_members,
-    get_shortcuts_by_name,
-    getattr_path,
-    is_shortcut,
-    Namespace,
-    Shortcut,
 )
 
 register_search_fields(model=TFoo, search_fields=['b'], allow_non_unique=True)
@@ -699,7 +702,7 @@ def test_column_presets(NoSortTable):
                     <th class="first_column subheader">Download </th>
                     <th class="first_column subheader">Run </th>
                     <th class="first_column subheader" title="Select all">
-                        {}
+                        <i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, false)"></i>
                     </th>
                     <th class="first_column subheader"> Boolean </th>
                     <th class="first_column subheader"> Link </th>
@@ -718,7 +721,7 @@ def test_column_presets(NoSortTable):
                     <td class="rj"> 123 </td>
                 </tr>
             </tbody>
-        </table>""".format(make_select_display_name(table)))
+        </table>""")
 
 
 @pytest.mark.django_db
@@ -1448,6 +1451,18 @@ def test_auto_rowspan_and_render_twice(NoSortTable):
     t = t.bind(request=req('get'))
     verify_table_html(table=t, expected_html=expected)
     verify_table_html(table=t, expected_html=expected)
+
+
+def test_auto_rowspan_fail_on_override():
+    with pytest.raises(AssertionError) as e:
+        Table(
+            columns__foo=Column(
+                auto_rowspan=True,
+                cell__attrs__rowspan=17,
+            )
+        ).bind()
+
+    assert str(e.value) == 'Explicitly set rowspan html attribute collides with auto_rowspan on column foo'
 
 
 def test_render_table(NoSortTable):
@@ -3267,5 +3282,23 @@ def test_legacy_rows_property():
     t.sorted_and_filtered_rows = 'sorted_and_filtered_rows'
     assert t.rows == 'sorted_and_filtered_rows'
 
-    t.visible_rows = 'visible_rows'
+    t._visible_rows = 'visible_rows'
     assert t.rows == 'visible_rows'
+
+
+@pytest.mark.django_db
+def test_lazy_rows(settings):
+    settings.DEBUG = True
+    set_sql_debug(SQL_DEBUG_LEVEL_ALL)
+    q = TBar.objects.all()
+    choices = [1, 2, 3]
+    t = Table(
+        model=TBar,
+        rows=lambda **_: q,
+        columns__foo=Column.choice(
+            choices=choices,
+            filter__include=True,
+        )
+    ).bind()
+    assert t.query.form.fields.foo.choices == choices
+    assert q._result_cache is None, "No peeking!"
