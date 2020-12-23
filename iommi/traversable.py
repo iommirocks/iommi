@@ -19,6 +19,7 @@ from tri_struct import Struct
 from iommi.attrs import evaluate_attrs
 from iommi.base import (
     items,
+    NOT_BOUND_MESSAGE,
 )
 from iommi.evaluate import (
     evaluate_members,
@@ -112,7 +113,7 @@ class Traversable(RefinableObject):
 
     @property
     def iommi_dunder_path(self) -> str:
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         return build_long_path(self).replace('/', '__')
 
     def bind(self, *, parent=None, request=None):

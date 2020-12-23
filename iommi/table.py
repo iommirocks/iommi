@@ -88,6 +88,7 @@ from iommi.base import (
     MISSING,
     model_and_rows,
     values,
+    NOT_BOUND_MESSAGE,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -1258,11 +1259,11 @@ class Paginator(Traversable):
         return dict(paginator=self)
 
     def is_paginated(self):
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         return self.number_of_pages > 1
 
     def __html__(self):
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         if not self.show_always:
             if self.page_size is None:
                 return ''
@@ -1833,7 +1834,7 @@ class Table(Part, Tag):
     # property for jinja2 compatibility
     @property
     def render_actions(self):
-        assert self._is_bound, 'The table has not been bound. You need to call bind() before you can render it.'
+        assert self._is_bound, NOT_BOUND_MESSAGE
         non_grouped_actions, grouped_actions = group_actions(self.actions)
         return render_template(
             self.get_request(),
@@ -1954,7 +1955,7 @@ class Table(Part, Tag):
 
     def cells_for_rows(self):
         """Yield a Cells instance for each visible row on the screen."""
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         rows = self.preprocess_rows(rows=self.visible_rows, **self.iommi_evaluate_parameters())
         for i, row in enumerate(rows):
             row = self.preprocess_row(table=self, row=row)
@@ -2027,7 +2028,7 @@ class Table(Part, Tag):
         render=render_template,
     )
     def __html__(self, *, template=None, render=None):
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
 
         request = self.get_request()
 

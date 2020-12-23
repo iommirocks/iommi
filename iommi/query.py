@@ -32,6 +32,7 @@ from iommi.base import (
     MISSING,
     model_and_rows,
     values,
+    NOT_BOUND_MESSAGE,
 )
 from iommi.debug import iommi_debug_on
 from iommi.endpoint import path_join
@@ -781,7 +782,7 @@ class Query(Part):
         return '-' + path_join(self.iommi_path, 'query')
 
     def parse_query_string(self, query_string: str) -> Q:
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         query_string = query_string.strip()
         if not query_string:
             return Q()
@@ -907,7 +908,7 @@ class Query(Part):
         """
         Convert a parsed token of filter_name OPERATOR filter_name into a Q object
         """
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         query_name, op, value_string_or_filter_name = token
 
         pk_lookup = False
