@@ -1,3 +1,4 @@
+import logging
 from datetime import (
     date,
     datetime,
@@ -16,6 +17,7 @@ from iommi.sql_trace import (
     safe_unicode_literal,
     set_sql_debug,
     sql_debug_format_stack_trace,
+    SQL_DEBUG_LEVEL_WORST,
 )
 
 
@@ -29,10 +31,52 @@ urlpatterns = [
 ]
 
 
+@pytest.fixture
+def frame():
+    frame2 = Struct(
+        f_lineno=1,
+        f_back=None,
+        f_locals={
+            'bit': 'django_template_bit',
+        },
+        f_code=Struct(
+            co_name='_resolve_lookup',
+            co_filename='foo.py',
+        ),
+    )
+    frame1 = Struct(
+        f_lineno=1,
+        f_back=frame2,
+        f_code=Struct(
+            co_name='f',
+            co_filename='/lib/python/foo.py',
+        ),
+    )
+    frame0 = Struct(
+        f_lineno=1,
+        f_back=frame1,
+        f_code=Struct(
+            co_name='f',
+            co_filename='foo.py',
+        ),
+    )
+    return Struct(
+        f_lineno=1,
+        f_back=frame0,
+        f_code=Struct(
+            co_name='f',
+            co_filename='foo2.py',
+        ),
+    )
+
+
 @pytest.mark.django_db
-def test_middleware(settings, client):
+def test_middleware(settings, client, caplog):
+    caplog.set_level(logging.DEBUG)
     settings.ROOT_URLCONF = __name__
     settings.DEBUG = True
+    settings.SQL_DEBUG = SQL_DEBUG_LEVEL_WORST
+    settings.SQL_DEBUG_WORST_SUSPICIOUS_CUTOFF = 0
 
     response = client.get('/?_iommi_sql_trace')
 
@@ -41,8 +85,13 @@ def test_middleware(settings, client):
 
     assert '1 queries' in content
     # noinspection SqlResolve
-    assert 'SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username"' in content
+    select_statement = 'SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username"'
+    assert select_statement in content
     assert '<span style="color: green; font-weight: bold">SELECT</span>' in content
+
+    assert '------ 1 times: -------' in caplog.text
+    assert select_statement in caplog.text
+    assert 'File "iommi/iommi/sql_trace__tests.py", line ' in caplog.text
 
 
 @pytest.mark.parametrize('text, fg, bold, expected', [
@@ -86,42 +135,6 @@ def test_set_sql_debug():
     assert get_sql_debug() == 'worst'
 
 
-def test_sql_debug_format_stack_trace():
-    frame2 = Struct(
-        f_lineno=1,
-        f_back=None,
-        f_locals={
-            'bit': 'django_template_bit',
-        },
-        f_code=Struct(
-            co_name='_resolve_lookup',
-            co_filename='foo.py',
-        ),
-    )
-    frame1 = Struct(
-        f_lineno=1,
-        f_back=frame2,
-        f_code=Struct(
-            co_name='f',
-            co_filename='/lib/python/foo.py',
-        ),
-    )
-    frame0 = Struct(
-        f_lineno=1,
-        f_back=frame1,
-        f_code=Struct(
-            co_name='f',
-            co_filename='foo.py',
-        ),
-    )
-    frame = Struct(
-        f_lineno=1,
-        f_back=frame0,
-        f_code=Struct(
-            co_name='f',
-            co_filename='foo2.py',
-        ),
-    )
-
+def test_sql_debug_format_stack_trace(frame):
     expected = """  File "foo2.py", line 1, in f => \n  File "foo.py", line 1, in f => \n  File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)"""
     assert sql_debug_format_stack_trace(frame) == expected
