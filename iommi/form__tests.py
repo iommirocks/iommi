@@ -69,6 +69,7 @@ from iommi.form import (
     render_template,
     time_parse,
     url_parse,
+    boolean_tristate__parse,
 )
 from iommi.from_model import (
     member_from_model,
@@ -757,6 +758,10 @@ def test_render_misc_attributes():
 
 def test_heading():
     assert '>#foo#</' in Form(fields__heading=Field.heading(display_name='#foo#')).bind(request=req('get')).__html__()
+
+
+def test_none_title_from_display_name():
+    assert Form(fields__foo=Field(display_name=None)).bind(request=req('get')).fields.foo.label is None
 
 
 def test_info():
@@ -2172,6 +2177,10 @@ def test_help_text_for_boolean_tristate():
     assert '$$$$' in str(form)
 
 
+def test_boolean_tristate_none_parse():
+    assert boolean_tristate__parse(string_value='') is None
+
+
 @pytest.mark.django_db
 def test_all_field_shortcuts():
     class MyFancyField(Field):
@@ -2708,3 +2717,75 @@ def test_date_parse():
 
     assert date_parse('2020-01-02') == date(2020, 1, 2)
     assert date_parse('today') == date.today()
+
+
+def test_grouped_choices():
+    f = Form(
+        fields__foo=Field.choice(
+            choices=[1, 2, 3, 4, 5],
+            choice_to_optgroup=lambda choice, **_: 'a' if choice < 3 else 'b',
+        )
+    ).bind(request=req('get'))
+    assert f.fields.foo.grouped_choice_tuples == [
+        (None, []),
+        ('a', [(1, '1', '1', False, 1), (2, '2', '2', False, 2)]),
+        ('b', [(3, '3', '3', False, 3), (4, '4', '4', False, 4), (5, '5', '5', False, 5)]),
+    ]
+
+
+def test_nested_form():
+    class InnerForm(Form):
+        inner_field = Field()
+
+    class OuterForm(Form):
+        outer_field = Field()
+        inner_form = InnerForm()
+
+    instance = Struct(outer_field='a', inner_form=Struct(inner_field='b'))
+
+    f = OuterForm(instance=instance).bind(request=req('get'))
+
+    applied_instance = Struct(inner_form=Struct())
+    f.apply(applied_instance)
+    assert instance == applied_instance
+
+    assert f.parts.inner_form.parent_form is f
+    inner_form, = values(f.nested_forms)
+    assert inner_form is f.parts.inner_form
+    assert inner_form.form_tag != 'form'
+
+
+def test_nested_form_attr_empty_path():
+    class InnerForm(Form):
+        inner_field = Field()
+
+    class OuterForm(Form):
+        outer_field = Field()
+        inner_form = InnerForm(attr='')
+
+    instance = Struct(outer_field='a', inner_field='b')
+
+    f = OuterForm(instance=instance).bind(request=req('get'))
+
+    applied_instance = Struct()
+    f.apply(applied_instance)
+    assert instance == applied_instance
+
+
+def test_nested_form_validation_error_propagates_to_parent():
+    class InnerForm(Form):
+        inner_field = Field(is_valid=lambda **_: (False, 'nope'))
+
+    class OuterForm(Form):
+        outer_field = Field()
+        inner_form = InnerForm(attr='')
+
+    instance = Struct(outer_field='a', inner_field='b')
+
+    f = OuterForm(instance=instance).bind(request=req('get', inner_field='foo'))
+
+    assert not f.nested_forms.inner_form.is_valid()
+    assert not f.is_valid()
+    assert f.nested_forms.inner_form.get_errors() == {'fields': {'inner_field': {'nope'}}}
+    # TODO: currently this returns {}, but this seems wrong to me
+    # assert f.get_errors()

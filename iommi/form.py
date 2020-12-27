@@ -1480,7 +1480,7 @@ class Form(Part):
 
     def validate(self):
         # When validate is called at the end of bind, self._valid will be either
-        # False becaues a field's add_error was called during the fields bind.
+        # False because a field's add_error was called during the fields bind.
         # Or it will still be None.  In that latter case set it to True here,
         # so that we can call is_valid inside post_validation hook to check if
         # everything up until this point was valid.
