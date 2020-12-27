@@ -8,6 +8,7 @@ from iommi import (
 from iommi.debug import (
     dunder_path__format,
     local_debug_url_builder,
+    should_ignore_frame,
 )
 from iommi.endpoint import find_target
 from tests.helpers import req
@@ -75,3 +76,15 @@ def test_local_debug_url_builder(settings):
 
     settings.IOMMI_DEBUG_URL_MAPPING = ['BASE_DIR', 'ANOTHER']
     assert local_debug_url_builder('foo.txt', 10) == 'pycharm://open?file=ANOTHER/foo.txt&line=10'
+
+
+def test_should_ignore_frame():
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.admin.foo'}), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': '_pydev_bundle.foo'}), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.foo.bar'}), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'tri_declarative.foo.bar'}), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'django.foo.bar'}), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='syspath/foo/bar/baz.py')), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='<string>')), 'syspath/foo')
+
+    assert not should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='my actual app')), 'syspath/foo')

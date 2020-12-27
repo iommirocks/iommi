@@ -156,6 +156,28 @@ def src_debug_url_builder(filename, lineno=None):
     return debug_url_builder(filename, lineno)
 
 
+def should_ignore_frame(frame, env_path):
+    module_name = frame.f_globals.get('__name__')
+
+    if module_name.startswith('iommi.admin'):
+        return True
+
+    if module_name.startswith('_pydev_bundle.'):
+        return True
+
+    base_module_name = module_name.partition('.')[0]
+    if base_module_name in ('tri_declarative', 'iommi', 'django',):
+        return True
+
+    if frame.f_code.co_filename.startswith(env_path):
+        return True
+
+    if frame.f_code.co_filename == '<string>':
+        return True
+
+    return False
+
+
 def filename_and_line_num_from_part(part):
     frame = part._instantiated_at_frame
 
@@ -166,22 +188,8 @@ def filename_and_line_num_from_part(part):
         frame = frame.f_back
         if frame is None:
             break
-        module_name = frame.f_globals.get('__name__')
 
-        if module_name.startswith('iommi.admin'):
-            continue
-
-        if module_name.startswith('_pydev_bundle.'):
-            continue
-
-        base_module_name = module_name.partition('.')[0]
-        if base_module_name in ('tri_declarative', 'iommi', 'django', ):
-            continue
-
-        if frame.f_code.co_filename.startswith(env_path):
-            continue
-
-        if frame.f_code.co_filename == '<string>':
+        if should_ignore_frame(frame, env_path):
             continue
 
         return frame.f_code.co_filename, frame.f_lineno
