@@ -143,7 +143,7 @@ def MyTestForm():
         class Meta:
             @staticmethod
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     return MyTestForm
 
@@ -160,7 +160,7 @@ def test_required_choice():
         class Meta:
             @staticmethod
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     form = Required().bind(request=req('post', **{'-submit': ''}))
 
@@ -176,7 +176,7 @@ def test_required_choice():
         class Meta:
             @staticmethod
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     form = NotRequired().bind(request=req('post', **{'-submit': '', 'c': ''}))
     assert form.is_target()
@@ -250,7 +250,7 @@ def test_custom_parsed_value():
 
         class Meta:
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     form = MyForm().bind(request=req('post', **{'-submit': ''}))
     assert form.fields.foo.value == 'this is custom parsed data'
@@ -265,7 +265,7 @@ def test_custom_parsed_value_none():
 
         class Meta:
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     form = MyForm().bind(request=req('post', **{'-submit': '', 'foo': 'bar'}))
     assert form.fields.foo.value == 'bar'
@@ -1526,7 +1526,7 @@ def test_boolean_initial_true():
     )
 
     def submit(form, **_):
-        pass
+        pass  # pragma: no cover
 
     form = Form(fields=fields).bind(request=req('get'))
     assert form.fields.foo.value is True
@@ -1587,7 +1587,7 @@ def test_mode_full_form_from_request():
         class Meta:
             @classmethod
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     # empty POST
     form = FooForm().bind(request=req('post', **{'-submit': ''}))
@@ -1651,7 +1651,7 @@ def test_form_errors_function():
 
         class Meta:
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     def post_validation(form, **_):
         form.add_error('global error')
@@ -1820,7 +1820,7 @@ def test_render_with_action():
 
         class Meta:
             def actions__submit__post_handler(form, **_):
-                pass
+                pass  # pragma: no cover
 
     expected_html = """
         <form action="" enctype="multipart/form-data" method="post">

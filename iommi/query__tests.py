@@ -105,7 +105,16 @@ def test_unknown_field(MyTestQuery):
     with pytest.raises(QueryException) as e:
         query.parse_query_string('unknown_filter=1')
 
-    assert 'Unknown filter "unknown_filter"' in str(e)
+    assert 'Unknown filter "unknown_filter"' in str(e.value)
+    assert isinstance(e.value, QueryException)
+
+
+def test_unknown_field_wrong_case(MyTestQuery):
+    query = MyTestQuery().bind(request=None)
+    with pytest.raises(QueryException) as e:
+        query.parse_query_string('unknown_filTER=1')
+
+    assert 'Unknown filter "unknown_filTER"' in str(e.value)
     assert isinstance(e.value, QueryException)
 
 

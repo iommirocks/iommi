@@ -420,7 +420,7 @@ class Column(Part):
         self.table = None
 
     def __html__(self, *, render=None):
-        assert False, "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"
+        assert False, "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"  # pragma: no cover
 
     @staticmethod
     @evaluated_refinable
