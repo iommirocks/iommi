@@ -11,6 +11,7 @@ from iommi.live_edit import (
     get_wrapped_view_function,
     should_edit,
     dangerous_execute_code,
+    orig_reload,
 )
 from iommi.part import render_root
 from tests.helpers import req
@@ -100,10 +101,12 @@ def foo_view(request):
     assert actual_new_code == orig_code.replace('foo view data', 'changed!')
 
     # Reload trigger hack
-    from django.utils import autoreload
-    autoreload.trigger_reload('notused')
-    captured = capsys.readouterr()
-    assert captured.out == 'Skipped reload\n'
+    if orig_reload is not None:  # modern django
 
-    with pytest.raises(SystemExit):
+        from django.utils import autoreload
         autoreload.trigger_reload('notused')
+        captured = capsys.readouterr()
+        assert captured.out == 'Skipped reload\n'
+
+        with pytest.raises(SystemExit):
+            autoreload.trigger_reload('notused')
