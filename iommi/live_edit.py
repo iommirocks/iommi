@@ -24,21 +24,26 @@ class Middleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def should_edit(self, request):
-        return settings.DEBUG and '_iommi_live_edit' in request.GET
-
     def __call__(self, request):
         return self.get_response(request)
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
-        if self.should_edit(request):
-            while hasattr(callback, '__wrapped__'):
-                callback = callback.__wrapped__
-
-            if hasattr(callback, '__iommi_target__'):
-                assert False, "Edit mode isn't supported for the as_view() style yet."
-
+        if should_edit(request):
             return live_edit_view(request, callback)
+
+
+def should_edit(request):
+    return settings.DEBUG and '_iommi_live_edit' in request.GET
+
+
+def get_wrapped_view_function(view):
+    while hasattr(view, '__wrapped__'):
+        view = view.__wrapped__
+
+    if hasattr(view, '__iommi_target__'):
+        assert False, "Edit mode isn't supported for the as_view() style yet."
+
+    return view
 
 
 def include_decorators(node):
@@ -60,6 +65,7 @@ def find_function(*, name, node):
 
 @csrf_exempt
 def live_edit_view(request, view_func):
+    view_func = get_wrapped_view_function(view_func)
     # Read the old code
     filename = view_func.__globals__['__file__']
     with open(filename) as f:
@@ -69,6 +75,7 @@ def live_edit_view(request, view_func):
     is_unix_line_endings = '\r\n' not in entire_file
 
     ast_of_old_code = find_function(name=view_func.__name__, node=ast_of_entire_file)
+    assert ast_of_old_code is not None
 
     flow_direction = request.GET.get('_iommi_live_edit') or 'column'
     assert flow_direction in ('column', 'row')
@@ -78,22 +85,11 @@ def live_edit_view(request, view_func):
             code = request.POST['data'].replace('\t', '    ')
             if is_unix_line_endings:
                 code = code.replace('\r\n', '\n')
+            final_result = dangerous_execute_code(code, request, view_func)
 
-            local_variables = {}
-            exec(code, view_func.__globals__, local_variables)
-            assert len(local_variables) == 1
-            request.method = 'GET'
-            response = list(local_variables.values())[0](request)
-            response = render_if_needed(request, response)
-            final_result = HttpResponse(json.dumps(dict(page=response.content.decode())))
-
-            ast_of_new_code = find_function(name=view_func.__name__, node=parso.parse(code))
-
-            ast_of_old_code.children[:] = ast_of_new_code.children
-
-            # This only works in django 2.2+
             if orig_reload is not None:
                 # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
+                # This only works in django 2.2+
                 def restore_auto_reload(filename):
                     from django.utils import autoreload
                     print('Skipped reload')
@@ -101,6 +97,8 @@ def live_edit_view(request, view_func):
 
                 autoreload.trigger_reload = restore_auto_reload
 
+            ast_of_new_code = find_function(name=view_func.__name__, node=parso.parse(code))
+            ast_of_old_code.children[:] = ast_of_new_code.children
             new_code = ast_of_entire_file.get_code()
             with open(filename, 'w') as f:
                 f.write(new_code)
@@ -202,3 +200,14 @@ def live_edit_view(request, view_func):
         foo();
         ''')),
     )
+
+
+def dangerous_execute_code(code, request, view_func):
+    local_variables = {}
+    exec(code, view_func.__globals__, local_variables)
+    assert len(local_variables) == 1
+    request.method = 'GET'
+    response = list(local_variables.values())[0](request)
+    response = render_if_needed(request, response)
+    final_result = HttpResponse(json.dumps(dict(page=response.content.decode())))
+    return final_result
