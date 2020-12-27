@@ -292,9 +292,8 @@ def test_reinvoke_new_default_change_shortcut():
     ).kwargs == dict(foo='bar', shortcut_was_here=True)
 
 
-
 @pytest.mark.skip('Broken since there is no way to set things on the container of Action')
-def test_set_class_on_actions_container():
+def test_set_class_on_actions_container():  # pragma: no cover
     t = Table()
     style_data = Namespace(
         actions__attrs__class={'object-tools': True},

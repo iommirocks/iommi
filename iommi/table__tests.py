@@ -2004,7 +2004,7 @@ def test_yield_rows():
 
 @pytest.mark.skip('This assert is broken currently, due to value_to_q being a function by default which is truthy')
 @pytest.mark.django_db
-def test_error_on_invalid_filter_setup():
+def test_error_on_invalid_filter_setup():  # pragma: no cover
     class MyTable(Table):
         c = Column(attr=None, filter__include=True)
 
@@ -3068,7 +3068,7 @@ def test_title_default_to_none():
 
 @pytest.mark.skip('This assert is broken currently, due to value_to_q being a function by default which is truthy')
 @pytest.mark.django_db
-def test_error_when_inserting_field_into_query_form_with_no_attr():
+def test_error_when_inserting_field_into_query_form_with_no_attr():  # pragma: no cover
     with pytest.raises(AssertionError):
         Table(
             auto__model=TFoo,

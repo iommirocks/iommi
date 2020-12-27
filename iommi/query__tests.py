@@ -334,7 +334,7 @@ def test_invalid_form_data():
 
 
 @pytest.mark.skip('This assert is broken currently, due to value_to_q being a function by default which is truthy')
-def test_none_attr():
+def test_none_attr():  # pragma: no cover
     with pytest.raises(AssertionError) as e:
         Query(
             filters__bazaar=Filter(attr=None, field__include=True),
