@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from django.views.decorators.csrf import csrf_exempt
@@ -60,3 +61,49 @@ def view(request):
 """
 
     assert json.loads(dangerous_execute_code(code=code, request=req('get', foo='foo'), view_func=view).content) == dict(page='foobar')
+
+
+def test_edit(capsys):
+    path = Path(__file__).parent.parent / 'tests' / 'test_edit_views_temp.py'
+
+    orig_code = """
+from iommi._web_compat import HttpResponse
+
+def foo_view(request):
+    return HttpResponse('foo view data')        
+"""
+
+    new_code = """
+def foo_view(request):
+    return HttpResponse('changed!')        
+"""
+
+    with open(path, 'w') as f:
+        f.write(orig_code)
+
+    from tests.test_edit_views_temp import foo_view
+
+    # Broken changes are NOT written to disk
+    data = json.loads(live_edit_view(req('post', data='syntax error!'), foo_view).content)
+    assert data == {'error': 'invalid syntax (<string>, line 1)'}
+
+    with open(path) as f:
+        assert f.read() == orig_code
+
+    # Valid changes are written to disk
+    data = json.loads(live_edit_view(req('post', data=new_code), foo_view).content)
+    assert data == {'page': 'changed!'}
+
+    with open(path) as f:
+        actual_new_code = f.read()
+
+    assert actual_new_code == orig_code.replace('foo view data', 'changed!')
+
+    # Reload trigger hack
+    from django.utils import autoreload
+    autoreload.trigger_reload('notused')
+    captured = capsys.readouterr()
+    assert captured.out == 'Skipped reload\n'
+
+    with pytest.raises(SystemExit):
+        autoreload.trigger_reload('notused')

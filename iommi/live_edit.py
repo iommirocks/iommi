@@ -105,7 +105,10 @@ def live_edit_view(request, view_func):
 
             return final_result
         except Exception as e:
-            return HttpResponse(json.dumps(dict(error=str(e))))
+            error = str(e)
+            if not error:
+                error = str(e.__class__)
+            return HttpResponse(json.dumps(dict(error=error)))
 
     # This class exists just to provide a way to style the page
     class LiveEditPage(Page):

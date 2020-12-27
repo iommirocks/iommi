@@ -31,6 +31,15 @@ Maybe revise inheritance semantics: should class Meta on subclass override short
 
 ## Docs
 
+Creating your own style 
+
+Integration howto:
+
+    - link to docs for creating your own style
+    - discussion on base.html, configuring iommi content tag, rendering assets
+    - link to iommi in production page
+    
+    
 Fix docs that show priority of config
 
 API reference for free functions
@@ -42,7 +51,6 @@ Tutorial for how to build a site
 Admin customization how to
 
 "How to create your own iommi component": own_evaluate_parameters, on_bind, collect_members/bind_members, Refinable, EvaluatedRefinable, `__html__`
-
 
 Document the assumed URL schema
 
