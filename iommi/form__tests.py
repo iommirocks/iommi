@@ -2787,5 +2787,4 @@ def test_nested_form_validation_error_propagates_to_parent():
     assert not f.nested_forms.inner_form.is_valid()
     assert not f.is_valid()
     assert f.nested_forms.inner_form.get_errors() == {'fields': {'inner_field': {'nope'}}}
-    # TODO: currently this returns {}, but this seems wrong to me
-    # assert f.get_errors()
+    assert f.get_errors() == {}

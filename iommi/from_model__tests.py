@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import User
 from django.db.models import (
     CharField,
     IntegerField,
@@ -16,6 +17,7 @@ from iommi.from_model import (
     get_search_fields,
     NoRegisteredSearchFieldException,
     register_search_fields,
+    SearchFieldsAlreadyRegisteredException,
 )
 from tests.models import FormFromModelTest
 
@@ -163,3 +165,16 @@ Existing fields:
 def test_get_field_path():
     assert get_field_path(SomeModel, 'foo__bar') == OtherModel._meta.get_field('bar')
     assert get_field_path(OtherModel, 'bar') == OtherModel._meta.get_field('bar')
+
+
+def test_register_search_fields_already_registered():
+    with pytest.raises(SearchFieldsAlreadyRegisteredException):
+        register_search_fields(model=User, search_fields=['username'])
+
+
+def test_register_search_fields_pk_special_case():
+    # pk doesn't exist on the model but it's still valid
+    register_search_fields(model=User, search_fields=['pk'], overwrite=True)
+
+    # restore at the end
+    register_search_fields(model=User, search_fields=['username'], overwrite=True)

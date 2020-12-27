@@ -2,7 +2,6 @@ from platform import python_implementation
 
 import pytest
 from django.test import override_settings
-from tri_struct import Struct
 
 from iommi import (
     Fragment,
@@ -109,3 +108,8 @@ def test_invalid_context_specified():
         _force_bind_all(root.parts)
 
     assert str(e.value) == 'The context property is only valid on the root page'
+
+
+def test_as_view():
+    view = Page(parts__foo='##foo##').as_view()
+    assert '##foo##' in view(req('get')).content.decode()

@@ -1,3 +1,4 @@
+import pytest
 from tri_struct import Struct
 
 from iommi._web_compat import Template
@@ -201,3 +202,10 @@ def test_actions():
             <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
             <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
         </div>""")
+
+
+def test_check_for_bad_value_usage():
+    with pytest.raises(AssertionError) as e:
+        Action(tag='button', attrs__value='foo')
+
+    assert str(e.value) == 'You passed attrs__value, but you should pass display_name'

@@ -325,11 +325,17 @@ def test_assets_render_from_style():
     unregister_style('my_style')
 
 
-def test_deprecated_assets_style():
+def test_deprecated_assets_style(settings, capsys):
+    settings.DEBUG = True
     register_style('my_style', Style(
         test,
         assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
     ))
+
+    captured = capsys.readouterr()
+    assert 'Warning: The preferred way to add top level assets config' in captured.out
+
+    settings.DEBUG = False
 
     expected = prettify('''
         <!DOCTYPE html>

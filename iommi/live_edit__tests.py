@@ -19,12 +19,12 @@ from tests.models import TFoo
 
 
 def view(request):
-    return HttpResponse('hello!')
+    return HttpResponse('hello!')   # pragma: no cover
 
 
 @csrf_exempt
 def csrf_exempt_view(request):
-    return HttpResponse('hello!')
+    return HttpResponse('hello!')   # pragma: no cover
 
 
 def test_live_edit():

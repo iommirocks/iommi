@@ -5,12 +5,14 @@ from tri_struct import Struct
 from iommi import (
     Page,
     register_style,
+    Header,
 )
 from iommi._web_compat import Template
 from iommi.part import (
     as_html,
     render_root,
     request_data,
+    get_title,
 )
 from iommi.style import Style
 from iommi.style_base import base
@@ -63,3 +65,7 @@ def test_context_processor_is_called_on_render_root():
         context=dict(my_context_variable='my_context_variable'),
     )
     assert t == 'context_processor_is_called\nroot_part_context_variable\nmy_context_variable\n'
+
+
+def test_get_title_of_header():
+    assert get_title(Header(children__foo='foo', children__bar='qwe').bind(request=req('get'))) == 'foo'
