@@ -16,7 +16,7 @@ class HighlightBrokenVariable:
         return True
 
     def __mod__(self, other):
-        raise Exception(f'Tried to render non-existent variable {other}')
+        assert False, f'Tried to render non-existent variable {other}'
 
 
 TEMPLATES = [

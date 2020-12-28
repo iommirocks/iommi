@@ -947,7 +947,7 @@ class Cell(CellConfig):
         return self.__html__()
 
     def __repr__(self):
-        return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.cells.row}!r>"  # pragma: no cover
+        return f"<{type(self).__name__} column={self.column.declared_column!r} row={self.cells.row!r}>"
 
     def get_context(self):
         return self.cells.get_context()
@@ -1620,15 +1620,17 @@ class Table(Part, Tag):
                     field = setdefaults_path(
                         Namespace(),
                         column.bulk,
-                        call_target__cls=field_class,
-                        model=self.model,
-                        model_field_name=column.model_field_name,
-                        _name=name,
-                        attr=name if column.attr is MISSING else column.attr,
-                        required=False,
-                        empty_choice_tuple=(None, '', '---', True),
-                        parse_empty_string_as_none=True,
-                        display_name=column.display_name,
+                        dict(
+                            call_target__cls=field_class,
+                            model=self.model,
+                            model_field_name=column.model_field_name,
+                            _name=name,
+                            attr=name if column.attr is MISSING else column.attr,
+                            required=False,
+                            empty_choice_tuple=(None, '', '---', True),
+                            parse_empty_string_as_none=True,
+                            display_name=column.display_name,
+                        ),
                         **field
                     )
                     if isinstance(column.model_field, BooleanField):

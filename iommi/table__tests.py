@@ -13,6 +13,7 @@ from django.test import override_settings
 from iommi import (
     Action,
     Page,
+    html,
 )
 from iommi._web_compat import (
     mark_safe,
@@ -798,6 +799,25 @@ def test_bulk_edit():
         assert {x.pk for x in queryset} == {1, 2}
         assert updates == dict(a=0, b='changed')
 
+    # The most important part of the test: don't bulk update with an invalid form!
+    t = TestTable(
+        rows=TFoo.objects.all().order_by('pk'),
+        post_bulk_edit=post_bulk_edit,
+    ).bind(
+        request=req('post', pk_1='', pk_2='', **{'bulk/a': 'asd', 'bulk/b': 'changed', '-bulk/submit': ''}),
+    )
+    assert t._is_bound
+    assert t.bulk._name == 'bulk'
+    t.render_to_response()
+
+    assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
+        (1, 1, u''),
+        (2, 2, u''),
+        (3, 3, u''),
+        (4, 4, u''),
+    ]
+
+    # Now do the bulk update
     t = TestTable(
         rows=TFoo.objects.all().order_by('pk'),
         post_bulk_edit=post_bulk_edit,
@@ -815,12 +835,17 @@ def test_bulk_edit():
         (4, 4, u''),
     ]
 
-    # Test that empty field means "no change"
-    TestTable(
-        rows=TFoo.objects.all()
+    # Test that empty field means "no change", even with the form set to not parse empty as None
+    t = TestTable(
+        rows=TFoo.objects.all(),
+        # TODO: this doesn't do anything, but imo it should work :(
+        # bulk__fields__b__parse_empty_string_as_none=False,
+        columns__b__bulk__parse_empty_string_as_none=False,
     ).bind(
         request=req('post', pk_1='', pk_2='', **{'bulk/a': '', 'bulk/b': '', '-bulk/submit': ''}),
-    ).render_to_response()
+    )
+    t.render_to_response()
+    assert t.bulk.fields.b.value == ''
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
         (1, 0, u'changed'),
         (2, 0, u'changed'),
@@ -2416,6 +2441,7 @@ def test_paginator_rendered():
     assert table.paginator.page_size == 1
     assert table.paginator.count == 2
     assert table.paginator.number_of_pages == 2
+    assert table.paginator.is_paginated() is True
     content = table.render_to_response().content.decode()
 
     assert 'aria-label="Pages"' in content
@@ -2471,6 +2497,15 @@ def test_cell_value_is_none_if_attr_is_none():
     assert len(bound_rows) == 1
     cells = bound_rows[0]
     assert cells['foo'].value is None
+
+    # Check some random stuff on Cells, Cell and ColumnHeader for coverage
+    assert cells.__html__() == str(cells)
+    cell = cells['foo']
+    assert cell.iommi_evaluate_parameters() is cell._evaluate_parameters
+    assert cell.get_request() is cells.get_request()
+    assert cell.get_context() == cells.get_context()
+    assert repr(cell) == '<Cell column=<iommi.table.Column foo> row=11>'
+    assert repr(t.header_levels[0][0]) == '<Header: foo>'
 
 
 @pytest.mark.django_db
@@ -3182,3 +3217,34 @@ def test_auto_model_include_pk():
         auto__include=['pk'],
     ).bind(request=req('get'))
     assert 'pk' in t.columns
+
+
+def test_h_tag():
+    class TestTable(Table):
+        foo = Column()
+
+    rows = [
+        Struct(foo=False),
+    ]
+
+    verify_table_html(
+        table=TestTable(rows=rows, h_tag=html.h1('foo', attrs__class__foo=True)),
+        find=dict(name='h1'),
+        expected_html="""
+            <h1 class="foo">foo</h1>
+        """)
+
+    verify_table_html(
+        table=TestTable(rows=rows, title='bar', h_tag__attrs__class__bar=True),
+        find=dict(name='h1'),
+        expected_html="""
+            <h1 class="bar">Bar</h1>
+        """)
+
+
+@pytest.mark.django_db
+def test_bulk_no_actions_makes_bulk_form_none():
+    # normal case
+    assert Table(auto__model=TFoo, columns__a__bulk__include=True).bind(request=req('get')).bulk is not None
+    # the thing we want to test
+    assert Table(auto__model=TFoo, columns__a__bulk__include=True, bulk__actions__submit__include=False).bind(request=req('get')).bulk is None

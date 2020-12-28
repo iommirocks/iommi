@@ -42,7 +42,7 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     if find is None:
         find = dict(class_='table')
         if not expected_html.strip():
-            expected_html = "<table/>"
+            expected_html = "<table/>"  # pragma: no cover
 
     if isinstance(table, Namespace):
         table = table()
@@ -61,13 +61,13 @@ def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
     prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
-    if not hit:
+    if not hit:  # pragma: no cover
         print(actual_html)
         assert False, f"Couldn't find selector {find} in actual output"
     assert hit, actual_soup
     prettified_actual = reindent(hit.prettify()).strip()
 
-    if prettified_actual != prettified_expected:
+    if prettified_actual != prettified_expected:  # pragma: no cover
         print(actual_html)
     assert prettified_actual == prettified_expected
 

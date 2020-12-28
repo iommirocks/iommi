@@ -3,6 +3,12 @@ branch = False
 include=
     iommi/*
     docs/_generated_tests/*
+omit=
+    tests/test_edit_views_temp.py
+    tests/settings_jinja2_only.py
+    iommi/_web_compat_flask.py
+    tests/compat.py
+    tests/compat_flask.py
 
 [report]
 precision=2

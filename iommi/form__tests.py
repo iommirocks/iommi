@@ -428,16 +428,9 @@ def test_post_validation_and_error_checking_initial():
         capture_timeline(form)
         field.add_error('second error')
 
-    def form__post_validation(form, **_):
-        capture_timeline(form)
-        form.add_error('global error')
-
     class MyForm(Form):
         first = Field(post_validation=first__post_validation)
         second = Field(post_validation=second__post_validation)
-
-        class Meta:
-            post_validation = form__post_validation
 
     form = MyForm().bind(request=req('get'))
     capture_timeline(form)
@@ -459,6 +452,7 @@ def test_post_validation_and_error_checking_initial():
             'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}}
         },
     ]
+
 
 def test_post_validation_and_error_checking_full():
     timeline = []
@@ -495,6 +489,7 @@ def test_post_validation_and_error_checking_full():
                 return form
 
     form = MyForm().bind(request=req('post', **{'-submit': '', 'first': 'First', 'second': 'Second'}))
+    form.render_to_response()
     capture_timeline(form)
 
     assert timeline == [
@@ -519,6 +514,7 @@ def test_post_validation_and_error_checking_full():
             'errors': {'fields': {'first': {'first error'}, 'second': {'second error'}}, 'global': {'global error'}}
         },
     ]
+
 
 def test_initial_from_instance():
     assert Form(
@@ -1819,7 +1815,7 @@ def test_render_with_action():
         bar = Field()
 
         class Meta:
-            def actions__submit__post_handler(form, **_):
+            def actions__submit__post_handler(**_):
                 pass  # pragma: no cover
 
     expected_html = """

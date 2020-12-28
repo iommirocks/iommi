@@ -5,7 +5,11 @@ from tri_declarative import (
     Refinable,
 )
 
-from iommi.base import items
+from iommi.base import (
+    items,
+    keys,
+    values,
+)
 from iommi.member import (
     bind_members,
     collect_members,
@@ -79,7 +83,17 @@ def test_unbound_error():
     with pytest.raises(NotBoundYetException) as e2:
         str(basket.fruits)
 
-    assert str(e.value) == str(e2.value)
+    with pytest.raises(NotBoundYetException) as e3:
+        keys(basket.fruits)
+
+    with pytest.raises(NotBoundYetException) as e4:
+        values(basket.fruits)
+
+    with pytest.raises(NotBoundYetException) as e5:
+        for _ in basket.fruits:
+            pass  # pragma: no cover as it is supposed to raise on iter
+
+    assert str(e.value) == str(e2.value) == str(e3.value) == str(e4.value) == str(e5.value)
     assert str(e.value) == expected
 
 
