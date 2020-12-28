@@ -8,8 +8,6 @@ from typing import (
 
 from tri_declarative import (
     dispatch,
-    getattr_path,
-    Namespace,
     Refinable,
     refinable,
     RefinableObject,
@@ -265,11 +263,12 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 result[short_path] = long_path
             else:
                 less_short_path = find_unique_suffix(long_path_segments)
-                if less_short_path is not None:
-                    result[less_short_path] = long_path
-                else:
-                    so_far = '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
-                    assert False, f"Ran out of names... Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\nResult so far:\n{so_far}"
+                assert less_short_path is not None, (
+                        f"Ran out of names...\n"
+                        f"Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\n"
+                        f"Result so far:\n" + '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
+                )
+                result[less_short_path] = long_path
 
         if hasattr(node, '_declared_members'):
             members = declared_members(node)

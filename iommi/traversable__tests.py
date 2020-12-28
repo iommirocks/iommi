@@ -38,6 +38,8 @@ from iommi.traversable import (
     build_long_path_by_path,
     evaluated_refinable,
     EvaluatedRefinable,
+    get_path_by_long_path,
+    set_declared_member,
     Traversable,
 )
 from tests.helpers import (
@@ -139,6 +141,23 @@ def test_evil_names():
         ErrorMessages()
 
     assert str(e.value) == 'The names bind, get_request, iommi_path, iommi_style, on_bind, own_evaluate_parameters are reserved by iommi, please pick other names'
+
+
+def test_warning_when_names_are_recalculated(capsys):
+    page = Page(parts__foo=Fragment(_name='foo'))
+    assert get_path_by_long_path(page) == {
+        'parts/foo': ''
+    }
+    out, err = capsys.readouterr()
+    assert out == ''
+
+    set_declared_member(page, 'bar', Fragment(_name='bar'))
+    assert get_path_by_long_path(page) == {
+        'parts/foo': '',
+        'bar': 'bar',
+    }
+    out, err = capsys.readouterr()
+    assert out == '### A disturbance in the force... The namespace has been recalculated!\n'
 
 
 def test_dunder_path_is_fully_qualified_and_skipping_root():
