@@ -47,6 +47,7 @@ from iommi.table import (
     Struct,
     Table,
     yes_no_formatter,
+    bulk_delete__post_handler,
 )
 from iommi.traversable import declared_members
 from tests.helpers import (
@@ -969,6 +970,10 @@ def test_bulk_delete_all_respects_query():
     assert response.status_code == 302, response.content.decode()
     # Deleting all should not have touched objects in TFoo that were filtered out.
     assert list(TFoo.objects.all().order_by('a').values_list('a', flat=True)) == [2]
+
+
+def test_bulk_delete_post_handler_does_nothing_on_invalid_form():
+    assert bulk_delete__post_handler(table=None, form=Struct(is_valid=lambda: False)) is None
 
 
 @pytest.mark.django_db
@@ -3248,3 +3253,19 @@ def test_bulk_no_actions_makes_bulk_form_none():
     assert Table(auto__model=TFoo, columns__a__bulk__include=True).bind(request=req('get')).bulk is not None
     # the thing we want to test
     assert Table(auto__model=TFoo, columns__a__bulk__include=True, bulk__actions__submit__include=False).bind(request=req('get')).bulk is None
+
+
+def test_legacy_rows_property():
+    t = Table()
+
+    t.initial_rows = 'initial_rows'
+    assert t.rows == 'initial_rows'
+
+    t.sorted_rows = 'sorted_rows'
+    assert t.rows == 'sorted_rows'
+
+    t.sorted_and_filtered_rows = 'sorted_and_filtered_rows'
+    assert t.rows == 'sorted_and_filtered_rows'
+
+    t.visible_rows = 'visible_rows'
+    assert t.rows == 'visible_rows'

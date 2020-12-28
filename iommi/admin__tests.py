@@ -252,3 +252,5 @@ def test_change_password(settings, admin_client, admin_user):
 def test_collect_config_returns_none_on_missing():
     import os
     assert collect_config(os) is None
+    from tests import empty_iommi_admin
+    assert collect_config(empty_iommi_admin) is None

@@ -60,6 +60,7 @@ class Middleware:
 
     def __call__(self, request):
         set_current_request(request)
+        request.iommi_start_time = datetime.now()
         sql_trace = request.GET.get('_iommi_sql_trace')
         request.iommi_sql_debug_log = []
 
@@ -259,7 +260,7 @@ def sql_debug_total_time():
     try:
         log = get_current_request().iommi_sql_debug_log
     except AttributeError:
-        return None
+        return 0
 
     return sum(x['duration'] for x in log)
 
@@ -295,6 +296,7 @@ def sql_debug_format_stack_trace(frame):
                 extra = colored(f'(looking up: {f.f_locals["bit"]}) ', color='red')
         elif "django/template" in file_name:
             if skip_template_code:
+                frame = frame.f_back
                 continue
             skip_template_code = True
         elif skip_template_code:
@@ -347,14 +349,10 @@ def sql_debug_last_call(response):
         sql_debug(f'Total number of SQL statements: {sum(queries_per_using.values())}, {queries_per_using.get("read-only")} read-only, {queries_per_using.get("summary")} summary\n')
 
     if settings.DEBUG:
-        total_sql_time = sql_debug_total_time()
-        if total_sql_time is not None:
-            total_time = f"total sql time: {total_sql_time:.3f}"
-            sql_debug(msg=f'{request.META["REQUEST_METHOD"]} {request.get_full_path()} {total_time}')
-        duration = '-'
-        if hasattr(request, '_start_time'):
-            duration = f'{(datetime.now() - request._start_time).total_seconds():.3f}s'
-        sql_debug(f'{request.get_full_path()} -> {response.status_code}', fg='magenta', duration=duration)
+        total_sql_time = f" (sql time: {sql_debug_total_time():.3f}s)"
+        duration = f' ({(datetime.now() - request.iommi_start_time).total_seconds():.3f}s)'
+        sql_debug(msg=f'{request.META["REQUEST_METHOD"]} {request.get_full_path()} -> {response.status_code} {duration}{total_sql_time}')
+        sql_debug(f'{request.get_full_path()} -> {response.status_code}{duration}', fg='magenta')
 
     set_sql_debug(None)
 

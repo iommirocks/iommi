@@ -30,51 +30,20 @@ from tests.helpers import req
 
 def bogus_view(request):
     list(User.objects.filter(username='foo'))
+    list(User.objects.filter(username='foo'))
+    list(User.objects.filter(username='foo'))
+    list(User.objects.filter(username='foo'))
+    return HttpResponse('unseen')
+
+
+def bogus_view_with_no_queries(request):
     return HttpResponse('unseen')
 
 
 urlpatterns = [
-    path('', bogus_view)
+    path('', bogus_view),
+    path('no_queries/', bogus_view_with_no_queries),
 ]
-
-
-@pytest.fixture
-def frame():
-    frame2 = Struct(
-        f_lineno=1,
-        f_back=None,
-        f_locals={
-            'bit': 'django_template_bit',
-        },
-        f_code=Struct(
-            co_name='_resolve_lookup',
-            co_filename='foo.py',
-        ),
-    )
-    frame1 = Struct(
-        f_lineno=1,
-        f_back=frame2,
-        f_code=Struct(
-            co_name='f',
-            co_filename='/lib/python/foo.py',
-        ),
-    )
-    frame0 = Struct(
-        f_lineno=1,
-        f_back=frame1,
-        f_code=Struct(
-            co_name='f',
-            co_filename='foo.py',
-        ),
-    )
-    return Struct(
-        f_lineno=1,
-        f_back=frame0,
-        f_code=Struct(
-            co_name='f',
-            co_filename='foo2.py',
-        ),
-    )
 
 
 @pytest.mark.django_db
@@ -84,21 +53,29 @@ def test_middleware(settings, client, caplog):
     settings.DEBUG = True
     settings.SQL_DEBUG = SQL_DEBUG_LEVEL_WORST
     settings.SQL_DEBUG_WORST_SUSPICIOUS_CUTOFF = 0
+    settings.SQL_DEBUG_WORST_QUERY_CUTOFF = 1
+
+    client.get('/no_queries/?_iommi_sql_trace')
+    assert 'GET /no_queries/?_iommi_sql_trace -> 200  (0.000s)' in caplog.text
+
+    caplog.clear()
 
     response = client.get('/?_iommi_sql_trace')
 
     content = response.content.decode().replace('&quot;', '"')
     assert 'unseen' not in content
 
-    assert '1 queries' in content
+    assert '4 queries' in content
     # noinspection SqlResolve
     select_statement = 'SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username"'
     assert select_statement in content
     assert '<span style="color: green; font-weight: bold">SELECT</span>' in content
 
-    assert '------ 1 times: -------' in caplog.text
+    assert '------ 4 times: -------' in caplog.text
     assert select_statement in caplog.text
     assert 'File "iommi/iommi/sql_trace__tests.py", line ' in caplog.text
+    assert 'GET /?_iommi_sql_trace -> 200  (0.000s) (sql time: 0.000s)' in caplog.text
+    assert '... and 3 more unique statements' in caplog.text
 
 
 @pytest.mark.parametrize('text, fg, bold, expected', [
@@ -142,9 +119,80 @@ def test_set_sql_debug():
     assert get_sql_debug() == 'worst'
 
 
-def test_sql_debug_format_stack_trace(frame):
-    expected = """  File "foo2.py", line 1, in f => \n  File "foo.py", line 1, in f => \n  File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)"""
-    assert sql_debug_format_stack_trace(frame) == expected
+def test_sql_debug_format_stack_trace():
+    frames = [
+        Struct(
+            f_lineno=1,
+            f_locals={
+                'bit': 'django_template_bit',
+            },
+            f_code=Struct(
+                co_name='asd',
+                co_filename='foo.py',
+            ),
+        ),
+        Struct(
+            f_lineno=1,
+            f_locals={},
+            f_code=Struct(
+                co_name='_resolve_lookup',
+                co_filename='foo.py',
+            ),
+        ),
+        Struct(
+            f_lineno=1,
+            f_code=Struct(
+                co_name='f',
+                co_filename='foo/django/template/bar',
+            ),
+        ),
+        Struct(
+            f_lineno=1,
+            f_code=Struct(
+                co_name='f',
+                co_filename='foo/django/template/bar',
+            ),
+        ),
+        Struct(
+            f_lineno=1,
+            f_code=Struct(
+                co_name='f',
+                co_filename='/lib/python/foo.py',
+            ),
+        ),
+        Struct(
+            f_lineno=1,
+            f_code=Struct(
+                co_name='f',
+                co_filename='foo.py',
+            ),
+        ),
+        Struct(
+            f_lineno=1,
+            f_code=Struct(
+                co_name='f',
+                co_filename='foo2.py',
+            ),
+        )
+    ]
+
+    for i, f in enumerate(frames):
+        if i == 0:
+            f.f_back = None
+        else:
+            f.f_back = frames[i-1]
+
+    frame = frames[-1]
+
+    expected = """
+  File "foo2.py", line 1, in f => 
+  File "foo.py", line 1, in f => 
+  File "foo/django/template/bar", line 1, in f => 
+  File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)
+  File "foo.py", line 1, in asd =>
+  """.strip()
+    actual = sql_debug_format_stack_trace(frame).strip()
+    assert actual == expected
 
 
 def test_sql_debug_trace_sql_cutoff(caplog):
@@ -190,7 +238,7 @@ def test_sql_debug_total_time():
     set_sql_debug(SQL_DEBUG_LEVEL_WORST)
 
     set_current_request(None)
-    assert sql_debug_total_time() is None
+    assert sql_debug_total_time() == 0.0
 
     request = req('get')
     set_current_request(request)
