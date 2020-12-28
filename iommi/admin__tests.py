@@ -15,6 +15,7 @@ from tri_struct import Struct
 from iommi.admin import (
     Admin,
     Messages,
+    collect_config,
 )
 from iommi.base import values
 from tests.helpers import (
@@ -247,3 +248,7 @@ def test_change_password(settings, admin_client, admin_user):
     admin_user.refresh_from_db()
     assert admin_user.check_password(new_password)
 
+
+def test_collect_config_returns_none_on_missing():
+    import os
+    assert collect_config(os) is None

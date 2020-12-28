@@ -39,6 +39,7 @@ from iommi.query import (
     QueryException,
     value_to_str_for_query,
     Filter,
+    choice_queryset_value_to_q,
 )
 from iommi.traversable import declared_members
 from tests.helpers import req
@@ -460,6 +461,26 @@ def test_choice_queryset():
 
     # test a string with the contents "null"
     assert repr(query2.parse_query_string('foo="null"')) == repr(Q(foo=None))
+
+
+@pytest.mark.django_db
+def test_choice_queryset_value_to_q_misc():
+    assert choice_queryset_value_to_q(Filter(attr=None), op='=', value_string_or_f=None) == Q()
+    assert choice_queryset_value_to_q(Filter(attr='foo'), op='=', value_string_or_f='null') == Q(foo=None)
+
+    foo = Foo.objects.create(foo=1)
+
+    assert choice_queryset_value_to_q(Filter(attr='foo', search_fields=['foo'], choices=Foo.objects.all()), op='=', value_string_or_f='1') == Q(foo__pk=foo.pk)
+
+    Foo.objects.create(foo=1)
+    with pytest.raises(QueryException) as e:
+        choice_queryset_value_to_q(Filter(attr='foo', search_fields=['foo'], choices=Foo.objects.all()), op='=', value_string_or_f='1')
+
+    assert str(e.value) == 'Found more than one object for name "1"'
+
+
+def test_base_value_to_q_misc():
+    assert Filter.value_to_q(Filter(attr=None), op='=', value_string_or_f=None) == Q()
 
 
 @pytest.mark.django_db

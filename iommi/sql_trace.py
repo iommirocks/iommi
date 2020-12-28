@@ -120,7 +120,7 @@ def colorize(text, fg, bold=False):
         return text
 
 
-def format_sql(text, record=None, width=60, duration=None):
+def format_sql(text, width=60, duration=None, short_limit=120):
     BASE_COLORS = {
         'SELECT': 'green',
         'INSERT': 'magenta',
@@ -136,7 +136,7 @@ def format_sql(text, record=None, width=60, duration=None):
 
     def tokenize(text):
         tokens = re.split(sql_token_sep_re, text.strip().replace('`', ''))
-        short = len(text) < 120
+        short = len(text) < short_limit
 
         _first = True
         column = 0

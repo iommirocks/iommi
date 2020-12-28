@@ -22,6 +22,7 @@ from iommi.sql_trace import (
     SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
     sql_debug_log_to_request,
     sql_debug_total_time,
+    format_sql,
 )
 from iommi.thread_locals import set_current_request
 from tests.helpers import req
@@ -195,3 +196,12 @@ def test_sql_debug_total_time():
     set_current_request(request)
     request.iommi_sql_debug_log = [dict(duration=3), dict(duration=7)]
     assert sql_debug_total_time() == 10
+
+
+def test_format_sql():
+    assert format_sql('SELECT x AND y FROM foo', short_limit=0) == (
+        '<span><span style="color: green; font-weight: bold">SELECT</span> <span '
+        'style="color: green">x</span> <span><br>&nbsp;</span>&nbsp;<span '
+        'style="color: green; font-weight: bold">AND</span> <span style="color: '
+        'green">y</span> <span><br>&nbsp;</span><span style="color: green; '
+        'font-weight: bold">FROM</span> <span style="color: green">foo</span> </span>')
