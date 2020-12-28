@@ -18,7 +18,13 @@ from iommi.sql_trace import (
     set_sql_debug,
     sql_debug_format_stack_trace,
     SQL_DEBUG_LEVEL_WORST,
+    sql_debug_trace_sql,
+    SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
+    sql_debug_log_to_request,
+    sql_debug_total_time,
 )
+from iommi.thread_locals import set_current_request
+from tests.helpers import req
 
 
 def bogus_view(request):
@@ -138,3 +144,54 @@ def test_set_sql_debug():
 def test_sql_debug_format_stack_trace(frame):
     expected = """  File "foo2.py", line 1, in f => \n  File "foo.py", line 1, in f => \n  File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)"""
     assert sql_debug_format_stack_trace(frame) == expected
+
+
+def test_sql_debug_trace_sql_cutoff(caplog):
+    caplog.set_level(logging.DEBUG)
+    set_sql_debug(SQL_DEBUG_LEVEL_WORST)
+
+    sql_debug_trace_sql('!' * 10_001)
+    assert caplog.records[0].msg.startswith('!' * 10_000)
+    assert caplog.records[0].msg[10_000:] == '... [10001 bytes sql]'
+
+
+def test_sql_debug_trace_sql_frame(caplog):
+    caplog.set_level(logging.DEBUG)
+    set_sql_debug(SQL_DEBUG_LEVEL_ALL_WITH_STACKS)
+
+    with pytest.raises(KeyError):
+        sql_debug_trace_sql('foo')
+
+    frame = Struct(
+        f_lineno=1,
+        f_back=None,
+        f_locals={},
+        f_code=Struct(
+            co_name='foo',
+            co_filename='foo.py',
+        ),
+    )
+
+    sql_debug_trace_sql('foo', frame=frame)
+    assert caplog.records[0].msg == '  File "foo.py", line 1, in foo =>'
+
+
+def test_sql_debug_log_to_request_adds_attribute():
+    set_sql_debug(SQL_DEBUG_LEVEL_WORST)
+
+    request = req('get')
+    set_current_request(request)
+    sql_debug_log_to_request(sql='q', foo='bar')
+    assert request.iommi_sql_debug_log == [dict(sql='q', foo='bar')]
+
+
+def test_sql_debug_total_time():
+    set_sql_debug(SQL_DEBUG_LEVEL_WORST)
+
+    set_current_request(None)
+    assert sql_debug_total_time() is None
+
+    request = req('get')
+    set_current_request(request)
+    request.iommi_sql_debug_log = [dict(duration=3), dict(duration=7)]
+    assert sql_debug_total_time() == 10
