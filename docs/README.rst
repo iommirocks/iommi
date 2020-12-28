@@ -3,6 +3,8 @@ iommi
 
 .. raw:: html
 
+    <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://raw.githubusercontent.com/TriOptima/iommi/master/logo_with_outline.svg" alt="iommi" style="max-width: 200px" width=300></a></p>
+
     <h3 class="pun">Your first pick for a django power cord</h3>
 
 .. image:: https://github.com/TriOptima/iommi/workflows/tests/badge.svg

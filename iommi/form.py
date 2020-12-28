@@ -562,7 +562,7 @@ class Field(Part):
         :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
         :param choice_to_option: DEPRECATED: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
-        :param choice_to_optgroup Callback to generate the optgroup for the given choice.  It will get the keywoard argument `choice`. It should return None if the choice should not be grouped.
+        :param choice_to_optgroup Callback to generate the optgroup for the given choice. It will get the keyword argument `choice`. It should return None if the choice should not be grouped.
         """
 
         model_field = kwargs.get('model_field')
@@ -776,7 +776,7 @@ class Field(Part):
             self.initial = None
 
     def _read_raw_data(self):
-        # The client might have refined raw_data.  If so evaluate it.
+        # The client might have refined raw_data. If so evaluate it.
         if self.raw_data is not None:
             self.raw_data = evaluate_strict(self.raw_data, **self.iommi_evaluate_parameters())
             if self.raw_data is not None:
@@ -1244,7 +1244,7 @@ class Form(Part):
     See tri.declarative docs for more on this dual style of declaration.
 
     In the common case the fields namespace will contain only instances of `Field`, but
-    iommi actually supports arbitrary `Part`s (except other `Form`s).  For example:
+    iommi actually supports arbitrary `Part` objects. For example:
 
     .. code:: python
 
@@ -1337,7 +1337,7 @@ class Form(Part):
                 )
 
         # Submit is special.
-        # We used to have an automatic action submit button.  Now we instead if something is inj
+        # We used to have an automatic action submit button. Now we instead if something is inj
         # the actions submit space assume you want to define it as a primary button (unless you
         # explicitely specify differently). That way we get no button if you don't explicitely opt
         # into it, by either directly defining something inside the submit namespace or using
@@ -1481,7 +1481,7 @@ class Form(Part):
     def validate(self):
         # When validate is called at the end of bind, self._valid will be either
         # False because a field's add_error was called during the fields bind.
-        # Or it will still be None.  In that latter case set it to True here,
+        # Or it will still be None. In that latter case set it to True here,
         # so that we can call is_valid inside post_validation hook to check if
         # everything up until this point was valid.
         if self._valid is None:

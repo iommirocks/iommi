@@ -305,7 +305,7 @@ def form_example_children_that_are_not_fields_declarative(request):
 @example(gettext("Nested forms -- to abstract out behaviour and create complex 'fields'."))
 def form_example_nested_forms(request):
     """Here we have two fields first_day, last_day and want to abstract
-       out the validation behaviour.  Maybe because we have several
+       out the validation behaviour. Maybe because we have several
        different forms that that edit different models that all have
        a first_day and a last_day field."""
     class DateRangeField(Form):

@@ -68,7 +68,7 @@ Parts & Pages
 How do I override part of a part/page? 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is all just *standard* tri.declarative magic.  But as you are likely new to it
+This is all just *standard* tri.declarative magic. But as you are likely new to it
 this might take a while to get used to. Let's say you created yourself a master template 
 for your site.
 
@@ -91,7 +91,7 @@ Which you can use like this:
 
     index(req('get'))
 
-Here you can see that `Part` s (`Page` s are themselves `Part` s) form a tree and the direct children are gathered in the `parts` namespace.  Here we overwrote a leaf of
+Here you can see that `Part` s (`Page` s are themselves `Part` s) form a tree and the direct children are gathered in the `parts` namespace. Here we overwrote a leaf of
 an existing namespace, but you can also add new elements or replace bigger
 parts (and most of the time it doesn't matter if you use the class Member or the 
 keyword arguments to init syntax):
@@ -110,7 +110,7 @@ keyword arguments to init syntax):
 In the above we replaced the title and removed the subtitle element completely. The
 latter of which shows one of the gotchas as only `str`, `Part` and the django
 template types are gathered into the parts structure when a `Part` class definition
-is processed.  As `None` is not an instance of those types, you can remove things
+is processed. As `None` is not an instance of those types, you can remove things
 by setting their value to `None`.
 
 .. _Page.title:
@@ -156,7 +156,7 @@ How do I specify the context used when a Template is rendered?
 
     index(req('get'))
 
-You can use the full power of `tri.declarative` to construct the context.  This
+You can use the full power of `tri.declarative` to construct the context. This
 not only makes the above shorter, but also makes it easy to write abstractions that
 can be extended later:
 
@@ -265,8 +265,8 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
 How do I validate multiple fields together?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Refine the `post_validation` hook on the `form`.  It is run after all the individual fields validation
-has run.  But note that it is run even if the individual fields validation was not successful. 
+Refine the `post_validation` hook on the `form`. It is run after all the individual fields validation
+has run. But note that it is run even if the individual fields validation was not successful.
 
 How do I exclude a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -435,7 +435,7 @@ Pass a template name or a `Template` object to the `input` namespace:
 How do I change how fields are rendered everywhere in my project?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Define a custom style and override the appropriate fields.  For
+Define a custom style and override the appropriate fields. For
 example here is how you could change `Field.date` to use a text
 based input control (as opposed to the date picker that `input type='date'`
 uses).
@@ -774,7 +774,7 @@ This will show the column `name` only if the GET parameter `some_parameter` is s
 To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
 
-.. _Table.cells_for_rows
+.. _Table.cells_for_rows:
 
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

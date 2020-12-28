@@ -116,7 +116,7 @@ Changelog
 2.3.0 (2020-10-30)
 ~~~~~~~~~~~~~~~~~~
 
-* Every part can now have assets that are added to the assets of the style and included in the head. This is particularly useful for bundling small pieces of javascript or css with the components that need them and thereby gets us closer to being able to write truly self contained "component".  As a proof of concept I did so for the tables javascript parts. The naming takes care of deduplication of assets.
+* Every part can now have assets that are added to the assets of the style and included in the head. This is particularly useful for bundling small pieces of javascript or css with the components that need them and thereby gets us closer to being able to write truly self contained "component". As a proof of concept I did so for the tables javascript parts. The naming takes care of deduplication of assets.
 
 * Only include select2 assets when needed (possible because of the point above)
 

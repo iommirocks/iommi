@@ -64,7 +64,7 @@ class Action(Fragment):
         # Notice that because forms
         # with a single primary submit button are so common, iommi assumes
         # that if you have a action called submit and do NOT explicitly
-        # specify the action that it is a primary action.  This is only
+        # specify the action that it is a primary action. This is only
         # done for the action called submit, inside the Forms actions
         # Namespace.
         #

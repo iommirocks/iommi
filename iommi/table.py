@@ -1487,7 +1487,7 @@ class Table(Part, Tag):
 
         paginator__call_target=Paginator,
         # The filter action on a table will often not be the primary
-        # action button on the page.  So let's use the secondary
+        # action button on the page. So let's use the secondary
         # style
         query__form__actions__submit__call_target=Action.button
     )
@@ -1700,7 +1700,7 @@ class Table(Part, Tag):
     @property
     def rows(self):
         """Legacy API: if self is fully bound return the rows that are
-           displayed on the screen.  Otherwise return as far as we got
+           displayed on the screen. Otherwise return as far as we got
            in the refinement process from initial_rows -> visible_rows.
 
            You are probably better off using `visible_rows` or
@@ -1989,7 +1989,7 @@ class Table(Part, Tag):
         return model, rows, columns
 
     def _selection_identifiers(self):
-        """Return a list of identifiers of the selected rows.  Or 'all' if all
+        """Return a list of identifiers of the selected rows. Or 'all' if all
            sorted_and_filtered_rows are selected."""
         if self.get_request().POST.get('_all_pks_') == '1':
             return 'all'
@@ -2017,7 +2017,7 @@ class Table(Part, Tag):
         """Return the queryset that contains only the selected rows with
            bulk_filter and bulk_exclude applied.
 
-           For use in post_handlers.  Only valid when rows was a queryset.
+           For use in post_handlers. Only valid when rows was a queryset.
         """
         assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
 

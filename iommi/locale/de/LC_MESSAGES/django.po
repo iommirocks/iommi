@@ -190,7 +190,7 @@ msgid ""
 "and abbreviated from \"10 days ago\" to \"-10d\"."
 msgstr ""
 "Man kann auch nach Zeitpunkten relativ zum heutigen Tag suchen: feld_name < "
-"\"10 days ago\".  Unterstützte Zeitspannen sind days, months, years, "
+"\"10 days ago\". Unterstützte Zeitspannen sind days, months, years, "
 "quarters and weekdays. Sie können auch negativ sein \"10 days ago\" und "
 "abgekürzt werden \"-10d\"."
 
