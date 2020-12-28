@@ -9,8 +9,11 @@ from iommi.debug import (
     dunder_path__format,
     local_debug_url_builder,
     should_ignore_frame,
+    filename_and_line_num_from_part,
+    source_url_from_part,
 )
 from iommi.endpoint import find_target
+from tests import debug_tests_stuff
 from tests.helpers import req
 
 
@@ -79,12 +82,30 @@ def test_local_debug_url_builder(settings):
 
 
 def test_should_ignore_frame():
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.admin.foo'}), 'syspath/foo')
-    assert should_ignore_frame(Struct(f_globals={'__name__': '_pydev_bundle.foo'}), 'syspath/foo')
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.foo.bar'}), 'syspath/foo')
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'tri_declarative.foo.bar'}), 'syspath/foo')
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'django.foo.bar'}), 'syspath/foo')
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='syspath/foo/bar/baz.py')), 'syspath/foo')
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='<string>')), 'syspath/foo')
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.admin.foo'}), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': '_pydev_bundle.foo'}), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.foo.bar'}), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'tri_declarative.foo.bar'}), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'django.foo.bar'}), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='syspath/foo/bar/baz.py')), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='<string>')), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='foo/helpers/pycharm/asd')), {'syspath/foo'})
 
-    assert not should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='my actual app')), 'syspath/foo')
+    assert not should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='my actual app')), {'syspath/foo'})
+
+
+def test_filename_and_line_num_from_part_empty_case():
+    assert filename_and_line_num_from_part(part=Struct(_instantiated_at_frame=Struct(f_back=None))) == (None, None)
+
+
+def test_source_url_from_part(settings):
+    settings.DEBUG = True
+
+    # We need this instantiation of a Page to be outside the iommi code to get the right url
+    filename = source_url_from_part(part=debug_tests_stuff.get_my_page())
+    assert debug_tests_stuff.__file__ in filename
+
+    # Make it trigger special code path that leads to the class definition
+    p = debug_tests_stuff.MyPage()
+    filename = source_url_from_part(part=p)
+    assert debug_tests_stuff.__file__ in filename

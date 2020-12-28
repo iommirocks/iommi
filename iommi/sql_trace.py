@@ -148,9 +148,6 @@ def format_sql(text, record=None, width=60, duration=None):
                 if _first and token in BASE_COLORS:
                     _first = False
                     fg = BASE_COLORS[token]
-                    using = getattr(record, 'using', None)
-                    if using == 'read-only':
-                        fg = 'white'
                 if not short:
                     if token in ('AND', 'OR', 'LEFT', 'INNER', 'FROM', 'WHERE', 'ORDER', 'LIMIT'):
                         yield format_html('<span><br>&nbsp;</span>')

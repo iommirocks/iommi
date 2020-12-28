@@ -111,5 +111,3 @@ class Page(Part):
 
     def as_view(self):
         return build_as_view_wrapper(self)
-
-

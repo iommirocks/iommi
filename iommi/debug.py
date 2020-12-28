@@ -1,5 +1,5 @@
+import sys
 from os.path import (
-    basename,
     dirname,
     isabs,
     join,
@@ -156,7 +156,8 @@ def src_debug_url_builder(filename, lineno=None):
     return debug_url_builder(filename, lineno)
 
 
-def should_ignore_frame(frame, env_path):
+def should_ignore_frame(frame, env_paths):
+    assert isinstance(env_paths, set)
     module_name = frame.f_globals.get('__name__')
 
     if module_name.startswith('iommi.admin'):
@@ -169,10 +170,14 @@ def should_ignore_frame(frame, env_path):
     if base_module_name in ('tri_declarative', 'iommi', 'django',):
         return True
 
-    if frame.f_code.co_filename.startswith(env_path):
-        return True
+    for env_path in env_paths:
+        if frame.f_code.co_filename.startswith(env_path):
+            return True
 
     if frame.f_code.co_filename == '<string>':
+        return True
+
+    if join('helpers', 'pycharm') in frame.f_code.co_filename:
         return True
 
     return False
@@ -182,14 +187,14 @@ def filename_and_line_num_from_part(part):
     frame = part._instantiated_at_frame
 
     import os
-    env_path = dirname(os.__file__)
+    env_paths = {dirname(os.__file__), dirname(dirname(sys.executable))}
 
     for _ in range(100):
         frame = frame.f_back
         if frame is None:
             break
 
-        if should_ignore_frame(frame, env_path):
+        if should_ignore_frame(frame, env_paths):
             continue
 
         return frame.f_code.co_filename, frame.f_lineno
@@ -197,18 +202,7 @@ def filename_and_line_num_from_part(part):
 
 
 def iommi_debug_panel(part):
-    filename, lineno = filename_and_line_num_from_part(part)
-
-    if filename is None or filename.endswith('urls.py'):
-        import inspect
-        if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
-            filename = inspect.getsourcefile(type(part))
-            lineno = inspect.getsourcelines(type(part))[-1]
-
-    if filename is not None:
-        source_url = src_debug_url_builder(filename, lineno)
-    else:
-        source_url = None
+    source_url = source_url_from_part(part)
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];
@@ -298,3 +292,17 @@ def iommi_debug_panel(part):
 
     from iommi.menu import DebugMenu
     return DebugMenu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(f'<script>{script}</script>')
+
+
+def source_url_from_part(part):
+    filename, lineno = filename_and_line_num_from_part(part)
+    if filename is None or filename.endswith('urls.py'):
+        import inspect
+        if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
+            filename = inspect.getsourcefile(type(part))
+            lineno = inspect.getsourcelines(type(part))[-1]
+    if filename is not None:
+        source_url = src_debug_url_builder(filename, lineno)
+    else:
+        source_url = None
+    return source_url
