@@ -44,19 +44,40 @@ Now you have the iommi admin gui for your app!
 Customization
 ~~~~~~~~~~~~~
 
-Remove a model from the admin
------------------------------
+Add a model to the admin
+------------------------
 
-By default iommi displays all models of all apps. You can override this like:
+You can add an app to your admin from your global config like this:
+
 
 .. code:: python
 
     class MyAdmin(Admin):
         class Meta:
-            apps__sessions_session__include = False
+            apps__myapp_mymodel__include = True
 
-This turns off the admin of the Session table in the sessions app. This is
-actually the default already. But you can turn off any model you like here.
+This is especially useful for adding config to a third party app that doesn't have built in iommi admin configuration.
+
+You can also add the config in the app, by creating a `iommi_admin.py` file in your app, and putting the configuration there:
+
+.. code:: python
+
+    class Meta:
+        apps__myapp_mymodel__include = True
+
+
+Remove a model from the admin
+-----------------------------
+
+By default iommi displays the built in Django `User` and `Group` models. You can override this like:
+
+.. code:: python
+
+    class MyAdmin(Admin):
+        class Meta:
+            apps__auth_user__include = False
+
+This turns off the admin of the `User` table in the `auth` app. Your global config always has priority.
 
 
 Permissions
