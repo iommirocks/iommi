@@ -21,6 +21,7 @@ Contents:
    dev_tools
    admin
    howto
+   styles
    api
    history
    authors

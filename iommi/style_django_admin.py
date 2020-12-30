@@ -52,5 +52,6 @@ django_admin = Style(
 
 django_admin_horizontal = Style(
     django_admin_base,
+    internal=True,
     Field__attrs__class={'compact-form-row': True},
 )

@@ -17,6 +17,7 @@ select2_assets = dict(
 )
 
 base = Style(
+    internal=True,
     base_template='iommi/base.html',
     content_block='content',
     root=dict(

@@ -125,6 +125,10 @@ Instead of using a function based view like above you can add a page it to a pat
 Production use
 --------------
 
+You probably want to define your own `Style` in a production scenario. See
+`How to create a Style <custom_style>`_, and especially the section on how to integrate into
+an existing code base.
+
 Just like you have your own custom base class for Django's `Model` to have a
 central place to put customization you will want to do the same for the base
 classes of iommi. In iommi this is even more important since you will almost

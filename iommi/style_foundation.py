@@ -75,6 +75,7 @@ foundation = Style(
 
 foundation_horizontal = Style(
     foundation_base,
+    internal=True,
     Form__attrs__class={
     },
     Field=dict(

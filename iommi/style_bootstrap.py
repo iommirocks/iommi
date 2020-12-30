@@ -174,6 +174,7 @@ bootstrap = Style(
 )
 bootstrap_horizontal = Style(
     bootstrap,
+    internal=True,
     Field=dict(
         shortcuts=dict(
             boolean__label__attrs__class={
