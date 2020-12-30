@@ -155,6 +155,7 @@ bulma = Style(
 
 bulma_query_form = Style(
     bulma,
+    internal=True,
     Field=dict(
         attrs__class={
             'mr-4': True,

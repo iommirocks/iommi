@@ -77,8 +77,9 @@ class Style:
     @dispatch(
         root=EMPTY,
     )
-    def __init__(self, *bases, base_template=None, content_block=None, assets=None, root=None, **kwargs):
+    def __init__(self, *bases, base_template=None, content_block=None, assets=None, root=None, internal=False, **kwargs):
         self.name = None
+        self.internal = internal
 
         self.base_template = base_template
         if not self.base_template:
