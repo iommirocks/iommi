@@ -12,6 +12,8 @@ from django.db.models import (
     OneToOneField,
 )
 
+from iommi import register_search_fields
+
 
 class FormFromModelTest(Model):
     f_int = IntegerField()
@@ -133,6 +135,9 @@ class TBar(Model):
 
     class Meta:
         ordering = ('pk',)
+
+
+register_search_fields(model=TBar, search_fields=['pk'])
 
 
 class TBar2(Model):

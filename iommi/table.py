@@ -304,11 +304,6 @@ def default_cell__value(column, row, **kwargs):
         return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
 
 
-def make_select_display_name(table, **_):
-    has_paginator = 'true' if table.paginator.is_paginated else 'false'
-    return mark_safe(f'<i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, {has_paginator})"></i>')
-
-
 class DataRetrievalMethods(Enum):
     attribute_access = auto()
     prefetch = auto()
@@ -455,6 +450,12 @@ class Column(Part):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
+        if self.auto_rowspan:
+            assert 'rowspan' not in self.cell.attrs, (
+                f'Explicitly set rowspan html attribute collides with '
+                f'auto_rowspan on column {self.iommi_path}'
+            )
+
     def own_evaluate_parameters(self):
         return dict(column=self)
 
@@ -547,7 +548,7 @@ class Column(Part):
 
     @classmethod
     @class_shortcut(
-        display_name=make_select_display_name,
+        header__template='iommi/table/select_column_header.html',
         sortable=False,
         filter__is_valid_filter=lambda **_: (True, ''),
         filter__field__include=False,
@@ -1165,15 +1166,15 @@ class Paginator(Traversable):
     @reinvokable
     def __init__(self, **kwargs):
         super(Paginator, self).__init__(**kwargs)
-        self._name = 'page'
         self.context = None
         self.page_size = None
         self.rows = None
 
     def on_bind(self) -> None:
         request = self.get_request()
+        table = self.iommi_evaluate_parameters()['table']
         page_size = request.GET.get(self.iommi_path + '_size') if request else None
-        self.page_size = self.iommi_parent().page_size if page_size is None else int(page_size)
+        self.page_size = table.page_size if page_size is None else int(page_size)
 
         self.attrs = evaluate_attrs(self)
         self.container.attrs = evaluate_attrs(self.container)
@@ -1181,7 +1182,7 @@ class Paginator(Traversable):
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
 
-        rows = self.iommi_parent().sorted_and_filtered_rows
+        rows = table.sorted_and_filtered_rows
         evaluate_parameters = dict(
             page_size=self.page_size,
             rows=rows,
@@ -1244,7 +1245,7 @@ class Paginator(Traversable):
         has_next = self.page < self.number_of_pages
         has_previous = self.page > 1
         self.context.update({
-            'page_size': self.iommi_parent().page_size,
+            'page_size': table.page_size,
             'has_next': has_next,
             'has_previous': has_previous,
             'next': self.page + 1 if has_next else None,
@@ -1422,7 +1423,6 @@ class Table(Part, Tag):
 
         query__form__attrs = {'data-iommi-id-of-table': lambda table, **_: table.iommi_path}
 
-
     @staticmethod
     @refinable
     def preprocess_rows(rows, **_):
@@ -1451,6 +1451,7 @@ class Table(Part, Tag):
         template='iommi/table/table.html',
         tbody__call_target=Fragment,
         tbody__tag='tbody',
+        parts=EMPTY,
         container__tag='div',
         container__attrs__class={'iommi-table-container': True},
         container__children__text__template='iommi/table/table_container.html',
@@ -1486,13 +1487,13 @@ class Table(Part, Tag):
         attrs__class=EMPTY,
         attrs__style=EMPTY,
 
-        paginator__call_target=Paginator,
+        parts__page__call_target=Paginator,
         # The filter action on a table will often not be the primary
         # action button on the page. So let's use the secondary
         # style
         query__form__actions__submit__call_target=Action.button
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, actions: Namespace = None, auto, title=MISSING, paginator, **kwargs):
+    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, parts: Namespace = None, actions: Namespace = None, auto, title=MISSING, **kwargs):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1555,10 +1556,11 @@ class Table(Part, Tag):
         # In bind initial_rows will be used to set these 3 (in that order)
         self.sorted_rows = None
         self.sorted_and_filtered_rows = None
-        self.visible_rows = None
+        self._visible_rows = None
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='parts', items=parts, cls=Fragment)
 
         self.query_args = query
         self.query: Query = None
@@ -1682,8 +1684,6 @@ class Table(Part, Tag):
         # Columns need to be at the end to not steal the short names
         declared_members(self).columns = declared_members(self).pop('columns')
 
-        self.paginator = paginator()
-        self._declared_members['page'] = self.paginator
         self.bulk_container = self.bulk_container(_name='bulk_container')
 
     @classmethod
@@ -1707,18 +1707,30 @@ class Table(Part, Tag):
            You are probably better off using `visible_rows` or
            `initial_rows` directly.
         """
-        if self.visible_rows is not None:
-            return self.visible_rows
+        if self._visible_rows is not None:
+            return self._visible_rows
         if self.sorted_and_filtered_rows is not None:
             return self.sorted_and_filtered_rows
         if self.sorted_rows is not None:
             return self.sorted_rows
         return self.initial_rows
 
+    @property
+    def paginator(self):
+        return self.parts.page
+
+    @property
+    def visible_rows(self):
+        if self._visible_rows is None:
+            self._visible_rows = self.parts.page.rows
+
+        return self._visible_rows
+
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
         bind_members(self, name='columns')
         bind_members(self, name='endpoints')
+        bind_members(self, name='parts')
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         if isinstance(self.h_tag, Namespace):
@@ -1780,12 +1792,6 @@ class Table(Part, Tag):
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
             if select:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.select_related(*select)
-
-        self.paginator = self.paginator.bind(parent=self)
-        # The effect of the paginator is to define what subset of sorted_and_filtered_rows is
-        # visible on the screen.
-        self.visible_rows = self.paginator.rows
-        self._prepare_auto_rowspan()
 
         self.bulk_container = self.bulk_container.bind(parent=self)
 
@@ -1850,11 +1856,13 @@ class Table(Part, Tag):
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
-
         if auto_rowspan_columns:
-            self.visible_rows = list(self.visible_rows)
+            self._visible_rows = list(self.visible_rows)
             no_value_set = object()
             for column in auto_rowspan_columns:
+                if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
+                    continue
+
                 rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
                 prev_value = no_value_set
                 prev_row = no_value_set
@@ -1873,7 +1881,6 @@ class Table(Part, Tag):
                 def auto_rowspan_style(row, **_):
                     return 'none' if id(row) not in rowspan_by_row else ''
 
-                assert 'rowspan' not in column.cell.attrs
                 column.cell.attrs['rowspan'] = rowspan
                 if 'style' not in column.cell.attrs:
                     column.cell.attrs['style'] = {}
@@ -1903,7 +1910,7 @@ class Table(Part, Tag):
             order_args = isinstance(order_args, list) and order_args or [order_args]
 
             if sort_column.sortable:
-                if isinstance(self.rows, list):
+                if isinstance(self.initial_rows, list):
                     self.sorted_rows = ordered_by_on_list(self.initial_rows, order_args[0], is_desc)
                 else:
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
@@ -2034,12 +2041,14 @@ class Table(Part, Tag):
 
         request = self.get_request()
 
+        self._prepare_auto_rowspan()
+
         assert self.visible_rows is not None
 
         context = self.iommi_evaluate_parameters().copy()
 
         if self.query and self.query.form and not self.query.form.is_valid():
-            self.visible_rows = []
+            self._visible_rows = []
             self.paginator.count = 0
 
         return render(request=request, template=template or self.template, context=context)
