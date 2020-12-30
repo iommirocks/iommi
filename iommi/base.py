@@ -2,6 +2,9 @@ from django.db.models import QuerySet
 from django.utils.encoding import force_str
 
 
+NOT_BOUND_MESSAGE = 'This object is not bound. You need to call `.bind(request=request)` before you can call this function.'
+
+
 class UnknownMissingValueException(Exception):
     pass
 

@@ -22,7 +22,10 @@ from iommi.attrs import (
     Attrs,
     render_attrs,
 )
-from iommi.base import values
+from iommi.base import (
+    values,
+    NOT_BOUND_MESSAGE,
+)
 from iommi.evaluate import evaluate_strict_container
 from iommi.member import (
     bind_members,
@@ -168,7 +171,7 @@ class Fragment(Part, Tag):
         render=fragment__render,
     )
     def __html__(self, *, render=None):
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         return render(
             fragment=self,
             context=self.get_context(),

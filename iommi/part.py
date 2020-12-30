@@ -23,6 +23,7 @@ from iommi._web_compat import (
 from iommi.base import (
     items,
     MISSING,
+    NOT_BOUND_MESSAGE,
 )
 from iommi.debug import (
     endpoint__debug_tree,
@@ -95,7 +96,7 @@ class Part(Traversable):
         assert False, 'Not implemented'  # pragma: no cover, no mutate
 
     def __str__(self):
-        assert self._is_bound, 'This object is unbound, you probably forgot to call `.bind(request=request)` on it'
+        assert self._is_bound, NOT_BOUND_MESSAGE
         return self.__html__()
 
     def bind(self, *, parent=None, request=None):

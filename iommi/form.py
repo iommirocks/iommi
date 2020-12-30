@@ -76,6 +76,7 @@ from iommi.base import (
     MISSING,
     capitalize,
     values,
+    NOT_BOUND_MESSAGE,
 )
 from iommi.error import Errors
 from iommi.evaluate import (
@@ -1432,7 +1433,7 @@ class Form(Part):
     # property for jinja2 compatibility
     @property
     def render_actions(self):
-        assert self._is_bound, 'The form has not been bound. You need to call bind() before you can render it.'
+        assert self._is_bound, NOT_BOUND_MESSAGE
         non_grouped_actions, grouped_actions = group_actions(self.actions)
         return render_template(
             self.get_request(),
@@ -1474,7 +1475,7 @@ class Form(Part):
     def is_valid(self):
         """Is the form valid?  Can be called inside forms post_validation hook to determine if the
            individual fields were all valid."""
-        assert self._is_bound, "Is valid can only be called on bound forms"
+        assert self._is_bound, NOT_BOUND_MESSAGE
         assert self._valid is not None, "Internal error: Once a form is bound we should know if it is valid or not"
         return self._valid
 
@@ -1516,7 +1517,7 @@ class Form(Part):
     # property for jinja2 compatibility
     @property
     def render_fields(self):
-        assert self._is_bound, "the form must be bound, otherwise self.parts will not be defined"
+        assert self._is_bound, NOT_BOUND_MESSAGE
         r = []
         for part in values(self.parts):
             r.append(part.__html__())
@@ -1591,7 +1592,7 @@ class Form(Part):
             field.write_to_instance(field, instance, field.value)
 
     def get_errors(self):
-        assert self._is_bound
+        assert self._is_bound, NOT_BOUND_MESSAGE
         r = {}
         if self._errors:
             r['global'] = self._errors
