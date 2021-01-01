@@ -2,6 +2,8 @@
 
 (These are random notes for ideas, things we would like to fix and more)
 
+Style builder page: live edit view with the important components
+
 Add a style for Materialize CSS framework
 
 examples.iommi.rocks
@@ -30,18 +32,13 @@ Separate crud shortcuts to a separate beast than Form. (So that callbacks and wh
 
 Maybe revise inheritance semantics: should class Meta on subclass override shortcut on parent? It doesn't now.
 
+## Tests
+
+We should have something like @pytest.mark.subject('Query.postprocess') so we can know which tests are for which method/member/etc. Then we can know which refinable members aren't tested.
+
 
 ## Docs
 
-Creating your own style 
-
-Integration howto:
-
-    - link to docs for creating your own style
-    - discussion on base.html, configuring iommi content tag, rendering assets
-    - link to iommi in production page
-    
-    
 Fix docs that show priority of config
 
 API reference for free functions
