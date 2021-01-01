@@ -11,10 +11,6 @@
 HOWTO
 =====
 
-.. contents::
-    :local:
-
-
 General
 -------
 

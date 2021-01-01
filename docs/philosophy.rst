@@ -37,10 +37,6 @@ In short we want to be able to have code that reads like:
 
 The philosophy has these main parts:
 
-.. contents::
-    :local:
-
-
 No silent mistakes
 ---------------------
 

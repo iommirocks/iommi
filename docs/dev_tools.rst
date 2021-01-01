@@ -5,8 +5,6 @@ iommi ships with several integrated tools to make it faster to develop. They
 are shown on iommi pages when `settings.DEBUG` is `True`. Some are always
 active and some are optional and needs to be added to your project.
 
-.. toctree::
-
 
 Code (jump to your code)
 ------------------------

@@ -20,10 +20,6 @@ All these examples and a bigger example using many more features can be found in
 
 Read the full documentation and the :doc:`howto` for more.
 
-.. contents::
-    :local:
-
-
 Creating tables from models
 ---------------------------
 

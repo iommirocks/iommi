@@ -7,10 +7,6 @@
 Usage
 =====
 
-.. contents::
-    :local:
-
-
 Install
 -------
 

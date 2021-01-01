@@ -1,5 +1,5 @@
 sphinx
-alabaster
+furo
 Django
 freezegun
 -r../requirements.txt

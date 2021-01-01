@@ -10,9 +10,6 @@ The powerful abstractions of iommi enable us to build an admin interface
 that is automagically created based on your models, while retaining the full
 feature set of iommi.
 
-.. contents::
-    :local:
-
 
 Installation
 ~~~~~~~~~~~~

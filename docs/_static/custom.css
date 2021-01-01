@@ -2,59 +2,11 @@
     display: none;
 }
 
-body {
-    box-sizing: border-box;
-}
-
-.sphinxsidebar h3,
-.sphinxsidebar h1.logo {
+.sidebar-brand-text {
     display: none;
 }
 
-div.sphinxsidebar a {
-    border-bottom: none;
-    width: 100%;
-    display: inline-block;
-    padding-left: 2px;
-}
-
-div.sphinxsidebar a:hover {
-    border-right: 2px solid gray;
-    border-bottom: none;
-}
-
-div.sphinxsidebar a.current {
-    background: #eee;
-    border-right: 2px solid gray;
-}
-
-pre {
-    padding: 7px 15px;
-}
-
-div.body h3.pun {
-    font-size: 100%;
-    padding-top: 0;
-    margin-top: -10px;
-    font-style: italic;
-}
-
-@media screen and (min-width: 1040px) {
-    div.document {
-        width: 1040px;
-    }
-
-}
-
-li a {
-    vertical-align: text-top;
-}
-
-dl > dd:last-child, dl > dd:last-child > :last-child {
-    margin-bottom: 10px;
-}
-
-@media screen and (max-width: 875px) {
+@media screen and (max-width: 67em) {
 
     .mobile-logo {
         display: block;
@@ -63,28 +15,6 @@ dl > dd:last-child, dl > dd:last-child > :last-child {
 
     .logo {
         width: 150px;
-    }
-
-    div.body {
-        min-width: 0;
-    }
-
-    body {
-        padding: 10px 20px;
-    }
-
-    ul {
-        padding-left: 13px;
-    }
-
-    .highlight-default,
-    .highlight-python,
-    .highlight-html {
-        margin: 0 -20px;
-    }
-
-    .highlight pre {
-        padding: 4px 8px;
     }
 
     /* Hide badges */

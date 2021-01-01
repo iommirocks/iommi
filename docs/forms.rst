@@ -18,10 +18,6 @@ Major features compared to Django forms:
 
 Read the full documentation and the :doc:`howto` for more.
 
-.. contents::
-    :local:
-
-
 iommi pre-packages sets of defaults for common field types as 'shortcuts'.
 Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.
 The full list of shortcuts can be found in the
