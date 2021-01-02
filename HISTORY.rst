@@ -1,6 +1,38 @@
 Changelog
 ---------
 
+2.8.0 (2021-??-??)
+~~~~~~~~~~~~~~~~~~
+
+* Nested forms
+
+* The paginator is now lazy. This means we can avoid a potentially expensive `.count()` database hit in many situations
+
+* Added `Table.bulk_container`
+
+* `Table.post_bulk_edit` takes evaluate parameters now
+
+* Column.include=False implies that the column shouldn't get anything in the bulk form. If you want bulk editing without a visible column use Column.render_column=False
+
+* Support auto__include=['pk']
+
+* Fix reinvoke/reinvoke_new_defaults when shortcut is changed
+
+* Date/datetime parsing bugs fixed after mutation testing
+
+* Do not do form post_validation if we are in initial display mode
+
+* Forms now don't create a submit button by default. If you have a post handler you will get a submit button though.
+
+* SQL trace bugfixes
+
+* Custom raw_data callback should have same semantics as constant value (and parsed_data callback)
+
+* Improved error message on disallowed unbound object access
+
+* Documentation improvements, for example new pages for dev tools, and styles
+
+
 2.7.0 (2020-12-14)
 ~~~~~~~~~~~~~~~~~~
 
