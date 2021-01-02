@@ -30,29 +30,8 @@ Add iommi's middleware:
         'iommi.middleware',
     ]
 
-By default iommi uses a very basic bootstrap base template. You can override it by declaring your own style:
-
-.. code:: python
-
-    from iommi import register_style
-    from iommi.style_bootstrap import bootstrap
-
-    my_style = Style(
-        bootstrap,
-        base_template='base.html'
-    )
-    register_style('my_style', my_style)
-
-
-and then setting
-
-.. code:: python
-
-    IOMMI_DEFAULT_STYLE = 'my_style'
-
-in your `settings.py`.
-
-If you want to put your content somewhere else than a block called `content` you can specify `content_block='main'` in your style definition.
+By default iommi uses a very basic bootstrap base template. See :doc:`styles <styles>` for
+more information how to integrate iommi to your CSS framework.
 
 
 Basic usage
@@ -84,20 +63,16 @@ When you've done the stuff above you can create a page with a table in it:
 
 .. code:: python
 
-    class MyTable(Table):
-        a_column = Column()
-        another_column = Column.date()
+    def my_page(request):
+        class MyTable(Table):
+            a_column = Column()
+            another_column = Column.date()
 
 
-    my_table = MyTable(rows=Artist.objects.all()).bind(request=request)
+        return MyTable(rows=Artist.objects.all()).bind(request=request)
 
-and then you can render it in your template:
-
-
-.. code:: html
-
-    {{ my_table }}
-
+.. test
+    my_page(req('get'))
 
 Or you can compose a page with two tables:
 
@@ -113,16 +88,13 @@ Or you can compose a page with two tables:
 .. test
     my_page(req('get'))
 
-Instead of using a function based view like above you can add a page it to a path like this:
-
-
 
 
 Production use
 --------------
 
 You probably want to define your own `Style` in a production scenario. See
-`How to create a Style <custom_style>`_, and especially the section on how to integrate into
+:doc:`How to create a Style <styles>`, and especially the section on how to integrate into
 an existing code base.
 
 Just like you have your own custom base class for Django's `Model` to have a
