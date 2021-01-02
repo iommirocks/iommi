@@ -36,12 +36,12 @@ def should_edit(request):
     return settings.DEBUG and '_iommi_live_edit' in request.GET
 
 
-def get_wrapped_view_function(view):
+def get_wrapped_view(view):
+    if hasattr(view, '__iommi_target__'):
+        view = view.__iommi_target__
+
     while hasattr(view, '__wrapped__'):
         view = view.__wrapped__
-
-    if hasattr(view, '__iommi_target__'):
-        assert False, "Edit mode isn't supported for the as_view() style yet."
 
     return view
 
@@ -52,29 +52,46 @@ def include_decorators(node):
     return node
 
 
-def find_function(*, name, node):
-    if node.type == 'funcdef':
+def find_node(*, name, node, node_type):
+    """
+    node_type should be either funcdef or classdef
+    """
+    if node.type == node_type:
         if getattr(node, 'name', Struct(value=None)).value == name:
             return node
     for child_node in getattr(node, 'children', []):
-        r = find_function(node=child_node, name=name)
+        r = find_node(node=child_node, name=name, node_type=node_type)
         if r is not None:
             return include_decorators(r)
     return None
 
 
+def find_view(view, ast_of_entire_file):
+    if isinstance(view, Part):
+        return find_node(name=type(view).__name__, node=ast_of_entire_file, node_type='classdef')
+    else:
+        return find_node(name=view.__name__, node=ast_of_entire_file, node_type='funcdef')
+
+
 @csrf_exempt
-def live_edit_view(request, view_func):
-    view_func = get_wrapped_view_function(view_func)
+def live_edit_view(request, view):
+    view = get_wrapped_view(view)
     # Read the old code
-    filename = view_func.__globals__['__file__']
+    try:
+        # view is a function based view
+        filename = view.__globals__['__file__']
+    except AttributeError:
+        # view is an iommi class
+        from iommi.debug import filename_and_line_num_from_part
+        filename, _ = filename_and_line_num_from_part(view)
+
     with open(filename) as f:
         entire_file = f.read()
         ast_of_entire_file = parso.parse(entire_file)
 
     is_unix_line_endings = '\r\n' not in entire_file
 
-    ast_of_old_code = find_function(name=view_func.__name__, node=ast_of_entire_file)
+    ast_of_old_code = find_view(view, ast_of_entire_file)
     assert ast_of_old_code is not None
 
     flow_direction = request.GET.get('_iommi_live_edit') or 'column'
@@ -85,7 +102,7 @@ def live_edit_view(request, view_func):
             code = request.POST['data'].replace('\t', '    ')
             if is_unix_line_endings:
                 code = code.replace('\r\n', '\n')
-            final_result = dangerous_execute_code(code, request, view_func)
+            final_result = dangerous_execute_code(code, request, view)
 
             if orig_reload is not None:
                 # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
@@ -97,7 +114,10 @@ def live_edit_view(request, view_func):
 
                 autoreload.trigger_reload = restore_auto_reload
 
-            ast_of_new_code = find_function(name=view_func.__name__, node=parso.parse(code))
+            if isinstance(view, Part):
+                ast_of_new_code = find_node(name=view.__class__.__name__, node=parso.parse(code), node_type='classdef')
+            else:
+                ast_of_new_code = find_node(name=view.__name__, node=parso.parse(code), node_type='funcdef')
             ast_of_old_code.children[:] = ast_of_new_code.children
             new_code = ast_of_entire_file.get_code()
             with open(filename, 'w') as f:
@@ -105,6 +125,8 @@ def live_edit_view(request, view_func):
 
             return final_result
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             error = str(e)
             if not error:
                 error = str(e.__class__)
@@ -205,12 +227,21 @@ def live_edit_view(request, view_func):
     )
 
 
-def dangerous_execute_code(code, request, view_func):
+def dangerous_execute_code(code, request, view):
     local_variables = {}
-    exec(code, view_func.__globals__, local_variables)
+    if isinstance(view, Part):
+        from iommi.debug import frame_from_part
+        frame = frame_from_part(view)
+        exec(code, frame.f_globals, local_variables)
+    else:
+        exec(code, view.__globals__, local_variables)
     assert len(local_variables) == 1
     request.method = 'GET'
-    response = list(local_variables.values())[0](request)
+    new_view = list(local_variables.values())[0]
+    if isinstance(new_view, type) and issubclass(new_view, Part):
+        response = new_view().bind(request=request).render_to_response()
+    else:
+        response = new_view(request)
     response = render_if_needed(request, response)
     final_result = HttpResponse(json.dumps(dict(page=response.content.decode())))
     return final_result

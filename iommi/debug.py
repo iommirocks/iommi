@@ -183,7 +183,7 @@ def should_ignore_frame(frame, env_paths):
     return False
 
 
-def filename_and_line_num_from_part(part):
+def frame_from_part(part):
     frame = part._instantiated_at_frame
 
     import os
@@ -197,8 +197,17 @@ def filename_and_line_num_from_part(part):
         if should_ignore_frame(frame, env_paths):
             continue
 
-        return frame.f_code.co_filename, frame.f_lineno
-    return None, None
+        return frame
+    return None
+
+
+def filename_and_line_num_from_part(part):
+    frame = frame_from_part(part)
+
+    if frame is None:
+        return None, None
+
+    return frame.f_code.co_filename, frame.f_lineno
 
 
 def iommi_debug_panel(part):

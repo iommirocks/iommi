@@ -8,7 +8,7 @@ from iommi import Form
 from iommi._web_compat import HttpResponse
 from iommi.live_edit import (
     live_edit_view,
-    get_wrapped_view_function,
+    get_wrapped_view,
     should_edit,
     dangerous_execute_code,
     orig_reload,
@@ -34,12 +34,9 @@ def test_live_edit():
 
 
 def test_get_wrapped_view_function():
-    assert get_wrapped_view_function(view) is view
-    assert get_wrapped_view_function(csrf_exempt(view)) is view
-    with pytest.raises(AssertionError) as e:
-        get_wrapped_view_function(Form.create(auto__model=TFoo).as_view())
-
-    assert str(e.value) == "Edit mode isn't supported for the as_view() style yet."
+    assert get_wrapped_view(view) is view
+    assert get_wrapped_view(csrf_exempt(view)) is view
+    get_wrapped_view(Form.create(auto__model=TFoo).as_view())
 
 
 def test_should_edit(settings):
@@ -52,7 +49,7 @@ def test_should_edit(settings):
 
 def test_dangerous_execute_code_error():
     with pytest.raises(SyntaxError):
-        dangerous_execute_code(code='invalid code', request=req('post'), view_func=view)
+        dangerous_execute_code(code='invalid code', request=req('post'), view=view)
 
 
 def test_dangerous_execute_code_success():
@@ -61,7 +58,7 @@ def view(request):
     return HttpResponse(request.GET['foo'] + 'bar')    
 """
 
-    assert json.loads(dangerous_execute_code(code=code, request=req('get', foo='foo'), view_func=view).content) == dict(page='foobar')
+    assert json.loads(dangerous_execute_code(code=code, request=req('get', foo='foo'), view=view).content) == dict(page='foobar')
 
 
 def test_edit(capsys):
