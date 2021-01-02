@@ -44,7 +44,7 @@ The `Page` class is used to compose pages. If you have installed the iommi
 middleware you can also return them directly from your views. They accept
 `str`, `Part` and Django `Template` types:
 
-..test
+.. test
     class MyOtherPage(Page):
         pass
 
@@ -107,3 +107,7 @@ This fragment will render as:
 .. code:: html
 
     <div baz='quux'>foobar</div>
+
+This might seem overly complex for such a simple thing, but when used in
+reusable components in iommi `Fragment` objects can be further customized
+with high precision.
