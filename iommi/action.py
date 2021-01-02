@@ -85,9 +85,14 @@ class Action(Fragment):
             if not form.is_valid():
                 return
 
-        class MyForm(Form):
+        class MyOtherForm(Form):
             class Meta:
-                actions__submit__post_handler = Action.primary(post_handler=on_submit)
+                actions__submit = Action.primary(post_handler=on_submit)
+
+    .. test
+        r = req('post', **{'-submit': ''})
+        MyForm().bind(request=r).render_to_response()
+        MyOtherForm().bind(request=r).render_to_response()
     """
 
     group: str = EvaluatedRefinable()

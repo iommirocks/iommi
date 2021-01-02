@@ -1276,6 +1276,10 @@ class Form(Part):
             print(form.fields.a.value, form.fields.b.value, form.fields.c.value)
             # And not:
             # print(form.fields.box.a.value, form.fields.box.b.value, form.fields.c.value)
+
+    .. test
+
+        post_handler(form.bind(request=req('post')))
 """
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
