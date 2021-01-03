@@ -233,6 +233,7 @@ class DummyRow:
 class ShortcutSelectorForm(Form):
     class Meta:
         attrs__method = 'get'
+        actions__submit__post_handler = lambda **_: None
 
     shortcut = Field.multi_choice(
         choices=[
@@ -265,6 +266,7 @@ def all_column_sorts(request):
         header=Header('All sorts of columns'),
         form=ShortcutSelectorForm(),
         table=Table(
+            assets__ajax_enhance__template=None,
             columns={
                 f'column_of_type_{t}': dict(
                     type_specifics.get(t, {}),
