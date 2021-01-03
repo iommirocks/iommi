@@ -115,9 +115,10 @@ class StyleSelector(Form):
 
     style = Field.choice(
         choices=[
-            k for k in
-            keys(iommi.style._styles)
-            if k not in ('test', 'base') and not k.endswith('_horizontal')
+            k
+            for k, v in
+            items(iommi.style._styles)
+            if not v.internal
         ],
         initial=lambda form, field, **_: getattr(settings, 'IOMMI_DEFAULT_STYLE', iommi.style.DEFAULT_STYLE),
     )
