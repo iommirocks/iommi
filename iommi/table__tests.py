@@ -71,6 +71,7 @@ from tests.models import (
     AutomaticUrl,
     AutomaticUrl2,
     BooleanFromModelTestModel,
+    ChoicesModel,
     CSVExportTestModel,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
@@ -3302,3 +3303,17 @@ def test_lazy_rows(settings):
     ).bind()
     assert t.query.form.fields.foo.choices == choices
     assert q._result_cache is None, "No peeking!"
+
+@pytest.mark.django_db
+def test_auto_model_for_textchoices():
+    class TestTable(Table):
+        class Meta:
+            auto__model = ChoicesModel
+
+    verify_table_html(
+        table=TestTable(rows=[]),
+        find=dict(name='tbody'),
+        expected_html="""<tbody></tbody>"""
+        )
+
+
