@@ -101,6 +101,10 @@ base = Style(
     Paginator=dict(
         show_always=False,
         template='iommi/table/paginator.html',
+        item__tag='span',
+        container__tag='div',
+        active_item__tag='span',
+        link__tag='a',
     ),
     Query=dict(
         template='iommi/query/form.html',

@@ -1,4 +1,4 @@
-<{{ field.tag }}{{ field.attrs }}>
+{{ field.iommi_open_tag }}
     {% if field.label %}{{ field.label }}{% endif %}
     <div class="control">
     {{ field.input }}
@@ -7,4 +7,4 @@
         {{ field.help }}
     {% endif %}
     {{ field.errors }}
-</{{ field.tag }}>
+{{ field.iommi_close_tag }}

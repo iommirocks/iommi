@@ -29,6 +29,7 @@ class IommiConfig(AppConfig):
         from iommi.style_django_admin import django_admin
         from iommi.style_water import water
         from iommi.style_bulma import bulma
+        from iommi.style_uikit import uikit
 
         register_style('blank', Style(internal=True))
         register_style('base', base)
@@ -40,4 +41,5 @@ class IommiConfig(AppConfig):
         register_style('water', water)
         register_style('foundation', foundation)
         register_style('django_admin', django_admin)
+        register_style('uikit', uikit)
         register_style('bootstrap_docs', bootstrap_docs)

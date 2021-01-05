@@ -9,4 +9,5 @@ water = Style(
             href='https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css',
         ),
     ),
+    MenuItem__tag='nav',
 )
