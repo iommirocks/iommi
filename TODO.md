@@ -2,10 +2,6 @@
 
 (These are random notes for ideas, things we would like to fix and more)
 
-Style builder page: live edit view with the important components
-
-Add a style for Materialize CSS framework
-
 examples.iommi.rocks
 
 https for iommi.rocks redirect
