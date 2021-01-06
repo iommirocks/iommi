@@ -222,6 +222,9 @@ def live_edit_view(request, view, args, kwargs):
                 '<<flow_direction>>', flow_direction
             ),
         ),
+
+        iommi_style='bootstrap',
+
         parts__result=html.iframe(attrs__id='result'),
         parts__editor=html.div(
             ast_of_old_code.get_code(),
