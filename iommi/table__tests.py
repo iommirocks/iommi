@@ -6,6 +6,7 @@ from datetime import (
     time,
 )
 
+import django
 import pytest
 from django.db.models import QuerySet
 from django.http import HttpResponse
@@ -3304,6 +3305,7 @@ def test_lazy_rows(settings):
     assert t.query.form.fields.foo.choices == choices
     assert q._result_cache is None, "No peeking!"
 
+
 @pytest.mark.django_db
 def test_auto_model_for_textchoices():
     class TestTable(Table):
@@ -3315,5 +3317,22 @@ def test_auto_model_for_textchoices():
         find=dict(name='tbody'),
         expected_html="""<tbody></tbody>"""
         )
+
+
+@pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
+@pytest.mark.django_db
+def test_auto_model_for_textchoices_with_choices_class():
+    from tests.models import ChoicesClassModel
+
+    class TestTable(Table):
+        class Meta:
+            auto__model = ChoicesClassModel
+
+    verify_table_html(
+        table=TestTable(rows=[]),
+        find=dict(name='tbody'),
+        expected_html="""<tbody></tbody>"""
+        )
+
 
 
