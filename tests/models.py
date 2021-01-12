@@ -1,3 +1,4 @@
+import django
 from django.db import models
 from django.db.models import (
     BooleanField,
@@ -242,3 +243,15 @@ class SortKeyOnForeignKeyB(models.Model):
 class ChoicesModel(models.Model):
     CHOICES = [('purple', 'Purple'), ('orange', 'Orange')]
     color = models.CharField(choices=CHOICES, max_length=255)
+
+
+if django.VERSION[:2] >= (3, 0):
+
+    class ColorChoices(models.TextChoices):
+        PURPLE = ('purple', 'Purple')
+        ORANGE = ('orange', 'Orange')
+
+
+    class ChoicesClassModel(models.Model):
+        CHOICES = [('purple', 'Purple'), ('orange', 'Orange')]
+        color = models.CharField(choices=ColorChoices, max_length=255)

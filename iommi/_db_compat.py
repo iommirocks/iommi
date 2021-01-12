@@ -51,6 +51,15 @@ def setup_db_compat_django():
         if not model_field.choices:
             return Shortcut(call_target__attribute='text')
 
+        return Shortcut(
+            call_target__attribute='choice',
+            choices=[x[0] for x in model_field.choices],
+        )
+
+    def field_char_field_factory(model_field, **_):
+        if not model_field.choices:
+            return Shortcut(call_target__attribute='text')
+
         display_name_by_choice = dict(model_field.choices)
 
         return Shortcut(
@@ -61,6 +70,8 @@ def setup_db_compat_django():
 
     # The order here is significant because of inheritance structure. More specific must be below less specific.
     register_factory(CharField, factory=char_field_factory)
+    register_field_factory(CharField, factory=field_char_field_factory)  # the field is special, overwrite that here
+
     register_factory(UUIDField, shortcut_name='text')
     register_factory(TimeField, shortcut_name='time')
     register_factory(EmailField, shortcut_name='email')
