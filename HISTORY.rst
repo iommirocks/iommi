@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-2.8.0 (2021-??-??)
+2.8.0 (2021-01-13)
 ~~~~~~~~~~~~~~~~~~
 
 * Nested forms
@@ -31,6 +31,12 @@ Changelog
 * Improved error message on disallowed unbound object access
 
 * Documentation improvements, for example new pages for dev tools, and styles
+
+* Live editing on `.as_view()` style views work in the case of an explicitly declared class
+
+* Fixed bug where the ajax enhanced table didn't work if you used `Table.div` or otherwise changed the `tag` of `Table`
+
+* Fixed auto__model column/filter for `CharField` with choices
 
 
 2.7.0 (2020-12-14)
