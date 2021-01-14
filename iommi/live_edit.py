@@ -73,6 +73,11 @@ def find_view(view, ast_of_entire_file):
         return find_node(name=view.__name__, node=ast_of_entire_file, node_type='funcdef')
 
 
+# This class exists just to provide a way to style the page
+class LiveEditPage(Page):
+    pass
+
+
 @csrf_exempt
 def live_edit_view(request, view):
     view = get_wrapped_view(view)
@@ -131,10 +136,6 @@ def live_edit_view(request, view):
             if not error:
                 error = str(e.__class__)
             return HttpResponse(json.dumps(dict(error=error)))
-
-    # This class exists just to provide a way to style the page
-    class LiveEditPage(Page):
-        pass
 
     return LiveEditPage(
         assets__code_editor=Asset.js(

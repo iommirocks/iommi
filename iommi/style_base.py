@@ -126,4 +126,5 @@ base = Style(
             'flex-column': False,
         },
     ),
+    LiveEditPage__iommi_style='bootstrap',
 )
