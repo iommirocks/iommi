@@ -37,11 +37,6 @@ def should_profile(request):
 class Middleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.prof = None
-
-    def process_view(self, request, callback, callback_args, callback_kwargs):
-        if should_profile(request):
-            return self.prof.runcall(callback, request, *callback_args, **callback_kwargs)
 
     def __call__(self, request):
         # Disable profiling early on /media requests since touching request.user will add a
@@ -53,18 +48,20 @@ class Middleware:
                 break
 
         if should_profile(request):
-            self.prof = cProfile.Profile()
-            self.prof.enable()
+            prof = cProfile.Profile()
+            prof.enable()
+        else:
+            prof = None
 
         response = self.get_response(request)
 
-        if should_profile(request):
+        if prof is not None:
             response = HttpResponse()
-            self.prof.disable()
+            prof.disable()
 
             import pstats
             s = StringIO()
-            ps = pstats.Stats(self.prof, stream=s).sort_stats(request.GET.get('_iommi_prof') or 'cumulative')
+            ps = pstats.Stats(prof, stream=s).sort_stats(request.GET.get('_iommi_prof') or 'cumulative')
             ps.print_stats()
 
             stats_str = s.getvalue()
