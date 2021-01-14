@@ -98,9 +98,10 @@ class Middleware:
                     post = post[post.rindex(token) + len(token):]
                     return f'{pre} {post}'
 
+                base_dir = str(settings.BASE_DIR)
                 for line in stats_str.split("\n")[:limit]:
-                    should_bold = settings.BASE_DIR in line and '/site-packages/' not in line
-                    line = line.replace(settings.BASE_DIR, '')
+                    should_bold = base_dir in line and '/site-packages/' not in line
+                    line = line.replace(base_dir, '')
                     line = strip_extra_path(line, '/site-packages')
                     line = strip_extra_path(line, '/Python.framework/Versions')
                     if should_bold:
