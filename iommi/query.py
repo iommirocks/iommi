@@ -310,7 +310,7 @@ class Filter(Part):
             factory_lookup=_filter_factory_by_django_field_type,
             model_field_name=model_field_name,
             model_field=model_field,
-            defaults_factory=lambda model_field: {},
+            defaults_factory=lambda model_field: {},  # TODO: this is wrong! but base_defaults_factory doesn't work either.. there's no display_name on Filter
             **kwargs)
 
     @classmethod

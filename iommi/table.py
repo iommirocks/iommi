@@ -133,6 +133,7 @@ from iommi.traversable import (
     set_declared_member,
     Traversable,
 )
+from ._db_compat import base_defaults_factory
 from .reinvokable import (
     reinvokable,
     reinvoke,
@@ -472,7 +473,7 @@ class Column(Part):
             factory_lookup_register_function=register_column_factory,
             model_field_name=model_field_name,
             model_field=model_field,
-            defaults_factory=lambda model_field: {},
+            defaults_factory=base_defaults_factory,
             **kwargs)
 
     @classmethod
@@ -1989,7 +1990,7 @@ class Table(Part, Tag):
         assert rows is None or isinstance(rows, QuerySet), \
             'auto__rows needs to be a QuerySet for column generation to work. ' \
             'If it needs to be a lambda, provide a model with auto__model for column generation, ' \
-            'and pass the lambda as rows.'
+            f'and pass the lambda as rows. I got a {type(rows)}'
 
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
