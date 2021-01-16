@@ -29,7 +29,7 @@ class Middleware:
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
         if should_edit(request):
-            return live_edit_view(request, callback)
+            return live_edit_view(request, callback, callback_args, callback_kwargs)
 
 
 def should_edit(request):
@@ -79,7 +79,7 @@ class LiveEditPage(Page):
 
 
 @csrf_exempt
-def live_edit_view(request, view):
+def live_edit_view(request, view, args, kwargs):
     view = get_wrapped_view(view)
     # Read the old code
     try:
@@ -107,7 +107,7 @@ def live_edit_view(request, view):
             code = request.POST['data'].replace('\t', '    ')
             if is_unix_line_endings:
                 code = code.replace('\r\n', '\n')
-            final_result = dangerous_execute_code(code, request, view)
+            final_result = dangerous_execute_code(code, request, view, args, kwargs)
 
             if orig_reload is not None:
                 # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
@@ -228,7 +228,7 @@ def live_edit_view(request, view):
     )
 
 
-def dangerous_execute_code(code, request, view):
+def dangerous_execute_code(code, request, view, args, kwargs):
     local_variables = {}
     if isinstance(view, Part):
         from iommi.debug import frame_from_part
@@ -242,7 +242,7 @@ def dangerous_execute_code(code, request, view):
     if isinstance(new_view, type) and issubclass(new_view, Part):
         response = new_view().bind(request=request).render_to_response()
     else:
-        response = new_view(request)
+        response = new_view(request, *args, **kwargs)
     response = render_if_needed(request, response)
     final_result = HttpResponse(json.dumps(dict(page=response.content.decode())))
     return final_result

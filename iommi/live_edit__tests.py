@@ -28,7 +28,7 @@ def csrf_exempt_view(request):
 
 
 def test_live_edit():
-    result = render_root(part=live_edit_view(req('get'), csrf_exempt_view).bind(request=req('get')))
+    result = render_root(part=live_edit_view(req('get'), csrf_exempt_view, args=(), kwargs={}).bind(request=req('get')))
     assert '@csrf_exempt' in result, result
     assert "def csrf_exempt_view(request):" in result, result
 
@@ -49,7 +49,7 @@ def test_should_edit(settings):
 
 def test_dangerous_execute_code_error():
     with pytest.raises(SyntaxError):
-        dangerous_execute_code(code='invalid code', request=req('post'), view=view)
+        dangerous_execute_code(code='invalid code', request=req('post'), view=view, args=(), kwargs={})
 
 
 def test_dangerous_execute_code_success():
@@ -58,7 +58,7 @@ def view(request):
     return HttpResponse(request.GET['foo'] + 'bar')    
 """
 
-    assert json.loads(dangerous_execute_code(code=code, request=req('get', foo='foo'), view=view).content) == dict(page='foobar')
+    assert json.loads(dangerous_execute_code(code=code, request=req('get', foo='foo'), view=view, args=(), kwargs={}).content) == dict(page='foobar')
 
 
 def test_edit(capsys):
@@ -82,14 +82,14 @@ def foo_view(request):
     from tests.test_edit_views_temp import foo_view
 
     # Broken changes are NOT written to disk
-    data = json.loads(live_edit_view(req('post', data='syntax error!'), foo_view).content)
+    data = json.loads(live_edit_view(req('post', data='syntax error!'), foo_view, args=(), kwargs={}).content)
     assert data == {'error': 'invalid syntax (<string>, line 1)'}
 
     with open(path) as f:
         assert f.read() == orig_code
 
     # Valid changes are written to disk
-    data = json.loads(live_edit_view(req('post', data=new_code), foo_view).content)
+    data = json.loads(live_edit_view(req('post', data=new_code), foo_view, args=(), kwargs={}).content)
     assert data == {'page': 'changed!'}
 
     with open(path) as f:
