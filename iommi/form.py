@@ -100,6 +100,7 @@ from iommi.page import (
 from iommi.fragment import (
     Fragment,
     Header,
+    Tag,
 )
 from iommi.part import (
     Part,
@@ -443,7 +444,7 @@ def render_fragment(fragment):
 
 
 @with_meta
-class Field(Part):
+class Field(Part, Tag):
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
 
