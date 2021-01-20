@@ -114,12 +114,19 @@ def setup_db_compat_django():
     register_field_factory(FileField, shortcut_name='file')
 
 
-def field_defaults_factory(model_field):
+def base_defaults_factory(model_field):
     from iommi.base import capitalize
-    from django.db.models import BooleanField
     r = {}
     if hasattr(model_field, 'verbose_name'):
         r['display_name'] = capitalize(model_field.verbose_name)
+
+    return r
+
+
+# TODO: move to form.py! remember to take the tests with them
+def field_defaults_factory(model_field):
+    from django.db.models import BooleanField
+    r = base_defaults_factory(model_field)
 
     if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
         r['required'] = not model_field.null and not model_field.blank

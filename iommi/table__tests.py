@@ -3335,4 +3335,11 @@ def test_auto_model_for_textchoices_with_choices_class():
         )
 
 
+@pytest.mark.django_db
+def test_table_foreign_key_column_name():
+    t = Table(
+        auto__model=TBar,
+        auto__include=['foo'],
+    ).bind(request=req('get'))
+    assert t.columns.foo.display_name == 'Foo'
 
