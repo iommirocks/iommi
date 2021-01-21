@@ -3,7 +3,6 @@ from copy import (
     copy,
 )
 from typing import (
-    Any,
     Dict,
     Type,
 )
@@ -19,29 +18,42 @@ from iommi.base import (
     items,
     keys,
 )
-from iommi.reinvokable import reinvoke
+from iommi.refinable import RefinableMembers
 from iommi.sort_after import sort_after
 from iommi.traversable import (
-    declared_members,
-    set_declared_member,
     Traversable,
 )
 
 FORBIDDEN_NAMES = {x for x in dir(Traversable)} - {'context'}
 
-# Need to use this in collect_members that has a local variable called items
-items_of = items
+
+class Members(Traversable):
+    """
+    Internal iommi class that holds members of another class, for example the columns of a `Table` instance.
+    """
+
+    @dispatch
+    def __init__(self, *, _declared_members, unknown_types_fall_through, cls,  **kwargs):
+        super(Members, self).__init__(**kwargs)
+        self._declared_members = _declared_members
+        self._unknown_types_fall_through = unknown_types_fall_through
+        self._cls = cls
+
+    def on_bind(self):
+        self._bound_members = MemberBinder(self, self._declared_members, self._unknown_types_fall_through)
 
 
-def collect_members(
-    container,
-    *,
-    name: str,
-    items_dict: Dict = None,
-    items: Dict[str, Any] = None,
-    cls: Type,
-    unknown_types_fall_through=False,
-):
+def refine_done_members(
+        container,
+        *,
+        name: str,
+        members_from_namespace: Dict[str, Traversable] = None,
+        members_from_declared: Dict[str, Traversable] = None,
+        members_from_auto: Dict[str, Traversable] = None,
+        cls: Type,
+        members_cls: Type = Members,
+        extra_member_defaults=None,
+        unknown_types_fall_through=False):
     """
     This function is used to collect and merge data from the constructor
     argument, the declared members, and other config into one data structure.
@@ -63,139 +75,110 @@ def collect_members(
     In this example the resulting table will have two columns `instrument` and
     `name`, with `instrument` after name even though it was declared before.
     """
-    forbidden_names = FORBIDDEN_NAMES & (set(keys(items_dict or {})) | set(keys(items or {})))
+    forbidden_names = FORBIDDEN_NAMES & (set(keys(members_from_declared or {})) | set(keys(members_from_namespace or {})))
     if forbidden_names:
         raise ForbiddenNamesException(
             f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names'
         )
-    deprecated_names = [n for n in items_dict or [] if '__' in n]
-    for n in deprecated_names:
-        warnings.warn(
-            f'Names containing __ are deprecated and will not be supported in next major release. '
-            f'Use another name and specify the current name with attr="{n}"',
-            category=DeprecationWarning,
-        )
 
-    assert name != 'items'
-    unbound_items = Struct()
+    assert isinstance(container.get_declared('refinable')[name], RefinableMembers)
+
+    member_by_name = Struct()
     _unapplied_config = {}
+    extra_member_defaults = extra_member_defaults or {}
 
-    if items_dict is not None:
-        for key, x in items_of(items_dict):
+    if members_from_auto is not None:
+        member_by_name.update(members_from_auto)
+
+    if members_from_declared is not None:
+        for key, x in items(members_from_declared):
+            assert '__' not in key, "Don't specify nested attrs using the field name. You lose the ability to include more config from other places. Pick another name and give the path as attr instead"
             x._name = key
-            unbound_items[key] = x
+            member_by_name[key] = x
 
-    if items is not None:
-        for key, item in items_of(items):
+    if members_from_namespace is not None:
+        for key, item in items(members_from_namespace):
             if isinstance(item, Traversable):
                 # noinspection PyProtectedMember
                 assert not item._is_bound
                 item._name = key
-                unbound_items[key] = item
+                member_by_name[key] = item
             elif isinstance(item, dict):
-                if key in unbound_items:
+                if key in member_by_name:
                     _unapplied_config[key] = item
                 else:
                     item = setdefaults_path(
                         Namespace(),
                         item,
+                        extra_member_defaults.pop(key, {}),
                         call_target__cls=cls,
                         _name=key,
                     )
-                    unbound_items[key] = item()
+                    member_by_name[key] = item()
             else:
                 assert (
                     unknown_types_fall_through or item is None
                 ), f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
-                unbound_items[key] = item
+                member_by_name[key] = item
 
-    for k, v in items_of(Namespace(_unapplied_config)):
-        unbound_items[k] = reinvoke(unbound_items[k], v)
+    for k, v in items(Namespace(_unapplied_config)):
+        member_by_name[k] = member_by_name[k].refine(**v)
         # noinspection PyProtectedMember
-        assert unbound_items[k]._name is not None
+        assert member_by_name[k]._name is not None
 
-    to_delete = {k for k, v in items_of(unbound_items) if v is None}
+    if extra_member_defaults:
+        for k, v in items(Namespace(extra_member_defaults)):
+            if k in member_by_name:
+                member_by_name[k] = member_by_name[k].refine_defaults(**v)
+            else:
+                member_by_name[k] = Namespace(
+                    v,
+                    call_target__cls=cls,
+                    _name=k,
+                )()
+            # noinspection PyProtectedMember
+            assert member_by_name[k]._name is not None
+
+    to_delete = {k for k, v in items(member_by_name) if v is None}
 
     for k in to_delete:
-        del unbound_items[k]
+        del member_by_name[k]
 
-    sort_after(unbound_items)
+    for key, item in items(member_by_name):
+        if isinstance(item, Traversable):
+            member_by_name[key] = item.refine_done(parent=container)
 
-    set_declared_member(container, name, unbound_items)
-    setattr(container, name, NotBoundYet(container, name))
+    member_by_name = sort_after(member_by_name)
+    container.iommi_namespace[name] = member_by_name
 
+    m = members_cls(
+        _name=name,
+        _declared_members=member_by_name,
+        cls=cls,
+        unknown_types_fall_through=unknown_types_fall_through,
+    )
+    m = m.refine_done(parent=container)
 
-class Members(Traversable):
-    """
-    Internal iommi class that holds members of another class, for example the columns of a `Table` instance.
-    """
-
-    @dispatch
-    def __init__(self, *, _declared_members, unknown_types_fall_through, **kwargs):
-        super(Members, self).__init__(**kwargs)
-        self._declared_members = _declared_members
-        self._unknown_types_fall_through = unknown_types_fall_through
-
-    def on_bind(self):
-        self._bound_members = MemberBinder(self, self._declared_members, self._unknown_types_fall_through)
+    setattr(container, 'iommi_member_renderer_' + name, m)
 
 
 # noinspection PyProtectedMember
-def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_fall_through=False, lazy=True) -> None:
+def bind_members(container: Traversable, *, name: str, lazy=True) -> None:
     """
     This is the companion function to `collect_members`. It is used at bind
     time to recursively (and by default lazily(!)) bind the parts of a container.
     """
-    m = cls(
-        _name=name,
-        _declared_members=declared_members(parent)[name],
-        unknown_types_fall_through=unknown_types_fall_through,
-    )
-    assert parent._is_bound
-    m = m.bind(parent=parent)
-    setattr(parent._bound_members, name, m)
-    setattr(parent, name, m._bound_members)
+    assert container._is_bound
+    m = getattr(container, 'iommi_member_renderer_' + name)
+    m = m.bind(parent=container)
+    setattr(container._bound_members, name, m)
+    setattr(container, name, m._bound_members)
     if not lazy:
         _force_bind_all(m._bound_members)
 
 
 class ForbiddenNamesException(Exception):
     pass
-
-
-class NotBoundYetException(Exception):
-    pass
-
-
-class NotBoundYet:
-    """
-    This class is used to make debugging easier. Before the members are bound,
-    this class is used as a sentinel so you get some feedback on where you
-    should be looking instead. Without this class I was constantly confused why
-    stuff was empty and spent lots of time trying to figure that out.
-    """
-
-    def __init__(self, parent, name):
-        self.parent = parent
-        self.name = name
-
-    def __repr__(self):
-        return f"{self.name} of {type(self.parent).__name__} is not bound, look in _declared_members[{self.name}] for the declared copy of this, or bind first"
-
-    def __str__(self):
-        raise NotBoundYetException(repr(self))
-
-    def __iter__(self):
-        raise NotBoundYetException(repr(self))
-
-    def values(self):
-        raise NotBoundYetException(repr(self))
-
-    def keys(self):
-        raise NotBoundYetException(repr(self))
-
-    def items(self):
-        raise NotBoundYetException(repr(self))
 
 
 # noinspection PyCallByClass
@@ -228,6 +211,13 @@ class MemberBinder(dict):
     def __getitem__(self, name):
         _force_bind(self, name)
         return dict.__getitem__(self, name)
+
+    def __delitem__(self, name):
+        dict.__delitem__(self, name)
+        _bindable_names = object.__getattribute__(self, '_bindable_names')
+        _declared_members = object.__getattribute__(self, '_declared_members')
+        _bindable_names.remove(name)
+        del _declared_members[name]
 
     def get(self, name, *args):
         _force_bind(self, name)

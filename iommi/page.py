@@ -30,25 +30,26 @@ from iommi.fragment import (
 )
 from iommi.member import (
     bind_members,
-    collect_members,
+    refine_done_members,
 )
 from iommi.part import (
     as_html,
     Part,
     PartType,
 )
-from iommi.reinvokable import reinvokable
-from iommi.traversable import (
+from iommi.refinable import (
     EvaluatedRefinable,
-    Traversable,
+    RefinableMembers,
 )
+from iommi.traversable import Traversable
 
 
 @with_meta
 @declarative(
-    parameter='_parts_dict',
+    parameter='parts_dict',
     is_member=lambda obj: isinstance(obj, (Part, str) + template_types),
     sort_key=lambda x: 0,
+    add_init_kwargs=False,
 )
 class Page(Part):
     """
@@ -63,21 +64,16 @@ class Page(Part):
     h_tag: Union[
         Fragment, str
     ] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    parts: Dict[str, PartType] = RefinableMembers()
 
     class Meta:
         member_class = Fragment
 
-    @reinvokable
-    @dispatch(
-        parts=EMPTY,
-        context=EMPTY,
-        h_tag__call_target=Header,
-    )
-    def __init__(self, *, _parts_dict: Dict[str, PartType] = None, parts: dict, **kwargs):
-        super(Page, self).__init__(**kwargs)
+        parts = EMPTY
+        context = EMPTY
+        h_tag__call_target = Header
 
-        self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
-
+    def on_refine_done(self):
         # First we have to up sample parts that aren't Part into Fragment
         def as_fragment_if_needed(k, v):
             if v is None:
@@ -87,10 +83,12 @@ class Page(Part):
             else:
                 return v
 
-        _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in items(_parts_dict)}
-        parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(parts)})
+        _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in items(self.get_declared('parts_dict'))}
+        self.parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(self.parts)})
 
-        collect_members(self, name='parts', items=parts, items_dict=_parts_dict, cls=self.get_meta().member_class)
+        refine_done_members(self, name='parts', members_from_namespace=self.parts, members_from_declared=_parts_dict, cls=self.get_meta().member_class)
+
+        super(Page, self).on_refine_done()
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
@@ -108,10 +106,12 @@ class Page(Part):
         request = self.get_request()
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}
         rendered = {'h_tag': as_html(request=request, part=self.h_tag, context=context)}
-        rendered.update({
-            name: as_html(request=request, part=part, context=context)
-            for name, part in items(self.parts)
-        })
+        rendered.update(
+            {
+                name: as_html(request=request, part=part, context=context)
+                for name, part in items(self.parts)
+            }
+        )
 
         return render(rendered)
 

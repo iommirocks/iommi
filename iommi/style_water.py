@@ -1,6 +1,6 @@
+from iommi.asset import Asset
 from iommi.style import Style
 from iommi.style_base import base
-from iommi.asset import Asset
 
 water = Style(
     base,

@@ -19,6 +19,7 @@ from iommi.from_model import (
     register_search_fields,
     SearchFieldsAlreadyRegisteredException,
 )
+from tests.helpers import req
 from tests.models import FormFromModelTest
 
 
@@ -83,8 +84,8 @@ def test_respect_include_ordering():
     f = Form(
         auto__model=FormFromModelTest,
         auto__include=include,
-    )
-    assert list(f._declared_members.fields.keys()) == include
+    ).bind(request=req('get'))
+    assert list(f.fields.keys()) == include
 
 
 def test_exclude():
@@ -94,8 +95,8 @@ def test_exclude():
             'f_bool',
             'f_int',
         ],
-    )
-    assert list(f._declared_members.fields.keys()) == ['id', 'f_float', 'f_file', 'f_int_excluded']
+    ).bind(request=req('get'))
+    assert list(f.fields.keys()) == ['f_float', 'f_file', 'f_int_excluded']
 
 
 def test_include_not_existing_error():
@@ -103,7 +104,7 @@ def test_include_not_existing_error():
         Form(
             auto__model=FormFromModelTest,
             auto__include=['does_not_exist'],
-        )
+        ).bind()
 
     assert (
         str(e.value)
@@ -116,7 +117,7 @@ def test_exclude_not_existing_error():
         Form(
             auto__model=FormFromModelTest,
             auto__exclude=['does_not_exist'],
-        )
+        ).bind()
 
     assert (
         str(e.value)
@@ -157,9 +158,8 @@ def test_from_model():
     f = Form(
         auto__model=SomeModel,
         auto__include=['foo__bar'],
-    )
-
-    declared_fields = f._declared_members.fields
+    ).bind()
+    declared_fields = f.fields
     assert list(declared_fields.keys()) == ['foo_bar']
     assert declared_fields['foo_bar'].attr == 'foo__bar'
 
@@ -169,7 +169,7 @@ def test_from_model_missing_subfield():
         Form(
             auto__model=SomeModel,
             auto__include=['foo__barf'],
-        )
+        ).bind()
     assert (
         str(e.value)
         == '''\

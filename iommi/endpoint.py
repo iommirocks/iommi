@@ -6,8 +6,8 @@ from tri_declarative import (
 )
 
 from iommi.base import keys
+from iommi.refinable import EvaluatedRefinable
 from iommi.traversable import (
-    EvaluatedRefinable,
     get_long_path_by_path,
     get_path_by_long_path,
     Traversable,

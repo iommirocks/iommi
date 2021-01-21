@@ -45,7 +45,8 @@ def test_profiler_graph_error():
 
 def test_profiler_graph_dot_present():
     if get_dot_path():
-        assert '<!DOCTYPE svg ' in middleware(staff_req('get', _iommi_prof='', graph='')).content.decode()
+        content = middleware(staff_req('get', _iommi_prof='graph')).content.decode()
+        assert '<!DOCTYPE svg ' in content, content
 
 
 def test_profiler_graph_dot_not_present():

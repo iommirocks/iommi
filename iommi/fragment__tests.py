@@ -234,12 +234,12 @@ def test_fragment__render__simple_cases():
     assert format_html('{}', html.h1('foo').bind(parent=None)) == '<h1>foo</h1>'
     assert format_html('{}', Fragment(children__child='foo<foo>').bind(parent=None)) == 'foo&lt;foo&gt;'
 
-    assert fragment__render(Fragment(include=False), {}) == ''
+    assert fragment__render(Fragment(include=False).refine_done(), {}) == ''
 
 
 def test_fragment_repr():
     assert (
-        repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'})))
+        repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'})).refine_done())
         == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
     )
 
@@ -261,3 +261,32 @@ def test_fragment_meta():
 def test_fragment_template():
     f = Fragment(Template('<div>{{ fragment.extra.foo }}</div>'), extra__foo=7)
     assert str(f.bind(request=req('get'))) == '<div>7</div>'
+
+
+def test_foo():
+    f = Fragment(
+        children__child=Fragment('child')
+    )
+    assert f.bind().__html__() == 'child'
+    assert f.bind().__html__() == 'child'
+
+
+def test_barz():
+    p = Page(
+        parts__footer=html.div(
+            html.hr(),
+        )
+    )
+    assert p.bind().__html__() == '<div><hr></div>'
+    assert p.bind().__html__() == '<div><hr></div>'
+
+
+def test_bar():
+    class ExamplesPage(Page):
+        footer = html.div(
+            html.hr(),
+        )
+
+    p = ExamplesPage()
+    assert p.bind().__html__() == '<div><hr></div>'
+    assert p.bind().__html__() == '<div><hr></div>'

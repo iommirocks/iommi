@@ -7,7 +7,6 @@ from tri_declarative import (
     dispatch,
     Refinable,
     refinable,
-    RefinableObject,
     Shortcut,
 )
 
@@ -16,6 +15,7 @@ from iommi.docs import (
     _generate_rst_docs,
     get_default_classes,
 )
+from iommi.refinable import RefinableObject
 
 
 def test_generate_docs():

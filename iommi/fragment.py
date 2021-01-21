@@ -1,7 +1,5 @@
 from typing import (
-    Dict,
     List,
-    Optional,
     Union,
 )
 
@@ -10,7 +8,6 @@ from tri_declarative import (
     EMPTY,
     Namespace,
     Refinable,
-    setdefaults_path,
     with_meta,
 )
 
@@ -35,19 +32,19 @@ from iommi.evaluate import (
 )
 from iommi.member import (
     bind_members,
-    collect_members,
+    refine_done_members,
 )
 from iommi.part import (
     as_html,
     Part,
     PartType,
 )
-from iommi.reinvokable import reinvokable
-from iommi.traversable import (
+# https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+from iommi.refinable import (
     EvaluatedRefinable,
+    RefinableMembers,
 )
 
-# https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 _void_elements = [
     'area',
     'base',
@@ -155,23 +152,21 @@ class Fragment(Part, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
+    children = RefinableMembers()
 
-    @reinvokable
     @dispatch(
-        tag=None,
         children=EMPTY,
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )
-    def __init__(self, text=None, *, children: Optional[Dict[str, PartType]] = None, **kwargs):
-        super(Fragment, self).__init__(**kwargs)
+    def __init__(self, text=None, **kwargs):
         if text is not None:
-            setdefaults_path(
-                children,
-                text=text,
-            )
-        self._iommi_saved_params['text'] = text
-        collect_members(self, name='children', items=children, cls=Fragment, unknown_types_fall_through=True)
+            kwargs['children'].text = text
+        super().__init__(**kwargs)
+
+    def on_refine_done(self):
+        super().on_refine_done()
+        refine_done_members(self, name='children', members_from_namespace=self.iommi_namespace.children, cls=Fragment, unknown_types_fall_through=True)
 
     def render_text_or_children(self, context):
         request = self.get_request()
@@ -181,10 +176,14 @@ class Fragment(Part, Tag):
         )
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} tag:{self.tag} attrs:{dict(self.attrs) if self.attrs else None!r}>'
+        if self.is_refine_done:
+            return f'<{self.__class__.__name__} tag:{self.tag} attrs:{dict(self.attrs)!r}>'
+        else:
+            return f'<{self.__class__.__name__}>'
 
     def on_bind(self) -> None:
-        bind_members(self, name='children', unknown_types_fall_through=True)
+        super().on_bind()
+        bind_members(self, name='children')
 
         # Fragment children are special and they can be raw str/int etc but
         # also callables. We need to evaluate them!

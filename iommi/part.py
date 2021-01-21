@@ -38,14 +38,13 @@ from iommi.endpoint import (
 )
 from iommi.member import (
     bind_members,
-    collect_members,
+    refine_done_members,
 )
 from iommi.style import (
     get_iommi_style_name,
     get_style,
 )
 from iommi.traversable import (
-    EvaluatedRefinable,
     Traversable,
 )
 from ._web_compat import (
@@ -53,7 +52,10 @@ from ._web_compat import (
     settings,
     template_types,
 )
-from .reinvokable import reinvokable
+from .refinable import (
+    EvaluatedRefinable,
+    RefinableMembers,
+)
 from .sort_after import sort_after
 
 
@@ -70,27 +72,29 @@ class Part(Traversable):
     extra_evaluated: Dict[
         str, Any
     ] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
-    endpoints: Namespace = Refinable()
+    endpoints: Namespace = RefinableMembers()
     # Only the assets used by this part
-    assets: Namespace = Refinable()
+    assets: Namespace = RefinableMembers()
 
-    @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
     )
-    def __init__(self, *, endpoints: Dict[str, Any] = None, assets: Dict[str, Any] = None, include, **kwargs):
-        from iommi.asset import Asset
-
-        super(Part, self).__init__(include=include, **kwargs)
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
-        collect_members(self, name='assets', items=assets, cls=Asset)
+    def __init__(self, **kwargs):
+        super(Part, self).__init__(**kwargs)
 
         if iommi_debug_on():
             import inspect
 
             frame = inspect.currentframe()
             self._instantiated_at_info = get_instantiated_at_info(frame.f_back)
+
+    def on_refine_done(self):
+        from iommi.asset import Asset
+
+        refine_done_members(self, name='endpoints', members_from_namespace=self.endpoints, cls=Endpoint)
+        refine_done_members(self, name='assets', members_from_namespace=self.assets, cls=Asset)
+        super().on_refine_done()
 
     @dispatch(
         render=EMPTY,
@@ -214,7 +218,7 @@ def render_root(*, part, context, **render):
     from iommi.fragment import Container
 
     context = dict(
-        container=Container(_name='Container').bind(parent=part),
+        container=Container(_name='Container').refine_done(parent=part).bind(parent=part),
         content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=iommi_debug_panel(part) if iommi_debug_on() and '_iommi_disable_debug_panel' not in part.get_request().GET else '',

@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pytest
 from tri_declarative import (
     class_shortcut,
@@ -27,53 +29,50 @@ from iommi.base import (
 )
 from iommi.member import (
     bind_members,
-    collect_members,
+    refine_done_members,
 )
 from iommi.page import (
     Page,
 )
-from iommi.reinvokable import reinvokable
-from iommi.style import unregister_style
-from iommi.traversable import (
-    build_long_path_by_path,
+from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
-    get_path_by_long_path,
-    set_declared_member,
+    RefinableMembers,
+)
+from iommi.traversable import (
+    build_long_path_by_path,
     Traversable,
 )
 from tests.helpers import (
+    Basket,
+    Box,
+    Fruit,
     req,
-    StubTraversable,
 )
 from tests.models import TFoo
 
 
 def test_traverse():
-    bar = Struct(
-        _name='bar',
-        _declared_members=dict(
-            baz=Struct(_name='baz'),
-            buzz=Struct(_name='buzz'),
+    bar = Basket(
+        fruits=dict(
+            baz=Fruit(),
+            buzz=Fruit(),
         ),
     )
-    foo = Struct(
-        _name='foo',
-        _declared_members=dict(
-            bar=bar,
-        ),
+    foo = Box(
+        items__bar=bar,
     )
-    root = StubTraversable(
+    root = Box(
         _name='root',
-        members=Struct(foo=foo),
-    )
+        items__foo=foo,
+    ).refine_done()
 
     expected = {
         '': '',
-        'foo': 'foo',
-        'bar': 'foo/bar',
-        'baz': 'foo/bar/baz',
-        'buzz': 'foo/bar/buzz',
+        'foo': 'items/foo',
+        'bar': 'items/foo/items/bar',
+        'baz': 'items/foo/items/bar/fruits/baz',
+        'buzz': 'items/foo/items/bar/fruits/buzz',
     }
     actual = build_long_path_by_path(root)
     assert items(actual) == items(expected)
@@ -103,44 +102,68 @@ def test_traverse_on_iommi():
             ),
         )
 
-    page = MyPage()
-
+    page = MyPage().refine_done()
     actual = build_long_path_by_path(page)
     assert actual == {
         '': 'parts/header',
         'a_table': 'parts/a_table',
         'a_table/columns': 'parts/a_table/columns/columns',
         'a_table/fusk': 'parts/a_table/columns/fusk',
-        'a_table/select': 'parts/a_table/columns/select',
         'advanced': 'parts/a_table/query/advanced',
+        'ajax_enhance': 'parts/a_table/query/assets/ajax_enhance',
+        'bulk_container': 'parts/a_table/bulk_container',
         'columns': 'parts/a_table/query/form/fields/columns',
         'columns/config': 'parts/a_table/query/form/fields/columns/endpoints/config',
+        'columns/help': 'parts/a_table/query/form/fields/columns/help',
+        'columns/input': 'parts/a_table/query/form/fields/columns/input',
+        'columns/label': 'parts/a_table/query/form/fields/columns/label',
+        'columns/non_editable_input': 'parts/a_table/query/form/fields/columns/non_editable_input',
         'columns/validate': 'parts/a_table/query/form/fields/columns/endpoints/validate',
         'config': 'parts/some_form/fields/fisk/endpoints/config',
         'csv': 'parts/a_table/endpoints/csv',
+        'debug_tree': 'endpoints/debug_tree',
         'errors': 'parts/a_table/query/endpoints/errors',
         'fisk': 'parts/some_form/fields/fisk',
         'fisk/config': 'parts/some_other_form/fields/fisk/endpoints/config',
+        'fisk/help': 'parts/some_other_form/fields/fisk/help',
+        'fisk/input': 'parts/some_other_form/fields/fisk/input',
+        'fisk/label': 'parts/some_other_form/fields/fisk/label',
+        'fisk/non_editable_input': 'parts/some_other_form/fields/fisk/non_editable_input',
         'fisk/validate': 'parts/some_other_form/fields/fisk/endpoints/validate',
         'fjomp': 'parts/some_other_form/fields/fjomp',
         'fjomp/config': 'parts/some_other_form/fields/fjomp/endpoints/config',
+        'fjomp/help': 'parts/some_other_form/fields/fjomp/help',
+        'fjomp/input': 'parts/some_other_form/fields/fjomp/input',
+        'fjomp/label': 'parts/some_other_form/fields/fjomp/label',
+        'fjomp/non_editable_input': 'parts/some_other_form/fields/fjomp/non_editable_input',
         'fjomp/validate': 'parts/some_other_form/fields/fjomp/endpoints/validate',
         'form': 'parts/a_table/query/form',
+        'form_container': 'parts/a_table/query/form_container',
         'freetext_search': 'parts/a_table/query/form/fields/freetext_search',
         'freetext_search/config': 'parts/a_table/query/form/fields/freetext_search/endpoints/config',
+        'freetext_search/help': 'parts/a_table/query/form/fields/freetext_search/help',
+        'freetext_search/input': 'parts/a_table/query/form/fields/freetext_search/input',
+        'freetext_search/label': 'parts/a_table/query/form/fields/freetext_search/label',
+        'freetext_search/non_editable_input': 'parts/a_table/query/form/fields/freetext_search/non_editable_input',
         'freetext_search/validate': 'parts/a_table/query/form/fields/freetext_search/endpoints/validate',
         'fusk': 'parts/a_table/query/form/fields/fusk',
         'fusk/config': 'parts/a_table/query/form/fields/fusk/endpoints/config',
+        'fusk/help': 'parts/a_table/query/form/fields/fusk/help',
+        'fusk/input': 'parts/a_table/query/form/fields/fusk/input',
+        'fusk/label': 'parts/a_table/query/form/fields/fusk/label',
+        'fusk/non_editable_input': 'parts/a_table/query/form/fields/fusk/non_editable_input',
         'fusk/validate': 'parts/a_table/query/form/fields/fusk/endpoints/validate',
+        'help': 'parts/some_form/fields/fisk/help',
+        'input': 'parts/some_form/fields/fisk/input',
+        'label': 'parts/some_form/fields/fisk/label',
+        'header': 'parts/a_table/header',
+        'non_editable_input': 'parts/some_form/fields/fisk/non_editable_input',
         'page': 'parts/a_table/parts/page',
         'query': 'parts/a_table/query',
         'query/columns': 'parts/a_table/query/filters/columns',
         'query/fusk': 'parts/a_table/query/filters/fusk',
-        'query/select': 'parts/a_table/query/filters/select',
         'query_form_toggle_script': 'parts/a_table/assets/query_form_toggle_script',
-        'select': 'parts/a_table/query/form/fields/select',
-        'select/config': 'parts/a_table/query/form/fields/select/endpoints/config',
-        'select/validate': 'parts/a_table/query/form/fields/select/endpoints/validate',
+        'select': 'parts/a_table/columns/select',
         'some_form': 'parts/some_form',
         'some_other_form': 'parts/some_other_form',
         'some_other_form/fisk': 'parts/some_other_form/fields/fisk',
@@ -184,7 +207,7 @@ def test_evil_names():
         get_request = Fragment()
 
     with pytest.raises(Exception) as e:
-        ErrorMessages()
+        ErrorMessages().refine_done()
 
     assert (
         str(e.value)
@@ -192,44 +215,15 @@ def test_evil_names():
     )
 
 
-def test_warning_when_names_are_recalculated(capsys):
-    page = Page(parts__foo=Fragment(_name='foo'))
-    assert get_path_by_long_path(page) == {'parts/foo': ''}
-    out, err = capsys.readouterr()
-    assert out == ''
-
-    set_declared_member(page, 'bar', Fragment(_name='bar'))
-    assert get_path_by_long_path(page) == {
-        'parts/foo': '',
-        'bar': 'bar',
-    }
-    out, err = capsys.readouterr()
-    assert out == '### A disturbance in the force... The namespace has been recalculated!\n'
-
-
 def test_dunder_path_is_fully_qualified_and_skipping_root():
-    foo = StubTraversable(
-        _name='my_part3',
-        members=Struct(
-            my_part2=StubTraversable(
-                _name='my_part2',
-                members=Struct(
-                    my_part=StubTraversable(
-                        _name='my_part',
-                    )
-                ),
-            )
-        ),
-    )
-    foo = foo.bind(request=None)
+    banana = Fruit()
+    basket = Basket(fruits__banana=banana)
+    root = basket.bind(request=None)
 
-    assert foo.iommi_path == ''
+    assert root.iommi_path == ''
 
-    assert foo.iommi_bound_members().my_part2.iommi_path == 'my_part2'
-    assert foo.iommi_bound_members().my_part2.iommi_dunder_path == 'my_part2'
-
-    assert foo.iommi_bound_members().my_part2.iommi_bound_members().my_part.iommi_path == 'my_part'
-    assert foo.iommi_bound_members().my_part2.iommi_bound_members().my_part.iommi_dunder_path == 'my_part2__my_part'
+    assert root.iommi_bound_members().fruits.iommi_bound_members().banana.iommi_path == 'banana'
+    assert root.iommi_bound_members().fruits.iommi_bound_members().banana.iommi_dunder_path == 'fruits__banana'
 
 
 def test_evaluated_refinable_function():
@@ -283,21 +277,16 @@ def test_initial_setup():
 
 
 def test_traversable_repr():
-    bar = StubTraversable(_name='bar')
-    foo = StubTraversable(
-        _name='foo',
-        members=Struct(
-            bar=bar,
-        ),
-    )
+    banana = Fruit(_name='banana')
+    basket = Basket(_name='basket', fruits__banana=banana)
 
-    assert repr(foo) == '<tests.helpers.StubTraversable foo>'
-    assert repr(bar) == '<tests.helpers.StubTraversable bar>'
+    assert repr(basket) == '<tests.helpers.Basket basket>'
+    assert repr(banana) == '<tests.helpers.Fruit banana>'
 
-    foo = foo.bind(request=None)
+    basket = basket.bind(request=None)
 
-    assert repr(foo) == "<tests.helpers.StubTraversable foo (bound) members:['bar']>"
-    assert repr(foo._bound_members.bar) == "<tests.helpers.StubTraversable bar (bound) path:'bar'>"
+    assert repr(basket) == "<tests.helpers.Basket basket (bound) members:['fruits']>"
+    assert repr(basket._bound_members.fruits) == "<iommi.member.Members fruits (bound) path:<no path>>"
 
 
 def test_apply_style_not_affecting_definition(settings):
@@ -329,13 +318,16 @@ def test_apply_style_not_affecting_definition_2():
         'foo_style',
         Style(
             MenuItem__attrs__class__foo=True,
+            MenuItem__active_class='active',
         ),
     ), register_style(
         'bar_style',
         Style(
             MenuItem__attrs__class__bar=True,
+            MenuItem__active_class='active',
         ),
     ):
+
         class MyPage(Page):
             menu = Menu(sub_menu=dict(root=MenuItem()))
 
@@ -356,10 +348,23 @@ def test_get_config():
             Fruit__attrs__class__style=True,
         ),
     ):
-        class Fruit(Traversable):
+        class FruitBase(Traversable):
             attrs = Refinable()
 
-            @reinvokable
+            @dispatch(
+                attrs__class__fruit_base=True,
+            )
+            def __init__(self, **kwargs):
+                super(FruitBase, self).__init__(**kwargs)
+
+            @classmethod
+            @class_shortcut(
+                attrs__class__fruit_shortcut_base=True,
+            )
+            def fruit_shortcut(cls, *, call_target=None, **kwargs):
+                return call_target(**kwargs)
+
+        class Fruit(FruitBase):
             @dispatch(
                 attrs__class__fruit=True,
             )
@@ -368,65 +373,52 @@ def test_get_config():
 
             @classmethod
             @class_shortcut(
-                attrs__class__some_fruit=True,
+                call_target__attribute='fruit_shortcut',
+                attrs__class__fruit_shortcut=True,
             )
-            def some_fruit(cls, *, call_target=None, **kwargs):
+            def fruit_shortcut(cls, *, call_target=None, **kwargs):
                 return call_target(**kwargs)
 
-        class SubFruit(Fruit):
-            @reinvokable
-            @dispatch(
-                attrs__class__sub_fruit=True,
-            )
-            def __init__(self, **kwargs):
-                super(SubFruit, self).__init__(**kwargs)
-
-            @classmethod
-            @class_shortcut(
-                call_target__attribute='some_fruit',
-                attrs__class__sub_some_fruit=True,
-            )
-            def some_fruit(cls, *, call_target=None, **kwargs):
-                return call_target(**kwargs)
-
-        @declarative(Fruit, '_fruits_dict')
+        @declarative(Fruit, 'fruits', add_init_kwargs=False)
         @with_meta
-        class Basket(Traversable):
-            fruits = Refinable()
+        class BasketBase(Traversable):
+            fruits: Dict = RefinableMembers()
 
             class Meta:
-                fruits__banana__attrs__class__basket = True
+                fruits__banana__attrs__class__basket_base = True
 
             @dispatch(
                 fruits=EMPTY,
             )
-            def __init__(self, *, _fruits_dict, fruits, **kwargs):
-                super(Basket, self).__init__(**kwargs)
-                collect_members(self, name='fruits', items_dict=_fruits_dict, items=fruits, cls=Fruit)
+            def __init__(self, **kwargs):
+                super(BasketBase, self).__init__(**kwargs)
+
+            def on_refine_done(self):
+                refine_done_members(self, name='fruits', members_from_namespace=self.fruits, members_from_declared=self.get_declared('fruits'), cls=Fruit)
 
             def on_bind(self) -> None:
                 bind_members(self, name='fruits')
 
-        class SubBasket(Basket):
+        class Basket(BasketBase):
             class Meta:
-                fruits__banana__attrs__class__sub_basket = True
+                fruits__banana__attrs__class__basket = True
                 iommi_style = 'fruit_style'
 
-        class MyBasket(SubBasket):
-            banana = SubFruit.some_fruit(
+        class MyBasket(Basket):
+            banana = Fruit.fruit_shortcut(
                 attrs__class__my_basket_fruit_invoke=True,
             )
 
         basket = MyBasket(fruits__banana__attrs__class__my_basket_invoke=True).bind(request=None)
 
-        assert list(basket.fruits.banana.attrs['class'].keys()) == [
+        assert sorted(set(basket.fruits.banana.attrs['class'].keys())) == sorted({
             'fruit',
-            'sub_fruit',
+            'fruit_base',
             'style',
             'basket',
-            'sub_basket',
+            'basket_base',
             'my_basket_invoke',
-            'some_fruit',
-            'sub_some_fruit',
+            'fruit_shortcut',
+            'fruit_shortcut_base',
             'my_basket_fruit_invoke',
-        ]
+        })

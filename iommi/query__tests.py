@@ -46,7 +46,6 @@ from iommi.query import (
     QueryException,
     value_to_str_for_query,
 )
-from iommi.traversable import declared_members
 from tests.helpers import req
 from tests.models import (
     Bar,
@@ -133,6 +132,7 @@ def test_freetext(MyTestQuery):
     expected = repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
     assert repr(query.parse_query_string('"asd"')) == expected
 
+    assert FREETEXT_SEARCH_NAME in MyTestQuery().bind().form.fields
     query2 = MyTestQuery().bind(request=req('get', **{'-': '-', FREETEXT_SEARCH_NAME: 'asd'}))
     assert repr(query2.get_q()) == expected
 
@@ -212,18 +212,11 @@ def test_boolean_filter():
     for i in range(5):
         BooleanFromModelTestModel.objects.create(b=False)
 
-    assert (
-        BooleanFromModelTestModel.objects.filter(
-            Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', b='1')).get_q()
-        ).count()
-        == 3
-    )
-    assert (
-        BooleanFromModelTestModel.objects.filter(
-            Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', b='0')).get_q()
-        ).count()
-        == 5
-    )
+    q = Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', b='1')).get_q()
+    assert BooleanFromModelTestModel.objects.filter(q).count() == 3
+
+    q = Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', b='0')).get_q()
+    assert BooleanFromModelTestModel.objects.filter(q).count() == 5
 
     with pytest.raises(QueryException) as e:
         Query(auto__model=BooleanFromModelTestModel).bind(request=req('get', **{'-query': 'b>0'})).get_q()
@@ -303,7 +296,9 @@ def test_filter_parsing_simple(shortcut, input, expected_parse):
         bazaar = shortcut(attr='quux__bar__bazaar')
 
     query = MyQuery().bind(request=req('get', bazaar=input))
+    assert 'bazaar' in query.form.fields
     assert not query.form.get_errors(), query.form.get_errors()
+    assert query.form.fields.bazaar.iommi_path == 'bazaar'
     assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__iexact': expected_parse}))
 
 
@@ -336,7 +331,8 @@ def test_gui_is_not_required():
     class Query2(Query):
         foo = Filter()
 
-    assert Query2.foo.field.required is False
+    query = Query2().bind()
+    assert query.form.fields.foo.required is False
 
 
 def test_invalid_value():
@@ -516,26 +512,30 @@ def test_choice_queryset():
 
 @pytest.mark.django_db
 def test_choice_queryset_value_to_q_misc():
-    assert choice_queryset_value_to_q(Filter(attr=None), op='=', value_string_or_f=None) == Q()
-    assert choice_queryset_value_to_q(Filter(attr='foo'), op='=', value_string_or_f='null') == Q(foo=None)
+    assert choice_queryset_value_to_q(Filter(attr=None).refine_done(), op='=', value_string_or_f=None) == Q()
+    assert choice_queryset_value_to_q(Filter(attr='foo').refine_done(), op='=', value_string_or_f='null') == Q(foo=None)
 
     foo = Foo.objects.create(foo=1)
 
     assert choice_queryset_value_to_q(
-        Filter(attr='foo', search_fields=['foo'], choices=Foo.objects.all()), op='=', value_string_or_f='1'
+        Filter(attr='foo', search_fields=['foo'], choices=Foo.objects.all()).refine_done(),
+        op='=',
+        value_string_or_f='1',
     ) == Q(foo__pk=foo.pk)
 
     Foo.objects.create(foo=1)
     with pytest.raises(QueryException) as e:
         choice_queryset_value_to_q(
-            Filter(attr='foo', search_fields=['foo'], choices=Foo.objects.all()), op='=', value_string_or_f='1'
+            Filter(attr='foo', search_fields=['foo'], choices=Foo.objects.all()).refine_done(),
+            op='=',
+            value_string_or_f='1',
         )
 
     assert str(e.value) == 'Found more than one object for name "1"'
 
 
 def test_base_value_to_q_misc():
-    assert Filter.value_to_q(Filter(attr=None), op='=', value_string_or_f=None) == Q()
+    assert Filter.value_to_q(Filter(attr=None).refine_done(), op='=', value_string_or_f=None) == Q()
 
 
 @pytest.mark.django_db
@@ -599,24 +599,25 @@ def test_multi_choice_queryset():
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert list(declared_members(t).filters.keys()) == ['id', 'foo']
+    assert list(t.iommi_namespace.filters.keys()) == ['id', 'foo']
     assert list(t.filters.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert list(declared_members(t).filters.keys()) == ['id', 'foo']
+    assert list(t.iommi_namespace.filters.keys()) == ['id', 'foo']
     assert list(t.filters.keys()) == ['foo']
 
 
+@pytest.mark.django_db
 def test_from_model_foreign_key():
     class MyQuery(Query):
         class Meta:
             filters = Query.filters_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert list(declared_members(t).filters.keys()) == ['id', 'foo']
+    assert list(t.iommi_namespace.filters.keys()) == ['id', 'foo']
     assert isinstance(t.filters['foo'].choices, QuerySet)
 
 
@@ -690,7 +691,7 @@ def test_filter_repr():
 @pytest.mark.django_db
 def test_nice_error_message():
     with pytest.raises(NoRegisteredSearchFieldException) as e:
-        value_to_str_for_query(Filter(search_fields=['custom_name_field']), NonStandardName(non_standard_name='foo'))
+        value_to_str_for_query(Filter(search_fields=['custom_name_field']).refine_done(), NonStandardName(non_standard_name='foo'))
 
     assert (
         str(e.value)
@@ -701,13 +702,13 @@ def test_nice_error_message():
 @pytest.mark.django_db
 def test_value_to_str_for_query_dunder_path():
     bar = Bar.objects.create(foo=Foo.objects.create(foo=17))
-    assert value_to_str_for_query(Filter(search_fields=['foo__foo']), bar) == '"17"'
+    assert value_to_str_for_query(Filter(search_fields=['foo__foo']).refine_done(), bar) == '"17"'
 
 
 @pytest.mark.django_db
 def test_build_query_expression_for_model_with_no_search_fields():
     foo = Foo.objects.create(foo=17)
-    assert build_query_expression(filter=Filter(query_name='bar'), value=foo) == f'bar.pk={foo.pk}'
+    assert build_query_expression(filter=Filter(query_name='bar').refine_done(), value=foo) == f'bar.pk={foo.pk}'
 
 
 @pytest.mark.django_db
@@ -718,11 +719,17 @@ def test_build_query_expression_for_model_with_search_fields():
 
     foo = Foo.objects.create(foo=17)
     assert (
-        build_query_expression(filter=Filter(query_name='bar', search_fields=['foo']), value=foo)
+        build_query_expression(
+            filter=Filter(query_name='bar', search_fields=['foo']).refine_done(),
+            value=foo,
+        )
         == f'bar="{foo.foo}"'  # Vanilla case with only one serach field
     )
     assert (
-        build_query_expression(filter=Filter(query_name='bar', search_fields=['foo', 'pk']), value=foo)
+        build_query_expression(
+            filter=Filter(query_name='bar', search_fields=['foo', 'pk']).refine_done(),
+            value=foo,
+        )
         == f'bar="{foo.pk}"'  # If more than one, assume the last one is the one that is unique
     )
 
@@ -800,8 +807,8 @@ def test_from_model_with_inheritance():
     query.bind(request=req('get'))
 
     assert was_called == {
-        'MyField.float': 2,
-        'MyVariable.float': 2,
+        'MyField.float': 1,
+        'MyVariable.float': 1,
     }
 
 
@@ -892,6 +899,7 @@ def test_custom_query_name(MyTestQuery):
     assert repr(query.parse_query_string('bar.pk=7')) == repr(Q(**{'foo__pk': 7}))
 
 
+@pytest.mark.django_db
 def test_filter_model_mixup():
     q = Query(auto__model=TBar).bind(request=req('get'))
     assert q.filters.foo.model == TFoo

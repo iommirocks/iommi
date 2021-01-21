@@ -18,6 +18,7 @@ class IommiConfig(AppConfig):
         register_search_fields(model=Permission, search_fields=['codename'])
 
         from iommi import register_style
+        from iommi import Style
         from iommi.style_test_base import test
         from iommi.style_base import base
         from iommi.style_bootstrap import bootstrap
@@ -27,6 +28,7 @@ class IommiConfig(AppConfig):
         from iommi.style_water import water
         from iommi.style_bulma import bulma
 
+        register_style('blank', Style())
         register_style('base', base)
         register_style('test', test)
         register_style('bulma', bulma)
