@@ -1,10 +1,17 @@
 import pytest
 from tri_declarative import (
+    class_shortcut,
     declarative,
-    dispatch,
+    Namespace,
     Refinable,
 )
 
+from iommi import (
+    html,
+    Page,
+    register_style,
+    Style,
+)
 from iommi.base import (
     items,
     keys,
@@ -13,41 +20,49 @@ from iommi.base import (
 from iommi.member import (
     bind_members,
     collect_members,
-    NotBoundYetException,
     ForbiddenNamesException,
+    NotBoundYetException,
 )
+from iommi.style import unregister_style
 from iommi.traversable import (
     declared_members,
     Traversable,
 )
-from iommi.reinvokable import reinvokable
 
 
 class Fruit(Traversable):
-    @reinvokable
-    def __init__(self, taste=None, **kwargs):
-        super(Fruit, self).__init__(**kwargs)
-        self.taste = taste
+    taste = Refinable()
 
 
-@declarative(Fruit, 'fruits_dict')
+@declarative(Fruit, 'fruits_dict', add_init_kwargs=False)
 class Basket(Traversable):
+    fruits: Namespace = Refinable()
 
-    @dispatch
-    def __init__(self, fruits=None, fruits_dict=None, unknown_types_fall_through=False):
-        super(Basket, self).__init__()
-        collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit, unknown_types_fall_through=unknown_types_fall_through)
+    def __init__(self, unknown_types_fall_through=False, **kwargs):
+        self.unknown_types_fall_through = unknown_types_fall_through
+        super(Basket, self).__init__(**kwargs)
+
+    def on_finalize(self):
+        collect_members(
+            container=self,
+            name='fruits',
+            items=self.fruits,
+            items_dict=self.get_declared('fruits_dict'),
+            cls=Fruit,
+            unknown_types_fall_through=self.unknown_types_fall_through,
+        )
+        super(Basket, self).on_finalize()
 
     def on_bind(self):
-        bind_members(parent=self, name='fruits')
+        bind_members(parent=self, name='fruits', lazy=False)
 
 
 def test_empty_collect():
-    assert declared_members(Basket()).fruits == {}
+    assert declared_members(Basket().finalize()).fruits == {}
 
 
 def test_collect_from_arg():
-    basket = Basket(fruits__banana__taste="sweet")
+    basket = Basket(fruits__banana__taste="sweet").finalize()
     assert declared_members(basket).fruits.banana.taste == 'sweet'
 
 
@@ -55,7 +70,7 @@ def test_collect_from_declarative():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    basket = MyBasket()
+    basket = MyBasket().finalize()
     assert declared_members(basket).fruits.orange.taste == 'sour'
 
 
@@ -63,7 +78,7 @@ def test_collect_unapplied_config():
     class MyBasket(Basket):
         pear = Fruit()
 
-    basket = MyBasket(fruits__pear__taste='meh')
+    basket = MyBasket(fruits__pear__taste='meh').finalize()
     # noinspection PyUnresolvedReferences
     assert basket._declared_members.fruits.pear.taste == 'meh'
 
@@ -74,7 +89,7 @@ def test_unbound_error():
 
     expected = 'fruits of MyBasket is not bound, look in _declared_members[fruits] for the declared copy of this, or bind first'
 
-    basket = MyBasket()
+    basket = MyBasket().finalize()
     assert repr(basket.fruits) == expected
 
     with pytest.raises(NotBoundYetException) as e:
@@ -125,7 +140,7 @@ def test_bind_via_unapplied_config():
     with pytest.raises(TypeError) as e:
         MyBasket(fruits__pear__color='green').bind()
 
-    assert str(e.value) == "'Fruit' object has no refinable attribute(s): color.\nAvailable attributes:\n    iommi_style"
+    assert str(e.value) == "'Fruit' object has no refinable attribute(s): color.\nAvailable attributes:\n    assets\n    endpoints\n    iommi_style\n    taste\n"
 
 
 def test_ordering():
@@ -148,10 +163,7 @@ def test_ordering():
 
 def test_inclusion():
     class IncludableFruit(Fruit):
-        @reinvokable
-        def __init__(self, include=True, **kwargs):
-            super(IncludableFruit, self).__init__(**kwargs)
-            self.include = include
+        include = Refinable()
 
     class MyBasket(Basket):
         banana = IncludableFruit()
@@ -169,11 +181,11 @@ def test_unapplied_config_does_not_remember_simple():
     from iommi import Page
     from iommi import html
 
-    class Admin(Page):
+    class MyPage(Page):
         link = html.a('Admin')
 
-    a = Admin(parts__link__attrs__href='#foo#').bind()
-    b = Admin().bind()
+    a = MyPage(parts__link__attrs__href='#foo#').bind()
+    b = MyPage().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
 
@@ -182,13 +194,70 @@ def test_unapplied_config_does_not_remember():
     from iommi import Page
     from iommi import html
 
-    class Admin(Page):
+    class MyPage(Page):
         header = html.h1(children__link=html.a('Admin'))
 
-    a = Admin(parts__header__children__link__attrs__href='#foo#').bind()
-    b = Admin().bind()
+    a = MyPage(parts__header__children__link__attrs__href='#foo#').bind()
+    b = MyPage().bind()
     assert '#foo#' in a.__html__()
     assert '#foo#' not in b.__html__()
+
+
+@pytest.fixture
+def foo_style():
+    register_style('precedence', Style(Page__parts__foo=html.div('from style')))
+    yield
+    unregister_style('precedence')
+
+
+def test_precedence(foo_style):
+    class MyPage(Page):
+        class Meta:
+            iommi_style = 'precedence'
+
+    assert str(MyPage().bind()) == '<div>from style</div>'
+
+
+def test_precedence_override_style(foo_style):
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+
+    assert str(MyPage().bind()) == '<div>from declaration</div>'
+    assert str(MyPage.shortcut(parts__foo=html.div('from constructor call')).bind()) == '<div>from constructor call</div>'
+
+
+def test_precedence_override_meta(foo_style):
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+            parts__foo = html.div('from class Meta')
+
+    assert str(MyPage().bind()) == '<div>from class Meta</div>'
+    assert str(MyPage(parts__foo=html.div('from constructor call')).bind()) == '<div>from constructor call</div>'
+
+
+def test_precedence_override_shortcut(foo_style):
+    class MyPage(Page):
+        foo = html.div('from declaration')
+
+        class Meta:
+            iommi_style = 'precedence'
+
+        @classmethod
+        @class_shortcut(
+            parts__foo=html.div('from shortcut')
+        )
+        def shortcut(cls, call_target, **kwargs):
+            return call_target(**kwargs)
+
+    assert str(MyPage.shortcut().bind()) == '<div>from shortcut</div>'
+
+    assert str(MyPage.shortcut(parts__foo=html.div('from constructor call')).bind()) == '<div>from constructor call</div>'
 
 
 def test_lazy_bind():
@@ -227,7 +296,7 @@ def test_forbidden_names():
         iommi_style = Fruit()
 
     with pytest.raises(ForbiddenNamesException) as e:
-        MyBasket()
+        MyBasket().finalize()
 
     assert str(e.value) == 'The names _name, iommi_style are reserved by iommi, please pick other names'
 
@@ -236,7 +305,7 @@ def test_collect_sets_name():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    basket = MyBasket()
+    basket = MyBasket().finalize()
     assert declared_members(basket).fruits.orange._name == 'orange'
 
     basket = MyBasket(fruits__orange=Fruit(taste='sour'))
@@ -247,7 +316,7 @@ def test_none_members_should_be_discarded_after_being_allowed_through():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
 
-    basket = MyBasket(fruits__orange=None)
+    basket = MyBasket(fruits__orange=None).finalize()
     assert 'orange' not in declared_members(basket).fruits
 
 

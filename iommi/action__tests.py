@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pytest
 from tri_struct import Struct
 
@@ -6,6 +8,7 @@ from tri_declarative import (
     dispatch,
     get_members,
     is_shortcut,
+    Refinable,
     Shortcut,
 )
 
@@ -97,10 +100,11 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Traversable):
-        @dispatch
-        def __init__(self, actions):
-            super(ThingWithActions, self).__init__()
-            collect_members(self, name='actions', items=actions, cls=MyFancyAction)
+
+        actions: Dict[str, Action] = Refinable()
+
+        def on_finalize(self):
+            collect_members(self, name='actions', items=self.actions, cls=MyFancyAction)
 
         def on_bind(self):
             bind_members(self, name='actions')
@@ -149,13 +153,13 @@ def test_lambda_tag():
 
 def test_action_groups():
     non_grouped, grouped = group_actions(dict(
-        a=Action(),
-        b=Action(),
-        c=Action(group='a'),
-        d=Action(group='a'),
-        e=Action(group='a'),
-        f=Action(group='b'),
-        g=Action(group='b'),
+        a=Action().finalize(),
+        b=Action().finalize(),
+        c=Action(group='a').finalize(),
+        d=Action(group='a').finalize(),
+        e=Action(group='a').finalize(),
+        f=Action(group='b').finalize(),
+        g=Action(group='b').finalize(),
     ))
     assert len(non_grouped) == 2
     assert len(grouped) == 2

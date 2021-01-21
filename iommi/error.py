@@ -3,14 +3,11 @@ from tri_declarative import (
     EMPTY,
 )
 
-from iommi.reinvokable import reinvokable
-
 
 class Errors:
     @dispatch(
         attrs=EMPTY,
     )
-    @reinvokable
     def __init__(self, *, parent, attrs, template=None):
         self._parent = parent
         self.attrs = attrs

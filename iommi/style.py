@@ -21,19 +21,16 @@ from iommi.base import (
     items,
     keys,
 )
-from iommi.reinvokable import (
-    is_reinvokable,
-    retain_special_cases,
-)
 from ._web_compat import settings
+from .namespacey import Namespacey
 
 DEFAULT_STYLE = 'bootstrap'
 
 
 def get_iommi_style_name(obj: Any) -> str:
     while obj is not None:
-        if obj.iommi_style is not None:
-            return obj.iommi_style
+        if obj.namespace.get('iommi_style') is not None:
+            return obj.namespace.iommi_style
         obj = obj.iommi_parent()
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
@@ -46,10 +43,10 @@ def apply_style(style_name: str, obj: Any, is_root) -> Any:
 def apply_style_data(style_data: Namespace, obj: Any) -> Any:
     if not style_data:
         return obj
-    if not is_reinvokable(obj):
+    if not isinstance(obj, Namespacey):
         print(f'Missing out of {style_data} for {type(obj)}')
         return obj
-    return reinvoke_new_defaults(obj, style_data)
+    return obj.refine_defaults(**style_data)
 
 
 def _style_name_for_class(cls):
@@ -153,47 +150,6 @@ def get_style(name):
 
 Available styles:
     {style_names}''') from None
-
-
-def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
-    assert is_reinvokable(obj), f'reinvoke_new_defaults() called on object with ' \
-                                f'missing @reinvokable constructor decorator: {obj!r}'
-    additional_kwargs_namespace = Namespace(additional_kwargs)
-
-    kwargs = Namespace(additional_kwargs_namespace)
-    for name, saved_param in items(obj._iommi_saved_params):
-        try:
-            new_param = getattr_path(additional_kwargs_namespace, name)
-        except AttributeError:
-            kwargs[name] = saved_param
-        else:
-            if is_reinvokable(saved_param):
-                assert isinstance(new_param, dict)
-                kwargs[name] = reinvoke_new_defaults(saved_param, new_param)
-            else:
-                if isinstance(saved_param, Namespace):
-                    kwargs[name] = Namespace(new_param, saved_param)
-                else:
-                    kwargs[name] = saved_param
-
-    try:
-        call_target = kwargs.pop('call_target', None)
-        if call_target is not None:
-            kwargs['call_target'] = Namespace(
-                call_target,
-                cls=type(obj)
-            )
-        else:
-            kwargs['call_target'] = type(obj)
-
-        result = kwargs()
-    except TypeError as e:
-        raise InvalidStyleConfigurationException(
-            f'Object {obj!r} could not be updated with style configuration {flatten(additional_kwargs_namespace)}'
-        ) from e
-
-    retain_special_cases(obj, result)
-    return result
 
 
 def get_style_data_for_object(style_name, obj, is_root):

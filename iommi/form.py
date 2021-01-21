@@ -110,7 +110,6 @@ from iommi.traversable import (
     EvaluatedRefinable,
     evaluated_refinable,
 )
-from iommi.reinvokable import reinvokable
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -503,7 +502,6 @@ class Field(Part, Tag):
 
     empty_label: str = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         tag=None,
         attr=MISSING,
@@ -566,12 +564,13 @@ class Field(Part, Tag):
         :param choice_to_option: DEPRECATED: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
         :param choice_to_optgroup Callback to generate the optgroup for the given choice. It will get the keyword argument `choice`. It should return None if the choice should not be grouped.
         """
-
-        model_field = kwargs.get('model_field')
-        if model_field and model_field.remote_field:
-            kwargs['model'] = model_field.remote_field.model
-
         super(Field, self).__init__(**kwargs)
+
+    def on_finalize(self):
+        # @todo
+        # model_field = kwargs.get('model_field')
+        # if model_field and model_field.remote_field:
+        #     kwargs['model'] = model_field.remote_field.model
 
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
@@ -585,6 +584,8 @@ class Field(Part, Tag):
         self.label = self.label(_name='label')
         self.help = self.help(_name='help')
         self._errors: Set[str] = set()
+
+        super(Field, self).on_finalize()
 
     @property
     def form(self):
@@ -1218,7 +1219,7 @@ class FormAutoConfig(AutoConfig):
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
 
-@declarative(Part, '_fields_dict')
+@declarative(Part, '_fields_dict', add_init_kwargs=False)
 @with_meta
 class Form(Part):
     """
@@ -1296,13 +1297,16 @@ class Form(Part):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
+    auto: Namespace = Refinable()
+    attr: str = Refinable()
+    fields: Namespace = Refinable()
+    instance: Any = Refinable()
 
     class Meta:
         member_class = Field
         action_class = Action
         page_class = Page
 
-    @reinvokable
     @dispatch(
         model=None,
         editable=True,
@@ -1315,30 +1319,33 @@ class Form(Part):
         auto=EMPTY,
         errors=EMPTY,
         h_tag__call_target=Header,
+        instance=None,
     )
-    def __init__(self, *, attr=None, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
+    def __init__(self, **kwargs):
+        super(Form, self).__init__(**kwargs)
 
-        if auto:
-            auto = FormAutoConfig(**auto)
-            assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
-            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
-            assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
+    def on_finalize(self):
+        if self.auto:
+            auto = FormAutoConfig(**self.auto)
+            # assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
+            # assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
+            # assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
             if auto.model is None:
                 auto.model = auto.instance.__class__
 
             model, fields = self._from_model(
                 model=auto.model,
-                fields=fields,
+                fields=self.fields,
                 include=auto.include,
                 exclude=auto.exclude,
             )
-            instance = auto.instance
-            if title is MISSING and auto.type is not None:
-                title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(
+            self.instance = auto.instance
+            if self.title is MISSING and auto.type is not None:
+                self.title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(
                     crud_type=gettext(auto.type), model_name=model._meta.verbose_name))
 
                 setdefaults_path(
-                    actions,
+                    self.actions,
                     submit__display_name=gettext('Save') if auto.type == 'edit' else capitalize(gettext(auto.type)),
                 )
 
@@ -1348,25 +1355,23 @@ class Form(Part):
         # explicitely specify differently). That way we get no button if you don't explicitely opt
         # into it, by either directly defining something inside the submit namespace or using
         # Form.edit/delete/...
-        if 'submit' in actions:
+        if 'submit' in self.actions:
             setdefaults_path(
-                actions,
+                self.actions,
                 submit__call_target__attribute='primary'
             )
-        super(Form, self).__init__(model=model, title=title, **kwargs)
 
-        assert isinstance(fields, dict)
+        assert isinstance(self.fields, dict)
 
-        self.attr = attr
-        self.fields = None
         self._errors: Set[str] = set()
         self._valid = None
-        self.instance = instance
         self.mode = INITIALS_FROM_GET
         self.parent_form = None
 
-        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
-        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class)
+        collect_members(self, name='actions', items=self.actions, cls=self.get_meta().action_class)
+        collect_members(self, name='fields', items=self.fields, items_dict=self.get_declared('_fields_dict'), cls=self.get_meta().member_class)
+
+        super(Form, self).on_finalize()
 
     def on_bind(self) -> None:
         self._valid = None

@@ -60,7 +60,7 @@ from .models import (
 )
 
 # Use this function in your code to check that the style is configured correctly. Pass in all stylable classes in your system. For example if you have subclasses for Field, pass these here.
-validate_styles()
+# validate_styles()
 
 
 def ensure_objects():

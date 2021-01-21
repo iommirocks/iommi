@@ -34,8 +34,6 @@ from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
-
 
 @with_meta
 class Action(Fragment):
@@ -101,20 +99,20 @@ class Action(Fragment):
 
     @dispatch(
         tag='a',
-        attrs=EMPTY,
-        children=EMPTY,
         display_name=lambda action, **_: capitalize(action._name).replace('_', ' '),
     )
-    @reinvokable
-    def __init__(self, *, tag=None, attrs=None, children=None, display_name=None, **kwargs):
-        if tag == 'input':
-            if display_name and 'value' not in attrs:
-                attrs.value = display_name
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def on_finalize(self):
+        if self.tag == 'input':
+            if self.display_name and 'value' not in self.attrs:
+                self.attrs.value = self.display_name
         else:
-            children['text'] = display_name
-            if tag == 'button' and 'value' in attrs:
+            self.children['text'] = self.display_name
+            if self.tag == 'button' and 'value' in self.attrs:
                 assert False, 'You passed attrs__value, but you should pass display_name'
-        super().__init__(tag=tag, attrs=attrs, children=children, display_name=display_name, **kwargs)
+        super().on_finalize()
 
     def on_bind(self):
         super().on_bind()
@@ -209,6 +207,5 @@ class Actions(Members, Tag):
         attrs__class=EMPTY,
         attrs__style=EMPTY,
     )
-    @reinvokable
     def __init__(self, **kwargs):
         super(Actions, self).__init__(**kwargs)

@@ -11,18 +11,15 @@ from iommi import (
     Asset,
     Fragment,
     Page,
-    Table,
 )
 from iommi.attrs import render_attrs
 from iommi.base import items
-from iommi.reinvokable import reinvokable
 from iommi.style import (
     apply_style_data,
     get_style,
     get_style_data_for_object,
     InvalidStyleConfigurationException,
     register_style,
-    reinvoke_new_defaults,
     Style,
     unregister_style,
     validate_styles,
@@ -42,7 +39,6 @@ from tests.helpers import (
 def test_style():
     class A(Traversable):
         @dispatch
-        @reinvokable
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
 
@@ -59,7 +55,6 @@ def test_style():
 
     class B(A):
         @dispatch
-        @reinvokable
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
 
@@ -90,27 +85,30 @@ def test_style():
         ),
     )
 
+    def styled_items(obj):
+        return items(obj.finalize())
+
     # First the unstyled case
-    assert items(B()) == dict(foo=None, bar=None)
-    assert items(B.shortcut1()) == dict(foo=None, bar=None)
-    assert items(B.shortcut2()) == dict(foo=None, bar=None)
+    assert styled_items(B()) == dict(foo=None, bar=None)
+    assert styled_items(B.shortcut1()) == dict(foo=None, bar=None)
+    assert styled_items(B.shortcut2()) == dict(foo=None, bar=None)
 
     # Now let's add the style
     b = B()
     b = apply_style_data(style_data=overrides.component(b), obj=b)
-    assert items(b) == dict(foo=5, bar=7)
+    assert styled_items(b) == dict(foo=5, bar=7)
 
     b = B.shortcut1()
     assert overrides.component(b) == dict(foo=4, bar=7)
     assert b.__tri_declarative_shortcut_stack == ['shortcut1']
     b = apply_style_data(style_data=overrides.component(b), obj=b)
-    assert items(b) == dict(foo=4, bar=7)
+    assert styled_items(b) == dict(foo=4, bar=7)
 
     b = B.shortcut2()
     assert b.__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
     assert overrides.component(b) == dict(foo=4, bar=7)
     b = apply_style_data(style_data=overrides.component(b), obj=b)
-    assert items(b) == dict(foo=4, bar=7)
+    assert styled_items(b) == dict(foo=4, bar=7)
 
 
 def test_apply_checkbox_style():
@@ -165,7 +163,6 @@ def test_validate_default_styles():
 
 def test_error_when_trying_to_style_non_existent_attribute():
     class Foo:
-        @reinvokable
         def __init__(self):
             pass
 
@@ -262,43 +259,42 @@ def test_get_style_error():
 class MyReinvokable:
     _name = None
 
-    @reinvokable
     def __init__(self, **kwargs):
         self.kwargs = Struct(kwargs)
 
 
-def test_reinvokable_new_defaults_recurse():
-    x = MyReinvokable(foo=MyReinvokable(bar=17))
-    x = reinvoke_new_defaults(x, Namespace(foo__bar=42, foo__baz=43))
-
-    assert isinstance(x.kwargs.foo, MyReinvokable)
-    assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
-
-
-def test_reinvoke_new_default_change_shortcut():
-    class ReinvokableWithShortcut(MyReinvokable):
-        @classmethod
-        @class_shortcut
-        def shortcut(cls, call_target=None, **kwargs):
-            kwargs['shortcut_was_here'] = True
-            return call_target(**kwargs)
-
-    assert reinvoke_new_defaults(
-        ReinvokableWithShortcut(),
-        dict(
-            call_target__attribute='shortcut',
-            foo='bar',
-        )
-    ).kwargs == dict(foo='bar', shortcut_was_here=True)
-
-
-@pytest.mark.skip('Broken since there is no way to set things on the container of Action')
-def test_set_class_on_actions_container():  # pragma: no cover
-    t = Table()
-    style_data = Namespace(
-        actions__attrs__class={'object-tools': True},
-    )
-    reinvoke_new_defaults(t, style_data)
+# def test_reinvokable_new_defaults_recurse():
+#     x = MyReinvokable(foo=MyReinvokable(bar=17))
+#     x = reinvoke_new_defaults(x, Namespace(foo__bar=42, foo__baz=43))
+#
+#     assert isinstance(x.kwargs.foo, MyReinvokable)
+#     assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
+#
+#
+# def test_reinvoke_new_default_change_shortcut():
+#     class ReinvokableWithShortcut(MyReinvokable):
+#         @classmethod
+#         @class_shortcut
+#         def shortcut(cls, call_target=None, **kwargs):
+#             kwargs['shortcut_was_here'] = True
+#             return call_target(**kwargs)
+#
+#     assert reinvoke_new_defaults(
+#         ReinvokableWithShortcut(),
+#         dict(
+#             call_target__attribute='shortcut',
+#             foo='bar',
+#         )
+#     ).kwargs == dict(foo='bar', shortcut_was_here=True)
+#
+#
+# @pytest.mark.skip('Broken since there is no way to set things on the container of Action')
+# def test_set_class_on_actions_container():  # pragma: no cover
+#     t = Table()
+#     style_data = Namespace(
+#         actions__attrs__class={'object-tools': True},
+#     )
+#     reinvoke_new_defaults(t, style_data)
 
 
 def test_assets_render_from_style():

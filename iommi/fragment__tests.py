@@ -201,7 +201,7 @@ def test_fragment__render__simple_cases():
     assert format_html('{}', html.h1('foo').bind(parent=None)) == '<h1>foo</h1>'
     assert format_html('{}', Fragment(children__child='foo<foo>').bind(parent=None)) == 'foo&lt;foo&gt;'
 
-    assert fragment__render(Fragment(include=False), {}) == ''
+    assert fragment__render(Fragment(include=False).finalize(), {}) == ''
 
 
 def test_fragment_repr():

@@ -32,7 +32,6 @@ from iommi.member import (
 from iommi.page import (
     Page,
 )
-from iommi.reinvokable import reinvokable
 from iommi.style import unregister_style
 from iommi.traversable import (
     build_long_path_by_path,
@@ -313,7 +312,6 @@ def test_get_config():
     class Fruit(Traversable):
         attrs = Refinable()
 
-        @reinvokable
         @dispatch(
             attrs__class__fruit=True,
         )
@@ -328,7 +326,6 @@ def test_get_config():
             return call_target(**kwargs)
 
     class SubFruit(Fruit):
-        @reinvokable
         @dispatch(
             attrs__class__sub_fruit=True,
         )

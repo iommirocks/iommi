@@ -53,7 +53,6 @@ from ._web_compat import (
     settings,
     template_types,
 )
-from .reinvokable import reinvokable
 from .sort_after import sort_after
 
 
@@ -72,21 +71,22 @@ class Part(Traversable):
     # Only the assets used by this part
     assets: Namespace = Refinable()
 
-    @reinvokable
     @dispatch(
         extra=EMPTY,
         include=True,
     )
-    def __init__(self, *, endpoints: Dict[str, Any] = None, assets: Dict[str, Any] = None, include, **kwargs):
-        from iommi.asset import Asset
-
-        super(Part, self).__init__(include=include, **kwargs)
-        collect_members(self, name='endpoints', items=endpoints, cls=Endpoint)
-        collect_members(self, name='assets', items=assets, cls=Asset)
+    def __init__(self, **kwargs):
+        super(Part, self).__init__(**kwargs)
 
         if iommi_debug_on():
             import inspect
             self._instantiated_at_frame = inspect.currentframe().f_back
+
+    def on_finalize(self):
+        from iommi.asset import Asset
+        collect_members(self, name='endpoints', items=self.endpoints, cls=Endpoint)
+        collect_members(self, name='assets', items=self.assets, cls=Asset)
+        super().on_finalize()
 
     @dispatch(
         render=EMPTY,

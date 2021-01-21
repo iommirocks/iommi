@@ -39,7 +39,6 @@ from iommi.part import Part
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
 from iommi._web_compat import settings
 
 
@@ -50,7 +49,6 @@ class MenuBase(Part, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
         sort=True,
         sub_menu=EMPTY,
@@ -102,7 +100,6 @@ class MenuItem(MenuBase):
     a = Refinable()
     active_class = Refinable()
 
-    @reinvokable
     @dispatch(
         display_name=lambda menu_item, **_: capitalize(menu_item.iommi_name()).replace('_', ' '),
         regex=lambda menu_item, **_: '^' + str(menu_item.url) if menu_item.url else None,
@@ -192,7 +189,6 @@ class Menu(MenuBase):
     """
     items_container = Refinable()
 
-    @reinvokable
     @dispatch(
         sort=False,
         items_container=EMPTY,

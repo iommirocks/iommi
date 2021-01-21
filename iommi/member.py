@@ -14,9 +14,11 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi.base import keys, items
-from iommi.reinvokable import reinvoke
-from iommi.sort_after import sort_after
+from iommi.base import (
+    keys,
+    items,
+    values,
+)
 from iommi.traversable import (
     declared_members,
     set_declared_member,
@@ -81,13 +83,13 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                         call_target__cls=cls,
                         _name=key,
                     )
-                    unbound_items[key] = item()
+                    unbound_items[key] = item().apply_styles(is_root=False)
             else:
                 assert unknown_types_fall_through or item is None, f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
     for k, v in items_of(Namespace(_unapplied_config)):
-        unbound_items[k] = reinvoke(unbound_items[k], v)
+        unbound_items[k] = unbound_items[k].refine(**v)
         # noinspection PyProtectedMember
         assert unbound_items[k]._name is not None
 
@@ -100,7 +102,9 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
     for k in to_delete:
         del unbound_items[k]
 
-    sort_after(unbound_items)
+    for item in values(unbound_items):
+        if isinstance(item, Traversable):
+            item.finalize()
 
     set_declared_member(container, name, unbound_items)
     setattr(container, name, NotBoundYet(container, name))
@@ -114,6 +118,7 @@ class Members(Traversable):
     @dispatch
     def __init__(self, *, _declared_members, unknown_types_fall_through, **kwargs):
         super(Members, self).__init__(**kwargs)
+        # _declared_members = sort_after(_declared_members)
         self._declared_members = _declared_members
         self._unknown_types_fall_through = unknown_types_fall_through
 
@@ -133,7 +138,7 @@ def bind_members(parent: Traversable, *, name: str, cls=Members, unknown_types_f
         unknown_types_fall_through=unknown_types_fall_through,
     )
     assert parent._is_bound
-    m = m.bind(parent=parent)
+    m = m.finalize().bind(parent=parent)
     setattr(parent._bound_members, name, m)
     setattr(parent, name, m._bound_members)
     if not lazy:
