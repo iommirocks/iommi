@@ -217,7 +217,7 @@ class Admin(Page):
             for app_name, models in items(django_apps.all_models):
                 has_yielded_header = False
 
-                for model_name, model in items(models):
+                for model_name, model in sorted(items(models), key=lambda x: x[1]._meta.verbose_name_plural):
                     if not admin.apps.get(f'{app_name}_{model_name}', {}).get('include', False):
                         continue
 
