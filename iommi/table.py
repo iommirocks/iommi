@@ -1835,10 +1835,11 @@ class Table(Part, Tag):
         set_declared_member(self.bulk, 'fields', declared_fields)
 
         self.bulk = self.bulk.bind(parent=self)
-        if self.bulk.actions:
-            self._bound_members.bulk = self.bulk
-        else:
-            self.bulk = None
+        if self.bulk is not None:
+            if self.bulk.actions:
+                self._bound_members.bulk = self.bulk
+            else:
+                self.bulk = None
 
     # property for jinja2 compatibility
     @property
