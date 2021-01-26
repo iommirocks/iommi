@@ -233,7 +233,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         from iommi.table import Paginator
         from iommi.menu import (
             MenuBase,
-            DebugMenu,
+            get_debug_menu,
         )
         from iommi.error import Errors
         from iommi.action import Actions
@@ -245,7 +245,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Action,
             Actions,
             Column,
-            DebugMenu,
+            get_debug_menu().__class__,
             Errors,
             Field,
             Form,

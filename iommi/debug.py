@@ -298,9 +298,8 @@ def iommi_debug_panel(part):
         };
     """
 
-
-    from iommi.menu import DebugMenu
-    return DebugMenu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(f'<script>{script}</script>')
+    from iommi.menu import get_debug_menu
+    return get_debug_menu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(f'<script>{script}</script>')
 
 
 def source_url_from_part(part):
