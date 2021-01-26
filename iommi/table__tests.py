@@ -969,6 +969,20 @@ def test_bulk_include_false():
 
 
 @pytest.mark.django_db
+def test_bulk_include_false():
+
+    table = Table(
+        auto__rows=TFoo.objects.all(),
+        columns__a__bulk__include=True,
+        bulk__include=False,
+    ).bind(request=req('get'))
+
+    assert table.bulk == None
+    table.__html__()
+    assert True
+
+
+@pytest.mark.django_db
 def test_bulk_delete_all_respects_query():
     TFoo.objects.create(a=1, b='a')
     TFoo.objects.create(a=2, b='b')
