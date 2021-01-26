@@ -1078,7 +1078,7 @@ def bulk_delete__post_handler(table, form, **_):
     )
 
     class ConfirmPage(Page):
-        title = html.h1(f'Are you sure you want to delete these {queryset.count()} items?')
+        title = html.h1(gettext_lazy('Are you sure you want to delete these {} items?').format(queryset.count()))
         confirm = Table(
             auto__rows=queryset,
             columns__select=dict(
@@ -1093,7 +1093,7 @@ def bulk_delete__post_handler(table, form, **_):
                 actions__delete=dict(
                     attrs__name=table.bulk.actions.delete.attrs.name,
                     call_target__attribute='delete',
-                    display_name='Yes, delete all!',
+                    display_name=gettext_lazy('Yes, delete all!'),
                     include=True,
                 ),
             ),

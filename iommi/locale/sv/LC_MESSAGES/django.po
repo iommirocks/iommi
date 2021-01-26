@@ -1,13 +1,13 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-27 16:20+0100\n"
+"POT-Creation-Date: 2021-01-26 11:10+0100\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: action.py:121
+#: action.py:146
 msgid "Submit"
 msgstr "Skicka"
 
@@ -68,60 +68,68 @@ msgstr "Nytt lösenord"
 msgid "Confirm password"
 msgstr "Repetera lösenord"
 
-#: form.py:1221
+#: form.py:1211
 msgid "create"
 msgstr "skapa"
 
-#: form.py:1222
+#: form.py:1212
 msgid "edit"
 msgstr "ändra"
 
-#: form.py:1223
+#: form.py:1213
 msgid "delete"
 msgstr "radera"
 
-#: form.py:1308
+#: form.py:1337
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:1312
+#: form.py:1342
 msgid "Save"
 msgstr "Spara"
 
-#: query.py:545 templates/iommi/query/form_toggle_script.html:26
+#: query.py:550 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Byt till avancerad sökning"
 
-#: query.py:650
+#: query.py:655
 msgid "Search"
 msgstr "Sök"
 
-#: query.py:676
+#: query.py:681
 msgid "Filter"
 msgstr "Filtrera"
 
-#: table.py:498
+#: table.py:505
 msgid "Edit"
 msgstr "Ändra"
 
-#: table.py:510
+#: table.py:517
 msgid "Delete"
 msgstr "Radera"
 
-#: table.py:523
+#: table.py:530
 msgid "Download"
 msgstr "Ladda ner"
 
-#: table.py:535
+#: table.py:542
 msgid "Run"
 msgstr "Kör"
 
-#: table.py:1468 table.py:1642
+#: table.py:1081
+msgid "Are you sure you want to delete these {} items?"
+msgstr "Är du säker att du vill radera dessa {} rader?"
+
+#: table.py:1096
+msgid "Yes, delete all!"
+msgstr "Ja, radera alla!"
+
+#: table.py:1477 table.py:1655
 msgid "Bulk change"
 msgstr "Ändra markerade"
 
-#: table.py:1648
+#: table.py:1661
 msgid "Bulk delete"
 msgstr "Radera markerade"
 

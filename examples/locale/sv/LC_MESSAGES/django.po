@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-27 16:20+0100\n"
+"POT-Creation-Date: 2021-01-26 11:10+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,28 +18,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: examples/form_examples.py:39
+#: examples/form_examples.py:43
 msgid "Use much like a django form"
 msgstr ""
 
-#: examples/form_examples.py:207
+#: examples/form_examples.py:225
 msgid "Global error message 1"
 msgstr ""
 
-#: examples/form_examples.py:208
+#: examples/form_examples.py:226
 msgid "Global error message 2"
 msgstr ""
 
-#: examples/form_examples.py:211
+#: examples/form_examples.py:229
 msgid "Field error message 1"
 msgstr ""
 
-#: examples/form_examples.py:212
+#: examples/form_examples.py:230
 msgid "Field error message 2"
 msgstr ""
 
-#: examples/form_examples.py:215
+#: examples/form_examples.py:233
 msgid "Error messages"
+msgstr ""
+
+#: examples/form_examples.py:240
+msgid "Form children do not need to be all fields"
+msgstr ""
+
+#: examples/form_examples.py:271
+msgid "Form children do not need to be all fields -- declarative"
+msgstr ""
+
+#: examples/form_examples.py:305
+msgid "Nested forms -- to abstract out behaviour and create complex 'fields'."
 msgstr ""
 
 #: examples/menu_examples.py:20
@@ -86,19 +98,19 @@ msgstr ""
 msgid "tracks"
 msgstr ""
 
-#: examples/page_examples.py:26
+#: examples/page_examples.py:28
 msgid "Standard example"
 msgstr ""
 
-#: examples/page_examples.py:32
+#: examples/page_examples.py:34
 msgid "View with some calculation to do before making the page"
 msgstr ""
 
-#: examples/page_examples.py:42
+#: examples/page_examples.py:44
 msgid "Further specializing an already defined page"
 msgstr ""
 
-#: examples/page_examples.py:51
+#: examples/page_examples.py:53
 msgid "Busy page with different components"
 msgstr ""
 
