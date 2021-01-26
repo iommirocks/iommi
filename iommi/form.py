@@ -1369,7 +1369,6 @@ class Form(Part):
         collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class)
 
     def on_bind(self) -> None:
-        assert self.actions_template
         self._valid = None
         request = self.get_request()
         self._request_data = request_data(request)
