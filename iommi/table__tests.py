@@ -955,6 +955,20 @@ def test_bulk_delete_all_uses_original_rows():
 
 
 @pytest.mark.django_db
+def test_bulk_include_false():
+
+    table = Table(
+        auto__rows=TFoo.objects.all(),
+        columns__a__bulk__include=True,
+        bulk__include=False,
+    ).bind(request=req('get'))
+
+    assert table.bulk == None
+    # we want to see that we can render the table with no crash
+    table.__html__()
+
+
+@pytest.mark.django_db
 def test_bulk_delete_all_respects_query():
     TFoo.objects.create(a=1, b='a')
     TFoo.objects.create(a=2, b='b')
