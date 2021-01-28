@@ -68,6 +68,7 @@ bootstrap_base = Style(
             'form-text': True,
             'text-muted': True,
         },
+        non_editable_input__attrs__class={'form-control': False},
     ),
     Action=dict(
         shortcuts=dict(
