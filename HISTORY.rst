@@ -1,6 +1,32 @@
 Changelog
 ---------
 
+2.8.1 (2021-02-01)
+~~~~~~~~~~~~~~~~~~
+
+* Auto generated tables had "ID" as the column name for foreign keys, instead of the name of the remote model.
+
+* Profiler fixed: the bind and render of iommi objects that were handled by the middleware weren't profiled
+
+* Fixed live edit to work for views with URL arguments
+
+* Handle settings.BASE_DIR as Path objects
+
+* fix bulk__include = False on table
+
+* Make DebugMenu created on demand to avoid setting of breakpoints when debugging your own code
+
+* Models in admin are now in alphabetical order
+
+* `Field` is not a `Tag`, so you can render a `Form` as a div if you want.
+
+* The root menu item for the iommi admin was broken if you inherited from Admin
+
+* Force the live edit view to be bootstrap. This avoids the live edit feature looking a big broken for your own custom styles.
+
+* Minor bootstrap styling fix for non-editable fields
+
+
 2.8.0 (2021-01-13)
 ~~~~~~~~~~~~~~~~~~
 
