@@ -358,17 +358,13 @@ def form_example_file_upload(request):
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
-    all_fields = html.p(
-        Action(
-            display_name='Example with all types of fields',
-            attrs__href='all_fields',
-        ),
-        html.br(),
-        after='example_12',
-    )
 
-    class Meta:
-        parts = example_links(examples)
+    examples = example_links(examples)
+
+    all_fields = Action(
+        display_name='Example with all types of fields',
+        attrs__href='all_fields',
+    )
 
 
 urlpatterns = [

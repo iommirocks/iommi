@@ -42,8 +42,7 @@ class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
 
-    class Meta:
-        parts = example_links(examples)
+    examples = example_links(examples)
 
 
 urlpatterns = [
