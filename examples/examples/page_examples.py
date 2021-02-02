@@ -64,8 +64,7 @@ class IndexPage(ExamplesPage):
     header = html.h1('Page examples')
     description = html.p('Some examples of iommi Page')
 
-    class Meta:
-        parts = example_links(examples)
+    examples = example_links(examples)
 
 
 @csrf_exempt

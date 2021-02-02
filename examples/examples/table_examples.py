@@ -206,17 +206,14 @@ class IndexPage(ExamplesPage):
 
     description = html.p('Some examples of iommi tables')
 
+    examples = example_links(examples)
+
     all_fields = html.p(
         Action(
             display_name='Example with all available types of columns',
             attrs__href='all_columns',
         ),
-        html.br(),
-        after='example_6',
     )
-
-    class Meta:
-        parts = example_links(examples)
 
 
 urlpatterns = [

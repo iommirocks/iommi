@@ -341,20 +341,30 @@ def form_example_nested_forms(request):
     )
 
 
+@example(gettext(("File upload")))
+def form_example_file_upload(request):
+    class FileForm(Form):
+        upload = Field.file()
+
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                if form.is_valid():
+                    print(f"Uploaded {len(form.fields.upload.value)} bytes")
+
+    return FileForm()
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
-    all_fields = html.p(
-        Action(
-            display_name='Example with all types of fields',
-            attrs__href='all_fields',
-        ),
-        html.br(),
-        after='example_12',
-    )
 
-    class Meta:
-        parts = example_links(examples)
+    examples = example_links(examples)
+
+    all_fields = Action(
+        display_name='Example with all types of fields',
+        attrs__href='all_fields',
+    )
 
 
 urlpatterns = [
@@ -371,5 +381,6 @@ urlpatterns = [
     path('example_10/', form_example_children_that_are_not_fields),
     path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('example_12/', form_example_nested_forms),
+    path('example_13/', form_example_file_upload),
     path('all_fields/', all_field_sorts),
 ]
