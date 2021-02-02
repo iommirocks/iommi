@@ -62,7 +62,10 @@ to get the total time. If you have gprof2dot installed you can also do
 .. note::
 
     This feature isn't enabled by default because it requires you to add
-    `'iommi.profiling.Middleware'` to `settings.MIDDLEWARE`.
+    `'iommi.profiling.Middleware'` to `settings.MIDDLEWARE`. Note that you
+    need to put this below `django.contrib.auth.middleware.AuthenticationMiddleware`
+    if you want to use this in production. Only staff users are allowed to
+    profile in production, but all users can profile in debug mode.
 
 
 SQL trace
