@@ -212,7 +212,7 @@ def get_search_fields(*, model):
         except FieldDoesNotExist:
             raise NoRegisteredSearchFieldException(f'{model.__name__} has no registered search fields. Please register a list of field names with register_search_fields.') from None
         if not field.unique:
-            warnings.warn(f"The model {model.__name__} is using the default `name` field as a search field, but it's not unique. You can register_search_field(..., =unique=False) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names.")
+            warnings.warn(f"The model {model.__name__} is using the default `name` field as a search field, but it's not unique. You can register_search_fields(model={model.__name__}, search_fields=['name'], allow_non_unique=True) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names.")
         return ['name']
 
     return search_fields
