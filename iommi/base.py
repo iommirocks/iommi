@@ -1,6 +1,8 @@
 from django.db.models import QuerySet
 from django.utils.encoding import force_str
+from django.utils.safestring import SafeText
 
+from iommi._web_compat import mark_safe
 
 NOT_BOUND_MESSAGE = 'This object is not bound. You need to call `.bind(request=request)` before you can call this function.'
 
@@ -46,6 +48,8 @@ def build_as_view_wrapper(target):
 
 
 def capitalize(s):
+    if isinstance(s, SafeText):
+        return SafeText(capitalize('' + s))  # str(s) will give you back SafeText, and then we have infinite recursion
     return s[0].upper() + s[1:] if s else s
 
 
