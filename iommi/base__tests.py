@@ -1,5 +1,9 @@
 import pytest
 from django.template import RequestContext
+from django.utils.safestring import (
+    mark_safe,
+    SafeText,
+)
 
 from iommi import MISSING
 from iommi._web_compat import Template
@@ -39,6 +43,12 @@ def test_build_as_view_wrapper():
 
 def test_capitalize():
     assert capitalize('xFooBarBaz Foo oOOOo') == 'XFooBarBaz Foo oOOOo'
+
+
+def test_capitalize_safetext():
+    capitalized = capitalize(mark_safe('xFooBarBaz Foo oOOOo'))
+    assert str(capitalized) == 'XFooBarBaz Foo oOOOo'
+    assert isinstance(capitalized, SafeText)
 
 
 @pytest.mark.django_db
