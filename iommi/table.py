@@ -1817,7 +1817,10 @@ class Table(Part, Tag):
         self.query = self.query.bind(parent=self)
         self._bound_members.query = self.query
 
-        self.sorted_and_filtered_rows = self.query.filter(query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters())
+        if self.query is not None:
+            self.sorted_and_filtered_rows = self.query.filter(query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters())
+        else:
+            self.sorted_and_filtered_rows = self.sorted_rows
 
     def _bind_bulk_form(self):
         if self.bulk is None:
