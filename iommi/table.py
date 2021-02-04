@@ -36,7 +36,10 @@ from django.utils.formats import date_format
 from django.utils.html import (
     conditional_escape,
 )
-from django.utils.translation import gettext_lazy
+from django.utils.translation import (
+    gettext,
+    gettext_lazy,
+)
 
 from tri_declarative import (
     class_shortcut,
@@ -240,9 +243,9 @@ def yes_no_formatter(value, **_):
     if value is None:
         return ''
     if value == 1:  # boolean True is equal to 1
-        return 'Yes'
+        return gettext('Yes')
     if value == 0:  # boolean False is equal to 0
-        return 'No'
+        return gettext('No')
     assert False, f"Unable to convert {value} to Yes/No"
 
 

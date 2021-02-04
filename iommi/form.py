@@ -1006,7 +1006,7 @@ class Field(Part, Tag):
         call_target__attribute="choice",
         choices=[True, False],
         choice_id_formatter=lambda choice, **_: 'true' if choice else 'false',
-        choice_display_name_formatter=lambda choice, **_: 'Yes' if choice else 'No',
+        choice_display_name_formatter=lambda choice, **_: gettext('Yes') if choice else gettext('No'),
         parse=boolean_tristate__parse,
         required=False,
     )
