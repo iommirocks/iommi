@@ -50,10 +50,7 @@ from iommi.base import (
 )
 from iommi.reinvokable import reinvokable
 
-app_verbose_name_by_label = {
-    config.label: config.verbose_name
-    for config in values(django_apps.app_configs)
-}
+app_verbose_name_by_label = {config.label: config.verbose_name for config in values(django_apps.app_configs)}
 
 joined_app_name_and_model = {
     f'{app_name}_{model_name}'
@@ -82,13 +79,15 @@ class Messages(Fragment):
         super().on_bind()
         ms = messages.get_messages(self.get_request())
         if ms:
-            self.children.update({
-                f'message{i}': Fragment(
-                    tag='div',
-                    text=f'{m}',
-                ).bind(parent=self)
-                for i, m in enumerate(ms)
-            })
+            self.children.update(
+                {
+                    f'message{i}': Fragment(
+                        tag='div',
+                        text=f'{m}',
+                    ).bind(parent=self)
+                    for i, m in enumerate(ms)
+                }
+            )
 
 
 def collect_config(module):
@@ -151,8 +150,12 @@ class Admin(Page):
 
     menu = Menu(
         sub_menu=dict(
-            root=MenuItem(url=lambda admin, **_: reverse(admin.__class__.all_models), display_name=gettext('iommi administration')),
-            change_password=MenuItem(url=lambda **_: reverse(Auth.change_password), display_name=gettext('Change password')),
+            root=MenuItem(
+                url=lambda admin, **_: reverse(admin.__class__.all_models), display_name=gettext('iommi administration')
+            ),
+            change_password=MenuItem(
+                url=lambda **_: reverse(Auth.change_password), display_name=gettext('Change password')
+            ),
             logout=MenuItem(url=lambda **_: reverse(Auth.logout), display_name=gettext('Logout')),
         ),
     )
@@ -166,7 +169,9 @@ class Admin(Page):
     def __init__(self, parts, apps, **kwargs):
         # Validate apps params
         for k in apps.keys():
-            assert k in joined_app_name_and_model, f'{k} is not a valid app/model key.\n\nValid keys:\n    ' + '\n    '.join(joined_app_name_and_model)
+            assert (
+                k in joined_app_name_and_model
+            ), f'{k} is not a valid app/model key.\n\nValid keys:\n    ' + '\n    '.join(joined_app_name_and_model)
 
         def should_throw_away(k, v):
             if isinstance(v, Namespace) and 'call_target' in v:
@@ -226,7 +231,9 @@ class Admin(Page):
                             name=app_verbose_name_by_label[app_name],
                             verbose_app_name=app_verbose_name_by_label[app_name],
                             url=None,
-                            format=lambda row, table, **_: Header(row.name, _name='invalid_name').bind(parent=table).__html__()
+                            format=lambda row, table, **_: Header(row.name, _name='invalid_name')
+                            .bind(parent=table)
+                            .__html__(),
                         )
                         has_yielded_header = True
 
@@ -254,10 +261,7 @@ class Admin(Page):
             ),
         )
 
-        return call_target(
-            parts__all_models=table,
-            **kwargs
-        )
+        return call_target(parts__all_models=table, **kwargs)
 
     @classmethod
     @class_shortcut(
@@ -317,7 +321,9 @@ class Admin(Page):
             raise Http404()
 
         def on_save(form, instance, **_):
-            message = f'{form.model._meta.verbose_name.capitalize()} {instance} was ' + ('created' if form.extra.is_create else 'updated')
+            message = f'{form.model._meta.verbose_name.capitalize()} {instance} was ' + (
+                'created' if form.extra.is_create else 'updated'
+            )
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
         def on_delete(form, instance, **_):
@@ -371,12 +377,13 @@ class Admin(Page):
     def urls(cls):
         return Struct(
             urlpatterns=[
-                            path('', cls.all_models),
-                            path('<app_name>/<model_name>/', cls.list),
-                            path('<app_name>/<model_name>/create/', cls.create),
-                            path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit),
-                            path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete),
-                        ] + Auth.urls().urlpatterns
+                path('', cls.all_models),
+                path('<app_name>/<model_name>/', cls.list),
+                path('<app_name>/<model_name>/create/', cls.create),
+                path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit),
+                path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete),
+            ]
+            + Auth.urls().urlpatterns
         )
 
 
@@ -430,13 +437,19 @@ class LoginForm(Form):
 
 class LoginPage(Page):
     form = LoginForm()
-    set_focus = html.script(mark_safe(
-        'document.getElementById("id_username").focus();',
-    ))
+    set_focus = html.script(
+        mark_safe(
+            'document.getElementById("id_username").focus();',
+        )
+    )
 
 
 def current_password__is_valid(form, parsed_data, **_):
-    return (True, None) if check_password(parsed_data, form.get_request().user.password) else (False, gettext('Incorrect password'))
+    return (
+        (True, None)
+        if check_password(parsed_data, form.get_request().user.password)
+        else (False, gettext('Incorrect password'))
+    )
 
 
 def new_password__is_valid(form, parsed_data, **_):
@@ -448,7 +461,11 @@ def new_password__is_valid(form, parsed_data, **_):
 
 
 def confirm_password__is_valid(form, parsed_data, **_):
-    return (True, None) if parsed_data == form.fields.new_password.value else (False, gettext('New passwords does not match'))
+    return (
+        (True, None)
+        if parsed_data == form.fields.new_password.value
+        else (False, gettext('New passwords does not match'))
+    )
 
 
 class ChangePasswordForm(Form):
@@ -470,6 +487,8 @@ class ChangePasswordForm(Form):
 
 class ChangePasswordPage(Page):
     form = ChangePasswordForm()
-    set_focus = html.script(mark_safe(
-        'document.getElementById("id_current_password").focus();',
-    ))
+    set_focus = html.script(
+        mark_safe(
+            'document.getElementById("id_current_password").focus();',
+        )
+    )

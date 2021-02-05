@@ -1,6 +1,6 @@
 from tri_declarative import class_shortcut
 
-from iommi import Fragment
+from iommi.fragment import Fragment
 
 
 class Asset(Fragment):

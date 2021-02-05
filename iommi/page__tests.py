@@ -25,10 +25,7 @@ def test_page_constructor():
     class MyPage(Page):
         h1 = html.h1()
 
-    my_page = MyPage(
-        parts__foo=html.div(_name='foo'),
-        parts__bar=html.div()
-    )
+    my_page = MyPage(parts__foo=html.div(_name='foo'), parts__bar=html.div())
 
     assert ['h1', 'foo', 'bar'] == list(declared_members(my_page).parts.keys())
     my_page = my_page.bind(request=None)
@@ -42,6 +39,7 @@ def test_page_constructor():
 def test_page_render():
     # Working around some weird issue with pypy3+django3.0
     from django.conf import settings
+
     settings.DEBUG = False
     # end workaround
 

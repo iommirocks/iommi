@@ -61,14 +61,14 @@ INSTALLED_APPS = [
 ]
 
 try:
-    import django_fastdev
+    import django_fastdev  # noqa: F401
 except ImportError:
     pass
 else:
     INSTALLED_APPS += ['django_fastdev']
 
 try:
-    import django_pycharm_breakpoint
+    import django_pycharm_breakpoint  # noqa: F401
 except ImportError:
     pass
 else:

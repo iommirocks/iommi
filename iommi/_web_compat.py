@@ -5,16 +5,12 @@ template_types = tuple()
 try:
     from django.core.exceptions import ValidationError
     from django.core.validators import validate_email, URLValidator
-    from django.http import (
-        HttpResponse,
-        QueryDict,
-    )
+    from django.http import HttpResponse
+    from django.http import QueryDict  # noqa: F401
     from django.template import RequestContext
-    from django.template.loader import (
-        render_to_string,
-        get_template,
-    )
-    from django.template.exceptions import TemplateDoesNotExist
+    from django.template.loader import render_to_string
+    from django.template.loader import get_template  # noqa: F401
+    from django.template.exceptions import TemplateDoesNotExist  # noqa: F401
     from django.utils.html import format_html
     from django.utils.text import slugify
     from django.http import HttpResponseRedirect
@@ -29,13 +25,16 @@ try:
     JinjaTemplate = None
 
     from django.conf import settings
+
     if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
         from django.template import Template as DjangoTemplate
+
         template_types = template_types + (DjangoTemplate,)
     else:
         assert any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES)
-        import jinja2
+        import jinja2  # noqa: F401
         from jinja2 import Template as JinjaTemplate
+
         template_types = template_types + (JinjaTemplate,)
 
     class Template:
@@ -50,7 +49,6 @@ try:
                 return JinjaTemplate(self.s).render(**context.flatten())
 
     template_types = template_types + (Template,)
-
 
     def csrf(request):
         return {} if request is None else csrf_(request)
@@ -78,6 +76,7 @@ try:
         @type context: dict
         """
         from iommi._web_compat import template_types
+
         if template is None:
             return ''
         elif isinstance(template, str):
@@ -87,16 +86,18 @@ try:
         else:
             return mark_safe(template.render(context, request))
 
+
 except ImportError:  # pragma: no cover This flask support is a work in progress/future plan
     from jinja2 import Markup
     from flask import render_template as render
-    from ._web_compat_flask import HttpRequest
+    from ._web_compat_flask import HttpRequest  # noqa: F401
 
     csrf = None
 
     class HttpResponse:
         def __init__(self, content, content_type=None):
             from flask import Response
+
             self.r = Response(content, content_type=content_type)
 
         @property
@@ -121,6 +122,7 @@ except ImportError:  # pragma: no cover This flask support is a work in progress
 
     def HttpResponseRedirect(url, code=302):
         from flask import redirect
+
         return redirect(url, code=code)
 
     def smart_str(s):
@@ -155,6 +157,7 @@ except ImportError:  # pragma: no cover This flask support is a work in progress
     class Template:
         def __init__(self, template_string, **kwargs):
             from jinja2 import Template
+
             self.template = Template(template_string, **kwargs)
 
         def render(self, context, request=None):

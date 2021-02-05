@@ -81,6 +81,7 @@ def ensure_objects():
     if not Path(settings.STATIC_ROOT).joinpath('album_art').exists():
         try:
             from scrape_data import scrape_data
+
             scrape_data()
         except ImportError as e:
             print("!!! Unable to scrape artist and track data.")
@@ -95,7 +96,7 @@ def ensure_objects():
             for album_name, album_data in items(albums):
                 album, _ = Album.objects.get_or_create(artist=artist, name=album_name, year=int(album_data['year']))
                 for i, (track_name, duration) in enumerate(album_data['tracks']):
-                    Track.objects.get_or_create(album=album, index=i+1, name=track_name, duration=duration)
+                    Track.objects.get_or_create(album=album, index=i + 1, name=track_name, duration=duration)
 
 
 try:
@@ -114,12 +115,7 @@ class StyleSelector(Form):
             return HttpResponseRedirect(request.get_full_path())
 
     style = Field.choice(
-        choices=[
-            k
-            for k, v in
-            items(iommi.style._styles)
-            if not v.internal
-        ],
+        choices=[k for k, v in items(iommi.style._styles) if not v.internal],
         initial=lambda form, field, **_: getattr(settings, 'IOMMI_DEFAULT_STYLE', iommi.style.DEFAULT_STYLE),
     )
 
@@ -142,7 +138,7 @@ menu = Menu(
             display_name='Log out',
             url='/iommi-admin/logout/',
             include=lambda request, **_: request.user.is_authenticated,
-        )
+        ),
     )
 )
 
@@ -168,44 +164,43 @@ class IndexPage(ExamplesPage):
 
 def all_field_sorts(request):
     some_choices = ['Foo', 'Bar', 'Baz']
-    return ExamplesPage(parts=dict(
-        header=Header('All sorts of fields'),
-        form=Form(
-            fields={
-                f'{t}__call_target__attribute': t
-                for t in keys(get_members(
-                    cls=Field,
-                    member_class=Shortcut,
-                    is_member=is_shortcut
-                ))
-                if t not in [
-                    # These only work if we have an instance
-                    'foreign_key',
-                    'many_to_many']
-            },
-            fields__radio__choices=some_choices,
-            fields__choice__choices=some_choices,
-            fields__choice_queryset__choices=Artist.objects.all(),
-            fields__multi_choice__choices=some_choices,
-            fields__multi_choice_queryset__choices=Track.objects.all(),
-            fields__info__value="This is some information",
-            fields__text__initial='Text',
-            fields__textarea__initial='text area\nsecond row',
-            fields__integer__initial=3,
-            fields__float__initial=3.14,
-            fields__password__initial='abc123',
-            fields__boolean__initial=True,
-            fields__datetime__initial=datetime.now(),
-            fields__date__initial=date.today(),
-            fields__time__initial=datetime.now().time(),
-            fields__decimal__initial=3.14,
-            fields__url__initial='http://iommi.rocks',
-            fields__email__initial='example@example.com',
-            fields__phone_number__initial='+1 555 555',
-
-            actions__submit__include=False,
+    return ExamplesPage(
+        parts=dict(
+            header=Header('All sorts of fields'),
+            form=Form(
+                fields={
+                    f'{t}__call_target__attribute': t
+                    for t in keys(get_members(cls=Field, member_class=Shortcut, is_member=is_shortcut))
+                    if t
+                    not in [
+                        # These only work if we have an instance
+                        'foreign_key',
+                        'many_to_many',
+                    ]
+                },
+                fields__radio__choices=some_choices,
+                fields__choice__choices=some_choices,
+                fields__choice_queryset__choices=Artist.objects.all(),
+                fields__multi_choice__choices=some_choices,
+                fields__multi_choice_queryset__choices=Track.objects.all(),
+                fields__info__value="This is some information",
+                fields__text__initial='Text',
+                fields__textarea__initial='text area\nsecond row',
+                fields__integer__initial=3,
+                fields__float__initial=3.14,
+                fields__password__initial='abc123',
+                fields__boolean__initial=True,
+                fields__datetime__initial=datetime.now(),
+                fields__date__initial=date.today(),
+                fields__time__initial=datetime.now().time(),
+                fields__decimal__initial=3.14,
+                fields__url__initial='http://iommi.rocks',
+                fields__email__initial='example@example.com',
+                fields__phone_number__initial='+1 555 555',
+                actions__submit__include=False,
+            ),
         )
-    ))
+    )
 
 
 class DummyRow:
@@ -216,12 +211,14 @@ class DummyRow:
         _, _, shortcut = attr.partition('column_of_type_')
         s = f'{shortcut} #{self.idx}'
         if shortcut == 'link':
+
             class Link:
                 def get_absolute_url(self):
                     return '#'
 
                 def __str__(self):
                     return 'title'
+
             return Link()
         return s
 
@@ -238,12 +235,9 @@ class ShortcutSelectorForm(Form):
     shortcut = Field.multi_choice(
         choices=[
             t
-            for t in keys(get_members(
-                cls=Column,
-                member_class=Shortcut,
-                is_member=is_shortcut
-            ))
-            if t not in [
+            for t in keys(get_members(cls=Column, member_class=Shortcut, is_member=is_shortcut))
+            if t
+            not in [
                 'icon',
                 'foreign_key',
                 'many_to_many',
@@ -262,21 +256,23 @@ def all_column_sorts(request):
         multi_choice__choices=['Foo', 'Bar', 'Baz'],
     )
 
-    return ExamplesPage(parts=dict(
-        header=Header('All sorts of columns'),
-        form=ShortcutSelectorForm(),
-        table=Table(
-            assets__ajax_enhance__template=None,
-            columns={
-                f'column_of_type_{t}': dict(
-                    type_specifics.get(t, {}),
-                    call_target__attribute=t,
-                )
-                for t in selected_shortcuts
-            },
-            rows=[DummyRow(i) for i in range(10)],
+    return ExamplesPage(
+        parts=dict(
+            header=Header('All sorts of columns'),
+            form=ShortcutSelectorForm(),
+            table=Table(
+                assets__ajax_enhance__template=None,
+                columns={
+                    f'column_of_type_{t}': dict(
+                        type_specifics.get(t, {}),
+                        call_target__attribute=t,
+                    )
+                    for t in selected_shortcuts
+                },
+                rows=[DummyRow(i) for i in range(10)],
+            ),
         )
-    ))
+    )
 
 
 class ExampleAdmin(Admin):
@@ -294,7 +290,7 @@ class ExampleAdmin(Admin):
             children=dict(
                 hr=html.hr(),
                 style=StyleSelector(title='Change iommi style'),
-            )
+            ),
         )
 
 

@@ -14,7 +14,10 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi.base import keys, items
+from iommi.base import (
+    items,
+    keys,
+)
 from iommi.reinvokable import reinvoke
 from iommi.sort_after import sort_after
 from iommi.traversable import (
@@ -29,7 +32,15 @@ FORBIDDEN_NAMES = {x for x in dir(Traversable)} - {'context'}
 items_of = items
 
 
-def collect_members(container, *, name: str, items_dict: Dict = None, items: Dict[str, Any] = None, cls: Type, unknown_types_fall_through=False):
+def collect_members(
+    container,
+    *,
+    name: str,
+    items_dict: Dict = None,
+    items: Dict[str, Any] = None,
+    cls: Type,
+    unknown_types_fall_through=False,
+):
     """
     This function is used to collect and merge data from the constructor
     argument, the declared members, and other config into one data structure.
@@ -53,7 +64,9 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
     """
     forbidden_names = FORBIDDEN_NAMES & (set(keys(items_dict or {})) | set(keys(items or {})))
     if forbidden_names:
-        raise ForbiddenNamesException(f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names')
+        raise ForbiddenNamesException(
+            f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names'
+        )
 
     assert name != 'items'
     unbound_items = Struct()
@@ -83,7 +96,9 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
                     )
                     unbound_items[key] = item()
             else:
-                assert unknown_types_fall_through or item is None, f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
+                assert (
+                    unknown_types_fall_through or item is None
+                ), f'I got {type(item)} when creating a {cls.__name__}.{key}, but I was expecting Traversable or dict'
                 unbound_items[key] = item
 
     for k, v in items_of(Namespace(_unapplied_config)):
@@ -91,11 +106,7 @@ def collect_members(container, *, name: str, items_dict: Dict = None, items: Dic
         # noinspection PyProtectedMember
         assert unbound_items[k]._name is not None
 
-    to_delete = {
-        k
-        for k, v in items_of(unbound_items)
-        if v is None
-    }
+    to_delete = {k for k, v in items_of(unbound_items) if v is None}
 
     for k in to_delete:
         del unbound_items[k]
@@ -254,7 +265,7 @@ def _force_bind(member_binder: MemberBinder, name: str):
                         (k, bound_member if k == name else bound_members[k])
                         for k in dict.keys(_declared_members)
                         if k == name or k in bound_members
-                    )
+                    ),
                 )
 
 

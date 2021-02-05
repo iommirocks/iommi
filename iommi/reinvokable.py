@@ -19,6 +19,7 @@ def reinvokable(f):
         if not hasattr(self, '_iommi_saved_params'):
             self._iommi_saved_params = kwargs
         return f(self, *args, **kwargs)
+
     return reinvokable_wrapper
 
 
@@ -63,11 +64,7 @@ def reinvoke(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
 
 
 def retain_special_cases(obj, result):
-    special_cases = [
-        '_name',
-        '__tri_declarative_shortcut_stack',
-        '_instantiated_at_frame'
-    ]
+    special_cases = ['_name', '__tri_declarative_shortcut_stack', '_instantiated_at_frame']
     for special_case in special_cases:
         value = getattr(obj, special_case, None)
         if value is not None:

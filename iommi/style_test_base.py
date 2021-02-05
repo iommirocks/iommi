@@ -14,8 +14,7 @@ test = Style(
         axios=None,
     ),
     Field=dict(
-        shortcuts=dict(
-        ),
+        shortcuts=dict(),
     ),
     Table=dict(
         attrs__class__table=True,
@@ -26,10 +25,7 @@ test = Style(
     Paginator=dict(
         template='iommi/table/bootstrap/paginator.html',
     ),
-    Menu=dict(
-        tag='nav',
-        items_container__tag='ul'
-    ),
+    Menu=dict(tag='nav', items_container__tag='ul'),
     MenuItem=dict(
         tag='li',
         a__attrs__class={'link': True},

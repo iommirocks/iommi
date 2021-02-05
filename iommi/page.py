@@ -64,15 +64,9 @@ class Page(Part):
         parts=EMPTY,
         context=EMPTY,
     )
-    def __init__(
-        self,
-        *,
-        _parts_dict: Dict[str, PartType] = None,
-        parts: dict,
-        **kwargs
-    ):
+    def __init__(self, *, _parts_dict: Dict[str, PartType] = None, parts: dict, **kwargs):
         super(Page, self).__init__(**kwargs)
-        
+
         self.parts = {}  # This is just so that the repr can survive if it gets triggered before parts is set properly
 
         # First we have to up sample parts that aren't Part into Fragment
@@ -91,15 +85,13 @@ class Page(Part):
 
     def on_bind(self) -> None:
         bind_members(self, name='parts')
-        if self.context and self.iommi_parent() != None:
+        if self.context and self.iommi_parent() is not None:
             assert False, 'The context property is only valid on the root page'
 
     def own_evaluate_parameters(self):
         return dict(page=self)
 
-    @dispatch(
-        render=lambda rendered: format_html('{}' * len(rendered), *values(rendered))
-    )
+    @dispatch(render=lambda rendered: format_html('{}' * len(rendered), *values(rendered)))
     def __html__(self, *, render=None):
         self.context = evaluate_strict_container(self.context or {}, **self.iommi_evaluate_parameters())
         rendered = {

@@ -37,16 +37,20 @@ class Errors:
             pass
 
         # noinspection PyProtectedMember
-        return Errors(
-            _name='error',
-            tag='ul',
-            attrs=self.attrs,
-            template=self.template,
-            children={
-                f'error_{i}': Fragment(
-                    tag='li',
-                    children__text=error,
-                )
-                for i, error in enumerate(sorted(self._parent._errors))
-            },
-        ).bind(parent=self._parent).__html__()
+        return (
+            Errors(
+                _name='error',
+                tag='ul',
+                attrs=self.attrs,
+                template=self.template,
+                children={
+                    f'error_{i}': Fragment(
+                        tag='li',
+                        children__text=error,
+                    )
+                    for i, error in enumerate(sorted(self._parent._errors))
+                },
+            )
+            .bind(parent=self._parent)
+            .__html__()
+        )

@@ -13,11 +13,11 @@ from typing import (
     Callable,
     Dict,
     List,
+    Optional,
     Set,
     Tuple,
     Type,
     Union,
-    Optional
 )
 
 from django.db.models import (
@@ -29,12 +29,6 @@ from django.db.models import (
     When,
 )
 from django.utils.translation import gettext
-
-from iommi.datetime_parsing import (
-    parse_relative_date,
-    parse_relative_datetime,
-)
-from iommi.debug import iommi_debug_on
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -71,17 +65,27 @@ from iommi.action import (
 from iommi.attrs import Attrs
 from iommi.base import (
     build_as_view_wrapper,
+    capitalize,
     get_display_name,
     items,
     MISSING,
-    capitalize,
-    values,
     NOT_BOUND_MESSAGE,
+    values,
 )
+from iommi.datetime_parsing import (
+    parse_relative_date,
+    parse_relative_datetime,
+)
+from iommi.debug import iommi_debug_on
 from iommi.error import Errors
 from iommi.evaluate import (
     evaluate,
     evaluate_strict,
+)
+from iommi.fragment import (
+    Fragment,
+    Header,
+    Tag,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -97,20 +101,15 @@ from iommi.member import (
 from iommi.page import (
     Page,
 )
-from iommi.fragment import (
-    Fragment,
-    Header,
-    Tag,
-)
 from iommi.part import (
     Part,
     request_data,
 )
-from iommi.traversable import (
-    EvaluatedRefinable,
-    evaluated_refinable,
-)
 from iommi.reinvokable import reinvokable
+from iommi.traversable import (
+    evaluated_refinable,
+    EvaluatedRefinable,
+)
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -172,7 +171,7 @@ def find_unique_prefixes(attributes):
         prefix, _, _ = attribute.rpartition('__')
         parts = prefix.split('__')
         for i in range(len(parts)):
-            result.add(tuple(parts[:i + 1]))
+            result.add(tuple(parts[: i + 1]))
     return ['__'.join(p) for p in sorted(sorted(result), key=len)]
 
 
@@ -180,7 +179,9 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
         form.instance = evaluate(form.extra.new_instance, **form.iommi_evaluate_parameters())
-        for field in values(form.fields):  # two phase save for creation in django, have to save main object before related stuff
+        for field in values(
+            form.fields
+        ):  # two phase save for creation in django, have to save main object before related stuff
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
@@ -212,7 +213,9 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
             model_object.save()
         form.extra.on_save(instance=form.instance, **form.iommi_evaluate_parameters())
 
-        return create_or_edit_object_redirect(is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form)
+        return create_or_edit_object_redirect(
+            is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form
+        )
 
 
 def default_endpoints__config(field: 'Field', **_) -> dict:
@@ -257,7 +260,10 @@ def choice_parse(form, field, string_value):
 
 
 def choice_queryset__is_valid(field, parsed_data, **_):
-    return field.choices.filter(pk=parsed_data.pk).exists(), f'{", ".join(field.raw_data) if field.is_list else field.raw_data} not in available choices'
+    return (
+        field.choices.filter(pk=parsed_data.pk).exists(),
+        f'{", ".join(field.raw_data) if field.is_list else field.raw_data} not in available choices',
+    )
 
 
 def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
@@ -304,17 +310,16 @@ def choice_queryset__extra__filter_and_sort(field, value, **_):
     q_objects = []
 
     def create_q_objects(suffix):
-        q_objects.extend([
-            Q(**{search_field + suffix: value})
-            for search_field in field.search_fields]
-        )
+        q_objects.extend([Q(**{search_field + suffix: value}) for search_field in field.search_fields])
 
     create_q_objects(suffix='')
     create_q_objects(suffix='__istartswith')
     create_q_objects(suffix='__icontains')
 
     when_clauses = [When(q, then=rank) for rank, q in enumerate(q_objects)]
-    choices = field.choices.annotate(iommi_ranking=Case(*when_clauses, default=len(q_objects) + 1, output_field=IntegerField()))
+    choices = field.choices.annotate(
+        iommi_ranking=Case(*when_clauses, default=len(q_objects) + 1, output_field=IntegerField())
+    )
 
     return choices.filter(reduce(or_, q_objects)).order_by('iommi_ranking', *field.search_fields)
 
@@ -342,7 +347,9 @@ def datetime_parse(string_value, **_):
     result = parse_relative_datetime(string_value)
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
-        raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"')
+        raise ValidationError(
+            f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"'
+        )
     return result
 
 
@@ -364,7 +371,9 @@ def date_parse(string_value, **_):
     result = parse_relative_date(string_value)
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
-        raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"{extra_information}')
+        raise ValidationError(
+            f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"{extra_information}'
+        )
     return result
 
 
@@ -416,7 +425,10 @@ def email_parse(string_value, **_):
 
 
 def phone_number_is_valid(parsed_data, **_):
-    return re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE), 'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
+    return (
+        re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE),
+        'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567',
+    )
 
 
 def default_input_id(field, **_):
@@ -576,11 +588,13 @@ class Field(Part, Tag):
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
 
-        self.non_editable_input = Namespace({
-            **flatten(self.input),
-            **self.non_editable_input,
-            '_name': 'non_editable_input',
-        })()
+        self.non_editable_input = Namespace(
+            {
+                **flatten(self.input),
+                **self.non_editable_input,
+                '_name': 'non_editable_input',
+            }
+        )()
         self.input = self.input(_name='input')
         self.label = self.label(_name='label')
         self.help = self.help(_name='help')
@@ -700,7 +714,9 @@ class Field(Part, Tag):
             except NoRegisteredSearchFieldException:
                 self.search_fields = ['pk']
                 if iommi_debug_on():
-                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}.')
+                    print(
+                        f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}.'
+                    )
 
     def _parse(self):
         if self.parsed_data is not None:
@@ -754,10 +770,7 @@ class Field(Part, Tag):
                 self.value = value
 
     def _validate_parsed_data(self, value):
-        is_valid, error = self.is_valid(
-            form=self.form,
-            field=self,
-            parsed_data=value)
+        is_valid, error = self.is_valid(form=self.form, field=self, parsed_data=value)
         if is_valid and not self.errors and self.parsed_data is not None and not self.is_list:
             value = self.parsed_data
         elif not is_valid and self.form.mode:
@@ -820,7 +833,10 @@ class Field(Part, Tag):
 
     def _choice_to_option_shim(self, form, field, choice):
         if self.choice_to_option is not None:
-            warnings.warn('Field.choice_to_option is deprecated. It was too complicated and did too much, and has been replaced with choice_id_formatter, choice_display_name_formatter, and choice_is_selected. You normally just want to override choice_display_name_formatter and leave the others as their default.', category=DeprecationWarning)
+            warnings.warn(
+                'Field.choice_to_option is deprecated. It was too complicated and did too much, and has been replaced with choice_id_formatter, choice_display_name_formatter, and choice_is_selected. You normally just want to override choice_display_name_formatter and leave the others as their default.',
+                category=DeprecationWarning,
+            )
             return self.choice_to_option(form=form, field=field, choice=choice)
 
         if not field.is_list:
@@ -842,10 +858,7 @@ class Field(Part, Tag):
             return []
 
         if self.is_list:
-            return [
-                self._choice_to_option_shim(form=self.form, field=self, choice=v)
-                for v in self.value
-            ]
+            return [self._choice_to_option_shim(form=self.form, field=self, choice=v) for v in self.value]
         else:
             return [self._choice_to_option_shim(form=self.form, field=self, choice=self.value)]
 
@@ -888,7 +901,8 @@ class Field(Part, Tag):
             defaults_factory=field_defaults_factory,
             model_field_name=model_field_name,
             model_field=model_field,
-            **kwargs)
+            **kwargs,
+        )
 
     @dispatch(
         render=EMPTY,
@@ -909,17 +923,21 @@ class Field(Part, Tag):
         if self.template:
             return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
 
-        return Fragment(
-            _name=self._name,
-            tag=self.tag,
-            attrs=self.attrs,
-            children=dict(
-                label=render_fragment(self.label),
-                input=render_fragment(self.input),
-                help=render_fragment(self.help),
-                errors=render_fragment(self.errors),
-            ),
-        ).bind(parent=self._parent).__html__()
+        return (
+            Fragment(
+                _name=self._name,
+                tag=self.tag,
+                attrs=self.attrs,
+                children=dict(
+                    label=render_fragment(self.label),
+                    input=render_fragment(self.input),
+                    help=render_fragment(self.help),
+                    errors=render_fragment(self.errors),
+                ),
+            )
+            .bind(parent=self._parent)
+            .__html__()
+        )
 
     @classmethod
     @class_shortcut(
@@ -1030,12 +1048,15 @@ class Field(Part, Tag):
             elif 'model_field' in kwargs:
                 kwargs['model'] = kwargs['model_field'].remote_field.model
             else:
-                assert False, 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
+                assert (
+                    False
+                ), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 
         setdefaults_path(
             kwargs,
-            choices=(lambda form, **_: choices.all()) if isinstance(choices,
-                                                                    QuerySet) else choices,  # clone the QuerySet if needed
+            choices=(lambda form, **_: choices.all())
+            if isinstance(choices, QuerySet)
+            else choices,  # clone the QuerySet if needed
         )
 
         return call_target(**kwargs)
@@ -1142,7 +1163,6 @@ class Field(Part, Tag):
         setdefaults_path(
             kwargs,
             initial=value,
-
         )
         return call_target(**kwargs)
 
@@ -1193,7 +1213,9 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
         if is_create:
             redirect_to = "../"
         else:
-            redirect_to = "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
+            redirect_to = (
+                "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
+            )
     return redirect(request=request, redirect_to=redirect_to, form=form)
 
 
@@ -1280,14 +1302,18 @@ class Form(Part):
 
     .. test
 
-        post_handler(form.bind(request=req('post')))
-"""
+        post_handler(form.bind(request=req('post')))"""
+
     actions: Namespace = Refinable()
     actions_template: Union[str, Template] = Refinable()
-    attr: str = EvaluatedRefinable()  # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
+    attr: str = (
+        EvaluatedRefinable()
+    )  # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
-    h_tag: Union[Fragment, str] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[
+        Fragment, str
+    ] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
     title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
     errors: Errors = Refinable()
@@ -1316,13 +1342,29 @@ class Form(Part):
         errors=EMPTY,
         h_tag__call_target=Header,
     )
-    def __init__(self, *, attr=None, instance=None, fields: Dict[str, Field] = None, _fields_dict: Dict[str, Field] = None, actions: Dict[str, Any] = None, model=None, auto=None, title=MISSING, **kwargs):
+    def __init__(
+        self,
+        *,
+        attr=None,
+        instance=None,
+        fields: Dict[str, Field] = None,
+        _fields_dict: Dict[str, Field] = None,
+        actions: Dict[str, Any] = None,
+        model=None,
+        auto=None,
+        title=MISSING,
+        **kwargs,
+    ):
 
         if auto:
             auto = FormAutoConfig(**auto)
             assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
-            assert not model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
-            assert not instance, "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
+            assert (
+                not model
+            ), "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
+            assert (
+                not instance
+            ), "You can't use the auto feature and explicitly pass instance. Pass auto__instance (None in the create case)"
             if auto.model is None:
                 auto.model = auto.instance.__class__
 
@@ -1334,8 +1376,10 @@ class Form(Part):
             )
             instance = auto.instance
             if title is MISSING and auto.type is not None:
-                title = capitalize(gettext('%(crud_type)s %(model_name)s') % dict(
-                    crud_type=gettext(auto.type), model_name=model._meta.verbose_name))
+                title = capitalize(
+                    gettext('%(crud_type)s %(model_name)s')
+                    % dict(crud_type=gettext(auto.type), model_name=model._meta.verbose_name)
+                )
 
                 setdefaults_path(
                     actions,
@@ -1349,10 +1393,7 @@ class Form(Part):
         # into it, by either directly defining something inside the submit namespace or using
         # Form.edit/delete/...
         if 'submit' in actions:
-            setdefaults_path(
-                actions,
-                submit__call_target__attribute='primary'
-            )
+            setdefaults_path(actions, submit__call_target__attribute='primary')
         super(Form, self).__init__(model=model, title=title, **kwargs)
 
         assert isinstance(fields, dict)
@@ -1447,7 +1488,8 @@ class Form(Part):
                 non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 form=self,
-            ))
+            ),
+        )
 
     @classmethod
     @dispatch(
@@ -1455,9 +1497,7 @@ class Form(Part):
     )
     def fields_from_model(cls, fields, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class,
-            member_params_by_member_name=fields,
-            **kwargs
+            member_class=cls.get_meta().member_class, member_params_by_member_name=fields, **kwargs
         )
 
     @classmethod
@@ -1478,7 +1518,7 @@ class Form(Part):
 
     def is_valid(self):
         """Is the form valid?  Can be called inside forms post_validation hook to determine if the
-           individual fields were all valid."""
+        individual fields were all valid."""
         assert self._is_bound, NOT_BOUND_MESSAGE
         assert self._valid is not None, "Internal error: Once a form is bound we should know if it is valid or not"
         return self._valid
@@ -1566,7 +1606,7 @@ class Form(Part):
     def write_nested_form_to_instance(form, instance):
         """Write the nested_form to the instance.
 
-           This is analogous to `Field.write_to_instance` but for nested forms.
+        This is analogous to `Field.write_to_instance` but for nested forms.
         """
         if form.attr == '':
             i = instance
@@ -1579,7 +1619,7 @@ class Form(Part):
     def read_nested_form_from_instance(form: 'Form', instance: Any) -> Any:
         """Read the nested forms instance from the parent forms instance.
 
-           This is analogous to `Field.read_from_instance` but for nested forms.
+        This is analogous to `Field.read_from_instance` but for nested forms.
         """
         if form.attr == '':
             return instance

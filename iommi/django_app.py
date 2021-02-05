@@ -12,6 +12,7 @@ class IommiConfig(AppConfig):
             User,
             Permission,
         )
+
         register_search_fields(model=User, search_fields=['username'])
         register_search_fields(model=Permission, search_fields=['codename'])
 
@@ -27,6 +28,7 @@ class IommiConfig(AppConfig):
         from iommi.style_django_admin import django_admin, django_admin_horizontal
         from iommi.style_water import water
         from iommi.style_bulma import bulma, bulma_query_form
+
         register_style('base', base)
         register_style('test', test)
         register_style('bulma', bulma)

@@ -12,17 +12,17 @@ from tri_struct import Struct
 
 from iommi.sql_trace import (
     colorize,
+    format_sql,
     get_sql_debug,
     no_sql_debug,
     safe_unicode_literal,
     set_sql_debug,
     sql_debug_format_stack_trace,
-    SQL_DEBUG_LEVEL_WORST,
-    sql_debug_trace_sql,
     SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
+    SQL_DEBUG_LEVEL_WORST,
     sql_debug_log_to_request,
     sql_debug_total_time,
-    format_sql,
+    sql_debug_trace_sql,
 )
 from iommi.thread_locals import set_current_request
 from tests.helpers import req
@@ -78,27 +78,33 @@ def test_middleware(settings, client, caplog):
     assert '... and 3 more unique statements' in caplog.text
 
 
-@pytest.mark.parametrize('text, fg, bold, expected', [
-    ('foo', None, False, 'foo'),
-    ('foo', 'red', False, '<span style="color: red">foo</span> '),
-    ('foo', None, True, '<span style="font-weight: bold">foo</span> '),
-    ('foo', 'red', True, '<span style="color: red; font-weight: bold">foo</span> '),
-])
+@pytest.mark.parametrize(
+    'text, fg, bold, expected',
+    [
+        ('foo', None, False, 'foo'),
+        ('foo', 'red', False, '<span style="color: red">foo</span> '),
+        ('foo', None, True, '<span style="font-weight: bold">foo</span> '),
+        ('foo', 'red', True, '<span style="color: red; font-weight: bold">foo</span> '),
+    ],
+)
 def test_colorize(text, fg, bold, expected):
     assert colorize(text, fg, bold) == expected
 
 
-@pytest.mark.parametrize('params, expected', [
-    (None, (1, 2, 3)),
-    ([1, 2, 3], (1, 2, 3)),
-    ((1, 2, 3), (1, 2, 3)),
-    (1, '1'),
-    (1.5, '1.5'),
-    (date(2020, 1, 3), "'2020-01-03'"),
-    (datetime(2020, 1, 3, 13, 37), "'2020-01-03 13:37'"),
-    ({'foo': 1.5}, {'foo': '1.5'}),
-    (b'foo', 'foo'),
-])
+@pytest.mark.parametrize(
+    'params, expected',
+    [
+        (None, (1, 2, 3)),
+        ([1, 2, 3], (1, 2, 3)),
+        ((1, 2, 3), (1, 2, 3)),
+        (1, '1'),
+        (1.5, '1.5'),
+        (date(2020, 1, 3), "'2020-01-03'"),
+        (datetime(2020, 1, 3, 13, 37), "'2020-01-03 13:37'"),
+        ({'foo': 1.5}, {'foo': '1.5'}),
+        (b'foo', 'foo'),
+    ],
+)
 def test_safe_unicode_literal(params, expected):
     assert safe_unicode_literal(params), expected
 
@@ -173,14 +179,14 @@ def test_sql_debug_format_stack_trace():
                 co_name='f',
                 co_filename='foo2.py',
             ),
-        )
+        ),
     ]
 
     for i, f in enumerate(frames):
         if i == 0:
             f.f_back = None
         else:
-            f.f_back = frames[i-1]
+            f.f_back = frames[i - 1]
 
     frame = frames[-1]
 
@@ -190,7 +196,7 @@ def test_sql_debug_format_stack_trace():
   File "foo/django/template/bar", line 1, in f => 
   File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)
   File "foo.py", line 1, in asd =>
-  """.strip()
+  """.strip()  # noqa: W291
     actual = sql_debug_format_stack_trace(frame).strip()
     assert actual == expected
 
@@ -252,4 +258,5 @@ def test_format_sql():
         'style="color: green">x</span> <span><br>&nbsp;</span>&nbsp;<span '
         'style="color: green; font-weight: bold">AND</span> <span style="color: '
         'green">y</span> <span><br>&nbsp;</span><span style="color: green; '
-        'font-weight: bold">FROM</span> <span style="color: green">foo</span> </span>')
+        'font-weight: bold">FROM</span> <span style="color: green">foo</span> </span>'
+    )

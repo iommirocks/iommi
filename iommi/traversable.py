@@ -106,7 +106,9 @@ class Traversable(RefinableObject):
         path = path_by_long_path.get(long_path)
         if path is None:
             candidates = '\n'.join(path_by_long_path.keys())
-            raise PathNotFoundException(f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}")
+            raise PathNotFoundException(
+                f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}"
+            )
         return path
 
     @property
@@ -167,7 +169,9 @@ class Traversable(RefinableObject):
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
-        evaluated_attributes = [k for k, v in items(result.get_declared('refinable_members')) if is_evaluated_refinable(v)]
+        evaluated_attributes = [
+            k for k, v in items(result.get_declared('refinable_members')) if is_evaluated_refinable(v)
+        ]
         evaluate_members(result, evaluated_attributes, **evaluate_parameters)
 
         if hasattr(result, 'extra_evaluated'):
@@ -204,10 +208,7 @@ def declared_members(node: Traversable) -> Any:
 
 def set_declared_member(node: Traversable, name: str, value: Union[Any, Dict[str, Traversable]]):
     root = node.iommi_root()
-    if (
-        hasattr(root, '_long_path_by_path')
-        or hasattr(root, '_path_by_long_path')
-    ):
+    if hasattr(root, '_long_path_by_path') or hasattr(root, '_path_by_long_path'):
         print("### A disturbance in the force... The namespace has been recalculated!")
         root._long_path_by_path = root._path_by_long_path = None
     # noinspection PyProtectedMember
@@ -252,6 +253,7 @@ def build_long_path_by_path(root) -> Dict[str, str]:
 
     def _traverse(node, long_path_segments, short_path_candidate_segments):
         if include_in_short_path(node):
+
             def find_unique_suffix(parts):
                 for i in range(len(parts), -1, -1):
                     candidate = '/'.join(parts[i:])
@@ -265,9 +267,9 @@ def build_long_path_by_path(root) -> Dict[str, str]:
             else:
                 less_short_path = find_unique_suffix(long_path_segments)
                 assert less_short_path is not None, (
-                        f"Ran out of names...\n"
-                        f"Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\n"
-                        f"Result so far:\n" + '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
+                    f"Ran out of names...\n"
+                    f"Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\n"
+                    f"Result so far:\n" + '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
                 )
                 result[less_short_path] = long_path
 
@@ -283,11 +285,8 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 _traverse(
                     member,
                     long_path_segments=long_path_segments + [name],
-                    short_path_candidate_segments=short_path_candidate_segments + (
-                        [name]
-                        if include_in_short_path(member)
-                        else []
-                    )
+                    short_path_candidate_segments=short_path_candidate_segments
+                    + ([name] if include_in_short_path(member) else []),
                 )
 
     _traverse(root, [], [])

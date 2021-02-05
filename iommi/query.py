@@ -16,6 +16,36 @@ from django.db.models import (
     QuerySet,
 )
 from django.utils.translation import gettext
+from pyparsing import (
+    alphanums,
+    alphas,
+    Char,
+    Forward,
+    Group,
+    Keyword,
+    oneOf,
+    ParseException,
+    ParseResults,
+    QuotedString,
+    quotedString,
+    Word,
+    ZeroOrMore,
+)
+from tri_declarative import (
+    class_shortcut,
+    declarative,
+    dispatch,
+    EMPTY,
+    flatten,
+    getattr_path,
+    Namespace,
+    Refinable,
+    refinable,
+    setdefaults_path,
+    Shortcut,
+    with_meta,
+)
+from tri_struct import Struct
 
 from iommi import (
     Action,
@@ -31,8 +61,8 @@ from iommi.base import (
     keys,
     MISSING,
     model_and_rows,
-    values,
     NOT_BOUND_MESSAGE,
+    values,
 )
 from iommi.debug import iommi_debug_on
 from iommi.endpoint import path_join
@@ -62,46 +92,16 @@ from iommi.part import (
     Part,
     request_data,
 )
-from iommi.traversable import (
-    declared_members,
-    EvaluatedRefinable,
-    set_declared_member,
-)
 from iommi.reinvokable import (
     reinvokable,
     reinvoke,
     set_and_remember_for_reinvoke,
 )
-from pyparsing import (
-    alphanums,
-    alphas,
-    Char,
-    Forward,
-    Group,
-    Keyword,
-    oneOf,
-    ParseException,
-    ParseResults,
-    QuotedString,
-    quotedString,
-    Word,
-    ZeroOrMore,
+from iommi.traversable import (
+    declared_members,
+    EvaluatedRefinable,
+    set_declared_member,
 )
-from tri_declarative import (
-    class_shortcut,
-    declarative,
-    dispatch,
-    EMPTY,
-    getattr_path,
-    Namespace,
-    Refinable,
-    refinable,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-    flatten
-)
-from tri_struct import Struct
 
 
 class QueryException(Exception):
@@ -154,7 +154,9 @@ def value_to_str_for_query(filter, v):
         try:
             v = getattr_path(v, search_field)
         except AttributeError:
-            raise NoRegisteredSearchFieldException(f'{model.__name__} has no attribute {search_field}. Please register search fields with register_search_fields or specify search_fields.')
+            raise NoRegisteredSearchFieldException(
+                f'{model.__name__} has no attribute {search_field}. Please register search fields with register_search_fields or specify search_fields.'
+            )
     return to_string_surrounded_by_quote(v)
 
 
@@ -204,11 +206,17 @@ choice_queryset_value_to_q.iommi_needs_attr = True
 
 
 def default_filter__is_valid_filter(name, filter, **_):
-    return filter.attr or filter.value_to_q, f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)"
+    return (
+        filter.attr or filter.value_to_q,
+        f"{name} cannot be a part of a query, it has no attr or value_to_q so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)",
+    )
 
 
 def choice_queryset__is_valid_filter(name, filter, **_):
-    return filter.attr, f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)"
+    return (
+        filter.attr,
+        f"{name} cannot be a part of a query, it has no attr so we don't know what to search for. If you want to include it anyway you can define the callback is_valid_filter which should return a boolean and a string with an error message if the boolean is False. The simplest way to do that would be is_valid_filter=lambda **_: (True, '') (filter__is_valid_filter=lambda **_: (True, '') for a Column)",
+    )
 
 
 @with_meta
@@ -239,7 +247,9 @@ class Filter(Part):
         search_fields=MISSING,
         field__required=False,
         # TODO: this isn't right, freetext can be a callable
-        field__include=lambda query, field, **_: not query.filters._declared_members.get(field._name, Struct(freetext=False)).freetext,
+        field__include=lambda query, field, **_: not query.filters._declared_members.get(
+            field._name, Struct(freetext=False)
+        ).freetext,
         is_valid_filter=default_filter__is_valid_filter,
         query_name=lambda filter, **_: filter.iommi_name(),
     )
@@ -266,7 +276,9 @@ class Filter(Part):
             except NoRegisteredSearchFieldException:
                 self.search_fields = ['pk']
                 if iommi_debug_on():
-                    print(f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}')
+                    print(
+                        f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}'
+                    )
 
     def own_evaluate_parameters(self):
         return dict(filter=self)
@@ -311,7 +323,8 @@ class Filter(Part):
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=lambda model_field: {},  # TODO: this is wrong! but base_defaults_factory doesn't work either.. there's no display_name on Filter
-            **kwargs)
+            **kwargs,
+        )
 
     @classmethod
     @class_shortcut(
@@ -338,9 +351,12 @@ class Filter(Part):
         :type choices: list
         """
         assert 'choices' in kwargs, 'To use Filter.choice, you must pass the choices list'
-        setdefaults_path(kwargs, dict(
-            field__choices=kwargs.get('choices'),
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                field__choices=kwargs.get('choices'),
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -352,9 +368,12 @@ class Filter(Part):
         Field that has one value out of a set.
         :type choices: list
         """
-        setdefaults_path(kwargs, dict(
-            field__choices=kwargs.get('choices'),
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                field__choices=kwargs.get('choices'),
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -369,14 +388,19 @@ class Filter(Part):
         Field that has one value out of a set.
         """
         if 'model' not in kwargs:
-            assert isinstance(choices, QuerySet), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
+            assert isinstance(
+                choices, QuerySet
+            ), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances'
             kwargs['model'] = choices.model
 
-        setdefaults_path(kwargs, dict(
-            field__choices=choices,
-            field__model=kwargs['model'],
-            choices=choices,
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                field__choices=choices,
+                field__model=kwargs['model'],
+                choices=choices,
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -530,9 +554,7 @@ class QueryAutoConfig(AutoConfig):
 class Advanced(Fragment):
     toggle: Namespace = Refinable()
 
-    @dispatch(
-        toggle=EMPTY
-    )
+    @dispatch(toggle=EMPTY)
     @reinvokable
     def __init__(self, **kwargs):
         super(Advanced, self).__init__(**kwargs)
@@ -544,9 +566,7 @@ class Advanced(Fragment):
             call_target=Action,
             attrs__href='#',
             attrs__class__iommi_query_toggle_simple_mode=True,
-            attrs={
-                'data-advanced-mode': 'simple'
-            },
+            attrs={'data-advanced-mode': 'simple'},
             display_name=gettext('Switch to advanced search'),
         )
         self.toggle = declared_members(self).toggle = toggle()
@@ -611,8 +631,10 @@ class Query(Part):
                 exclude=auto.exclude,
             )
 
-            assert model is None, "You can't use the auto feature and explicitly pass model. " \
-                                  "Either pass auto__model, or we will set the model for you from auto__rows"
+            assert model is None, (
+                "You can't use the auto feature and explicitly pass model. "
+                "Either pass auto__model, or we will set the model for you from auto__rows"
+            )
             model = auto_model
 
             if rows is None:
@@ -639,11 +661,7 @@ class Query(Part):
             kwargs = Namespace(flatten(Namespace(kwargs)))
             freetext_config = kwargs.get('form', {}).get('fields', {}).pop('freetext', {})
 
-        super(Query, self).__init__(
-            model=model,
-            rows=rows,
-            **kwargs
-        )
+        super(Query, self).__init__(model=model, rows=rows, **kwargs)
 
         collect_members(self, name='filters', items=filters, items_dict=_filters_dict, cls=self.get_meta().member_class)
 
@@ -656,7 +674,7 @@ class Query(Part):
             required=False,
             include=False,
             help__include=False,
-            **freetext_config
+            **freetext_config,
         )
 
         for name, filter in items(declared_members(self).filters):
@@ -748,10 +766,7 @@ class Query(Part):
 
         self.form_container = self.form_container.bind(parent=self)
 
-        self.filter_name_by_query_name = {
-            x.query_name: name
-            for name, x in items(self.filters)
-        }
+        self.filter_name_by_query_name = {x.query_name: name for name, x in items(self.filters)}
 
     @staticmethod
     @refinable
@@ -765,10 +780,7 @@ class Query(Part):
             if q:
                 rows = rows.filter(q)
 
-        return query.postprocess(
-            rows=rows,
-            **query.iommi_evaluate_parameters()
-        )
+        return query.postprocess(rows=rows, **query.iommi_evaluate_parameters())
 
     @staticmethod
     @refinable
@@ -789,7 +801,7 @@ class Query(Part):
         parser = self._create_grammar()
         try:
             tokens = parser.parseString(query_string, parseAll=True)
-        except ParseException as e:
+        except ParseException:
             raise QueryException('Invalid syntax for query')
         return self._compile(tokens)
 
@@ -861,7 +873,9 @@ class Query(Part):
         something < 10 AND other >= 2015-01-01 AND (foo < 1 OR bar > 1)
 
         """
-        quoted_string_excluding_quotes = QuotedString('"', escChar='\\').setParseAction(lambda token: StringValue(token[0]))
+        quoted_string_excluding_quotes = QuotedString('"', escChar='\\').setParseAction(
+            lambda token: StringValue(token[0])
+        )
         and_ = Keyword('and', caseless=True)
         or_ = Keyword('or', caseless=True)
         binary_op = oneOf('=> =< = < > >= <= : != !:', caseless=True).setResultsName('operator')
@@ -899,10 +913,14 @@ class Query(Part):
         filter = self.filters.get(filter_name.lower())
         if filter:
             if not filter.unary:
-                raise QueryException(f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"')
+                raise QueryException(
+                    f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"'
+                )
             result = filter.value_to_q(filter=filter, op='=', value_string_or_f=value)
             return result
-        raise QueryException(f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(keys(self.filters)))}')
+        raise QueryException(
+            f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(keys(self.filters)))}'
+        )
 
     def _binary_op_to_q(self, token):
         """
@@ -913,16 +931,20 @@ class Query(Part):
 
         pk_lookup = False
         if query_name.endswith('.pk'):
-            query_name = query_name[:-len('.pk')]
+            query_name = query_name[: -len('.pk')]
             pk_lookup = True
 
         filter_name = self.filter_name_by_query_name.get(query_name)
         if filter_name is None:
-            raise QueryException(f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}')
+            raise QueryException(
+                f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}'
+            )
 
         filter = self.filters.get(filter_name.lower())
         if filter is None:
-            raise QueryException(f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}')
+            raise QueryException(
+                f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}'
+            )
 
         if pk_lookup:
             if op != '=':
@@ -935,7 +957,11 @@ class Query(Part):
 
             return Q(**{f'{filter.attr}__pk': pk})
 
-        if isinstance(value_string_or_filter_name, str) and not isinstance(value_string_or_filter_name, StringValue) and value_string_or_filter_name.lower() in self.filters:
+        if (
+            isinstance(value_string_or_filter_name, str)
+            and not isinstance(value_string_or_filter_name, StringValue)
+            and value_string_or_filter_name.lower() in self.filters
+        ):
             value_string_or_f = F(self.filters[value_string_or_filter_name.lower()].attr)
         else:
             value_string_or_f = value_string_or_filter_name
@@ -959,7 +985,7 @@ class Query(Part):
                 Q(**{filter.attr + '__' + filter.query_operator_to_q_operator(':'): token})
                 for filter in values(self.filters)
                 if filter.freetext
-            ]
+            ],
         )
 
     def get_query_string(self):
@@ -975,6 +1001,7 @@ class Query(Part):
         if request_data(request).get(self.get_advanced_query_param(), '').strip():
             return request_data(request).get(self.get_advanced_query_param())
         elif form.is_valid():
+
             def expr(field, is_list, value):
                 if is_list:
                     return '(' + ' OR '.join([expr(field, is_list=False, value=x) for x in field.value]) + ')'
@@ -983,17 +1010,22 @@ class Query(Part):
             result = [
                 expr(field, field.is_list, field.value)
                 for field in values(form.fields)
-                if field._name != FREETEXT_SEARCH_NAME and field._name in self.filters and field.value not in (None, '', [])
+                if field._name != FREETEXT_SEARCH_NAME
+                and field._name in self.filters
+                and field.value not in (None, '', [])
             ]
 
             if FREETEXT_SEARCH_NAME in form.fields:
                 freetext = form.fields[FREETEXT_SEARCH_NAME].value
                 if freetext:
                     result.append(
-                        '(%s)' % ' or '.join([
-                            f'{filter.query_name}:{to_string_surrounded_by_quote(freetext)}'
-                            for filter in values(self.filters)
-                            if filter.freetext]
+                        '(%s)'
+                        % ' or '.join(
+                            [
+                                f'{filter.query_name}:{to_string_surrounded_by_quote(freetext)}'
+                                for filter in values(self.filters)
+                                if filter.freetext
+                            ]
                         )
                     )
             return ' and '.join(result)
@@ -1016,9 +1048,7 @@ class Query(Part):
     )
     def filters_from_model(cls, filters, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class,
-            member_params_by_member_name=filters,
-            **kwargs
+            member_class=cls.get_meta().member_class, member_params_by_member_name=filters, **kwargs
         )
 
     @classmethod
@@ -1026,10 +1056,11 @@ class Query(Part):
         filters=EMPTY,
     )
     def _from_model(cls, *, rows=None, model=None, filters, include=None, exclude=None):
-        assert rows is None or isinstance(rows, QuerySet), \
-            'auto__rows needs to be a QuerySet for filter generation to work. ' \
-            'If it needs to be a lambda, provide a model with auto__model for filter generation, ' \
+        assert rows is None or isinstance(rows, QuerySet), (
+            'auto__rows needs to be a QuerySet for filter generation to work. '
+            'If it needs to be a lambda, provide a model with auto__model for filter generation, '
             'and pass the lambda as rows.'
+        )
 
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "auto__model or auto__rows must be specified"

@@ -3,16 +3,16 @@ from django.utils.safestring import mark_safe
 from tri_struct import Struct
 
 from iommi import (
+    Header,
     Page,
     register_style,
-    Header,
 )
 from iommi._web_compat import Template
 from iommi.part import (
     as_html,
+    get_title,
     render_root,
     request_data,
-    get_title,
 )
 from iommi.style import Style
 from iommi.style_base import base
@@ -39,8 +39,14 @@ def test_as_html():
 
     # __html__ attribute case
     assert format_html('{}', as_html(part=Struct(__html__=lambda: 'foo'), context={})) == 'foo'
-    assert format_html('{}', as_html(part=Struct(__html__=lambda: '<foo>bar</foo>'), context={})) == '&lt;foo&gt;bar&lt;/foo&gt;'
-    assert format_html('{}', as_html(part=Struct(__html__=lambda: mark_safe('<foo>bar</foo>')), context={})) == '<foo>bar</foo>'
+    assert (
+        format_html('{}', as_html(part=Struct(__html__=lambda: '<foo>bar</foo>'), context={}))
+        == '&lt;foo&gt;bar&lt;/foo&gt;'
+    )
+    assert (
+        format_html('{}', as_html(part=Struct(__html__=lambda: mark_safe('<foo>bar</foo>')), context={}))
+        == '<foo>bar</foo>'
+    )
 
 
 def test_as_html_integer():

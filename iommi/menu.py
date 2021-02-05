@@ -20,7 +20,11 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
-from iommi._web_compat import Template
+from iommi import Fragment
+from iommi._web_compat import (
+    settings,
+    Template,
+)
 from iommi.attrs import Attrs
 from iommi.base import (
     capitalize,
@@ -34,13 +38,11 @@ from iommi.member import (
     bind_members,
     collect_members,
 )
-from iommi import Fragment
 from iommi.part import Part
+from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
-from iommi._web_compat import settings
 
 
 class MenuBase(Part, Tag):
@@ -73,18 +75,17 @@ class MenuBase(Part, Tag):
     def __repr__(self):
         r = f'{self._name}'
         if self.sub_menu:
-            for items in values(self.sub_menu):
-                r += ''.join([f'\n    {x}' for x in repr(items).split('\n')])
+            for i in values(self.sub_menu):
+                r += ''.join([f'\n    {x}' for x in repr(i).split('\n')])
         return r
 
     def on_bind(self):
         bind_members(self, name='sub_menu')
 
         if self.sort:
-            self.sub_menu = Struct({
-                item._name: item
-                for item in sorted(values(self.sub_menu), key=lambda x: x.display_name)
-            })
+            self.sub_menu = Struct(
+                {item._name: item for item in sorted(values(self.sub_menu), key=lambda x: x.display_name)}
+            )
 
 
 @with_meta
@@ -106,7 +107,9 @@ class MenuItem(MenuBase):
     @dispatch(
         display_name=lambda menu_item, **_: capitalize(menu_item.iommi_name()).replace('_', ' '),
         regex=lambda menu_item, **_: '^' + str(menu_item.url) if menu_item.url else None,
-        url=lambda menu_item, **_: '/' + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name()) + '/',
+        url=lambda menu_item, **_: '/'
+        + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name())
+        + '/',
         a=EMPTY,
     )
     def __init__(self, **kwargs):
@@ -127,8 +130,8 @@ class MenuItem(MenuBase):
     def __repr__(self):
         r = f'{self._name} -> {self.url}'
         if self.sub_menu:
-            for items in values(self.sub_menu):
-                r += ''.join([f'\n    {x}' for x in repr(items).split('\n')])
+            for i in values(self.sub_menu):
+                r += ''.join([f'\n    {x}' for x in repr(i).split('\n')])
         return r
 
     def __html__(self, *, render=None):
@@ -190,6 +193,7 @@ class Menu(MenuBase):
             ),
         )
     """
+
     items_container = Refinable()
 
     @reinvokable
@@ -207,7 +211,7 @@ class Menu(MenuBase):
             template=self.template,
             children__items_container=Fragment(
                 **self.items_container,
-            )
+            ),
         ).bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
         items_container = fragment.children.items_container
@@ -284,12 +288,23 @@ def get_debug_menu(**kwargs):
         tree = MenuItem(url='?/debug_tree', tag='li')
         pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
         edit = MenuItem(
-            display_name=lambda request, **_: 'Edit' if request.GET.get('_iommi_live_edit') in (None, 'row') else 'Edit vertical',
-            url=lambda request, **_: '?_iommi_live_edit' if request.GET.get('_iommi_live_edit') in (None, 'row') else '?_iommi_live_edit=row',
+            display_name=lambda request, **_: 'Edit'
+            if request.GET.get('_iommi_live_edit') in (None, 'row')
+            else 'Edit vertical',
+            url=lambda request, **_: '?_iommi_live_edit'
+            if request.GET.get('_iommi_live_edit') in (None, 'row')
+            else '?_iommi_live_edit=row',
             tag='li',
             include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
-        profile = MenuItem(url='?_iommi_prof', tag='li', include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE)
-        sql_trace = MenuItem(display_name='SQL trace', url='?_iommi_sql_trace', tag='li', include=lambda **_: 'iommi.sql_trace.Middleware' in settings.MIDDLEWARE)
+        profile = MenuItem(
+            url='?_iommi_prof', tag='li', include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE
+        )
+        sql_trace = MenuItem(
+            display_name='SQL trace',
+            url='?_iommi_sql_trace',
+            tag='li',
+            include=lambda **_: 'iommi.sql_trace.Middleware' in settings.MIDDLEWARE,
+        )
 
     return DebugMenu(**kwargs)

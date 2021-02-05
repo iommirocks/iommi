@@ -2,8 +2,8 @@ from iommi import html
 from iommi.style import (
     Style,
 )
-from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
+from iommi.style_font_awesome_4 import font_awesome_4
 
 semantic_ui_base = Style(
     base,
@@ -54,7 +54,7 @@ semantic_ui_base = Style(
             ui=True,
             pointing=True,
             label=True,
-        )
+        ),
     ),
     Action=dict(
         shortcuts=dict(
@@ -122,7 +122,7 @@ semantic_ui_base = Style(
         active_item__attrs__class=dict(
             item=True,
             active=True,
-        )
+        ),
     ),
     Errors__attrs__class=dict(
         ui=True,

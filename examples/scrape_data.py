@@ -8,7 +8,9 @@ import requests
 
 session = requests.session()
 
-session.get('https://www.discogs.com/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&layout=sm&page_size=50&subtype=Albums&filter_anv=0&type=Releases&page=1')
+session.get(
+    'https://www.discogs.com/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&layout=sm&page_size=50&subtype=Albums&filter_anv=0&type=Releases&page=1'
+)
 
 base_url = 'https://www.discogs.com'
 
@@ -77,8 +79,14 @@ def scrape_artist(artist, url):
 def scrape_data():
     print('### Scraping artist and album data')
     scrape_artist('Django Reinhardt', '/artist/253481-Django-Reinhardt?filter_anv=0&subtype=Albums&type=Releases')
-    scrape_artist('Quintette Du Hot Club De France', '/artist/355185-Quintette-Du-Hot-Club-De-France?filter_anv=0&subtype=Albums&type=Releases')
-    scrape_artist('Black Sabbath', '/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&filter_anv=0&subtype=Albums&type=Releases&page=1&layout=sm')
+    scrape_artist(
+        'Quintette Du Hot Club De France',
+        '/artist/355185-Quintette-Du-Hot-Club-De-France?filter_anv=0&subtype=Albums&type=Releases',
+    )
+    scrape_artist(
+        'Black Sabbath',
+        '/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&filter_anv=0&subtype=Albums&type=Releases&page=1&layout=sm',
+    )
     scrape_artist('Dio', '/artist/252122-Dio-2?filter_anv=0&subtype=Albums&type=Releases')
     scrape_artist('Ozzy Osbourne', '/artist/59770-Ozzy-Osbourne?filter_anv=0&subtype=Albums&type=Releases')
     scrape_artist('Tony Iommi', '/artist/253791-Tony-Iommi?filter_anv=0&subtype=Albums&type=Releases')

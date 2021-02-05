@@ -12,6 +12,7 @@ def add_example(examples, description):
         f.description = description
         examples.append(f)
         return f
+
     return decorator
 
 
@@ -33,4 +34,3 @@ def example_links(examples):
         )
 
     return Fragment(children=children)
-

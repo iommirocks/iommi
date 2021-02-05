@@ -2,9 +2,9 @@ from django.db.models import QuerySet
 from django.utils.encoding import force_str
 from django.utils.safestring import SafeText
 
-from iommi._web_compat import mark_safe
-
-NOT_BOUND_MESSAGE = 'This object is not bound. You need to call `.bind(request=request)` before you can call this function.'
+NOT_BOUND_MESSAGE = (
+    'This object is not bound. You need to call `.bind(request=request)` before you can call this function.'
+)
 
 
 class UnknownMissingValueException(Exception):

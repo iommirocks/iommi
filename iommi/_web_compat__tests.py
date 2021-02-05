@@ -15,33 +15,29 @@ from tests.helpers import req
 
 def test_simple_render_to_string():
     t = Template('{{ field }}')
-    assert t.render(
-        context=RequestContext(
-            req('get'),
-            dict(
-                field='foo'
-            )
-        )
-    ).strip() == 'foo'
+    assert t.render(context=RequestContext(req('get'), dict(field='foo'))).strip() == 'foo'
 
 
 def test_render_to_string():
     t = Template('<span id="{{ field.input.attrs.id }}">{{ field.rendered_value }}</span>')
-    assert t.render(
-        context=RequestContext(
-            req('get'),
-            dict(
-                field=dict(
-                    input=dict(
-                        attrs=dict(
-                            id=SafeText('<a b c><d><e>'),
+    assert (
+        t.render(
+            context=RequestContext(
+                req('get'),
+                dict(
+                    field=dict(
+                        input=dict(
+                            attrs=dict(
+                                id=SafeText('<a b c><d><e>'),
+                            ),
                         ),
+                        rendered_value=SafeText('<a b c><d><e>'),
                     ),
-                    rendered_value=SafeText('<a b c><d><e>'),
                 ),
             )
-        )
-    ).strip() == '<span id="<a b c><d><e>"><a b c><d><e></span>'
+        ).strip()
+        == '<span id="<a b c><d><e>"><a b c><d><e></span>'
+    )
 
 
 def test_format_html():
@@ -49,11 +45,19 @@ def test_format_html():
 
 
 def test_format_html2():
-    assert render_template(req('get'), Template('{{foo}}'), dict(foo=format_html('<a href="foo">foo</a>'))) == '<a href="foo">foo</a>'
+    assert (
+        render_template(req('get'), Template('{{foo}}'), dict(foo=format_html('<a href="foo">foo</a>')))
+        == '<a href="foo">foo</a>'
+    )
 
 
 def test_format_html3():
-    assert render_template(req('get'), Template('{{foo}}'), dict(foo=format_html('{}', format_html('<a href="foo">foo</a>')))) == '<a href="foo">foo</a>'
+    assert (
+        render_template(
+            req('get'), Template('{{foo}}'), dict(foo=format_html('{}', format_html('<a href="foo">foo</a>')))
+        )
+        == '<a href="foo">foo</a>'
+    )
 
 
 def test_format_html4():
@@ -64,17 +68,21 @@ def test_format_html4():
         Template('{{form}}'),
         dict(
             form=form,
-        )
+        ),
     )
     assert '<input id="id_foo" name="foo" type="text" value="">' in actual
 
 
 def test_format_html5():
-    actual = Form(
-        fields__foo=Field(),
-    ).bind(
-        request=req('get'),
-    ).__html__()
+    actual = (
+        Form(
+            fields__foo=Field(),
+        )
+        .bind(
+            request=req('get'),
+        )
+        .__html__()
+    )
     assert '<form' in actual
     assert '<input' in actual
     assert type(actual) == SafeText

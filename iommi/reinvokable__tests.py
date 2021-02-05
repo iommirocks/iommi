@@ -4,6 +4,7 @@ from tri_declarative import (
     Refinable,
 )
 from tri_struct import Struct
+
 from iommi import (
     Field,
     Form,
@@ -57,37 +58,16 @@ def test_reinvoke_namespace_merge():
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
 
-    assert reinvoke(
-        ReinvokableWithExtra(
-            extra__foo=17
-        ),
-        Namespace(
-            extra__bar=42
-        )
-    ).extra == dict(bar=42, foo=17)
+    assert reinvoke(ReinvokableWithExtra(extra__foo=17), Namespace(extra__bar=42)).extra == dict(bar=42, foo=17)
 
     # Try again with pre-Namespaced kwargs
-    assert reinvoke(
-        ReinvokableWithExtra(
-            **Namespace(extra__foo=17)
-        ),
-        Namespace(
-            extra__bar=42
-        )
-    ).extra == dict(bar=42, foo=17)
+    assert reinvoke(ReinvokableWithExtra(**Namespace(extra__foo=17)), Namespace(extra__bar=42)).extra == dict(
+        bar=42, foo=17
+    )
 
 
 def test_reinvokable_recurse_retain_original():
-    x = MyReinvokable(
-        a=1,
-        foo=MyReinvokable(
-            b=2,
-            bar=MyReinvokable(
-                c=3,
-                baz=17
-            )
-        )
-    )
+    x = MyReinvokable(a=1, foo=MyReinvokable(b=2, bar=MyReinvokable(c=3, baz=17)))
     x = reinvoke(x, Namespace(foo__bar__baz=42))
 
     assert isinstance(x.kwargs.foo, MyReinvokable)
@@ -133,9 +113,7 @@ def test_reinvoke_extra():
             extra__foo=17,
         )
 
-    f = MyForm(
-        fields__my_field__extra__bar=42
-    )
+    f = MyForm(fields__my_field__extra__bar=42)
 
     assert f.bind().fields.my_field.extra == dict(foo=17, bar=42)
 
@@ -154,9 +132,7 @@ def test_reinvoke_extra_shortcut():
             extra__foo=17,
         )
 
-    f = MyForm(
-        fields__my_field__extra__bar=42
-    )
+    f = MyForm(fields__my_field__extra__bar=42)
 
     assert f.bind().fields.my_field.extra == dict(foo=17, bar=42, buz=4711)
 
@@ -169,10 +145,13 @@ def test_reinvoke_change_shortcut():
             kwargs['shortcut_was_here'] = True
             return call_target(**kwargs)
 
-    assert reinvoke(
-        ReinvokableWithShortcut(),
-        dict(
-            call_target__attribute='shortcut',
-            foo='bar',
-        )
-    ).kwargs == dict(foo='bar', shortcut_was_here=True)
+    assert (
+        reinvoke(
+            ReinvokableWithShortcut(),
+            dict(
+                call_target__attribute='shortcut',
+                foo='bar',
+            ),
+        ).kwargs
+        == dict(foo='bar', shortcut_was_here=True)
+    )

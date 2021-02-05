@@ -1,16 +1,16 @@
 import pytest
 from django.contrib.auth.models import User
 from django.db.models import (
+    CASCADE,
     CharField,
+    ForeignKey,
     IntegerField,
     Model,
-    ForeignKey,
-    CASCADE,
 )
 
 from iommi import (
-    Form,
     Field,
+    Form,
 )
 from iommi.from_model import (
     get_field_path,
@@ -29,7 +29,10 @@ def test_get_name_field_for_model_error():
     with pytest.raises(NoRegisteredSearchFieldException) as e:
         get_search_fields(model=NoRegisteredNameExceptionModel)
 
-    assert str(e.value) == 'NoRegisteredNameExceptionModel has no registered search fields. Please register a list of field names with register_search_fields.'
+    assert (
+        str(e.value)
+        == 'NoRegisteredNameExceptionModel has no registered search fields. Please register a list of field names with register_search_fields.'
+    )
 
 
 def test_get_name_field_for_model_error_non_unique():
@@ -39,7 +42,10 @@ def test_get_name_field_for_model_error_non_unique():
     with pytest.warns(Warning) as records:
         get_search_fields(model=NoRegisteredNameException2Model)
 
-    assert str(records[0].message) == "The model NoRegisteredNameException2Model is using the default `name` field as a search field, but it's not unique. You can register_search_fields(model=NoRegisteredNameException2Model, search_fields=['name'], allow_non_unique=True) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names."
+    assert (
+        str(records[0].message)
+        == "The model NoRegisteredNameException2Model is using the default `name` field as a search field, but it's not unique. You can register_search_fields(model=NoRegisteredNameException2Model, search_fields=['name'], allow_non_unique=True) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names."
+    )
 
 
 def test_register_search_fields_error():
@@ -49,7 +55,9 @@ def test_register_search_fields_error():
     with pytest.raises(TypeError) as e:
         register_search_fields(model=RegisterNameExceptionModel, search_fields=['foo'])
 
-    assert str(e.value) == 'Cannot register search field "foo" for model RegisterNameExceptionModel. foo must be unique.'
+    assert (
+        str(e.value) == 'Cannot register search field "foo" for model RegisterNameExceptionModel. foo must be unique.'
+    )
 
 
 def test_register_search_fields_error_nested():
@@ -97,7 +105,10 @@ def test_include_not_existing_error():
             auto__include=['does_not_exist'],
         )
 
-    assert str(e.value) == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id\n    pk'
+    assert (
+        str(e.value)
+        == 'You can only include fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id\n    pk'
+    )
 
 
 def test_exclude_not_existing_error():
@@ -107,7 +118,10 @@ def test_exclude_not_existing_error():
             auto__exclude=['does_not_exist'],
         )
 
-    assert str(e.value) == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id\n    pk'
+    assert (
+        str(e.value)
+        == 'You can only exclude fields that exist on the model: does_not_exist specified but does not exist\nExisting fields:\n    f_bool\n    f_file\n    f_float\n    f_int\n    f_int_excluded\n    id\n    pk'
+    )
 
 
 @pytest.mark.django
@@ -124,7 +138,10 @@ def test_field_from_model_factory_error_message():
     with pytest.raises(AssertionError) as error:
         Field.from_model(FooFromModelTestModel, 'foo')
 
-    assert str(error.value) == "No factory for CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
+    assert (
+        str(error.value)
+        == "No factory for CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
+    )
 
 
 class OtherModel(Model):
@@ -153,13 +170,16 @@ def test_from_model_missing_subfield():
             auto__model=SomeModel,
             auto__include=['foo__barf'],
         )
-    assert str(e.value) == '''\
+    assert (
+        str(e.value)
+        == '''\
 You can only include fields that exist on the model: foo__barf specified but does not exist
 Existing fields:
     foo__bar
     foo__id
     foo__pk
     foo__somemodel'''
+    )
 
 
 def test_get_field_path():

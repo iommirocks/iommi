@@ -13,14 +13,14 @@ from iommi.base import (
 from iommi.member import (
     bind_members,
     collect_members,
-    NotBoundYetException,
     ForbiddenNamesException,
+    NotBoundYetException,
 )
+from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     declared_members,
     Traversable,
 )
-from iommi.reinvokable import reinvokable
 
 
 class Fruit(Traversable):
@@ -32,11 +32,17 @@ class Fruit(Traversable):
 
 @declarative(Fruit, 'fruits_dict')
 class Basket(Traversable):
-
     @dispatch
     def __init__(self, fruits=None, fruits_dict=None, unknown_types_fall_through=False):
         super(Basket, self).__init__()
-        collect_members(container=self, name='fruits', items=fruits, items_dict=fruits_dict, cls=Fruit, unknown_types_fall_through=unknown_types_fall_through)
+        collect_members(
+            container=self,
+            name='fruits',
+            items=fruits,
+            items_dict=fruits_dict,
+            cls=Fruit,
+            unknown_types_fall_through=unknown_types_fall_through,
+        )
 
     def on_bind(self):
         bind_members(parent=self, name='fruits')
@@ -125,7 +131,9 @@ def test_bind_via_unapplied_config():
     with pytest.raises(TypeError) as e:
         MyBasket(fruits__pear__color='green').bind()
 
-    assert str(e.value) == "'Fruit' object has no refinable attribute(s): color.\nAvailable attributes:\n    iommi_style"
+    assert (
+        str(e.value) == "'Fruit' object has no refinable attribute(s): color.\nAvailable attributes:\n    iommi_style"
+    )
 
 
 def test_ordering():

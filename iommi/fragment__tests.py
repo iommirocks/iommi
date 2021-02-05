@@ -81,35 +81,49 @@ def test_auto_h_tag():
     assert Header().bind(request=None).tag == 'h1'
 
     # Nesting doesn't increase level
-    assert Fragment(
-        children__child=Fragment(
-            children__child=Header(),
+    assert (
+        Fragment(
+            children__child=Fragment(
+                children__child=Header(),
+            )
         )
-    ).bind(request=None).__html__() == '<h1></h1>'
+        .bind(request=None)
+        .__html__()
+        == '<h1></h1>'
+    )
 
     # A header on a level increases the level for the next header
-    assert Fragment(
-        children__child=Fragment(
-            children__child=Header(
+    assert (
+        Fragment(
+            children__child=Fragment(
                 children__child=Header(
-                    children__child='h2',
+                    children__child=Header(
+                        children__child='h2',
+                    )
                 )
             )
         )
-    ).bind(request=None).__html__() == '<h1><h2>h2</h2></h1>'
+        .bind(request=None)
+        .__html__()
+        == '<h1><h2>h2</h2></h1>'
+    )
 
     # Sibling headers get the same level
-    assert Fragment(
-        children__child=Fragment(
-            children__child=Header(
+    assert (
+        Fragment(
+            children__child=Fragment(
                 children__child=Header(
-                    children__child='h2'),
-                children__another=Header(
-                    children__child='another h2',
+                    children__child=Header(children__child='h2'),
+                    children__another=Header(
+                        children__child='another h2',
+                    ),
                 )
             )
         )
-    ).bind(request=None).__html__() == '<h1><h2>h2</h2><h2>another h2</h2></h1>'
+        .bind(request=None)
+        .__html__()
+        == '<h1><h2>h2</h2><h2>another h2</h2></h1>'
+    )
 
 
 def test_render_simple_tag():
@@ -147,11 +161,29 @@ def test_fragment_with_tag():
 
 
 def test_fragment_with_two_children():
-    assert Fragment(children__child='foo', tag='h1', children__foo='asd').bind(request=None).__html__() == '<h1>fooasd</h1>'
+    assert (
+        Fragment(children__child='foo', tag='h1', children__foo='asd').bind(request=None).__html__()
+        == '<h1>fooasd</h1>'
+    )
 
 
 def test_void_element():
-    for tag in ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']:
+    for tag in [
+        'area',
+        'base',
+        'br',
+        'col',
+        'embed',
+        'hr',
+        'img',
+        'input',
+        'link',
+        'meta',
+        'param',
+        'source',
+        'track',
+        'wbr',
+    ]:
         assert Fragment(tag=tag).bind(request=None).__html__() == f'<{tag}>'
 
 
@@ -205,4 +237,7 @@ def test_fragment__render__simple_cases():
 
 
 def test_fragment_repr():
-    assert repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'}))) == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
+    assert (
+        repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'})))
+        == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
+    )

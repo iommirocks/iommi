@@ -5,14 +5,13 @@ from os.path import (
     join,
 )
 
-from ._web_compat import settings
 from tri_struct import Struct
 
 from iommi._web_compat import (
     format_html,
     HttpRequest,
-    Template,
     mark_safe,
+    Template,
 )
 from iommi.base import (
     items,
@@ -24,6 +23,7 @@ from iommi.traversable import (
     PathNotFoundException,
     Traversable,
 )
+from ._web_compat import settings
 
 
 def iommi_debug_on():
@@ -38,7 +38,7 @@ def dunder_path__format(row, **_):
         '<span class="full-path">{prefix}{separator}</span>{name}',
         prefix=prefix,
         separator='__' if prefix else '',
-        name=row.name
+        name=row.name,
     )
 
 
@@ -70,13 +70,7 @@ def endpoint__debug_tree(endpoint, **_):
         if isinstance(node, dict):
             children = list(node.items())
         elif isinstance(node, Traversable):
-            children = [
-                (
-                    k,
-                    node.iommi_bound_members().get(k, v)
-                )
-                for k, v in items(declared_members(node))
-            ]
+            children = [(k, node.iommi_bound_members().get(k, v)) for k, v in items(declared_members(node))]
 
         if (isinstance(node, Members) or isinstance(node, dict)) and not children:
             return
@@ -88,7 +82,7 @@ def endpoint__debug_tree(endpoint, **_):
             base_type=base_type_name,
             path=p,
             dunder_path='__'.join(path),
-            included=is_bound
+            included=is_bound,
         )
 
         for k, v in children:
@@ -101,7 +95,8 @@ def endpoint__debug_tree(endpoint, **_):
 
     class TreeTable(Table):
         class Meta:
-            template = Template("""
+            template = Template(
+                """
                 <style>
                     .full-path {
                         opacity: 0.0;
@@ -109,20 +104,21 @@ def endpoint__debug_tree(endpoint, **_):
                     tr:hover .full-path {
                         opacity: 0.6;
                     }
-                    
+
                     tr {
                         opacity: 0.4;
                     }
                     tr.included {
                         opacity: 1;
                     }
-                    
+
                 </style>
-                
-                {% include "iommi/table/table.html" %}            
-            """)
+
+                {% include "iommi/table/table.html" %}
+            """
+            )
             sortable = False
-            row__attrs__class__included = (lambda row, **_: row.included)
+            row__attrs__class__included = lambda row, **_: row.included
             page_size = None
 
         dunder_path = Column(
@@ -131,7 +127,9 @@ def endpoint__debug_tree(endpoint, **_):
         )
         path = Column()
         type = Column(
-            cell__url=lambda row, **_: f'https://docs.iommi.rocks/en/latest/{row.base_type}.html' if row.base_type else None
+            cell__url=lambda row, **_: f'https://docs.iommi.rocks/en/latest/{row.base_type}.html'
+            if row.base_type
+            else None
         )
         included = Column.boolean()
 
@@ -167,7 +165,11 @@ def should_ignore_frame(frame, env_paths):
         return True
 
     base_module_name = module_name.partition('.')[0]
-    if base_module_name in ('tri_declarative', 'iommi', 'django',):
+    if base_module_name in (
+        'tri_declarative',
+        'iommi',
+        'django',
+    ):
         return True
 
     for env_path in env_paths:
@@ -187,6 +189,7 @@ def frame_from_part(part):
     frame = part._instantiated_at_frame
 
     import os
+
     env_paths = {dirname(os.__file__), dirname(dirname(sys.executable))}
 
     for _ in range(100):
@@ -215,13 +218,13 @@ def iommi_debug_panel(part):
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];
-            
+
             function create(html) {
                 let r = document.createElement('div');
                 r.innerHTML = html;
                 return r.firstChild;
             }
-            
+
             window.iommi_close_pick_toolbar = function() {
                 window.iommi_pick_stack.forEach(function(el) {
                     el[3].style.backgroundColor = el[2];
@@ -234,41 +237,44 @@ def iommi_debug_panel(part):
                 if (!toolbar) {
                     return;
                 }
-                
+
                 while(toolbar.firstChild) {
                     toolbar.removeChild(toolbar.firstChild);
                 }
-                
+
                 toolbar.append(create('<div style="float: right" onclick="iommi_close_pick_toolbar()">close</div>'));
                 for (let i in window.iommi_pick_stack) {
                     let x = window.iommi_pick_stack[i];
                     toolbar.append(create('<div style="background-color: ' + getColor(i) + '">' + x[0] + ' <a href="https://docs.iommi.rocks/en/latest/' + x[1] + '.html">' + x[1] + '</a></div>'));
                 }
             }
-        
+
             let with_iommi_path = document.querySelectorAll('*[data-iommi-path]');
+
             let colors = [
-'rgb(255, 255, 191)',
-'rgb(254, 224, 139)',
-'rgb(253, 174,  97)',
-'rgb(244, 109,  67)',
-'rgb(213,  62,  79)',
-'rgb(158,   1,  66)',
-'rgb(230, 245, 152)',
-'rgb(171, 221, 164)',
-'rgb(102, 194, 165)',
-'rgb( 50, 136, 189)',
-'rgb( 94,  79, 162)',
+                'rgb(255, 255, 191)',
+                'rgb(254, 224, 139)',
+                'rgb(253, 174,  97)',
+                'rgb(244, 109,  67)',
+                'rgb(213,  62,  79)',
+                'rgb(158,   1,  66)',
+                'rgb(230, 245, 152)',
+                'rgb(171, 221, 164)',
+                'rgb(102, 194, 165)',
+                'rgb( 50, 136, 189)',
+                'rgb( 94,  79, 162)',
             ];
+
             function getColor(index) {
                 return colors[Math.min(index, colors.length - 1)]
-            } 
-            
+            }
+
             function mouseenter() {
                 window.iommi_pick_stack.push([this.getAttribute('data-iommi-path'), this.getAttribute('data-iommi-type'), this.style.backgroundColor, this])
                 this.style.backgroundColor = getColor(window.iommi_pick_stack.length-1);
                 update_toolbar();
             }
+
             function mouseleave() {
                 if (window.iommi_pick_stack.length) {
                     this.style.backgroundColor = window.iommi_pick_stack.pop()[2];
@@ -282,7 +288,7 @@ def iommi_debug_panel(part):
                     e.removeEventListener('click', click)
                 });
             }
-            
+
             with_iommi_path.forEach(function (e) {
                 e.addEventListener('mouseenter', mouseenter);
                 e.addEventListener('mouseleave', mouseleave);
@@ -290,22 +296,25 @@ def iommi_debug_panel(part):
                     e.addEventListener('click', click);
                 });
             });
-            
-            
+
             let toolbar = create('<div id="iommi-pick-toolbar" style="position: fixed; left: 0; bottom: 0; width: 100%; background-color: white; color: black; padding: 4px; border-top: 2px solid #1084ff; z-index: 200">');
-            
+
             document.getElementsByTagName('body')[0].append(toolbar);
         };
     """
 
     from iommi.menu import get_debug_menu
-    return get_debug_menu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(f'<script>{script}</script>')
+
+    return get_debug_menu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(
+        f'<script>{script}</script>'
+    )
 
 
 def source_url_from_part(part):
     filename, lineno = filename_and_line_num_from_part(part)
     if filename is None or filename.endswith('urls.py'):
         import inspect
+
         if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
             filename = inspect.getsourcefile(type(part))
             lineno = inspect.getsourcelines(type(part))[-1]

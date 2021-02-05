@@ -1,9 +1,9 @@
+from iommi.asset import Asset
 from iommi.style import (
     Style,
 )
-from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
-from iommi.asset import Asset
+from iommi.style_font_awesome_4 import font_awesome_4
 
 bootstrap_base = Style(
     base,
@@ -99,7 +99,6 @@ bootstrap_base = Style(
                 header__attrs__title='Select all',
                 header__attrs__class={'text-center': True},
                 cell__attrs__class={'text-center': True},
-
             ),
             number=dict(
                 cell__attrs__class={'text-right': True},
@@ -109,7 +108,7 @@ bootstrap_base = Style(
             delete=dict(
                 cell__link__attrs__class={'text-danger': True},
             ),
-        )
+        ),
     ),
     Query=dict(
         form__iommi_style='bootstrap_horizontal',
@@ -130,7 +129,7 @@ bootstrap_base = Style(
             'bg-primary': True,
         },
         items_container__attrs__class={'navbar-nav': True},
-        items_container__tag='ul'
+        items_container__tag='ul',
     ),
     MenuItem=dict(
         tag='li',

@@ -55,17 +55,17 @@ def test_generate_docs():
             return cls()  # pragma: no cover
 
         @classmethod
-        @class_shortcut(
-            description='fish'
-        )
+        @class_shortcut(description='fish')
         def shortcut2(cls, call_target):
             """shortcut2 docstring"""
             return call_target()  # pragma: no cover
 
         @classmethod
+        # fmt: off
         @class_shortcut(
             description=lambda foo: 'qwe'
         )
+        # fmt: on
         def shortcut3(cls, call_target):
             """
             shortcut3 docstring
@@ -80,7 +80,7 @@ def test_generate_docs():
         description='qwe',
     )
 
-    (actual_filename, actual_doc), = list(_generate_rst_docs(classes=[Foo]))
+    ((actual_filename, actual_doc),) = list(_generate_rst_docs(classes=[Foo]))
 
     assert actual_filename == '/Foo.rst'
 
@@ -166,7 +166,7 @@ def test_generate_docs_empty_docstring():
     class Foo(RefinableObject):
         name = Refinable()
 
-    (actual_filename, actual_doc), = list(_generate_rst_docs(classes=[Foo]))
+    ((actual_filename, actual_doc),) = list(_generate_rst_docs(classes=[Foo]))
 
     assert actual_filename == '/Foo.rst'
 
@@ -236,7 +236,7 @@ def test_generate_docs_kill_obscure_mutant():
         def __init__(self, **kwargs):
             super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
-    (actual_filename, actual_doc), = list(_generate_rst_docs(classes=[Foo]))
+    ((actual_filename, actual_doc),) = list(_generate_rst_docs(classes=[Foo]))
 
     assert actual_filename == '/Foo.rst'
 
@@ -266,12 +266,16 @@ def test_default_classes():
     default_classes = {x.__name__ for x in get_default_classes() if isinstance(x, type)}
 
     import iommi
+
     classes_in_all = {x for x in iommi.__all__ if isinstance(getattr(iommi, x), type)}
 
     assert (classes_in_all - default_classes) == set()
 
 
-@pytest.mark.skipif(python_implementation() == 'PyPy', reason='Fails on pypy, but we only run this for building documentation and we do that on cpython')
+@pytest.mark.skipif(
+    python_implementation() == 'PyPy',
+    reason='Fails on pypy, but we only run this for building documentation and we do that on cpython',
+)
 def test_type_annotations():
     class Foo(RefinableObject):
         a: int = Refinable()
@@ -301,6 +305,5 @@ Refinable members
 * `c`
     Type: :doc:`Fragment`
     
-"""
-    print(actual_doc)
+"""  # noqa: W293
     assert actual_doc.strip() == expected_doc.strip()

@@ -1,7 +1,7 @@
 class HttpRequest:
-
     def __init__(self, environ):
         from flask import Request
+
         self.r = Request(environ)
 
     @property

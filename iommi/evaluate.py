@@ -12,7 +12,9 @@ _matches_cache = {}
 
 def matches(caller_parameters, callee_parameters, __match_empty=False):
     cache_key = ';'.join((caller_parameters, callee_parameters))  # pragma: no mutate
-    cached_value = _matches_cache.get(cache_key, None)  # pragma: no mutate (mutation changes this to cached_value = None, which just slows down the code)
+    cached_value = _matches_cache.get(
+        cache_key, None
+    )  # pragma: no mutate (mutation changes this to cached_value = None, which just slows down the code)
     if cached_value is not None:
         return cached_value
 
@@ -21,7 +23,7 @@ def matches(caller_parameters, callee_parameters, __match_empty=False):
     a, b, c = callee_parameters.split('|')
     required = set(a.split(',')) if a else set()
     optional = set(b.split(',')) if b else set()
-    wildcard = (c == '*')
+    wildcard = c == '*'
 
     if not __match_empty and not required and not optional and wildcard:
         return False  # Special case to not match no-specification function "lambda **whatever: ..."
@@ -31,13 +33,16 @@ def matches(caller_parameters, callee_parameters, __match_empty=False):
     else:
         result = required <= caller <= required.union(optional)
 
-    _matches_cache[cache_key] = result  # pragma: no mutate (mutation changes result to None which just makes things slower)
+    _matches_cache[
+        cache_key
+    ] = result  # pragma: no mutate (mutation changes result to None which just makes things slower)
     return result
 
 
 def get_callable_description(c):
     if getattr(c, '__name__', None) == '<lambda>':
         import inspect
+
         try:
             return 'lambda found at: `{}`'.format(inspect.getsource(c).strip())
         except OSError:  # pragma: no cover
@@ -55,14 +60,13 @@ def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True
             return func_or_value(**kwargs)
 
         if __strict:
-            assert (
-                    isinstance(func_or_value, Namespace)
-                    and 'call_target' not in func_or_value
-            ), "Evaluating {} didn't resolve it into a value but strict mode was active, " \
-               "the signature doesn't match the given parameters. " \
-               "We had these arguments: {}".format(
-                get_callable_description(func_or_value),
-                ', '.join(keys(kwargs)),
+            assert isinstance(func_or_value, Namespace) and 'call_target' not in func_or_value, (
+                "Evaluating {} didn't resolve it into a value but strict mode was active, "
+                "the signature doesn't match the given parameters. "
+                "We had these arguments: {}".format(
+                    get_callable_description(func_or_value),
+                    ', '.join(keys(kwargs)),
+                )
             )
     return func_or_value
 
@@ -74,8 +78,8 @@ def evaluate_strict(func_or_value, __signature=None, __match_empty=True, **kwarg
 
 def get_signature(func):
     """
-        :type func: Callable
-        :rtype: str
+    :type func: Callable
+    :rtype: str
     """
     try:
         return object.__getattribute__(func, '__tri_declarative_signature')
@@ -126,9 +130,4 @@ def evaluate_member(obj, key, strict=True, **kwargs):
 
 
 def evaluate_strict_container(c, **kwargs):
-    return Namespace(
-        {
-            k: evaluate_strict(v, **kwargs)
-            for k, v in items(c)
-        }
-    )
+    return Namespace({k: evaluate_strict(v, **kwargs) for k, v in items(c)})

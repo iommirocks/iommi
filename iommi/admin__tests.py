@@ -14,8 +14,8 @@ from tri_struct import Struct
 
 from iommi.admin import (
     Admin,
-    Messages,
     collect_config,
+    Messages,
 )
 from iommi.base import values
 from tests.helpers import (
@@ -24,7 +24,6 @@ from tests.helpers import (
     user_req,
 )
 from tests.models import Foo
-
 
 urlpatterns = [
     path('', include(Admin.urls())),
@@ -79,10 +78,7 @@ def test_create(mock_messages, settings):
     assert f.foo == 7
 
     mock_messages.add_message.assert_called_with(
-        request,
-        mock_messages.INFO,
-        f'Foo {f} was created',
-        fail_silently=True
+        request, mock_messages.INFO, f'Foo {f} was created', fail_silently=True
     )
 
 
@@ -101,10 +97,7 @@ def test_edit(mock_messages, settings):
     assert Foo.objects.get().foo == 11
 
     mock_messages.add_message.assert_called_with(
-        request,
-        mock_messages.INFO,
-        f'Foo {f} was updated',
-        fail_silently=True
+        request, mock_messages.INFO, f'Foo {f} was updated', fail_silently=True
     )
 
 
@@ -123,21 +116,21 @@ def test_delete(mock_messages, settings):
     assert Foo.objects.count() == 0
 
     mock_messages.add_message.assert_called_with(
-        request,
-        mock_messages.INFO,
-        f'Foo {f} was deleted',
-        fail_silently=True
+        request, mock_messages.INFO, f'Foo {f} was deleted', fail_silently=True
     )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('is_authenticated', [True, False])
-@pytest.mark.parametrize('view,kwargs', [
-    (Admin.all_models, dict()),
-    (Admin.list, dict(app_name='tests', model_name='foo')),
-    (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
-    (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
-])
+@pytest.mark.parametrize(
+    'view,kwargs',
+    [
+        (Admin.all_models, dict()),
+        (Admin.list, dict(app_name='tests', model_name='foo')),
+        (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
+        (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
+    ],
+)
 def test_redirect_to_login(settings, is_authenticated, view, kwargs):
     settings.ROOT_URLCONF = __name__
     if 'pk' in kwargs:
@@ -155,12 +148,15 @@ def test_redirect_to_login(settings, is_authenticated, view, kwargs):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('view,kwargs', [
-    (Admin.all_models, dict()),
-    (Admin.list, dict(app_name='tests', model_name='foo')),
-    (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
-    (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
-])
+@pytest.mark.parametrize(
+    'view,kwargs',
+    [
+        (Admin.all_models, dict()),
+        (Admin.list, dict(app_name='tests', model_name='foo')),
+        (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
+        (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
+    ],
+)
 def test_404_for_non_staff(settings, view, kwargs):
     settings.ROOT_URLCONF = __name__
     if 'pk' in kwargs:
@@ -181,7 +177,10 @@ def test_messages():
 def test_all_models(settings):
     settings.ROOT_URLCONF = __name__
     request = staff_req('get')
-    assert 'Authentication' in Admin.all_models(request=request).bind(request=request).render_to_response().content.decode()
+    assert (
+        'Authentication'
+        in Admin.all_models(request=request).bind(request=request).render_to_response().content.decode()
+    )
 
 
 @pytest.mark.django_db
@@ -212,7 +211,7 @@ def test_change_password(settings, admin_client, admin_user):
             'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
             'OPTIONS': {
                 'min_length': 3,
-            }
+            },
         },
     ]
 
@@ -251,6 +250,8 @@ def test_change_password(settings, admin_client, admin_user):
 
 def test_collect_config_returns_none_on_missing():
     import os
+
     assert collect_config(os) is None
     from tests import empty_iommi_admin
+
     assert collect_config(empty_iommi_admin) is None

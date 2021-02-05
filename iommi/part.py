@@ -26,7 +26,6 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
 )
 from iommi.debug import (
-    endpoint__debug_tree,
     iommi_debug_on,
 )
 from iommi.endpoint import (
@@ -67,7 +66,9 @@ class Part(Traversable):
     include: bool = Refinable()  # This is evaluated, but first and in a special way
     after: Union[int, str] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
-    extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    extra_evaluated: Dict[
+        str, Any
+    ] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
     endpoints: Namespace = Refinable()
     # Only the assets used by this part
     assets: Namespace = Refinable()
@@ -86,6 +87,7 @@ class Part(Traversable):
 
         if iommi_debug_on():
             import inspect
+
             self._instantiated_at_frame = inspect.currentframe().f_back
 
     @dispatch(
@@ -163,6 +165,7 @@ class Part(Traversable):
 
 def get_title(part):
     from iommi import Header
+
     if isinstance(part, Header):
         for text in part.children.values():
             return text
@@ -216,9 +219,13 @@ def render_root(*, part, context, **render):
         **context,
     )
 
-    template_string = '{% extends "' + template_name + '" %} {% block ' + \
-        content_block_name + \
-        ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
+    template_string = (
+        '{% extends "'
+        + template_name
+        + '" %} {% block '
+        + content_block_name
+        + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
+    )
     return get_template_from_string(template_string).render(context=context, request=part.get_request())
 
 
@@ -242,6 +249,7 @@ def as_html(*, request=None, part: PartType, context):
         return part
     elif isinstance(part, template_types):
         from django.template import RequestContext
+
         assert not isinstance(context, RequestContext)
         template = part
         return mark_safe(template.render(context=RequestContext(request, context)))

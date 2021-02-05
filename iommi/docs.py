@@ -21,25 +21,15 @@ def read_howto_links():
 
 def parse_howto_links(lines):
     link_marker = '.. _'
-    anchors = [
-        line.strip()[len(link_marker):].rstrip(':')
-        for line in lines
-        if line.startswith(link_marker)
-    ]
+    anchors = [line.strip()[len(link_marker) :].rstrip(':') for line in lines if line.startswith(link_marker)]
 
     # TODO: validate that we only have anchors once
 
-    return {
-        x for x in anchors
-        if not x.endswith('?')
-    }
+    return {x for x in anchors if not x.endswith('?')}
 
 
 def validate_howto_links(howto_links):
-    class_by_name = {
-        x.__name__: x
-        for x in get_default_classes()
-    }
+    class_by_name = {x.__name__: x for x in get_default_classes()}
 
     for link in howto_links:
         if '.' in link:
@@ -50,6 +40,7 @@ def validate_howto_links(howto_links):
 
 def get_default_classes():
     import iommi
+
     return [
         iommi.Table,
         iommi.Column,
@@ -65,7 +56,6 @@ def get_default_classes():
         iommi.Style,
         iommi.fragment.Header,
         iommi.Asset,
-
         # Private-ish APIs
         iommi.endpoint.Endpoint,
         iommi.part.Part,
@@ -99,6 +89,7 @@ def generate_rst_docs(directory, classes=None):  # pragma: no cover - this is te
 def get_docs_callable_description(c):
     if getattr(c, '__name__', None) == '<lambda>':
         import inspect
+
         return inspect.getsource(c).strip()
     return c.__module__ + '.' + c.__name__
 
@@ -116,21 +107,19 @@ def _generate_rst_docs(classes):
             return dict(text=None, params={})
         doc = dedent(doc)
         return dict(
-            text=doc[:doc.find(':param')].strip() if ':param' in doc else doc.strip(),
-            params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc))
+            text=doc[: doc.find(':param')].strip() if ':param' in doc else doc.strip(),
+            params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc)),
         )
 
     def indent(levels, s):
         return (' ' * levels * 4) + s.strip()
 
     def get_namespace(c):
-        return Namespace({
-            k: c.__init__.dispatch.get(k)
-            for k, v in items(get_declared(c, 'refinable_members'))
-        })
+        return Namespace({k: c.__init__.dispatch.get(k) for k, v in items(get_declared(c, 'refinable_members'))})
 
     for c in classes:
         from io import StringIO
+
         f = StringIO()
 
         def w(levels, s):
@@ -138,12 +127,7 @@ def _generate_rst_docs(classes):
             f.write('\n')
 
         def section(level, title):
-            underline = {
-                0: '=',
-                1: '-',
-                2: '^',
-                3: '+',
-            }[level] * len(title)
+            underline = {0: '=', 1: '-', 2: '^', 3: '+'}[level] * len(title)
             w(0, title)
             w(0, underline)
             w(0, '')
@@ -214,7 +198,7 @@ def _generate_rst_docs(classes):
                 v = get_docs_callable_description(v)
 
                 if 'lambda' in v:
-                    v = v[v.find('lambda'):]
+                    v = v[v.find('lambda') :]
                     v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
             if v == '':
                 v = '""'

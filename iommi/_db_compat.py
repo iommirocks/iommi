@@ -65,7 +65,7 @@ def setup_db_compat_django():
         return Shortcut(
             call_target__attribute='choice',
             choices=[x[0] for x in model_field.choices],
-            choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice]
+            choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
         )
 
     # The order here is significant because of inheritance structure. More specific must be below less specific.
@@ -108,7 +108,7 @@ def setup_db_compat_django():
             Shortcut(call_target__attribute='boolean')
             if not model_field.null
             else Shortcut(call_target__attribute='boolean_tristate')
-        )
+        ),
     )
     register_field_factory(TextField, shortcut_name='textarea')
     register_field_factory(FileField, shortcut_name='file')
@@ -116,6 +116,7 @@ def setup_db_compat_django():
 
 def base_defaults_factory(model_field):
     from iommi.base import capitalize
+
     r = {}
     if hasattr(model_field, 'verbose_name'):
         r['display_name'] = capitalize(model_field.verbose_name)
@@ -126,6 +127,7 @@ def base_defaults_factory(model_field):
 # TODO: move to form.py! remember to take the tests with them
 def field_defaults_factory(model_field):
     from django.db.models import BooleanField
+
     r = base_defaults_factory(model_field)
 
     if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
