@@ -146,7 +146,7 @@ def live_edit_view(request, view, args, kwargs):
             ),
             after=-1,
         ),
-        assets__custom=Asset(
+        assets__live_edit_page_custom=Asset(
             tag='style',
             text='''
             .container {
