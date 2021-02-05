@@ -32,6 +32,9 @@ clean-docs:
 lint:
 	tox -e lint
 
+black:
+	tox -e black
+
 test-all:
 	tox --skip-missing-interpreters
 
