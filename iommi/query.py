@@ -148,25 +148,12 @@ def value_to_str_for_query(filter, v):
         return {True: '1', False: '0'}.get(v)
     if type(v) in (int, float):
         return str(v)
-    if isinstance(v, Model):
-        model = type(v)
-        search_field = filter.search_fields[0]
-        try:
-            v = getattr_path(v, search_field)
-        except AttributeError:
-            raise NoRegisteredSearchFieldException(
-                f'{model.__name__} has no attribute {search_field}. Please register search fields with register_search_fields or specify search_fields.'
-            )
     return to_string_surrounded_by_quote(v)
 
 
 def build_query_expression(*, filter, value):
     if isinstance(value, Model):
-        try:
-            # We ignore the return value on purpose here. We are after the raise.
-            get_search_fields(model=type(value))
-        except NoRegisteredSearchFieldException:
-            return f'{filter.query_name}.pk={value.pk}'
+        return f'{filter.query_name}.pk={value.pk}'
 
     return f'{filter.query_name}{filter.query_operator_for_field}{value_to_str_for_query(filter, value)}'
 

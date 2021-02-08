@@ -31,15 +31,14 @@ from iommi.form import (
     Field,
     Form,
 )
-from iommi.from_model import NoRegisteredSearchFieldException
 from iommi.query import (
+    build_query_expression,
     choice_queryset_value_to_q,
     Filter,
     FREETEXT_SEARCH_NAME,
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
     QueryException,
-    value_to_str_for_query,
 )
 from iommi.traversable import declared_members
 from tests.helpers import req
@@ -49,7 +48,6 @@ from tests.models import (
     EndPointDispatchModel,
     Foo,
     FromModelWithInheritanceTest,
-    NonStandardName,
     TBar,
     TBaz,
     TFoo,
@@ -682,20 +680,9 @@ def test_filter_repr():
 
 
 @pytest.mark.django_db
-def test_nice_error_message():
-    with pytest.raises(NoRegisteredSearchFieldException) as e:
-        value_to_str_for_query(Filter(search_fields=['custom_name_field']), NonStandardName(non_standard_name='foo'))
-
-    assert (
-        str(e.value)
-        == "NonStandardName has no attribute custom_name_field. Please register search fields with register_search_fields or specify search_fields."
-    )
-
-
-@pytest.mark.django_db
-def test_value_to_str_for_query_dunder_path():
-    bar = Bar.objects.create(foo=Foo.objects.create(foo=1))
-    value_to_str_for_query(Filter(search_fields=['foo__foo']), bar)
+def test_build_query_expression_for_model():
+    foo = Foo.objects.create(foo=17)
+    assert build_query_expression(filter=Filter(query_name='bar'), value=foo) == f'bar.pk={foo.pk}'
 
 
 def test_escape_quote():
