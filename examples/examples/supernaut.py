@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.shortcuts import get_object_or_404
 from django.template import Template
 from django.urls import (
@@ -26,6 +24,7 @@ from .models import (
 
 # Menu -----------------------------
 
+
 class SupernautMenu(Menu):
     home = MenuItem(url='/', display_name=_('Home'))
     artists = MenuItem(display_name=_('Artists'))
@@ -37,6 +36,7 @@ class SupernautMenu(Menu):
 
 
 # Tables ---------------------------
+
 
 class TrackTable(Table):
     class Meta:
@@ -83,7 +83,8 @@ class IndexPage(Page):
         tag='div',
         header__template=None,
         cell__tag=None,
-        row__template=Template("""
+        row__template=Template(
+            """
             <div class="card" style="width: 15rem; display: inline-block;" {{ cells.attrs }}>
                 <img class="card-img-top" src="/static/album_art/{{ row.artist }}/{{ row.name|urlencode }}.jpg">
                 <div class="card-body text-center">
@@ -93,7 +94,8 @@ class IndexPage(Page):
                     </p>
                 </div>
             </div>
-        """),
+        """
+        ),
     )
 
 
@@ -142,10 +144,8 @@ urlpatterns = [
     path('albums/create/', Form.create(auto__model=Album).as_view()),
     path('artists/', ArtistTable(auto__model=Artist).as_view()),
     path('tracks/', TrackTable(auto__model=Track).as_view()),
-
     path('artist/<artist>/', artist_page),
     path('artist/<artist>/<album>/', album_page),
     path('artist/<artist>/<album>/edit/', edit_album),
     path('artist/<artist>/<album>/delete/', delete_album),
 ]
-

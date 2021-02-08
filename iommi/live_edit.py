@@ -1,15 +1,20 @@
 import json
 
+import parso
 from django.conf import settings
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.utils import autoreload
+from django.views.decorators.csrf import csrf_exempt
 from tri_struct import Struct
 
-from iommi import *
-from iommi import render_if_needed
+from iommi import (
+    Asset,
+    html,
+    Page,
+    Part,
+    render_if_needed,
+)
 from iommi._web_compat import mark_safe
-import parso
 
 orig_reload = getattr(autoreload, 'trigger_reload', None)
 
@@ -88,6 +93,7 @@ def live_edit_view(request, view, args, kwargs):
     except AttributeError:
         # view is an iommi class
         from iommi.debug import filename_and_line_num_from_part
+
         filename, _ = filename_and_line_num_from_part(view)
 
     with open(filename) as f:
@@ -114,6 +120,7 @@ def live_edit_view(request, view, args, kwargs):
                 # This only works in django 2.2+
                 def restore_auto_reload(filename):
                     from django.utils import autoreload
+
                     print('Skipped reload')
                     autoreload.trigger_reload = orig_reload
 
@@ -131,6 +138,7 @@ def live_edit_view(request, view, args, kwargs):
             return final_result
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             error = str(e)
             if not error:
@@ -149,82 +157,86 @@ def live_edit_view(request, view, args, kwargs):
         assets__live_edit_page_custom=Asset(
             tag='style',
             text='''
-            .container {
-                padding: 0 !important;           
-                margin: 0 !important;
-                max-width: 100%;
-            }
+                .container {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    max-width: 100%;
+                }
 
-            html,
-            body {
-                height: 100%;
-                margin: 0;
-            }
+                html,
+                body {
+                    height: 100%;
+                    margin: 0;
+                }
 
-            .container {
-                display: flex;
-                flex-flow: <<flow_direction>>;
-                height: 100%;
-            }
+                .container {
+                    display: flex;
+                    flex-flow: <<flow_direction>>;
+                    height: 100%;
+                }
 
-            .container iframe {
-                flex: 1 1 auto;
-            }
-            .container #editor {
-                flex: 2 1 auto;
-            }
-            '''.replace('<<flow_direction>>', flow_direction)
+                .container iframe {
+                    flex: 1 1 auto;
+                }
+
+                .container #editor {
+                    flex: 2 1 auto;
+                }
+            '''.replace(
+                '<<flow_direction>>', flow_direction
+            ),
         ),
-
         parts__result=html.iframe(attrs__id='result'),
         parts__editor=html.div(
             ast_of_old_code.get_code(),
             attrs__id='editor',
         ),
+        parts__script=html.script(
+            mark_safe(
+                '''
+                    function iommi_debounce(func, wait) {
+                        let timeout;
 
-        parts__script=html.script(mark_safe('''
-        function iommi_debounce(func, wait) {
-            let timeout;
+                        return (...args) => {
+                            const fn = () => func.apply(this, args);
 
-            return (...args) => {
-                const fn = () => func.apply(this, args);
+                            clearTimeout(timeout);
+                            timeout = setTimeout(() => fn(), wait);
+                        };
+                    }
 
-                clearTimeout(timeout);
-                timeout = setTimeout(() => fn(), wait);
-            };
-        }
+                    var editor = ace.edit("editor");
+                    editor.setTheme("ace/theme/cobalt");
+                    editor.session.setMode("ace/mode/python");
+                    editor.setShowPrintMargin(false);
 
-        var editor = ace.edit("editor");
-        editor.setTheme("ace/theme/cobalt");
-        editor.session.setMode("ace/mode/python");
-        editor.setShowPrintMargin(false);
+                    async function update() {
+                        let form_data = new FormData();
+                        form_data.append('data', editor.getValue());
 
-        async function update() {
-            let form_data = new FormData();
-            form_data.append('data', editor.getValue());
+                        let response = await fetch('', {
+                            method: 'POST',
+                            body: form_data
+                        });
+                        let foo = await response.json();
+                        if (foo.page) {
+                            // TODO: get scroll position and restore it
+                            document.getElementById('result').srcdoc = foo.page;
+                        }
+                    }
 
-            let response = await fetch('', {
-                method: 'POST',
-                body: form_data
-            });
-            let foo = await response.json();
-            if (foo.page) {
-                // TODO: get scroll position and restore it
-                document.getElementById('result').srcdoc = foo.page;
-            }
-        }
+                    function foo() {
+                        iommi_debounce(update, 200)();
+                    }
 
+                    editor.session.on('change', foo);
+                    editor.setFontSize(14);
+                    editor.session.setUseWrapMode(true);
 
-        function foo() {
-            iommi_debounce(update, 200)();
-        }
-
-        editor.session.on('change', foo);
-        editor.setFontSize(14);
-        editor.session.setUseWrapMode(true);
-        
-        foo();
-        ''')),
+                    foo();
+        '''
+            )
+        ),
     )
 
 
@@ -232,6 +244,7 @@ def dangerous_execute_code(code, request, view, args, kwargs):
     local_variables = {}
     if isinstance(view, Part):
         from iommi.debug import frame_from_part
+
         frame = frame_from_part(view)
         exec(code, frame.f_globals, local_variables)
     else:

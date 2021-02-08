@@ -1,6 +1,5 @@
 from iommi import (
     Asset,
-    Fragment,
     html,
     Page,
 )
@@ -12,12 +11,10 @@ from tests.helpers import (
 
 def test_assets_float_to_root():
     class MyPage(Page):
-        foo = html.div(
-            'foo',
-            assets__my_asset=Asset.css(attrs__href='http://foo.bar/baz')
-        )
+        foo = html.div('foo', assets__my_asset=Asset.css(attrs__href='http://foo.bar/baz'))
 
-    expected = prettify('''
+    expected = prettify(
+        '''
         <!DOCTYPE html>
         <html>
             <head>
@@ -28,7 +25,8 @@ def test_assets_float_to_root():
                 <div> foo </div>
             </body>
         </html>
-    ''')
+    '''
+    )
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
 
@@ -37,16 +35,11 @@ def test_assets_render_once():
     an_asset = Asset.css(attrs__href='http://foo.bar/baz')
 
     class MyPage(Page):
-        foo = html.div(
-            'foo',
-            assets__my_asset=an_asset
-        )
-        bar = html.div(
-            'bar',
-            assets__my_asset=an_asset
-        )
+        foo = html.div('foo', assets__my_asset=an_asset)
+        bar = html.div('bar', assets__my_asset=an_asset)
 
-    expected = prettify('''
+    expected = prettify(
+        '''
         <!DOCTYPE html>
         <html>
             <head>
@@ -58,19 +51,18 @@ def test_assets_render_once():
                 <div> bar </div>
             </body>
         </html>
-    ''')
+    '''
+    )
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
 
 
 def test_assets_render_any_fragment():
     class MyPage(Page):
-        foo = html.div(
-            'foo',
-            assets__my_asset=html.span(attrs__href='http://foo.bar/baz')
-        )
+        foo = html.div('foo', assets__my_asset=html.span(attrs__href='http://foo.bar/baz'))
 
-    expected = prettify('''
+    expected = prettify(
+        '''
         <!DOCTYPE html>
         <html>
             <head>
@@ -81,7 +73,8 @@ def test_assets_render_any_fragment():
                 <div> foo </div>
             </body>
         </html>
-    ''')
+    '''
+    )
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
 
@@ -92,7 +85,8 @@ def test_asset_shortcuts():
             assets__css_asset = Asset.css(attrs__href='http://foo.bar/baz.css')
             assets__js_asset = Asset.js(attrs__href='http://foo.bar/baz.j')
 
-    expected = prettify('''
+    expected = prettify(
+        '''
         <!DOCTYPE html>
         <html>
             <head>
@@ -102,6 +96,7 @@ def test_asset_shortcuts():
             </head>
              <body />
         </html>
-    ''')
+    '''
+    )
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected

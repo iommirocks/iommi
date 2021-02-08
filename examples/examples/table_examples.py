@@ -1,5 +1,5 @@
-from django.urls import path
 from django.http import HttpResponseRedirect
+from django.urls import path
 from django.utils.translation import gettext
 
 from examples import (
@@ -16,12 +16,12 @@ from examples.views import (
     ExamplesPage,
 )
 from iommi import (
-    Page,
     Action,
     Column,
-    html,
-    Table,
     Field,
+    html,
+    Page,
+    Table,
 )
 
 examples = []
@@ -43,7 +43,9 @@ def table_readme_example_1(request):
 
     # I can declare a table:
     class FooTable(Table):
-        a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
+        # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
+        a = Column.number()
+
         b = Column()
         c = Column(cell__format=lambda value, **_: value[-1])  # Display the last value of the tuple
         sum_c = Column(cell__value=lambda row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
@@ -132,7 +134,7 @@ example_6_view = Table(
     columns__a__bulk__include=True,
     bulk__actions__delete__include=True,
     extra_evaluated__report_name='example_download',
-    columns__a__extra_evaluated__report_name='A'
+    columns__a__extra_evaluated__report_name='A',
 ).as_view()
 
 example_6_view = example('Table expressed directly as a view function')(example_6_view)
@@ -151,7 +153,7 @@ def table_two(request):
             columns__b__filter__include=True,
             page_size=5,
             query__advanced__include=False,
-        )
+        ),
     )
 
 
@@ -176,7 +178,9 @@ def table_post_handler_on_lists(request):
     class FooTable(Table):
         # I can add checkboxes to each row
         s = Column.select()
-        a = Column.number()  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
+        a = (
+            Column.number()
+        )  # This is a shortcut that results in the css class "rj" (for right justified) being added to the header and cell
         b = Column()
         c = Column(cell__format=lambda value, **_: value[-1])  # Display the last value of the tuple
         sum_c = Column(cell__value=lambda row, **_: sum(row.c), sortable=False)  # Calculate a value not present in Foo
@@ -184,7 +188,9 @@ def table_post_handler_on_lists(request):
         class Meta:
             page_size = 3
             # And register a button that will get the selection passed in its post_handler
-            bulk__actions__print = Action.primary(display_name='print me', post_handler=bulk__actions__print__post_handler)
+            bulk__actions__print = Action.primary(
+                display_name='print me', post_handler=bulk__actions__print__post_handler
+            )
 
     return FooTable(rows=foos)
 
@@ -194,9 +200,9 @@ def extra_fields(request):
     class FooTable(Table):
         name = Column(filter__include=True)
 
-    table = FooTable(rows=Foo.objects.all(),
-                     query__form__fields__my_extra_field=Field(attr=None, initial="Hello World")
-                     ).bind(request=request)
+    table = FooTable(
+        rows=Foo.objects.all(), query__form__fields__my_extra_field=Field(attr=None, initial="Hello World")
+    ).bind(request=request)
     print(table.query.form.fields.my_extra_field.value)
     return table
 
@@ -219,7 +225,6 @@ class IndexPage(ExamplesPage):
 urlpatterns = [
     path('', IndexPage().as_view()),
     path('all_columns/', all_column_sorts),
-
     path('example_1/', table_readme_example_1, name='readme_example_1'),
     path('example_2/', table_readme_example_2, name='readme_example_2'),
     path('example_3/', table_auto_example_1, name='readme_example_1'),

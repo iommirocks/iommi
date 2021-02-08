@@ -24,7 +24,9 @@ def sort_after(d):
     if len(unmoved) == len(d):
         return d
 
-    to_be_moved_by_index = sorted(to_be_moved_by_index, key=lambda x: x[1].after)  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
+    to_be_moved_by_index = sorted(
+        to_be_moved_by_index, key=lambda x: x[1].after
+    )  # pragma: no mutate (infinite loop when x.after changed to None, but if changed to a number manually it exposed a missing test)
 
     def place(x):
         yield x
@@ -60,9 +62,11 @@ def sort_after(d):
 
     if to_be_moved_by_name:
         available_names = "\n    ".join(sorted(list(d.keys())))
-        raise KeyError(f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} '
-                       f'but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} '
-                       f'not exist.\nAvailable names:\n    {available_names}')
+        raise KeyError(
+            f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} '
+            f'but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} '
+            f'not exist.\nAvailable names:\n    {available_names}'
+        )
 
     d.clear()
     d.update(dict(result))

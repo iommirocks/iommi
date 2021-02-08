@@ -72,7 +72,7 @@ def page_live(request):
     return Page(
         parts__foo='Test',
         parts__circle=mark_safe('<svg><circle cx=50 cy=50 r=40 stroke=green fill=yellow stroke-width=4></svg>'),
-        parts__bar=Table(auto__model=TFoo, page_size=2)
+        parts__bar=Table(auto__model=TFoo, page_size=2),
     )
 
 

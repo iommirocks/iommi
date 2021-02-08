@@ -5,8 +5,8 @@ from typing import (
     List,
     Tuple,
 )
-from django.utils.translation import gettext_lazy
 
+from django.utils.translation import gettext_lazy
 from tri_declarative import (
     class_shortcut,
     dispatch,
@@ -31,10 +31,10 @@ from iommi.fragment import (
 )
 from iommi.member import Members
 from iommi.part import Part
+from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
 
 
 @with_meta
@@ -182,10 +182,7 @@ def group_actions(actions: Dict[str, Action]):
 
     grouped_actions: List[Tuple[str, str, List[Action]]] = [
         (group_name, slugify(group_name), list(actions_in_group))
-        for group_name, actions_in_group in groupby(
-            actions_with_group,
-            key=lambda l: l.group
-        )
+        for group_name, actions_in_group in groupby(actions_with_group, key=lambda l: l.group)
     ]
 
     for _, _, actions_in_group in grouped_actions:
@@ -193,11 +190,7 @@ def group_actions(actions: Dict[str, Action]):
             action.attrs.role = 'menuitem'
             action.attrs['class']['dropdown-item'] = True
 
-    actions_without_group = [
-        action
-        for action in values(actions)
-        if action.group is None
-    ]
+    actions_without_group = [action for action in values(actions) if action.group is None]
     return actions_without_group, grouped_actions
 
 

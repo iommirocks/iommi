@@ -35,7 +35,7 @@ def parse_relative_date(s, start_date=None):
         period = '1d'
         start_date = None
     if period.endswith('ago'):
-        period = period[:-len('ago')].strip()
+        period = period[: -len('ago')].strip()
         neg = True
         if period.endswith('_'):
             period = period[:-1]
@@ -43,7 +43,7 @@ def parse_relative_date(s, start_date=None):
     sym = None
     for symbol in period_symbols:
         if period.endswith(symbol):
-            period = period[:-len(symbol)]
+            period = period[: -len(symbol)]
             sym = symbol
             break  # pragma: no mutate optimization
     d = None

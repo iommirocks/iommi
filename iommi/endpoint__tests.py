@@ -9,26 +9,25 @@ from tri_struct import Struct
 from iommi import (
     Field,
     Form,
-    Page,
-    Table,
-    Part,
     html,
+    Page,
+    Part,
+    Table,
 )
 from iommi.endpoint import (
     find_target,
     InvalidEndpointPathException,
-    perform_post_dispatch,
     path_join,
+    perform_post_dispatch,
 )
 from iommi.part import request_data
 from iommi.traversable import (
     build_long_path,
-    get_path_by_long_path,
 )
 from tests.helpers import (
+    req,
     request_with_middleware,
     StubTraversable,
-    req,
 )
 from tests.models import (
     T1,
@@ -77,9 +76,7 @@ def test_find_target():
     )
     root = StubTraversable(
         _name='root',
-        members=Struct(
-            foo=foo
-        ),
+        members=Struct(foo=foo),
     )
     root = root.bind(request=None)
 
@@ -98,24 +95,24 @@ def test_find_target_with_invalid_path():
     )
     root = StubTraversable(
         _name='root',
-        members=Struct(
-            foo=foo
-        ),
+        members=Struct(foo=foo),
     )
     root = root.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
         find_target(path='/foo/bar/baz', root=root)
 
-    assert str(e.value) == "Given path /foo/bar/baz not found.\n" \
-                           "    Short alternatives:\n" \
-                           "        ''\n" \
-                           "        foo\n" \
-                           "        bar\n" \
-                           "    Long alternatives:\n" \
-                           "        ''\n" \
-                           "        foo\n" \
-                           "        foo/bar"
+    assert (
+        str(e.value) == "Given path /foo/bar/baz not found.\n"
+        "    Short alternatives:\n"
+        "        ''\n"
+        "        foo\n"
+        "        bar\n"
+        "    Long alternatives:\n"
+        "        ''\n"
+        "        foo\n"
+        "        foo/bar"
+    )
 
 
 def test_middleware_fallthrough_on_non_part():
@@ -139,9 +136,7 @@ def test_dispatch_auto_json():
 
 
 def test_dispatch_return_http_response():
-    p = Part(
-        endpoints__foo__func=lambda value, **_: HttpResponse(f'foo {value}')
-    )
+    p = Part(endpoints__foo__func=lambda value, **_: HttpResponse(f'foo {value}'))
     r = p.bind(request=req('get', **{'/foo': '7'})).render_to_response()
     assert r.content == b'foo 7'
 
@@ -149,7 +144,7 @@ def test_dispatch_return_http_response():
 def test_dispatch_return_part():
     p = Part(
         endpoints__foo__func=lambda request, **_: html.div('foo', attrs__class__bar=True).bind(request=request),
-        endpoints__bar__func = lambda request, **_: html.div('bar', attrs__class__baz=True),
+        endpoints__bar__func=lambda request, **_: html.div('bar', attrs__class__baz=True),
     )
     r = p.bind(request=req('get', **{'/foo': '7'})).render_to_response()
     assert b'<div class="bar">foo</div>' in r.content
@@ -166,7 +161,9 @@ def test_invalid_enpoint_path(settings):
     with pytest.raises(InvalidEndpointPathException) as e:
         p.render_to_response()
 
-    assert str(e.value) == """
+    assert (
+        str(e.value)
+        == """
 Given path /foo not found.
     Short alternatives:
         ''
@@ -175,6 +172,7 @@ Given path /foo not found.
         ''
         endpoints/debug_tree
 """.strip()
+    )
 
 
 def test_unsupported_request_method():
@@ -196,17 +194,24 @@ class ExplodingForm(Form):
 
 
 def test_post_not_trigger_bind():
-    p = Page(parts=dict(
-        form=Form(
-            fields__foo=Field(),
-        ),
-        exploding_form=ExplodingForm()
-    ))
+    p = Page(
+        parts=dict(
+            form=Form(
+                fields__foo=Field(),
+            ),
+            exploding_form=ExplodingForm(),
+        )
+    )
 
-    p = p.bind(request=req('post', **{
-        '-': '',
-        'foo': 'bar',
-    }))
+    p = p.bind(
+        request=req(
+            'post',
+            **{
+                '-': '',
+                'foo': 'bar',
+            },
+        )
+    )
 
     assert p.parts.form.fields.foo.value == 'bar'
     with pytest.raises(Exception) as e:
@@ -216,16 +221,23 @@ def test_post_not_trigger_bind():
 
 
 def test_ajax_not_trigger_bind():
-    p = Page(parts=dict(
-        form=Form(
-            endpoints__foo__func=lambda value, **_: HttpResponse('bar'),
-        ),
-        exploding_form=ExplodingForm()
-    ))
+    p = Page(
+        parts=dict(
+            form=Form(
+                endpoints__foo__func=lambda value, **_: HttpResponse('bar'),
+            ),
+            exploding_form=ExplodingForm(),
+        )
+    )
 
-    p = p.bind(request=req('get', **{
-        '/foo': '',
-    }))
+    p = p.bind(
+        request=req(
+            'get',
+            **{
+                '/foo': '',
+            },
+        )
+    )
 
     assert p.render_to_response().content == b'bar'
 
@@ -242,7 +254,9 @@ def test_perform_post_dispatch_error_message():
     with pytest.raises(InvalidEndpointPathException) as e:
         perform_post_dispatch(root=target, path='/foo', value='')
 
-    assert str(e.value) == "Target <tests.helpers.StubTraversable foo (bound) path:'foo'> has no registered post_handler"
+    assert (
+        str(e.value) == "Target <tests.helpers.StubTraversable foo (bound) path:'foo'> has no registered post_handler"
+    )
 
 
 def test_path_join():

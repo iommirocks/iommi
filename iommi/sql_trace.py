@@ -27,8 +27,10 @@ from iommi.thread_locals import (
 try:
     from termcolor import colored
 except ImportError:
+
     def colored(text, color=None, on_color=None, attrs=None):
         return text
+
 
 from django.conf import settings
 from django.db.backends import utils as django_db_utils
@@ -83,7 +85,9 @@ class Middleware:
                 color = '#4f4fff'
                 for i, x in enumerate(iommi_sql_debug_log):
                     proportion = x["duration"] / total_duration * 100
-                    result.append(f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>')
+                    result.append(
+                        f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>'
+                    )
 
                 result.append('<br>By group:<br>')
 
@@ -91,7 +95,9 @@ class Middleware:
                     duration = sum(x["duration"] for x in group)
                     proportion = duration / total_duration * 100
                     k = k.replace('>', '&gt;')
-                    result.append(f'<span style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{duration:.3}s, like {k}"></span>')
+                    result.append(
+                        f'<span style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{duration:.3}s, like {k}"></span>'
+                    )
 
                 result.append('<p></p><pre>')
 
@@ -153,7 +159,10 @@ def format_sql(text, width=60, duration=None, short_limit=120):
                     if token in ('AND', 'OR', 'LEFT', 'INNER', 'FROM', 'WHERE', 'ORDER', 'LIMIT'):
                         yield format_html('<span><br>&nbsp;</span>')
                         column = 2
-                        if token in ('AND', 'OR',):
+                        if token in (
+                            'AND',
+                            'OR',
+                        ):
                             yield format_html('&nbsp;')
                             column += 2
             yield colorize(token, fg=fg, bold=bold)
@@ -320,16 +329,15 @@ def fill_stacks(iommi_sql_debug_log):
 
 def sql_debug_last_call(response):
     request = get_current_request()
-    if get_sql_debug() == SQL_DEBUG_LEVEL_WORST and hasattr(request, 'iommi_sql_debug_log'):  # hasattr check because process_request might not be called in case of an early redirect
+    if get_sql_debug() == SQL_DEBUG_LEVEL_WORST and hasattr(
+        request, 'iommi_sql_debug_log'
+    ):  # hasattr check because process_request might not be called in case of an early redirect
         stacks = defaultdict(list)
         fill_stacks(request.iommi_sql_debug_log)
         for x in request.iommi_sql_debug_log:
             stacks[x['sql']].append(x)
 
-        highscore = sorted([
-            (len(logs), stack_trace, logs)
-            for stack_trace, logs in stacks.items()
-        ])
+        highscore = sorted([(len(logs), stack_trace, logs) for stack_trace, logs in stacks.items()])
         # Print the worst offenders
         number_of_offenders = getattr(settings, 'SQL_DEBUG_WORST_NUMBER_OF_OFFENDERS', 3)
         query_cutoff = getattr(settings, 'SQL_DEBUG_WORST_QUERY_CUTOFF', 4)
@@ -346,19 +354,22 @@ def sql_debug_last_call(response):
         for x in request.iommi_sql_debug_log:
             queries_per_using[x['using']] += 1
 
-        sql_debug(f'Total number of SQL statements: {sum(queries_per_using.values())}, {queries_per_using.get("read-only")} read-only, {queries_per_using.get("summary")} summary\n')
+        sql_debug(
+            f'Total number of SQL statements: {sum(queries_per_using.values())}, {queries_per_using.get("read-only")} read-only, {queries_per_using.get("summary")} summary\n'
+        )
 
     if settings.DEBUG:
         total_sql_time = f" (sql time: {sql_debug_total_time():.3f}s)"
         duration = f' ({(datetime.now() - request.iommi_start_time).total_seconds():.3f}s)'
-        sql_debug(msg=f'{request.META["REQUEST_METHOD"]} {request.get_full_path()} -> {response.status_code} {duration}{total_sql_time}')
+        sql_debug(
+            msg=f'{request.META["REQUEST_METHOD"]} {request.get_full_path()} -> {response.status_code} {duration}{total_sql_time}'
+        )
         sql_debug(f'{request.get_full_path()} -> {response.status_code}{duration}', fg='magenta')
 
     set_sql_debug(None)
 
 
 class CursorDebugWrapper(django_db_utils.CursorWrapper):
-
     def _execute_and_log(self, *, f, **kwargs):
         frame = sys._getframe().f_back.f_back
         while "django/db" in frame.f_code.co_filename:

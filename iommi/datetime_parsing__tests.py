@@ -4,8 +4,8 @@ from datetime import (
     timedelta,
 )
 
-import pytest
 import freezegun
+import pytest
 
 from iommi._web_compat import ValidationError
 from iommi.datetime_parsing import (
@@ -39,7 +39,7 @@ def frozen_time():
         ('500 months', '"500 months" is not a valid relative date. 500 is too big (max is 499).'),
         ('167 quarters', '"167 quarters" is not a valid relative date. 167 is too big (max is 166).'),
         ('400 years', '"400 years" is not a valid relative date. 400 is too big (max is 399).'),
-    ]
+    ],
 )
 def test_parse_relative_date_error_conditions(value, message):
     with pytest.raises(ValidationError) as e:
@@ -57,14 +57,15 @@ def test_parse_relative_datetime():
     assert parse_relative_datetime('now') == datetime.now()
 
 
-
 def test_parse_relative_date_relative():
     today = date.today()
 
     # past
     assert parse_relative_date('yesterday') == (today - timedelta(days=1))
     assert parse_relative_date('5 days ago') == (today - timedelta(days=5))
-    assert parse_relative_date('5 day_ago') == (today - timedelta(days=5))  # Weird, but the code was written for this case, so let's test it
+    assert parse_relative_date('5 day_ago') == (
+        today - timedelta(days=5)
+    )  # Weird, but the code was written for this case, so let's test it
     assert parse_relative_date('5 weekdays ago') == (today - timedelta(days=7))
     assert parse_relative_date('1 week ago') == (today - timedelta(days=7))
     assert parse_relative_date('1 month ago') == (today - timedelta(days=31))
@@ -123,7 +124,6 @@ def test_parse_relative_date_relative():
     assert parse_relative_date('1 y') == (today + timedelta(days=365))
     assert parse_relative_date('1 yr') == (today + timedelta(days=365))
     assert parse_relative_date('1 years') == (today + timedelta(days=365))
-
 
 
 def test_parse_relative_date_weekdays():

@@ -1,8 +1,8 @@
 import csv
 from datetime import (
+    date,
     datetime,
     time,
-    date,
 )
 from enum import (
     auto,
@@ -40,7 +40,6 @@ from django.utils.translation import (
     gettext,
     gettext_lazy,
 )
-
 from tri_declarative import (
     class_shortcut,
     declarative,
@@ -90,8 +89,8 @@ from iommi.base import (
     keys,
     MISSING,
     model_and_rows,
-    values,
     NOT_BOUND_MESSAGE,
+    values,
 )
 from iommi.endpoint import (
     DISPATCH_PREFIX,
@@ -110,7 +109,6 @@ from iommi.fragment import Tag
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
-    get_fields,
     get_search_fields,
     member_from_model,
     NoRegisteredSearchFieldException,
@@ -127,7 +125,6 @@ from iommi.part import render_root
 from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
-    QueryException,
 )
 from iommi.traversable import (
     declared_members,
@@ -142,7 +139,6 @@ from .reinvokable import (
     reinvoke,
     set_and_remember_for_reinvoke,
 )
-from ._web_compat import settings
 
 LAST = LAST
 
@@ -345,6 +341,7 @@ class Column(Part):
     See :doc:`Table` for more complete examples.
 
     """
+
     attr: str = EvaluatedRefinable()
     sort_default_desc: bool = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
@@ -420,7 +417,9 @@ class Column(Part):
         self.table = None
 
     def __html__(self, *, render=None):
-        assert False, "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"  # pragma: no cover
+        assert (
+            False
+        ), "This is implemented just to make linting happy that we've implemented all abstract methods. Don't call this!"  # pragma: no cover
 
     @staticmethod
     @evaluated_refinable
@@ -456,8 +455,7 @@ class Column(Part):
 
         if self.auto_rowspan:
             assert 'rowspan' not in self.cell.attrs, (
-                f'Explicitly set rowspan html attribute collides with '
-                f'auto_rowspan on column {self.iommi_path}'
+                f'Explicitly set rowspan html attribute collides with ' f'auto_rowspan on column {self.iommi_path}'
             )
 
     def own_evaluate_parameters(self):
@@ -477,7 +475,8 @@ class Column(Part):
             model_field_name=model_field_name,
             model_field=model_field,
             defaults_factory=base_defaults_factory,
-            **kwargs)
+            **kwargs,
+        )
 
     @classmethod
     @class_shortcut(
@@ -578,6 +577,7 @@ class Column(Part):
         :param checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
         :param checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
         """
+
         def cell__value(row, table, cells, **kwargs):
             checked_str = ' checked' if evaluate_strict(checked, row=row, **kwargs) else ''
             if isinstance(table.rows, QuerySet):
@@ -588,9 +588,7 @@ class Column(Part):
                 row_id = cells.row_index
             return mark_safe(f'<input type="checkbox"{checked_str} class="checkbox" name="{checkbox_name}_{row_id}" />')
 
-        setdefaults_path(kwargs, dict(
-            cell__value=cell__value
-        ))
+        setdefaults_path(kwargs, dict(cell__value=cell__value))
         return call_target(**kwargs)
 
     @classmethod
@@ -622,10 +620,13 @@ class Column(Part):
     def choice(cls, call_target=None, **kwargs):
         assert 'choices' in kwargs, 'To use Column.choice, you must pass the choices list'
         choices = kwargs['choices']
-        setdefaults_path(kwargs, dict(
-            bulk__choices=choices,
-            filter__choices=choices,
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                bulk__choices=choices,
+                filter__choices=choices,
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -635,10 +636,13 @@ class Column(Part):
         filter__call_target__attribute='choice_queryset',
     )
     def choice_queryset(cls, call_target=None, **kwargs):
-        setdefaults_path(kwargs, dict(
-            bulk__model=kwargs.get('model'),
-            filter__model=kwargs.get('model'),
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                bulk__model=kwargs.get('model'),
+                filter__model=kwargs.get('model'),
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -648,10 +652,13 @@ class Column(Part):
         filter__call_target__attribute='multi_choice_queryset',
     )
     def multi_choice_queryset(cls, call_target, **kwargs):
-        setdefaults_path(kwargs, dict(
-            bulk__model=kwargs.get('model'),
-            filter__model=kwargs.get('model'),
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                bulk__model=kwargs.get('model'),
+                filter__model=kwargs.get('model'),
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -661,10 +668,13 @@ class Column(Part):
         filter__call_target__attribute='multi_choice',
     )
     def multi_choice(cls, call_target, **kwargs):
-        setdefaults_path(kwargs, dict(
-            bulk__model=kwargs.get('model'),
-            filter__model=kwargs.get('model'),
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                bulk__model=kwargs.get('model'),
+                filter__model=kwargs.get('model'),
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -683,9 +693,12 @@ class Column(Part):
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
 
-        setdefaults_path(kwargs, dict(
-            cell__url=link_cell_url,
-        ))
+        setdefaults_path(
+            kwargs,
+            dict(
+                cell__url=link_cell_url,
+            ),
+        )
         return call_target(**kwargs)
 
     @classmethod
@@ -721,8 +734,8 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='date',
-        filter__query_operator_to_q_operator=lambda op: {'=': 'exact',
-                                                         ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op)
+        or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='date',
     )
     def date(cls, call_target, **kwargs):
@@ -731,8 +744,8 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='datetime',
-        filter__query_operator_to_q_operator=lambda op: {'=': 'exact',
-                                                         ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op)
+        or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='datetime',
     )
     def datetime(cls, call_target, **kwargs):
@@ -741,8 +754,8 @@ class Column(Part):
     @classmethod
     @class_shortcut(
         filter__call_target__attribute='time',
-        filter__query_operator_to_q_operator=lambda op: {'=': 'exact',
-                                                         ':': 'contains'}.get(op) or Q_OPERATOR_BY_QUERY_OPERATOR[op],
+        filter__query_operator_to_q_operator=lambda op: {'=': 'exact', ':': 'contains'}.get(op)
+        or Q_OPERATOR_BY_QUERY_OPERATOR[op],
         bulk__call_target__attribute='time',
     )
     def time(cls, call_target, **kwargs):
@@ -768,7 +781,7 @@ class Column(Part):
     @class_shortcut(
         bulk__call_target__attribute='file',
         filter__call_target__attribute='file',
-        cell__format=lambda value, **_: str(value)
+        cell__format=lambda value, **_: str(value),
     )
     def file(cls, call_target, **kwargs):
         return call_target(**kwargs)
@@ -819,11 +832,14 @@ class Cells(Traversable, Tag):
     """
     Internal class used in row rendering
     """
+
     template: Union[str, Template] = EvaluatedRefinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag: str = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
-    extra_evaluated: Dict[str, Any] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    extra_evaluated: Dict[
+        str, Any
+    ] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
 
     def __init__(self, row, row_index, **kwargs):
         super(Cells, self).__init__(_name='row', **kwargs)
@@ -838,14 +854,15 @@ class Cells(Traversable, Tag):
         if self.template:
             return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
 
-        return Fragment(
-            tag=self.tag,
-            attrs=self.attrs,
-            children__text=mark_safe('\n'.join(
-                bound_cell.__html__()
-                for bound_cell in self
-            ))
-        ).bind(parent=self).__html__()
+        return (
+            Fragment(
+                tag=self.tag,
+                attrs=self.attrs,
+                children__text=mark_safe('\n'.join(bound_cell.__html__() for bound_cell in self)),
+            )
+            .bind(parent=self)
+            .__html__()
+        )
 
     def __str__(self):
         return self.__html__()
@@ -874,7 +891,6 @@ class CellConfig(RefinableObject, Tag):
 
 
 class Cell(CellConfig):
-
     @dispatch
     def __init__(self, cells: Cells, column):
         kwargs = setdefaults_path(
@@ -894,10 +910,7 @@ class Cell(CellConfig):
         self.table = cells.iommi_parent()
         self.row = cells.row
 
-        self._evaluate_parameters = {
-            **self.cells.iommi_evaluate_parameters(),
-            'column': column
-        }
+        self._evaluate_parameters = {**self.cells.iommi_evaluate_parameters(), 'column': column}
 
         self.value = evaluate_strict(self.value, **self._evaluate_parameters)
         self._evaluate_parameters['value'] = self.value
@@ -916,8 +929,9 @@ class Cell(CellConfig):
     def __html__(self):
         cell__template = self.column.cell.template
         if cell__template:
-            context = dict(table=self.table, column=self.column, cells=self.cells,
-                           row=self.row, value=self.value, bound_cell=self)
+            context = dict(
+                table=self.table, column=self.column, cells=self.cells, row=self.row, value=self.value, bound_cell=self
+            )
             return render_template(self.table.get_request(), cell__template, context)
 
         if self.tag:
@@ -932,21 +946,16 @@ class Cell(CellConfig):
         if url:
             url_title = self.url_title
             # TODO: `url`, `url_title` and `link` is overly complex
-            cell_contents = Fragment(
-                tag='a',
-                attrs__title=url_title,
-                attrs__href=url,
-                children__content=cell_contents,
-                **self.link
-            ).bind(parent=self.table).__html__()
+            cell_contents = (
+                Fragment(tag='a', attrs__title=url_title, attrs__href=url, children__content=cell_contents, **self.link)
+                .bind(parent=self.table)
+                .__html__()
+            )
         return cell_contents
 
     def render_formatted(self):
         return evaluate_strict(
-            self.column.cell.format,
-            row=self.row,
-            value=self.value,
-            **self.column.iommi_evaluate_parameters()
+            self.column.cell.format, row=self.row, value=self.value, **self.column.iommi_evaluate_parameters()
         )
 
     def __str__(self):
@@ -1003,9 +1012,19 @@ class ColumnHeader(object):
     read the docs for :doc:`HeaderConfig`.
     """
 
-    @dispatch(
-    )
-    def __init__(self, *, display_name, attrs, template, table, url=None, column=None, number_of_columns_in_group=None, index_in_group=None):
+    @dispatch()
+    def __init__(
+        self,
+        *,
+        display_name,
+        attrs,
+        template,
+        table,
+        url=None,
+        column=None,
+        number_of_columns_in_group=None,
+        index_in_group=None,
+    ):
         self.table = table
         self.display_name = mark_safe(display_name)
         self.template = template
@@ -1052,10 +1071,7 @@ def bulk__post_handler(table, form, **_):
         else:
             simple_updates.append(field)
 
-    updates = {
-        field.attr: field.value
-        for field in simple_updates
-    }
+    updates = {field.attr: field.value for field in simple_updates}
     queryset.update(**updates)
 
     if m2m_updates:
@@ -1136,7 +1152,9 @@ class Paginator(Traversable):
     link = Refinable()
     adjacent_pages: int = Refinable()
     min_page_size: int = Refinable()
-    number_of_pages: int = Refinable()  # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
+    number_of_pages: int = (
+        Refinable()
+    )  # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
     count: int = Refinable()  # count is evaluated, but in a special way so gets no EvaluatedRefinable type
     slice = Refinable()
     show_always = Refinable()
@@ -1144,27 +1162,21 @@ class Paginator(Traversable):
     @dispatch(
         adjacent_pages=6,
         min_page_size=1,
-
         attrs__class=EMPTY,
         attrs__style=EMPTY,
-
         container__attrs__class=EMPTY,
         container__attrs__style=EMPTY,
-
         active_item__attrs__class=EMPTY,
         active_item__attrs__style=EMPTY,
-
         item__attrs__class=EMPTY,
         item__attrs__style=EMPTY,
-
         link__attrs__class=EMPTY,
         link__attrs__style=EMPTY,
-
         page=1,
-
         count=paginator__count,
-        number_of_pages=lambda paginator, rows, **_: ceil(max(1, (paginator.count -
-                                                                  (paginator.min_page_size - 1))) / paginator.page_size),
+        number_of_pages=lambda paginator, rows, **_: ceil(
+            max(1, (paginator.count - (paginator.min_page_size - 1))) / paginator.page_size
+        ),
         slice=lambda top, bottom, rows, **_: rows[bottom:top],
     )
     @reinvokable
@@ -1229,8 +1241,8 @@ class Paginator(Traversable):
         elif foo > self.number_of_pages - self.adjacent_pages:
             foo = self.number_of_pages - self.adjacent_pages
         page_numbers = [
-            n for n in
-            range(self.page - self.adjacent_pages, foo + self.adjacent_pages + 1)
+            n
+            for n in range(self.page - self.adjacent_pages, foo + self.adjacent_pages + 1)
             if 0 < n <= self.number_of_pages
         ]
 
@@ -1239,26 +1251,30 @@ class Paginator(Traversable):
         if self.iommi_path in get:
             del get[self.iommi_path]
 
-        self.context.update(dict(
-            extra=get and (get.urlencode() + "&") or "",
-            page_numbers=page_numbers,
-            show_first=1 not in page_numbers,
-            show_last=self.number_of_pages not in page_numbers,
-        ))
+        self.context.update(
+            dict(
+                extra=get and (get.urlencode() + "&") or "",
+                page_numbers=page_numbers,
+                show_first=1 not in page_numbers,
+                show_last=self.number_of_pages not in page_numbers,
+            )
+        )
 
         has_next = self.page < self.number_of_pages
         has_previous = self.page > 1
-        self.context.update({
-            'page_size': table.page_size,
-            'has_next': has_next,
-            'has_previous': has_previous,
-            'next': self.page + 1 if has_next else None,
-            'previous': self.page - 1 if has_previous else None,
-            'page': self.page,
-            'pages': self.number_of_pages,
-            'hits': self.count,
-            'paginator': self,
-        })
+        self.context.update(
+            {
+                'page_size': table.page_size,
+                'has_next': has_next,
+                'has_previous': has_previous,
+                'next': self.page + 1 if has_next else None,
+                'previous': self.page - 1 if has_previous else None,
+                'page': self.page,
+                'pages': self.number_of_pages,
+                'hits': self.count,
+                'paginator': self,
+            }
+        )
 
     def own_evaluate_parameters(self):
         return dict(paginator=self)
@@ -1294,7 +1310,9 @@ def endpoint__csv(table, **_):
     columns = [c for c in values(table.columns) if c.extra_evaluated.get('report_name')]
     csv_safe_column_indexes = {i for i, c in enumerate(values(table.columns)) if 'csv_whitelist' in c.extra}
     assert columns, 'To get CSV output you must specify at least one column with extra_evaluated__report_name'
-    assert 'report_name' in table.extra_evaluated, 'To get CSV output you must specify extra_evaluated__report_name on the table'
+    assert (
+        'report_name' in table.extra_evaluated
+    ), 'To get CSV output you must specify extra_evaluated__report_name on the table'
     filename = table.extra_evaluated.report_name + '.csv'
 
     header = [c.extra_evaluated.report_name for c in columns]
@@ -1328,10 +1346,7 @@ def endpoint__csv(table, **_):
 
     def write_csv_row(writer, row):
         row_strings = [smart_text2(value) for value in row]
-        safe_row = [
-            v if i in csv_safe_column_indexes else safe_csv_value(v)
-            for i, v in enumerate(row_strings)
-        ]
+        safe_row = [v if i in csv_safe_column_indexes else safe_csv_value(v) for i, v in enumerate(row_strings)]
         writer.writerow(safe_row)
 
     f = StringIO()
@@ -1343,7 +1358,9 @@ def endpoint__csv(table, **_):
     response = FileResponse(f.getvalue(), 'text/csv')
 
     # RFC 2183, RFC 2184
-    response['Content-Disposition'] = smart_str("attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename)))
+    response['Content-Disposition'] = smart_str(
+        "attachment; filename*=UTF-8''{value}".format(value=quote_plus(filename))
+    )
     response['Last-Modified'] = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
     return response
 
@@ -1373,6 +1390,7 @@ class Table(Part, Tag):
                 attrs__style = 'background: green'
 
     """
+
     bulk_filter: Namespace = EvaluatedRefinable()
     bulk_exclude: Namespace = EvaluatedRefinable()
     sortable: bool = EvaluatedRefinable()
@@ -1417,13 +1435,15 @@ class Table(Part, Tag):
         query_class = Query
         action_class = Action
         page_class = Page
-        endpoints__tbody__func = (lambda table, **_: {'html': table.__html__(template='iommi/table/table_tag.html')})
+        endpoints__tbody__func = lambda table, **_: {'html': table.__html__(template='iommi/table/table_tag.html')}
         endpoints__csv__func = endpoint__csv
 
-        attrs = Namespace({
-            'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
-            'data-iommi-id': lambda table, **_: table.iommi_path,
-        })
+        attrs = Namespace(
+            {
+                'data-endpoint': lambda table, **_: DISPATCH_PREFIX + table.endpoints.tbody.iommi_path,
+                'data-iommi-id': lambda table, **_: table.iommi_path,
+            }
+        )
 
         query__form__attrs = {'data-iommi-id-of-table': lambda table, **_: table.iommi_path}
 
@@ -1471,7 +1491,6 @@ class Table(Part, Tag):
         cell__tag='td',
         header__template='iommi/table/table_header_rows.html',
         h_tag__call_target=Header,
-
         actions=EMPTY,
         actions_template='iommi/form/actions.html',
         actions_below=False,
@@ -1480,24 +1499,36 @@ class Table(Part, Tag):
         bulk__title=gettext_lazy('Bulk change'),
         bulk_container__call_target=Fragment,
         page_size=DEFAULT_PAGE_SIZE,
-
         endpoints=EMPTY,
-
         superheader__attrs__class__superheader=True,
         superheader__template='iommi/table/header.html',
-
         auto=EMPTY,
         tag='table',
         attrs__class=EMPTY,
         attrs__style=EMPTY,
-
         parts__page__call_target=Paginator,
         # The filter action on a table will often not be the primary
         # action button on the page. So let's use the secondary
         # style
-        query__form__actions__submit__call_target=Action.button
+        query__form__actions__submit__call_target=Action.button,
     )
-    def __init__(self, *, columns: Namespace = None, _columns_dict=None, model=None, rows=None, bulk=None, header=None, query=None, row=None, parts: Namespace = None, actions: Namespace = None, auto, title=MISSING, **kwargs):
+    def __init__(
+        self,
+        *,
+        columns: Namespace = None,
+        _columns_dict=None,
+        model=None,
+        rows=None,
+        bulk=None,
+        header=None,
+        query=None,
+        row=None,
+        parts: Namespace = None,
+        actions: Namespace = None,
+        auto,
+        title=MISSING,
+        **kwargs,
+    ):
         """
         :param rows: a list or QuerySet of objects
         :param columns: (use this only when not using the declarative style) a list of Column objects
@@ -1529,8 +1560,10 @@ class Table(Part, Tag):
                 exclude=auto.exclude,
             )
 
-            assert model is None, "You can't use the auto feature and explicitly pass model. " \
-                                  "Either pass auto__model, or we will set the model for you from auto__rows"
+            assert model is None, (
+                "You can't use the auto feature and explicitly pass model. "
+                "Either pass auto__model, or we will set the model for you from auto__rows"
+            )
             model = auto_model
 
             if rows is None:
@@ -1549,12 +1582,7 @@ class Table(Part, Tag):
         self.columns = None
 
         super(Table, self).__init__(
-            model=model,
-            initial_rows=rows,
-            header=HeaderConfig(**header),
-            row=RowConfig(**row),
-            title=title,
-            **kwargs
+            model=model, initial_rows=rows, header=HeaderConfig(**header), row=RowConfig(**row), title=title, **kwargs
         )
 
         # In bind initial_rows will be used to set these 3 (in that order)
@@ -1609,10 +1637,7 @@ class Table(Part, Tag):
                 filters[name] = filter()
 
             self.query = self.get_meta().query_class(
-                _filters_dict=filters,
-                _name='query',
-                model=self.model,
-                **self.query_args
+                _filters_dict=filters, _name='query', model=self.model, **self.query_args
             )
             declared_members(self).query = self.query
 
@@ -1638,7 +1663,7 @@ class Table(Part, Tag):
                             parse_empty_string_as_none=True,
                             display_name=column.display_name,
                         ),
-                        **field
+                        **field,
                     )
                     if isinstance(column.model_field, BooleanField):
                         field.call_target.attribute = 'boolean_tristate'
@@ -1664,7 +1689,7 @@ class Table(Part, Tag):
                         display_name=gettext_lazy('Bulk delete'),
                         include=False,
                     ),
-                    **bulk
+                    **bulk,
                 )
 
             declared_members(self).bulk = self.bulk
@@ -1681,7 +1706,7 @@ class Table(Part, Tag):
                 # We don't want form's default submit button unless somebody
                 # explicitly added it again.
                 actions__submit=bulk['actions'].get('submit', None),
-                **bulk
+                **bulk,
             )
             declared_members(self).bulk = self.bulk
 
@@ -1705,11 +1730,11 @@ class Table(Part, Tag):
     @property
     def rows(self):
         """Legacy API: if self is fully bound return the rows that are
-           displayed on the screen. Otherwise return as far as we got
-           in the refinement process from initial_rows -> visible_rows.
+        displayed on the screen. Otherwise return as far as we got
+        in the refinement process from initial_rows -> visible_rows.
 
-           You are probably better off using `visible_rows` or
-           `initial_rows` directly.
+        You are probably better off using `visible_rows` or
+        `initial_rows` directly.
         """
         if self._visible_rows is not None:
             return self._visible_rows
@@ -1739,10 +1764,7 @@ class Table(Part, Tag):
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         if isinstance(self.h_tag, Namespace):
             if self.title not in (None, MISSING):
-                self.h_tag = self.h_tag(
-                    _name='h_tag',
-                    children__text=capitalize(self.title)
-                ).bind(parent=self)
+                self.h_tag = self.h_tag(_name='h_tag', children__text=capitalize(self.title)).bind(parent=self)
             else:
                 self.h_tag = ''
         else:
@@ -1768,8 +1790,12 @@ class Table(Part, Tag):
                 column.sortable = False
 
         # If the column is not included, the down stream query filters and bulk fields should also be gone
-        declared_query_filters = declared_members(self.query)['filters'] if self._declared_members.get('query') is not None else {}
-        declared_bulk_fields = declared_members(self.bulk)['fields'] if self._declared_members.get('bulk') is not None else {}
+        declared_query_filters = (
+            declared_members(self.query)['filters'] if self._declared_members.get('query') is not None else {}
+        )
+        declared_bulk_fields = (
+            declared_members(self.bulk)['fields'] if self._declared_members.get('bulk') is not None else {}
+        )
         for name, column in items(self._declared_members.columns):
             if name not in keys(self.columns):
                 if name in declared_query_filters:
@@ -1821,7 +1847,9 @@ class Table(Part, Tag):
         self._bound_members.query = self.query
 
         if self.query is not None:
-            self.sorted_and_filtered_rows = self.query.filter(query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters())
+            self.sorted_and_filtered_rows = self.query.filter(
+                query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters()
+            )
         else:
             self.sorted_and_filtered_rows = self.sorted_rows
 
@@ -1860,7 +1888,8 @@ class Table(Part, Tag):
                 non_grouped_actions=non_grouped_actions,
                 grouped_actions=grouped_actions,
                 table=self,
-            ))
+            ),
+        )
 
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
@@ -1871,7 +1900,9 @@ class Table(Part, Tag):
                 if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
                     continue
 
-                rowspan_by_row = {}  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
+                rowspan_by_row = (
+                    {}
+                )  # cells for rows in this dict are displayed, if they're not in here, they get style="display: none"
                 prev_value = no_value_set
                 prev_row = no_value_set
                 for cells in self.cells_for_rows():
@@ -1897,7 +1928,7 @@ class Table(Part, Tag):
     def _prepare_sorting(self):
         """Sort all the rows.
 
-           self.sorted_rows = sorted(self.initial_rows)
+        self.sorted_rows = sorted(self.initial_rows)
         """
         # TODO: Sorting less values is faster then sorting more values, so we should
         # filter first and then sort.
@@ -1931,19 +1962,23 @@ class Table(Part, Tag):
         subheaders = []
 
         # The id(header) and stuff is to make None not be equal to None in the grouping
-        for _, group_iterator in groupby((x for x in values(self.columns) if x.render_column), key=lambda header: header.group or id(header)):
+        for _, group_iterator in groupby(
+            (x for x in values(self.columns) if x.render_column), key=lambda header: header.group or id(header)
+        ):
             columns_in_group = list(group_iterator)
             group_name = columns_in_group[0].group
 
             number_of_columns_in_group = len(columns_in_group)
 
-            superheaders.append(ColumnHeader(
-                display_name=group_name or '',
-                table=self,
-                attrs=self.superheader.attrs,
-                attrs__colspan=number_of_columns_in_group,
-                template=self.superheader.template,
-            ))
+            superheaders.append(
+                ColumnHeader(
+                    display_name=group_name or '',
+                    table=self,
+                    attrs=self.superheader.attrs,
+                    attrs__colspan=number_of_columns_in_group,
+                    template=self.superheader.template,
+                )
+            )
 
             for i, column in enumerate(columns_in_group):
                 subheaders.append(
@@ -1984,9 +2019,7 @@ class Table(Part, Tag):
     )
     def columns_from_model(cls, columns, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class,
-            member_params_by_member_name=columns,
-            **kwargs
+            member_class=cls.get_meta().member_class, member_params_by_member_name=columns, **kwargs
         )
 
     @classmethod
@@ -1994,10 +2027,11 @@ class Table(Part, Tag):
         columns=EMPTY,
     )
     def _from_model(cls, *, rows=None, model=None, columns=None, include=None, exclude=None):
-        assert rows is None or isinstance(rows, QuerySet), \
-            'auto__rows needs to be a QuerySet for column generation to work. ' \
-            'If it needs to be a lambda, provide a model with auto__model for column generation, ' \
+        assert rows is None or isinstance(rows, QuerySet), (
+            'auto__rows needs to be a QuerySet for column generation to work. '
+            'If it needs to be a lambda, provide a model with auto__model for column generation, '
             f'and pass the lambda as rows. I got a {type(rows)}'
+        )
 
         model, rows = model_and_rows(model, rows)
         assert model is not None or rows is not None, "auto__model or auto__rows must be specified"
@@ -2006,17 +2040,17 @@ class Table(Part, Tag):
 
     def _selection_identifiers(self):
         """Return a list of identifiers of the selected rows. Or 'all' if all
-           sorted_and_filtered_rows are selected."""
+        sorted_and_filtered_rows are selected."""
         if self.get_request().POST.get('_all_pks_') == '1':
             return 'all'
         else:
-            return [key[len('pk_'):] for key in self.get_request().POST if key.startswith('pk_')]
+            return [key[len('pk_') :] for key in self.get_request().POST if key.startswith('pk_')]
 
     def selection(self):
         """Return the selected rows.
 
-           For use in post_handlers. It's a queryset if rows is a queryset and a list otherwise.
-           Unlike bulk_queryset neither bulk_filter nor bulk_exclude are applied.
+        For use in post_handlers. It's a queryset if rows is a queryset and a list otherwise.
+        Unlike bulk_queryset neither bulk_filter nor bulk_exclude are applied.
         """
         identifiers = self._selection_identifiers()
         if identifiers == 'all':
@@ -2031,15 +2065,13 @@ class Table(Part, Tag):
 
     def bulk_queryset(self):
         """Return the queryset that contains only the selected rows with
-           bulk_filter and bulk_exclude applied.
+        bulk_filter and bulk_exclude applied.
 
-           For use in post_handlers. Only valid when rows was a queryset.
+        For use in post_handlers. Only valid when rows was a queryset.
         """
         assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
 
-        return self.selection() \
-            .filter(**self.bulk_filter) \
-            .exclude(**self.bulk_exclude)
+        return self.selection().filter(**self.bulk_filter).exclude(**self.bulk_exclude)
 
     @dispatch(
         render=render_template,

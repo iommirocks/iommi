@@ -2,6 +2,7 @@ from django.urls import (
     path,
     reverse_lazy,
 )
+
 from iommi import (
     Menu,
     MenuItem,
@@ -32,11 +33,17 @@ def test_menu():
     assert menu.sub_menu is not None
     assert menu.sub_menu.home._active is True
     assert menu.sub_menu.artists.regex == '^/artists/'
-    assert menu.__html__() == '<nav><ul><li><a class="active link" href="/">Home</a></li><li><a class="link" href="/artists/">Artists</a></li></ul></nav>'
+    assert (
+        menu.__html__()
+        == '<nav><ul><li><a class="active link" href="/">Home</a></li><li><a class="link" href="/artists/">Artists</a></li></ul></nav>'
+    )
 
-    assert repr(menu) == """root
+    assert (
+        repr(menu)
+        == """root
     home -> /
     artists -> /artists/"""
+    )
 
 
 def test_set_active():
@@ -65,26 +72,40 @@ def test_submenu():
 
     menu = MyMenu().bind(request=req('GET'))
     assert menu.sub_menu is not None
-    assert menu.__html__() == '<nav><ul><li>Sub menu<li><a class="link" href="/bar/">Bar</a></li><li><a class="link" href="/foo/">Foo</a></li></li></ul></nav>'
+    assert (
+        menu.__html__()
+        == '<nav><ul><li>Sub menu<li><a class="link" href="/bar/">Bar</a></li><li><a class="link" href="/foo/">Foo</a></li></li></ul></nav>'
+    )
 
 
 def test_debug_menu():
-    assert get_debug_menu().bind(request=req('get')).__html__() == '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100"><ul style="list-style: none"><li><a class="link" href="/code/">Code</a></li><li><a class="link" href="?/debug_tree">Tree</a></li><li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li><li><a class="link" href="?_iommi_live_edit">Edit</a></li><li><a class="link" href="?_iommi_prof">Profile</a></li><li><a class="link" href="?_iommi_sql_trace">SQL trace</a></li></ul></nav>'
+    assert (
+        get_debug_menu().bind(request=req('get')).__html__()
+        == '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100"><ul style="list-style: none"><li><a class="link" href="/code/">Code</a></li><li><a class="link" href="?/debug_tree">Tree</a></li><li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li><li><a class="link" href="?_iommi_live_edit">Edit</a></li><li><a class="link" href="?_iommi_prof">Profile</a></li><li><a class="link" href="?_iommi_sql_trace">SQL trace</a></li></ul></nav>'
+    )
 
 
 def test_template():
-    menu = Menu(
-        template=Template('{{ menu.sub_menu.foo.display_name }}'),
-        sub_menu=dict(foo=MenuItem())
-    ).bind(request=req('get'))
+    menu = Menu(template=Template('{{ menu.sub_menu.foo.display_name }}'), sub_menu=dict(foo=MenuItem())).bind(
+        request=req('get')
+    )
     assert menu.__html__() == 'Foo'
 
 
 def test_validation():
     class MyMenu(Menu):
-        sub_menu1 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')))
-        sub_menu2 = MenuItem(url='foo', sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')))
-        sub_menu3 = MenuItem(url='bar', sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')))
+        sub_menu1 = MenuItem(
+            url='foo',
+            sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')),
+        )
+        sub_menu2 = MenuItem(
+            url='foo',
+            sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')),
+        )
+        sub_menu3 = MenuItem(
+            url='bar',
+            sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')),
+        )
         external = MenuItem(url='http://example.com')
 
     m = MyMenu().bind(request=req('get'))

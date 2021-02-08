@@ -142,7 +142,10 @@ def test_evaluate_strict():
     with pytest.raises(AssertionError) as e:
         evaluate_strict(lambda foo: 1, bar=2, baz=4)
 
-    assert str(e.value) == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active, the signature doesn't match the given parameters. We had these arguments: bar, baz"
+    assert (
+        str(e.value)
+        == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active, the signature doesn't match the given parameters. We had these arguments: bar, baz"
+    )
 
 
 def test_non_strict_evaluate():
@@ -167,7 +170,9 @@ def test_get_callable_description_nested_lambda():
     foo = Namespace(bar=lambda x: x)
 
     description = get_callable_description(foo)
-    assert description.startswith('`Namespace(bar=<function test_get_callable_description_nested_lambda.<locals>.<lambda> at')
+    assert description.startswith(
+        '`Namespace(bar=<function test_get_callable_description_nested_lambda.<locals>.<lambda> at'
+    )
     assert description.endswith('`')
 
 
@@ -178,7 +183,7 @@ def test_get_signature_on_namespace_does_not_modify_its_contents():
 
 
 def test_match_empty():
-    f = (lambda **_: 17)
+    f = lambda **_: 17
     assert evaluate(f, x=1, __match_empty=False) is f
     assert evaluate(f, x=1, __match_empty=True) == 17
 

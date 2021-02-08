@@ -27,7 +27,9 @@ from iommi.evaluate import evaluate
 from iommi.reinvokable import set_and_remember_for_reinvoke
 
 
-def create_members_from_model(*, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None):
+def create_members_from_model(
+    *, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None
+):
     members = Struct()
 
     check_list(model, include, 'include')
@@ -79,9 +81,20 @@ def create_members_from_model(*, member_class, model, member_params_by_member_na
     return members
 
 
-def member_from_model(cls, model, factory_lookup, defaults_factory, factory_lookup_register_function=None, model_field_name=None, model_field=None, **kwargs):
+def member_from_model(
+    cls,
+    model,
+    factory_lookup,
+    defaults_factory,
+    factory_lookup_register_function=None,
+    model_field_name=None,
+    model_field=None,
+    **kwargs,
+):
     if model_field is None:
-        assert model_field_name is not None, "Field can't be automatically created from model, you must specify it manually"
+        assert (
+            model_field_name is not None
+        ), "Field can't be automatically created from model, you must specify it manually"
 
         sub_field_name, _, field_path_rest = model_field_name.partition('__')
 
@@ -96,7 +109,8 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
                 defaults_factory=defaults_factory,
                 factory_lookup_register_function=factory_lookup_register_function,
                 model_field_name=field_path_rest,
-                **kwargs)
+                **kwargs,
+            )
             set_and_remember_for_reinvoke(result, attr=model_field_name)
             return result
 
@@ -111,7 +125,10 @@ def member_from_model(cls, model, factory_lookup, defaults_factory, factory_look
     if factory is MISSING:
         message = f'No factory for {type(model_field).__name__}.'
         if factory_lookup_register_function is not None:
-            message += ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type' % factory_lookup_register_function.__name__
+            message += (
+                ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type'
+                % factory_lookup_register_function.__name__
+            )
         raise AssertionError(message)
 
     if factory is None:
@@ -169,7 +186,6 @@ def get_field_path(model, path):
 
 
 def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
-
     def existing_alternatives(missing_path):
         prefix = []
         current_model = model
@@ -178,11 +194,8 @@ def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
                 current_model = get_field(current_model, part).remote_field.model
             except FieldDoesNotExist:
                 return sorted(
-                    [
-                        '__'.join(prefix + [field.name])
-                        for field in get_fields(current_model)
-                    ] +
-                    ['__'.join(prefix + ['pk'])]
+                    ['__'.join(prefix + [field.name]) for field in get_fields(current_model)]
+                    + ['__'.join(prefix + ['pk'])]
                 )
             else:
                 prefix.append(part)
@@ -192,9 +205,11 @@ def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
             try:
                 get_field_path(model, path)
             except FieldDoesNotExist:
-                assert False,  f'You can only {operation} fields that exist on the model: {path} specified but does not exist\n' \
-                               f'Existing fields:\n' \
-                               f'    ' + '\n    '.join(existing_alternatives(path))
+                assert False, (
+                    f'You can only {operation} fields that exist on the model: {path} specified but does not exist\n'
+                    f'Existing fields:\n'
+                    f'    ' + '\n    '.join(existing_alternatives(path))
+                )
 
 
 _search_fields_by_model = {}
@@ -210,9 +225,13 @@ def get_search_fields(*, model):
         try:
             field = model._meta.get_field('name')
         except FieldDoesNotExist:
-            raise NoRegisteredSearchFieldException(f'{model.__name__} has no registered search fields. Please register a list of field names with register_search_fields.') from None
+            raise NoRegisteredSearchFieldException(
+                f'{model.__name__} has no registered search fields. Please register a list of field names with register_search_fields.'
+            ) from None
         if not field.unique:
-            warnings.warn(f"The model {model.__name__} is using the default `name` field as a search field, but it's not unique. You can register_search_fields(model={model.__name__}, search_fields=['name'], allow_non_unique=True) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names.")
+            warnings.warn(
+                f"The model {model.__name__} is using the default `name` field as a search field, but it's not unique. You can register_search_fields(model={model.__name__}, search_fields=['name'], allow_non_unique=True) to silence this warning. The reason we are warning is because you won't be able to use the advanced query language with non-unique names."
+            )
         return ['name']
 
     return search_fields
@@ -235,7 +254,9 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
                 for unique_together in model._meta.unique_together:
                     if path[0] in unique_together:
                         return
-                raise TypeError(f'Cannot register search field "{search_field}" for model {model.__name__}. {path[0]} must be unique.')
+                raise TypeError(
+                    f'Cannot register search field "{search_field}" for model {model.__name__}. {path[0]} must be unique.'
+                )
         else:
             validate_name_field(search_field, path[1:], field.remote_field.model)
 
@@ -245,7 +266,9 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
         validate_name_field(search_field, search_field.split('__'), model)
 
     if model in _search_fields_by_model and not overwrite:
-        raise SearchFieldsAlreadyRegisteredException(f'Cannot register search fields for {model}, it already has registered search fields {_search_fields_by_model[model]}.\nTo overwrite the existing registration pass overwrite=True to register_search_fields().')
+        raise SearchFieldsAlreadyRegisteredException(
+            f'Cannot register search fields for {model}, it already has registered search fields {_search_fields_by_model[model]}.\nTo overwrite the existing registration pass overwrite=True to register_search_fields().'
+        )
     _search_fields_by_model[model] = search_fields
 
 

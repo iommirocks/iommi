@@ -7,11 +7,11 @@ from django.views.decorators.csrf import csrf_exempt
 from iommi import Form
 from iommi._web_compat import HttpResponse
 from iommi.live_edit import (
-    live_edit_view,
-    get_wrapped_view,
-    should_edit,
     dangerous_execute_code,
+    get_wrapped_view,
+    live_edit_view,
     orig_reload,
+    should_edit,
 )
 from iommi.part import render_root
 from tests.helpers import req
@@ -19,12 +19,12 @@ from tests.models import TFoo
 
 
 def view(request):
-    return HttpResponse('hello!')   # pragma: no cover
+    return HttpResponse('hello!')  # pragma: no cover
 
 
 @csrf_exempt
 def csrf_exempt_view(request):
-    return HttpResponse('hello!')   # pragma: no cover
+    return HttpResponse('hello!')  # pragma: no cover
 
 
 def test_live_edit():
@@ -55,10 +55,12 @@ def test_dangerous_execute_code_error():
 def test_dangerous_execute_code_success():
     code = """
 def view(request):
-    return HttpResponse(request.GET['foo'] + 'bar')    
+    return HttpResponse(request.GET['foo'] + 'bar')
 """
 
-    assert json.loads(dangerous_execute_code(code=code, request=req('get', foo='foo'), view=view, args=(), kwargs={}).content) == dict(page='foobar')
+    assert json.loads(
+        dangerous_execute_code(code=code, request=req('get', foo='foo'), view=view, args=(), kwargs={}).content
+    ) == dict(page='foobar')
 
 
 def test_edit(capsys):
@@ -68,12 +70,12 @@ def test_edit(capsys):
 from iommi._web_compat import HttpResponse
 
 def foo_view(request):
-    return HttpResponse('foo view data')        
+    return HttpResponse('foo view data')
 """
 
     new_code = """
 def foo_view(request):
-    return HttpResponse('changed!')        
+    return HttpResponse('changed!')
 """
 
     with open(path, 'w') as f:
@@ -101,6 +103,7 @@ def foo_view(request):
     if orig_reload is not None:  # modern django
 
         from django.utils import autoreload
+
         autoreload.trigger_reload('notused')
         captured = capsys.readouterr()
         assert captured.out == 'Skipped reload\n'

@@ -50,6 +50,7 @@ def test_profiler_graph_dot_present():
 
 def test_profiler_graph_dot_not_present():
     import iommi.profiling
+
     orig = iommi.profiling._dot_search_paths[:]
     iommi.profiling._dot_search_paths[:] = ['does_not_exist']
 

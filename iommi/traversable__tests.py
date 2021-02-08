@@ -65,9 +65,7 @@ def test_traverse():
     )
     root = StubTraversable(
         _name='root',
-        members=Struct(
-            foo=foo
-        ),
+        members=Struct(foo=foo),
     )
 
     expected = {
@@ -86,13 +84,17 @@ def test_traverse():
 def test_traverse_on_iommi():
     class MyPage(Page):
         header = Fragment()
-        some_form = Form(fields=Namespace(
-            fisk=Field(),
-        ))
-        some_other_form = Form(fields=Namespace(
-            fjomp=Field(),
-            fisk=Field(),
-        ))
+        some_form = Form(
+            fields=Namespace(
+                fisk=Field(),
+            )
+        )
+        some_other_form = Form(
+            fields=Namespace(
+                fjomp=Field(),
+                fisk=Field(),
+            )
+        )
         a_table = Table(
             model=TFoo,
             columns=Namespace(
@@ -140,14 +142,15 @@ def test_evil_names():
     with pytest.raises(Exception) as e:
         ErrorMessages()
 
-    assert str(e.value) == 'The names bind, get_request, iommi_path, iommi_style, on_bind, own_evaluate_parameters are reserved by iommi, please pick other names'
+    assert (
+        str(e.value)
+        == 'The names bind, get_request, iommi_path, iommi_style, on_bind, own_evaluate_parameters are reserved by iommi, please pick other names'
+    )
 
 
 def test_warning_when_names_are_recalculated(capsys):
     page = Page(parts__foo=Fragment(_name='foo'))
-    assert get_path_by_long_path(page) == {
-        'parts/foo': ''
-    }
+    assert get_path_by_long_path(page) == {'parts/foo': ''}
     out, err = capsys.readouterr()
     assert out == ''
 
@@ -170,9 +173,9 @@ def test_dunder_path_is_fully_qualified_and_skipping_root():
                     my_part=StubTraversable(
                         _name='my_part',
                     )
-                )
+                ),
             )
-        )
+        ),
     )
     foo = foo.bind(request=None)
 
@@ -254,13 +257,19 @@ def test_traversable_repr():
 
 
 def test_apply_style_not_affecting_definition(settings):
-    register_style('my_style', Style(
-        Fragment__attrs__class__foo=True,
-    ))
+    register_style(
+        'my_style',
+        Style(
+            Fragment__attrs__class__foo=True,
+        ),
+    )
 
-    register_style('other_style', Style(
-        Fragment__attrs__class__bar=True,
-    ))
+    register_style(
+        'other_style',
+        Style(
+            Fragment__attrs__class__bar=True,
+        ),
+    )
 
     definition = Fragment()
 
@@ -277,20 +286,22 @@ def test_apply_style_not_affecting_definition(settings):
 
 
 def test_apply_style_not_affecting_definition_2():
-    register_style('foo_style', Style(
-        MenuItem__attrs__class__foo=True,
-    ))
+    register_style(
+        'foo_style',
+        Style(
+            MenuItem__attrs__class__foo=True,
+        ),
+    )
 
-    register_style('bar_style', Style(
-        MenuItem__attrs__class__bar=True,
-    ))
+    register_style(
+        'bar_style',
+        Style(
+            MenuItem__attrs__class__bar=True,
+        ),
+    )
 
     class MyPage(Page):
-        menu = Menu(
-            sub_menu=dict(
-                root=MenuItem()
-            )
-        )
+        menu = Menu(sub_menu=dict(root=MenuItem()))
 
     class OtherPage(Page):
         menu = MyPage.menu
@@ -306,9 +317,12 @@ def test_apply_style_not_affecting_definition_2():
 
 
 def test_get_config():
-    register_style('fruit_style', Style(
-        Fruit__attrs__class__style=True,
-    ))
+    register_style(
+        'fruit_style',
+        Style(
+            Fruit__attrs__class__style=True,
+        ),
+    )
 
     class Fruit(Traversable):
         attrs = Refinable()
@@ -371,11 +385,7 @@ def test_get_config():
             attrs__class__my_basket_fruit_invoke=True,
         )
 
-    basket = MyBasket(
-        fruits__banana__attrs__class__my_basket_invoke=True
-    ).bind(
-        request=None
-    )
+    basket = MyBasket(fruits__banana__attrs__class__my_basket_invoke=True).bind(request=None)
 
     assert list(basket.fruits.banana.attrs['class'].keys()) == [
         'fruit',

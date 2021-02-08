@@ -1,9 +1,9 @@
+from iommi.asset import Asset
 from iommi.style import (
     Style,
 )
-from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
-from iommi.asset import Asset
+from iommi.style_font_awesome_4 import font_awesome_4
 
 foundation_base = Style(
     base,
@@ -45,7 +45,10 @@ foundation_base = Style(
     ),
     Column=dict(
         shortcuts=dict(
-            delete__cell__link__attrs__class=dict(alert=True, button=True,)
+            delete__cell__link__attrs__class=dict(
+                alert=True,
+                button=True,
+            )
         ),
     ),
     Query=dict(
@@ -76,8 +79,7 @@ foundation = Style(
 foundation_horizontal = Style(
     foundation_base,
     internal=True,
-    Form__attrs__class={
-    },
+    Form__attrs__class={},
     Field=dict(
         shortcuts=dict(
             boolean__attrs__class={'medium-2': True, 'medium-4': False},

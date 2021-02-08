@@ -12,7 +12,6 @@ from tri_declarative import (
     setdefaults_path,
 )
 
-from iommi.part import Part
 from iommi._web_compat import (
     format_html,
     render_template,
@@ -23,8 +22,8 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
-    values,
     NOT_BOUND_MESSAGE,
+    values,
 )
 from iommi.evaluate import evaluate_strict_container
 from iommi.member import (
@@ -33,15 +32,31 @@ from iommi.member import (
 )
 from iommi.part import (
     as_html,
+    Part,
     PartType,
 )
+from iommi.reinvokable import reinvokable
 from iommi.traversable import (
     EvaluatedRefinable,
 )
-from iommi.reinvokable import reinvokable
 
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
-_void_elements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']
+_void_elements = [
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
+]
 
 
 def fragment__render(fragment, context):
@@ -51,7 +66,11 @@ def fragment__render(fragment, context):
     rendered_children = fragment.render_text_or_children(context=context)
 
     if fragment.template:
-        return render_template(fragment.get_request(), fragment.template, dict(**context, **fragment.iommi_evaluate_parameters(), rendered_children=rendered_children))
+        return render_template(
+            fragment.get_request(),
+            fragment.template,
+            dict(**context, **fragment.iommi_evaluate_parameters(), rendered_children=rendered_children),
+        )
 
     is_void_element = fragment.tag in _void_elements
 
@@ -150,10 +169,8 @@ class Fragment(Part, Tag):
         request = self.get_request()
         return format_html(
             '{}' * len(self.children),
-            *[
-                as_html(part=x, context=context, request=request)
-                for x in values(self.children)
-            ])
+            *[as_html(part=x, context=context, request=request) for x in values(self.children)],
+        )
 
     def __repr__(self):
         return f'<{self.__class__.__name__} tag:{self.tag} attrs:{dict(self.attrs) if self.attrs else None!r}>'
@@ -202,7 +219,7 @@ class Header(Fragment):
             root._iommi_auto_header_set.add(real_level)
 
             level = 0
-            for i in range(real_level+1):
+            for i in range(real_level + 1):
                 if i in root._iommi_auto_header_set:
                     level += 1
 
@@ -214,6 +231,7 @@ class Container(Fragment):
     """
     The main container for iommi. This class is useful when you want to apply styling or change the tag of what iommi produces for its content inside your body tag.
     """
+
     pass
 
 

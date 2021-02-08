@@ -2,8 +2,8 @@ from iommi import html
 from iommi.style import (
     Style,
 )
-from iommi.style_font_awesome_4 import font_awesome_4
 from iommi.style_base import base
+from iommi.style_font_awesome_4 import font_awesome_4
 
 django_admin_base = Style(
     base,
@@ -12,9 +12,16 @@ django_admin_base = Style(
         css_base=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/base.css")),
         css_login=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/login.css")),
         css_forms=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/forms.css")),
-        meta=html.meta(attrs=dict(name="viewport", content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0")),
-        css_responsive=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/responsive.css")),
-        css_extra=html.style("""
+        meta=html.meta(
+            attrs=dict(
+                name="viewport", content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"
+            )
+        ),
+        css_responsive=html.link(
+            attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/responsive.css")
+        ),
+        css_extra=html.style(
+            """
             .compact-form-row {
                 display: inline-block;
             }
@@ -22,7 +29,8 @@ django_admin_base = Style(
             .compact-form-row .helptext {
                 display: none;
             }
-        """),
+        """
+        ),
     ),
     Container=dict(
         tag='div',

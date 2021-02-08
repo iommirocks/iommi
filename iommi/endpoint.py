@@ -77,6 +77,7 @@ def find_target(*, path, root):
     if long_path is None:
         long_path = p
         if long_path not in keys(get_path_by_long_path(root)):
+
             def format_paths(paths):
                 return '\n        '.join(["''" if not x else x for x in keys(paths)])
 

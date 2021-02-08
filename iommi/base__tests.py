@@ -4,19 +4,19 @@ from django.utils.safestring import (
     mark_safe,
     SafeText,
 )
+from tri_struct import Struct
 
 from iommi import MISSING
 from iommi._web_compat import Template
 from iommi.base import (
-    get_display_name,
-    UnknownMissingValueException,
     build_as_view_wrapper,
     capitalize,
+    get_display_name,
     model_and_rows,
+    UnknownMissingValueException,
 )
 from tests.helpers import req
 from tests.models import Foo
-from tri_struct import Struct
 
 
 def test_missing():
@@ -35,7 +35,9 @@ def test_build_as_view_wrapper():
         """
         docs
         """
+
         pass
+
     vw = build_as_view_wrapper(Foo())
     assert vw.__doc__ == Foo.__doc__
     assert vw.__name__ == 'Foo.as_view'

@@ -8,9 +8,8 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from ._web_compat import settings
-
 from iommi._web_compat import HttpResponse
+from ._web_compat import settings
 
 MEDIA_PREFIXES = ['/static/']
 
@@ -60,6 +59,7 @@ class Middleware:
             prof.disable()
 
             import pstats
+
             s = StringIO()
             ps = pstats.Stats(prof, stream=s).sort_stats(request.GET.get('_iommi_prof') or 'cumulative')
             ps.print_stats()
@@ -75,7 +75,9 @@ class Middleware:
                     if not gprof2dot_path.exists():
                         raise Exception('gprof2dot not found. Please install it to use the graph feature.')
 
-                    gprof2dot = subprocess.Popen((sys.executable, gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE)
+                    gprof2dot = subprocess.Popen(
+                        (sys.executable, gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE
+                    )
 
                     response['Content-Type'] = 'image/svg+xml'
 
@@ -95,7 +97,7 @@ class Middleware:
                     if token not in s:
                         return s
                     pre, _, post = s.rpartition(' ')
-                    post = post[post.rindex(token) + len(token):]
+                    post = post[post.rindex(token) + len(token) :]
                     return f'{pre} {post}'
 
                 base_dir = str(settings.BASE_DIR)
@@ -110,7 +112,9 @@ class Middleware:
                     line = line.replace(' ', '&nbsp;')
                     result.append(line)
 
-                response.content = '<div style="font-family: monospace; white-space: nowrap">%s</div' % "<br />\n".join(result)
+                response.content = '<div style="font-family: monospace; white-space: nowrap">%s</div' % "<br />\n".join(
+                    result
+                )
 
                 response['Content-Type'] = 'text/html'
 

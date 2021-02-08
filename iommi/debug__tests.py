@@ -7,9 +7,9 @@ from iommi import (
 )
 from iommi.debug import (
     dunder_path__format,
+    filename_and_line_num_from_part,
     local_debug_url_builder,
     should_ignore_frame,
-    filename_and_line_num_from_part,
     source_url_from_part,
 )
 from iommi.endpoint import find_target
@@ -46,10 +46,7 @@ def test_debug_tree(settings):
     result = target.func(value='', **target.iommi_evaluate_parameters())
 
     assert isinstance(result, Table)
-    tree = [
-        ', '.join([str(x.value) for x in cells])
-        for cells in result.cells_for_rows()
-    ]
+    tree = [', '.join([str(x.value) for x in cells]) for cells in result.cells_for_rows()]
     expected = """, , MyPage, True
 endpoints, None, Members[Endpoint], True
 endpoints__debug_tree, debug_tree, Endpoint, True
@@ -68,7 +65,9 @@ parts__nested__parts__foo__children__text, None, str, False"""
 def test_dunder_path__format():
     assert dunder_path__format(row=Struct(dunder_path=None)) == ''
     assert dunder_path__format(row=Struct(dunder_path='foo', name='foo')) == '<span class="full-path"></span>foo'
-    assert dunder_path__format(row=Struct(dunder_path='foo__bar', name='bar')) == '<span class="full-path">foo__</span>bar'
+    assert (
+        dunder_path__format(row=Struct(dunder_path='foo__bar', name='bar')) == '<span class="full-path">foo__</span>bar'
+    )
 
 
 def test_local_debug_url_builder(settings):
@@ -87,11 +86,19 @@ def test_should_ignore_frame():
     assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.foo.bar'}), {'syspath/foo'})
     assert should_ignore_frame(Struct(f_globals={'__name__': 'tri_declarative.foo.bar'}), {'syspath/foo'})
     assert should_ignore_frame(Struct(f_globals={'__name__': 'django.foo.bar'}), {'syspath/foo'})
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='syspath/foo/bar/baz.py')), {'syspath/foo'})
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='<string>')), {'syspath/foo'})
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='foo/helpers/pycharm/asd')), {'syspath/foo'})
+    assert should_ignore_frame(
+        Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='syspath/foo/bar/baz.py')), {'syspath/foo'}
+    )
+    assert should_ignore_frame(
+        Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='<string>')), {'syspath/foo'}
+    )
+    assert should_ignore_frame(
+        Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='foo/helpers/pycharm/asd')), {'syspath/foo'}
+    )
 
-    assert not should_ignore_frame(Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='my actual app')), {'syspath/foo'})
+    assert not should_ignore_frame(
+        Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='my actual app')), {'syspath/foo'}
+    )
 
 
 def test_filename_and_line_num_from_part_empty_case():

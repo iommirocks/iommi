@@ -8,7 +8,9 @@ from iommi.style import (
 from iommi.style_base import base
 from iommi.style_font_awesome_4 import font_awesome_4
 
-navbar_burger_click_js = Fragment(mark_safe("""\
+navbar_burger_click_js = Fragment(
+    mark_safe(
+        """\
 <script>
     $(document).ready(function() {
           // Check for click events on the navbar burger icon
@@ -21,7 +23,9 @@ navbar_burger_click_js = Fragment(mark_safe("""\
           });
     });
 </script>
-"""))
+"""
+    )
+)
 
 bulma_base = Style(
     base,
@@ -75,7 +79,7 @@ bulma_base = Style(
         },
         help__attrs__class=dict(
             help=True,
-        )
+        ),
     ),
     Actions=dict(
         tag="div",

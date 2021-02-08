@@ -10,12 +10,15 @@ def evaluate_attrs(obj, **kwargs):
 
     # Micro optimization
     from iommi.debug import iommi_debug_on
+
     if not attrs and not iommi_debug_on():
         return ''
 
     classes = evaluate_strict(attrs.get('class', {}), **kwargs)
 
-    assert not isinstance(classes, str), """CSS classes needs to be specified as dicts, not as strings. So you want something like:
+    assert not isinstance(
+        classes, str
+    ), """CSS classes needs to be specified as dicts, not as strings. So you want something like:
     field__class__foo=True
 
 or
@@ -24,7 +27,9 @@ or
 
     styles = evaluate_strict(attrs.get('style', {}), **kwargs)
 
-    assert not isinstance(styles, str), """CSS styles needs to be specified as dicts, not as strings. So you want something like:
+    assert not isinstance(
+        styles, str
+    ), """CSS styles needs to be specified as dicts, not as strings. So you want something like:
         field__style__display='none'
 
     or
@@ -33,21 +38,9 @@ or
 
     return Attrs(
         obj,
-        **{
-            'class': {
-                k: evaluate_strict(v, **kwargs)
-                for k, v in items(classes)
-            }
-        },
-        style={
-            k: evaluate_strict(v, **kwargs)
-            for k, v in items(styles)
-        },
-        **{
-            k: evaluate_strict(v, **kwargs)
-            for k, v in items(attrs)
-            if k not in ('class', 'style')
-        },
+        **{'class': {k: evaluate_strict(v, **kwargs) for k, v in items(classes)}},
+        style={k: evaluate_strict(v, **kwargs) for k, v in items(styles)},
+        **{k: evaluate_strict(v, **kwargs) for k, v in items(attrs) if k not in ('class', 'style')},
     )
 
 
@@ -84,9 +77,13 @@ def render_attrs(attrs):
                 raise TypeError(f"Attributes can't be of type {type(value).__name__}, you sent {value} for key {key}")
             elif callable(value):
                 from .docs import get_docs_callable_description
-                raise TypeError(f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}")
+
+                raise TypeError(
+                    f"Attributes can't be callable, you sent {get_docs_callable_description(value)} for key {key}"
+                )
             v = f'{value}'.replace('"', '&quot;')
             yield f'{key}="{v}"'
+
     r = mark_safe(' %s' % ' '.join(parts()))
     return '' if r == ' ' else r
 

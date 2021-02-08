@@ -1,19 +1,18 @@
 import pytest
-from tri_struct import Struct
-
-from iommi._web_compat import Template
 from tri_declarative import (
     dispatch,
     get_members,
     is_shortcut,
     Shortcut,
 )
+from tri_struct import Struct
 
 from iommi import (
     Action,
     Column,
     Table,
 )
+from iommi._web_compat import Template
 from iommi.action import group_actions
 from iommi.base import (
     items,
@@ -37,48 +36,53 @@ def assert_renders(action, html):
 
 
 def test_render():
-    action = Action(
-        _name='do_it',
-        attrs__href='#'
-    ).bind()
-    assert_renders(action, '''
+    action = Action(_name='do_it', attrs__href='#').bind()
+    assert_renders(
+        action,
+        '''
         <a href="#"> Do it </a>
-    ''')
+    ''',
+    )
 
 
 def test_render_input():
-    action = Action(
-        _name='do_it',
-        tag='input',
-        attrs__href='#'
-    ).bind()
-    assert_renders(action, '''
+    action = Action(_name='do_it', tag='input', attrs__href='#').bind()
+    assert_renders(
+        action,
+        '''
         <input href="#" value="Do it">
-    ''')
+    ''',
+    )
 
 
 def test_render_class():
-    action = Action(
-        _name='do_it',
-        attrs__class__foo=True
-    ).bind()
-    assert_renders(action, '''
+    action = Action(_name='do_it', attrs__class__foo=True).bind()
+    assert_renders(
+        action,
+        '''
         <a class="foo">Do it</a>
-    ''')
+    ''',
+    )
 
 
 def test_render_button():
     submit = Action.button(_name='do_it').bind()
-    assert_renders(submit, '''
+    assert_renders(
+        submit,
+        '''
        <button> Do it </button>
-    ''')
+    ''',
+    )
 
 
 def test_render_submit():
     submit = Action.submit(display_name='Do it').bind()
-    assert_renders(submit, '''
+    assert_renders(
+        submit,
+        '''
        <button accesskey="s" name="-">Do it</button>
-    ''')
+    ''',
+    )
 
 
 def test_render_icon():
@@ -86,9 +90,12 @@ def test_render_icon():
         icon='flower',
         display_name='Name',
     ).bind()
-    assert_renders(submit, '''
+    assert_renders(
+        submit,
+        '''
        <a> <i class="fa fa-flower"> </i> Name </a>
-    ''')
+    ''',
+    )
 
 
 def test_all_action_shortcuts():
@@ -105,18 +112,17 @@ def test_all_action_shortcuts():
         def on_bind(self):
             bind_members(self, name='actions')
 
-    all_shortcut_names = keys(get_members(
-        cls=MyFancyAction,
-        member_class=Shortcut,
-        is_member=is_shortcut,
-    ))
+    all_shortcut_names = keys(
+        get_members(
+            cls=MyFancyAction,
+            member_class=Shortcut,
+            is_member=is_shortcut,
+        )
+    )
 
     thing = ThingWithActions(
         actions__action_of_type_icon__icon='flower',
-        **{
-            f'actions__action_of_type_{t}__call_target__attribute': t
-            for t in all_shortcut_names
-        },
+        **{f'actions__action_of_type_{t}__call_target__attribute': t for t in all_shortcut_names},
     ).bind()
 
     for name, column in items(thing.actions):
@@ -136,11 +142,16 @@ def test_icon_action():
 
 
 def test_icon_action_with_icon_classes():
-    assert Action.icon('foo', display_name='dn', icon_classes=['a', 'b']).bind(request=None).__html__() == '<a><i class="fa fa-foo fa-a fa-b"></i> dn</a>'
+    assert (
+        Action.icon('foo', display_name='dn', icon_classes=['a', 'b']).bind(request=None).__html__()
+        == '<a><i class="fa fa-foo fa-a fa-b"></i> dn</a>'
+    )
 
 
 def test_display_name_to_value_attr():
-    assert Action.delete(display_name='foo').bind(request=None).__html__() == '<button accesskey="s" name="-">foo</button>'
+    assert (
+        Action.delete(display_name='foo').bind(request=None).__html__() == '<button accesskey="s" name="-">foo</button>'
+    )
 
 
 def test_lambda_tag():
@@ -148,15 +159,17 @@ def test_lambda_tag():
 
 
 def test_action_groups():
-    non_grouped, grouped = group_actions(dict(
-        a=Action(),
-        b=Action(),
-        c=Action(group='a'),
-        d=Action(group='a'),
-        e=Action(group='a'),
-        f=Action(group='b'),
-        g=Action(group='b'),
-    ))
+    non_grouped, grouped = group_actions(
+        dict(
+            a=Action(),
+            b=Action(),
+            c=Action(group='a'),
+            d=Action(group='a'),
+            e=Action(group='a'),
+            f=Action(group='b'),
+            g=Action(group='b'),
+        )
+    )
     assert len(non_grouped) == 2
     assert len(grouped) == 2
     assert len(grouped[0][2]) == 3
@@ -176,7 +189,9 @@ def test_actions():
                 d=dict(display_name='Qux', attrs__href='/bar/', group='Other'),
                 e=Action.icon('icon_foo', display_name='Icon foo', attrs__href='/icon_foo/'),
                 f=Action.icon('icon_bar', icon_classes=['lg'], display_name='Icon bar', attrs__href='/icon_bar/'),
-                g=Action.icon('icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'),
+                g=Action.icon(
+                    'icon_baz', icon_classes=['one', 'two'], display_name='Icon baz', attrs__href='/icon_baz/'
+                ),
             )
 
     rows = [Struct(foo="foo")]
@@ -201,7 +216,8 @@ def test_actions():
             <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
             <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
             <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
-        </div>""")
+        </div>""",
+    )
 
 
 def test_check_for_bad_value_usage():

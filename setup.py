@@ -2,14 +2,19 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-from setuptools import setup, find_packages, Command
 from io import open
+
+from setuptools import (
+    Command,
+    setup,
+)
 
 readme = open('README.rst', encoding='utf8').readlines()
 
 assert 'Your first pick for a django power cord' in readme[4]
 
 readme = ''.join(['iommi\n', '=====\n'] + readme[5:])
+
 
 def read_reqs(name):
     with open(os.path.join(os.path.dirname(__file__), name), encoding='utf8') as f:
@@ -35,6 +40,7 @@ class Tag(Command):
 
     def run(self):
         from subprocess import call
+
         version = read_version()
         errno = call(['git', 'tag', '--annotate', version, '--message', 'Version %s' % version])
         if errno == 0:
@@ -53,6 +59,7 @@ class ReleaseCheck(Command):
 
     def run(self):
         from subprocess import check_output, CalledProcessError
+
         try:
             tag = check_output(['git', 'describe', 'HEAD']).strip().decode('utf8')
         except CalledProcessError:
@@ -95,6 +102,5 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     test_suite='tests',
-    cmdclass={'tag': Tag,
-              'release_check': ReleaseCheck},
+    cmdclass={'tag': Tag, 'release_check': ReleaseCheck},
 )

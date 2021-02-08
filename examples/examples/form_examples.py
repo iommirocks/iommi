@@ -18,7 +18,6 @@ from examples import (
 )
 from examples.models import (
     Artist,
-    Album,
     Track,
 )
 from examples.views import (
@@ -50,17 +49,13 @@ def form_example_1(request):
         )
 
     form = FruitForm().bind(request=request)
-    message = mark_safe("\n".join(
-        format_html(
-            "{}: {}",
-            name,
-            bound_field.value
-        )
-        for name, bound_field in form.fields.items())
+    message = mark_safe(
+        "\n".join(format_html("{}: {}", name, bound_field.value) for name, bound_field in form.fields.items())
     )
 
     return HttpResponse(
-        Template("""
+        Template(
+            """
             <html>
                 <head>
                     {% for asset in form.iommi_collected_assets.values %}
@@ -71,15 +66,8 @@ def form_example_1(request):
                     {{ message }}
                 </body>
             </html>
-        """).render(
-            context=RequestContext(
-                request,
-                dict(
-                    form=form,
-                    message=message
-                )
-            )
-        ),
+        """
+        ).render(context=RequestContext(request, dict(form=form, message=message))),
     )
 
 
@@ -129,7 +117,7 @@ def form_example_6(request):
             a=Action.submit(attrs__value='Foo', group='x'),
             b=Action.submit(attrs__value='Bar', group='x'),
             back=Action(display_name='Back to index', attrs__href='/'),
-        )
+        ),
     )
 
 
@@ -137,12 +125,7 @@ def form_example_6(request):
 class KitchenForm(Form):
     kitchen_foo = Field()
 
-    fisk = Field.multi_choice(
-        choices=[1, 2, 3, 4],
-        parse=choice_parse,
-        initial=[1, 2],
-        editable=False
-    )
+    fisk = Field.multi_choice(choices=[1, 2, 3, 4], parse=choice_parse, initial=[1, 2], editable=False)
 
     textarea = Field.textarea(initial='initial value')
 
@@ -156,8 +139,7 @@ class KitchenForm(Form):
 
     choice_with_groups = Field.choice(
         choices=['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'X'],
-        choice_to_optgroup=lambda choice, **_:
-        choice[0] if choice[0].islower() else None
+        choice_to_optgroup=lambda choice, **_: choice[0] if choice[0].islower() else None,
     )
 
 
@@ -233,7 +215,7 @@ def form_example_error_messages(request):
         title=gettext('Error messages'),
         auto__model=Artist,
         post_validation=form_error_messages,
-        fields__name__post_validation=field_error_messages
+        fields__name__post_validation=field_error_messages,
     )
 
 
@@ -257,14 +239,16 @@ def form_example_children_that_are_not_fields(request):
         fields__in_box=html.div(
             children__f1=Field.integer(attrs__class__column=True),
             children__plus=html.span("+", attrs__class={'column': True, 'is-narrow': True}),
-            children__f2=Field.integer(attrs__class__column=True,),
+            children__f2=Field.integer(
+                attrs__class__column=True,
+            ),
             children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
             children__f3=Field.integer(attrs__class_column=True),
             iommi_style="bulma_query_form",
-            attrs__class={'box': True, 'columns': True, 'is-vcentered': True}
+            attrs__class={'box': True, 'columns': True, 'is-vcentered': True},
         ),
         post_validation=post_validation,
-        actions__submit__post_handler=on_submit
+        actions__submit__post_handler=on_submit,
     )
 
 
@@ -286,11 +270,13 @@ def form_example_children_that_are_not_fields_declarative(request):
         in_a_box = html.div(
             children__f1=Field.integer(attrs__class__column=True),
             children__plus=html.span("+", attrs__class={'column': True, 'is-narrow': True}),
-            children__f2=Field.integer(attrs__class__column=True,),
+            children__f2=Field.integer(
+                attrs__class__column=True,
+            ),
             children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
             children__f3=Field.integer(attrs__class_column=True),
             iommi_style="bulma_query_form",
-            attrs__class={'box': True, 'columns': True, 'is-vcentered': True}
+            attrs__class={'box': True, 'columns': True, 'is-vcentered': True},
         )
 
         class Meta:
@@ -305,9 +291,10 @@ def form_example_children_that_are_not_fields_declarative(request):
 @example(gettext("Nested forms -- to abstract out behaviour and create complex 'fields'."))
 def form_example_nested_forms(request):
     """Here we have two fields first_day, last_day and want to abstract
-       out the validation behaviour. Maybe because we have several
-       different forms that that edit different models that all have
-       a first_day and a last_day field."""
+    out the validation behaviour. Maybe because we have several
+    different forms that that edit different models that all have
+    a first_day and a last_day field."""
+
     class DateRangeField(Form):
         first_day = Field.date()
         last_day = Field.date()
@@ -337,7 +324,7 @@ def form_example_nested_forms(request):
         parts__title1=Header("Without instance"),
         parts__form1=MyForm(),
         parts__title2=Header("With instance"),
-        parts__form2=MyForm(instance=Struct(first_day=today, last_day=today, event="Party"))
+        parts__form2=MyForm(instance=Struct(first_day=today, last_day=today, event="Party")),
     )
 
 
