@@ -33,6 +33,10 @@ Add iommi's middleware:
 By default iommi uses a very basic bootstrap base template. See :doc:`styles <styles>` for
 more information how to integrate iommi to your CSS framework.
 
+.. note::
+
+    The iommi middleware must be the last middleware in the list!
+
 
 Basic usage
 -----------
