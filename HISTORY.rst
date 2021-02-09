@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+2.8.2 (2021-02-09)
+~~~~~~~~~~~~~~~~~~
+
+* Avoid using `search_fields` when composing queries from model filter values. Always using the `.pk` fallback approach is more stable when the search field values might not be unique. This will remove a bunch of warnings that weren't very helpful too.
+
+* Fixed crash when setting `query__include=False` on `Table`
+
+* `capitalize()` now handles safe strings properly. This will enable you to pass safe strings to `title` for example.
+
+* Translation of Yes/No
+
+* Fixed error message for `register_search_fields`
+
+* Updated to fontawesome 4.7
+
+* Renamed live edit asset to not conflict with the name 'custom' which might be fairly common
+
+* Nicer title in the admin for apps
+
+
 2.8.1 (2021-02-01)
 ~~~~~~~~~~~~~~~~~~
 
