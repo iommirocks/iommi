@@ -50,7 +50,10 @@ from iommi.base import (
 )
 from iommi.reinvokable import reinvokable
 
-app_verbose_name_by_label = {config.label: config.verbose_name for config in values(django_apps.app_configs)}
+app_verbose_name_by_label = {
+    config.label: config.verbose_name.replace('_', ' ')
+    for config in values(django_apps.app_configs)
+}
 
 joined_app_name_and_model = {
     f'{app_name}_{model_name}'
