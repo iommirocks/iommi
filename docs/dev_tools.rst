@@ -79,4 +79,7 @@ those easily.
 .. note::
 
     This feature isn't enabled by default because it requires you to add
-    `'iommi.sql_trace.Middleware'` to `settings.MIDDLEWARE`.
+    `'iommi.sql_trace.Middleware'` to `settings.MIDDLEWARE`. Note that you
+    need to put this below `django.contrib.auth.middleware.AuthenticationMiddleware`
+    if you want to use this in production. Only staff users are allowed to
+    trace sql in production, but all users can trace sql in debug mode.
