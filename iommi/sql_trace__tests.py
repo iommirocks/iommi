@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import (
     date,
     datetime,
@@ -74,7 +75,8 @@ def test_middleware(settings, client, caplog):
     assert '------ 4 times: -------' in caplog.text
     assert select_statement in caplog.text
     assert 'File "iommi/iommi/sql_trace__tests.py", line ' in caplog.text
-    assert 'GET /?_iommi_sql_trace -> 200  (0.000s) (sql time: 0.000s)' in caplog.text
+    print(caplog.text)
+    assert re.findall(r'GET /\?_iommi_sql_trace -> 200  \(0\.\d\d\ds\) \(sql time: 0\.\d\d\ds\)', caplog.text)
     assert '... and 3 more unique statements' in caplog.text
 
 
