@@ -14,7 +14,8 @@ from datetime import (
 from logging import addLevelName
 from time import monotonic
 
-from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db import connections
+from django.db.utils import DEFAULT_DB_ALIAS
 from django.http import HttpResponse
 from django.utils.html import format_html
 
@@ -409,4 +410,5 @@ def make_debug_cursor(self, cursor):
     return CursorDebugWrapper(cursor, self)
 
 
-BaseDatabaseWrapper.make_debug_cursor = make_debug_cursor
+connections[DEFAULT_DB_ALIAS].__class__.make_debug_cursor = make_debug_cursor
+
