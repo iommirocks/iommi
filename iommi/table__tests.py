@@ -2500,8 +2500,8 @@ def test_query_from_indexes():
         auto__model=QueryFromIndexesTestModel,
         query_from_indexes=True,
     ).bind(request=req('get'))
-    assert list(t.query.filters.keys()) == ['b', 'c']
-    assert list(t.query.form.fields.keys()) == ['b', 'c']
+    assert list(t.query.filters.keys()) == ['b', 'c', 'd']
+    assert list(t.query.form.fields.keys()) == ['b', 'c', 'd']
 
 
 @pytest.mark.django_db
