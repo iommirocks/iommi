@@ -24,6 +24,7 @@ from typing import (
 from urllib.parse import quote_plus
 
 from django.db.models import (
+    AutoField,
     BooleanField,
     ManyToManyField,
     Model,
@@ -1631,7 +1632,7 @@ class Table(Part, Tag):
                     field__display_name=column.display_name,
                 )
                 # Special case for automatic query config
-                if self.query_from_indexes and column.model_field and getattr(column.model_field, 'db_index', False):
+                if self.query_from_indexes and column.model_field and (getattr(column.model_field, 'db_index', False) or isinstance(column.model_field, AutoField)):
                     filter.include = True
 
                 filters[name] = filter()
