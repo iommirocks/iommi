@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+2.8.3 (2021-02-14)
+~~~~~~~~~~~~~~~~~~
+
+* Removed bad assert that prevented passing instance as a lambda for auto__model of Form
+
+* SQL trace was broken for postgres
+
+* query_from_indexes should automatically generate filters for foreign keys. This especially affected the admin.
+
+
 2.8.2 (2021-02-09)
 ~~~~~~~~~~~~~~~~~~
 
