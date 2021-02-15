@@ -26,10 +26,10 @@ from .models import (
 
 
 class SupernautMenu(Menu):
-    home = MenuItem(url='/', display_name=_('Home'))
-    artists = MenuItem(display_name=_('Artists'))
-    albums = MenuItem(display_name=_('Albums'))
-    tracks = MenuItem(display_name=_('Tracks'))
+    home = MenuItem(url='/supernaut/', display_name=_('Home'))
+    artists = MenuItem(url='/supernaut/artists/', display_name=_('Artists'))
+    albums = MenuItem(url='/supernaut/albums/', display_name=_('Albums'))
+    tracks = MenuItem(url='/supernaut/tracks/', display_name=_('Tracks'))
 
     class Meta:
         attrs__class = {'fixed-top': True}
