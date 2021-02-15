@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2.8.4 (2021-02-15)
+~~~~~~~~~~~~~~~~~~
+
+* Form: support passing instance as a lambda, even in combination with `auto__model`
+
+
 2.8.3 (2021-02-14)
 ~~~~~~~~~~~~~~~~~~
 
