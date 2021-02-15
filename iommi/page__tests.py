@@ -111,3 +111,15 @@ def test_invalid_context_specified():
 def test_as_view():
     view = Page(parts__foo='##foo##').as_view()
     assert '##foo##' in view(req('get')).content.decode()
+
+
+def test_title_basic():
+    assert '<h1>Foo</h1>' == Page(title='foo').bind(request=req('get')).__html__()
+
+
+def test_title_empty():
+    assert '' in Page().bind(request=req('get')).__html__()
+
+
+def test_title_attr():
+    assert '<h1 class="foo">Foo</h1>' == Page(title='foo', h_tag__attrs__class__foo=True).bind(request=req('get')).__html__()

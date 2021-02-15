@@ -8,6 +8,7 @@ from typing import (
 from tri_declarative import (
     dispatch,
     EMPTY,
+    Namespace,
     Refinable,
     setdefaults_path,
 )
@@ -22,6 +23,8 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.base import (
+    capitalize,
+    MISSING,
     NOT_BOUND_MESSAGE,
     values,
 )
@@ -225,6 +228,16 @@ class Header(Fragment):
 
             self.tag = f'h{level}'
         super(Header, self).on_bind()
+
+
+def build_and_bind_h_tag(p):
+    if isinstance(p.h_tag, Namespace):
+        if p.title not in (None, MISSING):
+            p.h_tag = p.h_tag(_name='h_tag', children__text=capitalize(p.title)).bind(parent=p)
+        else:
+            p.h_tag = ''
+    else:
+        p.h_tag = p.h_tag.bind(parent=p)
 
 
 class Container(Fragment):

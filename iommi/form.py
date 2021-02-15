@@ -83,6 +83,7 @@ from iommi.evaluate import (
     evaluate_strict,
 )
 from iommi.fragment import (
+    build_and_bind_h_tag,
     Fragment,
     Header,
     Tag,
@@ -1426,17 +1427,7 @@ class Form(Part):
             self.instance = self.read_nested_form_from_instance(self, self.parent_form.instance)
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
-        if isinstance(self.h_tag, Namespace):
-            if self.title not in (None, MISSING):
-                # noinspection PyCallingNonCallable
-                self.h_tag = self.h_tag(
-                    _name='h_tag',
-                    children__text=capitalize(self.title),
-                ).bind(parent=self)
-            else:
-                self.h_tag = ''
-        else:
-            self.h_tag = self.h_tag.bind(parent=self)
+        build_and_bind_h_tag(self)
 
         # Actions have to be bound first because is_target() needs it
         bind_members(self, name='actions', cls=Actions)
