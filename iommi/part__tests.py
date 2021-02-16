@@ -48,6 +48,8 @@ def test_as_html():
         == '<foo>bar</foo>'
     )
 
+    assert as_html(request=req('get'), part=None, context={}) == ''
+
 
 def test_as_html_integer():
     assert as_html(part=123, context={}) == '123'

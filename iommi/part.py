@@ -255,5 +255,7 @@ def as_html(*, request=None, part: PartType, context):
         return mark_safe(template.render(context=RequestContext(request, context)))
     elif hasattr(part, '__html__'):
         return part.__html__()
+    elif part is None:
+        return ''
     else:
         return str(part)
