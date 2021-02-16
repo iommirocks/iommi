@@ -106,7 +106,10 @@ from iommi.form import (
     Field,
     Form,
 )
-from iommi.fragment import Tag
+from iommi.fragment import (
+    build_and_bind_h_tag,
+    Tag,
+)
 from iommi.from_model import (
     AutoConfig,
     create_members_from_model,
@@ -1400,7 +1403,9 @@ class Table(Part, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
-    h_tag: Fragment = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[
+        Fragment, str
+    ] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
     title: str = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     row: RowConfig = EvaluatedRefinable()
     cell: CellConfig = EvaluatedRefinable()
@@ -1718,7 +1723,6 @@ class Table(Part, Tag):
 
     @classmethod
     @class_shortcut(
-        extra__buz=4711,
         tag='div',
         tbody__tag='div',
         cell__tag=None,
@@ -1763,13 +1767,7 @@ class Table(Part, Tag):
         bind_members(self, name='parts')
 
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
-        if isinstance(self.h_tag, Namespace):
-            if self.title not in (None, MISSING):
-                self.h_tag = self.h_tag(_name='h_tag', children__text=capitalize(self.title)).bind(parent=self)
-            else:
-                self.h_tag = ''
-        else:
-            self.h_tag = self.h_tag.bind(parent=self)
+        build_and_bind_h_tag(self)
 
         self.tbody = self.tbody(_name='tbody').bind(parent=self)
         self.container = self.container(_name='container').bind(parent=self)
