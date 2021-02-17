@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2.8.5 (2021-02-17)
+~~~~~~~~~~~~~~~~~~
+
+* Render title of `Page` objects. To turn off the rendering of the title pass `h_tag__include=False`.
+
+* Removed the register_search_fields warning, it was 90% annoying and 10% useful
+
+
 2.8.4 (2021-02-15)
 ~~~~~~~~~~~~~~~~~~
 
