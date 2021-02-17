@@ -262,10 +262,6 @@ class Filter(Part):
                 self.search_fields = get_search_fields(model=self.model)
             except NoRegisteredSearchFieldException:
                 self.search_fields = ['pk']
-                if iommi_debug_on():
-                    print(
-                        f'Warning: falling back to primary key as lookup and sorting on {self._name}. \nTo get rid of this warning and get a nicer lookup and sorting use register_search_fields for model {self.model}'
-                    )
 
     def own_evaluate_parameters(self):
         return dict(filter=self)
