@@ -22,6 +22,7 @@ from tri_declarative import (
 )
 from tri_struct import Struct
 
+from iommi import from_model
 from iommi.base import (
     items,
     keys,
@@ -31,6 +32,10 @@ from iommi.form import (
     Field,
     Form,
 )
+from iommi.from_model import (
+    NoRegisteredSearchFieldException,
+    register_search_fields,
+)
 from iommi.query import (
     build_query_expression,
     choice_queryset_value_to_q,
@@ -39,6 +44,7 @@ from iommi.query import (
     Q_OPERATOR_BY_QUERY_OPERATOR,
     Query,
     QueryException,
+    value_to_str_for_query,
 )
 from iommi.traversable import declared_members
 from tests.helpers import req
@@ -48,6 +54,7 @@ from tests.models import (
     EndPointDispatchModel,
     Foo,
     FromModelWithInheritanceTest,
+    NonStandardName,
     TBar,
     TBaz,
     TFoo,
@@ -680,9 +687,45 @@ def test_filter_repr():
 
 
 @pytest.mark.django_db
-def test_build_query_expression_for_model():
+def test_nice_error_message():
+    with pytest.raises(NoRegisteredSearchFieldException) as e:
+        value_to_str_for_query(Filter(search_fields=['custom_name_field']), NonStandardName(non_standard_name='foo'))
+
+    assert (
+        str(e.value)
+        == "NonStandardName has no attribute custom_name_field. Please register search fields with register_search_fields or specify search_fields."
+    )
+
+
+@pytest.mark.django_db
+def test_value_to_str_for_query_dunder_path():
+    bar = Bar.objects.create(foo=Foo.objects.create(foo=17))
+    assert value_to_str_for_query(Filter(search_fields=['foo__foo']), bar) == '"17"'
+
+
+@pytest.mark.django_db
+def test_build_query_expression_for_model_with_no_search_fields():
     foo = Foo.objects.create(foo=17)
     assert build_query_expression(filter=Filter(query_name='bar'), value=foo) == f'bar.pk={foo.pk}'
+
+
+@pytest.mark.django_db
+def test_build_query_expression_for_model_with_search_fields():
+    old_search_fields_by_model = dict(from_model._search_fields_by_model)
+
+    register_search_fields(model=Foo, search_fields=['foo', 'pk'], allow_non_unique=True)
+
+    foo = Foo.objects.create(foo=17)
+    assert (
+        build_query_expression(filter=Filter(query_name='bar', search_fields=['foo']), value=foo)
+        == f'bar="{foo.foo}"'  # Vanilla case with only one serach field
+    )
+    assert (
+        build_query_expression(filter=Filter(query_name='bar', search_fields=['foo', 'pk']), value=foo)
+        == f'bar="{foo.pk}"'  # If more than one, assume the last one is the one that is unique
+    )
+
+    from_model._search_fields_by_model = old_search_fields_by_model
 
 
 def test_escape_quote():
