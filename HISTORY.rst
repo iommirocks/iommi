@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+2.8.6 (2021-02-19)
+~~~~~~~~~~~~~~~~~~
+
+* Revert to the old (pre 2.8.2) way of using `search_fields` to compose queries.
+
+  The new approach failed for cases when there was a custom `value_to_q` definition.
+  A proper fix needs to have a unified approach also when using `.pk` format.
+
+
 2.8.5 (2021-02-17)
 ~~~~~~~~~~~~~~~~~~
 
