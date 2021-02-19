@@ -150,7 +150,7 @@ def value_to_str_for_query(filter, v):
         return str(v)
     if isinstance(v, Model):
         model = type(v)
-        search_field = filter.search_fields[0]
+        search_field = filter.search_fields[-1]
         try:
             v = getattr_path(v, search_field)
         except AttributeError:
