@@ -138,7 +138,7 @@ _styles = {}
 
 
 def register_style(name, conf):
-    assert name not in _styles
+    assert name not in _styles, f'{name} is already registered'
     assert conf.name is None
     conf.name = name
     _styles[name] = conf
