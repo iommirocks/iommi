@@ -8,7 +8,10 @@ from iommi import (
     Page,
 )
 from iommi.attrs import Attrs
-from iommi.fragment import fragment__render
+from iommi.fragment import (
+    build_and_bind_h_tag,
+    fragment__render,
+)
 from tests.helpers import req
 
 
@@ -241,3 +244,8 @@ def test_fragment_repr():
         repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'})))
         == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
     )
+
+
+def test_h_tag_callable():
+    p = Page(title=lambda request, **_: request.GET['foo']).bind(request=req('get', foo='title here'))
+    assert '<h1>Title here</h1>' in p.__html__()

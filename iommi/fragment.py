@@ -28,7 +28,10 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
     values,
 )
-from iommi.evaluate import evaluate_strict_container
+from iommi.evaluate import (
+    evaluate_strict,
+    evaluate_strict_container,
+)
 from iommi.member import (
     bind_members,
     collect_members,
@@ -233,7 +236,7 @@ class Header(Fragment):
 def build_and_bind_h_tag(p):
     if isinstance(p.h_tag, Namespace):
         if p.title not in (None, MISSING):
-            p.h_tag = p.h_tag(_name='h_tag', children__text=capitalize(p.title)).bind(parent=p)
+            p.h_tag = p.h_tag(_name='h_tag', children__text=capitalize(evaluate_strict(p.title, **p.iommi_evaluate_parameters()))).bind(parent=p)
         else:
             p.h_tag = ''
     else:
