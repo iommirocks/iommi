@@ -260,6 +260,9 @@ class Filter(Part):
         :param field__include: set to `True` to display a GUI element for this filter in the basic style interface.
         :param field__call_target: the factory to create a `Field` for the basic GUI, for example `Field.choice`. Default: `Field`
         """
+        model_field = kwargs.get('model_field')
+        if model_field and model_field.remote_field:
+            kwargs['model'] = model_field.remote_field.model
 
         super(Filter, self).__init__(**kwargs)
 
@@ -518,7 +521,6 @@ class Filter(Part):
             choices=model_field.remote_field.model.objects.all(),
             extra__django_related_field=True,
         )
-        kwargs['model'] = model_field.remote_field.model
         return call_target(model_field=model_field, **kwargs)
 
 

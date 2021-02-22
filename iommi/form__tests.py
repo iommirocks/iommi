@@ -2923,3 +2923,8 @@ def test_nested_form_validation_error_propagates_to_parent():
     assert not f.is_valid()
     assert f.nested_forms.inner_form.get_errors() == {'fields': {'inner_field': {'nope'}}}
     assert f.get_errors() == {}
+
+
+def test_filter_model_mixup():
+    f = Form(auto__model=TBar).bind(request=req('get'))
+    assert f.fields.foo.model == TFoo

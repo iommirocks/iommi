@@ -3467,3 +3467,8 @@ def test_table_foreign_key_column_name():
         auto__include=['foo'],
     ).bind(request=req('get'))
     assert t.columns.foo.display_name == 'Foo'
+
+
+def test_filter_model_mixup():
+    t = Table(auto__model=TBar).bind(request=req('get'))
+    assert t.columns.foo.model == TFoo
