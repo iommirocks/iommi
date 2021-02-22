@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2.8.7 (2021-02-22)
+~~~~~~~~~~~~~~~~~~
+
+* Make it possible to pass a lambda to title of Page/Form/Table
+
+* Improved error when trying to register an already registered style
+
+
 2.8.6 (2021-02-19)
 ~~~~~~~~~~~~~~~~~~
 
