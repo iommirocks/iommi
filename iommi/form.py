@@ -1043,7 +1043,7 @@ class Field(Part, Tag):
             if isinstance(choices, QuerySet):
                 kwargs['model'] = choices.model
             elif 'model_field' in kwargs:
-                kwargs['model'] = kwargs['model_field'].remote_field.model
+                pass
             else:
                 assert (
                     False

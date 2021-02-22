@@ -329,7 +329,7 @@ def default_icon__cell__format(column, value, **_):
 def foreign_key__sort_key(column, **_):
     if column.model:
         try:
-            sort_columns = get_search_fields(model=column.model_field.model)
+            sort_columns = get_search_fields(model=column.model)
             return f'{column.attr}__{sort_columns[0]}'
         except NoRegisteredSearchFieldException:
             pass
@@ -413,6 +413,10 @@ class Column(Part):
         :param cell__url_title: callable that receives kw arguments: `table`, `column`, `row` and `value`.
         :param render_column: If set to `False` the column won't be rendered in the table, but still be available in `table.columns`. This can be useful if you want some other feature from a column like filtering.
         """
+
+        model_field = kwargs.get('model_field')
+        if model_field and model_field.remote_field:
+            kwargs['model'] = model_field.remote_field.model
 
         super(Column, self).__init__(header=HeaderColumnConfig(**header), **kwargs)
 
@@ -817,19 +821,17 @@ class Column(Part):
         sort_key=foreign_key__sort_key,
     )
     def foreign_key(cls, call_target, model_field, **kwargs):
-        model_field = model_field.foreign_related_fields[0]
-        if hasattr(model_field.model, 'get_absolute_url'):
+        remote_model = model_field.remote_field.model
+        if hasattr(remote_model, 'get_absolute_url'):
             setdefaults_path(
                 kwargs,
                 cell__url=lambda value, **_: value.get_absolute_url() if value is not None else None,
             )
         setdefaults_path(
             kwargs,
-            choices=model_field.model.objects.all(),
-            model_field=model_field,
-            model=model_field.model,
+            choices=remote_model.objects.all(),
         )
-        return call_target(**kwargs)
+        return call_target(model_field=model_field, **kwargs)
 
 
 class Cells(Traversable, Tag):

@@ -884,3 +884,8 @@ def test_custom_query_name(MyTestQuery):
     query = MyTestQuery(filters__foo_name__query_name='bar').bind(request=None)
     assert repr(query.parse_query_string('bar=7')) == repr(Q(**{'foo__iexact': '7'}))
     assert repr(query.parse_query_string('bar.pk=7')) == repr(Q(**{'foo__pk': 7}))
+
+
+def test_filter_model_mixup():
+    q = Query(auto__model=TBar).bind(request=req('get'))
+    assert q.filters.foo.model == TFoo
