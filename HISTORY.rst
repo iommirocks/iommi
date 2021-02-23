@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2.8.8 (2021-02-23)
+~~~~~~~~~~~~~~~~~~
+
+* Automatically generating a Query from a model with a foreign key was broken in cases where the name field wasn't the same as name field of the parent model
+
+
 2.8.7 (2021-02-22)
 ~~~~~~~~~~~~~~~~~~
 
