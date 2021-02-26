@@ -93,11 +93,12 @@ class Middleware:
                 result.append('<br>By group:<br>')
 
                 for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
+                    group = list(group)
                     duration = sum(x["duration"] for x in group)
                     proportion = duration / total_duration * 100
                     k = k.replace('>', '&gt;')
                     result.append(
-                        f'<span style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{duration:.3}s, like {k}"></span>'
+                        format_html('<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>', proportion, color, len(group), f'{duration:.3}', k)
                     )
 
                 result.append('<p></p><pre>')
