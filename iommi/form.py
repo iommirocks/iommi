@@ -963,16 +963,12 @@ class Field(Part, Tag):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        parse=int_parse,
-    )
+    @class_shortcut
     def integer(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        parse=float_parse,
-    )
+    @class_shortcut
     def float(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 

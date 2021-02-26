@@ -2,6 +2,10 @@ from iommi.debug import (
     endpoint__debug_tree,
     iommi_debug_on,
 )
+from iommi.form import (
+    float_parse,
+    int_parse,
+)
 from iommi.style import Style
 from iommi.asset import Asset
 
@@ -74,6 +78,8 @@ base = Style(
             heading=dict(
                 template='iommi/form/heading.html',
             ),
+            float__parse=float_parse,
+            integer__parse=int_parse,
         ),
         tag='div',
         input__attrs__type='text',

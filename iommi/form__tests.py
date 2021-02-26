@@ -2928,3 +2928,19 @@ def test_nested_form_validation_error_propagates_to_parent():
 def test_filter_model_mixup():
     f = Form(auto__model=TBar).bind(request=req('get'))
     assert f.fields.foo.model == TFoo
+
+
+def test_override_parse_float_with_style():
+    from iommi import register_style
+    from iommi.style_base import base
+    from iommi import Style
+
+    def my_parse(string_value, **_):
+        pass
+
+    register_style('test_override_parse_float_with_style', Style(base, Field__shortcuts__float__parse=my_parse))
+
+    form = Form(fields__foo=Field.float(), iommi_style='test_override_parse_float_with_style')
+    form = form.bind(request=req('get'))
+    print(form.fields.foo.parse)
+    assert form.fields.foo.parse is my_parse
