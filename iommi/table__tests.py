@@ -77,6 +77,7 @@ from tests.models import (
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
+    T2,
     TBar,
     TBar2,
     TBaz,
@@ -1087,13 +1088,33 @@ def test_invalid_syntax_query():
 
 
 @pytest.mark.django_db
+def test_freetext_searching():
+    objects = [
+        T2.objects.create(foo='q', bar='q'),
+        T2.objects.create(foo='A', bar='q'),  # <- we should find this
+        T2.objects.create(foo='q', bar='a'),  # <- ...and this
+        T2.objects.create(foo='w', bar='w'),
+    ]
+
+    t = Table(
+        auto__model=T2,
+        columns=dict(
+            foo__filter=dict(include=True, freetext=True),
+            bar__filter=dict(include=True, freetext=True),
+        )
+    ).bind(request=req('get', freetext_search='a'))
+
+    assert set(t.rows) == set(objects[1:-1])
+
+
+@pytest.mark.django_db
 def test_query_form_freetext():
     class TestTable(Table):
         b = Column(filter__include=True, filter__freetext=True)
 
     expected_html = """
         <span class="iommi_query_form_simple">
-            <div><label for="id_freetext">Search</label><input id="id_freetext" name="freetext" type="text" value=""></div>
+            <div><label for="id_freetext_search">Search</label><input id="id_freetext_search" name="freetext_search" type="text" value=""></div>
         </span>
     """
     verify_table_html(
@@ -1114,7 +1135,7 @@ def test_query_form_freetext__exclude_label():
 
     expected_html = """
         <span class="iommi_query_form_simple">
-            <div><input id="id_freetext" name="freetext" type="text" value=""></div>
+            <div><input id="id_freetext_search" name="freetext_search" type="text" value=""></div>
         </span>
     """
     verify_table_html(
