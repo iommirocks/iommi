@@ -77,6 +77,7 @@ from tests.models import (
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
+    T2,
     TBar,
     TBar2,
     TBaz,
@@ -1084,6 +1085,26 @@ def test_invalid_syntax_query():
         find=dict(class_='iommi_query_error'),
         expected_html='<div class="iommi_query_error">Invalid syntax for query</div>',
     )
+
+
+@pytest.mark.django_db
+def test_freetext_searching():
+    objects = [
+        T2.objects.create(foo='q', bar='q'),
+        T2.objects.create(foo='A', bar='q'),  # <- we should find this
+        T2.objects.create(foo='q', bar='a'),  # <- ...and this
+        T2.objects.create(foo='w', bar='w'),
+    ]
+
+    t = Table(
+        auto__model=T2,
+        columns=dict(
+            foo__filter=dict(include=True, freetext=True),
+            bar__filter=dict(include=True, freetext=True),
+        )
+    ).bind(request=req('get', freetext_search='a'))
+
+    assert set(t.rows) == set(objects[1:-1])
 
 
 @pytest.mark.django_db
