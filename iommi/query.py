@@ -125,7 +125,7 @@ Q_OPERATOR_BY_QUERY_OPERATOR = {
     ':': 'icontains',
 }
 
-FREETEXT_SEARCH_NAME = 'freetext'
+FREETEXT_SEARCH_NAME = 'freetext_search'
 
 _filter_factory_by_django_field_type = {}
 

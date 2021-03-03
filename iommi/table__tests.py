@@ -1093,7 +1093,7 @@ def test_query_form_freetext():
 
     expected_html = """
         <span class="iommi_query_form_simple">
-            <div><label for="id_freetext">Search</label><input id="id_freetext" name="freetext" type="text" value=""></div>
+            <div><label for="id_freetext_search">Search</label><input id="id_freetext_search" name="freetext_search" type="text" value=""></div>
         </span>
     """
     verify_table_html(
@@ -1114,7 +1114,7 @@ def test_query_form_freetext__exclude_label():
 
     expected_html = """
         <span class="iommi_query_form_simple">
-            <div><input id="id_freetext" name="freetext" type="text" value=""></div>
+            <div><input id="id_freetext_search" name="freetext_search" type="text" value=""></div>
         </span>
     """
     verify_table_html(
