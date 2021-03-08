@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+2.8.9 (2021-03-08)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed bad html escape in SQL trace magnitude graph (this is not a security problem, as it's a developer tool with very restricted access)
+
+* Renamed freetext to freetext_search. It was too easy to collide with a user defined model with a field called freetext
+
+
 2.8.8 (2021-02-23)
 ~~~~~~~~~~~~~~~~~~
 
