@@ -38,8 +38,8 @@ from django.db.backends import utils as django_db_utils
 
 
 log = logging.getLogger('db')
-SQL = 11
-addLevelName(SQL, 'SQL')
+IOMMI_SQL_LOG = logging.INFO + 1
+addLevelName(IOMMI_SQL_LOG, 'IOMMI_SQL_LOG')
 
 SQL_DEBUG_LEVEL_ALL = 'all'
 SQL_DEBUG_LEVEL_ALL_WITH_STACKS = 'stacks'
@@ -234,7 +234,7 @@ def sql_debug(msg, **extra):
         if 'sql' not in extra:
             # If we don't do this we'll end up with infinite recursion back here
             extra['sql'] = ''
-        log.log(level=SQL, msg=msg, extra=extra)
+        log.log(level=IOMMI_SQL_LOG, msg=msg, extra=extra)
 
 
 def sql_debug_log_to_request(**data):
