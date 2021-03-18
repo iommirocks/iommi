@@ -233,6 +233,11 @@ class EvilNames(models.Model):
         ordering = ('id',)
 
 
+class DefaultsInForms(models.Model):
+    name = models.CharField(max_length=255, default='<name>')
+    number = models.IntegerField(default=7)
+
+
 class SortKeyOnForeignKeyA(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
 

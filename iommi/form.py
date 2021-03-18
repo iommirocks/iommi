@@ -20,6 +20,7 @@ from typing import (
     Union,
 )
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import (
     Case,
     IntegerField,
@@ -779,10 +780,14 @@ class Field(Part, Tag):
 
     def _read_initial(self):
         form = self.form
-        if self.initial is MISSING and self.include and form.instance is not None:
-            if self.attr:
-                initial = self.read_from_instance(self, form.instance)
-                self.initial = initial
+        if self.initial is MISSING and self.include and self.attr:
+            if form.instance is not None:
+                self.initial = self.read_from_instance(self, form.instance)
+            elif form.model is not None:
+                try:
+                    self.initial = self.read_from_instance(self, form.model())
+                except (ObjectDoesNotExist, AttributeError, ValueError):
+                    pass
 
         if self.initial is MISSING:
             self.initial = None
