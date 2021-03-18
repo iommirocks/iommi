@@ -91,6 +91,7 @@ from tests.models import (
     BooleanFromModelTestModel,
     ChoicesModel,
     CreateOrEditObjectTest,
+    DefaultsInForms,
     Foo,
     TBar,
     TBaz,
@@ -2928,3 +2929,9 @@ def test_nested_form_validation_error_propagates_to_parent():
 def test_filter_model_mixup():
     f = Form(auto__model=TBar).bind(request=req('get'))
     assert f.fields.foo.model == TFoo
+
+
+def test_initial_is_set_to_default_of_model():
+    form = Form.create(auto__model=DefaultsInForms).bind(request=req('get'))
+    assert form.fields.name.initial == '<name>'
+    assert form.fields.number.initial == 7
