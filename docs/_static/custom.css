@@ -17,11 +17,6 @@
         width: 150px;
     }
 
-    /* Hide badges */
-    .reference.external.image-reference {
-        display: none;
-    }
-
     #iommi h1 {
         display: none;
     }
