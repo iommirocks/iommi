@@ -62,7 +62,7 @@ def build_test_file_from_rst(filename):
         '`': None,
     })
 
-    with open(base_dir / '_generated_tests' / f'test_{filename.partition(os.path.sep)[-1].partition(".")[0]}.py', 'w') as f:
+    with open(base_dir / '_generated_tests' / f'test_{filename.rpartition(os.path.sep)[-1].partition(".")[0]}.py', 'w') as f:
         current_line = 0
 
         def write(s):

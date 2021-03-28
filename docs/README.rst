@@ -7,6 +7,9 @@ iommi
 
     <h3 class="pun">Your first pick for a django power cord</h3>
 
+.. image:: https://img.shields.io/discord/773470009795018763?logo=discord&logoColor=fff?label=Discord&color=7389d8
+    :target: https://discord.gg/ZyYRYhf7Pd
+
 .. image:: https://github.com/TriOptima/iommi/workflows/tests/badge.svg
     :target: https://github.com/TriOptima/iommi/actions?query=workflow%3Atests+branch%3Amaster
 
@@ -15,10 +18,6 @@ iommi
 
 .. image:: https://repl.it/badge/github/boxed/iommi-repl.it
     :target: https://repl.it/github/boxed/iommi-repl.it
-
-.. image:: https://img.shields.io/discord/773470009795018763
-    :target: https://discord.gg/ZyYRYhf7Pd
-
 
 iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
 
