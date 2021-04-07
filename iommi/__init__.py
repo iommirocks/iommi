@@ -95,4 +95,4 @@ __all__ = [
     'html',
 ]
 
-default_app_config = 'iommi.django_app.IommiConfig'
+default_app_config = 'iommi.apps.IommiConfig'

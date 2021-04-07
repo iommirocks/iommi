@@ -6,6 +6,7 @@ from iommi.from_model import register_search_fields
 class IommiConfig(AppConfig):
     name = 'iommi'
     verbose_name = 'iommi'
+    default = True
 
     def ready(self):
         from django.contrib.auth.models import (
