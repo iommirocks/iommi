@@ -577,7 +577,9 @@ class Field(Part, Tag):
         :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False``
         :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
-        :param choice_to_option: DEPRECATED: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)`
+        :param choice_to_option: DEPRECATED: Callback to generate the choice data given a choice value. It will get the keyword arguments `form`, `field` and `choice`. It should return a 4-tuple: `(choice, internal_value, display_name, is_selected)` It is deprecated since it was too complicated and did too much, and has been replaced with `choice_id_formatter` and `choice_display_name_formatter`.
+        :param choice_id_formatter: Callback given the keyword argument `choice` in addition to standard parameters, to obtain the string value to represent the identity of a given `choice`. Default implementation will use `str(choice)`
+        :param choice_display_name_formatter: Callback given the keyword argument `choice` in addition to standard parameters, to obtain the display name representing a given choice to the end user. Default implementation will use `str(choice)`
         :param choice_to_optgroup Callback to generate the optgroup for the given choice. It will get the keyword argument `choice`. It should return None if the choice should not be grouped.
         """
 
@@ -836,7 +838,7 @@ class Field(Part, Tag):
     def _choice_to_option_shim(self, form, field, choice):
         if self.choice_to_option is not None:
             warnings.warn(
-                'Field.choice_to_option is deprecated. It was too complicated and did too much, and has been replaced with choice_id_formatter, choice_display_name_formatter, and choice_is_selected. You normally just want to override choice_display_name_formatter and leave the others as their default.',
+                'Field.choice_to_option is deprecated. It was too complicated and did too much, and has been replaced with choice_id_formatter and choice_display_name_formatter. You normally just want to override choice_display_name_formatter and leave the other as their default.',
                 category=DeprecationWarning,
             )
             return self.choice_to_option(form=form, field=field, choice=choice)
