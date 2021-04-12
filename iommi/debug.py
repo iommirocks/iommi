@@ -208,9 +208,18 @@ def filename_and_line_num_from_part(part):
     frame = frame_from_part(part)
 
     if frame is None:
-        return None, None
+        filename, lineno = None, None
+    else:
+        filename, lineno = frame.f_code.co_filename, frame.f_lineno
 
-    return frame.f_code.co_filename, frame.f_lineno
+    if filename is None or filename.endswith('urls.py'):
+        import inspect
+
+        if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
+            filename = inspect.getsourcefile(type(part))
+            lineno = inspect.getsourcelines(type(part))[-1]
+
+    return filename, lineno
 
 
 def iommi_debug_panel(part):
@@ -312,12 +321,6 @@ def iommi_debug_panel(part):
 
 def source_url_from_part(part):
     filename, lineno = filename_and_line_num_from_part(part)
-    if filename is None or filename.endswith('urls.py'):
-        import inspect
-
-        if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
-            filename = inspect.getsourcefile(type(part))
-            lineno = inspect.getsourcelines(type(part))[-1]
     if filename is not None:
         source_url = src_debug_url_builder(filename, lineno)
     else:
