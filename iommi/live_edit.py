@@ -243,8 +243,6 @@ def live_edit_view(request, view, args, kwargs):
 def dangerous_execute_code(code, request, view, args, kwargs):
     local_variables = {}
     if isinstance(view, Part):
-        from iommi.debug import frame_from_part
-
         from importlib import import_module
         module = import_module(view.__module__)
         exec(code, module.__dict__, local_variables)
