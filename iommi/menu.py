@@ -297,6 +297,12 @@ def get_debug_menu(**kwargs):
             tag='li',
             include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
+        stop_editing = MenuItem(
+            display_name='Stop editing',
+            url='.',
+            tag='li',
+            include=lambda request, **_: '_iommi_live_edit' in request.GET,
+        )
         profile = MenuItem(
             url='?_iommi_prof', tag='li', include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE
         )

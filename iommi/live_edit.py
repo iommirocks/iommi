@@ -146,6 +146,8 @@ def live_edit_view(request, view, args, kwargs):
             return HttpResponse(json.dumps(dict(error=error)))
 
     return LiveEditPage(
+        title='iommi live edit',
+        h_tag__include=False,
         assets__code_editor=Asset.js(
             attrs=dict(
                 src='https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js',
@@ -250,6 +252,8 @@ def dangerous_execute_code(code, request, view, args, kwargs):
         exec(code, view.__globals__, local_variables)
     assert len(local_variables) == 1
     request.method = 'GET'
+    request.GET = request.GET.copy()
+    request.GET['_iommi_disable_debug_panel'] = ''
     new_view = list(local_variables.values())[0]
     if isinstance(new_view, type) and issubclass(new_view, Part):
         response = new_view().bind(request=request).render_to_response()
