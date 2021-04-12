@@ -215,9 +215,11 @@ def filename_and_line_num_from_part(part):
     if filename is None or filename.endswith('urls.py'):
         import inspect
 
-        if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
-            filename = inspect.getsourcefile(type(part))
-            lineno = inspect.getsourcelines(type(part))[-1]
+        from iommi import Part
+        if isinstance(part, Part):
+            if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
+                filename = inspect.getsourcefile(type(part))
+                lineno = inspect.getsourcelines(type(part))[-1]
 
     return filename, lineno
 

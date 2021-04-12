@@ -245,8 +245,9 @@ def dangerous_execute_code(code, request, view, args, kwargs):
     if isinstance(view, Part):
         from iommi.debug import frame_from_part
 
-        frame = frame_from_part(view)
-        exec(code, frame.f_globals, local_variables)
+        from importlib import import_module
+        module = import_module(view.__module__)
+        exec(code, module.__dict__, local_variables)
     else:
         exec(code, view.__globals__, local_variables)
     assert len(local_variables) == 1
