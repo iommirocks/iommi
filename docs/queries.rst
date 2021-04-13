@@ -20,6 +20,20 @@ Queries are normally used from inside iommi tables where they are an
 integrated part, but can also be used stand alone. See below for an
 example.
 
+.. image:: queries_example.png
+
+The code for the example above:
+
+.. code:: python
+
+    Table(
+        auto__model=Album,
+        page_size=10,
+        columns__name__filter__include=True,
+        columns__artist__filter__include=True,
+    )
+
+
 Read the full documentation and the :doc:`howto` for more.
 
 Query language

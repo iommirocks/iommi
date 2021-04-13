@@ -16,7 +16,17 @@ iommi tables makes it easy to create full featured HTML tables easily:
 * automatic rowspan
 * grouping of headers
 
-All these examples and a bigger example using many more features can be found in the examples django project.
+.. image:: forms_create_example.png
+
+The code for the example above:
+
+.. code:: python
+
+    Table(
+        auto__model=Album,
+        page_size=10,
+    )
+
 
 Read the full documentation and the :doc:`howto` for more.
 

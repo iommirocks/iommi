@@ -9,6 +9,14 @@ Forms
 
 iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on weaknesses.
 
+.. image:: forms_create_example.png
+
+The code for the example above:
+
+.. code:: python
+
+    Form.create(auto__model=Album)
+
 Major features compared to Django forms:
 
 - Nice rendering to HTML out of the box. Default bootstrap but more built in and can be adapted to your design system.
