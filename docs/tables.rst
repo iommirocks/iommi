@@ -16,7 +16,7 @@ iommi tables makes it easy to create full featured HTML tables easily:
 * automatic rowspan
 * grouping of headers
 
-.. image:: forms_create_example.png
+.. image:: tables_example_albums.png
 
 The code for the example above:
 
