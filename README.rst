@@ -16,27 +16,17 @@
 .. image:: https://repl.it/badge/github/boxed/iommi-repl.it
     :target: https://repl.it/github/boxed/iommi-repl.it
 
-iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
-
 iommi is a toolkit to build web apps faster. It's built on Django but goes a lot further.
 
 It has:
 
-- forms that feel familiar, but can handle growing complexity better than Djangos forms
-- tables that are powerful out of the box and scale up to arbitrary complexity
-- a system to compose parts, like forms, menus, and tables, into bigger pages
-- tools that will speed up your development like jump-to-code, great feedback for missing select/prefetch related, a profiler, and more.
+- `forms <https://docs.iommi.rocks/en/latest/forms.html>`_: that feel familiar, but can handle growing complexity better than Djangos forms
+- `tables <https://docs.iommi.rocks/en/latest/tables.html>`_: that are powerful out of the box and scale up to arbitrary complexity
+- a system to `compose parts <https://docs.iommi.rocks/en/latest/pages.html>`_:, like forms, menus, and tables, into bigger pages
+- tools that will speed up your development like live edit, jump to code, great feedback for missing select/prefetch related, a profiler, and more.
 - great error messages when you make a mistake
 
-
-.. image:: docs/README-demo.gif
-
-Major features:
-
-- `Forms <https://docs.iommi.rocks/en/latest/forms.html>`_: view models, data validation, and parsing
-- `Queries <https://docs.iommi.rocks/en/latest/queries.html>`_: filtering lists/query sets
-- `Tables <https://docs.iommi.rocks/en/latest/tables.html>`_: view models for lists/query sets, html tables, and CSV reports
-- `Pages <https://docs.iommi.rocks/en/latest/pages.html>`_: compose pages from parts like forms, tables and html fragments
+.. image:: README-demo.gif
 
 
 Example:
