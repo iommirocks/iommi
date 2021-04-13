@@ -19,28 +19,18 @@ iommi
 .. image:: https://repl.it/badge/github/boxed/iommi-repl.it
     :target: https://repl.it/github/boxed/iommi-repl.it
 
-iommi is a Django-based framework that magically create pages, forms and tables with advanced out-of-the-box functionality based on your applications models - without sacrificing flexibility and control.
+iommi is a toolkit to build web apps faster. It's built on Django but goes a lot further.
 
-Major features:
+It has:
 
-- A system to project django model definitions into more high level definitions
-- :doc:`Forms <forms>`: view models, data validation, and parsing
-- :doc:`Queries <queries>`: filtering lists/query sets
-- :doc:`Tables <tables>`: view models for lists/query sets, html tables, and CSV reports
-- :doc:`Pages <pages>`: compose pages from parts like forms, tables and html fragments
+- `forms <https://docs.iommi.rocks/en/latest/forms.html>`_: that feel familiar, but can handle growing complexity better than Djangos forms
+- `tables <https://docs.iommi.rocks/en/latest/tables.html>`_: that are powerful out of the box and scale up to arbitrary complexity
+- a system to `compose parts <https://docs.iommi.rocks/en/latest/pages.html>`_:, like forms, menus, and tables, into bigger pages
+- tools that will speed up your development like live edit, jump to code, great feedback for missing select/prefetch related, a profiler, and more.
+- great error messages when you make a mistake
 
-All the components are written with the same philosophy of:
+.. image:: README-demo.gif
 
-* Everything has a name
-* Traversing a namespace is done with `__` when `.` can't be used in normal python syntax
-* Callables for advanced usage, values for the simple cases
-* Late binding
-* Declarative/programmatic hybrid API
-* Prepackaged commonly used patterns (that can still be customized!)
-* Single point customization with *no* boilerplate
-* Escape hatches included
-
-See :doc:`philosophy <philosophy>` for explanations of all these.
 
 Example:
 

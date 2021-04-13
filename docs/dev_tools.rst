@@ -1,7 +1,7 @@
 Dev tools
 =========
 
-iommi ships with several integrated tools to make it faster to develop. They
+iommi ships with several integrated tools to increase your development speed. They
 are shown on iommi pages when `settings.DEBUG` is `True`. Some are always
 active and some are optional and needs to be added to your project.
 

@@ -7,13 +7,15 @@
 Forms
 =====
 
-iommi forms is an alternative forms system for Django. It is inspired by, and
-comes from a frustration with, the standard Django forms.
+iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on weaknesses.
 
 Major features compared to Django forms:
 
+- Nice rendering to HTML out of the box. Default bootstrap but more built in and can be adapted to your design system.
+- AJAX-backed select widgets for your foreign key relationships.
 - Supports `__` syntax for going across table/object boundaries, similar to how Django does with QuerySets.
 - Send in a callable that is late evaluated to determine if a field should be displayed (`include`). This is very handy for showing a slightly different form to administrators for example.
+- Eeasily add a CSS class or style to just the thing you need just now.
 - Easy configuration without writing entire classes that are only used in one place anyway.
 
 Read the full documentation and the :doc:`howto` for more.
@@ -23,13 +25,13 @@ Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.
 The full list of shortcuts can be found in the
 `API documentation for Field <api.html#iommi.Field>`_.
 
-iommi also comes with full edit, create and delete views. See below for an example of `Form.edit`.
+iommi also comes with full `edit`, `create` and `delete` views. See below for an example of `Form.edit`.
 
 
 Declarative forms
 -----------------
 
-You can create forms declaratively, similar to Django forms. There are some important differences between iommi forms and Django forms in this mode, maybe the most important being that in iommi you can pass a callable as a parameter to late evaluate what the value of something is. This coupled with the `include` flag that is used to totally remove or turn on a part (most commonly an entire field), as we've done for the `is_staff` field in this example:
+You can create forms declaratively, similar to Django forms. There are some important differences between iommi forms and Django forms in this mode, maybe the most important being that in iommi you can pass a callable as a parameter to late evaluate what the value of something is. This is used to restrict a field for staff users in this example:
 
 
 .. code:: python
@@ -79,7 +81,7 @@ Note that we don't need any template here.
 Programmatic forms
 ------------------
 
-The declarative style is very readable, but sometimes you don't know until runtime what the form should look like. In iommi forms creating forms programmatically is easy (and equivalent to doing it the declarative way:
+The declarative style is very readable, but sometimes you don't know until runtime what the form should look like. Creating forms programmatically in iommi is easy (and equivalent to doing it the declarative way):
 
 
 .. code:: python

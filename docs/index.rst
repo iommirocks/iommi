@@ -11,23 +11,24 @@ Contents:
    :maxdepth: 2
 
    usage
-   philosophy
-   architecture
+   howto
+   forms
    pages
    tables
    queries
-   forms
-   registrations
    dev_tools
    admin
-   howto
    styles
+   registrations
    api
+   philosophy
+   architecture
    history
    authors
    contributing
 
    @github <https://github.com/TriOptima/iommi>
+   @discord <https://img.shields.io/discord/773470009795018763?logo=discord&logoColor=fff?label=Discord&color=7389d8>
    @pypi <https://pypi.org/project/iommi/>
 
 Indices and tables

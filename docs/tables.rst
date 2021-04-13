@@ -7,14 +7,14 @@ Tables
 iommi tables makes it easy to create full featured HTML tables easily:
 
 * generates header, rows and cells
-* grouping of headers
-* filtering
 * sorting
-* bulk edit
+* filtering
 * pagination
-* automatic rowspan
+* bulk edit
 * link creation
 * customization on multiple levels, all the way down to templates for cells
+* automatic rowspan
+* grouping of headers
 
 All these examples and a bigger example using many more features can be found in the examples django project.
 
@@ -23,9 +23,9 @@ Read the full documentation and the :doc:`howto` for more.
 Creating tables from models
 ---------------------------
 
-Say I have some models:
+Say I have some model:
 
-.. code:: python
+.. test
 
     class Foo(models.Model):
         a = models.IntegerField()
@@ -136,10 +136,5 @@ Table of plain python objects
 .. test
     plain_objs_view(req('get'))
 
-And this is what you get:
 
-.. image:: table_example_1.png
-
-All these examples and a bigger example using many more features can be found in the examples django project.
-
-Read the full documentation for more.
+All these examples and a bigger example using many more features can be found in the examples project.

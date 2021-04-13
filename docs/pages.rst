@@ -7,12 +7,12 @@
 Pages
 =====
 
-iommi pages is used to compose parts of a page into a full page.
+iommi pages are used to compose parts of a page into a full page.
 
 Example
 -------
 
-.. code:: python
+.. test
 
     from django.contrib.auth.models import User
     from iommi import (
@@ -21,21 +21,20 @@ Example
         Table,
     )
 
-    def my_view(request):
-        class MyPage(Page):
-            title = html.h1('My page')
-            users = Table(auto__model=User)
-            create_user = Form.create(auto__model=User)
+.. code:: python
 
-        return MyPage()
+    class MyPage(Page):
+        title = html.h1('My page')
+        users = Table(auto__model=User)
+        create_user = Form.create(auto__model=User)
 
 .. test
     request = req('get')
-    my_view(request).bind(request=request).render_to_response()
+    MyPage().bind(request=request).render_to_response()
 
 
 This creates a page with an h1 tag, a table of users and a form to create a
-new user.
+new user. You can add it your `urls.py` like this: `path('my_page/', MyPage().as_view())`, or make a function based view and `return MyPage()`.
 
 Page
 ----

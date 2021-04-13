@@ -1,7 +1,7 @@
 .. _history:
 
-History
-=======
+Changelog
+=========
 
 .. include:: ../HISTORY.rst
     :start-line: 2
