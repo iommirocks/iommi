@@ -23,9 +23,9 @@ iommi is a toolkit to build web apps faster. It's built on Django but goes a lot
 
 It has:
 
-- `forms <forms>`: that feel familiar, but can handle growing complexity better than Djangos forms
-- `tables <tables>`: that are powerful out of the box and scale up to arbitrary complexity
-- a system to `compose parts <pages>`:, like forms, menus, and tables, into bigger pages
+- :doc:`forms <forms>`: that feel familiar, but can handle growing complexity better than Djangos forms
+- :doc:`tables <tables>`: that are powerful out of the box and scale up to arbitrary complexity
+- a system to :doc:`compose parts <pages>`:, like forms, menus, and tables, into bigger pages
 - tools that will speed up your development like live edit, jump to code, great feedback for missing select/prefetch related, a profiler, and more.
 - great error messages when you make a mistake
 
