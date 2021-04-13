@@ -26,7 +26,7 @@ It has:
 - tools that will speed up your development like live edit, jump to code, great feedback for missing select/prefetch related, a profiler, and more.
 - great error messages when you make a mistake
 
-.. image:: README-demo.gif
+.. image:: docs/README-demo.gif
 
 
 Example:
