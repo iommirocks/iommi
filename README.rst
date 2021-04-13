@@ -13,6 +13,10 @@
 .. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/TriOptima/iommi
 
+.. image:: https://readthedocs.org/projects/iommi/badge/?version=latest
+    :target: https://docs.iommi.rocks
+    :alt: Documentation Status
+
 .. image:: https://repl.it/badge/github/boxed/iommi-repl.it
     :target: https://repl.it/github/boxed/iommi-repl.it
 
