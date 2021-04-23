@@ -89,6 +89,12 @@ def setup_db_compat_django():
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
     register_factory(BinaryField, factory=None)
+    try:
+        # This raises ImportError when the postgres driver isn't installed
+        from django.contrib.postgres.fields import JSONField
+        register_factory(JSONField, factory=None)
+    except ImportError:
+        pass
 
     # Column specific
     register_column_factory(BooleanField, shortcut_name='boolean')
