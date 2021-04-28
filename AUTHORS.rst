@@ -21,3 +21,4 @@ Credits
 * Martin Barksten <martin.barksten@trioptima.com>
 * Rasmus Spiegelberg <rasmus.spiegelberg@trioptima.com>
 * Benedikt Grundmann <benedikt.grundmann@gmail.com>
+* flying_sausages
