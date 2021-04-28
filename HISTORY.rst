@@ -1,6 +1,24 @@
 Changelog
 ---------
 
+2.8.10 (2021-04-28)
+~~~~~~~~~~~~~~~~~~~
+
+* Read defaults from model for initial of fields
+
+* Increased log level of SQL logging from 11 to 21 (DEBUG+1 -> INFO+1)
+
+* Added null factory for `JSONField`
+
+* Fixed live editing code to use the same logic as 'jump to code' to find the code
+
+* Fixed one case where live edit broke
+
+* Prettier debug menu for live editing
+
+* Prettier query help text (thanks new contributor flying_sausages!)
+
+
 2.8.9 (2021-03-08)
 ~~~~~~~~~~~~~~~~~~
 
