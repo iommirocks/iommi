@@ -179,6 +179,7 @@ def live_edit_view(request, view, args, kwargs):
 
                 .container iframe {
                     flex: 1 1 auto;
+                    border: 0;
                 }
 
                 .container #editor {
