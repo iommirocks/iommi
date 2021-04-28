@@ -14,7 +14,7 @@
                 <h3>{% blocktrans %}Available fields{% endblocktrans %}</h3>
                 <ul>
                     {% for name in query.filters %}
-                        <li>{{ name }}</li>
+                        <li><code>{{ name }}</code></li>
                     {% endfor %}
                 </ul>
             </div>
