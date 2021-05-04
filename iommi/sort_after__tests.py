@@ -32,12 +32,14 @@ def test_order_after_LAST():
 
 
 def test_order_after_large():
-    assert list(sort_after(dict(
-        foo=Struct(after=42),
-        baz=Struct(),
-        bar=Struct(after=4711),
-        quux=Struct(after=17),
-    )).keys()) == ['baz', 'quux', 'foo', 'bar']
+    sorts_right(
+        dict(
+            foo=Struct(expected_position=2, after=42),
+            bar=Struct(expected_position=0, ),
+            quux=Struct(expected_position=3, after=42),
+            baz=Struct(expected_position=1, after=17),
+        )
+    )
 
 
 def test_order_after_name():
