@@ -40,7 +40,7 @@ def sort_after(d):
                 next_to_be_moved_by_index = to_be_moved_by_index[0]
 
                 next_by_position_index = next_to_be_moved_by_index[1].after
-                if count < next_by_position_index:  # pragma: no mutate (infinite loop when mutating < to <=)
+                if unmoved and count < next_by_position_index:  # pragma: no mutate (infinite loop when mutating < to <=)
                     break  # pragma: no mutate (infinite loop when mutated to continue)
 
                 for x in place(next_to_be_moved_by_index):
