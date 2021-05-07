@@ -11,6 +11,7 @@ from tri_declarative import (
     Namespace,
     Refinable,
     setdefaults_path,
+    with_meta,
 )
 
 from iommi._web_compat import (
@@ -117,6 +118,7 @@ class Tag:
             return format_html('</{}>', self.tag)
 
 
+@with_meta
 class Fragment(Part, Tag):
     """
     `Fragment` is a class used to build small HTML fragments that plug into iommis structure.

@@ -249,3 +249,13 @@ def test_fragment_repr():
 def test_h_tag_callable():
     p = Page(title=lambda request, **_: request.GET['foo']).bind(request=req('get', foo='title here'))
     assert '<h1>Title here</h1>' in p.__html__()
+
+
+def test_fragment_meta():
+    class MyFragment(Fragment):
+        class Meta:
+            tag = 'span'
+            attrs__class__foo = True
+
+    assert str(MyFragment().bind(request=req('get'))) == '<span class="foo"></span>'
+
