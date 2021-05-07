@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+2.8.11 (2021-05-07)
+~~~~~~~~~~~~~~~~~~~
+
+* `Fragment` should have `@with_meta`
+
+* Fixed nesting tables inside forms. This would previously crash with a strange error message.
+
+* Avoid infinite loop in sort_after on too large indicies
+
+
 2.8.10 (2021-04-28)
 ~~~~~~~~~~~~~~~~~~~
 
