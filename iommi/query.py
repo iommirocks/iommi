@@ -722,6 +722,10 @@ class Query(Part):
         return render(request=self.get_request())
 
     def on_bind(self) -> None:
+        # Prevent the nested form from thinking it's a part of a nested form set up
+        if 'form' in self._evaluate_parameters:
+            del self._evaluate_parameters['form']
+
         bind_members(self, name='filters')
 
         request = self.get_request()
