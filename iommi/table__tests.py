@@ -3493,3 +3493,13 @@ def test_table_foreign_key_column_name():
 def test_filter_model_mixup():
     t = Table(auto__model=TBar).bind(request=req('get'))
     assert t.columns.foo.model == TFoo
+
+
+@pytest.mark.django_db
+def test_nest_table_inside_form_does_not_crash_due_to_nested_forms():
+    # This used to crash
+    form = Form(
+        auto__instance=TFoo(),
+        fields__a_table=Table(auto__model=TFoo)
+    ).bind(request=req('get'))
+
