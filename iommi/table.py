@@ -1080,23 +1080,33 @@ def bulk__post_handler(table, form, **_):
             continue
 
         if isinstance(field.model_field, ManyToManyField):
+            assert '__' not in field.attr, "Nested m2m relations is currently not supported for bulk editing"
             m2m_updates.append(field)
         else:
             simple_updates.append(field)
 
     updates = {field.attr: field.value for field in simple_updates}
-    queryset.update(**updates)
+    m2m_updates = {field.attr: field.value for field in m2m_updates}
+
+    pks = list(queryset.values_list('pk', flat=True))
+
+    queryset.model.objects.filter(pk__in=pks).update(**updates)
 
     if m2m_updates:
         for obj in queryset:
-            for field in m2m_updates:
-                assert '__' not in field.attr, "Nested m2m relations is currently not supported for bulk editing"
-                getattr(obj, field.attr).set(field.value)
+            for attr, value in items(m2m_updates):
+                getattr(obj, attr).set(value)
             obj.save()
 
-    table.post_bulk_edit(queryset=queryset, updates=updates, **table.iommi_evaluate_parameters())
+    table.post_bulk_edit(
+        pks=pks,
+        queryset=queryset,
+        updates=updates,
+        m2m_updates=m2m_updates,
+        **table.iommi_evaluate_parameters(),
+    )
 
-    return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
+    return HttpResponseRedirect(form.get_request().META.get('HTTP_REFERER', '/'))
 
 
 def bulk_delete__post_handler(table, form, **_):
@@ -1141,7 +1151,7 @@ def bulk_delete__post_handler(table, form, **_):
 
     if request.POST.get(p.parts.confirm.bulk.fields.confirmed.iommi_path) == 'confirmed':
         queryset.delete()
-        return HttpResponseRedirect(form.get_request().META['HTTP_REFERER'])
+        return HttpResponseRedirect(form.get_request().META.get('HTTP_REFERER', '/'))
 
     return HttpResponse(render_root(part=p))
 
