@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+2.8.12 (2021-05-18)
+~~~~~~~~~~~~~~~~~~~
+
+* Major bug: tables based on querysets would implicitly use the django result cache. This resulted in the contents of the table not changing until after process restart
+
+
 2.8.11 (2021-05-07)
 ~~~~~~~~~~~~~~~~~~~
 

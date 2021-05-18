@@ -1,4 +1,4 @@
-__version__ = '2.8.11'
+__version__ = '2.8.12'
 
 from tri_declarative import LAST
 
