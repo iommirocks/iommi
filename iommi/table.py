@@ -1782,6 +1782,11 @@ class Table(Part, Tag):
 
         evaluate_member(self, 'model', strict=False, **self.iommi_evaluate_parameters())
         evaluate_member(self, 'initial_rows', **self.iommi_evaluate_parameters())
+
+        if isinstance(self.initial_rows, QuerySet):
+            # Copy the QuerySet so we don't get the original QuerySets result cache
+            self.initial_rows = self.initial_rows.all()
+
         self._prepare_sorting()
 
         if not self.sortable:

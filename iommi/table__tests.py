@@ -3461,6 +3461,17 @@ def test_lazy_rows(settings):
 
 
 @pytest.mark.django_db
+def test_rows_should_not_cache():
+    q = TBar.objects.all()
+    assert q._result_cache is None, "Cache should be empty"
+    Table(
+        model=TBar,
+        rows=lambda **_: q,
+    ).bind(request=req('get')).render_to_response()
+    assert q._result_cache is None, "Cache should be empty"
+
+
+@pytest.mark.django_db
 def test_auto_model_for_textchoices():
     class TestTable(Table):
         class Meta:
