@@ -694,6 +694,13 @@ class Column(Part):
         return call_target(**kwargs)
 
     @classmethod
+    @class_shortcut(
+        call_target__attribute='text',
+    )
+    def textarea(cls, call_target, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
     @class_shortcut
     def link(cls, call_target, **kwargs):
         # Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
