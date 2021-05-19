@@ -335,6 +335,13 @@ class Filter(Part):
 
     @classmethod
     @class_shortcut(
+        call_target__attribute='text',
+    )
+    def textarea(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
         query_operator_to_q_operator=case_sensitive_query_operator_to_q_operator,
     )
     def case_sensitive(cls, call_target=None, **kwargs):

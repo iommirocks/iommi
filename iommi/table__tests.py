@@ -2394,6 +2394,7 @@ def test_shortcuts_map_to_form_and_query(name, shortcut):
         'number',  # no equivalent in Field or Filter, there you have to choose integer or float
         'substring',
         'boolean_tristate',  # this is special in the bulk case where you want want a boolean_quadstate: don't change, clear, True, False. For now we'll wait for someone to report this misfeature/bug :)
+        'textarea',
     }
     if name in whitelist:
         return

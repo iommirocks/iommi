@@ -806,7 +806,12 @@ def test_from_model_with_inheritance():
 
 @pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Filter).items())
 def test_shortcuts_map_to_form(name, shortcut):
-    if name == 'case_sensitive':  # This has no equivalent in Field
+    whitelist = [
+        'case_sensitive',
+        'textarea',
+    ]
+
+    if name in whitelist:  # This has no equivalent in Field
         return
 
     assert shortcut.dispatch.field.call_target.attribute == name
