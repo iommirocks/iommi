@@ -51,6 +51,7 @@ from tests.helpers import req
 from tests.models import (
     Bar,
     BooleanFromModelTestModel,
+    CamelCaseFieldModel,
     EndPointDispatchModel,
     Foo,
     FromModelWithInheritanceTest,
@@ -905,3 +906,13 @@ def test_filter_api():
 
     query = Query(auto__model=Foo, filter=refined_filter).bind(request=req('get'))
     assert list(query.filter(query=query, rows=Foo.objects.all())) == list(Foo.objects.filter(foo=5))
+
+
+@pytest.mark.django_db
+def test_filter_on_camel_case():
+    CamelCaseFieldModel.objects.create(camelCaseField=True)
+    CamelCaseFieldModel.objects.create(camelCaseField=False)
+    CamelCaseFieldModel.objects.create(camelCaseField=False)
+
+    query = Query(auto__model=CamelCaseFieldModel).bind()
+    assert repr(query.parse_query_string('camelCaseField=1')) == repr(Q(camelCaseField__exact=True))

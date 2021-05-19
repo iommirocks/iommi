@@ -942,7 +942,7 @@ class Query(Part):
                 f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}'
             )
 
-        filter = self.filters.get(filter_name.lower())
+        filter = self._lowercase_filters().get(filter_name.lower())
         if filter is None:
             raise QueryException(
                 f'Unknown filter "{query_name}", available filters: {list(keys(self.filter_name_by_query_name))}'
@@ -1043,6 +1043,11 @@ class Query(Part):
         except QueryException as e:
             self.query_error = str(e)
             raise
+
+    def _lowercase_filters(self):
+        if not hasattr(self, '_lowercase_filters_cache'):
+            self._lowercase_filters_cache = {k.lower(): v for k, v in items(self.filters)}
+        return self._lowercase_filters_cache
 
     @classmethod
     @dispatch(
