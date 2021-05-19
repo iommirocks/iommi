@@ -889,3 +889,19 @@ def test_custom_query_name(MyTestQuery):
 def test_filter_model_mixup():
     q = Query(auto__model=TBar).bind(request=req('get'))
     assert q.filters.foo.model == TFoo
+
+
+@pytest.mark.django_db
+def test_filter_api():
+    Foo.objects.create(foo=5)
+    Foo.objects.create(foo=7)
+
+    query = Query(auto__model=Foo).bind(request=req('get'))
+    assert list(query.filter(query=query, rows=Foo.objects.all())) == list(Foo.objects.all())
+
+    def refined_filter(query, rows, **_):
+        assert isinstance(query, Query)
+        return rows.filter(foo=5)
+
+    query = Query(auto__model=Foo, filter=refined_filter).bind(request=req('get'))
+    assert list(query.filter(query=query, rows=Foo.objects.all())) == list(Foo.objects.filter(foo=5))
