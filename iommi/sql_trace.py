@@ -79,7 +79,22 @@ class Middleware:
             if iommi_sql_debug_log is not None:
                 total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
                 result = [
-                    '<style> a, span { box-sizing: border-box; } </style>',
+                    '''
+                    <style> 
+                        a, span { 
+                            box-sizing: border-box; 
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            html {
+                                background-color: black;
+                                color: #bbb;
+                            }
+                            b {
+                                color: white;
+                            }
+                        } 
+                        </style>
+                    ''',
                     f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
                 ]
 
@@ -90,7 +105,7 @@ class Middleware:
                         f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>'
                     )
 
-                result.append('<br>By group:<br>')
+                result.append('<br><br>By group:<br>')
 
                 for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
                     group = list(group)

@@ -112,9 +112,28 @@ class Middleware:
                     line = line.replace(' ', '&nbsp;')
                     result.append(line)
 
-                response.content = '<div style="font-family: monospace; white-space: nowrap">%s</div' % "<br />\n".join(
-                    result
-                )
+                start_html = '''
+                <style>
+                    html {
+                        font-family: monospace; 
+                        white-space: nowrap;
+                    }
+                    
+                    @media (prefers-color-scheme: dark) {
+                        html {
+                            background-color: black;
+                            color: #bbb;
+                        }
+                        b {
+                            color: white;
+                        }
+                    }
+                </style>
+                <div>'''
+                lines_html = "<br />\n".join(result)
+                end_html = '</div>'
+
+                response.content = start_html + lines_html + end_html
 
                 response['Content-Type'] = 'text/html'
 
