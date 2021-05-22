@@ -1,3 +1,4 @@
+from glob import glob
 from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
@@ -14,12 +15,15 @@ from iommi import MISSING
 from iommi.base import items
 
 
-def read_howto_links():
-    with open(Path(__file__).parent.parent / 'docs' / 'howto.rst') as f:
-        return parse_howto_links(f.readlines())
+def read_cookbook_links():
+    result = []
+    for filename in glob(str(Path(__file__).parent.parent / 'docs' / 'cookbook_*.rst')):
+        with open(filename) as f:
+            result.append((parse_cookbook_links(f.readlines()), Path(filename).stem))
+    return result
 
 
-def parse_howto_links(lines):
+def parse_cookbook_links(lines):
     link_marker = '.. _'
     anchors = [line.strip()[len(link_marker) :].rstrip(':') for line in lines if line.startswith(link_marker)]
 
@@ -28,10 +32,10 @@ def parse_howto_links(lines):
     return {x for x in anchors if not x.endswith('?')}
 
 
-def validate_howto_links(howto_links):
+def validate_cookbook_links(cookbook_links):
     class_by_name = {x.__name__: x for x in get_default_classes()}
 
-    for link in howto_links:
+    for link, name in cookbook_links:
         if '.' in link:
             class_name, _, refinable_name = link.partition('.')
             assert class_name in class_by_name, f'{class_name} was not found in default_classes'
@@ -97,9 +101,13 @@ def get_docs_callable_description(c):
 def _generate_rst_docs(classes):
     import re
 
-    howto_links = read_howto_links()
-    validate_howto_links(howto_links)
-    # TODO: validate that all howto_links are actually linked somewhere. For example ".. _Column.cells_for_rows" isn't right now.
+    cookbook_links = read_cookbook_links()
+    validate_cookbook_links(cookbook_links)
+    # TODO: validate that all cookbook links are actually linked somewhere. For example ".. _Column.cells_for_rows" isn't right now.
+    cookbook_name_by_refinable_name = {}
+    for links, name in cookbook_links:
+        for link in links:
+            cookbook_name_by_refinable_name[link] = name
 
     def docstring_param_dict(obj):
         doc = obj.__doc__
@@ -181,9 +189,9 @@ def _generate_rst_docs(classes):
                         w(1, f'Type: `{name}`')
                     w(1, '')
 
-                if f'{c.__name__}.{refinable}' in howto_links:
-                    ref_name = f'{c.__name__}.{refinable}'.lower()
-                    w(1, f'HOWTO: :ref:`{ref_name}`')
+                ref_name = f'{c.__name__}.{refinable}'
+                if ref_name in cookbook_name_by_refinable_name:
+                    w(1, f'Cookbook: :ref:`{ref_name.lower()}`')
                     w(1, '')
 
             w(0, '')

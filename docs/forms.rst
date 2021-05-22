@@ -26,7 +26,7 @@ Major features compared to Django forms:
 - Eeasily add a CSS class or style to just the thing you need just now.
 - Easy configuration without writing entire classes that are only used in one place anyway.
 
-Read the full documentation and the :doc:`howto` for more.
+Read the full documentation and the :doc:`cookbook` for more.
 
 iommi pre-packages sets of defaults for common field types as 'shortcuts'.
 Some examples include `Field.boolean`, `Field.integer` and `Field.choice`.

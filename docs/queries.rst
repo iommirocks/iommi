@@ -34,7 +34,7 @@ The code for the example above:
     )
 
 
-Read the full documentation and the :doc:`howto` for more.
+Read the full documentation and the :doc:`cookbook` for more.
 
 Query language
 --------------

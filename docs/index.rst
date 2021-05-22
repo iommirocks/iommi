@@ -11,7 +11,7 @@ Contents:
    :maxdepth: 2
 
    usage
-   howto
+   cookbook
    forms
    pages
    tables
