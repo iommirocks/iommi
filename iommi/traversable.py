@@ -27,6 +27,7 @@ from iommi.evaluate import (
 from iommi.style import (
     apply_style,
     get_iommi_style_name,
+    get_style_object,
 )
 
 
@@ -125,11 +126,13 @@ class Traversable(RefinableObject):
         if parent:
             is_root = False
             iommi_style = get_iommi_style_name(parent)
+            style_object = get_style_object(parent)
         else:
             is_root = True
             iommi_style = get_iommi_style_name(self)
+            style_object = get_style_object(self)
 
-        result = apply_style(iommi_style, result, is_root)
+        result = apply_style(style_object, result, is_root)
         result._declared = self
 
         del self  # to prevent mistakes when changing the code below

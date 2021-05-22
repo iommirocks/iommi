@@ -5,9 +5,12 @@ from iommi.style import (
 from iommi.style_base import base
 from iommi.style_font_awesome_4 import font_awesome_4
 
-django_admin_base = Style(
+django_admin = Style(
     base,
     font_awesome_4,
+    sub_styles__horizontal=dict(
+        Field__attrs__class={'compact-form-row': True},
+    ),
     root__assets=dict(
         css_base=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/base.css")),
         css_login=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/login.css")),
@@ -40,10 +43,6 @@ django_admin_base = Style(
     ),
     Table__attrs__id='changelist',
     Query__form__iommi_style='django_admin_horizontal',
-)
-
-django_admin = Style(
-    django_admin_base,
     Field__attrs__class={'form-row': True},
     Form__attrs__class=dict(
         aligned=True,
@@ -55,11 +54,4 @@ django_admin = Style(
     Table__bulk__attrs__id=None,
     # Admin__parts__menu__attrs__id='header',
     Menu__tag='nav',
-)
-
-
-django_admin_horizontal = Style(
-    django_admin_base,
-    internal=True,
-    Field__attrs__class={'compact-form-row': True},
 )

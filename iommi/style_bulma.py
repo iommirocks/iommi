@@ -35,6 +35,17 @@ bulma_base = Style(
         ),
         navbar_burger_click_js=navbar_burger_click_js,
     ),
+    sub_styles__horizontal=dict(
+        Field=dict(
+                attrs__class={
+                    'mr-4': True,
+                },
+                label__attrs__class={
+                    'mt-2': True,
+                    'mr-1': True,
+                },
+            ),
+    ),
     Header__attrs__class={
         'title': True,
         'is-1': lambda fragment, **_: fragment.tag == 'h1',
@@ -120,9 +131,6 @@ bulma_base = Style(
             ),
         ),
     ),
-    Query__form=dict(
-        iommi_style='bulma_query_form',
-    ),
     Query__form_container=dict(
         tag='span',
         attrs__class={
@@ -157,16 +165,3 @@ bulma = Style(
 )
 
 
-bulma_query_form = Style(
-    bulma,
-    internal=True,
-    Field=dict(
-        attrs__class={
-            'mr-4': True,
-        },
-        label__attrs__class={
-            'mt-2': True,
-            'mr-1': True,
-        },
-    ),
-)

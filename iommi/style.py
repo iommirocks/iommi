@@ -38,8 +38,49 @@ def get_iommi_style_name(obj: Any) -> str:
     return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
 
-def apply_style(style_name: str, obj: Any, is_root) -> Any:
-    style_data = get_style_data_for_object(style_name=style_name, obj=obj, is_root=is_root)
+def get_style_object(obj: Any) -> 'Style':
+    # Step 1: build the stack
+    stack = []
+    o = obj
+    while o is not None:
+        if o.iommi_style is not None:
+            stack.append(o.iommi_style)
+            if isinstance(o.iommi_style, Style):
+                break
+        o = o.iommi_parent()
+
+    # Step 2: resolve names in the stack
+    stack.append(get_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)))
+    stack.reverse()
+
+    if len(stack) == 1:
+        return stack[0]
+
+    def resolve(x, previous_style):
+        if isinstance(x, Style):
+            return x
+
+        assert isinstance(x, str)
+
+        if previous_style is None:
+            return get_style(x)
+
+        result = previous_style.resolve(x)
+        if result is None:
+            return get_style(x)
+
+        assert isinstance(result, Style)
+        return result
+
+    resolved_stack = []
+    for i, x in enumerate(stack):
+        resolved_stack.append(resolve(x, resolved_stack[i - 1] if i else None))
+
+    return resolved_stack[-1]
+
+
+def apply_style(style_object: 'Style', obj: Any, is_root) -> Any:
+    style_data = get_style_data_for_object(style_object, obj=obj, is_root=is_root)
     return apply_style_data(style_data, obj)
 
 
@@ -76,12 +117,14 @@ def recursive_namespace(d):
 class Style:
     @dispatch(
         root=EMPTY,
+        sub_styles=EMPTY,
     )
     def __init__(
-        self, *bases, base_template=None, content_block=None, assets=None, root=None, internal=False, **kwargs
+        self, *bases, base_template=None, content_block=None, assets=None, root=None, internal=False, sub_styles=None, **kwargs
     ):
         self.name = None
         self.internal = internal
+        self.bases = bases
 
         self.base_template = base_template
         if not self.base_template:
@@ -109,6 +152,10 @@ class Style:
 
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
+        self.sub_styles = {
+            k: Style(self, **v)
+            for k, v in items(sub_styles)
+        }
 
     def component(self, obj, is_root=False):
         """
@@ -133,6 +180,21 @@ class Style:
 
         return result
 
+    def __repr__(self):
+        return f'<Style: {self.name}>'
+
+    def resolve(self, sub_style_name):
+        result = self.sub_styles.get(sub_style_name)
+        if result:
+            return result
+
+        for base in self.bases:
+            result = base.resolve(sub_style_name)
+            if result:
+                return result
+
+        return None
+
 
 _styles = {}
 
@@ -150,6 +212,8 @@ def unregister_style(name):
 
 
 def get_style(name):
+    if isinstance(name, Style):
+        return name
     try:
         return _styles[name]
     except KeyError:
@@ -201,8 +265,8 @@ def reinvoke_new_defaults(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
     return result
 
 
-def get_style_data_for_object(style_name, obj, is_root):
-    return get_style(style_name).component(obj, is_root)
+def get_style_data_for_object(style_object, obj, is_root):
+    return style_object.component(obj, is_root)
 
 
 class InvalidStyleConfigurationException(Exception):
