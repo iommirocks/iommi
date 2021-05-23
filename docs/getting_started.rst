@@ -132,6 +132,10 @@ The simplest is to add something like this to your `settings.py`:
     IOMMI_DEFAULT_STYLE = Style(
         bootstrap,
         base_template='my_project/iommi_base.html',
+        root__assets=dict(
+            my_project_custom_css=Asset.css(attrs__href='/static/custom.css'),
+            my_project__custom_js=Asset.js(attrs__src='/static/custom.js'),
+        ),
     )
 
 Where `my_project/iommi_base.html` could look something like this:
@@ -142,4 +146,8 @@ Where `my_project/iommi_base.html` could look something like this:
 
     {% block iommi_top %}
         {% include "my_menu.html" %}
+    {% endblock %}
+
+    {% block iommi_bottom %}
+        {% include "my_footer.html" %}
     {% endblock %}
