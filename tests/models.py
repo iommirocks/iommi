@@ -261,3 +261,7 @@ if django.VERSION[:2] >= (3, 0):
     class ChoicesClassModel(models.Model):
         CHOICES = [('purple', 'Purple'), ('orange', 'Orange')]
         color = models.CharField(choices=ColorChoices, max_length=255)
+
+
+class CamelCaseFieldModel(models.Model):
+    camelCaseField = models.BooleanField()
