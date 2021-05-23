@@ -1,3 +1,15 @@
+.. imports
+    from tests.helpers import req, user_req, staff_req
+    from django.template import Template
+    from tri_declarative import Namespace
+    from iommi.attrs import render_attrs
+    from django.http import HttpResponseRedirect
+    from datetime import date
+    import pytest
+    pytestmark = pytest.mark.django_db
+
+
+
 Getting started
 ===============
 
@@ -36,7 +48,7 @@ By default iommi uses a very basic bootstrap base template. We'll get to how to 
 2. Your first form
 ------------------
 
-Pick a model from your app, and let's build a create form for it! Add this to your `urls.py`:
+Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with some your model. Add this to your `urls.py`:
 
 .. code:: python
 
@@ -44,7 +56,7 @@ Pick a model from your app, and let's build a create form for it! Add this to yo
 
     urlpatterns = [
         # ...your urls...
-        path('iommi-form-test/', Form.create(auto__model=SomeModelFromYourApp).as_view(),
+        path('iommi-form-test/', Form.create(auto__model=Album).as_view()),
     ]
 
 
@@ -59,7 +71,7 @@ Pick a model from your app, and let's build a create form for it! Add this to yo
 
     urlpatterns = [
         # ...your urls...
-        path('iommi-table-test/', Table(auto__model=SomeModelFromYourApp).as_view()),
+        path('iommi-table-test/', Table(auto__model=Album).as_view()),
     ]
 
 
@@ -70,8 +82,8 @@ If you want, add a filter for some column:
     urlpatterns = [
         # ...your urls...
         path('iommi-table-test/', Table(
-            auto__model=SomeModelFromYourApp,
-            columns__your_column_name__filter__include=True,  # <---
+            auto__model=Album,
+            columns__name__filter__include=True,  # <--- replace `name` with some field from your model
         ).as_view()),
     ]
 
@@ -81,13 +93,13 @@ If you want, add a filter for some column:
 
 Pages are the method to compose complex pages from parts. Add this to your `views.py`:
 
-.. code::
+.. code:: python
 
     from iommi import Page, Form, Table
 
     class TestPage(Page):
-        create_form = Form.create(auto__model=SomeModelFromYourApp)
-        a_table = Table(auto__model=SomeModelFromYourApp)
+        create_form = Form.create(auto__model=Artist)
+        a_table = Table(auto__model=Artist)
 
         class Meta:
             title = 'An iommi page!'
@@ -95,8 +107,6 @@ Pages are the method to compose complex pages from parts. Add this to your `view
 then hook into `urls.py`:
 
 .. code:: python
-
-    from .views import TestPage
 
     urlpatterns = [
         # ...your urls...
