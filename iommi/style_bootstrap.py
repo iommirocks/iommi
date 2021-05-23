@@ -7,6 +7,24 @@ from iommi.style_font_awesome_4 import font_awesome_4
 
 bootstrap_base = Style(
     base,
+    sub_styles__horizontal=dict(
+        Field=dict(
+            shortcuts=dict(
+                boolean__label__attrs__class={
+                    'col-form-label': True,
+                },
+            ),
+            attrs__class={
+                'form-group': False,
+                'col-sm-3': True,
+                'my-1': True,
+            },
+            errors__template='iommi/form/bootstrap/errors.html',
+        ),
+        Form__attrs__class={
+            'align-items-center': True,
+        },
+    ),
     root__assets=dict(
         css=Asset.css(
             attrs=dict(
@@ -111,7 +129,7 @@ bootstrap_base = Style(
         ),
     ),
     Query=dict(
-        form__iommi_style='bootstrap_horizontal',
+        form__iommi_style='horizontal',
         form_container=dict(
             tag='span',
             attrs__class={
@@ -171,24 +189,4 @@ bootstrap_base = Style(
 bootstrap = Style(
     bootstrap_base,
     font_awesome_4,
-)
-bootstrap_horizontal = Style(
-    bootstrap,
-    internal=True,
-    Field=dict(
-        shortcuts=dict(
-            boolean__label__attrs__class={
-                'col-form-label': True,
-            },
-        ),
-        attrs__class={
-            'form-group': False,
-            'col-sm-3': True,
-            'my-1': True,
-        },
-        errors__template='iommi/form/bootstrap/errors.html',
-    ),
-    Form__attrs__class={
-        'align-items-center': True,
-    },
 )

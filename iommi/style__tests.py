@@ -127,7 +127,7 @@ def test_apply_checkbox_style():
     assert get_iommi_style_name(form.fields.foo) == 'bootstrap'
     assert (
         get_style_data_for_object(
-            style_name='bootstrap',
+            get_style('bootstrap'),
             obj=form.fields.foo,
             is_root=False,
         )['attrs']
