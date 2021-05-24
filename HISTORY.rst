@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+3.0.0 (2021-05-24)
+~~~~~~~~~~~~~~~~~~
+
+* Styles have a new `sub_styles` parameter. This change greatly simplifies how you set up a custom style for your project if you want to customize the query form.
+
+* `IOMMI_DEFAULT_STYLE` can now be a `Style` object
+
+* Breaking change: The horizontal styles are removed and replaced with the substyle feature. If you use for example `'bootstrap_horizontal'`, you need to replace it with `'horizontal'`.
+
+* Mixed case filter fields didn't work
+
+* Respect browsers preferred dark/light mode for profiler and sql tracer
+
+
 2.8.12 (2021-05-18)
 ~~~~~~~~~~~~~~~~~~~
 

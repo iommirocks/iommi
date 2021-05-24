@@ -65,10 +65,10 @@ This creates a page with three separate tables, a header and some text:
 For more examples, see the `examples project <https://github.com/TriOptima/iommi/tree/master/examples/examples>`_.
 
 
-Usage
-------
+Getting started
+---------------
 
-See :doc:`usage <usage>`.
+See :doc:`getting started <getting_started>`.
 
 
 Running tests

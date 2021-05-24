@@ -62,10 +62,10 @@ This creates a page with three separate tables, a header and some text:
 For more examples, see the `examples project <https://github.com/TriOptima/iommi/tree/master/examples/examples>`_.
 
 
-Usage
-------
+Getting started
+---------------
 
-See `usage <https://docs.iommi.rocks/en/latest/usage.html>`_.
+See `getting started <https://docs.iommi.rocks/en/latest/getting_started.html>`_.
 
 
 Running tests

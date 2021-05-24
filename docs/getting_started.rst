@@ -34,7 +34,13 @@ Add iommi's middleware:
 .. code:: python
 
     MIDDLEWARE = [
-        # [...]
+        # These three are optional, but highly recommended!
+        'iommi.live_edit.Middleware',
+        'iommi.sql_trace.Middleware',
+        'iommi.profiling.Middleware',
+
+        # [... your other middleware ...]
+
         'iommi.middleware',
     ]
 
@@ -117,7 +123,45 @@ then hook into `urls.py`:
     ]
 
 
-5. Make iommi pages fit into your projects design
+5. A simple function based view
+-------------------------------
+
+It's often useful to have a function based view around your iommi code to do
+some basic setup. So we'll add an example for that too. With iommis
+middleware you can return iommi objects from your view:
+
+
+`views.py`:
+
+.. test
+
+    class TestPage(Page):
+        pass
+
+.. code:: python
+
+    def iommi_view(request, name):
+        return TestPage(title=f'Hello {name}')
+
+
+.. test
+
+    iommi_view(req('get'), 'foo')
+
+`urls.py`:
+
+.. code:: python
+
+    urlpatterns = [
+        # ...your urls...
+        path(
+            'iommi-view-test/{name}',
+            iommi_view
+        ),
+    ]
+
+
+6. Make iommi pages fit into your projects design
 -------------------------------------------------
 
 So far all the views we've created are rendered in plain bootstrap. Let's fit
@@ -151,3 +195,7 @@ Where `my_project/iommi_base.html` could look something like this:
     {% block iommi_bottom %}
         {% include "my_footer.html" %}
     {% endblock %}
+
+
+After you've set up your base style successfully, all the test pages you made
+before (form, table, page, view) are now using your style.

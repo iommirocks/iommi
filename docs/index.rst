@@ -10,7 +10,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   usage
+   getting_started
+   production_use
    cookbook
    forms
    pages
