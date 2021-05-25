@@ -36,6 +36,9 @@ Add iommi's middleware:
     MIDDLEWARE = [
         # These three are optional, but highly recommended!
         'iommi.live_edit.Middleware',
+
+        # [... Django middleware ...]
+
         'iommi.sql_trace.Middleware',
         'iommi.profiling.Middleware',
 
