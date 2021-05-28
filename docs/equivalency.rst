@@ -103,3 +103,6 @@ Without using the `auto` features:
         fields__year=Field.integer(),
         title='Create album'
     )
+
+
+You can read more about this in the philosophy section under :ref:`philosophy_hybrid_api`.

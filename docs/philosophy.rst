@@ -176,6 +176,8 @@ Late binding is accomplished by two mechanisms:
 - and `Callables for advanced usage, values for the simple cases`_
 
 
+.. _philosophy_hybrid_api:
+
 Declarative/programmatic hybrid API
 -----------------------------------
 
