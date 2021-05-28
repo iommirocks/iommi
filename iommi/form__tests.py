@@ -92,6 +92,7 @@ from tests.models import (
     ChoicesModel,
     CreateOrEditObjectTest,
     DefaultsInForms,
+    FieldFromModelOneToOneTest,
     Foo,
     TBar,
     TBaz,
@@ -2935,3 +2936,15 @@ def test_initial_is_set_to_default_of_model():
     form = Form.create(auto__model=DefaultsInForms).bind(request=req('get'))
     assert form.fields.name.initial == '<name>'
     assert form.fields.number.initial == 7
+
+
+@pytest.mark.skip('currently broken')
+def test_shoot_config_into_auto_dunder_field():
+    Form(
+        auto__model=FieldFromModelOneToOneTest,
+        # attr `foo_one_to_one__foo` creates a field named `foo_one_to_one_foo`. Note that the `__` is collapsed to one `_`!
+        auto__include=['foo_one_to_one__foo'],
+        fields__foo_one_to_one_foo__display_name='bar',
+    ).bind(request=req('get'))
+
+
