@@ -12,6 +12,7 @@ Contents:
 
    getting_started
    production_use
+   equivalency
    cookbook
    forms
    pages

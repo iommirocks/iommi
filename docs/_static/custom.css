@@ -6,6 +6,27 @@
     display: none;
 }
 
+.highlight .p,
+.highlight .o {
+    color: rgb(107, 106, 190);
+}
+
+.highlight {
+    background: #f7fafa;
+}
+
+h2 {
+    margin-top: 2rem;
+    font-weight: 400;
+}
+
+@media (prefers-color-scheme: dark) {
+    .highlight {
+        background: #202020;
+        color: #d0d0d0;
+    }
+}
+
 @media screen and (max-width: 67em) {
 
     .mobile-logo {
