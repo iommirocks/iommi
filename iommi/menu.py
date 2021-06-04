@@ -299,7 +299,7 @@ def get_debug_menu(**kwargs):
         )
         stop_editing = MenuItem(
             display_name='Stop editing',
-            url='.',
+            url='?_iommi_live_edit=stop',
             tag='li',
             include=lambda request, **_: '_iommi_live_edit' in request.GET,
         )

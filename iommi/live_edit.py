@@ -1,8 +1,12 @@
 import json
+from pathlib import Path
 
 import parso
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseRedirect,
+)
 from django.utils import autoreload
 from django.views.decorators.csrf import csrf_exempt
 from tri_struct import Struct
@@ -106,6 +110,11 @@ def live_edit_view(request, view, args, kwargs):
     assert ast_of_old_code is not None
 
     flow_direction = request.GET.get('_iommi_live_edit') or 'column'
+
+    if flow_direction == 'stop':
+        Path(filename).touch()
+        return HttpResponseRedirect('.')
+
     assert flow_direction in ('column', 'row')
 
     if request.method == 'POST':
@@ -119,8 +128,6 @@ def live_edit_view(request, view, args, kwargs):
                 # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
                 # This only works in django 2.2+
                 def restore_auto_reload(filename):
-                    from django.utils import autoreload
-
                     print('Skipped reload')
                     autoreload.trigger_reload = orig_reload
 
