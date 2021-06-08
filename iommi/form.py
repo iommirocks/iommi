@@ -181,6 +181,8 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
         form.instance = evaluate(form.extra.new_instance, **form.iommi_evaluate_parameters())
+        # noinspection PyProtectedMember
+        form._evaluate_parameters['instance'] = form.instance
         for field in values(
             form.fields
         ):  # two phase save for creation in django, have to save main object before related stuff
@@ -194,9 +196,9 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
         return
 
     if is_create:  # two phase save for creation in django...
-        form.extra.pre_save_all_but_related_fields(instance=form.instance, **form.iommi_evaluate_parameters())
+        form.extra.pre_save_all_but_related_fields(**form.iommi_evaluate_parameters())
         form.instance.save()
-        form.extra.on_save_all_but_related_fields(instance=form.instance, **form.iommi_evaluate_parameters())
+        form.extra.on_save_all_but_related_fields(**form.iommi_evaluate_parameters())
 
     form.apply(form.instance)
 
@@ -207,13 +209,13 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if form.is_valid():
         attributes = filter(None, [f.attr for f in form.fields.values()])
 
-        form.extra.pre_save(instance=form.instance, **form.iommi_evaluate_parameters())
+        form.extra.pre_save(**form.iommi_evaluate_parameters())
         for prefix in find_unique_prefixes(attributes):
             model_object = form.instance
             if prefix:  # Might be ''
                 model_object = getattr_path(model_object, prefix)
             model_object.save()
-        form.extra.on_save(instance=form.instance, **form.iommi_evaluate_parameters())
+        form.extra.on_save(**form.iommi_evaluate_parameters())
 
         return create_or_edit_object_redirect(
             is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form
@@ -1225,7 +1227,7 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
 
 def delete_object__post_handler(form, **_):
     instance = form.instance
-    form.extra.on_delete(instance=form.instance, **form.iommi_evaluate_parameters())
+    form.extra.on_delete(**form.iommi_evaluate_parameters())
     if instance.pk is not None:  # Check if already deleted by the callback
         instance.delete()
     return HttpResponseRedirect('../..')
@@ -1432,6 +1434,9 @@ class Form(Part):
         if self.instance is None and self.parent_form is not None and self.parent_form.instance is not None:
             self.instance = self.read_nested_form_from_instance(self, self.parent_form.instance)
 
+        self._evaluate_parameters['instance'] = self.instance
+        self.editable = evaluate_strict(self.editable, **self.iommi_evaluate_parameters())
+
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         build_and_bind_h_tag(self)
 
@@ -1455,7 +1460,7 @@ class Form(Part):
         self.validate()
 
     def own_evaluate_parameters(self):
-        return dict(form=self)
+        return dict(form=self, instance=self.instance)
 
     @property
     def is_nested_form(self) -> bool:
