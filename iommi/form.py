@@ -1228,7 +1228,13 @@ def delete_object__post_handler(form, **_):
     form.extra.on_delete(instance=form.instance, **form.iommi_evaluate_parameters())
     if instance.pk is not None:  # Check if already deleted by the callback
         instance.delete()
-    return HttpResponseRedirect('../..')
+    return create_or_edit_object_redirect(
+        is_create=False,
+        redirect_to=form.extra.redirect_to,
+        request=form.get_request(),
+        redirect=form.extra.redirect,
+        form=form,
+    )
 
 
 # noinspection PyUnreachableCode
