@@ -83,7 +83,7 @@ async function iommi_query_populate(form) {
     const params = new URLSearchParams(formData);
 
     let table = document.querySelector(`[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`)
-    const container = table.parentNode;
+    const container = table.closest('.iommi-table-container');
 
     iommi_update_URL(params);
     iommi_validate_form(params, form);
@@ -105,7 +105,8 @@ async function iommi_query_populate(form) {
             child = container.firstElementChild;
         }
 
-        container.innerHTML = html;
+        const element = document.createRange().createContextualFragment(html);
+        container.appendChild(element);
     } catch (err) {
         if (!Axios.isCancel(err)) {
             const errors = form.querySelector('.iommi_query_error');

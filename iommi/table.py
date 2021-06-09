@@ -1450,7 +1450,7 @@ class Table(Part, Tag):
         query_class = Query
         action_class = Action
         page_class = Page
-        endpoints__tbody__func = lambda table, **_: {'html': table.__html__(template='iommi/table/table_tag.html')}
+        endpoints__tbody__func = lambda table, **_: {'html': table.__html__(template='iommi/table/table_container.html')}
         endpoints__csv__func = endpoint__csv
 
         attrs = Namespace(
