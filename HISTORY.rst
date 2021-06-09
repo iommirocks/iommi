@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+3.1.0 (2021-06-09)
+~~~~~~~~~~~~~~~~~~
+
+* Form: Evaluate parameters now contain instance
+
+* Use the same redirect logic for delete as create/edit. This means you can now use `extra__redirect` and `extra__redirect_to` for delete too
+
+* When stopping the live editing, a full runserver restart is now triggered so you get the new code you just edited
+
+
 3.0.0 (2021-05-24)
 ~~~~~~~~~~~~~~~~~~
 
