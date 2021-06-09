@@ -181,8 +181,11 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
         form.instance = evaluate(form.extra.new_instance, **form.iommi_evaluate_parameters())
+
+        # `own_evaluate_parameters` can't be used here because it is calculated too early when the instance doesn't exist yet. So instead we have to insert it manually when we get it.
         # noinspection PyProtectedMember
         form._evaluate_parameters['instance'] = form.instance
+
         for field in values(
             form.fields
         ):  # two phase save for creation in django, have to save main object before related stuff
@@ -308,6 +311,7 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
+    assert field.search_fields is not None, f'There are no search_fields specified for {field._name}'
     if not value:
         return field.choices.order_by(*field.search_fields)
 
