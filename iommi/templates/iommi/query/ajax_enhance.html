@@ -83,7 +83,7 @@ async function iommi_query_populate(form) {
     const params = new URLSearchParams(formData);
 
     let table = document.querySelector(`[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`)
-    const container = table.parentNode;
+    const container = table.closest('.iommi-table-container');
 
     iommi_update_URL(params);
     iommi_validate_form(params, form);
