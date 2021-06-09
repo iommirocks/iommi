@@ -2468,7 +2468,7 @@ def test_create_object_callbacks():
         invoked.append('pre_save')
 
     def on_save(form, instance, **_):
-        # validate  that the arguments are what we expect
+        # validate that the arguments are what we expect
         assert form.instance is instance
         assert isinstance(instance, CreateOrEditObjectTest)
         assert instance.pk is not None
@@ -2948,3 +2948,23 @@ def test_shoot_config_into_auto_dunder_field():
     ).bind(request=req('get'))
 
 
+@pytest.mark.django_db
+def test_instance_available_in_evaluate_parameters():
+    x = Foo.objects.create(foo=42)
+    f = Form(
+        instance=lambda **_: x,
+        title=lambda instance, **_: f'title: {instance.foo}',
+    ).bind()
+    assert f.title == 'title: 42'
+
+
+@pytest.mark.django_db
+def test_editable_can_be_a_callable():
+    x = Foo.objects.create(foo=7)
+    f = Form(auto__instance=x, editable=lambda instance, **_: instance.foo == 7).bind()
+    assert f.fields.foo.editable is True
+
+    x.foo = 3
+    x.save()
+    f = Form(auto__instance=x, editable=lambda instance, **_: instance.foo == 7).bind()
+    assert f.fields.foo.editable is False
