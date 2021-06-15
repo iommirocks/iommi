@@ -1603,7 +1603,7 @@ class Table(Part, Tag):
         # In bind initial_rows will be used to set these 3 (in that order)
         self.sorted_rows = None
         self.sorted_and_filtered_rows = None
-        self._visible_rows = None
+        self.visible_rows = None
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
@@ -1742,32 +1742,8 @@ class Table(Part, Tag):
         return call_target(**kwargs)
 
     @property
-    def rows(self):
-        """Legacy API: if self is fully bound return the rows that are
-        displayed on the screen. Otherwise return as far as we got
-        in the refinement process from initial_rows -> visible_rows.
-
-        You are probably better off using `visible_rows` or
-        `initial_rows` directly.
-        """
-        if self._visible_rows is not None:
-            return self._visible_rows
-        if self.sorted_and_filtered_rows is not None:
-            return self.sorted_and_filtered_rows
-        if self.sorted_rows is not None:
-            return self.sorted_rows
-        return self.initial_rows
-
-    @property
     def paginator(self):
         return self.parts.page
-
-    @property
-    def visible_rows(self):
-        if self._visible_rows is None:
-            self._visible_rows = self.parts.page.rows
-
-        return self._visible_rows
 
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
@@ -1793,6 +1769,7 @@ class Table(Part, Tag):
         if isinstance(self.initial_rows, QuerySet):
             # Copy the QuerySet so we don't get the original QuerySets result cache
             self.initial_rows = self.initial_rows.all()
+            self.rows = self.initial_rows
 
         self._prepare_sorting()
 
@@ -1833,16 +1810,21 @@ class Table(Part, Tag):
             ]
             if prefetch:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.prefetch_related(*prefetch)
+                self.rows = self.sorted_and_filtered_rows
             if select:
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.select_related(*select)
+                self.rows = self.sorted_and_filtered_rows
 
         self.bulk_container = self.bulk_container.bind(parent=self)
+
+        self.visible_rows = self.parts.page.rows
 
     def _bind_query(self):
         """
         Bind the query form and apply it.
         """
         self.sorted_and_filtered_rows = self.sorted_rows
+        self.rows = self.sorted_and_filtered_rows
 
         if self.query is None:
             return
@@ -1863,8 +1845,10 @@ class Table(Part, Tag):
             self.sorted_and_filtered_rows = self.query.filter(
                 query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters()
             )
+            self.rows = self.sorted_and_filtered_rows
         else:
             self.sorted_and_filtered_rows = self.sorted_rows
+            self.rows = self.sorted_and_filtered_rows
 
     def _bind_bulk_form(self):
         if self.bulk is None:
@@ -1907,7 +1891,7 @@ class Table(Part, Tag):
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
         if auto_rowspan_columns:
-            self._visible_rows = list(self.visible_rows)
+            self.visible_rows = list(self.visible_rows)
             no_value_set = object()
             for column in auto_rowspan_columns:
                 if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
@@ -1946,6 +1930,7 @@ class Table(Part, Tag):
         # TODO: Sorting less values is faster then sorting more values, so we should
         # filter first and then sort.
         self.sorted_rows = self.initial_rows
+        self.rows = self.sorted_rows
         request = self.get_request()
         if request is None:
             return
@@ -1964,9 +1949,11 @@ class Table(Part, Tag):
             if sort_column.sortable:
                 if isinstance(self.initial_rows, list):
                     self.sorted_rows = ordered_by_on_list(self.initial_rows, order_args[0], is_desc)
+                    self.rows = self.sorted_rows
                 else:
                     order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
                     self.sorted_rows = self.initial_rows.order_by(*order_args)
+                    self.rows = self.sorted_rows
 
     def _bind_headers(self):
         prepare_headers(self)
@@ -2101,7 +2088,7 @@ class Table(Part, Tag):
         context = self.iommi_evaluate_parameters().copy()
 
         if self.query and self.query.form and not self.query.form.is_valid():
-            self._visible_rows = []
+            self.visible_rows = []
             self.paginator.count = 0
 
         return render(request=request, template=template or self.template, context=context)

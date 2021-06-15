@@ -3427,22 +3427,6 @@ def test_bulk_no_actions_makes_bulk_form_none():
     )
 
 
-def test_legacy_rows_property():
-    t = Table()
-
-    t.initial_rows = 'initial_rows'
-    assert t.rows == 'initial_rows'
-
-    t.sorted_rows = 'sorted_rows'
-    assert t.rows == 'sorted_rows'
-
-    t.sorted_and_filtered_rows = 'sorted_and_filtered_rows'
-    assert t.rows == 'sorted_and_filtered_rows'
-
-    t._visible_rows = 'visible_rows'
-    assert t.rows == 'visible_rows'
-
-
 @pytest.mark.django_db
 def test_lazy_rows(settings):
     settings.DEBUG = True
@@ -3503,14 +3487,14 @@ def test_table_foreign_key_column_name():
 
 
 def test_filter_model_mixup():
-    t = Table(auto__model=TBar).bind(request=req('get'))
+    t = Table(auto__model=TBar, page_size=None).bind(request=req('get'))
     assert t.columns.foo.model == TFoo
 
 
 @pytest.mark.django_db
 def test_nest_table_inside_form_does_not_crash_due_to_nested_forms():
     # This used to crash
-    form = Form(
+    Form(
         auto__instance=TFoo(),
         fields__a_table=Table(auto__model=TFoo)
     ).bind(request=req('get'))
