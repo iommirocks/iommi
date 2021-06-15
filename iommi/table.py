@@ -1603,7 +1603,7 @@ class Table(Part, Tag):
         # In bind initial_rows will be used to set these 3 (in that order)
         self.sorted_rows = None
         self.sorted_and_filtered_rows = None
-        self._visible_rows = None
+        self.visible_rows = None
 
         collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
         collect_members(self, name='columns', items=columns, items_dict=_columns_dict, cls=self.get_meta().member_class)
@@ -1750,8 +1750,8 @@ class Table(Part, Tag):
         You are probably better off using `visible_rows` or
         `initial_rows` directly.
         """
-        if self._visible_rows is not None:
-            return self._visible_rows
+        if self.visible_rows is not None:
+            return self.visible_rows
         if self.sorted_and_filtered_rows is not None:
             return self.sorted_and_filtered_rows
         if self.sorted_rows is not None:
@@ -1761,13 +1761,6 @@ class Table(Part, Tag):
     @property
     def paginator(self):
         return self.parts.page
-
-    @property
-    def visible_rows(self):
-        if self._visible_rows is None:
-            self._visible_rows = self.parts.page.rows
-
-        return self._visible_rows
 
     def on_bind(self) -> None:
         bind_members(self, name='actions', cls=Actions)
@@ -1838,6 +1831,8 @@ class Table(Part, Tag):
 
         self.bulk_container = self.bulk_container.bind(parent=self)
 
+        self.visible_rows = self.parts.page.rows
+
     def _bind_query(self):
         """
         Bind the query form and apply it.
@@ -1907,7 +1902,7 @@ class Table(Part, Tag):
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
         if auto_rowspan_columns:
-            self._visible_rows = list(self.visible_rows)
+            self.visible_rows = list(self.visible_rows)
             no_value_set = object()
             for column in auto_rowspan_columns:
                 if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
@@ -2101,7 +2096,7 @@ class Table(Part, Tag):
         context = self.iommi_evaluate_parameters().copy()
 
         if self.query and self.query.form and not self.query.form.is_valid():
-            self._visible_rows = []
+            self.visible_rows = []
             self.paginator.count = 0
 
         return render(request=request, template=template or self.template, context=context)
