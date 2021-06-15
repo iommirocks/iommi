@@ -3427,22 +3427,6 @@ def test_bulk_no_actions_makes_bulk_form_none():
     )
 
 
-def test_legacy_rows_property():
-    t = Table()
-
-    t.initial_rows = 'initial_rows'
-    assert t.rows == 'initial_rows'
-
-    t.sorted_rows = 'sorted_rows'
-    assert t.rows == 'sorted_rows'
-
-    t.sorted_and_filtered_rows = 'sorted_and_filtered_rows'
-    assert t.rows == 'sorted_and_filtered_rows'
-
-    t.visible_rows = 'visible_rows'
-    assert t.rows == 'visible_rows'
-
-
 @pytest.mark.django_db
 def test_lazy_rows(settings):
     settings.DEBUG = True
