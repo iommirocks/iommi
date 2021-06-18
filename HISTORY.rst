@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+3.1.1 (2021-06-18)
+~~~~~~~~~~~~~~~~~~
+
+* Expand ajax reload on filter change of tables to also include the bulk form. If not done, the bulk options are not in sync with the filtering.
+
+* Remove reference to non-existant `errors.html` in bootstrap style
+
+* Make `Table.visible_rows` non-lazy and not a property
+
+* `Table.rows` is no longer a property
+
+
 3.1.0 (2021-06-09)
 ~~~~~~~~~~~~~~~~~~
 
