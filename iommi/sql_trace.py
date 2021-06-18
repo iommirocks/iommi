@@ -291,6 +291,13 @@ def sql_debug_total_time():
     return sum(x['duration'] for x in log)
 
 
+def format_clickable_filename(file_name, line, fn, extra=None):
+    if not extra:
+        extra = linecache.getline(file_name, line)
+
+    return f'  File "{file_name}", line {line}, in {fn} => {extra.strip()}'
+
+
 def sql_debug_format_stack_trace(frame):
     base_path = os.path.abspath(os.path.join(settings.BASE_DIR, '..')) + "/"
     msg = []
@@ -328,10 +335,7 @@ def sql_debug_format_stack_trace(frame):
         elif skip_template_code:
             skip_template_code = False
 
-        if not extra:
-            extra = linecache.getline(file_name, line)
-
-        msg.append(f'  File "{file_name}", line {line}, in {fn} => {extra.strip()}')
+        msg.append(format_clickable_filename(file_name, line, fn, extra))
 
         frame = frame.f_back
 
@@ -362,6 +366,12 @@ def sql_debug_last_call(response):
         for count, _, logs in highscore[-number_of_offenders:]:
             if count > num_suspicious:  # 3 times is ok-ish, more is suspicious
                 sql_debug(f'------ {count} times: -------', bold=True)
+                if hasattr(response, 'iommi_part'):
+                    from iommi.debug import filename_and_line_num_from_part
+                    filename, lineno = filename_and_line_num_from_part(response.iommi_part)
+                    sql_debug('From source:')
+                    sql_debug(format_clickable_filename(filename, lineno, str(response.iommi_part._name)), sql_trace=True)
+                    sql_debug('With Stack:')
                 sql_debug(logs[0]['stack'], sql_trace=True)
                 for x in logs[:query_cutoff]:
                     sql_debug_trace_sql(**x)
@@ -372,7 +382,7 @@ def sql_debug_last_call(response):
             queries_per_using[x['using']] += 1
 
         sql_debug(
-            f'Total number of SQL statements: {sum(queries_per_using.values())}, {queries_per_using.get("read-only")} read-only, {queries_per_using.get("summary")} summary\n'
+            f'Total number of SQL statements: {sum(queries_per_using.values())}\n'
         )
 
     if settings.DEBUG:

@@ -83,3 +83,28 @@ those easily.
     need to put this below `django.contrib.auth.middleware.AuthenticationMiddleware`
     if you want to use this in production. Only staff users are allowed to
     trace sql in production, but all users can trace sql in debug mode.
+
+In DEBUG the SQL trace middleware will automatically warn you if you have views
+appear to have `N+1 type errors <https://stackoverflow.com/questions/97197/what-is-the-n1-selects-problem-in-orm-object-relational-mapping>`_. By default iommi will will print stack traces and example SQL statements
+for the worst offenders for your view to the console:
+
+.. code::
+
+    ------ 5 times: -------
+    From source:
+      File "/Users/boxed/Projects/iommi/examples/examples/table_examples.py", line 146, in root => return Page(
+    With Stack:
+      File "iommi/table.py", line 308, in default_cell__value => return getattr_path(row, evaluate_strict(column.attr, row=row, column=column, **kwargs))
+      File "iommi/evaluate.py", line 60, in evaluate => return func_or_value(**kwargs)
+      File "iommi/evaluate.py", line 76, in evaluate_strict => return evaluate(func_or_value, __signature=None, __strict=True, __match_empty=__match_empty, **kwargs)
+      File "iommi/table.py", line 933, in __init__ => self.tag = evaluate_strict(self.tag, **self._evaluate_parameters)
+      File "iommi/table.py", line 887, in __iter__ => yield Cell(cells=self, column=column)
+    SELECT "examples_tfoo"."id", "examples_tfoo"."name", "examples_tfoo"."a" FROM "examples_tfoo" WHERE "examples_tfoo"."id" = 1
+    SELECT "examples_tfoo"."id", "examples_tfoo"."name", "examples_tfoo"."a" FROM "examples_tfoo" WHERE "examples_tfoo"."id" = 2
+    SELECT "examples_tfoo"."id", "examples_tfoo"."name", "examples_tfoo"."a" FROM "examples_tfoo" WHERE "examples_tfoo"."id" = 3
+    SELECT "examples_tfoo"."id", "examples_tfoo"."name", "examples_tfoo"."a" FROM "examples_tfoo" WHERE "examples_tfoo"."id" = 4
+    ... and 1 more unique statements
+
+
+If you want more detailed information in your console to debug a problem you can set
+`settings.SQL_DEBUG` to `'all'` (which prints all SQL statements), `'stacks'` (all SQL statements with tracebacks). You can also set it to `None` to turn it off.

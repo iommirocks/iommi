@@ -157,7 +157,9 @@ class Part(Traversable):
             if request.method == 'POST':
                 assert False, 'This request was a POST, but there was no dispatch command present.'
 
-        return HttpResponse(render_root(part=self, **kwargs))
+        response = HttpResponse(render_root(part=self, **kwargs))
+        response.iommi_part = self
+        return response
 
     def iommi_collected_assets(self):
         return sort_after(self.iommi_root()._iommi_collected_assets)
