@@ -18,6 +18,7 @@ Contents:
    pages
    tables
    queries
+   extra
    dev_tools
    admin
    styles

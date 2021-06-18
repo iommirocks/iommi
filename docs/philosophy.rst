@@ -274,14 +274,4 @@ can't be *extended* to do what you want it's even worse. We aim to include escap
 hatches for when you reach the limits of iommi. You should be able to add your
 own logic and data without having to subclass or patch the code.
 
-Very often it's useful to add some little bit of data on the side that you need
-later to customize something. We think it's important to support this use case
-with minimal amounts of code. To do this we have a field called `extra` on most
-of the classes in iommi. This is your place to put whatever you want in order
-to extend iommi for a general feature or just some simple one-off customization
-for a single view. We also have `extra_evaluated` that is similar but values
-here are evaluated (see
-`Callables for advanced usage, values for the simple cases`_)
-
-All Part derived classes have `extra` and `extra_evaluated` namespaces, for example:
-`Page`, `Column`, `Table`, `Field`, `Form`, and `Action`.
+Read the documentation on :doc:`extra` for more information.
