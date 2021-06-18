@@ -19,7 +19,6 @@ bootstrap_base = Style(
                 'col-sm-3': True,
                 'my-1': True,
             },
-            errors__template='iommi/form/bootstrap/errors.html',
         ),
         Form__attrs__class={
             'align-items-center': True,
