@@ -98,23 +98,24 @@ class Middleware:
                     f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
                 ]
 
-                color = '#4f4fff'
-                for i, x in enumerate(iommi_sql_debug_log):
-                    proportion = x["duration"] / total_duration * 100
-                    result.append(
-                        f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>'
-                    )
+                if total_duration:
+                    color = '#4f4fff'
+                    for i, x in enumerate(iommi_sql_debug_log):
+                        proportion = x["duration"] / total_duration * 100
+                        result.append(
+                            f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>'
+                        )
 
-                result.append('<br><br>By group:<br>')
+                    result.append('<br><br>By group:<br>')
 
-                for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
-                    group = list(group)
-                    duration = sum(x["duration"] for x in group)
-                    proportion = duration / total_duration * 100
-                    k = k.replace('>', '&gt;')
-                    result.append(
-                        format_html('<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>', proportion, color, len(group), f'{duration:.3}', k)
-                    )
+                    for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
+                        group = list(group)
+                        duration = sum(x["duration"] for x in group)
+                        proportion = duration / total_duration * 100
+                        k = k.replace('>', '&gt;')
+                        result.append(
+                            format_html('<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>', proportion, color, len(group), f'{duration:.3}', k)
+                        )
 
                 result.append('<p></p><pre>')
 
