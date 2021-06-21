@@ -592,6 +592,7 @@ class Field(Part, Tag):
         model_field = kwargs.get('model_field')
         if model_field and model_field.remote_field:
             kwargs['model'] = model_field.remote_field.model
+        self._choices = kwargs.pop('choices', None)
 
         super(Field, self).__init__(**kwargs)
 
@@ -682,8 +683,7 @@ class Field(Part, Tag):
 
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
-
-        self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        self._choices_evaluated = None
 
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
         self._read_initial()
@@ -723,6 +723,12 @@ class Field(Part, Tag):
                 self.search_fields = get_search_fields(model=self.model)
             except NoRegisteredSearchFieldException:
                 self.search_fields = ['pk']
+
+    @property
+    def choices(self):
+        if self._choices_evaluated is None:
+            self._choices_evaluated = evaluate_strict(self._choices, **self.iommi_evaluate_parameters())
+        return self._choices_evaluated
 
     def _parse(self):
         if self.parsed_data is not None:
