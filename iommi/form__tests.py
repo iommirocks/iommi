@@ -1065,6 +1065,24 @@ def test_choice_queryset_do_not_cache():
 
 
 @pytest.mark.django_db
+def test_choices_not_invoked_when_not_needed():
+    from django.contrib.auth.models import User
+
+    def exploding_choices(**_):
+        assert False
+
+    class MyForm(Form):
+        foo = Field.choice_queryset(
+            attr=None,
+            model=User,
+            choices=exploding_choices,
+        )
+
+    response = MyForm().bind(request=req('get')).render_to_response()
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_choice_queryset_do_not_look_up_by_default():
     from django.contrib.auth.models import User
 
