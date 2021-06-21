@@ -330,7 +330,7 @@ def form_example_nested_forms(request):
     )
 
 
-@example(gettext(("File upload")))
+@example(gettext("File upload"))
 def form_example_file_upload(request):
     class FileForm(Form):
         upload = Field.file()
@@ -344,18 +344,6 @@ def form_example_file_upload(request):
     return FileForm()
 
 
-class IndexPage(ExamplesPage):
-    header = html.h1('Form examples')
-    description = html.p('Some examples of iommi Forms')
-
-    examples = example_links(examples)
-
-    all_fields = Action(
-        display_name='Example with all types of fields',
-        attrs__href='all_fields',
-    )
-
-
 @example(gettext("Formset"))
 def formset(request):
     class FruitForm(Form):
@@ -364,7 +352,7 @@ def formset(request):
 
     class FruitBasketForm(Form):
         name = Field.text()
-        fruits = Field.formset(FruitForm)
+        fruits = Field.formset(nested_form=FruitForm)
 
     return FruitBasketForm()
 
@@ -377,6 +365,18 @@ def auto_formset(request):
             call_target__attribute='formset_reverse_foreign_key',
             after=LAST,
         ),
+    )
+
+
+class IndexPage(ExamplesPage):
+    header = html.h1('Form examples')
+    description = html.p('Some examples of iommi Forms')
+
+    examples = example_links(examples)
+
+    all_fields = Action(
+        display_name='Example with all types of fields',
+        attrs__href='all_fields',
     )
 
 
@@ -395,7 +395,7 @@ urlpatterns = [
     path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('example_12/', form_example_nested_forms),
     path('example_13/', form_example_file_upload),
+    path('example_14/', formset),
+    path('example_15/', auto_formset),
     path('all_fields/', all_field_sorts),
-    path('formset/', formset),
-    path('auto_formset/', auto_formset),
 ]

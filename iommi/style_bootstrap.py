@@ -24,12 +24,6 @@ bootstrap_base = Style(
             'align-items-center': True,
         },
     ),
-    sub_styles__fieldsets=dict(
-        Field=dict(
-            input__attrs__placeholder=lambda field, **_: field.display_name,
-            label__include=False,
-        ),
-    ),
     root__assets=dict(
         css=Asset.css(
             attrs=dict(
@@ -78,9 +72,6 @@ bootstrap_base = Style(
                     'form-check-input': True,
                     'form-control': False,
                 },
-            ),
-            formset=dict(
-                nested_table__iommi_style='bootstrap_fieldset',
             ),
         ),
         attrs__class={

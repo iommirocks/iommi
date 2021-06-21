@@ -20,6 +20,12 @@ base = Style(
     internal=True,
     base_template='iommi/base.html',
     content_block='content',
+    sub_styles__fieldsets=dict(
+        Field=dict(
+            input__attrs__placeholder=lambda field, **_: field.display_name,
+            label__include=False,
+        ),
+    ),
     root=dict(
         endpoints__debug_tree=dict(
             include=lambda endpoint, **_: iommi_debug_on(),
@@ -74,6 +80,9 @@ base = Style(
             ),
             heading=dict(
                 template='iommi/form/heading.html',
+            ),
+            formset=dict(
+                # nested_table__iommi_style='fieldset',
             ),
         ),
         tag='div',
