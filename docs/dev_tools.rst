@@ -108,3 +108,6 @@ for the worst offenders for your view to the console:
 
 If you want more detailed information in your console to debug a problem you can set
 `settings.SQL_DEBUG` to `'all'` (which prints all SQL statements), `'stacks'` (all SQL statements with tracebacks). You can also set it to `None` to turn it off.
+
+
+You can use this middleware on non-iommi views too. Just add `?_iommi_sql_trace` to your url.
