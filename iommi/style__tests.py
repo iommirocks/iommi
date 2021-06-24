@@ -219,27 +219,24 @@ def test_style_bulk_form():
     from iommi import Column, Table
     from tests.models import Foo
 
-    register_style(
-        'my_style',
-        Style(
-            base,
-            Table__bulk__attrs__class__foo=True,
-        ),
-    )
+    with register_style(
+            'my_style',
+            Style(
+                base,
+                Table__bulk__attrs__class__foo=True,
+            ),
+    ):
+        class MyTable(Table):
+            class Meta:
+                iommi_style = 'my_style'
+                model = Foo
 
-    class MyTable(Table):
-        class Meta:
-            iommi_style = 'my_style'
-            model = Foo
+            bar = Column(bulk__include=True)
 
-        bar = Column(bulk__include=True)
+        table = MyTable()
+        table = table.bind(request=None)
 
-    table = MyTable()
-    table = table.bind(request=None)
-
-    assert 'foo' in render_attrs(table.bulk.attrs)
-
-    unregister_style('my_style')
+        assert 'foo' in render_attrs(table.bulk.attrs)
 
 
 @pytest.mark.django_db
@@ -247,25 +244,22 @@ def test_style_bulk_form_broken_on_no_form():
     from iommi import Table
     from tests.models import Foo
 
-    register_style(
+    with register_style(
         'my_style',
         Style(
             base,
             Table__bulk__attrs__class__foo=True,
         ),
-    )
+    ):
+        class MyTable(Table):
+            class Meta:
+                iommi_style = 'my_style'
+                model = Foo
 
-    class MyTable(Table):
-        class Meta:
-            iommi_style = 'my_style'
-            model = Foo
+        table = MyTable()
+        table = table.bind(request=None)
 
-    table = MyTable()
-    table = table.bind(request=None)
-
-    assert table.bulk is None
-
-    unregister_style('my_style')
+        assert table.bulk is None
 
 
 def test_get_style_error():
@@ -321,94 +315,86 @@ def test_set_class_on_actions_container():  # pragma: no cover
 
 
 def test_assets_render_from_style():
-    register_style(
+    with register_style(
         'my_style',
         Style(
             test,
             root__assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
         ),
-    )
+    ):
 
-    expected = prettify(
+        expected = prettify(
+            '''
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title/>
+                    <link href='http://foo.bar/baz' rel="stylesheet"/>
+                </head>
+                <body/>
+            </html>
         '''
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title/>
-                <link href='http://foo.bar/baz' rel="stylesheet"/>
-            </head>
-            <body/>
-        </html>
-    '''
-    )
-    actual = prettify(Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content)
-    assert actual == expected
-
-    unregister_style('my_style')
+        )
+        actual = prettify(Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content)
+        assert actual == expected
 
 
 def test_deprecated_assets_style(settings, capsys):
     settings.DEBUG = True
-    register_style(
+    with register_style(
         'my_style',
         Style(
             test,
             assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
         ),
-    )
+    ):
+        captured = capsys.readouterr()
+        assert 'Warning: The preferred way to add top level assets config' in captured.out
 
-    captured = capsys.readouterr()
-    assert 'Warning: The preferred way to add top level assets config' in captured.out
+        settings.DEBUG = False
 
-    settings.DEBUG = False
-
-    expected = prettify(
+        expected = prettify(
+            '''
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title/>
+                    <link href='http://foo.bar/baz' rel="stylesheet"/>
+                </head>
+                <body/>
+            </html>
         '''
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title/>
-                <link href='http://foo.bar/baz' rel="stylesheet"/>
-            </head>
-            <body/>
-        </html>
-    '''
-    )
-    actual = prettify(Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content)
-    assert actual == expected
-
-    unregister_style('my_style')
+        )
+        actual = prettify(Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content)
+        assert actual == expected
 
 
 def test_assets_render_any_fragment_from_style():
-    register_style(
+    with register_style(
         'my_style',
         Style(
             test,
             root__assets__an_asset=Fragment('This is a fragment!'),
         ),
-    )
+    ):
+        class MyPage(Page):
+            class Meta:
+                iommi_style = 'my_style'
 
-    class MyPage(Page):
-        class Meta:
-            iommi_style = 'my_style'
-
-    expected = prettify(
+        expected = prettify(
+            '''
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title/>
+                    This is a fragment!
+                </head>
+                <body/>
+            </html>
         '''
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title/>
-                This is a fragment!
-            </head>
-            <body/>
-        </html>
-    '''
-    )
-    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
-    assert actual == expected
-
-    unregister_style('my_style')
+        )
+        actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+        assert actual == expected
 
 
 def test_assets_render_from_bulma_style():
