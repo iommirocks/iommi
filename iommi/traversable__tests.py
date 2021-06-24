@@ -106,7 +106,51 @@ def test_traverse_on_iommi():
     page = MyPage()
 
     actual = build_long_path_by_path(page)
-    assert len(actual.keys()) == len(set(actual.keys()))
+    assert actual == {
+        '': 'parts/header',
+        'a_table': 'parts/a_table',
+        'a_table/columns': 'parts/a_table/columns/columns',
+        'a_table/fusk': 'parts/a_table/columns/fusk',
+        'a_table/select': 'parts/a_table/columns/select',
+        'advanced': 'parts/a_table/query/advanced',
+        'columns': 'parts/a_table/query/form/fields/columns',
+        'columns/config': 'parts/a_table/query/form/fields/columns/endpoints/config',
+        'columns/validate': 'parts/a_table/query/form/fields/columns/endpoints/validate',
+        'config': 'parts/some_form/fields/fisk/endpoints/config',
+        'csv': 'parts/a_table/endpoints/csv',
+        'errors': 'parts/a_table/query/endpoints/errors',
+        'fisk': 'parts/some_form/fields/fisk',
+        'fisk/config': 'parts/some_other_form/fields/fisk/endpoints/config',
+        'fisk/validate': 'parts/some_other_form/fields/fisk/endpoints/validate',
+        'fjomp': 'parts/some_other_form/fields/fjomp',
+        'fjomp/config': 'parts/some_other_form/fields/fjomp/endpoints/config',
+        'fjomp/validate': 'parts/some_other_form/fields/fjomp/endpoints/validate',
+        'form': 'parts/a_table/query/form',
+        'freetext_search': 'parts/a_table/query/form/fields/freetext_search',
+        'freetext_search/config': 'parts/a_table/query/form/fields/freetext_search/endpoints/config',
+        'freetext_search/validate': 'parts/a_table/query/form/fields/freetext_search/endpoints/validate',
+        'fusk': 'parts/a_table/query/form/fields/fusk',
+        'fusk/config': 'parts/a_table/query/form/fields/fusk/endpoints/config',
+        'fusk/validate': 'parts/a_table/query/form/fields/fusk/endpoints/validate',
+        'page': 'parts/a_table/parts/page',
+        'query': 'parts/a_table/query',
+        'query/columns': 'parts/a_table/query/filters/columns',
+        'query/fusk': 'parts/a_table/query/filters/fusk',
+        'query/select': 'parts/a_table/query/filters/select',
+        'query_form_toggle_script': 'parts/a_table/assets/query_form_toggle_script',
+        'select': 'parts/a_table/query/form/fields/select',
+        'select/config': 'parts/a_table/query/form/fields/select/endpoints/config',
+        'select/validate': 'parts/a_table/query/form/fields/select/endpoints/validate',
+        'some_form': 'parts/some_form',
+        'some_other_form': 'parts/some_other_form',
+        'some_other_form/fisk': 'parts/some_other_form/fields/fisk',
+        'submit': 'parts/a_table/query/form/actions/submit',
+        'table_js_select_all': 'parts/a_table/assets/table_js_select_all',
+        'tbody': 'parts/a_table/endpoints/tbody',
+        'toggle': 'parts/a_table/query/advanced/toggle',
+        'validate': 'parts/some_form/fields/fisk/endpoints/validate',
+    }
+    assert len(actual.values()) == len(set(actual.values()))
     page = page.bind(request=req('get'))
 
     assert page.iommi_path == ''
