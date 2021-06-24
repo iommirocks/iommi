@@ -1,4 +1,5 @@
 from collections import defaultdict
+from contextlib import contextmanager
 from typing import (
     Any,
     Dict,
@@ -204,6 +205,14 @@ def register_style(name, conf):
     assert conf.name is None
     conf.name = name
     _styles[name] = conf
+
+    @contextmanager
+    def _unregister():
+        try:
+            yield
+        finally:
+            unregister_style(name)
+    return _unregister()
 
 
 def unregister_style(name):

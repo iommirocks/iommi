@@ -61,18 +61,17 @@ def test_context_processor_is_called_on_render_root():
         base,
         base_template='test_context_processor_is_called_on_render_root.html',
     )
-    register_style(style_name, style)
+    with register_style(style_name, style):
+        part = Page(
+            context__root_part_context_variable='root_part_context_variable',
+            iommi_style=style_name,
+        )
 
-    part = Page(
-        context__root_part_context_variable='root_part_context_variable',
-        iommi_style=style_name,
-    )
-
-    t = render_root(
-        part=part.bind(request=req('get')),
-        context=dict(my_context_variable='my_context_variable'),
-    )
-    assert t == 'context_processor_is_called\nroot_part_context_variable\nmy_context_variable\n'
+        t = render_root(
+            part=part.bind(request=req('get')),
+            context=dict(my_context_variable='my_context_variable'),
+        )
+        assert t == 'context_processor_is_called\nroot_part_context_variable\nmy_context_variable\n'
 
 
 def test_get_title_of_header():

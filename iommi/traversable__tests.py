@@ -301,146 +301,132 @@ def test_traversable_repr():
 
 
 def test_apply_style_not_affecting_definition(settings):
-    register_style(
+    with register_style(
         'my_style',
         Style(
             Fragment__attrs__class__foo=True,
         ),
-    )
-
-    register_style(
+    ), register_style(
         'other_style',
         Style(
             Fragment__attrs__class__bar=True,
         ),
-    )
+    ):
 
-    definition = Fragment()
+        definition = Fragment()
 
-    settings.IOMMI_DEFAULT_STYLE = 'my_style'
-    fragment = definition.bind(request=None)
-    assert fragment.attrs['class'] == dict(foo=True)
+        settings.IOMMI_DEFAULT_STYLE = 'my_style'
+        fragment = definition.bind(request=None)
+        assert fragment.attrs['class'] == dict(foo=True)
 
-    settings.IOMMI_DEFAULT_STYLE = 'other_style'
-    fragment = definition.bind(request=None)
-    assert fragment.attrs['class'] == dict(bar=True)
-
-    unregister_style('my_style')
-    unregister_style('other_style')
+        settings.IOMMI_DEFAULT_STYLE = 'other_style'
+        fragment = definition.bind(request=None)
+        assert fragment.attrs['class'] == dict(bar=True)
 
 
 def test_apply_style_not_affecting_definition_2():
-    register_style(
+    with register_style(
         'foo_style',
         Style(
             MenuItem__attrs__class__foo=True,
         ),
-    )
-
-    register_style(
+    ), register_style(
         'bar_style',
         Style(
             MenuItem__attrs__class__bar=True,
         ),
-    )
+    ):
+        class MyPage(Page):
+            menu = Menu(sub_menu=dict(root=MenuItem()))
 
-    class MyPage(Page):
-        menu = Menu(sub_menu=dict(root=MenuItem()))
+        class OtherPage(Page):
+            menu = MyPage.menu
 
-    class OtherPage(Page):
-        menu = MyPage.menu
+        page = MyPage(iommi_style='foo_style').bind(request=Struct(path=''))
+        assert page.parts.menu.sub_menu.root.attrs['class'] == dict(foo=True)
 
-    page = MyPage(iommi_style='foo_style').bind(request=Struct(path=''))
-    assert page.parts.menu.sub_menu.root.attrs['class'] == dict(foo=True)
-
-    page = OtherPage(iommi_style='bar_style').bind(request=Struct(path=''))
-    assert page.parts.menu.sub_menu.root.attrs['class'] == dict(bar=True)
-
-    unregister_style('foo_style')
-    unregister_style('bar_style')
+        page = OtherPage(iommi_style='bar_style').bind(request=Struct(path=''))
+        assert page.parts.menu.sub_menu.root.attrs['class'] == dict(bar=True)
 
 
 def test_get_config():
-    register_style(
+    with register_style(
         'fruit_style',
         Style(
             Fruit__attrs__class__style=True,
         ),
-    )
+    ):
+        class Fruit(Traversable):
+            attrs = Refinable()
 
-    class Fruit(Traversable):
-        attrs = Refinable()
+            @reinvokable
+            @dispatch(
+                attrs__class__fruit=True,
+            )
+            def __init__(self, **kwargs):
+                super(Fruit, self).__init__(**kwargs)
 
-        @reinvokable
-        @dispatch(
-            attrs__class__fruit=True,
-        )
-        def __init__(self, **kwargs):
-            super(Fruit, self).__init__(**kwargs)
+            @classmethod
+            @class_shortcut(
+                attrs__class__some_fruit=True,
+            )
+            def some_fruit(cls, *, call_target=None, **kwargs):
+                return call_target(**kwargs)
 
-        @classmethod
-        @class_shortcut(
-            attrs__class__some_fruit=True,
-        )
-        def some_fruit(cls, *, call_target=None, **kwargs):
-            return call_target(**kwargs)
+        class SubFruit(Fruit):
+            @reinvokable
+            @dispatch(
+                attrs__class__sub_fruit=True,
+            )
+            def __init__(self, **kwargs):
+                super(SubFruit, self).__init__(**kwargs)
 
-    class SubFruit(Fruit):
-        @reinvokable
-        @dispatch(
-            attrs__class__sub_fruit=True,
-        )
-        def __init__(self, **kwargs):
-            super(SubFruit, self).__init__(**kwargs)
+            @classmethod
+            @class_shortcut(
+                call_target__attribute='some_fruit',
+                attrs__class__sub_some_fruit=True,
+            )
+            def some_fruit(cls, *, call_target=None, **kwargs):
+                return call_target(**kwargs)
 
-        @classmethod
-        @class_shortcut(
-            call_target__attribute='some_fruit',
-            attrs__class__sub_some_fruit=True,
-        )
-        def some_fruit(cls, *, call_target=None, **kwargs):
-            return call_target(**kwargs)
+        @declarative(Fruit, '_fruits_dict')
+        @with_meta
+        class Basket(Traversable):
+            fruits = Refinable()
 
-    @declarative(Fruit, '_fruits_dict')
-    @with_meta
-    class Basket(Traversable):
-        fruits = Refinable()
+            class Meta:
+                fruits__banana__attrs__class__basket = True
 
-        class Meta:
-            fruits__banana__attrs__class__basket = True
+            @dispatch(
+                fruits=EMPTY,
+            )
+            def __init__(self, *, _fruits_dict, fruits, **kwargs):
+                super(Basket, self).__init__(**kwargs)
+                collect_members(self, name='fruits', items_dict=_fruits_dict, items=fruits, cls=Fruit)
 
-        @dispatch(
-            fruits=EMPTY,
-        )
-        def __init__(self, *, _fruits_dict, fruits, **kwargs):
-            super(Basket, self).__init__(**kwargs)
-            collect_members(self, name='fruits', items_dict=_fruits_dict, items=fruits, cls=Fruit)
+            def on_bind(self) -> None:
+                bind_members(self, name='fruits')
 
-        def on_bind(self) -> None:
-            bind_members(self, name='fruits')
+        class SubBasket(Basket):
+            class Meta:
+                fruits__banana__attrs__class__sub_basket = True
+                iommi_style = 'fruit_style'
 
-    class SubBasket(Basket):
-        class Meta:
-            fruits__banana__attrs__class__sub_basket = True
-            iommi_style = 'fruit_style'
+        class MyBasket(SubBasket):
+            banana = SubFruit.some_fruit(
+                attrs__class__my_basket_fruit_invoke=True,
+            )
 
-    class MyBasket(SubBasket):
-        banana = SubFruit.some_fruit(
-            attrs__class__my_basket_fruit_invoke=True,
-        )
+        basket = MyBasket(fruits__banana__attrs__class__my_basket_invoke=True).bind(request=None)
 
-    basket = MyBasket(fruits__banana__attrs__class__my_basket_invoke=True).bind(request=None)
-
-    assert list(basket.fruits.banana.attrs['class'].keys()) == [
-        'fruit',
-        'sub_fruit',
-        'style',
-        'basket',
-        'sub_basket',
-        'my_basket_invoke',
-        'some_fruit',
-        'sub_some_fruit',
-        'my_basket_fruit_invoke',
-    ]
-
-    unregister_style('fruit_style')
+        assert list(basket.fruits.banana.attrs['class'].keys()) == [
+            'fruit',
+            'sub_fruit',
+            'style',
+            'basket',
+            'sub_basket',
+            'my_basket_invoke',
+            'some_fruit',
+            'sub_some_fruit',
+            'my_basket_fruit_invoke',
+        ]
