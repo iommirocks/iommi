@@ -49,6 +49,7 @@ function based view.
     `'iommi.live_edit.Middleware'` to `settings.MIDDLEWARE`. Note that you need
     to add this at the very top of the middleware list!
 
+This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true. 
 
 
 Profile
