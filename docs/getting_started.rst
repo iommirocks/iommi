@@ -72,7 +72,7 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
 3. Your first table
 -------------------
 
-Pick a model from your app, and let's build a create form for it! Add this to your `urls.py`:
+Pick a model from your app, and let's build a table for it! Add this to your `urls.py`:
 
 .. code:: python
 
