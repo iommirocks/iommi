@@ -174,6 +174,7 @@ The simplest is to add something like this to your `settings.py`:
 
 .. code:: python
 
+    from iommi import Style
     from iommi.style_bootstrap import bootstrap
 
     IOMMI_DEFAULT_STYLE = Style(
