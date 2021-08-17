@@ -182,7 +182,7 @@ The simplest is to add something like this to your `settings.py`:
         base_template='my_project/iommi_base.html',
         root__assets=dict(
             my_project_custom_css=Asset.css(attrs__href='/static/custom.css'),
-            my_project__custom_js=Asset.js(attrs__src='/static/custom.js'),
+            my_project_custom_js=Asset.js(attrs__src='/static/custom.js'),
         ),
     )
 
