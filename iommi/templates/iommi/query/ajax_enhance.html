@@ -88,7 +88,7 @@ async function iommi_query_populate(form) {
     iommi_update_URL(params);
     iommi_validate_form(params, form);
     iommi_show_spinner(true, container);
-    const iommiTbodyPath = container.querySelector('{{ table.tag }}').getAttribute('data-endpoint');
+    const iommiTbodyPath = container.querySelector('[data-iommi-id="{{ table.iommi_path }}"]').getAttribute('data-endpoint');
 
     try {
         const {
