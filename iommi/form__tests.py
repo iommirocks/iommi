@@ -2267,8 +2267,10 @@ def test_dunder_name_for_column():
         foo = Field()
         foo__a = Field()
 
-    form = FooForm()
-    form = form.bind(request=None)
+    with pytest.deprecated_call():
+        form = FooForm()
+        form = form.bind(request=None)
+
     assert list(form.fields.keys()) == ['foo', 'foo__a']
 
 
