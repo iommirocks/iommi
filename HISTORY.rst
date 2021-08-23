@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+3.2.0 (2021-08-23)
+~~~~~~~~~~~~~~~~~~
+
+* Names with underscore are deprecated and will be removed in the next major version. This means you can no longer write this:
+
+.. code:: python
+
+    class MyTable(Table):
+        foo__bar = Column()
+
+You must now instead write:
+
+.. code:: python
+
+    class MyTable(Table):
+        some_name = Column(attr='foo__bar')
+
+Using `foo__bar` had some weird consequences like you not being able to later target that name without getting ambiguities in what `__` meant.
+
+
 3.1.1 (2021-06-18)
 ~~~~~~~~~~~~~~~~~~
 
