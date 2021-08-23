@@ -205,9 +205,9 @@ def test_django_table():
         foo = Column.choice_queryset(
             model=TFoo, choices=lambda table, **_: TFoo.objects.all(), filter__include=True, bulk__include=True
         )
-
-    t = TestTable(rows=TBar.objects.all().order_by('pk'))
-    t = t.bind(request=req('get'))
+    with pytest.deprecated_call():
+        t = TestTable(rows=TBar.objects.all().order_by('pk'))
+        t = t.bind(request=req('get'))
 
     assert list(t.columns['foo'].choices) == list(TFoo.objects.all())
 
@@ -356,22 +356,23 @@ def test_name_traversal():
 
     rows = [Struct(foo=Struct(bar="bar"))]
 
-    verify_table_html(
-        table=TestTable(rows=rows),
-        expected_html="""
-        <table class="table" data-endpoint="/tbody" data-iommi-id="">
-            <thead>
-                <tr>
-                    <th class="first_column subheader"> Bar </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td> bar </td>
-                </tr>
-            </tbody>
-        </table>""",
-    )
+    with pytest.deprecated_call():
+        verify_table_html(
+            table=TestTable(rows=rows),
+            expected_html="""
+            <table class="table" data-endpoint="/tbody" data-iommi-id="">
+                <thead>
+                    <tr>
+                        <th class="first_column subheader"> Bar </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> bar </td>
+                    </tr>
+                </tbody>
+            </table>""",
+        )
 
 
 # def test_tuple_data():
@@ -2331,10 +2332,29 @@ def test_dunder_name_for_column():
             model = TBar
 
         foo = Column(filter__include=True)
-        foo__a = Column(filter__include=True)
+        a = Column(attr='foo__a', filter__include=True)
 
     table = FooTable()
     table = table.bind(request=None)
+
+    assert list(table.columns.keys()) == ['foo', 'a']
+    assert list(table.query.filters.keys()) == ['foo', 'a']
+    assert list(table.query.form.fields.keys()) == ['foo', 'a']
+
+
+@pytest.mark.django_db
+def test_dunder_name_for_column_deprecated():
+    class FooTable(Table):
+        class Meta:
+            model = TBar
+
+        foo = Column(filter__include=True)
+        foo__a = Column(filter__include=True)
+
+    with pytest.deprecated_call():
+        table = FooTable()
+        table = table.bind(request=None)
+
     assert list(table.columns.keys()) == ['foo', 'foo__a']
     assert list(table.query.filters.keys()) == ['foo', 'foo__a']
     assert list(table.query.form.fields.keys()) == ['foo', 'foo__a']

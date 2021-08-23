@@ -1,3 +1,4 @@
+import warnings
 from copy import (
     copy,
 )
@@ -66,6 +67,13 @@ def collect_members(
     if forbidden_names:
         raise ForbiddenNamesException(
             f'The names {", ".join(sorted(forbidden_names))} are reserved by iommi, please pick other names'
+        )
+    deprecated_names = [n for n in items_dict or [] if '__' in n]
+    for n in deprecated_names:
+        warnings.warn(
+            f'Names containing __ are deprecated and will not be supported in next major release. '
+            f'Use another name and specify the current name with attr="{n}"',
+            category=DeprecationWarning,
         )
 
     assert name != 'items'
