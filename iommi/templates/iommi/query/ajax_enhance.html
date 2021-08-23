@@ -82,13 +82,14 @@ async function iommi_query_populate(form) {
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
 
-    let table = document.querySelector(`[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`)
+    const iommi_id = form.getAttribute('data-iommi-id-of-table');
+    const table = document.querySelector(`[data-iommi-id="${iommi_id}"]`)
     const container = table.closest('.iommi-table-container');
 
     iommi_update_URL(params);
     iommi_validate_form(params, form);
     iommi_show_spinner(true, container);
-    const iommiTbodyPath = container.querySelector('[data-iommi-id="{{ table.iommi_path }}"]').getAttribute('data-endpoint');
+    const iommiTbodyPath = container.querySelector(`[data-iommi-id="${iommi_id}"]`).getAttribute('data-endpoint');
 
     try {
         const {
