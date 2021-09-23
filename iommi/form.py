@@ -770,7 +770,11 @@ class Field(Part, Tag):
                 value = self._validate_parsed_data(self.parsed_data)
 
         if not self.errors:
-            if form.mode is FULL_FORM_FROM_REQUEST and self.required and value in [None, '']:
+            if (
+                form.mode is FULL_FORM_FROM_REQUEST
+                and self.required
+                and (value == [] if self.is_list else value in [None, ''])
+            ):
                 self.add_error('This field is required')
             else:
                 self.value = value
