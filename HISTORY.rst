@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+3.2.1 (2021-09-24)
+~~~~~~~~~~~~~~~~~~
+
+* Fix enforcement on `required=True` on `Field.multi_choice` and others where value is a list.
+
+
 3.2.0 (2021-08-23)
 ~~~~~~~~~~~~~~~~~~
 
