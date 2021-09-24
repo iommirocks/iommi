@@ -1,3 +1,4 @@
+from django.db.models import ManyToManyField
 from tri_declarative import Shortcut
 
 from iommi.base import MISSING
@@ -138,6 +139,9 @@ def field_defaults_factory(model_field):
 
     if hasattr(model_field, 'null') and not isinstance(model_field, BooleanField):
         r['required'] = not model_field.null and not model_field.blank
+
+    if isinstance(model_field, ManyToManyField):
+        r['required'] = False
 
     if hasattr(model_field, 'null'):
         r['parse_empty_string_as_none'] = model_field.null

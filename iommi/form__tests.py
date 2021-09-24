@@ -191,6 +191,28 @@ def test_required_choice():
     assert form.fields['c']._errors == set()
 
 
+def test_required_multi_choice():
+    class MyForm(Form):
+        foo = Field.multi_choice(
+            choices=list('abc'),
+            initial=[],
+            required=True,
+        )
+
+        class Meta:
+            @staticmethod
+            def actions__submit__post_handler(form, **_):
+                pass  # pragma: no cover
+
+    form = MyForm()
+    target_marker = form.bind(request=req('get'),).actions.submit.own_target_marker()
+
+    bound_form = form.bind(request=req('post', **{target_marker: ''}))
+
+    assert not bound_form.is_valid()
+    assert bound_form.fields.foo.get_errors() == {'This field is required'}
+
+
 def test_required(MyTestForm):
     form = MyTestForm().bind(request=req('post', **{'-submit': ''}))
     assert form.is_target()
@@ -2558,6 +2580,7 @@ def test_edit_object():
     form = form.bind(request=request)
     assert form.mode == FULL_FORM_FROM_REQUEST
     response = form.render_to_response()
+    assert form.is_valid(), form.get_errors()
     assert response.status_code == 302
 
     assert response['Location'] == '../../'
