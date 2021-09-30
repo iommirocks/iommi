@@ -1817,7 +1817,9 @@ class Table(Part, Tag):
 
         self.bulk_container = self.bulk_container.bind(parent=self)
 
+    def get_visible_rows(self):
         self.visible_rows = self.parts.page.rows
+        return self.visible_rows
 
     def _bind_query(self):
         """
@@ -1891,7 +1893,7 @@ class Table(Part, Tag):
     def _prepare_auto_rowspan(self):
         auto_rowspan_columns = [column for column in values(self.columns) if column.auto_rowspan]
         if auto_rowspan_columns:
-            self.visible_rows = list(self.visible_rows)
+            self.visible_rows = list(self.get_visible_rows())
             no_value_set = object()
             for column in auto_rowspan_columns:
                 if column.cell.attrs.get('rowspan', no_value_set) is not no_value_set:
@@ -2008,7 +2010,7 @@ class Table(Part, Tag):
     def cells_for_rows(self):
         """Yield a Cells instance for each visible row on the screen."""
         assert self._is_bound, NOT_BOUND_MESSAGE
-        rows = self.preprocess_rows(rows=self.visible_rows, **self.iommi_evaluate_parameters())
+        rows = self.preprocess_rows(rows=self.get_visible_rows(), **self.iommi_evaluate_parameters())
         for i, row in enumerate(rows):
             row = self.preprocess_row(table=self, row=row)
             yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
@@ -2061,7 +2063,7 @@ class Table(Part, Tag):
                 return self.sorted_and_filtered_rows.filter(pk__in=identifiers)
             else:
                 identifiers = frozenset([int(i) for i in identifiers])
-                return [row for ndx, row in enumerate(self.visible_rows) if ndx in identifiers]
+                return [row for ndx, row in enumerate(self.get_visible_rows()) if ndx in identifiers]
 
     def bulk_queryset(self):
         """Return the queryset that contains only the selected rows with
@@ -2083,7 +2085,7 @@ class Table(Part, Tag):
 
         self._prepare_auto_rowspan()
 
-        assert self.visible_rows is not None
+        assert self.get_visible_rows() is not None
 
         context = self.iommi_evaluate_parameters().copy()
 
