@@ -1,5 +1,10 @@
 Changelog
 ---------
+3.2.2 (2021-10-01)
+~~~~~~~~~~~~~~~~~~
+
+* Fix bug causing any endpoint invocation of table fields to force a bind of the paginator (Which should be lazy)
+
 
 3.2.1 (2021-09-24)
 ~~~~~~~~~~~~~~~~~~
