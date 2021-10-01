@@ -3466,6 +3466,27 @@ def test_lazy_rows(settings):
 
 
 @pytest.mark.django_db
+def test_lazy_paginator(settings):
+    settings.DEBUG = True
+    set_sql_debug(SQL_DEBUG_LEVEL_ALL)
+    q = TBar.objects.all()
+    choices = [1, 2, 3]
+    t = Table(
+        model=TBar,
+        rows=lambda **_: q,
+        columns__foo=Column.choice(
+            choices=choices,
+            filter__include=True,
+        ),
+    ).bind(request=req('get'))
+    assert t.query.form.fields.foo.choices == choices
+    assert 'page' not in t._bound_members.parts._bound_members, "No peeking!"
+    t.__html__()
+    assert t.visible_rows is not None
+    assert 'page' in t._bound_members.parts._bound_members, "Did you not peek?"
+
+
+@pytest.mark.django_db
 def test_rows_should_not_cache():
     q = TBar.objects.all()
     assert q._result_cache is None, "Cache should be empty"
