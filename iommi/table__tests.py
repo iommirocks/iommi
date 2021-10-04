@@ -8,7 +8,10 @@ from datetime import (
 
 import django
 import pytest
-from django.db.models import QuerySet
+from django.db.models import (
+    F,
+    QuerySet,
+)
 from django.http import HttpResponse
 from django.test import override_settings
 from tri_declarative import (
@@ -916,6 +919,51 @@ def test_bulk_edit():
         (3, 11, u'changed2'),
         (4, 11, u'changed2'),
     ]
+
+
+@pytest.mark.skip('Django trips up on update when there is an annotation to a foreign table')
+@pytest.mark.django_db
+def test_django_broken_update():
+    TBar.objects.annotate(
+        a=F('foo__a'),
+    ).order_by(
+        'a',
+    ).update(
+        b=True,
+    )
+
+    assert True
+
+
+@pytest.mark.django_db
+def test_bulk_edit_with_annotate():
+    assert TBar.objects.all().count() == 0
+
+    TBar.objects.create(
+        c=False,
+        foo=TFoo.objects.create(a=2, b=''),
+    )
+
+    class TestTable(Table):
+        class Meta:
+            rows = TBar.objects.annotate(a=F('foo__a'))
+            default_sort_order = 'a'
+
+        a = Column()
+        c = Column(
+            bulk__include=True,
+        )
+
+    TestTable().bind(
+        request=req('post', **{
+            'pk_1': '',
+            'bulk/c': 'True',
+            '-bulk/submit': '',
+        }),
+    ).render_to_response()
+
+    x = TBar.objects.get()
+    assert (x.pk, x.c) == (1, True)
 
 
 @pytest.mark.django_db
