@@ -57,8 +57,10 @@ Profile
 
 Press this tool to get a cProfile output for the current page. By default it
 will do sorting on the cumulative time, but you can do `?_iommi_prof=tottime`
-to get the total time. If you have gprof2dot installed you can also do
-`?_iommi_prof=graph` to get a graph output.
+to get the total time.
+
+- If you have gprof2dot installed you can also do `?_iommi_prof=graph` to get a graph output.
+- If you have snakeviz installed you can also do `?iommi_prof=snake` to get snakeviz output.
 
 .. note::
 

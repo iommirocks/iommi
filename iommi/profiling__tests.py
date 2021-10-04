@@ -37,7 +37,7 @@ def test_profiler_graph_error():
     old_sys_executable = sys.executable
     sys.executable = 'does_not_exist'
     with pytest.raises(Exception) as e:
-        middleware(staff_req('get', _iommi_prof='', graph=''))
+        middleware(staff_req('get', _iommi_prof='graph'))
     sys.executable = old_sys_executable
 
     assert str(e.value) == 'gprof2dot not found. Please install it to use the graph feature.'
@@ -54,7 +54,7 @@ def test_profiler_graph_dot_not_present():
     orig = iommi.profiling._dot_search_paths[:]
     iommi.profiling._dot_search_paths[:] = ['does_not_exist']
 
-    response = middleware(staff_req('get', _iommi_prof='', graph=''))
+    response = middleware(staff_req('get', _iommi_prof='graph'))
 
     iommi.profiling._dot_search_paths[:] = orig
 

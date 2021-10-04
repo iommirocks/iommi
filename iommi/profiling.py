@@ -59,15 +59,15 @@ class Middleware:
             prof.disable()
 
             import pstats
-
             s = StringIO()
-            ps = pstats.Stats(prof, stream=s).sort_stats(request.GET.get('_iommi_prof') or 'cumulative')
-            ps.print_stats()
+            ps = pstats.Stats(prof, stream=s)
 
-            stats_str = s.getvalue()
+            prof_command = request.GET.get('_iommi_prof')
 
-            if 'graph' in request.GET:
+            if prof_command == 'graph':
                 with NamedTemporaryFile() as stats_dump:
+                    s = StringIO()
+                    ps = pstats.Stats(prof, stream=s)
                     ps.stream = stats_dump
                     ps.dump_stats(stats_dump.name)
 
@@ -89,7 +89,30 @@ class Middleware:
                         response['Content-Disposition'] = "attachment; filename=gprof2dot-graph.txt"
                         response.content = subprocess.check_output('tee', stdin=gprof2dot.stdout)
 
+            elif prof_command == 'snake':
+                try:
+                    import snakeviz
+                except ImportError:
+                    return HttpResponse('You must `pip install snakeviz` to use this feature')
+
+                with NamedTemporaryFile() as stats_dump:
+                    ps.stream = stats_dump
+                    ps.dump_stats(stats_dump.name)
+
+                    subprocess.Popen([sys.executable, str(Path(sys.executable).parent / 'snakeviz'), stats_dump.name], stdin=None, stdout=None, stderr=None)
+
+                    # We need to wait a bit to give snakeviz time to read the file
+                    from time import sleep
+                    sleep(3)
+
+                return HttpResponse('You should have gotten a new browser window with snakeviz opened to the profile data')
+
             else:
+                ps = ps.sort_stats(prof_command or 'cumulative')
+                ps.print_stats()
+
+                stats_str = s.getvalue()
+
                 limit = 280
                 result = []
 
