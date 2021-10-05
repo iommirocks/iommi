@@ -25,53 +25,8 @@ from iommi.refinable import RefinableObject
 DEFAULT_STYLE = 'bootstrap'
 
 
-def get_iommi_style_name(obj: Any) -> str:
-    while obj is not None:
-        if obj.iommi_namespace.get('iommi_style') is not None:
-            return obj.iommi_namespace.iommi_style
-        obj = obj.iommi_parent()
-    return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
-
-
 def get_style_object(obj: Any) -> 'Style':
-    # Step 1: build the stack
-    stack = []
-    o = obj
-    while o is not None:
-        if o.iommi_style is not None:
-            stack.append(o.iommi_style)
-            if isinstance(o.iommi_style, Style):
-                break
-        o = o.iommi_parent()
-
-    # Step 2: resolve names in the stack
-    stack.append(get_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)))
-    stack.reverse()
-
-    if len(stack) == 1:
-        return stack[0]
-
-    def resolve(x, previous_style):
-        if isinstance(x, Style):
-            return x
-
-        assert isinstance(x, str)
-
-        if previous_style is None:
-            return get_style(x)
-
-        result = previous_style.resolve(x)
-        if result is None:
-            return get_style(x)
-
-        assert isinstance(result, Style)
-        return result
-
-    resolved_stack = []
-    for i, x in enumerate(stack):
-        resolved_stack.append(resolve(x, resolved_stack[i - 1] if i else None))
-
-    return resolved_stack[-1]
+    return get_style(obj.iommi_style)
 
 
 def _style_name_for_class(cls):
@@ -174,22 +129,22 @@ class Style:
             if result:
                 return result
 
-        return None
+        return get_style(sub_style_name)
 
 
 _styles = {}
 
 
-def register_style(name, conf):
+def register_style(name, style):
     assert name not in _styles, f'{name} is already registered'
-    assert conf.name is None
-    conf.name = name
-    _styles[name] = conf
+    assert style.name is None
+    style.name = name
+    _styles[name] = style
 
     @contextmanager
     def _unregister():
         try:
-            yield
+            yield style
         finally:
             unregister_style(name)
     return _unregister()
