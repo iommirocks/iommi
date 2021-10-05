@@ -8,6 +8,8 @@ from tri_declarative import (
 
 from iommi import (
     Asset,
+    Field,
+    Form,
     Fragment,
     Menu,
     MenuItem,
@@ -21,6 +23,7 @@ from iommi.style import (
     get_iommi_style_name,
     get_style,
     get_style_data_for_object,
+    get_style_object,
     InvalidStyleConfigurationException,
     register_style,
     Style,
@@ -134,7 +137,7 @@ def test_apply_checkbox_style():
     form = MyForm()
     form = form.bind(request=None)
 
-    assert get_iommi_style_name(form.fields.foo) == 'bootstrap'
+    assert get_style_object(form.fields.foo) == get_style('bootstrap')
     assert (
         get_style_data_for_object(
             get_style('bootstrap'),
@@ -422,3 +425,61 @@ def test_assets_render_from_bulma_style():
     )
     actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
     assert actual == expected
+
+
+def test_style_inheritance():
+    with register_style(
+        'custom_style',
+        Style(
+            test,
+            Form__template='custom_style_form.html',
+        ),
+    ):
+        page1 = Page(
+            iommi_style='custom_style',
+            parts__form=Form(),
+        )
+        assert page1.bind().parts.form.template == 'custom_style_form.html'
+
+        page2 = Page(
+            iommi_style='base',
+            parts__form=Form(
+                iommi_style='custom_style',
+            )
+        )
+        assert page2.bind().parts.form.template == 'custom_style_form.html'
+
+
+@pytest.fixture
+def styled_form():
+    with register_style(
+        'my_style',
+        Style(
+            test,
+            Form__template='my_template.html',
+            Form__attrs__thing='Styled',
+            Field__template='my_other_template.html',
+            Field__attrs__other_thing='Also styled',
+        ),
+    ):
+        yield Form(
+            iommi_style='my_style',
+            fields__foo=Field(),
+        )
+
+
+def test_style_on_form_in_page(styled_form):
+    bound_form = styled_form.bind(request=req('get'))
+    assert bound_form.fields.foo.template == 'my_other_template.html'
+    assert bound_form.fields.foo.attrs.other_thing == 'Also styled'
+    assert bound_form.template == 'my_template.html'
+    assert bound_form.attrs.thing == 'Styled'
+
+
+def test_style_on_form_as_root(styled_form):
+    page = Page(parts__form=styled_form)
+    bound_page = page.bind(request=req('get'))
+    assert bound_page.parts.form.fields.foo.template == 'my_other_template.html'
+    assert bound_page.parts.form.fields.foo.attrs.other_thing == 'Also styled'
+    assert bound_page.parts.form.template == 'my_template.html'
+    assert bound_page.parts.form.attrs.thing == 'Styled'

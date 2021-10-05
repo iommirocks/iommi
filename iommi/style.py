@@ -25,14 +25,6 @@ from iommi.refinable import RefinableObject
 DEFAULT_STYLE = 'bootstrap'
 
 
-def get_iommi_style_name(obj: Any) -> str:
-    while obj is not None:
-        if obj.iommi_namespace.get('iommi_style') is not None:
-            return obj.iommi_namespace.iommi_style
-        obj = obj.iommi_parent()
-    return getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
-
-
 def get_style_object(obj: Any) -> 'Style':
     # Step 1: build the stack
     stack = []
