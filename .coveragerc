@@ -1,8 +1,5 @@
 [run]
 branch = False
-include=
-    iommi/*
-    docs/_generated_tests/*
 omit=
     tests/test_edit_views_temp.py
     tests/settings_jinja2_only.py

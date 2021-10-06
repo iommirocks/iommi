@@ -1,7 +1,5 @@
 [run]
 branch = False
-include=
-    iommi/*
 omit=
     iommi/*__tests.py
     iommi/*flask.py
