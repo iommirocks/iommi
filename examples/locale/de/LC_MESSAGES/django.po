@@ -3,44 +3,61 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-27 16:20+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2021-10-07 16:42+0200\n"
+"PO-Revision-Date: 2021-10-07 16:15+0000\n"
+"Last-Translator: Waldemar Hamm <wh@ravok.de>\n"
+"Language-Team: German <https://weblate.ravok.de/projects/iommi/examples/de/>"
+"\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.8.1\n"
 
-#: examples/form_examples.py:39
+#: examples/form_examples.py:42
 msgid "Use much like a django form"
 msgstr "Benutze es wie eine Django Form"
 
 #: examples/form_examples.py:207
 msgid "Global error message 1"
-msgstr ""
+msgstr "Globale Fehlernachricht 1"
 
 #: examples/form_examples.py:208
 msgid "Global error message 2"
-msgstr ""
+msgstr "Globale Fehlernachricht 2"
 
 #: examples/form_examples.py:211
 msgid "Field error message 1"
-msgstr ""
+msgstr "Datenfeld Fehlernachricht 1"
 
 #: examples/form_examples.py:212
 msgid "Field error message 2"
-msgstr ""
+msgstr "Datenfeld Fehlernachricht 2"
 
 #: examples/form_examples.py:215
 msgid "Error messages"
+msgstr "Fehlernachrichten"
+
+#: examples/form_examples.py:222
+msgid "Form children do not need to be all fields"
+msgstr "Formular\"kinder\" müssen nicht komplett aus Datenfeldern bestehen"
+
+#: examples/form_examples.py:255
+msgid "Form children do not need to be all fields -- declarative"
 msgstr ""
+"Formular\"kinder\" müssen nicht komplett aus Datenfeldern bestehen -- "
+"deklarativ"
+
+#: examples/form_examples.py:291
+msgid "Nested forms -- to abstract out behaviour and create complex 'fields'."
+msgstr ""
+"Verschachtelte Formulare -- um Vorgehensweise zu abstrahieren und komplexe "
+"\"Datenfelder\" zu erzeugen."
 
 #: examples/menu_examples.py:20
 msgid "A sample menu"
@@ -55,8 +72,6 @@ msgid "artist"
 msgstr "Künstler"
 
 #: examples/models.py:42
-#, fuzzy
-#| msgid "artist"
 msgid "artists"
 msgstr "Künstler"
 
@@ -88,37 +103,37 @@ msgstr "Titel"
 msgid "tracks"
 msgstr "Titel"
 
-#: examples/page_examples.py:26
+#: examples/page_examples.py:28
 msgid "Standard example"
 msgstr "Standardbeispiel"
 
-#: examples/page_examples.py:32
+#: examples/page_examples.py:34
 msgid "View with some calculation to do before making the page"
-msgstr "View die Berechnungen macht vor die Seite angezeigt wird."
+msgstr ""
+"View, welches einige Berechnungen durchführen muss, bevor es die Seite "
+"erstellt"
 
-#: examples/page_examples.py:42
+#: examples/page_examples.py:44
 msgid "Further specializing an already defined page"
 msgstr "Nachträgliches spezialisieren einer Seite"
 
-#: examples/page_examples.py:51
+#: examples/page_examples.py:53
 msgid "Busy page with different components"
 msgstr "Seite mit vielen verschiedenen Komponenten"
 
-#: examples/supernaut.py:30
+#: examples/supernaut.py:29
 msgid "Home"
 msgstr "Home"
 
-#: examples/supernaut.py:31
-#, fuzzy
-#| msgid "artist"
+#: examples/supernaut.py:30
 msgid "Artists"
 msgstr "Künstler"
 
-#: examples/supernaut.py:32
+#: examples/supernaut.py:31
 msgid "Albums"
 msgstr "Alben"
 
-#: examples/supernaut.py:33
+#: examples/supernaut.py:32
 msgid "Tracks"
 msgstr "Titel"
 
@@ -132,37 +147,37 @@ msgstr "Supernaut"
 
 #: examples/supernaut.py:79
 msgid "This is a discography of the best acts in music!"
-msgstr "Eine Diskographie der besten Bands"
+msgstr "Eine Diskographie der besten Interpreten!"
 
 #: examples/table_examples.py:32
 msgid "Readme example 1"
 msgstr "Readme Beispiel 1"
 
-#: examples/table_examples.py:55
+#: examples/table_examples.py:57
 msgid "Readme example 2"
 msgstr "Readme Beispiel 2"
 
-#: examples/table_examples.py:70
+#: examples/table_examples.py:72
 msgid "Auto from model example 1"
 msgstr "Automatisch vom Model Beispiel 1"
 
-#: examples/table_examples.py:77
+#: examples/table_examples.py:79
 msgid "Auto from model example 2"
 msgstr "Automatisch vom Model Beispiel 2"
 
-#: examples/table_examples.py:85
+#: examples/table_examples.py:87
 msgid "Kitchen sink example"
 msgstr "Beispiel für alles auf einmal"
 
-#: examples/table_examples.py:141
+#: examples/table_examples.py:143
 msgid "Two tables on the same page"
 msgstr "Zwei Tabellen auf derselben Seite"
 
-#: examples/table_examples.py:158
+#: examples/table_examples.py:160
 msgid "post handlers on lists"
 msgstr "Post handler für Listen"
 
-#: examples/table_examples.py:192
+#: examples/table_examples.py:198
 msgid "You can have extra fields in your form that the query will ignore"
 msgstr ""
 "Man kann Felder im Formular haben, die von der Abfrage ignoriert werden"
