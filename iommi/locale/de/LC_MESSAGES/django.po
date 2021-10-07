@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-07 16:42+0200\n"
-"PO-Revision-Date: 2021-10-07 16:15+0000\n"
+"PO-Revision-Date: 2021-10-07 17:36+0000\n"
 "Last-Translator: Waldemar Hamm <wh@ravok.de>\n"
 "Language-Team: German <https://weblate.ravok.de/projects/iommi/iommi/de/>\n"
 "Language: de\n"
@@ -65,7 +65,7 @@ msgstr "Passwort ungültig"
 
 #: admin.py:470
 msgid "New passwords does not match"
-msgstr "Neue Passwörter nicht gleich"
+msgstr "Neue Passwörter sind nicht identisch"
 
 #: admin.py:486
 msgid "Current password"
@@ -110,7 +110,7 @@ msgstr "Speichern"
 
 #: query.py:575 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
-msgstr "Zur erweiterten Suchfunktion"
+msgstr "Zur erweiterten Suchfunktion wechseln"
 
 #: query.py:678
 msgid "Search"
@@ -118,7 +118,7 @@ msgstr "Suche"
 
 #: query.py:704
 msgid "Filter"
-msgstr "Filtern"
+msgstr "Filtere"
 
 #: table.py:515
 msgid "Edit"
@@ -150,7 +150,7 @@ msgstr "Massenänderung"
 
 #: table.py:1714
 msgid "Bulk delete"
-msgstr "Massenlöschen"
+msgstr "Massenlöschung"
 
 #: templates/iommi/query/advanced.html:5
 msgid "Search query"
@@ -167,7 +167,7 @@ msgstr "Verfügbare Felder"
 
 #: templates/iommi/query/advanced.html:22
 msgid "Queries"
-msgstr "Suchanfragen"
+msgstr "Datenabfragen"
 
 #: templates/iommi/query/advanced.html:24
 msgid "Search for an exact value: <code>field_name=value</code>"
@@ -223,7 +223,7 @@ msgstr ""
 
 #: templates/iommi/query/form_toggle_script.html:17
 msgid "Switch to basic search"
-msgstr "Zurück zur Standardsuchfunktion"
+msgstr "Zurück zur einfachen Suchfunktion"
 
 #: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
