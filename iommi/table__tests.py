@@ -854,10 +854,11 @@ def test_bulk_edit():
     assert '<form action="" enctype="multipart/form-data" method="post">' in result, result
     assert '<button accesskey="s" name="-bulk/submit">Bulk change</button>' in result, result
 
-    def post_bulk_edit(table, queryset, updates, **_):
+    def post_bulk_edit(table, pks, queryset, updates, **_):
         assert isinstance(table, TestTable)
         assert isinstance(queryset, QuerySet)
         assert {x.pk for x in queryset} == {1, 2}
+        assert set(pks) == {1, 2}
         assert updates == dict(a=0, b='changed')
 
     # The most important part of the test: don't bulk update with an invalid form!
@@ -919,6 +920,22 @@ def test_bulk_edit():
         (3, 11, u'changed2'),
         (4, 11, u'changed2'),
     ]
+
+
+@pytest.mark.django_db
+def test_bulk_edit_custom_response():
+    class TestTable(Table):
+        class Meta:
+            @staticmethod
+            def post_bulk_edit(**_):
+                return HttpResponse('custom response')
+
+        a = Column(bulk__include=True)
+
+    t = TestTable(rows=TFoo.objects.none()).bind(
+        request=req('post', **{'bulk/a': '1', '-bulk/submit': ''}),
+    )
+    assert t.render_to_response().content == b'custom response'
 
 
 @pytest.mark.skip('Django trips up on update when there is an annotation to a foreign table')

@@ -1098,13 +1098,16 @@ def bulk__post_handler(table, form, **_):
                 getattr(obj, attr).set(value)
             obj.save()
 
-    table.post_bulk_edit(
+    response = table.post_bulk_edit(
         pks=pks,
         queryset=queryset,
         updates=updates,
         m2m_updates=m2m_updates,
         **table.iommi_evaluate_parameters(),
     )
+
+    if response is not None:
+        return response
 
     return HttpResponseRedirect(form.get_request().META.get('HTTP_REFERER', '/'))
 
