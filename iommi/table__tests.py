@@ -923,6 +923,67 @@ def test_bulk_edit():
 
 
 @pytest.mark.django_db
+def test_bulk_edit_fk():
+    foo1 = TFoo.objects.create(a=1, b="")
+    foo2 = TFoo.objects.create(a=2, b="")
+
+    bar = TBar.objects.create(c=True, foo=foo1)
+
+    class TestTable(Table):
+        class Meta:
+            rows = TBar.objects.all()
+
+        foo = Column(bulk__include=True)
+
+    response = TestTable().bind(
+        request=req('post', **{
+            '_all_pks_': '1',
+            'bulk/foo': str(foo2.pk),
+            '-bulk/submit': '',
+        }),
+    ).render_to_response()
+
+    assert response.status_code == 302
+    bar.refresh_from_db()
+    assert bar.foo == foo2
+
+
+@pytest.mark.django_db
+def test_bulk_edit_m2m():
+    foo1 = TFoo.objects.create(a=1, b="")
+    foo2 = TFoo.objects.create(a=2, b="")
+
+    baz = TBaz.objects.create()
+    baz.foo.set([foo1])
+
+    class TestTable(Table):
+        class Meta:
+            rows = TBaz.objects.all()
+
+            @staticmethod
+            def post_bulk_edit(m2m_updates, **_):
+                assert m2m_updates == dict(foo=[foo2])
+
+        foo = Column.from_model(
+            model=TBaz,
+            model_field_name='foo',
+            bulk__include=True,
+        )
+
+    response = TestTable().bind(
+        request=req('post', **{
+            '_all_pks_': '1',
+            'bulk/foo': str(foo2.pk),
+            '-bulk/submit': '',
+        }),
+    ).render_to_response()
+
+    assert response.status_code == 302
+    baz.refresh_from_db()
+    assert list(baz.foo.all()) == [foo2]
+
+
+@pytest.mark.django_db
 def test_bulk_edit_custom_response():
     class TestTable(Table):
         class Meta:
