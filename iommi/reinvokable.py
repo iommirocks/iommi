@@ -64,7 +64,7 @@ def reinvoke(obj: Any, additional_kwargs: Dict[str, Any]) -> Any:
 
 
 def retain_special_cases(obj, result):
-    special_cases = ['_name', '__tri_declarative_shortcut_stack', '_instantiated_at_frame']
+    special_cases = ['_name', '__tri_declarative_shortcut_stack', '_instantiated_at_info']
     for special_case in special_cases:
         value = getattr(obj, special_case, None)
         if value is not None:

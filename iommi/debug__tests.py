@@ -115,4 +115,4 @@ def test_source_url_from_part(settings):
     # Make it trigger special code path that leads to the class definition
     p = debug_tests_stuff.MyPage()
     filename = source_url_from_part(part=p)
-    assert debug_tests_stuff.__file__ in filename
+    assert __file__ in filename
