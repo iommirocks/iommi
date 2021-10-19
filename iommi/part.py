@@ -26,6 +26,7 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
 )
 from iommi.debug import (
+    get_instantiated_at_info,
     iommi_debug_on,
 )
 from iommi.endpoint import (
@@ -88,7 +89,8 @@ class Part(Traversable):
         if iommi_debug_on():
             import inspect
 
-            self._instantiated_at_frame = inspect.currentframe().f_back
+            frame = inspect.currentframe()
+            self._instantiated_at_info = get_instantiated_at_info(frame.f_back)
 
     @dispatch(
         render=EMPTY,

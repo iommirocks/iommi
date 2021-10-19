@@ -170,7 +170,8 @@ def should_ignore_frame(frame, env_paths):
         'iommi',
         'django',
     ):
-        return True
+        if not module_name.endswith('__tests'):
+            return True
 
     for env_path in env_paths:
         if frame.f_code.co_filename.startswith(env_path):
@@ -185,9 +186,7 @@ def should_ignore_frame(frame, env_paths):
     return False
 
 
-def frame_from_part(part):
-    frame = part._instantiated_at_frame
-
+def get_instantiated_at_info(frame):
     import os
 
     env_paths = {dirname(os.__file__), dirname(dirname(sys.executable))}
@@ -200,28 +199,12 @@ def frame_from_part(part):
         if should_ignore_frame(frame, env_paths):
             continue
 
-        return frame
-    return None
+        return frame.f_code.co_filename, frame.f_lineno
+    return None, None
 
 
 def filename_and_line_num_from_part(part):
-    frame = frame_from_part(part)
-
-    if frame is None:
-        filename, lineno = None, None
-    else:
-        filename, lineno = frame.f_code.co_filename, frame.f_lineno
-
-    if filename is None or filename.endswith('urls.py'):
-        import inspect
-
-        from iommi import Part
-        if isinstance(part, Part):
-            if not inspect.getmodule(type(part)).__name__.startswith('iommi.'):
-                filename = inspect.getsourcefile(type(part))
-                lineno = inspect.getsourcelines(type(part))[-1]
-
-    return filename, lineno
+    return getattr(part, '_instantiated_at_info', (None, None))
 
 
 def iommi_debug_panel(part):
