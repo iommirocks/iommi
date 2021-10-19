@@ -253,14 +253,12 @@ class ChoicesModel(models.Model):
 
 if django.VERSION[:2] >= (3, 0):
 
-    class ColorChoices(models.TextChoices):
-        PURPLE = ('purple', 'Purple')
-        ORANGE = ('orange', 'Orange')
-
-
     class ChoicesClassModel(models.Model):
-        CHOICES = [('purple', 'Purple'), ('orange', 'Orange')]
-        color = models.CharField(choices=ColorChoices, max_length=255)
+        class ColorChoices(models.TextChoices):
+            PURPLE = ('purple', 'Purple')
+            ORANGE = ('orange', 'Orange')
+
+        color = models.CharField(choices=ColorChoices.choices, max_length=255)
 
 
 class CamelCaseFieldModel(models.Model):

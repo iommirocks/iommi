@@ -12,6 +12,7 @@ from io import (
     StringIO,
 )
 
+import django
 import pytest
 from bs4 import BeautifulSoup
 from django.test import override_settings
@@ -2854,6 +2855,21 @@ def test_choices_in_char_field_model():
     assert form.fields.color.choices == [x[0] for x in ChoicesModel.CHOICES]
 
     value, display_name = ChoicesModel.CHOICES[0]
+    assert (
+        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
+        == display_name
+    )
+
+
+@pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
+@pytest.mark.django_db
+def test_choices_in_char_field_model_as_class():
+    from tests.models import ChoicesClassModel
+
+    form = Form.edit(auto__model=ChoicesClassModel).bind(request=req('get'))
+    assert form.fields.color.choices == [x[0] for x in ChoicesClassModel.ColorChoices.choices]
+
+    value, display_name = ChoicesClassModel.ColorChoices.choices[0]
     assert (
         form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == display_name
