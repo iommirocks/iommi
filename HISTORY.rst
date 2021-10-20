@@ -1,5 +1,22 @@
 Changelog
 ---------
+
+3.3.0 (2021-10-20)
+~~~~~~~~~~~~~~~~~~
+
+* Added snakeviz profiling (use it by passing `_iommi_prof=snake` as a url parameter)
+
+* Fixed stack traces in SQL tracing
+
+* Fixed jump to code for several scenarios
+
+* German translation fixes and updates
+
+* Improved error message for invalid admin config
+
+* `write_nested_form_to_instance` now takes keyword arguments
+
+
 3.2.2 (2021-10-01)
 ~~~~~~~~~~~~~~~~~~
 
