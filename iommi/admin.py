@@ -174,7 +174,7 @@ class Admin(Page):
         for k in apps.keys():
             assert (
                 k in joined_app_name_and_model
-            ), f'{k} is not a valid app/model key.\n\nValid keys:\n    ' + '\n    '.join(joined_app_name_and_model)
+            ), f'{k} is not a valid app/model key.\n\nValid keys:\n    ' + '\n    '.join(sorted(joined_app_name_and_model))
 
         def should_throw_away(k, v):
             if isinstance(v, Namespace) and 'call_target' in v:

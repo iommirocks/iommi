@@ -1610,7 +1610,7 @@ class Form(Part):
         for field in values(self.fields):
             self.apply_field(instance=instance, field=field)
         for nested_form in values(self.nested_forms):
-            nested_form.write_nested_form_to_instance(nested_form, instance)
+            nested_form.write_nested_form_to_instance(form=nested_form, instance=instance)
 
         return instance
 
