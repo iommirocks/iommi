@@ -15,6 +15,7 @@ from io import (
 import django
 import pytest
 from bs4 import BeautifulSoup
+from django.http import HttpResponse
 from django.test import override_settings
 from freezegun import freeze_time
 from tri_declarative import (
@@ -3009,3 +3010,10 @@ def test_editable_can_be_a_callable():
     x.save()
     f = Form(auto__instance=x, editable=lambda instance, **_: instance.foo == 7).bind()
     assert f.fields.foo.editable is False
+
+
+def test_get_form():
+    form = Form(
+        actions__submit__get_handler=lambda **_: HttpResponse("something"),
+    )
+    assert form.bind(request=req('get', **{'/submit': ''})).render_to_response().content.decode() == 'something'

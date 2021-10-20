@@ -1,12 +1,18 @@
 import datetime
 
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import (
+    HttpResponse,
+    HttpResponseRedirect,
+)
 from django.template import (
     RequestContext,
     Template,
 )
-from django.urls import path
+from django.urls import (
+    path,
+    reverse,
+)
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
@@ -32,6 +38,7 @@ from iommi import (
     html,
     Page,
 )
+from iommi.endpoint import DISPATCH_PREFIX
 from iommi.form import choice_parse
 
 examples = []
@@ -91,10 +98,10 @@ def form_example_2(request):
 
 @example(gettext(("Endpoints using ajax need no extra url entry")))
 def form_example_3(request):
-    class TrackForm(Form):
-        artist = Field.choice_queryset(choices=Track.objects.all())
+    class ArtistForm(Form):
+        artist = Field.choice_queryset(choices=Artist.objects.all())
 
-    return TrackForm()
+    return ArtistForm()
 
 
 @example(gettext(("Create forms from database models")))
@@ -342,6 +349,23 @@ def form_example_file_upload(request):
     return FileForm()
 
 
+@example(gettext('Forms submitted using GET'))
+class GetForm(Form):
+    class Meta:
+        attrs__method = 'get'
+
+        @staticmethod
+        def actions__submit__attrs__name(action, **_):
+            return DISPATCH_PREFIX + action.iommi_path
+
+        @staticmethod
+        def actions__submit__get_handler(form, **_):
+            if form.is_valid():
+                return HttpResponseRedirect(f'../example_{form.fields.example.value}')
+
+    example = Field.choice(choices=list(range(1, 10)))
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -369,5 +393,6 @@ urlpatterns = [
     path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('example_12/', form_example_nested_forms),
     path('example_13/', form_example_file_upload),
+    path('example_14/', GetForm().as_view()),
     path('all_fields/', all_field_sorts),
 ]

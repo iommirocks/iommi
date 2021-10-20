@@ -225,3 +225,6 @@ def test_check_for_bad_value_usage():
         Action(tag='button', attrs__value='foo')
 
     assert str(e.value) == 'You passed attrs__value, but you should pass display_name'
+
+def test_get_handler():
+    pass

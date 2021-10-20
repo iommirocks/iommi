@@ -98,6 +98,7 @@ class Action(Fragment):
     group: str = EvaluatedRefinable()
     display_name: str = EvaluatedRefinable()
     post_handler: Callable = Refinable()
+    get_handler: Callable = Refinable()
 
     @dispatch(
         tag='a',

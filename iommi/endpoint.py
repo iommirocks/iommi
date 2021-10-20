@@ -99,12 +99,18 @@ def find_target(*, path, root):
 
 
 def perform_ajax_dispatch(*, root, path, value):
+    from iommi import Action
     assert root._is_bound
 
     target = find_target(path=path, root=root)
+    func = None
+    if isinstance(target, Endpoint):
+        func = getattr(target, 'func', None)
 
-    func = getattr(target, 'func', None)
-    if not isinstance(target, Endpoint) or func is None:
+    if isinstance(target, Action):
+        func = getattr(target, 'get_handler', None)
+
+    if func is None:
         raise InvalidEndpointPathException(f'Target {target!r} is not a valid endpoint handler')
 
     return func(root=root, value=value, **target.iommi_evaluate_parameters())
