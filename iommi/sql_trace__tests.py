@@ -211,27 +211,6 @@ def test_sql_debug_trace_sql_cutoff(caplog):
     assert caplog.records[0].msg[10_000:] == '... [10001 bytes sql]'
 
 
-def test_sql_debug_trace_sql_frame(caplog):
-    caplog.set_level(logging.DEBUG)
-    set_sql_debug(SQL_DEBUG_LEVEL_ALL_WITH_STACKS)
-
-    with pytest.raises(KeyError):
-        sql_debug_trace_sql('foo')
-
-    frame = Struct(
-        f_lineno=1,
-        f_back=None,
-        f_locals={},
-        f_code=Struct(
-            co_name='foo',
-            co_filename='foo.py',
-        ),
-    )
-
-    sql_debug_trace_sql('foo', frame=frame)
-    assert caplog.records[0].msg == '  File "foo.py", line 1, in foo =>'
-
-
 def test_sql_debug_log_to_request_adds_attribute():
     set_sql_debug(SQL_DEBUG_LEVEL_WORST)
 

@@ -56,6 +56,26 @@ SQL_DEBUG_LEVELS = {
 assert getattr(settings, 'SQL_DEBUG', None) in SQL_DEBUG_LEVELS, f'SQL_DEBUG must be one of: {SQL_DEBUG_LEVELS}'
 
 
+def linkify(s):
+    from iommi.debug import src_debug_url_builder
+    r = []
+    for line in s.split('\n'):
+        match = re.search(r'File "(.*)", line (\d+), in (.*)', line)
+        if match:
+            filename = match.group(1)
+            lineno = int(match.group(2))
+            function_name = match.group(3)
+            r.append(format_html(
+                'File "<a href="{}">{}</a> ", line {}, in {}\n',
+                src_debug_url_builder(filename, lineno),
+                filename,
+                lineno,
+                function_name,
+            ))
+
+    return format_html('{}' * len(r), *r)
+
+
 class Middleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -65,72 +85,87 @@ class Middleware:
         set_current_request(request)
         request.iommi_start_time = datetime.now()
         sql_trace = request.GET.get('_iommi_sql_trace')
-        request.iommi_sql_debug_log = []
 
-        response = self.get_response(request)
+        if sql_trace == '':
+            sql_trace = SQL_DEBUG_LEVEL_WORST
 
-        if not settings.DEBUG and not request.user.is_staff:
-            return response
+        assert sql_trace in SQL_DEBUG_LEVELS
 
-        sql_debug_last_call(response)
+        old_state = get_sql_debug()
+        set_sql_debug(sql_trace)
+        try:
+            request.iommi_sql_debug_log = []
 
-        if sql_trace is not None:
-            iommi_sql_debug_log = getattr(request, 'iommi_sql_debug_log', None)
-            if iommi_sql_debug_log is not None:
-                total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
-                result = [
-                    '''
-                    <style> 
-                        a, span { 
-                            box-sizing: border-box; 
-                        }
-                        @media (prefers-color-scheme: dark) {
-                            html {
-                                background-color: black;
-                                color: #bbb;
+            response = self.get_response(request)
+
+            if not settings.DEBUG and not request.user.is_staff:
+                return response
+
+            sql_debug_last_call(response)
+
+            if sql_trace is not None:
+                iommi_sql_debug_log = getattr(request, 'iommi_sql_debug_log', None)
+                if iommi_sql_debug_log is not None:
+                    total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
+                    result = [
+                        '''
+                        <style> 
+                            a, span { 
+                                box-sizing: border-box; 
                             }
-                            b {
-                                color: white;
-                            }
-                        } 
-                        </style>
-                    ''',
-                    f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
-                ]
+                            @media (prefers-color-scheme: dark) {
+                                html {
+                                    background-color: black;
+                                    color: #bbb;
+                                }
+                                b {
+                                    color: white;
+                                }
+                            } 
+                            </style>
+                        ''',
+                        f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
+                    ]
 
-                if total_duration:
-                    color = '#4f4fff'
+                    if total_duration:
+                        color = '#4f4fff'
+                        for i, x in enumerate(iommi_sql_debug_log):
+                            proportion = x["duration"] / total_duration * 100
+                            result.append(
+                                f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>'
+                            )
+
+                        result.append('<br><br>By group:<br>')
+
+                        for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
+                            group = list(group)
+                            duration = sum(x["duration"] for x in group)
+                            proportion = duration / total_duration * 100
+                            k = k.replace('>', '&gt;')
+                            result.append(
+                                format_html('<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>', proportion, color, len(group), f'{duration:.3}', k)
+                            )
+
+                    result.append('<p></p><pre>')
+
                     for i, x in enumerate(iommi_sql_debug_log):
-                        proportion = x["duration"] / total_duration * 100
-                        result.append(
-                            f'<a href="#query_{i}" style="display: inline-block; height: 30px; width: {proportion}%; background-color: {color}; border-left: 1px solid black" title="{x["duration"]:.3}s"></a>'
-                        )
+                        sql = x['sql']
+                        if x['params']:
+                            sql %= safe_unicode_literal(x['params'])
 
-                    result.append('<br><br>By group:<br>')
+                        result.append(f'<a name="query_{i}">')
+                        result.append(format_sql(sql, duration=x['duration']))
+                        if sql_trace == SQL_DEBUG_LEVEL_ALL_WITH_STACKS:
+                            result.append('\n\n')
+                            # TODO: make links!
+                            result.append(linkify(x['stack']))
+                        result.append('\n\n')
+                    result.append('</pre>')
+                    return HttpResponse(''.join(result))
 
-                    for k, group in itertools.groupby(iommi_sql_debug_log, key=lambda x: x['sql']):
-                        group = list(group)
-                        duration = sum(x["duration"] for x in group)
-                        proportion = duration / total_duration * 100
-                        k = k.replace('>', '&gt;')
-                        result.append(
-                            format_html('<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>', proportion, color, len(group), f'{duration:.3}', k)
-                        )
-
-                result.append('<p></p><pre>')
-
-                for i, x in enumerate(iommi_sql_debug_log):
-                    sql = x['sql']
-                    if x['params']:
-                        sql %= safe_unicode_literal(x['params'])
-
-                    result.append(f'<a name="query_{i}">')
-                    result.append(format_sql(sql, duration=x['duration']))
-                    result.append('\n\n')
-                result.append('</pre>')
-                return HttpResponse(''.join(result))
-
-        return response
+            return response
+        finally:
+            set_sql_debug(old_state)
 
 
 def colorize(text, fg, bold=False):
@@ -276,7 +311,7 @@ def sql_debug_trace_sql(sql, params=None, **kwargs):
         sql = re.sub(r'[\x00-\x08\x0b-\x1f\x80-\xff]', '.', sql)
 
     if get_sql_debug() == SQL_DEBUG_LEVEL_ALL_WITH_STACKS:
-        sql_debug(sql_debug_format_stack_trace(kwargs['frame']), extra={})
+        sql_debug(kwargs['stack'], extra={})
 
     kwargs['sql'] = True
     sql_debug(sql, extra=kwargs)
@@ -344,18 +379,12 @@ def sql_debug_format_stack_trace(frame):
     return stack
 
 
-def fill_stacks(iommi_sql_debug_log):
-    for x in iommi_sql_debug_log:
-        x['stack'] = sql_debug_format_stack_trace(x['frame'])
-
-
 def sql_debug_last_call(response):
     request = get_current_request()
     if get_sql_debug() == SQL_DEBUG_LEVEL_WORST and hasattr(
         request, 'iommi_sql_debug_log'
     ):  # hasattr check because process_request might not be called in case of an early redirect
         stacks = defaultdict(list)
-        fill_stacks(request.iommi_sql_debug_log)
         for x in request.iommi_sql_debug_log:
             stacks[x['sql']].append(x)
 
@@ -410,7 +439,7 @@ class CursorDebugWrapper(django_db_utils.CursorWrapper):
             stop = monotonic()
             duration = stop - start
             sql_debug_log_to_request(
-                frame=frame,
+                stack=sql_debug_format_stack_trace(frame),
                 duration=duration,
                 rowcount=self.cursor.rowcount,
                 using=self.db.alias,
