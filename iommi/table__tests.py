@@ -20,12 +20,14 @@ from tri_declarative import (
     get_shortcuts_by_name,
     getattr_path,
     is_shortcut,
+    LAST,
     Namespace,
     Shortcut,
 )
 
 from iommi import (
     Action,
+    Fragment,
     html,
     Page,
 )
@@ -3666,3 +3668,15 @@ def test_nest_table_inside_form_does_not_crash_due_to_nested_forms():
         fields__a_table=Table(auto__model=TFoo)
     ).bind(request=req('get'))
 
+
+@pytest.mark.django_db
+def test_tbody_refined():
+    TFoo.objects.create(a=1, b='middle')
+    t = Table(
+        auto__model=TFoo,
+        auto__include=['b'],
+        tbody__children__before=Fragment('before', after=0),
+        tbody__children__after=Fragment('after', after=LAST),
+    ).bind(request=req('get'))
+    rendered = t.__html__()
+    assert rendered.index('before') < rendered.index('middle') < rendered.index('after')
