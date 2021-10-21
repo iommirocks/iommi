@@ -106,9 +106,10 @@ class Page(Part):
     def __html__(self, *, render=None):
         self.context = evaluate_strict_container(self.context or {}, **self.iommi_evaluate_parameters())
         request = self.get_request()
-        rendered = {'h_tag': as_html(request=request, part=self.h_tag, context=self.iommi_evaluate_parameters())}
+        context = {**self.get_context(), **self.iommi_evaluate_parameters()}
+        rendered = {'h_tag': as_html(request=request, part=self.h_tag, context=context)}
         rendered.update({
-            name: as_html(request=request, part=part, context=self.iommi_evaluate_parameters())
+            name: as_html(request=request, part=part, context=context)
             for name, part in items(self.parts)
         })
 
