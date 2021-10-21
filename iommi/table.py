@@ -1767,10 +1767,9 @@ class Table(Part, Tag):
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         build_and_bind_h_tag(self)
 
-        self.tbody = self.tbody(_name='tbody').bind(parent=self)
+        self.tbody = self.tbody(_name='tbody', children__text=_Lazy_tbody(self)).bind(parent=self)
         self.container = self.container(_name='container').bind(parent=self)
         self.outer = self.outer(_name='outer').bind(parent=self)
-        self.tbody.children.text = _Lazy_tbody(self)
         self.header = self.header.bind(parent=self)
 
         # needs to be done first because _bind_headers depends on it
