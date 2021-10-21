@@ -1,4 +1,5 @@
 import pytest
+from django.template import Template
 from django.utils.html import format_html
 
 from iommi import (
@@ -8,10 +9,7 @@ from iommi import (
     Page,
 )
 from iommi.attrs import Attrs
-from iommi.fragment import (
-    build_and_bind_h_tag,
-    fragment__render,
-)
+from iommi.fragment import fragment__render
 from tests.helpers import req
 
 
@@ -259,3 +257,7 @@ def test_fragment_meta():
 
     assert str(MyFragment().bind(request=req('get'))) == '<span class="foo"></span>'
 
+
+def test_fragment_template():
+    f = Fragment(Template('<div>{{ fragment.extra.foo }}</div>'), extra__foo=7)
+    assert str(f.bind(request=req('get'))) == '<div>7</div>'
