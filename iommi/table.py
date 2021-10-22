@@ -841,6 +841,7 @@ class Column(Part):
         return call_target(model_field=model_field, **kwargs)
 
 
+@with_meta
 class Cells(Traversable, Tag):
     """
     Internal class used in row rendering
@@ -853,9 +854,13 @@ class Cells(Traversable, Tag):
     extra_evaluated: Dict[
         str, Any
     ] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    cell_class: Type['Cell'] = Refinable()
 
-    def __init__(self, row, row_index, **kwargs):
-        super(Cells, self).__init__(_name='row', **kwargs)
+    def __init__(self, row, row_index, cell_class=None, **kwargs):
+        # This doesn't use a nice Meta definition because it would be a circular
+        if cell_class is None:
+            cell_class = Cell
+        super(Cells, self).__init__(_name='row', cell_class=cell_class, **kwargs)
         assert not isinstance(row, Cells)
         self.row: Any = row
         self.row_index = row_index
@@ -884,11 +889,11 @@ class Cells(Traversable, Tag):
         for column in values(self.iommi_parent().columns):
             if not column.render_column:
                 continue
-            yield Cell(cells=self, column=column)
+            yield self.cell_class(cells=self, column=column)
 
     def __getitem__(self, name):
         column = self.iommi_parent().columns[name]
-        return Cell(cells=self, column=column)
+        return self.cell_class(cells=self, column=column)
 
 
 class CellConfig(RefinableObject, Tag):
@@ -1451,6 +1456,7 @@ class Table(Part, Tag):
     query_class: Type[Query] = Refinable()
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
+    cells_class: Type[Cells] = Refinable()
 
     empty_message: str = Refinable()
     invalid_form_message: str = Refinable()
@@ -1463,6 +1469,7 @@ class Table(Part, Tag):
         query_class = Query
         action_class = Action
         page_class = Page
+        cells_class = Cells
         endpoints__tbody__func = lambda table, **_: {'html': table.__html__(template='iommi/table/table_container.html')}
         endpoints__csv__func = endpoint__csv
 
@@ -2025,7 +2032,7 @@ class Table(Part, Tag):
         rows = self.preprocess_rows(rows=self.get_visible_rows(), **self.iommi_evaluate_parameters())
         for i, row in enumerate(rows):
             row = self.preprocess_row(table=self, row=row)
-            yield Cells(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
+            yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     @classmethod
     @dispatch(
