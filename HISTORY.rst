@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+3.4.0 (2021-10-22)
+~~~~~~~~~~~~~~~~~~
+
+* Ability to customize the `Cell` and `Cells` classes used by `Table` rendering
+
+* Improved ability to customize `Table.tbody`. You can now add html after or before the rows from the table itself
+
+* Template-based rendering should get iommi_evaluate_parameters as context. This was the case in some cases but not all, most notably when rendering a `Fragment`.
+
+
 3.3.0 (2021-10-20)
 ~~~~~~~~~~~~~~~~~~
 
