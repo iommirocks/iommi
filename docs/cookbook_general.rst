@@ -40,7 +40,6 @@ Another nice way to find what is available is to append `?/debug_tree` in the
 url of your view. You will get a table of available paths with the ajax
 endpoint path, and their types with links to the appropriate documentation.
 
-
 If `IOMMI_DEBUG` is on you will also get two links on the top of your pages
 called `Code` and `Tree`. Code will jump to the code for the current view
 in PyCharm. You can configure the URL builder to make it open your favored
@@ -49,6 +48,12 @@ editor by setting `IOMMI_DEBUG_URL_BUILDER` in settings:
 .. code:: python
 
     IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: f'my_editor://{filename}:{lineno}'
+
+Visual Studio Code example:
+
+..code:: python
+
+    IOMMI_DEBUG_URL_BUILDER=lambda filename, lineno: f"vscode://file/{filename}:{lineno}:0"
 
 The `Tree` link will open the `?/debug_tree` page mentioned above.
 
