@@ -51,7 +51,7 @@ editor by setting `IOMMI_DEBUG_URL_BUILDER` in settings:
 
 Visual Studio Code example:
 
-..code:: python
+.. code:: python
 
     IOMMI_DEBUG_URL_BUILDER=lambda filename, lineno: f"vscode://file/{filename}:{lineno}:0"
 
