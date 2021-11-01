@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+4.0.0 (2021-11-01)
+~~~~~~~~~~~~~~~~~~
+
+* Dropped support for `__` in names of declared columns/fields/filters (deprecated since 3.2.0)
+
+* Big internal refactoring. You should see some performance improvements accross the board.
+
+
 3.4.0 (2021-10-22)
 ~~~~~~~~~~~~~~~~~~
 
