@@ -36,6 +36,9 @@ def model_and_rows(model, rows):
 
 
 def build_as_view_wrapper(target):
+    if not target.is_refine_done:
+        target = target.refine_done()
+
     def view_wrapper(request, **url_params):
         request.url_params = url_params
         return target.bind(request=request).render_to_response()
