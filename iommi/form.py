@@ -11,7 +11,6 @@ from operator import or_
 from typing import (
     Any,
     Callable,
-    Dict,
     List,
     Optional,
     Set,
@@ -77,7 +76,6 @@ from iommi.datetime_parsing import (
     parse_relative_date,
     parse_relative_datetime,
 )
-from iommi.debug import iommi_debug_on
 from iommi.error import Errors
 from iommi.evaluate import (
     evaluate,
@@ -98,7 +96,7 @@ from iommi.from_model import (
 )
 from iommi.member import (
     bind_members,
-    collect_members,
+    refine_done_members,
 )
 from iommi.page import (
     Page,
@@ -107,10 +105,10 @@ from iommi.part import (
     Part,
     request_data,
 )
-from iommi.reinvokable import reinvokable
-from iommi.traversable import (
+from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
+    RefinableMembers,
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
@@ -523,9 +521,7 @@ class Field(Part, Tag):
 
     empty_label: str = EvaluatedRefinable()
 
-    @reinvokable
     @dispatch(
-        tag=None,
         attr=MISSING,
         display_name=MISSING,
         attrs__class=EMPTY,
@@ -588,12 +584,12 @@ class Field(Part, Tag):
         :param choice_display_name_formatter: Callback given the keyword argument `choice` in addition to standard parameters, to obtain the display name representing a given choice to the end user. Default implementation will use `str(choice)`
         :param choice_to_optgroup Callback to generate the optgroup for the given choice. It will get the keyword argument `choice`. It should return None if the choice should not be grouped.
         """
-
-        model_field = kwargs.get('model_field')
-        if model_field and model_field.remote_field:
-            kwargs['model'] = model_field.remote_field.model
-
         super(Field, self).__init__(**kwargs)
+
+    def on_refine_done(self):
+        model_field = self.model_field
+        if model_field and model_field.remote_field:
+            self.model = model_field.remote_field.model
 
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
@@ -604,11 +600,13 @@ class Field(Part, Tag):
                 **self.non_editable_input,
                 '_name': 'non_editable_input',
             }
-        )()
-        self.input = self.input(_name='input')
-        self.label = self.label(_name='label')
-        self.help = self.help(_name='help')
+        )().refine_done(parent=self)
+        self.input = self.input(_name='input').refine_done(parent=self)
+        self.label = self.label(_name='label').refine_done(parent=self)
+        self.help = self.help(_name='help').refine_done(parent=self)
         self._errors: Set[str] = set()
+
+        super(Field, self).on_refine_done()
 
     @property
     def form(self):
@@ -1260,7 +1258,7 @@ class FormAutoConfig(AutoConfig):
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
 
-@declarative(Part, '_fields_dict')
+@declarative(Part, '_fields_dict', add_init_kwargs=False)
 @with_meta
 class Form(Part):
     """
@@ -1324,7 +1322,7 @@ class Form(Part):
 
         post_handler(form.bind(request=req('post')))"""
 
-    actions: Namespace = Refinable()
+    actions: Namespace = RefinableMembers()
     actions_template: Union[str, Template] = Refinable()
     attr: str = (
         EvaluatedRefinable()
@@ -1342,13 +1340,16 @@ class Form(Part):
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
+    auto: Namespace = Refinable()
+    attr: str = Refinable()
+    fields: Namespace = RefinableMembers()
+    instance: Any = Refinable()
 
     class Meta:
         member_class = Field
         action_class = Action
         page_class = Page
 
-    @reinvokable
     @dispatch(
         model=None,
         editable=True,
@@ -1361,48 +1362,42 @@ class Form(Part):
         auto=EMPTY,
         errors=EMPTY,
         h_tag__call_target=Header,
-    )
-    def __init__(
-        self,
-        *,
-        attr=None,
         instance=None,
-        fields: Dict[str, Field] = None,
-        _fields_dict: Dict[str, Field] = None,
-        actions: Dict[str, Any] = None,
-        model=None,
-        auto=None,
-        title=MISSING,
-        **kwargs,
-    ):
+    )
+    def __init__(self, **kwargs):
+        super(Form, self).__init__(
+            **kwargs,
+        )
 
-        if auto:
-            auto = FormAutoConfig(**auto)
-            assert not _fields_dict, "You can't have an auto generated Form AND a declarative Form at the same time"
-            assert (
-                not model
-            ), "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
+    def on_refine_done(self):
+        extra_member_defaults = dict()
+        if self.auto:
+            auto = FormAutoConfig(**self.auto).refine_done(parent=self)
+            assert not self.model, "You can't use the auto feature and explicitly pass model. Either pass auto__model, or we will set the model for you from auto__instance"
             if auto.model is None:
                 auto.model = auto.instance.__class__
 
-            model, fields = self._from_model(
+            model, fields_from_auto = self._from_model(
                 model=auto.model,
-                fields=fields,
                 include=auto.include,
                 exclude=auto.exclude,
             )
             if auto.instance is not None:
-                instance = auto.instance
-            if title is MISSING and auto.type is not None:
-                title = capitalize(
+                self.instance = auto.instance
+            if 'title' not in self.iommi_namespace and auto.type is not None:
+                self.title = capitalize(
                     gettext('%(crud_type)s %(model_name)s')
                     % dict(crud_type=gettext(auto.type), model_name=model._meta.verbose_name)
                 )
-
+                # TODO this in extra_member_defaults
                 setdefaults_path(
-                    actions,
+                    self.actions,
                     submit__display_name=gettext('Save') if auto.type == 'edit' else capitalize(gettext(auto.type)),
                 )
+
+            self.model = model
+        else:
+            fields_from_auto = None
 
         # Submit is special.
         # We used to have an automatic action submit button. Now we instead if something is inj
@@ -1410,22 +1405,20 @@ class Form(Part):
         # explicitely specify differently). That way we get no button if you don't explicitely opt
         # into it, by either directly defining something inside the submit namespace or using
         # Form.edit/delete/...
-        if 'submit' in actions:
-            setdefaults_path(actions, submit__call_target__attribute='primary')
-        super(Form, self).__init__(model=model, title=title, **kwargs)
+        if 'submit' in self.actions:
+            setdefaults_path(self.actions, submit__call_target__attribute='primary')
 
-        assert isinstance(fields, dict)
+        assert isinstance(self.fields, dict)
 
-        self.attr = attr
-        self.fields = None
         self._errors: Set[str] = set()
         self._valid = None
-        self.instance = instance
         self.mode = INITIALS_FROM_GET
         self.parent_form = None
 
-        collect_members(self, name='actions', items=actions, cls=self.get_meta().action_class)
-        collect_members(self, name='fields', items=fields, items_dict=_fields_dict, cls=self.get_meta().member_class)
+        refine_done_members(self, name='actions', members_from_namespace=self.actions, cls=self.get_meta().action_class, members_cls=Actions)
+        refine_done_members(self, name='fields', members_from_namespace=self.fields, members_from_declared=self.get_declared('_fields_dict'), members_from_auto=fields_from_auto, cls=self.get_meta().member_class, extra_member_defaults=extra_member_defaults,)
+
+        super(Form, self).on_refine_done()
 
     def on_bind(self) -> None:
         self._valid = None
@@ -1455,7 +1448,7 @@ class Form(Part):
         build_and_bind_h_tag(self)
 
         # Actions have to be bound first because is_target() needs it
-        bind_members(self, name='actions', cls=Actions)
+        bind_members(self, name='actions')
 
         if self._request_data is not None and self.is_target():
             self.mode = FULL_FORM_FROM_REQUEST
@@ -1505,20 +1498,17 @@ class Form(Part):
         )
 
     @classmethod
-    @dispatch(
-        fields=EMPTY,
-    )
-    def fields_from_model(cls, fields, **kwargs):
+    @dispatch()
+    def fields_from_model(cls, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class, member_params_by_member_name=fields, **kwargs
+            member_class=cls.get_meta().member_class,
+            **kwargs,
         )
 
     @classmethod
-    @dispatch(
-        fields=EMPTY,
-    )
-    def _from_model(cls, model, *, fields, include=None, exclude=None):
-        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, fields=fields)
+    @dispatch()
+    def _from_model(cls, model, *, include=None, exclude=None):
+        fields = cls.fields_from_model(model=model, include=include, exclude=exclude)
         return model, fields
 
     def is_target(self):

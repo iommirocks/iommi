@@ -25,9 +25,11 @@ from iommi.traversable import (
     build_long_path,
 )
 from tests.helpers import (
+    Basket,
+    Box,
+    Fruit,
     req,
     request_with_middleware,
-    StubTraversable,
 )
 from tests.models import (
     T1,
@@ -67,51 +69,36 @@ def test_find_target():
     # To build paths: _declared_members: Struct, and optionally name
     # To find target: _long_path_by_path: Dict on root
 
-    bar = StubTraversable(_name='bar')
-    foo = StubTraversable(
-        _name='foo',
-        members=Struct(
-            bar=bar,
-        ),
-    )
-    root = StubTraversable(
-        _name='root',
-        members=Struct(foo=foo),
-    )
+    banana = Fruit()
+    basket = Basket(fruits__banana=banana)
+    root = Box(items__basket=basket)
     root = root.bind(request=None)
 
-    target = find_target(path='/foo/bar', root=root)
-    assert target._declared is bar
-    assert build_long_path(target) == 'foo/bar'
+    target = find_target(path='/items/basket/fruits/banana', root=root)
+    assert target._name == 'banana'
+    assert build_long_path(target) == 'items/basket/fruits/banana'
+    assert target.iommi_path == 'banana'
 
 
 def test_find_target_with_invalid_path():
-    bar = StubTraversable(_name='bar')
-    foo = StubTraversable(
-        _name='foo',
-        members=Struct(
-            bar=bar,
-        ),
-    )
-    root = StubTraversable(
-        _name='root',
-        members=Struct(foo=foo),
-    )
+    banana = Fruit()
+    basket = Basket(fruits__banana=banana)
+    root = Box(items__basket=basket)
     root = root.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
-        find_target(path='/foo/bar/baz', root=root)
+        find_target(path='/items/baz', root=root)
 
     assert (
-        str(e.value) == "Given path /foo/bar/baz not found.\n"
-        "    Short alternatives:\n"
-        "        ''\n"
-        "        foo\n"
-        "        bar\n"
-        "    Long alternatives:\n"
-        "        ''\n"
-        "        foo\n"
-        "        foo/bar"
+            str(e.value) == "Given path /items/baz not found.\n"
+                            "    Short alternatives:\n"
+                            "        ''\n"
+                            "        basket\n"
+                            "        banana\n"
+                            "    Long alternatives:\n"
+                            "        ''\n"
+                            "        items/basket\n"
+                            "        items/basket/fruits/banana"
     )
 
 
@@ -162,8 +149,8 @@ def test_invalid_enpoint_path(settings):
         p.render_to_response()
 
     assert (
-        str(e.value)
-        == """
+            str(e.value)
+            == """
 Given path /foo not found.
     Short alternatives:
         ''
@@ -248,14 +235,14 @@ def test_ajax_not_trigger_bind():
 
 
 def test_perform_post_dispatch_error_message():
-    target = StubTraversable(_name='root', members=Struct(foo=StubTraversable(_name='foo')))
+    target = Basket(fruits__banana=Fruit())
     target = target.bind(request=None)
 
     with pytest.raises(InvalidEndpointPathException) as e:
-        perform_post_dispatch(root=target, path='/foo', value='')
+        perform_post_dispatch(root=target, path='/banana', value='')
 
     assert (
-        str(e.value) == "Target <tests.helpers.StubTraversable foo (bound) path:'foo'> has no registered post_handler"
+        str(e.value) == "Target <tests.helpers.Fruit banana (bound) path:'banana'> has no registered post_handler"
     )
 
 

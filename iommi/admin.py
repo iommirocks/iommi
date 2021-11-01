@@ -27,7 +27,6 @@ from tri_declarative import (
     EMPTY,
     LAST,
     Namespace,
-    Refinable,
     setdefaults_path,
     with_meta,
 )
@@ -48,7 +47,7 @@ from iommi.base import (
     items,
     values,
 )
-from iommi.reinvokable import reinvokable
+from iommi.refinable import Refinable
 
 app_verbose_name_by_label = {
     config.label: config.verbose_name.replace('_', ' ')
@@ -164,7 +163,6 @@ class Admin(Page):
     )
 
     @read_config
-    @reinvokable
     @dispatch(
         apps=EMPTY,
         parts=EMPTY,

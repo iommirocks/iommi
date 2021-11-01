@@ -37,6 +37,9 @@ def test_debug_tree(settings):
     class NestedPage(Page):
         foo = 'foo'
 
+        class Meta:
+            endpoints__fisk__func = lambda **_: None
+
     class MyPage(Page):
         bar = 'bar'
         nested = NestedPage()
@@ -47,17 +50,20 @@ def test_debug_tree(settings):
 
     assert isinstance(result, Table)
     tree = [', '.join([str(x.value) for x in cells]) for cells in result.cells_for_rows()]
-    expected = """, , MyPage, True
+    expected = """\
+, , MyPage, True
 endpoints, None, Members[Endpoint], True
 endpoints__debug_tree, debug_tree, Endpoint, True
-parts, None, Members[Part], True
+parts, None, Members[Fragment], True
 parts__bar, bar, Fragment, True
-parts__bar__children, None, Members[str], True
+parts__bar__children, None, Members[Fragment], True
 parts__bar__children__text, None, str, False
 parts__nested, nested, NestedPage, True
-parts__nested__parts, None, Members[Part], True
+parts__nested__endpoints, None, Members[Endpoint], True
+parts__nested__endpoints__fisk, fisk, Endpoint, True
+parts__nested__parts, None, Members[Fragment], True
 parts__nested__parts__foo, foo, Fragment, True
-parts__nested__parts__foo__children, None, Members[str], True
+parts__nested__parts__foo__children, None, Members[Fragment], True
 parts__nested__parts__foo__children__text, None, str, False"""
     assert '\n'.join(tree) == expected
 
@@ -102,7 +108,8 @@ def test_should_ignore_frame():
 
 
 def test_filename_and_line_num_from_part_empty_case():
-    assert filename_and_line_num_from_part(part=Struct(_instantiated_at_frame=Struct(f_back=None))) == (None, None)
+    assert filename_and_line_num_from_part(part=Struct()) == (None, None)
+    assert filename_and_line_num_from_part(part=Struct(_instantiated_at_info=('foo.py', 17))) == ('foo.py', 17)
 
 
 def test_source_url_from_part(settings):

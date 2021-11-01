@@ -1,6 +1,7 @@
+from typing import Dict
+
 import pytest
 from tri_declarative import (
-    dispatch,
     get_members,
     is_shortcut,
     Shortcut,
@@ -13,15 +14,19 @@ from iommi import (
     Table,
 )
 from iommi._web_compat import Template
-from iommi.action import group_actions
+from iommi.action import (
+    Actions,
+    group_actions,
+)
 from iommi.base import (
     items,
     keys,
 )
 from iommi.member import (
     bind_members,
-    collect_members,
+    refine_done_members,
 )
+from iommi.refinable import RefinableMembers
 from iommi.traversable import (
     Traversable,
 )
@@ -104,10 +109,11 @@ def test_all_action_shortcuts():
             extra__fancy = True
 
     class ThingWithActions(Traversable):
-        @dispatch
-        def __init__(self, actions):
-            super(ThingWithActions, self).__init__()
-            collect_members(self, name='actions', items=actions, cls=MyFancyAction)
+
+        actions: Dict[str, Action] = RefinableMembers()
+
+        def on_refine_done(self):
+            refine_done_members(self, name='actions', members_from_namespace=self.actions, cls=MyFancyAction, members_cls=Actions)
 
         def on_bind(self):
             bind_members(self, name='actions')
@@ -161,15 +167,16 @@ def test_lambda_tag():
 def test_action_groups():
     non_grouped, grouped = group_actions(
         dict(
-            a=Action(),
-            b=Action(),
-            c=Action(group='a'),
-            d=Action(group='a'),
-            e=Action(group='a'),
-            f=Action(group='b'),
-            g=Action(group='b'),
+            a=Action().refine_done(),
+            b=Action().refine_done(),
+            c=Action(group='a').refine_done(),
+            d=Action(group='a').refine_done(),
+            e=Action(group='a').refine_done(),
+            f=Action(group='b').refine_done(),
+            g=Action(group='b').refine_done(),
         )
     )
+
     assert len(non_grouped) == 2
     assert len(grouped) == 2
     assert len(grouped[0][2]) == 3
@@ -222,6 +229,6 @@ def test_actions():
 
 def test_check_for_bad_value_usage():
     with pytest.raises(AssertionError) as e:
-        Action(tag='button', attrs__value='foo')
+        Action(tag='button', attrs__value='foo').refine_done()
 
     assert str(e.value) == 'You passed attrs__value, but you should pass display_name'

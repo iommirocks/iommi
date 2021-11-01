@@ -78,7 +78,6 @@ from iommi.from_model import (
 from iommi.page import (
     Page,
 )
-from iommi.traversable import declared_members
 from tests.compat import RequestFactory
 from tests.helpers import (
     get_attrs,
@@ -95,6 +94,7 @@ from tests.models import (
     DefaultsInForms,
     FieldFromModelOneToOneTest,
     Foo,
+    FormFromModelTest,
     TBar,
     TBaz,
     TFoo,
@@ -619,7 +619,7 @@ def test_declared_fields():
     form = Form(fields=dict(foo=Field(include=True), bar=Field(include=False),),).bind(
         request=req('get'),
     )
-    assert list(declared_members(form).fields.keys()) == ['foo', 'bar']
+    assert list(form.iommi_namespace.fields.keys()) == ['foo', 'bar']
     assert list(form.fields.keys()) == ['foo']
 
 
@@ -995,7 +995,13 @@ def test_help_text_from_model2():
     from tests.models import Foo, Bar
 
     # simple integer field
-    form = Form(auto__model=Foo, auto__include=['foo']).bind(request=req('get', foo='1'))
+    form = Form(
+        auto__model=Foo,
+        auto__include=['foo'],
+    ).bind(
+        request=req('get', foo='1'),
+    )
+    assert list(form.fields.keys()) == ['foo']
     assert form.fields.foo.model_field is Foo._meta.get_field('foo')
     assert form.fields.foo.help_text == 'foo_help_text'
 
@@ -1133,6 +1139,19 @@ def test_field_from_model():
     assert not FooForm().bind(request=req('get', foo='asd')).is_valid()
 
 
+@pytest.mark.django
+def test_fields_from_model():
+    class TestForm(Form):
+
+        f_float = Field.from_model(FormFromModelTest, 'f_float')
+
+        class Meta:
+            auto__model = FormFromModelTest
+            auto__include = ['f_int']
+
+    assert list(keys(TestForm().bind().fields)) == ['f_int', 'f_float']
+
+
 @pytest.mark.django_db
 def test_field_from_model_foreign_key_choices():
     from tests.models import Foo, Bar
@@ -1195,10 +1214,10 @@ def test_field_from_model_required():
         c = TextField(blank=False, null=True)
         d = TextField(blank=False, null=False)
 
-    assert not Field.from_model(FooModel, 'a').required
-    assert not Field.from_model(FooModel, 'b').required
-    assert not Field.from_model(FooModel, 'c').required
-    assert Field.from_model(FooModel, 'd').required
+    assert not Field.from_model(FooModel, 'a').refine_done().required
+    assert not Field.from_model(FooModel, 'b').refine_done().required
+    assert not Field.from_model(FooModel, 'c').refine_done().required
+    assert Field.from_model(FooModel, 'd').refine_done().required
 
 
 @pytest.mark.django
@@ -1209,7 +1228,7 @@ def test_field_from_model_label():
     class FieldFromModelModel(Model):
         a = TextField(verbose_name='FOOO bar FOO')
 
-    assert Field.from_model(FieldFromModelModel, 'a').display_name == 'FOOO bar FOO'
+    assert Field.from_model(FieldFromModelModel, 'a').refine_done().display_name == 'FOOO bar FOO'
 
 
 @pytest.mark.django_db
@@ -1331,10 +1350,10 @@ def test_field_from_model_blank_handling():
 
     from django.db.models import CharField
 
-    subject = Field.from_model(model=Foo, model_field=CharField(null=True, blank=False))
+    subject = Field.from_model(model=Foo, model_field=CharField(null=True, blank=False)).refine_done()
     assert True is subject.parse_empty_string_as_none
 
-    subject = Field.from_model(model=Foo, model_field=CharField(null=False, blank=True))
+    subject = Field.from_model(model=Foo, model_field=CharField(null=False, blank=True)).refine_done()
     assert False is subject.parse_empty_string_as_none
 
 
@@ -1356,7 +1375,7 @@ def test_overriding_parse_empty_string_as_none_in_shortcut():
         factory_lookup={CharField: s},
         factory_lookup_register_function=register_field_factory,
         defaults_factory=field_defaults_factory,
-    )
+    ).refine_done()
 
     assert 'foo' == x.parse_empty_string_as_none
 
@@ -2118,8 +2137,9 @@ def test_field_from_model_path_minimal():
     from tests.models import Bar
 
     class FooForm(Form):
-        baz = Field.from_model(Bar, 'foo__foo', help_text='another help text')
+        baz = Field.from_model(model=Bar, model_field_name='foo__foo', help_text='another help text')
 
+    assert FooForm.baz.refine().refine_done().attr == 'foo__foo'
     assert FooForm().bind(request=req('get', baz='1')).fields.baz.attr == 'foo__foo'
 
 
@@ -2153,7 +2173,7 @@ def test_field_from_model_subtype():
     class FromModelSubtype(models.Model):
         foo = Foo()
 
-    result = Field.from_model(model=FromModelSubtype, model_field_name='foo')
+    result = Field.from_model(model=FromModelSubtype, model_field_name='foo').refine_done()
 
     assert result.parse is int_parse
 
@@ -2163,11 +2183,29 @@ def test_create_members_from_model_path():
     from tests.models import Foo, Bar
 
     class BarForm(Form):
-        class Meta:
-            fields__foo_foo__attr = 'foo__foo'
+        foo_foo = Field.from_model(
+            model=Bar,
+            model_field_name='foo__foo',
+        )
 
     bar = Bar.objects.create(foo=Foo.objects.create(foo=7))
     form = BarForm(auto__instance=bar).bind(request=req('get'))
+
+    assert form.fields.foo_foo.attr == 'foo__foo'
+    assert form.fields.foo_foo._name == 'foo_foo'
+    assert form.fields.foo_foo.model_field is Foo._meta.get_field('foo')
+    assert form.fields.foo_foo.help_text == 'foo_help_text'
+
+
+@pytest.mark.django_db
+def test_create_members_from_model_path_via_include():
+    from tests.models import Foo, Bar
+
+    bar = Bar.objects.create(foo=Foo.objects.create(foo=7))
+    form = Form(
+        auto__instance=bar,
+        auto__include=['foo__foo'],
+    ).bind(request=req('get'))
 
     assert form.fields.foo_foo.attr == 'foo__foo'
     assert form.fields.foo_foo._name == 'foo_foo'
@@ -2237,7 +2275,7 @@ def test_from_model_with_inheritance():
     )
 
     assert was_called == {
-        'MyField.float': 2,
+        'MyField.float': 1,
     }
 
 
@@ -2290,11 +2328,10 @@ def test_dunder_name_for_column():
         foo = Field()
         foo__a = Field()
 
-    with pytest.deprecated_call():
-        form = FooForm()
-        form = form.bind(request=None)
+    with pytest.raises(AssertionError) as e:
+        FooForm().bind(request=None)
 
-    assert list(form.fields.keys()) == ['foo', 'foo__a']
+    assert str(e.value) == "Don't specify nested attrs using the field name. You lose the ability to include more config from other places. Pick another name and give the path as attr instead"
 
 
 def test_help_text_for_boolean_tristate():
@@ -2364,7 +2401,7 @@ def test_shortcut_to_subclass():
                 **kwargs
             )  # pragma: no cover: we aren't testing that this shortcut is implemented correctly
 
-    field = MyField.choice(choices=[])
+    field = MyField.choice(choices=[]).refine_done()
     assert isinstance(field, MyField)
     assert field.empty_label == '---'
 

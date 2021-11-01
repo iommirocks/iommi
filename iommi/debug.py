@@ -17,7 +17,10 @@ from iommi.base import (
     items,
     values,
 )
-from iommi.member import Members
+from iommi.member import (
+    MemberBinder,
+    Members,
+)
 from iommi.traversable import (
     declared_members,
     PathNotFoundException,
@@ -59,18 +62,22 @@ def endpoint__debug_tree(endpoint, **_):
 
         type_name = type(node).__name__ if not is_struct else None
         base_type_name = type_name
-        if isinstance(node, Members) and node._declared_members:
-            if name == 'parts':
-                member_type = 'Part'
+        if isinstance(node, Members):
+            if node._declared_members:
+                type_name = f'Members[{node._cls.__name__}]'
             else:
-                member_type = type(list(values(declared_members(node)))[0]).__name__
-            type_name = f'Members[{member_type}]'
+                return
 
         children = []
         if isinstance(node, dict):
             children = list(node.items())
         elif isinstance(node, Traversable):
-            children = [(k, node.iommi_bound_members().get(k, v)) for k, v in items(declared_members(node))]
+
+            children = []
+            for k, v in items(declared_members(node)):
+                if node._bound_members is not None and isinstance(node._bound_members.get(k, None), MemberBinder):
+                    node._bound_members[k]._force_bind_all()
+                children.append((k, (node._bound_members or {}).get(k, v)))
 
         if (isinstance(node, Members) or isinstance(node, dict)) and not children:
             return

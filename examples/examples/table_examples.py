@@ -58,7 +58,8 @@ def table_readme_example_1(request):
 def table_readme_example_2(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
-        b__a = Column.number(  # Show "a" from "b". This works for plain old objects too.
+        b_a = Column.number(
+            attr='b__a',  # Show "a" from "b". This works for plain old objects too.
             filter__include=True,  # put this field into the query language
         )
         c = Column(
@@ -88,7 +89,7 @@ def table_auto_example_2(request):
 def table_kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
-        b__a = Column.number(filter__include=True)  # Show "a" from "b". This works for plain old objects too.
+        b_a = Column.number(attr='b__a', filter__include=True)  # Show "a" from "b". This works for plain old objects too.
 
         b = Column.from_model(
             model=TBar,

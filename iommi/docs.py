@@ -123,7 +123,7 @@ def _generate_rst_docs(classes):
         return (' ' * levels * 4) + s.strip()
 
     def get_namespace(c):
-        return Namespace({k: c.__init__.dispatch.get(k) for k, v in items(get_declared(c, 'refinable_members'))})
+        return Namespace({k: getattr(c.__init__, 'dispatch', {}).get(k) for k, v in items(get_declared(c, 'refinable'))})
 
     for c in classes:
         from io import StringIO

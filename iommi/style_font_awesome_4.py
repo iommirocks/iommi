@@ -1,5 +1,5 @@
-from iommi.style import Style
 from iommi.fragment import html
+from iommi.style import Style
 
 font_awesome_4 = Style(
     root__assets__icons=html.link(

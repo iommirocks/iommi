@@ -5,32 +5,30 @@ from tri_declarative import (
     Namespace,
     Refinable,
 )
-from tri_struct import Struct
 
 from iommi import (
     Asset,
     Fragment,
+    Menu,
+    MenuItem,
     Page,
     Table,
 )
 from iommi.attrs import render_attrs
 from iommi.base import items
-from iommi.reinvokable import reinvokable
+from iommi.refinable import RefinableObject
 from iommi.style import (
-    apply_style_data,
+    get_iommi_style_name,
     get_style,
     get_style_data_for_object,
     InvalidStyleConfigurationException,
     register_style,
-    reinvoke_new_defaults,
     Style,
-    unregister_style,
     validate_styles,
 )
 from iommi.style_base import base
 from iommi.style_test_base import test
 from iommi.traversable import (
-    get_iommi_style_name,
     Traversable,
 )
 from tests.helpers import (
@@ -42,7 +40,6 @@ from tests.helpers import (
 def test_style():
     class A(Traversable):
         @dispatch
-        @reinvokable
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
 
@@ -59,7 +56,6 @@ def test_style():
 
     class B(A):
         @dispatch
-        @reinvokable
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
 
@@ -88,27 +84,41 @@ def test_style():
         ),
     )
 
+    def styled_items(obj):
+        return items(obj.refine_done())
+
     # First the unstyled case
-    assert items(B()) == dict(foo=None, bar=None)
-    assert items(B.shortcut1()) == dict(foo=None, bar=None)
-    assert items(B.shortcut2()) == dict(foo=None, bar=None)
+    assert styled_items(B()) == dict(foo=None, bar=None)
+    assert styled_items(B.shortcut1()) == dict(foo=None, bar=None)
+    assert styled_items(B.shortcut2()) == dict(foo=None, bar=None)
 
     # Now let's add the style
-    b = B()
-    b = apply_style_data(style_data=overrides.component(b), obj=b)
-    assert items(b) == dict(foo=5, bar=7)
+    b = B(iommi_style=overrides)
+    assert styled_items(b) == dict(foo=5, bar=7)
 
-    b = B.shortcut1()
+    b = B.shortcut1(iommi_style=overrides)
     assert overrides.component(b) == dict(foo=4, bar=7)
     assert b.__tri_declarative_shortcut_stack == ['shortcut1']
-    b = apply_style_data(style_data=overrides.component(b), obj=b)
-    assert items(b) == dict(foo=4, bar=7)
+    assert styled_items(b) == dict(foo=4, bar=7)
 
-    b = B.shortcut2()
+    b = B.shortcut2(iommi_style=overrides)
     assert b.__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
     assert overrides.component(b) == dict(foo=4, bar=7)
-    b = apply_style_data(style_data=overrides.component(b), obj=b)
-    assert items(b) == dict(foo=4, bar=7)
+    assert styled_items(b) == dict(foo=4, bar=7)
+
+
+def test_style_menu():
+    class MyMenu(Menu):
+        item = MenuItem()
+
+    assert MyMenu().bind(request=req('get')).__html__() == '<nav><ul><li><a class="link" href="/item/">Item</a></li></ul></nav>'
+
+
+def test_style_menu_active():
+    class MyMenu(Menu):
+        item = MenuItem(url='/')
+
+    assert MyMenu().bind(request=req('get')).__html__() == '<nav><ul><li><a class="active link" href="/">Item</a></li></ul></nav>'
 
 
 def test_apply_checkbox_style():
@@ -140,14 +150,6 @@ def test_apply_checkbox_style():
     assert render_attrs(form.fields.foo.label.attrs) == ' class="form-check-label" for="id_foo"'
 
 
-def test_apply_style_data_does_not_overwrite():
-    foo = Namespace(bar__template='specified')
-    style = Namespace(bar__template='style_template')
-
-    foo = apply_style_data(style_data=style, obj=foo)
-    assert foo == Namespace(bar__template='specified')
-
-
 def test_last_win():
     from iommi import Form
 
@@ -167,23 +169,8 @@ def test_validate_default_styles():
 
 
 def test_error_when_trying_to_style_non_existent_attribute():
-    class Foo:
-        @reinvokable
-        def __init__(self):
-            pass
-
-        def __repr__(self):
-            return '<Foo>'
-
-    style = Namespace(something_that_does_not_exist='!!!')
-
-    with pytest.raises(InvalidStyleConfigurationException) as e:
-        apply_style_data(style_data=style, obj=Foo())
-
-    assert (
-        str(e.value)
-        == "Object <Foo> could not be updated with style configuration {'something_that_does_not_exist': '!!!'}"
-    )
+    with pytest.raises(TypeError) as e:
+        Menu(iommi_style=Style(Menu__something_that_does_not_exist='!!!')).refine_done()
 
 
 def test_error_message_for_invalid_style():
@@ -220,12 +207,13 @@ def test_style_bulk_form():
     from tests.models import Foo
 
     with register_style(
-            'my_style',
-            Style(
-                base,
-                Table__bulk__attrs__class__foo=True,
-            ),
+        'my_style',
+        Style(
+            base,
+            Table__bulk__attrs__class__foo=True,
+        ),
     ):
+
         class MyTable(Table):
             class Meta:
                 iommi_style = 'my_style'
@@ -251,6 +239,7 @@ def test_style_bulk_form_broken_on_no_form():
             Table__bulk__attrs__class__foo=True,
         ),
     ):
+
         class MyTable(Table):
             class Meta:
                 iommi_style = 'my_style'
@@ -269,40 +258,38 @@ def test_get_style_error():
     assert str(e.value).startswith('No registered style does_not_exist. Register a style with register_style().')
 
 
-class MyReinvokable:
-    _name = None
+class MyRefinableObject(RefinableObject):
 
-    @reinvokable
-    def __init__(self, **kwargs):
-        self.kwargs = Struct(kwargs)
+    foo: 'MyRefinableObject' = Refinable()
+    bar: int = Refinable()
+    baz: int = Refinable()
+
+    def on_refine_done(self):
+        if self.foo:
+            self.foo = self.foo.refine_done(parent=self)
 
 
 def test_reinvokable_new_defaults_recurse():
-    x = MyReinvokable(foo=MyReinvokable(bar=17))
-    x = reinvoke_new_defaults(x, Namespace(foo__bar=42, foo__baz=43))
+    x = MyRefinableObject(foo=MyRefinableObject(bar=17))
+    x = x.refine_defaults(foo__bar=42, foo__baz=43).refine_done()
 
-    assert isinstance(x.kwargs.foo, MyReinvokable)
-    assert x.kwargs.foo.kwargs == dict(bar=17, baz=43)
+    assert isinstance(x, MyRefinableObject)
+    assert isinstance(x.foo, MyRefinableObject)
+    assert x.foo.bar == 17
+    assert x.foo.baz == 43
 
 
 def test_reinvoke_new_default_change_shortcut():
-    class ReinvokableWithShortcut(MyReinvokable):
+    class RefinableObjectWithShortcut(MyRefinableObject):
         @classmethod
         @class_shortcut
         def shortcut(cls, call_target=None, **kwargs):
-            kwargs['shortcut_was_here'] = True
+            kwargs['baz'] = 'baz'
             return call_target(**kwargs)
 
-    assert (
-        reinvoke_new_defaults(
-            ReinvokableWithShortcut(),
-            dict(
-                call_target__attribute='shortcut',
-                foo='bar',
-            ),
-        ).kwargs
-        == dict(foo='bar', shortcut_was_here=True)
-    )
+    x = RefinableObjectWithShortcut.shortcut(bar='bar').refine_done()
+    assert x.bar == 'bar'
+    assert x.baz == 'baz'
 
 
 @pytest.mark.skip('Broken since there is no way to set things on the container of Action')
@@ -311,7 +298,7 @@ def test_set_class_on_actions_container():  # pragma: no cover
     style_data = Namespace(
         actions__attrs__class={'object-tools': True},
     )
-    reinvoke_new_defaults(t, style_data)
+    assert t.refine(**style_data).refine_done().actions.attrs['class']['object-tool'] == True
 
 
 def test_assets_render_from_style():
@@ -348,6 +335,7 @@ def test_deprecated_assets_style(settings, capsys):
             assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
         ),
     ):
+
         captured = capsys.readouterr()
         assert 'Warning: The preferred way to add top level assets config' in captured.out
 
@@ -377,6 +365,7 @@ def test_assets_render_any_fragment_from_style():
             root__assets__an_asset=Fragment('This is a fragment!'),
         ),
     ):
+
         class MyPage(Page):
             class Meta:
                 iommi_style = 'my_style'
@@ -425,8 +414,8 @@ def test_assets_render_from_bulma_style():
 </script>
                 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
             </head>
-            <body>
-                <div class="container main"/>
+            <body >
+                <div class="container main" />
             </body>
         </html>
     '''

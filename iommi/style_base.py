@@ -1,9 +1,9 @@
+from iommi.asset import Asset
 from iommi.debug import (
     endpoint__debug_tree,
     iommi_debug_on,
 )
 from iommi.style import Style
-from iommi.asset import Asset
 
 select2_assets = dict(
     select2_js=Asset.js(

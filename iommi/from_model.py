@@ -14,7 +14,6 @@ from tri_declarative import (
     dispatch,
     Namespace,
     Refinable,
-    RefinableObject,
     setdefaults_path,
 )
 from tri_struct import Struct
@@ -24,59 +23,40 @@ from iommi.base import (
     MISSING,
 )
 from iommi.evaluate import evaluate
-from iommi.reinvokable import set_and_remember_for_reinvoke
+from iommi.refinable import RefinableObject
 
 
 def create_members_from_model(
-    *, member_class, model, member_params_by_member_name, include: List[str] = None, exclude: List[str] = None
+    *, member_class, model, include: List[str] = None, exclude: List[str] = None
 ):
     members = Struct()
 
     check_list(model, include, 'include')
     check_list(model, exclude, 'exclude')
 
-    def create_declared_member(model_field_name):
-        definition_or_member = member_params_by_member_name.pop(model_field_name, {})
-        name = model_field_name.replace('__', '_')
-        if isinstance(definition_or_member, dict):
-            definition = setdefaults_path(
-                Namespace(),
-                definition_or_member,
-                _name=name,
-                # TODO: this should work, but there's a bug in tri.declarative, working around for now
-                # call_target__attribute='from_model' if definition_or_member.get('attr', model_field_name) is not None else None,
-                call_target__cls=member_class,
-            )
-            if definition_or_member.get('attr', model_field_name) is not None:
-                setdefaults_path(
-                    definition,
-                    call_target__attribute='from_model',
-                )
-            if include is not None and name in include:
-                setdefaults_path(
-                    definition,
-                    include=True,
-                )
-
-            member = definition(
-                model=model,
-                model_field_name=definition_or_member.get('attr', model_field_name),
-            )
-        else:
-            member = definition_or_member
-        if member is None:
-            return
-        members[name] = member
-
     model_field_names = include if include is not None else [field.name for field in get_fields(model)]
 
     for model_field_name in model_field_names:
         if exclude is not None and model_field_name in exclude:
             continue
-        create_declared_member(model_field_name)
+        name = model_field_name.replace('__', '_')
+        definition = Namespace(
+            _name=name,
+            call_target__cls=member_class,
+            call_target__attribute='from_model',
 
-    for model_field_name in list(keys(member_params_by_member_name)):
-        create_declared_member(model_field_name)
+            model_field_name=model_field_name,
+            model=model,
+        )
+        if include is not None and name in include:
+            setdefaults_path(
+                definition,
+                include=True,
+            )
+
+        member = definition()
+        if member is not None:
+            members[name] = member
 
     return members
 
@@ -111,7 +91,7 @@ def member_from_model(
                 model_field_name=field_path_rest,
                 **kwargs,
             )
-            set_and_remember_for_reinvoke(result, attr=model_field_name)
+            result = result.refine(attr=model_field_name)
             return result
 
     factory = factory_lookup.get(type(model_field), MISSING)

@@ -72,4 +72,4 @@ def get_display_name(part):
             return capitalize(part.model_field.verbose_name)
     except AttributeError:
         pass
-    return capitalize(force_str(part._name).rsplit('__', 1)[-1].replace("_", " "))
+    return capitalize(force_str(part._name).replace("_", " "))

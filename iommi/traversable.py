@@ -3,14 +3,12 @@ from typing import (
     Any,
     Dict,
     List,
-    Union,
 )
 
+from django.conf import settings
 from tri_declarative import (
-    dispatch,
+    Namespace,
     Refinable,
-    refinable,
-    RefinableObject,
 )
 from tri_struct import Struct
 
@@ -24,19 +22,23 @@ from iommi.evaluate import (
     evaluate_strict,
     evaluate_strict_container,
 )
+from iommi.refinable import (
+    evaluated_refinable,
+    EvaluatedRefinable,
+    is_evaluated_refinable,
+    RefinableMembers,
+    RefinableObject,
+)
 from iommi.style import (
-    apply_style,
-    get_iommi_style_name,
-    get_style_object,
+    DEFAULT_STYLE,
+    get_style,
+    get_style_data_for_object,
+    Style,
 )
 
-
-class EvaluatedRefinable(Refinable):
-    pass
-
-
-def is_evaluated_refinable(x):
-    return isinstance(x, EvaluatedRefinable) or getattr(x, '__iommi__evaluated', False)
+# Backward compatible definition
+EvaluatedRefinable = EvaluatedRefinable
+evaluated_refinable = evaluated_refinable
 
 
 class PathNotFoundException(Exception):
@@ -57,18 +59,17 @@ class Traversable(RefinableObject):
     context = None
 
     iommi_style: str = Refinable()
+    assets = RefinableMembers()
+    endpoints = RefinableMembers()
 
-    _declared_members: Dict[str, 'Traversable']
     _bound_members: Dict[str, 'Traversable']
 
-    @dispatch
     def __init__(self, _name=None, **kwargs):
-        self._declared_members = Struct()
         self._bound_members = None
         self._evaluate_parameters = None
         self._name = _name
 
-        super(Traversable, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __repr__(self):
         n = f'{self._name}' if self._name is not None else ''
@@ -98,7 +99,8 @@ class Traversable(RefinableObject):
         return node
 
     def iommi_bound_members(self) -> Dict[str, 'Traversable']:
-        return self._bound_members if self._bound_members is not None else Struct()
+        assert self._is_bound, "Not bound yet"
+        return self._bound_members
 
     @property
     def iommi_path(self) -> str:
@@ -108,7 +110,7 @@ class Traversable(RefinableObject):
         if path is None:
             candidates = '\n'.join(path_by_long_path.keys())
             raise PathNotFoundException(
-                f"Path not found(!) (Searched for {long_path} among the following:\n{candidates}"
+                f"Path not found(!) (Searched for '{long_path}' among the following:\n{candidates}"
             )
         return path
 
@@ -117,27 +119,52 @@ class Traversable(RefinableObject):
         assert self._is_bound, NOT_BOUND_MESSAGE
         return build_long_path(self).replace('/', '__')
 
+    def apply_styles(self, parent_style: Style, is_root=True):
+        iommi_style = self.iommi_namespace.get('iommi_style')
+
+        if iommi_style is None:
+            iommi_style = parent_style
+
+        if isinstance(iommi_style, str):
+            if isinstance(parent_style, Style):
+                iommi_style = parent_style.resolve(iommi_style)
+            else:
+                iommi_style = get_style(iommi_style)
+
+        if iommi_style is None:
+            iommi_style = get_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE))
+
+        assert iommi_style.__class__.__name__ == "Style"
+
+        style_data = get_style_data_for_object(iommi_style, obj=self, is_root=is_root)
+
+        result = self.refine_defaults(**style_data)
+        del self
+
+        result.iommi_style = iommi_style
+
+        for k, v in items(result.get_declared('refinable')):
+            if isinstance(v, Traversable):
+                setattr(result, k, v.apply_styles(iommi_style, is_root=False))
+
+        return result
+
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
         assert not self._is_bound
 
         result = copy.copy(self)
 
-        if parent:
-            is_root = False
-            iommi_style = get_iommi_style_name(parent)
-            style_object = get_style_object(parent)
-        else:
-            is_root = True
-            iommi_style = get_iommi_style_name(self)
-            style_object = get_style_object(self)
+        is_root = parent is None
 
-        result = apply_style(style_object, result, is_root)
+        if not result.is_refine_done:
+            result = result.refine_done(parent=parent)
+
+        # todo drop _declared
         result._declared = self
-
         del self  # to prevent mistakes when changing the code below
 
-        if parent is None:
+        if is_root:
             result._request = request
             if result._name is None:
                 result._name = 'root'
@@ -173,7 +200,7 @@ class Traversable(RefinableObject):
             result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
         evaluated_attributes = [
-            k for k, v in items(result.get_declared('refinable_members')) if is_evaluated_refinable(v)
+            k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)
         ]
         evaluate_members(result, evaluated_attributes, **evaluate_parameters)
 
@@ -205,17 +232,20 @@ class Traversable(RefinableObject):
 
 
 def declared_members(node: Traversable) -> Any:
-    # noinspection PyProtectedMember
-    return node._declared_members
+    assert node.is_refine_done, "Trying to find declared_member on RefinableObject without doing refine_done() first"
+    result = Namespace()
+    for k, v in items(node.get_declared('refinable')):
+        if isinstance(v, RefinableMembers):
+            result[k] = node.iommi_namespace.get(k, Namespace())
+        else:
+            child = getattr(node, k)
+            if isinstance(child, RefinableObject):
+                assert child.is_refine_done, f"refine_done() not invoked on something ({k}) in the declared namespace of {node._name}"
+                result[k] = child
+    if hasattr(node, '_declared_members'):
+        result.update(node._declared_members)
 
-
-def set_declared_member(node: Traversable, name: str, value: Union[Any, Dict[str, Traversable]]):
-    root = node.iommi_root()
-    if hasattr(root, '_long_path_by_path') or hasattr(root, '_path_by_long_path'):
-        print("### A disturbance in the force... The namespace has been recalculated!")
-        root._long_path_by_path = root._path_by_long_path = None
-    # noinspection PyProtectedMember
-    node._declared_members[name] = value
+    return result
 
 
 def get_long_path_by_path(node):
@@ -276,14 +306,16 @@ def build_long_path_by_path(root) -> Dict[str, str]:
                 )
                 result[less_short_path] = long_path
 
-        if hasattr(node, '_declared_members'):
+        if isinstance(node, RefinableObject):
             members = declared_members(node)
         elif isinstance(node, dict):
             members = node
+            assert '_declared_members' not in members
         else:
             return
 
-        for name, member in items(members):
+        for name, member in sorted(items(members), key=lambda item: item[0] == 'endpoints'):
+            assert name != '_declared_members'
             if member:
                 _traverse(
                     member,
@@ -295,9 +327,3 @@ def build_long_path_by_path(root) -> Dict[str, str]:
     _traverse(root, [], [])
 
     return result
-
-
-def evaluated_refinable(f):
-    f = refinable(f)
-    f.__iommi__evaluated = True
-    return f
