@@ -6,7 +6,10 @@ from django.utils.safestring import (
 )
 from tri_struct import Struct
 
-from iommi import MISSING
+from iommi import (
+    Fragment,
+    MISSING,
+)
 from iommi._web_compat import Template
 from iommi.base import (
     build_as_view_wrapper,
@@ -31,7 +34,7 @@ def test_missing():
 
 
 def test_build_as_view_wrapper():
-    class Foo:
+    class Foo(Fragment):
         """
         docs
         """
