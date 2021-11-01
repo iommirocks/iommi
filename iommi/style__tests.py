@@ -20,7 +20,6 @@ from iommi.attrs import render_attrs
 from iommi.base import items
 from iommi.refinable import RefinableObject
 from iommi.style import (
-    get_iommi_style_name,
     get_style,
     get_style_data_for_object,
     get_style_object,
