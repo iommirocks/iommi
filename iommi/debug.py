@@ -165,6 +165,9 @@ def should_ignore_frame(frame, env_paths):
     assert isinstance(env_paths, set)
     module_name = frame.f_globals.get('__name__')
 
+    if not module_name:
+        return False
+
     if module_name.startswith('iommi.admin'):
         return True
 
