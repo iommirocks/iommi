@@ -1,5 +1,7 @@
 __version__ = '4.0.0'
 
+from functools import wraps
+
 from tri_declarative import LAST
 
 from iommi._db_compat import (
@@ -65,6 +67,15 @@ def middleware(get_response):
     return iommi_middleware
 
 
+def iommi_render(view):
+    @wraps(view)
+    def inner(request, *args, **kwargs):
+        result = view(request, *args, **kwargs)
+        return render_if_needed(request, result)
+
+    return inner
+
+
 __all__ = [
     'Action',
     'Asset',
@@ -93,6 +104,7 @@ __all__ = [
     'register_search_fields',
     'Style',
     'html',
+    'iommi_render',
 ]
 
 default_app_config = 'iommi.apps.IommiConfig'
