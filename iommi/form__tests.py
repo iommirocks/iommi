@@ -1036,7 +1036,7 @@ def test_multi_choice_queryset():
     result = form.__html__()
     assert (
         str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
-        == '<select id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
+        == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
     )
 
 
@@ -1061,7 +1061,7 @@ def test_choice_queryset():
     result = form.__html__()
     assert (
         str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
-        == '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
+        == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
     )
 
 
@@ -1080,7 +1080,7 @@ def test_choice_queryset_do_not_cache():
 
     assert (
         str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0])
-        == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
+        == '<select class="select2_enhance" id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
     )
 
     # Now create a new queryset, check that we get two!
@@ -1089,7 +1089,7 @@ def test_choice_queryset_do_not_cache():
     assert form.fields.foo._errors == set()
     assert (
         str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0])
-        == '<select id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
+        == '<select class="select2_enhance" id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
     )
 
 
@@ -1108,7 +1108,7 @@ def test_choice_queryset_do_not_look_up_by_default():
     # The list should be empty because options are retrieved via ajax when needed
     assert (
         str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0])
-        == '<select id="id_foo" name="foo">\n</select>'
+        == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n</select>'
     )
     assert form.fields.foo.input.template is not None
 
@@ -1120,7 +1120,7 @@ def test_choice_queryset_do_not_look_up_by_default():
     assert form.fields.foo.input.template is not None
 
     expected = (
-        '<select id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
+        '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
     )
     assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == expected
 
