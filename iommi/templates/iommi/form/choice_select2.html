@@ -1,4 +1,4 @@
-<select{{ field.input.attrs }}>
+<select{{ field.input.attrs }} data-placeholder="{{ field.input.extra.placeholder }}" {% if field.endpoints.choices %}data-choices-endpoint="{{ field.endpoints.choices.endpoint_path }}{% endif %}">
     {% if field.endpoints.choices %}
         {% for choice in field.choice_to_options_selected %}
             <option value="{{ choice.1 }}" selected="selected" label="{{ choice.2 }}">{{ choice.2 }}</option>
@@ -9,37 +9,3 @@
         {% endfor %}
     {% endif %}
 </select>
-
-<style>
-    #{{ field.input.attrs.id }} {
-        min-width: 200px;
-    }
-</style>
-
-<script type="text/javascript">
-    var id_field = "#{{ field.input.attrs.id }}";
-    var f = $(id_field);
-    f.select2({
-        placeholder: '{{ field.input.extra.placeholder }}',
-        {% if field.endpoints.choices %}
-            ajax: {
-                url: "",
-                dataType: "json",
-                data: function (params) {
-                    return {
-                        '{{ field.endpoints.choices.endpoint_path }}': params.term || '', {# search term #}
-                        page: params.page || 1
-                    };
-                }
-            },
-        {% endif %}
-        allowClear: true,
-        multiple: {% if field.is_list %}true{% else %}false{% endif %}
-    });
-    f.on('change', function(e) {
-        let element = $("#{{ field.input.attrs.id }}").closest('form')[0];
-
-        {# Fire a non-jquery event so that ajax_enhance.html gets the event  #}
-        element.dispatchEvent(new Event('change'));
-    });
-</script>

@@ -4,10 +4,59 @@ from iommi.debug import (
     iommi_debug_on,
 )
 from iommi.style import Style
+from iommi._web_compat import mark_safe
 
 select2_assets = dict(
     select2_js=Asset.js(
         attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
+    ),
+    select2_iommi_js=Asset.js(
+        children__text=mark_safe('''
+        document.addEventListener('readystatechange', (event) => {
+            if (document.readyState === 'complete') {
+                iommi_init_all_select2();                
+            }
+        });
+        
+        function iommi_init_all_select2() {
+            $('.select2_enhance').each(function (_, x) {
+                iommi_init_select2(x);
+            });
+        }
+        
+        function iommi_init_select2(elem) {
+                let f = $(elem);
+                let endpoint_path = f.attr('data-choices-endpoint');
+                let multiple = f.attr('multiple') !== undefined;
+                let options = {
+                    placeholder: f.attr('data-placeholder'),
+                    allowClear: true,
+                    multiple: multiple
+                };
+                if (endpoint_path) {
+                    options.ajax = {
+                        url: "",
+                        dataType: "json",
+                        data: function (params) {
+                            let result = {
+                                page: params.page || 1
+                            } 
+                            result[endpoint_path] = params.term || '';
+                            
+                            return result;
+                        }
+                    }
+                }
+                f.select2(options);
+                f.on('change', function(e) {
+                    let element = e.target.closest('form');
+            
+                    // Fire a non-jquery event so that ajax_enhance.html gets the event
+                    element.dispatchEvent(new Event('change'));
+                });
+        }
+         
+        ''')
     ),
     select2_css=Asset.css(
         attrs=dict(
@@ -66,6 +115,12 @@ base = Style(
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
                 assets=select2_assets,
+                input__attrs={
+                    'class__select2_enhance': True,
+                },
+                attrs__style={
+                    'min-width': '200px',
+                }
             ),
             date__input__attrs__type='date',
             radio=dict(
