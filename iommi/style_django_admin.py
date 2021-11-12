@@ -2,12 +2,16 @@ from iommi import html
 from iommi.style import (
     Style,
 )
-from iommi.style_base import base
+from iommi.style_base import (
+    base,
+    select2_enhanced_forms,
+)
 from iommi.style_font_awesome_4 import font_awesome_4
 
 django_admin = Style(
     base,
     font_awesome_4,
+    select2_enhanced_forms,
     sub_styles__horizontal=dict(
         Field__attrs__class={'compact-form-row': True},
     ),

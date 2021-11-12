@@ -65,7 +65,28 @@ select2_assets = dict(
     ),
 )
 
+select2_enhanced_forms = Style(
+    internal=True,
+    Field=dict(
+        shortcuts=dict(
+            multi_choice=dict(
+                input__template='iommi/form/choice_select2.html',
+                assets=select2_assets,
+            ),
+            choice_queryset=dict(
+                input__template='iommi/form/choice_select2.html',
+                assets=select2_assets,
+                input__attrs__class__select2_enhance=True,
+                attrs__style={
+                    'min-width': '200px',
+                }
+            ),
+        ),
+    ),
+)
+
 base = Style(
+    select2_enhanced_forms,
     internal=True,
     base_template='iommi/base.html',
     content_block='content',
@@ -107,20 +128,6 @@ base = Style(
                 input__template='iommi/form/choice.html',
                 input__attrs__value=None,
                 input__attrs__type=None,
-            ),
-            multi_choice=dict(
-                input__template='iommi/form/choice_select2.html',
-                assets=select2_assets,
-            ),
-            choice_queryset=dict(
-                input__template='iommi/form/choice_select2.html',
-                assets=select2_assets,
-                input__attrs={
-                    'class__select2_enhance': True,
-                },
-                attrs__style={
-                    'min-width': '200px',
-                }
             ),
             date__input__attrs__type='date',
             radio=dict(
@@ -182,4 +189,11 @@ base = Style(
         },
     ),
     LiveEditPage__iommi_style='bootstrap',
+)
+
+
+base_enhanced_forms = Style(
+    base,
+    select2_enhanced_forms,
+    internal=True,
 )

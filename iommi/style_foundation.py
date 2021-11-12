@@ -2,12 +2,14 @@ from iommi.asset import Asset
 from iommi.style import (
     Style,
 )
-from iommi.style_base import base
+from iommi.style_base import (
+    base,
+    select2_enhanced_forms,
+)
 from iommi.style_font_awesome_4 import font_awesome_4
 
 foundation_base = Style(
     base,
-    font_awesome_4,
     sub_styles__horizontal=dict(
         Form__attrs__class={},
         Field=dict(
@@ -87,4 +89,6 @@ foundation_base = Style(
 
 foundation = Style(
     foundation_base,
+    font_awesome_4,
+    select2_enhanced_forms,
 )
