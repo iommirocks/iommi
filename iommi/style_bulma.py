@@ -5,7 +5,10 @@ from iommi.asset import Asset
 from iommi.style import (
     Style,
 )
-from iommi.style_base import base
+from iommi.style_base import (
+    base,
+    select2_enhanced_forms,
+)
 from iommi.style_font_awesome_4 import font_awesome_4
 
 navbar_burger_click_js = Fragment(
@@ -162,6 +165,7 @@ bulma_base = Style(
 bulma = Style(
     bulma_base,
     font_awesome_4,
+    select2_enhanced_forms,
 )
 
 
