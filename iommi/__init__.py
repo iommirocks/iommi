@@ -61,6 +61,15 @@ def render_if_needed(request, response):
 
 
 def middleware(get_response):
+    from django.db import connections
+    atomic_request_connections = [db for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']]
+    if any(atomic_request_connections):
+        raise TypeError(
+            'The iommi middleware is unable to retain atomic transactions. Disable ATOMIC_REQUEST for '
+            f'database connections ({", ".join(db.settings_dict["NAME"] for db in atomic_request_connections)}) '
+            f'or remove middleware and use the @iommi_render decorator on the views instead.'
+        )
+
     def iommi_middleware(request):
         return render_if_needed(request, get_response(request))
 
