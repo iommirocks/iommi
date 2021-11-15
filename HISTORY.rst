@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+4.1.0 (2021-11-15)
+~~~~~~~~~~~~~~~~~~
+
+* `as_view()` calls `refine_done`, giving you a nice little performance win for free
+
+* Introduce `@iommi_render` view decorator. Use this to get correct behavior when using transactions by default in views. The iommi middleware will now produce an error if you try to use it incorrectly.
+
+* Re-initializable select2 enhancement. If you dynamically modify with javascript you can call `iommi_init_all_select2` to re-initialize iommi select2 components
+
+* Break out the select2 enhancement from the base style into a separate `select2_enhanced_forms` style, and added it to all the built in styles. If you have a custom style that extended `base` you must now also add `select2_enhanced_forms` to that style to get the same behavior as before.
+
+* should_ignore_frame() is more robust against acrobatic frames. This is a rather obscure bug that won't affect normal iommi usage.
+
+
 4.0.0 (2021-11-01)
 ~~~~~~~~~~~~~~~~~~
 
