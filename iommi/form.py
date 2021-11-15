@@ -802,6 +802,10 @@ class Field(Part, Tag):
         if self.initial is MISSING:
             self.initial = None
 
+    @refinable
+    def iommi_path_for_read_raw_data(self, *, field, **_):
+        return field.iommi_path
+
     def _read_raw_data(self):
         # The client might have refined raw_data. If so evaluate it.
         if self.raw_data is not None:
@@ -812,14 +816,16 @@ class Field(Part, Tag):
         # Otherwise get it from the request
         form = self.form
 
+        iommi_path = self.iommi_path_for_read_raw_data(field=self, **self.iommi_evaluate_parameters())
+
         if self.is_list:
             try:
                 # django and similar
                 # noinspection PyUnresolvedReferences
-                raw_data = form._request_data.getlist(self.iommi_path)
+                raw_data = form._request_data.getlist(iommi_path)
             except AttributeError:  # pragma: no cover
                 # werkzeug and similar
-                raw_data = form._request_data.get(self.iommi_path)
+                raw_data = form._request_data.get(iommi_path)
 
             if raw_data and self.strip_input:
                 raw_data = [x.strip() for x in raw_data]
@@ -827,7 +833,7 @@ class Field(Part, Tag):
             if raw_data is not None:
                 self.raw_data = raw_data
         else:
-            self.raw_data = form._request_data.get(self.iommi_path)
+            self.raw_data = form._request_data.get(iommi_path)
             if self.raw_data and self.strip_input:
                 self.raw_data = self.raw_data.strip()
 
