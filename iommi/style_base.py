@@ -72,6 +72,7 @@ select2_enhanced_forms = Style(
             multi_choice=dict(
                 input__template='iommi/form/choice_select2.html',
                 assets=select2_assets,
+                input__attrs__class__select2_enhance=True,
             ),
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',

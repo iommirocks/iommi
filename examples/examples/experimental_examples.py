@@ -13,6 +13,7 @@ from django.template import (
 from django.urls import path
 from django.utils.translation import gettext
 from tri_declarative import (
+    EMPTY,
     Namespace,
     Refinable,
     refinable,
@@ -52,18 +53,17 @@ class FormsetCell(Cell):
         return path_join(self.column.iommi_path, str(self.row.pk))
 
     def render_cell_contents(self):
-        if self.column.editable:
+        if self.column.edit:
             path = self.get_path()
-            cell_contents = self.get_request().POST.get(path) or self.render_formatted()
 
-            input_html = Fragment(
-                **Namespace(
-                    self.column.edit_input,
-                    attrs__name=path,
-                    attrs__value=cell_contents,
-                    _name=str(self.row.pk),
-                )
-            ).bind(parent=self.cells).__html__()
+            field = self.table.edit_form.fields[self.column.iommi_name()]
+            field.initial = MISSING
+            field.form.instance = self.row
+            field.bind_instance(field=field)
+            field.input.attrs.name += f'/{self.row.pk}'
+            field.input.attrs.id += f'__{self.row.pk}'
+
+            input_html = field.input.__html__()
 
             if self.table.formset_errors:
                 errors = self.table.formset_errors.get(path)
@@ -83,7 +83,7 @@ class FormsetCells(Cells):
         for column in values(self.iommi_parent().columns):
             if not column.render_column:
                 continue
-            if not column.editable:
+            if not column.edit:
                 continue
             yield self.cell_class(cells=self, column=column)
 
@@ -91,18 +91,24 @@ class FormsetCells(Cells):
 class FormsetColumn(Column):
     edit: Field = Refinable()
 
+    class Meta:
+        edit = EMPTY
+
 
 def formset_table__post_handler(table, request, **_):
     # 1. Validate all the fields
     errors = defaultdict(set)
     parsed_data = {}
     for cells in table.cells_for_rows():
+        instance = cells.row
+        table.edit_form.instance = instance
         for cell in cells.iter_editable_cells():
-            path = cell.get_path()
+            path = table.edit_form.fields[cell.column.iommi_name()].iommi_path + '/' + str(instance.pk)
+            field = table.edit_form.fields[cell.column.iommi_name()]
             try:
-                parsed_data[path] = cell.column.field.parse(
+                parsed_data[path] = field.parse(
                     string_value=request.POST.get(path),
-                    **cell.iommi_evaluate_parameters(),
+                    **field.iommi_evaluate_parameters(),
                 )
             except ValidationError as e:
                 errors[path] |= set(e.messages)
@@ -119,10 +125,12 @@ def formset_table__post_handler(table, request, **_):
     #   3.1 Save all fields
     for cells in table.cells_for_rows():
         instance = cells.row
+        table.edit_form.instance = instance
         for cell in cells.iter_editable_cells():
-            path = cell.get_path()
+            path = table.edit_form.fields[cell.column.iommi_name()].iommi_path + '/' + str(instance.pk)
             value = parsed_data[path]
-            cell.column.field.write_to_instance(field=cell.column.field, instance=instance, value=value)
+            field = table.edit_form.fields[cell.column.iommi_name()]
+            field.write_to_instance(field=field, instance=instance, value=value)
         instance.save()
 
     if 'post_save' in table.extra:
@@ -134,7 +142,7 @@ def formset_table__post_handler(table, request, **_):
 
 class FormsetTable(Table):
     formset_errors = None
-    form: Form = Refinable()
+    edit_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
 
     class Meta:
@@ -151,6 +159,7 @@ class FormsetTable(Table):
         )
         actions__csrf = Action(children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
         actions_below = True
+        edit_form = EMPTY
 
     def on_refine_done(self):
         super(FormsetTable, self).on_refine_done()
@@ -162,30 +171,34 @@ class FormsetTable(Table):
         for name, column in items(self.iommi_namespace.columns):
             if getattr(column, 'include', None) is False:
                 continue
-            if getattr(column.field, 'include', None) is False:
+            if getattr(column.edit, 'include', None) is False:
                 continue
             field = setdefaults_path(
                 Namespace(),
-                column.field,
+                column.edit,
                 call_target__cls=field_class,
                 model=self.model,
                 model_field_name=column.model_field_name,
-                _name=name,
                 attr=name if column.attr is MISSING else column.attr,
             )
 
-            fields[name] = field()
+            fields[name] = field
 
-        self.form = self.get_meta().form_class(**setdefaults_path(
+        self.edit_form = self.get_meta().form_class(**setdefaults_path(
             Namespace(),
-            self.form,
+            self.edit_form,
             fields=fields,
-            _name='form',
-            model=self.model,
+            _name='edit_form',
+            auto=self.auto,
         ))
 
-        declared_fields = self.form.iommi_namespace.fields
-        self.form = self.form.refine_defaults(fields=declared_fields)
+        declared_fields = self.edit_form.iommi_namespace.fields
+        self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
+
+    def on_bind(self) -> None:
+        super(FormsetTable, self).on_bind()
+        self.edit_form = self.edit_form.bind(parent=self)
+        self._bound_members.edit_form = self.edit_form
 
 
 urlpatterns = [
@@ -193,7 +206,8 @@ urlpatterns = [
         '',
         FormsetTable(
             auto__model=Album,
-            fields__artist__editable=True,
+            # columns__name__edit__include=True,
+            columns__artist__edit__include=True,
         ).as_view(),
     ),
 ]

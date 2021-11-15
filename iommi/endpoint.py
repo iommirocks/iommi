@@ -101,13 +101,15 @@ def find_target(*, path, root):
 def perform_ajax_dispatch(*, root, path, value):
     assert root._is_bound
 
+    path, _, rest_path = path.partition(DISPATCH_PATH_SEPARATOR + DISPATCH_PATH_SEPARATOR)
+
     target = find_target(path=path, root=root)
 
     func = getattr(target, 'func', None)
     if not isinstance(target, Endpoint) or func is None:
         raise InvalidEndpointPathException(f'Target {target!r} is not a valid endpoint handler')
 
-    return func(root=root, value=value, **target.iommi_evaluate_parameters())
+    return func(root=root, value=value, rest_path=rest_path, **target.iommi_evaluate_parameters())
 
 
 def perform_post_dispatch(*, root, path, value):
@@ -126,3 +128,10 @@ def path_join(prefix, *args, separator=DISPATCH_PATH_SEPARATOR) -> str:
     if not prefix:
         return separator.join(args)
     return separator.join((prefix,) + args)
+
+
+def rest_path_join(prefix, *args, rest_path, separator=DISPATCH_PATH_SEPARATOR) -> str:
+    if not rest_path:
+        return path_join(prefix, *args, separator=separator)
+    else:
+        return path_join(prefix, *args, separator=separator) + separator + separator + rest_path

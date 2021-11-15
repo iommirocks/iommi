@@ -662,6 +662,37 @@ class Field(Part, Tag):
         self._errors.add(msg)
         self.form._valid = False
 
+    @staticmethod
+    @refinable
+    def bind_instance(*, field):
+        field.choices = evaluate_strict(field.choices, **field.iommi_evaluate_parameters())
+
+        field.initial = evaluate_strict(field.initial, **field.iommi_evaluate_parameters())
+        field._read_initial()
+
+        if not field.editable:
+            field.value = field.initial
+        else:
+            field._read_raw_data()
+
+            field.parsed_data = evaluate_strict(field.parsed_data, **field.iommi_evaluate_parameters())
+            field._parse()
+
+            field._validate()
+
+        field.input = field.iommi_namespace.input().bind(parent=field)
+
+        if field.is_boolean:
+            if 'checked' not in field.input.attrs and field.value:
+                field.input.attrs.checked = ''
+        else:
+            if 'value' not in field.input.attrs:
+                field.input.attrs.value = field.rendered_value
+
+        if not field.editable:
+            field.non_editable_input.children['text'] = field.rendered_value
+            field.input = field.non_editable_input
+
     def on_bind(self) -> None:
         form = self.form
         assert form is not None, "Each field needs a form."
@@ -681,22 +712,8 @@ class Field(Part, Tag):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
-        self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        self.bind_instance(field=self)
 
-        self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
-        self._read_initial()
-
-        if not self.editable:
-            self.value = self.initial
-        else:
-            self._read_raw_data()
-
-            self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
-            self._parse()
-
-            self._validate()
-
-        self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
         if self.label is not None:
             assert not self.label.children
@@ -802,8 +819,9 @@ class Field(Part, Tag):
         if self.initial is MISSING:
             self.initial = None
 
+    @staticmethod
     @refinable
-    def iommi_path_for_read_raw_data(self, *, field, **_):
+    def iommi_path_for_read_raw_data(*, field, **_):
         return field.iommi_path
 
     def _read_raw_data(self):
@@ -816,7 +834,7 @@ class Field(Part, Tag):
         # Otherwise get it from the request
         form = self.form
 
-        iommi_path = self.iommi_path_for_read_raw_data(field=self, **self.iommi_evaluate_parameters())
+        iommi_path = self.iommi_path_for_read_raw_data(**self.iommi_evaluate_parameters())
 
         if self.is_list:
             try:
@@ -927,17 +945,6 @@ class Field(Part, Tag):
     )
     def __html__(self, *, render=None):
         assert not render
-        if self.is_boolean:
-            if 'checked' not in self.input.attrs and self.value:
-                self.input.attrs.checked = ''
-        else:
-            if 'value' not in self.input.attrs:
-                self.input.attrs.value = self.rendered_value
-
-        if not self.editable:
-            self.non_editable_input.children['text'] = self.rendered_value
-            self.input = self.non_editable_input
-
         if self.template:
             return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
 

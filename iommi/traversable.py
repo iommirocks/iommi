@@ -9,6 +9,7 @@ from django.conf import settings
 from tri_declarative import (
     Namespace,
     Refinable,
+    refinable,
 )
 from tri_struct import Struct
 
