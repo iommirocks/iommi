@@ -680,7 +680,7 @@ class Field(Part, Tag):
 
             field._validate()
 
-        field.input = field.iommi_namespace.input().bind(parent=field)
+        field.input = field.iommi_namespace.input(_name='input').bind(parent=field)
 
         if field.is_boolean:
             if 'checked' not in field.input.attrs and field.value:

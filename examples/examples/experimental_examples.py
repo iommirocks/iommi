@@ -1,6 +1,5 @@
 from collections import defaultdict
 from typing import (
-    Any,
     Type,
 )
 
@@ -16,8 +15,6 @@ from tri_declarative import (
     EMPTY,
     Namespace,
     Refinable,
-    refinable,
-    setattr_path,
     setdefaults_path,
 )
 from tri_struct import Struct
@@ -39,7 +36,6 @@ from iommi.base import (
 from iommi.endpoint import path_join
 from iommi.form import (
     Field,
-    float_parse,
     Form,
 )
 from iommi.table import (
@@ -206,8 +202,8 @@ urlpatterns = [
         '',
         FormsetTable(
             auto__model=Album,
-            # columns__name__edit__include=True,
             columns__artist__edit__include=True,
+            columns__year__edit__include=True,
         ).as_view(),
     ),
 ]
