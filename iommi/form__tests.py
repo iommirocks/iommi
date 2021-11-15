@@ -1424,6 +1424,25 @@ def test_field_from_model_many_to_many():
 
 
 @pytest.mark.django_db
+def test_field_from_model_many_to_many_editable():
+    from django.db.models import QuerySet
+    from tests.models import Foo, FieldFromModelManyToManyTest
+
+    Foo.objects.create(foo=2)
+
+    class MyForm(Form):
+        foo_many_to_many = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many')
+        foo_many_to_many_read_only = Field.from_model(FieldFromModelManyToManyTest, 'foo_many_to_many', editable=False)
+
+    form = MyForm().bind(request=req('get'))
+    choices = form.fields.foo_many_to_many.choices
+    read_only_choices = form.fields.foo_many_to_many_read_only.choices
+
+    assert isinstance(choices, QuerySet)
+    assert isinstance(read_only_choices, QuerySet)
+
+
+@pytest.mark.django_db
 def test_field_from_model_many_to_one_foreign_key():
     from tests.models import Bar
 
