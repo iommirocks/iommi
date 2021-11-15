@@ -13,7 +13,9 @@ from examples import (
     page_examples,
     supernaut,
     table_examples,
+    experimental_examples,
 )
+
 
 urlpatterns = (
     [
@@ -24,6 +26,7 @@ urlpatterns = (
         path('menu/', include(menu_examples)),
         path('supernaut/', include(supernaut)),
         path('admin/', admin.site.urls),  # This is mostly to make the django_admin style available
+        path('experimental/', include(experimental_examples))
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

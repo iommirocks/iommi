@@ -665,6 +665,33 @@ class Field(Part, Tag):
         self._errors.add(msg)
         self.form._valid = False
 
+    def bind_from_instance(self):
+        self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
+        self._read_initial()
+
+        if not self.editable:
+            self.value = self.initial
+        else:
+            self._read_raw_data()
+
+            self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
+            self._parse()
+
+            self._validate()
+
+        self.input = self.iommi_namespace.input(_name='input').bind(parent=self)
+
+        if self.is_boolean:
+            if 'checked' not in self.input.attrs and self.value:
+                self.input.attrs.checked = ''
+        else:
+            if 'value' not in self.input.attrs:
+                self.input.attrs.value = self.rendered_value
+
+        if not self.editable:
+            self.input = self.iommi_namespace.input(children__text=self.rendered_value, **self.iommi_namespace.non_editable_input).bind(parent=self)
+
     def on_bind(self) -> None:
         self._errors: Set[str] = set()
 
@@ -686,22 +713,8 @@ class Field(Part, Tag):
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())
 
-        self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        self.bind_from_instance()
 
-        self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
-        self._read_initial()
-
-        if not self.editable:
-            self.value = self.initial
-        else:
-            self._read_raw_data()
-
-            self.parsed_data = evaluate_strict(self.parsed_data, **self.iommi_evaluate_parameters())
-            self._parse()
-
-            self._validate()
-
-        self.input = self.input.bind(parent=self)
         self.label = self.label.bind(parent=self)
         if self.label is not None:
             assert not self.label.children
@@ -928,17 +941,6 @@ class Field(Part, Tag):
     )
     def __html__(self, *, render=None):
         assert not render
-        if self.is_boolean:
-            if 'checked' not in self.input.attrs and self.value:
-                self.input.attrs.checked = ''
-        else:
-            if 'value' not in self.input.attrs:
-                self.input.attrs.value = self.rendered_value
-
-        if not self.editable:
-            self.non_editable_input.children['text'] = self.rendered_value
-            self.input = self.non_editable_input
-
         if self.template:
             return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
 

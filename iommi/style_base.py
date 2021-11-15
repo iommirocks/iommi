@@ -13,20 +13,21 @@ select2_assets = dict(
         attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
     ),
     select2_iommi_js=Asset.js(
+        # language=js
         children__text=mark_safe('''
-        document.addEventListener('readystatechange', (event) => {
-            if (document.readyState === 'complete') {
-                iommi_init_all_select2();                
-            }
-        });
-        
-        function iommi_init_all_select2() {
-            $('.select2_enhance').each(function (_, x) {
-                iommi_init_select2(x);
+            document.addEventListener('readystatechange', () => {
+                if (document.readyState === 'complete') {
+                    iommi_init_all_select2();
+                }
             });
-        }
-        
-        function iommi_init_select2(elem) {
+
+            function iommi_init_all_select2() {
+                $('.select2_enhance').each(function (_, x) {
+                    iommi_init_select2(x);
+                });
+            }
+
+            function iommi_init_select2(elem) {
                 let f = $(elem);
                 let endpoint_path = f.attr('data-choices-endpoint');
                 let multiple = f.attr('multiple') !== undefined;
@@ -42,9 +43,9 @@ select2_assets = dict(
                         data: function (params) {
                             let result = {
                                 page: params.page || 1
-                            } 
+                            }
                             result[endpoint_path] = params.term || '';
-                            
+
                             return result;
                         }
                     }
@@ -52,12 +53,10 @@ select2_assets = dict(
                 f.select2(options);
                 f.on('change', function(e) {
                     let element = e.target.closest('form');
-            
                     // Fire a non-jquery event so that ajax_enhance.html gets the event
                     element.dispatchEvent(new Event('change'));
                 });
-        }
-         
+            }
         ''')
     ),
     select2_css=Asset.css(
@@ -74,6 +73,7 @@ select2_enhanced_forms = Style(
             multi_choice=dict(
                 input__template='iommi/form/choice_select2.html',
                 assets=select2_assets,
+                input__attrs__class__select2_enhance=True,
             ),
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
@@ -197,7 +197,6 @@ base = Style(
     ),
     LiveEditPage__iommi_style='bootstrap',
 )
-
 
 base_enhanced_forms = Style(
     base,
