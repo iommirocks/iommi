@@ -690,8 +690,7 @@ class Field(Part, Tag):
                 field.input.attrs.value = field.rendered_value
 
         if not field.editable:
-            field.non_editable_input.children['text'] = field.rendered_value
-            field.input = field.non_editable_input
+            field.input = field.iommi_namespace.input(children__text=field.rendered_value, **field.iommi_namespace.non_editable_input).bind(parent=field)
 
     def on_bind(self) -> None:
         form = self.form
