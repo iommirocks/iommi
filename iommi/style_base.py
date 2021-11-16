@@ -11,8 +11,9 @@ select2_assets = dict(
         attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
     ),
     select2_iommi_js=Asset.js(
+        # language=js
         children__text=mark_safe('''
-        document.addEventListener('readystatechange', (event) => {
+        document.addEventListener('readystatechange', () => {
             if (document.readyState === 'complete') {
                 iommi_init_all_select2();                
             }
@@ -25,35 +26,35 @@ select2_assets = dict(
         }
         
         function iommi_init_select2(elem) {
-                let f = $(elem);
-                let endpoint_path = f.attr('data-choices-endpoint');
-                let multiple = f.attr('multiple') !== undefined;
-                let options = {
-                    placeholder: f.attr('data-placeholder'),
-                    allowClear: true,
-                    multiple: multiple
-                };
-                if (endpoint_path) {
-                    options.ajax = {
-                        url: "",
-                        dataType: "json",
-                        data: function (params) {
-                            let result = {
-                                page: params.page || 1
-                            } 
-                            result[endpoint_path] = params.term || '';
-                            
-                            return result;
-                        }
+            let f = $(elem);
+            let endpoint_path = f.attr('data-choices-endpoint');
+            let multiple = f.attr('multiple') !== undefined;
+            let options = {
+                placeholder: f.attr('data-placeholder'),
+                allowClear: true,
+                multiple: multiple
+            };
+            if (endpoint_path) {
+                options.ajax = {
+                    url: "",
+                    dataType: "json",
+                    data: function (params) {
+                        let result = {
+                            page: params.page || 1
+                        } 
+                        result[endpoint_path] = params.term || '';
+                        
+                        return result;
                     }
                 }
-                f.select2(options);
-                f.on('change', function(e) {
-                    let element = e.target.closest('form');
-            
-                    // Fire a non-jquery event so that ajax_enhance.html gets the event
-                    element.dispatchEvent(new Event('change'));
-                });
+            }
+            f.select2(options);
+            f.on('change', function(e) {
+                let element = e.target.closest('form');
+        
+                // Fire a non-jquery event so that ajax_enhance.html gets the event
+                element.dispatchEvent(new Event('change'));
+            });
         }
          
         ''')
