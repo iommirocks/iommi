@@ -3065,3 +3065,15 @@ def test_editable_can_be_a_callable():
     x.save()
     f = Form(auto__instance=x, editable=lambda instance, **_: instance.foo == 7).bind()
     assert f.fields.foo.editable is False
+
+
+def test_error_accidental_cache_of_valid_state():
+    f = Form.create(auto__model=Foo).refine_done()
+    form = f.bind(request=req('post', **{'-submit': ''}))
+    assert form.get_errors() == {'fields': {'foo': {'This field is required'}}}
+    assert not form._valid
+
+    # And again
+    form = f.bind(request=req('post', **{'-submit': ''}))
+    assert form.get_errors() == {'fields': {'foo': {'This field is required'}}}
+    assert not form._valid
