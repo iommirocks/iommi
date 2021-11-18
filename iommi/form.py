@@ -608,7 +608,6 @@ class Field(Part, Tag):
         self.input = self.input(_name='input').refine_done(parent=self)
         self.label = self.label(_name='label').refine_done(parent=self)
         self.help = self.help(_name='help').refine_done(parent=self)
-        self._errors: Set[str] = set()
 
         super(Field, self).on_refine_done()
 
@@ -667,6 +666,8 @@ class Field(Part, Tag):
         self.form._valid = False
 
     def on_bind(self) -> None:
+        self._errors: Set[str] = set()
+
         form = self.form
         assert form is not None, "Each field needs a form."
 
@@ -771,7 +772,7 @@ class Field(Part, Tag):
             if self.parsed_data is not None:
                 value = self._validate_parsed_data(self.parsed_data)
 
-        if not self.errors:
+        if not self._errors:
             if (
                 form.mode is FULL_FORM_FROM_REQUEST
                 and self.required
@@ -780,6 +781,8 @@ class Field(Part, Tag):
                 self.add_error('This field is required')
             else:
                 self.value = value
+        else:
+            assert self.form._valid is False
 
     def _validate_parsed_data(self, value):
         is_valid, error = self.is_valid(form=self.form, field=self, parsed_data=value)
@@ -1419,18 +1422,17 @@ class Form(Part):
 
         assert isinstance(self.fields, dict)
 
-        self._errors: Set[str] = set()
-        self._valid = None
-        self.mode = INITIALS_FROM_GET
-        self.parent_form = None
-
         refine_done_members(self, name='actions', members_from_namespace=self.actions, cls=self.get_meta().action_class, members_cls=Actions)
         refine_done_members(self, name='fields', members_from_namespace=self.fields, members_from_declared=self.get_declared('_fields_dict'), members_from_auto=fields_from_auto, cls=self.get_meta().member_class, extra_member_defaults=extra_member_defaults,)
 
         super(Form, self).on_refine_done()
 
     def on_bind(self) -> None:
+        self._errors: Set[str] = set()
         self._valid = None
+        self.mode = INITIALS_FROM_GET
+        self.parent_form = None
+
         request = self.get_request()
         self._request_data = request_data(request)
 

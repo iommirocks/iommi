@@ -3071,6 +3071,7 @@ def test_editable_can_be_a_callable():
     assert f.fields.foo.editable is False
 
 
+
 def test_render_grouped_fields():
     class MyForm(Form):
         a = Field()
@@ -3099,3 +3100,16 @@ def test_render_grouped_fields():
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
     prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
     assert prettified_actual == prettified_expected
+
+
+def test_error_accidental_cache_of_valid_state():
+    f = Form.create(auto__model=Foo).refine_done()
+    form = f.bind(request=req('post', **{'-submit': ''}))
+    assert form.get_errors() == {'fields': {'foo': {'This field is required'}}}
+    assert not form._valid
+
+    # And again
+    form = f.bind(request=req('post', **{'-submit': ''}))
+    assert form.get_errors() == {'fields': {'foo': {'This field is required'}}}
+    assert not form._valid
+
