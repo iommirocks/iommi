@@ -1119,6 +1119,7 @@ def test_choice_queryset_do_not_look_up_by_default():
 
     assert form.fields.foo.input.template is not None
 
+    # language=HTML
     expected = (
         '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
     )
@@ -1985,6 +1986,7 @@ def test_render_with_action():
             def actions__submit__post_handler(**_):
                 pass  # pragma: no cover
 
+    # language=HTML
     expected_html = """
         <form action="" enctype="multipart/form-data" method="post">
             <div>
@@ -2009,6 +2011,7 @@ def test_render_without_actions():
     class MyForm(Form):
         bar = Field()
 
+    # language=HTML
     expected_html = """
         <form action="" enctype="multipart/form-data" method="post">
             <div>
@@ -2824,6 +2827,7 @@ def test_create_or_edit_object_full_template_1():
     response = Form.create(auto__model=Foo).bind(request=request).render_to_response()
     assert response.status_code == 200
 
+    # language=HTML
     expected_html = """
 <!DOCTYPE html>
 <html>
@@ -3065,3 +3069,33 @@ def test_editable_can_be_a_callable():
     x.save()
     f = Form(auto__instance=x, editable=lambda instance, **_: instance.foo == 7).bind()
     assert f.fields.foo.editable is False
+
+
+def test_render_grouped_fields():
+    class MyForm(Form):
+        a = Field()
+        b = Field(group='1')
+        c = Field()
+        d = Field(group='2')
+        e = Field(group='2')
+        f = Field(group='2')
+
+    actual_html = MyForm().bind(request=req('get')).render_fields
+    # language=HTML
+    expected_html = '''
+         <div><label for="id_a">A</label><input id="id_a" name="a" type="text" value=""></div>
+         <div class="form_group">
+            <div><label for="id_b">B</label><input id="id_b" name="b" type="text" value=""></div>
+         </div>
+        
+         <div><label for="id_c">C</label><input id="id_c" name="c" type="text" value=""></div>
+        
+         <div class="form_group">        
+             <div><label for="id_d">D</label><input id="id_d" name="d" type="text" value=""></div>
+             <div><label for="id_e">E</label><input id="id_e" name="e" type="text" value=""></div>
+             <div><label for="id_f">F</label><input id="id_f" name="f" type="text" value=""></div>     
+         </div>
+    '''
+    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
+    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
+    assert prettified_actual == prettified_expected
