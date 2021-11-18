@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+4.2.0 (2021-11-18)
+~~~~~~~~~~~~~~~~~~
+
+* Field groups in forms. There is a new string `group` member on `Field` that is used to group, a `group` namespace on `Form` you can use to set attrs, tag, etc. Global styling for form groups is done via the `FieldGroup` class. The bootstrap style has been updated to support this feature out of the box.
+
+*  Validation could be bypassed for forms if they have been saved via `form.refine_done()`. This became the default behavior for `.as_view()` in iommi 4.1 so that release is broken.
+
+
 4.1.0 (2021-11-15)
 ~~~~~~~~~~~~~~~~~~
 
