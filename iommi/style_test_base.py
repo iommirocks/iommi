@@ -20,6 +20,10 @@ test = Style(
     Field=dict(
         shortcuts=dict(),
     ),
+    FieldGroup=dict(
+        tag='div',
+        attrs__class__form_group=True,
+    ),
     Table=dict(
         attrs__class__table=True,
     ),

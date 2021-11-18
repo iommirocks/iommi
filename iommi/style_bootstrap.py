@@ -90,6 +90,10 @@ bootstrap_base = Style(
         },
         non_editable_input__attrs__class={'form-control': False},
     ),
+    FieldGroup=dict(
+        tag='div',
+        attrs__class={'form-row': True},
+    ),
     Action=dict(
         shortcuts=dict(
             # In bootstrap one must choose a button style (secondary, success, ...)

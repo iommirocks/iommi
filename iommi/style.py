@@ -260,6 +260,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         from iommi.fragment import Container
         from iommi.fragment import Header
         from iommi.live_edit import LiveEditPage
+        from iommi.form import FieldGroup
 
         default_classes = [
             Action,
@@ -280,6 +281,7 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
             Container,
             Header,
             LiveEditPage,
+            FieldGroup,
         ]
     if additional_classes is None:
         additional_classes = []

@@ -7,6 +7,7 @@ from decimal import (
     InvalidOperation,
 )
 from functools import reduce
+from itertools import groupby
 from operator import or_
 from typing import (
     Any,
@@ -521,6 +522,8 @@ class Field(Part, Tag):
 
     empty_label: str = EvaluatedRefinable()
 
+    group: str = EvaluatedRefinable()
+
     @dispatch(
         attr=MISSING,
         display_name=MISSING,
@@ -548,6 +551,7 @@ class Field(Part, Tag):
         choice_to_optgroup=None,
         choice_id_formatter=lambda choice, **_: '%s' % choice,
         choice_display_name_formatter=lambda choice, **_: '%s' % choice,
+        group=MISSING,
     )
     def __init__(self, **kwargs):
         """
@@ -1261,6 +1265,10 @@ class FormAutoConfig(AutoConfig):
     type = Refinable()  # one of 'create', 'edit', 'delete'
 
 
+class FieldGroup(Fragment):
+    pass
+
+
 @declarative(Part, '_fields_dict', add_init_kwargs=False)
 @with_meta
 class Form(Part):
@@ -1344,9 +1352,9 @@ class Form(Part):
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
     auto: Namespace = Refinable()
-    attr: str = Refinable()
     fields: Namespace = RefinableMembers()
     instance: Any = Refinable()
+    field_group: Namespace = Refinable()
 
     class Meta:
         member_class = Field
@@ -1366,6 +1374,7 @@ class Form(Part):
         errors=EMPTY,
         h_tag__call_target=Header,
         instance=None,
+        field_group__call_target=FieldGroup,
     )
     def __init__(self, **kwargs):
         super(Form, self).__init__(
@@ -1566,9 +1575,18 @@ class Form(Part):
     @property
     def render_fields(self):
         assert self._is_bound, NOT_BOUND_MESSAGE
+
         r = []
-        for part in values(self.parts):
-            r.append(part.__html__())
+        for group_name, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
+            if group_name is not MISSING:
+                current_group = self.field_group().bind(parent=self)
+                r.append(current_group.iommi_open_tag())
+
+                r.extend([part.__html__() for part in parts])
+
+                r.append(current_group.iommi_close_tag())
+            else:
+                r.extend([part.__html__() for part in parts])
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}

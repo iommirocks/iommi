@@ -71,7 +71,7 @@ def form_example_1(request):
     )
 
 
-@example(gettext(("Use more ideomatic like an iommi part")))
+@example(gettext("Use more ideomatic like an iommi part"))
 def form_example_2(request):
     class FruitForm(Form):
         class Meta:
@@ -89,7 +89,7 @@ def form_example_2(request):
     return FruitForm()
 
 
-@example(gettext(("Endpoints using ajax need no extra url entry")))
+@example(gettext("Endpoints using ajax need no extra url entry"))
 def form_example_3(request):
     class TrackForm(Form):
         artist = Field.choice_queryset(choices=Track.objects.all())
@@ -97,17 +97,17 @@ def form_example_3(request):
     return TrackForm()
 
 
-@example(gettext(("Create forms from database models")))
+@example(gettext("Create forms from database models"))
 def form_example_4(request):
     return Form.create(auto__model=Artist)
 
 
-@example(gettext(("Create edit forms from database models")))
+@example(gettext("Create edit forms from database models"))
 def form_example_5(request):
     return Form.edit(auto__instance=Artist.objects.all().first())
 
 
-@example(gettext(("Custom actions can be added to forms")))
+@example(gettext("Custom actions can be added to forms"))
 def form_example_6(request):
     return Form.edit(
         auto__instance=Artist.objects.all().first(),
@@ -121,7 +121,7 @@ def form_example_6(request):
     )
 
 
-@example(gettext(("Multiple forms can be composed in a page")))
+@example(gettext("Multiple forms can be composed in a page"))
 class KitchenForm(Form):
     kitchen_foo = Field()
 
@@ -201,7 +201,7 @@ def form_example_8(request):
     return FruitForm()
 
 
-@example(gettext(("Error messages")))
+@example(gettext("Error messages"))
 def form_example_error_messages(request):
     def form_error_messages(form, **_):
         form.add_error(gettext('Global error message 1'))
@@ -328,7 +328,7 @@ def form_example_nested_forms(request):
     )
 
 
-@example(gettext(("File upload")))
+@example(gettext("File upload"))
 def form_example_file_upload(request):
     class FileForm(Form):
         upload = Field.file()
@@ -340,6 +340,19 @@ def form_example_file_upload(request):
                     print(f"Uploaded {len(form.fields.upload.value)} bytes")
 
     return FileForm()
+
+
+@example(gettext("Field groups"))
+def form_example_field_groups(request):
+    class FieldGroupForm(Form):
+        a = Field()
+        b = Field(group='1')
+        c = Field(group='1')
+        d = Field()
+        e = Field(group='2')
+        f = Field(group='2')
+
+    return FieldGroupForm()
 
 
 class IndexPage(ExamplesPage):
@@ -369,5 +382,6 @@ urlpatterns = [
     path('example_11/', form_example_children_that_are_not_fields_declarative),
     path('example_12/', form_example_nested_forms),
     path('example_13/', form_example_file_upload),
+    path('example_14/', form_example_field_groups),
     path('all_fields/', all_field_sorts),
 ]
