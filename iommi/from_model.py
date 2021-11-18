@@ -19,7 +19,6 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi.base import (
-    keys,
     MISSING,
 )
 from iommi.evaluate import evaluate
@@ -27,7 +26,7 @@ from iommi.refinable import RefinableObject
 
 
 def create_members_from_model(
-    *, member_class, model, include: List[str] = None, exclude: List[str] = None
+    *, member_class, model, include: List[str] = None, exclude: List[str] = None, default_included=True,
 ):
     members = Struct()
 
@@ -48,6 +47,11 @@ def create_members_from_model(
             model_field_name=model_field_name,
             model=model,
         )
+        if default_included is False:
+            setdefaults_path(
+                definition,
+                include=False,
+            )
         if include is not None and name in include:
             setdefaults_path(
                 definition,
@@ -256,6 +260,7 @@ class AutoConfig(RefinableObject):
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     include = Refinable()
     exclude = Refinable()
+    default_included = Refinable()
 
     @dispatch
     def __init__(self, **kwargs):

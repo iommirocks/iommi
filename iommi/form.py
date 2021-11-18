@@ -1395,6 +1395,7 @@ class Form(Part):
                 model=auto.model,
                 include=auto.include,
                 exclude=auto.exclude,
+                default_included=auto.default_included,
             )
             if auto.instance is not None:
                 self.instance = auto.instance
@@ -1520,8 +1521,8 @@ class Form(Part):
 
     @classmethod
     @dispatch()
-    def _from_model(cls, model, *, include=None, exclude=None):
-        fields = cls.fields_from_model(model=model, include=include, exclude=exclude)
+    def _from_model(cls, model, *, include=None, exclude=None, default_included=True):
+        fields = cls.fields_from_model(model=model, include=include, exclude=exclude, default_included=default_included)
         return model, fields
 
     def is_target(self):

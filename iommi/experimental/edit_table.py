@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Type
 
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 from django.template import (
     Context,
     Template,
@@ -41,10 +41,10 @@ class EditCell(Cell):
         return path_join(self.column.iommi_path, str(self.row.pk))
 
     def render_cell_contents(self):
-        if self.column.edit:
+        field = self.table.edit_form.fields.get(self.column.iommi_name(), None)
+        if field:
             path = self.get_path()
 
-            field = self.table.edit_form.fields[self.column.iommi_name()]
             field.initial = MISSING
             field.form.instance = self.row
             field.bind_from_instance()
@@ -71,7 +71,9 @@ class EditCells(Cells):
         for column in values(self.iommi_parent().columns):
             if not column.render_column:
                 continue
-            if not column.edit:
+
+            field = self.iommi_parent().edit_form.fields.get(column.iommi_name(), None)
+            if not field:
                 continue
             yield self.cell_class(cells=self, column=column)
 
@@ -79,8 +81,9 @@ class EditCells(Cells):
 class EditColumn(Column):
     edit: Field = Refinable()
 
-    class Meta:
-        edit = EMPTY
+    def on_refine_done(self):
+        super(EditColumn, self).on_refine_done()
+        self.edit = None
 
 
 def edit_table__post_handler(table, request, **_):
@@ -120,7 +123,7 @@ def edit_table__post_handler(table, request, **_):
     if 'post_save' in table.extra:
         table.extra.post_save(**table.iommi_evaluate_parameters())
 
-    return redirect('.')
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
 class EditTable(Table):
@@ -140,7 +143,7 @@ class EditTable(Table):
             display_name=gettext('Save'),
             post_handler=edit_table__post_handler,
         )
-        actions__csrf = Action(children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
+        actions__csrf = Action(tag='div', children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
         actions_below = True
         edit_form = EMPTY
 
@@ -149,30 +152,42 @@ class EditTable(Table):
 
         fields = Struct()
 
-        field_class = self.get_meta().form_class.get_meta().member_class
-
         for name, column in items(self.iommi_namespace.columns):
+            if not isinstance(column, EditColumn):
+                continue
             if getattr(column, 'include', None) is False:
+                continue
+
+            edit_conf = column.iommi_namespace.get('edit', None)
+
+            if not edit_conf:
                 continue
             if getattr(column.edit, 'include', None) is False:
                 continue
-            field = setdefaults_path(
-                Namespace(),
-                column.edit,
-                call_target__cls=field_class,
-                model=self.model,
-                model_field_name=column.model_field_name,
-                attr=name if column.attr is MISSING else column.attr,
-            )
+
+            if isinstance(edit_conf, dict):
+                field = setdefaults_path(
+                    Namespace(),
+                    edit_conf,
+                    model=self.model,
+                    model_field_name=column.model_field_name,
+                    attr=name if column.attr is MISSING else column.attr,
+                )
+            else:
+                field = column.iommi_namespace.edit
 
             fields[name] = field
+
+        auto = Namespace(self.auto)
+        if auto:
+            auto.default_included = False
 
         self.edit_form = self.get_meta().form_class(**setdefaults_path(
             Namespace(),
             self.edit_form,
             fields=fields,
             _name='edit_form',
-            auto=self.auto,
+            auto=auto,
         ))
 
         declared_fields = self.edit_form.iommi_namespace.fields
