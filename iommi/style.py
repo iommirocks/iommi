@@ -207,8 +207,12 @@ def get_style(name):
         return _styles[name]
     except KeyError:
         style_names = "\n    ".join(_styles.keys())
+
+        if not style_names:
+            'No styles registered! Did you forget to add iommi to INSTALLED_APPS?'
+
         raise Exception(
-            f'''No registered style {name}. Register a style with register_style().
+            f'''No registered iommi style {name}. Register a style with register_style().
 
 Available styles:
     {style_names}'''

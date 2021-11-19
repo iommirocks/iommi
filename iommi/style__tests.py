@@ -255,7 +255,7 @@ def test_get_style_error():
     with pytest.raises(Exception) as e:
         get_style('does_not_exist')
 
-    assert str(e.value).startswith('No registered style does_not_exist. Register a style with register_style().')
+    assert str(e.value).startswith('No registered iommi style does_not_exist. Register a style with register_style().')
 
 
 class MyRefinableObject(RefinableObject):
