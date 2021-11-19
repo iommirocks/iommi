@@ -25,6 +25,10 @@ select2_assets = dict(
                 $('.select2_enhance').each(function (_, x) {
                     iommi_init_select2(x);
                 });
+                // Second time is a workaround because the table might resize on select2-ification
+                $('.select2_enhance').each(function (_, x) {
+                    iommi_init_select2(x);
+                });
             }
 
             function iommi_init_select2(elem) {
