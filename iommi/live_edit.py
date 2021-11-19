@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-import parso
 from django.conf import settings
 from django.http import (
     HttpResponse,
@@ -89,6 +88,11 @@ class LiveEditPage(Page):
 
 @csrf_exempt
 def live_edit_view(request, view, args, kwargs):
+    try:
+        import parso
+    except ImportError:
+        return HttpResponse('Live edit requires parso. Please `pip install parso`.')
+
     view = get_wrapped_view(view)
     # Read the old code
     try:
