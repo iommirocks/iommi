@@ -428,7 +428,9 @@ class Filter(Part):
         return call_target(**kwargs)
 
     @classmethod
-    @class_shortcut
+    @class_shortcut(
+        field__call_target__attribute='number',
+    )
     def number(cls, call_target=None, **kwargs):
         return call_target(**kwargs)
 
