@@ -7,7 +7,6 @@ from django.db.models import (
     IntegerField,
     Model,
 )
-
 from iommi import (
     Field,
     Form,
@@ -20,7 +19,11 @@ from iommi.from_model import (
     SearchFieldsAlreadyRegisteredException,
 )
 from tests.helpers import req
-from tests.models import FormFromModelTest
+from tests.models import (
+    Foo,
+    FormFromModelTest,
+)
+from tri_declarative import class_shortcut
 
 
 def test_get_name_field_for_model_error():
@@ -198,3 +201,46 @@ def test_register_search_fields_pk_special_case():
 
     # restore at the end
     register_search_fields(model=User, search_fields=['username'], overwrite=True)
+
+
+# noinspection PyPep8Naming
+@pytest.fixture
+def MyField():
+    class MyField(Field):
+        @classmethod
+        @class_shortcut(
+            call_target__attribute='integer',
+            extra__value='this is my shortcut',
+        )
+        def my_integer(cls, call_target=None, **kwargs):
+            return call_target(**kwargs)
+    return MyField
+
+
+def test_weird_override_bug_working_case(MyField):
+
+    # This works...
+    form = Form(
+        fields__foo__call_target=MyField.my_integer,
+    )
+    assert form.bind().fields.foo.extra.value == 'this is my shortcut'
+
+
+def test_weird_override_bug_working_case_2(MyField):
+    # This also works
+    form = Form(
+        auto__model=Foo,
+        auto__include=['foo'],
+        fields__foo=MyField.my_integer(),
+    )
+    assert form.bind().fields.foo.extra.value == 'this is my shortcut'
+
+
+@pytest.mark.skip('This fails after from_model cleanup. Do we really need it?')
+def test_weird_override_bug_failing_case(MyField):
+    form = Form.edit(
+        auto__model=Foo,
+        auto__include=['foo'],
+        fields__foo__call_target=MyField.my_integer,
+    )
+    assert form.bind().fields.foo.extra.value == 'this is my shortcut'
