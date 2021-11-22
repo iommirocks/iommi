@@ -129,6 +129,8 @@ def refine_done_members(
     if extra_member_defaults:
         for k, v in items(Namespace(extra_member_defaults)):
             if k in member_by_name:
+                v = Namespace(v)
+                v.pop('call_target', None)
                 member_by_name[k] = member_by_name[k].refine_defaults(**v)
             else:
                 member_by_name[k] = Namespace(

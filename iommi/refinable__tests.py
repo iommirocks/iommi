@@ -192,6 +192,29 @@ def test_refine_defaults():
     assert my_refined_refinable.iommi_namespace == Namespace(a=17)
 
 
+def test_refine_fail_on_call_target():
+    class MyRefinableObject(RefinableObject):
+        a = Refinable()
+
+    MyRefinableObject().refine(a=17).refine_done()
+
+    with pytest.raises(TypeError) as e:
+        MyRefinableObject().refine(b=17).refine_done()
+    assert str(e.value) == (
+        'MyRefinableObject object has no refinable attribute(s): "b".\n'
+        'Available attributes:\n'
+        '    a\n'
+    )
+
+    with pytest.raises(TypeError) as e:
+        MyRefinableObject().refine(call_target=lambda **_: None).refine_done()
+    assert str(e.value) == (
+        'MyRefinableObject object has no refinable attribute(s): "call_target".\n'
+        'Available attributes:\n'
+        '    a\n'
+    )
+
+
 def test_done_refine():
     class MyRefinableObject(RefinableObject):
         a = Refinable()

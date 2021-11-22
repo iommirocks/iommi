@@ -146,7 +146,7 @@ class RefinableObject:
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
                 f"""\
-'{self.__class__.__name__}' object has no refinable attribute(s): {', '.join(f'"{k}"' for k in sorted(kwargs.keys()))}.
+{self.__class__.__name__} object has no refinable attribute(s): {', '.join(f'"{k}"' for k in sorted(kwargs.keys()))}.
 Available attributes:
     {available_keys}
 """
@@ -180,13 +180,11 @@ Available attributes:
                 if k in remaining_namespace:
                     setattr(result, k, remaining_namespace.pop(k))
 
-        remaining_namespace.pop('call_target', None)
-
         if remaining_namespace:
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
                 f"""\
-'{result.__class__.__name__}' object has no refinable attribute(s): {', '.join(f'"{k}"' for k in sorted(remaining_namespace.keys()))}.
+{result.__class__.__name__} object has no refinable attribute(s): {', '.join(f'"{k}"' for k in sorted(remaining_namespace.keys()))}.
 Available attributes:
     {available_keys}
 """
