@@ -4,6 +4,7 @@ from typing import Type
 from urllib.parse import urlencode
 
 from django.apps import apps as django_apps
+from django.conf import settings
 from django.contrib import (
     auth,
     messages,
@@ -396,7 +397,7 @@ class Auth:
     @classmethod
     def logout(cls, request):
         auth.logout(request)
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect(settings.LOGOUT_REDIRECT_URL or '/')
 
     @classmethod
     def change_password(cls, request):
