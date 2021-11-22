@@ -691,6 +691,12 @@ def test_column_presets(NoSortTable):
     )
 
 
+def test_column_select_shortcut_no_override_call_target(NoSortTable):
+    class TestTable(NoSortTable):
+        select = Column.select()
+    TestTable().bind()
+
+
 @pytest.mark.django_db
 def test_column_filters():
     class TestTable(Table):

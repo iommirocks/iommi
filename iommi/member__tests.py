@@ -90,9 +90,13 @@ def test_bind_via_unapplied_config():
     with pytest.raises(TypeError) as e:
         MyBasket(fruits__pear__color='green').bind()
 
-    assert (
-        str(e.value)
-        == "'Fruit' object has no refinable attribute(s): \"color\".\nAvailable attributes:\n    assets\n    endpoints\n    iommi_style\n    taste\n"
+    assert str(e.value) == (
+        'Fruit object has no refinable attribute(s): "color".\n'
+        'Available attributes:\n'
+        '    assets\n'
+        '    endpoints\n'
+        '    iommi_style\n'
+        '    taste\n'
     )
 
 

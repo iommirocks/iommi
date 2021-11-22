@@ -1449,7 +1449,7 @@ def test_field_from_model_many_to_one_foreign_key():
 
     assert (
         set(
-            Form(auto__model=Bar, fields__foo__call_target=Field.from_model)
+            Form(auto__model=Bar)
             .bind(
                 request=req('get'),
             )
