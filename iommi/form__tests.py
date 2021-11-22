@@ -3039,7 +3039,6 @@ def test_initial_is_set_to_default_of_model():
     assert form.fields.number.initial == 7
 
 
-@pytest.mark.skip('currently broken')
 def test_shoot_config_into_auto_dunder_field():
     Form(
         auto__model=FieldFromModelOneToOneTest,
