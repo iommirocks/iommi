@@ -244,3 +244,13 @@ def test_weird_override_bug_failing_case(MyField):
         fields__foo__call_target=MyField.my_integer,
     )
     assert form.bind().fields.foo.extra.value == 'this is my shortcut'
+
+
+@pytest.mark.skip('This fails after from_model cleanup. Do we really need it?')
+def test_weird_override_bug_failing_case2(MyField):
+    form = Form.edit(
+        auto__model=Foo,
+        auto__include=['foo'],
+        fields__foo__call_target__attribute='float',
+    )
+    assert form.bind().fields.foo.__tri_declarative_shortcut_stack == ['float']
