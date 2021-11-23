@@ -16,6 +16,7 @@ from django.http import (
     Http404,
     HttpResponseRedirect,
 )
+from django.shortcuts import resolve_url
 from django.urls import (
     path,
     reverse,
@@ -397,7 +398,7 @@ class Auth:
     @classmethod
     def logout(cls, request):
         auth.logout(request)
-        return HttpResponseRedirect(settings.LOGOUT_REDIRECT_URL or '/')
+        return HttpResponseRedirect(resolve_url(settings.LOGOUT_REDIRECT_URL or '/'))
 
     @classmethod
     def change_password(cls, request):
