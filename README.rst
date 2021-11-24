@@ -76,7 +76,7 @@ You need to have tox installed then:
 .. code-block::
 
     make venv
-    source env/bin/activate
+    source venv/bin/activate
     make test
     make test-docs
 
