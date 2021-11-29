@@ -106,24 +106,24 @@ def test_formset_table_post():
 def test_edit_table_definition():
     class MyEditTable(EditTable):
         foo = EditColumn(edit=None)
-        # bar = EditColumn(edit=Field())
+        bar = EditColumn(edit=Field())
         baz = EditColumn(edit=dict(call_target=Field))
         vanilla = Column()
 
     my_edit_table = MyEditTable(
         columns=dict(
             bing=EditColumn(edit=None),
-            # bang=EditColumn(edit=Field()),
+            bang=EditColumn(edit=Field()),
             bong=EditColumn(edit=dict(call_target=Field)),
         )
     ).bind()
 
     assert list(my_edit_table.columns.keys()) == [
         'foo',
-        # 'bar',
+        'bar',
         'baz',
         'vanilla',
         'bing',
-        # 'bang',
+        'bang',
         'bong',
     ]

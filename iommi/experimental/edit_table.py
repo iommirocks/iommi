@@ -80,6 +80,10 @@ class EditCells(Cells):
 class EditColumn(Column):
     edit: Field = Refinable()
 
+    def on_refine_done(self):
+        super(EditColumn, self).on_refine_done()
+        # `edit` here is just for configuration. The real thing is in EditTable.edit_form.fields.
+        self.edit = None
 
 
 def edit_table__post_handler(table, request, **_):
@@ -159,14 +163,19 @@ class EditTable(Table):
                 continue
             if getattr(column.edit, 'include', None) is False:
                 continue
-            field = setdefaults_path(
-                Namespace(),
-                column.edit,
-                call_target__cls=field_class,
-                model=self.model,
-                model_field_name=column.model_field_name,
-                attr=name if column.attr is MISSING else column.attr,
-            )
+
+            if isinstance(column.edit, dict):
+                field = setdefaults_path(
+                    Namespace(),
+                    column.edit,
+                    call_target__cls=field_class,
+                    model=self.model,
+                    model_field_name=column.model_field_name,
+                    attr=name if column.attr is MISSING else column.attr,
+                )
+            else:
+                assert not column.edit.is_refine_done
+                field = column.edit
 
             fields[name] = field
 
@@ -180,6 +189,13 @@ class EditTable(Table):
 
         declared_fields = self.edit_form.iommi_namespace.fields
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
+
+        for f in self.edit_form.iommi_namespace.fields.values():
+            assert isinstance(f, dict) or f.is_refine_done
+
+        # # crash!
+        # for f in self.edit_form.fields.values():
+        #     assert isinstance(f, dict) or f.is_refine_done
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
