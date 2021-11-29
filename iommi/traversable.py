@@ -240,7 +240,7 @@ def declared_members(node: Traversable) -> Any:
         else:
             child = getattr(node, k)
             if isinstance(child, RefinableObject):
-                assert child.is_refine_done, f"refine_done() not invoked on something ({k}) in the declared namespace of {node._name}"
+                # assert child.is_refine_done, f"refine_done() not invoked on something ({k}) in the declared namespace of {node._name}"
                 result[k] = child
     if hasattr(node, '_declared_members'):
         result.update(node._declared_members)

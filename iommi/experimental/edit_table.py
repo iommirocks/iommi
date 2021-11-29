@@ -42,10 +42,10 @@ class EditCell(Cell):
         return path_join(self.column.iommi_path, str(self.row.pk))
 
     def render_cell_contents(self):
-        if self.column.edit:
+        field = self.table.edit_form.fields.get(self.column.iommi_name(), None)
+        if field:
             path = self.get_path()
 
-            field = self.table.edit_form.fields[self.column.iommi_name()]
             field.initial = MISSING
             field.form.instance = self.row
             field.bind_from_instance()
@@ -82,7 +82,6 @@ class EditColumn(Column):
 
     def on_refine_done(self):
         super(EditColumn, self).on_refine_done()
-        # `edit` here is just for configuration. The real thing is in EditTable.edit_form.fields.
         self.edit = None
 
 
@@ -159,23 +158,25 @@ class EditTable(Table):
                 continue
             if getattr(column, 'include', None) is False:
                 continue
-            if getattr(column, 'edit', None) is None:
+
+            edit_conf = column.iommi_namespace.get('edit', None)
+
+            if not edit_conf:
                 continue
             if getattr(column.edit, 'include', None) is False:
                 continue
 
-            if isinstance(column.edit, dict):
+            if isinstance(edit_conf, dict):
                 field = setdefaults_path(
                     Namespace(),
-                    column.edit,
+                    edit_conf,
                     call_target__cls=field_class,
                     model=self.model,
                     model_field_name=column.model_field_name,
                     attr=name if column.attr is MISSING else column.attr,
                 )
             else:
-                assert not column.edit.is_refine_done
-                field = column.edit
+                field = column.iommi_namespace.edit
 
             fields[name] = field
 
@@ -185,17 +186,11 @@ class EditTable(Table):
             fields=fields,
             _name='edit_form',
             auto=self.auto,
+            auto__include=list(fields.keys()),
         ))
 
         declared_fields = self.edit_form.iommi_namespace.fields
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
-
-        for f in self.edit_form.iommi_namespace.fields.values():
-            assert isinstance(f, dict) or f.is_refine_done
-
-        # # crash!
-        # for f in self.edit_form.fields.values():
-        #     assert isinstance(f, dict) or f.is_refine_done
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
