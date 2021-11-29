@@ -681,7 +681,7 @@ class Query(Part):
             _name=FREETEXT_SEARCH_NAME,
             display_name=gettext('Search'),
             required=False,
-            include=any(filter.freetext for filter in values(self.iommi_namespace.filters)),
+            include=lambda query, **_: any(filter.freetext for filter in values(query.filters)),
             help__include=False,
             **self.iommi_namespace.form.get('fields', {}).get(FREETEXT_SEARCH_NAME, {}),
         )
@@ -695,8 +695,7 @@ class Query(Part):
                 model_field=filter.model_field,
                 attr=name if filter.attr is MISSING else filter.attr,
                 help__include=False,
-                # TODO: this isn't right, freetext can be a callable
-                include=filter.include and not filter.freetext,
+                include=lambda query, field, **_: field.iommi_name() in query.filters and not query.filters[field.iommi_name()].freetext,
             )
 
         # Remove fields from the form that correspond to non-included filters
@@ -1004,6 +1003,7 @@ class Query(Part):
                             ]
                         )
                     )
+                    assert result[-1] != '()'
             return ' and '.join(result)
         else:
             return ''

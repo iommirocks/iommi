@@ -1,3 +1,5 @@
+from django.utils.translation import gettext_lazy
+
 from iommi.asset import Asset
 from iommi.debug import (
     endpoint__debug_tree,
@@ -115,6 +117,11 @@ base = Style(
         ),
     ),
     Form=dict(
+        shortcuts=dict(
+            edit__actions__submit__display_name=gettext_lazy('Save'),
+            create__actions__submit__display_name=gettext_lazy('Create'),
+            delete__actions__submit__display_name=gettext_lazy('Delete'),
+        ),
         template='iommi/form/form.html',
         actions_template='iommi/form/actions.html',
     ),

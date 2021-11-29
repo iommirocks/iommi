@@ -137,10 +137,23 @@ class Admin(Page):
         parts__list_auth_user = dict(
             auto__include=['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
             columns=dict(
-                username__filter__freetext=True,
-                email__filter__freetext=True,
-                first_name__filter__freetext=True,
-                last_name__filter__freetext=True,
+                username__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                email__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                first_name__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                last_name__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+
                 is_staff__filter__include=True,
                 is_active__filter__include=True,
                 is_superuser__filter__include=True,

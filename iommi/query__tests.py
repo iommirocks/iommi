@@ -929,3 +929,11 @@ def test_filter_on_camel_case():
 
     query = Query(auto__model=CamelCaseFieldModel).bind()
     assert repr(query.parse_query_string('camelCaseField=1')) == repr(Q(camelCaseField__exact=True))
+
+
+def test_no_freetext_when_not_included():
+    class MyQuery(Query):
+        foo = Filter(include=False, freetext=True)
+
+    assert FREETEXT_SEARCH_NAME not in MyQuery().bind().form.fields
+
