@@ -14,6 +14,7 @@ from tests.helpers import (
     req,
     verify_table_html,
 )
+from tests.models import TFoo
 
 
 @pytest.mark.django_db
@@ -118,7 +119,7 @@ def test_edit_table_definition():
         )
     ).bind()
 
-    assert list(my_edit_table.columns.keys()) == [
+    assert list(my_edit_table.columns) == [
         'foo',
         'bar',
         'baz',
@@ -127,3 +128,19 @@ def test_edit_table_definition():
         'bang',
         'bong',
     ]
+
+    assert list(my_edit_table.edit_form.fields) == [
+        'bar',
+        'baz',
+        'bang',
+        'bong',
+    ]
+
+
+def test_edit_table_from_model():
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a__edit__include=True,
+        columns__b__edit__include=False,
+    )
+    assert list(table.bind().form.fields) == ['a']

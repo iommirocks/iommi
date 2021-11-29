@@ -3,7 +3,6 @@ from typing import Type
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
 from django.template import (
     Context,
     Template,
@@ -82,7 +81,10 @@ class EditColumn(Column):
 
     def on_refine_done(self):
         super(EditColumn, self).on_refine_done()
-        self.edit = None
+        if self.edit:
+            if isinstance(self.edit, dict):
+                self.edit = Namespace(self.edit)()
+            self.edit = self.edit.refine_done()
 
 
 def edit_table__post_handler(table, request, **_):
@@ -186,7 +188,6 @@ class EditTable(Table):
             fields=fields,
             _name='edit_form',
             auto=self.auto,
-            auto__include=list(fields.keys()),
         ))
 
         declared_fields = self.edit_form.iommi_namespace.fields
