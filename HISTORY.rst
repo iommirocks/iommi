@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+4.3.0 (2021-11-30)
+~~~~~~~~~~~~~~~~~~
+
+* Freetext field could be shown when it shouldn't, causing a crash on search
+
+* Experimental feature: `EditTable`. Import `iommi.experimental.edit_table.EditTable`. This API can change at any time and also move away from `experimental`.
+
+* Logout redirect for `Form.edit`/`Form.create` now follows `settings.LOGOUT_REDIRECT_URL`
+
+* Nicer error message for missing `parso` install
+
+* Fixed error for when you specify conf in a way that isn't supported. This would silently ignore the configuration before.
+
+
 4.2.0 (2021-11-18)
 ~~~~~~~~~~~~~~~~~~
 
