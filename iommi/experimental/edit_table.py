@@ -71,7 +71,9 @@ class EditCells(Cells):
         for column in values(self.iommi_parent().columns):
             if not column.render_column:
                 continue
-            if not column.edit:
+
+            field = self.iommi_parent().edit_form.fields.get(column.iommi_name(), None)
+            if not field:
                 continue
             yield self.cell_class(cells=self, column=column)
 
@@ -81,10 +83,7 @@ class EditColumn(Column):
 
     def on_refine_done(self):
         super(EditColumn, self).on_refine_done()
-        if self.edit:
-            if isinstance(self.edit, dict):
-                self.edit = Namespace(self.edit)()
-            self.edit = self.edit.refine_done()
+        self.edit = None
 
 
 def edit_table__post_handler(table, request, **_):
@@ -182,12 +181,17 @@ class EditTable(Table):
 
             fields[name] = field
 
+        auto = Namespace(self.auto)
+        if auto:
+            auto.default_included = False
+
         self.edit_form = self.get_meta().form_class(**setdefaults_path(
             Namespace(),
             self.edit_form,
             fields=fields,
             _name='edit_form',
-            auto=self.auto,
+            auto=auto,
+            # **({'auto__include': list(fields.keys())} if self.auto else {}),
         ))
 
         declared_fields = self.edit_form.iommi_namespace.fields

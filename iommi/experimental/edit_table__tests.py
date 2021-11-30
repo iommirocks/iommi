@@ -129,12 +129,12 @@ def test_edit_table_definition():
         'bong',
     ]
 
-    assert list(my_edit_table.edit_form.fields) == [
+    assert set(my_edit_table.edit_form.fields) == {
         'bar',
         'baz',
         'bang',
         'bong',
-    ]
+    }
 
 
 def test_edit_table_from_model():
@@ -143,4 +143,12 @@ def test_edit_table_from_model():
         columns__a__edit__include=True,
         columns__b__edit__include=False,
     )
-    assert list(table.bind().form.fields) == ['a']
+    assert list(table.bind().edit_form.fields) == ['a']
+
+
+def test_edit_table_from_model_implicit_exclude():
+    table = EditTable(
+        auto__model=TFoo,
+        columns__a__edit__include=True,
+    )
+    assert list(table.bind().edit_form.fields) == ['a']
