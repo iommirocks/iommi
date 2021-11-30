@@ -1472,8 +1472,6 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
     if normalizing is None:
         normalizing = []
 
-    SENTINEL = object()
-
     def test_empty_string_data():
         f = Form(fields__foo=shortcut(required=False,),).bind(
             request=req('get', foo=''),
@@ -1490,18 +1488,20 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
         assert f.fields.foo.value in (None, [])
 
     def test_editable_false():
-        f = Form(fields__foo=shortcut(required=False, initial=SENTINEL, editable=False),).bind(
-            request=req('get', foo='asdasasd'),
-        )
-        assert not f.get_errors()
-        assert f.fields.foo.value is SENTINEL
+        for _, initial in raw_and_parsed_data_tuples:
+            f = Form(fields__foo=shortcut(required=False, initial=initial, editable=False),).bind(
+                request=req('get', foo='asdasasd'),
+            )
+            assert not f.get_errors()
+            assert f.fields.foo.value is initial
 
     def test_editable_false_list():
-        f = Form(fields__foo=shortcut(required=False, initial=[SENTINEL], editable=False),).bind(
-            request=req('get', foo='asdasasd'),
-        )
-        assert not f.get_errors()
-        assert f.fields.foo.value == [SENTINEL]
+        for _, initial in raw_and_parsed_data_tuples:
+            f = Form(fields__foo=shortcut(required=False, initial=[initial], editable=False),).bind(
+                request=req('get', foo='asdasasd'),
+            )
+            assert not f.get_errors()
+            assert f.fields.foo.value == [initial]
 
     def test_roundtrip_from_initial_to_raw_string():
         for raw, initial in raw_and_parsed_data_tuples:
