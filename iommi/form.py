@@ -987,7 +987,13 @@ class Field(Part, Tag):
         return call_target(**kwargs)
 
     @classmethod
+    @class_shortcut
+    def number(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
     @class_shortcut(
+        call_target__attribute='number',
         parse=int_parse,
     )
     def integer(cls, call_target=None, **kwargs):
@@ -995,6 +1001,7 @@ class Field(Part, Tag):
 
     @classmethod
     @class_shortcut(
+        call_target__attribute='number',
         parse=float_parse,
     )
     def float(cls, call_target=None, **kwargs):
@@ -1134,6 +1141,7 @@ class Field(Part, Tag):
     @classmethod
     @class_shortcut(
         parse=decimal_parse,
+        call_target__attribute='number',
     )
     def decimal(cls, call_target=None, **kwargs):
         return call_target(**kwargs)

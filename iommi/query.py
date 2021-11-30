@@ -429,6 +429,14 @@ class Filter(Part):
 
     @classmethod
     @class_shortcut(
+        field__call_target__attribute='number',
+    )
+    def number(cls, call_target=None, **kwargs):
+        return call_target(**kwargs)
+
+    @classmethod
+    @class_shortcut(
+        call_target__attribute='number',
         field__call_target__attribute='integer',
         parse=int_parse,
     )
@@ -437,6 +445,7 @@ class Filter(Part):
 
     @classmethod
     @class_shortcut(
+        call_target__attribute='number',
         field__call_target__attribute='float',
         parse=float_parse,
     )
@@ -483,6 +492,7 @@ class Filter(Part):
 
     @classmethod
     @class_shortcut(
+        call_target__attribute='number',
         field__call_target__attribute='decimal',
     )
     def decimal(cls, call_target=None, **kwargs):
