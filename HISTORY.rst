@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.3.1 (2021-11-30)
+~~~~~~~~~~~~~~~~~~
+
+* Due to a mistake in packaging the experimental feature EditTable was not included in previous release. This is now fixed.
+
+
 4.3.0 (2021-11-30)
 ~~~~~~~~~~~~~~~~~~
 

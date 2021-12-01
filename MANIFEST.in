@@ -4,7 +4,9 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 include requirements.txt
-exclude tests/*
-exclude iommi/*__tests.py
-recursive-include iommi/templates *
-recursive-include iommi/locale *
+exclude tests/*.*
+recursive-include iommi *.*
+recursive-exclude iommi *__tests.py
+recursive-exclude iommi *.pyc
+recursive-exclude iommi testreport.xml
+prune *__tests.py
