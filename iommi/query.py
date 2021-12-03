@@ -687,14 +687,17 @@ class Query(Part):
         field_class = self.get_meta().form_class.get_meta().member_class
 
         declared_fields = Struct()
-        declared_fields[FREETEXT_SEARCH_NAME] = field_class(
-            _name=FREETEXT_SEARCH_NAME,
-            display_name=gettext('Search'),
-            required=False,
-            include=lambda query, **_: any(filter.freetext for filter in values(query.filters)),
-            help__include=False,
-            **self.iommi_namespace.form.get('fields', {}).get(FREETEXT_SEARCH_NAME, {}),
-        )
+
+        freetext_search_config = self.iommi_namespace.form.get('fields', {}).get(FREETEXT_SEARCH_NAME, {})
+        if freetext_search_config is not None:
+            declared_fields[FREETEXT_SEARCH_NAME] = field_class(
+                _name=FREETEXT_SEARCH_NAME,
+                display_name=gettext('Search'),
+                required=False,
+                include=lambda query, **_: any(filter.freetext for filter in values(query.filters)),
+                help__include=False,
+                **freetext_search_config,
+            )
 
         for name, filter in items(self.iommi_namespace.filters):
             declared_fields[name] = setdefaults_path(

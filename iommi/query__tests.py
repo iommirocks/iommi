@@ -771,6 +771,14 @@ def test_freetext_combined_with_other_stuff():
     )
 
 
+def test_turn_off_freetext_with_none():
+    class TestQuery(Query):
+        class Meta:
+            form__fields__freetext_search = None
+
+    assert 'freetext_search' not in TestQuery().bind().form.fields
+
+
 @pytest.mark.django_db
 def test_from_model_with_inheritance():
     was_called = defaultdict(int)
