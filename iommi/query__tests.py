@@ -779,6 +779,14 @@ def test_turn_off_freetext_with_none():
     assert 'freetext_search' not in TestQuery().bind().form.fields
 
 
+def test_turn_off_freetext_with_include_false():
+    class TestQuery(Query):
+        class Meta:
+            form__fields__freetext_search__include = False
+
+    assert 'freetext_search' not in TestQuery().bind().form.fields
+
+
 @pytest.mark.django_db
 def test_from_model_with_inheritance():
     was_called = defaultdict(int)

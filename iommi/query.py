@@ -691,12 +691,15 @@ class Query(Part):
         freetext_search_config = self.iommi_namespace.form.get('fields', {}).get(FREETEXT_SEARCH_NAME, {})
         if freetext_search_config is not None:
             declared_fields[FREETEXT_SEARCH_NAME] = field_class(
-                _name=FREETEXT_SEARCH_NAME,
-                display_name=gettext('Search'),
-                required=False,
-                include=lambda query, **_: any(filter.freetext for filter in values(query.filters)),
-                help__include=False,
-                **freetext_search_config,
+                **setdefaults_path(
+                    Namespace(),
+                    freetext_search_config,
+                    _name=FREETEXT_SEARCH_NAME,
+                    display_name=gettext('Search'),
+                    required=False,
+                    include=lambda query, **_: any(filter.freetext for filter in values(query.filters)),
+                    help__include=False,
+                )
             )
 
         for name, filter in items(self.iommi_namespace.filters):
