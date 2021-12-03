@@ -104,8 +104,8 @@ def test_formset_table_nested():
 @pytest.mark.django_db
 def test_formset_table_post():
     rows = [
-        Struct(pk=1, editable_thing='foo', readonly_thing='bar', save=lambda: None, ),
-        Struct(pk=2, editable_thing='baz', readonly_thing='buzz', save=lambda: None, ),
+        Struct(pk=1, editable_thing='foo', readonly_thing='bar', save=lambda **_: None, ),
+        Struct(pk=2, editable_thing='baz', readonly_thing='buzz', save=lambda **_: None, ),
     ]
     edit_table = EditTable(
         columns=dict(
