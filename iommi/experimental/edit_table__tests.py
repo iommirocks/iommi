@@ -5,6 +5,7 @@ from tri_struct import Struct
 from iommi import (
     Column,
     Field,
+    Form,
 )
 from iommi.experimental.edit_table import (
     EditColumn,
@@ -76,6 +77,28 @@ def test_formset_table():
             </form>
         """
     )
+
+
+@pytest.mark.django_db
+def test_formset_table_nested():
+    form = Form(
+        fields__edit_table=EditTable(
+            sortable=False,
+            columns=dict(
+                editable_thing=EditColumn(
+                    edit=Namespace(call_target=Field),
+                ),
+                readonly_thing=EditColumn(),
+            ),
+            rows=[
+                Struct(pk=1, editable_thing='foo', readonly_thing='bar'),
+                Struct(pk=2, editable_thing='baz', readonly_thing='buzz'),
+            ],
+        ),
+    )
+
+    html = form.bind(request=req('get')).__html__()
+    assert html.count('<form') == 1
 
 
 @pytest.mark.django_db
