@@ -16,6 +16,8 @@ def save_nested_forms(form, request, **_):
     did_fail = False
     for nested_form in form.nested_forms.values():
         for action in nested_form.actions.values():
+            if action.post_handler is None:
+                continue
             if action.post_handler and action.post_handler(**action.iommi_evaluate_parameters()) is None:
                 did_fail = True
 

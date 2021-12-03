@@ -13,6 +13,7 @@ from django.template import (
 from django.utils.translation import gettext
 from tri_declarative import (
     EMPTY,
+    getattr_path,
     Namespace,
     Refinable,
     setdefaults_path,
@@ -116,12 +117,15 @@ def edit_table__post_handler(table, request, **_):
     for cells in table.cells_for_rows():
         instance = cells.row
         table.edit_form.instance = instance
+        attrs_to_save = []
         for cell in cells.iter_editable_cells():
             path = table.edit_form.fields[cell.column.iommi_name()].iommi_path + '/' + str(instance.pk)
             value = parsed_data[path]
             field = table.edit_form.fields[cell.column.iommi_name()]
-            field.write_to_instance(field=field, instance=instance, value=value)
-        instance.save()
+            if getattr_path(instance, field.attr) != value:
+                field.write_to_instance(field=field, instance=instance, value=value)
+                attrs_to_save.append(field.attr)
+        instance.save(update_fields=attrs_to_save)
 
     if 'post_save' in table.extra:
         table.extra.post_save(**table.iommi_evaluate_parameters())
