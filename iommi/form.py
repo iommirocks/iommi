@@ -1506,6 +1506,9 @@ class Form(Part):
     # property for jinja2 compatibility
     @property
     def render_actions(self):
+        # For now we do not support actions in child forms.
+        if self.is_nested_form:
+            return ''
         assert self._is_bound, NOT_BOUND_MESSAGE
         non_grouped_actions, grouped_actions = group_actions(self.actions)
         return render_template(

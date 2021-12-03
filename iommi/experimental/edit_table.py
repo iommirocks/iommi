@@ -1,5 +1,8 @@
 from collections import defaultdict
-from typing import Type
+from typing import (
+    Optional,
+    Type,
+)
 
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
@@ -130,6 +133,7 @@ class EditTable(Table):
     edit_errors = None
     edit_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
+    parent_form: Optional[Form] = Refinable()
 
     class Meta:
         form_class = Form
@@ -197,3 +201,22 @@ class EditTable(Table):
         super(EditTable, self).on_bind()
         self.edit_form = self.edit_form.bind(parent=self)
         self._bound_members.edit_form = self.edit_form
+
+        # If this is a nested form register it with the parent, need
+        # to do this early because is_target needs self.parent_form
+        if self.iommi_parent() is not None:
+            self.parent_form = self.iommi_parent().iommi_evaluate_parameters().get('form', None)
+            if self.parent_form is not None:
+                self.parent_form.nested_forms[self._name] = self
+                self.outer.tag = None
+
+    def is_valid(self):
+        return self.edit_form.is_valid()
+
+    @property
+    def render_actions(self):
+        # For now we do not support actions in child forms. This mirrors the behavior in Form
+        if self.parent_form:
+            return ''
+
+        return super().render_actions
