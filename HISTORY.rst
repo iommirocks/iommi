@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+4.3.2 (2021-12-06)
+~~~~~~~~~~~~~~~~~~
+
+* `EditTable` can now be nested inside a `Form`, similar to how forms can be nested in forms.
+
+* Make it possible to turn off freetext_search query form field by passing `None` as config.
+
+* Optimized writing for `EditTable`
+
+* Several fixes for `EditTable`. Basically it works now :)
+
+
 4.3.1 (2021-11-30)
 ~~~~~~~~~~~~~~~~~~
 
