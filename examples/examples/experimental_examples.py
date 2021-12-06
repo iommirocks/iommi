@@ -43,7 +43,7 @@ urlpatterns = [
         'nested/',
         Form(
             fields=dict(
-                # edit_album=Form.edit(auto__model=Track, instance=lambda **_: Track.objects.get(album__artist__name='Black Sabbath', name='Supernaut'), fields__name__include=False),
+                edit_album=Form.edit(auto__model=Track, instance=lambda **_: Track.objects.get(album__artist__name='Black Sabbath', name='Supernaut'), fields__name__include=False),
                 edit_table=EditTable(
                     auto__model=Album,
                     columns__artist__edit__include=True,
