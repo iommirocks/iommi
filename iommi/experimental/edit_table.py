@@ -50,10 +50,14 @@ class EditCell(Cell):
             path = self.get_path()
 
             field.initial = MISSING
+            field.raw_data = None
+            field.value = None
+            field.parsed_data = None
+            field._errors = set()
             field.form.instance = self.row
+            field._iommi_path_override = path
+            del field.input.attrs['value']
             field.bind_from_instance()
-            field.input.attrs.name += f'/{self.row.pk}'
-            field.input.attrs.id += f'__{self.row.pk}'
 
             input_html = field.input.__html__()
 
@@ -98,7 +102,7 @@ def edit_table__post_handler(table, request, **_):
         instance = cells.row
         table.edit_form.instance = instance
         for cell in cells.iter_editable_cells():
-            path = table.edit_form.fields[cell.column.iommi_name()].iommi_path + '/' + str(instance.pk)
+            path = cell.get_path()
             field = table.edit_form.fields[cell.column.iommi_name()]
             try:
                 parsed_data[path] = field.parse(
@@ -108,6 +112,8 @@ def edit_table__post_handler(table, request, **_):
             except ValidationError as e:
                 errors[path] |= set(e.messages)
             except ValueError as e:
+                errors[path] = {str(e)}
+            except TypeError as e:
                 errors[path] = {str(e)}
 
     if errors:
@@ -119,7 +125,7 @@ def edit_table__post_handler(table, request, **_):
         table.edit_form.instance = instance
         attrs_to_save = []
         for cell in cells.iter_editable_cells():
-            path = table.edit_form.fields[cell.column.iommi_name()].iommi_path + '/' + str(instance.pk)
+            path = cell.get_path()
             value = parsed_data[path]
             field = table.edit_form.fields[cell.column.iommi_name()]
             if getattr_path(instance, field.attr) != value:

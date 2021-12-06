@@ -104,6 +104,9 @@ class Traversable(RefinableObject):
 
     @property
     def iommi_path(self) -> str:
+        if hasattr(self, '_iommi_path_override'):
+            return self._iommi_path_override
+
         long_path = build_long_path(self)
         path_by_long_path = get_path_by_long_path(self)
         path = path_by_long_path.get(long_path)

@@ -52,7 +52,7 @@ def test_formset_table():
                             <tbody>
                                 <tr data-pk="1">
                                     <td>
-                                         <input id="id_edit_form__editable_thing__1" name="edit_form/editable_thing/1" type="text" value="foo"/>
+                                         <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/>
                                     </td>
                                     <td>
                                         bar
@@ -60,7 +60,7 @@ def test_formset_table():
                                 </tr>
                                 <tr data-pk="2">
                                     <td>
-                                        <input id="id_edit_form__editable_thing__2" name="edit_form/editable_thing/2" type="text" value="baz"/>
+                                        <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/>
                                     </td>
                                     <td>
                                         buzz
@@ -117,8 +117,8 @@ def test_formset_table_post():
         rows=rows,
     )
     response = edit_table.bind(request=req('POST', **{
-        'edit_form/editable_thing/1': 'fisk',
-        'edit_form/editable_thing/2': 'fusk',
+        'editable_thing/1': 'fisk',
+        'editable_thing/2': 'fusk',
         '-submit': '',
     })).render_to_response()
     assert response.status_code == 302
