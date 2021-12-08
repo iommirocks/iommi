@@ -131,6 +131,11 @@ def edit_table__post_handler(table, request, **_):
             if getattr_path(instance, field.attr) != value:
                 field.write_to_instance(field=field, instance=instance, value=value)
                 attrs_to_save.append(field.attr)
+
+        if instance.pk is not None and instance.pk < 0:
+            instance.pk = None
+        if instance.pk is None:
+            attrs_to_save = None
         instance.save(update_fields=attrs_to_save)
 
     if 'post_save' in table.extra:
