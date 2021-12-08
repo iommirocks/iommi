@@ -15,6 +15,7 @@ from io import (
 import django
 import pytest
 from bs4 import BeautifulSoup
+from django.core.exceptions import FieldError
 from django.test import override_settings
 from freezegun import freeze_time
 from tri_declarative import (
@@ -3112,3 +3113,11 @@ def test_error_accidental_cache_of_valid_state():
     assert form.get_errors() == {'fields': {'foo': {'This field is required'}}}
     assert not form._valid
 
+
+@pytest.mark.django_db
+def test_error_on_incorrect_search_fields():
+    f = Form.create(auto__model=Bar, fields__foo__search_fields=['invalid']).refine_done()
+    form = f.bind(request=req('get', **{'/foo': ''}))
+    with pytest.raises(FieldError) as e:
+        perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/choices', value='a')
+    assert 'invalid' in str(e.value)
