@@ -734,7 +734,7 @@ class Field(Part, Tag):
             # To render cleanly in templates:
             self.help = ''
 
-        if self.model and self.include:
+        if self.model and self.include and not self.search_fields:
             try:
                 self.search_fields = get_search_fields(model=self.model)
             except NoRegisteredSearchFieldException:
