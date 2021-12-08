@@ -55,7 +55,7 @@ class Page(Part):
     """
     A page is used to compose iommi parts into a bigger whole.
 
-    See the `howto <https://docs.iommi.rocks/en/latest/howto.html#parts-pages>`_ for example usages.
+    See the `howto <https://docs.iommi.rocks/en/latest/cookbook_parts_pages.html#parts-pages>`_ for example usages.
     """
 
     title: str = EvaluatedRefinable()

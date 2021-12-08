@@ -63,7 +63,7 @@ class Part(Traversable):
     """
     `Part` is the base class for parts of a page that can be rendered as html, and can respond to ajax and post.
 
-    See the `howto <https://docs.iommi.rocks/en/latest/howto.html#parts-pages>`_ for example usages.
+    See the `howto <https://docs.iommi.rocks/en/latest/cookbook_parts_pages.html#parts-pages>`_ for example usages.
     """
 
     include: bool = Refinable()  # This is evaluated, but first and in a special way

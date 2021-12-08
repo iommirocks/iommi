@@ -563,7 +563,7 @@ class Field(Part, Tag):
 
             Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
-        :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/howto.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
+        :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/cookbook_forms.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
         :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
         :param parse: Parse function. Default just returns the string input unchanged: `lambda form, field, string_value: string_value`. This function can raise `ValueError` or `ValidationError` to produce a field error message.
         :param initial: Initial value of the field

@@ -17,6 +17,8 @@ callable that takes `filename` and `lineno` arguments and returns a string.
 On your staging server you can use this to point to your source code too,
 which can be very handy.
 
+For VSCode: `IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: 'vscode://file/%s:' % (filename,)+ ('' if lineno is None else "%d" % (lineno,))`
+
 
 Tree
 ----
