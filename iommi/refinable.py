@@ -180,6 +180,8 @@ Available attributes:
                 if k in remaining_namespace:
                     setattr(result, k, remaining_namespace.pop(k))
 
+        remaining_namespace.pop('call_target', None)
+
         if remaining_namespace:
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
