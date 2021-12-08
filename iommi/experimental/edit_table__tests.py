@@ -175,3 +175,15 @@ def test_edit_table_from_model_implicit_exclude():
         columns__a__edit__include=True,
     )
     assert list(table.bind().edit_form.fields) == ['a']
+
+
+@pytest.mark.django_db
+def test_edit_table_auto_rows():
+    table = EditTable(
+        auto__rows=TFoo.objects.all(),
+        columns__a__edit__include=True,
+    )
+    assert list(table.bind().edit_form.fields) == ['a']
+
+
+# TODO: attr=None on a column crashes

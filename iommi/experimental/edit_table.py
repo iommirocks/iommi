@@ -196,6 +196,11 @@ class EditTable(Table):
         if auto:
             auto.default_included = False
 
+        if 'model' not in auto and 'rows' in auto:
+            auto['model'] = auto.rows.model
+
+        auto.pop('rows', None)
+
         self.edit_form = self.get_meta().form_class(**setdefaults_path(
             Namespace(),
             self.edit_form,
