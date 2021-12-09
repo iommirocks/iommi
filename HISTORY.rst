@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+4.3.3 (2021-12-09)
+~~~~~~~~~~~~~~~~~~
+
+* `EditTable`: Fixed auto__rows
+
+* `EditTable`: if instance.pk < 0, treat this as a create
+
+* Passing search_fields to a Field.choice_queryset did nothing
+
+
+
 4.3.2 (2021-12-06)
 ~~~~~~~~~~~~~~~~~~
 
