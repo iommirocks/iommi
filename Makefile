@@ -80,3 +80,6 @@ makemessages:
 compilemessages:
 	(cd iommi && django-admin compilemessages)
 	(cd examples && django-admin compilemessages)
+
+release:
+	rm -rf dist/ && python setup.py sdist bdist_wheel && twine upload dist/*
