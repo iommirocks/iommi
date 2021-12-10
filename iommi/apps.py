@@ -22,6 +22,7 @@ class IommiConfig(AppConfig):
         from iommi.style_test_base import test
         from iommi.style_base import base
         from iommi.style_bootstrap import bootstrap
+        from iommi.style_bootstrap5 import bootstrap5
         from iommi.style_semantic_ui import semantic_ui
         from iommi.style_foundation import foundation
         from iommi.style_django_admin import django_admin
@@ -33,6 +34,7 @@ class IommiConfig(AppConfig):
         register_style('test', test)
         register_style('bulma', bulma)
         register_style('bootstrap', bootstrap)
+        register_style('bootstrap5', bootstrap5)
         register_style('semantic_ui', semantic_ui)
         register_style('water', water)
         register_style('foundation', foundation)
