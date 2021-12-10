@@ -42,7 +42,9 @@ select2_assets = dict(
                 };
                 if (endpoint_path) {
                     options.ajax = {
-                        url: "",
+                        url: function() {
+                            return '?' + this.closest('form').serialize();
+                        },
                         dataType: "json",
                         data: function (params) {
                             let result = {
