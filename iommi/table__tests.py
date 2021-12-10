@@ -3636,3 +3636,8 @@ def test_tbody_refined():
     ).bind(request=req('get'))
     rendered = t.__html__()
     assert rendered.index('before') < rendered.index('middle') < rendered.index('after')
+
+
+def test_filter_model_mixup2():
+    t = Table(auto__model=TBar, auto__include=['foo__a']).bind(request=req('get'))
+    assert t.columns.foo_a.model == TFoo

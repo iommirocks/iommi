@@ -1664,7 +1664,7 @@ class Table(Part, Tag):
                     Namespace(),
                     column.filter,
                     call_target__cls=field_class,
-                    model=self.model,
+                    model=column.model,
                     model_field_name=column.model_field_name,
                     _name=name,
                     attr=name if column.attr is MISSING else column.attr,
