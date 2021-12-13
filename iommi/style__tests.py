@@ -1,6 +1,5 @@
 import pytest
 from tri_declarative import (
-    class_shortcut,
     dispatch,
     Namespace,
     Refinable,
@@ -19,6 +18,7 @@ from iommi import (
 from iommi.attrs import render_attrs
 from iommi.base import items
 from iommi.refinable import RefinableObject
+from iommi.shortcut import with_defaults
 from iommi.style import (
     get_global_style,
     get_style_data_for_object,
@@ -49,9 +49,9 @@ def test_style():
         bar = Refinable()
 
         @classmethod
-        @class_shortcut
-        def shortcut1(cls, call_target, **kwargs):
-            return call_target(**kwargs)
+        @with_defaults
+        def shortcut1(cls, **kwargs):
+            return cls(**kwargs)
 
         def items(self):
             return dict(foo=self.foo, bar=self.bar)
@@ -62,9 +62,9 @@ def test_style():
             super().__init__(**kwargs)
 
         @classmethod
-        @class_shortcut(call_target__attribute='shortcut1')
-        def shortcut2(cls, call_target, **kwargs):
-            return call_target(**kwargs)
+        @with_defaults
+        def shortcut2(cls, **kwargs):
+            return cls.shortcut1(**kwargs)
 
     base = Style(
         A=dict(
@@ -201,8 +201,15 @@ def test_validate_default_styles():
 
 
 def test_error_when_trying_to_style_non_existent_attribute():
-    with pytest.raises(TypeError):
-        Menu(iommi_style=Style(Menu__something_that_does_not_exist='!!!')).refine_done()
+    with pytest.raises(TypeError, match=(
+        'Fragment object has no refinable attribute\\(s\\): "something_that_does_not_exist".\n'
+        + 'Available attributes:\n'
+        + '    after\n'
+        + '    assets\n'
+        + '    attrs\n'
+        # ...
+    )):
+        Fragment(iommi_style=Style(Fragment__something_that_does_not_exist='!!!')).refine_done()
 
 
 def test_error_message_for_invalid_style():
@@ -301,23 +308,13 @@ class MyRefinableObject(RefinableObject):
             self.foo = self.foo.refine_done(parent=self)
 
 
-def test_reinvokable_new_defaults_recurse():
-    x = MyRefinableObject(foo=MyRefinableObject(bar=17))
-    x = x.refine_defaults(foo__bar=42, foo__baz=43).refine_done()
-
-    assert isinstance(x, MyRefinableObject)
-    assert isinstance(x.foo, MyRefinableObject)
-    assert x.foo.bar == 17
-    assert x.foo.baz == 43
-
-
 def test_reinvoke_new_default_change_shortcut():
     class RefinableObjectWithShortcut(MyRefinableObject):
         @classmethod
-        @class_shortcut
-        def shortcut(cls, call_target=None, **kwargs):
+        @with_defaults
+        def shortcut(cls, **kwargs):
             kwargs['baz'] = 'baz'
-            return call_target(**kwargs)
+            return cls(**kwargs)
 
     x = RefinableObjectWithShortcut.shortcut(bar='bar').refine_done()
     assert x.bar == 'bar'

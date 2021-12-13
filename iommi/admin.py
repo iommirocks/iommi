@@ -24,7 +24,6 @@ from django.urls import (
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 from tri_declarative import (
-    class_shortcut,
     dispatch,
     EMPTY,
     flatten,
@@ -52,6 +51,7 @@ from iommi.base import (
     values,
 )
 from iommi.refinable import Refinable
+from iommi.shortcut import with_defaults
 
 app_verbose_name_by_label = {
     config.label: config.verbose_name.replace('_', ' ')
@@ -161,7 +161,8 @@ class Admin(Page):
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
-    apps: Namespace = Refinable()  # Global configuration on apps level
+    # Global configuration on apps level
+    apps: Namespace = Refinable()
 
     menu = Menu(
         sub_menu=dict(
@@ -278,10 +279,10 @@ class Admin(Page):
         return dict(admin=self, **super(Admin, self).own_evaluate_parameters())
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         operation='all_models',
     )
-    def all_models(cls, table=None, *, call_target, **kwargs):
+    def all_models(cls, table=None, **kwargs):
 
         def rows(admin, **_):
             for app_name, models in items(django_apps.all_models):
@@ -326,7 +327,7 @@ class Admin(Page):
             ),
         )
 
-        return call_target(
+        return cls(
             parts__all_models=table,
             **kwargs,
         )
@@ -370,8 +371,8 @@ class Admin(Page):
         )
 
     @classmethod
-    @class_shortcut
-    def crud(cls, operation, form=None, *, call_target, **kwargs):
+    @with_defaults
+    def crud(cls, operation, form=None, **kwargs):
         def on_save(request, form, instance, **_):
             message = f'{form.model._meta.verbose_name.capitalize()} {instance} was ' + (
                 'created' if form.extra.is_create else 'updated'
@@ -391,41 +392,38 @@ class Admin(Page):
             extra__on_delete=on_delete,
         )
 
-        return call_target(
+        return cls(
             parts__form=form,
             operation=operation,
             **kwargs,
         )
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='crud',
+    @with_defaults(
         parts__header__children__link__attrs__href='../../..',
     )
-    def create(cls, *, call_target, **kwargs):
-        return call_target(
+    def create(cls, **kwargs):
+        return cls.crud(
             operation='create',
             **kwargs,
         )
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='crud',
+    @with_defaults(
         parts__header__children__link__attrs__href='../../../..',
     )
-    def edit(cls, *, call_target, **kwargs):
-        return call_target(
+    def edit(cls, **kwargs):
+        return cls.crud(
             operation='edit',
             **kwargs,
         )
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='crud',
+    @with_defaults(
         parts__header__children__link__attrs__href='../../../..',
     )
-    def delete(cls, *, call_target, **kwargs):
-        return call_target(
+    def delete(cls, **kwargs):
+        return cls.crud(
             operation='delete',
             **kwargs,
         )

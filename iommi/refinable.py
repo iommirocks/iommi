@@ -1,14 +1,23 @@
 from copy import copy
+from enum import (
+    auto,
+    Enum,
+)
+from typing import (
+    Any,
+    List,
+    Tuple,
+)
 
 from tri_declarative import (
     declarative,
     dispatch,
-    flatten,
     getattr_path,
     Namespace,
     Refinable,
     refinable,
 )
+from tri_declarative.refinable import is_refinable_function
 
 from iommi.base import items
 
@@ -19,85 +28,85 @@ def prefixes(path):
         yield '__'.join(parts[: i + 1])
 
 
-class RefinedNamespace(Namespace):
-    __iommi_refined_description: str
-    __iommi_refined_parent: Namespace
-    __iommi_refined_params: Namespace
-    __iommi_refined_defaults: bool
+class Prio(Enum):
+    refine_defaults = auto()
+    table_defaults = auto()
+    member_defaults = auto()
+    constructor = auto()
+    shortcut = auto()
+    style = auto()
+    base = auto()
+    member = auto()
+    refine = auto()
 
-    def __init__(self, description, parent, defaults=False, *args, **kwargs):
-        params = Namespace(*args, **kwargs)
-        object.__setattr__(self, '__iommi_refined_description', description)
-        object.__setattr__(self, '__iommi_refined_parent', parent)
-        object.__setattr__(self, '__iommi_refined_params', params)
-        object.__setattr__(self, '__iommi_refined_defaults', defaults)
-        missing = object()
-        if defaults:
-            default_updates = Namespace()
-            updates = Namespace()
-            for path, value in items(flatten(params)):
-                found = False
-                for prefix in prefixes(path):
-                    existing = getattr_path(parent, prefix, missing)
-                    if existing is missing:
-                        break
-                    if isinstance(existing, RefinableObject):
-                        new_defaults = getattr_path(params, prefix)
-                        if isinstance(new_defaults, dict):
-                            existing = existing.refine_defaults(**new_defaults)
-                            updates.setitem_path(prefix, existing)
-                        else:
-                            # We got an entire object here, so throw the rest away!
-                            pass
-                        found = True
-                if not found:
-                    default_updates.setitem_path(path, value)
-            super().__init__(default_updates, parent, updates)
+
+def flatten_items(namespace, _prefix=''):
+    for key, value in dict.items(namespace):
+        path = _prefix + key
+        if isinstance(value, Namespace):
+            if value:
+                yield from flatten_items(value, _prefix=path + '__')
+            else:
+                yield path, value
         else:
-            updates = Namespace()
-            for path, value in items(flatten(params)):
-                found = False
-                for prefix in prefixes(path):
-                    existing = getattr_path(parent, prefix, missing)
-                    if existing is missing:
-                        break
-                    if isinstance(existing, RefinableObject):
-                        new_updates = getattr_path(params, prefix)
-                        if isinstance(new_updates, dict):
-                            existing = existing.refine(**new_updates)
-                        else:
-                            existing = new_updates
-                        updates.setitem_path(prefix, existing)
-                        found = True
-                if not found:
-                    updates.setitem_path(path, value)
-            super().__init__(parent, updates)
+            yield path, value
+
+
+class RefinableNamespace(Namespace):
+    __iommi_refined_stack: List[Tuple[Prio, Namespace, List[Tuple[str, Any]]]]
 
     def as_stack(self):
-        refinements = []
-        default_refinements = []
-        node = self
+        return [
+            (prio.name, dict(flattened_params))
+            for prio, _, flattened_params in self._get_parent_stack()
+        ]
 
-        while isinstance(node, RefinedNamespace):
-            try:
-                description = object.__getattribute__(node, '__iommi_refined_description')
-                parent = object.__getattribute__(node, '__iommi_refined_parent')
-                delta = object.__getattribute__(node, '__iommi_refined_params')
-                defaults = object.__getattribute__(node, '__iommi_refined_defaults')
-                value = (description, flatten(delta))
-                if defaults:
-                    default_refinements = default_refinements + [value]
-                else:
-                    refinements = [value] + refinements
-                node = parent
-            except AttributeError:
-                break
+    def _get_parent_stack(self):
+        try:
+            return object.__getattribute__(self, '__iommi_refined_stack')
+        except AttributeError:
+            return [
+                (Prio.base, self, list(flatten_items(self))),
+            ]
 
-        return default_refinements + [('base', flatten(node))] + refinements
+    def _refine(self, prio: Prio, **kwargs):
+        params = Namespace(**kwargs)
 
+        stack = self._get_parent_stack() + [
+            (prio, params, list(flatten_items(params))),
+        ]
+        stack.sort(key=lambda x: x[0].value)
 
-def is_refinable_function(attr):
-    return getattr(attr, 'refinable', False)
+        result = RefinableNamespace()
+        object.__setattr__(result, '__iommi_refined_stack', stack)
+
+        missing = object()
+
+        for prio, params, flattened_params in stack:
+            for path, value in flattened_params:
+                found = False
+                for prefix in prefixes(path):
+                    existing = getattr_path(result, prefix, missing)
+                    if existing is missing:
+                        break
+                    new_updates = getattr_path(params, prefix)
+
+                    if isinstance(existing, RefinableObject):
+                        if isinstance(new_updates, dict):
+                            existing = existing.refine(prio, **new_updates)
+                        else:
+                            existing = new_updates
+                        result.setitem_path(prefix, existing)
+                        found = True
+
+                    if isinstance(new_updates, RefinableObject):
+                        result.setitem_path(prefix, new_updates)
+                        found = True
+
+                if not found:
+                    result.setitem_path(path, value)
+
+        return result
 
 
 class EvaluatedRefinable(Refinable):
@@ -110,12 +119,12 @@ def evaluated_refinable(f):
     return f
 
 
-class RefinableMembers(Refinable):
-    pass
-
-
 def is_evaluated_refinable(x):
     return isinstance(x, EvaluatedRefinable) or getattr(x, '__iommi__evaluated', False)
+
+
+class RefinableMembers(Refinable):
+    pass
 
 
 @declarative(
@@ -125,34 +134,22 @@ def is_evaluated_refinable(x):
     add_init_kwargs=False,
 )
 class RefinableObject:
-
-    iommi_namespace: Namespace
+    iommi_namespace: RefinableNamespace
     is_refine_done: bool
 
-    @dispatch()
-    def __init__(self, namespace=None, **kwargs):
-        if namespace is None:
-            namespace = Namespace()
-        else:
-            namespace = Namespace(namespace)
-
+    @dispatch
+    def __init__(self, **kwargs):
+        self.iommi_namespace = RefinableNamespace(**kwargs)
         declared_items = self.get_declared('refinable')
-        for name in list(kwargs):
-            prefix, _, _ = name.partition('__')
-            if prefix in declared_items:
-                namespace.setitem_path(name, kwargs.pop(name))
-
-        if kwargs:
+        unknown_args = [name for name in kwargs if name not in declared_items]
+        if unknown_args:
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
-                f"""\
-{self.__class__.__name__} object has no refinable attribute(s): {', '.join(f'"{k}"' for k in sorted(kwargs.keys()))}.
-Available attributes:
-    {available_keys}
-"""
+                f'{self.__class__.__name__} object has no refinable attribute(s): '
+                + ', '.join(f'"{k}"' for k in sorted(unknown_args)) + '.\n'
+                + 'Available attributes:\n    ' + available_keys + '\n'
             )
 
-        self.iommi_namespace = namespace
         self.is_refine_done = False
 
     def refine_done(self, parent=None):
@@ -176,7 +173,7 @@ Available attributes:
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')
-        remaining_namespace = Namespace(result.iommi_namespace)
+        remaining_namespace = dict(result.iommi_namespace)
         for k, v in items(declared_items):
             if k == 'iommi_style':
                 remaining_namespace.pop(k, None)
@@ -188,13 +185,12 @@ Available attributes:
                     setattr(result, k, remaining_namespace.pop(k))
 
         if remaining_namespace:
+            unknown_args = list(remaining_namespace.keys())
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
-                f"""\
-{result.__class__.__name__} object has no refinable attribute(s): {', '.join(f'"{k}"' for k in sorted(remaining_namespace.keys()))}.
-Available attributes:
-    {available_keys}
-"""
+                    f'{result.__class__.__name__} object has no refinable attribute(s): '
+                    + ', '.join(f'"{k}"' for k in sorted(unknown_args)) + '.\n'
+                    + 'Available attributes:\n    ' + available_keys + '\n'
             )
         result.is_refine_done = True
 
@@ -205,17 +201,24 @@ Available attributes:
     def on_refine_done(self):
         pass
 
-    def refine(self, **args):
+    def refine(self, prio: Prio = Prio.refine, **args):
         assert not self.is_refine_done, f"Already called refine_done on {self!r}"
-        result = copy(self)
-        result.iommi_namespace = RefinedNamespace('refine', self.iommi_namespace, **args)
+        if prio == Prio.constructor:
+            # Inplace
+            result = self
+        else:
+            result = copy(self)
+
+        result.iommi_namespace = self.iommi_namespace._refine(prio, **args)
+
         return result
 
     def refine_defaults(self, **args):
-        assert not self.is_refine_done, f"Already called refine_done on {self!r}"
-        result = copy(self)
-        result.iommi_namespace = RefinedNamespace('refine defaults', self.iommi_namespace, defaults=True, **args)
-        return result
+        return self.refine(Prio.refine_defaults, **args)
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self.iommi_namespace}>"
+        return (
+            f"<{self.__class__.__name__} "
+            + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace))
+            + ">"
+        )

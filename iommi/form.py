@@ -34,7 +34,6 @@ from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.translation import gettext
 from tri_declarative import (
-    class_shortcut,
     declarative,
     dispatch,
     EMPTY,
@@ -112,8 +111,10 @@ from iommi.part import (
 from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
+    Prio,
     RefinableMembers,
 )
+from iommi.shortcut import with_defaults
 from iommi.sort_after import sort_after
 
 
@@ -530,11 +531,20 @@ class Field(Part, Tag):
 
     group: str = EvaluatedRefinable()
 
-    @dispatch(
+    class Meta:
+        attrs__class = EMPTY
+        attrs__style = EMPTY
+        errors = EMPTY
+
+    @with_defaults(
+        tag='div',
+        input__attrs__type='text',
+        input__tag='input',
+        label__tag='label',
+        help__attrs__class__helptext=True,
+        help__tag='div',
         attr=MISSING,
         display_name=MISSING,
-        attrs__class=EMPTY,
-        attrs__style=EMPTY,
         parse_empty_string_as_none=True,
         required=True,
         is_list=False,
@@ -543,7 +553,6 @@ class Field(Part, Tag):
         strip_input=True,
         endpoints__config__func=default_endpoints__config,
         endpoints__validate__func=default_endpoints__validate,
-        errors=EMPTY,
         label__call_target=Fragment,
         label__attrs__for=default_input_id,
         help__call_target=Fragment,
@@ -552,11 +561,13 @@ class Field(Part, Tag):
         input__attrs__name=lambda field, **_: field.iommi_path,
         input__extra__placeholder='',
         non_editable_input__call_target=Fragment,
+        non_editable_input__attrs__disabled=True,
         initial=MISSING,
         choice_to_optgroup=None,
         choice_id_formatter=lambda choice, **_: '%s' % choice,
         choice_display_name_formatter=lambda choice, **_: '%s' % choice,
         group=MISSING,
+        empty_label='---',
     )
     def __init__(self, **kwargs):
         """
@@ -596,6 +607,9 @@ class Field(Part, Tag):
         super(Field, self).__init__(**kwargs)
 
     def on_refine_done(self):
+        if 'choice' in getattr(self, '__tri_declarative_shortcut_stack', []):
+            assert self.iommi_namespace.get('choices') is not None, 'To use Field.choice, you must pass the choices list'
+
         model_field = self.model_field
         if model_field and model_field.remote_field:
             self.model = model_field.remote_field.model
@@ -983,107 +997,100 @@ class Field(Part, Tag):
         return f.__html__()
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__attrs__type='hidden',
         attrs__style__display='none',
     )
-    def hidden(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def hidden(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__attrs__type='text',
     )
-    def text(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def text(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__tag='textarea',
         input__attrs__type=None,
         input__attrs__value=None,
         input__children__text=lambda field, **_: field.rendered_value,
         input__attrs__readonly=lambda field, **_: True if field.editable is False else None,
     )
-    def textarea(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def textarea(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut
-    def number(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    @with_defaults
+    def number(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='number',
+    @with_defaults(
         parse=int_parse,
     )
-    def integer(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def integer(cls, **kwargs):
+        return cls.number(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='number',
+    @with_defaults(
         parse=float_parse,
     )
-    def float(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def float(cls, **kwargs):
+        return cls.number(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__attrs__type='password',
     )
-    def password(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def password(cls, **kwargs):
+        return cls(**kwargs)
 
     # Boolean field. Tries hard to parse a boolean value from its input.
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         parse=bool_parse,
         required=False,
         is_boolean=True,
     )
-    def boolean(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def boolean(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         required=True,
         is_list=False,
-        empty_label='---',
         is_valid=choice_is_valid,
         input__attrs__multiple=lambda field, **_: True if field.is_list else None,
         parse=choice_parse,
     )
-    def choice(cls, call_target=None, **kwargs):
+    def choice(cls, **kwargs):
         """
         Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
         :param choice_to_option: callable with three arguments: form, field, choice. Convert from a choice object to a tuple of (choice, value, label, selected), the last three for the <option> element
         """
-        assert 'choices' in kwargs, 'To use Field.choice, you must pass the choices list'
-
-        setdefaults_path(
-            kwargs,
-            empty_choice_tuple=(None, '', kwargs['empty_label'], True),
+        instance = cls(**kwargs)
+        instance = instance.refine(
+            Prio.shortcut,
+            empty_choice_tuple=(None, '', instance.iommi_namespace['empty_label'], True),
         )
-
-        return call_target(**kwargs)
+        return instance
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute="choice",
+    @with_defaults(
         choices=[True, False],
         choice_id_formatter=lambda choice, **_: 'true' if choice else 'false',
         choice_display_name_formatter=lambda choice, **_: gettext('Yes') if choice else gettext('No'),
         parse=boolean_tristate__parse,
         required=False,
     )
-    def boolean_tristate(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def boolean_tristate(cls, **kwargs):
+        return cls.choice(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute="choice",
+    @with_defaults(
         parse=choice_queryset__parse,
         choice_id_formatter=lambda choice, **_: choice.pk,
         endpoints__choices__func=choice_queryset__endpoint_handler,
@@ -1091,7 +1098,7 @@ class Field(Part, Tag):
         extra__filter_and_sort=choice_queryset__extra__filter_and_sort,
         extra__model_from_choices=choice_queryset__extra__model_from_choices,
     )
-    def choice_queryset(cls, choices, call_target=None, **kwargs):
+    def choice_queryset(cls, choices: QuerySet = None, **kwargs):
         if 'model' not in kwargs:
             if isinstance(choices, QuerySet):
                 kwargs['model'] = choices.model
@@ -1102,153 +1109,147 @@ class Field(Part, Tag):
                     False
                 ), 'The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'
 
-        setdefaults_path(
-            kwargs,
-            choices=(lambda form, **_: choices.all())
-            if isinstance(choices, QuerySet)
-            else choices,  # clone the QuerySet if needed
+        instance = cls.choice(**kwargs)
+        instance = instance.refine(
+            Prio.shortcut,
+            choices=(
+                (lambda form, **_: choices.all())
+                if isinstance(choices, QuerySet)
+                else choices
+            ),  # clone the QuerySet if needed
         )
-
-        return call_target(**kwargs)
+        return instance
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='choice',
+    @with_defaults(
         is_list=True,
     )
-    def multi_choice(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def multi_choice(cls, **kwargs):
+        return cls.choice(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='choice_queryset',
+    @with_defaults(
         is_list=True,
     )
-    def multi_choice_queryset(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def multi_choice_queryset(cls, **kwargs):
+        return cls.choice_queryset(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='choice',
+    @with_defaults(
         input__attrs__id=None,
         extra_evaluated__id=default_input_id,
     )
-    def radio(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def radio(cls, **kwargs):
+        return cls.choice(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         parse=datetime_parse,
         render_value=datetime_render_value,
     )
-    def datetime(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def datetime(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         parse=date_parse,
         render_value=date_render_value,
     )
-    def date(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def date(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         parse=time_parse,
         render_value=time_render_value,
     )
-    def time(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def time(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         parse=decimal_parse,
-        call_target__attribute='number',
     )
-    def decimal(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def decimal(cls, **kwargs):
+        return cls.number(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__attrs__type='url',
         parse=url_parse,
     )
-    def url(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def url(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__attrs__type='file',
         raw_data=file__raw_data,
         write_to_instance=file_write_to_instance,
     )
-    def file(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def file(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='file',
+    @with_defaults(
         template='iommi/form/image_row.html',
     )
-    def image(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def image(cls, **kwargs):
+        return cls.file(**kwargs)
 
     # Shortcut to create a fake input that performs no parsing but is useful to separate sections of a form.
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         editable=False,
         attr=None,
     )
-    def heading(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def heading(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         editable=False,
         attr=None,
     )
-    def info(cls, value, call_target=None, **kwargs):
+    def info(cls, value, **kwargs):
         """
         Shortcut to create an info entry.
         """
-        setdefaults_path(
-            kwargs,
+        instance = cls(**kwargs)
+        instance = instance.refine(
+            Prio.shortcut,
             initial=value,
         )
-        return call_target(**kwargs)
+        return instance
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         input__attrs__type='email',
         parse=email_parse,
     )
-    def email(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def email(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         is_valid=phone_number_is_valid,
     )
-    def phone_number(cls, call_target=None, **kwargs):
-        return call_target(**kwargs)
+    def phone_number(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='choice_queryset',
-    )
-    def foreign_key(cls, model_field, model, call_target, **kwargs):
+    @with_defaults
+    def foreign_key(cls, model_field, model, **kwargs):
         del model
         setdefaults_path(
             kwargs,
             choices=model_field.foreign_related_fields[0].model.objects.all(),
         )
-        return call_target(model_field=model_field, **kwargs)
+        return cls.choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='multi_choice_queryset',
-    )
-    def many_to_many(cls, call_target, model_field, **kwargs):
+    @with_defaults
+    def many_to_many(cls, model_field, **kwargs):
         setdefaults_path(
             kwargs,
             choices=model_field.remote_field.model.objects.all(),
@@ -1256,7 +1257,7 @@ class Field(Part, Tag):
             write_to_instance=many_to_many_factory_write_to_instance,
             extra__django_related_field=True,
         )
-        return call_target(model_field=model_field, **kwargs)
+        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
@@ -1429,21 +1430,21 @@ class Form(Part):
         member_class = Field
         action_class = Action
         page_class = Page
+        fields = EMPTY
+        actions = EMPTY
+        auto = EMPTY
+        errors = EMPTY
 
-    @dispatch(
+    @with_defaults(
         model=None,
+        instance=None,
         editable=True,
-        fields=EMPTY,
-        attr=MISSING,
         attrs__action='',
         attrs__method='post',
         attrs__enctype='multipart/form-data',
-        actions=EMPTY,
-        auto=EMPTY,
-        errors=EMPTY,
         h_tag__call_target=Header,
-        instance=None,
         field_group__call_target=FieldGroup,
+        attr=MISSING,
     )
     def __init__(self, **kwargs):
         super(Form, self).__init__(
@@ -1741,7 +1742,7 @@ class Form(Part):
         return r
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         extra__pre_save_all_but_related_fields=lambda **kwargs: None,  # pragma: no mutate
         extra__on_save_all_but_related_fields=lambda **kwargs: None,  # pragma: no mutate
         extra__pre_save=lambda **kwargs: None,  # pragma: no mutate
@@ -1751,40 +1752,37 @@ class Form(Part):
         extra__redirect_to=None,
         auto=EMPTY,
     )
-    def crud(cls, call_target, **kwargs):
-        return call_target(**kwargs)
+    def crud(cls, **kwargs):
+        return cls(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='crud',
+    @with_defaults(
         extra__is_create=True,
         extra__new_instance=lambda form, **_: form.model(),
         actions__submit__post_handler=create_object__post_handler,
         auto__type='create',
     )
-    def create(cls, call_target, **kwargs):
-        return call_target(**kwargs)
+    def create(cls, **kwargs):
+        return cls.crud(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='crud',
+    @with_defaults(
         extra__is_create=False,
         actions__submit__post_handler=edit_object__post_handler,
         auto__type='edit',
     )
-    def edit(cls, call_target, **kwargs):
-        return call_target(**kwargs)
+    def edit(cls, **kwargs):
+        return cls.crud(**kwargs)
 
     @classmethod
-    @class_shortcut(
-        call_target__attribute='crud',
+    @with_defaults(
         actions__submit__call_target__attribute='delete',
         actions__submit__post_handler=delete_object__post_handler,
         auto__type='delete',
         editable=False,
     )
-    def delete(cls, call_target, **kwargs):
-        return call_target(**kwargs)
+    def delete(cls, **kwargs):
+        return cls.crud(**kwargs)
 
     def as_view(self):
         return build_as_view_wrapper(self)

@@ -7,6 +7,7 @@ from django.db.models import (
     IntegerField,
     Model,
 )
+
 from iommi import (
     Field,
     Form,
@@ -18,12 +19,12 @@ from iommi.from_model import (
     register_search_fields,
     SearchFieldsAlreadyRegisteredException,
 )
+from iommi.shortcut import with_defaults
 from tests.helpers import req
 from tests.models import (
     Foo,
     FormFromModelTest,
 )
-from tri_declarative import class_shortcut
 
 
 def test_get_name_field_for_model_error():
@@ -208,12 +209,11 @@ def test_register_search_fields_pk_special_case():
 def MyField():
     class MyField(Field):
         @classmethod
-        @class_shortcut(
-            call_target__attribute='integer',
+        @with_defaults(
             extra__value='this is my shortcut',
         )
-        def my_integer(cls, call_target=None, **kwargs):
-            return call_target(**kwargs)
+        def my_integer(cls, **kwargs):
+            return cls.integer(**kwargs)
     return MyField
 
 

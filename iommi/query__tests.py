@@ -14,7 +14,6 @@ from django.db.models import (
     QuerySet,
 )
 from tri_declarative import (
-    class_shortcut,
     get_members,
     get_shortcuts_by_name,
     is_shortcut,
@@ -47,6 +46,7 @@ from iommi.query import (
     QueryException,
     value_to_str_for_query,
 )
+from iommi.shortcut import with_defaults
 from tests.helpers import req
 from tests.models import (
     Bar,
@@ -454,8 +454,8 @@ def test_missing_choices():
     with pytest.raises(AssertionError, match='To use Filter.choice, you must pass the choices list'):
         Filter.choice().refine_done()
 
-    # with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances'):
-    #     Filter.choice_queryset().refine_done()
+    with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances'):
+        Filter.choice_queryset().refine_done()
 
 
 @pytest.mark.django_db
@@ -803,10 +803,10 @@ def test_from_model_with_inheritance():
 
     class MyField(Field):
         @classmethod
-        @class_shortcut
-        def float(cls, call_target=None, **kwargs):
+        @with_defaults
+        def float(cls, **kwargs):
             was_called['MyField.float'] += 1
-            return call_target(**kwargs)
+            return cls(**kwargs)
 
     class MyForm(Form):
         class Meta:
@@ -814,12 +814,12 @@ def test_from_model_with_inheritance():
 
     class MyFilter(Filter):
         @classmethod
-        @class_shortcut(
+        @with_defaults(
             field__call_target__attribute='float',
         )
-        def float(cls, call_target=None, **kwargs):
+        def float(cls, **kwargs):
             was_called['MyVariable.float'] += 1
-            return call_target(**kwargs)
+            return cls(**kwargs)
 
     class MyQuery(Query):
         class Meta:
@@ -843,12 +843,21 @@ def test_shortcuts_map_to_form(name, shortcut):
     whitelist = [
         'case_sensitive',
         'textarea',
+        'foreign_key',
+        'many_to_many',
     ]
 
     if name in whitelist:  # This has no equivalent in Field
         return
 
-    assert shortcut.dispatch.field.call_target.attribute == name
+    kwargs = {}
+    if name in [
+        'choice_queryset',
+        'multi_choice_queryset',
+    ]:
+        kwargs['model'] = None
+
+    assert shortcut(**kwargs).iommi_namespace.field.call_target.attribute == name
 
 
 @pytest.mark.django_db

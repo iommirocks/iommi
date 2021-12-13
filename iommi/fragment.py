@@ -42,8 +42,10 @@ from iommi.part import (
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 from iommi.refinable import (
     EvaluatedRefinable,
+    Prio,
     RefinableMembers,
 )
+from iommi.shortcut import with_defaults
 
 _void_elements = [
     'area',
@@ -156,15 +158,16 @@ class Fragment(Part, Tag):
     template: Union[str, Template] = EvaluatedRefinable()
     children = RefinableMembers()
 
-    @dispatch(
-        children=EMPTY,
-        attrs__class=EMPTY,
-        attrs__style=EMPTY,
-    )
+    class Meta:
+        children = EMPTY
+        attrs__class = EMPTY
+        attrs__style = EMPTY
+
+    @with_defaults
     def __init__(self, text=None, **kwargs):
-        if text is not None:
-            kwargs['children'].text = text
         super().__init__(_collect_instantiated_at_info=False, **kwargs)
+        if text is not None:
+            self.refine(Prio.constructor, children__text=text)
 
     def on_refine_done(self):
         super().on_refine_done()

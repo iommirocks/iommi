@@ -1,12 +1,10 @@
 from typing import Callable
 
-from tri_declarative import (
-    dispatch,
-    Refinable,
-)
+from tri_declarative import Refinable
 
 from iommi.base import keys
 from iommi.refinable import EvaluatedRefinable
+from iommi.shortcut import with_defaults
 from iommi.traversable import (
     get_long_path_by_path,
     get_path_by_long_path,
@@ -53,7 +51,7 @@ class Endpoint(Traversable):
     func: Callable = Refinable()
     include: bool = EvaluatedRefinable()
 
-    @dispatch(
+    @with_defaults(
         func=None,
         include=True,
     )

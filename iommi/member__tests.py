@@ -1,6 +1,5 @@
 import pytest
 from tri_declarative import (
-    class_shortcut,
     dispatch,
     Refinable,
 )
@@ -13,6 +12,7 @@ from iommi import (
     Style,
 )
 from iommi.member import ForbiddenNamesException
+from iommi.shortcut import with_defaults
 from tests.helpers import (
     Basket,
     Fruit,
@@ -236,16 +236,20 @@ def test_precedence_override_shortcut(foo_style):
         foo = html.div('from declaration')
 
         @classmethod
-        @class_shortcut(
+        @with_defaults(
             extra__foo='from shortcut',
             parts__foo=html.div('from shortcut'),
         )
-        def shortcut(cls, call_target, **kwargs):
-            return call_target(**kwargs)
+        def shortcut(cls, **kwargs):
+            return cls(**kwargs)
 
-    my_page = MyPage.shortcut(iommi_style='foo').bind()
+    my_page = MyPage.shortcut().bind()
     assert my_page.extra.foo == 'from shortcut'
     assert str(my_page) == '<div>from shortcut</div>'
+
+    my_page = MyPage.shortcut(iommi_style='foo').bind()
+    assert my_page.extra.foo == 'from style'
+    assert str(my_page) == '<div>from style</div>'
 
     my_page = MyPage.shortcut(
         iommi_style='foo',
@@ -256,7 +260,6 @@ def test_precedence_override_shortcut(foo_style):
     assert str(my_page) == '<div>from constructor call</div>'
 
 
-@pytest.mark.skip(reason='Style should be able to override shortcuts, but that is yet to be done')
 def test_precedence_override_style_with_shortcut(foo_style):
     bar_style = Style(
         foo_style,
@@ -265,17 +268,16 @@ def test_precedence_override_style_with_shortcut(foo_style):
     )
 
     with register_style('bar', bar_style):
-
         class MyPage(Page):
             foo = html.div('from declaration')
 
             @classmethod
-            @class_shortcut(
+            @with_defaults(
                 extra__foo='from shortcut',
                 parts__foo=html.div('from shortcut'),
             )
-            def shortcut(cls, call_target, **kwargs):
-                return call_target(**kwargs)
+            def shortcut(cls, **kwargs):
+                return cls(**kwargs)
 
         my_page = MyPage.shortcut().bind()
         assert my_page.extra.foo == 'from shortcut'

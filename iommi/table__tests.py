@@ -15,7 +15,6 @@ from django.db.models import (
 from django.http import HttpResponse
 from django.test import override_settings
 from tri_declarative import (
-    class_shortcut,
     get_members,
     get_shortcuts_by_name,
     getattr_path,
@@ -53,6 +52,7 @@ from iommi.query import (
     Filter,
     Query,
 )
+from iommi.shortcut import with_defaults
 from iommi.sql_trace import (
     set_sql_debug,
     SQL_DEBUG_LEVEL_ALL,
@@ -948,7 +948,7 @@ def test_django_broken_update():
     ).order_by(
         'a',
     ).update(
-        b=True,
+        c=True,
     )
 
     assert True
@@ -1790,6 +1790,17 @@ def test_default_formatters(NoSortTable):
     )
 
 
+def test_missing_choices():
+    with pytest.raises(AssertionError, match='To use Column.choice, you must pass the choices list'):
+        Column.choice().refine_done()
+
+    with pytest.raises(AssertionError, match='To use Column.choice, you must pass the choices list'):
+        Column.multi_choice().refine_done()
+
+    with pytest.raises(AssertionError, match='To use Column.choice, you must pass the choices list'):
+        Column.choice_queryset().refine_done()
+
+
 @pytest.mark.django_db
 def test_choice_queryset():
     assert TFoo.objects.all().count() == 0
@@ -2284,10 +2295,10 @@ def test_from_model_with_inheritance():
 
     class MyField(Field):
         @classmethod
-        @class_shortcut
-        def float(cls, call_target=None, **kwargs):
+        @with_defaults
+        def float(cls, **kwargs):
             was_called['MyField.float'] += 1
-            return call_target(**kwargs)
+            return cls(**kwargs)
 
     class MyForm(Form):
         class Meta:
@@ -2295,12 +2306,12 @@ def test_from_model_with_inheritance():
 
     class MyFilter(Filter):
         @classmethod
-        @class_shortcut(
+        @with_defaults(
             field__call_target__attribute='float',
         )
-        def float(cls, call_target=None, **kwargs):
+        def float(cls, **kwargs):
             was_called['MyVariable.float'] += 1
-            return call_target(**kwargs)
+            return cls(**kwargs)
 
     class MyQuery(Query):
         class Meta:
@@ -2309,14 +2320,13 @@ def test_from_model_with_inheritance():
 
     class MyColumn(Column):
         @classmethod
-        @class_shortcut(
-            call_target__attribute='number',
+        @with_defaults(
             filter__call_target__attribute='float',
             bulk__call_target__attribute='float',
         )
-        def float(cls, call_target, **kwargs):
+        def float(cls, **kwargs):
             was_called['MyColumn.float'] += 1
-            return call_target(**kwargs)
+            return cls.number(**kwargs)
 
     class MyTable(Table):
         class Meta:
@@ -2482,24 +2492,27 @@ def test_render_column_attribute():
 @pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Column).items())
 def test_shortcuts_map_to_form_and_query(name, shortcut):
     whitelist = {
+        'boolean_tristate',  # this is special in the bulk case where you want want a boolean_quadstate: don't change, clear, True, False. For now we'll wait for someone to report this misfeature/bug :)
+        'delete',
+        'download',
+        'edit',
         'icon',
-        'select',
-        'run',
         'link',
         'number',  # no equivalent in Field or Filter, there you have to choose integer or float
+        'run',
+        'select',
         'substring',
-        'boolean_tristate',  # this is special in the bulk case where you want want a boolean_quadstate: don't change, clear, True, False. For now we'll wait for someone to report this misfeature/bug :)
         'textarea',
     }
     if name in whitelist:
         return
 
-    if 'call_target' in shortcut.dispatch and shortcut.dispatch.call_target.attribute in whitelist:
+    if 'call_target' in getattr(shortcut, '__iommi_with_defaults_kwargs', []) and shortcut.__iommi_with_defaults_kwargs.call_target.attribute in whitelist:
         # shortcuts that in turn point to whitelisted ones are also whitelisted
         return
 
-    assert shortcut.dispatch.filter.call_target.attribute == name
-    assert shortcut.dispatch.bulk.call_target.attribute == name
+    assert Namespace(shortcut.__iommi_with_defaults_kwargs).filter.call_target.attribute == name
+    assert Namespace(shortcut.__iommi_with_defaults_kwargs).bulk.call_target.attribute == name
 
 
 @pytest.mark.django_db

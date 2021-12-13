@@ -3,8 +3,6 @@ from typing import Dict
 
 import pytest
 from tri_declarative import (
-    class_shortcut,
-    dispatch,
     Refinable,
     refinable,
     Shortcut,
@@ -16,6 +14,7 @@ from iommi.docs import (
     get_default_classes,
 )
 from iommi.refinable import RefinableObject
+from iommi.shortcut import with_defaults
 
 
 def test_generate_docs(snapshot):
@@ -32,7 +31,7 @@ def test_generate_docs(snapshot):
         some_other_thing = Refinable()
         empty_string_default = Refinable()
 
-        @dispatch(
+        @with_defaults(
             name='foo-name',
             description=lambda foo, bar: 'qwe',
             some_other_thing=some_callable,
@@ -50,29 +49,29 @@ def test_generate_docs(snapshot):
             pass  # pragma: no cover
 
         @classmethod
-        @class_shortcut
+        @with_defaults
         def shortcut1(cls):
             return cls()  # pragma: no cover
 
         @classmethod
-        @class_shortcut(description='fish')
-        def shortcut2(cls, call_target):
+        @with_defaults(description='fish')
+        def shortcut2(cls):
             """shortcut2 docstring"""
-            return call_target()  # pragma: no cover
+            return cls()  # pragma: no cover
 
         @classmethod
         # fmt: off
-        @class_shortcut(
-            description=lambda foo: 'qwe'
+        @with_defaults(
+            description=lambda foo: 'qwe',
         )
         # fmt: on
-        def shortcut3(cls, call_target):
+        def shortcut3(cls):
             """
             shortcut3 docstring
 
             :param call_target: something something call_target
             """
-            return call_target()  # pragma: no cover
+            return cls()  # pragma: no cover
 
     Foo.shortcut4 = Shortcut(
         call_target=Foo,
@@ -106,7 +105,7 @@ def test_generate_docs_description_and_params_in_constructor(snapshot):
 
         name = Refinable()
 
-        @dispatch
+        @with_defaults
         def __init__(self, **kwargs):
             """
             __init__ description
@@ -126,7 +125,7 @@ def test_generate_docs_kill_obscure_mutant(snapshot):
     class Foo(RefinableObject):
         name = Refinable()
 
-        @dispatch(
+        @with_defaults(
             # this is to handle that mutmut mutates strip(',') to strip('XX,XX')
             name=lambda X: X,
         )

@@ -41,6 +41,7 @@ from iommi.member import (
     bind_members,
     refine_done_members,
 )
+from iommi.shortcut import with_defaults
 from iommi.style import (
     get_style_object,
 )
@@ -75,8 +76,10 @@ class Part(Traversable):
     # Only the assets used by this part
     assets: Namespace = RefinableMembers()
 
-    @dispatch(
-        extra=EMPTY,
+    class Meta:
+        extra = EMPTY
+
+    @with_defaults(
         include=True,
     )
     def __init__(self, _collect_instantiated_at_info=True, **kwargs):

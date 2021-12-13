@@ -1,6 +1,5 @@
-from tri_declarative import class_shortcut
-
 from iommi.fragment import Fragment
+from iommi.shortcut import with_defaults
 
 
 class Asset(Fragment):
@@ -17,10 +16,10 @@ class Asset(Fragment):
     """
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         tag='script',
     )
-    def js(cls, text=None, call_target=None, **kwargs):
+    def js(cls, text=None, **kwargs):
         """
         To use this shortcut, pass `attrs__src='/my_url_to_the.js'`
 
@@ -34,14 +33,14 @@ class Asset(Fragment):
 
             Asset.js('window.foo = bar')
         """
-        return call_target(text, **kwargs)
+        return cls(text, **kwargs)
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         tag='link',
         attrs__rel='stylesheet',
     )
-    def css(cls, text=None, call_target=None, **kwargs):
+    def css(cls, text=None, **kwargs):
         """
         To use this shortcut, pass `attrs__href='/my_url_to_the.js'`
 
@@ -57,4 +56,4 @@ class Asset(Fragment):
 
             Asset.css('p { font-size: 18pt; }')
         """
-        return call_target(text, **kwargs)
+        return cls(text, **kwargs)
