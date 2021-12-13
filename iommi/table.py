@@ -2050,21 +2050,21 @@ class Table(Part, Tag):
         columns = cls.columns_from_model(model=model, include=include, exclude=exclude)
         return model, rows, columns
 
-    def _selection_identifiers(self):
+    def _selection_identifiers(self, prefix):
         """Return a list of identifiers of the selected rows. Or 'all' if all
         sorted_and_filtered_rows are selected."""
         if self.get_request().POST.get('_all_pks_') == '1':
             return 'all'
         else:
-            return [key[len('pk_') :] for key in self.get_request().POST if key.startswith('pk_')]
+            return [key[len(prefix):] for key in self.get_request().POST if key.startswith(prefix)]
 
-    def selection(self):
+    def selection(self, prefix='pk_'):
         """Return the selected rows.
 
         For use in post_handlers. It's a queryset if rows is a queryset and a list otherwise.
         Unlike bulk_queryset neither bulk_filter nor bulk_exclude are applied.
         """
-        identifiers = self._selection_identifiers()
+        identifiers = self._selection_identifiers(prefix=prefix)
         if identifiers == 'all':
             print('inside all', self.sorted_and_filtered_rows)
             return self.sorted_and_filtered_rows
@@ -2075,7 +2075,7 @@ class Table(Part, Tag):
                 identifiers = frozenset([int(i) for i in identifiers])
                 return [row for ndx, row in enumerate(self.get_visible_rows()) if ndx in identifiers]
 
-    def bulk_queryset(self):
+    def bulk_queryset(self, prefix='pk_'):
         """Return the queryset that contains only the selected rows with
         bulk_filter and bulk_exclude applied.
 
@@ -2083,7 +2083,7 @@ class Table(Part, Tag):
         """
         assert isinstance(self.initial_rows, QuerySet), "bulk_queryset can only be used on querysets"
 
-        return self.selection().filter(**self.bulk_filter).exclude(**self.bulk_exclude)
+        return self.selection(prefix=prefix).filter(**self.bulk_filter).exclude(**self.bulk_exclude)
 
     @dispatch(
         render=render_template,

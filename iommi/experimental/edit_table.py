@@ -5,13 +5,16 @@ from typing import (
 )
 
 from django.core.exceptions import ValidationError
+from django.db.models import QuerySet
 from django.http import HttpResponseRedirect
 from django.template import (
     Context,
     Template,
 )
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 from tri_declarative import (
+    class_shortcut,
     EMPTY,
     getattr_path,
     Namespace,
@@ -22,6 +25,7 @@ from tri_struct import Struct
 
 from iommi import (
     Action,
+    Asset,
     Column,
     Field,
     Form,
@@ -34,6 +38,7 @@ from iommi.base import (
     values,
 )
 from iommi.endpoint import path_join
+from iommi.evaluate import evaluate_strict
 from iommi.table import (
     Cell,
     Cells,
@@ -93,6 +98,42 @@ class EditColumn(Column):
         super(EditColumn, self).on_refine_done()
         self.edit = None
 
+    @classmethod
+    @class_shortcut(
+        header__template='iommi/table/header.html',
+        sortable=False,
+        filter__is_valid_filter=lambda **_: (True, ''),
+        filter__field__include=False,
+        attr=None,
+        display_name=gettext('Delete'),
+        cell__attrs__class__delete=True,
+        # language=js
+        assets__fancy_delete=Asset(mark_safe('''
+            $(document).ready(() => {
+                $('.edit_table_delete').click((event) => {
+                    const checked = $(event.target).closest('tr').find('input')[0].checked;
+                    $(event.target).closest('tr').find('input').prop("checked", !checked);
+                    $(event.target).closest('tr')[0].style.opacity = checked ? "1.0" : "0.3";
+                    event.preventDefault();
+                    return false;
+                });
+            });
+        '''), tag='script')
+    )
+    def delete(cls, call_target=None, **kwargs):
+        def cell__value(row, table, cells, column, **_):
+            if isinstance(table.rows, QuerySet):
+                row_id = row.pk
+            else:
+                # row_index is the visible row number
+                # See selection() for the code that does the lookup
+                row_id = cells.row_index
+            button = Action.delete(display_name=column.display_name, attrs__class__edit_table_delete=True).bind()
+            return mark_safe(f'{button.__html__()}<input style="display: none" type="checkbox" name="pk_delete_{row_id}" />')
+
+        setdefaults_path(kwargs, dict(cell__value=cell__value))
+        return call_target(**kwargs)
+
 
 def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
@@ -119,6 +160,9 @@ def edit_table__post_handler(table, request, **_):
     if errors:
         table.edit_errors = errors
         return None
+
+    if isinstance(table.initial_rows, QuerySet):
+        table.bulk_queryset(prefix='pk_delete_').delete()
 
     for cells in table.cells_for_rows():
         instance = cells.row

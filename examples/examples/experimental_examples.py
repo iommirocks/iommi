@@ -9,7 +9,10 @@ from iommi import (
     Action,
     Form,
 )
-from iommi.experimental.edit_table import EditTable
+from iommi.experimental.edit_table import (
+    EditColumn,
+    EditTable,
+)
 
 
 def save_nested_forms(form, request, **_):
@@ -35,8 +38,10 @@ urlpatterns = [
         '',
         EditTable(
             auto__model=Album,
+            page_size=5,
             columns__artist__edit__include=True,
             columns__year__edit__include=True,
+            columns__delete=EditColumn.delete(),
         ).as_view(),
     ),
     path(
