@@ -18,7 +18,6 @@ The styles iommi ships with are:
 
 .. code:: python
 
-    blank
     bootstrap
     bulma
     foundation
