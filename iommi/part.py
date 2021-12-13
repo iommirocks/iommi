@@ -41,8 +41,7 @@ from iommi.member import (
     refine_done_members,
 )
 from iommi.style import (
-    get_iommi_style_name,
-    get_style,
+    get_style_object,
 )
 from iommi.traversable import (
     Traversable,
@@ -197,8 +196,7 @@ def get_title(part):
 )
 def render_root(*, part, context, **render):
     assert part._is_bound
-    root_style_name = get_iommi_style_name(part)
-    root_style = get_style(root_style_name)
+    root_style = get_style_object(part)
     template_name = root_style.base_template
     content_block_name = root_style.content_block
 
@@ -208,8 +206,8 @@ def render_root(*, part, context, **render):
 
     assets = part.iommi_collected_assets()
 
-    assert template_name, f"{root_style_name} doesn't have a base_template defined"
-    assert content_block_name, f"{root_style_name} doesn't have a content_block defined"
+    assert template_name, f"{root_style} doesn't have a base_template defined"
+    assert content_block_name, f"{root_style} doesn't have a content_block defined"
 
     title = get_title(part)
 
