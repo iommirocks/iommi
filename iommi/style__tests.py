@@ -20,13 +20,13 @@ from iommi.attrs import render_attrs
 from iommi.base import items
 from iommi.refinable import RefinableObject
 from iommi.style import (
-    get_style,
+    get_global_style,
     get_style_data_for_object,
     get_style_object,
     InvalidStyleConfigurationException,
     register_style,
     Style,
-    validate_styles,
+    validate_styles, resolve_style,
 )
 from iommi.style_base import base
 from iommi.style_test_base import test
@@ -109,6 +109,36 @@ def test_style():
     assert styled_items(b) == dict(foo=4, bar=7)
 
 
+def test_resolve_style_base():
+    assert resolve_style([], None) is get_global_style('test')
+
+
+def test_resolve_style_trivial():
+    assert resolve_style([], 'test') is get_global_style('test')
+
+
+def test_resolve_style_fail():
+    with pytest.raises(Exception) as e:
+        resolve_style([], 'not_a_style')
+    assert 'No registered iommi style not_a_style. Register a style with register_style().' in str(e.value)
+
+
+def test_resolve_style_shadow_default():
+    with register_style('my_style', Style()) as my_style:
+        assert resolve_style([Style(), Style()], 'my_style') is my_style
+
+
+def test_resolve_style_shadow_default():
+    with register_style('my_style', Style()) as my_style:
+        assert resolve_style([Style(), my_style], 'my_style') is my_style
+
+
+def test_resolve_style_sub_style():
+    sub_style = Style()
+    with register_style('my_style', Style(sub_styles=dict(sub_style=sub_style))) as my_style:
+        assert resolve_style([Style(), my_style, Style()], 'sub_style') is sub_style
+
+
 def test_style_menu():
     class MyMenu(Menu):
         item = MenuItem()
@@ -136,10 +166,10 @@ def test_apply_checkbox_style():
     form = MyForm()
     form = form.bind(request=None)
 
-    assert get_style_object(form.fields.foo) == get_style('bootstrap')
+    assert get_style_object(form.fields.foo) == get_global_style('bootstrap')
     assert (
         get_style_data_for_object(
-            get_style('bootstrap'),
+            get_global_style('bootstrap'),
             obj=form.fields.foo,
             is_root=False,
         )['attrs']
@@ -255,7 +285,7 @@ def test_style_bulk_form_broken_on_no_form():
 
 def test_get_style_error():
     with pytest.raises(Exception) as e:
-        get_style('does_not_exist')
+        get_global_style('does_not_exist')
 
     assert str(e.value).startswith('No registered iommi style does_not_exist. Register a style with register_style().')
 

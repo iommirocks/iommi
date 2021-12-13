@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from typing import (
     Any,
     List,
-    Type,
+    Type, Union,
 )
 
 from django.conf import settings
@@ -26,7 +26,7 @@ DEFAULT_STYLE = 'bootstrap'
 
 
 def get_style_object(obj: Any) -> 'Style':
-    return get_style(obj.iommi_style)
+    return get_global_style(obj.iommi_style)
 
 
 def _style_name_for_class(cls):
@@ -89,7 +89,7 @@ class Style:
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
         self.sub_styles = {
-            k: Style(self, **v)
+            k: v if isinstance(v, Style) else Style(self, **v)
             for k, v in items(sub_styles)
         }
         for name, sub_style in items(self.sub_styles):
@@ -121,13 +121,13 @@ class Style:
     def __repr__(self):
         return f'<Style: {self.name}>'
 
-    def resolve(self, sub_style_name):
+    def resolve_sub_style(self, sub_style_name):
         result = self.sub_styles.get(sub_style_name)
         if result:
             return result
 
         for base in self.bases:
-            result = base.resolve(sub_style_name)
+            result = base.resolve_sub_style(sub_style_name)
             if result:
                 return result
 
@@ -157,7 +157,7 @@ def unregister_style(name):
     del _styles[name]
 
 
-def get_style(name):
+def get_global_style(name):
     if isinstance(name, Style):
         return name
     try:
@@ -291,3 +291,26 @@ def validate_styles(*, additional_classes: List[Type] = None, default_classes=No
         if invalid_shortcut_names_str:
             invalid_shortcut_names_str = 'Invalid shortcut names:\n' + invalid_shortcut_names_str
         raise InvalidStyleConfigurationException('\n\n'.join([invalid_class_names_str, invalid_shortcut_names_str]))
+
+
+def resolve_style(parent_styles: List[Style], iommi_style: Union[str, Style]):
+    if isinstance(iommi_style, Style):
+        return iommi_style
+
+    if parent_styles:
+        enclosing_style = parent_styles[-1]
+    else:
+        default_style = get_global_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE))
+        enclosing_style = default_style
+
+    if iommi_style is None:
+        return enclosing_style
+
+    sub_style = enclosing_style.resolve_sub_style(iommi_style)
+    if sub_style is not None:
+        return sub_style
+
+    if parent_styles:
+        return resolve_style(parent_styles[:-1], iommi_style)
+    else:
+        return get_global_style(iommi_style)

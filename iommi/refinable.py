@@ -169,7 +169,7 @@ Available attributes:
                 result._iommi_style_stack = list(parent._iommi_style_stack)
             iommi_style = result.iommi_namespace.get('iommi_style')
 
-            from iommi.traversable import resolve_style
+            from iommi.style import resolve_style
             iommi_style = resolve_style(result._iommi_style_stack, iommi_style)
             result._iommi_style_stack += [iommi_style]
             result = result.apply_styles(result._iommi_style_stack[-1], is_root=is_root)

@@ -3,10 +3,8 @@ from typing import (
     Any,
     Dict,
     List,
-    Union,
 )
 
-from django.conf import settings
 from tri_declarative import (
     Namespace,
     Refinable,
@@ -31,8 +29,6 @@ from iommi.refinable import (
     RefinableObject,
 )
 from iommi.style import (
-    DEFAULT_STYLE,
-    get_style,
     get_style_data_for_object,
     Style,
 )
@@ -44,31 +40,6 @@ evaluated_refinable = evaluated_refinable
 
 class PathNotFoundException(Exception):
     pass
-
-
-def resolve_style(parent_styles: List[Style], iommi_style: Union[str, Style]):
-    if isinstance(iommi_style, Style):
-        return iommi_style
-
-    if not parent_styles:
-        default_style = get_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE))
-        if iommi_style is None:
-            return default_style
-        sub_style = default_style.resolve(iommi_style)
-        if sub_style is not None:
-            return sub_style
-        return get_style(iommi_style)
-
-    last_in_stack = parent_styles[-1]
-
-    if iommi_style is None:
-        return last_in_stack
-
-    sub_style = last_in_stack.resolve(iommi_style)
-    if sub_style is not None:
-        return sub_style
-
-    return resolve_style(parent_styles[:-1], iommi_style)
 
 
 class Traversable(RefinableObject):
