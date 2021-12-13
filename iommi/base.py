@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import QuerySet
 from django.utils.encoding import force_str
 from django.utils.safestring import SafeText
@@ -36,7 +37,7 @@ def model_and_rows(model, rows):
 
 
 def build_as_view_wrapper(target):
-    if not target.is_refine_done:
+    if not target.is_refine_done and getattr(settings, 'IOMMI_REFINE_DONE_OPTIMIZATION', True):
         target = target.refine_done()
 
     def view_wrapper(request, **url_params):

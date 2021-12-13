@@ -459,6 +459,34 @@ def test_style_inheritance():
         assert form.template == 'custom_style_form.html'
 
 
+def test_style_inheritance_tricky():
+    with register_style(
+        'custom_style',
+        Style(
+            test,
+            sub_styles=dict(
+                custom_sub_style=dict(
+                    Form__template='sub.html',
+                )
+            ),
+            Form__template='custom.html',
+        ),
+    ) as custom_style:
+        page1 = Page(
+            iommi_style=custom_style,
+            parts__form=Form(
+                iommi_style='custom_sub_style',
+            )
+        )
+        page = page1.bind()
+        assert page.iommi_style.name == 'custom_style'
+
+        form = page.parts.form
+        assert form.iommi_style.name is 'custom_sub_style'
+
+        assert form.template == 'sub.html'
+
+
 @pytest.fixture
 def styled_form():
     with register_style(

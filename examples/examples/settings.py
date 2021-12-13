@@ -140,3 +140,6 @@ LOGGING = {
 }
 
 SQL_DEBUG = 'worst'
+
+# This is needed to make the dynamic style switching work. Styling will be re-computed on each page render, slowing things down.
+IOMMI_REFINE_DONE_OPTIMIZATION = False

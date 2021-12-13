@@ -114,6 +114,8 @@ class StyleSelector(Form):
             settings.IOMMI_DEFAULT_STYLE = style
             return HttpResponseRedirect(request.get_full_path())
 
+        include = getattr(settings, 'IOMMI_REFINE_DONE_OPTIMIZATION', True) is False
+
     style = Field.choice(
         choices=[k for k, v in items(iommi.style._styles) if not v.internal],
         initial=lambda form, field, **_: getattr(settings, 'IOMMI_DEFAULT_STYLE', iommi.style.DEFAULT_STYLE),

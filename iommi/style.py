@@ -6,6 +6,7 @@ from typing import (
     Type,
 )
 
+from django.conf import settings
 from tri_declarative import (
     dispatch,
     EMPTY,
@@ -15,7 +16,6 @@ from tri_declarative import (
     setdefaults_path,
 )
 
-from iommi._web_compat import settings
 from iommi.base import (
     items,
     keys,
@@ -92,6 +92,8 @@ class Style:
             k: Style(self, **v)
             for k, v in items(sub_styles)
         }
+        for name, sub_style in items(self.sub_styles):
+            sub_style.name = name
 
     def component(self, obj, is_root=False):
         """
@@ -129,7 +131,7 @@ class Style:
             if result:
                 return result
 
-        return get_style(sub_style_name)
+        return None
 
 
 _styles = {}

@@ -162,10 +162,17 @@ Available attributes:
         assert not result.is_refine_done, f"refine_done() already invoked on {result!r}"
 
         if hasattr(result, 'apply_styles'):
-            if parent is None:
-                result = result.apply_styles(None, is_root=True)
+            is_root = parent is None
+            if is_root:
+                result._iommi_style_stack = []
             else:
-                result = result.apply_styles(parent.iommi_style, is_root=False)
+                result._iommi_style_stack = list(parent._iommi_style_stack)
+            iommi_style = result.iommi_namespace.get('iommi_style')
+
+            from iommi.traversable import resolve_style
+            iommi_style = resolve_style(result._iommi_style_stack, iommi_style)
+            result._iommi_style_stack += [iommi_style]
+            result = result.apply_styles(result._iommi_style_stack[-1], is_root=is_root)
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')

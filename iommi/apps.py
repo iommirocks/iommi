@@ -28,7 +28,7 @@ class IommiConfig(AppConfig):
         from iommi.style_water import water
         from iommi.style_bulma import bulma
 
-        register_style('blank', Style())
+        register_style('blank', Style(internal=True))
         register_style('base', base)
         register_style('test', test)
         register_style('bulma', bulma)

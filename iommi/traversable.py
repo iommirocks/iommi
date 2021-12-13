@@ -3,6 +3,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Union,
 )
 
 from django.conf import settings
@@ -43,6 +44,31 @@ evaluated_refinable = evaluated_refinable
 
 class PathNotFoundException(Exception):
     pass
+
+
+def resolve_style(parent_styles: List[Style], iommi_style: Union[str, Style]):
+    if isinstance(iommi_style, Style):
+        return iommi_style
+
+    if not parent_styles:
+        default_style = get_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE))
+        if iommi_style is None:
+            return default_style
+        sub_style = default_style.resolve(iommi_style)
+        if sub_style is not None:
+            return sub_style
+        return get_style(iommi_style)
+
+    last_in_stack = parent_styles[-1]
+
+    if iommi_style is None:
+        return last_in_stack
+
+    sub_style = last_in_stack.resolve(iommi_style)
+    if sub_style is not None:
+        return sub_style
+
+    return resolve_style(parent_styles[:-1], iommi_style)
 
 
 class Traversable(RefinableObject):
@@ -122,22 +148,8 @@ class Traversable(RefinableObject):
         assert self._is_bound, NOT_BOUND_MESSAGE
         return build_long_path(self).replace('/', '__')
 
-    def apply_styles(self, parent_style: Style, is_root=True):
-        iommi_style = self.iommi_namespace.get('iommi_style')
-
-        if iommi_style is None:
-            iommi_style = parent_style
-
-        if isinstance(iommi_style, str):
-            if isinstance(parent_style, Style):
-                iommi_style = parent_style.resolve(iommi_style)
-            else:
-                iommi_style = get_style(iommi_style)
-
-        if iommi_style is None:
-            iommi_style = get_style(getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE))
-
-        assert iommi_style.__class__.__name__ == "Style"
+    def apply_styles(self, iommi_style: Style, is_root=True):
+        assert iommi_style.__class__.__name__ == "Style", iommi_style.__class__.__name__
 
         style_data = get_style_data_for_object(iommi_style, obj=self, is_root=is_root)
 
