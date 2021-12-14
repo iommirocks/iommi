@@ -174,6 +174,7 @@ The simplest is to add something like this to your `settings.py`:
 
 .. code:: python
 
+    # These imports need to be at the bottom of the file!
     from iommi import Style, Asset
     from iommi.style_bootstrap import bootstrap
 
