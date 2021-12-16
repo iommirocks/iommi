@@ -20,7 +20,7 @@ class Asset(Fragment):
     @class_shortcut(
         tag='script',
     )
-    def js(cls, call_target=None, **kwargs):
+    def js(cls, text=None, call_target=None, **kwargs):
         """
         To use this shortcut, pass `attrs__src='/my_url_to_the.js'`
 
@@ -32,14 +32,14 @@ class Asset(Fragment):
                 attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
             )
         """
-        return call_target(**kwargs)
+        return call_target(text, **kwargs)
 
     @classmethod
     @class_shortcut(
         tag='link',
         attrs__rel='stylesheet',
     )
-    def css(cls, call_target=None, **kwargs):
+    def css(cls, text=None, call_target=None, **kwargs):
         """
         To use this shortcut, pass `attrs__href='/my_url_to_the.js'`
 
@@ -53,4 +53,4 @@ class Asset(Fragment):
                 attrs__crossorigin='anonymous',
             )
         """
-        return call_target(**kwargs)
+        return call_target(text, **kwargs)

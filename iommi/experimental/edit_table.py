@@ -38,7 +38,6 @@ from iommi.base import (
     values,
 )
 from iommi.endpoint import path_join
-from iommi.evaluate import evaluate_strict
 from iommi.table import (
     Cell,
     Cells,
@@ -50,8 +49,12 @@ class EditCell(Cell):
         return path_join(self.column.iommi_path, str(self.row.pk))
 
     def render_cell_contents(self):
-        field = self.table.edit_form.fields.get(self.column.iommi_name(), None)
+        field = self.cells.get_field(self.column)
+
         if field:
+            if self.cells.is_template:
+                field.attr = None
+
             path = self.get_path()
 
             field.initial = MISSING
@@ -75,17 +78,30 @@ class EditCell(Cell):
         else:
             return super().render_cell_contents()
 
+    def on_refine_done(self):
+        if self.cells.is_template:
+            self.value = None
+        super(EditCell, self).on_refine_done()
+
 
 class EditCells(Cells):
+    is_template = Refinable()
+
     class Meta:
         cell_class = EditCell
+
+    def get_field(self, column):
+        if self.is_template:
+            return self.iommi_parent().template_edit_form.fields.get(column.iommi_name(), None)
+        else:
+            return self.iommi_parent().edit_form.fields.get(column.iommi_name(), None)
 
     def iter_editable_cells(self):
         for column in values(self.iommi_parent().columns):
             if not column.render_column:
                 continue
 
-            field = self.iommi_parent().edit_form.fields.get(column.iommi_name(), None)
+            field = self.get_field(column)
             if not field:
                 continue
             yield self.cell_class(cells=self, column=column)
@@ -191,6 +207,7 @@ def edit_table__post_handler(table, request, **_):
 class EditTable(Table):
     edit_errors = None
     edit_form: Form = Refinable()
+    template_edit_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
 
@@ -207,8 +224,39 @@ class EditTable(Table):
             post_handler=edit_table__post_handler,
         )
         actions__csrf = Action(tag='div', children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
+        # actions__add_row = Action.button(attrs__onclick='iommi_add_row(this); return false')
         actions_below = True
         edit_form = EMPTY
+        template_edit_form = EMPTY
+
+        attrs = {
+            'data-next-virtual-pk': '-1',
+        }
+
+        # language=js
+        assets__edit_table_js = Asset.js(mark_safe('''
+        
+        function iommi_add_row(element) {
+            while (element.tagName !== 'FORM') {
+                element = element.parentNode;
+            }
+            let table = element.querySelector('table');
+            let virtual_pk = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
+            virtual_pk -= 1;
+            virtual_pk = virtual_pk.toString();
+            table.setAttribute('data-next-virtual-pk', virtual_pk);
+            
+            let tmp = document.createElement('table');
+            tmp.innerHTML = table.getAttribute('data-add-template').replaceAll('#sentinel#', virtual_pk);
+            let y = tmp.querySelector('tr');
+            y.setAttribute('data-pk', virtual_pk)
+            table.querySelector('tbody').appendChild(y);
+            if (y.querySelector('.select2_enhance')) {
+                iommi_init_all_select2();
+            }
+        }
+       
+        '''))
 
     def on_refine_done(self):
         super(EditTable, self).on_refine_done()
@@ -242,13 +290,21 @@ class EditTable(Table):
             fields[name] = field
 
         auto = Namespace(self.auto)
-        if auto:
-            auto.default_included = False
 
+        auto.pop('rows', None)
         if 'model' not in auto and 'rows' in auto:
             auto['model'] = auto.rows.model
 
-        auto.pop('rows', None)
+        self.template_edit_form = self.get_meta().form_class(**setdefaults_path(
+            Namespace(),
+            self.template_edit_form,
+            fields=fields,
+            _name='template_edit_form',
+            auto=auto,
+        ))
+
+        if auto:
+            auto.default_included = False
 
         self.edit_form = self.get_meta().form_class(**setdefaults_path(
             Namespace(),
@@ -260,11 +316,14 @@ class EditTable(Table):
 
         declared_fields = self.edit_form.iommi_namespace.fields
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
+        self.template_edit_form = self.template_edit_form.refine_defaults(fields=declared_fields).refine_done()
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
         self.edit_form = self.edit_form.bind(parent=self)
         self._bound_members.edit_form = self.edit_form
+        self.template_edit_form = self.template_edit_form.bind(parent=self)
+        self._bound_members.template_edit_form = self.template_edit_form
 
         # If this is a nested form register it with the parent, need
         # to do this early because is_target needs self.parent_form
@@ -273,6 +332,8 @@ class EditTable(Table):
             if self.parent_form is not None:
                 self.parent_form.nested_forms[self._name] = self
                 self.outer.tag = None
+
+        self.attrs['data-add-template'] = self.cells_class(row=self.model(pk='#sentinel#'), row_index=-1, is_template=True, **self.row.as_dict()).bind(parent=self).__html__()
 
     def is_valid(self):
         return self.edit_form.is_valid()
