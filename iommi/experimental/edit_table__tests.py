@@ -42,7 +42,8 @@ def test_formset_table():
             <form enctype="multipart/form-data" method="post">
                 <div class="iommi-table-container">
                     <div class="iommi-table-plus-paginator">
-                        <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                        <table class="table" data-add-template=\'&lt;tr data-pk="#sentinel#"&gt;&lt;td&gt;&lt;input id="id_editable_thing__#sentinel#" name="editable_thing/#sentinel#" type="text" value=""&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;\' data-endpoint="/endpoints/tbody" data-iommi-id="" data-next-virtual-pk="-1">
                             <thead>
                                 <tr>
                                     <th class="first_column subheader"> Editable thing </th>
@@ -73,6 +74,9 @@ def test_formset_table():
                 <div class="links">
                     <button accesskey="s" name="-submit"> Save </button>
                     <div style="display: none"> Csrf </div>
+                    <button onclick="iommi_add_row(this); return false">
+                        Add row
+                    </button>
                 </div>
             </form>
         """

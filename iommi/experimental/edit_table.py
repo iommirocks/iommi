@@ -35,6 +35,7 @@ from iommi import (
 )
 from iommi.base import (
     items,
+    keys,
     values,
 )
 from iommi.endpoint import path_join
@@ -333,7 +334,11 @@ class EditTable(Table):
                 self.parent_form.nested_forms[self._name] = self
                 self.outer.tag = None
 
-        self.attrs['data-add-template'] = self.cells_class(row=self.model(pk='#sentinel#'), row_index=-1, is_template=True, **self.row.as_dict()).bind(parent=self).__html__()
+        if self.model is not None:
+            sentinel_row = self.model(pk='#sentinel#')
+        else:
+            sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.template_edit_form.fields)})
+        self.attrs['data-add-template'] = self.cells_class(row=sentinel_row, row_index=-1, is_template=True, **self.row.as_dict()).bind(parent=self).__html__()
 
     def is_valid(self):
         return self.edit_form.is_valid()
