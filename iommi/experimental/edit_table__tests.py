@@ -74,9 +74,6 @@ def test_formset_table():
                 <div class="links">
                     <button accesskey="s" name="-submit"> Save </button>
                     <div style="display: none"> Csrf </div>
-                    <button onclick="iommi_add_row(this); return false">
-                        Add row
-                    </button>
                 </div>
             </form>
         """
