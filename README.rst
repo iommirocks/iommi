@@ -2,7 +2,7 @@
 
     <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://raw.githubusercontent.com/TriOptima/iommi/master/logo_with_outline.svg" alt="iommi" style="max-width: 200px" width=300></a></p>
 
-    <h3 class="pun">Your first pick for a django power cord</h3>
+    <h3 class="pun">Your first pick for a django power chord</h3>
 
 .. image:: https://img.shields.io/discord/773470009795018763?logo=discord&logoColor=fff?label=Discord&color=7389d8
     :target: https://discord.gg/ZyYRYhf7Pd
