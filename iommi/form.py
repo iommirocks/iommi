@@ -608,6 +608,8 @@ class Field(Part, Tag):
         self.input = self.input(_name='input').refine_done(parent=self)
         self.label = self.label(_name='label').refine_done(parent=self)
         self.help = self.help(_name='help').refine_done(parent=self)
+        self._parsed_data = self.parsed_data
+        self._raw_data = self.raw_data
 
         super(Field, self).on_refine_done()
 
@@ -666,6 +668,8 @@ class Field(Part, Tag):
         self.form._valid = False
 
     def bind_from_instance(self):
+        self.raw_data = self._raw_data
+        self.parsed_data = self._parsed_data
         self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
         self._read_initial()

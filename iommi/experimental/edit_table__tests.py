@@ -114,24 +114,51 @@ def test_formset_table_post():
         Struct(pk=1, editable_thing='foo', readonly_thing='bar', save=lambda **_: None, ),
         Struct(pk=2, editable_thing='baz', readonly_thing='buzz', save=lambda **_: None, ),
     ]
+
+    post_save_was_called = False
+
+    def post_save(**_):
+        nonlocal post_save_was_called
+        post_save_was_called = True
+
     edit_table = EditTable(
         columns=dict(
             editable_thing=EditColumn(
-                edit=Namespace(call_target=Field),
+                edit=Namespace(call_target=Field, is_valid=lambda parsed_data, **_: (parsed_data != 'invalid', 'error-string')),
             ),
             readonly_thing=EditColumn(),
         ),
         rows=rows,
+        extra__post_save=post_save,
     )
-    response = edit_table.bind(request=req('POST', **{
+
+    # Check validation errors
+    bound = edit_table.bind(request=req('POST', **{
+        'editable_thing/1': 'invalid',
+        'editable_thing/2': 'fusk',
+        '-submit': '',
+    }))
+    response = bound.render_to_response()
+    assert response.status_code == 200
+    assert 'error-string' in response.content.decode()
+
+    # No rows should be modified
+    assert rows[0].editable_thing == 'foo'
+    assert rows[1].editable_thing == 'baz'
+
+    # Now edit for real
+    bound = edit_table.bind(request=req('POST', **{
         'editable_thing/1': 'fisk',
         'editable_thing/2': 'fusk',
         '-submit': '',
-    })).render_to_response()
+    }))
+    response = bound.render_to_response()
     assert response.status_code == 302
 
     assert rows[0].editable_thing == 'fisk'
     assert rows[1].editable_thing == 'fusk'
+
+    assert post_save_was_called
 
 
 def test_edit_table_definition():
@@ -213,5 +240,22 @@ def test_formset_table_post_create():
     assert obj.foo.pk == foo_pk
     assert obj.c is True
 
+
+@pytest.mark.django_db
+def test_formset_table_post_delete():
+    tfoo = TFoo.objects.create(a=1, b='asd')
+    edit_table = EditTable(auto__model=TFoo, columns__delete=EditColumn.delete())
+    assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
+
+    response = edit_table.bind(request=req('GET')).render_to_response()
+    assert f'name="pk_delete_{tfoo.pk}"' in response.content.decode()
+
+    response = edit_table.bind(request=req('POST', **{
+        f'pk_delete_{tfoo.pk}': '',
+        '-actions/submit': '',
+    })).render_to_response()
+    assert response.status_code == 302
+
+    assert TFoo.objects.all().count() == 0
 
 # TODO: attr=None on a column crashes

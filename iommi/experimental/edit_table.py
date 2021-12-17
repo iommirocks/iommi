@@ -98,6 +98,7 @@ class EditCells(Cells):
 
     class Meta:
         cell_class = EditCell
+        is_create_template = False
 
     def get_field(self, column):
         if self.is_create_template:
@@ -172,17 +173,13 @@ def edit_table__post_handler(table, request, **_):
             for cell in cells.iter_editable_cells():
                 path = cell.get_path()
                 field = form.fields[cell.column.iommi_name()]
-                try:
-                    parsed_data[path] = field.parse(
-                        string_value=request.POST.get(path),
-                        **field.iommi_evaluate_parameters(),
-                    )
-                except ValidationError as e:
-                    errors[path] |= set(e.messages)
-                except ValueError as e:
-                    errors[path] = {str(e)}
-                except TypeError as e:
-                    errors[path] = {str(e)}
+                field._iommi_path_override = path
+                field.bind_from_instance()
+                field_errors = field.get_errors()
+                if field_errors:
+                    errors[path] |= set(field_errors)
+                else:
+                    parsed_data[path] = field.value
 
     validate(table.cells_for_rows(), table.edit_form)
     validate(table.cells_for_rows_for_create(), table.create_form)
@@ -203,6 +200,7 @@ def edit_table__post_handler(table, request, **_):
                 path = cell.get_path()
                 value = parsed_data[path]
                 field = form.fields[cell.column.iommi_name()]
+                field._iommi_path_override = path
                 if cells.is_create_template or getattr_path(instance, field.attr) != value:
                     field.write_to_instance(field=field, instance=instance, value=value)
                     attrs_to_save.append(field.attr)
@@ -273,7 +271,6 @@ class EditTable(Table):
                 iommi_init_all_select2();
             }
         }
-       
         '''))
 
     def on_refine_done(self):
