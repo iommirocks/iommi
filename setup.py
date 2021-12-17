@@ -11,7 +11,7 @@ from setuptools import (
 
 readme = open('README.rst', encoding='utf8').readlines()
 
-assert 'Your first pick for a django power cord' in readme[4]
+assert 'Your first pick for a django power chord' in readme[4]
 
 readme = ''.join(['iommi\n', '=====\n'] + readme[5:])
 
