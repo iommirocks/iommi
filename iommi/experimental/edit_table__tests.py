@@ -15,7 +15,10 @@ from tests.helpers import (
     req,
     verify_table_html,
 )
-from tests.models import TFoo
+from tests.models import (
+    TBar,
+    TFoo,
+)
 
 
 @pytest.mark.django_db
@@ -74,6 +77,9 @@ def test_formset_table():
                 <div class="links">
                     <button accesskey="s" name="-submit"> Save </button>
                     <div style="display: none"> Csrf </div>
+                    <button onclick="iommi_add_row(this); return false">
+                        Add row
+                    </button>
                 </div>
             </form>
         """
@@ -185,6 +191,27 @@ def test_edit_table_auto_rows():
         columns__a__edit__include=True,
     )
     assert list(table.bind().edit_form.fields) == ['a']
+
+
+@pytest.mark.django_db
+def test_formset_table_post_create():
+    foo_pk = TFoo.objects.create(a=1, b='asd').pk
+    edit_table = EditTable(auto__model=TBar)
+    assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
+
+    assert not TBar.objects.exists()
+
+    response = edit_table.bind(request=req('POST', **{
+        'columns/foo/-1': f'{foo_pk}',
+        'columns/c/-1': 'true',
+        '-actions/submit': '',
+    })).render_to_response()
+    assert response.status_code == 302
+
+    obj = TBar.objects.get()
+    assert obj.pk >= 0
+    assert obj.foo.pk == foo_pk
+    assert obj.c is True
 
 
 # TODO: attr=None on a column crashes

@@ -19,6 +19,7 @@ from tri_declarative import (
     getattr_path,
     Namespace,
     Refinable,
+    refinable,
     setdefaults_path,
 )
 from tri_struct import Struct
@@ -36,9 +37,13 @@ from iommi import (
 from iommi.base import (
     items,
     keys,
+    NOT_BOUND_MESSAGE,
     values,
 )
-from iommi.endpoint import path_join
+from iommi.endpoint import (
+    DISPATCH_PATH_SEPARATOR,
+    path_join,
+)
 from iommi.table import (
     Cell,
     Cells,
@@ -53,7 +58,8 @@ class EditCell(Cell):
         field = self.cells.get_field(self.column)
 
         if field:
-            if self.cells.is_template:
+            orig_attr = field.attr
+            if self.cells.is_create_template:
                 field.attr = None
 
             path = self.get_path()
@@ -65,10 +71,12 @@ class EditCell(Cell):
             field._errors = set()
             field.form.instance = self.row
             field._iommi_path_override = path
-            del field.input.attrs['value']
+            field.input.attrs.pop('value', None)
             field.bind_from_instance()
 
             input_html = field.input.__html__()
+
+            field.attr = orig_attr
 
             if self.table.edit_errors:
                 errors = self.table.edit_errors.get(path)
@@ -80,20 +88,20 @@ class EditCell(Cell):
             return super().render_cell_contents()
 
     def on_refine_done(self):
-        if self.cells.is_template:
+        if self.cells.is_create_template:
             self.value = None
         super(EditCell, self).on_refine_done()
 
 
 class EditCells(Cells):
-    is_template = Refinable()
+    is_create_template = Refinable()
 
     class Meta:
         cell_class = EditCell
 
     def get_field(self, column):
-        if self.is_template:
-            return self.iommi_parent().template_edit_form.fields.get(column.iommi_name(), None)
+        if self.is_create_template:
+            return self.iommi_parent().create_form.fields.get(column.iommi_name(), None)
         else:
             return self.iommi_parent().edit_form.fields.get(column.iommi_name(), None)
 
@@ -156,23 +164,28 @@ def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
     errors = defaultdict(set)
     parsed_data = {}
-    for cells in table.cells_for_rows():
-        instance = cells.row
-        table.edit_form.instance = instance
-        for cell in cells.iter_editable_cells():
-            path = cell.get_path()
-            field = table.edit_form.fields[cell.column.iommi_name()]
-            try:
-                parsed_data[path] = field.parse(
-                    string_value=request.POST.get(path),
-                    **field.iommi_evaluate_parameters(),
-                )
-            except ValidationError as e:
-                errors[path] |= set(e.messages)
-            except ValueError as e:
-                errors[path] = {str(e)}
-            except TypeError as e:
-                errors[path] = {str(e)}
+
+    def validate(cells_iterator, form):
+        for cells in cells_iterator:
+            instance = cells.row
+            form.instance = instance
+            for cell in cells.iter_editable_cells():
+                path = cell.get_path()
+                field = form.fields[cell.column.iommi_name()]
+                try:
+                    parsed_data[path] = field.parse(
+                        string_value=request.POST.get(path),
+                        **field.iommi_evaluate_parameters(),
+                    )
+                except ValidationError as e:
+                    errors[path] |= set(e.messages)
+                except ValueError as e:
+                    errors[path] = {str(e)}
+                except TypeError as e:
+                    errors[path] = {str(e)}
+
+    validate(table.cells_for_rows(), table.edit_form)
+    validate(table.cells_for_rows_for_create(), table.create_form)
 
     if errors:
         table.edit_errors = errors
@@ -181,23 +194,27 @@ def edit_table__post_handler(table, request, **_):
     if isinstance(table.initial_rows, QuerySet):
         table.bulk_queryset(prefix='pk_delete_').delete()
 
-    for cells in table.cells_for_rows():
-        instance = cells.row
-        table.edit_form.instance = instance
-        attrs_to_save = []
-        for cell in cells.iter_editable_cells():
-            path = cell.get_path()
-            value = parsed_data[path]
-            field = table.edit_form.fields[cell.column.iommi_name()]
-            if getattr_path(instance, field.attr) != value:
-                field.write_to_instance(field=field, instance=instance, value=value)
-                attrs_to_save.append(field.attr)
+    def save(cells_iterator, form):
+        for cells in cells_iterator:
+            instance = cells.row
+            form.instance = instance
+            attrs_to_save = []
+            for cell in cells.iter_editable_cells():
+                path = cell.get_path()
+                value = parsed_data[path]
+                field = form.fields[cell.column.iommi_name()]
+                if cells.is_create_template or getattr_path(instance, field.attr) != value:
+                    field.write_to_instance(field=field, instance=instance, value=value)
+                    attrs_to_save.append(field.attr)
 
-        if instance.pk is not None and instance.pk < 0:
-            instance.pk = None
-        if instance.pk is None:
-            attrs_to_save = None
-        instance.save(update_fields=attrs_to_save)
+            if instance.pk is not None and instance.pk < 0:
+                instance.pk = None
+            if instance.pk is None:
+                attrs_to_save = None
+            instance.save(update_fields=attrs_to_save)
+
+    save(table.cells_for_rows(), table.edit_form)
+    save(table.cells_for_rows_for_create(), table.create_form)
 
     if 'post_save' in table.extra:
         table.extra.post_save(**table.iommi_evaluate_parameters())
@@ -208,7 +225,7 @@ def edit_table__post_handler(table, request, **_):
 class EditTable(Table):
     edit_errors = None
     edit_form: Form = Refinable()
-    template_edit_form: Form = Refinable()
+    create_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
     parent_form: Optional[Form] = Refinable()
 
@@ -225,10 +242,10 @@ class EditTable(Table):
             post_handler=edit_table__post_handler,
         )
         actions__csrf = Action(tag='div', children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
-        # actions__add_row = Action.button(attrs__onclick='iommi_add_row(this); return false')
+        actions__add_row = Action.button(attrs__onclick='iommi_add_row(this); return false')
         actions_below = True
         edit_form = EMPTY
-        template_edit_form = EMPTY
+        create_form = EMPTY
 
         attrs = {
             'data-next-virtual-pk': '-1',
@@ -296,11 +313,11 @@ class EditTable(Table):
         if 'model' not in auto and 'rows' in auto:
             auto['model'] = auto.rows.model
 
-        self.template_edit_form = self.get_meta().form_class(**setdefaults_path(
+        self.create_form = self.get_meta().form_class(**setdefaults_path(
             Namespace(),
-            self.template_edit_form,
+            self.create_form,
             fields=fields,
-            _name='template_edit_form',
+            _name='create_form',
             auto=auto,
         ))
 
@@ -317,14 +334,14 @@ class EditTable(Table):
 
         declared_fields = self.edit_form.iommi_namespace.fields
         self.edit_form = self.edit_form.refine_defaults(fields=declared_fields).refine_done()
-        self.template_edit_form = self.template_edit_form.refine_defaults(fields=declared_fields).refine_done()
+        self.create_form = self.create_form.refine_defaults(fields=declared_fields).refine_done()
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
         self.edit_form = self.edit_form.bind(parent=self)
         self._bound_members.edit_form = self.edit_form
-        self.template_edit_form = self.template_edit_form.bind(parent=self)
-        self._bound_members.template_edit_form = self.template_edit_form
+        self.create_form = self.create_form.bind(parent=self)
+        self._bound_members.create_form = self.create_form
 
         # If this is a nested form register it with the parent, need
         # to do this early because is_target needs self.parent_form
@@ -337,11 +354,42 @@ class EditTable(Table):
         if self.model is not None:
             sentinel_row = self.model(pk='#sentinel#')
         else:
-            sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.template_edit_form.fields)})
-        self.attrs['data-add-template'] = self.cells_class(row=sentinel_row, row_index=-1, is_template=True, **self.row.as_dict()).bind(parent=self).__html__()
+            sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.create_form.fields)})
+        self.attrs['data-add-template'] = self.cells_class(row=sentinel_row, row_index=-1, is_create_template=True, **self.row.as_dict()).bind(parent=self).__html__()
 
     def is_valid(self):
         return self.edit_form.is_valid()
+    
+    def cells_for_rows_for_create(self):
+        """Yield a Cells instance for each create row sent from the client."""
+        assert self._is_bound, NOT_BOUND_MESSAGE
+
+        prefix = path_join(self.iommi_path, 'columns')
+        
+        pks = {
+            int(k[len(prefix):].split(DISPATCH_PATH_SEPARATOR)[2])
+            for k in keys(self.get_request().POST)
+            if k.startswith(prefix)
+        }
+
+        virtual_pks = {k for k in pks if k < 0}
+
+        if not virtual_pks:
+            return
+
+        rows = [
+            self.model(pk=pk)
+            for pk in virtual_pks
+        ]
+
+        for i, row in enumerate(rows):
+            row = self.preprocess_row_for_create(table=self, row=row)
+            yield self.cells_class(is_create_template=True, row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
+
+    @staticmethod
+    @refinable
+    def preprocess_row_for_create(row, **_):
+        return row
 
     @property
     def render_actions(self):
