@@ -125,14 +125,7 @@ class Traversable(RefinableObject):
         style_data = get_style_data_for_object(iommi_style, obj=self, is_root=is_root)
 
         result = self.refine_defaults(**style_data)
-        del self
-
         result.iommi_style = iommi_style
-
-        for k, v in items(result.get_declared('refinable')):
-            if isinstance(v, Traversable):
-                setattr(result, k, v.apply_styles(iommi_style, is_root=False))
-
         return result
 
     def bind(self, *, parent=None, request=None):

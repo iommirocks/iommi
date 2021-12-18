@@ -550,3 +550,14 @@ def test_style_on_form_as_root(styled_form):
     assert bound_page.parts.form.fields.foo.attrs.other_thing == 'Also styled'
     assert bound_page.parts.form.template == 'my_template.html'
     assert bound_page.parts.form.attrs.thing == 'Styled'
+
+
+def test_style_on_child():
+    with register_style('foo', Style(
+        test,
+        Fragment__extra__foo='foo',
+        Table__tbody__extra__bar='bar',
+    )):
+        table = Table(iommi_style='foo').bind()
+        assert table.tbody.extra.foo == 'foo'
+        assert table.tbody.extra.bar == 'bar'
