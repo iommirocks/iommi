@@ -50,6 +50,9 @@ docs:
 test-docs:
 	tox -e docs-tests
 
+docs-coverage:
+	tox -e coverage-from-docs
+
 dist: clean
 	python setup.py sdist
 	python setup.py bdist_wheel
