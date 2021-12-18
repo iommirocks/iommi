@@ -109,14 +109,15 @@ def form_example_5(request):
 
 @example(gettext("Custom actions can be added to forms"))
 def form_example_6(request):
+    do_nothing = lambda **_: None
     return Form.edit(
         auto__instance=Artist.objects.all().first(),
         actions=dict(
-            foo=Action.submit(attrs__value='Foo'),
-            bar=Action.submit(attrs__value='Bar'),
-            a=Action.submit(attrs__value='Foo', group='x'),
-            b=Action.submit(attrs__value='Bar', group='x'),
-            back=Action(display_name='Back to index', attrs__href='/'),
+            foo=Action.submit(display_name='Foo', post_handler=do_nothing),
+            bar=Action.submit(display_name='Bar', post_handler=do_nothing),
+            a=Action.submit(display_name='Foo', group='x', post_handler=do_nothing),
+            b=Action.submit(display_name='Bar', group='x', post_handler=do_nothing),
+            back=Action(display_name='Back to index', attrs__href='/', post_handler=do_nothing),
         ),
     )
 
