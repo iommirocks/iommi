@@ -1,19 +1,15 @@
-from django.urls import path
-
-from docs.models import *
-from tests.helpers import req
-
-request = req('get')
-
-
-from tests.helpers import req
-
-import pytest
-pytestmark = pytest.mark.django_db
+.. imports
+    from tests.helpers import req, user_req, staff_req
+    from django.template import Template
+    from tri_declarative import Namespace
+    from iommi.attrs import render_attrs
+    from django.http import HttpResponseRedirect
+    from datetime import date
+    import pytest
+    pytestmark = pytest.mark.django_db
 
 
-# language=rst
-"""
+
 Getting started
 ===============
 
@@ -26,35 +22,31 @@ First:
 
 Add `iommi` to installed apps:
 
-"""
+.. code-block:: python
 
-INSTALLED_APPS = [
-    # [...]
-    'iommi',
-]
+    INSTALLED_APPS = [
+        # [...]
+        'iommi',
+    ]
 
-# language=rst
-"""
 Add iommi's middleware:
-"""
 
+.. code-block:: python
 
-MIDDLEWARE = [
-    # These three are optional, but highly recommended!
-    'iommi.live_edit.Middleware',
+    MIDDLEWARE = [
+        # These three are optional, but highly recommended!
+        'iommi.live_edit.Middleware',
 
-    # [... Django middleware ...]
+        # [... Django middleware ...]
 
-    'iommi.sql_trace.Middleware',
-    'iommi.profiling.Middleware',
+        'iommi.sql_trace.Middleware',
+        'iommi.profiling.Middleware',
 
-    # [... your other middleware ...]
+        # [... your other middleware ...]
 
-    'iommi.middleware',
-]
+        'iommi.middleware',
+    ]
 
-# language=rst
-"""
 .. note::
 
     The iommi middleware must be the last middleware in the list!
@@ -67,83 +59,73 @@ By default iommi uses a very basic bootstrap base template. We'll get to how to 
 
 Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with some your model. Add this to your `urls.py`:
 
-"""
+.. code-block:: python
 
-from iommi import Form
+    from iommi import Form
 
-urlpatterns = [
-    # ...your urls...
-    path('iommi-form-test/', Form.create(auto__model=Album).as_view()),
-]
+    urlpatterns = [
+        # ...your urls...
+        path('iommi-form-test/', Form.create(auto__model=Album).as_view()),
+    ]
 
 
-# language=rst
-"""
 3. Your first table
 -------------------
 
 Pick a model from your app, and let's build a table for it! Add this to your `urls.py`:
 
-"""
+.. code-block:: python
 
-from iommi import Table
+    from iommi import Table
 
-urlpatterns = [
-    # ...your urls...
-    path('iommi-table-test/', Table(auto__model=Album).as_view()),
-]
+    urlpatterns = [
+        # ...your urls...
+        path('iommi-table-test/', Table(auto__model=Album).as_view()),
+    ]
 
 
-# language=rst
-"""
 If you want, add a filter for some column:
-"""
 
-urlpatterns = [
-    # ...your urls...
-    path('iommi-table-test/', Table(
-        auto__model=Album,
-        columns__name__filter__include=True,  # <--- replace `name` with some field from your model
-    ).as_view()),
-]
+.. code-block:: python
+
+    urlpatterns = [
+        # ...your urls...
+        path('iommi-table-test/', Table(
+            auto__model=Album,
+            columns__name__filter__include=True,  # <--- replace `name` with some field from your model
+        ).as_view()),
+    ]
 
 
-# language=rst
-"""
 4. Your first page
 ------------------
 
 Pages are the method to compose complex pages from parts. Add this to your `views.py`:
-"""
 
-from iommi import Page, Form, Table
+.. code-block:: python
 
+    from iommi import Page, Form, Table
 
-class TestPage(Page):
-    create_form = Form.create(auto__model=Artist)
-    a_table = Table(auto__model=Artist)
+    class TestPage(Page):
+        create_form = Form.create(auto__model=Artist)
+        a_table = Table(auto__model=Artist)
 
-    class Meta:
-        title = 'An iommi page!'
+        class Meta:
+            title = 'An iommi page!'
 
-
-# language=rst
-"""
 then hook into `urls.py`:
-"""
+
+.. code-block:: python
+
+    urlpatterns = [
+        # ...your urls...
+        path(
+            'iommi-page-test/',
+            TestPage().as_view()
+        ),
+    ]
 
 
-urlpatterns = [
-    # ...your urls...
-    path(
-        'iommi-page-test/',
-        TestPage().as_view()
-    ),
-]
-
-
-# language=rst
-"""
 5. A simple function based view
 -------------------------------
 
@@ -153,40 +135,35 @@ middleware you can return iommi objects from your view:
 
 
 `views.py`:
-"""
 
-#@ test
-class TestPage(Page):
-    pass
+.. test
 
-#@ end
+    class TestPage(Page):
+        pass
 
-def iommi_view(request, name):
-    return TestPage(title=f'Hello {name}')
+.. code-block:: python
+
+    def iommi_view(request, name):
+        return TestPage(title=f'Hello {name}')
 
 
-#@ test
+.. test
 
-iommi_view(req('get'), 'foo')
+    iommi_view(req('get'), 'foo')
 
-#@ end
-
-# language=rst
-"""
 `urls.py`:
-"""
 
-urlpatterns = [
-    # ...your urls...
-    path(
-        'iommi-view-test/{name}',
-        iommi_view
-    ),
-]
+.. code-block:: python
+
+    urlpatterns = [
+        # ...your urls...
+        path(
+            'iommi-view-test/{name}',
+            iommi_view
+        ),
+    ]
 
 
-# language=rst
-"""
 6. Make iommi pages fit into your projects design
 -------------------------------------------------
 
@@ -194,24 +171,22 @@ So far all the views we've created are rendered in plain bootstrap. Let's fit
 the iommi views you've already added into the design of your project.
 
 The simplest is to add something like this to your `settings.py`:
-"""
 
+.. code-block:: python
 
-# These imports need to be at the bottom of the file!
-from iommi import Style, Asset
-from iommi.style_bootstrap import bootstrap
+    # These imports need to be at the bottom of the file!
+    from iommi import Style, Asset
+    from iommi.style_bootstrap import bootstrap
 
-IOMMI_DEFAULT_STYLE = Style(
-    bootstrap,
-    base_template='my_project/iommi_base.html',
-    root__assets=dict(
-        my_project_custom_css=Asset.css(attrs__href='/static/custom.css'),
-        my_project_custom_js=Asset.js(attrs__src='/static/custom.js'),
-    ),
-)
+    IOMMI_DEFAULT_STYLE = Style(
+        bootstrap,
+        base_template='my_project/iommi_base.html',
+        root__assets=dict(
+            my_project_custom_css=Asset.css(attrs__href='/static/custom.css'),
+            my_project_custom_js=Asset.js(attrs__src='/static/custom.js'),
+        ),
+    )
 
-# language=rst
-"""
 Where `my_project/iommi_base.html` could look something like this:
 
 .. code-block:: html
@@ -229,4 +204,3 @@ Where `my_project/iommi_base.html` could look something like this:
 
 After you've set up your base style successfully, all the test pages you made
 before (form, table, page, view) are now using your style.
-"""
