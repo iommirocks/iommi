@@ -18,7 +18,7 @@ Installation
 
 First declare a subclass of `Admin`:
 
-.. code:: python
+.. code-block:: python
 
     from iommi.admin import Admin
 
@@ -29,7 +29,7 @@ This is the place you will put configuration. If you don't need any you
 can skip this step. Next plug it into your urls:
 
 
-.. code:: python
+.. code-block:: python
 
     urlpatterns = [
         # ...
@@ -49,7 +49,7 @@ Add a model to the admin
 You can add an app to your admin from your global config like this:
 
 
-.. code:: python
+.. code-block:: python
 
     class MyAdmin(Admin):
         class Meta:
@@ -59,7 +59,7 @@ This is especially useful for adding config to a third party app that doesn't ha
 
 You can also add the config in the app, by creating a `iommi_admin.py` file in your app, and putting the configuration there:
 
-.. code:: python
+.. code-block:: python
 
     class Meta:
         apps__myapp_mymodel__include = True
@@ -70,7 +70,7 @@ Remove a model from the admin
 
 By default iommi displays the built in Django `User` and `Group` models. You can override this like:
 
-.. code:: python
+.. code-block:: python
 
     class MyAdmin(Admin):
         class Meta:
@@ -85,7 +85,7 @@ Permissions
 By default staff users have access to the admin. You can change this by
 overriding `has_permission`:
 
-.. code:: python
+.. code-block:: python
 
     from iommi.admin import Admin
 
@@ -109,7 +109,7 @@ HTML attributes
 You can configure attributes in the admin similarly to the rest of iommi, on
 the `Meta` class:
 
-.. code:: python
+.. code-block:: python
 
     class MyAdmin(Admin):
         class Meta:

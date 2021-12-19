@@ -62,7 +62,7 @@ to filter.) We really like this style and have expanded on it. It
 enables functions to expose the *full* API of functions it calls while
 still keeping the code simple. Here's a contrived example:
 
-.. code:: python
+.. code-block:: python
 
     from tri_declarative import dispatch, EMPTY
 
@@ -131,7 +131,7 @@ To customize iommi you can pass functions/lambdas in many places. This makes it 
 
     t = (
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Artist,
@@ -166,7 +166,7 @@ This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious
 
     expected = """
 
-.. code:: python
+.. code-block:: python
 
     request        WSGIRequest
     table          Table

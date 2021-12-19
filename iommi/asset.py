@@ -26,7 +26,7 @@ class Asset(Fragment):
 
         Example:
 
-        .. code:: python
+        .. code-block:: python
 
             Asset.js(
                 attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
@@ -45,7 +45,7 @@ class Asset(Fragment):
 
         Example:
 
-        .. code:: python
+        .. code-block:: python
 
             Asset.css(
                 attrs__href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css',

@@ -586,7 +586,7 @@ class Query(Part):
     """
     Declare a query language. Example:
 
-    .. code:: python
+    .. code-block:: python
 
         class CarQuery(Query):
             make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])

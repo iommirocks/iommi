@@ -39,7 +39,7 @@ It has:
 Example:
 
 
-.. code:: python
+.. code-block:: python
 
     class IndexPage(Page):
         title = html.h1('Supernaut')
@@ -76,7 +76,7 @@ Running tests
 
 You need to have tox installed then:
 
-.. code::
+.. code-block::
 
     make venv
     source env/bin/activate

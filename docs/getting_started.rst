@@ -22,7 +22,7 @@ First:
 
 Add `iommi` to installed apps:
 
-.. code:: python
+.. code-block:: python
 
     INSTALLED_APPS = [
         # [...]
@@ -31,7 +31,7 @@ Add `iommi` to installed apps:
 
 Add iommi's middleware:
 
-.. code:: python
+.. code-block:: python
 
     MIDDLEWARE = [
         # These three are optional, but highly recommended!
@@ -59,7 +59,7 @@ By default iommi uses a very basic bootstrap base template. We'll get to how to 
 
 Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with some your model. Add this to your `urls.py`:
 
-.. code:: python
+.. code-block:: python
 
     from iommi import Form
 
@@ -74,7 +74,7 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
 
 Pick a model from your app, and let's build a table for it! Add this to your `urls.py`:
 
-.. code:: python
+.. code-block:: python
 
     from iommi import Table
 
@@ -86,7 +86,7 @@ Pick a model from your app, and let's build a table for it! Add this to your `ur
 
 If you want, add a filter for some column:
 
-.. code:: python
+.. code-block:: python
 
     urlpatterns = [
         # ...your urls...
@@ -102,7 +102,7 @@ If you want, add a filter for some column:
 
 Pages are the method to compose complex pages from parts. Add this to your `views.py`:
 
-.. code:: python
+.. code-block:: python
 
     from iommi import Page, Form, Table
 
@@ -115,7 +115,7 @@ Pages are the method to compose complex pages from parts. Add this to your `view
 
 then hook into `urls.py`:
 
-.. code:: python
+.. code-block:: python
 
     urlpatterns = [
         # ...your urls...
@@ -141,7 +141,7 @@ middleware you can return iommi objects from your view:
     class TestPage(Page):
         pass
 
-.. code:: python
+.. code-block:: python
 
     def iommi_view(request, name):
         return TestPage(title=f'Hello {name}')
@@ -153,7 +153,7 @@ middleware you can return iommi objects from your view:
 
 `urls.py`:
 
-.. code:: python
+.. code-block:: python
 
     urlpatterns = [
         # ...your urls...
@@ -172,7 +172,7 @@ the iommi views you've already added into the design of your project.
 
 The simplest is to add something like this to your `settings.py`:
 
-.. code:: python
+.. code-block:: python
 
     # These imports need to be at the bottom of the file!
     from iommi import Style, Asset
@@ -189,7 +189,7 @@ The simplest is to add something like this to your `settings.py`:
 
 Where `my_project/iommi_base.html` could look something like this:
 
-.. code:: html
+.. code-block:: html
 
     {% extends "iommi/base.html" %}
 

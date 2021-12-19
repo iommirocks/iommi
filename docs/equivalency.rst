@@ -10,7 +10,7 @@ In iommi there are multiple ways to accomplish the same thing. The two most obvi
 
 First a model:
 
-.. code:: python
+.. code-block:: python
 
     class Album(Model):
         name = CharField(max_length=255, db_index=True)
@@ -27,7 +27,7 @@ We want to create a form to create an album. We already have the artist from the
 The following forms all accomplish this goal (although they would need more work to create a full functioning view!):
 
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -35,7 +35,7 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto=dict(
@@ -45,7 +45,7 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -53,7 +53,7 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-.. code:: python
+.. code-block:: python
 
     class ArtistForm(Form):
         class Meta:
@@ -63,7 +63,7 @@ The following forms all accomplish this goal (although they would need more work
     form = ArtistForm()
 
 
-.. code:: python
+.. code-block:: python
 
     class ArtistForm(Form):
         class Meta:
@@ -72,7 +72,7 @@ The following forms all accomplish this goal (although they would need more work
 
     form = ArtistForm()
 
-.. code:: python
+.. code-block:: python
 
     class ArtistForm(Form):
         class Meta:
@@ -84,7 +84,7 @@ The following forms all accomplish this goal (although they would need more work
 
 Without using the `auto` features:
 
-.. code:: python
+.. code-block:: python
 
     class ArtistForm(Form):
         name = Field()
@@ -96,7 +96,7 @@ Without using the `auto` features:
     form = ArtistForm()
 
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         fields__name=Field(),

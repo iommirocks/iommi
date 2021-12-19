@@ -20,7 +20,7 @@ iommi tables makes it easy to create full featured HTML tables easily:
 
 The code for the example above:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -48,7 +48,7 @@ Say I have some model:
             app_label = 'docs_tables'
     assert str(Foo(a=7)) == 'Foo: 7'
 
-.. code:: python
+.. code-block:: python
 
     class Bar(models.Model):
         b = models.ForeignKey(Foo, on_delete=models.CASCADE)
@@ -60,7 +60,7 @@ Say I have some model:
 
 Now I can display a list of `Bar` in a table like this:
 
-.. code:: python
+.. code-block:: python
 
     def my_view(request):
         return Table(auto__model=Bar)
@@ -80,7 +80,7 @@ Explicit tables
 
 You can also create tables explicitly:
 
-.. code:: python
+.. code-block:: python
 
     def albums(request):
         class AlbumTable(Table):
@@ -110,7 +110,7 @@ This gives me a view with filtering, sorting, bulk edit and pagination.
 Table of plain python objects
 -----------------------------
 
-.. code:: python
+.. code-block:: python
 
     def plain_objs_view(request):
         # Say I have a class...

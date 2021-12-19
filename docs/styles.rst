@@ -16,7 +16,7 @@ The styles iommi ships with are:
 
     style_names = '''
 
-.. code:: python
+.. code-block:: python
 
     bootstrap
     bulma
@@ -86,7 +86,7 @@ from all components and the style root are collected and rendered in the
 
 Defining an asset on the root:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         root__assets__my_design_system_css=Asset.css(
@@ -101,13 +101,13 @@ Defining an asset on the root:
 There is also a useful shortcut for JavaScript assets: `Asset.js(attrs__src='url')`.
 You can put script and css literals (or anything really) there if you want:
 
-.. code:: python
+.. code-block:: python
 
     Asset(tag='style', text='body { font-color: blue; }')
 
 Adding an asset on a specific shortcut:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         Field__shortcuts__multi_choice__assets__foo=Asset.css(
@@ -117,7 +117,7 @@ Adding an asset on a specific shortcut:
 
 Adding an asset on a specific class:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         Field__assets__foo=Asset.css(
@@ -133,7 +133,7 @@ By default iommi uses `iommi/base.html` to render pages. For simple projects
 this works very well, but for more complex sites you might need something
 more complex. So you can define your base template in a style definition:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         base_template='base.html',
@@ -142,7 +142,7 @@ more complex. So you can define your base template in a style definition:
 If you do this, you will have to make sure to render the iommi assets in the
 `<head>` tag:
 
-.. code:: html
+.. code-block:: html
 
     {% for asset in assets.values %}
         {{ asset }}
@@ -151,7 +151,7 @@ If you do this, you will have to make sure to render the iommi assets in the
 By default iommi will render the iommi page contents into the "content" block,
 to override this you can define `content_block`:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         base_template='base.html',
@@ -164,7 +164,7 @@ Targeting a class for styling
 
 You can apply style definitions via the class name:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         Field__attrs__class__foo=True,
@@ -180,7 +180,7 @@ Targeting a shortcut for styling
 
 You can apply style definitions on shortcut names:
 
-.. code:: python
+.. code-block:: python
 
     Style(
         MyClass__shortcuts__my_shortcut__attrs__class__foo=True,

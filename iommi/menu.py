@@ -172,7 +172,7 @@ class Menu(MenuBase):
 
     Example:
 
-    .. code:: python
+    .. code-block:: python
 
         menu = Menu(
             sub_menu=dict(

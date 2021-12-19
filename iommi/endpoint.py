@@ -28,7 +28,7 @@ class Endpoint(Traversable):
 
     Example:
 
-    .. code:: python
+    .. code-block:: python
 
         def my_view(request):
             return Page(

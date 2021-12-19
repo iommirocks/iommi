@@ -12,7 +12,7 @@ All `Part` derived classes have `extra` and `extra_evaluated` namespaces, for ex
 
 You use `extra` to put some data you want as-is:
 
-.. code::
+.. code-block::
 
     form = Form.create(
         auto__model=Artist
@@ -28,7 +28,7 @@ entire `Form`. We can then access these in e.g. a template:
 machinery to get some dynamic behavior:
 
 
-.. code::
+.. code-block::
 
     form = Form.create(
         auto__model=Artist

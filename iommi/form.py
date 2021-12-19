@@ -559,7 +559,7 @@ class Field(Part, Tag):
 
         All these parameters can be callables, and if they are, will be evaluated with the keyword arguments form and field. The only exceptions are `is_valid` (which gets `form`, `field` and `parsed_data`), `render_value` (which takes `form`, `field` and `value`) and `parse` (which gets `form`, `field`, `string_value`). Example of using a lambda to specify a value:
 
-        .. code:: python
+        .. code-block:: python
 
             Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
@@ -1289,7 +1289,7 @@ class Form(Part):
     """
     Describe a Form. Example:
 
-    .. code:: python
+    .. code-block:: python
 
         class MyForm(Form):
             a = Field()
@@ -1299,7 +1299,7 @@ class Form(Part):
 
     You can also create an instance of a form with this syntax if it's more convenient:
 
-    .. code:: python
+    .. code-block:: python
 
         form = Form(
             fields=dict(
@@ -1313,7 +1313,7 @@ class Form(Part):
     In the common case the fields namespace will contain only instances of `Field`, but
     iommi actually supports arbitrary `Part` objects. For example:
 
-    .. code:: python
+    .. code-block:: python
 
         form = Form(
             fields = dict(
@@ -1333,7 +1333,7 @@ class Form(Part):
     only instances of `Field` keyed by their `_name` independently of how deep they are in the
     hierarchy. Given the above, an appropriate post_handler would be:
 
-    .. code:: python
+    .. code-block:: python
 
         def post_handler(form, **_):
             if not form.is_valid():

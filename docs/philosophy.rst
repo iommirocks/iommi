@@ -85,14 +85,14 @@ with something like:
     class ElectricEngine:
         pass
 
-.. code:: python
+.. code-block:: python
 
     car = Car(engine=ElectricEngine())
 
 which is fine if you want to replace the entire engine, but if you just wanted
 to configure a small thing but keep all the defaults this can become noisy:
 
-.. code:: python
+.. code-block:: python
 
     car = Car(
         engine=InternalCombustionEngine(
@@ -116,7 +116,7 @@ would like to write:
 .. test
     """
 
-.. code:: python
+.. code-block:: python
 
     car = Car(engine.gearbox.clutch_type='double')
 
@@ -125,7 +125,7 @@ would like to write:
 
 but pythons syntax doesn't allow this. So instead we use `__`:
 
-.. code:: python
+.. code-block:: python
 
     car = Car(engine__gearbox__clutch_type='double')
 
@@ -139,7 +139,7 @@ We want the simple cases to be obvious and simple and the complex cases to
 be possible. To enable this we aim to make it so that every place you can
 place a value, you can use a lambda. So for example the simple case could be:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Musician,
@@ -149,7 +149,7 @@ place a value, you can use a lambda. So for example the simple case could be:
 but for the more dynamic case we can write:
 
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Musician,
@@ -185,7 +185,7 @@ The ``@declarative`` and ``@with_meta``
 decorators from tri.declarative enables us to very easily write an API
 that can look both like a normal simple python API:
 
-.. code:: python
+.. code-block:: python
 
     my_table = Table(
         columns=dict(
@@ -197,7 +197,7 @@ that can look both like a normal simple python API:
 This code is hopefully pretty self explanatory. But the cool thing is
 that we can do the exact same thing with a declarative style:
 
-.. code:: python
+.. code-block:: python
 
     class MyTable(Table):
         foo = Column()
@@ -214,7 +214,7 @@ declare defaults, not hard coding values. This means we can create
 instances of the class and set the values in the call to the
 constructor:
 
-.. code:: python
+.. code-block:: python
 
     my_table = MyTable(
         columns__foo__include=False,  # <- hides the column foo
@@ -258,7 +258,7 @@ In iommi we strive to avoid this by enabling one-off customizations with
 *no boilerplate*. To set a CSS style on a specific input field inside a form
 that was automatically generated we can write:
 
-.. code:: python
+.. code-block:: python
 
     Form(
         auto__model=Album,

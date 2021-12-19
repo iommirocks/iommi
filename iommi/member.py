@@ -62,7 +62,7 @@ def refine_done_members(
 
     Example:
 
-    .. code:: python
+    .. code-block:: python
 
         class ArtistTable(Table):
             instrument = Column()  # <- declared member

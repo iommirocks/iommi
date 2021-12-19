@@ -21,7 +21,7 @@ Example
         Table,
     )
 
-.. code:: python
+.. code-block:: python
 
     class MyPage(Page):
         title = html.h1('My page')
@@ -47,7 +47,7 @@ middleware you can also return them directly from your views. They accept
     class MyOtherPage(Page):
         pass
 
-.. code:: python
+.. code-block:: python
 
     class MyPage(Page):
         # Using the html builder to create a tag safely
@@ -92,7 +92,7 @@ Fragment
 
 Advanced example:
 
-.. code:: python
+.. code-block:: python
 
     Fragment(
         'foo',
@@ -103,7 +103,7 @@ Advanced example:
 
 This fragment will render as:
 
-.. code:: html
+.. code-block:: html
 
     <div baz='quux'>foobar</div>
 

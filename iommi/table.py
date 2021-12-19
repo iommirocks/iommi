@@ -567,7 +567,7 @@ class Column(Part):
 
         To implement a custom post handler that operates on the selected rows, do
 
-         .. code:: python
+         .. code-block:: python
 
             def my_handler(table):
                 rows = table.selection()
@@ -1412,7 +1412,7 @@ class Table(Part, Tag):
     """
     Describe a table. Example:
 
-    .. code:: python
+    .. code-block:: python
 
         class FooTable(Table):
             a = Column()

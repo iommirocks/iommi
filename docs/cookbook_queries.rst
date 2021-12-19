@@ -20,7 +20,7 @@ How do I override what operator is used for a query?
 The member `query_operator_to_q_operator` for `Filter` is used to convert from e.g. `:`
 to `icontains`. You can specify another callable here:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Track,

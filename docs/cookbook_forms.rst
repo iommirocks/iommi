@@ -19,7 +19,7 @@ How do I supply a custom parser for a field?
 
 Pass a callable to the `parse` member of the field:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Track,
@@ -41,7 +41,7 @@ How do I make a field non-editable?
 
 Pass a callable or `bool` to the `editable` member of the field:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -68,7 +68,7 @@ How do I make an entire form non-editable?
 
 This is a very common case so there's a special syntax for this: pass a `bool` to the form:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -89,7 +89,7 @@ How do I supply a custom validator?
 
 Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Return a tuple `(is_valid, 'error message if not valid')`.
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -133,7 +133,7 @@ How do I supply a custom initial value?
 
 Pass a value or callable to the `initial` member:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -156,7 +156,7 @@ How do I set if a field is required?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Normally this will be handled automatically by looking at the model definition, but sometimes you want a form to be more strict than the model. Pass a `bool` or a callable to the `required` member:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -178,7 +178,7 @@ How do I change the order of the fields?
 
 You can change the order in your model definitions as this is what iommi uses. If that's not practical you can use the `after` member. It's either the name of a field or an index. There is a special value `LAST` to put a field last.
 
-.. code:: python
+.. code-block:: python
 
     from tri_declarative import LAST
 
@@ -212,7 +212,7 @@ to a model field `name`.
 In special cases you can override which attributes it uses for
 searching by specifying `search_fields`:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -236,14 +236,14 @@ How do I override rendering of an entire field?
 
 Pass a template name or a `Template` object:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
         fields__year__template='my_template.html',
     )
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -259,14 +259,14 @@ How do I override rendering of the input field?
 
 Pass a template name or a `Template` object to the `input` namespace:
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
         fields__year__input__template='my_template.html',
     )
 
-.. code:: python
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -284,7 +284,7 @@ uses).
 .. test
     from iommi.style_bootstrap import bootstrap
 
-.. code:: python
+.. code-block:: python
 
     my_style = Style(bootstrap, Field__shortcuts__date__input__attrs_type='date')
 

@@ -13,7 +13,7 @@ iommi forms is an alternative forms system for Django. It is inspired by the sta
 
 The code for the example above:
 
-.. code:: python
+.. code-block:: python
 
     Form.create(auto__model=Album)
 
@@ -42,7 +42,7 @@ Declarative forms
 You can create forms declaratively, similar to Django forms. There are some important differences between iommi forms and Django forms in this mode, maybe the most important being that in iommi you can pass a callable as a parameter to late evaluate what the value of something is. This is used to restrict a field for staff users in this example:
 
 
-.. code:: python
+.. code-block:: python
 
     class UserForm(Form):
         first_name = Field.text()
@@ -92,7 +92,7 @@ Programmatic forms
 The declarative style is very readable, but sometimes you don't know until runtime what the form should look like. Creating forms programmatically in iommi is easy (and equivalent to doing it the declarative way):
 
 
-.. code:: python
+.. code-block:: python
 
     def edit_user_save_post_handler(form, **_):
         if not form.is_valid():
@@ -149,7 +149,7 @@ customize the behavior!). The above example is equivalent to:
         form.instance.save()
         return HttpResponseRedirect('..')
 
-.. code:: python
+.. code-block:: python
 
     def edit_user_view(request, username):
         return Form(
@@ -185,7 +185,7 @@ customize the behavior!). The above example is equivalent to:
 
 or even better: use `Form.edit`:
 
-.. code:: python
+.. code-block:: python
 
     def edit_user_view(request, username):
         return Form.edit(
@@ -227,7 +227,7 @@ You can do this yourself in the classic Django way:
     def do_your_thing():
         pass
 
-.. code:: python
+.. code-block:: python
 
     if form.is_valid() and request.method == 'POST':
         do_your_thing()
@@ -246,7 +246,7 @@ By default for create/edit/delete forms you get one post handler by the name
     # This test is a bit silly as User doesn't have a "disabled" property, but the docs don't say what type is actually here, so let's play along :P
     instance = User.objects.create(username='foo')
 
-.. code:: python
+.. code-block:: python
 
     def disable_action(form, **_):
         form.instance.disabled = True

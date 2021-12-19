@@ -123,20 +123,20 @@ class Fragment(Part, Tag):
     .. test
         from iommi.fragment import Fragment
 
-    .. code:: python
+    .. code-block:: python
 
         h1 = Fragment(children__text='Tony', tag='h1')
 
     It's easiest to use via the html builder:
 
-    .. code:: python
+    .. code-block:: python
 
         h1 = html.h1('Tony')
 
     Fragments are useful because attrs, template and tag are evaluated, so if
     you have a `Page` with a fragment in it you can configure it later:
 
-    .. code:: python
+    .. code-block:: python
 
         class MyPage(Page):
             header = html.h1(

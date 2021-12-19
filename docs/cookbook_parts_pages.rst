@@ -19,7 +19,7 @@ This is all just *standard* tri.declarative magic. But as you are likely new to 
 this might take a while to get used to. Let's say you created yourself a master template
 for your site.
 
-.. code:: python
+.. code-block:: python
 
     class BasePage(Page):
         title = html.h1('My awesome webpage')
@@ -27,7 +27,7 @@ for your site.
 
 Which you can use like this:
 
-.. code:: python
+.. code-block:: python
 
     def index(request):
         class IndexPage(BasePage):
@@ -43,7 +43,7 @@ an existing namespace, but you can also add new elements or replace bigger
 parts (and most of the time it doesn't matter if you use the class Member or the
 keyword arguments to init syntax):
 
-.. code:: python
+.. code-block:: python
 
     def index(request):
         class IndexPage(BasePage):
@@ -67,13 +67,13 @@ How do I set the title of my page?
 
 As in the text shown in the browser status bar?
 
-.. code:: python
+.. code-block:: python
 
     Page(title='The title in the browser')
 
 Note that this is different from
 
-.. code:: python
+.. code-block:: python
 
     class MyPage(Page):
         title = html.h1('A header element in the dom')
@@ -81,7 +81,7 @@ Note that this is different from
 
 Which is equivalent to:
 
-.. code:: python
+.. code-block:: python
 
     Page(parts__title=html.h1('A header element in the dom'))
 
@@ -91,7 +91,7 @@ Which is equivalent to:
 How do I specify the context used when a Template is rendered?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+.. code-block:: python
 
     def index(request):
         context = {'today' : date.today()}
@@ -107,7 +107,7 @@ You can use the full power of `tri.declarative` to construct the context. This
 not only makes the above shorter, but also makes it easy to write abstractions that
 can be extended later:
 
-.. code:: python
+.. code-block:: python
 
     Page(
         parts__body=Template("""A django template was rendered on {{today}}."""),

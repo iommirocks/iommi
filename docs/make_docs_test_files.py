@@ -41,14 +41,14 @@ def build_test_file_from_rst(filename):
             type_of_block = line[2:].strip()
 
         elif line.startswith('    '):
-            if type_of_block == 'code:: pycon':
+            if type_of_block == 'code-block:: pycon':
                 if line.strip().startswith('>>>'):
                     current_section['code'].append((line.replace('>>>', 'tmp ='), i))
                 elif line.strip().startswith('...'):
                     current_section['code'].append((line.replace('...', ''), i))
                 else:
                     current_section['code'].append(('    assert tmp == ' + line.strip(' '), i))
-            elif type_of_block in ('code:: python', 'test'):
+            elif type_of_block in ('code-block:: python', 'test'):
                 current_section['code'].append((line, i))
             elif type_of_block == 'imports':
                 current_section['code'].append((line[4:], i))  # 4: is to dedent one level

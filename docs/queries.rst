@@ -24,7 +24,7 @@ example.
 
 The code for the example above:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -42,7 +42,7 @@ Query language
 iommi comes with an advanced query language so users can filter tables
 after what they want. Searching songs can look like this:
 
-.. code::
+.. code-block::
 
     album=Paranoid AND lyrics:"have the power"
 
@@ -81,7 +81,7 @@ Stand alone example
 Simple view that allows the user to search for a car by choosing the make from a drop down, and search
 for specific model in the advanced mode:
 
-.. code:: python
+.. code-block:: python
 
     class CarQuery(Query):
         make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])
@@ -102,7 +102,7 @@ for specific model in the advanced mode:
 .. test
     cars(req('get'))
 
-.. code:: html
+.. code-block:: html
 
     <!-- cars.html -->
     {{ query }}
@@ -122,7 +122,7 @@ After switching to the advanced mode:
 
 Programmatically call the search API:
 
-.. code:: python
+.. code-block:: python
 
     query = CarQuery().bind(request=request)
     cars_query_set = query.parse_query_string(

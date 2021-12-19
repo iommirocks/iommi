@@ -25,7 +25,7 @@ You use the `register_factory` function to register your own factory. The simple
     class TimeField:
         pass
 
-.. code:: python
+.. code-block:: python
 
     register_factory(
         TimeField,
@@ -44,7 +44,7 @@ For more advanced behavior you can pass a `Shortcut` instance or a callable that
     from django.db.models.fields import BooleanField
 
 
-.. code:: python
+.. code-block:: python
 
     register_field_factory(
         BooleanField,
@@ -65,7 +65,7 @@ iommi renders `bool`, `list`, `set`, `tuple`, `QuerySet` and any type that has a
     class MyType:
         pass
 
-.. code:: python
+.. code-block:: python
 
     register_cell_formatter(MyType, lambda value, **_: f'hello {value}')
 
@@ -78,7 +78,7 @@ The search fields of your Django models
 When searching for an object with `Query` we need to know which fields to use to find the object. This enables the advanced query language to be `my_car_brand='toyota'` instead of `my_car_brand.pk=42` which is a lot nicer. iommi will automatically use a field called `name` if it exists and is unique. If you have other fields you want iommi to use to find objects you can register it like this:
 
 
-.. code:: python
+.. code-block:: python
 
     register_search_fields(model=Album, search_fields=['year'], allow_non_unique=True)
 

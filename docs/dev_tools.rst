@@ -93,7 +93,7 @@ In DEBUG the SQL trace middleware will automatically warn you if you have views
 appear to have `N+1 type errors <https://stackoverflow.com/questions/97197/what-is-the-n1-selects-problem-in-orm-object-relational-mapping>`_. By default iommi will will print stack traces and example SQL statements
 for the worst offenders for your view to the console:
 
-.. code::
+.. code-block::
 
     ------ 5 times: -------
     From source:

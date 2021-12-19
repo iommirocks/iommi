@@ -92,7 +92,7 @@ class Attrs(Namespace):
     """
     The `attrs` namespace on `Field`, `Form`, `Header`, `Cell` and more is used to customize HTML attributes.
 
-    .. code:: python
+    .. code-block:: python
 
         form = Form(
             auto__model=Album,
@@ -103,7 +103,7 @@ class Attrs(Namespace):
 
     or more succinctly:
 
-    .. code:: python
+    .. code-block:: python
 
         form = Form(
             auto__model=Album,
@@ -120,13 +120,13 @@ class Attrs(Namespace):
     for `style` and `class`. The example above will result in the following
     attributes on the field tag:
 
-    .. code:: html
+    .. code-block:: html
 
        <div foo="bar" class="bar" style="baz: qwe">
 
     The values in these dicts can be callables:
 
-    .. code:: python
+    .. code-block:: python
 
         form = Form(
             auto__model=Album,

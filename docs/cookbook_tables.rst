@@ -32,14 +32,14 @@ How do you turn off pagination?
 
 Specify `page_size=None`:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
         page_size=None,
     )
 
-.. code:: python
+.. code-block:: python
 
     class MyTable(Table):
         a = Column()
@@ -67,7 +67,7 @@ How do I make a link in a cell?
 
 This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
 
-.. code:: python
+.. code-block:: python
 
     Column(
         cell__url='http://example.com',
@@ -82,7 +82,7 @@ How do I create a column based on computed data (i.e. a column not based on an a
 
 Let's say we have a model like this:
 
-.. code:: python
+.. code-block:: python
 
     class Foo(models.Model):
         value = models.IntegerField()
@@ -93,7 +93,7 @@ Let's say we have a model like this:
 
 And we want a computed column `square` that is the square of the value, then we can do:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Foo,
@@ -105,7 +105,7 @@ And we want a computed column `square` that is the square of the value, then we 
 
 or we could do:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Foo,
@@ -131,7 +131,7 @@ How do I reorder columns?
 
 By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
 
-.. code:: python
+.. code-block:: python
 
     class Foo(models.Model):
         a = models.IntegerField()
@@ -144,13 +144,13 @@ By default the columns come in the order defined so if you have an explicit tabl
 
 If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value `-1`:
 
-.. code:: python
+.. code-block:: python
 
     Table(auto__model=Foo, columns__c__after=-1)
 
 `-1` means the first, other numbers mean index. We can also put columns after another named column like so:
 
-.. code:: python
+.. code-block:: python
 
     Table(auto__model=Foo, columns__c__after='a')
 
@@ -167,7 +167,7 @@ How do I enable searching/filter on columns?
 Pass the value `filter__include=True` to the column, to enable searching
 in the advanced query language.
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -192,7 +192,7 @@ How do I make a freetext search field?
 
 If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -222,14 +222,14 @@ The `attrs` namespace has special handling to make it easy to customize. There a
 
 First the straight forward case where a key/value pair is rendered in the output:
 
-.. code:: pycon
+.. code-block:: pycon
 
     >>> render_attrs(Namespace(foo='bar'))
     ' foo="bar"'
 
 Then there's a special handling for CSS classes:
 
-.. code:: pycon
+.. code-block:: pycon
 
     >>> render_attrs(Namespace(class__foo=True, class__bar=True))
     ' class="bar foo"'
@@ -238,7 +238,7 @@ Note that the class names are sorted alphabetically on render.
 
 Lastly there is the special handling of `style`:
 
-.. code:: pycon
+.. code-block:: pycon
 
     >>> render_attrs(Namespace(style__font='Arial'))
     ' style="font: Arial"'
@@ -246,7 +246,7 @@ Lastly there is the special handling of `style`:
 If you need to add a style with `-` in the name you have to do this:
 
 
-.. code:: pycon
+.. code-block:: pycon
 
     >>> render_attrs(Namespace(**{'style__font-family': 'sans-serif'}))
     ' style="font-family: sans-serif"'
@@ -254,7 +254,7 @@ If you need to add a style with `-` in the name you have to do this:
 
 Everything together:
 
-.. code:: pycon
+.. code-block:: pycon
 
     >>> render_attrs(
     ...     Namespace(
@@ -316,7 +316,7 @@ How do I specify which columns to show?
 
 Just pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -340,7 +340,7 @@ Here's a simple example that prints a table to stdout:
     Artist.objects.create(name='foo')
     table = Table(auto__model=Artist).bind(request=req('get'))
 
-.. code:: python
+.. code-block:: python
 
     for row in table.cells_for_rows():
         for cell in row:
@@ -355,7 +355,7 @@ How do I access foreign key related data in a column?
 
 Let's say we have two models:
 
-.. code:: python
+.. code-block:: python
 
     class Foo(models.Model):
         a = models.IntegerField()
@@ -364,7 +364,7 @@ Let's say we have two models:
         class Meta:
             app_label = 'docs_fk'
 
-.. code:: python
+.. code-block:: python
 
     class Bar(models.Model):
         b = models.IntegerField()
@@ -376,7 +376,7 @@ Let's say we have two models:
 
 we can build a table of `Bar` that shows the data of `a` like this:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Bar,
@@ -392,7 +392,7 @@ How do I turn off sorting? (on a column or table wide)
 
 To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -401,7 +401,7 @@ To turn off column on a column pass it `sortable=False` (you can also use a lamb
 
 and to turn it off on the entire table:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -415,7 +415,7 @@ How do I specify the title of a header?
 
 The `display_name` property of a column is displayed in the header.
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -427,7 +427,7 @@ The `display_name` property of a column is displayed in the header.
 How do I set the default sort order of a column to be descending instead of ascending?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -440,7 +440,7 @@ How do I set the default sort order of a column to be descending instead of asce
 How do I group columns?
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -458,7 +458,7 @@ How do I get rowspan on a table?
 
 You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -474,7 +474,7 @@ How do I enable bulk editing?
 Editing multiple items at a time is easy in iommi with the built in bulk
 editing. Enable it for a columns by passing `bulk__include=True`:
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -495,7 +495,7 @@ the columns you want to bulk edit.
 How do I enable bulk delete?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+.. code-block:: python
 
     Table(
         auto__model=Album,
@@ -516,7 +516,7 @@ You need to first show the select column by passing
 `columns__select__include=True`, then define a submit `Action` with a post
 handler:
 
-.. code:: python
+.. code-block:: python
 
     def my_action_post_handler(table, request, **_):
         queryset = table.bulk_queryset()

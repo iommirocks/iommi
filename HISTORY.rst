@@ -117,14 +117,14 @@ Changelog
 
 * Names with underscore are deprecated and will be removed in the next major version. This means you can no longer write this:
 
-.. code:: python
+.. code-block:: python
 
     class MyTable(Table):
         foo__bar = Column()
 
 You must now instead write:
 
-.. code:: python
+.. code-block:: python
 
     class MyTable(Table):
         some_name = Column(attr='foo__bar')

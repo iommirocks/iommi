@@ -41,7 +41,7 @@ class Action(Fragment):
 
     Examples:
 
-    .. code:: python
+    .. code-block:: python
 
         # Link
         Action(attrs__href='http://example.com')
