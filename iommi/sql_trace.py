@@ -159,7 +159,6 @@ class Middleware:
                         result.append(format_sql(sql, duration=x['duration']))
                         if sql_trace == SQL_DEBUG_LEVEL_ALL_WITH_STACKS:
                             result.append('\n\n')
-                            # TODO: make links!
                             result.append(linkify(x['stack']))
                         result.append('\n\n')
                     result.append('</pre>')
