@@ -60,13 +60,15 @@ def linkify(s):
     from iommi.debug import src_debug_url_builder
     r = []
     for line in s.split('\n'):
-        match = re.search(r'File "(.*)", line (\d+), in (.*)', line)
+        match = re.search(r'( *)File "(.*)", line (\d+), in (.*)', line)
         if match:
-            filename = match.group(1)
-            lineno = int(match.group(2))
-            function_name = match.group(3)
+            starting_space = match.group(1)
+            filename = match.group(2)
+            lineno = int(match.group(3))
+            function_name = match.group(4)
             r.append(format_html(
-                'File "<a href="{}">{}</a> ", line {}, in {}\n',
+                '{}File "<a href="{}">{}</a> ", line {}, in {}\n',
+                starting_space,
                 src_debug_url_builder(filename, lineno),
                 filename,
                 lineno,

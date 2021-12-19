@@ -15,6 +15,7 @@ from iommi.sql_trace import (
     colorize,
     format_sql,
     get_sql_debug,
+    linkify,
     no_sql_debug,
     safe_unicode_literal,
     set_sql_debug,
@@ -240,3 +241,19 @@ def test_format_sql():
         'green">y</span> <span><br>&nbsp;</span><span style="color: green; '
         'font-weight: bold">FROM</span> <span style="color: green">foo</span> </span>'
     )
+
+
+def test_linkify():
+    original = """
+  File "foo/django/template/bar", line 1, in f => 
+  File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)
+  File "foo.py", line 13, in asd =>
+""".strip()
+    expected = """
+  File "<a href="pycharm://open?file=/Users/boxed/Projects/iommi/foo/django/template/bar&amp;line=1">foo/django/template/bar</a> ", line 1, in f =&gt; 
+  File "<a href="pycharm://open?file=/Users/boxed/Projects/iommi/foo.py&amp;line=1">foo.py</a> ", line 1, in _resolve_lookup =&gt; (looking up: django_template_bit)
+  File "<a href="pycharm://open?file=/Users/boxed/Projects/iommi/foo.py&amp;line=13">foo.py</a> ", line 13, in asd =&gt;
+""".strip()
+    actual = linkify(original).strip()
+    print(repr(actual))
+    assert actual == expected
