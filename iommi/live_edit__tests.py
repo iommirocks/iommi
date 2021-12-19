@@ -3,8 +3,11 @@ from pathlib import Path
 
 import pytest
 from django.views.decorators.csrf import csrf_exempt
-
-from iommi import Form
+from django.test import override_settings
+from iommi import (
+    Form,
+    Page,
+)
 from iommi._web_compat import HttpResponse
 from iommi.live_edit import (
     dangerous_execute_code,
@@ -18,8 +21,16 @@ from tests.helpers import req
 from tests.models import TFoo
 
 
-def view(request):
+def function_based_view(request):
     return HttpResponse('hello!')  # pragma: no cover
+
+
+class PartBasedViewPage(Page):
+    hello = 'hello!'
+
+
+with override_settings(DEBUG=True):
+    part_based_view = PartBasedViewPage().as_view()
 
 
 @csrf_exempt
@@ -33,10 +44,21 @@ def test_live_edit():
     assert "def csrf_exempt_view(request):" in result, result
 
 
+def test_live_edit_part():
+    result = render_root(part=live_edit_view(req('get'), part_based_view, args=(), kwargs={}).bind(request=req('get')))
+    assert 'class PartBasedViewPage' in result, result
+
+
 def test_get_wrapped_view_function():
+    view = function_based_view
     assert get_wrapped_view(view) is view
     assert get_wrapped_view(csrf_exempt(view)) is view
-    get_wrapped_view(Form.create(auto__model=TFoo).as_view())
+
+
+def test_get_wrapped_part_view_wrapped():
+    view = part_based_view
+    assert get_wrapped_view(view) is view.__iommi_target__
+    assert get_wrapped_view(csrf_exempt(view)) is view.__iommi_target__
 
 
 def test_should_edit(settings):
@@ -47,12 +69,14 @@ def test_should_edit(settings):
     assert should_edit(req('get', _iommi_live_edit=''))
 
 
-def test_dangerous_execute_code_error():
+@pytest.mark.parametrize('view', [function_based_view, part_based_view])
+def test_dangerous_execute_code_error(view):
     with pytest.raises(SyntaxError):
         dangerous_execute_code(code='invalid code', request=req('post'), view=view, args=(), kwargs={})
 
 
 def test_dangerous_execute_code_success():
+    view = function_based_view
     code = """
 def view(request):
     return HttpResponse(request.GET['foo'] + 'bar')
