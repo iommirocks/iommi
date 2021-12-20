@@ -238,6 +238,7 @@ class EditTable(Table):
             call_target__attribute='primary',
             display_name=gettext('Save'),
             post_handler=edit_table__post_handler,
+            include=lambda table, **_: table.parent_form is None,
         )
         actions__csrf = Action(tag='div', children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
         actions__add_row = Action.button(attrs__onclick='iommi_add_row(this); return false')
@@ -387,11 +388,3 @@ class EditTable(Table):
     @refinable
     def preprocess_row_for_create(row, **_):
         return row
-
-    @property
-    def render_actions(self):
-        # For now we do not support actions in child forms. This mirrors the behavior in Form
-        if self.parent_form:
-            return ''
-
-        return super().render_actions
