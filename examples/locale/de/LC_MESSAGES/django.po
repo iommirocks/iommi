@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-07 16:42+0200\n"
+"POT-Creation-Date: 2021-12-20 12:49+0100\n"
 "PO-Revision-Date: 2021-10-07 17:36+0000\n"
 "Last-Translator: Waldemar Hamm <wh@ravok.de>\n"
-"Language-Team: German <https://weblate.ravok.de/projects/iommi/examples/de/>"
-"\n"
+"Language-Team: German <https://weblate.ravok.de/projects/iommi/examples/de/"
+">\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -23,41 +23,73 @@ msgstr ""
 msgid "Use much like a django form"
 msgstr "Benutze es wie ein Django-Formular"
 
-#: examples/form_examples.py:207
-msgid "Global error message 1"
-msgstr "Globale Fehlernachricht 1"
+#: examples/form_examples.py:74
+msgid "Use more ideomatic like an iommi part"
+msgstr ""
 
-#: examples/form_examples.py:208
-msgid "Global error message 2"
-msgstr "Globale Fehlernachricht 2"
+#: examples/form_examples.py:92
+msgid "Endpoints using ajax need no extra url entry"
+msgstr ""
 
-#: examples/form_examples.py:211
-msgid "Field error message 1"
-msgstr "Datenfeld Fehlernachricht 1"
+#: examples/form_examples.py:100
+msgid "Create forms from database models"
+msgstr ""
 
-#: examples/form_examples.py:212
-msgid "Field error message 2"
-msgstr "Datenfeld Fehlernachricht 2"
+#: examples/form_examples.py:105
+msgid "Create edit forms from database models"
+msgstr ""
 
-#: examples/form_examples.py:215
+#: examples/form_examples.py:110
+msgid "Custom actions can be added to forms"
+msgstr ""
+
+#: examples/form_examples.py:125
+msgid "Multiple forms can be composed in a page"
+msgstr ""
+
+#: examples/form_examples.py:205 examples/form_examples.py:216
 msgid "Error messages"
 msgstr "Fehlernachrichten"
 
-#: examples/form_examples.py:222
+#: examples/form_examples.py:208
+msgid "Global error message 1"
+msgstr "Globale Fehlernachricht 1"
+
+#: examples/form_examples.py:209
+msgid "Global error message 2"
+msgstr "Globale Fehlernachricht 2"
+
+#: examples/form_examples.py:212
+msgid "Field error message 1"
+msgstr "Datenfeld Fehlernachricht 1"
+
+#: examples/form_examples.py:213
+msgid "Field error message 2"
+msgstr "Datenfeld Fehlernachricht 2"
+
+#: examples/form_examples.py:223
 msgid "Form children do not need to be all fields"
 msgstr "Formular\"kinder\" müssen nicht komplett aus Datenfeldern bestehen"
 
-#: examples/form_examples.py:255
+#: examples/form_examples.py:256
 msgid "Form children do not need to be all fields -- declarative"
 msgstr ""
 "Formular\"kinder\" müssen nicht komplett aus Datenfeldern bestehen -- "
 "deklarativ"
 
-#: examples/form_examples.py:291
+#: examples/form_examples.py:292
 msgid "Nested forms -- to abstract out behaviour and create complex 'fields'."
 msgstr ""
 "Verschachtelte Formulare -- um Vorgehensweise zu abstrahieren und komplexe "
 "\"Datenfelder\" zu erzeugen."
+
+#: examples/form_examples.py:332
+msgid "File upload"
+msgstr ""
+
+#: examples/form_examples.py:346
+msgid "Field groups"
+msgstr ""
 
 #: examples/menu_examples.py:20
 msgid "A sample menu"
@@ -157,27 +189,27 @@ msgstr "Readme Beispiel 1"
 msgid "Readme example 2"
 msgstr "Readme Beispiel 2"
 
-#: examples/table_examples.py:72
+#: examples/table_examples.py:73
 msgid "Auto from model example 1"
 msgstr "Automatisch vom Model Beispiel 1"
 
-#: examples/table_examples.py:79
+#: examples/table_examples.py:80
 msgid "Auto from model example 2"
 msgstr "Automatisch vom Model Beispiel 2"
 
-#: examples/table_examples.py:87
+#: examples/table_examples.py:88
 msgid "Kitchen sink example"
 msgstr "Beispiel für alles auf einmal"
 
-#: examples/table_examples.py:143
+#: examples/table_examples.py:144
 msgid "Two tables on the same page"
 msgstr "Zwei Tabellen auf derselben Seite"
 
-#: examples/table_examples.py:160
+#: examples/table_examples.py:161
 msgid "post handlers on lists"
 msgstr "Post handler für Listen"
 
-#: examples/table_examples.py:198
+#: examples/table_examples.py:199
 msgid "You can have extra fields in your form that the query will ignore"
 msgstr ""
 "Man kann zusätzliche Felder im Formular haben, die von der Datenabfrage "

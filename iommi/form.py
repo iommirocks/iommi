@@ -795,7 +795,7 @@ class Field(Part, Tag):
                 and self.required
                 and (value == [] if self.is_list else value in [None, ''])
             ):
-                self.add_error('This field is required')
+                self.add_error(gettext('This field is required'))
             else:
                 self.value = value
         else:

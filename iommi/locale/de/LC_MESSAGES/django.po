@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-07 16:42+0200\n"
+"POT-Creation-Date: 2021-12-20 12:49+0100\n"
 "PO-Revision-Date: 2021-10-07 17:36+0000\n"
 "Last-Translator: Waldemar Hamm <wh@ravok.de>\n"
 "Language-Team: German <https://weblate.ravok.de/projects/iommi/iommi/de/>\n"
@@ -18,137 +18,147 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.8.1\n"
 
-#: action.py:146
+#: action.py:143
 msgid "Submit"
 msgstr "Absenden"
 
-#: admin.py:157
+#: admin.py:171
 msgid "iommi administration"
 msgstr "iommi Verwaltung"
 
-#: admin.py:160 admin.py:476
+#: admin.py:174 admin.py:489
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: admin.py:162
+#: admin.py:176
 msgid "Logout"
 msgstr "Abmelden"
 
-#: admin.py:254
+#: admin.py:267
 msgid "All models"
 msgstr "Alle Modelle"
 
-#: admin.py:300
+#: admin.py:313
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "%(model_name)s anlegen"
 
-#: admin.py:419
+#: admin.py:432
 msgid "Username"
 msgstr "Benutzername"
 
-#: admin.py:420
+#: admin.py:433
 msgid "Password"
 msgstr "Passwort"
 
-#: admin.py:423
+#: admin.py:436
 msgid "Login"
 msgstr "Anmelden"
 
-#: admin.py:438
+#: admin.py:451
 msgid "Unknown username or password"
 msgstr "Unbekannter Benutzername oder ungültiges Passwort"
 
-#: admin.py:454
+#: admin.py:467
 msgid "Incorrect password"
 msgstr "Passwort ungültig"
 
-#: admin.py:470
+#: admin.py:483
 msgid "New passwords does not match"
 msgstr "Neue Passwörter sind nicht identisch"
 
-#: admin.py:486
+#: admin.py:499
 msgid "Current password"
 msgstr "Aktuelles Passwort"
 
-#: admin.py:487
+#: admin.py:500
 msgid "New password"
 msgstr "Neues Passwort"
 
-#: admin.py:488
+#: admin.py:501
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: form.py:1041 table.py:246
+#: experimental/edit_table.py:134 style_base.py:129 table.py:523
+msgid "Delete"
+msgstr "Löschen"
+
+#: experimental/edit_table.py:239 form.py:1422 style_base.py:127
+msgid "Save"
+msgstr "Speichern"
+
+#: form.py:798
+msgid "This field is required"
+msgstr "Dieses Feld ist erforderlich"
+
+#: form.py:1059 table.py:241
 msgid "Yes"
 msgstr "Ja"
 
-#: form.py:1041 table.py:248
+#: form.py:1059 table.py:243
 msgid "No"
 msgstr "Nein"
 
-#: form.py:1253
+#: form.py:1272
 msgid "create"
 msgstr "anlegen"
 
-#: form.py:1254
+#: form.py:1273
 msgid "edit"
 msgstr "bearbeiten"
 
-#: form.py:1255
+#: form.py:1274
 msgid "delete"
 msgstr "löschen"
 
-#: form.py:1398
+#: form.py:1416
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(model_name)s %(crud_type)s"
 
-#: form.py:1404
-msgid "Save"
-msgstr "Speichern"
-
-#: query.py:575 templates/iommi/query/form_toggle_script.html:26
+#: query.py:574 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion wechseln"
 
-#: query.py:678
+#: query.py:698
 msgid "Search"
 msgstr "Suche"
 
-#: query.py:704
+#: query.py:737
 msgid "Filter"
 msgstr "Filtere"
 
-#: table.py:515
+#: style_base.py:128
+#, fuzzy
+#| msgid "create"
+msgid "Create"
+msgstr "anlegen"
+
+#: table.py:511
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: table.py:527
-msgid "Delete"
-msgstr "Löschen"
-
-#: table.py:540
+#: table.py:536
 msgid "Download"
 msgstr "Herunterladen"
 
-#: table.py:552
+#: table.py:548
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1123
+#: table.py:1131
 msgid "Are you sure you want to delete these {} items?"
 msgstr "Bist Du sicher, dass du diese {} Zeilen löschen willst?"
 
-#: table.py:1138
+#: table.py:1146
 msgid "Yes, delete all!"
 msgstr "Ja, lösche alles!"
 
-#: table.py:1524 table.py:1708
+#: table.py:1541 table.py:1738
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1714
+#: table.py:1744
 msgid "Bulk delete"
 msgstr "Massenlöschung"
 
@@ -215,11 +225,11 @@ msgid ""
 "\"-10d\"</code>."
 msgstr ""
 "Du kannst nach Zeitpunkten relativ zum heutigen Tag suchen: <code>feld_name "
-"< \"10 days ago\"</code>. Unterstützte Zeitspannen sind Tage "
-"(<code>days</code>), Monate (<code>months</code>), Jahre (<code>years</code>)"
-", Quartale (<code>quarters</code>) und Wochentage (<code>weekdays</code>). "
-"Die Angaben können auch negativ sein und abgekürzt werden; so wird aus <code>"
-"\"10 days ago\"</code> beispielsweise <code>\"-10d\"</code>."
+"< \"10 days ago\"</code>. Unterstützte Zeitspannen sind Tage (<code>days</"
+"code>), Monate (<code>months</code>), Jahre (<code>years</code>), Quartale "
+"(<code>quarters</code>) und Wochentage (<code>weekdays</code>). Die Angaben "
+"können auch negativ sein und abgekürzt werden; so wird aus <code>\"10 days "
+"ago\"</code> beispielsweise <code>\"-10d\"</code>."
 
 #: templates/iommi/query/form_toggle_script.html:17
 msgid "Switch to basic search"
