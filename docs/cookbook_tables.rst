@@ -1,16 +1,9 @@
-.. imports
-    from tests.helpers import req, user_req, staff_req
-    from django.template import Template
-    from tri_declarative import Namespace
-    from iommi.attrs import render_attrs
-    from django.http import HttpResponseRedirect
-    from datetime import date
-    import pytest
-    pytestmark = pytest.mark.django_db
-
 
 Tables
 ------
+
+    
+
 
 How do I customize the rendering of a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,10 +20,14 @@ To customize the cell, see `How do I customize the rendering of a cell?`_
 
 .. _Table.page_size:
 
+    
+
+
 How do you turn off pagination?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Specify `page_size=None`:
+
 
 .. code-block:: python
 
@@ -39,7 +36,6 @@ Specify `page_size=None`:
         page_size=None,
     )
 
-.. code-block:: python
 
     class MyTable(Table):
         a = Column()
@@ -48,7 +44,11 @@ Specify `page_size=None`:
             page_size = None
 
 
+
 .. _Table.cell:
+
+    
+
 
 How do I customize the rendering of a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,10 +62,14 @@ You can customize the :doc:`Cell` rendering in several ways:
 - Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
 
 
+    
+
+
 How do I make a link in a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is such a common case that there's a special case for it: pass the `url` and `url_title` parameters to the `cell`:
+
 
 .. code-block:: python
 
@@ -75,23 +79,26 @@ This is such a common case that there's a special case for it: pass the `url` an
     )
 
 
+
 .. _How do I create a column based on computed data?:
+
+    
+
 
 How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's say we have a model like this:
 
+
 .. code-block:: python
 
     class Foo(models.Model):
         value = models.IntegerField()
 
-.. test
-        class Meta:
-            app_label = 'docs_computed'
 
 And we want a computed column `square` that is the square of the value, then we can do:
+
 
 .. code-block:: python
 
@@ -103,7 +110,9 @@ And we want a computed column `square` that is the square of the value, then we 
         )
     )
 
+
 or we could do:
+
 
 .. code-block:: python
 
@@ -115,7 +124,11 @@ or we could do:
         )
     )
 
+
 This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
+
+
+    
 
 
 How do I get iommi tables to understand my Django ModelField subclasses?
@@ -126,10 +139,14 @@ See :doc:`registrations`.
 
 .. _Column.after:
 
+    
+
+
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default the columns come in the order defined so if you have an explicit table defined, just move them around there. If the table is generated from a model definition, you can also move them in the model definition if you like, but that might not be a good idea. So to handle this case we can set the ordering on a column by giving it the `after` argument. Let's start with a simple model:
+
 
 .. code-block:: python
 
@@ -138,21 +155,22 @@ By default the columns come in the order defined so if you have an explicit tabl
         b = models.IntegerField()
         c = models.IntegerField()
 
-.. test
-        class Meta:
-            app_label = 'docs_reorder'
 
 If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value `-1`:
+
 
 .. code-block:: python
 
     Table(auto__model=Foo, columns__c__after=-1)
 
+
 `-1` means the first, other numbers mean index. We can also put columns after another named column like so:
+
 
 .. code-block:: python
 
     Table(auto__model=Foo, columns__c__after='a')
+
 
 this will put the columns in the order a, c, b.
 
@@ -161,11 +179,15 @@ There is a special value `LAST` (import from `tri_declarative`) to put something
 
 .. _Column.filter:
 
+    
+
+
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass the value `filter__include=True` to the column, to enable searching
 in the advanced query language.
+
 
 .. code-block:: python
 
@@ -173,6 +195,7 @@ in the advanced query language.
         auto__model=Album,
         columns__name__filter__include=True,
     )
+
 
 The `query` namespace here is used to configure a :doc:`Filter` so you can
 configure the behavior of the searching by passing parameters here.
@@ -187,10 +210,14 @@ you can turn off the field in the generated form by passing
 
 .. _Filter.freetext:
 
+    
+
+
 How do I make a freetext search field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to filter based on a freetext query on one or more columns we've got a nice little feature for this:
+
 
 .. code-block:: python
 
@@ -205,7 +232,15 @@ If you want to filter based on a freetext query on one or more columns we've got
     )
 
 
+
 This will display one search box to search both `year` and `name` columns.
+
+    
+
+.. code-block:: python
+
+    # TODO: the code in here is no longer tested!
+
 
 .. _Table.attrs:
 
@@ -257,18 +292,21 @@ Everything together:
 .. code-block:: pycon
 
     >>> render_attrs(
-    ...     Namespace(
-    ...         foo='bar',
-    ...         class__foo=True,
-    ...         class__bar=True,
-    ...         style__font='Arial',
-    ...         **{'style__font-family': 'serif'}
-    ...     )
-    ... )
+         Namespace(
+             foo='bar',
+             class__foo=True,
+             class__bar=True,
+             style__font='Arial',
+             **{'style__font-family': 'serif'}
+         )
+     )
     ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
 
 .. _Table.row:
+
+    
+
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -285,6 +323,9 @@ To customize the cell, see `How do I customize the rendering of a cell?`_
 
 .. _Column.header:
 
+    
+
+
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -297,10 +338,16 @@ You can customize headers in two ways:
 
 .. _Table.header:
 
+    
+
+
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Set `header__template` to `None`.
+
+
+    
 
 
 How do I add fields to a table that is generated from a model?
@@ -311,10 +358,14 @@ See the question `How do I create a column based on computed data?`_
 
 .. _Column.include:
 
+    
+
+
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Just pass `include=False` to hide the column or `include=True` to show it. By default columns are shown, except the primary key column that is by default hidden. You can also pass a callable here like so:
+
 
 .. code-block:: python
 
@@ -324,6 +375,7 @@ Just pass `include=False` to hide the column or `include=True` to show it. By de
             lambda request, **_: request.GET.get('some_parameter') == 'hello!',
     )
 
+
 This will show the column `name` only if the GET parameter `some_parameter` is set to `hello!`.
 
 To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
@@ -331,50 +383,34 @@ To be more precise, `include` turns off the entire column. Sometimes you want to
 
 .. _Table.cells_for_rows:
 
+    
+
+
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here's a simple example that prints a table to stdout:
 
-.. test
-    Artist.objects.create(name='foo')
-    table = Table(auto__model=Artist).bind(request=req('get'))
-
-.. code-block:: python
-
-    for row in table.cells_for_rows():
-        for cell in row:
-            print(cell.render_formatted(), end='')
-        print()
-
 
 .. _Column.attr:
+
+    
+
 
 How do I access foreign key related data in a column?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's say we have two models:
 
+
 .. code-block:: python
 
     class Foo(models.Model):
         a = models.IntegerField()
 
-.. test
-        class Meta:
-            app_label = 'docs_fk'
-
-.. code-block:: python
-
-    class Bar(models.Model):
-        b = models.IntegerField()
-        c = models.ForeignKey(Foo, on_delete=models.CASCADE)
-
-.. test
-        class Meta:
-            app_label = 'docs_fk'
 
 we can build a table of `Bar` that shows the data of `a` like this:
+
 
 .. code-block:: python
 
@@ -383,14 +419,19 @@ we can build a table of `Bar` that shows the data of `a` like this:
         columns__a=Column(attr='c__a'),
     )
 
+
 .. _Table.sortable:
 
 .. _Column.sortable:
+
+    
+
 
 How do I turn off sorting? (on a column or table wide)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
+
 
 .. code-block:: python
 
@@ -399,7 +440,9 @@ To turn off column on a column pass it `sortable=False` (you can also use a lamb
         columns__name__sortable=False,
     )
 
+
 and to turn it off on the entire table:
+
 
 .. code-block:: python
 
@@ -408,12 +451,17 @@ and to turn it off on the entire table:
         sortable=False,
     )
 
+
 .. _Column.display_name:
+
+    
+
 
 How do I specify the title of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `display_name` property of a column is displayed in the header.
+
 
 .. code-block:: python
 
@@ -422,10 +470,15 @@ The `display_name` property of a column is displayed in the header.
         columns__name__display_name='header title',
     )
 
+
 .. _Column.sort_default_desc:
+
+    
+
 
 How do I set the default sort order of a column to be descending instead of ascending?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 .. code-block:: python
 
@@ -435,10 +488,15 @@ How do I set the default sort order of a column to be descending instead of asce
     )
 
 
+
 .. _Column.group:
+
+    
+
 
 How do I group columns?
 ~~~~~~~~~~~~~~~~~~~~~~~
+
 
 .. code-block:: python
 
@@ -448,15 +506,20 @@ How do I group columns?
         columns__year__group='foo',
     )
 
+
 The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
 
 
 .. _Column.auto_rowspan:
 
+    
+
+
 How do I get rowspan on a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
+
 
 .. code-block:: python
 
@@ -466,13 +529,18 @@ You can manually set the rowspan attribute via `row__attrs__rowspan` but this is
     )
 
 
+
 .. _Column.bulk:
+
+    
+
 
 How do I enable bulk editing?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Editing multiple items at a time is easy in iommi with the built in bulk
 editing. Enable it for a columns by passing `bulk__include=True`:
+
 
 .. code-block:: python
 
@@ -481,6 +549,7 @@ editing. Enable it for a columns by passing `bulk__include=True`:
         columns__select__include=True,
         columns__year__bulk__include=True,
     )
+
 
 The bulk namespace here is used to configure a `Field` for the GUI so you
 can pass any parameter you can pass to `Field` there to customize the
@@ -492,8 +561,12 @@ the columns you want to bulk edit.
 
 .. _Table.bulk:
 
+    
+
+
 How do I enable bulk delete?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 .. code-block:: python
 
@@ -503,10 +576,14 @@ How do I enable bulk delete?
         bulk__actions__delete__include=True,
     )
 
+
 To enable the bulk delete, enable the `delete` action.
 
 You also need to enable the select column, otherwise you can't select
 the columns you want to delete.
+
+
+    
 
 
 How do I make a custom bulk action?
@@ -515,6 +592,7 @@ How do I make a custom bulk action?
 You need to first show the select column by passing
 `columns__select__include=True`, then define a submit `Action` with a post
 handler:
+
 
 .. code-block:: python
 
@@ -530,13 +608,6 @@ handler:
             post_handler=my_action_post_handler,
         )
     )
-
-.. test
-    artist = Artist.objects.create(name='Black Sabbath')
-    album = Album.objects.create(artist=artist, name='foo', year=1970)
-    r = t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
-    album.refresh_from_db()
-    assert album.name == 'Paranoid'
 
 
 What is the difference between `attr` and `_name`?

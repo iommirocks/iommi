@@ -1,23 +1,17 @@
-.. imports
-    from tests.helpers import req, user_req, staff_req
-    from django.template import Template
-    from tri_declarative import Namespace
-    from iommi.attrs import render_attrs
-    from django.http import HttpResponseRedirect
-    from datetime import date
-    import pytest
-    pytestmark = pytest.mark.django_db
-
 
 Forms
 -----
 
 .. _Field.parse:
 
+    
+
+
 How do I supply a custom parser for a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a callable to the `parse` member of the field:
+
 
 .. code-block:: python
 
@@ -27,19 +21,17 @@ Pass a callable to the `parse` member of the field:
             lambda field, string_value, **_: int(string_value[:-3]),
     )
 
-.. test
-
-    form = form.bind(request=req('get', index='123abc'))
-    assert not form.get_errors()
-    assert form.fields.index.value == 123
-
 
 .. _Field.editable:
+
+    
+
 
 How do I make a field non-editable?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a callable or `bool` to the `editable` member of the field:
+
 
 .. code-block:: python
 
@@ -51,22 +43,17 @@ Pass a callable or `bool` to the `editable` member of the field:
     )
 
 
-.. test
-    user_form = form.bind(request=user_req('get'))
-    assert user_form.fields.name.editable is False
-    assert user_form.fields.artist.editable is False
-
-    staff_form = form.bind(request=staff_req('get'))
-    assert staff_form.fields.name.editable is True
-    assert staff_form.fields.artist.editable is False
-
 
 .. _Form.editable:
+
+    
+
 
 How do I make an entire form non-editable?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a very common case so there's a special syntax for this: pass a `bool` to the form:
+
 
 .. code-block:: python
 
@@ -75,19 +62,17 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
         editable=False,
     )
 
-.. test
-
-    form = form.bind(request=req('get'))
-    assert form.fields.name.editable is False
-    assert form.fields.year.editable is False
-
 
 .. _Field.is_valid:
+
+    
+
 
 How do I supply a custom validator?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Return a tuple `(is_valid, 'error message if not valid')`.
+
 
 .. code-block:: python
 
@@ -98,10 +83,6 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
     )
 
 
-.. test
-
-    form = form.bind(request=req('get', name='foo'))
-    assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
 
 How do I validate multiple fields together?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,10 +90,16 @@ How do I validate multiple fields together?
 Refine the `post_validation` hook on the `form`. It is run after all the individual fields validation
 has run. But note that it is run even if the individual fields validation was not successful.
 
+    
+
+
 How do I exclude a field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See `How do I say which fields to include when creating a form from a model?`_
+
+
+    
 
 
 How do I say which fields to include when creating a form from a model?
@@ -128,10 +115,14 @@ How do I say which fields to include when creating a form from a model?
 
 .. _Field.initial:
 
+    
+
+
 How do I supply a custom initial value?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a value or callable to the `initial` member:
+
 
 .. code-block:: python
 
@@ -141,20 +132,19 @@ Pass a value or callable to the `initial` member:
         fields__year__initial=lambda field, form, **_: 1970,
     )
 
-.. test
-
-    form = form.bind(request=req('get'))
-    assert form.fields.name.value == 'Paranoid'
-    assert form.fields.year.value == 1970
 
 If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
 
 
 .. _Field.required:
 
+    
+
+
 How do I set if a field is required?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Normally this will be handled automatically by looking at the model definition, but sometimes you want a form to be more strict than the model. Pass a `bool` or a callable to the `required` member:
+
 
 .. code-block:: python
 
@@ -164,19 +154,17 @@ Normally this will be handled automatically by looking at the model definition, 
         fields__year__required=lambda field, form, **_: True,
     )
 
-.. test
-
-    form = form.bind(request=req('get'))
-    assert form.fields.name.required is True
-    assert form.fields.year.required is True
-
 
 .. _Field.after:
+
+    
+
 
 How do I change the order of the fields?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can change the order in your model definitions as this is what iommi uses. If that's not practical you can use the `after` member. It's either the name of a field or an index. There is a special value `LAST` to put a field last.
+
 
 .. code-block:: python
 
@@ -189,10 +177,6 @@ You can change the order in your model definitions as this is what iommi uses. I
         fields__artist__after=0,
     )
 
-.. test
-
-    form = form.bind(request=req('get'))
-    assert list(form.fields.keys()) == ['artist', 'year', 'name']
 
 This will make the field order `artist`, `year`, `name`.
 
@@ -200,6 +184,9 @@ If there are multiple fields with the same index or name the order of the fields
 
 
 .. _Field.search_fields:
+
+    
+
 
 How do I specify which model fields the search of a choice_queryset use?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,6 +199,7 @@ to a model field `name`.
 In special cases you can override which attributes it uses for
 searching by specifying `search_fields`:
 
+
 .. code-block:: python
 
     form = Form(
@@ -219,8 +207,12 @@ searching by specifying `search_fields`:
         fields__name__search_fields=('name', 'year'),
     )
 
+
 This last method is discouraged though, because it will mean searching behaves
 differently in different parts of your application for the same data.
+
+
+    
 
 
 How do I insert a CSS class or HTML attribute?
@@ -231,10 +223,14 @@ See :doc:`Attrs`.
 
 .. _Field.template:
 
+    
+
+
 How do I override rendering of an entire field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a template name or a `Template` object:
+
 
 .. code-block:: python
 
@@ -243,7 +239,6 @@ Pass a template name or a `Template` object:
         fields__year__template='my_template.html',
     )
 
-.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -251,13 +246,18 @@ Pass a template name or a `Template` object:
     )
 
 
+
 .. _Field.input:
+
+    
+
 
 How do I override rendering of the input field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Pass a template name or a `Template` object to the `input` namespace:
+
 
 .. code-block:: python
 
@@ -266,12 +266,14 @@ Pass a template name or a `Template` object to the `input` namespace:
         fields__year__input__template='my_template.html',
     )
 
-.. code-block:: python
 
     form = Form(
         auto__model=Album,
         fields__year__input__template=Template('{{ field.attrs }}'),
     )
+
+    
+
 
 How do I change how fields are rendered everywhere in my project?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -281,12 +283,6 @@ example here is how you could change `Field.date` to use a text
 based input control (as opposed to the date picker that `input type='date'`
 uses).
 
-.. test
-    from iommi.style_bootstrap import bootstrap
-
-.. code-block:: python
-
-    my_style = Style(bootstrap, Field__shortcuts__date__input__attrs_type='date')
 
 When you do that you will get English language relative date parsing
 (e.g. "yesterday", "3 days ago") for free, because iommi used to use a

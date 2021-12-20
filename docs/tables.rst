@@ -1,5 +1,6 @@
-.. imports
-    def fill_dummy_data(): pass
+
+
+
 
 Tables
 ======
@@ -20,6 +21,7 @@ iommi tables makes it easy to create full featured HTML tables easily:
 
 The code for the example above:
 
+
 .. code-block:: python
 
     Table(
@@ -28,14 +30,18 @@ The code for the example above:
     )
 
 
+
 Read the full documentation and the :doc:`cookbook` for more.
+
+    
+
 
 Creating tables from models
 ---------------------------
 
 Say I have some model:
 
-.. test
+.. code-block:: python
 
     class Foo(models.Model):
         a = models.IntegerField()
@@ -43,30 +49,20 @@ Say I have some model:
         def __str__(self):
             return f'Foo: {self.a}'
 
-.. test
-        class Meta:
-            app_label = 'docs_tables'
-    assert str(Foo(a=7)) == 'Foo: 7'
-
-.. code-block:: python
 
     class Bar(models.Model):
         b = models.ForeignKey(Foo, on_delete=models.CASCADE)
         c = models.CharField(max_length=255)
 
-.. test
-        class Meta:
-            app_label = 'docs_tables'
 
 Now I can display a list of `Bar` in a table like this:
+
 
 .. code-block:: python
 
     def my_view(request):
         return Table(auto__model=Bar)
 
-.. test
-    my_view(req('get'))
 
 
 This automatically creates a table with pagination and sorting. If you pass
@@ -75,10 +71,14 @@ that have database indexes. This filtering system includes an advanced filter
 language. See :doc:`queries` for more on filtering.
 
 
+
+
+
 Explicit tables
 ---------------
 
 You can also create tables explicitly:
+
 
 .. code-block:: python
 
@@ -101,14 +101,16 @@ You can also create tables explicitly:
 
         return AlbumTable(rows=Artist.objects.all())
 
-.. test
-    albums(req('get'))
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 
 
+
+
+
 Table of plain python objects
 -----------------------------
+
 
 .. code-block:: python
 
@@ -143,8 +145,6 @@ Table of plain python objects
         # now to get an HTML table:
         return FooTable(rows=foos)
 
-.. test
-    plain_objs_view(req('get'))
 
 
 All these examples and a bigger example using many more features can be found in the examples project.

@@ -1,6 +1,3 @@
-.. imports
-
-    from django.db.models import Model, CharField, IntegerField, ForeignKey
 
 Equivalence
 ===========
@@ -10,6 +7,7 @@ In iommi there are multiple ways to accomplish the same thing. The two most obvi
 
 First a model:
 
+
 .. code-block:: python
 
     class Album(Model):
@@ -18,13 +16,11 @@ First a model:
         year = IntegerField()
 
 
-.. test
-        class Meta:
-            app_label = 'docs_avoid_conflict'
 
 We want to create a form to create an album. We already have the artist from the URL, so that field shouldn't be in the form.
 
 The following forms all accomplish this goal (although they would need more work to create a full functioning view!):
+
 
 
 .. code-block:: python
@@ -35,7 +31,6 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-.. code-block:: python
 
     form = Form(
         auto=dict(
@@ -45,7 +40,6 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-.. code-block:: python
 
     form = Form(
         auto__model=Album,
@@ -53,7 +47,6 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-.. code-block:: python
 
     class ArtistForm(Form):
         class Meta:
@@ -63,7 +56,6 @@ The following forms all accomplish this goal (although they would need more work
     form = ArtistForm()
 
 
-.. code-block:: python
 
     class ArtistForm(Form):
         class Meta:
@@ -72,7 +64,6 @@ The following forms all accomplish this goal (although they would need more work
 
     form = ArtistForm()
 
-.. code-block:: python
 
     class ArtistForm(Form):
         class Meta:
@@ -82,7 +73,9 @@ The following forms all accomplish this goal (although they would need more work
     form = ArtistForm()
 
 
+
 Without using the `auto` features:
+
 
 .. code-block:: python
 
@@ -96,13 +89,13 @@ Without using the `auto` features:
     form = ArtistForm()
 
 
-.. code-block:: python
 
     form = Form(
         fields__name=Field(),
         fields__year=Field.integer(),
         title='Create album'
     )
+
 
 
 You can read more about this in the philosophy section under :ref:`philosophy_hybrid_api`.

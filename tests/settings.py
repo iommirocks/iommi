@@ -6,6 +6,7 @@ TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, 'tests'),
     os.path.join(BASE_DIR, 'tests/templates'),
     os.path.join(BASE_DIR, 'iommi/templates'),
+    os.path.join(BASE_DIR, 'docs/templates'),
 ]
 
 TEMPLATE_DEBUG = True
@@ -35,12 +36,6 @@ TEMPLATES = [
 ]
 
 SECRET_KEY = "foobar"
-INSTALLED_APPS = [
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'iommi',
-    'tests',
-]
 
 DATABASES = {
     'default': {
@@ -48,6 +43,8 @@ DATABASES = {
         'NAME': ':memory:',
     }
 }
+
+USE_TZ = False
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
@@ -78,6 +75,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'iommi',
     'tests',
+    'docs',
 ]
 
 

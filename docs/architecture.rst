@@ -1,11 +1,9 @@
-.. imports
-
-    import pytest
-    pytestmark = pytest.mark.django_db
-
 
 Architecture
 ============
+
+    
+
 
 Execution phases
 ----------------
@@ -33,6 +31,9 @@ At traversal time we are good to go and can now invoke the final methods of all 
 
 .. _bind:
 
+    
+
+
 Bind
 ----
 
@@ -49,6 +50,9 @@ The root object of the graph is initialized with `bind(request=request)`. Only o
 
 .. _dispatching:
 
+    
+
+
 Namespace dispatching
 ---------------------
 
@@ -61,6 +65,7 @@ you're not familiar with Django, here's the gist of it: you can do
 to filter.) We really like this style and have expanded on it. It
 enables functions to expose the *full* API of functions it calls while
 still keeping the code simple. Here's a contrived example:
+
 
 .. code-block:: python
 
@@ -111,10 +116,14 @@ still keeping the code simple. Here's a contrived example:
     # z: 5
     # y: 2
 
+
 This is really useful for the `Table` class as it means we can expose the full
 feature set of the underling `Query` and `Form` classes by just
 dispatching keyword arguments downstream. It also enables us to bundle
 commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.
+
+
+    
 
 
 Evaluate
@@ -126,10 +135,6 @@ Evaluate
 
 To customize iommi you can pass functions/lambdas in many places. This makes it super easy and fast to customize things, but how does this all work? Let's start with a concrete example:
 
-.. test
-    Artist.objects.create(name='Dio')
-
-    t = (
 
 .. code-block:: python
 
@@ -139,34 +144,16 @@ To customize iommi you can pass functions/lambdas in many places. This makes it 
     )
 
 
-.. test
 
-    )
-
-    t = t.bind(request=req('get'))
-    data = [
-        [cell.render_cell_contents() for cell in cells]
-        for cells in t.cells_for_rows()
-    ]
-    assert data == [['Dio !!!']]
 
 
 This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious question here is: what other keyword arguments besides `value` do I get? In this case you get:
 
 
-.. test
-
-    kwargs = {}
-
-    t = Table(
-        auto__model=Artist,
-        columns__name__cell__format=lambda **format_kwargs: kwargs.update(format_kwargs),
-    )
-    str(t.bind(request=req('get')))  # trigger render
-
-    expected = """
 
 .. code-block:: python
+
+
 
     request        WSGIRequest
     table          Table
@@ -175,15 +162,6 @@ This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious
     value          str
     row            Artist
 
-.. test
-
-    """.strip().split('\n')
-    expected = dict(
-        x.strip().replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').split(' ')
-        for x in expected
-    )
-
-    assert {k: type(v).__name__ for k, v in kwargs.items()} == expected
 
 
 The general idea here that you should get all useful objects up the tree and as they are named it becomes easy to understand what is happening when reading these functions. If you have an iommi object you can call the method `iommi_evaluate_parameters()` on it to retrieve this dict.
@@ -195,6 +173,9 @@ The general idea here that you should get all useful objects up the tree and as 
 .. note::
 
     It is a good idea to always give your callbacks `**_` even if you match all keyword arguments. We don't consider adding keyword arguments a breaking change so additional keyword arguments can be added at any time.
+
+
+
 
 
 Evaluate - under the hood

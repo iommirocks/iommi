@@ -1,11 +1,11 @@
-.. imports
-    from django.contrib.auth.models import User
-
 
 Registrations
 =============
 
 To make iommi understand the specifics of your code base you can register various handlers and behaviors.
+
+    
+
 
 Django custom fields
 ~~~~~~~~~~~~~~~~~~~~
@@ -21,9 +21,6 @@ To tell iommi how to handle your custom fields you have these options:
 
 You use the `register_factory` function to register your own factory. The simplest way is:
 
-.. test
-    class TimeField:
-        pass
 
 .. code-block:: python
 
@@ -31,6 +28,7 @@ You use the `register_factory` function to register your own factory. The simple
         TimeField,
         shortcut_name='time'
     )
+
 
 When iommi then sees a Django `TimeField` it will call the `Column.time` shortcut to create a column, `Filter.time` to create a `Filter` and `Field.time` to create a field.
 
@@ -40,8 +38,6 @@ You can also register `None` to tell iommi to just ignore the field type wheneve
 
 For more advanced behavior you can pass a `Shortcut` instance or a callable that returns a shortcut. This is the iommi definition for booleans:
 
-.. test
-    from django.db.models.fields import BooleanField
 
 
 .. code-block:: python
@@ -56,20 +52,24 @@ For more advanced behavior you can pass a `Shortcut` instance or a callable that
     )
 
 
+
+
+
 Rendering of your custom types in a table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 iommi renders `bool`, `list`, `set`, `tuple`, `QuerySet` and any type that has a `__html__` method with special logic to make it look nice in a table. If you have a type where you can't or don't want to implement a `__html__` method (or you want more complex rendering) you can plug into this system yourself with `register_cell_formatter`:
 
-.. test
-    class MyType:
-        pass
 
 .. code-block:: python
 
     register_cell_formatter(MyType, lambda value, **_: f'hello {value}')
 
+
 The callable you register gets the keyword arguments `value`, `table`, `column` and `row`.
+
+
+
 
 
 The search fields of your Django models
@@ -78,11 +78,16 @@ The search fields of your Django models
 When searching for an object with `Query` we need to know which fields to use to find the object. This enables the advanced query language to be `my_car_brand='toyota'` instead of `my_car_brand.pk=42` which is a lot nicer. iommi will automatically use a field called `name` if it exists and is unique. If you have other fields you want iommi to use to find objects you can register it like this:
 
 
+
 .. code-block:: python
 
     register_search_fields(model=Album, search_fields=['year'], allow_non_unique=True)
 
+
 On startup iommi registers just this one particular canonical name for you since you probably want it. Note also that you can can use `__` separated paths here if you have a one-to-one with another model where the name field exists.
+
+
+
 
 
 Custom styles
