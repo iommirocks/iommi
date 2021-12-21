@@ -865,6 +865,9 @@ class Cells(Traversable, Tag):
     def own_evaluate_parameters(self):
         return dict(cells=self, row=self.row)
 
+    def get_table(self):
+        return self.iommi_evaluate_parameters()['table']
+
     def __html__(self):
         if self.template:
             return render_template(self.iommi_parent().get_request(), self.template, self.iommi_evaluate_parameters())
@@ -883,7 +886,7 @@ class Cells(Traversable, Tag):
         return self.__html__()
 
     def __iter__(self):
-        for column in values(self.iommi_parent().columns):
+        for column in values(self.get_table().columns):
             if not column.render_column:
                 continue
             yield self.cell_class(cells=self, column=column).refine_done(parent=self)
@@ -922,7 +925,7 @@ class Cell(CellConfig):
 
         self.column = column
         self.cells = cells
-        self.table = cells.iommi_parent()
+        self.table = cells.get_table()
         self.row = cells.row
 
     def on_refine_done(self):
@@ -2053,6 +2056,7 @@ class Table(Part, Tag):
     def _selection_identifiers(self, prefix):
         """Return a list of identifiers of the selected rows. Or 'all' if all
         sorted_and_filtered_rows are selected."""
+        # TODO: this needs to be namespaced
         if self.get_request().POST.get('_all_pks_') == '1':
             return 'all'
         else:

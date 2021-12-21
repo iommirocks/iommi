@@ -101,13 +101,15 @@ class EditCells(Cells):
         is_create_template = False
 
     def get_field(self, column):
+        table = self.iommi_evaluate_parameters()['table']
         if self.is_create_template:
-            return self.iommi_parent().create_form.fields.get(column.iommi_name(), None)
+            return table.create_form.fields.get(column.iommi_name(), None)
         else:
-            return self.iommi_parent().edit_form.fields.get(column.iommi_name(), None)
+            return table.edit_form.fields.get(column.iommi_name(), None)
 
     def iter_editable_cells(self):
-        for column in values(self.iommi_parent().columns):
+        table = self.iommi_evaluate_parameters()['table']
+        for column in values(table.columns):
             if not column.render_column:
                 continue
 
@@ -155,7 +157,8 @@ class EditColumn(Column):
                 # See selection() for the code that does the lookup
                 row_id = cells.row_index
             button = Action.delete(display_name=column.display_name, attrs__class__edit_table_delete=True).bind()
-            return mark_safe(f'{button.__html__()}<input style="display: none" type="checkbox" name="pk_delete_{row_id}" />')
+            path = path_join(table.iommi_path, f'pk_delete_{row_id}')
+            return mark_safe(f'{button.__html__()}<input style="display: none" type="checkbox" name="{path}" />')
 
         setdefaults_path(kwargs, dict(cell__value=cell__value))
         return call_target(**kwargs)
@@ -163,10 +166,11 @@ class EditColumn(Column):
 
 def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
-    errors = defaultdict(set)
+    table.edit_errors = defaultdict(set)
+    table.create_errors = defaultdict(set)
     parsed_data = {}
 
-    def validate(cells_iterator, form):
+    def validate(cells_iterator, form, errors):
         for cells in cells_iterator:
             instance = cells.row
             form.instance = instance
@@ -181,15 +185,15 @@ def edit_table__post_handler(table, request, **_):
                 else:
                     parsed_data[path] = field.value
 
-    validate(table.cells_for_rows(), table.edit_form)
-    validate(table.cells_for_rows_for_create(), table.create_form)
+    validate(table.cells_for_rows(), table.edit_form, table.edit_errors)
+    validate(table.cells_for_rows_for_create(), table.create_form, table.create_errors)
 
-    if errors:
-        table.edit_errors = errors
+    if table.edit_errors or table.create_errors:
         return None
 
     if isinstance(table.initial_rows, QuerySet):
-        table.bulk_queryset(prefix='pk_delete_').delete()
+        prefix = path_join(table.iommi_path, 'pk_delete_')
+        table.bulk_queryset(prefix=prefix).delete()
 
     def save(cells_iterator, form):
         for cells in cells_iterator:
@@ -222,6 +226,7 @@ def edit_table__post_handler(table, request, **_):
 
 class EditTable(Table):
     edit_errors = None
+    create_errors = None
     edit_form: Form = Refinable()
     create_form: Form = Refinable()
     form_class: Type[Form] = Refinable()
@@ -238,10 +243,13 @@ class EditTable(Table):
             call_target__attribute='primary',
             display_name=gettext('Save'),
             post_handler=edit_table__post_handler,
-            include=lambda table, **_: table.parent_form is None,
+            template=lambda table, **_: 'iommi/blank.html' if table.parent_form is not None else None,
         )
         actions__csrf = Action(tag='div', children__csrf=Fragment(template=Template('{% csrf_token %}')), attrs__style__display='none')
-        actions__add_row = Action.button(attrs__onclick='iommi_add_row(this); return false')
+        actions__add_row = Action.button(
+            display_name=gettext('Add row'),
+            attrs__onclick='iommi_add_row(this); return false',
+        )
         actions_below = True
         edit_form = EMPTY
         create_form = EMPTY
@@ -254,10 +262,31 @@ class EditTable(Table):
         assets__edit_table_js = Asset.js(mark_safe('''
         
         function iommi_add_row(element) {
+            function find_for_siblings(s) {
+                while (s) {
+                    let t = s.querySelector('table');
+                    if (t) {
+                        return t;
+                    }
+                    s = s.previousElementSibling;
+                }
+                return null;
+            }
+
+            let table = null;
             while (element.tagName !== 'FORM') {
                 element = element.parentNode;
+                let s = find_for_siblings(element);
+                if (s) {
+                    table = s;
+                    break;
+                }
             }
-            let table = element.querySelector('table');
+            if (!table) {
+                console.error('iommi: failed to find table!');
+                return;
+            }
+
             let virtual_pk = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
             virtual_pk -= 1;
             virtual_pk = virtual_pk.toString();
@@ -353,24 +382,41 @@ class EditTable(Table):
             sentinel_row = self.model(pk='#sentinel#')
         else:
             sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.create_form.fields)})
-        self.attrs['data-add-template'] = self.cells_class(row=sentinel_row, row_index=-1, is_create_template=True, **self.row.as_dict()).bind(parent=self).__html__()
+        self.attrs['data-add-template'] = self.cells_class(
+            row=sentinel_row,
+            row_index=-1,
+            is_create_template=True,
+            **self.row.as_dict()
+        ).bind(parent=self.create_form).__html__()
 
     def is_valid(self):
-        return self.edit_form.is_valid()
+        return not self.edit_errors and not self.create_errors
     
     def cells_for_rows_for_create(self):
         """Yield a Cells instance for each create row sent from the client."""
         assert self._is_bound, NOT_BOUND_MESSAGE
 
-        prefix = path_join(self.iommi_path, 'columns')
+        prefix = self.iommi_path + DISPATCH_PATH_SEPARATOR if self.iommi_path else ''
+        delete_prefix = prefix + 'pk_delete_'
+
+        def parse_virtual_pk(k):
+            if not k.startswith(prefix) or k.startswith(delete_prefix):
+                return None
+            parts = k[len(prefix):].split(DISPATCH_PATH_SEPARATOR)
+            if len(parts) < 2:
+                return None
+            try:
+                return int(parts[-1])
+            except ValueError:
+                return None
         
         pks = {
-            int(k[len(prefix):].split(DISPATCH_PATH_SEPARATOR)[2])
+            parse_virtual_pk(k)
             for k in keys(self.get_request().POST)
-            if k.startswith(prefix)
+
         }
 
-        virtual_pks = {k for k in pks if k < 0}
+        virtual_pks = {k for k in pks if k is not None and k < 0}
 
         if not virtual_pks:
             return
@@ -383,6 +429,9 @@ class EditTable(Table):
         for i, row in enumerate(rows):
             row = self.preprocess_row_for_create(table=self, row=row)
             yield self.cells_class(is_create_template=True, row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
+
+    def get_errors(self):
+        return set()
 
     @staticmethod
     @refinable

@@ -225,14 +225,24 @@ def test_formset_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
     edit_table = EditTable(auto__model=TBar)
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
+    expected_create_template = '''<tr data-pk="#sentinel#"><td><select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices">
+    
+        
+    
+</select>
+</td>
+<td><input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox"></td></tr>'''
+    assert edit_table.bind().attrs['data-add-template'] == expected_create_template
 
     assert not TBar.objects.exists()
 
-    response = edit_table.bind(request=req('POST', **{
+    edit_table = edit_table.bind(request=req('POST', **{
         'columns/foo/-1': f'{foo_pk}',
         'columns/c/-1': 'true',
         '-actions/submit': '',
-    })).render_to_response()
+    }))
+    assert not edit_table.get_errors()
+    response = edit_table.render_to_response()
     assert response.status_code == 302
 
     obj = TBar.objects.get()
