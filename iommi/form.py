@@ -21,6 +21,7 @@ from typing import (
 )
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 from django.db.models import (
     Case,
     IntegerField,
@@ -1257,7 +1258,11 @@ def delete_object__post_handler(form, **_):
     instance = form.instance
     form.extra.on_delete(**form.iommi_evaluate_parameters())
     if instance.pk is not None:  # Check if already deleted by the callback
-        instance.delete()
+        try:
+            instance.delete()
+        except IntegrityError as e:
+            form.add_error(format_html('{}<br>\n'*len(e.args), *e.args))
+            return None
     return create_or_edit_object_redirect(
         is_create=False,
         redirect_to=form.extra.redirect_to,
