@@ -1264,9 +1264,12 @@ def delete_object__post_handler(form, **_):
         try:
             instance.delete()
         except IntegrityError as e:
-            if not hasattr(e, 'restricted_objects'):
+            objects = getattr(e, 'restricted_objects', None)
+            if objects is None:
+                objects = getattr(e, 'protected_objects', None)
+            if objects is None:
                 # This message must match the one in Django exactly to get translations for free
-                form.add_error(gettext("Cannot delete %(name)s") % {"name": str(e)})
+                form.add_error((gettext("Cannot delete %(name)s") % {"name": str(instance)}) + str(e))
                 return
 
             # This message must match the one in Django exactly to get translations for free
@@ -1287,7 +1290,7 @@ def delete_object__post_handler(form, **_):
                 {% endfor %}
             </ul>            
             """).render(context=Context(dict(
-                restricted_objects=e.restricted_objects,
+                restricted_objects=objects,
                 object=instance,
                 object_name=instance._meta.verbose_name,
             ))))
