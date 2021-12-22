@@ -1,6 +1,24 @@
 Changelog
 ---------
 
+4.4.0 (2021-12-22)
+~~~~~~~~~~~~~~~~~~
+
+* Send full state of current form when doing ajax select2 callback, enabling more advanced filtering
+
+* Fixed bug where `auto__include=['fk__charfield']` crashes
+
+* Fixed bug where style application on an object only had an effect on the child objects
+
+* `Form.delete` will now show a nice error message if the object can't be deleted due to restricted rows
+
+* `EditTable`: Add row feature added
+
+* `EditTable`: Delete row feature added
+
+* `EditTable`: `field` on an `EditColumn` now match the behavior of `field` for a normal `Form`
+
+
 4.3.3 (2021-12-09)
 ~~~~~~~~~~~~~~~~~~
 
