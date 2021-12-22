@@ -20,16 +20,19 @@ from typing import (
     Union,
 )
 
+from django.contrib.admin.utils import model_ngettext
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.db.models import (
     Case,
     IntegerField,
     Model,
+    ProtectedError,
     Q,
     QuerySet,
     When,
 )
+from django.template import Context
 from django.utils.translation import gettext
 from tri_declarative import (
     class_shortcut,
@@ -1261,8 +1264,35 @@ def delete_object__post_handler(form, **_):
         try:
             instance.delete()
         except IntegrityError as e:
-            form.add_error(format_html('{}<br>\n'*len(e.args), *e.args))
+            if not hasattr(e, 'restricted_objects'):
+                # This message must match the one in Django exactly to get translations for free
+                form.add_error(gettext("Cannot delete %(name)s")) % {"name": str(e)}
+                return
+
+            # This message must match the one in Django exactly to get translations for free
+            # language=html
+            form.add_error(Template("""
+            {% load i18n %}
+            <p>{% blocktrans with escaped_object=object %}Deleting the {{ object_name }} '{{ escaped_object }}' would require deleting the following protected related objects:{% endblocktrans %}</p>
+            
+            <ul>
+                {% for obj in restricted_objects %}
+                    <li>
+                        {% if obj.get_absolute_url %}
+                            <a href="{{ obj.get_absolute_url }}">{{ obj }}</a>
+                        {% else %}
+                            {{ obj }}
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>            
+            """).render(context=Context(dict(
+                restricted_objects=e.restricted_objects,
+                object=instance,
+                object_name=instance._meta.verbose_name,
+            ))))
             return None
+
     return create_or_edit_object_redirect(
         is_create=False,
         redirect_to=form.extra.redirect_to,
