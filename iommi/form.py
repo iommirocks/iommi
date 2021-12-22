@@ -1266,7 +1266,7 @@ def delete_object__post_handler(form, **_):
         except IntegrityError as e:
             if not hasattr(e, 'restricted_objects'):
                 # This message must match the one in Django exactly to get translations for free
-                form.add_error(gettext("Cannot delete %(name)s")) % {"name": str(e)}
+                form.add_error(gettext("Cannot delete %(name)s") % {"name": str(e)})
                 return
 
             # This message must match the one in Django exactly to get translations for free
