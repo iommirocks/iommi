@@ -1,16 +1,11 @@
-from iommi import *
-from iommi.admin import Admin
-from django.urls import (
-    include,
-    path,
-)
-from django.db import models
-from tests.helpers import req, user_req, staff_req
 from docs.models import *
+from iommi import *
+from tests.helpers import req
+
 request = req('get')
 
-def fill_dummy_data(): pass
 
+def fill_dummy_data(): pass
 
 
 def test_tables():
@@ -41,7 +36,6 @@ def test_tables():
         auto__model=Album,
         page_size=10,
     )
-
 
     # language=rst
     """

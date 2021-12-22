@@ -1,19 +1,10 @@
 from iommi import *
-from iommi.admin import Admin
-from django.urls import (
-    include,
-    path,
-)
-from django.db import models
-from tests.helpers import req, user_req, staff_req
-from docs.models import *
+from tests.helpers import req
+
 request = req('get')
 
-from tests.helpers import req, user_req, staff_req
+from tests.helpers import req
 from django.template import Template
-from tri_declarative import Namespace
-from iommi.attrs import render_attrs
-from django.http import HttpResponseRedirect
 from datetime import date
 import pytest
 pytestmark = pytest.mark.django_db

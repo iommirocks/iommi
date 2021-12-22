@@ -1,25 +1,16 @@
-from iommi import *
-from iommi.admin import Admin
 from django.urls import (
-    include,
     path,
 )
-from django.db import models
-from tests.helpers import req, user_req, staff_req
+
 from docs.models import *
+from iommi import *
+from tests.helpers import req
+
 request = req('get')
 
-from tests.helpers import req, user_req, staff_req
-from django.template import Template
-from tri_declarative import Namespace
-from iommi.attrs import render_attrs
-from django.http import HttpResponseRedirect
-from datetime import date
+from tests.helpers import req
 import pytest
 pytestmark = pytest.mark.django_db
-
-
-
 
 
 def test_getting_started():
@@ -100,8 +91,6 @@ def test_2__your_first_form():
     ]
 
 
-    
-
 def test_3__your_first_table():
     # language=rst
     """
@@ -134,8 +123,6 @@ def test_3__your_first_table():
         ).as_view()),
     ]
 
-
-    
 
 def test_4__your_first_page():
     # language=rst
@@ -170,8 +157,6 @@ def test_4__your_first_page():
         ),
     ]
 
-
-    
 
 def test_5__a_simple_function_based_view():
     # language=rst
@@ -215,8 +200,6 @@ def test_5__a_simple_function_based_view():
             iommi_view
         ),
     ]
-
-
 
 
 def test_6__make_iommi_pages_fit_into_your_projects_design():

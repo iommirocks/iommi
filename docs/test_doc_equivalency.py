@@ -1,16 +1,10 @@
-from iommi import *
-from iommi.admin import Admin
-from django.urls import (
-    include,
-    path,
-)
-from django.db import models
-from tests.helpers import req, user_req, staff_req
 from docs.models import *
+from iommi import *
+from tests.helpers import req
+
 request = req('get')
 
 from django.db.models import Model, CharField, IntegerField, ForeignKey
-
 
 
 def test_equivalence():
@@ -51,7 +45,6 @@ def test_equivalence():
     )
 
 
-
     form = Form(
         auto=dict(
             model=Album,
@@ -60,12 +53,10 @@ def test_equivalence():
     )
 
 
-
     form = Form(
         auto__model=Album,
         fields__artist__include=False,
     )
-
 
 
     class ArtistForm(Form):
@@ -74,7 +65,6 @@ def test_equivalence():
             auto__exclude = ['artist']
 
     form = ArtistForm()
-
 
 
     class ArtistForm(Form):
@@ -107,7 +97,6 @@ def test_equivalence():
             title = 'Create album'
 
     form = ArtistForm()
-
 
 
     form = Form(
