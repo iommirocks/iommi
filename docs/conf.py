@@ -21,6 +21,7 @@ import sys, os
 
 # Get the project root dir, which is the parent dir of this
 from pathlib import Path
+from subprocess import check_call
 
 cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
@@ -35,9 +36,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
 from django import setup
 setup()
 
-from iommi.docs import generate_api_docs_tests
-
-generate_api_docs_tests(Path(__file__).parent.absolute())
+check_call(f"python {(Path(__file__).parent.parent / 'make_doc_rsts.py').absolute()}", shell=True)
 
 # -- General configuration -----------------------------------------------------
 html_css_files = [
