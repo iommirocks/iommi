@@ -1,8 +1,3 @@
-.. imports
-    from django.shortcuts import render
-    import pytest
-    pytestmark = pytest.mark.django_db
-
 
 Queries
 =======
@@ -24,6 +19,7 @@ example.
 
 The code for the example above:
 
+
 .. code-block:: python
 
     Table(
@@ -34,7 +30,11 @@ The code for the example above:
     )
 
 
+
 Read the full documentation and the :doc:`cookbook` for more.
+
+    
+
 
 Query language
 --------------
@@ -75,11 +75,15 @@ parameter to specify the fields to use. Note that you can use `pk` or
 other non-string columns as search fields if you want.
 
 
+    
+
+
 Stand alone example
 -------------------
 
 Simple view that allows the user to search for a car by choosing the make from a drop down, and search
 for specific model in the advanced mode:
+
 
 .. code-block:: python
 
@@ -99,8 +103,7 @@ for specific model in the advanced mode:
             },
         )
 
-.. test
-    cars(req('get'))
+
 
 .. code-block:: html
 
@@ -121,6 +124,7 @@ After switching to the advanced mode:
 .. image:: advanced_gui.png
 
 Programmatically call the search API:
+
 
 .. code-block:: python
 

@@ -117,13 +117,15 @@ class Tag:
 
 @with_meta
 class Fragment(Part, Tag):
+    # language=rst
     """
     `Fragment` is a class used to build small HTML fragments that plug into iommis structure.
 
-    .. test
-        from iommi.fragment import Fragment
-
     .. code-block:: python
+
+        # @ test
+        from iommi.fragment import Fragment
+        # @end
 
         h1 = Fragment(children__text='Tony', tag='h1')
 

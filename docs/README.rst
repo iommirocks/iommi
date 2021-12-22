@@ -1,6 +1,6 @@
+
 iommi
 =====
-
 .. raw:: html
 
     <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://raw.githubusercontent.com/TriOptima/iommi/master/logo_with_outline.svg" alt="iommi" style="max-width: 200px" width=300></a></p>

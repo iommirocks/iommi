@@ -22,6 +22,7 @@ class InvalidEndpointPathException(Exception):
 
 
 class Endpoint(Traversable):
+    # language=rst
     """
     Class that describes an endpoint in iommi. You can create your own custom
     endpoints on any :doc:`Part`.
@@ -36,11 +37,12 @@ class Endpoint(Traversable):
                 endpoints__echo__func=lambda value, **_: value,
             )
 
-    .. test
+        # @test
         import json
         request = req('get', **{'/echo': 'foo'})
         response = my_view(request).bind(request=request).render_to_response()
         assert json.loads(response.content) == 'foo'
+        # @end
 
     this page will respond to `?/echo=foo` by returning a json response `"foo"`.
 

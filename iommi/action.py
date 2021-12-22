@@ -36,6 +36,7 @@ from iommi.refinable import EvaluatedRefinable
 
 @with_meta
 class Action(Fragment):
+    # language=rst
     """
     The `Action` class describes buttons and links.
 
@@ -86,10 +87,11 @@ class Action(Fragment):
             class Meta:
                 actions__submit = Action.primary(post_handler=on_submit)
 
-    .. test
+        # @test
         r = req('post', **{'-submit': ''})
         MyForm().bind(request=r).render_to_response()
         MyOtherForm().bind(request=r).render_to_response()
+        # @end
     """
 
     group: str = EvaluatedRefinable()

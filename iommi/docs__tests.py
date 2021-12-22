@@ -12,7 +12,7 @@ from tri_declarative import (
 
 from iommi import Fragment
 from iommi.docs import (
-    _generate_rst_docs,
+    _generate_tests_from_class_docs,
     get_default_classes,
 )
 from iommi.refinable import RefinableObject
@@ -80,17 +80,35 @@ def test_generate_docs():
         description='qwe',
     )
 
-    ((actual_filename, actual_doc),) = list(_generate_rst_docs(classes=[Foo]))
+    ((actual_filename, actual_doc),) = list(_generate_tests_from_class_docs(classes=[Foo]))
 
-    assert actual_filename == '/Foo.rst'
+    assert actual_filename == 'test_doc__api_Foo.py'
 
-    expected_doc = """
-Foo
-===
+    expected_doc = '''
+    # NOTE: this file is automaticallly generated
 
-Base class: `RefinableObject`
+from iommi import *
+from iommi.admin import Admin
+from django.urls import (
+    include,
+    path,
+)
+from django.db import models
+from tests.helpers import req, user_req, staff_req
+from docs.models import *
+request = req('get')
 
-docstring for Foo
+
+def test_class_doc():
+    # language=rst
+    """
+    Foo
+    ===
+    
+    Base class: `RefinableObject`
+    
+    docstring for Foo
+    
 
 Refinable members
 -----------------
@@ -157,7 +175,10 @@ Defaults
     * `baz`
 * `description`
     * `qwe`
-    """
+
+"""
+    
+    '''
 
     assert actual_doc.strip() == expected_doc.strip()
 
@@ -166,23 +187,39 @@ def test_generate_docs_empty_docstring():
     class Foo(RefinableObject):
         name = Refinable()
 
-    ((actual_filename, actual_doc),) = list(_generate_rst_docs(classes=[Foo]))
+    ((actual_filename, actual_doc),) = list(_generate_tests_from_class_docs(classes=[Foo]))
 
-    assert actual_filename == '/Foo.rst'
+    assert actual_filename == 'test_doc__api_Foo.py'
 
-    expected_doc = """
-Foo
-===
+    expected_doc = '''# NOTE: this file is automaticallly generated
 
-Base class: `RefinableObject`
+from iommi import *
+from iommi.admin import Admin
+from django.urls import (
+    include,
+    path,
+)
+from django.db import models
+from tests.helpers import req, user_req, staff_req
+from docs.models import *
+request = req('get')
 
+
+def test_class_doc():
+    # language=rst
+    """
+    Foo
+    ===
+    
+    Base class: `RefinableObject`
+    
 
 Refinable members
 -----------------
 
 * `name`
-"""
 
+"""'''
     assert actual_doc.strip() == expected_doc.strip()
 
 
@@ -203,17 +240,34 @@ def test_generate_docs_description_and_params_in_constructor():
             """
             super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
-    (actual_filename, actual_doc), (_, _) = list(_generate_rst_docs(classes=[Foo, RefinableObject]))
+    (actual_filename, actual_doc), (_, _) = list(_generate_tests_from_class_docs(classes=[Foo, RefinableObject]))
 
-    assert actual_filename == '/Foo.rst'
+    assert actual_filename == 'test_doc__api_Foo.py'
 
-    expected_doc = """
-Foo
-===
+    expected_doc = '''# NOTE: this file is automaticallly generated
 
-Base class: :doc:`RefinableObject`
+from iommi import *
+from iommi.admin import Admin
+from django.urls import (
+    include,
+    path,
+)
+from django.db import models
+from tests.helpers import req, user_req, staff_req
+from docs.models import *
+request = req('get')
 
-First description
+
+def test_class_doc():
+    # language=rst
+    """
+    Foo
+    ===
+    
+    Base class: :doc:`RefinableObject`
+    
+    First description
+    
 
 __init__ description
 
@@ -221,7 +275,8 @@ Refinable members
 -----------------
 
 * `name`
-"""
+
+"""'''
     assert actual_doc.strip() == expected_doc.strip()
 
 
@@ -236,16 +291,32 @@ def test_generate_docs_kill_obscure_mutant():
         def __init__(self, **kwargs):
             super(Foo, self).__init__(**kwargs)  # pragma: no cover
 
-    ((actual_filename, actual_doc),) = list(_generate_rst_docs(classes=[Foo]))
+    ((actual_filename, actual_doc),) = list(_generate_tests_from_class_docs(classes=[Foo]))
 
-    assert actual_filename == '/Foo.rst'
+    assert actual_filename == 'test_doc__api_Foo.py'
 
-    expected_doc = """
-Foo
-===
+    expected_doc = '''# NOTE: this file is automaticallly generated
 
-Base class: `RefinableObject`
+from iommi import *
+from iommi.admin import Admin
+from django.urls import (
+    include,
+    path,
+)
+from django.db import models
+from tests.helpers import req, user_req, staff_req
+from docs.models import *
+request = req('get')
 
+
+def test_class_doc():
+    # language=rst
+    """
+    Foo
+    ===
+    
+    Base class: `RefinableObject`
+    
 
 Refinable members
 -----------------
@@ -257,8 +328,8 @@ Defaults
 
 * `name`
     * `lambda X: X`
-"""
-    print(actual_doc)
+
+"""'''
     assert actual_doc.strip() == expected_doc.strip()
 
 
@@ -282,16 +353,32 @@ def test_type_annotations():
         b: Dict = Refinable()
         c: Fragment = Refinable()
 
-    (actual_filename, actual_doc), (_, _) = list(_generate_rst_docs(classes=[Foo, Fragment]))
+    (actual_filename, actual_doc), (_, _) = list(_generate_tests_from_class_docs(classes=[Foo, Fragment]))
 
-    assert actual_filename == '/Foo.rst'
+    assert actual_filename == 'test_doc__api_Foo.py'
 
-    expected_doc = """
-Foo
-===
+    expected_doc = '''# NOTE: this file is automaticallly generated
 
-Base class: `RefinableObject`
+from iommi import *
+from iommi.admin import Admin
+from django.urls import (
+    include,
+    path,
+)
+from django.db import models
+from tests.helpers import req, user_req, staff_req
+from docs.models import *
+request = req('get')
 
+
+def test_class_doc():
+    # language=rst
+    """
+    Foo
+    ===
+    
+    Base class: `RefinableObject`
+    
 
 Refinable members
 -----------------
@@ -305,5 +392,6 @@ Refinable members
 * `c`
     Type: :doc:`Fragment`
     
-"""  # noqa: W293
+
+"""'''  # noqa: W293
     assert actual_doc.strip() == expected_doc.strip()

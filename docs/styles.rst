@@ -1,3 +1,4 @@
+
 Style
 =====
 
@@ -12,11 +13,8 @@ how things look, but also how they work.
 
 The styles iommi ships with are:
 
-.. test
 
-    style_names = '''
 
-.. code-block:: python
 
     bootstrap
     bulma
@@ -25,19 +23,15 @@ The styles iommi ships with are:
     water
     django_admin
 
-.. test
-
-    '''.strip().split('\n')
-    style_names = [x.strip() for x in style_names]
-
-    from iommi.style import _styles
-    assert set(style_names) == {x.name for x in _styles.values() if not x.internal}
 
 There are also some internal styles, most notably `base` which is used for
 common style data for all styles, and `test` which is used for the tests.
 
 You can change which style your app uses by default by setting
 `IOMMI_DEFAULT_STYLE` to the name of your style in the Django settings.
+
+
+
 
 Creating a custom style
 -----------------------
@@ -64,6 +58,9 @@ Things you will most likely want to target with a style are:
 - template (try to avoid this as it can make upgrading iommi versions more brittle)
 
 
+
+
+
 Basing on another style
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -73,6 +70,9 @@ simple example might be `my_style = Style(bootstrap)` which is just a new style
 based on bootstrap. Note that style objects don't need to be registered to be
 used like this, so you can use this to compose parts that make sense to keep
 separate for readability or reuse.
+
+
+
 
 
 Assets
@@ -86,6 +86,7 @@ from all components and the style root are collected and rendered in the
 
 Defining an asset on the root:
 
+
 .. code-block:: python
 
     Style(
@@ -98,14 +99,18 @@ Defining an asset on the root:
         ),
     )
 
+
 There is also a useful shortcut for JavaScript assets: `Asset.js(attrs__src='url')`.
 You can put script and css literals (or anything really) there if you want:
+
 
 .. code-block:: python
 
     Asset(tag='style', text='body { font-color: blue; }')
 
+
 Adding an asset on a specific shortcut:
+
 
 .. code-block:: python
 
@@ -115,7 +120,9 @@ Adding an asset on a specific shortcut:
         ),
     )
 
+
 Adding an asset on a specific class:
+
 
 .. code-block:: python
 
@@ -126,6 +133,9 @@ Adding an asset on a specific class:
     )
 
 
+
+
+
 base_template/content_block
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -133,11 +143,13 @@ By default iommi uses `iommi/base.html` to render pages. For simple projects
 this works very well, but for more complex sites you might need something
 more complex. So you can define your base template in a style definition:
 
+
 .. code-block:: python
 
     Style(
         base_template='base.html',
     )
+
 
 If you do this, you will have to make sure to render the iommi assets in the
 `<head>` tag:
@@ -151,6 +163,7 @@ If you do this, you will have to make sure to render the iommi assets in the
 By default iommi will render the iommi page contents into the "content" block,
 to override this you can define `content_block`:
 
+
 .. code-block:: python
 
     Style(
@@ -159,10 +172,14 @@ to override this you can define `content_block`:
     )
 
 
+
+
+
 Targeting a class for styling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can apply style definitions via the class name:
+
 
 .. code-block:: python
 
@@ -170,9 +187,13 @@ You can apply style definitions via the class name:
         Field__attrs__class__foo=True,
     )
 
+
 The style system will look at the full class hierarchy when it looks at what
 definitions to apply. It will also match on the name of the class only,
 the package name doesn't matter.
+
+
+
 
 
 Targeting a shortcut for styling
@@ -180,11 +201,13 @@ Targeting a shortcut for styling
 
 You can apply style definitions on shortcut names:
 
+
 .. code-block:: python
 
     Style(
         MyClass__shortcuts__my_shortcut__attrs__class__foo=True,
     )
+
 
 The style system will look at the full shortcut hierarchy when it looks at what
 definitions to apply. So for example the shortcut `Field.choice_queryset` is

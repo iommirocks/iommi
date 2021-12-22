@@ -3,10 +3,10 @@ from pathlib import Path
 
 current_dir = Path(__file__).parent
 
-with open(current_dir / 'README.rst') as f:
+with open(current_dir / 'docs' / 'README.rst') as f:
     docs_readme = f.read()
 
-with open(current_dir.parent / 'README.rst') as f:
+with open(current_dir / 'README.rst') as f:
     repo_readme = f.read()
 
 # normalize the readmes:

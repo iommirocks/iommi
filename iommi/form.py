@@ -1322,6 +1322,7 @@ class FieldGroup(Fragment):
 @declarative(Part, '_fields_dict', add_init_kwargs=False)
 @with_meta
 class Form(Part):
+    # language=rst
     """
     Describe a Form. Example:
 
@@ -1352,15 +1353,15 @@ class Form(Part):
     .. code-block:: python
 
         form = Form(
-            fields = dict(
+            fields=dict(
                 # Display a and b inside a box
-                box = html.div(
+                box=html.div(
                     attrs__class__box=True,
-                    children__a = Field(),
-                    children__b = Field.email()
+                    children__a=Field(),
+                    children__b=Field.email(),
                 ),
                 # And c regularly
-                c = Field()
+                c=Field(),
             )
         )
 
@@ -1379,9 +1380,11 @@ class Form(Part):
             # And not:
             # print(form.fields.box.a.value, form.fields.box.b.value, form.fields.c.value)
 
-    .. test
+        # @test
+        post_handler(form.bind(request=req('post')))
+        # @end
+        """
 
-        post_handler(form.bind(request=req('post')))"""
 
     actions: Namespace = RefinableMembers()
     actions_template: Union[str, Template] = Refinable()

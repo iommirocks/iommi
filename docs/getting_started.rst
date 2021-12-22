@@ -1,17 +1,9 @@
-.. imports
-    from tests.helpers import req, user_req, staff_req
-    from django.template import Template
-    from tri_declarative import Namespace
-    from iommi.attrs import render_attrs
-    from django.http import HttpResponseRedirect
-    from datetime import date
-    import pytest
-    pytestmark = pytest.mark.django_db
-
-
 
 Getting started
 ===============
+
+    
+
 
 1. Install
 ----------
@@ -22,6 +14,7 @@ First:
 
 Add `iommi` to installed apps:
 
+
 .. code-block:: python
 
     INSTALLED_APPS = [
@@ -29,7 +22,9 @@ Add `iommi` to installed apps:
         'iommi',
     ]
 
+
 Add iommi's middleware:
+
 
 .. code-block:: python
 
@@ -47,6 +42,7 @@ Add iommi's middleware:
         'iommi.middleware',
     ]
 
+
 .. note::
 
     The iommi middleware must be the last middleware in the list!
@@ -54,10 +50,14 @@ Add iommi's middleware:
 By default iommi uses a very basic bootstrap base template. We'll get to how to integrate it into your site later.
 
 
+    
+
+
 2. Your first form
 ------------------
 
 Pick a model from your app, and let's build a create form for it! I'm using `Album` here, but you should replace it with some your model. Add this to your `urls.py`:
+
 
 .. code-block:: python
 
@@ -69,10 +69,14 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
     ]
 
 
+    
+
+
 3. Your first table
 -------------------
 
 Pick a model from your app, and let's build a table for it! Add this to your `urls.py`:
+
 
 .. code-block:: python
 
@@ -84,7 +88,9 @@ Pick a model from your app, and let's build a table for it! Add this to your `ur
     ]
 
 
+
 If you want, add a filter for some column:
+
 
 .. code-block:: python
 
@@ -97,10 +103,14 @@ If you want, add a filter for some column:
     ]
 
 
+    
+
+
 4. Your first page
 ------------------
 
 Pages are the method to compose complex pages from parts. Add this to your `views.py`:
+
 
 .. code-block:: python
 
@@ -113,7 +123,9 @@ Pages are the method to compose complex pages from parts. Add this to your `view
         class Meta:
             title = 'An iommi page!'
 
+
 then hook into `urls.py`:
+
 
 .. code-block:: python
 
@@ -126,6 +138,9 @@ then hook into `urls.py`:
     ]
 
 
+    
+
+
 5. A simple function based view
 -------------------------------
 
@@ -136,10 +151,6 @@ middleware you can return iommi objects from your view:
 
 `views.py`:
 
-.. test
-
-    class TestPage(Page):
-        pass
 
 .. code-block:: python
 
@@ -147,11 +158,9 @@ middleware you can return iommi objects from your view:
         return TestPage(title=f'Hello {name}')
 
 
-.. test
-
-    iommi_view(req('get'), 'foo')
 
 `urls.py`:
+
 
 .. code-block:: python
 
@@ -164,6 +173,9 @@ middleware you can return iommi objects from your view:
     ]
 
 
+
+
+
 6. Make iommi pages fit into your projects design
 -------------------------------------------------
 
@@ -171,6 +183,7 @@ So far all the views we've created are rendered in plain bootstrap. Let's fit
 the iommi views you've already added into the design of your project.
 
 The simplest is to add something like this to your `settings.py`:
+
 
 .. code-block:: python
 
@@ -186,6 +199,7 @@ The simplest is to add something like this to your `settings.py`:
             my_project_custom_js=Asset.js(attrs__src='/static/custom.js'),
         ),
     )
+
 
 Where `my_project/iommi_base.html` could look something like this:
 

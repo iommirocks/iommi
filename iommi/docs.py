@@ -1,3 +1,4 @@
+import itertools
 from glob import glob
 from pathlib import Path
 from textwrap import dedent
@@ -74,19 +75,19 @@ def get_default_classes():
     ]
 
 
-def generate_rst_docs(directory, classes=None):  # pragma: no cover - this is tested by rtd anyway
+def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this is tested by rtd anyway
     """
-    Generate documentation for tri.declarative APIs
+    Generate test files for tri.declarative APIs
 
-    :param directory: directory to write the .rst files into
-    :param classes: list of classes to generate documentation for
+    :param directory: directory to write the .py files into
+    :param classes: list of classes to generate tests for
     """
     if classes is None:
         classes = get_default_classes()
 
-    doc_by_filename = _generate_rst_docs(classes=classes)  # pragma: no mutate
+    doc_by_filename = _generate_tests_from_class_docs(classes=classes)  # pragma: no mutate
     for filename, doc in doc_by_filename:  # pragma: no mutate
-        with open(directory + filename, 'w') as f2:  # pragma: no mutate
+        with open(directory / filename, 'w') as f2:  # pragma: no mutate
             f2.write(doc)  # pragma: no mutate
 
 
@@ -98,7 +99,7 @@ def get_docs_callable_description(c):
     return c.__module__ + '.' + c.__name__
 
 
-def _generate_rst_docs(classes):
+def _generate_tests_from_class_docs(classes):
     import re
 
     cookbook_links = read_cookbook_links()
@@ -134,27 +135,73 @@ def _generate_rst_docs(classes):
             f.write(indent(levels, s))
             f.write('\n')
 
-        def section(level, title):
+        def section(level, title, indent=0):
             underline = {0: '=', 1: '-', 2: '^', 3: '+'}[level] * len(title)
-            w(0, title)
-            w(0, underline)
-            w(0, '')
+            w(indent, title)
+            w(indent, underline)
+            w(indent, '')
 
-        section(0, c.__name__)
+        w(0, '''
+# NOTE: this file is automaticallly generated
+
+from iommi import *
+from iommi.admin import Admin
+from django.urls import (
+    include,
+    path,
+)
+from django.db import models
+from tests.helpers import req, user_req, staff_req
+from docs.models import *
+request = req('get')
+
+
+def test_class_doc():
+    # language=rst
+    """
+        ''')
+
+        section(0, c.__name__, indent=1)
 
         class_doc = docstring_param_dict(c)
         constructor_doc = docstring_param_dict(c.__init__)
 
         if c.__base__ in classes:
-            w(0, f'Base class: :doc:`{c.__base__.__name__}`')
+            w(1, f'Base class: :doc:`{c.__base__.__name__}`')
         else:
-            w(0, f'Base class: `{c.__base__.__name__}`')
+            w(1, f'Base class: `{c.__base__.__name__}`')
 
-        w(0, '')
+        w(1, '')
 
         if class_doc['text']:
-            f.write(class_doc['text'])
-            w(0, '')
+            in_code_block = False
+            code_block_indent = None
+            for line in class_doc['text'].split('\n'):
+                if line.strip().startswith('.. code-block:: python'):
+                    w(1, '"""')
+
+                    in_code_block = True
+                elif in_code_block:
+                    if code_block_indent is None:
+                        if line.strip():
+                            code_block_indent = len(line) - len(line.lstrip(' '))
+                        f.write(line)
+                        f.write('\n')
+                    else:
+                        if line.startswith(' ' * code_block_indent) or not line.strip():
+                            f.write(line)
+                            f.write('\n')
+                        else:
+                            in_code_block = False
+                            w(1, '# language=rst')
+                            w(1, '"""')
+                            w(1, line)
+                else:
+                    w(1, line)
+            if in_code_block:
+                w(0, '# language=rst')
+                w(0, '"""')
+            w(1, '')
 
         if constructor_doc['text']:
             if class_doc['text']:
@@ -246,4 +293,5 @@ def _generate_rst_docs(classes):
                         w(1, f'* `{v}`')
                     w(0, '')
 
-        yield '/%s.rst' % c.__name__, f.getvalue()
+        w(0, '''"""''')
+        yield 'test_doc__api_%s.py' % c.__name__, f.getvalue()

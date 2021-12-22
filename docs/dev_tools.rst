@@ -1,9 +1,13 @@
+
 Dev tools
 =========
 
 iommi ships with several integrated tools to increase your development speed. They
 are shown on iommi pages when `settings.DEBUG` is `True`. Some are always
 active and some are optional and needs to be added to your project.
+
+
+    
 
 
 Code (jump to your code)
@@ -20,12 +24,18 @@ which can be very handy.
 For VSCode: `IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: 'vscode://file/%s:' % (filename,)+ ('' if lineno is None else "%d" % (lineno,))`
 
 
+    
+
+
 Tree
 ----
 
 This tool shows you the full tree of the current page with the names, full
 iommi paths, types (with links to documentation), and the included state
 of all the nodes in the tree.
+
+
+    
 
 
 Pick
@@ -35,6 +45,9 @@ If you want to configure some part of a page, pick is your friend. Start the
 pick tool and then click on the item and you'll get the iommi path to that
 part with the type shown (with a link to the documentation). You will also
 get the paths and types of all the parent components up the tree.
+
+
+    
 
 
 Edit
@@ -51,7 +64,10 @@ function based view.
     `'iommi.live_edit.Middleware'` to `settings.MIDDLEWARE`. Note that you need
     to add this at the very top of the middleware list!
 
-This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true. 
+This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true.
+
+
+    
 
 
 Profile
@@ -71,6 +87,9 @@ to get the total time.
     need to put this below `django.contrib.auth.middleware.AuthenticationMiddleware`
     if you want to use this in production. Only staff users are allowed to
     profile in production, but all users can profile in debug mode.
+
+
+    
 
 
 SQL trace

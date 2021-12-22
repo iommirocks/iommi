@@ -1,14 +1,3 @@
-.. imports
-
-    class BogusClass:
-        def __init__(self, **kwargs):
-            pass
-
-    Car = BogusClass
-    InternalCombustionEngine = BogusClass
-    ElectricEngine = BogusClass
-    SequentialGearbox = BogusClass
-
 
 Philosophy
 ==========
@@ -37,6 +26,9 @@ In short we want to be able to have code that reads like:
 
 The philosophy has these main parts:
 
+    
+
+
 No silent mistakes
 ---------------------
 
@@ -61,6 +53,9 @@ To accomplish this we:
 We love Django, but it does silently fail in many places. In iommi we try our hardest to never let you get stuck with silence as your only company.
 
 
+    
+
+
 Everything has a name
 ---------------------
 
@@ -73,6 +68,9 @@ features of iommi and the robust error handling and error messages.
 
 This philosophy is what enables `Single point customization with no boilerplate`_ via :ref:`dispatching`.
 
+    
+
+
 Traversing a namespace is done with `__` when `.` can't be used in normal python syntax
 ---------------------------------------------------------------------------------------
 
@@ -81,16 +79,15 @@ let's say you want to create a `Car` with an electric engine. In standard
 OOP the `Car` constructor might take an `engine` parameter so you'll end up
 with something like:
 
-.. test
-    class ElectricEngine:
-        pass
 
 .. code-block:: python
 
     car = Car(engine=ElectricEngine())
 
+
 which is fine if you want to replace the entire engine, but if you just wanted
 to configure a small thing but keep all the defaults this can become noisy:
+
 
 .. code-block:: python
 
@@ -108,28 +105,28 @@ to configure a small thing but keep all the defaults this can become noisy:
         )
     )
 
+
 Now it's impossible to see the intent of the programmer: which of all those
 options was the single thing they wanted to change and which are copy paste
 of the defaults? Turns out in this case it was just the `clutch_type`! We
 would like to write:
 
-.. test
-    """
-
 .. code-block:: python
-
+    
     car = Car(engine.gearbox.clutch_type='double')
 
-.. test
-    """
-
 but pythons syntax doesn't allow this. So instead we use `__`:
+
 
 .. code-block:: python
 
     car = Car(engine__gearbox__clutch_type='double')
 
+
 this is an elegant solution to this problem, one we've stolen from Djangos ORM.
+
+
+
 
 
 Callables for advanced usage, values for the simple cases
@@ -139,6 +136,7 @@ We want the simple cases to be obvious and simple and the complex cases to
 be possible. To enable this we aim to make it so that every place you can
 place a value, you can use a lambda. So for example the simple case could be:
 
+
 .. code-block:: python
 
     form = Form(
@@ -146,7 +144,9 @@ place a value, you can use a lambda. So for example the simple case could be:
         fields__instrument__initial='guitar',
     )
 
+
 but for the more dynamic case we can write:
+
 
 
 .. code-block:: python
@@ -157,9 +157,13 @@ but for the more dynamic case we can write:
             lambda request, **_: 'guitar' if request.is_staff else 'tambourine',
     )
 
+
 In this case you have e.g. `form`, and `field` accessible. If you don't
 know which arguments you can use, you can write whatever and you will get an
 error message telling you what arguments are available.
+
+
+
 
 
 Late binding
@@ -178,12 +182,16 @@ Late binding is accomplished by two mechanisms:
 
 .. _philosophy_hybrid_api:
 
+
+
+
 Declarative/programmatic hybrid API
 -----------------------------------
 
 The ``@declarative`` and ``@with_meta``
 decorators from tri.declarative enables us to very easily write an API
 that can look both like a normal simple python API:
+
 
 .. code-block:: python
 
@@ -194,8 +202,10 @@ that can look both like a normal simple python API:
         ),
         sortable=False)
 
+
 This code is hopefully pretty self explanatory. But the cool thing is
 that we can do the exact same thing with a declarative style:
+
 
 .. code-block:: python
 
@@ -208,11 +218,13 @@ that we can do the exact same thing with a declarative style:
 
     my_table = MyTable()
 
+
 This style can be much more readable. There's a subtle different though
 between the first and second styles: the second is really a way to
 declare defaults, not hard coding values. This means we can create
 instances of the class and set the values in the call to the
 constructor:
+
 
 .. code-block:: python
 
@@ -221,9 +233,13 @@ constructor:
         sortable=True,                # <- turns on sorting again
     )
 
+
 ...without having to create a new class inheriting from ``MyTable``. So
 the API keeps all the power of the simple style and also getting the
 nice syntax of a declarative API.
+
+
+
 
 Prepackaged commonly used patterns (that can still be customized!)
 ------------------------------------------------------------------
@@ -243,6 +259,9 @@ config in a shortcut are defaults, not hard behavior. That means we can start
 with a shortcut that does mostly what we want and then pass one or more
 arguments to further refine. Again without writing a class.
 
+
+
+
 Single point customization with no boilerplate
 ----------------------------------------------
 
@@ -258,13 +277,18 @@ In iommi we strive to avoid this by enabling one-off customizations with
 *no boilerplate*. To set a CSS style on a specific input field inside a form
 that was automatically generated we can write:
 
+
 .. code-block:: python
 
     Form(
         auto__model=Album,
         fields__year__input__attrs__style__font='helvetica')
 
+
 See also `Everything has a name`_
+
+
+
 
 Escape hatches included
 -----------------------
