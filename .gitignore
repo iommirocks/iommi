@@ -165,3 +165,4 @@ docs/_generated_tests/test_*.py
 examples/examples/admin/
 
 tests/test_edit_views_temp.py
+docs/test_doc__api_*.py

@@ -87,10 +87,13 @@ def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this
     doc_by_filename = _generate_tests_from_class_docs(classes=classes)  # pragma: no mutate
     for filename, doc in doc_by_filename:  # pragma: no mutate
         # Avoid rewriting the files! If we do then pytest will redo the assertion rewriting which is very slow.
-        with open(directory / filename) as f2:
-            old_contents = f2.read()
-        if old_contents == doc:
-            continue
+        try:
+            with open(directory / filename) as f2:
+                old_contents = f2.read()
+            if old_contents == doc:
+                continue
+        except FileNotFoundError:
+            pass
         with open(directory / filename, 'w') as f2:  # pragma: no mutate
             f2.write(doc)  # pragma: no mutate
 
