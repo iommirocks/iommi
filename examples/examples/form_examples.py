@@ -171,7 +171,7 @@ def form_example_7(request):
     return KitchenPage()
 
 
-@example(gettext(("Custom validation for all fields in a form")))
+@example(gettext("Custom validation for all fields in a form"))
 def form_example_8(request):
     class FruitForm(Form):
         class Meta:

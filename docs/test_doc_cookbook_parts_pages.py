@@ -87,14 +87,14 @@ def test_how_do_i_override_part_of_a_part_page():
     is processed. As `None` is not an instance of those types, you can remove things
     by setting their value to `None`.
 
-    .. _Page.title:
-
     """
     
 
 def test_how_do_i_set_the_title_of_my_page():
     # language=rst
     """
+    .. _Page.title:
+
     How do I set the title of my page?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -123,16 +123,11 @@ def test_how_do_i_set_the_title_of_my_page():
     Page(parts__title=html.h1('A header element in the dom'))
 
 
+def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
     # language=rst
     """
     .. _Page.context:
 
-    """
-    
-
-def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
-    # language=rst
-    """
     How do I specify the context used when a Template is rendered?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -45,15 +45,14 @@ def test_how_do_i_customize_the_rendering_of_a_table():
 
     To customize the cell, see `How do I customize the rendering of a cell?`_
 
-
-    .. _Table.page_size:
-
     """
     
 
 def test_how_do_you_turn_off_pagination():
     # language=rst
     """
+    .. _Table.page_size:
+
     How do you turn off pagination?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -74,16 +73,11 @@ def test_how_do_you_turn_off_pagination():
             page_size = None
 
 
+def test_how_do_i_customize_the_rendering_of_a_cell():
     # language=rst
     """
     .. _Table.cell:
 
-    """
-    
-
-def test_how_do_i_customize_the_rendering_of_a_cell():
-    # language=rst
-    """
     How do I customize the rendering of a cell?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -115,16 +109,11 @@ def test_how_do_i_make_a_link_in_a_cell():
     )
 
 
+def test_how_do_i_create_a_column_based_on_computed_data_():
     # language=rst
     """
     .. _How do I create a column based on computed data?:
 
-    """
-    
-
-def test_how_do_i_create_a_column_based_on_computed_data_():
-    # language=rst
-    """
     How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -183,15 +172,14 @@ def test_how_do_i_get_iommi_tables_to_understand_my_django_modelfield_subclasses
 
     See :doc:`registrations`.
 
-
-    .. _Column.after:
-
     """
     
 
 def test_how_do_i_reorder_columns():
     # language=rst
     """
+    .. _Column.after:
+
     How do I reorder columns?
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -230,15 +218,14 @@ def test_how_do_i_reorder_columns():
 
     There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
 
-
-    .. _Column.filter:
-
     """
     
 
 def test_how_do_i_enable_searching_filter_on_columns():
     # language=rst
     """
+    .. _Column.filter:
+
     How do I enable searching/filter on columns?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -264,15 +251,14 @@ def test_how_do_i_enable_searching_filter_on_columns():
     you can turn off the field in the generated form by passing
     `filter__field__include=False`:
 
-
-    .. _Filter.freetext:
-
     """
     
 
 def test_how_do_i_make_a_freetext_search_field():
     # language=rst
     """
+    .. _Filter.freetext:
+
     How do I make a freetext search field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -363,15 +349,14 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
          )
         ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
-
-    .. _Table.row:
-
     """
     
 
 def test_how_do_i_customize_the_rendering_of_a_row():
     # language=rst
     """
+    .. _Table.row:
+
     How do I customize the rendering of a row?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -385,14 +370,14 @@ def test_how_do_i_customize_the_rendering_of_a_row():
 
     To customize the cell, see `How do I customize the rendering of a cell?`_
 
-    .. _Column.header:
-
     """
     
 
 def test_how_do_i_customize_the_rendering_of_a_header():
     # language=rst
     """
+    .. _Column.header:
+
     How do I customize the rendering of a header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -402,15 +387,14 @@ def test_how_do_i_customize_the_rendering_of_a_header():
 
     - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
 
-
-    .. _Table.header:
-
     """
     
 
 def test_how_do_i_turn_off_the_header():
     # language=rst
     """
+    .. _Table.header:
+
     How do I turn off the header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -428,15 +412,14 @@ def test_how_do_i_add_fields_to_a_table_that_is_generated_from_a_model():
 
     See the question `How do I create a column based on computed data?`_
 
-
-    .. _Column.include:
-
     """
     
 
 def test_how_do_i_specify_which_columns_to_show():
     # language=rst
     """
+    .. _Column.include:
+
     How do I specify which columns to show?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -456,15 +439,14 @@ def test_how_do_i_specify_which_columns_to_show():
 
     To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
-
-    .. _Table.cells_for_rows:
-
     """
     
 
 def test_how_do_i_access_table_data_programmatically_():
     # language=rst
     """
+    .. _Table.cells_for_rows:
+
     How do I access table data programmatically (like for example to dump to json)?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -475,23 +457,17 @@ def test_how_do_i_access_table_data_programmatically_():
     Artist.objects.create(name='foo')
     table = Table(auto__model=Artist).bind(request=req('get'))
 
-
     for row in table.cells_for_rows():
         for cell in row:
             print(cell.render_formatted(), end='')
         print()
 
 
+def test_how_do_i_access_foreign_key_related_data_in_a_column():
     # language=rst
     """
     .. _Column.attr:
 
-    """
-    
-
-def test_how_do_i_access_foreign_key_related_data_in_a_column():
-    # language=rst
-    """
     How do I access foreign key related data in a column?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -526,18 +502,14 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
         columns__a=Column(attr='c__a'),
     )
 
+
+def test_how_do_i_turn_off_sorting_():
     # language=rst
     """
     .. _Table.sortable:
 
     .. _Column.sortable:
 
-    """
-    
-
-def test_how_do_i_turn_off_sorting_():
-    # language=rst
-    """
     How do I turn off sorting? (on a column or table wide)
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -561,16 +533,12 @@ def test_how_do_i_turn_off_sorting_():
         sortable=False,
     )
 
-    # language=rst
-    """
-    .. _Column.display_name:
-
-    """
-    
 
 def test_how_do_i_specify_the_title_of_a_header():
     # language=rst
     """
+    .. _Column.display_name:
+
     How do I specify the title of a header?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -583,16 +551,12 @@ def test_how_do_i_specify_the_title_of_a_header():
         columns__name__display_name='header title',
     )
 
-    # language=rst
-    """
-    .. _Column.sort_default_desc:
-
-    """
-    
 
 def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instead_of_ascending():
     # language=rst
     """
+    .. _Column.sort_default_desc:
+
     How do I set the default sort order of a column to be descending instead of ascending?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -604,16 +568,11 @@ def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instea
     )
 
 
+def test_how_do_i_group_columns():
     # language=rst
     """
     .. _Column.group:
 
-    """
-    
-
-def test_how_do_i_group_columns():
-    # language=rst
-    """
     How do I group columns?
     ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -629,15 +588,14 @@ def test_how_do_i_group_columns():
     """
     The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
 
-
-    .. _Column.auto_rowspan:
-
     """
     
 
 def test_how_do_i_get_rowspan_on_a_table():
     # language=rst
     """
+    .. _Column.auto_rowspan:
+
     How do I get rowspan on a table?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -651,16 +609,11 @@ def test_how_do_i_get_rowspan_on_a_table():
     )
 
 
+def test_how_do_i_enable_bulk_editing():
     # language=rst
     """
     .. _Column.bulk:
 
-    """
-    
-
-def test_how_do_i_enable_bulk_editing():
-    # language=rst
-    """
     How do I enable bulk editing?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -684,15 +637,14 @@ def test_how_do_i_enable_bulk_editing():
     You also need to enable the select column, otherwise you can't select
     the columns you want to bulk edit.
 
-
-    .. _Table.bulk:
-
     """
     
 
 def test_how_do_i_enable_bulk_delete():
     # language=rst
     """
+    .. _Table.bulk:
+
     How do I enable bulk delete?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

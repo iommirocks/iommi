@@ -128,7 +128,7 @@ def test_resolve_style_shadow_default():
         assert resolve_style([Style(), Style()], 'my_style') is my_style
 
 
-def test_resolve_style_shadow_default():
+def test_resolve_style_shadow_default2():
     with register_style('my_style', Style()) as my_style:
         assert resolve_style([Style(), my_style], 'my_style') is my_style
 

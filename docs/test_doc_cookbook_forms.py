@@ -1,24 +1,13 @@
-from iommi import *
-from iommi.admin import Admin
-from django.urls import (
-    include,
-    path,
-)
-from django.db import models
-from tests.helpers import req, user_req, staff_req
 from docs.models import *
+from iommi import *
+from tests.helpers import req
+
 request = req('get')
 
 from tests.helpers import req, user_req, staff_req
 from django.template import Template
-from tri_declarative import Namespace
-from iommi.attrs import render_attrs
-from django.http import HttpResponseRedirect
-from datetime import date
 import pytest
 pytestmark = pytest.mark.django_db
-
-
 
 
 def test_forms():
@@ -27,14 +16,15 @@ def test_forms():
     Forms
     -----
 
-    .. _Field.parse:
-
     """
-    
+
 
 def test_how_do_i_supply_a_custom_parser_for_a_field():
     # language=rst
     """
+    .. _Field.parse:
+
+
     How do I supply a custom parser for a field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -55,16 +45,11 @@ def test_how_do_i_supply_a_custom_parser_for_a_field():
     assert form.fields.index.value == 123
 
 
+def test_how_do_i_make_a_field_non_editable():
     # language=rst
     """
     .. _Field.editable:
 
-    """
-    
-
-def test_how_do_i_make_a_field_non_editable():
-    # language=rst
-    """
     How do I make a field non-editable?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -79,7 +64,6 @@ def test_how_do_i_make_a_field_non_editable():
         fields__artist__editable=False,
     )
 
-
     # @test
     user_form = form.bind(request=user_req('get'))
     assert user_form.fields.name.editable is False
@@ -90,16 +74,11 @@ def test_how_do_i_make_a_field_non_editable():
     assert staff_form.fields.artist.editable is False
 
 
+def test_how_do_i_make_an_entire_form_non_editable():
     # language=rst
     """
     .. _Form.editable:
 
-    """
-    
-
-def test_how_do_i_make_an_entire_form_non_editable():
-    # language=rst
-    """
     How do I make an entire form non-editable?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -119,16 +98,11 @@ def test_how_do_i_make_an_entire_form_non_editable():
     assert form.fields.year.editable is False
 
 
+def test_how_do_i_supply_a_custom_validator():
     # language=rst
     """
     .. _Field.is_valid:
 
-    """
-    
-
-def test_how_do_i_supply_a_custom_validator():
-    # language=rst
-    """
     How do I supply a custom validator?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -142,13 +116,11 @@ def test_how_do_i_supply_a_custom_validator():
             lambda form, field, parsed_data: (False, 'invalid!'),
     )
 
-
     # @test
 
     form = form.bind(request=req('get', name='foo'))
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
 
-    
 
 def test_how_do_i_validate_multiple_fields_together():
     # language=rst
@@ -160,7 +132,7 @@ def test_how_do_i_validate_multiple_fields_together():
     has run. But note that it is run even if the individual fields validation was not successful.
 
     """
-    
+
 
 def test_how_do_i_exclude_a_field():
     # language=rst
@@ -172,7 +144,7 @@ def test_how_do_i_exclude_a_field():
 
 
     """
-    
+
 
 def test_how_do_i_say_which_fields_to_include_when_creating_a_form_from_a_model():
     # language=rst
@@ -187,15 +159,14 @@ def test_how_do_i_say_which_fields_to_include_when_creating_a_form_from_a_model(
     3. for more advanced usages you can also pass the `include` parameter to a specific field like `fields__my_field__include=True`. Here you can supply either a `bool` or a callable like `fields__my_field__include=lambda request, **_: request.user.is_staff`.
     4. you can also add fields that are not present in the model by passing configuration like `fields__foo__attr='bar__baz'` (this means create a `Field` called `foo` that reads its data from `bar.baz`). You can either pass configuration data like that, or pass an entire `Field` instance.
 
-
-    .. _Field.initial:
-
     """
-    
+
 
 def test_how_do_i_supply_a_custom_initial_value():
     # language=rst
     """
+    .. _Field.initial:
+
     How do I supply a custom initial value?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -219,15 +190,14 @@ def test_how_do_i_supply_a_custom_initial_value():
     """
     If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
 
-
-    .. _Field.required:
-
     """
-    
+
 
 def test_how_do_i_set_if_a_field_is_required():
     # language=rst
     """
+    .. _Field.required:
+
     How do I set if a field is required?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Normally this will be handled automatically by looking at the model definition, but sometimes you want a form to be more strict than the model. Pass a `bool` or a callable to the `required` member:
@@ -247,16 +217,11 @@ def test_how_do_i_set_if_a_field_is_required():
     assert form.fields.year.required is True
 
 
+def test_how_do_i_change_the_order_of_the_fields():
     # language=rst
     """
     .. _Field.after:
 
-    """
-    
-
-def test_how_do_i_change_the_order_of_the_fields():
-    # language=rst
-    """
     How do I change the order of the fields?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -284,15 +249,14 @@ def test_how_do_i_change_the_order_of_the_fields():
 
     If there are multiple fields with the same index or name the order of the fields will be used to disambiguate.
 
-
-    .. _Field.search_fields:
-
     """
-    
+
 
 def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use():
     # language=rst
     """
+    .. _Field.search_fields:
+
     How do I specify which model fields the search of a choice_queryset use?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -318,7 +282,7 @@ def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use
 
 
     """
-    
+
 
 def test_how_do_i_insert_a_css_class_or_html_attribute():
     # language=rst
@@ -328,15 +292,14 @@ def test_how_do_i_insert_a_css_class_or_html_attribute():
 
     See :doc:`Attrs`.
 
-
-    .. _Field.template:
-
     """
-    
+
 
 def test_how_do_i_override_rendering_of_an_entire_field():
     # language=rst
     """
+    .. _Field.template:
+
     How do I override rendering of an entire field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -356,16 +319,11 @@ def test_how_do_i_override_rendering_of_an_entire_field():
     )
 
 
+def test_how_do_i_override_rendering_of_the_input_field():
     # language=rst
     """
     .. _Field.input:
 
-    """
-    
-
-def test_how_do_i_override_rendering_of_the_input_field():
-    # language=rst
-    """
     How do I override rendering of the input field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -385,7 +343,7 @@ def test_how_do_i_override_rendering_of_the_input_field():
         fields__year__input__template=Template('{{ field.attrs }}'),
     )
 
-    
+
 
 def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     # language=rst

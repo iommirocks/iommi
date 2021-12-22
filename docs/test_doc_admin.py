@@ -1,18 +1,18 @@
-from iommi import *
-from iommi.admin import Admin
 from django.urls import (
     include,
     path,
 )
-from django.db import models
-from tests.helpers import req, user_req, staff_req
-from docs.models import *
+
+from iommi.admin import Admin
+from tests.helpers import (
+    req,
+    staff_req,
+)
+
 request = req('get')
 
-from django.contrib.auth.models import User
 import pytest
 pytestmark = pytest.mark.django_db
-
 
 
 def test_admin():
@@ -103,8 +103,6 @@ def test_add_a_model_to_the_admin():
     class Meta:
         apps__myapp_mymodel__include = True
 
-
-    
 
 def test_remove_a_model_from_the_admin():
     # language=rst

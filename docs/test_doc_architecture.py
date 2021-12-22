@@ -1,18 +1,12 @@
-from iommi import *
-from iommi.admin import Admin
-from django.urls import (
-    include,
-    path,
-)
-from django.db import models
-from tests.helpers import req, user_req, staff_req
 from docs.models import *
+from iommi import *
+from tests.helpers import req
+
 request = req('get')
 
 import pytest
+
 pytestmark = pytest.mark.django_db
-
-
 
 
 def test_architecture():
@@ -22,7 +16,7 @@ def test_architecture():
     ============
 
     """
-    
+
 
 def test_execution_phases():
     # language=rst
@@ -51,14 +45,14 @@ def test_execution_phases():
     At traversal time we are good to go and can now invoke the final methods of all objects. We can now render html, respond to ajax, etc.
 
 
-    .. _bind:
-
     """
-    
+
 
 def test_bind():
     # language=rst
     """
+    .. _bind:
+
     Bind
     ----
 
@@ -72,15 +66,14 @@ def test_bind():
     The parts are responsible for calling `bind(parent=self)` on all their children in `on_bind`.
 
     The root object of the graph is initialized with `bind(request=request)`. Only one object can be the root.
-
-    .. _dispatching:
-
     """
-    
+
 
 def test_namespace_dispatching():
     # language=rst
     """
+    .. _dispatching:
+
     Namespace dispatching
     ---------------------
 
@@ -96,8 +89,10 @@ def test_namespace_dispatching():
 
 
     """
-    from tri_declarative import dispatch, EMPTY
-
+    from tri_declarative import (
+        dispatch,
+        EMPTY,
+    )
 
     @dispatch(
         b__x=1,  # these are default values. "b" here is implicitly
@@ -109,14 +104,12 @@ def test_namespace_dispatching():
         some_function(**b)
         another_function(**c)
 
-
-    @dispatch (
+    @dispatch(
         d=EMPTY,  # explicit namespace
     )
     def some_function(x, d):
         print('x:', x)
         another_function(**d)
-
 
     def another_function(y=None, z=None):
         if y:
@@ -130,7 +123,6 @@ def test_namespace_dispatching():
     # foo: q
     # x: 1
     # y: 2
-
 
     a('q', b__x=5)
     # foo: q
@@ -149,10 +141,8 @@ def test_namespace_dispatching():
     feature set of the underling `Query` and `Form` classes by just
     dispatching keyword arguments downstream. It also enables us to bundle
     commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.
-
-
     """
-    
+
 
 def test_evaluate():
     # language=rst
@@ -171,15 +161,14 @@ def test_evaluate():
     Artist.objects.create(name='Dio')
 
     t = (
-    # @end
+        # @end
 
-    Table(
-        auto__model=Artist,
-        columns__name__cell__format=lambda value, **_: f'{value} !!!',
-    )
+        Table(
+            auto__model=Artist,
+            columns__name__cell__format=lambda value, **_: f'{value} !!!',
+        )
 
-
-    # @test
+        # @test
 
     )
 
@@ -190,7 +179,6 @@ def test_evaluate():
     ]
     assert data == [['Dio !!!']]
     # @end
-
 
     # language=rst
     """

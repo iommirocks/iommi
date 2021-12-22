@@ -225,15 +225,14 @@ def test_late_binding():
     - not creating object structures until the :ref:`bind` phase
     - and `Callables for advanced usage, values for the simple cases`_
 
-
-    .. _philosophy_hybrid_api:
-
     """
 
 
 def test_declarative_programmatic_hybrid_api():
     # language=rst
     """
+    .. _philosophy_hybrid_api:
+
     Declarative/programmatic hybrid API
     -----------------------------------
 

@@ -27,14 +27,14 @@ def test_queries():
     Queries
     -------
 
-    .. _Filter.query_operator_to_q_operator:
-
     """
     
 
 def test_how_do_i_override_what_operator_is_used_for_a_query():
     # language=rst
     """
+    .. _Filter.query_operator_to_q_operator:
+
     How do I override what operator is used for a query?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -56,14 +56,14 @@ def test_how_do_i_override_what_operator_is_used_for_a_query():
 
     See also `How do I control what Q is produced?`_
 
-    .. _Filter.value_to_q:
-
     """
     
 
 def test_how_do_i_control_what_q_is_produced():
     # language=rst
     """
+    .. _Filter.value_to_q:
+
     How do I control what Q is produced?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
