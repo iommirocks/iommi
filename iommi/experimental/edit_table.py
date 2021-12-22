@@ -428,6 +428,7 @@ class EditTable(Table):
 
         for i, row in enumerate(rows):
             row = self.preprocess_row_for_create(table=self, row=row)
+            assert row is not None, 'preprocess_row must return the object'
             yield self.cells_class(is_create_template=True, row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     def get_errors(self):

@@ -2029,6 +2029,7 @@ class Table(Part, Tag):
         rows = self.preprocess_rows(rows=self.get_visible_rows(), **self.iommi_evaluate_parameters())
         for i, row in enumerate(rows):
             row = self.preprocess_row(table=self, row=row)
+            assert row is not None, 'preprocess_row must return the object'
             yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     @classmethod
