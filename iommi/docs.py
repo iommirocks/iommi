@@ -1,4 +1,5 @@
 from glob import glob
+from os import listdir
 from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
@@ -82,6 +83,7 @@ def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this
     :param classes: list of classes to generate tests for
     """
     print(f'generate_api_docs_tests("{directory}")')
+    print(listdir(directory))
     if classes is None:
         classes = get_default_classes()
 
