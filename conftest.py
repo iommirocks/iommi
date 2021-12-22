@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 
@@ -21,3 +23,9 @@ def pytest_runtest_setup(item):
 @pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(session, config, items):
     items[:] = sorted(items, key=lambda x: x.fspath)
+
+
+def pytest_sessionstart(session):
+    from iommi.docs import generate_api_docs_tests
+
+    generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())

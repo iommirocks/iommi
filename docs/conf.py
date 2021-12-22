@@ -37,7 +37,6 @@ setup()
 
 from iommi.docs import generate_api_docs_tests
 
-print(Path(__file__).parent.absolute())
 generate_api_docs_tests(Path(__file__).parent.absolute())
 
 # -- General configuration -----------------------------------------------------

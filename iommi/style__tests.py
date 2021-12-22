@@ -512,7 +512,7 @@ def test_style_inheritance_tricky():
         assert page.iommi_style.name == 'custom_style'
 
         form = page.parts.form
-        assert form.iommi_style.name is 'custom_sub_style'
+        assert form.iommi_style.name == 'custom_sub_style'
 
         assert form.template == 'sub.html'
 

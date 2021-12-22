@@ -21,7 +21,6 @@ from iommi.sql_trace import (
     safe_unicode_literal,
     set_sql_debug,
     sql_debug_format_stack_trace,
-    SQL_DEBUG_LEVEL_ALL_WITH_STACKS,
     SQL_DEBUG_LEVEL_WORST,
     sql_debug_log_to_request,
     sql_debug_total_time,
@@ -76,7 +75,7 @@ def test_middleware(settings, client, caplog):
 
     assert '------ 4 times: -------' in caplog.text
     assert select_statement in caplog.text
-    assert 'File "iommi/iommi/sql_trace__tests.py", line ' in caplog.text
+    assert 'File "iommi/sql_trace__tests.py", line ' in caplog.text.replace('iommi/iommi/', 'iommi/').replace('./', '')
     assert re.findall(r'GET /\?_iommi_sql_trace -> 200  \(0\.\d\d\ds\) \(sql time: 0\.\d\d\ds\)', caplog.text)
     assert '... and 3 more unique statements' in caplog.text
 
