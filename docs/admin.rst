@@ -77,8 +77,6 @@ You can also add the config in the app, by creating a `iommi_admin.py` file in y
         apps__myapp_mymodel__include = True
 
 
-    
-
 
 Remove a model from the admin
 -----------------------------

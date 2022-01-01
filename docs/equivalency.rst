@@ -31,7 +31,6 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-
     form = Form(
         auto=dict(
             model=Album,
@@ -40,12 +39,10 @@ The following forms all accomplish this goal (although they would need more work
     )
 
 
-
     form = Form(
         auto__model=Album,
         fields__artist__include=False,
     )
-
 
 
     class ArtistForm(Form):
@@ -54,7 +51,6 @@ The following forms all accomplish this goal (although they would need more work
             auto__exclude = ['artist']
 
     form = ArtistForm()
-
 
 
     class ArtistForm(Form):
@@ -87,7 +83,6 @@ Without using the `auto` features:
             title = 'Create album'
 
     form = ArtistForm()
-
 
 
     form = Form(

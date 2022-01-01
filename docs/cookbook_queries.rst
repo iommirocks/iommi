@@ -2,10 +2,10 @@
 Queries
 -------
 
-.. _Filter.query_operator_to_q_operator:
-
     
 
+
+.. _Filter.query_operator_to_q_operator:
 
 How do I override what operator is used for a query?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,10 +28,10 @@ advanced query language. Use this feature with caution!
 
 See also `How do I control what Q is produced?`_
 
-.. _Filter.value_to_q:
-
     
 
+
+.. _Filter.value_to_q:
 
 How do I control what Q is produced?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

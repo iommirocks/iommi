@@ -2,7 +2,7 @@
 Architecture
 ============
 
-    
+
 
 
 Execution phases
@@ -29,10 +29,10 @@ At bind time we:
 At traversal time we are good to go and can now invoke the final methods of all objects. We can now render html, respond to ajax, etc.
 
 
+
+
+
 .. _bind:
-
-    
-
 
 Bind
 ----
@@ -48,10 +48,9 @@ The parts are responsible for calling `bind(parent=self)` on all their children 
 
 The root object of the graph is initialized with `bind(request=request)`. Only one object can be the root.
 
+
+
 .. _dispatching:
-
-    
-
 
 Namespace dispatching
 ---------------------
@@ -69,8 +68,10 @@ still keeping the code simple. Here's a contrived example:
 
 .. code-block:: python
 
-    from tri_declarative import dispatch, EMPTY
-
+    from tri_declarative import (
+        dispatch,
+        EMPTY,
+    )
 
     @dispatch(
         b__x=1,  # these are default values. "b" here is implicitly
@@ -82,14 +83,12 @@ still keeping the code simple. Here's a contrived example:
         some_function(**b)
         another_function(**c)
 
-
-    @dispatch (
+    @dispatch(
         d=EMPTY,  # explicit namespace
     )
     def some_function(x, d):
         print('x:', x)
         another_function(**d)
-
 
     def another_function(y=None, z=None):
         if y:
@@ -103,7 +102,6 @@ still keeping the code simple. Here's a contrived example:
     # foo: q
     # x: 1
     # y: 2
-
 
     a('q', b__x=5)
     # foo: q
@@ -123,8 +121,6 @@ dispatching keyword arguments downstream. It also enables us to bundle
 commonly used features in what we call "shortcuts", which are pre-packaged sets of defaults.
 
 
-    
-
 
 Evaluate
 --------
@@ -138,12 +134,10 @@ To customize iommi you can pass functions/lambdas in many places. This makes it 
 
 .. code-block:: python
 
-    Table(
-        auto__model=Artist,
-        columns__name__cell__format=lambda value, **_: f'{value} !!!',
-    )
-
-
+        Table(
+            auto__model=Artist,
+            columns__name__cell__format=lambda value, **_: f'{value} !!!',
+        )
 
 
 

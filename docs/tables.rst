@@ -1,7 +1,6 @@
 
 
 
-
 Tables
 ======
 
@@ -28,7 +27,6 @@ The code for the example above:
         auto__model=Album,
         page_size=10,
     )
-
 
 
 Read the full documentation and the :doc:`cookbook` for more.

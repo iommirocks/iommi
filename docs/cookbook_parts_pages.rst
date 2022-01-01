@@ -51,10 +51,10 @@ template types are gathered into the parts structure when a `Part` class definit
 is processed. As `None` is not an instance of those types, you can remove things
 by setting their value to `None`.
 
-.. _Page.title:
-
     
 
+
+.. _Page.title:
 
 How do I set the title of my page?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,9 +87,6 @@ Which is equivalent to:
 
 
 .. _Page.context:
-
-    
-
 
 How do I specify the context used when a Template is rendered?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

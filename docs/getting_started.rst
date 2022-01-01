@@ -69,8 +69,6 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
     ]
 
 
-    
-
 
 3. Your first table
 -------------------
@@ -102,8 +100,6 @@ If you want, add a filter for some column:
         ).as_view()),
     ]
 
-
-    
 
 
 4. Your first page
@@ -138,8 +134,6 @@ then hook into `urls.py`:
     ]
 
 
-    
-
 
 5. A simple function based view
 -------------------------------
@@ -171,8 +165,6 @@ middleware you can return iommi objects from your view:
             iommi_view
         ),
     ]
-
-
 
 
 

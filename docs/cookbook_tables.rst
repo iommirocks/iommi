@@ -17,11 +17,10 @@ To customize the row, see `How do I customize the rendering of a row?`_
 
 To customize the cell, see `How do I customize the rendering of a cell?`_
 
-
-.. _Table.page_size:
-
     
 
+
+.. _Table.page_size:
 
 How do you turn off pagination?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,9 +45,6 @@ Specify `page_size=None`:
 
 
 .. _Table.cell:
-
-    
-
 
 How do I customize the rendering of a cell?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -81,9 +77,6 @@ This is such a common case that there's a special case for it: pass the `url` an
 
 
 .. _How do I create a column based on computed data?:
-
-    
-
 
 How do I create a column based on computed data (i.e. a column not based on an attribute of the row)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,11 +129,10 @@ How do I get iommi tables to understand my Django ModelField subclasses?
 
 See :doc:`registrations`.
 
-
-.. _Column.after:
-
     
 
+
+.. _Column.after:
 
 How do I reorder columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,11 +168,10 @@ this will put the columns in the order a, c, b.
 
 There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
 
-
-.. _Column.filter:
-
     
 
+
+.. _Column.filter:
 
 How do I enable searching/filter on columns?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -207,11 +198,10 @@ If you just want to have the filter available in the advanced query language,
 you can turn off the field in the generated form by passing
 `filter__field__include=False`:
 
-
-.. _Filter.freetext:
-
     
 
+
+.. _Filter.freetext:
 
 How do I make a freetext search field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -302,11 +292,10 @@ Everything together:
      )
     ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
-
-.. _Table.row:
-
     
 
+
+.. _Table.row:
 
 How do I customize the rendering of a row?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -321,10 +310,10 @@ In templates you can access the raw row via `row`. This would typically be one o
 
 To customize the cell, see `How do I customize the rendering of a cell?`_
 
-.. _Column.header:
-
     
 
+
+.. _Column.header:
 
 How do I customize the rendering of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -335,11 +324,10 @@ You can customize headers in two ways:
 
 - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
 
-
-.. _Table.header:
-
     
 
+
+.. _Table.header:
 
 How do I turn off the header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -355,11 +343,10 @@ How do I add fields to a table that is generated from a model?
 
 See the question `How do I create a column based on computed data?`_
 
-
-.. _Column.include:
-
     
 
+
+.. _Column.include:
 
 How do I specify which columns to show?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -380,11 +367,10 @@ This will show the column `name` only if the GET parameter `some_parameter` is s
 
 To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
-
-.. _Table.cells_for_rows:
-
     
 
+
+.. _Table.cells_for_rows:
 
 How do I access table data programmatically (like for example to dump to json)?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -393,9 +379,6 @@ Here's a simple example that prints a table to stdout:
 
 
 .. _Column.attr:
-
-    
-
 
 How do I access foreign key related data in a column?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -420,12 +403,10 @@ we can build a table of `Bar` that shows the data of `a` like this:
     )
 
 
+
 .. _Table.sortable:
 
 .. _Column.sortable:
-
-    
-
 
 How do I turn off sorting? (on a column or table wide)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -452,10 +433,8 @@ and to turn it off on the entire table:
     )
 
 
+
 .. _Column.display_name:
-
-    
-
 
 How do I specify the title of a header?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -471,10 +450,8 @@ The `display_name` property of a column is displayed in the header.
     )
 
 
+
 .. _Column.sort_default_desc:
-
-    
-
 
 How do I set the default sort order of a column to be descending instead of ascending?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,9 +468,6 @@ How do I set the default sort order of a column to be descending instead of asce
 
 .. _Column.group:
 
-    
-
-
 How do I group columns?
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -509,11 +483,10 @@ How do I group columns?
 
 The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
 
-
-.. _Column.auto_rowspan:
-
     
 
+
+.. _Column.auto_rowspan:
 
 How do I get rowspan on a table?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -531,9 +504,6 @@ You can manually set the rowspan attribute via `row__attrs__rowspan` but this is
 
 
 .. _Column.bulk:
-
-    
-
 
 How do I enable bulk editing?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -558,11 +528,10 @@ behavior and look of the bulk editing for the column.
 You also need to enable the select column, otherwise you can't select
 the columns you want to bulk edit.
 
-
-.. _Table.bulk:
-
     
 
+
+.. _Table.bulk:
 
 How do I enable bulk delete?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
