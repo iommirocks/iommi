@@ -37,11 +37,12 @@ def model_and_rows(model, rows):
 
 
 def build_as_view_wrapper(target):
+    from iommi.path import decode_path_components  # avoid circular import
     if not target.is_refine_done and getattr(settings, 'IOMMI_REFINE_DONE_OPTIMIZATION', True):
         target = target.refine_done()
 
     def view_wrapper(request, **url_params):
-        request.url_params = url_params
+        decode_path_components(request, **url_params)
         return target.bind(request=request).render_to_response()
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
