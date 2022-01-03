@@ -118,7 +118,7 @@ class Part(Traversable):
         return result
 
     @dispatch
-    def render_to_response(self, **kwargs):
+    def perform_dispatch(self, **kwargs):
         request = self.get_request()
         req_data = request_data(request)
 
@@ -161,6 +161,14 @@ class Part(Traversable):
         else:
             if request.method == 'POST':
                 assert False, 'This request was a POST, but there was no dispatch command present.'
+
+        return None
+
+    @dispatch
+    def render_to_response(self, **kwargs):
+        dispatch = self.perform_dispatch(**kwargs)
+        if dispatch is not None:
+            return dispatch
 
         response = HttpResponse(render_root(part=self, **kwargs))
         response.iommi_part = self

@@ -683,7 +683,7 @@ def test_how_do_i_make_a_custom_bulk_action():
 
     # @test
     artist = Artist.objects.create(name='Black Sabbath')
-    album = Album.objects.create(artist=artist, name='foo', year=1970)
+    album = Album.objects.create(artist=artist, name='Heaven & Hell', year=1980)
     r = t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
     album.refresh_from_db()
     assert album.name == 'Paranoid'

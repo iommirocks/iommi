@@ -34,6 +34,7 @@ for source in docs_dir.glob('test_*.py'):
                     if state == 'starting rst':
                         target_f.write('\n')
                         state = 'rst'
+                        should_dedent = line.startswith('    ')
                     elif state == 'rst':
                         state = 'py'
                         write_code_block = True
@@ -43,15 +44,8 @@ for source in docs_dir.glob('test_*.py'):
                     state = 'py'
                 else:
                     if state == 'rst':
-                        if should_dedent is None:
-                            should_dedent = line.startswith('    ')
-
-                        if should_dedent and len(line) >= 4:
-                            if not line.startswith('    '):
-                                should_dedent = False
-                                target_f.write(line)
-                            else:
-                                target_f.write(line[4:])
+                        if should_dedent and line.startswith('    '):
+                            target_f.write(line[4:])
                         else:
                             target_f.write(line)
                     elif state == 'py':
@@ -60,6 +54,7 @@ for source in docs_dir.glob('test_*.py'):
                                 target_f.write('.. code-block:: python\n\n')
                                 write_code_block = False
 
-                        target_f.write(line)
+                        if line.startswith('    ') or not stripped_line:
+                            target_f.write(line)
 
 

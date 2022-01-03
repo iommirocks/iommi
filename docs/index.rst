@@ -30,6 +30,7 @@ Contents:
    api
    philosophy
    architecture
+   legacy_fbv
    history
    authors
    contributing
