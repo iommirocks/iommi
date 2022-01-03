@@ -7,4 +7,5 @@ flask
 parso
 flake8
 black[d]==20.8b1
+pytest_snapshot==0.8.0
 -rrequirements.txt
