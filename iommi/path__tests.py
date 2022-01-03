@@ -51,7 +51,7 @@ def test_view_decorator():
 
     expected = [artist, 7]
     assert actual == expected
-    assert set(request.url_params.keys()) == {'artist', 'artist_pk', 'pass_through'}
+    assert set(request.iommi_view_params.keys()) == {'artist', 'artist_pk', 'pass_through'}
 
 
 @pytest.mark.django_db

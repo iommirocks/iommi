@@ -84,10 +84,10 @@ def decode_path_components(request, **kwargs):
         decoded_kwargs[snake_name] = obj
         decoded_keys.add(k)
 
-    if not hasattr(request, 'url_params'):
-        request.url_params = {}
-    request.url_params.update(kwargs)
-    request.url_params.update(decoded_kwargs)
+    if not hasattr(request, 'iommi_view_params'):
+        request.iommi_view_params = {}
+    request.iommi_view_params.update(kwargs)
+    request.iommi_view_params.update(decoded_kwargs)
 
     return {
         **{k: v for k, v in items(kwargs) if k not in decoded_keys},

@@ -41,8 +41,8 @@ def build_as_view_wrapper(target):
     if not target.is_refine_done and getattr(settings, 'IOMMI_REFINE_DONE_OPTIMIZATION', True):
         target = target.refine_done()
 
-    def view_wrapper(request, **url_params):
-        decode_path_components(request, **url_params)
+    def view_wrapper(request, **view_params):
+        decode_path_components(request, **view_params)
         return target.bind(request=request).render_to_response()
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
