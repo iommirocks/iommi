@@ -165,22 +165,26 @@ from docs.models import *
 request = req('get')
 
 
-def test_class_doc():
-    # language=rst
-    """
+# language=rst
+"""
         ''')
 
-        section(0, c.__name__, indent=1)
+        section(0, c.__name__, indent=0)
 
         class_doc = docstring_param_dict(c)
         constructor_doc = docstring_param_dict(c.__init__)
 
         if c.__base__ in classes:
-            w(1, f'Base class: :doc:`{c.__base__.__name__}`')
+            w(0, f'Base class: :doc:`{c.__base__.__name__}`')
         else:
-            w(1, f'Base class: `{c.__base__.__name__}`')
+            w(0, f'Base class: `{c.__base__.__name__}`')
 
-        w(1, '')
+        w(0, '')
+
+        w(0, '"""')
+        w(0, 'def test_base():')
+        w(1, '# language=rst')
+        w(1, '"""')
 
         if class_doc['text']:
             in_code_block = False
@@ -227,9 +231,10 @@ def test_class_doc():
             type_hints = get_type_hints(c)
             for refinable, value in refinable_members:
                 w(0, '* `' + refinable + '`')
+                w(0, '')
 
                 if constructor_doc['params'].get(refinable):
-                    w(1, constructor_doc['params'][refinable])
+                    w(2, constructor_doc['params'][refinable])
                     w(0, '')
                 type_hint = type_hints.get(refinable)
                 if type_hint:
@@ -240,15 +245,15 @@ def test_class_doc():
                         name = type_hint.__name__
 
                     if type_hint in classes:
-                        w(1, f'Type: :doc:`{name}`')
+                        w(2, f'Type: :doc:`{name}`')
                     else:
-                        w(1, f'Type: `{name}`')
+                        w(2, f'Type: `{name}`')
                     w(1, '')
 
                 ref_name = f'{c.__name__}.{refinable}'
                 if ref_name in cookbook_name_by_refinable_name:
-                    w(1, f'Cookbook: :ref:`{ref_name.lower()}`')
-                    w(1, '')
+                    w(2, f'Cookbook: :ref:`{ref_name.lower()}`')
+                    w(2, '')
 
             w(0, '')
 

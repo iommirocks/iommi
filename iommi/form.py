@@ -474,6 +474,7 @@ class Field(Part, Tag):
     See :doc:`Form` for more complete examples.
 
     The life cycle of the data is:
+
         1. `raw_data`: will be set if the corresponding key is present in the HTTP request
         2. `parsed_data`: set if parsing is successful, which only happens if the previous step succeeded
         3. `value`: set if validation is successful, which only happens if the previous step succeeded
@@ -565,7 +566,7 @@ class Field(Part, Tag):
 
         .. code-block:: python
 
-            Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
+                Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
         :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/cookbook_forms.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
         :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
