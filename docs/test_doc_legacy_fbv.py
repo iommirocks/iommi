@@ -171,3 +171,15 @@ def test_legacy_fbv_step4():
                 'albums': page.parts.albums,
             }
         )
+
+    # @test
+    artist = Artist.objects.create(name='Black Sabbath')
+    album = Album.objects.create(artist=artist, name='Heaven & Hell', year=1980)
+    track = Track.objects.create(album=album, name='Neon Knights', index=1)
+    response = view_artist(req('get'), artist_name=artist.name)
+    assert '..artist..' in response.content.decode()
+    # ajax dispatch
+    response = view_artist(req('get', **{'/album/choices': album.name}), artist_name=artist.name)
+    assert '..artist..' not in response.content.decode()
+    assert album.name in response.content.decode()
+    # @end
