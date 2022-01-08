@@ -32,6 +32,7 @@ from django.db.models import (
     QuerySet,
     When,
 )
+from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.translation import gettext
 from tri_declarative import (
@@ -1248,6 +1249,7 @@ class Field(Part, Tag):
 
 
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
+    assert redirect_to is None or isinstance(redirect_to, str), 'redirect_to must be a str'
     if redirect_to is None:
         if is_create:
             redirect_to = "../"
@@ -1255,7 +1257,9 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
             redirect_to = (
                 "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
             )
-    return redirect(request=request, redirect_to=redirect_to, form=form)
+    response = redirect(request=request, redirect_to=redirect_to, form=form)
+    assert isinstance(response, HttpResponseBase), 'redirect must return a http response'
+    return response
 
 
 def delete_object__post_handler(form, **_):

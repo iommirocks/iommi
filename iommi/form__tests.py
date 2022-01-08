@@ -16,6 +16,7 @@ import django
 import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import FieldError
+from django.http.response import HttpResponseBase
 from django.test import override_settings
 from freezegun import freeze_time
 from tri_declarative import (
@@ -2708,10 +2709,16 @@ def test_edit_object_foreign_related_attribute():
 
 
 def test_redirect_default_case():
-    sentinel1, sentinel2, sentinel3, sentinel4 = object(), object(), object(), object()
+    sentinel1, sentinel2, sentinel3, sentinel4 = object(), '#sentinel#', object(), object()
     expected = dict(redirect_to=sentinel2, request=sentinel3, form=sentinel4)
+
+    class FakeHttpResponse(HttpResponseBase):
+        # noinspection PyMissingConstructor
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
     assert (
-        create_or_edit_object_redirect(**merged(expected, is_create=sentinel1, redirect=lambda **kwargs: kwargs))
+        create_or_edit_object_redirect(**merged(expected, is_create=sentinel1, redirect=lambda **kwargs: FakeHttpResponse(**kwargs))).kwargs
         == expected
     )
 

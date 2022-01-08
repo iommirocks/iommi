@@ -32,7 +32,9 @@ def save_nested_forms(form, request, **_):
         request.method = 'GET'
 
         redirect_to = form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.'))
-        return redirect(redirect_to(**form.iommi_evaluate_parameters()))
+        target = redirect_to(**form.iommi_evaluate_parameters())
+        assert isinstance(target, str), 'redirect_to must return a str'
+        return redirect(target)
 
 
 urlpatterns = [

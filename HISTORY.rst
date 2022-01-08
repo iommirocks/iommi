@@ -26,7 +26,7 @@ Changelog
 
 * `EditTable`: if instance.pk < 0, treat this as a create
 
-* Passing search_fields to a Field.choice_queryset did nothing
+* Passing `search_fields` to a `Field.choice_queryset` did nothing
 
 
 
