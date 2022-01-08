@@ -94,7 +94,7 @@ def test_iommi():
     .. code-block::
 
         make venv
-        source env/bin/activate
+        source venv/bin/activate
         make test
         make test-docs
 
