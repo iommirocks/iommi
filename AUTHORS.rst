@@ -22,3 +22,4 @@ Credits
 * Rasmus Spiegelberg <rasmus.spiegelberg@trioptima.com>
 * Benedikt Grundmann <benedikt.grundmann@gmail.com>
 * flying_sausages
+* Nigel Metheringham <nigel.metheringham@gmail.com>
