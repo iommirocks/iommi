@@ -31,6 +31,7 @@ def test_style():
     
     
         bootstrap
+        bootstrap5
         bulma
         foundation
         semantic_ui
