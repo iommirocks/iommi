@@ -316,6 +316,7 @@ def choice_queryset__extra__model_from_choices(form, field, choices):
 
 def choice_queryset__extra__filter_and_sort(field, value, **_):
     assert field.search_fields is not None, f'There are no search_fields specified for {field._name}'
+    assert isinstance(field.search_fields, (tuple, list))
     if not value:
         return field.choices.order_by(*field.search_fields)
 
