@@ -22,6 +22,7 @@ Contents:
    pages
    tables
    queries
+   path
    extra
    dev_tools
    admin

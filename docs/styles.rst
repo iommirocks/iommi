@@ -17,6 +17,7 @@ The styles iommi ships with are:
 
 
     bootstrap
+    bootstrap5
     bulma
     foundation
     semantic_ui

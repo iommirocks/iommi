@@ -119,3 +119,4 @@ You should only create one iommi component in order to get the automatic namespa
                 'albums': page.parts.albums,
             }
         )
+

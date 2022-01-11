@@ -69,20 +69,29 @@ def decode_path_components(request, **kwargs):
     decoded_kwargs = {}
     decoded_keys = set()
 
-    for k, v in items(kwargs):
-        decode_data = _path_component_to_decode_data.get(k, None)
-        if decode_data is None:
-            continue
+    if _path_component_to_decode_data:
+        for k, v in items(kwargs):
+            decode_data = _path_component_to_decode_data.get(k, None)
+            if decode_data is None:
+                continue
 
-        model, snake_name, lookup, decoder = decode_data
+            model, snake_name, lookup, decoder = decode_data
 
-        try:
-            obj = decoder.decode(lookup=lookup, string=v, request=request, model=model, snake_name=snake_name)
-        except model.DoesNotExist:
-            raise Http404()
+            try:
+                obj = decoder.decode(
+                    lookup=lookup,
+                    string=v,
+                    request=request,
+                    model=model,
+                    snake_name=snake_name,
+                    decoded_kwargs=decoded_kwargs,
+                    kwargs=kwargs,
+                )
+            except model.DoesNotExist:
+                raise Http404()
 
-        decoded_kwargs[snake_name] = obj
-        decoded_keys.add(k)
+            decoded_kwargs[snake_name] = obj
+            decoded_keys.add(k)
 
     if not hasattr(request, 'iommi_view_params'):
         request.iommi_view_params = {}
