@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+4.5.0 (2022-01-11)
+~~~~~~~~~~~~~~~~~~
+
+* Path decoding feature added. See https://docs.iommi.rocks/en/latest/path.html
+
+* New style: `bootstrap5`. Thanks to Nigel Metheringham!
+
+* Expose `perform_dispatch` for legacy FBVs. See https://docs.iommi.rocks/en/latest/legacy_fbv.html for how to use it.
+
+* Forms: Some asserts to make `redirect`/`redirect_to` more fool proof
+
+* Forms: A little check to make setting `search_fields` on a `Field` more fool proof
+
+
 4.4.0 (2021-12-22)
 ~~~~~~~~~~~~~~~~~~
 
