@@ -330,7 +330,17 @@ def sql_debug_total_time():
 
 def format_clickable_filename(file_name, line, fn, extra=None):
     if not extra:
-        extra = linecache.getline(file_name, line)
+        if line is not None:
+            extra = linecache.getline(file_name, line)
+
+    if extra is None:
+        extra = '<unknown>'
+    if file_name is None:
+        file_name = '<unknown>'
+    if line is None:
+        line = '<unknown>'
+    if fn is None:
+        fn = '<unknown>'
 
     return f'  File "{file_name}", line {line}, in {fn} => {extra.strip()}'
 

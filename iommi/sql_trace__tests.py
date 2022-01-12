@@ -14,6 +14,7 @@ from tri_struct import Struct
 
 from iommi.sql_trace import (
     colorize,
+    format_clickable_filename,
     format_sql,
     get_sql_debug,
     linkify,
@@ -259,3 +260,7 @@ def test_linkify():
     actual = linkify(original).strip()
     print(repr(actual))
     assert actual == expected
+
+
+def test_format_clickable_line_nones():
+    assert format_clickable_filename(None, None, None) == '  File "<unknown>", line <unknown>, in <unknown> => <unknown>'

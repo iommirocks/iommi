@@ -2071,7 +2071,6 @@ class Table(Part, Tag):
         """
         identifiers = self._selection_identifiers(prefix=prefix)
         if identifiers == 'all':
-            print('inside all', self.sorted_and_filtered_rows)
             return self.sorted_and_filtered_rows
         else:
             if isinstance(self.sorted_and_filtered_rows, QuerySet):
