@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+4.5.1 (2022-01-12)
+~~~~~~~~~~~~~~~~~~
+
+* Minor fix for SQL tracing when function names could not be retrieved
+
+
 4.5.0 (2022-01-11)
 ~~~~~~~~~~~~~~~~~~
 
