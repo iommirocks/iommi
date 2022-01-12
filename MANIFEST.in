@@ -8,5 +8,6 @@ exclude tests/*.*
 recursive-include iommi *.*
 recursive-exclude iommi *__tests.py
 recursive-exclude iommi *.pyc
+recursive-exclude iommi/snapshots *.*
 recursive-exclude iommi testreport.xml
 prune *__tests.py
