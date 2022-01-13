@@ -2,23 +2,20 @@ import json
 from pathlib import Path
 
 import pytest
-from django.views.decorators.csrf import csrf_exempt
 from django.test import override_settings
+from django.views.decorators.csrf import csrf_exempt
 from iommi import (
-    Form,
     Page,
 )
 from iommi._web_compat import HttpResponse
 from iommi.live_edit import (
     dangerous_execute_code,
-    get_wrapped_view,
     live_edit_view,
     orig_reload,
     should_edit,
 )
 from iommi.part import render_root
 from tests.helpers import req
-from tests.models import TFoo
 
 
 def function_based_view(request):
@@ -30,7 +27,8 @@ class PartBasedViewPage(Page):
 
 
 with override_settings(DEBUG=True):
-    part_based_view = PartBasedViewPage().as_view()
+    page = PartBasedViewPage()
+    part_based_view = page.as_view()
 
 
 @csrf_exempt
@@ -47,18 +45,6 @@ def test_live_edit():
 def test_live_edit_part():
     result = render_root(part=live_edit_view(req('get'), part_based_view, args=(), kwargs={}).bind(request=req('get')))
     assert 'class PartBasedViewPage' in result, result
-
-
-def test_get_wrapped_view_function():
-    view = function_based_view
-    assert get_wrapped_view(view) is view
-    assert get_wrapped_view(csrf_exempt(view)) is view
-
-
-def test_get_wrapped_part_view_wrapped():
-    view = part_based_view
-    assert get_wrapped_view(view) is view.__iommi_target__
-    assert get_wrapped_view(csrf_exempt(view)) is view.__iommi_target__
 
 
 def test_should_edit(settings):

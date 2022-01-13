@@ -8,6 +8,7 @@ from django.http import (
 )
 from django.utils import autoreload
 from django.views.decorators.csrf import csrf_exempt
+from iommi.base import get_wrapped_view
 from tri_struct import Struct
 
 from iommi import (
@@ -42,16 +43,6 @@ class Middleware:
 
 def should_edit(request):
     return settings.DEBUG and '_iommi_live_edit' in request.GET
-
-
-def get_wrapped_view(view):
-    if hasattr(view, '__iommi_target__'):
-        view = view.__iommi_target__
-
-    while hasattr(view, '__wrapped__'):
-        view = view.__wrapped__
-
-    return view
 
 
 def include_decorators(node):
