@@ -3,13 +3,17 @@ from django.template import Template
 from django.utils.html import format_html
 
 from iommi import (
+    Form,
     Fragment,
     Header,
     html,
     Page,
 )
 from iommi.attrs import Attrs
-from iommi.fragment import fragment__render
+from iommi.fragment import (
+    build_and_bind_h_tag,
+    fragment__render,
+)
 from tests.helpers import req
 
 
@@ -150,7 +154,9 @@ def test_html_builder():
 
 def test_html_builder_multi_arg():
     assert html.h1('foo', 'bar').bind(request=None).__html__() == '<h1>foobar</h1>'
-    assert html.h1('foo', html.p('bar')).bind(request=None).__html__() == '<h1>foo<p>bar</p></h1>'
+    nested = html.h1('foo', html.p('bar')).bind(request=None)
+    assert nested.__html__() == '<h1>foo<p>bar</p></h1>'
+    assert list(nested.children.keys()) == ['child', 'child2']
 
 
 def test_fragment_basic():
@@ -258,9 +264,18 @@ def test_fragment_meta():
     assert str(MyFragment().bind(request=req('get'))) == '<span class="foo"></span>'
 
 
-def test_fragment_template():
-    f = Fragment(Template('<div>{{ fragment.extra.foo }}</div>'), extra__foo=7)
-    assert str(f.bind(request=req('get'))) == '<div>7</div>'
+def test_fragment_template_as_child():
+    f = Fragment(Template('<div>{{ fragment.extra.foo }}</div> {{ request.GET.param }}'), extra__foo=7)
+    assert str(f.bind(request=req('get', param=11))) == '<div>7</div> 11'
+
+
+def test_fragment_template_as_template_kwarg():
+    f = Fragment(
+        'child text',
+        template=Template('<div>{{ fragment.extra.foo }}</div> {{ rendered_children }} {{ request.GET.param }}'),
+        extra__foo=7
+    )
+    assert str(f.bind(request=req('get', param=11))) == '<div>7</div> child text 11'
 
 
 def test_foo():
@@ -290,3 +305,30 @@ def test_bar():
     p = ExamplesPage()
     assert p.bind().__html__() == '<div><hr></div>'
     assert p.bind().__html__() == '<div><hr></div>'
+
+
+def test_open_tag():
+    f = Fragment().bind()
+    assert f.iommi_open_tag() == ''
+    assert f.iommi_close_tag() == ''
+
+    f = Fragment(tag='div').bind()
+    assert f.iommi_open_tag() == '<div>'
+    assert f.iommi_close_tag() == '</div>'
+
+
+def test_build_and_bind_h_tag():
+    form = Form().bind()
+    assert form.h_tag == ''
+
+    form = Form(title='title').bind()
+    assert form.h_tag._is_bound
+    assert form.h_tag._name == 'h_tag'
+    assert form.h_tag.iommi_parent() is form
+    assert form.h_tag.__html__() == '<h1>Title</h1>'
+
+    form = Form(h_tag=html.div('hello')).bind()
+    assert form.h_tag._is_bound
+    assert form.h_tag._name == 'h_tag'
+    assert form.h_tag.iommi_parent() is form
+    assert form.h_tag.__html__() == '<div>hello</div>'

@@ -12,8 +12,6 @@ from django.http import Http404
 
 from iommi.base import items
 
-_path_component_to_decode_data: Dict[str, Tuple[Type[Model], str, str, 'Decoder']] = {}
-
 
 _camel_to_snake_regex = re.compile(r'(?<!^)(?=[A-Z])')
 
@@ -28,6 +26,9 @@ class Decoder:
             return model.objects.get(**{lookup: string})
         else:
             return self._decode(lookup=lookup, string=string, model=model, **kwargs)
+
+
+_path_component_to_decode_data: Dict[str, Tuple[Type[Model], str, str, Decoder]] = {}
 
 
 _default_decoder = Decoder('pk', 'name')

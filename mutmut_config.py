@@ -1,3 +1,6 @@
+import os
+
+
 def init():
     pass
 
@@ -11,4 +14,13 @@ def pre_mutation(context, **_):
         context.skip = True
 
     # run only relevant test module
-    context.config.test_command += ' ' + context.filename[:-len('.py')] + '__tests.py'
+    base_path = context.filename[:-len('.py')]
+    base_name = os.path.split(base_path)[-1]
+    module_test_file = f'{base_path}__tests.py'
+    doc_test_file = f'docs/test_doc_{base_name}.py'
+
+    if os.path.exists(module_test_file):
+        context.config.test_command += ' ' + module_test_file
+
+    if os.path.exists(doc_test_file):
+        context.config.test_command += ' ' + doc_test_file

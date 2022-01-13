@@ -24,9 +24,10 @@ def test_simple_path_decode():
     artist = Artist.objects.create(pk=3, name='Black Sabbath')
     album = Album.objects.create(pk=7, name='Heaven & Hell', artist=artist, year=1980)
     with register_path_decoding(Artist, Album):
-        result = decode_path_components(request=req('get'), artist_pk=str(artist.pk), album_name='Heaven & Hell')
+        result = decode_path_components(request=req('get'), pass_through='pass through', artist_pk=str(artist.pk), album_name='Heaven & Hell')
         assert result['artist'] == artist
         assert result['album'] == album
+        assert result['pass_through'] == 'pass through'
 
     user = User.objects.create(pk=11, username='tony', email='tony@example.com')
     track = Track.objects.create(pk=13, album=album, name='Walk Away', index=7)
@@ -79,3 +80,10 @@ def test_camel_to_snake():
     assert camel_to_snake('hello_friend') == 'hello_friend'
     assert camel_to_snake('helloFriend') == 'hello_friend'
     assert camel_to_snake('HelloFriend') == 'hello_friend'
+
+
+def test_iommi_view_params_fills_already_existing():
+    request = req('get')
+    decode_path_components(request, foo=1)
+    decode_path_components(request, bar=3)
+    assert request.iommi_view_params == dict(foo=1, bar=3)

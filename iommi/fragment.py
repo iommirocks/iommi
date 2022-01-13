@@ -245,6 +245,7 @@ def build_and_bind_h_tag(p):
             p.h_tag = ''
     else:
         p.h_tag = p.h_tag.bind(parent=p)
+        p.h_tag._name = 'h_tag'
 
 
 class Container(Fragment):
@@ -261,7 +262,7 @@ class Html:
             if parts is not None:
                 children = children or {}
                 for i, child in enumerate(parts):
-                    children[f'child{i if i>0 else ""}'] = child
+                    children[f'child{i+1 if i>0 else ""}'] = child
 
             return Fragment(tag=tag, children=children, **kwargs)
 

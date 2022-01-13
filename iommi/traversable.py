@@ -35,8 +35,8 @@ from iommi.style import (
 )
 
 # Backward compatible definition
-EvaluatedRefinable = EvaluatedRefinable
-evaluated_refinable = evaluated_refinable
+EvaluatedRefinable = EvaluatedRefinable  # pragma: no mutate this is just marking the symbols as used
+evaluated_refinable = evaluated_refinable  # pragma: no mutate this is just marking the symbols as used
 
 
 class PathNotFoundException(Exception):
