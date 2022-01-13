@@ -9,6 +9,7 @@ from docs.models import (
 )
 
 from iommi.path import (
+    camel_to_snake,
     decode_path,
     decode_path_components,
     Decoder,
@@ -72,3 +73,9 @@ def test_path_decode_404():
     with register_path_decoding(Artist):
         with pytest.raises(Http404):
             decode_path_components(request=req('get'), artist_name='Does not exist')
+
+
+def test_camel_to_snake():
+    assert camel_to_snake('hello_friend') == 'hello_friend'
+    assert camel_to_snake('helloFriend') == 'hello_friend'
+    assert camel_to_snake('HelloFriend') == 'hello_friend'

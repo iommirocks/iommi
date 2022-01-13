@@ -11,7 +11,7 @@ def evaluate_attrs(obj, **kwargs):
     # Micro optimization
     from iommi.debug import iommi_debug_on
 
-    if not attrs and not iommi_debug_on():
+    if not attrs and not iommi_debug_on():  # pragma: no mutate
         return ''
 
     classes = evaluate_strict(attrs.get('class', {}), **kwargs)

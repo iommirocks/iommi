@@ -147,6 +147,8 @@ def test_evaluate_strict():
         == "Evaluating lambda found at: `evaluate_strict(lambda foo: 1, bar=2, baz=4)` didn't resolve it into a value but strict mode was active, the signature doesn't match the given parameters. We had these arguments: bar, baz"
     )
 
+    assert evaluate_strict(lambda **_: 1, bar=2, baz=4) == 1
+
 
 def test_non_strict_evaluate():
     def foo(bar):

@@ -142,6 +142,9 @@ def test_parse_relative_date_weekdays():
     with freezegun.freeze_time('2018-02-04'):  # a sunday
         assert parse_relative_date('1 weekday ago') == date(2018, 2, 2)
 
+    with freezegun.freeze_time('2018-02-05'):  # a monday
+        assert parse_relative_date('1 weekday ago') == date(2018, 2, 2)
+
 
 def test_parse_relative_date_month_overflow():
     assert parse_relative_date('1 month', start_date=date(2018, 1, 31)) == date(2018, 2, 28)
