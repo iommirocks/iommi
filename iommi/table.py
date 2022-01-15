@@ -1751,8 +1751,8 @@ class Table(Part, Tag):
                     fields=declared_bulk_fields,
                 )
 
-        if not self.model and not self.bulk and 'actions' in self.iommi_namespace.bulk:  # @todo
-            # Support custom 'bulk' actions even when there is no model
+        if not self.model and not self.bulk and 'actions' in self.iommi_namespace.bulk:
+            # TODO: Support custom 'bulk' actions even when there is no model
             if any(x.bulk.include for x in values(self.iommi_namespace.columns)):
                 assert False, "The builtin bulk actions only work on querysets."
             declared_bulk_fields = Struct()

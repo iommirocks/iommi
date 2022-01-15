@@ -561,3 +561,8 @@ def test_style_on_child():
         table = Table(iommi_style='foo').bind()
         assert table.tbody.extra.foo == 'foo'
         assert table.tbody.extra.bar == 'bar'
+
+
+def test_style_repr():
+    with register_style('foo', Style()) as foo:
+        assert repr(foo) == '<Style: foo>'

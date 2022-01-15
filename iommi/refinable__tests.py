@@ -264,3 +264,8 @@ def test_refine_done_not_mutating():
     result = o.refine_done()
     assert o.is_refine_done is False
     assert result.is_refine_done is True
+
+
+def test_namespace_kwarg():
+    r = RefinableObject(namespace=dict(foo__bar=3))
+    assert r.iommi_namespace.foo.bar == 3

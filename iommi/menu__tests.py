@@ -94,6 +94,7 @@ def test_template():
 
 def test_validation():
     class MyMenu(Menu):
+        external = MenuItem(url='http://example.com')  # first makes mutation testing happier
         sub_menu1 = MenuItem(
             url='foo',
             sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')),
@@ -106,7 +107,6 @@ def test_validation():
             url='bar',
             sub_menu=dict(bar=MenuItem(), external=MenuItem(url='http://example.com'), foo=MenuItem(url='baz')),
         )
-        external = MenuItem(url='http://example.com')
 
     m = MyMenu().bind(request=req('get'))
     assert m.validate() == {

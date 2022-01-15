@@ -3641,3 +3641,8 @@ def test_tbody_refined():
 def test_filter_model_mixup2():
     t = Table(auto__model=TBar, auto__include=['foo__a']).bind(request=req('get'))
     assert t.columns.foo_a.model == TFoo
+
+
+def test_turn_off_entire_query():
+    t = Table(auto__model=TBar, columns__foo__filter__include=True, query__include=False).bind(request=req('get'))
+    assert t.query is None

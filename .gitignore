@@ -152,6 +152,9 @@ docs/Container.rst
 docs/Style.rst
 docs/Asset.rst
 
+# these are created by mutation testing
+docs/XXtest*
+
 # tests
 results/
 .pytest_cache
