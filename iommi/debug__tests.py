@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 from tri_struct import Struct
 
@@ -8,6 +10,7 @@ from iommi import (
 from iommi.debug import (
     dunder_path__format,
     filename_and_line_num_from_part,
+    get_instantiated_at_info,
     local_debug_url_builder,
     should_ignore_frame,
     source_url_from_part,
@@ -123,3 +126,8 @@ def test_source_url_from_part(settings):
     p = debug_tests_stuff.MyPage()
     filename = source_url_from_part(part=p)
     assert __file__ in filename
+
+
+def test_get_instantiated_at_info_base_case():
+    frame = Struct(f_back=None)
+    assert get_instantiated_at_info(frame) == (None, None)

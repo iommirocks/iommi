@@ -24,10 +24,13 @@ def test_simple_path_decode():
     artist = Artist.objects.create(pk=3, name='Black Sabbath')
     album = Album.objects.create(pk=7, name='Heaven & Hell', artist=artist, year=1980)
     with register_path_decoding(Artist, Album):
-        result = decode_path_components(request=req('get'), pass_through='pass through', artist_pk=str(artist.pk), album_name='Heaven & Hell')
-        assert result['artist'] == artist
-        assert result['album'] == album
-        assert result['pass_through'] == 'pass through'
+        actual = decode_path_components(request=req('get'), pass_through='pass through', artist_pk=str(artist.pk), album_name='Heaven & Hell')
+        expected = dict(
+            artist=artist,
+            album=album,
+            pass_through='pass through',
+        )
+        assert actual == expected
 
     user = User.objects.create(pk=11, username='tony', email='tony@example.com')
     track = Track.objects.create(pk=13, album=album, name='Walk Away', index=7)
@@ -35,9 +38,12 @@ def test_simple_path_decode():
         User: Decoder('pk', 'username', 'email'),
         Track: Decoder('foo', decode=lambda string, model, **_: model.objects.get(name__iexact=string.strip())),
     }):
-        result = decode_path_components(request=req('get'), user_email='tony@example.com', track_foo='  WALK aWay\n \t ')
-        assert result['user'] == user
-        assert result['track'] == track
+        actual = decode_path_components(request=req('get'), user_email='tony@example.com', track_foo='  WALK aWay\n \t ')
+        expected = dict(
+            user=user,
+            track=track,
+        )
+        assert actual == expected
 
 
 @pytest.mark.django_db

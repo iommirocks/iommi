@@ -147,7 +147,7 @@ def test_path_decoder():
     """
 
     @decode_path
-    def my_view(request, artist, album, **_):
+    def my_view(request, artist, album):
         return artist, album
 
     # @test
@@ -159,10 +159,9 @@ def test_path_decoder():
 
     # language=rst
     """
-    the `**_` at the end is needed because your view will get the undecoded
-    keyword parameters too, and you normally don't care about them.
+    If you want to get any of the raw values before they are decoded you can access them
+    via `request.iommi_view_params` which has both the undecoded and the decoded parameters.
     """
-
 
     # @test
     unregister_decoding.__exit__(None, None, None)
