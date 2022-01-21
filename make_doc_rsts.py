@@ -1,7 +1,10 @@
 import os
+import re
+from os.path import join
 from pathlib import Path
 
 # API docs
+from tests.helpers import create_iframe
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
 
@@ -22,12 +25,16 @@ for source in docs_dir.glob('test_*.py'):
     with open(source) as source_f:
         with open(target, 'w') as target_f:
             state = 'import'
+            func_name = None
+            func_count = 0
             should_dedent = None
             write_code_block = False
             for line in source_f.readlines():
                 stripped_line = line.strip()
                 if line.startswith('def '):  # not stripped_line!
                     state = 'py'
+                    func_name = line[len('def '):].partition('(')[0]
+                    func_count = 0
                 elif stripped_line.startswith("# language=rst"):
                     state = 'starting rst'
                 elif stripped_line in ('"""', "'''"):
@@ -56,5 +63,17 @@ for source in docs_dir.glob('test_*.py'):
 
                         if line.startswith('    ') or not stripped_line:
                             target_f.write(line)
+                    elif state == 'only test':
+                        if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
+                            assert stripped_line.startswith("show_output('") or stripped_line.startswith("show_output_collapsed('"), "make_doc_rsts.py only supports ' for strings"  # note the extra ' at the end!
+                            name = re.search("'(.*?)'", stripped_line).groups()[0]
 
+                            expected_name = join(target.stem, func_name)
+                            if func_count:
+                                expected_name += str(func_count)
+                            assert expected_name == name, f'expected: {expected_name}, actual:{name}'
+                            func_count += 1
+
+                            target_f.write('.. raw:: html\n\n')
+                            target_f.write('    ' + create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed')))
 

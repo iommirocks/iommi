@@ -1,0 +1,19 @@
+<head>
+    {% for asset in query.iommi_collected_assets.values %}
+        {{ asset }}
+    {% endfor %}
+</head>
+
+<style>
+    html {
+        background: white;
+    }
+</style>
+
+{{ query }}
+
+<ul>
+    {% for car in cars %}
+        <li>{{ car }}</li>
+    {% endfor %}
+</ul>

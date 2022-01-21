@@ -3,10 +3,8 @@ from django.shortcuts import (
     get_object_or_404,
     render,
 )
-from django.test import override_settings
 
 from docs.models import (
-    Album,
     Artist,
     Track,
 )
@@ -27,7 +25,7 @@ Add iommi to a FBV
 """
 
 
-def test_legacy_fbv():
+def test_legacy_fbv(artist):
     # language=rst
     """
     Let's say we have a simple view to display an album:
@@ -44,7 +42,6 @@ def test_legacy_fbv():
         )
 
     # @test
-    artist = Artist.objects.create(name='Black Sabbath')
     response = view_artist(req('get'), artist_name=artist.name)
     assert '..artist..' in response.content.decode()
     # @end
@@ -55,7 +52,7 @@ def test_legacy_fbv():
     """
 
 
-def test_legacy_fbv_step2():
+def test_legacy_fbv_step2(artist):
     # language=rst
     """
     Add an iommi table
@@ -79,7 +76,6 @@ def test_legacy_fbv_step2():
         )
 
     # @test
-    artist = Artist.objects.create(name='Black Sabbath')
     response = view_artist(req('get'), artist_name=artist.name)
     assert '..artist..' in response.content.decode()
     # @end
@@ -91,7 +87,7 @@ def test_legacy_fbv_step2():
     """
 
 
-def test_legacy_fbv_step3():
+def test_legacy_fbv_step3(artist, album, track):
     # language=rst
     """
     AJAX dispatch
@@ -126,9 +122,6 @@ def test_legacy_fbv_step3():
         )
 
     # @test
-    artist = Artist.objects.create(name='Black Sabbath')
-    album = Album.objects.create(artist=artist, name='Heaven & Hell', year=1980)
-    track = Track.objects.create(album=album, name='Neon Knights', index=1)
     response = view_artist(req('get'), artist_name=artist.name)
     assert '..artist..' in response.content.decode()
     # ajax dispatch
@@ -138,7 +131,7 @@ def test_legacy_fbv_step3():
     # @end
 
 
-def test_legacy_fbv_step4():
+def test_legacy_fbv_step4(artist, album, track):
     # language=rst
     """
     Multiple iommi components
@@ -173,9 +166,6 @@ def test_legacy_fbv_step4():
         )
 
     # @test
-    artist = Artist.objects.create(name='Black Sabbath')
-    album = Album.objects.create(artist=artist, name='Heaven & Hell', year=1980)
-    track = Track.objects.create(album=album, name='Neon Knights', index=1)
     response = view_artist(req('get'), artist_name=artist.name)
     assert '..artist..' in response.content.decode()
     # ajax dispatch

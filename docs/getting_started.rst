@@ -68,6 +68,12 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
         path('iommi-form-test/', Form.create(auto__model=Album).as_view()),
     ]
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('788dec13-4fb7-479c-84e5-12be3d59ec2b', this)">▼ Hide result</div>
+        <iframe id="788dec13-4fb7-479c-84e5-12be3d59ec2b" src="doc_includes/getting_started/test_2__your_first_form.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 3. Your first table
@@ -85,10 +91,14 @@ Pick a model from your app, and let's build a table for it! Add this to your `ur
         path('iommi-table-test/', Table(auto__model=Album).as_view()),
     ]
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('59b6c359-92c0-4900-b1b2-f15172bbf15f', this)">▼ Hide result</div>
+        <iframe id="59b6c359-92c0-4900-b1b2-f15172bbf15f" src="doc_includes/getting_started/test_3__your_first_table.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 If you want, add a filter for some column:
-
 
 .. code-block:: python
 
@@ -100,6 +110,12 @@ If you want, add a filter for some column:
         ).as_view()),
     ]
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('96439478-e49a-4ef0-ba44-eac34e355a7c', this)">▼ Hide result</div>
+        <iframe id="96439478-e49a-4ef0-ba44-eac34e355a7c" src="doc_includes/getting_started/test_3__your_first_table1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 4. Your first page
@@ -133,6 +149,12 @@ then hook into `urls.py`:
         ),
     ]
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('67202385-8b07-4f56-b3af-6346f42ce0e0', this)">▼ Hide result</div>
+        <iframe id="67202385-8b07-4f56-b3af-6346f42ce0e0" src="doc_includes/getting_started/test_4__your_first_page.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 5. A simple function based view
@@ -152,7 +174,6 @@ middleware you can return iommi objects from your view:
         return TestPage(title=f'Hello {name}')
 
 
-
 `urls.py`:
 
 
@@ -166,6 +187,12 @@ middleware you can return iommi objects from your view:
         ),
     ]
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('8efa796b-ed06-43b4-be90-d99cc4092729', this)">▼ Hide result</div>
+        <iframe id="8efa796b-ed06-43b4-be90-d99cc4092729" src="doc_includes/getting_started/test_5__a_simple_function_based_view.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 6. Make iommi pages fit into your projects design

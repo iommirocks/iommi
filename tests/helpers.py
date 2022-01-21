@@ -1,4 +1,11 @@
+import os.path
 import re
+from os import (
+    makedirs,
+    mkdir,
+)
+from pathlib import Path
+from uuid import uuid4
 
 from django.test import RequestFactory
 from tri_declarative import (
@@ -10,6 +17,7 @@ from tri_declarative import (
 from tri_struct import Struct
 
 from iommi import (
+    render_if_needed,
     Table,
     middleware,
 )
@@ -153,3 +161,34 @@ class Box(Traversable):
 def prettify(content):
     from bs4 import BeautifulSoup
     return reindent(BeautifulSoup(content, 'html.parser').prettify().strip())
+
+
+def _show_relative_path_from_name(name):
+    return Path('doc_includes') / (name.replace('/', os.path.sep) + '.html')
+
+
+def _show_path_from_name(name):
+    return Path(__file__).parent.parent / 'docs' / 'custom' / _show_relative_path_from_name(name)
+
+
+def show_output(name, part):
+    file_path = _show_path_from_name(name)
+    makedirs(file_path.parent, exist_ok=True)
+    with open(file_path, 'wb') as f:
+        f.write(render_if_needed(req('get'), part).content)
+
+
+# This function exists to have a different name for make_doc_rsts.py
+def show_output_collapsed(name, part):
+    show_output(name, part)
+
+
+def create_iframe(name, collapsed):
+    uuid = uuid4()
+    file_path = _show_relative_path_from_name(name)
+    text = '► Show result' if collapsed else '▼ Hide result'
+    display = 'none' if collapsed else ''
+    return f'''
+        <div class="iframe_collapse" onclick="toggle('{uuid}', this)">{text}</div>
+        <iframe id="{uuid}" src="{file_path}" style="display: {display}; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    '''

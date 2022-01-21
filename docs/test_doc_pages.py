@@ -1,6 +1,10 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+    show_output_collapsed,
+)
 
 request = req('get')
 
@@ -43,20 +47,18 @@ def test_example():
         users = Table(auto__model=User)
         create_user = Form.create(auto__model=User)
 
-    # @test
-    request = req('get')
-    MyPage().bind(request=request).render_to_response()
-    # @end
-
     # language=rst
     """
     This creates a page with an h1 tag, a table of users and a form to create a
     new user. You can add it your `urls.py` like this: `path('my_page/', MyPage().as_view())`, or make a function based view and `return MyPage()`.
-
     """
 
+    # @test
+    show_output_collapsed('pages/test_example', MyPage())
+    # @end
 
-def test_page():
+
+def test_page(small_discography):
     # language=rst
     """
     Page
@@ -94,38 +96,34 @@ def test_page():
     """
     The types here that aren't `Part` will be converted to a `Part` derived class
     as needed.
-
     """
 
-
-def test_html():
-    # language=rst
-    """
-    html
-    ----
+    # @test
+    show_output_collapsed('pages/test_page', MyPage(context__foo='foo!'))
+    # @end
 
 
-    html is a little builder object to create simple elements. You just do
-    `html.h1('some text')` to create an h1 html tag. It works by creating `Fragment`
-    instances, so the `html.h1('foo')` is the same as
-    `Fragment('some text', tag='h1')`, which is itself a convenient short way to
-    write `Fragment(children__text='some text', tag='h1')`. See `Fragment` for more
-    available parameters.
+# language=rst
+"""
+html
+----
 
 
-    """
+html is a little builder object to create simple elements. You just do
+`html.h1('some text')` to create an h1 html tag. It works by creating `Fragment`
+instances, so the `html.h1('foo')` is the same as
+`Fragment('some text', tag='h1')`, which is itself a convenient short way to
+write `Fragment(children__text='some text', tag='h1')`. See `Fragment` for more
+available parameters.
 
 
-def test_part():
-    # language=rst
-    """
-    Part
-    --------
+Part
+--------
 
-    `Part` it the base class/API for objects that can be composed into a page.
+`Part` it the base class/API for objects that can be composed into a page.
 
 
-    """
+"""
 
 
 def test_fragment():

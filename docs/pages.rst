@@ -19,11 +19,15 @@ Example
         create_user = Form.create(auto__model=User)
 
 
-
 This creates a page with an h1 tag, a table of users and a form to create a
 new user. You can add it your `urls.py` like this: `path('my_page/', MyPage().as_view())`, or make a function based view and `return MyPage()`.
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('564f9ae4-c2cb-41e1-aba5-71dd0c5d0c1a', this)">► Show result</div>
+        <iframe id="564f9ae4-c2cb-41e1-aba5-71dd0c5d0c1a" src="doc_includes/pages/test_example.html" style="display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 Page
@@ -57,7 +61,12 @@ middleware you can also return them directly from your views. They accept
 The types here that aren't `Part` will be converted to a `Part` derived class
 as needed.
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('44c785bd-352e-4645-9fcf-a2478b246e77', this)">► Show result</div>
+        <iframe id="44c785bd-352e-4645-9fcf-a2478b246e77" src="doc_includes/pages/test_page.html" style="display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 html
@@ -70,9 +79,6 @@ instances, so the `html.h1('foo')` is the same as
 `Fragment('some text', tag='h1')`, which is itself a convenient short way to
 write `Fragment(children__text='some text', tag='h1')`. See `Fragment` for more
 available parameters.
-
-
-
 
 
 Part
