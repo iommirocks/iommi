@@ -30,7 +30,6 @@ The code for the example above:
     )
 
 
-
 Read the full documentation and the :doc:`cookbook` for more.
 
     
@@ -104,7 +103,6 @@ for specific model in the advanced mode:
         )
 
 
-
 .. code-block:: html
 
     <!-- cars.html -->
@@ -115,6 +113,16 @@ for specific model in the advanced mode:
             <li>{{ car }}</li>
         {% endfor %}
     </ul>
+    
+You will also need to render the assets in your `<head>` tag:
+
+.. code-block:: html
+    
+    {% for asset in query.iommi_collected_assets.values %}
+        {{ asset }}
+    {% endfor %}
+
+
 
 
 .. image:: simple_gui.png

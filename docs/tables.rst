@@ -85,6 +85,8 @@ You can also create tables explicitly:
             # Shortcut for creating checkboxes to select rows
             select = Column.select()
 
+            name = Column()
+
             # Show the name field from Artist. This works for plain old objects too.
             artist_name = Column.number(
                 attr='artist__name',
@@ -97,13 +99,17 @@ You can also create tables explicitly:
                 bulk__include=True,
             )
 
-        return AlbumTable(rows=Artist.objects.all())
+        return AlbumTable(rows=Album.objects.all())
 
 
 This gives me a view with filtering, sorting, bulk edit and pagination.
 
+.. raw:: html
 
-
+    
+        <div class="iframe_collapse" onclick="toggle('48297433-14e2-48f3-8757-e637898447a8', this)">▼ Hide result</div>
+        <iframe id="48297433-14e2-48f3-8757-e637898447a8" src="doc_includes/tables/test_explicit_tables.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 Table of plain python objects
@@ -143,6 +149,11 @@ Table of plain python objects
         # now to get an HTML table:
         return FooTable(rows=foos)
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('c9f28c51-c8c4-4266-98b5-817793582527', this)">▼ Hide result</div>
+        <iframe id="c9f28c51-c8c4-4266-98b5-817793582527" src="doc_includes/tables/test_table_of_plain_python_objects.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 All these examples and a bigger example using many more features can be found in the examples project.

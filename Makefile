@@ -47,6 +47,10 @@ coverage:
 docs:
 	tox -e docs
 
+docs-viewer:
+	echo "http://127.0.0.1:10331"
+	cd docs/_build/html; python -m http.server 10331
+
 test-docs:
 	tox -e docs-tests
 

@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -40,7 +43,6 @@ def test_queries():
         columns__name__filter__include=True,
         columns__artist__filter__include=True,
     )
-
 
     # language=rst
     """
@@ -121,10 +123,6 @@ def test_stand_alone_example():
             },
         )
 
-    # @test
-    cars(req('get'))
-    # @end
-
     # language=rst
     """
     .. code-block:: html
@@ -137,7 +135,25 @@ def test_stand_alone_example():
                 <li>{{ car }}</li>
             {% endfor %}
         </ul>
+        
+    You will also need to render the assets in your `<head>` tag:
+    
+    .. code-block:: html
+        
+        {% for asset in query.iommi_collected_assets.values %}
+            {{ asset }}
+        {% endfor %}
+    """
 
+    # @test
+    Car.objects.create(name='Tonys car', make='Toyota')
+    Car.objects.create(name='Ozzys car', make='Toyota')
+    # TODO: go through these examples, as they don't really work... and remove the images and do show_output instead
+    # show_output('queries/test_stand_alone_example', cars(req('get')))
+    # @end
+
+    # language=rst
+    """
 
     .. image:: simple_gui.png
 

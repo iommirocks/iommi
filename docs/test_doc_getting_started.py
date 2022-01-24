@@ -4,7 +4,10 @@ from django.urls import (
 
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -90,8 +93,12 @@ def test_2__your_first_form():
         path('iommi-form-test/', Form.create(auto__model=Album).as_view()),
     ]
 
+    # @test
+    show_output('getting_started/test_2__your_first_form', urlpatterns[0].callback(req('get')))
+    # @end
 
-def test_3__your_first_table():
+
+def test_3__your_first_table(small_discography):
     # language=rst
     """
     3. Your first table
@@ -108,11 +115,13 @@ def test_3__your_first_table():
         path('iommi-table-test/', Table(auto__model=Album).as_view()),
     ]
 
+    # @test
+    show_output('getting_started/test_3__your_first_table', urlpatterns[0].callback(req('get')))
+    # @end
 
     # language=rst
     """
     If you want, add a filter for some column:
-
 
     """
     urlpatterns = [
@@ -122,6 +131,10 @@ def test_3__your_first_table():
             columns__name__filter__include=True,  # <--- replace `name` with some field from your model
         ).as_view()),
     ]
+
+    # @test
+    show_output('getting_started/test_3__your_first_table1', urlpatterns[0].callback(req('get')))
+    # @end
 
 
 def test_4__your_first_page():
@@ -157,6 +170,10 @@ def test_4__your_first_page():
         ),
     ]
 
+    # @test
+    show_output('getting_started/test_4__your_first_page', urlpatterns[0].callback(req('get')))
+    # @end
+
 
 def test_5__a_simple_function_based_view():
     # language=rst
@@ -182,11 +199,6 @@ def test_5__a_simple_function_based_view():
     def iommi_view(request, name):
         return TestPage(title=f'Hello {name}')
 
-
-    # @test
-
-    iommi_view(req('get'), 'foo')
-    # @end
     # language=rst
     """
     `urls.py`:
@@ -200,6 +212,10 @@ def test_5__a_simple_function_based_view():
             iommi_view
         ),
     ]
+
+    # @test
+    show_output('getting_started/test_5__a_simple_function_based_view', urlpatterns[0].callback(req('get'), name='Tony'))
+    # @end
 
 
 def test_6__make_iommi_pages_fit_into_your_projects_design():

@@ -43,6 +43,14 @@ html_css_files = [
     'custom.css',
 ]
 
+html_js_files = [
+    'custom.js',
+]
+
+html_extra_path = [
+    'custom',
+]
+
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 

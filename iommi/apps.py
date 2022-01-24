@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 
 from iommi.from_model import register_search_fields
+from iommi.style_bootstrap_docs import bootstrap_docs
 
 
 class IommiConfig(AppConfig):
@@ -39,3 +40,4 @@ class IommiConfig(AppConfig):
         register_style('water', water)
         register_style('foundation', foundation)
         register_style('django_admin', django_admin)
+        register_style('bootstrap_docs', bootstrap_docs)

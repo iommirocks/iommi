@@ -103,7 +103,7 @@ Register your models:
 """
 
 
-def test_path_decoder():
+def test_path_decoder(artist, album):
     # @test
     unregister_decoding = (
     # @end
@@ -151,9 +151,6 @@ def test_path_decoder():
         return artist, album
 
     # @test
-    artist = Artist.objects.create(name='Black Sabbath')
-    album = Album.objects.create(name='Heaven & Hell', artist=artist, year=1980)
-
     assert my_view(request, artist_pk=artist.pk, album_pk=album.pk) == (artist, album)
     # @end
 
@@ -177,7 +174,7 @@ For cases where you want to decode something other than a pk or name you need th
 """
 
 
-def test_path_advanced_decoder():
+def test_path_advanced_decoder(track):
     # @test
     unregister_encoding = (
     # @end
@@ -203,11 +200,7 @@ def test_path_advanced_decoder():
 
     # @test
     user = User.objects.create(pk=11, username='tony', email='tony@example.com')
-    artist = Artist.objects.create(name='Black Sabbath')
-    album = Album.objects.create(name='Heaven & Hell', artist=artist, year=1980)
-    track = Track.objects.create(pk=13, album=album, name='Walk Away', index=7)
-
-    result = decode_path_components(request=req('get'), user_email='tony@example.com', track_foo='  WALK aWay\n \t ')
+    result = decode_path_components(request=req('get'), user_email='tony@example.com', track_foo='  neoN kNights\n \t ')
     assert result['user'] == user
     assert result['track'] == track
 
