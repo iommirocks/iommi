@@ -15,11 +15,24 @@ from iommi import (
     Page,
     Table,
 )
+from iommi.path import (
+    Decoder,
+    register_advanced_path_decoding,
+    register_path_decoding,
+)
+
 from .models import (
     Album,
     Artist,
     Track,
 )
+
+# Registrations --------------------
+
+register_path_decoding(Artist)
+register_advanced_path_decoding({
+    Album: Decoder('name', decode=lambda model, string, decoded_kwargs, **_: model.objects.get(name=string, artist=decoded_kwargs['artist'])),
+})
 
 
 # Menu -----------------------------
@@ -99,41 +112,22 @@ class IndexPage(Page):
     )
 
 
-def artist_page(request, artist):
-    artist = get_object_or_404(Artist, name=artist)
+class ArtistPage(Page):
+    title = html.h1(lambda params, **_: params.artist.name)
 
-    class ArtistPage(Page):
-        title = html.h1(artist.name)
-
-        albums = AlbumTable(auto__rows=Album.objects.filter(artist=artist))
-        tracks = TrackTable(auto__rows=Track.objects.filter(album__artist=artist))
-
-    return ArtistPage()
+    albums = AlbumTable(auto__model=Album, rows=lambda params, **_: Album.objects.filter(artist=params.artist))
+    tracks = TrackTable(auto__model=Track, rows=lambda params, **_: Track.objects.filter(album__artist=params.artist))
 
 
-def album_page(request, artist, album):
-    album = get_object_or_404(Album, name=album, artist__name=artist)
+class AlbumPage(Page):
+    title = html.h1(lambda params, **_: params.album)
+    text = html.a(lambda params, **_: params.album.artist, attrs__href=lambda params, **_: params.album.artist.get_absolute_url())
 
-    class AlbumPage(Page):
-        title = html.h1(album)
-        text = html.a(album.artist, attrs__href=album.artist.get_absolute_url())
-
-        tracks = TrackTable(
-            auto__rows=Track.objects.filter(album=album),
-            columns__album__include=False,
-        )
-
-    return AlbumPage()
-
-
-def edit_album(request, artist, album):
-    album = get_object_or_404(Album, name=album, artist__name=artist)
-    return Form.edit(auto__instance=album)
-
-
-def delete_album(request, artist, album):
-    album = get_object_or_404(Album, name=album, artist__name=artist)
-    return Form.delete(auto__instance=album)
+    tracks = TrackTable(
+        auto__model=Track,
+        rows=lambda params, **_: Track.objects.filter(album=params.album),
+        columns__album__include=False,
+    )
 
 
 # URLs -----------------------------
@@ -144,8 +138,8 @@ urlpatterns = [
     path('albums/create/', Form.create(auto__model=Album).as_view()),
     path('artists/', ArtistTable(auto__model=Artist).as_view()),
     path('tracks/', TrackTable(auto__model=Track).as_view()),
-    path('artist/<artist>/', artist_page),
-    path('artist/<artist>/<album>/', album_page),
-    path('artist/<artist>/<album>/edit/', edit_album),
-    path('artist/<artist>/<album>/delete/', delete_album),
+    path('artist/<artist_name>/', ArtistPage().as_view()),
+    path('artist/<artist_name>/<album_name>/', AlbumPage().as_view()),
+    path('artist/<artist_name>/<album_name>/edit/', Form.edit(auto__model=Album, instance=lambda params, **_: params.album).as_view()),
+    path('artist/<artist_name>/<album_name>/delete/', Form.delete(auto__model=Album, instance=lambda params, **_: params.album).as_view()),
 ]
