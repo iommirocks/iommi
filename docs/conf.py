@@ -21,7 +21,10 @@ import sys, os
 
 # Get the project root dir, which is the parent dir of this
 from pathlib import Path
-from subprocess import check_call
+from subprocess import (
+    check_call,
+    check_output,
+)
 
 cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
@@ -37,7 +40,7 @@ from django import setup
 setup()
 
 check_call(f"python {(Path(__file__).parent.parent / 'make_doc_rsts.py').absolute()}", shell=True)
-check_call(f"cd {(Path(__file__).parent.parent).absolute()} -m pytest docs", shell=True)
+print(check_output(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs", shell=True))
 
 # -- General configuration -----------------------------------------------------
 html_css_files = [
