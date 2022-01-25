@@ -37,6 +37,7 @@ from django import setup
 setup()
 
 check_call(f"python {(Path(__file__).parent.parent / 'make_doc_rsts.py').absolute()}", shell=True)
+check_call(f"cd {(Path(__file__).parent.parent).absolute()} -m pytest docs", shell=True)
 
 # -- General configuration -----------------------------------------------------
 html_css_files = [
