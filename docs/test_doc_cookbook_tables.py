@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -47,13 +50,16 @@ def test_how_do_you_turn_off_pagination():
 
     Specify `page_size=None`:
 
-
     """
     Table(
         auto__model=Album,
         page_size=None,
     )
 
+    # language=rst
+    """
+    Or in the declarative style:
+    """
 
     class MyTable(Table):
         a = Column()
@@ -76,13 +82,13 @@ def test_how_do_i_customize_the_rendering_of_a_cell():
 
     - Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
-    - Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
+    - Pass a url (or callable that returns a url) to `cell__url` to make the cell a link (see next question).
 
 
     """
     
 
-def test_how_do_i_make_a_link_in_a_cell():
+def test_how_do_i_make_a_link_in_a_cell(album):
     # language=rst
     """
     How do I make a link in a cell?
@@ -92,10 +98,15 @@ def test_how_do_i_make_a_link_in_a_cell():
 
 
     """
-    Column(
-        cell__url='http://example.com',
-        cell__url_title='go to example',
+    table = Table(
+        auto__model=Album,
+        columns__name__cell__url='http://example.com',
+        columns__name__cell__url_title='go to example',
     )
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_make_a_link_in_a_cell', table)
+    # @end
 
 
 def test_how_do_i_create_a_column_based_on_computed_data_():
@@ -117,13 +128,15 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
         class Meta:
             app_label = 'docs_computed'
 
+    foos = [Foo(value=8)]
+
     # language=rst
     """
     And we want a computed column `square` that is the square of the value, then we can do:
 
-
     """
-    Table(
+
+    table = Table(
         auto__model=Foo,
         columns__square=Column(
             # computed value:
@@ -131,12 +144,15 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
         )
     )
 
+    # @test
+    show_output('cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_', table.refine(rows=foos))
+    # @end
+
     # language=rst
     """
     or we could do:
-
-
     """
+
     Table(
         auto__model=Foo,
         columns__square=Column(
@@ -148,8 +164,6 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
     # language=rst
     """
     This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
-
-
     """
     
 
@@ -188,27 +202,38 @@ def test_how_do_i_reorder_columns():
     # language=rst
     """
     If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value `-1`:
-
-
     """
-    Table(auto__model=Foo, columns__c__after=-1)
+
+    table = Table(auto__model=Foo, columns__c__after=-1)
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_reorder_columns', table.refine(rows=[]))
+    # @end
 
     # language=rst
     """
     `-1` means the first, other numbers mean index. We can also put columns after another named column like so:
-
-
     """
-    Table(auto__model=Foo, columns__c__after='a')
+
+    table = Table(auto__model=Foo, columns__c__after='a')
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_reorder_columns1', table.refine(rows=[]))
+    # @end
 
     # language=rst
     """
     this will put the columns in the order a, c, b.
 
-    There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
-
+    There is a special value `LAST` (import from `tri_declarative`) to put something last in a list:
     """
-    
+
+    table = Table(auto__model=Foo, columns__a__after=LAST)
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_reorder_columns2', table.refine(rows=[]))
+    # @end
+
 
 def test_how_do_i_enable_searching_filter_on_columns():
     # language=rst
@@ -223,7 +248,7 @@ def test_how_do_i_enable_searching_filter_on_columns():
 
 
     """
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__filter__include=True,
     )
@@ -239,9 +264,12 @@ def test_how_do_i_enable_searching_filter_on_columns():
     If you just want to have the filter available in the advanced query language,
     you can turn off the field in the generated form by passing
     `filter__field__include=False`:
-
     """
-    
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_enable_searching_filter_on_columns', table)
+    # @end
+
 
 def test_how_do_i_make_a_freetext_search_field():
     # language=rst
@@ -255,7 +283,7 @@ def test_how_do_i_make_a_freetext_search_field():
 
 
     """
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__filter=dict(
             freetext=True,
@@ -265,15 +293,18 @@ def test_how_do_i_make_a_freetext_search_field():
         columns__year__filter__include=True,
     )
 
-
     # language=rst
     """
-    This will display one search box to search both `year` and `name` columns.
-
+    This will display one search box to search both `year` and `name` columns:
     """
-    
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_make_a_freetext_search_field', table.refine(rows=[]))
+    # @end
+
 
 def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specifications():
+    # @test
     # TODO: the code in here is no longer tested!
 
     # language=rst

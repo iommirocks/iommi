@@ -1,4 +1,5 @@
 from django.utils.translation import gettext_lazy
+from iommi import MISSING
 
 from iommi.asset import Asset
 from iommi.debug import (
@@ -78,11 +79,15 @@ select2_enhanced_forms = Style(
         shortcuts=dict(
             multi_choice=dict(
                 input__template='iommi/form/choice_select2.html',
+                non_editable_input__attrs__class__select2_enhance=False,
+                non_editable_input__attrs__disabled=True,
                 assets=select2_assets,
                 input__attrs__class__select2_enhance=True,
             ),
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
+                non_editable_input__attrs__class__select2_enhance=False,
+                non_editable_input__attrs__disabled=True,
                 assets=select2_assets,
                 input__attrs__class__select2_enhance=True,
                 attrs__style={

@@ -21,10 +21,7 @@ import sys, os
 
 # Get the project root dir, which is the parent dir of this
 from pathlib import Path
-from subprocess import (
-    check_call,
-    check_output,
-)
+from subprocess import check_call
 
 cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
@@ -40,7 +37,7 @@ from django import setup
 setup()
 
 check_call(f"python {(Path(__file__).parent.parent / 'make_doc_rsts.py').absolute()}", shell=True)
-print(check_output(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs", shell=True))
+check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs", shell=True)
 
 # -- General configuration -----------------------------------------------------
 html_css_files = [
@@ -80,7 +77,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iommi'
-copyright = u'2020, Anders Hovmöller & Johan Lübcke'
+copyright = u'2022, Anders Hovmöller & Johan Lübcke'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -1,5 +1,8 @@
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -8,8 +11,6 @@ from django.template import Template
 from datetime import date
 import pytest
 pytestmark = pytest.mark.django_db
-
-
 
 
 def test_parts__pages():
@@ -27,7 +28,7 @@ def test_how_do_i_override_part_of_a_part_page():
     How do I override part of a part/page?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    This is all just *standard* tri.declarative magic. But as you are likely new to it
+    This is all just *standard* tri.declarative magic, but as you are likely new to it
     this might take a while to get used to. Let's say you created yourself a master template
     for your site.
 
@@ -37,6 +38,10 @@ def test_how_do_i_override_part_of_a_part_page():
         title = html.h1('My awesome webpage')
         subtitle = html.h2('It rocks')
 
+    # @test
+    show_output('cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page', BasePage())
+    # @end
+
     # language=rst
     """
     Which you can use like this:
@@ -45,30 +50,32 @@ def test_how_do_i_override_part_of_a_part_page():
     """
     def index(request):
         class IndexPage(BasePage):
-            body = ...
-        return IndexPage(parts__subtitle__children__text='Still rocking...')
+            body = 'body'
+        return IndexPage(parts__subtitle__children__child='Still rocking...')
 
     # @test
 
-    index(req('get'))
+    # @test
+    show_output('cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page1', index(req('get')))
+    # @end
 
     # language=rst
     """
     Here you can see that `Part` s (`Page` s are themselves `Part` s) form a tree and the direct children are gathered in the `parts` namespace. Here we overwrote a leaf of
     an existing namespace, but you can also add new elements or replace bigger
-    parts (and most of the time it doesn't matter if you use the class Member or the
+    parts (and most of the time it doesn't matter if you use the `class Meta` or the
     keyword arguments to init syntax):
 
 
     """
     def index(request):
         class IndexPage(BasePage):
-            title = html.img(attrs=dict(src='...', alt='...'))
+            title = html.img(attrs=dict(src='/_static/logo_with_outline.svg', alt='...', width='70px'))
         return IndexPage(parts__subtitle=None)
 
     # @test
-
-    index(req('get'))
+    show_output('cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page2', index(req('get')))
+    # @end
 
     # language=rst
     """
@@ -91,27 +98,25 @@ def test_how_do_i_set_the_title_of_my_page():
 
     As in the text shown in the browser status bar?
 
-
     """
     Page(title='The title in the browser')
 
     # language=rst
     """
     Note that this is different from
-
-
     """
+
     class MyPage(Page):
-        title = html.h1('A header element in the dom')
+        title = Header('A header element in the dom')
+
     MyPage()
 
     # language=rst
     """
     Which is equivalent to:
-
-
     """
-    Page(parts__title=html.h1('A header element in the dom'))
+    
+    Page(parts__title=Header('A header element in the dom'))
 
 
 def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
@@ -125,14 +130,16 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
 
     """
     def index(request):
-        context = {'today' : date.today()}
+        context = {'today': date.today()}
+
         class MyPage(Page):
             body = Template("""A django template was rendered on {{today}}.""")
+
         return MyPage(context=context)
 
     # @test
-
-    index(req('get'))
+    show_output('cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered', index(req('get')))
+    # @end
 
     # language=rst
     """
@@ -146,3 +153,7 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
         parts__body=Template("""A django template was rendered on {{today}}."""),
         context__today=date.today(),
     )
+
+    # @test
+    show_output('cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered1', index(req('get')))
+    # @end

@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -74,7 +77,7 @@ def test_how_do_i_make_a_field_non_editable():
     assert staff_form.fields.artist.editable is False
 
 
-def test_how_do_i_make_an_entire_form_non_editable():
+def test_how_do_i_make_an_entire_form_non_editable(album):
     # language=rst
     """
     .. _Form.editable:
@@ -86,8 +89,8 @@ def test_how_do_i_make_an_entire_form_non_editable():
 
 
     """
-    form = Form(
-        auto__model=Album,
+    form = Form.edit(
+        auto__instance=album,
         editable=False,
     )
 
@@ -96,6 +99,9 @@ def test_how_do_i_make_an_entire_form_non_editable():
     form = form.bind(request=req('get'))
     assert form.fields.name.editable is False
     assert form.fields.year.editable is False
+    show_output('cookbook_forms/test_how_do_i_make_an_entire_form_non_editable', form)
+
+    # @end
 
 
 def test_how_do_i_supply_a_custom_validator():
@@ -110,16 +116,18 @@ def test_how_do_i_supply_a_custom_validator():
 
 
     """
-    form = Form(
+    form = Form.create(
         auto__model=Album,
+        auto__include=['name'],
         fields__name__is_valid=
             lambda form, field, parsed_data: (False, 'invalid!'),
     )
 
     # @test
 
-    form = form.bind(request=req('get', name='foo'))
+    form = form.bind(request=req('post', name='foo', **{'-submit': ''}))
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
+    show_output('cookbook_forms/test_how_do_i_supply_a_custom_validator', form)
 
 
 def test_how_do_i_validate_multiple_fields_together():
@@ -185,6 +193,7 @@ def test_how_do_i_supply_a_custom_initial_value():
     form = form.bind(request=req('get'))
     assert form.fields.name.value == 'Paranoid'
     assert form.fields.year.value == 1970
+    show_output('cookbook_forms/test_how_do_i_supply_a_custom_initial_value', form)
 
     # language=rst
     """
@@ -242,6 +251,7 @@ def test_how_do_i_change_the_order_of_the_fields():
 
     form = form.bind(request=req('get'))
     assert list(form.fields.keys()) == ['artist', 'year', 'name']
+    show_output('cookbook_forms/test_how_do_i_change_the_order_of_the_fields', form)
 
     # language=rst
     """
@@ -303,7 +313,7 @@ def test_how_do_i_override_rendering_of_an_entire_field():
     How do I override rendering of an entire field?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Pass a template name or a `Template` object:
+    Pass a template name:
 
 
     """
@@ -312,11 +322,23 @@ def test_how_do_i_override_rendering_of_an_entire_field():
         fields__year__template='my_template.html',
     )
 
+    # @test
+    show_output('cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field', form)
+    # @end
+    
+    # language=rst
+    """
+    or a `Template` object:
+    """
 
     form = Form(
         auto__model=Album,
-        fields__year__template=Template('{{ field.attrs }}'),
+        fields__year__template=Template('This is from the inline template'),
     )
+
+    # @test
+    show_output('cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field1', form)
+    # @end
 
 
 def test_how_do_i_override_rendering_of_the_input_field():
@@ -337,12 +359,23 @@ def test_how_do_i_override_rendering_of_the_input_field():
         fields__year__input__template='my_template.html',
     )
 
+    # @test
+    show_output('cookbook_forms/test_how_do_i_override_rendering_of_the_input_field', form)
+    # @end
+    
+    # language=rst
+    """
+    
+    """
 
     form = Form(
         auto__model=Album,
-        fields__year__input__template=Template('{{ field.attrs }}'),
+        fields__year__input__template=Template('This is from the inline template'),
     )
 
+    # @test
+    show_output('cookbook_forms/test_how_do_i_override_rendering_of_the_input_field1', form)
+    # @end
 
 
 def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
@@ -358,10 +391,10 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
 
     """
     # @test
-    from iommi.style_bootstrap import bootstrap
+    from iommi.style_bootstrap_docs import bootstrap_docs as bootstrap
+    # @end
 
-
-    my_style = Style(bootstrap, Field__shortcuts__date__input__attrs_type='date')
+    my_style = Style(bootstrap, Field__shortcuts__date__input__attrs__type='text')
 
     # language=rst
     """
@@ -371,3 +404,8 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     (its just that when using the default date picker control it will
     always only see ISO-8601 dates).
     """
+
+    # @test
+    form = Form(fields__date=Field.date(), iommi_style=my_style)
+    show_output('cookbook_forms/test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project', form)
+    # @end

@@ -8,7 +8,7 @@ Parts & Pages
 How do I override part of a part/page?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is all just *standard* tri.declarative magic. But as you are likely new to it
+This is all just *standard* tri.declarative magic, but as you are likely new to it
 this might take a while to get used to. Let's say you created yourself a master template
 for your site.
 
@@ -19,6 +19,12 @@ for your site.
         title = html.h1('My awesome webpage')
         subtitle = html.h2('It rocks')
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('ca66009b-10dc-4b3b-a8a1-327faebc02dc', this)">▼ Hide result</div>
+        <iframe id="ca66009b-10dc-4b3b-a8a1-327faebc02dc" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 Which you can use like this:
 
@@ -27,13 +33,19 @@ Which you can use like this:
 
     def index(request):
         class IndexPage(BasePage):
-            body = ...
-        return IndexPage(parts__subtitle__children__text='Still rocking...')
+            body = 'body'
+        return IndexPage(parts__subtitle__children__child='Still rocking...')
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('7c1294ba-f0c5-44ba-af2b-0cb75982d694', this)">▼ Hide result</div>
+        <iframe id="7c1294ba-f0c5-44ba-af2b-0cb75982d694" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 Here you can see that `Part` s (`Page` s are themselves `Part` s) form a tree and the direct children are gathered in the `parts` namespace. Here we overwrote a leaf of
 an existing namespace, but you can also add new elements or replace bigger
-parts (and most of the time it doesn't matter if you use the class Member or the
+parts (and most of the time it doesn't matter if you use the `class Meta` or the
 keyword arguments to init syntax):
 
 
@@ -41,9 +53,15 @@ keyword arguments to init syntax):
 
     def index(request):
         class IndexPage(BasePage):
-            title = html.img(attrs=dict(src='...', alt='...'))
+            title = html.img(attrs=dict(src='/_static/logo_with_outline.svg', alt='...', width='70px'))
         return IndexPage(parts__subtitle=None)
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('acba3c73-a661-4ec3-89a1-374721135c78', this)">▼ Hide result</div>
+        <iframe id="acba3c73-a661-4ec3-89a1-374721135c78" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page2.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 In the above we replaced the title and removed the subtitle element completely. The
 latter of which shows one of the gotchas as only `str`, `Part` and the django
@@ -61,7 +79,6 @@ How do I set the title of my page?
 
 As in the text shown in the browser status bar?
 
-
 .. code-block:: python
 
     Page(title='The title in the browser')
@@ -69,20 +86,19 @@ As in the text shown in the browser status bar?
 
 Note that this is different from
 
-
 .. code-block:: python
 
     class MyPage(Page):
-        title = html.h1('A header element in the dom')
+        title = Header('A header element in the dom')
+
     MyPage()
 
 
 Which is equivalent to:
-
-
+    
 .. code-block:: python
 
-    Page(parts__title=html.h1('A header element in the dom'))
+    Page(parts__title=Header('A header element in the dom'))
 
 
 
@@ -95,11 +111,19 @@ How do I specify the context used when a Template is rendered?
 .. code-block:: python
 
     def index(request):
-        context = {'today' : date.today()}
+        context = {'today': date.today()}
+
         class MyPage(Page):
             body = Template("""A django template was rendered on {{today}}.""")
+
         return MyPage(context=context)
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('328febb9-5520-4cfa-85d8-71ed05c98461', this)">▼ Hide result</div>
+        <iframe id="328febb9-5520-4cfa-85d8-71ed05c98461" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 You can use the full power of `tri.declarative` to construct the context. This
 not only makes the above shorter, but also makes it easy to write abstractions that
@@ -112,3 +136,10 @@ can be extended later:
         parts__body=Template("""A django template was rendered on {{today}}."""),
         context__today=date.today(),
     )
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('4a91ecb4-bfdd-4dba-90f9-e225d6816492', this)">▼ Hide result</div>
+        <iframe id="4a91ecb4-bfdd-4dba-90f9-e225d6816492" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    

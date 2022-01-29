@@ -27,7 +27,6 @@ How do you turn off pagination?
 
 Specify `page_size=None`:
 
-
 .. code-block:: python
 
     Table(
@@ -35,6 +34,10 @@ Specify `page_size=None`:
         page_size=None,
     )
 
+
+Or in the declarative style:
+
+.. code-block:: python
 
     class MyTable(Table):
         a = Column()
@@ -55,7 +58,7 @@ You can customize the :doc:`Cell` rendering in several ways:
 
 - Use `cell__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object.
 
-- Pass a url (or callable that returns a url) to `cell__url` to make the cell a link.
+- Pass a url (or callable that returns a url) to `cell__url` to make the cell a link (see next question).
 
 
     
@@ -69,11 +72,18 @@ This is such a common case that there's a special case for it: pass the `url` an
 
 .. code-block:: python
 
-    Column(
-        cell__url='http://example.com',
-        cell__url_title='go to example',
+    table = Table(
+        auto__model=Album,
+        columns__name__cell__url='http://example.com',
+        columns__name__cell__url_title='go to example',
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('42e21361-a248-43df-ada2-4b6f1cb975dd', this)">▼ Hide result</div>
+        <iframe id="42e21361-a248-43df-ada2-4b6f1cb975dd" src="doc_includes/cookbook_tables/test_how_do_i_make_a_link_in_a_cell.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _How do I create a column based on computed data?:
@@ -95,7 +105,7 @@ And we want a computed column `square` that is the square of the value, then we 
 
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Foo,
         columns__square=Column(
             # computed value:
@@ -103,9 +113,14 @@ And we want a computed column `square` that is the square of the value, then we 
         )
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('28d1328e-0124-49b5-be4c-3e8a9257ed22', this)">▼ Hide result</div>
+        <iframe id="28d1328e-0124-49b5-be4c-3e8a9257ed22" src="doc_includes/cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 or we could do:
-
 
 .. code-block:: python
 
@@ -119,8 +134,6 @@ or we could do:
 
 
 This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
-
-
     
 
 
@@ -150,24 +163,43 @@ By default the columns come in the order defined so if you have an explicit tabl
 
 If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, c. But let's say I want to put c first, then we can pass it the `after` value `-1`:
 
-
 .. code-block:: python
 
-    Table(auto__model=Foo, columns__c__after=-1)
+    table = Table(auto__model=Foo, columns__c__after=-1)
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('e07bbcce-b204-4293-825e-4bb20f8e86d8', this)">▼ Hide result</div>
+        <iframe id="e07bbcce-b204-4293-825e-4bb20f8e86d8" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 `-1` means the first, other numbers mean index. We can also put columns after another named column like so:
 
-
 .. code-block:: python
 
-    Table(auto__model=Foo, columns__c__after='a')
+    table = Table(auto__model=Foo, columns__c__after='a')
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('adb9fa17-ad90-4358-b03d-a05b9aa33862', this)">▼ Hide result</div>
+        <iframe id="adb9fa17-ad90-4358-b03d-a05b9aa33862" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 this will put the columns in the order a, c, b.
 
-There is a special value `LAST` (import from `tri_declarative`) to put something last in a list.
+There is a special value `LAST` (import from `tri_declarative`) to put something last in a list:
 
+.. code-block:: python
+
+    table = Table(auto__model=Foo, columns__a__after=LAST)
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('8260a985-a18a-408c-b0cd-08aaa15423a9', this)">▼ Hide result</div>
+        <iframe id="8260a985-a18a-408c-b0cd-08aaa15423a9" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns2.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -182,7 +214,7 @@ in the advanced query language.
 
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__filter__include=True,
     )
@@ -198,6 +230,11 @@ If you just want to have the filter available in the advanced query language,
 you can turn off the field in the generated form by passing
 `filter__field__include=False`:
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('43a15ffd-3d39-4d1e-b1a4-4c878c2623a8', this)">▼ Hide result</div>
+        <iframe id="43a15ffd-3d39-4d1e-b1a4-4c878c2623a8" src="doc_includes/cookbook_tables/test_how_do_i_enable_searching_filter_on_columns.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -211,7 +248,7 @@ If you want to filter based on a freetext query on one or more columns we've got
 
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__filter=dict(
             freetext=True,
@@ -222,14 +259,14 @@ If you want to filter based on a freetext query on one or more columns we've got
     )
 
 
+This will display one search box to search both `year` and `name` columns:
 
-This will display one search box to search both `year` and `name` columns.
+.. raw:: html
 
     
-
-.. code-block:: python
-
-    # TODO: the code in here is no longer tested!
+        <div class="iframe_collapse" onclick="toggle('77c626ea-cfcf-416b-8178-c28af1ef332e', this)">▼ Hide result</div>
+        <iframe id="77c626ea-cfcf-416b-8178-c28af1ef332e" src="doc_includes/cookbook_tables/test_how_do_i_make_a_freetext_search_field.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Table.attrs:

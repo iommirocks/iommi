@@ -51,10 +51,17 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
 
 .. code-block:: python
 
-    form = Form(
-        auto__model=Album,
+    form = Form.edit(
+        auto__instance=album,
         editable=False,
     )
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('16ac6ab1-61f7-4744-8c1e-79ab2c78873d', this)">▼ Hide result</div>
+        <iframe id="16ac6ab1-61f7-4744-8c1e-79ab2c78873d" src="doc_includes/cookbook_forms/test_how_do_i_make_an_entire_form_non_editable.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Field.is_valid:
@@ -67,13 +74,19 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
 
 .. code-block:: python
 
-    form = Form(
+    form = Form.create(
         auto__model=Album,
+        auto__include=['name'],
         fields__name__is_valid=
             lambda form, field, parsed_data: (False, 'invalid!'),
     )
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('d95d4a44-5068-4f52-9965-f0ff26d3fada', this)">▼ Hide result</div>
+        <iframe id="d95d4a44-5068-4f52-9965-f0ff26d3fada" src="doc_includes/cookbook_forms/test_how_do_i_supply_a_custom_validator.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 How do I validate multiple fields together?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,7 +134,12 @@ Pass a value or callable to the `initial` member:
         fields__year__initial=lambda field, form, **_: 1970,
     )
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('f1a12559-0d28-44dd-a192-8732248b1b9e', this)">▼ Hide result</div>
+        <iframe id="f1a12559-0d28-44dd-a192-8732248b1b9e" src="doc_includes/cookbook_forms/test_how_do_i_supply_a_custom_initial_value.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
 
 
@@ -162,7 +180,12 @@ You can change the order in your model definitions as this is what iommi uses. I
         fields__artist__after=0,
     )
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('428e411a-2251-4440-9cbb-adf5646346de', this)">▼ Hide result</div>
+        <iframe id="428e411a-2251-4440-9cbb-adf5646346de" src="doc_includes/cookbook_forms/test_how_do_i_change_the_order_of_the_fields.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 This will make the field order `artist`, `year`, `name`.
 
 If there are multiple fields with the same index or name the order of the fields will be used to disambiguate.
@@ -212,7 +235,7 @@ See :doc:`Attrs`.
 How do I override rendering of an entire field?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pass a template name or a `Template` object:
+Pass a template name:
 
 
 .. code-block:: python
@@ -222,12 +245,28 @@ Pass a template name or a `Template` object:
         fields__year__template='my_template.html',
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('0dce80e3-7773-46fd-a427-4219e8a786b3', this)">▼ Hide result</div>
+        <iframe id="0dce80e3-7773-46fd-a427-4219e8a786b3" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        
+
+or a `Template` object:
+
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
-        fields__year__template=Template('{{ field.attrs }}'),
+        fields__year__template=Template('This is from the inline template'),
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('65efc399-4d7a-4a17-a6e9-9740061849ce', this)">▼ Hide result</div>
+        <iframe id="65efc399-4d7a-4a17-a6e9-9740061849ce" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Field.input:
@@ -246,13 +285,28 @@ Pass a template name or a `Template` object to the `input` namespace:
         fields__year__input__template='my_template.html',
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('e15b1f73-223b-4af5-ad45-6ee191c6e229', this)">▼ Hide result</div>
+        <iframe id="e15b1f73-223b-4af5-ad45-6ee191c6e229" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_the_input_field.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        
+
+
+
+.. code-block:: python
 
     form = Form(
         auto__model=Album,
-        fields__year__input__template=Template('{{ field.attrs }}'),
+        fields__year__input__template=Template('This is from the inline template'),
     )
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('bdb87e6d-6c36-4ec9-9ed4-1941b563a233', this)">▼ Hide result</div>
+        <iframe id="bdb87e6d-6c36-4ec9-9ed4-1941b563a233" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_the_input_field1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 How do I change how fields are rendered everywhere in my project?
@@ -264,8 +318,20 @@ based input control (as opposed to the date picker that `input type='date'`
 uses).
 
 
+.. code-block:: python
+
+    my_style = Style(bootstrap, Field__shortcuts__date__input__attrs__type='text')
+
+
 When you do that you will get English language relative date parsing
 (e.g. "yesterday", "3 days ago") for free, because iommi used to use a
 text based input control and the parser is applied no matter what
 (its just that when using the default date picker control it will
 always only see ISO-8601 dates).
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('5888b2e2-a8d7-428f-a136-ce8176a1f27f', this)">▼ Hide result</div>
+        <iframe id="5888b2e2-a8d7-428f-a136-ce8176a1f27f" src="doc_includes/cookbook_forms/test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    

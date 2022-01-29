@@ -25,8 +25,8 @@ new user. You can add it your `urls.py` like this: `path('my_page/', MyPage().as
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('564f9ae4-c2cb-41e1-aba5-71dd0c5d0c1a', this)">► Show result</div>
-        <iframe id="564f9ae4-c2cb-41e1-aba5-71dd0c5d0c1a" src="doc_includes/pages/test_example.html" style="display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('614838b0-d590-4031-8576-741102e1fe85', this)">► Show result</div>
+        <iframe id="614838b0-d590-4031-8576-741102e1fe85" src="doc_includes/pages/test_example.html" style="display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -64,8 +64,8 @@ as needed.
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('44c785bd-352e-4645-9fcf-a2478b246e77', this)">► Show result</div>
-        <iframe id="44c785bd-352e-4645-9fcf-a2478b246e77" src="doc_includes/pages/test_page.html" style="display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('c458673d-c991-4b16-8e1e-044f3f8868c8', this)">► Show result</div>
+        <iframe id="c458673d-c991-4b16-8e1e-044f3f8868c8" src="doc_includes/pages/test_page.html" style="display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 

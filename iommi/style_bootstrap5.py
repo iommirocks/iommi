@@ -89,8 +89,7 @@ bootstrap5_base = Style(
             'text-muted': True,
         },
         label__attrs__class={'form-label': True},
-        label__attrs__class__form_label=True, # need this to make class render
-        non_editable_input__attrs__class={'form-control': False},
+        label__attrs__class__form_label=True,  # need this to make class render
     ),
     FieldGroup=dict(
         tag='div',

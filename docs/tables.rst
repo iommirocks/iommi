@@ -107,8 +107,8 @@ This gives me a view with filtering, sorting, bulk edit and pagination.
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('48297433-14e2-48f3-8757-e637898447a8', this)">▼ Hide result</div>
-        <iframe id="48297433-14e2-48f3-8757-e637898447a8" src="doc_includes/tables/test_explicit_tables.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('86ac16a2-7b28-42f1-b8d1-63349ed82b27', this)">▼ Hide result</div>
+        <iframe id="86ac16a2-7b28-42f1-b8d1-63349ed82b27" src="doc_includes/tables/test_explicit_tables.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -152,8 +152,8 @@ Table of plain python objects
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('c9f28c51-c8c4-4266-98b5-817793582527', this)">▼ Hide result</div>
-        <iframe id="c9f28c51-c8c4-4266-98b5-817793582527" src="doc_includes/tables/test_table_of_plain_python_objects.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('bcad8a38-6f49-4306-9a97-5de87e780c9a', this)">▼ Hide result</div>
+        <iframe id="bcad8a38-6f49-4306-9a97-5de87e780c9a" src="doc_includes/tables/test_table_of_plain_python_objects.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 All these examples and a bigger example using many more features can be found in the examples project.
