@@ -70,7 +70,7 @@ def test_how_do_i_override_part_of_a_part_page():
     """
     def index(request):
         class IndexPage(BasePage):
-            title = html.img(attrs=dict(src='/_static/logo_with_outline.svg', alt='...', width='70px'))
+            title = html.img(attrs=dict(src='https://docs.iommi.rocks/en/latest/_static/logo_with_outline.svg', alt='iommi logo', width='70px'))
         return IndexPage(parts__subtitle=None)
 
     # @test

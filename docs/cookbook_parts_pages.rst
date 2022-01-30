@@ -53,7 +53,7 @@ keyword arguments to init syntax):
 
     def index(request):
         class IndexPage(BasePage):
-            title = html.img(attrs=dict(src='/_static/logo_with_outline.svg', alt='...', width='70px'))
+            title = html.img(attrs=dict(src='https://docs.iommi.rocks/en/latest/_static/logo_with_outline.svg', alt='iommi logo', width='70px'))
         return IndexPage(parts__subtitle=None)
 
 .. raw:: html
@@ -142,4 +142,3 @@ can be extended later:
     
         <div class="iframe_collapse" onclick="toggle('9a23e1d1-0fc0-4019-9f18-e4f74eb96bd1', this)">▼ Hide result</div>
         <iframe id="9a23e1d1-0fc0-4019-9f18-e4f74eb96bd1" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
-    
