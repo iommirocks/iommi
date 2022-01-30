@@ -1,1 +1,10 @@
-..artist..
+{{ artist }}
+
+<table>
+    {% for album in artist.albums.all %}
+        <tr>
+            <td>{{ album.name }}</td>
+            <td>{{ album.year }}</td>
+        </tr>
+    {% endfor %}
+</table>

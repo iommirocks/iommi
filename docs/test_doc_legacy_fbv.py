@@ -12,7 +12,10 @@ from iommi import (
     Page,
     Table,
 )
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -25,7 +28,7 @@ Add iommi to a FBV
 """
 
 
-def test_legacy_fbv(artist):
+def test_legacy_fbv(small_discography, artist):
     # language=rst
     """
     Let's say we have a simple view to display an album:
@@ -43,7 +46,8 @@ def test_legacy_fbv(artist):
 
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
-    assert '..artist..' in response.content.decode()
+    assert artist.name in response.content.decode()
+    show_output('legacy_fbv/test_legacy_fbv', response)
     # @end
 
     # language=rst
@@ -52,7 +56,7 @@ def test_legacy_fbv(artist):
     """
 
 
-def test_legacy_fbv_step2(artist):
+def test_legacy_fbv_step2(small_discography, artist):
     # language=rst
     """
     Add an iommi table
@@ -62,28 +66,28 @@ def test_legacy_fbv_step2(artist):
     def view_artist(request, artist_name):
         artist = get_object_or_404(Artist, name=artist_name)
 
-        tracks = Table(
-            auto__rows=Track.objects.filter(album__artist=artist),
+        albums = Table(
+            auto__rows=artist.albums.all(),
         ).bind(request=request)
 
         return render(
             request,
-            'view_artist.html',
+            'view_artist2.html',
             context={
                 'artist': artist,
-                'tracks': tracks,
+                'albums': albums,
             }
         )
 
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
-    assert '..artist..' in response.content.decode()
+    assert artist.name in response.content.decode()
+    show_output('legacy_fbv/test_legacy_fbv_step2', response)
     # @end
 
     # language=rst
     """
     Now in the template we can add `{{ tracks }}` to render the table, and we can delete all the old manually written table html.
-
     """
 
 
@@ -123,10 +127,10 @@ def test_legacy_fbv_step3(artist, album, track):
 
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
-    assert '..artist..' in response.content.decode()
+    assert artist.name in response.content.decode()
     # ajax dispatch
     response = view_artist(req('get', **{'/choices': album.name}), artist_name=artist.name)
-    assert '..artist..' not in response.content.decode()
+    assert artist.name not in response.content.decode()
     assert album.name in response.content.decode()
     # @end
 
@@ -157,7 +161,7 @@ def test_legacy_fbv_step4(artist, album, track):
 
         return render(
             request,
-            'view_artist.html',
+            'view_artist3.html',
             context={
                 'artist': artist,
                 'tracks': page.parts.tracks,
@@ -167,9 +171,10 @@ def test_legacy_fbv_step4(artist, album, track):
 
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
-    assert '..artist..' in response.content.decode()
+    show_output('legacy_fbv/test_legacy_fbv_step4', response)
+    assert artist.name in response.content.decode()
     # ajax dispatch
     response = view_artist(req('get', **{'/album/choices': album.name}), artist_name=artist.name)
-    assert '..artist..' not in response.content.decode()
+    assert artist.name not in response.content.decode()
     assert album.name in response.content.decode()
     # @end

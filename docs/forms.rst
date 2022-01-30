@@ -4,15 +4,16 @@ Forms
 
 iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on weaknesses.
 
-.. image:: forms_create_example.png
-
-The code for the example above:
-
-
 .. code-block:: python
 
-    Form.create(auto__model=Album)
+    form = Form.create(auto__model=Album)
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('98400e7e-e31e-460d-9db7-f6df607365f8', this)">▼ Hide result</div>
+        <iframe id="98400e7e-e31e-460d-9db7-f6df607365f8" src="doc_includes/forms/test_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 Major features compared to Django forms:
 
@@ -72,11 +73,14 @@ You can create forms declaratively, similar to Django forms. There are some impo
         user = User.objects.get(username=username)
         return UserForm(instance=user)
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('74f8e549-e44f-4c70-ac14-713edb968247', this)">▼ Hide result</div>
+        <iframe id="74f8e549-e44f-4c70-ac14-713edb968247" src="doc_includes/forms/test_declarative_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 Note that we don't need any template here.
-
-
 
 
 
@@ -117,7 +121,12 @@ The declarative style is very readable, but sometimes you don't know until runti
             actions__submit__post_handler=edit_user_save_post_handler,
         )
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('87abd96a-711c-4de9-a719-00c62aa2e15a', this)">▼ Hide result</div>
+        <iframe id="87abd96a-711c-4de9-a719-00c62aa2e15a" src="doc_includes/forms/test_programmatic_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 Fully automatic forms

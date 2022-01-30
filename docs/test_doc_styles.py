@@ -28,18 +28,16 @@ def test_style():
         # @end
         # language=rst
         '''
-    
-    
-        bootstrap
-        bootstrap5
-        bulma
-        foundation
-        semantic_ui
-        water
-        django_admin
+        - bootstrap
+        - bootstrap5
+        - bulma
+        - foundation
+        - semantic_ui
+        - water
+        - django_admin
         '''
         # @test
-    ).strip().split('\n')
+    ).replace('- ', '').strip().split('\n')
     style_names = [x.strip() for x in style_names]
 
     from iommi.style import _styles

@@ -14,15 +14,13 @@ how things look, but also how they work.
 The styles iommi ships with are:
 
 
-
-
-    bootstrap
-    bootstrap5
-    bulma
-    foundation
-    semantic_ui
-    water
-    django_admin
+    - bootstrap
+    - bootstrap5
+    - bulma
+    - foundation
+    - semantic_ui
+    - water
+    - django_admin
 
 
 There are also some internal styles, most notably `base` which is used for

@@ -71,8 +71,8 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('46ef0c30-c85b-4e9e-af5b-d79f90222dac', this)">▼ Hide result</div>
-        <iframe id="46ef0c30-c85b-4e9e-af5b-d79f90222dac" src="doc_includes/getting_started/test_2__your_first_form.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('194b0829-9c1b-475c-97e2-47ff5dd42bff', this)">▼ Hide result</div>
+        <iframe id="194b0829-9c1b-475c-97e2-47ff5dd42bff" src="doc_includes/getting_started/test_2__your_first_form.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -94,8 +94,8 @@ Pick a model from your app, and let's build a table for it! Add this to your `ur
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('1e513a96-c3b7-4bf6-9145-459aee02d94a', this)">▼ Hide result</div>
-        <iframe id="1e513a96-c3b7-4bf6-9145-459aee02d94a" src="doc_includes/getting_started/test_3__your_first_table.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('6e926673-ebb8-4897-a200-8a930aaa00cb', this)">▼ Hide result</div>
+        <iframe id="6e926673-ebb8-4897-a200-8a930aaa00cb" src="doc_includes/getting_started/test_3__your_first_table.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 If you want, add a filter for some column:
@@ -113,8 +113,8 @@ If you want, add a filter for some column:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('36beca7f-4d81-4b09-8bc6-822eb7d8b8bf', this)">▼ Hide result</div>
-        <iframe id="36beca7f-4d81-4b09-8bc6-822eb7d8b8bf" src="doc_includes/getting_started/test_3__your_first_table1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('4c5ef5bd-5c70-4fba-b6f1-4c0d2b0c7b43', this)">▼ Hide result</div>
+        <iframe id="4c5ef5bd-5c70-4fba-b6f1-4c0d2b0c7b43" src="doc_includes/getting_started/test_3__your_first_table1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -152,8 +152,8 @@ then hook into `urls.py`:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('bfa7ef93-79a0-49fd-a435-fdefdbcc4b98', this)">▼ Hide result</div>
-        <iframe id="bfa7ef93-79a0-49fd-a435-fdefdbcc4b98" src="doc_includes/getting_started/test_4__your_first_page.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('02217ffd-b36b-4954-9957-44ed8dbf7e8a', this)">▼ Hide result</div>
+        <iframe id="02217ffd-b36b-4954-9957-44ed8dbf7e8a" src="doc_includes/getting_started/test_4__your_first_page.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -190,8 +190,8 @@ middleware you can return iommi objects from your view:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('4316d16f-1063-454e-88a6-deee8a412ff0', this)">▼ Hide result</div>
-        <iframe id="4316d16f-1063-454e-88a6-deee8a412ff0" src="doc_includes/getting_started/test_5__a_simple_function_based_view.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('2835af44-0d9e-41de-949c-48336d88ec5a', this)">▼ Hide result</div>
+        <iframe id="2835af44-0d9e-41de-949c-48336d88ec5a" src="doc_includes/getting_started/test_5__a_simple_function_based_view.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 

@@ -22,8 +22,8 @@ for your site.
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('ca66009b-10dc-4b3b-a8a1-327faebc02dc', this)">▼ Hide result</div>
-        <iframe id="ca66009b-10dc-4b3b-a8a1-327faebc02dc" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('ce8e8111-21fb-40fc-8d85-69cdba2bdaab', this)">▼ Hide result</div>
+        <iframe id="ce8e8111-21fb-40fc-8d85-69cdba2bdaab" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 Which you can use like this:
@@ -39,8 +39,8 @@ Which you can use like this:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('7c1294ba-f0c5-44ba-af2b-0cb75982d694', this)">▼ Hide result</div>
-        <iframe id="7c1294ba-f0c5-44ba-af2b-0cb75982d694" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('f2cc855f-9fb3-43e2-ba64-7c8bea75ee5f', this)">▼ Hide result</div>
+        <iframe id="f2cc855f-9fb3-43e2-ba64-7c8bea75ee5f" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 Here you can see that `Part` s (`Page` s are themselves `Part` s) form a tree and the direct children are gathered in the `parts` namespace. Here we overwrote a leaf of
@@ -59,8 +59,8 @@ keyword arguments to init syntax):
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('acba3c73-a661-4ec3-89a1-374721135c78', this)">▼ Hide result</div>
-        <iframe id="acba3c73-a661-4ec3-89a1-374721135c78" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page2.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('9259fc38-5e1d-44d5-b00b-0ada079c4b3b', this)">▼ Hide result</div>
+        <iframe id="9259fc38-5e1d-44d5-b00b-0ada079c4b3b" src="doc_includes/cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 In the above we replaced the title and removed the subtitle element completely. The
@@ -121,8 +121,8 @@ How do I specify the context used when a Template is rendered?
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('328febb9-5520-4cfa-85d8-71ed05c98461', this)">▼ Hide result</div>
-        <iframe id="328febb9-5520-4cfa-85d8-71ed05c98461" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('9c799b21-50d6-4b57-9655-9f09f856a13e', this)">▼ Hide result</div>
+        <iframe id="9c799b21-50d6-4b57-9655-9f09f856a13e" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 You can use the full power of `tri.declarative` to construct the context. This
@@ -140,6 +140,6 @@ can be extended later:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('4a91ecb4-bfdd-4dba-90f9-e225d6816492', this)">▼ Hide result</div>
-        <iframe id="4a91ecb4-bfdd-4dba-90f9-e225d6816492" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('9a23e1d1-0fc0-4019-9f18-e4f74eb96bd1', this)">▼ Hide result</div>
+        <iframe id="9a23e1d1-0fc0-4019-9f18-e4f74eb96bd1" src="doc_includes/cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     

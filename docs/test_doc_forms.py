@@ -2,6 +2,7 @@ from docs.models import *
 from iommi import *
 from tests.helpers import (
     req,
+    show_output,
     user_req,
 )
 
@@ -20,14 +21,13 @@ def test_forms():
     =====
 
     iommi forms is an alternative forms system for Django. It is inspired by the standard Django forms, while improving on weaknesses.
-
-    .. image:: forms_create_example.png
-
-    The code for the example above:
-
-
     """
-    Form.create(auto__model=Album)
+
+    form = Form.create(auto__model=Album)
+
+    # @test
+    show_output('forms/test_forms', form)
+    # @end
 
     # language=rst
     """
@@ -95,6 +95,8 @@ def test_declarative_forms():
 
     user = User.objects.create(username='foo')
 
+    show_output('forms/test_declarative_forms', edit_user_view(req('get'), user.username))
+
     post_request = req('post', first_name='foo', username='demo_', is_staff='1', **{'-submit': ''})
     post_request.user = user
 
@@ -106,8 +108,6 @@ def test_declarative_forms():
     # language=rst
     """
     Note that we don't need any template here.
-
-
     """
 
 
@@ -153,7 +153,10 @@ def test_programmatic_forms():
     # @test
 
     user = User.objects.create(username='foo')
-    edit_user_view(user_req('get'), user.username).bind(request=user_req('get'))
+    response = edit_user_view(user_req('get'), user.username).bind(request=user_req('get'))
+
+    show_output('forms/test_programmatic_forms', response)
+
     post_request = req('post', first_name='foo', username='demo_foo', is_staff='1', **{'-submit': ''})
     post_request.user = user
     f = edit_user_view(post_request, user.username).bind(request=post_request)

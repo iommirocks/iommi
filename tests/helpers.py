@@ -190,5 +190,5 @@ def create_iframe(name, collapsed):
     display = 'none' if collapsed else ''
     return f'''
         <div class="iframe_collapse" onclick="toggle('{uuid}', this)">{text}</div>
-        <iframe id="{uuid}" src="{file_path}" style="display: {display}; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <iframe id="{uuid}" src="{file_path}" style="background: white; display: {display}; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     '''

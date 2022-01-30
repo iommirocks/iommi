@@ -8,7 +8,10 @@ from tests.helpers import (
 request = req('get')
 
 from tests.helpers import req
-from django.http import HttpResponseRedirect
+from django.http import (
+    HttpResponse,
+    HttpResponseRedirect,
+)
 import pytest
 pytestmark = pytest.mark.django_db
 
@@ -462,7 +465,7 @@ def test_how_do_i_specify_which_columns_to_show():
     """
     
 
-def test_how_do_i_access_table_data_programmatically_():
+def test_how_do_i_access_table_data_programmatically_(capsys, small_discography):
     # language=rst
     """
     .. _Table.cells_for_rows:
@@ -473,14 +476,19 @@ def test_how_do_i_access_table_data_programmatically_():
     Here's a simple example that prints a table to stdout:
 
     """
-    # @test
-    Artist.objects.create(name='foo')
-    table = Table(auto__model=Artist).bind(request=req('get'))
+    def print_table(table):
+        for row in table.cells_for_rows():
+            for cell in row:
+                print(cell.render_formatted(), end=' ')
+            print()
 
-    for row in table.cells_for_rows():
-        for cell in row:
-            print(cell.render_formatted(), end='')
-        print()
+    table = Table(auto__model=Album).bind(request=req('get'))
+    print_table(table)
+
+    # @test
+    captured = capsys.readouterr()
+    show_output('cookbook_tables/test_how_do_i_access_table_data_programmatically_', HttpResponse('<html><style>html {color: black; background: white}</style><pre>' + captured.out + '</pre></html>'))
+    # @end
 
 
 def test_how_do_i_access_foreign_key_related_data_in_a_column():
@@ -501,7 +509,7 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     # @test
         class Meta:
             app_label = 'docs_fk'
-
+    # @end
 
     class Bar(models.Model):
         b = models.IntegerField()
@@ -514,16 +522,21 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     # language=rst
     """
     we can build a table of `Bar` that shows the data of `a` like this:
-
-
     """
-    Table(
+
+    table = Table(
         auto__model=Bar,
         columns__a=Column(attr='c__a'),
     )
 
+    # @test
+    f = Foo(a=7)
+    b = Bar(b=3, c=f)
+    show_output('cookbook_tables/test_how_do_i_access_foreign_key_related_data_in_a_column', table.refine(rows=[b]))
+    # @end
 
-def test_how_do_i_turn_off_sorting_():
+
+def test_how_do_i_turn_off_sorting(small_discography):
     # language=rst
     """
     .. _Table.sortable:
@@ -534,27 +547,33 @@ def test_how_do_i_turn_off_sorting_():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
-
-
     """
-    Table(
+
+    table = Table(
         auto__model=Album,
         columns__name__sortable=False,
     )
 
+    # @test
+    show_output('cookbook_tables/test_how_do_i_turn_off_sorting', table)
+    # @end
+
     # language=rst
     """
     and to turn it off on the entire table:
-
-
     """
-    Table(
+
+    table = Table(
         auto__model=Album,
         sortable=False,
     )
 
+    # @test
+    show_output('cookbook_tables/test_how_do_i_turn_off_sorting1', table)
+    # @end
 
-def test_how_do_i_specify_the_title_of_a_header():
+
+def test_how_do_i_specify_the_title_of_a_header(small_discography):
     # language=rst
     """
     .. _Column.display_name:
@@ -566,10 +585,14 @@ def test_how_do_i_specify_the_title_of_a_header():
 
 
     """
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__display_name='header title',
     )
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_specify_the_title_of_a_header', table)
+    # @end
 
 
 def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instead_of_ascending():
@@ -580,8 +603,8 @@ def test_how_do_i_set_the_default_sort_order_of_a_column_to_be_descending_instea
     How do I set the default sort order of a column to be descending instead of ascending?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
     """
+
     Table(
         auto__model=Album,
         columns__name__sort_default_desc=True,  # or a lambda!
@@ -598,20 +621,24 @@ def test_how_do_i_group_columns():
 
 
     """
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__group='foo',
-        columns__year__group='foo',
+        columns__artist__group='bar',
+        columns__year__group='bar',
     )
 
     # language=rst
     """
     The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
-
     """
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_group_columns', table)
+    # @end
     
 
-def test_how_do_i_get_rowspan_on_a_table():
+def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
     # language=rst
     """
     .. _Column.auto_rowspan:
@@ -620,16 +647,21 @@ def test_how_do_i_get_rowspan_on_a_table():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
-
-
     """
-    Table(
+
+    table = Table(
         auto__model=Album,
         columns__year__auto_rowspan=True,
+        columns__year__after=0,  # put the column first
     )
 
+    # @test
+    Album.objects.create(name='Live at Last', year=1980, artist=artist)
+    show_output('cookbook_tables/test_how_do_i_get_rowspan_on_a_table', table)
+    # @end
 
-def test_how_do_i_enable_bulk_editing():
+
+def test_how_do_i_enable_bulk_editing(small_discography):
     # language=rst
     """
     .. _Column.bulk:
@@ -639,10 +671,9 @@ def test_how_do_i_enable_bulk_editing():
 
     Editing multiple items at a time is easy in iommi with the built in bulk
     editing. Enable it for a columns by passing `bulk__include=True`:
-
-
     """
-    Table(
+
+    table = Table(
         auto__model=Album,
         columns__select__include=True,
         columns__year__bulk__include=True,
@@ -656,21 +687,23 @@ def test_how_do_i_enable_bulk_editing():
 
     You also need to enable the select column, otherwise you can't select
     the columns you want to bulk edit.
-
     """
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_enable_bulk_editing', table)
+    # @end
     
 
-def test_how_do_i_enable_bulk_delete():
+def test_how_do_i_enable_bulk_delete(small_discography):
     # language=rst
     """
     .. _Table.bulk:
 
     How do I enable bulk delete?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
     """
-    Table(
+
+    table = Table(
         auto__model=Album,
         columns__select__include=True,
         bulk__actions__delete__include=True,
@@ -682,10 +715,12 @@ def test_how_do_i_enable_bulk_delete():
 
     You also need to enable the select column, otherwise you can't select
     the columns you want to delete.
-
-
     """
-    
+
+    # @test
+    show_output('cookbook_tables/test_how_do_i_enable_bulk_delete', table)
+    # @end
+
 
 def test_how_do_i_make_a_custom_bulk_action(album):
     # language=rst
@@ -696,9 +731,8 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     You need to first show the select column by passing
     `columns__select__include=True`, then define a submit `Action` with a post
     handler:
-
-
     """
+
     def my_action_post_handler(table, request, **_):
         queryset = table.bulk_queryset()
         queryset.update(name='Paranoid')
@@ -713,7 +747,7 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     )
 
     # @test
-    r = t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
+    t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
     album.refresh_from_db()
     assert album.name == 'Paranoid'
 

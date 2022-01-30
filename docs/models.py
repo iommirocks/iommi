@@ -12,10 +12,12 @@ class Artist(models.Model):
         app_label = 'docs'
 
 
+# album_start
 class Album(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums')
     year = models.IntegerField()
+    # album_end
 
     def __str__(self):
         return self.name

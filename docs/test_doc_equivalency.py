@@ -1,10 +1,12 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+    show_output_collapsed,
+)
 
 request = req('get')
-
-from django.db.models import Model, CharField, IntegerField, ForeignKey
 
 
 def test_equivalence():
@@ -18,93 +20,140 @@ def test_equivalence():
 
     First a model:
 
-
+    .. literalinclude:: models.py
+         :start-after: # album_start
+         :end-before: # album_end
+         :language: python
     """
-    class Album(Model):
-        name = CharField(max_length=255, db_index=True)
-        artist = ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums')
-        year = IntegerField()
-
-
-    # @test
-        class Meta:
-            app_label = 'docs_avoid_conflict'
 
     # language=rst
     """
     We want to create a form to create an album. We already have the artist from the URL, so that field shouldn't be in the form.
 
-    The following forms all accomplish this goal (although they would need more work to create a full functioning view!):
-
-
+    The following forms all accomplish this goal (you can use `form.as_view()` to create a view from a `Form` instance):
 
     """
-    form = Form(
+
+    form = Form.create(
         auto__model=Album,
         auto__exclude=['artist'],
     )
 
+    # @test
+    show_output('equivalency/test_equivalence', form)
+    # @end
 
-    form = Form(
+    # language=rst
+    """
+    """
+
+    form = Form.create(
         auto=dict(
             model=Album,
             exclude=['artist'],
         ),
     )
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence1', form)
+    # @end
 
-    form = Form(
+    # language=rst
+    """
+    """
+
+    form = Form.create(
         auto__model=Album,
         fields__artist__include=False,
     )
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence2', form)
+    # @end
+
+    # language=rst
+    """
+    """
 
     class ArtistForm(Form):
         class Meta:
             auto__model = Album
             auto__exclude = ['artist']
 
-    form = ArtistForm()
+    form = ArtistForm.create()
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence3', form)
+    # @end
+
+    # language=rst
+    """
+    """
 
     class ArtistForm(Form):
         class Meta:
             auto__model = Album
             auto__include = ['name', 'year']
 
-    form = ArtistForm()
+    form = ArtistForm.create()
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence4', form)
+    # @end
+
+    # language=rst
+    """
+    """
 
     class ArtistForm(Form):
         class Meta:
             auto__model = Album
             fields__artist__include = False
 
-    form = ArtistForm()
+    form = ArtistForm.create()
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence5', form)
+    # @end
 
     # language=rst
     """
     Without using the `auto` features:
-
-
     """
+
+    # @test
+    def create_artist(**_):
+        pass
+    # @end
+
     class ArtistForm(Form):
         name = Field()
         year = Field.integer()
 
         class Meta:
             title = 'Create album'
+            actions__submit__post_handler = create_artist
 
     form = ArtistForm()
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence6', form)
+    # @end
+
+    # language=rst
+    """
+    """
 
     form = Form(
         fields__name=Field(),
         fields__year=Field.integer(),
-        title='Create album'
+        title='Create album',
+        actions__submit__post_handler=create_artist,
     )
 
+    # @test
+    show_output_collapsed('equivalency/test_equivalence7', form)
+    # @end
 
     # language=rst
     """

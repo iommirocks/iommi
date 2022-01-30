@@ -81,8 +81,8 @@ This is such a common case that there's a special case for it: pass the `url` an
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('42e21361-a248-43df-ada2-4b6f1cb975dd', this)">▼ Hide result</div>
-        <iframe id="42e21361-a248-43df-ada2-4b6f1cb975dd" src="doc_includes/cookbook_tables/test_how_do_i_make_a_link_in_a_cell.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('74828d9e-32cc-437c-997f-5db0f122e1c8', this)">▼ Hide result</div>
+        <iframe id="74828d9e-32cc-437c-997f-5db0f122e1c8" src="doc_includes/cookbook_tables/test_how_do_i_make_a_link_in_a_cell.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -116,8 +116,8 @@ And we want a computed column `square` that is the square of the value, then we 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('28d1328e-0124-49b5-be4c-3e8a9257ed22', this)">▼ Hide result</div>
-        <iframe id="28d1328e-0124-49b5-be4c-3e8a9257ed22" src="doc_includes/cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('5a666fec-85fa-4083-9b76-da9ba512e370', this)">▼ Hide result</div>
+        <iframe id="5a666fec-85fa-4083-9b76-da9ba512e370" src="doc_includes/cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 or we could do:
@@ -170,8 +170,8 @@ If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('e07bbcce-b204-4293-825e-4bb20f8e86d8', this)">▼ Hide result</div>
-        <iframe id="e07bbcce-b204-4293-825e-4bb20f8e86d8" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('f69c8f9b-5655-4712-a76c-f0169e0e177d', this)">▼ Hide result</div>
+        <iframe id="f69c8f9b-5655-4712-a76c-f0169e0e177d" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 `-1` means the first, other numbers mean index. We can also put columns after another named column like so:
@@ -183,8 +183,8 @@ If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('adb9fa17-ad90-4358-b03d-a05b9aa33862', this)">▼ Hide result</div>
-        <iframe id="adb9fa17-ad90-4358-b03d-a05b9aa33862" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns1.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('2ffe5e49-f307-4a60-94cd-25f8c43a41ee', this)">▼ Hide result</div>
+        <iframe id="2ffe5e49-f307-4a60-94cd-25f8c43a41ee" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 this will put the columns in the order a, c, b.
@@ -198,8 +198,8 @@ There is a special value `LAST` (import from `tri_declarative`) to put something
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('8260a985-a18a-408c-b0cd-08aaa15423a9', this)">▼ Hide result</div>
-        <iframe id="8260a985-a18a-408c-b0cd-08aaa15423a9" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns2.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('f3689f76-071a-43ef-af6c-8e8152378b9a', this)">▼ Hide result</div>
+        <iframe id="f3689f76-071a-43ef-af6c-8e8152378b9a" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -233,8 +233,8 @@ you can turn off the field in the generated form by passing
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('43a15ffd-3d39-4d1e-b1a4-4c878c2623a8', this)">▼ Hide result</div>
-        <iframe id="43a15ffd-3d39-4d1e-b1a4-4c878c2623a8" src="doc_includes/cookbook_tables/test_how_do_i_enable_searching_filter_on_columns.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('96210225-85a4-41fd-869d-60acf360b8c3', this)">▼ Hide result</div>
+        <iframe id="96210225-85a4-41fd-869d-60acf360b8c3" src="doc_includes/cookbook_tables/test_how_do_i_enable_searching_filter_on_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -264,8 +264,8 @@ This will display one search box to search both `year` and `name` columns:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('77c626ea-cfcf-416b-8178-c28af1ef332e', this)">▼ Hide result</div>
-        <iframe id="77c626ea-cfcf-416b-8178-c28af1ef332e" src="doc_includes/cookbook_tables/test_how_do_i_make_a_freetext_search_field.html" style="display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('a6887f84-58b3-40e7-9352-9e975e5d892a', this)">▼ Hide result</div>
+        <iframe id="a6887f84-58b3-40e7-9352-9e975e5d892a" src="doc_includes/cookbook_tables/test_how_do_i_make_a_freetext_search_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -414,6 +414,24 @@ How do I access table data programmatically (like for example to dump to json)?
 
 Here's a simple example that prints a table to stdout:
 
+.. code-block:: python
+
+    def print_table(table):
+        for row in table.cells_for_rows():
+            for cell in row:
+                print(cell.render_formatted(), end=' ')
+            print()
+
+    table = Table(auto__model=Album).bind(request=req('get'))
+    print_table(table)
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('140ad55f-71a3-4d0e-ac75-28c679fcfd18', this)">▼ Hide result</div>
+        <iframe id="140ad55f-71a3-4d0e-ac75-28c679fcfd18" src="doc_includes/cookbook_tables/test_how_do_i_access_table_data_programmatically_.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
+
 
 .. _Column.attr:
 
@@ -429,16 +447,26 @@ Let's say we have two models:
         a = models.IntegerField()
 
 
-we can build a table of `Bar` that shows the data of `a` like this:
+    class Bar(models.Model):
+        b = models.IntegerField()
+        c = models.ForeignKey(Foo, on_delete=models.CASCADE)
 
+
+we can build a table of `Bar` that shows the data of `a` like this:
 
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Bar,
         columns__a=Column(attr='c__a'),
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('0b731423-c337-441d-a4b3-8bbcfb154fa9', this)">▼ Hide result</div>
+        <iframe id="0b731423-c337-441d-a4b3-8bbcfb154fa9" src="doc_includes/cookbook_tables/test_how_do_i_access_foreign_key_related_data_in_a_column.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Table.sortable:
@@ -450,25 +478,35 @@ How do I turn off sorting? (on a column or table wide)
 
 To turn off column on a column pass it `sortable=False` (you can also use a lambda here!):
 
-
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__sortable=False,
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('6a49a76f-43d8-49ad-9932-8aa034ff09fa', this)">▼ Hide result</div>
+        <iframe id="6a49a76f-43d8-49ad-9932-8aa034ff09fa" src="doc_includes/cookbook_tables/test_how_do_i_turn_off_sorting.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 and to turn it off on the entire table:
 
-
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         sortable=False,
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('3bbf4d19-4c8f-4a75-a39e-d12d5fea2453', this)">▼ Hide result</div>
+        <iframe id="3bbf4d19-4c8f-4a75-a39e-d12d5fea2453" src="doc_includes/cookbook_tables/test_how_do_i_turn_off_sorting1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Column.display_name:
@@ -481,11 +519,17 @@ The `display_name` property of a column is displayed in the header.
 
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__display_name='header title',
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('1c824de0-3883-4a2c-bb9d-f2701e382d32', this)">▼ Hide result</div>
+        <iframe id="1c824de0-3883-4a2c-bb9d-f2701e382d32" src="doc_includes/cookbook_tables/test_how_do_i_specify_the_title_of_a_header.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Column.sort_default_desc:
@@ -511,16 +555,22 @@ How do I group columns?
 
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__name__group='foo',
-        columns__year__group='foo',
+        columns__artist__group='bar',
+        columns__year__group='bar',
     )
 
 
 The grouping only works if the columns are next to each other, otherwise you'll get multiple groups. The groups are rendered by default as a second header row above the normal header row with colspans to group the headers.
 
+.. raw:: html
+
     
+        <div class="iframe_collapse" onclick="toggle('0a0b5838-441d-47a3-a57a-cfb7f89b7c01', this)">▼ Hide result</div>
+        <iframe id="0a0b5838-441d-47a3-a57a-cfb7f89b7c01" src="doc_includes/cookbook_tables/test_how_do_i_group_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        
 
 
 .. _Column.auto_rowspan:
@@ -530,14 +580,20 @@ How do I get rowspan on a table?
 
 You can manually set the rowspan attribute via `row__attrs__rowspan` but this is tricky to get right because you also have to hide the cells that are "overwritten" by the rowspan. We supply a simpler method: `auto_rowspan`. It automatically makes sure the rowspan count is correct and the cells are hidden. It works by checking if the value of the cell is the same, and then it becomes part of the rowspan.
 
-
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__year__auto_rowspan=True,
+        columns__year__after=0,  # put the column first
     )
 
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('f6c164b4-daa2-4e30-899e-723a985f0a97', this)">▼ Hide result</div>
+        <iframe id="f6c164b4-daa2-4e30-899e-723a985f0a97" src="doc_includes/cookbook_tables/test_how_do_i_get_rowspan_on_a_table.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 
 .. _Column.bulk:
@@ -548,10 +604,9 @@ How do I enable bulk editing?
 Editing multiple items at a time is easy in iommi with the built in bulk
 editing. Enable it for a columns by passing `bulk__include=True`:
 
-
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__select__include=True,
         columns__year__bulk__include=True,
@@ -565,7 +620,12 @@ behavior and look of the bulk editing for the column.
 You also need to enable the select column, otherwise you can't select
 the columns you want to bulk edit.
 
+.. raw:: html
+
     
+        <div class="iframe_collapse" onclick="toggle('1615a79f-27ae-4592-a301-a3ceca88d1e3', this)">▼ Hide result</div>
+        <iframe id="1615a79f-27ae-4592-a301-a3ceca88d1e3" src="doc_includes/cookbook_tables/test_how_do_i_enable_bulk_editing.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        
 
 
 .. _Table.bulk:
@@ -573,10 +633,9 @@ the columns you want to bulk edit.
 How do I enable bulk delete?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 .. code-block:: python
 
-    Table(
+    table = Table(
         auto__model=Album,
         columns__select__include=True,
         bulk__actions__delete__include=True,
@@ -588,7 +647,11 @@ To enable the bulk delete, enable the `delete` action.
 You also need to enable the select column, otherwise you can't select
 the columns you want to delete.
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('94753f6e-435b-4d39-b9a4-de016f702109', this)">▼ Hide result</div>
+        <iframe id="94753f6e-435b-4d39-b9a4-de016f702109" src="doc_includes/cookbook_tables/test_how_do_i_enable_bulk_delete.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -598,7 +661,6 @@ How do I make a custom bulk action?
 You need to first show the select column by passing
 `columns__select__include=True`, then define a submit `Action` with a post
 handler:
-
 
 .. code-block:: python
 
