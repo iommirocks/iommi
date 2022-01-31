@@ -99,7 +99,6 @@ select2_enhanced_forms = Style(
 )
 
 base = Style(
-    select2_enhanced_forms,
     internal=True,
     base_template='iommi/base.html',
     content_block='content',
