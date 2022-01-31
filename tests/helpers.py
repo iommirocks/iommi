@@ -1,3 +1,4 @@
+import inspect
 import os.path
 import re
 from os import (
@@ -171,16 +172,17 @@ def _show_path_from_name(name):
     return Path(__file__).parent.parent / 'docs' / 'custom' / _show_relative_path_from_name(name)
 
 
-def show_output(name, part):
+def show_output(part):
+    frame = inspect.currentframe().f_back
+    name = os.path.join(Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name)
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
     with open(file_path, 'wb') as f:
         f.write(render_if_needed(req('get'), part).content)
 
 
-# This function exists to have a different name for make_doc_rsts.py
-def show_output_collapsed(name, part):
-    show_output(name, part)
+# This synonym exists to have a different name for make_doc_rsts.py
+show_output_collapsed = show_output
 
 
 def create_iframe(name, collapsed):

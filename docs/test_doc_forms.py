@@ -26,7 +26,7 @@ def test_forms():
     form = Form.create(auto__model=Album)
 
     # @test
-    show_output('forms/test_forms', form)
+    show_output(form)
     # @end
 
     # language=rst
@@ -95,7 +95,7 @@ def test_declarative_forms():
 
     user = User.objects.create(username='foo')
 
-    show_output('forms/test_declarative_forms', edit_user_view(req('get'), user.username))
+    show_output(edit_user_view(req('get'), user.username))
 
     post_request = req('post', first_name='foo', username='demo_', is_staff='1', **{'-submit': ''})
     post_request.user = user
@@ -155,7 +155,7 @@ def test_programmatic_forms():
     user = User.objects.create(username='foo')
     response = edit_user_view(user_req('get'), user.username).bind(request=user_req('get'))
 
-    show_output('forms/test_programmatic_forms', response)
+    show_output(response)
 
     post_request = req('post', first_name='foo', username='demo_foo', is_staff='1', **{'-submit': ''})
     post_request.user = user

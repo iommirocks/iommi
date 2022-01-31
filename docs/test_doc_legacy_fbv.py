@@ -47,7 +47,7 @@ def test_legacy_fbv(small_discography, artist):
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
     assert artist.name in response.content.decode()
-    show_output('legacy_fbv/test_legacy_fbv', response)
+    show_output(response)
     # @end
 
     # language=rst
@@ -82,7 +82,7 @@ def test_legacy_fbv_step2(small_discography, artist):
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
     assert artist.name in response.content.decode()
-    show_output('legacy_fbv/test_legacy_fbv_step2', response)
+    show_output(response)
     # @end
 
     # language=rst
@@ -171,7 +171,7 @@ def test_legacy_fbv_step4(artist, album, track):
 
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
-    show_output('legacy_fbv/test_legacy_fbv_step4', response)
+    show_output(response)
     assert artist.name in response.content.decode()
     # ajax dispatch
     response = view_artist(req('get', **{'/album/choices': album.name}), artist_name=artist.name)

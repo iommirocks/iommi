@@ -99,7 +99,7 @@ def test_how_do_i_make_an_entire_form_non_editable(album):
     form = form.bind(request=req('get'))
     assert form.fields.name.editable is False
     assert form.fields.year.editable is False
-    show_output('cookbook_forms/test_how_do_i_make_an_entire_form_non_editable', form)
+    show_output(form)
 
     # @end
 
@@ -127,7 +127,7 @@ def test_how_do_i_supply_a_custom_validator():
 
     form = form.bind(request=req('post', name='foo', **{'-submit': ''}))
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
-    show_output('cookbook_forms/test_how_do_i_supply_a_custom_validator', form)
+    show_output(form)
 
 
 def test_how_do_i_validate_multiple_fields_together():
@@ -193,7 +193,7 @@ def test_how_do_i_supply_a_custom_initial_value():
     form = form.bind(request=req('get'))
     assert form.fields.name.value == 'Paranoid'
     assert form.fields.year.value == 1970
-    show_output('cookbook_forms/test_how_do_i_supply_a_custom_initial_value', form)
+    show_output(form)
 
     # language=rst
     """
@@ -251,7 +251,7 @@ def test_how_do_i_change_the_order_of_the_fields():
 
     form = form.bind(request=req('get'))
     assert list(form.fields.keys()) == ['artist', 'year', 'name']
-    show_output('cookbook_forms/test_how_do_i_change_the_order_of_the_fields', form)
+    show_output(form)
 
     # language=rst
     """
@@ -323,7 +323,7 @@ def test_how_do_i_override_rendering_of_an_entire_field():
     )
 
     # @test
-    show_output('cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field', form)
+    show_output(form)
     # @end
     
     # language=rst
@@ -337,7 +337,7 @@ def test_how_do_i_override_rendering_of_an_entire_field():
     )
 
     # @test
-    show_output('cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field1', form)
+    show_output(form)
     # @end
 
 
@@ -360,7 +360,7 @@ def test_how_do_i_override_rendering_of_the_input_field():
     )
 
     # @test
-    show_output('cookbook_forms/test_how_do_i_override_rendering_of_the_input_field', form)
+    show_output(form)
     # @end
     
     # language=rst
@@ -374,7 +374,7 @@ def test_how_do_i_override_rendering_of_the_input_field():
     )
 
     # @test
-    show_output('cookbook_forms/test_how_do_i_override_rendering_of_the_input_field1', form)
+    show_output(form)
     # @end
 
 
@@ -407,5 +407,5 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
 
     # @test
     form = Form(fields__date=Field.date(), iommi_style=my_style)
-    show_output('cookbook_forms/test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project', form)
+    show_output(form)
     # @end

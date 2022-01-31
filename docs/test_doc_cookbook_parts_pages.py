@@ -39,7 +39,7 @@ def test_how_do_i_override_part_of_a_part_page():
         subtitle = html.h2('It rocks')
 
     # @test
-    show_output('cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page', BasePage())
+    show_output(BasePage())
     # @end
 
     # language=rst
@@ -56,7 +56,7 @@ def test_how_do_i_override_part_of_a_part_page():
     # @test
 
     # @test
-    show_output('cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page1', index(req('get')))
+    show_output(index(req('get')))
     # @end
 
     # language=rst
@@ -74,7 +74,7 @@ def test_how_do_i_override_part_of_a_part_page():
         return IndexPage(parts__subtitle=None)
 
     # @test
-    show_output('cookbook_parts_pages/test_how_do_i_override_part_of_a_part_page2', index(req('get')))
+    show_output(index(req('get')))
     # @end
 
     # language=rst
@@ -138,7 +138,7 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
         return MyPage(context=context)
 
     # @test
-    show_output('cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered', index(req('get')))
+    show_output(index(req('get')))
     # @end
 
     # language=rst
@@ -155,5 +155,5 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
     )
 
     # @test
-    show_output('cookbook_parts_pages/test_how_do_i_specify_the_context_used_when_a_template_is_rendered1', index(req('get')))
+    show_output(index(req('get')))
     # @end

@@ -143,7 +143,7 @@ def test_explicit_tables(small_discography):
     """
 
     # @test
-    show_output('tables/test_explicit_tables', albums(req('get')))
+    show_output(albums(req('get')))
     # @end
 
 
@@ -187,7 +187,7 @@ def test_table_of_plain_python_objects():
         return FooTable(rows=foos)
 
     # @test
-    show_output('tables/test_table_of_plain_python_objects', plain_objs_view(req('get')))
+    show_output(plain_objs_view(req('get')))
     # @end
 
     # language=rst

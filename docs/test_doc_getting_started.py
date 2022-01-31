@@ -94,7 +94,7 @@ def test_2__your_first_form():
     ]
 
     # @test
-    show_output('getting_started/test_2__your_first_form', urlpatterns[0].callback(req('get')))
+    show_output(urlpatterns[0].callback(req('get')))
     # @end
 
 
@@ -116,7 +116,7 @@ def test_3__your_first_table(small_discography):
     ]
 
     # @test
-    show_output('getting_started/test_3__your_first_table', urlpatterns[0].callback(req('get')))
+    show_output(urlpatterns[0].callback(req('get')))
     # @end
 
     # language=rst
@@ -133,7 +133,7 @@ def test_3__your_first_table(small_discography):
     ]
 
     # @test
-    show_output('getting_started/test_3__your_first_table1', urlpatterns[0].callback(req('get')))
+    show_output(urlpatterns[0].callback(req('get')))
     # @end
 
 
@@ -171,7 +171,7 @@ def test_4__your_first_page():
     ]
 
     # @test
-    show_output('getting_started/test_4__your_first_page', urlpatterns[0].callback(req('get')))
+    show_output(urlpatterns[0].callback(req('get')))
     # @end
 
 
@@ -214,7 +214,7 @@ def test_5__a_simple_function_based_view():
     ]
 
     # @test
-    show_output('getting_started/test_5__a_simple_function_based_view', urlpatterns[0].callback(req('get'), name='Tony'))
+    show_output(urlpatterns[0].callback(req('get'), name='Tony'))
     # @end
 
 

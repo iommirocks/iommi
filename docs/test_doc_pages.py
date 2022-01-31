@@ -54,7 +54,7 @@ def test_example():
     """
 
     # @test
-    show_output_collapsed('pages/test_example', MyPage())
+    show_output_collapsed(MyPage())
     # @end
 
 
@@ -99,7 +99,7 @@ def test_page(small_discography):
     """
 
     # @test
-    show_output_collapsed('pages/test_page', MyPage(context__foo='foo!'))
+    show_output_collapsed(MyPage(context__foo='foo!'))
     # @end
 
 

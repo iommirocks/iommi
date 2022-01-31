@@ -28,8 +28,8 @@ The following forms all accomplish this goal (you can use `form.as_view()` to cr
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('4400f7fa-4150-445a-9e69-5a0a6d2507fd', this)">▼ Hide result</div>
-        <iframe id="4400f7fa-4150-445a-9e69-5a0a6d2507fd" src="doc_includes/equivalency/test_equivalence.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('47e6d733-5a1f-4505-9742-d14d6fe48fa0', this)">▼ Hide result</div>
+        <iframe id="47e6d733-5a1f-4505-9742-d14d6fe48fa0" src="doc_includes/equivalency/test_equivalence.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -45,8 +45,8 @@ The following forms all accomplish this goal (you can use `form.as_view()` to cr
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('f7e0f46a-6c61-464c-8fa6-9e4304e418db', this)">► Show result</div>
-        <iframe id="f7e0f46a-6c61-464c-8fa6-9e4304e418db" src="doc_includes/equivalency/test_equivalence1.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('f5486d25-9097-46d3-839d-e60f059f817f', this)">► Show result</div>
+        <iframe id="f5486d25-9097-46d3-839d-e60f059f817f" src="doc_includes/equivalency/test_equivalence1.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -60,8 +60,8 @@ The following forms all accomplish this goal (you can use `form.as_view()` to cr
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('bfb4038d-bae6-4dc9-9cfa-0944611875ea', this)">► Show result</div>
-        <iframe id="bfb4038d-bae6-4dc9-9cfa-0944611875ea" src="doc_includes/equivalency/test_equivalence2.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('4153e20c-5494-4c8d-a395-a51d5da48d67', this)">► Show result</div>
+        <iframe id="4153e20c-5494-4c8d-a395-a51d5da48d67" src="doc_includes/equivalency/test_equivalence2.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -77,8 +77,8 @@ The following forms all accomplish this goal (you can use `form.as_view()` to cr
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('83f19eb5-0d71-4987-93d3-b4edaae4d090', this)">► Show result</div>
-        <iframe id="83f19eb5-0d71-4987-93d3-b4edaae4d090" src="doc_includes/equivalency/test_equivalence3.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('d4b8ac30-5a23-4598-9866-d8da20787e3a', this)">► Show result</div>
+        <iframe id="d4b8ac30-5a23-4598-9866-d8da20787e3a" src="doc_includes/equivalency/test_equivalence3.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -94,8 +94,8 @@ The following forms all accomplish this goal (you can use `form.as_view()` to cr
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('d97bcae6-4985-41e3-ba6e-27713b158f66', this)">► Show result</div>
-        <iframe id="d97bcae6-4985-41e3-ba6e-27713b158f66" src="doc_includes/equivalency/test_equivalence4.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('a91dfce4-44e0-4c5b-b0df-d9cb05b489bb', this)">► Show result</div>
+        <iframe id="a91dfce4-44e0-4c5b-b0df-d9cb05b489bb" src="doc_includes/equivalency/test_equivalence4.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -111,8 +111,8 @@ The following forms all accomplish this goal (you can use `form.as_view()` to cr
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('74170b1d-bc61-47b3-93ea-206ad29f0aa4', this)">► Show result</div>
-        <iframe id="74170b1d-bc61-47b3-93ea-206ad29f0aa4" src="doc_includes/equivalency/test_equivalence5.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('460f5735-bd64-4e71-b392-67820f9e3e98', this)">► Show result</div>
+        <iframe id="460f5735-bd64-4e71-b392-67820f9e3e98" src="doc_includes/equivalency/test_equivalence5.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 Without using the `auto` features:
@@ -133,8 +133,8 @@ Without using the `auto` features:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('83a93a78-eaeb-4811-b9f6-64fba9b9a037', this)">► Show result</div>
-        <iframe id="83a93a78-eaeb-4811-b9f6-64fba9b9a037" src="doc_includes/equivalency/test_equivalence6.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('bc2b686e-727c-4d2e-9bae-4e706638c67d', this)">► Show result</div>
+        <iframe id="bc2b686e-727c-4d2e-9bae-4e706638c67d" src="doc_includes/equivalency/test_equivalence6.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -150,8 +150,8 @@ Without using the `auto` features:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('8e99054a-d97e-423f-a6c4-454383404848', this)">► Show result</div>
-        <iframe id="8e99054a-d97e-423f-a6c4-454383404848" src="doc_includes/equivalency/test_equivalence7.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('f163205b-8e39-4a37-abed-66c218aac259', this)">► Show result</div>
+        <iframe id="f163205b-8e39-4a37-abed-66c218aac259" src="doc_includes/equivalency/test_equivalence7.html" style="background: white; display: none; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 You can read more about this in the philosophy section under :ref:`philosophy_hybrid_api`.

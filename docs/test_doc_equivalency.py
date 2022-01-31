@@ -40,7 +40,7 @@ def test_equivalence():
     )
 
     # @test
-    show_output('equivalency/test_equivalence', form)
+    show_output(form)
     # @end
 
     # language=rst
@@ -55,7 +55,7 @@ def test_equivalence():
     )
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence1', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst
@@ -68,7 +68,7 @@ def test_equivalence():
     )
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence2', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst
@@ -83,7 +83,7 @@ def test_equivalence():
     form = ArtistForm.create()
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence3', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst
@@ -98,7 +98,7 @@ def test_equivalence():
     form = ArtistForm.create()
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence4', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst
@@ -113,7 +113,7 @@ def test_equivalence():
     form = ArtistForm.create()
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence5', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst
@@ -137,7 +137,7 @@ def test_equivalence():
     form = ArtistForm()
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence6', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst
@@ -152,7 +152,7 @@ def test_equivalence():
     )
 
     # @test
-    show_output_collapsed('equivalency/test_equivalence7', form)
+    show_output_collapsed(form)
     # @end
 
     # language=rst

@@ -65,13 +65,9 @@ for source in docs_dir.glob('test_*.py'):
                             target_f.write(line)
                     elif state == 'only test':
                         if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
-                            assert stripped_line.startswith("show_output('") or stripped_line.startswith("show_output_collapsed('"), "make_doc_rsts.py only supports ' for strings"  # note the extra ' at the end!
-                            name = re.search("'(.*?)'", stripped_line).groups()[0]
-
-                            expected_name = join(target.stem, func_name)
+                            name = join(target.stem, func_name)
                             if func_count:
-                                expected_name += str(func_count)
-                            assert expected_name == name, f'expected: {expected_name}, actual:{name}'
+                                name += str(func_count)
                             func_count += 1
 
                             target_f.write('.. raw:: html\n\n')

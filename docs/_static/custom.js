@@ -18,7 +18,7 @@ docReady(function() {
     var iframes = document.querySelectorAll("iframe");
     for( var i = 0; i < iframes.length; i++) {
         iframes[i].addEventListener('load', function(e) {
-            resizeIFrameToFitContent( e.target );
+            resizeIFrameToFitContent(e.target);
         });
     }
 });
@@ -28,6 +28,7 @@ function toggle(id, source) {
     if (e.style.display === 'none') {
         e.style.display = '';
         source.innerText = '▼ Hide result';
+        resizeIFrameToFitContent(e);
     }
     else {
         e.style.display = 'none';

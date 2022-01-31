@@ -11,8 +11,8 @@ iommi forms is an alternative forms system for Django. It is inspired by the sta
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('98400e7e-e31e-460d-9db7-f6df607365f8', this)">▼ Hide result</div>
-        <iframe id="98400e7e-e31e-460d-9db7-f6df607365f8" src="doc_includes/forms/test_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('ca460e11-8a3d-440f-9950-d77833ae7559', this)">▼ Hide result</div>
+        <iframe id="ca460e11-8a3d-440f-9950-d77833ae7559" src="doc_includes/forms/test_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 Major features compared to Django forms:
@@ -76,8 +76,8 @@ You can create forms declaratively, similar to Django forms. There are some impo
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('74f8e549-e44f-4c70-ac14-713edb968247', this)">▼ Hide result</div>
-        <iframe id="74f8e549-e44f-4c70-ac14-713edb968247" src="doc_includes/forms/test_declarative_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('0c7c6a14-eddd-444d-bd35-69af752118f5', this)">▼ Hide result</div>
+        <iframe id="0c7c6a14-eddd-444d-bd35-69af752118f5" src="doc_includes/forms/test_declarative_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 Note that we don't need any template here.
@@ -124,8 +124,8 @@ The declarative style is very readable, but sometimes you don't know until runti
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('87abd96a-711c-4de9-a719-00c62aa2e15a', this)">▼ Hide result</div>
-        <iframe id="87abd96a-711c-4de9-a719-00c62aa2e15a" src="doc_includes/forms/test_programmatic_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('82b8fb10-aacf-4579-b723-6df76d385f5b', this)">▼ Hide result</div>
+        <iframe id="82b8fb10-aacf-4579-b723-6df76d385f5b" src="doc_includes/forms/test_programmatic_forms.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 

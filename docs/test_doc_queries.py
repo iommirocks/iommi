@@ -149,7 +149,7 @@ def test_stand_alone_example():
     Car.objects.create(name='Tonys car', make='Toyota')
     Car.objects.create(name='Ozzys car', make='Toyota')
     # TODO: go through these examples, as they don't really work... and remove the images and do show_output instead
-    # show_output('queries/test_stand_alone_example', cars(req('get')))
+    # show_output(cars(req('get')))
     # @end
 
     # language=rst

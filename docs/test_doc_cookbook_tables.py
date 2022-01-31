@@ -108,7 +108,7 @@ def test_how_do_i_make_a_link_in_a_cell(album):
     )
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_make_a_link_in_a_cell', table)
+    show_output(table)
     # @end
 
 
@@ -148,7 +148,7 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
     )
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_', table.refine(rows=foos))
+    show_output(table.refine(rows=foos))
     # @end
 
     # language=rst
@@ -210,7 +210,7 @@ def test_how_do_i_reorder_columns():
     table = Table(auto__model=Foo, columns__c__after=-1)
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_reorder_columns', table.refine(rows=[]))
+    show_output(table.refine(rows=[]))
     # @end
 
     # language=rst
@@ -221,7 +221,7 @@ def test_how_do_i_reorder_columns():
     table = Table(auto__model=Foo, columns__c__after='a')
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_reorder_columns1', table.refine(rows=[]))
+    show_output(table.refine(rows=[]))
     # @end
 
     # language=rst
@@ -234,7 +234,7 @@ def test_how_do_i_reorder_columns():
     table = Table(auto__model=Foo, columns__a__after=LAST)
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_reorder_columns2', table.refine(rows=[]))
+    show_output(table.refine(rows=[]))
     # @end
 
 
@@ -270,7 +270,7 @@ def test_how_do_i_enable_searching_filter_on_columns():
     """
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_enable_searching_filter_on_columns', table)
+    show_output(table)
     # @end
 
 
@@ -302,7 +302,7 @@ def test_how_do_i_make_a_freetext_search_field():
     """
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_make_a_freetext_search_field', table.refine(rows=[]))
+    show_output(table.refine(rows=[]))
     # @end
 
 
@@ -487,7 +487,7 @@ def test_how_do_i_access_table_data_programmatically_(capsys, small_discography)
 
     # @test
     captured = capsys.readouterr()
-    show_output('cookbook_tables/test_how_do_i_access_table_data_programmatically_', HttpResponse('<html><style>html {color: black; background: white}</style><pre>' + captured.out + '</pre></html>'))
+    show_output(HttpResponse('<html><style>html {color: black; background: white}</style><pre>' + captured.out + '</pre></html>'))
     # @end
 
 
@@ -532,7 +532,7 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     # @test
     f = Foo(a=7)
     b = Bar(b=3, c=f)
-    show_output('cookbook_tables/test_how_do_i_access_foreign_key_related_data_in_a_column', table.refine(rows=[b]))
+    show_output(table.refine(rows=[b]))
     # @end
 
 
@@ -555,7 +555,7 @@ def test_how_do_i_turn_off_sorting(small_discography):
     )
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_turn_off_sorting', table)
+    show_output(table)
     # @end
 
     # language=rst
@@ -569,7 +569,7 @@ def test_how_do_i_turn_off_sorting(small_discography):
     )
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_turn_off_sorting1', table)
+    show_output(table)
     # @end
 
 
@@ -591,7 +591,7 @@ def test_how_do_i_specify_the_title_of_a_header(small_discography):
     )
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_specify_the_title_of_a_header', table)
+    show_output(table)
     # @end
 
 
@@ -634,7 +634,7 @@ def test_how_do_i_group_columns():
     """
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_group_columns', table)
+    show_output(table)
     # @end
     
 
@@ -657,7 +657,7 @@ def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
 
     # @test
     Album.objects.create(name='Live at Last', year=1980, artist=artist)
-    show_output('cookbook_tables/test_how_do_i_get_rowspan_on_a_table', table)
+    show_output(table)
     # @end
 
 
@@ -690,7 +690,7 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     """
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_enable_bulk_editing', table)
+    show_output(table)
     # @end
     
 
@@ -718,7 +718,7 @@ def test_how_do_i_enable_bulk_delete(small_discography):
     """
 
     # @test
-    show_output('cookbook_tables/test_how_do_i_enable_bulk_delete', table)
+    show_output(table)
     # @end
 
 
