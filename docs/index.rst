@@ -37,7 +37,7 @@ Contents:
    contributing
 
    @github <https://github.com/TriOptima/iommi>
-   @discord <https://img.shields.io/discord/773470009795018763?logo=discord&logoColor=fff?label=Discord&color=7389d8>
+   @discord <https://discord.gg/ZyYRYhf7Pd>
    @pypi <https://pypi.org/project/iommi/>
 
     
