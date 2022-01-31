@@ -71,8 +71,8 @@ Pick a model from your app, and let's build a create form for it! I'm using `Alb
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('fa92e1ce-9ba7-47c2-82e2-f18bbde628b1', this)">▼ Hide result</div>
-        <iframe id="fa92e1ce-9ba7-47c2-82e2-f18bbde628b1" src="doc_includes/getting_started/test_2__your_first_form.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('50cc1488-5676-4717-a83e-ab72cd92d3b7', this)">▼ Hide result</div>
+        <iframe id="50cc1488-5676-4717-a83e-ab72cd92d3b7" src="doc_includes/getting_started/test_2__your_first_form.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -94,8 +94,8 @@ Pick a model from your app, and let's build a table for it! Add this to your `ur
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('b4a265f7-88ac-44ac-9f22-9775a8f0dacb', this)">▼ Hide result</div>
-        <iframe id="b4a265f7-88ac-44ac-9f22-9775a8f0dacb" src="doc_includes/getting_started/test_3__your_first_table.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('2e363f48-f2e1-49db-b6bd-8241261266ad', this)">▼ Hide result</div>
+        <iframe id="2e363f48-f2e1-49db-b6bd-8241261266ad" src="doc_includes/getting_started/test_3__your_first_table.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 If you want, add a filter for some column:
@@ -113,8 +113,8 @@ If you want, add a filter for some column:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('c3a216e8-b466-434f-b65c-314ce42c5b25', this)">▼ Hide result</div>
-        <iframe id="c3a216e8-b466-434f-b65c-314ce42c5b25" src="doc_includes/getting_started/test_3__your_first_table1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('bedf23cd-ae78-4e87-8146-f5297b2e2f05', this)">▼ Hide result</div>
+        <iframe id="bedf23cd-ae78-4e87-8146-f5297b2e2f05" src="doc_includes/getting_started/test_3__your_first_table1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -152,8 +152,8 @@ then hook into `urls.py`:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('b25a0f4d-e1f0-4dcf-8d66-fe5afc310fab', this)">▼ Hide result</div>
-        <iframe id="b25a0f4d-e1f0-4dcf-8d66-fe5afc310fab" src="doc_includes/getting_started/test_4__your_first_page.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('bbb07eb8-8367-4d74-a2a1-79d8f828abe9', this)">▼ Hide result</div>
+        <iframe id="bbb07eb8-8367-4d74-a2a1-79d8f828abe9" src="doc_includes/getting_started/test_4__your_first_page.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -190,8 +190,8 @@ middleware you can return iommi objects from your view:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('ee841d53-0c0f-4764-af9e-fed3f3f12296', this)">▼ Hide result</div>
-        <iframe id="ee841d53-0c0f-4764-af9e-fed3f3f12296" src="doc_includes/getting_started/test_5__a_simple_function_based_view.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('6b967c5d-9ac7-4440-a717-532e2bd4be9d', this)">▼ Hide result</div>
+        <iframe id="6b967c5d-9ac7-4440-a717-532e2bd4be9d" src="doc_includes/getting_started/test_5__a_simple_function_based_view.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 

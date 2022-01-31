@@ -22,8 +22,8 @@ Let's say we have a simple view to display an album:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('d20f75f2-6135-4687-86ab-31a981848180', this)">▼ Hide result</div>
-        <iframe id="d20f75f2-6135-4687-86ab-31a981848180" src="doc_includes/legacy_fbv/test_legacy_fbv.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('b6f0a74a-4cff-4bce-a4b2-ed6a48afe94b', this)">▼ Hide result</div>
+        <iframe id="b6f0a74a-4cff-4bce-a4b2-ed6a48afe94b" src="doc_includes/legacy_fbv/test_legacy_fbv.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 There's a table in the template for the tracks but it's all manual written `<table>`, `<tr>`, etc tags and so doesn't have sorting, and it's just a lot of code in that template. It would be nicer to use an iommi table! 
@@ -54,8 +54,8 @@ Add an iommi table
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('6d700f92-6db9-4348-aae0-a8877de7fd0c', this)">▼ Hide result</div>
-        <iframe id="6d700f92-6db9-4348-aae0-a8877de7fd0c" src="doc_includes/legacy_fbv/test_legacy_fbv_step2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('e6e48091-32fe-4f1f-8683-791e2dc9b333', this)">▼ Hide result</div>
+        <iframe id="e6e48091-32fe-4f1f-8683-791e2dc9b333" src="doc_includes/legacy_fbv/test_legacy_fbv_step2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 Now in the template we can add `{{ tracks }}` to render the table, and we can delete all the old manually written table html.
@@ -132,6 +132,6 @@ You should only create one iommi component in order to get the automatic namespa
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('aed2310a-6f54-4d51-8558-a79c2355b744', this)">▼ Hide result</div>
-        <iframe id="aed2310a-6f54-4d51-8558-a79c2355b744" src="doc_includes/legacy_fbv/test_legacy_fbv_step4.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('4861bf71-0389-48d4-9163-4eb4cf9e5f49', this)">▼ Hide result</div>
+        <iframe id="4861bf71-0389-48d4-9163-4eb4cf9e5f49" src="doc_includes/legacy_fbv/test_legacy_fbv_step4.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     

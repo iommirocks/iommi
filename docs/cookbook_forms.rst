@@ -59,8 +59,8 @@ This is a very common case so there's a special syntax for this: pass a `bool` t
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('20ce4ea8-dbe6-4ea0-be62-fc1c82031be0', this)">▼ Hide result</div>
-        <iframe id="20ce4ea8-dbe6-4ea0-be62-fc1c82031be0" src="doc_includes/cookbook_forms/test_how_do_i_make_an_entire_form_non_editable.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('b20ed97f-151e-42dd-9647-67442e6b2b25', this)">▼ Hide result</div>
+        <iframe id="b20ed97f-151e-42dd-9647-67442e6b2b25" src="doc_includes/cookbook_forms/test_how_do_i_make_an_entire_form_non_editable.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -84,8 +84,8 @@ Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Retur
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('9a1a96aa-8b24-464e-aa34-8e49a47c7e5d', this)">▼ Hide result</div>
-        <iframe id="9a1a96aa-8b24-464e-aa34-8e49a47c7e5d" src="doc_includes/cookbook_forms/test_how_do_i_supply_a_custom_validator.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('63eda868-b572-4d93-84e8-a22d2ed77ff4', this)">▼ Hide result</div>
+        <iframe id="63eda868-b572-4d93-84e8-a22d2ed77ff4" src="doc_includes/cookbook_forms/test_how_do_i_supply_a_custom_validator.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 How do I validate multiple fields together?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,8 +137,8 @@ Pass a value or callable to the `initial` member:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('8b263338-5e2e-47ab-b7dc-fb3a336494d7', this)">▼ Hide result</div>
-        <iframe id="8b263338-5e2e-47ab-b7dc-fb3a336494d7" src="doc_includes/cookbook_forms/test_how_do_i_supply_a_custom_initial_value.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('275c9727-1602-4ba3-af6d-c4a0398fb3e3', this)">▼ Hide result</div>
+        <iframe id="275c9727-1602-4ba3-af6d-c4a0398fb3e3" src="doc_includes/cookbook_forms/test_how_do_i_supply_a_custom_initial_value.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 If there are `GET` parameters in the request, iommi will use them to fill in the appropriate fields. This is very handy for supplying links with partially filled in forms from just a link on another part of the site.
 
@@ -183,8 +183,8 @@ You can change the order in your model definitions as this is what iommi uses. I
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('13392965-2636-43e9-81c0-f27b33875d95', this)">▼ Hide result</div>
-        <iframe id="13392965-2636-43e9-81c0-f27b33875d95" src="doc_includes/cookbook_forms/test_how_do_i_change_the_order_of_the_fields.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('e63db685-c379-4217-8a9f-275e3db5e31e', this)">▼ Hide result</div>
+        <iframe id="e63db685-c379-4217-8a9f-275e3db5e31e" src="doc_includes/cookbook_forms/test_how_do_i_change_the_order_of_the_fields.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 This will make the field order `artist`, `year`, `name`.
 
@@ -248,8 +248,8 @@ Pass a template name:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('b0d25cb4-bf44-494c-bdf6-9387a4eb7deb', this)">▼ Hide result</div>
-        <iframe id="b0d25cb4-bf44-494c-bdf6-9387a4eb7deb" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('6bb837af-3f02-4a2d-8de9-6abe6294763b', this)">▼ Hide result</div>
+        <iframe id="6bb837af-3f02-4a2d-8de9-6abe6294763b" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
         
 
 or a `Template` object:
@@ -264,8 +264,8 @@ or a `Template` object:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('cd5f9ba5-4b8b-47b2-b4d5-d938688156c5', this)">▼ Hide result</div>
-        <iframe id="cd5f9ba5-4b8b-47b2-b4d5-d938688156c5" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('44942481-5fb9-45b9-a8b7-c7ad31b06f06', this)">▼ Hide result</div>
+        <iframe id="44942481-5fb9-45b9-a8b7-c7ad31b06f06" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_an_entire_field1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -288,8 +288,8 @@ Pass a template name or a `Template` object to the `input` namespace:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('17b3e892-80c7-40fe-b31c-316c3b874936', this)">▼ Hide result</div>
-        <iframe id="17b3e892-80c7-40fe-b31c-316c3b874936" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_the_input_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('62f87a62-7c2a-48b8-b4df-9d639dd5f370', this)">▼ Hide result</div>
+        <iframe id="62f87a62-7c2a-48b8-b4df-9d639dd5f370" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_the_input_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
         
 
 
@@ -304,8 +304,8 @@ Pass a template name or a `Template` object to the `input` namespace:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('f70bcb43-379f-44fe-9d14-fdf7c3f3607c', this)">▼ Hide result</div>
-        <iframe id="f70bcb43-379f-44fe-9d14-fdf7c3f3607c" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_the_input_field1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('4c13ef68-79d7-44e5-9a81-38a698addc9a', this)">▼ Hide result</div>
+        <iframe id="4c13ef68-79d7-44e5-9a81-38a698addc9a" src="doc_includes/cookbook_forms/test_how_do_i_override_rendering_of_the_input_field1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -332,6 +332,6 @@ always only see ISO-8601 dates).
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('c4f68613-f0ed-46d8-a45a-ba854c91fd29', this)">▼ Hide result</div>
-        <iframe id="c4f68613-f0ed-46d8-a45a-ba854c91fd29" src="doc_includes/cookbook_forms/test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('36dddcaa-4718-43ef-ae2b-bbfe34e91694', this)">▼ Hide result</div>
+        <iframe id="36dddcaa-4718-43ef-ae2b-bbfe34e91694" src="doc_includes/cookbook_forms/test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     

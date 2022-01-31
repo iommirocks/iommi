@@ -81,8 +81,8 @@ This is such a common case that there's a special case for it: pass the `url` an
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('8fb8c8f2-fd9e-471f-a8e6-dd3331d9bfa7', this)">▼ Hide result</div>
-        <iframe id="8fb8c8f2-fd9e-471f-a8e6-dd3331d9bfa7" src="doc_includes/cookbook_tables/test_how_do_i_make_a_link_in_a_cell.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('4f8cac52-860f-4567-af4e-cd038840a731', this)">▼ Hide result</div>
+        <iframe id="4f8cac52-860f-4567-af4e-cd038840a731" src="doc_includes/cookbook_tables/test_how_do_i_make_a_link_in_a_cell.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -116,8 +116,8 @@ And we want a computed column `square` that is the square of the value, then we 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('311395ed-1d82-448e-be0c-4579d1700910', this)">▼ Hide result</div>
-        <iframe id="311395ed-1d82-448e-be0c-4579d1700910" src="doc_includes/cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('bf2b82cd-db56-4c20-aa9b-5e04d7d395eb', this)">▼ Hide result</div>
+        <iframe id="bf2b82cd-db56-4c20-aa9b-5e04d7d395eb" src="doc_includes/cookbook_tables/test_how_do_i_create_a_column_based_on_computed_data_.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 or we could do:
@@ -170,8 +170,8 @@ If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('d37ad73f-be5b-4675-8458-d9feb4b59959', this)">▼ Hide result</div>
-        <iframe id="d37ad73f-be5b-4675-8458-d9feb4b59959" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('15512e79-bcfc-4b07-819e-39224aaba711', this)">▼ Hide result</div>
+        <iframe id="15512e79-bcfc-4b07-819e-39224aaba711" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 `-1` means the first, other numbers mean index. We can also put columns after another named column like so:
@@ -183,8 +183,8 @@ If we just do `Table(auto__model=Foo)` we'll get the columns in the order a, b, 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('4c5c9096-c1c5-422e-844a-bf79ddb68618', this)">▼ Hide result</div>
-        <iframe id="4c5c9096-c1c5-422e-844a-bf79ddb68618" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('a54b6cf0-f116-46b0-9486-03a3f567ba8a', this)">▼ Hide result</div>
+        <iframe id="a54b6cf0-f116-46b0-9486-03a3f567ba8a" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 this will put the columns in the order a, c, b.
@@ -198,8 +198,8 @@ There is a special value `LAST` (import from `tri_declarative`) to put something
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('d8111248-bc05-409f-b5c9-b86f5c292296', this)">▼ Hide result</div>
-        <iframe id="d8111248-bc05-409f-b5c9-b86f5c292296" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('40924e76-50cc-4ce1-b3d9-59b29e64531e', this)">▼ Hide result</div>
+        <iframe id="40924e76-50cc-4ce1-b3d9-59b29e64531e" src="doc_includes/cookbook_tables/test_how_do_i_reorder_columns2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -233,8 +233,8 @@ you can turn off the field in the generated form by passing
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('2f32d073-9ed0-4bdf-94ce-29faaaeb8f71', this)">▼ Hide result</div>
-        <iframe id="2f32d073-9ed0-4bdf-94ce-29faaaeb8f71" src="doc_includes/cookbook_tables/test_how_do_i_enable_searching_filter_on_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('0282a000-de56-416f-aad6-e5be9bc74854', this)">▼ Hide result</div>
+        <iframe id="0282a000-de56-416f-aad6-e5be9bc74854" src="doc_includes/cookbook_tables/test_how_do_i_enable_searching_filter_on_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -264,8 +264,8 @@ This will display one search box to search both `year` and `name` columns:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('0a0d6c9a-de5b-472b-a761-c1dec4b37d4b', this)">▼ Hide result</div>
-        <iframe id="0a0d6c9a-de5b-472b-a761-c1dec4b37d4b" src="doc_includes/cookbook_tables/test_how_do_i_make_a_freetext_search_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('62e6fbf1-fbdd-4372-a740-1b4209d13b09', this)">▼ Hide result</div>
+        <iframe id="62e6fbf1-fbdd-4372-a740-1b4209d13b09" src="doc_includes/cookbook_tables/test_how_do_i_make_a_freetext_search_field.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -428,8 +428,8 @@ Here's a simple example that prints a table to stdout:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('a8c70195-d02f-4043-aa93-7cdbae509776', this)">▼ Hide result</div>
-        <iframe id="a8c70195-d02f-4043-aa93-7cdbae509776" src="doc_includes/cookbook_tables/test_how_do_i_access_table_data_programmatically_.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('9f348bd8-7966-43ea-b711-3df10cfc1d86', this)">▼ Hide result</div>
+        <iframe id="9f348bd8-7966-43ea-b711-3df10cfc1d86" src="doc_includes/cookbook_tables/test_how_do_i_access_table_data_programmatically_.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -464,8 +464,8 @@ we can build a table of `Bar` that shows the data of `a` like this:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('66573977-4978-4d20-8639-deadbf75043e', this)">▼ Hide result</div>
-        <iframe id="66573977-4978-4d20-8639-deadbf75043e" src="doc_includes/cookbook_tables/test_how_do_i_access_foreign_key_related_data_in_a_column.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('4c04eaec-7386-4f07-aaf0-6bc7a7448a1c', this)">▼ Hide result</div>
+        <iframe id="4c04eaec-7386-4f07-aaf0-6bc7a7448a1c" src="doc_includes/cookbook_tables/test_how_do_i_access_foreign_key_related_data_in_a_column.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -488,8 +488,8 @@ To turn off column on a column pass it `sortable=False` (you can also use a lamb
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('68fb799b-bce3-47b3-9df9-2713de3d1471', this)">▼ Hide result</div>
-        <iframe id="68fb799b-bce3-47b3-9df9-2713de3d1471" src="doc_includes/cookbook_tables/test_how_do_i_turn_off_sorting.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('dca3aba0-0a32-47a0-9066-c22466ed0f90', this)">▼ Hide result</div>
+        <iframe id="dca3aba0-0a32-47a0-9066-c22466ed0f90" src="doc_includes/cookbook_tables/test_how_do_i_turn_off_sorting.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 and to turn it off on the entire table:
@@ -504,8 +504,8 @@ and to turn it off on the entire table:
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('8a9dc3f9-e1d8-4139-87a1-c494e83ca743', this)">▼ Hide result</div>
-        <iframe id="8a9dc3f9-e1d8-4139-87a1-c494e83ca743" src="doc_includes/cookbook_tables/test_how_do_i_turn_off_sorting1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('0ab2606e-5969-4a5e-801c-ee7c154584eb', this)">▼ Hide result</div>
+        <iframe id="0ab2606e-5969-4a5e-801c-ee7c154584eb" src="doc_includes/cookbook_tables/test_how_do_i_turn_off_sorting1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -527,8 +527,8 @@ The `display_name` property of a column is displayed in the header.
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('971c658c-6585-47d0-8342-2dc24032b34c', this)">▼ Hide result</div>
-        <iframe id="971c658c-6585-47d0-8342-2dc24032b34c" src="doc_includes/cookbook_tables/test_how_do_i_specify_the_title_of_a_header.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('e5559c32-e2e0-4d16-a883-e0693aff8058', this)">▼ Hide result</div>
+        <iframe id="e5559c32-e2e0-4d16-a883-e0693aff8058" src="doc_includes/cookbook_tables/test_how_do_i_specify_the_title_of_a_header.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -568,8 +568,8 @@ The grouping only works if the columns are next to each other, otherwise you'll 
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('bab6f703-e0d6-4427-8412-49c7308ad839', this)">▼ Hide result</div>
-        <iframe id="bab6f703-e0d6-4427-8412-49c7308ad839" src="doc_includes/cookbook_tables/test_how_do_i_group_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('5dbb74f0-29cc-4519-81d4-443abe48301d', this)">▼ Hide result</div>
+        <iframe id="5dbb74f0-29cc-4519-81d4-443abe48301d" src="doc_includes/cookbook_tables/test_how_do_i_group_columns.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
         
 
 
@@ -591,8 +591,8 @@ You can manually set the rowspan attribute via `row__attrs__rowspan` but this is
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('b77c5c77-939e-4a50-8d7e-d9329e3ed062', this)">▼ Hide result</div>
-        <iframe id="b77c5c77-939e-4a50-8d7e-d9329e3ed062" src="doc_includes/cookbook_tables/test_how_do_i_get_rowspan_on_a_table.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('f1eba926-a9ce-4762-abdb-965ed0fb49a1', this)">▼ Hide result</div>
+        <iframe id="f1eba926-a9ce-4762-abdb-965ed0fb49a1" src="doc_includes/cookbook_tables/test_how_do_i_get_rowspan_on_a_table.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -623,8 +623,8 @@ the columns you want to bulk edit.
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('efbde22f-6a3d-45f1-ac8e-d96be45dafce', this)">▼ Hide result</div>
-        <iframe id="efbde22f-6a3d-45f1-ac8e-d96be45dafce" src="doc_includes/cookbook_tables/test_how_do_i_enable_bulk_editing.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('816ab49a-24fd-461f-8244-711a5e01e572', this)">▼ Hide result</div>
+        <iframe id="816ab49a-24fd-461f-8244-711a5e01e572" src="doc_includes/cookbook_tables/test_how_do_i_enable_bulk_editing.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
         
 
 
@@ -650,8 +650,8 @@ the columns you want to delete.
 .. raw:: html
 
     
-        <div class="iframe_collapse" onclick="toggle('bc1af7bc-c600-45c8-b810-94aba1fe8dbf', this)">▼ Hide result</div>
-        <iframe id="bc1af7bc-c600-45c8-b810-94aba1fe8dbf" src="doc_includes/cookbook_tables/test_how_do_i_enable_bulk_delete.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+        <div class="iframe_collapse" onclick="toggle('60c444a4-d464-455a-a342-9e9b8c29079e', this)">▼ Hide result</div>
+        <iframe id="60c444a4-d464-455a-a342-9e9b8c29079e" src="doc_includes/cookbook_tables/test_how_do_i_enable_bulk_delete.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 

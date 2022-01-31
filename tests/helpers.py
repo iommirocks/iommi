@@ -172,9 +172,19 @@ def _show_path_from_name(name):
     return Path(__file__).parent.parent / 'docs' / 'custom' / _show_relative_path_from_name(name)
 
 
+_show_output_used = set()
+
+
 def show_output(part):
     frame = inspect.currentframe().f_back
-    name = os.path.join(Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name)
+    base_name = os.path.join(Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name)
+    name = base_name
+    counter = 0
+    while name in _show_output_used:
+        counter += 1
+        name = f'{name}{counter}'
+    _show_output_used.add(name)
+
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
     with open(file_path, 'wb') as f:
