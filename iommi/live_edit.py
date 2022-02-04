@@ -1,3 +1,4 @@
+import inspect
 import json
 from pathlib import Path
 
@@ -77,14 +78,22 @@ class LiveEditPage(Page):
     pass
 
 
-@csrf_exempt
-def live_edit_view(request, view, args, kwargs):
-    try:
-        import parso
-    except ImportError:
-        return HttpResponse('Live edit requires parso. Please `pip install parso`.')
+def get_class_ast(cls):
+    import parso
 
-    view = get_wrapped_view(view)
+    filename = inspect.getsourcefile(cls)
+    with open(filename) as f:
+        entire_file = f.read()
+
+    is_unix_line_endings = '\r\n' not in entire_file
+
+    ast_of_entire_file = parso.parse(entire_file)
+    return find_node(name=cls.__name__, node=ast_of_entire_file, node_type='classdef'), is_unix_line_endings, ast_of_entire_file, filename
+
+
+def get_ast(view):
+    import parso
+
     # Read the old code
     try:
         # view is a function based view
@@ -102,6 +111,23 @@ def live_edit_view(request, view, args, kwargs):
     is_unix_line_endings = '\r\n' not in entire_file
 
     ast_of_old_code = find_view(view, ast_of_entire_file)
+
+    if ast_of_old_code is None:
+        return get_class_ast(view.__class__)
+
+    return ast_of_old_code, is_unix_line_endings, ast_of_entire_file, filename
+
+
+@csrf_exempt
+def live_edit_view(request, view, args, kwargs):
+    try:
+        import parso
+    except ImportError:
+        return HttpResponse('Live edit requires parso. Please `pip install parso`.')
+
+    view = get_wrapped_view(view)
+
+    ast_of_old_code, is_unix_line_endings, ast_of_entire_file, filename = get_ast(view)
     assert ast_of_old_code is not None
 
     flow_direction = request.GET.get('_iommi_live_edit') or 'column'
@@ -198,24 +224,21 @@ def live_edit_view(request, view, args, kwargs):
         ),
         parts__script=html.script(
             mark_safe(
+                # language=javascript
                 '''
-                    function iommi_debounce(func, wait) {
-                        let timeout;
-
-                        return (...args) => {
-                            const fn = () => func.apply(this, args);
-
-                            clearTimeout(timeout);
-                            timeout = setTimeout(() => fn(), wait);
-                        };
-                    }
-
                     var editor = ace.edit("editor");
                     editor.setTheme("ace/theme/cobalt");
                     editor.session.setMode("ace/mode/python");
                     editor.setShowPrintMargin(false);
 
                     async function update() {
+                        if (window.iommi_live_edit_updating) {
+                            return;
+                        }
+                    
+                        window.iommi_live_edit_updating = true;
+                        window.iommi_live_edit_needs_update = false;
+                        
                         let form_data = new FormData();
                         form_data.append('data', editor.getValue());
 
@@ -228,18 +251,23 @@ def live_edit_view(request, view, args, kwargs):
                             // TODO: get scroll position and restore it
                             document.getElementById('result').srcdoc = foo.page;
                         }
+                        window.iommi_live_edit_updating = false;
                     }
+                    
+                    setInterval(() => {
+                        if (!window.iommi_live_edit_needs_update) {
+                            return;
+                        }
+                        update();
+                    }, 200)
 
-                    function foo() {
-                        iommi_debounce(update, 200)();
-                    }
-
-                    editor.session.on('change', foo);
+                    window.iommi_live_edit_updating = false;
+                    window.iommi_live_edit_needs_update = true;
+                    
+                    editor.session.on('change', () => {window.iommi_live_edit_needs_update = true});
                     editor.setFontSize(14);
                     editor.session.setUseWrapMode(true);
-
-                    foo();
-        '''
+                '''
             )
         ),
     )
