@@ -255,7 +255,7 @@ if django.VERSION[:2] >= (3, 0):
 
     class ChoicesClassModel(models.Model):
         class ColorChoices(models.TextChoices):
-            PURPLE = ('purple', 'Purple')
+            PURPLE = ('purple_thing-thing', 'Purple')
             ORANGE = ('orange', 'Orange')
 
         color = models.CharField(choices=ColorChoices.choices, max_length=255)
