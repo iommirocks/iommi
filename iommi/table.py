@@ -46,6 +46,7 @@ from tri_declarative import (
     declarative,
     dispatch,
     EMPTY,
+    flatten,
     getattr_path,
     LAST,
     Namespace,
@@ -453,6 +454,7 @@ class Column(Part):
             attr=self.attr,
         )
         self.declared_column = self._declared
+        self.cell = Namespace(flatten(self.cell))
 
         # Not strict evaluate on purpose
         self.model = evaluate(self.model, **self.iommi_evaluate_parameters())

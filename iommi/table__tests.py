@@ -3662,3 +3662,9 @@ def test_text_choices():
         form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == display_name
     )
+
+
+def test_auto_rowspan_twice():
+    table = Table(rows=[Struct(a=1), Struct(a=1)], columns__a__auto_rowspan=True).refine_done()
+    table.bind(request=req('get')).__html__()
+    table.bind(request=req('get')).__html__()
