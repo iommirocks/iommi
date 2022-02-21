@@ -1,0 +1,235 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: iommi\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-12-20 12:49+0100\n"
+"PO-Revision-Date: 2022-02-21 11:21+0800\n"
+"Last-Translator: Yanhui Xie <yanhuixie@gmail.com>\n"
+"Language-Team: Chinese\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.0.1\n"
+
+#: action.py:143
+msgid "Submit"
+msgstr "提交"
+
+#: admin.py:171
+msgid "iommi administration"
+msgstr "iommi管理"
+
+#: admin.py:174 admin.py:489
+msgid "Change password"
+msgstr "修改密码"
+
+#: admin.py:176
+msgid "Logout"
+msgstr "登出"
+
+#: admin.py:267
+msgid "All models"
+msgstr "所有Model"
+
+#: admin.py:313
+#, python-format
+msgid "Create %(model_name)s"
+msgstr "创建 %(model_name)s"
+
+#: admin.py:432
+msgid "Username"
+msgstr "用户名"
+
+#: admin.py:433
+msgid "Password"
+msgstr "密码"
+
+#: admin.py:436
+msgid "Login"
+msgstr "登录"
+
+#: admin.py:451
+msgid "Unknown username or password"
+msgstr "未知的用户名或密码"
+
+#: admin.py:467
+msgid "Incorrect password"
+msgstr "错误的密码"
+
+#: admin.py:483
+msgid "New passwords does not match"
+msgstr "两次新密码不一致"
+
+#: admin.py:499
+msgid "Current password"
+msgstr "当前密码"
+
+#: admin.py:500
+msgid "New password"
+msgstr "新密码"
+
+#: admin.py:501
+msgid "Confirm password"
+msgstr "确认密码"
+
+#: experimental/edit_table.py:134 style_base.py:129 table.py:523
+msgid "Delete"
+msgstr "删除"
+
+#: experimental/edit_table.py:239 form.py:1422 style_base.py:127
+msgid "Save"
+msgstr "保存"
+
+#: form.py:798
+msgid "This field is required"
+msgstr "这个字段是必须的"
+
+#: form.py:1059 table.py:241
+msgid "Yes"
+msgstr "是"
+
+#: form.py:1059 table.py:243
+msgid "No"
+msgstr "否"
+
+#: form.py:1272
+msgid "create"
+msgstr "创建"
+
+#: form.py:1273
+msgid "edit"
+msgstr "编辑"
+
+#: form.py:1274
+msgid "delete"
+msgstr "删除"
+
+#: form.py:1416
+#, python-format
+msgid "%(crud_type)s %(model_name)s"
+msgstr "%(crud_type)s %(model_name)s"
+
+#: query.py:574 templates/iommi/query/form_toggle_script.html:26
+msgid "Switch to advanced search"
+msgstr "切换到高级搜索"
+
+#: query.py:698
+msgid "Search"
+msgstr "搜索"
+
+#: query.py:737
+msgid "Filter"
+msgstr "过滤"
+
+#: style_base.py:128
+#| msgid "create"
+msgid "Create"
+msgstr "创建"
+
+#: table.py:511
+msgid "Edit"
+msgstr "删除"
+
+#: table.py:536
+msgid "Download"
+msgstr "下载"
+
+#: table.py:548
+msgid "Run"
+msgstr "运行"
+
+#: table.py:1131
+msgid "Are you sure you want to delete these {} items?"
+msgstr "您确认要删除这 {} 个条目?"
+
+#: table.py:1146
+msgid "Yes, delete all!"
+msgstr "是，都删除！"
+
+#: table.py:1541 table.py:1738
+msgid "Bulk change"
+msgstr "批量修改"
+
+#: table.py:1744
+msgid "Bulk delete"
+msgstr "批量删除"
+
+#: templates/iommi/query/advanced.html:5
+msgid "Search query"
+msgstr "搜索查询"
+
+#: templates/iommi/query/advanced.html:9
+#: templates/iommi/query/form_toggle_script.html:48
+msgid "Show help"
+msgstr "显示帮助"
+
+#: templates/iommi/query/advanced.html:14
+msgid "Available fields"
+msgstr "可用的字段"
+
+#: templates/iommi/query/advanced.html:22
+msgid "Queries"
+msgstr "查询"
+
+#: templates/iommi/query/advanced.html:24
+msgid "Search for an exact value: <code>field_name=value</code>"
+msgstr "搜索一个精确值: <code>字段名=值</code>"
+
+#: templates/iommi/query/advanced.html:25
+msgid ""
+"Search for an exact value containing space: <code>field_name=\"value with "
+"space\"</code>"
+msgstr "搜索包含空格的精确值: <code>字段名=\"值 包含 空格\"</code>"
+
+#: templates/iommi/query/advanced.html:26
+msgid "Containing a text: <code>field_name:val</code>"
+msgstr "包含一个文本: <code>字段名:值</code>"
+
+#: templates/iommi/query/advanced.html:27
+msgid "Exclude a value: <code>field_name!=value</code>"
+msgstr "排除一个值: <code>字段名!=值</code>"
+
+#: templates/iommi/query/advanced.html:28
+msgid ""
+"You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
+"and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
+"code>"
+msgstr ""
+"您依然可以使用 <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> 和 "
+"<code>&gt;=</code> 来搜索区间值: <code>字段名&lt;10</code>"
+
+#: templates/iommi/query/advanced.html:29
+msgid ""
+"To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
+msgstr "要按日期搜索, 使用 ISO8601 格式: <code>字段名>1969-07-20</code>"
+
+#: templates/iommi/query/advanced.html:30
+msgid ""
+"You can filter for relative dates: <code>field_name < \"10 days ago\"</"
+"code>. Supported fields are <code>days</code>, <code>months</code>, "
+"<code>years</code>, <code>quarters</code> and <code>weekdays</code>. They "
+"can be negative and abbreviated from <code>\"10 days ago\"</code> to <code>"
+"\"-10d\"</code>."
+msgstr ""
+"您可以过滤相对日期: <code>字段名 < \"10 days ago\"</code>. 支持的字段有 "
+"<code>days</code>, <code>months</code>, <code>years</code>, <code>quarters</"
+"code> 和 <code>weekdays</code>. 它们可以是负值或缩写，从 <code>\"10 days ago"
+"\"</code> 到 <code>\"-10d\"</code>."
+
+#: templates/iommi/query/form_toggle_script.html:17
+msgid "Switch to basic search"
+msgstr "切换到简单搜索"
+
+#: templates/iommi/query/form_toggle_script.html:42
+msgid "Hide help"
+msgstr "隐藏帮助"
+
+#~ msgid "No results found"
+#~ msgstr "Suche erfolglos"
