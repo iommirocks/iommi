@@ -262,8 +262,9 @@ def set_sql_debug(new_state, validate=True):
 
 
 def get_sql_debug():
-    result = getattr(state, 'sql_debug', None)
-    if result is not None:
+    sentinel = object()
+    result = getattr(state, 'sql_debug', sentinel)
+    if result is not sentinel:
         return result
     return getattr(settings, 'SQL_DEBUG', SQL_DEBUG_LEVEL_WORST)
 
