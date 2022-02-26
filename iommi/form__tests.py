@@ -3138,4 +3138,4 @@ def test_non_editable_input_tag():
         fields__foo__initial='initial',
     )
     soup = BeautifulSoup(form.bind(request=req('get')).__html__(), 'html.parser').find(id='id_foo')
-    assert str(soup) == '<input id="id_foo" name="foo" readonly="" value="initial"/>'
+    assert str(soup) == '<input disabled="" id="id_foo" name="foo" value="initial"/>'
