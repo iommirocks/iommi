@@ -702,7 +702,17 @@ class Field(Part, Tag):
                 self.input.attrs.value = self.rendered_value
 
         if not self.editable:
-            self.input = self.iommi_namespace.input(children__text=self.rendered_value, **self.iommi_namespace.non_editable_input).bind(parent=self)
+            if self.iommi_namespace.non_editable_input.get('tag') == 'input':
+                self.input = self.iommi_namespace.input(
+                    attrs__value=self.rendered_value,
+                    attrs__readonly='',
+                    **self.iommi_namespace.non_editable_input
+                ).bind(parent=self)
+            else:
+                self.input = self.iommi_namespace.input(
+                    children__text=self.rendered_value,
+                    **self.iommi_namespace.non_editable_input
+                ).bind(parent=self)
 
     def on_bind(self) -> None:
         self._errors: Set[str] = set()

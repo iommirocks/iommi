@@ -265,7 +265,7 @@ def get_sql_debug():
     result = getattr(state, 'sql_debug', None)
     if result is not None:
         return result
-    return getattr(settings, 'SQL_DEBUG', None)
+    return getattr(settings, 'SQL_DEBUG', SQL_DEBUG_LEVEL_WORST)
 
 
 @contextmanager
@@ -316,6 +316,9 @@ def sql_debug_trace_sql(sql, params=None, **kwargs):
 
     kwargs['sql'] = True
     sql_debug(sql, extra=kwargs)
+
+    if get_sql_debug() == SQL_DEBUG_LEVEL_ALL_WITH_STACKS:
+        sql_debug('\n', extra=kwargs)
     return sql
 
 
@@ -346,6 +349,9 @@ def format_clickable_filename(file_name, line, fn, extra=None):
 
 
 def sql_debug_format_stack_trace(frame):
+    if frame is None:
+        return None
+
     base_path = os.path.abspath(os.path.join(settings.BASE_DIR, '..')) + "/"
     msg = []
     skip_template_code = False
@@ -439,9 +445,12 @@ def sql_debug_last_call(response):
 
 class CursorDebugWrapper(django_db_utils.CursorWrapper):
     def _execute_and_log(self, *, f, **kwargs):
-        frame = sys._getframe().f_back.f_back
-        while "django/db" in frame.f_code.co_filename:
-            frame = frame.f_back
+        if get_sql_debug() is not None:
+            frame = sys._getframe().f_back.f_back
+            while "django/db" in frame.f_code.co_filename:
+                frame = frame.f_back
+        else:
+            frame = None
 
         start = monotonic()
         try:

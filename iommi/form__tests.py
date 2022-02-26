@@ -3128,3 +3128,14 @@ def test_error_on_incorrect_search_fields():
     with pytest.raises(FieldError) as e:
         perform_ajax_dispatch(root=form, path='/fields/foo/endpoints/choices', value='a')
     assert 'invalid' in str(e.value)
+
+
+def test_non_editable_input_tag():
+    form = Form.create(
+        auto__model=Foo,
+        fields__foo__editable=False,
+        fields__foo__non_editable_input__tag='input',
+        fields__foo__initial='initial',
+    )
+    soup = BeautifulSoup(form.bind(request=req('get')).__html__(), 'html.parser').find(id='id_foo')
+    assert str(soup) == '<input id="id_foo" name="foo" readonly="" value="initial"/>'
