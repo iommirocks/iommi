@@ -705,7 +705,7 @@ class Field(Part, Tag):
             if self.iommi_namespace.non_editable_input.get('tag') == 'input':
                 self.input = self.iommi_namespace.input(
                     attrs__value=self.rendered_value,
-                    attrs__disabled='',
+                    attrs__disabled=True,
                     **self.iommi_namespace.non_editable_input
                 ).bind(parent=self)
             else:
