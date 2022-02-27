@@ -2462,6 +2462,8 @@ def test_form_h_tag():
     assert '<h1>$$$</h1>' in Form(title='$$$').bind(request=req('get')).__html__()
     assert '<b>$$$</b>' in Form(title='$$$', h_tag__tag='b').bind(request=req('get')).__html__()
     assert '<b>$$$</b>' in Form(h_tag=html.b('$$$')).bind(request=req('get')).__html__()
+    assert 'None' not in Form(h_tag=None).bind(request=req('get')).__html__()
+    assert 'None' not in Form(h_tag__include=False).bind(request=req('get')).__html__()
 
 
 @pytest.mark.django_db

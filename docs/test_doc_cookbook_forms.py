@@ -120,7 +120,7 @@ def test_how_do_i_supply_a_custom_validator():
         auto__model=Album,
         auto__include=['name'],
         fields__name__is_valid=
-            lambda form, field, parsed_data: (False, 'invalid!'),
+            lambda form, field, parsed_data: (parsed_data == 'only this value is valid', 'invalid!'),
     )
 
     # @test
