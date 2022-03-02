@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+4.6.0 (2022-03-02)
+~~~~~~~~~~~~~~~~~~
+
+* Chinese translation
+
+* Base style no longer includes the select2 assets
+
+* h_tag should be possible to set to None and to set include=False
+
+* Fixed default handling for get_sql_debug
+
+* Fixed issue where you couldn't set non-editable input tag to 'input'
+
+* Fix auto rowspan. It was broken if you did multiple bind() on the same object
+
+* Live edit improvements: Handle slower pages MUCH better, and editing of classes works
+
+* Fixed styling for non-editable select2
+
+
 4.5.1 (2022-01-12)
 ~~~~~~~~~~~~~~~~~~
 
