@@ -5,6 +5,7 @@ from typing import (
     Dict,
     Union,
 )
+import inspect
 
 from tri_declarative import (
     dispatch,
@@ -79,12 +80,10 @@ class Part(Traversable):
         extra=EMPTY,
         include=True,
     )
-    def __init__(self, **kwargs):
+    def __init__(self, _collect_instantiated_at_info=True, **kwargs):
         super(Part, self).__init__(**kwargs)
 
-        if iommi_debug_on():
-            import inspect
-
+        if _collect_instantiated_at_info:
             frame = inspect.currentframe()
             self._instantiated_at_info = get_instantiated_at_info(frame.f_back)
 
