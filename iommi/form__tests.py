@@ -2738,19 +2738,62 @@ def test_unique_constraint_violation():
             '-submit': '',
         },
     )
-    Form.create(auto__model=UniqueConstraintTest).bind(request=request).render_to_response()
+    form = Form.create(auto__model=UniqueConstraintTest)
+    form.bind(request=request).render_to_response()
     assert UniqueConstraintTest.objects.all().count() == 1
 
-    form = Form.create(
-        auto__model=UniqueConstraintTest,
-    ).bind(request=request)
-    form.render_to_response()
+    bound_form = form.bind(request=request)
+    bound_form.render_to_response()
 
-    assert form.is_valid() is False
-    assert form.get_errors() == {
+    assert bound_form.is_valid() is False
+    assert bound_form.get_errors() == {
         'global': {'Unique constraint test with this F int, F float and F bool already exists.'}
     }
     assert UniqueConstraintTest.objects.all().count() == 1
+
+
+@pytest.mark.django_db
+def test_unique_constraint_violation_edit():
+    from tests.models import UniqueConstraintTest
+
+    form = Form.create(auto__model=UniqueConstraintTest)
+    form.bind(request=req(
+        'post',
+        f_int='3',
+        f_float='5.1',
+        f_bool='True',
+        **{'-submit': ''}
+    )).render_to_response()
+
+    form.bind(request=req(
+        'post',
+        f_int='3',
+        f_float='5.1',
+        f_bool='False',
+        **{'-submit': ''}
+    )).render_to_response()
+
+    assert UniqueConstraintTest.objects.all().count() == 2
+
+    instance = UniqueConstraintTest.objects.get(f_bool=False)
+
+    form = Form.edit(auto__instance=instance)
+    bound_form = form.bind(request=req(
+        'post',
+        f_int='3',
+        f_float='5.1',
+        f_bool='True',
+        **{'-submit': ''}
+    ))
+    bound_form.render_to_response()
+
+    assert bound_form.is_valid() is False
+    assert bound_form.get_errors() == {
+        'global': {'Unique constraint test with this F int, F float and F bool already exists.'}
+    }
+
+    instance.refresh_from_db()
+    assert instance.f_bool == False
 
 
 @pytest.mark.django_db
