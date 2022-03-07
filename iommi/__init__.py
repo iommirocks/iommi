@@ -53,9 +53,18 @@ setup_db_compat()
 
 def render_if_needed(request, response):
     if isinstance(response, Part):
-        if not response._is_bound:
-            response = response.bind(request=request)
-        return response.render_to_response()
+        try:
+            if not response._is_bound:
+                response = response.bind(request=request)
+            return response.render_to_response()
+        except Exception as e:
+            filename, lineno = response._instantiated_at_info
+            from iommi.synthetic_traceback import SyntheticException
+            fake = SyntheticException(tb=[
+                dict(filename=filename, f_lineno=lineno, function='<iommi declaration>', f_globals={}, f_locals={})
+            ])
+
+            raise e from fake
     else:
         return response
 

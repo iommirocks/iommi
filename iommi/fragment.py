@@ -164,7 +164,7 @@ class Fragment(Part, Tag):
     def __init__(self, text=None, **kwargs):
         if text is not None:
             kwargs['children'].text = text
-        super().__init__(**kwargs)
+        super().__init__(_collect_instantiated_at_info=False, **kwargs)
 
     def on_refine_done(self):
         super().on_refine_done()
