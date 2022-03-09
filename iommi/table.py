@@ -1379,7 +1379,7 @@ def endpoint__csv(table, **_):
         return bound_column.extra_evaluated.get('report_value', value)
 
     def rows():
-        for cells in table.cells_for_rows():
+        for cells in table.cells_for_rows(paginate=False):
             yield [cell_value(cells, bound_column) for bound_column in columns]
 
     def write_csv_row(writer, row):
@@ -2025,11 +2025,15 @@ class Table(Part, Tag):
     def own_evaluate_parameters(self):
         return dict(table=self)
 
-    def cells_for_rows(self):
+    def cells_for_rows(self, paginate=True):
         """Yield a Cells instance for each visible row on the screen."""
         assert self._is_bound, NOT_BOUND_MESSAGE
-        rows = self.preprocess_rows(rows=self.get_visible_rows(), **self.iommi_evaluate_parameters())
-        for i, row in enumerate(rows):
+        if paginate:
+            rows = self.get_visible_rows()
+        else:
+            rows = self.sorted_and_filtered_rows
+        preprocessed_rows = self.preprocess_rows(rows=rows, **self.iommi_evaluate_parameters())
+        for i, row in enumerate(preprocessed_rows):
             row = self.preprocess_row(table=self, row=row)
             assert row is not None, 'preprocess_row must return the object'
             yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)

@@ -2602,14 +2602,37 @@ def test_csv_download():
     assert response['Content-Type'] == 'text/csv'
     assert response['Content-Disposition'] == "attachment; filename*=UTF-8''foo.csv"
     assert (
-        response.getvalue().decode()
-        == """
+        response.getvalue().decode().replace('\r\n', '\n')
+        == """\
 A,B,C,D,DANGER
 1,a,2.3,,\t=2+5+cmd|' /C calc'!A0
 2,b,5.0,,\t=2+5+cmd|' /C calc'!A0
-""".lstrip().replace(
-            '\n', '\r\n'
-        )
+""")
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_csv_pagination():
+    CSVExportTestModel.objects.create(a=1, b='a', c=2.3)
+    CSVExportTestModel.objects.create(a=2, b='b', c=5.0)
+    CSVExportTestModel.objects.create(a=3, b='c', c=7.0)
+    t = Table(
+        auto__model=CSVExportTestModel,
+        columns__a__extra_evaluated__report_name='A',
+        columns__b__extra_evaluated__report_name='B',
+        columns__c__extra_evaluated__report_name='C',
+        extra_evaluated__report_name='foo',
+        page_size=2
+    ).bind(request=req('get', **{'/csv': ''}))
+    response = t.render_to_response()
+    assert (
+        response.getvalue().decode().replace('\r\n', '\n')
+        == """\
+A,B,C
+1,a,2.3
+2,b,5.0
+3,c,7.0
+"""
     )
 
 
