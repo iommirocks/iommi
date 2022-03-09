@@ -7,6 +7,8 @@ from examples import (
     example_links,
 )
 from examples.models import (
+    Album,
+    Artist,
     Foo,
     TBar,
     TFoo,
@@ -208,6 +210,40 @@ def extra_fields(request):
     return table
 
 
+@example(gettext('Tables know how to render as CSV files'))
+def csv(request):
+    class ArtistTable(Table):
+        class Meta:
+            auto__model = Artist
+            page_size = 5
+
+            actions__download = Action(
+                attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
+            )
+            columns__name__extra_evaluated__report_name = 'name'
+            extra_evaluated__report_name = 'artists'
+
+    class AlbumTable(Table):
+        class Meta:
+            auto__model = Album
+            page_size = 5
+
+            actions__download = Action(
+                attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
+            )
+            columns__name__extra_evaluated__report_name = 'name'
+            columns__artist__extra_evaluated__report_name = 'artist'
+            columns__year__extra_evaluated__report_name = 'year'
+            extra_evaluated__report_name = 'alums'
+
+    return Page(
+        parts=dict(
+            artists=ArtistTable(),
+            albums=AlbumTable(),
+        ),
+    )
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Table examples')
 
@@ -235,4 +271,5 @@ urlpatterns = [
     path('example_7/', table_two),
     path('example_8/', table_post_handler_on_lists),
     path('example_9/', extra_fields),
+    path('example_10/', csv),
 ]
