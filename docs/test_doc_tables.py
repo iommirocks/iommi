@@ -1,6 +1,7 @@
 import pytest
 from docs.models import *
 from iommi import *
+from iommi import render_if_needed
 from tests.helpers import (
     req,
     show_output,
@@ -124,13 +125,13 @@ def test_explicit_tables(small_discography):
             name = Column()
 
             # Show the name field from Artist. This works for plain old objects too.
-            artist_name = Column.number(
+            artist_name = Column(
                 attr='artist__name',
 
                 # put this field into the query language
                 filter__include=True,
             )
-            year = Column(
+            year = Column.number(
                 # Enable bulk editing for this field
                 bulk__include=True,
             )
@@ -144,6 +145,47 @@ def test_explicit_tables(small_discography):
 
     # @test
     show_output(albums(req('get')))
+    # @end
+
+
+def test_table_csv(small_discography):
+    # language=rst
+    """
+    Table as CSV
+    ------------
+
+    Tables are able to render as CSV files. This is enabled if there is specified a name to use on the resulting file,
+    as a value of the table parameter `extra_evaluated__report_name`, and a file header name for each column that is
+    to be included, specified by the column parameter `extra_evaluated__report_name`.
+
+    For example:
+    """
+    def albums(request):
+        class AlbumTable(Table):
+            class Meta:
+                extra_evaluated__report_name = 'Albums'
+                actions__download = Action(
+                    attrs__href=lambda table, **_: '?' + table.endpoints.csv.endpoint_path,
+                )
+
+            name = Column(extra_evaluated__report_name='Name')
+            artist = Column(extra_evaluated__report_name='Artist')
+            year = Column.number(extra_evaluated__report_name='Artist')
+
+        return AlbumTable(rows=Album.objects.all())
+
+    # language=rst
+    """
+    This will behave like an ordinary table but when the csv rendering endpoint is invoked the content will be
+    returned as a text file in CSV format.
+    """
+
+    # @test
+    show_output(
+        b"<pre>"
+        + albums(None).bind(request=req('get', **{'/csv': ''})).render_to_response().getvalue()
+        + b"</pre>"
+    )
     # @end
 
 

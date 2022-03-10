@@ -188,7 +188,7 @@ def show_output(part):
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
     with open(file_path, 'wb') as f:
-        f.write(render_if_needed(req('get'), part).content)
+        f.write(part if isinstance(part, bytes) else render_if_needed(req('get'), part).content)
 
 
 # This synonym exists to have a different name for make_doc_rsts.py
