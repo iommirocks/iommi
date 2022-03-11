@@ -170,3 +170,13 @@ examples/examples/admin/
 tests/test_edit_views_temp.py
 docs/test_doc__api_*.py
 docs/custom/doc_includes/
+
+docs/cookbook_forms.rst
+docs/cookbook_parts_pages.rst
+docs/cookbook_tables.rst
+docs/equivalency.rst
+docs/forms.rst
+docs/getting_started.rst
+docs/legacy_fbv.rst
+docs/pages.rst
+docs/tables.rst
