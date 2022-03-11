@@ -10,7 +10,7 @@ from iommi import (
     Action,
     Form,
 )
-from iommi.experimental.edit_table import (
+from iommi.edit_table import (
     EditColumn,
     EditTable,
 )
@@ -52,7 +52,16 @@ urlpatterns = [
         'nested/',
         Form(
             fields=dict(
-                edit_album=Form.edit(auto__model=Track, instance=lambda **_: Track.objects.get(album__artist__name='Black Sabbath', name='Supernaut'), fields__name__include=False),
+                edit_album=Form.edit(
+                    auto__model=Track,
+                    instance=lambda **_: (
+                        Track.objects.get(
+                            album__artist__name='Black Sabbath',
+                            name='Supernaut',
+                        )
+                    ),
+                    fields__name__include=False,
+                ),
                 edit_table=EditTable(
                     auto__model=Album,
                     page_size=3,
@@ -67,7 +76,9 @@ urlpatterns = [
                     columns__delete=EditColumn.delete(),
                 ),
             ),
-            actions__save=Action.primary(post_handler=save_nested_forms),
+            actions__save=Action.primary(
+                post_handler=save_nested_forms,
+            ),
         ).as_view(),
     ),
 ]

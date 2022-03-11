@@ -2,14 +2,17 @@ import pytest
 from tri_declarative import Namespace
 from tri_struct import Struct
 
-from iommi import (
-    Column,
+from iommi.edit_table import (
+    EditColumn,
+    EditTable,
+)
+from iommi.form import (
+
     Field,
     Form,
 )
-from iommi.experimental.edit_table import (
-    EditColumn,
-    EditTable,
+from iommi.table import (
+    Column,
 )
 from tests.helpers import (
     req,
@@ -19,6 +22,16 @@ from tests.models import (
     TBar,
     TFoo,
 )
+
+
+def test_no_longer_experimental():
+    with pytest.raises(
+            Exception,
+            match='EditTable/EditColumn has moved out of iommi.experimental. '
+                  'Update imports and remove the .experimental part.',
+    ):
+        # noinspection PyUnresolvedReferences
+        import iommi.experimental.edit_table
 
 
 @pytest.mark.django_db
