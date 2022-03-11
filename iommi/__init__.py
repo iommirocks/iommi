@@ -47,6 +47,10 @@ from iommi.table import (
     register_column_factory,
     Table,
 )
+from iommi.edit_table import (
+    EditColumn,
+    EditTable,
+)
 
 setup_db_compat()
 
@@ -98,6 +102,8 @@ __all__ = [
     'Action',
     'Asset',
     'Column',
+    'EditTable',
+    'EditColumn',
     'Field',
     'Fragment',
     'Form',
