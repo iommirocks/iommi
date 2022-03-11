@@ -1,5 +1,4 @@
 sphinx
 furo
 Django
-freezegun
 -r../test_requirements.txt

@@ -14,11 +14,11 @@ from io import (
 
 import django
 import pytest
+import time_machine
 from bs4 import BeautifulSoup
 from django.core.exceptions import FieldError
 from django.http.response import HttpResponseBase
 from django.test import override_settings
-from freezegun import freeze_time
 from tri_declarative import (
     class_shortcut,
     get_members,
@@ -2261,10 +2261,10 @@ def test_choice_queryset_error_message_for_automatic_model_extraction():
 def test_datetime_parse():
     assert datetime_parse('2001-02-03 12') == datetime(2001, 2, 3, 12)
 
-    with freeze_time('2001-02-03 12:13:14'):
+    with time_machine.travel('2001-02-03 12:13:14', tick=False):
         assert datetime_parse('now') == datetime(2001, 2, 3, 12, 13, 14)
 
-    with freeze_time('2001-02-03 12:13:14'):
+    with time_machine.travel('2001-02-03 12:13:14', tick=False):
         assert datetime_parse('-2d') == datetime(2001, 2, 1, 12, 13, 14)
 
     bad_date = '091223'
@@ -2943,7 +2943,7 @@ def test_evil_names():
 
 
 def test_time_parse():
-    with freeze_time('2012-03-07 12:13:14'):
+    with time_machine.travel('2012-03-07 12:13:14', tick=False):
         assert time_parse('now') == time(12, 13, 14)
 
 
