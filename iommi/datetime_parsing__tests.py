@@ -4,7 +4,7 @@ from datetime import (
     timedelta,
 )
 
-import freezegun
+import time_machine
 import pytest
 
 from iommi._web_compat import ValidationError
@@ -13,21 +13,10 @@ from iommi.datetime_parsing import (
     parse_relative_datetime,
 )
 
-fake_now = datetime(2018, 2, 5, 7, 11, 13, 17)
-
 
 @pytest.fixture(autouse=True)
-def frozen_time():
-    with freezegun.freeze_time(
-        fake_now,
-        ignore=[
-            'tri.cassandra',
-            '_pytest.terminal',
-            '_pytest.runner',
-            'selenium',
-        ],
-    ) as f:
-        yield f
+def time_travel(time_machine):
+    time_machine.move_to(datetime(2018, 2, 5, 7, 11, 13, 17), tick=False)
 
 
 @pytest.mark.parametrize(
@@ -127,22 +116,22 @@ def test_parse_relative_date_relative():
 
 
 def test_parse_relative_date_weekdays():
-    with freezegun.freeze_time('2018-02-02'):  # a friday
+    with time_machine.travel('2018-02-02'):  # a friday
         assert parse_relative_date('1 weekday') == (date.today() + timedelta(days=3))
 
-    with freezegun.freeze_time('2018-02-03'):  # a saturday
+    with time_machine.travel('2018-02-03'):  # a saturday
         assert parse_relative_date('1 weekday') == (date.today() + timedelta(days=2))
 
-    with freezegun.freeze_time('2018-02-04'):  # a sunday
+    with time_machine.travel('2018-02-04'):  # a sunday
         assert parse_relative_date('1 weekday') == (date.today() + timedelta(days=1))
 
-    with freezegun.freeze_time('2018-02-03'):  # a saturday
+    with time_machine.travel('2018-02-03'):  # a saturday
         assert parse_relative_date('1 weekday ago') == date(2018, 2, 2)
 
-    with freezegun.freeze_time('2018-02-04'):  # a sunday
+    with time_machine.travel('2018-02-04'):  # a sunday
         assert parse_relative_date('1 weekday ago') == date(2018, 2, 2)
 
-    with freezegun.freeze_time('2018-02-05'):  # a monday
+    with time_machine.travel('2018-02-05'):  # a monday
         assert parse_relative_date('1 weekday ago') == date(2018, 2, 2)
 
 

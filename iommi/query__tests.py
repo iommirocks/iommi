@@ -6,12 +6,12 @@ from datetime import (
 )
 
 import pytest
+import time_machine
 from django.db.models import (
     F,
     Q,
     QuerySet,
 )
-from freezegun import freeze_time
 from tri_declarative import (
     class_shortcut,
     get_members,
@@ -426,7 +426,7 @@ def test_relative_date():
     class MyTestQuery(Query):
         foo = Filter.date()
 
-    with freeze_time('2014-03-07'):
+    with time_machine.travel('2014-03-07', tick=False):
         query = MyTestQuery().bind(request=None)
         assert repr(query.parse_query_string('foo > "3 days ago"')) == repr(Q(**{'foo__gt': date(2014, 3, 4)}))
         assert repr(query.parse_query_string('foo > "-3d"')) == repr(Q(**{'foo__gt': date(2014, 3, 4)}))

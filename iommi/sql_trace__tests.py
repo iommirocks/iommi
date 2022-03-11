@@ -7,6 +7,7 @@ from datetime import (
 from pathlib import Path
 
 import pytest
+import time_machine
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import path
@@ -58,27 +59,28 @@ def test_middleware(settings, client, caplog):
     settings.SQL_DEBUG_WORST_SUSPICIOUS_CUTOFF = 0
     settings.SQL_DEBUG_WORST_QUERY_CUTOFF = 1
 
-    client.get('/no_queries/?_iommi_sql_trace')
-    assert 'GET /no_queries/?_iommi_sql_trace -> 200  (0.000s)' in caplog.text
+    with time_machine.travel('1948, 2, 19', tick=False):
+        client.get('/no_queries/?_iommi_sql_trace')
+        assert 'GET /no_queries/?_iommi_sql_trace -> 200  (0.000s)' in caplog.text
 
-    caplog.clear()
+        caplog.clear()
 
-    response = client.get('/?_iommi_sql_trace')
+        response = client.get('/?_iommi_sql_trace')
 
-    content = response.content.decode().replace('&quot;', '"')
-    assert 'unseen' not in content
+        content = response.content.decode().replace('&quot;', '"')
+        assert 'unseen' not in content
 
-    assert '4 queries' in content
-    # noinspection SqlResolve
-    select_statement = 'SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username"'
-    assert select_statement in content
-    assert '<span style="color: green; font-weight: bold">SELECT</span>' in content
+        assert '4 queries' in content
+        # noinspection SqlResolve
+        select_statement = 'SELECT "auth_user"."id", "auth_user"."password", "auth_user"."last_login", "auth_user"."is_superuser", "auth_user"."username", "auth_user"."first_name", "auth_user"."last_name", "auth_user"."email", "auth_user"."is_staff", "auth_user"."is_active", "auth_user"."date_joined" FROM "auth_user" WHERE "auth_user"."username"'
+        assert select_statement in content
+        assert '<span style="color: green; font-weight: bold">SELECT</span>' in content
 
-    assert '------ 4 times: -------' in caplog.text
-    assert select_statement in caplog.text
-    assert 'File "iommi/sql_trace__tests.py", line ' in caplog.text.replace('iommi/iommi/', 'iommi/').replace('./', '')
-    assert re.findall(r'GET /\?_iommi_sql_trace -> 200  \(0\.\d\d\ds\) \(sql time: 0\.\d\d\ds\)', caplog.text)
-    assert '... and 3 more unique statements' in caplog.text
+        assert '------ 4 times: -------' in caplog.text
+        assert select_statement in caplog.text
+        assert 'File "iommi/sql_trace__tests.py", line ' in caplog.text.replace('iommi/iommi/', 'iommi/').replace('./', '')
+        assert re.findall(r'GET /\?_iommi_sql_trace -> 200  \(0\.\d\d\ds\) \(sql time: 0\.\d\d\ds\)', caplog.text)
+        assert '... and 3 more unique statements' in caplog.text
 
 
 @pytest.mark.parametrize(
