@@ -12,7 +12,10 @@ from tri_declarative import (
     Namespace,
 )
 
-from iommi import MISSING
+from iommi import (
+    MISSING,
+    Part,
+)
 from iommi.base import items
 
 
@@ -49,6 +52,8 @@ def get_default_classes():
     return [
         iommi.Table,
         iommi.Column,
+        iommi.EditTable,
+        iommi.EditColumn,
         iommi.Query,
         iommi.Filter,
         iommi.Form,
@@ -269,6 +274,8 @@ request = req('get')
                 if 'lambda' in v:
                     v = v[v.find('lambda') :]
                     v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
+            if isinstance(v, Part):
+                v = v.bind()
             if v == '':
                 v = '""'
             return v
