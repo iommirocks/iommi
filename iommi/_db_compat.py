@@ -48,30 +48,42 @@ def setup_db_compat_django():
         UUIDField,
     )
 
-    def char_field_factory(model_field, **_):
-        if not model_field.choices:
-            return Shortcut(call_target__attribute='text')
-
-        return Shortcut(
-            call_target__attribute='choice',
-            choices=[x[0] for x in model_field.choices],
-        )
-
-    def field_char_field_factory(model_field, **_):
+    def char_field_column_factory(model_field, **_):
         if not model_field.choices:
             return Shortcut(call_target__attribute='text')
 
         display_name_by_choice = dict(model_field.choices)
+        return Shortcut(
+            call_target__attribute='choice',
+            choices=[x[0] for x in model_field.choices],
+            filter__field__choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
+        )
 
+    def char_field_filter_factory(model_field, **_):
+        if not model_field.choices:
+            return Shortcut(call_target__attribute='text')
+
+        display_name_by_choice = dict(model_field.choices)
+        return Shortcut(
+            call_target__attribute='choice',
+            choices=[x[0] for x in model_field.choices],
+            field__choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
+        )
+
+    def char_field_field_factory(model_field, **_):
+        if not model_field.choices:
+            return Shortcut(call_target__attribute='text')
+
+        display_name_by_choice = dict(model_field.choices)
         return Shortcut(
             call_target__attribute='choice',
             choices=[x[0] for x in model_field.choices],
             choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
         )
 
-    # The order here is significant because of inheritance structure. More specific must be below less specific.
-    register_factory(CharField, factory=char_field_factory)
-    register_field_factory(CharField, factory=field_char_field_factory)  # the field is special, overwrite that here
+    register_column_factory(CharField, factory=char_field_column_factory)
+    register_filter_factory(CharField, factory=char_field_filter_factory)
+    register_field_factory(CharField, factory=char_field_field_factory)
 
     register_factory(UUIDField, shortcut_name='text')
     register_factory(TimeField, shortcut_name='time')

@@ -3671,19 +3671,18 @@ def test_turn_off_entire_query():
     assert t.query is None
 
 
-@pytest.mark.skip('broken right now... something fishy about `field_char_field_factory`')
 @pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
 def test_text_choices():
     from tests.models import ChoicesClassModel
 
     table = Table(auto__model=ChoicesClassModel, columns__color__filter__include=True).bind(request=req('get'))
     form = table.query.form
-    assert form.fields.color.choices == [x[0] for x in ChoicesModel.CHOICES]
+    assert form.fields.color.choices == list(ChoicesClassModel.ColorChoices)
 
-    value, display_name = ChoicesModel.CHOICES[0]
+    choice = list(ChoicesClassModel.ColorChoices)[0]
     assert (
-        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
-        == display_name
+        form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        == choice.label
     )
 
 
