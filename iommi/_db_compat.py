@@ -49,37 +49,37 @@ def setup_db_compat_django():
     )
 
     def char_field_column_factory(model_field, **_):
-        if not model_field.choices:
-            return Shortcut(call_target__attribute='text')
+        if model_field.choices:
+            return Shortcut(
+                call_target__attribute='choice',
+                choices=model_field.choices,
+                filter__field__choice_id_formatter=lambda choice, **_: choice[0],
+                filter__field__choice_display_name_formatter=lambda choice, **_: choice[1],
+            )
 
-        display_name_by_choice = dict(model_field.choices)
-        return Shortcut(
-            call_target__attribute='choice',
-            choices=[x[0] for x in model_field.choices],
-            filter__field__choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
-        )
+        return Shortcut(call_target__attribute='text')
 
     def char_field_filter_factory(model_field, **_):
-        if not model_field.choices:
-            return Shortcut(call_target__attribute='text')
+        if model_field.choices:
+            return Shortcut(
+                call_target__attribute='choice',
+                choices=model_field.choices,
+                field__choice_id_formatter=lambda choice, **_: choice[0],
+                field__choice_display_name_formatter=lambda choice, **_: choice[1],
+            )
 
-        display_name_by_choice = dict(model_field.choices)
-        return Shortcut(
-            call_target__attribute='choice',
-            choices=[x[0] for x in model_field.choices],
-            field__choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
-        )
+        return Shortcut(call_target__attribute='text')
 
     def char_field_field_factory(model_field, **_):
-        if not model_field.choices:
-            return Shortcut(call_target__attribute='text')
+        if model_field.choices:
+            return Shortcut(
+                call_target__attribute='choice',
+                choices=model_field.choices,
+                choice_id_formatter=lambda choice, **_: choice[0],
+                choice_display_name_formatter=lambda choice, **_: choice[1],
+            )
 
-        display_name_by_choice = dict(model_field.choices)
-        return Shortcut(
-            call_target__attribute='choice',
-            choices=[x[0] for x in model_field.choices],
-            choice_display_name_formatter=lambda choice, **_: display_name_by_choice[choice],
-        )
+        return Shortcut(call_target__attribute='text')
 
     register_column_factory(CharField, factory=char_field_column_factory)
     register_filter_factory(CharField, factory=char_field_filter_factory)

@@ -3677,13 +3677,23 @@ def test_text_choices():
 
     table = Table(auto__model=ChoicesClassModel, columns__color__filter__include=True).bind(request=req('get'))
     form = table.query.form
-    assert form.fields.color.choices == list(ChoicesClassModel.ColorChoices)
+    assert form.fields.color.choices == ChoicesClassModel.ColorChoices.choices
 
-    choice = list(ChoicesClassModel.ColorChoices)[0]
+    choice = list(ChoicesClassModel.ColorChoices.choices)[0]
+    value, label = choice
+    assert (
+        form.fields.color.choice_id_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        == value
+    )
     assert (
         form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
-        == choice.label
+        == label
     )
+    assert form.fields.color.choice_tuples == [
+        (None, '', '---', True, 0),
+        (('purple_thing-thing', 'Purple'), 'purple_thing-thing', 'Purple', False, 1),
+        (('orange', 'Orange'), 'orange', 'Orange', False, 2),
+    ]
 
 
 def test_auto_rowspan_twice():
