@@ -2965,13 +2965,22 @@ def test_find_prefixes(attributes, result):
 @pytest.mark.django_db
 def test_choices_in_char_field_model():
     form = Form.edit(auto__model=ChoicesModel).bind(request=req('get'))
-    assert form.fields.color.choices == [x[0] for x in ChoicesModel.CHOICES]
+    assert form.fields.color.choices == ChoicesModel.CHOICES
 
-    value, display_name = ChoicesModel.CHOICES[0]
+    choice = ChoicesModel.CHOICES[0]
+    value, display_name = choice
     assert (
-        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_id_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        == value
+    )
+    assert (
+        form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
         == display_name
     )
+    assert form.fields.color.choice_tuples == [
+        (('purple', 'Purple'), 'purple', 'Purple', False, 1),
+        (('orange', 'Orange'), 'orange', 'Orange', False, 2),
+    ]
 
 
 @pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
@@ -2980,13 +2989,22 @@ def test_choices_in_char_field_model_as_class():
     from tests.models import ChoicesClassModel
 
     form = Form.edit(auto__model=ChoicesClassModel).bind(request=req('get'))
-    assert form.fields.color.choices == [x[0] for x in ChoicesClassModel.ColorChoices.choices]
+    assert form.fields.color.choices == ChoicesClassModel.ColorChoices.choices
 
-    value, display_name = ChoicesClassModel.ColorChoices.choices[0]
+    choice = ChoicesClassModel.ColorChoices.choices[0]
+    value, label = choice
     assert (
-        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
-        == display_name
+        form.fields.color.choice_id_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        == value
     )
+    assert (
+        form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        == label
+    )
+    assert form.fields.color.choice_tuples == [
+        (('purple_thing-thing', 'Purple'), 'purple_thing-thing', 'Purple', False, 1),
+        (('orange', 'Orange'), 'orange', 'Orange', False, 2),
+    ]
 
 
 def test_date_parse():
