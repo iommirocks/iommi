@@ -282,7 +282,7 @@ class ExampleAdmin(Admin):
         iommi_style = None
         parts__menu__sub_menu = dict(
             home=MenuItem(url='/'),
-            admin=MenuItem(url=lambda **_: reverse(ExampleAdmin.all_models)),
+            admin=MenuItem(url=lambda **_: reverse('iommi.Admin.all_models')),
             change_password=MenuItem(url=lambda **_: reverse(Auth.change_password)),
             logout=MenuItem(url=lambda **_: reverse(Auth.logout)),
         )

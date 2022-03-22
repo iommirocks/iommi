@@ -34,14 +34,16 @@ urlpatterns = [
 def test_bulk_edit_for_non_unique(settings):
     settings.ROOT_URLCONF = __name__
     request = staff_req('get')
-    p = Admin.list(
-        request=request,
+    result = Admin.list(
+        parts__list_tests_adminunique__columns__foo__bulk__include=True,
+    ).refine_with_params(
         app_name='tests',
         model_name='adminunique',
-        parts__list_tests_adminunique__columns__foo__bulk__include=True,
+    ).bind(
+        request=request
     )
-    p = p.bind(request=request)
-    assert [x._name for x in values(p.parts.list_tests_adminunique.columns) if x.bulk.include] == ['foo']
+
+    assert [x._name for x in values(result.parts.list_tests_adminunique.columns) if x.bulk.include] == ['foo']
 
 
 @pytest.mark.django_db
@@ -50,7 +52,7 @@ def test_create(mock_messages, settings):
     settings.ROOT_URLCONF = __name__
 
     request = staff_req('get')
-    c = Admin.create(request=request, app_name='tests', model_name='foo')
+    c = Admin.create().refine_with_params(app_name='tests', model_name='foo')
     p = c.bind(request=request)
     assert list(p.parts.create_tests_foo.fields.keys()) == ['foo']
 
@@ -58,18 +60,19 @@ def test_create(mock_messages, settings):
 
     # Check access control for not logged in
     request = req('post', foo=7, **{'-submit': ''})
-    assert isinstance(Admin.create(request=request, app_name='tests', model_name='foo'), HttpResponseRedirect)
+    view = Admin.create().as_view()
+    assert isinstance(view(request, app_name='tests', model_name='foo'), HttpResponseRedirect)
     assert Foo.objects.count() == 0
 
     # Check access control for not staff
     request = user_req('post', foo=7, **{'-submit': ''})
     with pytest.raises(Http404):
-        Admin.create(request=request, app_name='tests', model_name='foo')
+        view(request, app_name='tests', model_name='foo')
 
     # Now for real
     request = staff_req('post', foo=7, **{'-submit': ''})
-    c = Admin.create(request=request, app_name='tests', model_name='foo')
-    p = c.bind(request=staff_req('post', foo=7, **{'-submit': ''}))
+    c = Admin.create().refine_with_params(app_name='tests', model_name='foo')
+    p = c.bind(request=request)
     assert p.parts.create_tests_foo.is_valid()
     p.render_to_response()
 
@@ -86,12 +89,12 @@ def test_create(mock_messages, settings):
 @mock.patch('iommi.admin.messages')
 def test_edit(mock_messages, settings):
     settings.ROOT_URLCONF = __name__
-    request = staff_req('get')
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
 
-    c = Admin.edit(request=request, app_name='tests', model_name='foo', pk=f.pk)
-    p = c.bind(request=req('post', foo=11, **{'-submit': ''}))
+    c = Admin.edit().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
+    request = staff_req('post', foo=11, **{'-submit': ''})
+    p = c.bind(request=request)
     assert p.parts.edit_tests_foo.is_valid()
     p.render_to_response()
     assert Foo.objects.get().foo == 11
@@ -105,12 +108,12 @@ def test_edit(mock_messages, settings):
 @mock.patch('iommi.admin.messages')
 def test_delete(mock_messages, settings):
     settings.ROOT_URLCONF = __name__
-    request = staff_req('get')
     assert Foo.objects.count() == 0
     f = Foo.objects.create(foo=7)
 
-    c = Admin.delete(request=request, app_name='tests', model_name='foo', pk=f.pk)
-    p = c.bind(request=req('post', **{'-submit': ''}))
+    c = Admin.delete().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
+    request = staff_req('post', **{'-submit': ''})
+    p = c.bind(request=request)
     assert p.parts.delete_tests_foo.is_valid()
     p.render_to_response()
     assert Foo.objects.count() == 0
@@ -123,44 +126,45 @@ def test_delete(mock_messages, settings):
 @pytest.mark.django_db
 @pytest.mark.parametrize('is_authenticated', [True, False])
 @pytest.mark.parametrize(
-    'view,kwargs',
+    'admin, kwargs',
     [
-        (Admin.all_models, dict()),
-        (Admin.list, dict(app_name='tests', model_name='foo')),
-        (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
-        (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
+        (Admin.all_models(), dict()),
+        (Admin.list(), dict(app_name='tests', model_name='foo')),
+        (Admin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
+        (Admin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
     ],
 )
-def test_redirect_to_login(settings, is_authenticated, view, kwargs):
+def test_redirect_to_login(settings, is_authenticated, admin, kwargs):
     settings.ROOT_URLCONF = __name__
     if 'pk' in kwargs:
         Foo.objects.create(pk=kwargs['pk'], foo=1)
     request = req('get')
     request.user = Struct(is_staff=True, is_authenticated=is_authenticated)
-
+    view = admin.as_view()
     result = view(request=request, **kwargs)
 
     if not is_authenticated:
         assert isinstance(result, HttpResponseRedirect)
         assert result.url == '/login/?next=%2F'
     else:
-        assert isinstance(result, Admin)
+        assert result.status_code == 200
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    'view,kwargs',
+    'admin, kwargs',
     [
-        (Admin.all_models, dict()),
-        (Admin.list, dict(app_name='tests', model_name='foo')),
-        (Admin.edit, dict(app_name='tests', model_name='foo', pk=0)),
-        (Admin.delete, dict(app_name='tests', model_name='foo', pk=0)),
+        (Admin.all_models(), dict()),
+        (Admin.list(), dict(app_name='tests', model_name='foo')),
+        (Admin.edit(), dict(app_name='tests', model_name='foo', pk=0)),
+        (Admin.delete(), dict(app_name='tests', model_name='foo', pk=0)),
     ],
 )
-def test_404_for_non_staff(settings, view, kwargs):
+def test_404_for_non_staff(settings, admin, kwargs):
     settings.ROOT_URLCONF = __name__
     if 'pk' in kwargs:
         Foo.objects.create(pk=kwargs['pk'], foo=1)
+    view = admin.as_view()
     request = user_req('get')
 
     with pytest.raises(Http404):
@@ -179,7 +183,7 @@ def test_all_models(settings):
     request = staff_req('get')
     assert (
         'Authentication'
-        in Admin.all_models(request=request).bind(request=request).render_to_response().content.decode()
+        in Admin.all_models().bind(request=request).render_to_response().content.decode()
     )
 
 
