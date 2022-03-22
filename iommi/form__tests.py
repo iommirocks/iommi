@@ -2964,22 +2964,26 @@ def test_find_prefixes(attributes, result):
 
 @pytest.mark.django_db
 def test_choices_in_char_field_model():
-    form = Form.edit(auto__model=ChoicesModel).bind(request=req('get'))
-    assert form.fields.color.choices == ChoicesModel.CHOICES
+    form = Form.edit(
+        auto__model=ChoicesModel,
+    ).bind(
+        request=req('get'),
+    )
 
-    choice = ChoicesModel.CHOICES[0]
-    value, display_name = choice
+    assert form.fields.color.choices == ['purple', 'orange']
+
+    value, display_name = ChoicesModel.CHOICES[0]
     assert (
-        form.fields.color.choice_id_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_id_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == value
     )
     assert (
-        form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == display_name
     )
     assert form.fields.color.choice_tuples == [
-        (('purple', 'Purple'), 'purple', 'Purple', False, 1),
-        (('orange', 'Orange'), 'orange', 'Orange', False, 2),
+        ('purple', 'purple', 'Purple', False, 1),
+        ('orange', 'orange', 'Orange', False, 2),
     ]
 
 
@@ -2988,22 +2992,26 @@ def test_choices_in_char_field_model():
 def test_choices_in_char_field_model_as_class():
     from tests.models import ChoicesClassModel
 
-    form = Form.edit(auto__model=ChoicesClassModel).bind(request=req('get'))
-    assert form.fields.color.choices == ChoicesClassModel.ColorChoices.choices
+    form = Form.edit(
+        auto__model=ChoicesClassModel,
+    ).bind(
+        request=req('get'),
+    )
 
-    choice = ChoicesClassModel.ColorChoices.choices[0]
-    value, label = choice
+    assert form.fields.color.choices == ['purple_thing-thing', 'orange']
+
+    value, label = ChoicesClassModel.ColorChoices.choices[0]
     assert (
-        form.fields.color.choice_id_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_id_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == value
     )
     assert (
-        form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == label
     )
     assert form.fields.color.choice_tuples == [
-        (('purple_thing-thing', 'Purple'), 'purple_thing-thing', 'Purple', False, 1),
-        (('orange', 'Orange'), 'orange', 'Orange', False, 2),
+        ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
+        ('orange', 'orange', 'Orange', False, 2),
     ]
 
 

@@ -48,13 +48,23 @@ def setup_db_compat_django():
         UUIDField,
     )
 
-    def char_field_column_factory(model_field, **_):
+    def _get_choices_from_model_choices(model_field):
+        return [value for value, label in model_field.choices]
+
+    def _build_display_name_formatter(model_field):
+        label_by_value = dict(model_field.choices)
+
+        def choice_display_name_formatter(choice, **_):
+            return label_by_value[choice]
+
+        return choice_display_name_formatter
+
+    def char_field_field_factory(model_field, **_):
         if model_field.choices:
             return Shortcut(
                 call_target__attribute='choice',
-                choices=model_field.choices,
-                filter__field__choice_id_formatter=lambda choice, **_: choice[0],
-                filter__field__choice_display_name_formatter=lambda choice, **_: choice[1],
+                choices=_get_choices_from_model_choices(model_field),
+                choice_display_name_formatter=_build_display_name_formatter(model_field),
             )
 
         return Shortcut(call_target__attribute='text')
@@ -63,27 +73,25 @@ def setup_db_compat_django():
         if model_field.choices:
             return Shortcut(
                 call_target__attribute='choice',
-                choices=model_field.choices,
-                field__choice_id_formatter=lambda choice, **_: choice[0],
-                field__choice_display_name_formatter=lambda choice, **_: choice[1],
+                choices=_get_choices_from_model_choices(model_field),
+                field__choice_display_name_formatter=_build_display_name_formatter(model_field),
             )
 
         return Shortcut(call_target__attribute='text')
 
-    def char_field_field_factory(model_field, **_):
+    def char_field_column_factory(model_field, **_):
         if model_field.choices:
             return Shortcut(
                 call_target__attribute='choice',
-                choices=model_field.choices,
-                choice_id_formatter=lambda choice, **_: choice[0],
-                choice_display_name_formatter=lambda choice, **_: choice[1],
+                choices=_get_choices_from_model_choices(model_field),
+                filter__field__choice_display_name_formatter=_build_display_name_formatter(model_field),
             )
 
         return Shortcut(call_target__attribute='text')
 
-    register_column_factory(CharField, factory=char_field_column_factory)
-    register_filter_factory(CharField, factory=char_field_filter_factory)
     register_field_factory(CharField, factory=char_field_field_factory)
+    register_filter_factory(CharField, factory=char_field_filter_factory)
+    register_column_factory(CharField, factory=char_field_column_factory)
 
     register_factory(UUIDField, shortcut_name='text')
     register_factory(TimeField, shortcut_name='time')

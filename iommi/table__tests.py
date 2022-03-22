@@ -3672,27 +3672,38 @@ def test_turn_off_entire_query():
 
 
 @pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
+@pytest.mark.django_db
 def test_text_choices():
     from tests.models import ChoicesClassModel
 
-    table = Table(auto__model=ChoicesClassModel, columns__color__filter__include=True).bind(request=req('get'))
-    form = table.query.form
-    assert form.fields.color.choices == ChoicesClassModel.ColorChoices.choices
+    ChoicesClassModel(color='purple').save()
+    ChoicesClassModel(color='orange').save()
 
-    choice = list(ChoicesClassModel.ColorChoices.choices)[0]
-    value, label = choice
+    table = Table(
+        auto__rows=ChoicesClassModel.objects.all(),
+        columns__color__filter__include=True,
+    ).bind(
+        request=req('get', color='orange'),
+    )
+
+    assert table.get_visible_rows().get().color == 'orange'
+
+    form = table.query.form
+    assert form.fields.color.choices == ['purple_thing-thing', 'orange']
+
+    value, label = list(ChoicesClassModel.ColorChoices.choices)[0]
     assert (
-        form.fields.color.choice_id_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_id_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == value
     )
     assert (
-        form.fields.color.choice_display_name_formatter(choice, **form.fields.color.iommi_evaluate_parameters())
+        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
         == label
     )
     assert form.fields.color.choice_tuples == [
-        (None, '', '---', True, 0),
-        (('purple_thing-thing', 'Purple'), 'purple_thing-thing', 'Purple', False, 1),
-        (('orange', 'Orange'), 'orange', 'Orange', False, 2),
+        (None, '', '---', False, 0),
+        ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
+        ('orange', 'orange', 'Orange', True, 2),
     ]
 
 

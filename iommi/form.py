@@ -920,7 +920,9 @@ class Field(Part, Tag):
     def choice_tuples(self):
         result = []
         if not self.required and not self.is_list:
-            result.append(self.empty_choice_tuple + (0,))
+            choice, id_, display_name, _ = self.empty_choice_tuple
+            is_selected = not bool(self.value)
+            result.append((choice, id_, display_name, is_selected, 0))
         for i, choice in enumerate(self.choices):
             result.append(self._choice_to_option_shim(form=self.form, field=self, choice=choice) + (i + 1,))
 

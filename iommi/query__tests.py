@@ -5,6 +5,7 @@ from datetime import (
     time,
 )
 
+import django
 import pytest
 import time_machine
 from django.db.models import (
@@ -51,6 +52,7 @@ from tests.models import (
     Bar,
     BooleanFromModelTestModel,
     CamelCaseFieldModel,
+    ChoicesModel,
     EndPointDispatchModel,
     Foo,
     FromModelWithInheritanceTest,
@@ -953,3 +955,68 @@ def test_no_freetext_when_not_included():
 
     assert FREETEXT_SEARCH_NAME not in MyQuery().bind().form.fields
 
+
+@pytest.mark.django_db
+def test_choices_in_char_field_model():
+    ChoicesModel(color='purple').save()
+    ChoicesModel(color='orange').save()
+
+    query = Query(
+        auto__model=ChoicesModel,
+    ).bind(
+        request=req('get', color='purple'),
+    )
+
+    assert Query.filter(query, ChoicesModel.objects.all()).get().color == 'purple'
+
+    assert query.form.fields.color.choices == ['purple', 'orange']
+
+    value, display_name = ChoicesModel.CHOICES[0]
+    assert (
+        query.form.fields.color.choice_id_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
+        == value
+    )
+    assert (
+        query.form.fields.color.choice_display_name_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
+        == display_name
+    )
+    assert query.form.fields.color.choice_tuples == [
+        (None, '', '---', False, 0),
+        ('purple', 'purple', 'Purple', True, 1),
+        ('orange', 'orange', 'Orange', False, 2),
+    ]
+
+
+@pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
+@pytest.mark.django_db
+def test_choices_in_char_field_model_as_class():
+    from tests.models import ChoicesClassModel
+
+    ChoicesClassModel(color='purple').save()
+    ChoicesClassModel(color='orange').save()
+
+    query = Query(
+        auto__model=ChoicesClassModel,
+    ).bind(
+        request=req('get', color='orange'),
+    )
+
+    assert Query.filter(query, ChoicesClassModel.objects.all()).get().color == 'orange'
+
+    assert query.form.fields.color.choices == ['purple_thing-thing', 'orange']
+
+    value, label = ChoicesClassModel.ColorChoices.choices[0]
+    assert (
+        query.form.fields.color.choice_id_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
+        == value
+    )
+    assert (
+        query.form.fields.color.choice_display_name_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
+        == label
+    )
+
+    assert query.form.fields.color.choice_tuples == [
+        (None, '', '---', False, 0),
+        ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
+        ('orange', 'orange', 'Orange', True, 2),
+    ]
