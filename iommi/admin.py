@@ -1,5 +1,4 @@
 import functools
-from functools import wraps
 from typing import Type
 from urllib.parse import urlencode
 
@@ -12,6 +11,7 @@ from django.contrib import (
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.db.models import Model
 from django.http import (
     Http404,
     HttpResponseRedirect,
@@ -27,6 +27,7 @@ from tri_declarative import (
     class_shortcut,
     dispatch,
     EMPTY,
+    flatten,
     LAST,
     Namespace,
     setdefaults_path,
@@ -46,6 +47,7 @@ from iommi import (
     Table,
 )
 from iommi.base import (
+    build_as_view_wrapper,
     items,
     values,
 )
@@ -61,17 +63,6 @@ joined_app_name_and_model = {
     for app_name, models in items(django_apps.all_models)
     for model_name, model in items(models)
 }
-
-
-def require_login(view):
-    @wraps(view)
-    def wrapper(cls, request, *args, **kwargs):
-        if not getattr(request, 'user', None) or not request.user.is_authenticated:
-            return HttpResponseRedirect(f'{reverse(Auth.login)}?{urlencode(dict(next=request.path))}')
-
-        return view(cls, request, *args, **kwargs)
-
-    return wrapper
 
 
 @with_meta
@@ -131,6 +122,8 @@ class Admin(Page):
         iommi_style = 'bootstrap'
         table_class = Table
         form_class = Form
+        apps = EMPTY
+        parts = EMPTY
         apps__auth_user__include = True
         apps__auth_group__include = True
         parts__messages = Messages()
@@ -160,6 +153,11 @@ class Admin(Page):
             ),
         )
 
+    model: Type[Model] = Refinable()
+    instance: Model = Refinable()
+    app_name: str = Refinable()
+    model_name: str = Refinable()
+    operation: str = Refinable()
     table_class: Type[Table] = Refinable()
     form_class: Type[Form] = Refinable()
 
@@ -168,7 +166,7 @@ class Admin(Page):
     menu = Menu(
         sub_menu=dict(
             root=MenuItem(
-                url=lambda admin, **_: reverse(admin.__class__.all_models), display_name=gettext('iommi administration')
+                url=lambda admin, **_: reverse('iommi.Admin.all_models'), display_name=gettext('iommi administration')
             ),
             change_password=MenuItem(
                 url=lambda **_: reverse(Auth.change_password), display_name=gettext('Change password')
@@ -178,10 +176,6 @@ class Admin(Page):
     )
 
     @read_config
-    @dispatch(
-        apps=EMPTY,
-        parts=EMPTY,
-    )
     def __init__(self, parts, apps, **kwargs):
         # Validate apps params
         for k in apps.keys():
@@ -189,8 +183,68 @@ class Admin(Page):
                 k in joined_app_name_and_model
             ), f'{k} is not a valid app/model key.\n\nValid keys:\n    ' + '\n    '.join(sorted(joined_app_name_and_model))
 
+        super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
+
+    def refine_with_params(self, app_name: str = None, model_name: str = None, pk: str = None):
+        refined_admin = self.refine(app_name=app_name, model_name=model_name)
+
+        model = django_apps.all_models[app_name][model_name] if app_name and model_name else None
+        instance = model.objects.get(pk=pk) if pk is not None else None
+
+        if model is not None and instance is None:
+            refined_admin = refined_admin.refine(model=model, parts__table__auto__model=model)
+
+        if instance is not None:
+            refined_admin = refined_admin.refine(instance=instance, parts__form__auto__instance=instance)
+
+        return refined_admin
+
+    def as_view(self):
+        def admin_view(request, *args, **kwargs):
+            if not getattr(request, 'user', None) or not request.user.is_authenticated:
+                return HttpResponseRedirect(f'{reverse(Auth.login)}?{urlencode(dict(next=request.path))}')
+
+            final_page = self.refine_with_params(
+                app_name=kwargs.pop('app_name', None),
+                model_name=kwargs.pop('model_name', None),
+                pk=kwargs.pop('pk', None),
+            ).refine_done()
+
+            if not self.has_permission(request, instance=final_page.instance, model=final_page.model, operation=final_page.operation):
+                raise Http404()
+
+            view = build_as_view_wrapper(final_page)
+
+            return view(request, *args, **kwargs)
+
+        return admin_view
+
+    def on_refine_done(self):
+        part_name = ''
+        part_name += self.operation
+        if self.app_name:
+            part_name += '_' + self.app_name
+        if self.model_name:
+            part_name += '_' + self.model_name
+
+        table = self.parts.get('table')
+        if table is not None:
+            setdefaults_path(
+                self.parts,
+                **{part_name: flatten(table)}
+            )
+            self.parts.table = None
+
+        form = self.parts.get('form')
+        if form is not None:
+            setdefaults_path(
+                self.parts,
+                **{part_name: flatten(form)}
+            )
+            self.parts.form = None
+
         def should_throw_away(k, v):
-            if isinstance(v, Namespace) and 'call_target' in v:
+            if k == part_name:
                 return False
 
             if k == 'all_models':
@@ -208,13 +262,13 @@ class Admin(Page):
 
             return False
 
-        parts = {
+        self.parts = {
             # Arguments that are not for us needs to be thrown on the ground
             k: None if should_throw_away(k, v) else v
-            for k, v in items(parts)
+            for k, v in items(self.parts)
         }
 
-        super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
+        super(Admin, self).on_refine_done()
 
     @staticmethod
     def has_permission(request, operation, model=None, instance=None):
@@ -225,16 +279,11 @@ class Admin(Page):
 
     @classmethod
     @class_shortcut(
-        table=EMPTY,
-        table__call_target__attribute='div',
+        operation='all_models',
     )
-    @require_login
-    def all_models(cls, request, table, call_target=None, **kwargs):
-        if not cls.has_permission(request, operation='all_models'):
-            raise Http404()
+    def all_models(cls, table=None, *, call_target, **kwargs):
 
         def rows(admin, **_):
-
             for app_name, models in items(django_apps.all_models):
                 has_yielded_header = False
 
@@ -263,38 +312,34 @@ class Admin(Page):
 
         table = setdefaults_path(
             Namespace(),
-            table,
+            table if table is not None else {},
             title=gettext('All models'),
             call_target__cls=cls.get_meta().table_class,
+            call_target__attribute='div',
             sortable=False,
             rows=rows,
-            header__template=None,
             page_size=None,
             columns__name=dict(
                 cell__url=lambda row, **_: row.url,
                 display_name='',
-                cell__format=lambda row, **kwargs: row.format(row=row, **kwargs),
+                cell__format=lambda row, **format_kwargs: row.format(row=row, **format_kwargs),
             ),
         )
 
-        return call_target(parts__all_models=table, **kwargs)
+        return call_target(
+            parts__all_models=table,
+            **kwargs,
+        )
 
     @classmethod
-    @class_shortcut(
-        table=EMPTY,
+    @dispatch(
+        operation='list',
     )
-    @require_login
-    def list(cls, request, app_name, model_name, table, call_target=None, **kwargs):
-        model = django_apps.all_models[app_name][model_name]
-
-        if not cls.has_permission(request, operation='list', model=model):
-            raise Http404()
-
+    def list(cls, table=None, **kwargs):
         table = setdefaults_path(
             Namespace(),
-            table,
+            table if table is not None else {},
             call_target__cls=cls.get_meta().table_class,
-            auto__model=model,
             columns=dict(
                 select__include=True,
                 edit=dict(
@@ -310,7 +355,7 @@ class Admin(Page):
             ),
             actions=dict(
                 create=dict(
-                    display_name=gettext('Create %(model_name)s') % dict(model_name=model._meta.verbose_name),
+                    display_name=lambda page, **_: gettext('Create %(model_name)s') % dict(model_name=page.model._meta.verbose_name),
                     attrs__href='create/',
                 ),
             ),
@@ -318,86 +363,82 @@ class Admin(Page):
             bulk__actions__delete__include=True,
         )
 
-        return call_target(
+        return cls(
             parts__header__children__link__attrs__href='../..',
-            **{f'parts__list_{app_name}_{model_name}': table},
+            parts__table=table,
             **kwargs,
         )
 
     @classmethod
-    @class_shortcut(
-        form=EMPTY,
-    )
-    @require_login
-    def crud(cls, request, operation, form, app_name, model_name, pk=None, call_target=None, **kwargs):
-        model = django_apps.all_models[app_name][model_name]
-        instance = model.objects.get(pk=pk) if pk is not None else None
-
-        if not cls.has_permission(request, operation=operation, model=model, instance=instance):
-            raise Http404()
-
-        def on_save(form, instance, **_):
+    @class_shortcut
+    def crud(cls, operation, form=None, *, call_target, **kwargs):
+        def on_save(request, form, instance, **_):
             message = f'{form.model._meta.verbose_name.capitalize()} {instance} was ' + (
                 'created' if form.extra.is_create else 'updated'
             )
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
-        def on_delete(form, instance, **_):
+        def on_delete(request, form, instance, **_):
             message = f'{form.model._meta.verbose_name.capitalize()} {instance} was deleted'
             messages.add_message(request, messages.INFO, message, fail_silently=True)
 
         form = setdefaults_path(
             Namespace(),
-            form,
+            form if form is not None else {},
             call_target__cls=cls.get_meta().form_class,
-            auto__instance=instance,
-            auto__model=model,
             call_target__attribute=operation,
             extra__on_save=on_save,
             extra__on_delete=on_delete,
         )
 
         return call_target(
-            **{f'parts__{operation}_{app_name}_{model_name}': form},
+            parts__form=form,
+            operation=operation,
             **kwargs,
         )
 
     @classmethod
     @class_shortcut(
         call_target__attribute='crud',
-        operation='create',
         parts__header__children__link__attrs__href='../../..',
     )
-    def create(cls, request, call_target, **kwargs):
-        return call_target(request=request, **kwargs)
+    def create(cls, *, call_target, **kwargs):
+        return call_target(
+            operation='create',
+            **kwargs,
+        )
 
     @classmethod
     @class_shortcut(
         call_target__attribute='crud',
-        operation='edit',
         parts__header__children__link__attrs__href='../../../..',
     )
-    def edit(cls, request, call_target, **kwargs):
-        return call_target(request=request, **kwargs)
+    def edit(cls, *, call_target, **kwargs):
+        return call_target(
+            operation='edit',
+            **kwargs,
+        )
 
     @classmethod
     @class_shortcut(
         call_target__attribute='crud',
-        operation='delete',
         parts__header__children__link__attrs__href='../../../..',
     )
-    def delete(cls, request, call_target, **kwargs):
-        return call_target(request=request, **kwargs)
+    def delete(cls, *, call_target, **kwargs):
+        return call_target(
+            operation='delete',
+            **kwargs,
+        )
 
     @classmethod
     def urls(cls):
         return Struct(
             urlpatterns=[
-                path('', cls.all_models),
-                path('<app_name>/<model_name>/', cls.list),
-                path('<app_name>/<model_name>/create/', cls.create),
-                path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit),
-                path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete),
+                path('', cls.all_models().as_view(), name='iommi.Admin.all_models'),
+                path('<app_name>/<model_name>/', cls.list().as_view(), name='iommi.Admin.list'),
+                path('<app_name>/<model_name>/create/', cls.create().as_view(), name='iommi.Admin.create'),
+                path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit().as_view(), name='iommi.Admin.edit'),
+                path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete().as_view(), name='iommi.Admin.delete'),
             ]
             + Auth.urls().urlpatterns
         )
