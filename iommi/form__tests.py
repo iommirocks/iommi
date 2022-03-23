@@ -2136,7 +2136,7 @@ def test_choice_post_validation_chains_empty_choice_when_required_false():
     form = MyForm().bind(request=req('get'))
 
     assert list(form.fields.foo.choice_tuples) == [
-        form.fields.foo.empty_choice_tuple + (0,),
+        (None, '', form.fields.foo.empty_label, True, 0,),
         (1, '1', '1', False, 1),
         (2, '2', '2', False, 2),
         (3, '3', '3', False, 3),
