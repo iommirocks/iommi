@@ -519,8 +519,6 @@ class Field(Part, Tag):
     choice_id_formatter: Callable[..., str] = Refinable()
     choice_display_name_formatter: Callable[..., str] = Refinable()
     choice_to_optgroup: Optional[Callable[..., Optional[str]]] = Refinable()
-    # deprecated: the formatters should be able to handle None
-    empty_choice_tuple: Tuple[Any, str, str, bool] = EvaluatedRefinable()
 
     search_fields = Refinable()
     errors: Errors = Refinable()
@@ -922,9 +920,10 @@ class Field(Part, Tag):
     def choice_tuples(self):
         result = []
         if not self.required and not self.is_list:
-            choice, id_, display_name, _ = self.empty_choice_tuple
-            is_selected = not bool(self.value)
-            result.append((choice, id_, display_name, is_selected, 0))
+            result.append(
+                # choice, id, display_name, selected, index
+                (None, '', (self.empty_label), (not bool(self.value)), 0)
+            )
         for i, choice in enumerate(self.choices):
             result.append(self._build_option(choice) + (i + 1,))
 
@@ -1059,12 +1058,7 @@ class Field(Part, Tag):
         """
         Shortcut for single choice field. If required is false it will automatically add an option first with the value '' and the title '---'. To override that text pass in the parameter empty_label.
         """
-        instance = cls(**kwargs)
-        instance = instance.refine(
-            Prio.shortcut,
-            empty_choice_tuple=(None, '', instance.iommi_namespace['empty_label'], True),
-        )
-        return instance
+        return cls(**kwargs)
 
     @classmethod
     @with_defaults(
