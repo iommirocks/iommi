@@ -1722,6 +1722,7 @@ class Table(Part, Tag):
                         empty_choice_tuple=(None, '', '---', True),
                         parse_empty_string_as_none=True,
                         display_name=column.display_name,
+                        initial=None,
                     ),
                 )
                 if isinstance(column.model_field, BooleanField):

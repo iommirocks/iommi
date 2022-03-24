@@ -78,6 +78,7 @@ from tests.models import (
     BooleanFromModelTestModel,
     ChoicesModel,
     CSVExportTestModel,
+    DefaultsInForms,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
@@ -1139,6 +1140,26 @@ def test_bulk_custom_action_on_list():
     response = table.bind(request=req('post', pk_1='on', **{'-my_handler': ''})).render_to_response()
     assert response.status_code == 200, response.content.decode()
     assert selected == [Row(name='Nagini')]
+
+
+@pytest.mark.django_db
+def test_bulk_fields_empty_by_default():
+    t = Table(
+        auto__model=DefaultsInForms,
+        columns__name__bulk__include=True,
+        columns__number__bulk__include=True,
+    ).bind()
+    assert t.bulk.fields.name.initial is None
+    assert t.bulk.fields.number.initial is None
+
+    t = Table(
+        auto__model=DefaultsInForms,
+        columns__name__bulk__include=True,
+        columns__number__bulk__include=True,
+        columns__number__bulk__initial=11,
+    ).bind()
+    assert t.bulk.fields.name.initial is None
+    assert t.bulk.fields.number.initial == 11
 
 
 @pytest.mark.django_db
