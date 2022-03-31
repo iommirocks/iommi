@@ -118,6 +118,8 @@ from iommi.refinable import (
 )
 
 # Prevent django templates from calling That Which Must Not Be Called
+from iommi.sort_after import sort_after
+
 Namespace.do_not_call_in_templates = True
 
 
@@ -553,7 +555,6 @@ class Field(Part, Tag):
         input__attrs__name=lambda field, **_: field.iommi_path,
         input__extra__placeholder='',
         non_editable_input__call_target=Fragment,
-        non_editable_input__attrs__type=None,
         initial=MISSING,
         choice_to_optgroup=None,
         choice_id_formatter=lambda choice, **_: '%s' % choice,
@@ -692,17 +693,10 @@ class Field(Part, Tag):
 
             self._validate()
 
-        self.input = self.iommi_namespace.input(_name='input').bind(parent=self)
-
-        if self.is_boolean:
-            if 'checked' not in self.input.attrs and self.value:
-                self.input.attrs.checked = ''
+        if self.editable:
+            self.input = self.iommi_namespace.input(_name='input').bind(parent=self)
         else:
-            if 'value' not in self.input.attrs:
-                self.input.attrs.value = self.rendered_value
-
-        if not self.editable:
-            if self.iommi_namespace.non_editable_input.get('tag') == 'input':
+            if self.iommi_namespace.non_editable_input.get('tag', self.iommi_namespace.input.get('tag')) == 'input':
                 self.input = self.iommi_namespace.input(
                     attrs__value=self.rendered_value,
                     attrs__disabled=True,
@@ -713,6 +707,14 @@ class Field(Part, Tag):
                     children__text=self.rendered_value,
                     **self.iommi_namespace.non_editable_input
                 ).bind(parent=self)
+
+        if self.is_boolean:
+            if 'checked' not in self.input.attrs and self.value:
+                self.input.attrs.checked = ''
+                self.input.attrs.pop('value', None)
+        else:
+            if 'value' not in self.input.attrs:
+                self.input.attrs.value = self.rendered_value
 
     def on_bind(self) -> None:
         self._errors: Set[str] = set()
@@ -968,21 +970,20 @@ class Field(Part, Tag):
         if self.template:
             return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
 
-        return (
-            Fragment(
-                _name=self._name,
-                tag=self.tag,
-                attrs=self.attrs,
-                children=dict(
-                    label=render_fragment(self.label),
-                    input=render_fragment(self.input),
-                    help=render_fragment(self.help),
-                    errors=render_fragment(self.errors),
-                ),
-            )
-            .bind(parent=self._parent)
-            .__html__()
-        )
+        f = Fragment(
+            _name=self._name,
+            tag=self.tag,
+            attrs=self.attrs,
+        ).bind(parent=self._parent)
+
+        f.children['label'] = self.label
+        f.children['input'] = self.input
+        f.children['help'] = self.help
+        f.children['errors'] = self.errors
+
+        f.children = sort_after(f.children)
+
+        return f.__html__()
 
     @classmethod
     @class_shortcut(

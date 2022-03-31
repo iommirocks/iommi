@@ -640,7 +640,7 @@ def test_non_editable():
         """
         <div>
             <label for="id_foo">Foo</label>
-            <span custom="7" id="id_foo" name="foo">11</span>
+            <input custom="7" disabled="" id="id_foo" name="foo" type="text" value="11"/>
         </div>
     """
     )
@@ -3149,7 +3149,6 @@ def test_editable_can_be_a_callable():
     assert f.fields.foo.editable is False
 
 
-
 def test_render_grouped_fields():
     class MyForm(Form):
         a = Field()
@@ -3208,5 +3207,17 @@ def test_non_editable_input_tag():
         fields__foo__non_editable_input__tag='input',
         fields__foo__initial='initial',
     )
-    html = form.bind(request=req('get')).__html__()
-    assert '<input disabled id="id_foo" name="foo" value="initial">' in html
+    actual = form.bind(request=req('get')).fields.foo.__html__()
+    expected = '<input disabled id="id_foo" name="foo" type="text" value="initial">'
+    assert expected in actual
+
+
+def test_non_editable_checkbox():
+    form = Form.edit(
+        auto__model=BooleanFromModelTestModel,
+        editable=False,
+        instance=BooleanFromModelTestModel(b=True),
+    )
+    actual = form.bind(request=req('get')).fields.b.__html__()
+    expected = '<div><input checked="" disabled id="id_b" name="b" type="checkbox"><label for="id_b">B</label><div class="helptext">$$$$</div></div>'
+    assert actual == expected
