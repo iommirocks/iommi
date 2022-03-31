@@ -194,6 +194,12 @@ def test_required_choice():
     assert form.fields['c']._errors == set()
 
 
+def test_multi_choice_is_list():
+    f = Field.multi_choice(choices=['a', 'b', 'c']).refine_done()
+    assert f.iommi_namespace.is_list
+    assert f.is_list
+
+
 def test_required_multi_choice():
     class MyForm(Form):
         foo = Field.multi_choice(
@@ -1040,6 +1046,17 @@ def test_multi_choice_queryset():
         str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
         == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
     )
+
+
+def test_missing_choices():
+    with pytest.raises(AssertionError, match='To use Field.choice, you must pass the choices list'):
+        Field.choice().refine_done()
+
+    with pytest.raises(AssertionError, match='To use Field.choice, you must pass the choices list'):
+        Field.multi_choice().refine_done()
+
+    # with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'):
+    #     Field.choice_queryset().refine_done()
 
 
 @pytest.mark.django_db
@@ -2933,6 +2950,14 @@ def test_create_or_edit_object_full_template_2():
     Form.delete(auto__instance=foo).bind(request=req('post', **{'-submit': ''})).render_to_response()
     with pytest.raises(Foo.DoesNotExist):
         foo.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_delete_form_not_editable():
+    from tests.models import Foo
+
+    foo = Foo.objects.create(foo=7)
+    assert not Form.delete(auto__instance=foo).bind(request=req('post', **{'-submit': ''})).editable
 
 
 @pytest.mark.django_db

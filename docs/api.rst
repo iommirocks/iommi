@@ -11,6 +11,8 @@ API Reference
    Column
    ColumnHeader
    Container
+   EditColumn
+   EditTable
    Endpoint
    Field
    Filter

@@ -450,6 +450,14 @@ def test_invalid_syntax(MyTestQuery):
     assert 'Invalid syntax for query' in str(e)
 
 
+def test_missing_choices():
+    with pytest.raises(AssertionError, match='To use Filter.choice, you must pass the choices list'):
+        Filter.choice().refine_done()
+
+    # with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances'):
+    #     Filter.choice_queryset().refine_done()
+
+
 @pytest.mark.django_db
 def test_choice_queryset():
     foos = [Foo.objects.create(foo=5), Foo.objects.create(foo=7)]

@@ -1,15 +1,13 @@
 import os
-import re
 from os.path import join
 from pathlib import Path
-
-# API docs
-from tests.helpers import create_iframe
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
 
 import django
 django.setup()
+
+from tests.helpers import create_iframe
 
 from iommi.docs import generate_api_docs_tests
 generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
