@@ -138,8 +138,8 @@ base = Style(
     Field=dict(
         shortcuts=dict(
             boolean=dict(
+                input__after=0,
                 input__attrs__type='checkbox',
-                template='iommi/form/row_checkbox.html',
             ),
             choice=dict(
                 input__template='iommi/form/choice.html',
@@ -158,7 +158,7 @@ base = Style(
         input__attrs__type='text',
         input__tag='input',
         label__tag='label',
-        non_editable_input__tag='span',
+        non_editable_input__attrs__disabled=True,
         help__attrs__class__helptext=True,
         help__tag='div',
     ),
