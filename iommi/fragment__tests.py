@@ -10,10 +10,7 @@ from iommi import (
     Page,
 )
 from iommi.attrs import Attrs
-from iommi.fragment import (
-    build_and_bind_h_tag,
-    fragment__render,
-)
+from iommi.fragment import fragment__render
 from tests.helpers import req
 
 

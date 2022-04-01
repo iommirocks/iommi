@@ -20,14 +20,12 @@ from typing import (
     Union,
 )
 
-from django.contrib.admin.utils import model_ngettext
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.db.models import (
     Case,
     IntegerField,
     Model,
-    ProtectedError,
     Q,
     QuerySet,
     When,
@@ -1296,7 +1294,7 @@ def delete_object__post_handler(form, **_):
             form.add_error(Template("""
             {% load i18n %}
             <p>{% blocktrans with escaped_object=object %}Deleting the {{ object_name }} '{{ escaped_object }}' would require deleting the following protected related objects:{% endblocktrans %}</p>
-            
+
             <ul>
                 {% for obj in restricted_objects %}
                     <li>
@@ -1307,7 +1305,7 @@ def delete_object__post_handler(form, **_):
                         {% endif %}
                     </li>
                 {% endfor %}
-            </ul>            
+            </ul>
             """).render(context=Context(dict(
                 restricted_objects=objects,
                 object=instance,
@@ -1406,7 +1404,6 @@ class Form(Part):
         post_handler(form.bind(request=req('post')))
         # @end
         """
-
 
     actions: Namespace = RefinableMembers()
     actions_template: Union[str, Template] = Refinable()

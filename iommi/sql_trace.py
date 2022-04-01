@@ -111,9 +111,9 @@ class Middleware:
                     total_duration = float(sum(x['duration'] for x in iommi_sql_debug_log))
                     result = [
                         '''
-                        <style> 
-                            a, span { 
-                                box-sizing: border-box; 
+                        <style>
+                            a, span {
+                                box-sizing: border-box;
                             }
                             @media (prefers-color-scheme: dark) {
                                 html {
@@ -123,7 +123,7 @@ class Middleware:
                                 b {
                                     color: white;
                                 }
-                            } 
+                            }
                             </style>
                         ''',
                         f'{len(iommi_sql_debug_log)} queries, {total_duration:.3} seconds total<br><br>',
@@ -488,4 +488,3 @@ def make_debug_cursor(self, cursor):
 
 
 connections[DEFAULT_DB_ALIAS].__class__.make_debug_cursor = make_debug_cursor
-

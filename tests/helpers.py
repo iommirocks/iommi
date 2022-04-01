@@ -47,6 +47,18 @@ def remove_csrf(html_code):
     return re.sub(csrf_regex, '', html_code)
 
 
+def assert_html(actual_html, expected_html):
+    from bs4 import BeautifulSoup
+    expected_soup = BeautifulSoup(expected_html, 'html.parser')
+    prettified_expected = reindent(expected_soup.prettify()).strip()
+    actual_soup = BeautifulSoup(actual_html, 'html.parser')
+    prettified_actual = reindent(actual_soup.prettify()).strip()
+
+    if prettified_actual != prettified_expected:  # pragma: no cover
+        print(actual_html)
+    assert prettified_actual == prettified_expected
+
+
 @dispatch(
     table__call_target=Table,
 )

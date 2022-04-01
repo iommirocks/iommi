@@ -201,7 +201,7 @@ def test_validate_default_styles():
 
 
 def test_error_when_trying_to_style_non_existent_attribute():
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError):
         Menu(iommi_style=Style(Menu__something_that_does_not_exist='!!!')).refine_done()
 
 
@@ -330,7 +330,7 @@ def test_set_class_on_actions_container():  # pragma: no cover
     style_data = Namespace(
         actions__attrs__class={'object-tools': True},
     )
-    assert t.refine(**style_data).refine_done().actions.attrs['class']['object-tool'] == True
+    assert bool(t.refine(**style_data).refine_done().actions.attrs['class']['object-tool'])
 
 
 def test_assets_render_from_style():

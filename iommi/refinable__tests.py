@@ -113,10 +113,10 @@ def test_refine_recursive():
     assert banana.color == 'yellow'
     assert banana.taste == 'good'
     assert (
-            str(basket.iommi_namespace.as_stack()) == "["
-        "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>}), "
-        "('refine', {'fruits__banana__taste': 'good'})"
-        "]"
+        str(basket.iommi_namespace.as_stack()) == "["
+                                                  "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>}), "
+                                                  "('refine', {'fruits__banana__taste': 'good'})"
+                                                  "]"
     )
 
 
@@ -130,8 +130,8 @@ def test_refine_recursive_defaults():
 
     assert banana.color == 'yellow'
     assert banana.taste == 'good'
-    assert (
-            str(basket.iommi_namespace.as_stack()) == "["
+    assert str(basket.iommi_namespace.as_stack()) == (
+        "["
         "('refine defaults', {'fruits__banana__color': 'blue', 'fruits__banana__taste': 'good'}), "
         "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>})"
         "]"
@@ -150,8 +150,8 @@ def test_refine_recursive_defaults2():
 
     assert banana.taste is None
     assert banana.color == 'yellow'
-    assert (
-            str(basket.iommi_namespace.as_stack()) == "["
+    assert str(basket.iommi_namespace.as_stack()) == (
+        "["
         "('refine defaults', {'fruits__banana': <Fruit Namespace(color=blue, taste=good)>}), "
         "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>})"
         "]"
@@ -170,8 +170,8 @@ def test_refine_recursive_2():
 
     assert banana.color == 'blue'
     assert banana.taste == 'good'
-    assert (
-            str(basket.iommi_namespace.as_stack()) == "["
+    assert str(basket.iommi_namespace.as_stack()) == (
+        "["
         "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>}), "
         "('refine', {'fruits__banana': <Fruit Namespace(color=blue, taste=good)>})"
         "]"

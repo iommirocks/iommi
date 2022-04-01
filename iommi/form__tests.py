@@ -2810,7 +2810,7 @@ def test_unique_constraint_violation_edit():
     }
 
     instance.refresh_from_db()
-    assert instance.f_bool == False
+    assert not bool(instance.f_bool)
 
 
 @pytest.mark.django_db
@@ -3190,13 +3190,13 @@ def test_render_grouped_fields():
          <div class="form_group">
             <div><label for="id_b">B</label><input id="id_b" name="b" type="text" value=""></div>
          </div>
-        
+
          <div><label for="id_c">C</label><input id="id_c" name="c" type="text" value=""></div>
-        
-         <div class="form_group">        
+
+         <div class="form_group">
              <div><label for="id_d">D</label><input id="id_d" name="d" type="text" value=""></div>
              <div><label for="id_e">E</label><input id="id_e" name="e" type="text" value=""></div>
-             <div><label for="id_f">F</label><input id="id_f" name="f" type="text" value=""></div>     
+             <div><label for="id_f">F</label><input id="id_f" name="f" type="text" value=""></div>
          </div>
     '''
     prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()

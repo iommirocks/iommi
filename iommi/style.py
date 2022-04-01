@@ -12,7 +12,6 @@ from tri_declarative import (
     EMPTY,
     get_shortcuts_by_name,
     Namespace,
-    RefinableObject,
     setdefaults_path,
 )
 

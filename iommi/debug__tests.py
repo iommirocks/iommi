@@ -1,5 +1,3 @@
-import inspect
-
 import pytest
 from tri_struct import Struct
 
