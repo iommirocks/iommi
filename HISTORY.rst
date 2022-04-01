@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+4.7.0 (2022-04-01)
+~~~~~~~~~~~~~~~~~~
+
+* Improved exceptions: you now get an exception frame that points to the declaration if you use the declarative style. This makes it much easier to know what code is responsible for a crash.
+
+* Fixed CSV rendering endpoint and added an example for it
+
+* `EditTable` is no longer experimental!
+
+* Fix rendering of choices in filter select widgets from CharField with choices
+
+* Bulk editing: fields should be default None, even if the model has a default value
+
+* Fixed rendering of disabled checkbox
+
+
 4.6.0 (2022-03-02)
 ~~~~~~~~~~~~~~~~~~
 
