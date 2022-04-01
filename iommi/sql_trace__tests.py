@@ -250,12 +250,12 @@ def test_linkify():
     base_path = Path(__file__).parent.parent.absolute()
 
     original = """
-  File "foo/django/template/bar", line 1, in f => 
+  File "foo/django/template/bar", line 1, in f =>
   File "foo.py", line 1, in _resolve_lookup => (looking up: django_template_bit)
   File "foo.py", line 13, in asd =>
 """.strip()
     expected = f"""
-  File "<a href="pycharm://open?file={base_path}/foo/django/template/bar&amp;line=1">foo/django/template/bar</a> ", line 1, in f =&gt; 
+  File "<a href="pycharm://open?file={base_path}/foo/django/template/bar&amp;line=1">foo/django/template/bar</a> ", line 1, in f =&gt;
   File "<a href="pycharm://open?file={base_path}/foo.py&amp;line=1">foo.py</a> ", line 1, in _resolve_lookup =&gt; (looking up: django_template_bit)
   File "<a href="pycharm://open?file={base_path}/foo.py&amp;line=13">foo.py</a> ", line 13, in asd =&gt;
 """.strip()

@@ -2810,7 +2810,7 @@ def test_unique_constraint_violation_edit():
     }
 
     instance.refresh_from_db()
-    assert instance.f_bool == False
+    assert not bool(instance.f_bool)
 
 
 @pytest.mark.django_db

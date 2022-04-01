@@ -330,7 +330,7 @@ def test_set_class_on_actions_container():  # pragma: no cover
     style_data = Namespace(
         actions__attrs__class={'object-tools': True},
     )
-    assert t.refine(**style_data).refine_done().actions.attrs['class']['object-tool'] == True
+    assert bool(t.refine(**style_data).refine_done().actions.attrs['class']['object-tool'])
 
 
 def test_assets_render_from_style():

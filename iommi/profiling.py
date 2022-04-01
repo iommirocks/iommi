@@ -92,7 +92,7 @@ class Middleware:
             elif prof_command == 'snake':
                 # noinspection PyPackageRequirements
                 try:
-                    import snakeviz
+                    import snakeviz  # noqa
                 except ImportError:
                     return HttpResponse('You must `pip install snakeviz` to use this feature')
 
@@ -137,23 +137,24 @@ class Middleware:
                     result.append(line)
 
                 start_html = '''
-                <style>
-                    html {
-                        font-family: monospace; 
-                        white-space: nowrap;
-                    }
-                    
-                    @media (prefers-color-scheme: dark) {
+                    <style>
                         html {
-                            background-color: black;
-                            color: #bbb;
+                            font-family: monospace;
+                            white-space: nowrap;
                         }
-                        b {
-                            color: white;
+
+                        @media (prefers-color-scheme: dark) {
+                            html {
+                                background-color: black;
+                                color: #bbb;
+                            }
+                            b {
+                                color: white;
+                            }
                         }
-                    }
-                </style>
-                <div>'''
+                    </style>
+                    <div>
+                '''
                 lines_html = "<br />\n".join(result)
                 end_html = '</div>'
 

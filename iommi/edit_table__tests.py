@@ -15,6 +15,7 @@ from iommi.table import (
     Column,
 )
 from tests.helpers import (
+    assert_html,
     req,
     verify_table_html,
 )
@@ -31,7 +32,7 @@ def test_no_longer_experimental():
                   'Update imports and remove the .experimental part.',
     ):
         # noinspection PyUnresolvedReferences
-        import iommi.experimental.edit_table
+        import iommi.experimental.edit_table  # noqa
 
 
 @pytest.mark.django_db
@@ -238,14 +239,18 @@ def test_formset_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
     edit_table = EditTable(auto__model=TBar)
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
-    expected_create_template = '''<tr data-pk="#sentinel#"><td><select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices">
-    
-        
-    
-</select>
-</td>
-<td><input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox"></td></tr>'''
-    assert edit_table.bind().attrs['data-add-template'] == expected_create_template
+    # language=html
+    expected_create_template = '''
+        <tr data-pk="#sentinel#">
+            <td>
+                <select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices"></select>
+            </td>
+            <td>
+                <input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox">
+            </td>
+        </tr>
+    '''
+    assert_html(edit_table.bind().attrs['data-add-template'], expected_create_template)
 
     assert not TBar.objects.exists()
 
