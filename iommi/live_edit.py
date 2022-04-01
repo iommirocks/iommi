@@ -235,10 +235,10 @@ def live_edit_view(request, view, args, kwargs):
                         if (window.iommi_live_edit_updating) {
                             return;
                         }
-                    
+
                         window.iommi_live_edit_updating = true;
                         window.iommi_live_edit_needs_update = false;
-                        
+
                         let form_data = new FormData();
                         form_data.append('data', editor.getValue());
 
@@ -253,7 +253,7 @@ def live_edit_view(request, view, args, kwargs):
                         }
                         window.iommi_live_edit_updating = false;
                     }
-                    
+
                     setInterval(() => {
                         if (!window.iommi_live_edit_needs_update) {
                             return;
@@ -263,7 +263,7 @@ def live_edit_view(request, view, args, kwargs):
 
                     window.iommi_live_edit_updating = false;
                     window.iommi_live_edit_needs_update = true;
-                    
+
                     editor.session.on('change', () => {window.iommi_live_edit_needs_update = true});
                     editor.setFontSize(14);
                     editor.session.setUseWrapMode(true);

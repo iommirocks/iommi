@@ -90,6 +90,7 @@ class Middleware:
                         response.content = subprocess.check_output('tee', stdin=gprof2dot.stdout)
 
             elif prof_command == 'snake':
+                # noinspection PyPackageRequirements
                 try:
                     import snakeviz
                 except ImportError:

@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy
 from tri_declarative import (
     class_shortcut,
     dispatch,
-    EMPTY,
     Refinable,
     setdefaults_path,
     with_meta,

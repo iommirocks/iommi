@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from django.template import Template
 from django.urls import (
     path,

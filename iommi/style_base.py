@@ -1,5 +1,4 @@
 from django.utils.translation import gettext_lazy
-from iommi import MISSING
 
 from iommi.asset import Asset
 from iommi.debug import (

@@ -1,7 +1,4 @@
-import warnings
-from copy import (
-    copy,
-)
+from copy import copy
 from typing import (
     Dict,
     Type,
@@ -33,7 +30,7 @@ class Members(Traversable):
     """
 
     @dispatch
-    def __init__(self, *, _declared_members, unknown_types_fall_through, cls,  **kwargs):
+    def __init__(self, *, _declared_members, unknown_types_fall_through, cls, **kwargs):
         super(Members, self).__init__(**kwargs)
         self._declared_members = _declared_members
         self._unknown_types_fall_through = unknown_types_fall_through

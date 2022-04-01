@@ -31,7 +31,7 @@ class Asset(Fragment):
             Asset.js(
                 attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
             )
-            
+
             Asset.js('window.foo = bar')
         """
         return call_target(text, **kwargs)
@@ -54,7 +54,7 @@ class Asset(Fragment):
                 attrs__integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh',
                 attrs__crossorigin='anonymous',
             )
-            
+
             Asset.css('p { font-size: 18pt; }')
         """
         return call_target(text, **kwargs)

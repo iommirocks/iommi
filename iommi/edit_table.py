@@ -267,7 +267,7 @@ class EditTable(Table):
 
         # language=js
         assets__edit_table_js = Asset.js(mark_safe('''
-        
+
         function iommi_add_row(element) {
             function find_for_siblings(s) {
                 while (s) {
@@ -298,7 +298,7 @@ class EditTable(Table):
             virtual_pk -= 1;
             virtual_pk = virtual_pk.toString();
             table.setAttribute('data-next-virtual-pk', virtual_pk);
-            
+
             let tmp = document.createElement('table');
             tmp.innerHTML = table.getAttribute('data-add-template').replaceAll('#sentinel#', virtual_pk);
             let y = tmp.querySelector('tr');
@@ -398,7 +398,7 @@ class EditTable(Table):
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
-    
+
     def cells_for_rows_for_create(self):
         """Yield a Cells instance for each create row sent from the client."""
         assert self._is_bound, NOT_BOUND_MESSAGE
@@ -416,7 +416,7 @@ class EditTable(Table):
                 return int(parts[-1])
             except ValueError:
                 return None
-        
+
         pks = {
             parse_virtual_pk(k)
             for k in keys(self.get_request().POST)

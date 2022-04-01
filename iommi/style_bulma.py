@@ -40,14 +40,14 @@ bulma_base = Style(
     ),
     sub_styles__horizontal=dict(
         Field=dict(
-                attrs__class={
-                    'mr-4': True,
-                },
-                label__attrs__class={
-                    'mt-2': True,
-                    'mr-1': True,
-                },
-            ),
+            attrs__class={
+                'mr-4': True,
+            },
+            label__attrs__class={
+                'mt-2': True,
+                'mr-1': True,
+            },
+        ),
     ),
     Header__attrs__class={
         'title': True,
@@ -167,5 +167,3 @@ bulma = Style(
     font_awesome_4,
     select2_enhanced_forms,
 )
-
-

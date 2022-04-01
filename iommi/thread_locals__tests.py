@@ -4,6 +4,7 @@ from iommi.thread_locals import (
     set_current_request,
 )
 
+
 def test_threadlocals():
     _thread_locals.__dict__.clear()
 

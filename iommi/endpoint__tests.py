@@ -89,16 +89,16 @@ def test_find_target_with_invalid_path():
     with pytest.raises(InvalidEndpointPathException) as e:
         find_target(path='/items/baz', root=root)
 
-    assert (
-            str(e.value) == "Given path /items/baz not found.\n"
-                            "    Short alternatives:\n"
-                            "        ''\n"
-                            "        basket\n"
-                            "        banana\n"
-                            "    Long alternatives:\n"
-                            "        ''\n"
-                            "        items/basket\n"
-                            "        items/basket/fruits/banana"
+    assert str(e.value) == (
+        "Given path /items/baz not found.\n"
+        "    Short alternatives:\n"
+        "        ''\n"
+        "        basket\n"
+        "        banana\n"
+        "    Long alternatives:\n"
+        "        ''\n"
+        "        items/basket\n"
+        "        items/basket/fruits/banana"
     )
 
 
@@ -148,9 +148,7 @@ def test_invalid_enpoint_path(settings):
     with pytest.raises(InvalidEndpointPathException) as e:
         p.render_to_response()
 
-    assert (
-            str(e.value)
-            == """
+    assert str(e.value) == """
 Given path /foo not found.
     Short alternatives:
         ''
@@ -159,7 +157,6 @@ Given path /foo not found.
         ''
         endpoints/debug_tree
 """.strip()
-    )
 
 
 def test_unsupported_request_method():

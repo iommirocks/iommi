@@ -13,10 +13,7 @@ from iommi._web_compat import (
     mark_safe,
     Template,
 )
-from iommi.base import (
-    items,
-    values,
-)
+from iommi.base import items
 from iommi.member import (
     MemberBinder,
     Members,
