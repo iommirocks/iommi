@@ -25,34 +25,30 @@ def test_base():
     """
     docstring for Foo
     
+    """
+
+# language=rst
+"""
 
 Refinable members
 -----------------
 
 * `description`
 
+        Default: `lambda foo, bar: 'qwe'`
 * `empty_string_default`
 
+        Default: `""`
 * `name`
 
         description of the name field
 
+        Default: `foo-name`
 * `refinable_func`
 
 * `some_other_thing`
 
-
-Defaults
-^^^^^^^^
-
-* `description`
-    * `lambda foo, bar: 'qwe'`
-* `empty_string_default`
-    * `""`
-* `name`
-    * `foo-name`
-* `some_other_thing`
-    * `iommi.docs__tests.some_callable`
+        Default: `iommi.docs__tests.some_callable`
 
 Shortcuts
 ---------

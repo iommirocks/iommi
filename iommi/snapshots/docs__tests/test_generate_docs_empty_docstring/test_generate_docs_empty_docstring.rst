@@ -23,6 +23,10 @@ Base class: `RefinableObject`
 def test_base():
     # language=rst
     """
+    """
+
+# language=rst
+"""
 
 Refinable members
 -----------------
