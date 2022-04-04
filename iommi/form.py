@@ -583,7 +583,7 @@ class Field(Part, Tag):
         :param required: If the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
-        :param editable: Default: `True`
+        :param editable: Is this field editable.
         :param strip_input: Runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
         :param render_value: Render the parsed and validated value into a string. Default just converts to unicode: `lambda form, field, value: unicode(value)`
         :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False``

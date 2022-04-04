@@ -220,6 +220,11 @@ request = req('get')
                 w(0, '"""')
             w(1, '')
 
+        w(1, '"""')
+        w(0, '')
+        w(0, '# language=rst')
+        w(0, '"""')
+
         if constructor_doc['text']:
             if class_doc['text']:
                 w(0, '')
@@ -228,6 +233,24 @@ request = req('get')
             w(0, '')
 
         w(0, '')
+
+        defaults = Namespace()
+        for refinable, value in sorted(get_namespace(c).items()):
+            if value not in (None, MISSING):
+                defaults[refinable] = value
+
+        def default_description(v):
+            if callable(v) and not isinstance(v, Namespace):
+                v = get_docs_callable_description(v)
+
+                if 'lambda' in v:
+                    v = v[v.find('lambda'):]
+                    v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
+            if isinstance(v, Part):
+                v = v.bind()
+            if v == '':
+                v = '""'
+            return v
 
         refinable_members = sorted(dict.items(get_namespace(c)))
         if refinable_members:
@@ -254,6 +277,9 @@ request = req('get')
                         w(2, f'Type: `{name}`')
                     w(1, '')
 
+                if refinable in defaults:
+                    w(2, f'Default: `{default_description(defaults.pop(refinable))}`')
+
                 ref_name = f'{c.__name__}.{refinable}'
                 if ref_name in cookbook_name_by_refinable_name:
                     w(2, f'Cookbook: :ref:`{ref_name.lower()}`')
@@ -261,34 +287,7 @@ request = req('get')
 
             w(0, '')
 
-        defaults = Namespace()
-        for refinable, value in sorted(get_namespace(c).items()):
-            if value not in (None, MISSING):
-                defaults[refinable] = value
-
-        def default_description(v):
-            if callable(v) and not isinstance(v, Namespace):
-                v = get_docs_callable_description(v)
-
-                if 'lambda' in v:
-                    v = v[v.find('lambda') :]
-                    v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
-            if isinstance(v, Part):
-                v = v.bind()
-            if v == '':
-                v = '""'
-            return v
-
-        if defaults:
-            section(2, 'Defaults')
-
-            for k, v in sorted(flatten_items(defaults)):
-                if v != {}:
-                    v = default_description(v)
-
-                    w(0, '* `%s`' % k)
-                    w(1, '* `%s`' % v)
-            w(0, '')
+        assert not defaults
 
         shortcuts = get_shortcuts_by_name(c)
         if shortcuts:

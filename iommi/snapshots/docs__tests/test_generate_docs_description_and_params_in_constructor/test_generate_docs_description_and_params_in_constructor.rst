@@ -25,6 +25,10 @@ def test_base():
     """
     First description
     
+    """
+
+# language=rst
+"""
 
 __init__ description
 
