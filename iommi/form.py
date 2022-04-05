@@ -114,12 +114,11 @@ from iommi.refinable import (
     EvaluatedRefinable,
     RefinableMembers,
 )
-
-# Prevent django templates from calling That Which Must Not Be Called
 from iommi.sort_after import sort_after
 
-Namespace.do_not_call_in_templates = True
 
+# Prevent django templates from calling That Which Must Not Be Called
+Namespace.do_not_call_in_templates = True
 
 FULL_FORM_FROM_REQUEST = 'full_form_from_request'  # pragma: no mutate The string is just to make debugging nice
 INITIALS_FROM_GET = 'initials_from_get'  # pragma: no mutate The string is just to make debugging nice
@@ -1485,7 +1484,7 @@ class Form(Part):
         # Submit is special.
         # We used to have an automatic action submit button. Now we instead if something is inj
         # the actions submit space assume you want to define it as a primary button (unless you
-        # explicitely specify differently). That way we get no button if you don't explicitely opt
+        # explicitly specify differently). That way we get no button if you don't explicitly opt
         # into it, by either directly defining something inside the submit namespace or using
         # Form.edit/delete/...
         if 'submit' in self.actions:
