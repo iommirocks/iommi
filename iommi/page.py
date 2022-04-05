@@ -61,9 +61,8 @@ class Page(Part):
     title: str = EvaluatedRefinable()
     member_class: Type[Fragment] = Refinable()
     context = Refinable()  # context is evaluated, but in a special way so gets no EvaluatedRefinable type
-    h_tag: Union[
-        Fragment, str
-    ] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[Fragment, str] = Refinable()
     parts: Dict[str, PartType] = RefinableMembers()
 
     class Meta:

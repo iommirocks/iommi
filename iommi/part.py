@@ -69,9 +69,8 @@ class Part(Traversable):
     include: bool = Refinable()  # This is evaluated, but first and in a special way
     after: Union[int, str] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
-    extra_evaluated: Dict[
-        str, Any
-    ] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    # not EvaluatedRefinable because this is an evaluated container so is special
+    extra_evaluated: Dict[str, Any] = Refinable()
     endpoints: Namespace = RefinableMembers()
     # Only the assets used by this part
     assets: Namespace = RefinableMembers()

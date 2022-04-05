@@ -137,17 +137,20 @@ class EditColumn(Column):
         display_name=gettext_lazy('Delete'),
         cell__attrs__class__delete=True,
         # language=js
-        assets__fancy_delete=Asset(mark_safe('''
-            $(document).ready(() => {
-                $('.edit_table_delete').click((event) => {
-                    const checked = $(event.target).closest('tr').find('input')[0].checked;
-                    $(event.target).closest('tr').find('input').prop("checked", !checked);
-                    $(event.target).closest('tr')[0].style.opacity = checked ? "1.0" : "0.3";
-                    event.preventDefault();
-                    return false;
+        assets__fancy_delete=Asset(
+            mark_safe('''
+                $(document).ready(() => {
+                    $('.edit_table_delete').click((event) => {
+                        const checked = $(event.target).closest('tr').find('input')[0].checked;
+                        $(event.target).closest('tr').find('input').prop("checked", !checked);
+                        $(event.target).closest('tr')[0].style.opacity = checked ? "1.0" : "0.3";
+                        event.preventDefault();
+                        return false;
+                    });
                 });
-            });
-        '''), tag='script')
+            '''),
+            tag='script',
+        )
     )
     def delete(cls, call_target=None, **kwargs):
         def cell__value(row, table, cells, column, **_):
