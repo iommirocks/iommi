@@ -850,9 +850,8 @@ class Cells(Traversable, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     tag: str = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
-    extra_evaluated: Dict[
-        str, Any
-    ] = Refinable()  # not EvaluatedRefinable because this is an evaluated container so is special
+    # not EvaluatedRefinable because this is an evaluated container so is special
+    extra_evaluated: Dict[str, Any] = Refinable()
     cell_class: Type['Cell'] = Refinable()
 
     def __init__(self, row, row_index, cell_class=None, **kwargs):
@@ -1188,9 +1187,8 @@ class Paginator(Traversable):
     link = Refinable()
     adjacent_pages: int = Refinable()
     min_page_size: int = Refinable()
-    number_of_pages: int = (
-        Refinable()
-    )  # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
+    # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
+    number_of_pages: int = Refinable()
     count: int = Refinable()  # count is evaluated, but in a special way so gets no EvaluatedRefinable type
     slice = Refinable()
     show_always = Refinable()
@@ -1438,9 +1436,8 @@ class Table(Part, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
-    h_tag: Union[
-        Fragment, str
-    ] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[Fragment, str] = Refinable()
     title: str = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     row: RowConfig = EvaluatedRefinable()
     cell: CellConfig = EvaluatedRefinable()

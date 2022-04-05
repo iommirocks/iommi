@@ -193,5 +193,6 @@ def group_actions(actions: Dict[str, Action]):
 
 
 class Actions(Members, Tag):
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = Refinable()
     tag = EvaluatedRefinable()

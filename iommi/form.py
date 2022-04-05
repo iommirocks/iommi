@@ -1407,14 +1407,12 @@ class Form(Part):
 
     actions: Namespace = RefinableMembers()
     actions_template: Union[str, Template] = Refinable()
-    attr: str = (
-        EvaluatedRefinable()
-    )  # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
+    # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
+    attr: str = EvaluatedRefinable()
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     editable: bool = Refinable()
-    h_tag: Union[
-        Fragment, str
-    ] = Refinable()  # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[Fragment, str] = Refinable()
     title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
     errors: Errors = Refinable()

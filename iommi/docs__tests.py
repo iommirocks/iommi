@@ -165,3 +165,17 @@ def test_type_annotations(snapshot):
     assert actual_filename == 'test_doc__api_Foo.py'
 
     snapshot.assert_match(actual_doc, 'test_type_annotations.rst')
+
+
+def test_read_defaults():
+    from iommi import Column
+    ((actual_filename, actual_doc),) = list(_generate_tests_from_class_docs(classes=[Column]))
+
+    assert """`time`
+^^^^^^
+
+Defaults
+++++++++
+
+* `filter__call_target__attribute`
+    * `time`""" in actual_doc
