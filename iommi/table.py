@@ -1714,7 +1714,6 @@ class Table(Part, Tag):
                         _name=name,
                         attr=name if column.attr is MISSING else column.attr,
                         required=False,
-                        empty_choice_tuple=(None, '', '---', True),
                         parse_empty_string_as_none=True,
                         display_name=column.display_name,
                         initial=None,
