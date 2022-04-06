@@ -15,7 +15,10 @@ from iommi.base import (
     items,
     keys,
 )
-from iommi.refinable import RefinableMembers
+from iommi.refinable import (
+    Prio,
+    RefinableMembers,
+)
 from iommi.sort_after import sort_after
 from iommi.traversable import (
     Traversable,
@@ -119,7 +122,7 @@ def refine_done_members(
                 member_by_name[key] = item
 
     for k, v in items(Namespace(_unapplied_config)):
-        member_by_name[k] = member_by_name[k].refine(**v)
+        member_by_name[k] = member_by_name[k].refine(Prio.member, **v)
         # noinspection PyProtectedMember
         assert member_by_name[k]._name is not None
 
@@ -128,7 +131,7 @@ def refine_done_members(
             if k in member_by_name:
                 v = Namespace(v)
                 v.pop('call_target', None)
-                member_by_name[k] = member_by_name[k].refine_defaults(**v)
+                member_by_name[k] = member_by_name[k].refine(Prio.member_defaults, **v)
             else:
                 member_by_name[k] = Namespace(
                     v,

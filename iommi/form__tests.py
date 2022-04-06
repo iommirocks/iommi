@@ -20,7 +20,6 @@ from django.core.exceptions import FieldError
 from django.http.response import HttpResponseBase
 from django.test import override_settings
 from tri_declarative import (
-    class_shortcut,
     get_members,
     getattr_path,
     is_shortcut,
@@ -80,6 +79,7 @@ from iommi.from_model import (
 from iommi.page import (
     Page,
 )
+from iommi.shortcut import with_defaults
 from tests.compat import RequestFactory
 from tests.helpers import (
     get_attrs,
@@ -1055,8 +1055,8 @@ def test_missing_choices():
     with pytest.raises(AssertionError, match='To use Field.choice, you must pass the choices list'):
         Field.multi_choice().refine_done()
 
-    # with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'):
-    #     Field.choice_queryset().refine_done()
+    with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances or if you specify model_field'):
+        Field.choice_queryset().refine_done()
 
 
 @pytest.mark.django_db
@@ -2302,10 +2302,10 @@ def test_from_model_with_inheritance():
 
     class MyField(Field):
         @classmethod
-        @class_shortcut
-        def float(cls, call_target=None, **kwargs):
+        @with_defaults
+        def float(cls, **kwargs):
             was_called['MyField.float'] += 1
-            return call_target(**kwargs)
+            return cls(**kwargs)
 
     class MyForm(Form):
         class Meta:
@@ -2426,9 +2426,9 @@ def test_all_field_shortcuts():
 def test_shortcut_to_subclass():
     class MyField(Field):
         @classmethod
-        @class_shortcut
-        def my_shortcut(cls, call_target=None, **kwargs):
-            return call_target(
+        @with_defaults()
+        def my_shortcut(cls, **kwargs):
+            return cls(
                 **kwargs
             )  # pragma: no cover: we aren't testing that this shortcut is implemented correctly
 
@@ -2436,9 +2436,9 @@ def test_shortcut_to_subclass():
 
     class MyField(Field):
         @classmethod
-        @class_shortcut
-        def choices(cls, call_target=None, **kwargs):
-            return call_target(
+        @with_defaults
+        def choices(cls, **kwargs):
+            return cls(
                 **kwargs
             )  # pragma: no cover: we aren't testing that this shortcut is implemented correctly
 

@@ -2,7 +2,6 @@ from typing import Dict
 
 import pytest
 from tri_declarative import (
-    class_shortcut,
     declarative,
     dispatch,
     EMPTY,
@@ -38,6 +37,10 @@ from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
     RefinableMembers,
+)
+from iommi.shortcut import (
+    superinvoking_classmethod,
+    with_defaults,
 )
 from iommi.traversable import (
     build_long_path_by_path,
@@ -358,11 +361,11 @@ def test_get_config():
                 super(FruitBase, self).__init__(**kwargs)
 
             @classmethod
-            @class_shortcut(
+            @with_defaults(
                 attrs__class__fruit_shortcut_base=True,
             )
-            def fruit_shortcut(cls, *, call_target=None, **kwargs):
-                return call_target(**kwargs)
+            def fruit_shortcut(cls, **kwargs):
+                return cls(**kwargs)
 
         class Fruit(FruitBase):
             @dispatch(
@@ -372,12 +375,12 @@ def test_get_config():
                 super(Fruit, self).__init__(**kwargs)
 
             @classmethod
-            @class_shortcut(
-                call_target__attribute='fruit_shortcut',
+            @superinvoking_classmethod
+            @with_defaults(
                 attrs__class__fruit_shortcut=True,
             )
-            def fruit_shortcut(cls, *, call_target=None, **kwargs):
-                return call_target(**kwargs)
+            def fruit_shortcut(cls, super_classmethod=None, **kwargs):
+                return super_classmethod(**kwargs)
 
         @declarative(Fruit, 'fruits', add_init_kwargs=False)
         @with_meta

@@ -26,6 +26,7 @@ from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
     is_evaluated_refinable,
+    Prio,
     RefinableMembers,
     RefinableObject,
 )
@@ -125,7 +126,9 @@ class Traversable(RefinableObject):
 
         style_data = get_style_data_for_object(iommi_style, obj=self, is_root=is_root)
 
-        result = self.refine_defaults(**style_data)
+        result = self.refine(Prio.style, **style_data)
+        del self
+
         result.iommi_style = iommi_style
         return result
 

@@ -5,7 +5,6 @@ from typing import get_type_hints
 
 from tri_declarative import (
     flatten,
-    flatten_items,
     get_declared,
     get_shortcuts_by_name,
     Namespace,
@@ -137,7 +136,7 @@ def _generate_tests_from_class_docs(classes):
         return (' ' * levels * 4) + s.strip()
 
     def get_namespace(c):
-        return Namespace({k: getattr(c.__init__, 'dispatch', {}).get(k) for k, v in items(get_declared(c, 'refinable'))})
+        return Namespace({k: getattr(c.__init__, '__iommi_with_defaults_kwargs', {}).get(k) for k, v in items(get_declared(c, 'refinable'))})
 
     for c in classes:
         from io import StringIO
@@ -302,7 +301,7 @@ request = req('get')
                     w(0, '')
                     w(0, '')
 
-                defaults = shortcut if isinstance(shortcut, dict) else shortcut.dispatch
+                defaults = shortcut if isinstance(shortcut, dict) else getattr(shortcut, '__iommi_with_defaults_kwargs', {})
                 if defaults:
                     defaults = Namespace(defaults)
                     section(3, 'Defaults')

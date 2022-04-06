@@ -7,13 +7,32 @@ from tri_declarative import (
     with_meta,
 )
 
+from iommi import (
+    Fragment,
+    Header,
+)
 from iommi.refinable import (
     prefixes,
+    Prio,
+    refinable,
     Refinable,
     RefinableMembers,
     RefinableObject,
-    RefinedNamespace,
+    RefinableNamespace,
 )
+
+
+def test_i_stil_med2():
+    f = RefinableNamespace(foo__call_target__cls=Header)
+    f = f._refine(
+        Prio.refine,
+        foo=Fragment(),
+    )
+    assert str(f.as_stack()) == str([
+        ('base', {'foo__call_target__cls': Header}),
+        ('refine', {'foo': Fragment()}),
+    ])
+    f.foo.refine_done()
 
 
 def test_empty():
@@ -112,11 +131,11 @@ def test_refine_recursive():
 
     assert banana.color == 'yellow'
     assert banana.taste == 'good'
-    assert (
-        str(basket.iommi_namespace.as_stack()) == "["
-                                                  "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>}), "
-                                                  "('refine', {'fruits__banana__taste': 'good'})"
-                                                  "]"
+    assert str(basket.iommi_namespace.as_stack()) == (
+        "["
+        "('base', {'fruits__banana': <Fruit color=yellow>}), "
+        "('refine', {'fruits__banana__taste': 'good'})"
+        "]"
     )
 
 
@@ -129,11 +148,11 @@ def test_refine_recursive_defaults():
     banana = basket.fruits.banana.refine_done()
 
     assert banana.color == 'yellow'
-    assert banana.taste == 'good'
+    assert banana.taste is None  # Shadowed by the wholesale overwrite by Fruit
     assert str(basket.iommi_namespace.as_stack()) == (
         "["
-        "('refine defaults', {'fruits__banana__color': 'blue', 'fruits__banana__taste': 'good'}), "
-        "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>})"
+        "('refine_defaults', {'fruits__banana__color': 'blue', 'fruits__banana__taste': 'good'}), "
+        "('base', {'fruits__banana': <Fruit color=yellow>})"
         "]"
     )
 
@@ -152,8 +171,8 @@ def test_refine_recursive_defaults2():
     assert banana.color == 'yellow'
     assert str(basket.iommi_namespace.as_stack()) == (
         "["
-        "('refine defaults', {'fruits__banana': <Fruit Namespace(color=blue, taste=good)>}), "
-        "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>})"
+        "('refine_defaults', {'fruits__banana': <Fruit color=blue taste=good>}), "
+        "('base', {'fruits__banana': <Fruit color=yellow>})"
         "]"
     )
 
@@ -172,8 +191,8 @@ def test_refine_recursive_2():
     assert banana.taste == 'good'
     assert str(basket.iommi_namespace.as_stack()) == (
         "["
-        "('base', {'fruits__banana': <Fruit Namespace(color=yellow)>}), "
-        "('refine', {'fruits__banana': <Fruit Namespace(color=blue, taste=good)>})"
+        "('base', {'fruits__banana': <Fruit color=yellow>}), "
+        "('refine', {'fruits__banana': <Fruit color=blue taste=good>})"
         "]"
     )
 
@@ -232,30 +251,30 @@ def test_no_double_done_refine():
 
 
 def test_refined_namespace():
-    base = Namespace(a=1, b=2)
-    refined = RefinedNamespace('refinement', base, b=3)
+    base = RefinableNamespace(a=1, b=2)
+    refined = base._refine(Prio.refine, b=3)
     assert refined == Namespace(a=1, b=3)
 
 
 def test_refined_defaults():
-    base = Namespace(a=1, b=2)
-    refined = RefinedNamespace('refinement', base, defaults=True, b=3, c=4)
+    base = RefinableNamespace(a=1, b=2)
+    refined = base._refine(Prio.refine_defaults, b=3, c=4)
     assert refined == Namespace(a=1, b=2, c=4)
 
 
 def test_refined_as_stack():
-    namespace = Namespace(a=1)
-    namespace = RefinedNamespace('refinement', namespace, b=2)
-    namespace = RefinedNamespace('defaults refinement', namespace, defaults=True, c=3)
-    namespace = RefinedNamespace('further refinement', namespace, d=4)
-    namespace = RefinedNamespace('further defaults refinement', namespace, defaults=True, e=5)
+    namespace = RefinableNamespace(a=1)
+    namespace = namespace._refine(Prio.refine, b=2)
+    namespace = namespace._refine(Prio.refine_defaults, c=3)
+    namespace = namespace._refine(Prio.refine, d=4)
+    namespace = namespace._refine(Prio.refine_defaults, e=5)
     assert namespace == dict(a=1, b=2, c=3, d=4, e=5)
     assert namespace.as_stack() == [
-        ('further defaults refinement', {'e': 5}),
-        ('defaults refinement', {'c': 3}),
+        ('refine_defaults', {'c': 3}),
+        ('refine_defaults', {'e': 5}),  # Later defaults now shadow earlier defaults
         ('base', {'a': 1}),
-        ('refinement', {'b': 2}),
-        ('further refinement', {'d': 4}),
+        ('refine', {'b': 2}),
+        ('refine', {'d': 4}),
     ]
 
 
@@ -266,6 +285,44 @@ def test_refine_done_not_mutating():
     assert result.is_refine_done is True
 
 
-def test_namespace_kwarg():
-    r = RefinableObject(namespace=dict(foo__bar=3))
-    assert r.iommi_namespace.foo.bar == 3
+def test_subclass_override():
+    class MyRefinable(RefinableObject):
+        @staticmethod
+        @refinable
+        def foo():
+            return 'MyRefinable'
+
+    assert MyRefinable(foo=lambda: 'from argument').refine_done().foo() == 'from argument'
+    assert MyRefinable().refine_done().foo() == 'MyRefinable'
+
+    class MySubclass(MyRefinable):
+        @staticmethod
+        @refinable
+        def foo():
+            return 'MySubclass'
+
+    assert MySubclass(foo=lambda: 'from argument').refine_done().foo() == 'from argument'
+    assert MySubclass().refine_done().foo() == 'MySubclass'
+
+    class MySubclass(MyRefinable):
+        # Somewhat unexpected the base class refinable shadows the subclass override if the override is not decorated
+        # @refinable
+        @staticmethod
+        def foo():
+            return 'MySubclass'
+
+    # Still refinable
+    assert MySubclass(foo=lambda: 'from argument').refine_done().foo() == 'from argument'
+    # But the default is from the base class having the @refinable decorator
+    assert MySubclass().refine_done().foo() == 'MyRefinable'
+    # assert MySubclass().refine_done().foo() == 'MySubclass'
+
+
+def test_check_attribute_existence():
+    with pytest.raises(TypeError, match=(
+        'Fruit object has no refinable attribute\\(s\\): "smell".\n'
+        'Available attributes:\n'
+        '    color\n'
+        '    taste\n'
+    )):
+        Fruit(smell=17)

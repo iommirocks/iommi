@@ -13,7 +13,6 @@ from django.template import (
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
 from tri_declarative import (
-    class_shortcut,
     EMPTY,
     getattr_path,
     Namespace,
@@ -43,6 +42,7 @@ from iommi.form import (
 from iommi.fragment import (
     Fragment,
 )
+from iommi.shortcut import with_defaults
 from iommi.table import (
     Cell,
     Cells,
@@ -128,7 +128,7 @@ class EditColumn(Column):
         self.edit = None
 
     @classmethod
-    @class_shortcut(
+    @with_defaults(
         header__template='iommi/table/header.html',
         sortable=False,
         filter__is_valid_filter=lambda **_: (True, ''),
@@ -152,7 +152,7 @@ class EditColumn(Column):
             tag='script',
         )
     )
-    def delete(cls, call_target=None, **kwargs):
+    def delete(cls, **kwargs):
         def cell__value(row, table, cells, column, **_):
             if isinstance(table.rows, QuerySet):
                 row_id = row.pk
@@ -165,7 +165,7 @@ class EditColumn(Column):
             return mark_safe(f'{button.__html__()}<input style="display: none" type="checkbox" name="{path}" />')
 
         setdefaults_path(kwargs, dict(cell__value=cell__value))
-        return call_target(**kwargs)
+        return cls(**kwargs)
 
 
 def edit_table__post_handler(table, request, **_):

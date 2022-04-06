@@ -11,7 +11,6 @@ from urllib.parse import (
 
 from tri_declarative import (
     declarative,
-    dispatch,
     EMPTY,
     Namespace,
     Refinable,
@@ -43,6 +42,7 @@ from iommi.refinable import (
     EvaluatedRefinable,
     RefinableMembers,
 )
+from iommi.shortcut import with_defaults
 
 
 class MenuBase(Part, Tag):
@@ -52,11 +52,13 @@ class MenuBase(Part, Tag):
     attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
     template: Union[str, Template] = EvaluatedRefinable()
 
-    @dispatch(
+    class Meta:
+        sub_menu = EMPTY
+        attrs__class = EMPTY
+        attrs__style = EMPTY
+
+    @with_defaults(
         sort=True,
-        sub_menu=EMPTY,
-        attrs__class=EMPTY,
-        attrs__style=EMPTY,
     )
     def __init__(self, **kwargs):
         super(MenuBase, self).__init__(**kwargs)
@@ -97,13 +99,15 @@ class MenuItem(MenuBase):
     a = Refinable()
     active_class = Refinable()
 
-    @dispatch(
+    class Meta:
+        a = EMPTY
+
+    @with_defaults(
         display_name=lambda menu_item, **_: capitalize(menu_item.iommi_name()).replace('_', ' '),
         regex=lambda menu_item, **_: '^' + str(menu_item.url) if menu_item.url else None,
-        url=lambda menu_item, **_: '/'
-        + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name())
-        + '/',
-        a=EMPTY,
+        url=lambda menu_item, **_: (
+            '/' + path_join(getattr(menu_item.iommi_parent(), 'url', None), menu_item.iommi_name()) + '/'
+        ),
     )
     def __init__(self, **kwargs):
         super(MenuItem, self).__init__(**kwargs)
@@ -123,8 +127,11 @@ class MenuItem(MenuBase):
     def __repr__(self):
         r = f'{self._name} -> {self.url}'
         if self.sub_menu:
-            for i in values(self.sub_menu):
-                r += ''.join([f'\n    {x}' for x in repr(i).split('\n')])
+            if isinstance(self.sub_menu, dict):
+                for i in values(self.sub_menu):
+                    r += ''.join([f'\n    {x}' for x in repr(i).split('\n')])
+            else:
+                r += str(self.sub_menu)
         return r
 
     def __html__(self, *, render=None):
@@ -189,9 +196,11 @@ class Menu(MenuBase):
 
     items_container = Refinable()
 
-    @dispatch(
+    class Meta:
+        items_container = EMPTY
+
+    @with_defaults(
         sort=False,
-        items_container=EMPTY,
     )
     def __init__(self, **kwargs):
         super(Menu, self).__init__(**kwargs)
