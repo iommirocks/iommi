@@ -22,6 +22,9 @@ class Album(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return f'/albums/{self.pk}/'
+
     class Meta:
         ordering = ('name',)
         app_label = 'docs'

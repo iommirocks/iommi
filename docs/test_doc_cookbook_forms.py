@@ -1,5 +1,6 @@
 from docs.models import *
 from iommi import *
+from iommi._web_compat import HttpResponseRedirect
 from tests.helpers import (
     req,
     show_output,
@@ -408,4 +409,54 @@ def test_how_do_i_change_how_fields_are_rendered_everywhere_in_my_project():
     # @test
     form = Form(fields__date=Field.date(), iommi_style=my_style)
     show_output(form)
+    # @end
+
+
+def test_how_do_I_change_redirect_target(artist):
+    # language=rst
+    """
+    How do I change where the form redirects to after completion?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    iommi by default redirects to `..` after edit/create/delete. You can
+    override this via two methods:
+
+    - `extra__redirect_to`: a string with the url to redirect to. Relative URLs also work.
+    - `extra__redirect`: a callable that gets at least the keyword arguments `request`, `redirect_to`, `form`.
+
+    Form that after create redirects to the edit page of the object:
+    """
+
+    form = Form.create(
+        auto__model=Album,
+        extra__redirect=
+            lambda form, **_: HttpResponseRedirect(
+                form.instance.get_absolute_url() + 'edit/'
+            ),
+    )
+
+    # @test
+    response = form.bind(request=req('POST', name='Heaven & Hell', artist=artist.pk, year=1980, **{'-submit': ''})).render_to_response()
+    assert response.status_code == 302, response.content.decode()
+
+    album = Album.objects.get()
+
+    assert response['Location'] == f'/albums/{album.pk}/edit/'
+
+    # @end
+
+    # language=rst
+    """
+    Form that after edit stays on the edit page:
+    """
+
+    form = Form.edit(
+        auto__instance=album,
+        extra__redirect_to='.',
+    )
+
+    # @test
+    response = form.bind(request=req('POST', name='Heaven & Hell!', artist=artist.pk, year=1980, **{'-submit': ''})).render_to_response()
+    assert response.status_code == 302
+    assert response['Location'] == '.'
     # @end
