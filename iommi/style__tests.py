@@ -355,37 +355,6 @@ def test_assets_render_from_style():
         assert actual == expected
 
 
-def test_deprecated_assets_style(settings, capsys):
-    settings.DEBUG = True
-    with register_style(
-        'my_style',
-        Style(
-            test,
-            assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
-        ),
-    ):
-
-        captured = capsys.readouterr()
-        assert 'Warning: The preferred way to add top level assets config' in captured.out
-
-        settings.DEBUG = False
-
-        expected = prettify(
-            '''
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <title/>
-                    <link href='http://foo.bar/baz' rel="stylesheet"/>
-                </head>
-                <body/>
-            </html>
-        '''
-        )
-        actual = prettify(Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content)
-        assert actual == expected
-
-
 def test_assets_render_any_fragment_from_style():
     with register_style(
         'my_style',
