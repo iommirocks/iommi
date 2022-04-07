@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+5.0.0 (----------)
+~~~~~~~~~~~~~~~~~~
+
+* Refurbished priority for settings on refinable objects. E.g style settings can now overwrite things declared by
+  shortcuts.
+
+* Introduced new decorator @with_defaults for giving parameters in shortcuts in a more natural way.
+
+* Introduced new decorator @superinvoking_classmethod to enable a classmethod to call a base class implementation
+  with the same name. Useful when declaring more specific shortcuts when customizing using inheritance.
+
+* Drop Field parameters choice_to_option and empty_choice_tuple
+
+* Drop Style parameter assert. Assets parameters now strictly go in root__assets
+
+
 4.7.0 (2022-04-01)
 ~~~~~~~~~~~~~~~~~~
 
