@@ -35,6 +35,9 @@ lint:
 black:
 	tox -e black
 
+blackd:
+	tox -e black -- -m blackd
+
 test-all:
 	tox --skip-missing-interpreters
 
