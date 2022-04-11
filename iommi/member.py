@@ -205,7 +205,14 @@ class MemberBinder(dict):
         _bindable_names = object.__getattribute__(self, '_bindable_names')
         if name in _bindable_names:
             return self[name]
-        return object.__getattribute__(self, name)
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError as e:
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no member '{name}'.\n"
+                f"Available members:\n    "
+                + '\n    '.join(sorted(_bindable_names)) + '\n'
+            ) from e
 
     def __setattr__(self, name, value):
         self[name] = value

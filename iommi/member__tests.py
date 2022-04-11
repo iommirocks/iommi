@@ -87,17 +87,18 @@ def test_bind_via_unapplied_config():
     basket = MyBasket(fruits__pear__taste='meh').bind()
     assert basket.fruits.pear.taste == 'meh'
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(
+            TypeError,
+            match=(
+                r'Fruit object has no refinable attribute\(s\): "color"\.\n'
+                r'Available attributes:\n'
+                r'    assets\n'
+                r'    endpoints\n'
+                r'    iommi_style\n'
+                r'    taste\n'
+            )
+    ):
         MyBasket(fruits__pear__color='green').bind()
-
-    assert str(e.value) == (
-        'Fruit object has no refinable attribute(s): "color".\n'
-        'Available attributes:\n'
-        '    assets\n'
-        '    endpoints\n'
-        '    iommi_style\n'
-        '    taste\n'
-    )
 
 
 def test_ordering():
@@ -308,10 +309,9 @@ def test_lazy_bind():
     my_basket = MyBasket().bind()
     assert my_basket.fruits.tasty_banana.taste == 'sweet'
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match='Boom'):
         # noinspection PyStatementEffect
         my_basket.fruits.exploding_orange
-    assert 'Boom' in str(e.value)
 
 
 def test_lazy_repr():
@@ -331,10 +331,12 @@ def test_forbidden_names():
         _name = Fruit()
         iommi_style = Fruit()
 
-    with pytest.raises(ForbiddenNamesException) as e:
+    with pytest.raises(
+            ForbiddenNamesException,
+            match='The names _name, iommi_style are reserved by iommi, please pick other names'
+    ):
         MyBasket().refine_done()
 
-    assert str(e.value) == 'The names _name, iommi_style are reserved by iommi, please pick other names'
 
 
 def test_collect_sets_name():
@@ -350,7 +352,7 @@ def test_collect_sets_name():
 
 def test_none_members_should_be_discarded_after_being_allowed_through():
     class MyBasket(Basket):
-        orange = Fruit(taste='sour')
+        orange = Fruit()
 
     basket = MyBasket(fruits__orange=None).refine_done()
     assert 'orange' not in basket.iommi_namespace.fruits
@@ -358,10 +360,28 @@ def test_none_members_should_be_discarded_after_being_allowed_through():
 
 def test_bind_not_reorder():
     class MyBasket(Basket):
-        banana = Fruit(taste='sweet')
-        orange = Fruit(taste='strange')
+        banana = Fruit()
+        orange = Fruit()
 
     my_basket = MyBasket().bind()
     # noinspection PyStatementEffect
     my_basket.fruits.orange
     assert list(my_basket.fruits.keys()) == ['banana', 'orange']
+
+
+def test_unknown_attribute():
+    class MyBasket(Basket):
+        orange = Fruit()
+        banana = Fruit()
+    my_basket = MyBasket().bind()
+    with pytest.raises(
+            AttributeError,
+            match=(
+                r"'MemberBinder' object has no member 'fruit_fly'\.\n"
+                r"Available members:\n"
+                r"    banana\n"
+                r"    orange\n"
+            ),
+        ):
+        # noinspection PyStatementEffect
+        my_basket.fruits.fruit_fly
