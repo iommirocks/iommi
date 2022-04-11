@@ -1,7 +1,6 @@
 import pytest
 from docs.models import *
 from iommi import *
-from iommi import render_if_needed
 from tests.helpers import (
     req,
     show_output,
@@ -160,6 +159,7 @@ def test_table_csv(small_discography):
 
     For example:
     """
+
     def albums(request):
         class AlbumTable(Table):
             class Meta:
