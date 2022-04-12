@@ -2,6 +2,7 @@ import pytest
 from tri_declarative import (
     dispatch,
     Refinable,
+    with_meta,
 )
 
 from iommi import (
@@ -50,7 +51,6 @@ def test_collect_unapplied_config():
         pear = Fruit()
 
     basket = MyBasket(fruits__pear__taste='meh').refine_done()
-    # noinspection PyUnresolvedReferences
     assert basket.iommi_namespace.fruits.pear.taste == 'meh'
 
 
@@ -120,12 +120,12 @@ def test_ordering():
 
 
 def test_inclusion():
+    @with_meta
     class IncludableFruit(Fruit):
         include = Refinable()
 
-        @dispatch(include=True)
-        def __init__(self, **kwargs):
-            super(IncludableFruit, self).__init__(**kwargs)
+        class Meta:
+            include = True
 
     class MyBasket(Basket):
         banana = IncludableFruit()
@@ -338,7 +338,6 @@ def test_forbidden_names():
         MyBasket().refine_done()
 
 
-
 def test_collect_sets_name():
     class MyBasket(Basket):
         orange = Fruit(taste='sour')
@@ -356,6 +355,7 @@ def test_none_members_should_be_discarded_after_being_allowed_through():
 
     basket = MyBasket(fruits__orange=None).refine_done()
     assert 'orange' not in basket.iommi_namespace.fruits
+    assert basket.fruits.orange is None
 
 
 def test_bind_not_reorder():
