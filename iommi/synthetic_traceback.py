@@ -30,6 +30,15 @@ class SyntheticTraceback:
         if len(self._frames) > 1:
             return SyntheticTraceback(self._frames[1:], self._line_nums[1:])
 
+    def __iter__(self):
+        # This is a hack to make pytest not fail on iterating over synthetic tracebacks
+        # noinspection PyUnresolvedReferences
+        from _pytest._code import TracebackEntry
+        cur_ = self
+        while cur_ is not None:
+            yield TracebackEntry(cur_, excinfo=None)
+            cur_ = cur_.tb_next
+
 
 class SyntheticException(Exception):
     def __init__(self, tb):
