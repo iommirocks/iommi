@@ -1,6 +1,6 @@
 beautifulsoup4==4.7.1
-pytest==4.6.2
-pytest-django==3.4.8
+pytest==7.1.1
+pytest-django==4.5.2
 time-machine==2.6.0
 gprof2dot
 flask
