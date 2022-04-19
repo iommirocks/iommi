@@ -1,5 +1,5 @@
 import pytest
-from tri_struct import merged
+from iommi.struct import merged
 
 from iommi._db_compat import field_defaults_factory
 

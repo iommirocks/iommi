@@ -10,7 +10,7 @@ from django.urls import (
     include,
     path,
 )
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.admin import (
     Admin,

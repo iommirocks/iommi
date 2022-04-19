@@ -13,7 +13,7 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import from_model
 from iommi.base import (

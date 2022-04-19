@@ -7,7 +7,7 @@ from django.utils.safestring import (
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.test import override_settings
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import (
     Fragment,

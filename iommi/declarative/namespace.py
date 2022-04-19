@@ -1,4 +1,4 @@
-from tri_struct import (
+from iommi.struct import (
     Frozen,
     Struct,
 )

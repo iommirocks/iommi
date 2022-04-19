@@ -9,7 +9,7 @@ from urllib.parse import (
     urlparse,
 )
 
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import Fragment
 from iommi._web_compat import (

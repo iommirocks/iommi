@@ -10,7 +10,7 @@ from django.db.models import (
     Field as DjangoField,
     Model,
 )
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.base import (
     MISSING,

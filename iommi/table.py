@@ -41,7 +41,7 @@ from django.utils.translation import (
     gettext_lazy,
 )
 from math import ceil
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi._web_compat import (
     format_html,
