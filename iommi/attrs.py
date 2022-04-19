@@ -1,4 +1,4 @@
-from tri_declarative import Namespace
+from iommi.declarative.namespace import Namespace
 
 from iommi._web_compat import mark_safe
 from iommi.base import items

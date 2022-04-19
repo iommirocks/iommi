@@ -1,10 +1,8 @@
 import pytest
 
-from tri_declarative import (
-    dispatch,
-    Namespace,
-    with_meta,
-)
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import Namespace
+from iommi.declarative.with_meta import with_meta
 
 
 def test_empty():

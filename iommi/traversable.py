@@ -5,10 +5,6 @@ from typing import (
     List,
 )
 
-from tri_declarative import (
-    Namespace,
-    Refinable,
-)
 from tri_struct import Struct
 
 from iommi.attrs import evaluate_attrs
@@ -16,6 +12,7 @@ from iommi.base import (
     items,
     NOT_BOUND_MESSAGE,
 )
+from iommi.declarative.namespace import Namespace
 from iommi.evaluate import (
     evaluate_members,
     evaluate_strict,
@@ -27,6 +24,7 @@ from iommi.refinable import (
     EvaluatedRefinable,
     is_evaluated_refinable,
     Prio,
+    Refinable,
     RefinableMembers,
     RefinableObject,
 )

@@ -173,7 +173,7 @@ def should_ignore_frame(frame, env_paths):
 
     base_module_name = module_name.partition('.')[0]
     if base_module_name in (
-        'tri_declarative',
+        'iommi.declarative',
         'iommi',
         'django',
     ):

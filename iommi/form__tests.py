@@ -19,14 +19,6 @@ from bs4 import BeautifulSoup
 from django.core.exceptions import FieldError
 from django.http.response import HttpResponseBase
 from django.test import override_settings
-from tri_declarative import (
-    get_members,
-    getattr_path,
-    is_shortcut,
-    Namespace,
-    setattr_path,
-    Shortcut,
-)
 from tri_struct import (
     merged,
     Struct,
@@ -47,6 +39,12 @@ from iommi.base import (
     items,
     keys,
     values,
+)
+from iommi.declarative import get_members
+from iommi.declarative.namespace import (
+    getattr_path,
+    Namespace,
+    setattr_path,
 )
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
@@ -79,7 +77,11 @@ from iommi.from_model import (
 from iommi.page import (
     Page,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    is_shortcut,
+    Shortcut,
+    with_defaults,
+)
 from tests.compat import RequestFactory
 from tests.helpers import (
     get_attrs,

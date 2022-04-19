@@ -239,7 +239,7 @@ def test_how_do_i_change_the_order_of_the_fields():
 
 
     """
-    from tri_declarative import LAST
+    from iommi import LAST
 
     form = Form(
         auto__model=Album,

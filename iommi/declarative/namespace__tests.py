@@ -1,7 +1,7 @@
 import pytest
 from tri_struct import Struct
 
-from tri_declarative import (
+from iommi.declarative.namespace import (
     EMPTY,
     flatten,
     getattr_path,

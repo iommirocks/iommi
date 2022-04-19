@@ -1,5 +1,4 @@
 import re
-import warnings
 from contextlib import contextmanager
 from datetime import datetime
 from decimal import (
@@ -33,20 +32,6 @@ from django.db.models import (
 from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.translation import gettext
-from tri_declarative import (
-    declarative,
-    dispatch,
-    EMPTY,
-    flatten,
-    getattr_path,
-    Namespace,
-    Refinable,
-    refinable,
-    setattr_path,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-)
 from tri_struct import Struct
 
 from iommi._db_compat import field_defaults_factory
@@ -79,6 +64,18 @@ from iommi.datetime_parsing import (
     parse_relative_date,
     parse_relative_datetime,
 )
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    flatten,
+    getattr_path,
+    Namespace,
+    setattr_path,
+    setdefaults_path,
+)
+from iommi.shortcut import Shortcut
+from iommi.declarative.with_meta import with_meta
 from iommi.error import Errors
 from iommi.evaluate import (
     evaluate,
@@ -112,11 +109,12 @@ from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
     Prio,
+    Refinable,
+    refinable,
     RefinableMembers,
 )
 from iommi.shortcut import with_defaults
 from iommi.sort_after import sort_after
-
 
 # Prevent django templates from calling That Which Must Not Be Called
 Namespace.do_not_call_in_templates = True
@@ -602,7 +600,7 @@ class Field(Part, Tag):
         super(Field, self).__init__(**kwargs)
 
     def on_refine_done(self):
-        if 'choice' in getattr(self, '__tri_declarative_shortcut_stack', []):
+        if 'choice' in getattr(self, '__iommi_declarative_shortcut_stack', []):
             assert self.iommi_namespace.get('choices') is not None, 'To use Field.choice, you must pass the choices list'
 
         model_field = self.model_field

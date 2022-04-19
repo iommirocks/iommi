@@ -1,5 +1,5 @@
-from tri_declarative import (
-    dispatch,
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
     EMPTY,
     Namespace,
 )

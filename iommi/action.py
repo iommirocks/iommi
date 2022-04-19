@@ -7,11 +7,6 @@ from typing import (
 )
 
 from django.utils.translation import gettext_lazy
-from tri_declarative import (
-    Refinable,
-    setdefaults_path,
-    with_meta,
-)
 
 from iommi._web_compat import (
     format_html,
@@ -22,13 +17,18 @@ from iommi.base import (
     capitalize,
     values,
 )
+from iommi.declarative.namespace import setdefaults_path
+from iommi.declarative.with_meta import with_meta
 from iommi.fragment import (
     Fragment,
     Tag,
 )
 from iommi.member import Members
 from iommi.part import Part
-from iommi.refinable import EvaluatedRefinable
+from iommi.refinable import (
+    EvaluatedRefinable,
+    Refinable,
+)
 from iommi.shortcut import with_defaults
 
 

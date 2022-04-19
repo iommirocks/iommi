@@ -1,14 +1,6 @@
 from typing import Dict
 
 import pytest
-from tri_declarative import (
-    declarative,
-    dispatch,
-    EMPTY,
-    Namespace,
-    Refinable,
-    with_meta,
-)
 from tri_struct import Struct
 
 from iommi import (
@@ -26,6 +18,13 @@ from iommi.base import (
     items,
     keys,
 )
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    Namespace,
+)
+from iommi.declarative.with_meta import with_meta
 from iommi.member import (
     bind_members,
     refine_done_members,
@@ -36,6 +35,7 @@ from iommi.page import (
 from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
+    Refinable,
     RefinableMembers,
 )
 from iommi.shortcut import (

@@ -1,9 +1,4 @@
 import pytest
-from tri_declarative import (
-    dispatch,
-    Namespace,
-    Refinable,
-)
 
 from iommi import (
     Asset,
@@ -17,7 +12,12 @@ from iommi import (
 )
 from iommi.attrs import render_attrs
 from iommi.base import items
-from iommi.refinable import RefinableObject
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import Namespace
+from iommi.refinable import (
+    Refinable,
+    RefinableObject,
+)
 from iommi.shortcut import with_defaults
 from iommi.style import (
     get_global_style,
@@ -25,8 +25,9 @@ from iommi.style import (
     get_style_object,
     InvalidStyleConfigurationException,
     register_style,
+    resolve_style,
     Style,
-    validate_styles, resolve_style,
+    validate_styles,
 )
 from iommi.style_base import base
 from iommi.style_test_base import test
@@ -100,11 +101,11 @@ def test_style():
 
     b = B.shortcut1(iommi_style=overrides)
     assert overrides.component(b) == dict(foo=4, bar=7)
-    assert b.__tri_declarative_shortcut_stack == ['shortcut1']
+    assert b.__iommi_declarative_shortcut_stack == ['shortcut1']
     assert styled_items(b) == dict(foo=4, bar=7)
 
     b = B.shortcut2(iommi_style=overrides)
-    assert b.__tri_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
+    assert b.__iommi_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
     assert overrides.component(b) == dict(foo=4, bar=7)
     assert styled_items(b) == dict(foo=4, bar=7)
 

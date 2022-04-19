@@ -9,14 +9,6 @@ from urllib.parse import (
     urlparse,
 )
 
-from tri_declarative import (
-    declarative,
-    EMPTY,
-    Namespace,
-    Refinable,
-    setdefaults_path,
-    with_meta,
-)
 from tri_struct import Struct
 
 from iommi import Fragment
@@ -30,6 +22,13 @@ from iommi.base import (
     items,
     values,
 )
+from iommi.declarative import declarative
+from iommi.declarative.namespace import (
+    EMPTY,
+    Namespace,
+    setdefaults_path,
+)
+from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate_strict
 from iommi.fragment import Tag
@@ -40,6 +39,7 @@ from iommi.member import (
 from iommi.part import Part
 from iommi.refinable import (
     EvaluatedRefinable,
+    Refinable,
     RefinableMembers,
 )
 from iommi.shortcut import with_defaults

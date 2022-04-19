@@ -31,28 +31,15 @@ from pyparsing import (
     Word,
     ZeroOrMore,
 )
-from tri_declarative import (
-    declarative,
-    dispatch,
-    EMPTY,
-    getattr_path,
-    Namespace,
-    Refinable,
-    refinable,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-)
 from tri_struct import Struct
 
-from iommi import (
-    Action,
-    Fragment,
-)
 from iommi._web_compat import (
     render_template,
     Template,
     ValidationError,
+)
+from iommi.action import (
+    Action,
 )
 from iommi.base import (
     items,
@@ -62,6 +49,15 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
     values,
 )
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    getattr_path,
+    Namespace,
+    setdefaults_path,
+)
+from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import path_join
 from iommi.evaluate import evaluate
 from iommi.form import (
@@ -73,6 +69,9 @@ from iommi.form import (
     Form,
     int_parse,
     time_parse,
+)
+from iommi.fragment import (
+    Fragment,
 )
 from iommi.from_model import (
     AutoConfig,
@@ -92,9 +91,14 @@ from iommi.part import (
 from iommi.refinable import (
     EvaluatedRefinable,
     Prio,
+    Refinable,
+    refinable,
     RefinableMembers,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults,
+)
 
 
 class QueryException(Exception):
@@ -252,7 +256,7 @@ class Filter(Part):
         super(Filter, self).__init__(**kwargs)
 
     def on_refine_done(self):
-        if 'choice' in getattr(self, '__tri_declarative_shortcut_stack', []):
+        if 'choice' in getattr(self, '__iommi_declarative_shortcut_stack', []):
             assert self.iommi_namespace.get('choices') is not None, 'To use Filter.choice, you must pass the choices list'
 
         model_field = self.model_field

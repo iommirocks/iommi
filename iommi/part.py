@@ -1,17 +1,10 @@
+import inspect
 import json
 from abc import abstractmethod
 from typing import (
     Any,
     Dict,
     Union,
-)
-import inspect
-
-from tri_declarative import (
-    dispatch,
-    EMPTY,
-    Namespace,
-    Refinable,
 )
 
 from iommi._web_compat import (
@@ -29,6 +22,11 @@ from iommi.base import (
 from iommi.debug import (
     get_instantiated_at_info,
     iommi_debug_on,
+)
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    Namespace,
 )
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
@@ -55,6 +53,7 @@ from ._web_compat import (
 )
 from .refinable import (
     EvaluatedRefinable,
+    Refinable,
     RefinableMembers,
 )
 from .sort_after import sort_after

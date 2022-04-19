@@ -1,4 +1,4 @@
-from tri_declarative import Shortcut
+from iommi.shortcut import Shortcut
 
 from docs.models import *
 from iommi import *

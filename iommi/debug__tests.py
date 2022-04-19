@@ -91,7 +91,7 @@ def test_should_ignore_frame():
     assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.admin.foo'}), {'syspath/foo'})
     assert should_ignore_frame(Struct(f_globals={'__name__': '_pydev_bundle.foo'}), {'syspath/foo'})
     assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.foo.bar'}), {'syspath/foo'})
-    assert should_ignore_frame(Struct(f_globals={'__name__': 'tri_declarative.foo.bar'}), {'syspath/foo'})
+    assert should_ignore_frame(Struct(f_globals={'__name__': 'iommi.declarative.foo.bar'}), {'syspath/foo'})
     assert should_ignore_frame(Struct(f_globals={'__name__': 'django.foo.bar'}), {'syspath/foo'})
     assert should_ignore_frame(
         Struct(f_globals={'__name__': 'qwe'}, f_code=Struct(co_filename='syspath/foo/bar/baz.py')), {'syspath/foo'}

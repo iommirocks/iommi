@@ -2,8 +2,6 @@ __version__ = '4.7.0'
 
 from functools import wraps
 
-from tri_declarative import LAST
-
 from iommi._db_compat import (
     register_factory,
     setup_db_compat,
@@ -11,6 +9,10 @@ from iommi._db_compat import (
 from iommi.action import Action
 from iommi.asset import Asset
 from iommi.base import MISSING
+from iommi.edit_table import (
+    EditColumn,
+    EditTable,
+)
 from iommi.form import (
     Field,
     Form,
@@ -37,6 +39,7 @@ from iommi.query import (
     Query,
     register_filter_factory,
 )
+from iommi.sort_after import LAST
 from iommi.style import (
     register_style,
     Style,
@@ -46,10 +49,6 @@ from iommi.table import (
     register_cell_formatter,
     register_column_factory,
     Table,
-)
-from iommi.edit_table import (
-    EditColumn,
-    EditTable,
 )
 
 setup_db_compat()

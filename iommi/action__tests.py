@@ -1,11 +1,6 @@
 from typing import Dict
 
 import pytest
-from tri_declarative import (
-    get_members,
-    is_shortcut,
-    Shortcut,
-)
 from tri_struct import Struct
 
 from iommi import (
@@ -22,11 +17,16 @@ from iommi.base import (
     items,
     keys,
 )
+from iommi.declarative import get_members
 from iommi.member import (
     bind_members,
     refine_done_members,
 )
 from iommi.refinable import RefinableMembers
+from iommi.shortcut import (
+    is_shortcut,
+    Shortcut,
+)
 from iommi.traversable import (
     Traversable,
 )

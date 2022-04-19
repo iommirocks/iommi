@@ -32,7 +32,7 @@ def test_get_signature():
 
     assert get_signature(lambda a, b: None) == get_signature(f2) == get_signature(f) == 'a,b||'
     # noinspection PyUnresolvedReferences
-    assert f.__tri_declarative_signature == 'a,b||'
+    assert f.__iommi_declarative_signature == 'a,b||'
 
 
 def test_get_signature_fails_on_native():
@@ -49,7 +49,7 @@ def test_get_signature_on_class():
 
     assert 'a,b,self||' == get_signature(Foo)
     # noinspection PyUnresolvedReferences
-    assert 'a,b,self||' == Foo.__tri_declarative_signature
+    assert 'a,b,self||' == Foo.__iommi_declarative_signature
 
 
 def test_get_signature_varargs():
@@ -134,7 +134,7 @@ def test_early_return_from_get_signature():
     def foo(a, b, c):
         assert False  # pragma: no cover
 
-    object.__setattr__(foo, '__tri_declarative_signature', 'foobar')
+    object.__setattr__(foo, '__iommi_declarative_signature', 'foobar')
     assert get_signature(foo) == 'foobar'
 
 

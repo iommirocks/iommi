@@ -228,7 +228,7 @@ def test_how_do_i_reorder_columns():
     """
     this will put the columns in the order a, c, b.
 
-    There is a special value `LAST` (import from `tri_declarative`) to put something last in a list:
+    There is a special value `LAST` (import from `iommi.declarative`) to put something last in a list:
     """
 
     table = Table(auto__model=Foo, columns__a__after=LAST)

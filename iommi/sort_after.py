@@ -1,8 +1,12 @@
 from collections import defaultdict
 
-from tri_declarative import LAST
 
 from iommi.base import items
+
+try:
+    from tri_declarative import LAST
+except ImportError:
+    LAST = object()
 
 
 def sort_after(d):

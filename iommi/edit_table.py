@@ -12,14 +12,6 @@ from django.template import (
 )
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from tri_declarative import (
-    EMPTY,
-    getattr_path,
-    Namespace,
-    Refinable,
-    refinable,
-    setdefaults_path,
-)
 from tri_struct import Struct
 
 from iommi.action import (Action)
@@ -31,6 +23,12 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
     values,
 )
+from iommi.declarative.namespace import (
+    EMPTY,
+    getattr_path,
+    Namespace,
+    setdefaults_path,
+)
 from iommi.endpoint import (
     DISPATCH_PATH_SEPARATOR,
     path_join,
@@ -41,6 +39,10 @@ from iommi.form import (
 )
 from iommi.fragment import (
     Fragment,
+)
+from iommi.refinable import (
+    Refinable,
+    refinable,
 )
 from iommi.shortcut import with_defaults
 from iommi.table import (

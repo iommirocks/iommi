@@ -1,12 +1,15 @@
+
+
 import pytest
 from tri_struct import Struct
 
-from tri_declarative import (
+from iommi.declarative import (
     declarative,
-    with_meta,
+    get_members,
 )
-from tri_declarative.declarative import get_members
-from tri_declarative.util import add_args_to_init_call
+from iommi.declarative.util import add_args_to_init_call
+
+from iommi.declarative.with_meta import with_meta
 
 
 class Member(Struct):

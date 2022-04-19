@@ -13,7 +13,7 @@ from django.urls import (
     path,
     reverse,
 )
-from tri_declarative import (
+from iommi.declarative import (
     get_members,
     is_shortcut,
     LAST,

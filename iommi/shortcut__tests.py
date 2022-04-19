@@ -1,24 +1,22 @@
 import pytest
-from tri_declarative import (
-    dispatch,
-    get_shortcuts_by_name,
-    is_shortcut,
-    Namespace,
-    Refinable,
-    Shortcut,
-    shortcut,
-)
 
 from iommi import (
     Part,
     register_style,
     Style,
 )
+from iommi.declarative.dispatch import dispatch
 from iommi.refinable import (
     Prio,
+    Refinable,
     RefinableObject,
 )
 from iommi.shortcut import (
+    get_shortcuts_by_name,
+    is_shortcut,
+    Namespace,
+    Shortcut,
+    shortcut,
     superinvoking_classmethod,
     with_defaults,
 )
@@ -316,3 +314,65 @@ def test_superinvoking_misconfig_other_decorator_warning():
             @superinvoking_classmethod
             def baz(cls, super_classmethod):
                 pass
+
+
+def test_is_shortcut():
+    t = Namespace(x=1)
+    assert not is_shortcut(t)
+
+    s = Shortcut(x=1)
+    assert isinstance(s, Namespace)
+    assert is_shortcut(s)
+
+
+def test_nested_namespace_overriding_and_calling():
+    @dispatch
+    def f(extra):
+        return extra.foo
+
+    foo = Shortcut(
+        call_target=f,
+        extra__foo='asd',
+    )
+    assert foo(extra__foo='qwe') == 'qwe'
+
+
+def test_retain_shortcut_type():
+    assert isinstance(Shortcut(foo=Shortcut()).foo, Shortcut)
+    assert isinstance(Shortcut(foo=Shortcut(bar=Shortcut())).foo.bar, Shortcut)
+
+    assert Shortcut(foo__bar__q=1, foo=Shortcut(bar=Shortcut())).foo.bar.q == 1
+
+
+def test_shortcut_call_target_attribute():
+    class Foo:
+        @classmethod
+        def foo(cls):
+            return cls
+
+    assert Shortcut(call_target__attribute='foo', call_target__cls=Foo)() is Foo
+    assert isinstance(Shortcut(call_target__cls=Foo)(), Foo)
+
+
+def test_namespace_shortcut_overwrite():
+    assert Namespace(
+        Namespace(
+            x=Shortcut(y__z=1, y__zz=2),
+        ),
+        Namespace(
+            x=Namespace(a__b=3),
+        ),
+    ) == Namespace(
+        x__a__b=3,
+    )
+
+
+def test_namespace_shortcut_overwrite_backward():
+    assert Namespace(
+        Namespace(x=Namespace(y__z=1, y__zz=2)),
+        Namespace(x=Shortcut(a__b=3)),
+    ) == Namespace(
+        x__a__b=3,
+        x__y__z=1,
+        x__y__zz=2,
+    )
