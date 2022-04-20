@@ -79,7 +79,7 @@ def test_namespace_dispatching():
 
     I've already hinted at this above in the example where we do
     ``columns__foo__include=False``. This is an example of the powerful
-    namespace dispatch mechanism from tri.declarative. It's inspired by the
+    namespace dispatch mechanism from iommi.declarative. It's inspired by the
     query syntax of Django where you use ``__`` to jump namespace. (If
     you're not familiar with Django, here's the gist of it: you can do
     ``Table.objects.filter(foreign_key__column='foo')``
@@ -89,10 +89,8 @@ def test_namespace_dispatching():
 
 
     """
-    from tri_declarative import (
-        dispatch,
-        EMPTY,
-    )
+    from iommi.declarative.dispatch import dispatch
+    from iommi.declarative.namespace import EMPTY
 
     @dispatch(
         b__x=1,  # these are default values. "b" here is implicitly

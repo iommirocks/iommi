@@ -14,20 +14,12 @@ from django.db.models import (
 )
 from django.http import HttpResponse
 from django.test import override_settings
-from tri_declarative import (
-    get_members,
-    get_shortcuts_by_name,
-    getattr_path,
-    is_shortcut,
-    LAST,
-    Namespace,
-    Shortcut,
-)
 
 from iommi import (
     Action,
     Fragment,
     html,
+    LAST,
     Page,
 )
 from iommi._web_compat import (
@@ -38,6 +30,8 @@ from iommi.base import (
     items,
     keys,
 )
+from iommi.declarative import get_members
+from iommi.declarative.namespace import getattr_path
 from iommi.endpoint import (
     find_target,
     InvalidEndpointPathException,
@@ -52,7 +46,13 @@ from iommi.query import (
     Filter,
     Query,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    get_shortcuts_by_name,
+    is_shortcut,
+    Namespace,
+    Shortcut,
+    with_defaults,
+)
 from iommi.sql_trace import (
     set_sql_debug,
     SQL_DEBUG_LEVEL_ALL,
@@ -993,7 +993,7 @@ def test_bulk_edit_from_model_has_tristate_for_booleans():
     )
 
     t2 = t.bind(request=req('get'))
-    assert t2.bulk.fields.b.__tri_declarative_shortcut_stack[0] == 'boolean_tristate'
+    assert t2.bulk.fields.b.__iommi_declarative_shortcut_stack[0] == 'boolean_tristate'
 
 
 @pytest.mark.django_db

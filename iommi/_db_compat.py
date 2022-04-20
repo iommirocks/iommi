@@ -1,5 +1,5 @@
 from django.db.models import ManyToManyField
-from tri_declarative import Shortcut
+from iommi.shortcut import Shortcut
 
 from iommi.base import MISSING
 

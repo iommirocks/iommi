@@ -10,19 +10,21 @@ from django.db.models import (
     Field as DjangoField,
     Model,
 )
-from tri_declarative import (
-    dispatch,
-    Namespace,
-    Refinable,
-    setdefaults_path,
-)
 from tri_struct import Struct
 
 from iommi.base import (
     MISSING,
 )
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    Namespace,
+    setdefaults_path,
+)
 from iommi.evaluate import evaluate
-from iommi.refinable import RefinableObject
+from iommi.refinable import (
+    Refinable,
+    RefinableObject,
+)
 
 
 def create_members_from_model(

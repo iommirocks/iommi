@@ -1,7 +1,7 @@
 import pytest
-from tri_declarative import Namespace
 from tri_struct import Struct
 
+from iommi.declarative.namespace import Namespace
 from iommi.edit_table import (
     EditColumn,
     EditTable,

@@ -13,13 +13,6 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from tri_declarative import (
-    get_members,
-    get_shortcuts_by_name,
-    is_shortcut,
-    Namespace,
-    Shortcut,
-)
 from tri_struct import Struct
 
 from iommi import from_model
@@ -27,6 +20,8 @@ from iommi.base import (
     items,
     keys,
 )
+from iommi.declarative import get_members
+from iommi.declarative.namespace import Namespace
 from iommi.endpoint import perform_ajax_dispatch
 from iommi.form import (
     Field,
@@ -46,7 +41,12 @@ from iommi.query import (
     QueryException,
     value_to_str_for_query,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    get_shortcuts_by_name,
+    is_shortcut,
+    Shortcut,
+    with_defaults,
+)
 from tests.helpers import req
 from tests.models import (
     Bar,

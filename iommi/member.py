@@ -4,16 +4,16 @@ from typing import (
     Type,
 )
 
-from tri_declarative import (
-    dispatch,
-    Namespace,
-    setdefaults_path,
-)
 from tri_struct import Struct
 
 from iommi.base import (
     items,
     keys,
+)
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    Namespace,
+    setdefaults_path,
 )
 from iommi.refinable import (
     Prio,

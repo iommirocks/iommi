@@ -1,24 +1,22 @@
 from typing import Dict
 
 import pytest
-from tri_declarative import (
-    dispatch,
-    Namespace,
-    with_meta,
-)
 
 from iommi import (
     Fragment,
     Header,
 )
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import Namespace
+from iommi.declarative.with_meta import with_meta
 from iommi.refinable import (
     prefixes,
     Prio,
     refinable,
     Refinable,
     RefinableMembers,
-    RefinableObject,
     RefinableNamespace,
+    RefinableObject,
 )
 
 

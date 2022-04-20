@@ -3,7 +3,6 @@ import json
 import pytest
 from django.http import HttpResponse
 from django.test import override_settings
-from tri_declarative import with_meta
 from tri_struct import Struct
 
 from iommi import (
@@ -14,6 +13,7 @@ from iommi import (
     Part,
     Table,
 )
+from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import (
     find_target,
     InvalidEndpointPathException,

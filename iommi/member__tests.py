@@ -1,9 +1,4 @@
 import pytest
-from tri_declarative import (
-    dispatch,
-    Refinable,
-    with_meta,
-)
 
 from iommi import (
     Fragment,
@@ -12,7 +7,9 @@ from iommi import (
     register_style,
     Style,
 )
+from iommi.declarative.with_meta import with_meta
 from iommi.member import ForbiddenNamesException
+from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 from tests.helpers import (
     Basket,

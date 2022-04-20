@@ -4,15 +4,6 @@ from typing import (
     Union,
 )
 
-from tri_declarative import (
-    declarative,
-    dispatch,
-    EMPTY,
-    Namespace,
-    Refinable,
-    with_meta,
-)
-
 from iommi._web_compat import (
     format_html,
     template_types,
@@ -22,6 +13,13 @@ from iommi.base import (
     items,
     values,
 )
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    Namespace,
+)
+from iommi.declarative.with_meta import with_meta
 from iommi.evaluate import evaluate_strict_container
 from iommi.fragment import (
     build_and_bind_h_tag,
@@ -39,6 +37,7 @@ from iommi.part import (
 )
 from iommi.refinable import (
     EvaluatedRefinable,
+    Refinable,
     RefinableMembers,
 )
 from iommi.traversable import Traversable

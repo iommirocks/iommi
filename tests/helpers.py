@@ -3,31 +3,29 @@ import os.path
 import re
 from os import (
     makedirs,
-    mkdir,
 )
 from pathlib import Path
 from uuid import uuid4
 
 from django.test import RequestFactory
-from tri_declarative import (
-    declarative,
-    dispatch,
-    Namespace,
-    Refinable,
-)
 from tri_struct import Struct
 
 from iommi import (
+    middleware,
     render_if_needed,
     Table,
-    middleware,
 )
-from iommi.base import items
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import Namespace
 from iommi.member import (
     bind_members,
     refine_done_members,
 )
-from iommi.refinable import RefinableMembers
+from iommi.refinable import (
+    Refinable,
+    RefinableMembers,
+)
 from iommi.traversable import (
     Traversable,
 )

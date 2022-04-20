@@ -3,18 +3,17 @@ from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
 
-from tri_declarative import (
-    flatten,
-    get_declared,
-    get_shortcuts_by_name,
-    Namespace,
-)
-
 from iommi import (
     MISSING,
     Part,
 )
 from iommi.base import items
+from iommi.declarative import get_declared
+from iommi.declarative.namespace import (
+    flatten,
+    Namespace,
+)
+from iommi.shortcut import get_shortcuts_by_name
 
 
 def read_cookbook_links():

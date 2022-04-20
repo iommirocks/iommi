@@ -41,27 +41,8 @@ from django.utils.translation import (
     gettext_lazy,
 )
 from math import ceil
-from tri_declarative import (
-    declarative,
-    dispatch,
-    EMPTY,
-    flatten,
-    getattr_path,
-    LAST,
-    Namespace,
-    Refinable,
-    refinable,
-    setdefaults_path,
-    Shortcut,
-    with_meta,
-)
 from tri_struct import Struct
 
-from iommi import (
-    Fragment,
-    Header,
-    html,
-)
 from iommi._web_compat import (
     format_html,
     HttpResponse,
@@ -91,6 +72,18 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
     values,
 )
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    flatten,
+    getattr_path,
+    Namespace,
+    setdefaults_path,
+)
+from iommi.shortcut import Shortcut
+from iommi.declarative.with_meta import with_meta
+
 from iommi.endpoint import (
     DISPATCH_PREFIX,
     path_join,
@@ -106,6 +99,9 @@ from iommi.form import (
 )
 from iommi.fragment import (
     build_and_bind_h_tag,
+    Fragment,
+    Header,
+    html,
     Tag,
 )
 from iommi.from_model import (
@@ -132,10 +128,13 @@ from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
     Prio,
+    Refinable,
+    refinable,
     RefinableMembers,
     RefinableObject,
 )
 from iommi.shortcut import with_defaults
+from iommi.sort_after import LAST
 from iommi.traversable import (
     Traversable,
 )
@@ -418,7 +417,7 @@ class Column(Part):
         super(Column, self).__init__(**kwargs)
 
     def on_refine_done(self):
-        if 'choice' in getattr(self, '__tri_declarative_shortcut_stack', []):
+        if 'choice' in getattr(self, '__iommi_declarative_shortcut_stack', []):
             assert self.iommi_namespace.get('choices') is not None, 'To use Column.choice, you must pass the choices list'
 
         self.header = HeaderColumnConfig(**self.header).refine_done(parent=self)

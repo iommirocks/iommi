@@ -2,19 +2,21 @@ from platform import python_implementation
 from typing import Dict
 
 import pytest
-from tri_declarative import (
-    Refinable,
-    refinable,
-    Shortcut,
-)
 
 from iommi import Fragment
 from iommi.docs import (
     _generate_tests_from_class_docs,
     get_default_classes,
 )
-from iommi.refinable import RefinableObject
-from iommi.shortcut import with_defaults
+from iommi.refinable import (
+    Refinable,
+    refinable,
+    RefinableObject,
+)
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults,
+)
 
 
 def test_generate_docs(snapshot):

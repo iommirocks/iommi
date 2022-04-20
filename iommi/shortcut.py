@@ -1,8 +1,27 @@
 import functools
 
-from tri_declarative import shortcut
-
+from iommi.declarative import get_members
+from iommi.declarative.namespace import Namespace
 from iommi.refinable import Prio
+
+
+# This is just a marker class for declaring shortcuts, and later for collecting them
+class Shortcut(Namespace):
+    shortcut = True
+
+
+# decorator
+def shortcut(f):
+    f.shortcut = True
+    return f
+
+
+def is_shortcut(x):
+    return getattr(x, 'shortcut', False)
+
+
+def get_shortcuts_by_name(class_):
+    return dict(get_members(class_, member_class=Shortcut, is_member=is_shortcut))
 
 
 def with_defaults(__target__=None, **decorator_kwargs):
@@ -21,9 +40,9 @@ def with_defaults(__target__=None, **decorator_kwargs):
                     **decorator_kwargs,
                 )
 
-                shortcut_stack = [name] + getattr(instance, '__tri_declarative_shortcut_stack', [])
+                shortcut_stack = [name] + getattr(instance, '__iommi_declarative_shortcut_stack', [])
                 try:
-                    instance.__tri_declarative_shortcut_stack = shortcut_stack
+                    instance.__iommi_declarative_shortcut_stack = shortcut_stack
                 except AttributeError:
                     pass
 

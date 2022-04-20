@@ -23,15 +23,6 @@ from django.urls import (
 )
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
-from tri_declarative import (
-    dispatch,
-    EMPTY,
-    flatten,
-    LAST,
-    Namespace,
-    setdefaults_path,
-    with_meta,
-)
 from tri_struct import Struct
 
 from iommi import (
@@ -40,6 +31,7 @@ from iommi import (
     Fragment,
     Header,
     html,
+    LAST,
     Menu,
     MenuItem,
     Page,
@@ -50,6 +42,14 @@ from iommi.base import (
     items,
     values,
 )
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    flatten,
+    Namespace,
+    setdefaults_path,
+)
+from iommi.declarative.with_meta import with_meta
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
 

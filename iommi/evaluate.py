@@ -1,6 +1,6 @@
 import inspect
 
-from tri_declarative import Namespace
+from iommi.declarative.namespace import Namespace
 
 from iommi.base import (
     items,
@@ -82,7 +82,7 @@ def get_signature(func):
     :rtype: str
     """
     try:
-        return object.__getattribute__(func, '__tri_declarative_signature')
+        return object.__getattribute__(func, '__iommi_declarative_signature')
     except AttributeError:
         pass
 
@@ -104,10 +104,10 @@ def get_signature(func):
 
     signature = '|'.join((required, optional, wildcard))
     try:
-        object.__setattr__(func, '__tri_declarative_signature', signature)
+        object.__setattr__(func, '__iommi_declarative_signature', signature)
     except TypeError:
         # For classes
-        type.__setattr__(func, '__tri_declarative_signature', signature)
+        type.__setattr__(func, '__iommi_declarative_signature', signature)
     except AttributeError:
         pass
     return signature

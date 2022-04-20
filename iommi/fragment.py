@@ -3,14 +3,6 @@ from typing import (
     Union,
 )
 
-from tri_declarative import (
-    dispatch,
-    EMPTY,
-    Namespace,
-    Refinable,
-    with_meta,
-)
-
 from iommi._web_compat import (
     format_html,
     render_template,
@@ -26,6 +18,12 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
     values,
 )
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    Namespace,
+)
+from iommi.declarative.with_meta import with_meta
 from iommi.evaluate import (
     evaluate_strict,
     evaluate_strict_container,
@@ -43,6 +41,7 @@ from iommi.part import (
 from iommi.refinable import (
     EvaluatedRefinable,
     Prio,
+    Refinable,
     RefinableMembers,
 )
 from iommi.shortcut import with_defaults

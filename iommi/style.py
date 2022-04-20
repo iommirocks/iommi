@@ -3,23 +3,23 @@ from contextlib import contextmanager
 from typing import (
     Any,
     List,
-    Type, Union,
+    Type,
+    Union,
 )
 
 from django.conf import settings
-from tri_declarative import (
-    dispatch,
-    EMPTY,
-    get_shortcuts_by_name,
-    Namespace,
-    setdefaults_path,
-)
 
 from iommi.base import (
     items,
     keys,
 )
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
+    EMPTY,
+    Namespace,
+)
 from iommi.refinable import RefinableObject
+from iommi.shortcut import get_shortcuts_by_name
 
 DEFAULT_STYLE = 'bootstrap'
 
@@ -99,7 +99,7 @@ class Style:
                 shortcuts_config = Namespace(config.pop('shortcuts', {}))
                 result.update(config)
 
-                for shortcut_name in reversed(getattr(obj, '__tri_declarative_shortcut_stack', [])):
+                for shortcut_name in reversed(getattr(obj, '__iommi_declarative_shortcut_stack', [])):
                     result = Namespace(result, shortcuts_config.get(shortcut_name, {}))
 
         if is_root:

@@ -9,17 +9,13 @@ from typing import (
     Tuple,
 )
 
-from tri_declarative import (
-    declarative,
-    dispatch,
+from iommi.base import items
+from iommi.declarative import declarative
+from iommi.declarative.dispatch import dispatch
+from iommi.declarative.namespace import (
     getattr_path,
     Namespace,
-    Refinable,
-    refinable,
 )
-from tri_declarative.refinable import is_refinable_function
-
-from iommi.base import items
 
 
 def prefixes(path):
@@ -107,6 +103,20 @@ class RefinableNamespace(Namespace):
                     result.setitem_path(path, value)
 
         return result
+
+
+class Refinable:
+    pass
+
+
+# decorator
+def refinable(f):
+    f.refinable = True
+    return f
+
+
+def is_refinable_function(attr):
+    return getattr(attr, 'refinable', False)
 
 
 class EvaluatedRefinable(Refinable):

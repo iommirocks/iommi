@@ -1,6 +1,6 @@
 import pytest
 from django.test import override_settings
-from tri_declarative import Namespace
+from iommi.declarative.namespace import Namespace
 from tri_struct import Struct
 
 from iommi.attrs import (
