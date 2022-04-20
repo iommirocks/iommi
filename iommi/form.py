@@ -32,7 +32,7 @@ from django.db.models import (
 from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.translation import gettext
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi._db_compat import field_defaults_factory
 from iommi._web_compat import (

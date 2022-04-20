@@ -3,7 +3,7 @@ import json
 import pytest
 from django.http import HttpResponse
 from django.test import override_settings
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import (
     Field,

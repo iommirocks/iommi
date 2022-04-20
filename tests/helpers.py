@@ -8,7 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.test import RequestFactory
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import (
     middleware,

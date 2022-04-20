@@ -12,7 +12,7 @@ from django.template import (
 )
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.action import (Action)
 from iommi.asset import (Asset)

@@ -1,6 +1,6 @@
 import pytest
 from iommi.sort_after import LAST
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.base import (
     keys,

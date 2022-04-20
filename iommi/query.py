@@ -31,7 +31,7 @@ from pyparsing import (
     Word,
     ZeroOrMore,
 )
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi._web_compat import (
     render_template,

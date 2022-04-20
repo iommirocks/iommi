@@ -5,7 +5,7 @@ from typing import (
     List,
 )
 
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.attrs import evaluate_attrs
 from iommi.base import (

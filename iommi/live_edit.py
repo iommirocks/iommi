@@ -10,7 +10,7 @@ from django.http import (
 from django.utils import autoreload
 from django.views.decorators.csrf import csrf_exempt
 from iommi.base import get_wrapped_view
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import (
     Asset,

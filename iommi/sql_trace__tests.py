@@ -11,7 +11,7 @@ import time_machine
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import path
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.sql_trace import (
     colorize,

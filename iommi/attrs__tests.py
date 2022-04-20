@@ -1,7 +1,7 @@
 import pytest
 from django.test import override_settings
 from iommi.declarative.namespace import Namespace
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.attrs import (
     evaluate_attrs,

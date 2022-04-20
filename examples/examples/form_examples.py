@@ -10,7 +10,7 @@ from django.urls import path
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from examples import (
     example_adding_decorator,

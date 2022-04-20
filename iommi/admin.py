@@ -23,7 +23,7 @@ from django.urls import (
 )
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import (
     Field,

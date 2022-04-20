@@ -4,7 +4,7 @@ from typing import (
     Type,
 )
 
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi.base import (
     items,

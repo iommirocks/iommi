@@ -1,5 +1,5 @@
 import pytest
-from tri_struct import Struct
+from iommi.struct import Struct
 
 from iommi import (
     Page,
