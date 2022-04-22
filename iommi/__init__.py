@@ -2,6 +2,8 @@ __version__ = '4.7.0'
 
 from functools import wraps
 
+import django
+
 from iommi._db_compat import (
     register_factory,
     setup_db_compat,
@@ -130,4 +132,5 @@ __all__ = [
     'iommi_render',
 ]
 
-default_app_config = 'iommi.apps.IommiConfig'
+if django.VERSION[:2] < (3, 2):
+    default_app_config = 'iommi.apps.IommiConfig'
