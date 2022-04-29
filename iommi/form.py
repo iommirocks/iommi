@@ -1447,15 +1447,16 @@ class Form(Part):
             )
             if auto.instance is not None:
                 self.instance = auto.instance
-            if 'title' not in self.iommi_namespace and auto.type is not None:
+            crud_type = self.extra.get('crud_type')
+            if 'title' not in self.iommi_namespace and crud_type is not None:
                 self.title = capitalize(
                     gettext('%(crud_type)s %(model_name)s')
-                    % dict(crud_type=gettext(auto.type), model_name=model._meta.verbose_name)
+                    % dict(crud_type=gettext(crud_type), model_name=model._meta.verbose_name)
                 )
                 # TODO this in extra_member_defaults
                 setdefaults_path(
                     self.actions,
-                    submit__display_name=gettext('Save') if auto.type == 'edit' else capitalize(gettext(auto.type)),
+                    submit__display_name=gettext('Save') if crud_type == 'edit' else capitalize(gettext(crud_type)),
                 )
 
             self.model = model
@@ -1740,7 +1741,7 @@ class Form(Part):
         extra__is_create=True,
         extra__new_instance=lambda form, **_: form.model(),
         actions__submit__post_handler=create_object__post_handler,
-        auto__type='create',
+        extra__crud_type='create',
     )
     def create(cls, **kwargs):
         return cls.crud(**kwargs)
@@ -1749,7 +1750,7 @@ class Form(Part):
     @with_defaults(
         extra__is_create=False,
         actions__submit__post_handler=edit_object__post_handler,
-        auto__type='edit',
+        extra__crud_type='edit',
     )
     def edit(cls, **kwargs):
         return cls.crud(**kwargs)
@@ -1758,7 +1759,7 @@ class Form(Part):
     @with_defaults(
         actions__submit__call_target__attribute='delete',
         actions__submit__post_handler=delete_object__post_handler,
-        auto__type='delete',
+        extra__crud_type='delete',
         editable=False,
     )
     def delete(cls, **kwargs):

@@ -3176,6 +3176,20 @@ def test_editable_can_be_a_callable():
     assert f.fields.foo.editable is False
 
 
+@pytest.mark.django_db
+def test_edit_no_require_auto():
+    x = Foo.objects.create(foo=7)
+    f = Form.edit(
+        instance=x,
+        fields__foo=Field.integer(),
+    ).bind(
+        request=req('post', **{'-submit': '', 'foo': '43'}),
+    )
+    f.render_to_response()
+    x.refresh_from_db()
+    assert x.foo == 43
+
+
 def test_render_grouped_fields():
     class MyForm(Form):
         a = Field()
