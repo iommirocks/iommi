@@ -13,13 +13,6 @@ from django.urls import (
     path,
     reverse,
 )
-from iommi.declarative import (
-    get_members,
-    is_shortcut,
-    LAST,
-    Namespace,
-    Shortcut,
-)
 
 import iommi.part
 import iommi.style
@@ -29,6 +22,7 @@ from iommi import (
     Fragment,
     Header,
     html,
+    LAST,
     Page,
     Table,
 )
@@ -41,6 +35,8 @@ from iommi.base import (
     items,
     keys,
 )
+from iommi.declarative import get_members
+from iommi.declarative.namespace import Namespace
 from iommi.form import (
     Field,
     Form,
@@ -48,6 +44,10 @@ from iommi.form import (
 from iommi.menu import (
     Menu,
     MenuItem,
+)
+from iommi.shortcut import (
+    is_shortcut,
+    Shortcut,
 )
 from iommi.style import validate_styles
 from .models import (
