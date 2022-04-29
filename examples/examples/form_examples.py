@@ -104,7 +104,10 @@ def form_example_4(request):
 
 @example(gettext("Create edit forms from database models"))
 def form_example_5(request):
-    return Form.edit(auto__instance=Artist.objects.all().first())
+    class MyForm(Form):
+        name = Field()
+
+    return MyForm.edit(instance=Artist.objects.all().first())
 
 
 @example(gettext("Custom actions can be added to forms"))
