@@ -3,11 +3,14 @@ import pytest
 from iommi import (
     Asset,
     Field,
+    Filter,
     Form,
     Fragment,
+    html,
     Menu,
     MenuItem,
     Page,
+    Query,
     Table,
 )
 from iommi.attrs import render_attrs
@@ -38,6 +41,7 @@ from tests.helpers import (
     prettify,
     req,
 )
+from tests.models import TBar
 
 
 def test_style():
@@ -533,3 +537,49 @@ def test_style_on_child():
 def test_style_repr():
     with register_style('foo', Style()) as foo:
         assert repr(foo) == '<Style: foo>'
+
+
+@pytest.mark.django_db
+def test_filter_assets_for_foreign_key():
+    q = Query(
+        auto__model=TBar,
+        iommi_style='bootstrap',
+        filters__foo__assets__select2_js=Asset.js(
+            attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
+        ),
+    ).bind(request=req('get'))
+    assert 'select2_js' in q.iommi_collected_assets().keys()
+
+
+def test_assets_from_different_sources():
+    with register_style(
+            'my_style',
+            Style(
+                test,
+                Page__assets__an_asset=html.script('This is an asset'),
+            ),
+    ):
+        class MyPage(Page):
+            class Meta:
+                iommi_style = 'my_style'
+                assets__another_asset = html.script('This is another asset')
+
+        # language=html
+        expected = prettify(
+            '''
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <title/>
+                        <script> This is an asset </script>
+                        <script> This is another asset </script>
+                    </head>
+                    <body/>
+                </html>
+            '''
+        )
+        actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
+        print(expected)
+        print(actual)
+
+        assert actual == expected

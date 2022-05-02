@@ -630,7 +630,7 @@ class Query(Part):
 
         if self.auto:
             auto = QueryAutoConfig(**self.auto).refine_done(parent=self)
-            model, rows, filters = self._from_model(
+            model, rows, filters_from_auto = self._from_model(
                 model=auto.model,
                 rows=auto.rows,
                 include=auto.include,
@@ -647,15 +647,15 @@ class Query(Part):
 
             if self.rows is None:
                 self.rows = rows
-
-            self.filters.update(filters)
+        else:
+            filters_from_auto = None
 
         self.model, self.rows = model_and_rows(self.model, self.rows)
 
         self.query_advanced_value = None
         self.query_error = None
 
-        refine_done_members(self, name='filters', members_from_namespace=self.filters, members_from_declared=self.get_declared('_filters_dict'), cls=self.get_meta().member_class)
+        refine_done_members(self, name='filters', members_from_namespace=self.filters, members_from_declared=self.get_declared('_filters_dict'), members_from_auto=filters_from_auto, cls=self.get_meta().member_class)
 
         self._on_refine_done_form()
 
