@@ -4,7 +4,7 @@
             <optgroup label="{{optgroup}}">
         {% endif %}
             {% for choice in choice_tuples %}
-                <option value="{{ choice.1 }}" {% if choice.3 %}selected="selected"{% endif %}>{{ choice.2 }}</option>
+                <option value="{{ choice.1|stringformat:'s' }}" {% if choice.3 %}selected="selected"{% endif %}>{{ choice.2 }}</option>
             {% endfor %}
         {% if optgroup %}
             </optgroup>
