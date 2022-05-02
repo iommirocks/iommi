@@ -3262,3 +3262,31 @@ def test_non_editable_checkbox():
     actual = form.bind(request=req('get')).fields.b.__html__()
     expected = '<div><input checked="" disabled id="id_b" name="b" type="checkbox"><label for="id_b">B</label><div class="helptext">$$$$</div></div>'
     assert actual == expected
+
+
+@pytest.mark.django_db
+def test_choice_queryset_with_thousands_separator_setting(settings):
+    settings.USE_THOUSAND_SEPARATOR = True
+    settings.USE_L10N = True
+
+    from django.contrib.auth.models import User
+
+    user = User.objects.create(username='foo', pk=12345)
+    user2 = User.objects.create(username='foo2')
+    User.objects.create(username='foo3')
+
+    class MyForm(Form):
+        foo = Field.choice_queryset(attr=None, choices=User.objects.filter(username=user.username))
+
+    assert [x.pk for x in MyForm().bind(request=req('get')).fields.foo.choices] == [user.pk]
+    assert MyForm().bind(request=req('get', foo=smart_str(user2.pk))).fields.foo._errors == {
+        'User matching query does not exist.'
+    }
+
+    form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
+    assert form.fields.foo._errors == set()
+    result = form.__html__()
+    assert (
+        str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
+        == f'<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="{user.pk}">foo</option>\n</select>'
+    )
