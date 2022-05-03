@@ -993,7 +993,7 @@ def test_bulk_edit_from_model_has_tristate_for_booleans():
     )
 
     t2 = t.bind(request=req('get'))
-    assert t2.bulk.fields.b.__iommi_declarative_shortcut_stack[0] == 'boolean_tristate'
+    assert t2.bulk.fields.b.iommi_shortcut_stack[0] == 'boolean_tristate'
 
 
 @pytest.mark.django_db

@@ -28,10 +28,7 @@ from iommi.refinable import (
     RefinableMembers,
     RefinableObject,
 )
-from iommi.style import (
-    get_style_data_for_object,
-    Style,
-)
+from iommi.style import Style
 
 # Backward compatible definition
 EvaluatedRefinable = EvaluatedRefinable  # pragma: no mutate this is just marking the symbols as used
@@ -119,13 +116,19 @@ class Traversable(RefinableObject):
         assert self._is_bound, NOT_BOUND_MESSAGE
         return build_long_path(self).replace('/', '__')
 
-    def apply_styles(self, iommi_style: Style, is_root=True):
+    def apply_style(self, iommi_style: Style, is_root=True):
         assert iommi_style.__class__.__name__ == "Style", iommi_style.__class__.__name__
 
-        style_data = get_style_data_for_object(iommi_style, obj=self, is_root=is_root)
+        refinements = iommi_style.resolve(obj=self, is_root=is_root)
 
-        result = self.refine(Prio.style, **style_data)
+        result = self
         del self
+
+        if refinements:
+            for refinement in refinements:
+                result = result.refine(Prio.style, **Namespace(refinement))
+        else:
+            result = result.refine(Prio.style)
 
         result.iommi_style = iommi_style
         return result
