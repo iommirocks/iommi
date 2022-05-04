@@ -2031,7 +2031,7 @@ class Table(Part, Tag):
         preprocessed_rows = self.preprocess_rows(rows=rows, **self.iommi_evaluate_parameters())
         for i, row in enumerate(preprocessed_rows):
             row = self.preprocess_row(table=self, row=row)
-            assert row is not None, 'preprocess_row must return the object'
+            assert row is not None, 'preprocess_row must return the row'
             yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     @classmethod
