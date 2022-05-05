@@ -35,18 +35,20 @@ def with_defaults(__target__=None, **decorator_kwargs):
             if name == '__init__':
                 args[0].refine(Prio.constructor, **decorator_kwargs)
             else:
-                instance = instance.refine(
-                    Prio.shortcut,
-                    **decorator_kwargs,
-                )
+                if decorator_kwargs:
+                    instance = instance.refine(
+                        Prio.shortcut,
+                        **decorator_kwargs,
+                    )
 
-                shortcut_stack = [name] + getattr(instance, '__iommi_declarative_shortcut_stack', [])
+                shortcut_stack = [name] + getattr(instance, 'iommi_shortcut_stack', [])
                 try:
-                    instance.__iommi_declarative_shortcut_stack = shortcut_stack
+                    instance.iommi_shortcut_stack = shortcut_stack
                 except AttributeError:
                     pass
 
             return instance
+
         wrapper_for_with_defaults.__iommi_with_defaults_kwargs = decorator_kwargs
         return wrapper_for_with_defaults
 

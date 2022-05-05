@@ -168,7 +168,7 @@ class RefinableObject:
 
         assert not result.is_refine_done, f"refine_done() already invoked on {result!r}"
 
-        if hasattr(result, 'apply_styles'):
+        if hasattr(result, 'apply_style'):
             is_root = parent is None
             if is_root:
                 result._iommi_style_stack = []
@@ -179,7 +179,7 @@ class RefinableObject:
             from iommi.style import resolve_style
             iommi_style = resolve_style(result._iommi_style_stack, iommi_style)
             result._iommi_style_stack += [iommi_style]
-            result = result.apply_styles(result._iommi_style_stack[-1], is_root=is_root)
+            result = result.apply_style(result._iommi_style_stack[-1], is_root=is_root)
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')

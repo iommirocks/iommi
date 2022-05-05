@@ -24,7 +24,6 @@ from iommi.refinable import (
 from iommi.shortcut import with_defaults
 from iommi.style import (
     get_global_style,
-    get_style_data_for_object,
     get_style_object,
     InvalidStyleConfigurationException,
     register_style,
@@ -104,13 +103,13 @@ def test_style():
     assert styled_items(b) == dict(foo=5, bar=7)
 
     b = B.shortcut1(iommi_style=overrides)
-    assert overrides.component(b) == dict(foo=4, bar=7)
-    assert b.__iommi_declarative_shortcut_stack == ['shortcut1']
+    assert overrides.resolve(b) == [dict(bar=6, foo=5), dict(foo=4), dict(bar=7)]
+    assert b.iommi_shortcut_stack == ['shortcut1']
     assert styled_items(b) == dict(foo=4, bar=7)
 
     b = B.shortcut2(iommi_style=overrides)
-    assert b.__iommi_declarative_shortcut_stack == ['shortcut2', 'shortcut1']
-    assert overrides.component(b) == dict(foo=4, bar=7)
+    assert b.iommi_shortcut_stack == ['shortcut2', 'shortcut1']
+    assert overrides.resolve(b) == [dict(bar=6, foo=5), dict(foo=4), dict(bar=7)]
     assert styled_items(b) == dict(foo=4, bar=7)
 
 
@@ -173,12 +172,12 @@ def test_apply_checkbox_style():
 
     assert get_style_object(form.fields.foo) == get_global_style('bootstrap')
     assert (
-        get_style_data_for_object(
-            get_global_style('bootstrap'),
-            obj=form.fields.foo,
-            is_root=False,
-        )['attrs']
-        == {'class': {'form-group': True, 'form-check': True}}
+        Namespace(
+            *get_global_style('bootstrap').resolve(
+                obj=form.fields.foo,
+                is_root=False,
+            )
+        )['attrs'] == {'class': {'form-group': True, 'form-check': True}}
     )
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert (
@@ -583,3 +582,163 @@ def test_assets_from_different_sources():
         print(actual)
 
         assert actual == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.skip
+def test_filter_assets_for_foreign_key2():
+    form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    assert 'data-choices-endpoint' in form.fields.foo.__html__()
+
+    q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='bootstrap').bind(request=req('get'))
+    assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
+
+    q = Query(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    print(q.form.fields.foo.iommi_style)
+    from pprint import pprint
+    pprint(q.form.fields.foo.iommi_style.resolve(q.form.fields.foo))
+    assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
+
+
+@pytest.mark.skip
+@pytest.mark.django_db
+def test_filter_assets_for_foreign_key3():
+    # form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    # assert form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
+    # assert 'data-choices-endpoint' in form.fields.foo.__html__()
+
+    q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='horizontal').bind(request=req('get'))
+    assert q.form.fields.foo.iommi_style.name == 'horizontal'
+    assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
+    from pprint import pprint
+    pprint(q.form.fields.foo.iommi_namespace.as_stack())
+    assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
+
+    form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    assert 'data-choices-endpoint' in form.fields.foo.__html__()
+
+    q = Query(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
+    assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
+
+
+def test_resolve_root():
+    assert Style(root__foo='bar').resolve(None, is_root=True) == [dict(foo='bar')]
+
+
+class Dog:
+    pass
+
+
+def test_resolve_style():
+    assert Style(
+        Dog__tail='short',
+    ).resolve(Dog()) == [dict(tail='short')]
+
+
+def test_resolve_inherit():
+    base_style = Style(
+        Dog__snaut='yes'
+    )
+    assert Style(
+        base_style,
+        Dog__tail='short',
+    ).resolve(Dog()) == [dict(snaut='yes', tail='short')]
+
+
+def test_resolve_substyle():
+    style = Style(sub_styles__shepard__Dog__tail='long')
+    assert style.resolve(Dog()) == []
+    assert style.resolve_sub_style('shepard').resolve(Dog()) == [dict(tail='long')]
+
+
+def test_resolve_substyle_merge():
+    style = Style(
+        sub_styles__shepard=dict(
+            Dog__snaut='long',
+        ),
+        Dog__fur='short',
+    )
+    sub_style = style.resolve_sub_style('shepard')
+    assert sub_style.resolve(Dog()) == [dict(snaut='long', fur='short')]
+
+
+def test_resolve_substyle_inherit():
+    base_style = Style(
+        sub_styles__shepard=dict(
+            Dog__snaut='long',
+        ),
+    )
+    style = Style(
+        base_style,
+        sub_styles__shepard=dict(
+            Dog__fur='short',
+        ),
+    )
+    sub_style = style.resolve_sub_style('shepard')
+    assert sub_style.resolve(Dog()) == [dict(snaut='long', fur='short')]
+
+
+def test_resolve_shortcut():
+    class Cat:
+        @classmethod
+        @with_defaults
+        def siamese(cls, **kwargs):
+            return cls(**kwargs)
+
+    style = Style(
+        Cat__teeth='sharp',
+        Cat__shortcuts__siamese__legs='long'
+    )
+
+    assert style.resolve(Cat()) == [dict(teeth='sharp')]
+    assert style.resolve(Cat.siamese()) == [dict(teeth='sharp'), dict(legs='long')]
+
+
+def test_resolve_shortcut_chain():
+    class Cat:
+        @classmethod
+        @with_defaults
+        def siamese(cls, **kwargs):
+            return cls(**kwargs)
+
+        @classmethod
+        @with_defaults
+        def garfield(cls, **kwargs):
+            return cls.siamese(**kwargs)
+
+    style = Style(
+        Cat__teeth='sharp',
+        Cat__shortcuts__siamese__legs='long',
+        Cat__shortcuts__garfield__belly='fat',
+    )
+
+    assert style.resolve(Cat()) == [dict(teeth='sharp')]
+    assert style.resolve(Cat.garfield()) == [dict(teeth='sharp'), dict(legs='long'), dict(belly='fat')]
+
+
+def test_resolve_shortcut_multi_base():
+    class Cat:
+        @classmethod
+        @with_defaults
+        def siamese(cls, **kwargs):
+            return cls(**kwargs)
+
+        @classmethod
+        @with_defaults
+        def garfield(cls, **kwargs):
+            return cls.siamese(**kwargs)
+
+    base_style = Style(
+        Cat__teeth='sharp',
+    )
+    other_style = Style(
+        Cat__shortcuts__siamese__legs='long',
+        Cat__shortcuts__siamese__belly='slim',
+    )
+    style = Style(
+        base_style, other_style,
+        Cat__shortcuts__garfield__belly='fat',
+    )
+
+    assert style.resolve(Cat.garfield()) == [dict(teeth='sharp'), dict(legs='long', belly='slim'), dict(belly='fat')]

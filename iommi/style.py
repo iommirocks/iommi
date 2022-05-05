@@ -77,33 +77,43 @@ class Style:
 
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
-        self.sub_styles = {
-            k: v if isinstance(v, Style) else Style(self, **v)
-            for k, v in items(sub_styles)
-        }
+        self.sub_styles = {}
+        for k, v in items(sub_styles):
+            if isinstance(v, Style):
+                self.sub_styles[k] = v
+            else:
+                sub_style_bases = [self]
+                for base in bases:
+                    sub_style_base = base.sub_styles.get(k)
+                    if sub_style_base:
+                        sub_style_bases.append(sub_style_base)
+                self.sub_styles[k] = Style(*sub_style_bases, **v)
+
         for name, sub_style in items(self.sub_styles):
             sub_style.name = name
 
-    def component(self, obj, is_root=False):
+    def resolve(self, obj, is_root=False):
         """
-        Calculate the namespace of additional argument that should be applied
+        Calculate the namespaces of additional argument that should be applied
         to the given object. If is_root is set to True, assets might also be
         added to the namespace.
         """
-        result = Namespace()
+        result = []
 
-        # TODO: is this wrong? Should it take classes first, then loop through shortcuts?
         for class_name in class_names_for(type(obj)):
             if class_name in self.config:
-                config = Namespace(self.config.get(class_name, {}))
-                shortcuts_config = Namespace(config.pop('shortcuts', {}))
-                result.update(config)
+                config = dict(self.config.get(class_name))
+                shortcuts_config = config.pop('shortcuts', {})
+                if config:
+                    result.append(config)
 
-                for shortcut_name in reversed(getattr(obj, '__iommi_declarative_shortcut_stack', [])):
-                    result = Namespace(result, shortcuts_config.get(shortcut_name, {}))
+                for shortcut_name in reversed(getattr(obj, 'iommi_shortcut_stack', [])):
+                    config = shortcuts_config.get(shortcut_name)
+                    if config:
+                        result.append(config)
 
-        if is_root:
-            result = Namespace(result, self.root)
+        if is_root and self.root:
+            result.append(self.root)
 
         return result
 
@@ -163,10 +173,6 @@ def get_global_style(name):
 Available styles:
     {style_names}'''
         ) from None
-
-
-def get_style_data_for_object(style_object, obj, is_root):
-    return style_object.component(obj, is_root)
 
 
 class InvalidStyleConfigurationException(Exception):
