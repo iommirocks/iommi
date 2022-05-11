@@ -4,6 +4,14 @@ Changelog
 5.0.0 (----------)
 ~~~~~~~~~~~~~~~~~~
 
+* Breaking change: how to declare shortcuts has now changed. Consult an example like `Column.float` for an example of the new style.
+
+* Breaking change: depedencies tri_struct and tri_declarative have been removed and merged into iommi. You need to change your imports if you import from tri_declarative!
+
+* Fixed bug where foreign keys in table filters didn't produce select2 inputs
+
+* Fixed support for Djangos `THOUSAND_SEPARATOR` feature. This previously broke selects and the paginator.
+
 * Refurbished priority for settings on refinable objects. E.g style settings can now overwrite things declared by
   shortcuts.
 

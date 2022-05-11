@@ -337,10 +337,10 @@ def test_apply_style_not_affecting_definition_2():
         class OtherPage(Page):
             menu = MyPage.menu
 
-        page = MyPage(iommi_style='foo_style').bind(request=Struct(path=''))
+        page = MyPage(iommi_style='foo_style').bind(request=req('get'))
         assert page.parts.menu.sub_menu.root.attrs['class'] == dict(foo=True)
 
-        page = OtherPage(iommi_style='bar_style').bind(request=Struct(path=''))
+        page = OtherPage(iommi_style='bar_style').bind(request=req('get'))
         assert page.parts.menu.sub_menu.root.attrs['class'] == dict(bar=True)
 
 

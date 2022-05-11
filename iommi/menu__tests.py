@@ -53,6 +53,7 @@ def test_set_active():
         albums = MenuItem()
         external = MenuItem(url='http://example.com')
         songs = MenuItem()
+        with_query = MenuItem(url='/songs/?foo')
 
     menu = MyMenu().bind(request=req('GET'))
 
@@ -61,6 +62,9 @@ def test_set_active():
 
     menu.set_active('/songs/')
     assert menu.sub_menu.songs._active is True
+
+    menu.set_active('/songs/?foo')
+    assert menu.sub_menu.with_query._active is True
 
     menu.set_active('/not_in_menu/')
     assert menu.sub_menu.home._active is True
