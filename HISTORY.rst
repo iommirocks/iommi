@@ -1,20 +1,34 @@
 Changelog
 ---------
 
-5.0.0 (----------)
+5.0.0 (2022-05-12)
 ~~~~~~~~~~~~~~~~~~
+
+* Dependencies tri.declarative and tri.struct are merged into iommi and are thus no longer required. You should remove them from your project and fix your imports to only import from iommi if you had imports from `tri_struct` or `tri_declarative`.
+
+* Fixes for how style definitions are merged. This fixes an issue where select2 wasn't used properly in table filters.
 
 * Refurbished priority for settings on refinable objects. E.g style settings can now overwrite things declared by
   shortcuts.
 
-* Introduced new decorator @with_defaults for giving parameters in shortcuts in a more natural way.
+* Fixed paginator and select2/choice/radio control when django is configured to use thousands separator
 
-* Introduced new decorator @superinvoking_classmethod to enable a classmethod to call a base class implementation
+* Drop Field parameters `choice_to_option` and `empty_choice_tuple`
+
+* Drop `Style` parameter `assets`. Assets parameters now strictly go in `root__assets`
+
+* Silenced deprecation warning from Django for app configs
+
+* Improved error messages
+
+* Workaround for crash deep in pytest internals when using synthetic traceback
+
+* Separate `Form.edit` from `auto__` machinery
+
+* Introduced new decorator `@with_defaults` for giving parameters in shortcuts in a more natural way.
+
+* Introduced new decorator `@superinvoking_classmethod` to enable a classmethod to call a base class implementation
   with the same name. Useful when declaring more specific shortcuts when customizing using inheritance.
-
-* Drop Field parameters choice_to_option and empty_choice_tuple
-
-* Drop Style parameter assert. Assets parameters now strictly go in root__assets
 
 
 4.7.0 (2022-04-01)
