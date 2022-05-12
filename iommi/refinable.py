@@ -170,16 +170,12 @@ class RefinableObject:
 
         if hasattr(result, 'apply_style'):
             is_root = parent is None
-            if is_root:
-                result.iommi_style_stack = []
-            else:
-                result.iommi_style_stack = list(parent.iommi_style_stack)
+            enclosing_style = None if is_root else parent.iommi_style
             iommi_style = result.iommi_namespace.get('iommi_style')
 
             from iommi.style import resolve_style
-            iommi_style = resolve_style(result.iommi_style_stack, iommi_style)
-            result.iommi_style_stack += [iommi_style]
-            result = result.apply_style(result.iommi_style_stack[-1], is_root=is_root)
+            iommi_style = resolve_style(iommi_style, enclosing_style=enclosing_style)
+            result = result.apply_style(iommi_style, is_root=is_root)
 
         # Apply config from result.namespace to result
         declared_items = result.get_declared('refinable')
