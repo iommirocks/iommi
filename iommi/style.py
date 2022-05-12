@@ -77,8 +77,14 @@ class Style:
 
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
+        sub_style_names = {
+            n
+            for base in bases
+            for n in base.sub_styles
+        } | set(sub_styles)
         self.sub_styles = {}
-        for k, v in items(sub_styles):
+        for k in sub_style_names:
+            v = sub_styles.get(k, {})
             if isinstance(v, Style):
                 self.sub_styles[k] = v
             else:
