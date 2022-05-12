@@ -113,33 +113,33 @@ def test_style():
 
 
 def test_resolve_style_base():
-    assert resolve_style([], None) is get_global_style('test')
+    assert resolve_style(None) is get_global_style('test')
 
 
 def test_resolve_style_trivial():
-    assert resolve_style([], 'test') is get_global_style('test')
+    assert resolve_style('test') is get_global_style('test')
 
 
 def test_resolve_style_fail():
     with pytest.raises(Exception) as e:
-        resolve_style([], 'not_a_style')
+        resolve_style('not_a_style')
     assert 'No registered iommi style not_a_style. Register a style with register_style().' in str(e.value)
 
 
 def test_resolve_style_shadow_default():
     with register_style('my_style', Style()) as my_style:
-        assert resolve_style([Style(), Style()], 'my_style') is my_style
+        assert resolve_style('my_style', enclosing_style=Style()) is my_style
 
 
 def test_resolve_style_shadow_default2():
     with register_style('my_style', Style()) as my_style:
-        assert resolve_style([Style(), my_style], 'my_style') is my_style
+        assert resolve_style('my_style', enclosing_style=my_style) is my_style
 
 
 def test_resolve_style_sub_style():
     sub_style = Style()
     with register_style('my_style', Style(sub_styles=dict(sub_style=sub_style))) as my_style:
-        assert resolve_style([Style(), my_style, Style()], 'sub_style') is sub_style
+        assert resolve_style('sub_style', enclosing_style=my_style) is sub_style
 
 
 def test_style_menu():
@@ -645,7 +645,7 @@ def test_resolve_inherit():
 def test_resolve_substyle():
     style = Style(sub_styles__shepard__Dog__tail='long')
     assert style.resolve(Dog()) == []
-    assert style.resolve_sub_style('shepard').resolve(Dog()) == [dict(tail='long')]
+    assert style.sub_styles['shepard'].resolve(Dog()) == [dict(tail='long')]
 
 
 def test_resolve_substyle_merge():
@@ -655,7 +655,7 @@ def test_resolve_substyle_merge():
         ),
         Dog__fur='short',
     )
-    sub_style = style.resolve_sub_style('shepard')
+    sub_style = style.sub_styles['shepard']
     assert sub_style.resolve(Dog()) == [dict(snout='long', fur='short')]
 
 
@@ -667,7 +667,7 @@ def test_resolve_substyle_inherit():
         base_style,
         sub_styles__shepard__Dog__fur='short',
     )
-    assert style.resolve_sub_style('shepard').resolve(Dog()) == [dict(snout='long', fur='short')]
+    assert style.sub_styles['shepard'].resolve(Dog()) == [dict(snout='long', fur='short')]
 
 
 def test_resolve_substyle_multiple_inheritance():
@@ -678,7 +678,7 @@ def test_resolve_substyle_multiple_inheritance():
         sub_styles__shepard__Dog__fur='short',
     )
     style = Style(base_style, other_style)
-    assert style.resolve_sub_style('shepard').resolve(Dog()) == [dict(snout='long', fur='short')]
+    assert style.sub_styles['shepard'].resolve(Dog()) == [dict(snout='long', fur='short')]
 
 
 def test_resolve_shortcut():
