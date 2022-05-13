@@ -3,7 +3,6 @@ import pytest
 from iommi import (
     Asset,
     Field,
-    Filter,
     Form,
     Fragment,
     html,
@@ -114,33 +113,33 @@ def test_style():
 
 
 def test_resolve_style_base():
-    assert resolve_style([], None) is get_global_style('test')
+    assert resolve_style(None) is get_global_style('test')
 
 
 def test_resolve_style_trivial():
-    assert resolve_style([], 'test') is get_global_style('test')
+    assert resolve_style('test') is get_global_style('test')
 
 
 def test_resolve_style_fail():
     with pytest.raises(Exception) as e:
-        resolve_style([], 'not_a_style')
+        resolve_style('not_a_style')
     assert 'No registered iommi style not_a_style. Register a style with register_style().' in str(e.value)
 
 
 def test_resolve_style_shadow_default():
     with register_style('my_style', Style()) as my_style:
-        assert resolve_style([Style(), Style()], 'my_style') is my_style
+        assert resolve_style('my_style', enclosing_style=Style()) is my_style
 
 
 def test_resolve_style_shadow_default2():
     with register_style('my_style', Style()) as my_style:
-        assert resolve_style([Style(), my_style], 'my_style') is my_style
+        assert resolve_style('my_style', enclosing_style=my_style) is my_style
 
 
 def test_resolve_style_sub_style():
     sub_style = Style()
     with register_style('my_style', Style(sub_styles=dict(sub_style=sub_style))) as my_style:
-        assert resolve_style([Style(), my_style, Style()], 'sub_style') is sub_style
+        assert resolve_style('sub_style', enclosing_style=my_style) is sub_style
 
 
 def test_style_menu():
@@ -585,22 +584,21 @@ def test_assets_from_different_sources():
 
 
 @pytest.mark.django_db
-@pytest.mark.skip
 def test_filter_assets_for_foreign_key2():
     form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
     assert 'data-choices-endpoint' in form.fields.foo.__html__()
-
     q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='bootstrap').bind(request=req('get'))
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
-
     q = Query(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
-    print(q.form.fields.foo.iommi_style)
-    from pprint import pprint
-    pprint(q.form.fields.foo.iommi_style.resolve(q.form.fields.foo))
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
 
-@pytest.mark.skip
+def test_bootstrap_template_snafu():
+    from iommi.style_bootstrap import bootstrap
+    assert Namespace(*bootstrap.resolve(Field.choice())).input.template == 'iommi/form/choice.html'
+    assert Namespace(*bootstrap.resolve(Field.choice_queryset(choices=TBar.objects.none()))).input.template == 'iommi/form/choice_select2.html'
+
+
 @pytest.mark.django_db
 def test_filter_assets_for_foreign_key3():
     # form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
@@ -610,8 +608,6 @@ def test_filter_assets_for_foreign_key3():
     q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='horizontal').bind(request=req('get'))
     assert q.form.fields.foo.iommi_style.name == 'horizontal'
     assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
-    from pprint import pprint
-    pprint(q.form.fields.foo.iommi_namespace.as_stack())
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
     form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
@@ -638,45 +634,51 @@ def test_resolve_style():
 
 def test_resolve_inherit():
     base_style = Style(
-        Dog__snaut='yes'
+        Dog__snout='yes'
     )
     assert Style(
         base_style,
         Dog__tail='short',
-    ).resolve(Dog()) == [dict(snaut='yes', tail='short')]
+    ).resolve(Dog()) == [dict(snout='yes', tail='short')]
 
 
 def test_resolve_substyle():
     style = Style(sub_styles__shepard__Dog__tail='long')
     assert style.resolve(Dog()) == []
-    assert style.resolve_sub_style('shepard').resolve(Dog()) == [dict(tail='long')]
+    assert style.sub_styles['shepard'].resolve(Dog()) == [dict(tail='long')]
 
 
 def test_resolve_substyle_merge():
     style = Style(
         sub_styles__shepard=dict(
-            Dog__snaut='long',
+            Dog__snout='long',
         ),
         Dog__fur='short',
     )
-    sub_style = style.resolve_sub_style('shepard')
-    assert sub_style.resolve(Dog()) == [dict(snaut='long', fur='short')]
+    sub_style = style.sub_styles['shepard']
+    assert sub_style.resolve(Dog()) == [dict(snout='long', fur='short')]
 
 
 def test_resolve_substyle_inherit():
     base_style = Style(
-        sub_styles__shepard=dict(
-            Dog__snaut='long',
-        ),
+        sub_styles__shepard__Dog__snout='long',
     )
     style = Style(
         base_style,
-        sub_styles__shepard=dict(
-            Dog__fur='short',
-        ),
+        sub_styles__shepard__Dog__fur='short',
     )
-    sub_style = style.resolve_sub_style('shepard')
-    assert sub_style.resolve(Dog()) == [dict(snaut='long', fur='short')]
+    assert style.sub_styles['shepard'].resolve(Dog()) == [dict(snout='long', fur='short')]
+
+
+def test_resolve_substyle_multiple_inheritance():
+    base_style = Style(
+        sub_styles__shepard__Dog__snout='long',
+    )
+    other_style = Style(
+        sub_styles__shepard__Dog__fur='short',
+    )
+    style = Style(base_style, other_style)
+    assert style.sub_styles['shepard'].resolve(Dog()) == [dict(snout='long', fur='short')]
 
 
 def test_resolve_shortcut():

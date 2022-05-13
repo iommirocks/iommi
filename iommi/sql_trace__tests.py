@@ -260,7 +260,6 @@ def test_linkify():
   File "<a href="pycharm://open?file={base_path}/foo.py&amp;line=13">foo.py</a> ", line 13, in asd =&gt;
 """.strip()
     actual = linkify(original).strip()
-    print(repr(actual))
     assert actual == expected
 
 
