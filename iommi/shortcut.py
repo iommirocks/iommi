@@ -60,7 +60,7 @@ def with_defaults(__target__=None, **decorator_kwargs):
 
 def superinvoking_classmethod(f):
     @functools.wraps(f)
-    def wrapper_for_superinvoking_classmethod(cls, **kwargs):
+    def wrapper_for_superinvoking_classmethod(cls, *args, **kwargs):
         def super_classmethod_invoker(*args, **kwargs):
             parent_classmethod = None
             for parent_class in list(cls.mro())[1:]:
@@ -78,6 +78,6 @@ def superinvoking_classmethod(f):
             undecorated_parent = parent_classmethod.__func__
             return undecorated_parent(cls, *args, **kwargs)
 
-        return f(cls, super_classmethod=super_classmethod_invoker, **kwargs)
+        return f(cls, *args, super_classmethod=super_classmethod_invoker, **kwargs)
 
     return wrapper_for_superinvoking_classmethod

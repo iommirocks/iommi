@@ -226,6 +226,50 @@ def test_better_shortcut():
         assert MyPart.my_shortcut(iommi_style='my_style').bind().extra.thing == 'style_thing'
 
 
+def test_superinvoking_classmethod_args():
+    class Foo:
+        @classmethod
+        def f(cls, calls):
+            assert cls.__name__ == 'Bar'
+            calls.append('Foo:f was here')
+            return calls
+
+    class Bar(Foo):
+        @classmethod
+        @superinvoking_classmethod
+        def f(cls, calls, super_classmethod):
+            assert cls.__name__ == 'Bar'
+            calls.append(f'Bar:f was here')
+            return super_classmethod(calls)
+
+    assert Bar.f([]) == [
+        'Bar:f was here',
+        'Foo:f was here',
+    ]
+
+
+def test_superinvoking_classmethod_kwargs():
+    class Foo:
+        @classmethod
+        def f(cls, calls):
+            assert cls.__name__ == 'Bar'
+            calls.append(f'Foo:f was here')
+            return calls
+
+    class Bar(Foo):
+        @classmethod
+        @superinvoking_classmethod
+        def f(cls, calls, super_classmethod):
+            assert cls.__name__ == 'Bar'
+            calls.append(f'Bar:f was here')
+            return super_classmethod(calls=calls)
+
+    assert Bar.f(calls=[]) == [
+        'Bar:f was here',
+        'Foo:f was here',
+    ]
+
+
 def test_shortcut_to_superclass():
     class Foo(RefinableObject):
         def __init__(self, **kwargs):
