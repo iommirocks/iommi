@@ -171,6 +171,14 @@ class MenuException(Exception):
     pass
 
 
+def _path_plus_query(url):
+    x = urlparse(str(url))
+    parsed_url = x.path
+    if x.query:
+        parsed_url += f'?{x.query}'
+    return parsed_url
+
+
 @with_meta
 @declarative(MenuItem, '_sub_menu_dict', add_init_kwargs=False)
 class Menu(MenuBase):
@@ -226,7 +234,8 @@ class Menu(MenuBase):
 
     def on_bind(self):
         super(Menu, self).on_bind()
-        self.set_active(current_path=self.get_request().path)
+
+        self.set_active(current_path=_path_plus_query(self.get_request().build_absolute_uri()))
 
     def own_evaluate_parameters(self):
         return dict(menu=self)
@@ -264,7 +273,7 @@ class Menu(MenuBase):
                 if sub_item.url is None or '://' in sub_item.url:
                     continue
 
-                parsed_url = urlparse(str(sub_item.url)).path
+                parsed_url = _path_plus_query(sub_item.url)
 
                 if current_path.startswith(parsed_url):
                     parts = PurePosixPath(unquote(parsed_url)).parts
