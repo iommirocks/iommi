@@ -192,7 +192,7 @@ def show_output(part):
     counter = 0
     while name in _show_output_used:
         counter += 1
-        name = f'{name}{counter}'
+        name = f'{base_name}{counter}'
     _show_output_used.add(name)
 
     file_path = _show_path_from_name(name)
