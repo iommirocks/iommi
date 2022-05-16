@@ -190,7 +190,10 @@ class Admin(Page):
         refined_admin = self.refine(app_name=app_name, model_name=model_name)
 
         model = django_apps.all_models[app_name][model_name] if app_name and model_name else None
-        instance = model.objects.get(pk=pk) if pk is not None else None
+        try:
+            instance = model.objects.get(pk=pk) if pk is not None else None
+        except model.DoesNotExist:
+            raise Http404()
 
         if model is not None and instance is None:
             refined_admin = refined_admin.refine(model=model, parts__table__auto__model=model)
