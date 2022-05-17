@@ -328,6 +328,36 @@ def test_superinvoking_twice():
     assert Baz.foo().iommi_namespace == dict(x=17, y=42, z=9)
 
 
+def test_super_twice():
+    class Foo(RefinableObject):
+        @classmethod
+        @with_defaults(
+            x=17,
+        )
+        def foo(cls, **kwargs):
+            return cls(**kwargs)
+
+    class Bar(Foo):
+        @classmethod
+        @with_defaults(
+            y=42,
+        )
+        def foo(cls, **kwargs):
+            return super().foo(**kwargs)
+
+    assert Bar.foo().iommi_namespace == dict(x=17, y=42)
+
+    class Baz(Bar):
+        @classmethod
+        @with_defaults(
+            z=9,
+        )
+        def foo(cls, **kwargs):
+            return super().foo(**kwargs)
+
+    assert Baz.foo().iommi_namespace == dict(x=17, y=42, z=9)
+
+
 def test_superinvoking_misconfig_no_super_warning():
     class Foo:
         pass
@@ -341,82 +371,61 @@ def test_superinvoking_misconfig_no_super_warning():
         Bar.baz()
 
 
-@pytest.mark.skip  # todo fix?
-def test_superinvoking_misconfig_other_decorator_warning():
-    class Foo:
-        pass
+class A:
+    @classmethod
+    def f(cls, m):
+        m.append('This is A.f')
+        return cls.g(m)
 
-    def other_decorator(f):
-        def wrapper():
-            return f()
-        return wrapper
-
-    with pytest.raises(TypeError):
-        class Bar(Foo):
-            @classmethod
-            @other_decorator
-            @superinvoking_classmethod
-            def baz(cls, super_classmethod):
-                pass
+    @classmethod
+    def g(cls, m):
+        m.append('This is A.g')
+        return m
 
 
-def test_is_shortcut():
-    t = Namespace(x=1)
-    assert not is_shortcut(t)
+class B_with_super_classmethod(A):
+    @classmethod
+    @superinvoking_classmethod
+    def f(cls, m, super_classmethod):
+        m.append('This is B.f')
+        return super_classmethod(m)
 
-    s = Shortcut(x=1)
-    assert isinstance(s, Namespace)
-    assert is_shortcut(s)
-
-
-def test_nested_namespace_overriding_and_calling():
-    @dispatch
-    def f(extra):
-        return extra.foo
-
-    foo = Shortcut(
-        call_target=f,
-        extra__foo='asd',
-    )
-    assert foo(extra__foo='qwe') == 'qwe'
+    @classmethod
+    @superinvoking_classmethod
+    def g(cls, m, super_classmethod):
+        m.append('This is B.g')
+        return super_classmethod(m)
 
 
-def test_retain_shortcut_type():
-    assert isinstance(Shortcut(foo=Shortcut()).foo, Shortcut)
-    assert isinstance(Shortcut(foo=Shortcut(bar=Shortcut())).foo.bar, Shortcut)
+class B_explicit_super_args(A):
+    @classmethod
+    def f(cls, m):
+        m.append('This is B.f')
+        return super(__class__, cls).f(m)
 
-    assert Shortcut(foo__bar__q=1, foo=Shortcut(bar=Shortcut())).foo.bar.q == 1
-
-
-def test_shortcut_call_target_attribute():
-    class Foo:
-        @classmethod
-        def foo(cls):
-            return cls
-
-    assert Shortcut(call_target__attribute='foo', call_target__cls=Foo)() is Foo
-    assert isinstance(Shortcut(call_target__cls=Foo)(), Foo)
+    @classmethod
+    def g(cls, m):
+        m.append('This is B.g')
+        return super(__class__, cls).g(m)
 
 
-def test_namespace_shortcut_overwrite():
-    assert Namespace(
-        Namespace(
-            x=Shortcut(y__z=1, y__zz=2),
-        ),
-        Namespace(
-            x=Namespace(a__b=3),
-        ),
-    ) == Namespace(
-        x__a__b=3,
-    )
+class B_implicit_super_args(A):
+    @classmethod
+    def f(cls, m):
+        m.append('This is B.f')
+        return super().f(m)
+
+    @classmethod
+    def g(cls, m):
+        m.append('This is B.g')
+        return super().g(m)
 
 
-def test_namespace_shortcut_overwrite_backward():
-    assert Namespace(
-        Namespace(x=Namespace(y__z=1, y__zz=2)),
-        Namespace(x=Shortcut(a__b=3)),
-    ) == Namespace(
-        x__a__b=3,
-        x__y__z=1,
-        x__y__zz=2,
-    )
+@pytest.mark.parametrize('B', [B_with_super_classmethod, B_explicit_super_args, B_implicit_super_args])
+def test_super_shortcut_shadow(B):
+    assert B.f([]) == [
+        'This is B.f',
+        'This is A.f',
+        'This is B.g',
+        'This is A.g',
+    ]
