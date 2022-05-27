@@ -149,6 +149,7 @@ class RefinableObject:
 
     @dispatch
     def __init__(self, **kwargs):
+        self.is_refine_done = False
         self.iommi_namespace = RefinableNamespace(**kwargs)
         declared_items = self.get_declared('refinable')
         unknown_args = [name for name in kwargs if name not in declared_items]
@@ -159,8 +160,6 @@ class RefinableObject:
                 + ', '.join(f'"{k}"' for k in sorted(unknown_args)) + '.\n'
                 + 'Available attributes:\n    ' + available_keys + '\n'
             )
-
-        self.is_refine_done = False
 
     def refine_done(self, parent=None):
         result = copy(self)

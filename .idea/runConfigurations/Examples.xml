@@ -13,7 +13,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="launchJavascriptDebuger" value="false" />
-    <option name="port" value="8000" />
+    <option name="port" value="8001" />
     <option name="host" value="" />
     <option name="additionalOptions" value="" />
     <option name="browserUrl" value="" />

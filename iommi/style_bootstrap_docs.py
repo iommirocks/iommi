@@ -1,8 +1,12 @@
-from iommi import Style
+from iommi import (
+    Asset,
+    Style,
+)
 from iommi.style_bootstrap import bootstrap
 
 bootstrap_docs = Style(
     bootstrap,
+    root__assets__doc_style=Asset.css(attrs__href='/_static/iframe_custom.css'),
     internal=True,
     Container=dict(
         attrs__class={
@@ -12,4 +16,5 @@ bootstrap_docs = Style(
         },
         attrs__style__padding='1rem',
     ),
+    Admin__parts__table__h_tag__attrs__style={'margin-top': '3rem'},
 )

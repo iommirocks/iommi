@@ -107,12 +107,12 @@ def request_with_middleware(response, request):
     return m(request=request)
 
 
-def no_auth_middleware_req(method, **data):
-    return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())('/', data=data)
+def no_auth_middleware_req(method, url='/', **data):
+    return getattr(RequestFactory(HTTP_REFERER='/'), method.lower())(url, data=data)
 
 
-def req(method, **data):
-    request = no_auth_middleware_req(method, **data)
+def req(method, url='/', **data):
+    request = no_auth_middleware_req(method, url=url, **data)
     request.user = Struct(is_staff=False, is_authenticated=False)
     return request
 
@@ -185,7 +185,7 @@ def _show_path_from_name(name):
 _show_output_used = set()
 
 
-def show_output(part):
+def show_output(part, path='/'):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name)
     name = base_name
@@ -198,7 +198,9 @@ def show_output(part):
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
     with open(file_path, 'wb') as f:
-        f.write(part if isinstance(part, bytes) else render_if_needed(req('get'), part).content)
+        content = part if isinstance(part, bytes) else render_if_needed(req('get', path=path), part).content
+        f.write(content)
+        return content
 
 
 # This synonym exists to have a different name for make_doc_rsts.py

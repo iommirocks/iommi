@@ -1,0 +1,13 @@
+.navbar-expand-lg .navbar-nav .nav-link {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.navbar-expand-lg {
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+}
+
+.navbar-expand-lg .navbar-nav {
+    flex-direction: row !important;
+}

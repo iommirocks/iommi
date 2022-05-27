@@ -6,9 +6,40 @@ The powerful abstractions of iommi enable us to build an admin interface
 that is automagically created based on your models, while retaining the full
 feature set of iommi.
 
-.. image:: admin_example.png
+Index page:
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('e024f0bd-7486-41e9-8ac8-0082eeeec8ba', this)">▼ Hide result</div>
+        <iframe id="e024f0bd-7486-41e9-8ac8-0082eeeec8ba" src="doc_includes/admin/test_admin.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
+
+Displaying albums:
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('f483e433-775c-4c9c-bdac-924f8e2980a8', this)">▼ Hide result</div>
+        <iframe id="f483e433-775c-4c9c-bdac-924f8e2980a8" src="doc_includes/admin/test_admin1.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
+
+Editing an album:
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('742fc6e6-9bd5-4933-83ba-575b222783a1', this)">▼ Hide result</div>
+        <iframe id="742fc6e6-9bd5-4933-83ba-575b222783a1" src="doc_includes/admin/test_admin2.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
+
+Delete page for an album:    
+
+.. raw:: html
+
+    
+        <div class="iframe_collapse" onclick="toggle('efd326ce-9a90-42e7-b45b-b9bdcf6a3774', this)">▼ Hide result</div>
+        <iframe id="efd326ce-9a90-42e7-b45b-b9bdcf6a3774" src="doc_includes/admin/test_admin3.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
     
 
 
@@ -26,10 +57,8 @@ First declare a subclass of `Admin`:
         pass
 
 
-This is the place you will put configuration. If you don't need any you
+This is the place you will put global configuration. If you don't need any you
 can skip this step. Next plug it into your urls:
-
-
 
 .. code-block:: python
 
@@ -41,8 +70,6 @@ can skip this step. Next plug it into your urls:
 
 
 Now you have the iommi admin gui for your app!
-
-
     
 
 
@@ -56,7 +83,6 @@ Add a model to the admin
 ------------------------
 
 You can add an app to your admin from your global config like this:
-
 
 
 .. code-block:: python
@@ -83,7 +109,6 @@ Remove a model from the admin
 
 By default iommi displays the built in Django `User` and `Group` models. You can override this like:
 
-
 .. code-block:: python
 
     class MyAdmin(Admin):
@@ -92,8 +117,6 @@ By default iommi displays the built in Django `User` and `Group` models. You can
 
 
 This turns off the admin of the `User` table in the `auth` app. Your global config always has priority.
-
-
     
 
 
@@ -128,14 +151,18 @@ HTML attributes
 You can configure attributes in the admin similarly to the rest of iommi, on
 the `Meta` class:
 
-
 .. code-block:: python
 
     class MyAdmin(Admin):
         class Meta:
-            parts__all_models__columns__model_name__cell__attrs__style__background = 'black'
+            parts__list_docs_album__columns__name__header__attrs__style__background = 'yellow'
 
+.. raw:: html
 
+    
+        <div class="iframe_collapse" onclick="toggle('c3e9bc10-270c-4798-af1a-c12841d991c2', this)">▼ Hide result</div>
+        <iframe id="c3e9bc10-270c-4798-af1a-c12841d991c2" src="doc_includes/admin/test_html_attributes.html" style="background: white; display: ; width: 100%; min-height: 100px; border: 1px solid gray;"></iframe>
+    
 
 The easiest way to find the path for configuration is to have
 `settings.IOMMI_DEBUG` turned on (by default on if `DEBUG` is on), and use

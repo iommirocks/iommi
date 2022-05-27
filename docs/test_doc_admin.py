@@ -3,9 +3,11 @@ from django.urls import (
     path,
 )
 
-from iommi.admin import Admin
+from iommi.admin import Admin as _Admin
+from docs.models import Album
 from tests.helpers import (
     req,
+    show_output,
     staff_req,
 )
 
@@ -15,7 +17,12 @@ import pytest
 pytestmark = pytest.mark.django_db
 
 
-def test_admin():
+class Admin(_Admin):
+    class Meta:
+        iommi_style = 'bootstrap_docs'
+
+
+def test_admin(settings, small_discography):
     # language=rst
     """
     Admin
@@ -25,11 +32,41 @@ def test_admin():
     that is automagically created based on your models, while retaining the full
     feature set of iommi.
 
-    .. image:: admin_example.png
-
-
+    Index page:
     """
-    
+
+    # @test
+    assert settings.IOMMI_DEFAULT_STYLE == 'bootstrap_docs'
+    show_output(Admin.all_models(), path='admin/')
+    # @end
+
+    # language=rst
+    """
+    Displaying albums:
+    """
+
+    # @test
+    show_output(Admin.list().as_view()(staff_req('get'), app_name='docs', model_name='album', model=Album))
+    # @end
+
+    # language=rst
+    """
+    Editing an album:
+    """
+
+    # @test
+    show_output(Admin.edit().as_view()(request=staff_req('get'), app_name='docs', model_name='album', model=Album, pk=Album.objects.first().pk))
+    # @end
+
+    # language=rst
+    """
+    Delete page for an album:    
+    """
+
+    # @test
+    show_output(Admin.delete().as_view()(request=staff_req('get'), app_name='docs', model_name='album', model=Album, pk=Album.objects.first().pk))
+    # @end
+
 
 def test_installation():
     # language=rst
@@ -48,12 +85,10 @@ def test_installation():
 
     # language=rst
     """
-    This is the place you will put configuration. If you don't need any you
+    This is the place you will put global configuration. If you don't need any you
     can skip this step. Next plug it into your urls:
-
-
-
     """
+
     urlpatterns = [
         # ...
 
@@ -63,8 +98,6 @@ def test_installation():
     # language=rst
     """
     Now you have the iommi admin gui for your app!
-
-
     """
     
 
@@ -85,9 +118,8 @@ def test_add_a_model_to_the_admin():
 
     You can add an app to your admin from your global config like this:
 
-
-
     """
+
     class MyAdmin(Admin):
         class Meta:
             apps__myapp_mymodel__include = True
@@ -112,7 +144,6 @@ def test_remove_a_model_from_the_admin():
 
     By default iommi displays the built in Django `User` and `Group` models. You can override this like:
 
-
     """
     class MyAdmin(Admin):
         class Meta:
@@ -121,8 +152,6 @@ def test_remove_a_model_from_the_admin():
     # language=rst
     """
     This turns off the admin of the `User` table in the `auth` app. Your global config always has priority.
-
-
     """
     
 
@@ -135,8 +164,8 @@ def test_permissions():
     By default staff users have access to the admin. You can change this by
     overriding `has_permission`:
 
-
     """
+
     from iommi.admin import Admin
 
     class MyAdmin(Admin):
@@ -158,7 +187,7 @@ def test_permissions():
     """
     
 
-def test_html_attributes():
+def test_html_attributes(small_discography):
     # language=rst
     """
     HTML attributes
@@ -166,13 +195,15 @@ def test_html_attributes():
 
     You can configure attributes in the admin similarly to the rest of iommi, on
     the `Meta` class:
-
-
     """
+
     class MyAdmin(Admin):
         class Meta:
-            parts__all_models__columns__model_name__cell__attrs__style__background = 'black'
+            parts__list_docs_album__columns__name__header__attrs__style__background = 'yellow'
 
+    # @test
+    show_output(MyAdmin.list().as_view()(staff_req('get'), app_name='docs', model_name='album', model=Album))
+    # @end
 
     # language=rst
     """

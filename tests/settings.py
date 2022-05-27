@@ -37,6 +37,8 @@ TEMPLATES = [
 
 SECRET_KEY = "foobar"
 
+ROOT_URLCONF = 'tests.urls'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
