@@ -46,7 +46,7 @@ django_admin = Style(
         },
     ),
     Table__attrs__id='changelist',
-    Query__form__iommi_style='django_admin_horizontal',
+    Query__form__iommi_style='horizontal',
     Field__attrs__class={'form-row': True},
     Form__attrs__class=dict(
         aligned=True,
