@@ -93,7 +93,7 @@ def test_path_url_mapping():
 # language=rst
 """
 iommi path decoders
-===================
+~~~~~~~~~~~~~~~~~~~
 
 In iommi we have a powerful and easy to use system for path decoding that also
 works smoothly with iommi views. It builds on top of the params feature
@@ -141,7 +141,7 @@ def test_path_decoder(artist, album):
     
     
     Use iommi decoders on a function based view
-    ===========================================
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
    
     You can use the iommi path decoders on a normal FBV too:
     """
