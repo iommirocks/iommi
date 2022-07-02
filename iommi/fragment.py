@@ -120,7 +120,7 @@ class Tag:
 class Fragment(Part, Tag):
     # language=rst
     """
-    `Fragment` is a class used to build small HTML fragments that plug into iommis structure.
+    `Fragment` is a class used to build small HTML fragments that plug into iommi's structure.
 
     .. code-block:: python
 
