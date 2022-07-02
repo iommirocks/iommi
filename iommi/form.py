@@ -31,6 +31,7 @@ from django.db.models import (
 )
 from django.http.response import HttpResponseBase
 from django.template import Context
+from django.utils.functional import Promise
 from django.utils.translation import gettext
 from iommi.struct import Struct
 
@@ -1240,8 +1241,20 @@ class Field(Part, Tag):
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
+def is_django_promise_with_string_proxy(redirect_to):
+    return (
+            isinstance(redirect_to, Promise)
+            and redirect_to._proxy____kw == {}
+            and len(redirect_to._proxy____args) == 1
+            and isinstance(redirect_to._proxy____args[0], str)
+    )
+
 def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
-    assert redirect_to is None or isinstance(redirect_to, str), 'redirect_to must be a str'
+    assert (
+            redirect_to is None
+            or isinstance(redirect_to, str)
+            or is_django_promise_with_string_proxy(redirect_to)
+    ), 'redirect_to must be a str'
     if redirect_to is None:
         if is_create:
             redirect_to = "../"
