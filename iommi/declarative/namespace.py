@@ -72,8 +72,8 @@ class Namespace(Struct):
 
         try:
             call_target = params.pop('call_target')
-        except KeyError:
-            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self)
+        except KeyError as e:
+            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self) from e
 
         if isinstance(call_target, Namespace):
             if 'call_target' in call_target:
@@ -147,7 +147,8 @@ def getattr_path(obj, path, default=_MISSING):
             try:
                 current = getattr(current, name)
             except AttributeError as e:
-                raise AttributeError(f"'{type(obj).__name__}' object has no attribute path '{path}', since {e}")
+                raise AttributeError(f"'{type(obj).__name__}' object has no attribute path '{path}', since {e}") from e
+
         else:
             current = getattr(current, name, _MISSING)
             if current is _MISSING:
