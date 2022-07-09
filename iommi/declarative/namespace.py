@@ -62,9 +62,11 @@ class Namespace(Struct):
                 self[key] = value
 
     def __repr__(self):
+        # NB: repr is called on any values in the namespace
         return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
 
     def __str__(self):
+        # NB: str is called on any values in the namespace
         return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
 
     def __call__(self, *args, **kwargs):
