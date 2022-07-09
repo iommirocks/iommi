@@ -19,6 +19,18 @@ from iommi.declarative.namespace import (
 
 
 def prefixes(path):
+    """
+    Given a path which contains components separated by double underscores,
+    return the path prefixes of increasing length (up to and including
+    the full path).
+
+    Example:
+
+    .. code-block:: python
+
+        >>> list(prefixes("foo__bar__baz__quux"))
+        ['foo', 'foo__bar', 'foo__bar__baz', 'foo__bar__baz__quux']
+    """
     parts = [p for p in path.split('__') if p]
     for i in range(len(parts)):
         yield '__'.join(parts[: i + 1])
