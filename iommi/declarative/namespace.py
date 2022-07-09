@@ -131,12 +131,12 @@ _MISSING = object()
 
 def getattr_path(obj, path, default=_MISSING):
     """
-        Get an attribute path, as defined by a string separated by '__'.
-        getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
-        will short circuit to return None if something on the path is None.
-        If no default value is provided AttributeError is raised if an attribute
-        is missing somewhere along the path. If a default value is provided that
-        value is returned.
+    Get an attribute path, as defined by a string separated by '__'.
+    getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
+    will short circuit to return None if something on the path is None.
+    If no default value is provided AttributeError is raised if an attribute
+    is missing somewhere along the path. If a default value is provided that
+    value is returned.
     """
     if path == '':
         return obj
@@ -159,8 +159,8 @@ def getattr_path(obj, path, default=_MISSING):
 
 def setattr_path(obj, path, value):
     """
-        Set an attribute path, as defined by a string separated by '__'.
-        setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
+    Set an attribute path, as defined by a string separated by '__'.
+    setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
     """
     path = path.split('__')
     o = obj
