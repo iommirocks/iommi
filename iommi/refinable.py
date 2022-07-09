@@ -206,7 +206,7 @@ class RefinableObject:
     def on_refine_done(self):
         pass
 
-    def refine(self, prio: Prio = Prio.refine, **args):
+    def refine(self, prio: Prio = Prio.refine, **kwargs):
         assert not self.is_refine_done, f"Already called refine_done on {self!r}"
         if prio == Prio.constructor:
             # Inplace
@@ -214,12 +214,12 @@ class RefinableObject:
         else:
             result = copy(self)
 
-        result.iommi_namespace = self.iommi_namespace._refine(prio, **args)
+        result.iommi_namespace = self.iommi_namespace._refine(prio, **kwargs)
 
         return result
 
-    def refine_defaults(self, **args):
-        return self.refine(Prio.refine_defaults, **args)
+    def refine_defaults(self, **kwargs):
+        return self.refine(Prio.refine_defaults, **kwargs)
 
     def __repr__(self):
         return (
