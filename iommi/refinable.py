@@ -25,6 +25,9 @@ def prefixes(path):
 
 
 class Prio(Enum):
+    """
+    Determines the order of priority in which refinement of attributes is performed.
+    """
     refine_defaults = auto()
     table_defaults = auto()
     member_defaults = auto()
