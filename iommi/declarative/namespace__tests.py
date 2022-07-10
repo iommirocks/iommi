@@ -172,12 +172,12 @@ def test_namespace_funcal():
     f(**flatten(Namespace(a=1, b=Namespace(c=2, d=3))))
 
 
-def test_namespace_call_target():
+def test_namespace_as_callable_with_call_target_present():
     subject = Namespace(x=17, call_target=lambda **kwargs: kwargs)
     assert subject() == dict(x=17)
 
 
-def test_namespace_missing_call_target():
+def test_namespace_as_callable_with_call_target_missing():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
