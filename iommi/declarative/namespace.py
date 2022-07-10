@@ -12,6 +12,18 @@ def _get_type_of_namespace(dict_value):
 
 
 class Namespace(Struct):
+    """
+    Namespace represents a structure of nested dicts. It behaves like a regular
+    dictionary, with the added feature that items at nested levels can be accessed
+    using attributes of the form "<name1>__<name2>__<name3>", where the double
+    underscores separate attribute names at increasing levels of depth.
+
+    In addition, a Namespace can act like a function if it contains a toplevel
+    item `{"call_target": f, ...}` where `f` is a callable. When the Namespace
+    is called, it applies `f` to the other dict items, which are passed as
+    keyword arguments to `f`.
+    """
+
     # noinspection PyMissingConstructor
     def __init__(self, *dicts, **kwargs):
         for mappings in dicts:
