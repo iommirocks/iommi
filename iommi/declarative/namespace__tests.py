@@ -181,8 +181,12 @@ def test_namespace_missing_call_target():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
-    assert "Namespace was used as a function, but no call_target was specified. " \
-           "The namespace is: Namespace(x=17)" in str(e.value)
+
+    expected_error_msg = (
+        "Namespace was used as a function, but no call_target was specified. "
+        "The namespace is: Namespace(x=17)"
+    )
+    assert expected_error_msg in str(e.value)
 
 
 def test_namespace_flatten_loop_detection():
