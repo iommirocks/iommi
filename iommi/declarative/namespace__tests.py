@@ -267,6 +267,7 @@ def test_namespace_setitem_function():
         pass
 
     x = Namespace(f=f)
+    assert x == dict(f=f)
     x.setitem_path('f__x', 17)
     assert x == dict(f=dict(call_target=f, x=17))
 
@@ -276,6 +277,7 @@ def test_namespace_setitem_function_backward():
         pass
 
     x = Namespace(f__x=17)
+    assert x == dict(f=dict(x=17))
     x.setitem_path('f', f)
     assert x == dict(f=dict(call_target=f, x=17))
 
@@ -283,7 +285,9 @@ def test_namespace_setitem_function_backward():
 def test_namespace_setitem_function_dict():
     def f():
         pass
+
     x = Namespace(f=f)
+    assert x == dict(f=f)
     x.setitem_path('f', dict(x=17))
     assert x == dict(f=dict(call_target=f, x=17))
 
@@ -293,6 +297,7 @@ def test_namespace_setitem_function_non_dict():
         pass
 
     x = Namespace(f=f)
+    assert x == dict(f=f)
     x.setitem_path('f', 17)
     assert x == dict(f=17)
 
