@@ -26,7 +26,7 @@ def prefixes(path):
 
     Example:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
         >>> list(prefixes("foo__bar__baz__quux"))
         ['foo', 'foo__bar', 'foo__bar__baz', 'foo__bar__baz__quux']
