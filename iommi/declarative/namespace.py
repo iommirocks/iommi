@@ -20,8 +20,8 @@ class Namespace(Struct):
 
     In addition, a Namespace can act like a function if it contains a toplevel
     item `{"call_target": f, ...}` where `f` is a callable. When the Namespace
-    is called, it applies `f` to the other dict items, which are passed as
-    keyword arguments to `f`.
+    is called, `f` is called with the contents of the Namespace as keyword
+    arguments (excluding f itself).
     """
 
     # noinspection PyMissingConstructor
