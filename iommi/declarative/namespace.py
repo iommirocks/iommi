@@ -14,9 +14,14 @@ def _get_type_of_namespace(dict_value):
 class Namespace(Struct):
     """
     Namespace represents a structure of nested dicts. It behaves like a regular
-    dictionary, with the added feature that items at nested levels can be accessed
-    using attributes of the form "<name1>__<name2>__<name3>", where the double
-    underscores separate attribute names at increasing levels of depth.
+    dictionary, with the added feature that values at nested levels can be set via
+    `setitem_path` by providing a "path" of the form "<name1>__<name2>__<name3>",
+    where the double underscores separate attribute names at increasing levels of
+    depth.
+
+    Attributes at nested levels can be retrieved either using "dotted" access
+    such as `foo_namespace.a.b.c`, or via the helper function `getattr_path` by
+    passing a double-underscored path like the example above.
 
     In addition, a Namespace can act like a function if it contains a toplevel
     item `{"call_target": f, ...}` where `f` is a callable. When the Namespace
