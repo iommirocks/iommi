@@ -137,13 +137,13 @@ def test_setdefaults_callable_backward_not_namespace():
 
 def test_namespace_repr():
     actual = repr(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
-    expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes since repr is called on values
+    expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes on '1' since `repr` is called on values
     assert actual == expected
 
 
 def test_namespace_str():
     actual = str(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
-    expected = "Namespace(a=4, b=3, c__d=2, c__e__f=1)"  # No quotes on '1' since str is used on values
+    expected = "Namespace(a=4, b=3, c__d=2, c__e__f=1)"  # No quotes on '1' since `str` is used on values
     assert actual == expected
 
 
