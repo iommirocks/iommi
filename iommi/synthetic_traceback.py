@@ -24,6 +24,7 @@ class SyntheticTraceback:
         self._line_nums = line_nums
         self.tb_frame = frames[0]
         self.tb_lineno = line_nums[0]
+        self.tb_lasti = -1
 
     @property
     def tb_next(self):
