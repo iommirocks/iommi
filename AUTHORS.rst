@@ -23,3 +23,4 @@ Credits
 * Benedikt Grundmann <benedikt.grundmann@gmail.com>
 * flying_sausages
 * Nigel Metheringham <nigel.metheringham@gmail.com>
+* Maximilian Albert <https://github.com/maxalbert>
