@@ -19,12 +19,27 @@ from iommi.declarative.namespace import (
 
 
 def prefixes(path):
+    """
+    Given a path which contains components separated by double underscores,
+    return the path prefixes of increasing length (up to and including
+    the full path).
+
+    Example:
+
+    .. code-block:: pycon
+
+        >>> list(prefixes("foo__bar__baz__quux"))
+        ['foo', 'foo__bar', 'foo__bar__baz', 'foo__bar__baz__quux']
+    """
     parts = [p for p in path.split('__') if p]
     for i in range(len(parts)):
         yield '__'.join(parts[: i + 1])
 
 
 class Prio(Enum):
+    """
+    Determines the order of priority in which refinement of attributes is performed.
+    """
     refine_defaults = auto()
     table_defaults = auto()
     member_defaults = auto()
@@ -206,7 +221,7 @@ class RefinableObject:
     def on_refine_done(self):
         pass
 
-    def refine(self, prio: Prio = Prio.refine, **args):
+    def refine(self, prio: Prio = Prio.refine, **kwargs):
         assert not self.is_refine_done, f"Already called refine_done on {self!r}"
         if prio == Prio.constructor:
             # Inplace
@@ -214,12 +229,12 @@ class RefinableObject:
         else:
             result = copy(self)
 
-        result.iommi_namespace = self.iommi_namespace._refine(prio, **args)
+        result.iommi_namespace = self.iommi_namespace._refine(prio, **kwargs)
 
         return result
 
-    def refine_defaults(self, **args):
-        return self.refine(Prio.refine_defaults, **args)
+    def refine_defaults(self, **kwargs):
+        return self.refine(Prio.refine_defaults, **kwargs)
 
     def __repr__(self):
         return (

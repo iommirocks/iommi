@@ -26,6 +26,9 @@ class Endpoint(Traversable):
     Class that describes an endpoint in iommi. You can create your own custom
     endpoints on any :doc:`Part`.
 
+    An endpoint can return an `HttpResponse` directly, or a `Part` (which is
+    rendered for you); everything else we try to dump to json for you.
+
     Example:
 
     .. code-block:: python
@@ -43,10 +46,7 @@ class Endpoint(Traversable):
         assert json.loads(response.content) == 'foo'
         # @end
 
-    this page will respond to `?/echo=foo` by returning a json response `"foo"`.
-
-    An endpoint can return an HttpResponse directly, a `Part` which is rendered for you,
-    and everything else we try to dump to json for you.
+    This page will respond to `?/echo=foo` by returning a json response `"foo"`.
     """
 
     func: Callable = Refinable()

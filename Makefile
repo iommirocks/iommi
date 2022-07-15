@@ -52,7 +52,7 @@ docs-viewer:
 	cd docs/_build/html; python -m http.server 10331
 
 test-docs:
-	tox -e docs-tests
+	tox -e docs
 
 docs-coverage:
 	tox -e coverage-from-docs

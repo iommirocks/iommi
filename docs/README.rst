@@ -74,7 +74,7 @@ See :doc:`getting started <getting_started>`.
 Running tests
 -------------
 
-You need to have tox installed then:
+You need to have tox installed, then:
 
 .. code-block::
 

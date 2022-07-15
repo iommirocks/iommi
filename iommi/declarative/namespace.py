@@ -12,6 +12,23 @@ def _get_type_of_namespace(dict_value):
 
 
 class Namespace(Struct):
+    """
+    Namespace represents a structure of nested dicts. It behaves like a regular
+    dictionary, with the added feature that values at nested levels can be set via
+    `setitem_path` by providing a "path" of the form "<name1>__<name2>__<name3>",
+    where the double underscores separate attribute names at increasing levels of
+    depth.
+
+    Attributes at nested levels can be retrieved either using "dotted" access
+    such as `foo_namespace.a.b.c`, or via the helper function `getattr_path` by
+    passing a double-underscored path like the example above.
+
+    In addition, a Namespace can act like a function if it contains a toplevel
+    item `{"call_target": f, ...}` where `f` is a callable. When the Namespace
+    is called, `f` is called with the contents of the Namespace as keyword
+    arguments (excluding f itself).
+    """
+
     # noinspection PyMissingConstructor
     def __init__(self, *dicts, **kwargs):
         for mappings in dicts:
@@ -62,18 +79,22 @@ class Namespace(Struct):
                 self[key] = value
 
     def __repr__(self):
-        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
+        # Note: `repr` is called on any values in the namespace
+        flattened_key_value_pairs = ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0]))
+        return "%s(%s)" % (type(self).__name__, flattened_key_value_pairs)
 
     def __str__(self):
-        return "%s(%s)" % (type(self).__name__, ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])))
+        # Note: `str` is called on any values in the namespace
+        flattened_key_value_pairs = ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0]))
+        return "%s(%s)" % (type(self).__name__, flattened_key_value_pairs)
 
     def __call__(self, *args, **kwargs):
         params = Namespace(self, kwargs)
 
         try:
             call_target = params.pop('call_target')
-        except KeyError:
-            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self)
+        except KeyError as e:
+            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self) from e
 
         if isinstance(call_target, Namespace):
             if 'call_target' in call_target:
@@ -131,12 +152,12 @@ _MISSING = object()
 
 def getattr_path(obj, path, default=_MISSING):
     """
-        Get an attribute path, as defined by a string separated by '__'.
-        getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
-        will short circuit to return None if something on the path is None.
-        If no default value is provided AttributeError is raised if an attribute
-        is missing somewhere along the path. If a default value is provided that
-        value is returned.
+    Get an attribute path, as defined by a string separated by '__'.
+    getattr_path(foo, 'a__b__c') is roughly equivalent to foo.a.b.c but
+    will short circuit to return None if something on the path is None.
+    If no default value is provided AttributeError is raised if an attribute
+    is missing somewhere along the path. If a default value is provided that
+    value is returned.
     """
     if path == '':
         return obj
@@ -147,7 +168,8 @@ def getattr_path(obj, path, default=_MISSING):
             try:
                 current = getattr(current, name)
             except AttributeError as e:
-                raise AttributeError(f"'{type(obj).__name__}' object has no attribute path '{path}', since {e}")
+                raise AttributeError(f"'{type(obj).__name__}' object has no attribute path '{path}', since {e}") from e
+
         else:
             current = getattr(current, name, _MISSING)
             if current is _MISSING:
@@ -159,8 +181,8 @@ def getattr_path(obj, path, default=_MISSING):
 
 def setattr_path(obj, path, value):
     """
-        Set an attribute path, as defined by a string separated by '__'.
-        setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
+    Set an attribute path, as defined by a string separated by '__'.
+    setattr_path(foo, 'a__b__c', value) is equivalent to "foo.a.b.c = value".
     """
     path = path.split('__')
     o = obj

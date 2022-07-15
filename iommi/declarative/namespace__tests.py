@@ -137,13 +137,13 @@ def test_setdefaults_callable_backward_not_namespace():
 
 def test_namespace_repr():
     actual = repr(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
-    expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes since repr is called on values
+    expected = "Namespace(a=4, b=3, c__d=2, c__e__f='1')"  # Quotes on '1' since `repr` is called on values
     assert actual == expected
 
 
 def test_namespace_str():
     actual = str(Namespace(a=4, b=3, c=Namespace(d=2, e=Namespace(f='1'))))
-    expected = "Namespace(a=4, b=3, c__d=2, c__e__f=1)"  # No quotes on '1' since str is used on values
+    expected = "Namespace(a=4, b=3, c__d=2, c__e__f=1)"  # No quotes on '1' since `str` is used on values
     assert actual == expected
 
 
@@ -172,17 +172,21 @@ def test_namespace_funcal():
     f(**flatten(Namespace(a=1, b=Namespace(c=2, d=3))))
 
 
-def test_namespace_call_target():
+def test_namespace_as_callable_with_call_target_present():
     subject = Namespace(x=17, call_target=lambda **kwargs: kwargs)
     assert subject() == dict(x=17)
 
 
-def test_namespace_missing_call_target():
+def test_namespace_as_callable_with_call_target_missing():
     subject = Namespace(x=17)
     with pytest.raises(TypeError) as e:
         subject()
-    assert "Namespace was used as a function, but no call_target was specified. " \
-           "The namespace is: Namespace(x=17)" in str(e.value)
+
+    expected_error_msg = (
+        "Namespace was used as a function, but no call_target was specified. "
+        "The namespace is: Namespace(x=17)"
+    )
+    assert expected_error_msg in str(e.value)
 
 
 def test_namespace_flatten_loop_detection():
@@ -229,80 +233,85 @@ def test_namespace_empty_initializer():
 
 
 def test_namespace_setitem_single_value():
-    x = Namespace()
-    x.setitem_path('x', 17)
-    assert x == dict(x=17)
+    ns = Namespace()
+    ns.setitem_path('x', 17)
+    assert ns == dict(x=17)
 
 
 def test_namespace_setitem_singe_value_overwrite():
-    x = Namespace(x=17)
-    x.setitem_path('x', 42)
-    assert x == dict(x=42)
+    ns = Namespace(x=17)
+    ns.setitem_path('x', 42)
+    assert ns == dict(x=42)
 
 
 def test_namespace_setitem_split_path():
-    x = Namespace()
-    x.setitem_path('x__y', 17)
-    assert x == dict(x=dict(y=17))
+    ns = Namespace()
+    ns.setitem_path('x__y', 17)
+    assert ns == dict(x=dict(y=17))
 
 
 def test_namespace_setitem_split_path_overwrite():
-    x = Namespace(x__y=17)
-    x.setitem_path('x__y', 42)
-    assert x == dict(x=dict(y=42))
+    ns = Namespace(x__y=17)
+    ns.setitem_path('x__y', 42)
+    assert ns == dict(x=dict(y=42))
 
 
 def test_namespace_setitem_namespace_merge():
-    x = Namespace(x__y=17)
-    x.setitem_path('x__z', 42)
-    assert x == dict(x=dict(y=17, z=42))
+    ns = Namespace(x__y=17)
+    ns.setitem_path('x__z', 42)
+    assert ns == dict(x=dict(y=17, z=42))
 
 
 def test_namespace_setitem_function():
     def f():
         pass
 
-    x = Namespace(f=f)
-    x.setitem_path('f__x', 17)
-    assert x == dict(f=dict(call_target=f, x=17))
+    ns = Namespace(f=f)
+    assert ns == dict(f=f)
+    ns.setitem_path('f__x', 17)
+    assert ns == dict(f=dict(call_target=f, x=17))
 
 
 def test_namespace_setitem_function_backward():
     def f():
         pass
 
-    x = Namespace(f__x=17)
-    x.setitem_path('f', f)
-    assert x == dict(f=dict(call_target=f, x=17))
+    ns = Namespace(f__x=17)
+    assert ns == dict(f=dict(x=17))
+    ns.setitem_path('f', f)
+    assert ns == dict(f=dict(call_target=f, x=17))
 
 
 def test_namespace_setitem_function_dict():
     def f():
         pass
-    x = Namespace(f=f)
-    x.setitem_path('f', dict(x=17))
-    assert x == dict(f=dict(call_target=f, x=17))
+
+    ns = Namespace(f=f)
+    assert ns == dict(f=f)
+    ns.setitem_path('f', dict(x=17))
+    assert ns == dict(f=dict(call_target=f, x=17))
 
 
 def test_namespace_setitem_function_non_dict():
     def f():
         pass
 
-    x = Namespace(f=f)
-    x.setitem_path('f', 17)
-    assert x == dict(f=17)
+    ns = Namespace(f=f)
+    assert ns == dict(f=f)
+    ns.setitem_path('f', 17)
+    assert ns == dict(f=17)
 
 
 def test_namespace_no_promote_overwrite():
-    x = Namespace(x=17)
-    x.setitem_path('x__z', 42)
-    assert x == Namespace(x__z=42)
+    ns = Namespace(x=17)
+    ns.setitem_path('x__z', 42)
+    assert ns == Namespace(x__z=42)
 
 
 def test_namespace_no_promote_overwrite_backwards():
-    x = Namespace(x__z=42)
-    x.setitem_path('x', 17)
-    assert x == Namespace(x=17)
+    ns = Namespace(x__z=42)
+    ns.setitem_path('x', 17)
+    assert ns == Namespace(x=17)
 
 
 @pytest.mark.parametrize('backward', [False, True], ids={False: '==>', True: '<=='}.get)

@@ -71,7 +71,7 @@ See `getting started <https://docs.iommi.rocks/en/latest/getting_started.html>`_
 Running tests
 -------------
 
-You need to have tox installed then:
+You need to have tox installed, then:
 
 .. code-block::
 
