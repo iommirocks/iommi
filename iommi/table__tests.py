@@ -765,7 +765,7 @@ def test_django_table_pagination():
 
 
 @pytest.mark.django_db
-def test_bulk_edit():
+def test_bulk_edit_table():
     assert TFoo.objects.all().count() == 0
 
     foos = [
@@ -783,15 +783,10 @@ def test_bulk_edit():
         )  # turn off sorting to not get the link with random query params
         b = Column(bulk__include=True)
 
-    result = (
-        TestTable(
-            rows=TFoo.objects.all(),
-        )
-        .bind(
-            request=req('get'),
-        )
-        .__html__()
-    )
+        class Meta:
+            rows = TFoo.objects.all().order_by('pk')
+
+    result = TestTable().bind(request=req('get'),).__html__()
     assert '<form action="" enctype="multipart/form-data" method="post">' in result, result
     assert '<button accesskey="s" name="-bulk/submit">Bulk change</button>' in result, result
 
@@ -803,7 +798,7 @@ def test_bulk_edit():
         assert updates == dict(a=0, b='changed')
 
     # The most important part of the test: don't bulk update with an invalid form!
-    t = TestTable(rows=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit,).bind(
+    t = TestTable(post_bulk_edit=post_bulk_edit).bind(
         request=req('post', pk_1='', pk_2='', **{'bulk/a': 'asd', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
@@ -818,7 +813,7 @@ def test_bulk_edit():
     ]
 
     # Now do the bulk update
-    t = TestTable(rows=TFoo.objects.all().order_by('pk'), post_bulk_edit=post_bulk_edit,).bind(
+    t = TestTable(post_bulk_edit=post_bulk_edit).bind(
         request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
@@ -834,7 +829,6 @@ def test_bulk_edit():
 
     # Test that empty field means "no change", even with the form set to not parse empty as None
     t = TestTable(
-        rows=TFoo.objects.all(),
         # TODO: this doesn't do anything, but imo it should work :(
         # bulk__fields__b__parse_empty_string_as_none=False,
         columns__b__bulk__parse_empty_string_as_none=False,
@@ -851,7 +845,7 @@ def test_bulk_edit():
     ]
 
     # Test edit all feature
-    TestTable(rows=TFoo.objects.all()).bind(
+    TestTable().bind(
         request=req('post', _all_pks_='1', **{'bulk/a': '11', 'bulk/b': 'changed2', '-bulk/submit': ''}),
     ).render_to_response()
 
@@ -1028,16 +1022,14 @@ def test_bulk_edit_for_m2m_relations():
 def test_bulk_delete():
     TFoo.objects.create(a=1, b='a')
     TFoo.objects.create(a=2, b='b')
-    t = Table(
+    table = Table(
         auto__model=TFoo,
         bulk__actions__delete__include=True,
-    ).bind(request=req('post', _all_pks_='1', **{'-delete': ''}))
+    ).refine_done()
+    t = table.bind(request=req('post', _all_pks_='1', **{'-delete': ''}))
     assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
 
-    t = Table(
-        auto__model=TFoo,
-        bulk__actions__delete__include=True,
-    ).bind(request=req('post', _all_pks_='1', **{'-delete': '', 'confirmed': 'confirmed'}))
+    t = table.bind(request=req('post', _all_pks_='1', **{'-delete': '', 'confirmed': 'confirmed'}))
     response = t.render_to_response()
     assert response.status_code == 302, response.content.decode()
 
@@ -1091,7 +1083,7 @@ def test_bulk_delete_all_respects_query():
         page_size=1,
         bulk__actions__delete__include=True,
         columns__b__filter__include=True,
-    )
+    ).refine_done()
     t = table.bind(request=req('post', b='a', _all_pks_='1', **{'-delete': ''}))
 
     assert 'Are you sure you want to delete these' in t.render_to_response().content.decode()
@@ -1260,7 +1252,7 @@ def test_query_form_foo__exclude_label():
 
 
 @pytest.mark.django_db
-def test_query():
+def test_query_filtering():
     assert TFoo.objects.all().count() == 0
 
     TFoo(a=1, b="foo").save()
@@ -1277,17 +1269,17 @@ def test_query():
         class Meta:
             sortable = False
 
-    t = TestTable(rows=TFoo.objects.all().order_by('pk'))
-    t = t.bind(request=req('get'))
-    assert t.query.filters.a.iommi_path == 'query/a'
-    assert t.query.form.fields.a.iommi_path == 'a'
-
     rows = TFoo.objects.all().order_by('pk')
-    assert TestTable(rows=rows).bind().query.filters.b.query_operator_for_field == ':'
+    t = TestTable(rows=rows).refine_done()
+    t2 = t.bind(request=req('get'))
+    assert t2.query.filters.a.iommi_path == 'query/a'
+    assert t2.query.form.fields.a.iommi_path == 'a'
+
+    assert t2.query.filters.b.query_operator_for_field == ':'
 
     verify_table_html(
         query=dict(a='1'),
-        table=TestTable(rows=rows),
+        table=t,
         find=dict(name='tbody'),
         expected_html="""
     <tbody>
@@ -1304,7 +1296,7 @@ def test_query():
     )
     verify_table_html(
         query=dict(b='bar'),
-        table=TestTable(rows=rows),
+        table=t,
         find=dict(name='tbody'),
         expected_html="""
     <tbody>
@@ -1328,8 +1320,8 @@ def test_query():
     """,
     )
     verify_table_html(
-        query={t.query.get_advanced_query_param(): 'b="bar"'},
-        table=TestTable(rows=rows),
+        query={t2.query.get_advanced_query_param(): 'b="bar"'},
+        table=t,
         find=dict(name='tbody'),
         expected_html="""
     <tbody>
@@ -1354,7 +1346,7 @@ def test_query():
     )
     verify_table_html(
         query=dict(b='fo'),
-        table=TestTable(rows=rows),
+        table=t,
         find=dict(name='tbody'),
         expected_html="""
     <tbody>

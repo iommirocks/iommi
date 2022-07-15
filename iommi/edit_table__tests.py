@@ -237,7 +237,7 @@ def test_edit_table_auto_rows():
 @pytest.mark.django_db
 def test_formset_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
-    edit_table = EditTable(auto__model=TBar)
+    edit_table = EditTable(auto__model=TBar).refine_done()
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
     # language=html
     expected_create_template = '''
@@ -272,7 +272,7 @@ def test_formset_table_post_create():
 @pytest.mark.django_db
 def test_formset_table_post_delete():
     tfoo = TFoo.objects.create(a=1, b='asd')
-    edit_table = EditTable(auto__model=TFoo, columns__delete=EditColumn.delete())
+    edit_table = EditTable(auto__model=TFoo, columns__delete=EditColumn.delete()).refine_done()
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
 
     response = edit_table.bind(request=req('GET')).render_to_response()
