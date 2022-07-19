@@ -17,6 +17,7 @@ from examples import (
     example_links,
 )
 from examples.models import (
+    Album,
     Artist,
     Track,
 )
@@ -359,6 +360,25 @@ def form_example_field_groups(request):
     return FieldGroupForm()
 
 
+@example(gettext("Dependent choices"))
+def form_example_dependent_fields(request):
+    def album_choices(form, **_):
+        if form.fields.artist.value:
+            return Album.objects.filter(artist=form.fields.artist.value)
+        else:
+            return Album.objects.all()
+
+    return Form(
+        auto__model=Track,
+        fields__artist=Field.choice_queryset(
+            attr=None,
+            choices=Artist.objects.all(),
+            after=0,
+        ),
+        fields__album__choices=album_choices,
+    )
+
+
 class IndexPage(ExamplesPage):
     header = html.h1('Form examples')
     description = html.p('Some examples of iommi Forms')
@@ -387,5 +407,6 @@ urlpatterns = [
     path('example_12/', form_example_nested_forms),
     path('example_13/', form_example_file_upload),
     path('example_14/', form_example_field_groups),
+    path('example_15/', form_example_dependent_fields),
     path('all_fields/', all_field_sorts),
 ]

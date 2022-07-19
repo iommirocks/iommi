@@ -460,3 +460,39 @@ def test_how_do_I_change_redirect_target(artist):
     assert response.status_code == 302
     assert response['Location'] == '.'
     # @end
+
+
+def test_how_do_I_make_a_fields_choices_depend_on_another_field():
+    # language=rst
+    """
+    How do I make a fields choices depend on another field?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    The contents of the form is sent with any AJAX requests, so we can
+    access the value of the other fields to do the filtering:
+    """
+
+    def album_choices(form, **_):
+        if form.fields.artist.value:
+            return Album.objects.filter(artist=form.fields.artist.value)
+        else:
+            return Album.objects.all()
+
+    # @test
+    form = (
+    # @end
+
+    Form(
+        auto__model=Track,
+        fields__artist=Field.choice_queryset(
+            attr=None,
+            choices=Artist.objects.all(),
+            after=0,
+        ),
+        fields__album__choices=album_choices,
+    )
+
+    # @test
+    )
+    form.bind(request=req('get')).render_to_response()
+    # @end
