@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+5.1.0 (2022-08-12)
+~~~~~~~~~~~~~~~~~~
+
+* Admin: respect django permissions system
+
+* Compatibility with Python 3.11
+
+* Enable usage of `reverse_lazy` with `redirect_to`
+
+* Allow `redirect_to` to be an instance of `django.utils.functional.Promise` that is a proxy for a string (which is what `reverse_lazy` returns)
+
+* Admin delete page should present 404 page on non-existing object
+
+* Menus should attempt to respect query parameters when doing set_active
+
+
 5.0.0 (2022-05-12)
 ~~~~~~~~~~~~~~~~~~
 
