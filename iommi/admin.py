@@ -280,7 +280,22 @@ class Admin(Page):
 
     @staticmethod
     def has_permission(request, operation, model=None, instance=None):
-        return request.user.is_staff
+        if request.user.is_superuser:
+            return True
+
+        if not request.user.is_staff:
+            return False
+
+        if model is None:
+            return True
+
+        action = {
+            'create': 'add',
+            'edit': 'change',
+            'list': 'view',
+        }.get(operation, operation)
+
+        return request.user.has_perm(f'{model._meta.app_label}.{action}_{model._meta.model_name}')
 
     def own_evaluate_parameters(self):
         return dict(admin=self, **super(Admin, self).own_evaluate_parameters())
@@ -291,7 +306,7 @@ class Admin(Page):
     )
     def all_models(cls, table=None, **kwargs):
 
-        def rows(admin, included_filter=False, **_):
+        def rows(admin, request, included_filter=False, **_):
             for app_name, models in items(django_apps.all_models):
                 has_yielded_header = False
 
@@ -299,6 +314,9 @@ class Admin(Page):
                     key = f'{app_name}_{model_name}'
                     included = admin.apps.get(key, {}).get('include', False)
                     if included == included_filter:
+                        continue
+
+                    if not cls.has_permission(request, instance=None, model=model, operation='view'):
                         continue
 
                     if not has_yielded_header:
@@ -392,6 +410,7 @@ class Admin(Page):
                     call_target__attribute='delete',
                     after=LAST,
                     cell__url=lambda row, **_: '%s/delete/' % row.pk,
+                    include=lambda request, table, **_: cls.has_permission(request, instance=None, model=table.model, operation='delete')
                 ),
             ),
             actions=dict(
@@ -401,7 +420,7 @@ class Admin(Page):
                 ),
             ),
             query_from_indexes=True,
-            bulk__actions__delete__include=True,
+            bulk__actions__delete__include=lambda request, table, **_: cls.has_permission(request, instance=None, model=table.model, operation='delete'),
         )
 
         return cls(
@@ -430,6 +449,8 @@ class Admin(Page):
             call_target__attribute=operation,
             extra__on_save=on_save,
             extra__on_delete=on_delete,
+            actions__submit__include=lambda request, form, **_: cls.has_permission(request, instance=None, model=form.model, operation=operation),
+            editable=lambda request, form, **_: False if operation == 'delete' else cls.has_permission(request, instance=None, model=form.model, operation=operation)
         )
 
         return cls(

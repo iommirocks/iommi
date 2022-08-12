@@ -114,7 +114,7 @@ def test_delete(mock_messages, settings):
     c = Admin.delete().refine_with_params(app_name='tests', model_name='foo', pk=f.pk)
     request = staff_req('post', **{'-submit': ''})
     p = c.bind(request=request)
-    assert p.parts.delete_tests_foo.is_valid()
+    assert p.parts.delete_tests_foo.is_valid(), p.parts.delete_tests_foo.get_errors()
     p.render_to_response()
     assert Foo.objects.count() == 0
 
@@ -139,7 +139,7 @@ def test_redirect_to_login(settings, is_authenticated, admin, kwargs):
     if 'pk' in kwargs:
         Foo.objects.create(pk=kwargs['pk'], foo=1)
     request = req('get')
-    request.user = Struct(is_staff=True, is_authenticated=is_authenticated)
+    request.user = Struct(is_staff=True, is_authenticated=is_authenticated, is_superuser=True)
     view = admin.as_view()
     result = view(request=request, **kwargs)
 
