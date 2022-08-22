@@ -139,6 +139,7 @@ def endpoint__debug_tree(endpoint, **_):
 
     request = HttpRequest()
     request.method = 'GET'
+    request.META = root._request.META
     if hasattr(root._request, 'user'):
         request.user = root._request.user
 
