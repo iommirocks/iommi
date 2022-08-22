@@ -713,6 +713,28 @@ def test_column_filters():
 
 
 @pytest.mark.django_db
+def test_column_filter_include():
+    t = Table(
+        auto__model=TFoo,
+        columns__a__filter__include=False,
+        columns__a__filter__field__include=True,
+    ).bind()
+    assert list(t.query.filters.keys()) == []
+    assert list(t.query.form.fields.keys()) == []
+
+
+@pytest.mark.django_db
+def test_column_filter_include_lambda():
+    t = Table(
+        auto__model=TFoo,
+        columns__a__filter__include=lambda **_: False,
+        columns__a__filter__field__include=lambda **_: True,
+    ).bind()
+    assert list(t.query.filters.keys()) == []
+    assert list(t.query.form.fields.keys()) == []
+
+
+@pytest.mark.django_db
 def test_django_table_pagination():
     for x in range(30):
         TFoo(a=x, b="foo").save()
