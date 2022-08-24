@@ -1329,7 +1329,10 @@ class FormAutoConfig(AutoConfig):
 
 
 class FieldGroup(Fragment):
-    pass
+    group = Refinable()
+
+    def own_evaluate_parameters(self):
+        return dict(group=self.group, **super().own_evaluate_parameters())
 
 
 @declarative(Part, '_fields_dict', add_init_kwargs=False)
@@ -1645,9 +1648,9 @@ class Form(Part):
         assert self._is_bound, NOT_BOUND_MESSAGE
 
         r = []
-        for group_name, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
-            if group_name is not MISSING:
-                current_group = self.field_group().bind(parent=self)
+        for group, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
+            if group is not MISSING:
+                current_group = self.field_group(group=group).bind(parent=self)
                 r.append(current_group.iommi_open_tag())
 
                 r.extend([part.__html__() for part in parts])
