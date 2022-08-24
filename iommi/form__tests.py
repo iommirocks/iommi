@@ -3222,6 +3222,11 @@ def test_edit_no_require_auto():
 
 def test_render_grouped_fields():
     class MyForm(Form):
+        class Meta:
+            @staticmethod
+            def field_group__attrs__class__this_is_two(group, **_):
+                return group == '2'
+
         a = Field()
         b = Field(group='1')
         c = Field()
@@ -3239,7 +3244,7 @@ def test_render_grouped_fields():
 
          <div><label for="id_c">C</label><input id="id_c" name="c" type="text" value=""></div>
 
-         <div class="form_group">
+         <div class="form_group this_is_two">
              <div><label for="id_d">D</label><input id="id_d" name="d" type="text" value=""></div>
              <div><label for="id_e">E</label><input id="id_e" name="e" type="text" value=""></div>
              <div><label for="id_f">F</label><input id="id_f" name="f" type="text" value=""></div>
