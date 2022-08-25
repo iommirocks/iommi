@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.1.1 (2022-08-25)
+~~~~~~~~~~~~~~~~~~
+
+* Add group name of form group specifier to lambda args when rendering the corresponding tags
+
+
 5.1.0 (2022-08-12)
 ~~~~~~~~~~~~~~~~~~
 
