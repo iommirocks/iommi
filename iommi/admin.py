@@ -384,7 +384,7 @@ class Admin(Page):
                 Copy the conf value to the `Meta` class of an `iommi_admin.py` file.
                 
                 Read <a href="https://docs.iommi.rocks/en/latest/admin.html#customization">the docs for admin customization</a> for more information.
-                ''')),
+                ''', include=settings.DEBUG)),
                 add_models=add_models,
             ),
             **kwargs,
