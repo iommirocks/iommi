@@ -3206,6 +3206,14 @@ def test_editable_can_be_a_callable():
     assert f.fields.foo.editable is False
 
 
+def test_editable_lambda():
+    class FooForm(Form):
+        foo = Field(editable=lambda request, **_: False)
+
+    f = FooForm().bind()
+    assert hasattr(f.fields.foo.input.attrs, 'disabled')
+
+
 @pytest.mark.django_db
 def test_edit_no_require_auto():
     x = Foo.objects.create(foo=7)

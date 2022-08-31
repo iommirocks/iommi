@@ -685,6 +685,7 @@ class Field(Part, Tag):
         self.parsed_data = self._parsed_data
         self._errors = set()
         self.choices = evaluate_strict(self.choices, **self.iommi_evaluate_parameters())
+        self.editable = evaluate_strict(self.editable, **self.iommi_evaluate_parameters())
         self.initial = evaluate_strict(self.initial, **self.iommi_evaluate_parameters())
         self._read_initial()
 
