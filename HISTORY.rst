@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+5.1.2 (2022-09-02)
+~~~~~~~~~~~~~~~~~~
+
+* Late evaluation of `Field.editable`, so you can now give a lambda for `editable`
+
+* Rare crash when Field.on_bind tries to access form.all_fields, that is removed
+
+* Admin debug message was shown in non-debug
+
+
 5.1.1 (2022-08-25)
 ~~~~~~~~~~~~~~~~~~
 
