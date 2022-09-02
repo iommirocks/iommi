@@ -1540,7 +1540,6 @@ class Form(Part):
 
         self.parts = self.fields
         self.fields = self.all_fields
-        del self.all_fields
 
         self.errors = Errors(parent=self, **self.errors)
 
