@@ -59,7 +59,10 @@ from iommi.declarative.namespace import (
 )
 from iommi.declarative.with_meta import with_meta
 from iommi.endpoint import path_join
-from iommi.evaluate import evaluate
+from iommi.evaluate import (
+    evaluate,
+    evaluate_strict,
+)
 from iommi.form import (
     bool_parse,
     boolean_tristate__parse,
@@ -700,15 +703,23 @@ class Query(Part):
             )
 
         for name, filter in items(self.iommi_namespace.filters):
+            orig_include = getattr_path(filter, 'field__include', False)
             declared_fields[name] = setdefaults_path(
-                Namespace(),
+                Namespace(
+                    include=lambda query, field, **_: (
+                        (
+                                field.iommi_name() in query.filters
+                                and not query.filters[field.iommi_name()].freetext
+                        )
+                        or evaluate_strict(orig_include, **query.iommi_evaluate_parameters())
+                    ),
+                ),
                 filter.field,
                 _name=name,
                 call_target__cls=field_class,
                 model_field=filter.model_field,
                 attr=name if filter.attr is MISSING else filter.attr,
                 help__include=False,
-                include=lambda query, field, **_: field.iommi_name() in query.filters and not query.filters[field.iommi_name()].freetext,
             )
 
         # Remove fields from the form that correspond to non-included filters

@@ -236,6 +236,7 @@ def test_request_to_q_simple(MyTestQuery):
         bazaar = Filter.boolean(attr='quux__bar__bazaar', field__include=True)
 
     query2 = Query2().bind(request=req('get', **{'foo_name': "asd", 'bar_name': '7', 'bazaar': 'true'}))
+    assert list(query2.form.fields.keys()) == ['freetext_search', 'foo_name', 'bar_name', 'baz_name', 'bazaar']
     assert repr(query2.get_q()) == repr(
         Q(**{'foo__iexact': 'asd'}) & Q(**{'bar__exact': '7'}) & Q(**{'quux__bar__bazaar__exact': True})
     )
