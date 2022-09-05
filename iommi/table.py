@@ -1801,7 +1801,19 @@ class Table(Part, Tag):
 
         self.tbody = self.tbody(_name='tbody', children__text=_Lazy_tbody(self)).bind(parent=self)
         self.container = self.container(_name='container').bind(parent=self)
-        self.outer = self.outer(_name='outer').bind(parent=self)
+
+        self.outer = self.outer(_name='outer').refine(
+            children=dict(
+                h_tag__template=Template('{{ table.h_tag|default_if_none:"" }}'),
+                query__template=Template('{{ table.query|default_if_none:"" }}'),
+                actions=dict(
+                    after=LAST if self.actions_below else 'h_tag',
+                    template=Template('{{ table.render_actions|default_if_none:"" }}'),
+                ),
+                container__template=Template('{{ table.container|default_if_none:"" }}'),
+            ),
+        ).bind(parent=self)
+
         self.header = self.header.bind(parent=self)
 
         # needs to be done first because _bind_headers depends on it

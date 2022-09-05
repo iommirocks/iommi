@@ -1,17 +1,1 @@
-{{ table.outer.iommi_open_tag }}
-
-{{ table.h_tag }}
-
-{% if not table.actions_below %}
-    {{ table.render_actions }}
-{% endif %}
-
-{% if table.query %}{{ table.query }}{% endif %}
-
-{{ table.container }}
-
-{% if table.actions_below %}
-    {{ table.render_actions }}
-{% endif %}
-
-{{ table.outer.iommi_close_tag }}
+{{ table.outer }}

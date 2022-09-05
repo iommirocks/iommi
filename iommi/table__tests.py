@@ -3770,3 +3770,17 @@ def test_pagination_with_thousands_separator(settings):
         </nav>
         """,
     )
+
+
+def test_insert_subtitle():
+    class MyTable(Table):
+        class Meta:
+            title = 'title'
+            outer__children__subtitle = html.h2('subtitle', after='h_tag')
+
+    t = MyTable(rows=[]).bind().__html__()
+    h1 = '<h1>Title</h1>'
+    h2 = '<h2>subtitle</h2>'
+    assert h1 in t
+    assert h2 in t
+    assert t.index(h1) < t.index(h2)
