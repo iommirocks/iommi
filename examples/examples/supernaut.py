@@ -29,9 +29,16 @@ from .models import (
 # Registrations --------------------
 
 register_path_decoding(Artist)
-register_advanced_path_decoding({
-    Album: Decoder('name', decode=lambda model, string, decoded_kwargs, **_: model.objects.get(name=string, artist=decoded_kwargs['artist'])),
-})
+register_advanced_path_decoding(
+    {
+        Album: Decoder(
+            'name',
+            decode=lambda model, string, decoded_kwargs, **_: model.objects.get(
+                name=string, artist=decoded_kwargs['artist']
+            ),
+        ),
+    }
+)
 
 
 # Menu -----------------------------
@@ -120,7 +127,10 @@ class ArtistPage(Page):
 
 class AlbumPage(Page):
     title = html.h1(lambda params, **_: params.album)
-    text = html.a(lambda params, **_: params.album.artist, attrs__href=lambda params, **_: params.album.artist.get_absolute_url())
+    text = html.a(
+        lambda params, **_: params.album.artist,
+        attrs__href=lambda params, **_: params.album.artist.get_absolute_url(),
+    )
 
     tracks = TrackTable(
         auto__model=Track,
@@ -139,6 +149,12 @@ urlpatterns = [
     path('tracks/', TrackTable(auto__model=Track).as_view()),
     path('artist/<artist_name>/', ArtistPage().as_view()),
     path('artist/<artist_name>/<album_name>/', AlbumPage().as_view()),
-    path('artist/<artist_name>/<album_name>/edit/', Form.edit(auto__model=Album, instance=lambda params, **_: params.album).as_view()),
-    path('artist/<artist_name>/<album_name>/delete/', Form.delete(auto__model=Album, instance=lambda params, **_: params.album).as_view()),
+    path(
+        'artist/<artist_name>/<album_name>/edit/',
+        Form.edit(auto__model=Album, instance=lambda params, **_: params.album).as_view(),
+    ),
+    path(
+        'artist/<artist_name>/<album_name>/delete/',
+        Form.delete(auto__model=Album, instance=lambda params, **_: params.album).as_view(),
+    ),
 ]

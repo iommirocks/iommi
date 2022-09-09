@@ -8,7 +8,6 @@ from iommi.declarative.with_meta import with_meta
 def test_empty():
     @with_meta
     class Test:
-
         def __init__(self, foo):
             assert foo == 'bar'
 
@@ -265,7 +264,7 @@ def test_dispatch_semantics_after_none_from_meta():
             actions = None
 
         @dispatch(
-            actions__magic__display_name="A magic button"
+            actions__magic__display_name="A magic button",
         )
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -281,7 +280,7 @@ def test_dispatch_none_semantics_after_meta():
             actions__magic__display_name = "A magic button"
 
         @dispatch(
-            actions=None
+            actions=None,
         )
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -301,7 +300,7 @@ def test_dispatch_none_semantics_after_superclass_meta():
 
     class SubForm(MyForm):
         @dispatch(
-            actions=None
+            actions=None,
         )
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -321,7 +320,7 @@ def test_dispatch_semantics_after_none_superclass_meta():
 
     class SubForm(MyForm):
         @dispatch(
-            actions__magic__display_name="A magic button"
+            actions__magic__display_name="A magic button",
         )
         def __init__(self, **kwargs):
             self.kwargs = kwargs

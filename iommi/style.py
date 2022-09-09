@@ -144,6 +144,7 @@ def register_style(name, style):
             yield style
         finally:
             unregister_style(name)
+
     return _unregister()
 
 

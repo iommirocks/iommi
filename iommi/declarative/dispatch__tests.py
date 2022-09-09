@@ -21,7 +21,10 @@ def test_dispatch_legacy():
         # do something with the inputs a, b, c...
         return a + b + c + x + y
 
-    @dispatch(b='X', quux={}, )
+    @dispatch(
+        b='X',
+        quux={},
+    )
     def do_bar(a, b, quux):
         return a + b + do_quux(**quux)
 
@@ -63,7 +66,10 @@ def test_dispatch_with_target():
         # something...
         return title
 
-    @dispatch(b='X', quux=Namespace(call_target=quux_), )
+    @dispatch(
+        b='X',
+        quux=Namespace(call_target=quux_),
+    )
     def bar_(a, b, quux):
         return a + b + quux()
 
@@ -75,7 +81,7 @@ def test_dispatch_with_target():
         bar=Namespace(call_target=bar_),
         bar__a='5',
         bar__quux__title='hi!',
-        baz=Namespace(call_target=baz_)
+        baz=Namespace(call_target=baz_),
     )
     def foo(a, b, c, bar, baz):
         x = bar()
@@ -89,7 +95,7 @@ def test_dispatch_with_target():
 def test_semantics_after_none_from_meta():
     class MyForm:
         @dispatch(
-            actions=None
+            actions=None,
         )
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -101,7 +107,7 @@ def test_semantics_after_none_from_meta():
 def test_none_semantics_over_meta():
     class MyForm:
         @dispatch(
-            actions__magic__display_name="A magic button"
+            actions__magic__display_name="A magic button",
         )
         def __init__(self, **kwargs):
             self.kwargs = kwargs

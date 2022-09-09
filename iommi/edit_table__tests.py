@@ -7,7 +7,6 @@ from iommi.edit_table import (
     EditTable,
 )
 from iommi.form import (
-
     Field,
     Form,
 )
@@ -27,9 +26,9 @@ from tests.models import (
 
 def test_no_longer_experimental():
     with pytest.raises(
-            Exception,
-            match='EditTable/EditColumn has moved out of iommi.experimental. '
-                  'Update imports and remove the .experimental part.',
+        Exception,
+        match='EditTable/EditColumn has moved out of iommi.experimental. '
+        'Update imports and remove the .experimental part.',
     ):
         # noinspection PyUnresolvedReferences
         import iommi.experimental.edit_table  # noqa
@@ -96,7 +95,7 @@ def test_formset_table():
                     </button>
                 </div>
             </form>
-        """
+        """,
     )
 
 
@@ -125,8 +124,18 @@ def test_formset_table_nested():
 @pytest.mark.django_db
 def test_formset_table_post():
     rows = [
-        Struct(pk=1, editable_thing='foo', readonly_thing='bar', save=lambda **_: None, ),
-        Struct(pk=2, editable_thing='baz', readonly_thing='buzz', save=lambda **_: None, ),
+        Struct(
+            pk=1,
+            editable_thing='foo',
+            readonly_thing='bar',
+            save=lambda **_: None,
+        ),
+        Struct(
+            pk=2,
+            editable_thing='baz',
+            readonly_thing='buzz',
+            save=lambda **_: None,
+        ),
     ]
 
     post_save_was_called = False
@@ -138,7 +147,10 @@ def test_formset_table_post():
     edit_table = EditTable(
         columns=dict(
             editable_thing=EditColumn(
-                edit=Namespace(call_target=Field, is_valid=lambda parsed_data, **_: (parsed_data != 'invalid', 'error-string')),
+                edit=Namespace(
+                    call_target=Field,
+                    is_valid=lambda parsed_data, **_: (parsed_data != 'invalid', 'error-string'),
+                ),
             ),
             readonly_thing=EditColumn(),
         ),
@@ -147,11 +159,16 @@ def test_formset_table_post():
     )
 
     # Check validation errors
-    bound = edit_table.bind(request=req('POST', **{
-        'editable_thing/1': 'invalid',
-        'editable_thing/2': 'fusk',
-        '-submit': '',
-    }))
+    bound = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'editable_thing/1': 'invalid',
+                'editable_thing/2': 'fusk',
+                '-submit': '',
+            },
+        )
+    )
     response = bound.render_to_response()
     assert response.status_code == 200
     assert 'error-string' in response.content.decode()
@@ -161,11 +178,16 @@ def test_formset_table_post():
     assert rows[1].editable_thing == 'baz'
 
     # Now edit for real
-    bound = edit_table.bind(request=req('POST', **{
-        'editable_thing/1': 'fisk',
-        'editable_thing/2': 'fusk',
-        '-submit': '',
-    }))
+    bound = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'editable_thing/1': 'fisk',
+                'editable_thing/2': 'fusk',
+                '-submit': '',
+            },
+        )
+    )
     response = bound.render_to_response()
     assert response.status_code == 302
 
@@ -254,11 +276,16 @@ def test_formset_table_post_create():
 
     assert not TBar.objects.exists()
 
-    edit_table = edit_table.bind(request=req('POST', **{
-        'columns/foo/-1': f'{foo_pk}',
-        'columns/c/-1': 'true',
-        '-actions/submit': '',
-    }))
+    edit_table = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/foo/-1': f'{foo_pk}',
+                'columns/c/-1': 'true',
+                '-actions/submit': '',
+            },
+        )
+    )
     assert not edit_table.get_errors()
     response = edit_table.render_to_response()
     assert response.status_code == 302
@@ -278,12 +305,18 @@ def test_formset_table_post_delete():
     response = edit_table.bind(request=req('GET')).render_to_response()
     assert f'name="pk_delete_{tfoo.pk}"' in response.content.decode()
 
-    response = edit_table.bind(request=req('POST', **{
-        f'pk_delete_{tfoo.pk}': '',
-        '-actions/submit': '',
-    })).render_to_response()
+    response = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                f'pk_delete_{tfoo.pk}': '',
+                '-actions/submit': '',
+            },
+        )
+    ).render_to_response()
     assert response.status_code == 302
 
     assert TFoo.objects.all().count() == 0
+
 
 # TODO: attr=None on a column crashes

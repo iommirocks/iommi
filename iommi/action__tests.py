@@ -113,7 +113,13 @@ def test_all_action_shortcuts():
         actions: Dict[str, Action] = RefinableMembers()
 
         def on_refine_done(self):
-            refine_done_members(self, name='actions', members_from_namespace=self.actions, cls=MyFancyAction, members_cls=Actions)
+            refine_done_members(
+                self,
+                name='actions',
+                members_from_namespace=self.actions,
+                cls=MyFancyAction,
+                members_cls=Actions,
+            )
 
         def on_bind(self):
             bind_members(self, name='actions')

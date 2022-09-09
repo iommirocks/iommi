@@ -248,10 +248,7 @@ def test_fragment_repr():
 
 
 def test_fragment_repr_not_done():
-    assert (
-        repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'})))
-        == "<Fragment>"
-    )
+    assert repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'}))) == "<Fragment>"
 
 
 def test_h_tag_callable():
@@ -277,15 +274,13 @@ def test_fragment_template_as_template_kwarg():
     f = Fragment(
         'child text',
         template=Template('<div>{{ fragment.extra.foo }}</div> {{ rendered_children }} {{ request.GET.param }}'),
-        extra__foo=7
+        extra__foo=7,
     )
     assert str(f.bind(request=req('get', param=11))) == '<div>7</div> child text 11'
 
 
 def test_foo():
-    f = Fragment(
-        children__child=Fragment('child')
-    )
+    f = Fragment(children__child=Fragment('child'))
     assert f.bind().__html__() == 'child'
     assert f.bind().__html__() == 'child'
 

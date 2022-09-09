@@ -1,5 +1,3 @@
-
-
 import pytest
 from iommi.struct import Struct
 
@@ -42,9 +40,7 @@ def test_declarative_with_dunder_in_name():
         def __init__(self, **kwargs):
             self.kwargs = kwargs
 
-    assert Foo(
-        members=Struct(bink__bonk=4711),
-    ).kwargs == dict(
+    assert Foo(members=Struct(bink__bonk=4711),).kwargs == dict(
         members=dict(bink__bonk=4711),
     )
 
@@ -70,35 +66,42 @@ def test_required_parameter():
     with pytest.raises(TypeError) as e:
         declarative()
 
-    assert str(
-        e.value) == "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)"
+    assert (
+        str(e.value)
+        == "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)"
+    )
 
 
 # noinspection PyUnusedLocal
 def test_find_member_fail_on_tuple():
     with pytest.raises(TypeError) as e:
-        class MyDeclarative(Declarative):
-            foo = Member(foo='bar'),
 
-    assert str(e.value) == "'foo' is a one-tuple containing what we are looking for.  " \
-                           "Trailing comma much?  Don't... just don't."
+        class MyDeclarative(Declarative):
+            foo = (Member(foo='bar'),)
+
+    assert (
+        str(e.value) == "'foo' is a one-tuple containing what we are looking for.  "
+        "Trailing comma much?  Don't... just don't."
+    )
 
 
 # noinspection PyUnusedLocal
 def test_find_member_fail_on_tuple_with_is_member_lambda():
     with pytest.raises(TypeError) as e:
-        @declarative(
-            is_member=lambda obj: isinstance(obj, Member)
-        )
-        class MyDeclarative:
-            foo = Member(foo='bar'),
 
-    assert str(e.value) == "'foo' is a one-tuple containing what we are looking for.  " \
-                           "Trailing comma much?  Don't... just don't."
+        @declarative(is_member=lambda obj: isinstance(obj, Member))
+        class MyDeclarative:
+            foo = (Member(foo='bar'),)
+
+    assert (
+        str(e.value) == "'foo' is a one-tuple containing what we are looking for.  "
+        "Trailing comma much?  Don't... just don't."
+    )
 
 
 def test_missing_ordering():
     with pytest.raises(TypeError):
+
         @declarative(str)
         class Fail:
             x = "x"
@@ -260,7 +263,6 @@ def test_declarative_and_meta():
 def test_declarative_and_meta_subclass_no_constructor_hack_workaround():
     @declarative(str, sort_key=lambda x: x)
     class Foo:
-
         def __init__(self, members, bar):
             assert members == dict()
             assert bar == 'bar'

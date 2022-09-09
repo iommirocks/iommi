@@ -21,18 +21,15 @@ class Struct(dict):
                 s[k] = v
 
     """
+
     __slots__ = ()
 
     def __repr__(self):
         pieces = (
-            "%s=%s" % (key,
-                       (repr(val) if val is not self
-                        else "%s(...)" % type(self).__name__)
-                       )
+            "%s=%s" % (key, (repr(val) if val is not self else "%s(...)" % type(self).__name__))
             for (key, val) in sorted(self.items())
         )
-        return "%s(%s)" % (type(self).__name__,
-                           ", ".join(pieces))
+        return "%s(%s)" % (type(self).__name__, ", ".join(pieces))
 
     __str__ = __repr__
 
@@ -80,22 +77,22 @@ class Frozen(object):
         return _hash
 
     def __setitem__(self, *_, **__):
-        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__, ))
+        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
 
     def __setattr__(self, key, value):
         raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
 
     def setdefault(self, *_, **__):
-        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__, ))
+        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
 
     def update(self, *_, **__):
-        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__, ))
+        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
 
     def clear(self, *_, **__):
-        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__, ))
+        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
 
     def __delitem__(self, *_, **__):
-        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__, ))
+        raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
 
     def __delattr__(self, *_, **__):
         raise TypeError("'%s' object attributes are read-only" % (type(self).__name__,))
@@ -111,7 +108,7 @@ class Frozen(object):
 
 
 class FrozenStruct(Frozen, Struct):
-    __slots__ = ('_hash', )
+    __slots__ = ('_hash',)
 
 
 def merged(*dicts, **kwargs):

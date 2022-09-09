@@ -122,25 +122,19 @@ def test_shortcut_to_superclass_two_calls2():
             super(Foo, self).__init__(**kwargs)
 
         @classmethod
-        @with_defaults(
-            z=4711
-        )
+        @with_defaults(z=4711)
         def buzz(cls, **kwargs):
             return cls(**kwargs)
 
         @classmethod
-        @with_defaults(
-            x=17
-        )
+        @with_defaults(x=17)
         def baz(cls, **kwargs):
             return cls.buzz(**kwargs)
 
     class Bar(Foo):
         @classmethod
         @superinvoking_classmethod
-        @with_defaults(
-            y=42
-        )
+        @with_defaults(y=42)
         def baz(cls, super_classmethod=None, **kwargs):
             return super_classmethod(**kwargs)
 
@@ -188,23 +182,13 @@ def test_shortcut_call_target_attribute():
 
 
 def test_namespace_shortcut_overwrite():
-    assert Namespace(
-        Namespace(
-            x=Shortcut(y__z=1, y__zz=2),
-        ),
-        Namespace(
-            x=Namespace(a__b=3),
-        ),
-    ) == Namespace(
+    assert Namespace(Namespace(x=Shortcut(y__z=1, y__zz=2),), Namespace(x=Namespace(a__b=3),),) == Namespace(
         x__a__b=3,
     )
 
 
 def test_namespace_shortcut_overwrite_backward():
-    assert Namespace(
-        Namespace(x=Namespace(y__z=1, y__zz=2)),
-        Namespace(x=Shortcut(a__b=3)),
-    ) == Namespace(
+    assert Namespace(Namespace(x=Namespace(y__z=1, y__zz=2)), Namespace(x=Shortcut(a__b=3)),) == Namespace(
         x__a__b=3,
         x__y__z=1,
         x__y__zz=2,
@@ -214,9 +198,7 @@ def test_namespace_shortcut_overwrite_backward():
 def test_better_shortcut():
     class MyPart(Part):
         @classmethod
-        @with_defaults(
-            extra__thing='shortcut_thing'
-        )
+        @with_defaults(extra__thing='shortcut_thing')
         def my_shortcut(cls, **kwargs):
             return cls(**kwargs)
 
@@ -276,18 +258,14 @@ def test_shortcut_to_superclass():
             super(Foo, self).__init__(**kwargs)
 
         @classmethod
-        @with_defaults(
-            x=17
-        )
+        @with_defaults(x=17)
         def baz(cls, **kwargs):
             return cls(**kwargs)
 
     class Bar(Foo):
         @classmethod
         @superinvoking_classmethod
-        @with_defaults(
-            y=42
-        )
+        @with_defaults(y=42)
         def baz(cls, super_classmethod, **kwargs):
             return super_classmethod(**kwargs)
 
@@ -363,11 +341,13 @@ def test_superinvoking_misconfig_no_super_warning():
         pass
 
     with pytest.raises(TypeError, match='Unable to find parent class implementation of Bar:baz'):
+
         class Bar(Foo):
             @classmethod
             @superinvoking_classmethod
             def baz(cls, super_classmethod):
                 super_classmethod()
+
         Bar.baz()
 
 

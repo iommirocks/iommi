@@ -27,6 +27,7 @@ def test_render_decorator():
 @pytest.mark.django_db
 def test_middleware():
     from django.db import connections
+
     default_database_settings = connections['default'].settings_dict
     old_value = default_database_settings['ATOMIC_REQUESTS']
     try:
@@ -38,7 +39,7 @@ def test_middleware():
             'ATOMIC_REQUEST for database connections '
             r'\(.*\) or remove middleware and '
             'use the @iommi_render decorator on the views instead.',
-            str(e.value)
+            str(e.value),
         )
     finally:
         default_database_settings['ATOMIC_REQUESTS'] = old_value

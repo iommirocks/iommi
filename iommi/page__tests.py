@@ -133,4 +133,7 @@ def test_title_empty():
 
 
 def test_title_attr():
-    assert '<h1 class="foo">Foo</h1>' == Page(title='foo', h_tag__attrs__class__foo=True).bind(request=req('get')).__html__()
+    assert (
+        '<h1 class="foo">Foo</h1>'
+        == Page(title='foo', h_tag__attrs__class__foo=True).bind(request=req('get')).__html__()
+    )

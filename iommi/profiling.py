@@ -59,6 +59,7 @@ class Middleware:
             prof.disable()
 
             import pstats
+
             s = StringIO()
             ps = pstats.Stats(prof, stream=s)
 
@@ -100,13 +101,21 @@ class Middleware:
                     ps.stream = stats_dump
                     ps.dump_stats(stats_dump.name)
 
-                    subprocess.Popen([sys.executable, str(Path(sys.executable).parent / 'snakeviz'), stats_dump.name], stdin=None, stdout=None, stderr=None)
+                    subprocess.Popen(
+                        [sys.executable, str(Path(sys.executable).parent / 'snakeviz'), stats_dump.name],
+                        stdin=None,
+                        stdout=None,
+                        stderr=None,
+                    )
 
                     # We need to wait a bit to give snakeviz time to read the file
                     from time import sleep
+
                     sleep(3)
 
-                return HttpResponse('You should have gotten a new browser window with snakeviz opened to the profile data')
+                return HttpResponse(
+                    'You should have gotten a new browser window with snakeviz opened to the profile data'
+                )
 
             else:
                 ps = ps.sort_stats(prof_command or 'cumulative')

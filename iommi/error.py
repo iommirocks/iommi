@@ -1,6 +1,7 @@
 from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import EMPTY
 
+
 class Errors:
     @dispatch(
         attrs=EMPTY,

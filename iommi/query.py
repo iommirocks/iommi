@@ -245,7 +245,6 @@ class Filter(Part):
         attr=MISSING,
         search_fields=MISSING,
         field__required=False,
-
         is_valid_filter=default_filter__is_valid_filter,
         query_name=lambda filter, **_: filter.iommi_name(),
     )
@@ -260,7 +259,9 @@ class Filter(Part):
 
     def on_refine_done(self):
         if 'choice' in getattr(self, 'iommi_shortcut_stack', []):
-            assert self.iommi_namespace.get('choices') is not None, 'To use Filter.choice, you must pass the choices list'
+            assert (
+                self.iommi_namespace.get('choices') is not None
+            ), 'To use Filter.choice, you must pass the choices list'
 
         model_field = self.model_field
         if model_field and model_field.remote_field:
@@ -658,7 +659,14 @@ class Query(Part):
         self.query_advanced_value = None
         self.query_error = None
 
-        refine_done_members(self, name='filters', members_from_namespace=self.filters, members_from_declared=self.get_declared('_filters_dict'), members_from_auto=filters_from_auto, cls=self.get_meta().member_class)
+        refine_done_members(
+            self,
+            name='filters',
+            members_from_namespace=self.filters,
+            members_from_declared=self.get_declared('_filters_dict'),
+            members_from_auto=filters_from_auto,
+            cls=self.get_meta().member_class,
+        )
 
         self._on_refine_done_form()
 
@@ -707,10 +715,7 @@ class Query(Part):
             declared_fields[name] = setdefaults_path(
                 Namespace(
                     include=lambda query, field, **_: (
-                        (
-                                field.iommi_name() in query.filters
-                                and not query.filters[field.iommi_name()].freetext
-                        )
+                        (field.iommi_name() in query.filters and not query.filters[field.iommi_name()].freetext)
                         or evaluate_strict(orig_include, **query.iommi_evaluate_parameters())
                     ),
                 ),
@@ -734,17 +739,23 @@ class Query(Part):
         form_args = self.form
 
         # noinspection PyCallingNonCallable
-        self.form: Form = self.get_meta().form_class(**setdefaults_path(
-            Namespace(),
-            form_args,
-            _name='form',
-            fields=declared_fields,
-            attrs__method='get',
-            actions__submit=dict(
-                attrs={'data-iommi-filter-button': ''},
-                display_name=gettext('Filter'),
-            ),
-        )).refine_done(parent=self)
+        self.form: Form = (
+            self.get_meta()
+            .form_class(
+                **setdefaults_path(
+                    Namespace(),
+                    form_args,
+                    _name='form',
+                    fields=declared_fields,
+                    attrs__method='get',
+                    actions__submit=dict(
+                        attrs={'data-iommi-filter-button': ''},
+                        display_name=gettext('Filter'),
+                    ),
+                )
+            )
+            .refine_done(parent=self)
+        )
 
     def on_bind(self) -> None:
         # Prevent the nested form from thinking it's a part of a nested form set up
@@ -1051,7 +1062,8 @@ class Query(Part):
     @dispatch()
     def filters_from_model(cls, **kwargs):
         return create_members_from_model(
-            member_class=cls.get_meta().member_class, **kwargs
+            member_class=cls.get_meta().member_class,
+            **kwargs,
         )
 
     @classmethod
