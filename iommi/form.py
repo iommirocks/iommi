@@ -291,6 +291,20 @@ def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
         result = []
         has_more = False
 
+    if field.extra.get('tags') and (not result or not result.object_list):
+        return dict(
+            results=[
+                Struct(
+                    id=value,
+                    text=value,
+                ),
+            ],
+            page=1,
+            pagination=dict(
+                more=False,
+            ),
+        )
+
     return dict(
         results=field.extra.model_from_choices(form, field, result),
         page=page,
@@ -336,9 +350,15 @@ def choice_queryset__extra__filter_and_sort(field, value, **_):
 
 def choice_queryset__parse(field, string_value, **_):
     try:
-        return field.choices.get(pk=string_value) if string_value else None
-    except field.model.DoesNotExist as e:
-        raise ValidationError(str(e))
+        try:
+            return field.choices.get(pk=string_value) if string_value else None
+        except field.model.DoesNotExist as e:
+            raise ValidationError(str(e))
+    except (ValueError, ValidationError):
+        if field.extra.get('tags'):
+            return field.extra.create_tag(field=field, string_value=string_value, **_)
+        else:
+            raise
 
 
 datetime_iso_formats = [
@@ -823,6 +843,7 @@ class Field(Part, Tag):
             assert self.form._valid is False
 
     def _validate_parsed_data(self, value):
+        # TODO: why not evaluate_parameters?
         is_valid, error = self.is_valid(form=self.form, field=self, parsed_data=value)
         if is_valid and not self.errors and self.parsed_data is not None and not self.is_list:
             value = self.parsed_data

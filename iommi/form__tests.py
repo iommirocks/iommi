@@ -97,6 +97,7 @@ from tests.models import (
     ChoicesModel,
     CreateOrEditObjectTest,
     DefaultsInForms,
+    FieldFromModelManyToManyTest,
     FieldFromModelOneToOneTest,
     Foo,
     FormFromModelTest,
@@ -1094,6 +1095,22 @@ def test_multi_choice_queryset():
         str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
         == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
     )
+
+
+@pytest.mark.django_db
+def test_multi_choice_queryset_dynamic_tag_creation():
+    form = Form.edit(
+        auto__model=FieldFromModelManyToManyTest,
+        fields__foo_many_to_many__extra=dict(
+            tags=True,
+            create_tag=lambda string_value, field, **_: field.model.objects.create(foo=len(string_value)),
+        )
+    )
+
+    test_string = 'test_string'
+
+    form.bind(request=req('post', **{'-submit': '', 'foo_many_to_many': [test_string]}))
+    assert Foo.objects.get().foo == len(test_string)
 
 
 def test_missing_choices():

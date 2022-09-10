@@ -39,19 +39,20 @@ select2_assets = dict(
                     let options = {
                         placeholder: f.attr('data-placeholder'),
                         allowClear: true,
-                        multiple: multiple
-                    };
-                    if (endpoint_path) {
-                        options.ajax = {
-                            url: function() {
-                                return '?' + this.closest('form').serialize();
-                            },
-                            dataType: "json",
-                            data: function (params) {
-                                let result = {
-                                    page: params.page || 1
-                                }
-                                result[endpoint_path] = params.term || '';
+                        tags: f.attr('data-tags') !== undefined,
+                    multiple: multiple
+                };
+                if (endpoint_path) {
+                    options.ajax = {
+                        url: function() {
+                            return '?' + this.closest('form').serialize();
+                        },
+                        dataType: "json",
+                        data: function (params) {
+                            let result = {
+                                page: params.page || 1
+                            }
+                            result[endpoint_path] = params.term || '';
 
                                 return result;
                             }

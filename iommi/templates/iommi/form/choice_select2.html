@@ -1,4 +1,4 @@
-<select{{ field.input.attrs }} data-placeholder="{{ field.input.extra.placeholder }}" {% if field.endpoints.choices %}data-choices-endpoint="{{ field.endpoints.choices.endpoint_path }}{% endif %}">
+<select{{ field.input.attrs }} data-placeholder="{{ field.input.extra.placeholder }}" {% if field.extra.tags %}data-tags {% endif %}{% if field.endpoints.choices %}data-choices-endpoint="{{ field.endpoints.choices.endpoint_path }}{% endif %}">
     {% if field.endpoints.choices %}
         {% for choice in field.choice_to_options_selected %}
             <option value="{{ choice.1|stringformat:'s' }}" selected="selected" label="{{ choice.2 }}">{{ choice.2 }}</option>
