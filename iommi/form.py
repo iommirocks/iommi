@@ -1594,6 +1594,8 @@ class Form(Part):
         return model, fields
 
     def is_target(self):
+        declared_members = object.__getattribute__(self.actions, '_declared_members')
+        this_form_is_target = any(f'-{action.iommi_path}' in self._request_data for action in values(declared_members))
         this_form_is_target = any(action.is_target() for action in values(self.actions))
         if this_form_is_target:
             return True
