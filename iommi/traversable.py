@@ -101,6 +101,9 @@ class Traversable(RefinableObject):
         if hasattr(self, '_iommi_path_override'):
             return self._iommi_path_override
 
+        if hasattr(self, '_iommi_path_cache'):
+            return self._iommi_path_cache
+
         long_path = build_long_path(self)
         path_by_long_path = get_path_by_long_path(self)
         path = path_by_long_path.get(long_path)
@@ -281,16 +284,17 @@ def build_long_path_by_path(root) -> Dict[str, str]:
 
             long_path = '/'.join(long_path_segments)
             short_path = find_unique_suffix(short_path_candidate_segments)
-            if short_path is not None:
-                result[short_path] = long_path
-            else:
+            if short_path is None:
                 less_short_path = find_unique_suffix(long_path_segments)
                 assert less_short_path is not None, (
                     f"Ran out of names...\n"
                     f"Any suitable short name for {'/'.join(long_path_segments)} already taken.\n\n"
                     f"Result so far:\n" + '\n'.join(f'{k}   ->   {v}' for k, v in result.items())
                 )
-                result[less_short_path] = long_path
+                short_path = less_short_path
+            result[short_path] = long_path
+
+            node._iommi_path_cache = short_path
 
         if isinstance(node, RefinableObject):
             members = declared_members(node)
