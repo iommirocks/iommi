@@ -40,7 +40,10 @@ def test_declarative_with_dunder_in_name():
         def __init__(self, **kwargs):
             self.kwargs = kwargs
 
-    assert Foo(members=Struct(bink__bonk=4711),).kwargs == dict(
+    foo = Foo(
+        members=Struct(bink__bonk=4711),
+    )
+    assert foo.kwargs == dict(
         members=dict(bink__bonk=4711),
     )
 

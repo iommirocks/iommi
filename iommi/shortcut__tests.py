@@ -182,17 +182,31 @@ def test_shortcut_call_target_attribute():
 
 
 def test_namespace_shortcut_overwrite():
-    assert Namespace(Namespace(x=Shortcut(y__z=1, y__zz=2),), Namespace(x=Namespace(a__b=3),),) == Namespace(
+    actual = Namespace(
+        Namespace(
+            x=Shortcut(y__z=1, y__zz=2),
+        ),
+        Namespace(
+            x=Namespace(a__b=3),
+        ),
+    )
+    expected = Namespace(
         x__a__b=3,
     )
+    assert actual == expected
 
 
 def test_namespace_shortcut_overwrite_backward():
-    assert Namespace(Namespace(x=Namespace(y__z=1, y__zz=2)), Namespace(x=Shortcut(a__b=3)),) == Namespace(
+    actual = Namespace(
+        Namespace(x=Namespace(y__z=1, y__zz=2)),
+        Namespace(x=Shortcut(a__b=3)),
+    )
+    expected = Namespace(
         x__a__b=3,
         x__y__z=1,
         x__y__zz=2,
     )
+    assert actual == expected
 
 
 def test_better_shortcut():

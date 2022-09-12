@@ -391,7 +391,10 @@ def test_parse_errors(MyTestForm):
     def post_validation(form, **_):
         form.add_error('General snafu')
 
-    form = MyTestForm(post_validation=post_validation,).bind(
+    form = MyTestForm(
+        post_validation=post_validation,
+    )
+    form = form.bind(
         request=req(
             'get',
             **dict(
@@ -405,7 +408,7 @@ def test_parse_errors(MyTestForm):
                 multi_choice_field=['q', 'w'],
                 **{'-submit': ''},
             ),
-        ),
+        )
     )
 
     assert form.mode == FULL_FORM_FROM_REQUEST
@@ -583,24 +586,32 @@ def test_initial_from_instance_override():
 
 
 def test_initial_from_instance_is_list():
-    assert Form(instance=Struct(a=Struct(b=[7])), fields__foo=Field(attr='a__b', is_list=True),).bind(
-        request=req('get'),
-    ).fields.foo.initial == [7]
+    form = Form(
+        instance=Struct(a=Struct(b=[7])),
+        fields__foo=Field(attr='a__b', is_list=True),
+    )
+    assert form.bind(request=req('get')).fields.foo.initial == [7]
 
 
 def test_non_editable_from_initial():
     class MyForm(Form):
-        foo = Field(editable=False, initial=':bar:')
+        foo = Field(
+            editable=False,
+            initial=':bar:',
+        )
 
     assert ':bar:' in MyForm().bind(request=req('get')).__html__()
     assert ':bar:' in MyForm().bind(request=req('post', **{'-': ''})).__html__()
 
 
 def test_apply():
-    form = Form(fields__foo=Field(initial=17, editable=False),).bind(
-        request=req('get'),
+    form = Form(
+        fields__foo=Field(
+            initial=17,
+            editable=False,
+        ),
     )
-    assert Struct(foo=17) == form.apply(Struct())
+    assert form.bind(request=req('get')).apply(Struct()) == Struct(foo=17)
 
 
 def test_include():
@@ -621,7 +632,13 @@ def test_include():
 
 
 def test_declared_fields():
-    form = Form(fields=dict(foo=Field(include=True), bar=Field(include=False),),).bind(
+    form = Form(
+        fields=dict(
+            foo=Field(include=True),
+            bar=Field(include=False),
+        ),
+    )
+    form = form.bind(
         request=req('get'),
     )
     assert list(form.iommi_namespace.fields.keys()) == ['foo', 'bar']
@@ -801,9 +818,10 @@ def test_setattr_path():
 
 
 def test_multi_select_with_one_value_only():
-    assert Form(fields__foo=Field.multi_choice(_name='foo', choices=['a', 'b']),).bind(
-        request=req('get', foo=['a'])
-    ).fields.foo.value == ['a']
+    form = Form(
+        fields__foo=Field.multi_choice(_name='foo', choices=['a', 'b']),
+    )
+    assert form.bind(request=req('get', foo=['a'])).fields.foo.value == ['a']
 
 
 def test_render_misc_attributes():
@@ -847,8 +865,10 @@ def test_radio():
         'b',
         'c',
     ]
-    req('get')
-    form = Form(fields__foo=Field.radio(choices=choices),).bind(
+    form = Form(
+        fields__foo=Field.radio(choices=choices),
+    )
+    form = form.bind(
         request=req('get', foo='a'),
     )
     soup = BeautifulSoup(form.__html__(), 'html.parser')
@@ -864,7 +884,10 @@ def test_radio_full_render():
         'c',
     ]
     req('get')
-    form = Form(fields__foo=Field.radio(choices=choices),).bind(
+    form = Form(
+        fields__foo=Field.radio(choices=choices),
+    )
+    form = form.bind(
         request=req('get', foo='a'),
     )
     first = form.fields.foo.__html__()
@@ -995,7 +1018,11 @@ def test_help_text_from_model2():
     from tests.models import Foo, Bar
 
     # simple integer field
-    form = Form(auto__model=Foo, auto__include=['foo'],).bind(
+    form = Form(
+        auto__model=Foo,
+        auto__include=['foo'],
+    )
+    form = form.bind(
         request=req('get', foo='1'),
     )
     assert list(form.fields.keys()) == ['foo']
@@ -1479,41 +1506,50 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
         normalizing = []
 
     def test_empty_string_data():
-        f = Form(fields__foo=shortcut(required=False,),).bind(
-            request=req('get', foo=''),
+        form = Form(
+            fields__foo=shortcut(
+                required=False,
+            ),
         )
-        assert not f.get_errors()
-        assert f.fields.foo.value in (None, [])
-        assert f.fields.foo.rendered_value == ''
+        form = form.bind(request=req('get', foo=''))
+        assert not form.get_errors()
+        assert form.fields.foo.value in (None, [])
+        assert form.fields.foo.rendered_value == ''
 
     def test_empty_data():
-        f = Form(fields__foo=shortcut(required=False,),).bind(
-            request=req('get'),
+        form = Form(
+            fields__foo=shortcut(
+                required=False,
+            ),
         )
-        assert not f.get_errors()
-        assert f.fields.foo.value in (None, [])
+        form = form.bind(request=req('get'))
+        assert not form.get_errors()
+        assert form.fields.foo.value in (None, [])
 
     def test_editable_false():
         for _, initial in raw_and_parsed_data_tuples:
-            f = Form(fields__foo=shortcut(required=False, initial=initial, editable=False),).bind(
-                request=req('get', foo='asdasasd'),
+            form = Form(
+                fields__foo=shortcut(required=False, initial=initial, editable=False),
             )
-            assert not f.get_errors()
-            assert f.fields.foo.value is initial
+            form = form.bind(request=req('get', foo='asdasasd'))
+            assert not form.get_errors()
+            assert form.fields.foo.value is initial
 
     def test_editable_false_list():
         for _, initial in raw_and_parsed_data_tuples:
-            f = Form(fields__foo=shortcut(required=False, initial=[initial], editable=False),).bind(
-                request=req('get', foo='asdasasd'),
+            form = Form(
+                fields__foo=shortcut(required=False, initial=[initial], editable=False),
             )
-            assert not f.get_errors()
-            assert f.fields.foo.value == [initial]
+            form = form.bind(request=req('get', foo='asdasasd'))
+            assert not form.get_errors()
+            assert form.fields.foo.value == [initial]
 
     def test_roundtrip_from_initial_to_raw_string():
         for raw, initial in raw_and_parsed_data_tuples:
-            form = Form(fields__foo=shortcut(required=True, initial=initial),).bind(
-                request=req('get'),
+            form = Form(
+                fields__foo=shortcut(required=True, initial=initial),
             )
+            form = form.bind(request=req('get'))
             assert not form.get_errors()
             f = form.fields.foo
             assert not f.is_list
@@ -1522,9 +1558,10 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
 
     def test_roundtrip_from_initial_to_raw_string_list():
         for raw, initial in raw_and_parsed_data_tuples:
-            form = Form(fields__foo=shortcut(required=True, initial=initial),).bind(
-                request=req('get'),
+            form = Form(
+                fields__foo=shortcut(required=True, initial=initial),
             )
+            form = form.bind(request=req('get'))
             assert not form.get_errors()
             f = form.fields.foo
             assert f.initial == initial
@@ -1534,9 +1571,12 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
 
     def test_roundtrip_from_raw_string_to_initial():
         for raw, initial in raw_and_parsed_data_tuples:
-            form = Form(fields__foo=shortcut(required=True,),).bind(
-                request=req('get', foo=raw),
+            form = Form(
+                fields__foo=shortcut(
+                    required=True,
+                ),
             )
+            form = form.bind(request=req('get', foo=raw))
             assert not form.get_errors(), 'input: %s' % raw
             f = form.fields.foo
             assert f.raw_data == raw
@@ -1549,17 +1589,23 @@ def shortcut_test(shortcut, raw_and_parsed_data_tuples, normalizing=None, is_lis
 
     def test_normalizing():
         for non_normalized, normalized in normalizing:
-            form = Form(fields__foo=shortcut(required=True,),).bind(
-                request=req('get', foo=non_normalized),
+            form = Form(
+                fields__foo=shortcut(
+                    required=True,
+                ),
             )
+            form = form.bind(request=req('get', foo=non_normalized))
             assert not form.get_errors()
             assert form.fields.foo.rendered_value == normalized
 
     def test_parse():
         for raw, parsed in raw_and_parsed_data_tuples:
-            form = Form(fields__foo=shortcut(required=True,),).bind(
-                request=req('get', foo=raw),
+            form = Form(
+                fields__foo=shortcut(
+                    required=True,
+                ),
             )
+            form = form.bind(request=req('get', foo=raw))
             assert not form.get_errors(), 'input: %s' % raw
             f = form.fields.foo
             assert f.raw_data == raw
@@ -1829,9 +1875,13 @@ def test_form_errors_function():
     def post_validation(form, **_):
         form.add_error('global error')
 
-    assert MyForm(post_validation=post_validation,).bind(
-        request=req('post', **{'-submit': '', 'foo': 'asd'}),
-    ).get_errors() == {'global': {'global error'}, 'fields': {'foo': {'field error'}}}
+    form = MyForm(
+        post_validation=post_validation,
+    )
+    assert form.bind(request=req('post', **{'-submit': '', 'foo': 'asd'})).get_errors() == {
+        'global': {'global error'},
+        'fields': {'foo': {'field error'}},
+    }
 
 
 @pytest.mark.django
@@ -2294,9 +2344,10 @@ def test_from_model_with_inheritance():
         class Meta:
             member_class = MyField
 
-    MyForm(auto__model=FromModelWithInheritanceTest,).bind(
-        request=req('get'),
+    form = MyForm(
+        auto__model=FromModelWithInheritanceTest,
     )
+    form.bind(request=req('get'))
 
     assert was_called == {
         'MyField.float': 1,
@@ -2307,16 +2358,20 @@ def test_from_model_with_inheritance():
 def test_from_model_override_field():
     from tests.models import FormFromModelTest
 
-    form = Form(auto__model=FormFromModelTest, fields__f_float=Field(_name='f_float'),).bind(
-        request=req('get'),
+    form = Form(
+        auto__model=FormFromModelTest,
+        fields__f_float=Field(_name='f_float'),
     )
+    form = form.bind(request=req('get'))
     assert form.fields.f_float.parse is not float_parse
 
 
 def test_field_merge():
-    form = Form(fields__foo={}, instance=Struct(foo=1),).bind(
-        request=req('get'),
+    form = Form(
+        fields__foo={},
+        instance=Struct(foo=1),
     )
+    form = form.bind(request=req('get'))
     assert len(form.fields) == 1
     assert form.fields.foo._name == 'foo'
     assert form.fields.foo.value == 1
@@ -2468,9 +2523,10 @@ def test_form_h_tag():
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_render_create_object():
-    form = Form.create(auto__model=CreateOrEditObjectTest,).bind(
-        request=req('get'),
+    form = Form.create(
+        auto__model=CreateOrEditObjectTest,
     )
+    form = form.bind(request=req('get'))
     response = form.__html__(render__call_target=lambda **kwargs: kwargs)
     assert response['context']['csrf_token']
 
@@ -2982,9 +3038,10 @@ def test_find_prefixes(attributes, result):
 
 @pytest.mark.django_db
 def test_choices_in_char_field_model():
-    form = Form.edit(auto__model=ChoicesModel,).bind(
-        request=req('get'),
+    form = Form.edit(
+        auto__model=ChoicesModel,
     )
+    form = form.bind(request=req('get'))
 
     assert form.fields.color.choices == ['purple', 'orange']
 
@@ -3005,9 +3062,10 @@ def test_choices_in_char_field_model():
 def test_choices_in_char_field_model_as_class():
     from tests.models import ChoicesClassModel
 
-    form = Form.edit(auto__model=ChoicesClassModel,).bind(
-        request=req('get'),
+    form = Form.edit(
+        auto__model=ChoicesClassModel,
     )
+    form = form.bind(request=req('get'))
 
     assert form.fields.color.choices == ['purple_thing-thing', 'orange']
 

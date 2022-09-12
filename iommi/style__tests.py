@@ -176,9 +176,12 @@ def test_apply_checkbox_style():
     form = form.bind(request=None)
 
     assert get_style_object(form.fields.foo) == get_global_style('bootstrap')
-    assert Namespace(*get_global_style('bootstrap').resolve(obj=form.fields.foo, is_root=False,))[
-        'attrs'
-    ] == {'class': {'form-group': True, 'form-check': True}}
+    assert Namespace(
+        *get_global_style('bootstrap').resolve(
+            obj=form.fields.foo,
+            is_root=False,
+        )
+    ).attrs == {'class': {'form-group': True, 'form-check': True}}
     assert render_attrs(form.fields.foo.attrs) == ' class="form-check form-group"'
     assert (
         render_attrs(form.fields.foo.input.attrs) == ' class="form-check-input" id="id_foo" name="foo" type="checkbox"'
@@ -639,16 +642,19 @@ class Dog:
 
 
 def test_resolve_style():
-    assert Style(Dog__tail='short',).resolve(
-        Dog()
-    ) == [dict(tail='short')]
+    style = Style(
+        Dog__tail='short',
+    )
+    assert style.resolve(Dog()) == [dict(tail='short')]
 
 
 def test_resolve_inherit():
     base_style = Style(Dog__snout='yes')
-    assert Style(base_style, Dog__tail='short',).resolve(
-        Dog()
-    ) == [dict(snout='yes', tail='short')]
+    style = Style(
+        base_style,
+        Dog__tail='short',
+    )
+    assert style.resolve(Dog()) == [dict(snout='yes', tail='short')]
 
 
 def test_resolve_substyle():

@@ -980,9 +980,7 @@ def test_bulk_edit_custom_response():
 @pytest.mark.skip('Django trips up on update when there is an annotation to a foreign table')
 @pytest.mark.django_db
 def test_django_broken_update():
-    TBar.objects.annotate(a=F('foo__a'),).order_by('a',).update(
-        c=True,
-    )
+    TBar.objects.annotate(a=F('foo__a')).order_by('a').update(c=True)
 
     assert True
 
@@ -1850,9 +1848,10 @@ def test_choice_queryset():
         class Meta:
             model = TFoo
 
-    foo_table = FooTable(rows=TFoo.objects.all(),).bind(
-        request=req('get'),
+    foo_table = FooTable(
+        rows=TFoo.objects.all(),
     )
+    foo_table = foo_table.bind(request=req('get'))
 
     assert repr(foo_table.columns['foo'].choices) == repr(TFoo.objects.filter(a=1))
     assert repr(foo_table.bulk.fields['foo'].choices) == repr(TFoo.objects.filter(a=1))
@@ -1970,9 +1969,10 @@ def test_row_extra_evaluated():
             row__extra__foo = some_callable
             row__extra_evaluated__foo = some_callable
 
-    table = TestTable(rows=[Struct(a=5, b=7)],).bind(
-        request=req('get'),
+    table = TestTable(
+        rows=[Struct(a=5, b=7)],
     )
+    table = table.bind(request=req('get'))
     cells = list(table.cells_for_rows())[0]
     assert cells.extra.foo is some_callable
     assert cells.extra_evaluated.foo == 5 + 7
@@ -2763,9 +2763,11 @@ def test_all_column_shortcuts():
         columns__column_of_type_foreign_key__model_field=TBar.foo.field,
     )
 
-    table = MyFancyTable(**config, **type_specifics,).bind(
-        request=req('get'),
+    table = MyFancyTable(
+        **config,
+        **type_specifics,
     )
+    table = table.bind(request=req('get'))
 
     for name, column in items(table.columns):
         assert column.extra.get('fancy'), name
@@ -3530,10 +3532,13 @@ def test_auto_model_dunder_path():
 @pytest.mark.django_db
 def test_invalid_form_message():
     invalid_form_message = 'Seventh Star'
-    t = Table(auto__model=TBar, columns__foo__filter__include=True, invalid_form_message=invalid_form_message,).bind(
-        request=req('get', foo=11)
-    )  # 11 isn't in valid choices!
-    assert invalid_form_message in t.__html__()
+    table = Table(
+        auto__model=TBar,
+        columns__foo__filter__include=True,
+        invalid_form_message=invalid_form_message,
+    )
+    table = table.bind(request=req('get', foo=11))  # 11 isn't in valid choices!
+    assert invalid_form_message in table.__html__()
 
 
 @pytest.mark.django_db
@@ -3748,9 +3753,11 @@ def test_text_choices():
     ChoicesClassModel(color='purple').save()
     ChoicesClassModel(color='orange').save()
 
-    table = Table(auto__rows=ChoicesClassModel.objects.all(), columns__color__filter__include=True,).bind(
-        request=req('get', color='orange'),
+    table = Table(
+        auto__rows=ChoicesClassModel.objects.all(),
+        columns__color__filter__include=True,
     )
+    table = table.bind(request=req('get', color='orange'))
 
     assert table.get_visible_rows().get().color == 'orange'
 
