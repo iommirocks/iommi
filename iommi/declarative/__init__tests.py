@@ -79,8 +79,10 @@ def test_required_parameter():
 def test_find_member_fail_on_tuple():
     with pytest.raises(TypeError) as e:
 
+        # fmt: off
         class MyDeclarative(Declarative):
-            foo = (Member(foo='bar'),)
+            foo = Member(foo='bar'),
+        # fmt: on
 
     assert (
         str(e.value) == "'foo' is a one-tuple containing what we are looking for.  "
@@ -92,9 +94,11 @@ def test_find_member_fail_on_tuple():
 def test_find_member_fail_on_tuple_with_is_member_lambda():
     with pytest.raises(TypeError) as e:
 
+        # fmt: off
         @declarative(is_member=lambda obj: isinstance(obj, Member))
         class MyDeclarative:
-            foo = (Member(foo='bar'),)
+            foo = Member(foo='bar'),
+        # fmt: on
 
     assert (
         str(e.value) == "'foo' is a one-tuple containing what we are looking for.  "

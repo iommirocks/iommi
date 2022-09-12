@@ -224,7 +224,10 @@ def test_flatten_broken():
 
 def test_flatten_identity_on_namespace_should_not_trigger_loop_detection():
     foo = Namespace(show=True)
-    namespace = Namespace(party1_labels=foo, party2_labels=foo, )
+    namespace = Namespace(
+        party1_labels=foo,
+        party2_labels=foo,
+    )
     assert flatten(namespace) == dict(
         party1_labels__show=True,
         party2_labels__show=True,
