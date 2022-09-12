@@ -3333,11 +3333,3 @@ def test_choice_queryset_with_thousands_separator_setting(settings):
         str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
         == f'<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="{user.pk}">foo</option>\n</select>'
     )
-
-
-def test_action_callbacks_should_be_lazy():
-    form = Form(actions=dict(
-        foo=Action(post_handler=lambda **_: dict()),
-        bar=Action(post_handler=lambda **_: None, extra_evaluated__fail=lambda **_: 1/0),
-    ))
-    assert form.bind(request=req('post', **{'-foo': ''})).render_to_response().content == b'{}'
