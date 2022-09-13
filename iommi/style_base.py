@@ -21,7 +21,7 @@ select2_assets = dict(
                         iommi_init_all_select2();
                     }
                 });
-    
+
                 function iommi_init_all_select2() {
                     $('.select2_enhance').each(function (_, x) {
                         iommi_init_select2(x);
@@ -31,7 +31,7 @@ select2_assets = dict(
                         iommi_init_select2(x);
                     });
                 }
-    
+
                 function iommi_init_select2(elem) {
                     let f = $(elem);
                     let endpoint_path = f.attr('data-choices-endpoint');
@@ -52,7 +52,7 @@ select2_assets = dict(
                                     page: params.page || 1
                                 }
                                 result[endpoint_path] = params.term || '';
-    
+
                                 return result;
                             }
                         }

@@ -16,10 +16,7 @@ from django.http import (
     Http404,
     HttpResponseRedirect,
 )
-from django.shortcuts import (
-    redirect,
-    resolve_url,
-)
+from django.shortcuts import resolve_url
 from django.urls import (
     path,
     reverse,
@@ -28,7 +25,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext
 
 from iommi import (
-    Action,
     Field,
     Form,
     Fragment,
@@ -383,7 +379,7 @@ class Admin(Page):
                     format_html(
                         '''
                             Copy the conf value to the `Meta` class of an `iommi_admin.py` file.
-                            
+
                             Read <a href="https://docs.iommi.rocks/en/latest/admin.html#customization">the docs for admin customization</a> for more information.
                         ''',
                         include=settings.DEBUG,

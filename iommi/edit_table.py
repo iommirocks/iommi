@@ -289,7 +289,7 @@ class EditTable(Table):
                             }
                             return null;
                         }
-            
+
                         let table = null;
                         while (element.tagName !== 'FORM') {
                             element = element.parentNode;
@@ -303,12 +303,12 @@ class EditTable(Table):
                             console.error('iommi: failed to find table!');
                             return;
                         }
-            
+
                         let virtual_pk = parseInt(table.getAttribute('data-next-virtual-pk'), 10);
                         virtual_pk -= 1;
                         virtual_pk = virtual_pk.toString();
                         table.setAttribute('data-next-virtual-pk', virtual_pk);
-            
+
                         let tmp = document.createElement('table');
                         tmp.innerHTML = table.getAttribute('data-add-template').replaceAll('#sentinel#', virtual_pk);
                         let y = tmp.querySelector('tr');

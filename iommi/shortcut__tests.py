@@ -235,7 +235,7 @@ def test_superinvoking_classmethod_args():
         @superinvoking_classmethod
         def f(cls, calls, super_classmethod):
             assert cls.__name__ == 'Bar'
-            calls.append(f'Bar:f was here')
+            calls.append('Bar:f was here')
             return super_classmethod(calls)
 
     assert Bar.f([]) == [
@@ -249,7 +249,7 @@ def test_superinvoking_classmethod_kwargs():
         @classmethod
         def f(cls, calls):
             assert cls.__name__ == 'Bar'
-            calls.append(f'Foo:f was here')
+            calls.append('Foo:f was here')
             return calls
 
     class Bar(Foo):
@@ -257,7 +257,7 @@ def test_superinvoking_classmethod_kwargs():
         @superinvoking_classmethod
         def f(cls, calls, super_classmethod):
             assert cls.__name__ == 'Bar'
-            calls.append(f'Bar:f was here')
+            calls.append('Bar:f was here')
             return super_classmethod(calls=calls)
 
     assert Bar.f(calls=[]) == [

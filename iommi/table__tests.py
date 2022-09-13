@@ -3808,7 +3808,7 @@ def test_pagination_with_thousands_separator(settings):
                 <li> <a href="?page_size=1&amp;page=999" aria-label="Page 999">999</a> </li>
                 <li> <a href="?page_size=1&amp;page=1000" aria-label="Page 1,000">1,000</a> </li>
                 <li> <a href="?page_size=1&amp;page=1001" aria-label="Page 1,001">1,001</a> </li>
-                <li> <a href="?page_size=1&amp;page=1002" aria-label="Page 1,002">1,002</a> </li>  
+                <li> <a href="?page_size=1&amp;page=1002" aria-label="Page 1,002">1,002</a> </li>
             </ul>
         </nav>
         """,

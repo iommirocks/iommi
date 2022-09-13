@@ -1285,7 +1285,7 @@ def delete_object__post_handler(form, **_):
                     """
                         {% load i18n %}
                         <p>{% blocktrans with escaped_object=object %}Deleting the {{ object_name }} '{{ escaped_object }}' would require deleting the following protected related objects:{% endblocktrans %}</p>
-            
+
                         <ul>
                             {% for obj in restricted_objects %}
                                 <li>
