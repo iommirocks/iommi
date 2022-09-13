@@ -91,7 +91,9 @@ def table_auto_example_2(request):
 def table_kitchen_sink(request):
     class BarTable(Table):
         select = Column.select()  # Shortcut for creating checkboxes to select rows
-        b_a = Column.number(attr='b__a', filter__include=True)  # Show "a" from "b". This works for plain old objects too.
+        b_a = Column.number(
+            attr='b__a', filter__include=True
+        )  # Show "a" from "b". This works for plain old objects too.
 
         b = Column.from_model(
             model=TBar,

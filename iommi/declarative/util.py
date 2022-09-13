@@ -34,6 +34,7 @@ def add_init_call_hook(cls, init_hook):
 
 def inject_args(args, kwargs, extra_args, pos_arg_names, merge_namespaces):
     from .namespace import Namespace
+
     new_kwargs = dict(extra_args)
     if pos_arg_names:
         if len(args) > len(pos_arg_names):

@@ -8,33 +8,39 @@ from .util import (
 
 def declarative(member_class=None, parameter='members', add_init_kwargs=True, sort_key=None, is_member=None):
     """
-        Class decorator to enable classes to be defined in the style of django models.
-        That is, @declarative classes will get an additional argument to constructor,
-        containing a dict with all class members matching the specified type.
+    Class decorator to enable classes to be defined in the style of django models.
+    That is, @declarative classes will get an additional argument to constructor,
+    containing a dict with all class members matching the specified type.
 
-        :param class member_class: Class(es) to collect
-        :param is_member: Function to determine if an object should be collected
-        :param str parameter: Name of constructor parameter to inject
-        :param bool add_init_kwargs: If constructor parameter should be injected (Default: True)
-        :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
+    :param class member_class: Class(es) to collect
+    :param is_member: Function to determine if an object should be collected
+    :param str parameter: Name of constructor parameter to inject
+    :param bool add_init_kwargs: If constructor parameter should be injected (Default: True)
+    :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
 
-        :type is_member: (object) -> bool
-        :type sort_key: (object) -> object
+    :type is_member: (object) -> bool
+    :type sort_key: (object) -> object
     """
     if member_class is None and is_member is None:
-        raise TypeError("The @declarative decorator needs either a member_class parameter or an is_member check function (or both)")
+        raise TypeError(
+            "The @declarative decorator needs either a member_class parameter or an is_member check function (or both)"
+        )
 
     def decorator(class_to_decorate):
         class DeclarativeMeta(class_to_decorate.__class__):
             # noinspection PyTypeChecker,PyMethodParameters
             def __init__(cls, name, bases, dict_):
-                members = get_members(cls, member_class=member_class, is_member=is_member, sort_key=sort_key, _parameter=parameter)
+                members = get_members(
+                    cls, member_class=member_class, is_member=is_member, sort_key=sort_key, _parameter=parameter
+                )
                 set_declared(cls, members, parameter)
                 super(DeclarativeMeta, cls).__init__(name, bases, dict_)
 
-        new_class = DeclarativeMeta(class_to_decorate.__name__,
-                                    class_to_decorate.__bases__,
-                                    {k: v for k, v in class_to_decorate.__dict__.items() if k not in ['__dict__', '__weakref__']})
+        new_class = DeclarativeMeta(
+            class_to_decorate.__name__,
+            class_to_decorate.__bases__,
+            {k: v for k, v in class_to_decorate.__dict__.items() if k not in ['__dict__', '__weakref__']},
+        )
 
         def get_extra_args_function(self):
             declared = get_declared(self, parameter)
@@ -57,9 +63,9 @@ def declarative(member_class=None, parameter='members', add_init_kwargs=True, so
 
 def set_declared(cls, value, parameter='members'):
     """
-        :type cls: class
-        :type value: dict
-        :type parameter: str
+    :type cls: class
+    :type value: dict
+    :type parameter: str
     """
 
     setattr(cls, '_declarative_' + parameter, value)
@@ -67,13 +73,13 @@ def set_declared(cls, value, parameter='members'):
 
 def get_declared(cls, parameter='members'):
     """
-        Get the :code:`dict` value of the parameter collected by the :code:`@declarative` class decorator.
-        This is the same value that would be submitted to the :code:`__init__` invocation in the :code:`members`
-        argument (or another name if overridden by the :code:`parameter` specification)
+    Get the :code:`dict` value of the parameter collected by the :code:`@declarative` class decorator.
+    This is the same value that would be submitted to the :code:`__init__` invocation in the :code:`members`
+    argument (or another name if overridden by the :code:`parameter` specification)
 
-        :type cls: class
-        :type parameter: str
-        :rtype: dict
+    :type cls: class
+    :type parameter: str
+    :rtype: dict
     """
 
     return getattr(cls, '_declarative_' + parameter, {})
@@ -82,15 +88,15 @@ def get_declared(cls, parameter='members'):
 # noinspection PyIncorrectDocstring
 def get_members(cls, member_class=None, is_member=None, sort_key=None, _parameter=None):
     """
-        Collect all class level attributes matching the given criteria.
+    Collect all class level attributes matching the given criteria.
 
-        :param cls: Class to traverse
-        :param class member_class: Class(es) to collect
-        :param is_member: Function to determine if an object should be collected
-        :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
+    :param cls: Class to traverse
+    :param class member_class: Class(es) to collect
+    :param is_member: Function to determine if an object should be collected
+    :param sort_key: Function to invoke on members to obtain ordering (Default is to use ordering from `creation_ordered`)
 
-        :type is_member: (object) -> bool
-        :type sort_key: (object) -> object
+    :type is_member: (object) -> bool
+    :type sort_key: (object) -> object
     """
     if member_class is None and is_member is None:
         raise TypeError("get_members either needs a member_class parameter or an is_member check function (or both)")
@@ -106,9 +112,8 @@ def get_members(cls, member_class=None, is_member=None, sort_key=None, _paramete
 
     def generate_member_bindings():
         def is_a_member(maybe_member):
-            return (
-                (member_class is not None and isinstance(maybe_member, member_class))
-                or (is_member is not None and is_member(maybe_member))
+            return (member_class is not None and isinstance(maybe_member, member_class)) or (
+                is_member is not None and is_member(maybe_member)
             )
 
         for name in cls.__dict__:
@@ -118,7 +123,9 @@ def get_members(cls, member_class=None, is_member=None, sort_key=None, _paramete
             if is_a_member(obj):
                 yield name, obj
             elif type(obj) is tuple and len(obj) == 1 and is_a_member(obj[0]):
-                raise TypeError(f"'{name}' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't.")  # pragma: no mutate
+                raise TypeError(
+                    f"'{name}' is a one-tuple containing what we are looking for.  Trailing comma much?  Don't... just don't."
+                )  # pragma: no mutate
 
     bindings = generate_member_bindings()
 

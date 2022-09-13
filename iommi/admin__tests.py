@@ -34,13 +34,15 @@ urlpatterns = [
 def test_bulk_edit_for_non_unique(settings):
     settings.ROOT_URLCONF = __name__
     request = staff_req('get')
-    result = Admin.list(
-        parts__list_tests_adminunique__columns__foo__bulk__include=True,
-    ).refine_with_params(
-        app_name='tests',
-        model_name='adminunique',
-    ).bind(
-        request=request
+    result = (
+        Admin.list(
+            parts__list_tests_adminunique__columns__foo__bulk__include=True,
+        )
+        .refine_with_params(
+            app_name='tests',
+            model_name='adminunique',
+        )
+        .bind(request=request)
     )
 
     assert [x._name for x in values(result.parts.list_tests_adminunique.columns) if x.bulk.include] == ['foo']
@@ -181,10 +183,7 @@ def test_messages():
 def test_all_models(settings):
     settings.ROOT_URLCONF = __name__
     request = staff_req('get')
-    assert (
-        'Authentication'
-        in Admin.all_models().bind(request=request).render_to_response().content.decode()
-    )
+    assert 'Authentication' in Admin.all_models().bind(request=request).render_to_response().content.decode()
 
 
 @pytest.mark.django_db

@@ -84,7 +84,13 @@ class Page(Part):
         _parts_dict = {k: as_fragment_if_needed(k, v) for k, v in items(self.get_declared('parts_dict'))}
         self.parts = Namespace({k: as_fragment_if_needed(k, v) for k, v in items(self.parts)})
 
-        refine_done_members(self, name='parts', members_from_namespace=self.parts, members_from_declared=_parts_dict, cls=self.get_meta().member_class)
+        refine_done_members(
+            self,
+            name='parts',
+            members_from_namespace=self.parts,
+            members_from_declared=_parts_dict,
+            cls=self.get_meta().member_class,
+        )
 
         super(Page, self).on_refine_done()
 
@@ -105,10 +111,7 @@ class Page(Part):
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}
         rendered = {'h_tag': as_html(request=request, part=self.h_tag, context=context)}
         rendered.update(
-            {
-                name: as_html(request=request, part=part, context=context)
-                for name, part in items(self.parts)
-            }
+            {name: as_html(request=request, part=part, context=context) for name, part in items(self.parts)}
         )
 
         return render(rendered)

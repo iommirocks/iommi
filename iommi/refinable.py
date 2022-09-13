@@ -40,6 +40,7 @@ class Prio(Enum):
     """
     Determines the order of priority in which refinement of attributes is performed.
     """
+
     refine_defaults = auto()
     table_defaults = auto()
     member_defaults = auto()
@@ -67,10 +68,7 @@ class RefinableNamespace(Namespace):
     __iommi_refined_stack: List[Tuple[Prio, Namespace, List[Tuple[str, Any]]]]
 
     def as_stack(self):
-        return [
-            (prio.name, dict(flattened_params))
-            for prio, _, flattened_params in self._get_parent_stack()
-        ]
+        return [(prio.name, dict(flattened_params)) for prio, _, flattened_params in self._get_parent_stack()]
 
     def _get_parent_stack(self):
         try:
@@ -172,8 +170,11 @@ class RefinableObject:
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
                 f'{self.__class__.__name__} object has no refinable attribute(s): '
-                + ', '.join(f'"{k}"' for k in sorted(unknown_args)) + '.\n'
-                + 'Available attributes:\n    ' + available_keys + '\n'
+                + ', '.join(f'"{k}"' for k in sorted(unknown_args))
+                + '.\n'
+                + 'Available attributes:\n    '
+                + available_keys
+                + '\n'
             )
 
     def refine_done(self, parent=None):
@@ -188,6 +189,7 @@ class RefinableObject:
             iommi_style = result.iommi_namespace.get('iommi_style')
 
             from iommi.style import resolve_style
+
             iommi_style = resolve_style(iommi_style, enclosing_style=enclosing_style)
             result = result.apply_style(iommi_style, is_root=is_root)
 
@@ -208,9 +210,12 @@ class RefinableObject:
             unknown_args = list(remaining_namespace.keys())
             available_keys = '\n    '.join(sorted(declared_items.keys()))
             raise TypeError(
-                    f'{result.__class__.__name__} object has no refinable attribute(s): '
-                    + ', '.join(f'"{k}"' for k in sorted(unknown_args)) + '.\n'
-                    + 'Available attributes:\n    ' + available_keys + '\n'
+                f'{result.__class__.__name__} object has no refinable attribute(s): '
+                + ', '.join(f'"{k}"' for k in sorted(unknown_args))
+                + '.\n'
+                + 'Available attributes:\n    '
+                + available_keys
+                + '\n'
             )
         result.is_refine_done = True
 
@@ -238,7 +243,5 @@ class RefinableObject:
 
     def __repr__(self):
         return (
-            f"<{self.__class__.__name__} "
-            + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace))
-            + ">"
+            f"<{self.__class__.__name__} " + ' '.join(f'{k}={v}' for k, v in flatten_items(self.iommi_namespace)) + ">"
         )

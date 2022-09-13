@@ -28,7 +28,12 @@ from iommi.refinable import (
 
 
 def create_members_from_model(
-    *, member_class, model, include: List[str] = None, exclude: List[str] = None, default_included=True,
+    *,
+    member_class,
+    model,
+    include: List[str] = None,
+    exclude: List[str] = None,
+    default_included=True,
 ):
     members = Struct()
 
@@ -45,7 +50,6 @@ def create_members_from_model(
             _name=name,
             call_target__cls=member_class,
             call_target__attribute='from_model',
-
             model_field_name=model_field_name,
             model=model,
         )

@@ -293,16 +293,9 @@ def test_traversable_repr():
 
 
 def test_apply_style_not_affecting_definition(settings):
-    with register_style(
-        'my_style',
-        Style(
-            Fragment__attrs__class__foo=True,
-        ),
-    ), register_style(
+    with register_style('my_style', Style(Fragment__attrs__class__foo=True)), register_style(
         'other_style',
-        Style(
-            Fragment__attrs__class__bar=True,
-        ),
+        Style(Fragment__attrs__class__bar=True),
     ):
 
         definition = Fragment()
@@ -351,6 +344,7 @@ def test_get_config():
             Fruit__attrs__class__style=True,
         ),
     ):
+
         class FruitBase(Traversable):
             attrs = Refinable()
 
@@ -397,7 +391,13 @@ def test_get_config():
                 super(BasketBase, self).__init__(**kwargs)
 
             def on_refine_done(self):
-                refine_done_members(self, name='fruits', members_from_namespace=self.fruits, members_from_declared=self.get_declared('fruits'), cls=Fruit)
+                refine_done_members(
+                    self,
+                    name='fruits',
+                    members_from_namespace=self.fruits,
+                    members_from_declared=self.get_declared('fruits'),
+                    cls=Fruit,
+                )
 
             def on_bind(self) -> None:
                 bind_members(self, name='fruits')
@@ -414,14 +414,16 @@ def test_get_config():
 
         basket = MyBasket(fruits__banana__attrs__class__my_basket_invoke=True).bind(request=None)
 
-        assert sorted(set(basket.fruits.banana.attrs['class'].keys())) == sorted({
-            'fruit',
-            'fruit_base',
-            'style',
-            'basket',
-            'basket_base',
-            'my_basket_invoke',
-            'fruit_shortcut',
-            'fruit_shortcut_base',
-            'my_basket_fruit_invoke',
-        })
+        assert sorted(set(basket.fruits.banana.attrs['class'].keys())) == sorted(
+            {
+                'fruit',
+                'fruit_base',
+                'style',
+                'basket',
+                'basket_base',
+                'my_basket_invoke',
+                'fruit_shortcut',
+                'fruit_shortcut_base',
+                'my_basket_fruit_invoke',
+            }
+        )

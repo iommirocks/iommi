@@ -214,6 +214,7 @@ def MyField():
         )
         def my_integer(cls, **kwargs):
             return cls.integer(**kwargs)
+
     return MyField
 
 

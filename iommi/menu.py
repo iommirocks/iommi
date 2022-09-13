@@ -65,7 +65,13 @@ class MenuBase(Part, Tag):
         self._active = False
 
     def on_refine_done(self):
-        refine_done_members(self, name='sub_menu', members_from_namespace=self.sub_menu, members_from_declared=self.get_declared('_sub_menu_dict'), cls=MenuItem)
+        refine_done_members(
+            self,
+            name='sub_menu',
+            members_from_namespace=self.sub_menu,
+            members_from_declared=self.get_declared('_sub_menu_dict'),
+            cls=MenuItem,
+        )
         super().on_refine_done()
 
     def __repr__(self):

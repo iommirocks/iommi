@@ -52,7 +52,9 @@ def test_getattr_missing_attribute():
 
     with pytest.raises(AttributeError) as e:
         getattr_path(Struct(foo=object()), 'foo__bar')
-    assert str(e.value) == "'Struct' object has no attribute path 'foo__bar', since 'object' object has no attribute 'bar'"
+    assert (
+        str(e.value) == "'Struct' object has no attribute path 'foo__bar', since 'object' object has no attribute 'bar'"
+    )
 
 
 def test_getattr_default():
@@ -76,45 +78,57 @@ def test_setdefaults_path_3():
 
 
 def test_setdefaults_path():
-    actual = setdefaults_path(dict(
-        x=1,
-        y=dict(z=2)
-    ), dict(
-        a=3,
-        x=4,
-        y__b=5,
-        y__z=6
-    ))
+    actual = setdefaults_path(
+        dict(
+            x=1,
+            y=dict(z=2),
+        ),
+        dict(
+            a=3,
+            x=4,
+            y__b=5,
+            y__z=6,
+        ),
+    )
     expected = dict(
         x=1,
         a=3,
-        y=dict(z=2, b=5)
+        y=dict(
+            z=2,
+            b=5,
+        ),
     )
     assert actual == expected
 
 
 def test_setdefaults_namespace_merge():
-    actual = setdefaults_path(dict(
-        x=1,
-        y=Struct(z=Struct(foo=True))
-    ), dict(
-        y__a__b=17,
-        y__z__c=True
-    ))
+    actual = setdefaults_path(
+        dict(x=1, y=Struct(z=Struct(foo=True))),
+        dict(
+            y__a__b=17,
+            y__z__c=True,
+        ),
+    )
     expected = dict(
         x=1,
-        y=Struct(a=Struct(b=17),
-                 z=Struct(foo=True,
-                          c=True))
+        y=Struct(
+            a=Struct(b=17),
+            z=Struct(
+                foo=True,
+                c=True,
+            ),
+        ),
     )
     assert actual == expected
 
 
 def test_setdefaults_callable_forward():
-    actual = setdefaults_path(Namespace(
-        foo=lambda x: x,
-        foo__x=17,
-    ))
+    actual = setdefaults_path(
+        Namespace(
+            foo=lambda x: x,
+            foo__x=17,
+        )
+    )
     assert actual.foo() == 17
 
 
@@ -183,8 +197,7 @@ def test_namespace_as_callable_with_call_target_missing():
         subject()
 
     expected_error_msg = (
-        "Namespace was used as a function, but no call_target was specified. "
-        "The namespace is: Namespace(x=17)"
+        "Namespace was used as a function, but no call_target was specified. The namespace is: Namespace(x=17)"
     )
     assert expected_error_msg in str(e.value)
 
@@ -199,10 +212,11 @@ def test_namespace_flatten_loop_detection():
 
 
 def test_flatten_broken():
-    assert flatten(Namespace(
+    namespace = Namespace(
         party1_labels=Namespace(show=True),
         party2_labels=Namespace(show=True),
-    )) == dict(
+    )
+    assert flatten(namespace) == dict(
         party1_labels__show=True,
         party2_labels__show=True,
     )
@@ -210,10 +224,11 @@ def test_flatten_broken():
 
 def test_flatten_identity_on_namespace_should_not_trigger_loop_detection():
     foo = Namespace(show=True)
-    assert flatten(Namespace(
+    namespace = Namespace(
         party1_labels=foo,
         party2_labels=foo,
-    )) == dict(
+    )
+    assert flatten(namespace) == dict(
         party1_labels__show=True,
         party2_labels__show=True,
     )
@@ -315,17 +330,21 @@ def test_namespace_no_promote_overwrite_backwards():
 
 
 @pytest.mark.parametrize('backward', [False, True], ids={False: '==>', True: '<=='}.get)
-@pytest.mark.parametrize('a, b, expected', [
-    (Namespace(), Namespace(), Namespace()),
-    (Namespace(a=1), Namespace(b=2), Namespace(a=1, b=2)),
-    (Namespace(a__b=1), Namespace(a__c=2), Namespace(a__b=1, a__c=2)),
-    (Namespace(x=sum), Namespace(x__y=1), Namespace(x__call_target=sum, x__y=1)),
-    (Namespace(x=dict(y=1)), Namespace(x__z=2), Namespace(x__y=1, x__z=2)),
-    (Namespace(x=Namespace(y__z=1)), Namespace(a=Namespace(b__c=2)), Namespace(x__y__z=1, a__b__c=2)),
-    (Namespace(bar__a=1), Namespace(bar__quux__title=2), Namespace(bar__a=1, bar__quux__title=2)),
-    (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
-    (Namespace(bar__='foo'), Namespace(bar__fisk="hi"), Namespace(bar__='foo', bar__fisk='hi')),
-], ids=str)
+@pytest.mark.parametrize(
+    'a, b, expected',
+    [
+        (Namespace(), Namespace(), Namespace()),
+        (Namespace(a=1), Namespace(b=2), Namespace(a=1, b=2)),
+        (Namespace(a__b=1), Namespace(a__c=2), Namespace(a__b=1, a__c=2)),
+        (Namespace(x=sum), Namespace(x__y=1), Namespace(x__call_target=sum, x__y=1)),
+        (Namespace(x=dict(y=1)), Namespace(x__z=2), Namespace(x__y=1, x__z=2)),
+        (Namespace(x=Namespace(y__z=1)), Namespace(a=Namespace(b__c=2)), Namespace(x__y__z=1, a__b__c=2)),
+        (Namespace(bar__a=1), Namespace(bar__quux__title=2), Namespace(bar__a=1, bar__quux__title=2)),
+        (Namespace(bar__a=1), Namespace(bar__quux__title="hi"), Namespace(bar__a=1, bar__quux__title="hi")),
+        (Namespace(bar__='foo'), Namespace(bar__fisk="hi"), Namespace(bar__='foo', bar__fisk='hi')),
+    ],
+    ids=str,
+)
 def test_merge(a, b, expected, backward):
     if backward:
         a, b = b, a
@@ -348,11 +367,7 @@ def test_setdefaults_path_empty_marker_copy():
 
 
 def test_setdefaults_path_empty_marker_no_side_effect():
-    assert setdefaults_path(
-        Namespace(a__b=1, a__c=2),
-        a=Namespace(d=3),
-        a__e=4,
-    ) == Namespace(
+    assert setdefaults_path(Namespace(a__b=1, a__c=2), a=Namespace(d=3), a__e=4) == Namespace(
         a__b=1,
         a__c=2,
         a__d=3,
@@ -396,17 +411,11 @@ def test_setdefaults_path_ordering():
 
 
 def test_setdefatults_path_retain_empty():
-    assert setdefaults_path(Namespace(
-        a=Namespace()),
-        a__b=Namespace()
-    ) == Namespace(
+    assert setdefaults_path(Namespace(a=Namespace()), a__b=Namespace()) == Namespace(
         a__b=Namespace(),
     )
 
-    assert setdefaults_path(
-        Namespace(),
-        attrs__class=Namespace(),
-    ) == Namespace(
+    assert setdefaults_path(Namespace(), attrs__class=Namespace()) == Namespace(
         attrs__class=Namespace(),
     )
 
@@ -419,10 +428,7 @@ def test_namespace_call():
     def bar(arg):
         return arg
 
-    f = Namespace(
-        call_target=bar,
-        arg='arg'
-    )
+    f = Namespace(call_target=bar, arg='arg')
     assert f() == 'arg'
 
 
@@ -432,11 +438,7 @@ def test_namespace_class_call():
         def bar(arg):
             return arg
 
-    f = Namespace(
-        call_target__cls=Foo,
-        call_target__attribute='bar',
-        arg='arg'
-    )
+    f = Namespace(call_target__cls=Foo, call_target__attribute='bar', arg='arg')
     assert f() == 'arg'
 
 
@@ -450,7 +452,7 @@ def test_namespace_class_call_override_default():
         call_target__call_target=lambda arg: "not arg",
         call_target__cls=Foo,
         call_target__attribute='bar',
-        arg='arg'
+        arg='arg',
     )
     assert f() == 'not arg'
 
@@ -476,7 +478,7 @@ def test_namespace_call_attribute_None():
     f = Namespace(
         call_target__cls=Foo,
         call_target__attribute=None,
-        arg='arg'
+        arg='arg',
     )
     assert f().arg == 'arg'
 

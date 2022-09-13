@@ -35,7 +35,7 @@ def test_order_after_large():
     sorts_right(
         dict(
             foo=Struct(expected_position=2, after=42),
-            bar=Struct(expected_position=0, ),
+            bar=Struct(expected_position=0),
             quux=Struct(expected_position=3, after=42),
             baz=Struct(expected_position=1, after=17),
         )

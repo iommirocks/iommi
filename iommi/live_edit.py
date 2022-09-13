@@ -88,7 +88,12 @@ def get_class_ast(cls):
     is_unix_line_endings = '\r\n' not in entire_file
 
     ast_of_entire_file = parso.parse(entire_file)
-    return find_node(name=cls.__name__, node=ast_of_entire_file, node_type='classdef'), is_unix_line_endings, ast_of_entire_file, filename
+    return (
+        find_node(name=cls.__name__, node=ast_of_entire_file, node_type='classdef'),
+        is_unix_line_endings,
+        ast_of_entire_file,
+        filename,
+    )
 
 
 def get_ast(view):
@@ -277,6 +282,7 @@ def dangerous_execute_code(code, request, view, args, kwargs):
     local_variables = {}
     if isinstance(view, Part):
         from importlib import import_module
+
         module = import_module(view.__module__)
         exec(code, module.__dict__, local_variables)
     else:

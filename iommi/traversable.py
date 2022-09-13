@@ -185,9 +185,7 @@ class Traversable(RefinableObject):
         if hasattr(result, 'attrs'):
             result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
-        evaluated_attributes = [
-            k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)
-        ]
+        evaluated_attributes = [k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)]
         evaluate_members(result, evaluated_attributes, **evaluate_parameters)
 
         if hasattr(result, 'extra_evaluated'):
@@ -226,7 +224,9 @@ def declared_members(node: Traversable) -> Any:
         else:
             child = getattr(node, k)
             if isinstance(child, RefinableObject):
-                assert child.is_refine_done, f"refine_done() not invoked on something ({k}) in the declared namespace of {node._name}"
+                assert (
+                    child.is_refine_done
+                ), f"refine_done() not invoked on something ({k}) in the declared namespace of {node._name}"
                 result[k] = child
     if hasattr(node, '_declared_members'):
         result.update(node._declared_members)

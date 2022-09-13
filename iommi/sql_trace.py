@@ -58,6 +58,7 @@ assert getattr(settings, 'SQL_DEBUG', None) in SQL_DEBUG_LEVELS, f'SQL_DEBUG mus
 
 def linkify(s):
     from iommi.debug import src_debug_url_builder
+
     r = []
     for line in s.split('\n'):
         match = re.search(r'( *)File "(.*)", line (\d+), in (.*)', line)
@@ -66,14 +67,16 @@ def linkify(s):
             filename = match.group(2)
             lineno = int(match.group(3))
             function_name = match.group(4)
-            r.append(format_html(
-                '{}File "<a href="{}">{}</a> ", line {}, in {}\n',
-                starting_space,
-                src_debug_url_builder(filename, lineno),
-                filename,
-                lineno,
-                function_name,
-            ))
+            r.append(
+                format_html(
+                    '{}File "<a href="{}">{}</a> ", line {}, in {}\n',
+                    starting_space,
+                    src_debug_url_builder(filename, lineno),
+                    filename,
+                    lineno,
+                    function_name,
+                )
+            )
 
     return format_html('{}' * len(r), *r)
 
@@ -145,7 +148,14 @@ class Middleware:
                             proportion = duration / total_duration * 100
                             k = k.replace('>', '&gt;')
                             result.append(
-                                format_html('<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>', proportion, color, len(group), f'{duration:.3}', k)
+                                format_html(
+                                    '<span style="display: inline-block; height: 30px; width: {}%; background-color: {}; border-left: 1px solid black" title="{} queries. Ran {}s, like {}"></span>',
+                                    proportion,
+                                    color,
+                                    len(group),
+                                    f'{duration:.3}',
+                                    k,
+                                )
                             )
 
                     result.append('<p></p><pre>')
@@ -416,9 +426,12 @@ def sql_debug_last_call(response):
                 sql_debug(f'------ {count} times: -------', bold=True)
                 if hasattr(response, 'iommi_part'):
                     from iommi.debug import filename_and_line_num_from_part
+
                     filename, lineno = filename_and_line_num_from_part(response.iommi_part)
                     sql_debug('From source:')
-                    sql_debug(format_clickable_filename(filename, lineno, str(response.iommi_part._name)), sql_trace=True)
+                    sql_debug(
+                        format_clickable_filename(filename, lineno, str(response.iommi_part._name)), sql_trace=True
+                    )
                     sql_debug('With Stack:')
                 sql_debug(logs[0]['stack'], sql_trace=True)
                 for x in logs[:query_cutoff]:
@@ -429,9 +442,7 @@ def sql_debug_last_call(response):
         for x in request.iommi_sql_debug_log:
             queries_per_using[x['using']] += 1
 
-        sql_debug(
-            f'Total number of SQL statements: {sum(queries_per_using.values())}\n'
-        )
+        sql_debug(f'Total number of SQL statements: {sum(queries_per_using.values())}\n')
 
     if settings.DEBUG:
         total_sql_time = f" (sql time: {sql_debug_total_time():.3f}s)"

@@ -78,7 +78,9 @@ def test_middleware(settings, client, caplog):
 
         assert '------ 4 times: -------' in caplog.text
         assert select_statement in caplog.text
-        assert 'File "iommi/sql_trace__tests.py", line ' in caplog.text.replace('iommi/iommi/', 'iommi/').replace('./', '')
+        assert 'File "iommi/sql_trace__tests.py", line ' in caplog.text.replace('iommi/iommi/', 'iommi/').replace(
+            './', ''
+        )
         assert re.findall(r'GET /\?_iommi_sql_trace -> 200  \(0\.\d\d\ds\) \(sql time: 0\.\d\d\ds\)', caplog.text)
         assert '... and 3 more unique statements' in caplog.text
 
@@ -264,4 +266,6 @@ def test_linkify():
 
 
 def test_format_clickable_line_nones():
-    assert format_clickable_filename(None, None, None) == '  File "<unknown>", line <unknown>, in <unknown> => <unknown>'
+    assert (
+        format_clickable_filename(None, None, None) == '  File "<unknown>", line <unknown>, in <unknown> => <unknown>'
+    )

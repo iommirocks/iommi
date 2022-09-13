@@ -35,6 +35,7 @@ class SyntheticTraceback:
         # This is a hack to make pytest not fail on iterating over synthetic tracebacks
         # noinspection PyUnresolvedReferences
         from _pytest._code import TracebackEntry
+
         cur_ = self
         while cur_ is not None:
             yield TracebackEntry(cur_, excinfo=None)

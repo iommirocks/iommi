@@ -80,12 +80,16 @@ class Namespace(Struct):
 
     def __repr__(self):
         # Note: `repr` is called on any values in the namespace
-        flattened_key_value_pairs = ", ".join('%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0]))
+        flattened_key_value_pairs = ", ".join(
+            '%s=%r' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])
+        )
         return "%s(%s)" % (type(self).__name__, flattened_key_value_pairs)
 
     def __str__(self):
         # Note: `str` is called on any values in the namespace
-        flattened_key_value_pairs = ", ".join('%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0]))
+        flattened_key_value_pairs = ", ".join(
+            '%s=%s' % (k, v) for k, v in sorted(flatten_items(self), key=lambda x: x[0])
+        )
         return "%s(%s)" % (type(self).__name__, flattened_key_value_pairs)
 
     def __call__(self, *args, **kwargs):
@@ -94,7 +98,9 @@ class Namespace(Struct):
         try:
             call_target = params.pop('call_target')
         except KeyError as e:
-            raise TypeError('Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self) from e
+            raise TypeError(
+                'Namespace was used as a function, but no call_target was specified. The namespace is: %s' % self
+            ) from e
 
         if isinstance(call_target, Namespace):
             if 'call_target' in call_target:

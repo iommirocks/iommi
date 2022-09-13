@@ -9,7 +9,9 @@ def dispatch(*function, **defaults):
         def dispatch_defaults_wrapper(*args, **kwargs):
             return f(*args, **Namespace(defaults, kwargs))
 
-        dispatch_defaults_wrapper.dispatch = Namespace(defaults)  # we store these here so we can inspect them for stuff like documentation
+        dispatch_defaults_wrapper.dispatch = Namespace(
+            defaults
+        )  # we store these here so we can inspect them for stuff like documentation
         return dispatch_defaults_wrapper
 
     if function:

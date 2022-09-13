@@ -113,6 +113,7 @@ def setup_db_compat_django():
     try:
         # This raises ImportError when the postgres driver isn't installed
         from django.contrib.postgres.fields import JSONField
+
         register_factory(JSONField, factory=None)
     except ImportError:
         pass

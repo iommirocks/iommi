@@ -37,6 +37,7 @@ from iommi.part import (
     Part,
     PartType,
 )
+
 # https://html.spec.whatwg.org/multipage/syntax.html#void-elements
 from iommi.refinable import (
     EvaluatedRefinable,
@@ -170,7 +171,13 @@ class Fragment(Part, Tag):
 
     def on_refine_done(self):
         super().on_refine_done()
-        refine_done_members(self, name='children', members_from_namespace=self.iommi_namespace.children, cls=Fragment, unknown_types_fall_through=True)
+        refine_done_members(
+            self,
+            name='children',
+            members_from_namespace=self.iommi_namespace.children,
+            cls=Fragment,
+            unknown_types_fall_through=True,
+        )
 
     def render_text_or_children(self, context):
         request = self.get_request()
@@ -242,7 +249,10 @@ class Header(Fragment):
 def build_and_bind_h_tag(p):
     if isinstance(p.h_tag, Namespace):
         if p.title not in (None, MISSING):
-            p.h_tag = p.h_tag(_name='h_tag', children__text=capitalize(evaluate_strict(p.title, **p.iommi_evaluate_parameters()))).bind(parent=p)
+            p.h_tag = p.h_tag(
+                _name='h_tag',
+                children__text=capitalize(evaluate_strict(p.title, **p.iommi_evaluate_parameters())),
+            ).bind(parent=p)
         else:
             p.h_tag = ''
     elif p.h_tag is not None:

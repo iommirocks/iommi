@@ -58,8 +58,7 @@ from iommi.shortcut import with_defaults
 from iommi.struct import Struct
 
 app_verbose_name_by_label = {
-    config.label: config.verbose_name.replace('_', ' ')
-    for config in values(django_apps.app_configs)
+    config.label: config.verbose_name.replace('_', ' ') for config in values(django_apps.app_configs)
 }
 
 joined_app_name_and_model = {
@@ -150,7 +149,6 @@ class Admin(Page):
                     include=True,
                     freetext=True,
                 ),
-
                 is_staff__filter__include=True,
                 is_active__filter__include=True,
                 is_superuser__filter__include=True,
@@ -186,8 +184,9 @@ class Admin(Page):
         for k in apps.keys():
             assert (
                 k in joined_app_name_and_model
-            ), f'{k} is not a valid app/model key.\n\nValid keys:\n    ' + '\n    '.join(sorted(joined_app_name_and_model))
-
+            ), f'{k} is not a valid app/model key.\n\n' f'Valid keys:\n    ' + '\n    '.join(
+                sorted(joined_app_name_and_model)
+            )
         super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
 
     def refine_with_params(self, app_name: str = None, model_name: str = None, pk: str = None):
@@ -218,7 +217,9 @@ class Admin(Page):
                 pk=kwargs.pop('pk', None),
             ).refine_done()
 
-            if not self.has_permission(request, instance=final_page.instance, model=final_page.model, operation=final_page.operation):
+            if not self.has_permission(
+                request, instance=final_page.instance, model=final_page.model, operation=final_page.operation
+            ):
                 raise Http404()
 
             view = build_as_view_wrapper(final_page)
@@ -237,18 +238,12 @@ class Admin(Page):
 
         table = self.parts.get('table')
         if table is not None:
-            setdefaults_path(
-                self.parts,
-                **{part_name: flatten(table)}
-            )
+            setdefaults_path(self.parts, **{part_name: flatten(table)})
             self.parts.table = None
 
         form = self.parts.get('form')
         if form is not None:
-            setdefaults_path(
-                self.parts,
-                **{part_name: flatten(form)}
-            )
+            setdefaults_path(self.parts, **{part_name: flatten(form)})
             self.parts.form = None
 
         def should_throw_away(k, v):
@@ -305,7 +300,6 @@ class Admin(Page):
         operation='all_models',
     )
     def all_models(cls, table=None, **kwargs):
-
         def rows(admin, request, included_filter=False, **_):
             for app_name, models in items(django_apps.all_models):
                 has_yielded_header = False
@@ -326,7 +320,9 @@ class Admin(Page):
                             app_name=None,
                             model_name=None,
                             url=None,
-                            format=lambda row, table, **_: html.h2(row.name, _name='invalid_name').bind(parent=table).__html__(),
+                            format=lambda row, table, **_: (
+                                html.h2(row.name, _name='invalid_name').bind(parent=table).__html__()
+                            ),
                             key=None,
                         )
                         has_yielded_header = True
@@ -364,10 +360,14 @@ class Admin(Page):
             sortable=False,
             rows=functools.partial(rows, included_filter=True),
             page_size=None,
-            columns__conf=cls.get_meta().table_class.get_meta().member_class(
-                cell__value=lambda row, **_: f'apps__{row.key}__include = True' if row.key else '',
-                # cell__url=lambda row, **_: f'{row.url}add_model/' if row.key else None,
-                after=LAST,
+            columns__conf=(
+                cls.get_meta()
+                .table_class.get_meta()
+                .member_class(
+                    cell__value=lambda row, **_: f'apps__{row.key}__include = True' if row.key else '',
+                    # cell__url=lambda row, **_: f'{row.url}add_model/' if row.key else None,
+                    after=LAST,
+                )
             ),
             columns__name=dict(
                 display_name='',
@@ -378,13 +378,17 @@ class Admin(Page):
         return cls(
             parts=dict(
                 all_models=table,
-
                 add_models_title=html.h1(gettext('Add models to admin'), include=settings.DEBUG),
-                add_models_help_text=html.p(format_html('''
-                Copy the conf value to the `Meta` class of an `iommi_admin.py` file.
-                
-                Read <a href="https://docs.iommi.rocks/en/latest/admin.html#customization">the docs for admin customization</a> for more information.
-                ''', include=settings.DEBUG)),
+                add_models_help_text=html.p(
+                    format_html(
+                        '''
+                            Copy the conf value to the `Meta` class of an `iommi_admin.py` file.
+                            
+                            Read <a href="https://docs.iommi.rocks/en/latest/admin.html#customization">the docs for admin customization</a> for more information.
+                        ''',
+                        include=settings.DEBUG,
+                    )
+                ),
                 add_models=add_models,
             ),
             **kwargs,
@@ -410,17 +414,23 @@ class Admin(Page):
                     call_target__attribute='delete',
                     after=LAST,
                     cell__url=lambda row, **_: '%s/delete/' % row.pk,
-                    include=lambda request, table, **_: cls.has_permission(request, instance=None, model=table.model, operation='delete')
+                    include=lambda request, table, **_: (
+                        cls.has_permission(request, instance=None, model=table.model, operation='delete')
+                    ),
                 ),
             ),
             actions=dict(
                 create=dict(
-                    display_name=lambda page, **_: gettext('Create %(model_name)s') % dict(model_name=page.model._meta.verbose_name),
+                    display_name=lambda page, **_: (
+                        gettext('Create %(model_name)s') % dict(model_name=page.model._meta.verbose_name)
+                    ),
                     attrs__href='create/',
                 ),
             ),
             query_from_indexes=True,
-            bulk__actions__delete__include=lambda request, table, **_: cls.has_permission(request, instance=None, model=table.model, operation='delete'),
+            bulk__actions__delete__include=lambda request, table, **_: (
+                cls.has_permission(request, instance=None, model=table.model, operation='delete')
+            ),
         )
 
         return cls(
@@ -449,8 +459,14 @@ class Admin(Page):
             call_target__attribute=operation,
             extra__on_save=on_save,
             extra__on_delete=on_delete,
-            actions__submit__include=lambda request, form, **_: cls.has_permission(request, instance=None, model=form.model, operation=operation),
-            editable=lambda request, form, **_: False if operation == 'delete' else cls.has_permission(request, instance=None, model=form.model, operation=operation)
+            actions__submit__include=lambda request, form, **_: cls.has_permission(
+                request, instance=None, model=form.model, operation=operation
+            ),
+            editable=lambda request, form, **_: (
+                False
+                if operation == 'delete'
+                else cls.has_permission(request, instance=None, model=form.model, operation=operation)
+            ),
         )
 
         return cls(
@@ -498,7 +514,7 @@ class Admin(Page):
                 path('<app_name>/<model_name>/create/', cls.create().as_view(), name='iommi.Admin.create'),
                 path('<app_name>/<model_name>/<int:pk>/edit/', cls.edit().as_view(), name='iommi.Admin.edit'),
                 path('<app_name>/<model_name>/<int:pk>/delete/', cls.delete().as_view(), name='iommi.Admin.delete'),
-                        ]
+            ]
             + Auth.urls().urlpatterns
         )
 

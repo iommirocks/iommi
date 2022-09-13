@@ -85,15 +85,15 @@ def test_bind_via_unapplied_config():
     assert basket.fruits.pear.taste == 'meh'
 
     with pytest.raises(
-            TypeError,
-            match=(
-                r'Fruit object has no refinable attribute\(s\): "color"\.\n'
-                r'Available attributes:\n'
-                r'    assets\n'
-                r'    endpoints\n'
-                r'    iommi_style\n'
-                r'    taste\n'
-            )
+        TypeError,
+        match=(
+            r'Fruit object has no refinable attribute\(s\): "color"\.\n'
+            r'Available attributes:\n'
+            r'    assets\n'
+            r'    endpoints\n'
+            r'    iommi_style\n'
+            r'    taste\n'
+        ),
     ):
         MyBasket(fruits__pear__color='green').bind()
 
@@ -266,6 +266,7 @@ def test_precedence_override_style_with_shortcut(foo_style):
     )
 
     with register_style('bar', bar_style):
+
         class MyPage(Page):
             foo = html.div('from declaration')
 
@@ -329,8 +330,7 @@ def test_forbidden_names():
         iommi_style = Fruit()
 
     with pytest.raises(
-            ForbiddenNamesException,
-            match='The names _name, iommi_style are reserved by iommi, please pick other names'
+        ForbiddenNamesException, match='The names _name, iommi_style are reserved by iommi, please pick other names'
     ):
         MyBasket().refine_done()
 
@@ -370,15 +370,16 @@ def test_unknown_attribute():
     class MyBasket(Basket):
         orange = Fruit()
         banana = Fruit()
+
     my_basket = MyBasket().bind()
     with pytest.raises(
-            AttributeError,
-            match=(
-                r"'MemberBinder' object has no member 'fruit_fly'\.\n"
-                r"Available members:\n"
-                r"    banana\n"
-                r"    orange\n"
-            ),
-        ):
+        AttributeError,
+        match=(
+            r"'MemberBinder' object has no member 'fruit_fly'\.\n"
+            r"Available members:\n"
+            r"    banana\n"
+            r"    orange\n"
+        ),
+    ):
         # noinspection PyStatementEffect
         my_basket.fruits.fruit_fly

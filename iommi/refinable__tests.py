@@ -26,10 +26,12 @@ def test_i_stil_med2():
         Prio.refine,
         foo=Fragment(),
     )
-    assert str(f.as_stack()) == str([
-        ('base', {'foo__call_target__cls': Header}),
-        ('refine', {'foo': Fragment()}),
-    ])
+    assert str(f.as_stack()) == str(
+        [
+            ('base', {'foo__call_target__cls': Header}),
+            ('refine', {'foo': Fragment()}),
+        ]
+    )
     f.foo.refine_done()
 
 
@@ -130,10 +132,7 @@ def test_refine_recursive():
     assert banana.color == 'yellow'
     assert banana.taste == 'good'
     assert str(basket.iommi_namespace.as_stack()) == (
-        "["
-        "('base', {'fruits__banana': <Fruit color=yellow>}), "
-        "('refine', {'fruits__banana__taste': 'good'})"
-        "]"
+        "[('base', {'fruits__banana': <Fruit color=yellow>}), ('refine', {'fruits__banana__taste': 'good'})]"
     )
 
 
@@ -218,17 +217,13 @@ def test_refine_fail_on_call_target():
     with pytest.raises(TypeError) as e:
         MyRefinableObject().refine(b=17).refine_done()
     assert str(e.value) == (
-        'MyRefinableObject object has no refinable attribute(s): "b".\n'
-        'Available attributes:\n'
-        '    a\n'
+        'MyRefinableObject object has no refinable attribute(s): "b".\nAvailable attributes:\n    a\n'
     )
 
     with pytest.raises(TypeError) as e:
         MyRefinableObject().refine(call_target=lambda **_: None).refine_done()
     assert str(e.value) == (
-        'MyRefinableObject object has no refinable attribute(s): "call_target".\n'
-        'Available attributes:\n'
-        '    a\n'
+        'MyRefinableObject object has no refinable attribute(s): "call_target".\nAvailable attributes:\n    a\n'
     )
 
 
@@ -317,10 +312,13 @@ def test_subclass_override():
 
 
 def test_check_attribute_existence():
-    with pytest.raises(TypeError, match=(
-        'Fruit object has no refinable attribute\\(s\\): "smell".\n'
-        'Available attributes:\n'
-        '    color\n'
-        '    taste\n'
-    )):
+    with pytest.raises(
+        TypeError,
+        match=(
+            'Fruit object has no refinable attribute\\(s\\): "smell".\n'
+            'Available attributes:\n'
+            '    color\n'
+            '    taste\n'
+        ),
+    ):
         Fruit(smell=17)

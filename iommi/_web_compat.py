@@ -86,7 +86,6 @@ try:
         else:
             return mark_safe(template.render(context, request))
 
-
 except ImportError:  # pragma: no cover This flask support is a work in progress/future plan
     from jinja2 import Markup
     from flask import render_template as render

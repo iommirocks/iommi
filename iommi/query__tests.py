@@ -455,7 +455,10 @@ def test_missing_choices():
     with pytest.raises(AssertionError, match='To use Filter.choice, you must pass the choices list'):
         Filter.choice().refine_done()
 
-    with pytest.raises(AssertionError, match='The convenience feature to automatically get the parameter model set only works for QuerySet instances'):
+    with pytest.raises(
+        AssertionError,
+        match='The convenience feature to automatically get the parameter model set only works for QuerySet instances',
+    ):
         Filter.choice_queryset().refine_done()
 
 
@@ -669,14 +672,11 @@ def test_endpoint_dispatch_errors():
 
     q = MyQuery().bind(request=req('get'))
 
-    assert (
-        perform_ajax_dispatch(
-            root=MyQuery().bind(request=req('get', **{q.get_advanced_query_param(): '!!'})),
-            path='/errors',
-            value='',
-        )
-        == {'global': ['Invalid syntax for query']}
-    )
+    assert perform_ajax_dispatch(
+        root=MyQuery().bind(request=req('get', **{q.get_advanced_query_param(): '!!'})),
+        path='/errors',
+        value='',
+    ) == {'global': ['Invalid syntax for query']}
     assert (
         perform_ajax_dispatch(
             root=MyQuery().bind(request=req('get', **{q.get_advanced_query_param(): 'foo=a'})),
@@ -685,14 +685,11 @@ def test_endpoint_dispatch_errors():
         )
         == {}
     )
-    assert (
-        perform_ajax_dispatch(
-            root=MyQuery().bind(request=req('get', foo='q')),
-            path='/errors',
-            value='',
-        )
-        == {'fields': {'foo': ['q not in available choices']}}
-    )
+    assert perform_ajax_dispatch(
+        root=MyQuery().bind(request=req('get', foo='q')),
+        path='/errors',
+        value='',
+    ) == {'fields': {'foo': ['q not in available choices']}}
 
 
 def test_filter_repr():
@@ -702,7 +699,9 @@ def test_filter_repr():
 @pytest.mark.django_db
 def test_nice_error_message():
     with pytest.raises(NoRegisteredSearchFieldException) as e:
-        value_to_str_for_query(Filter(search_fields=['custom_name_field']).refine_done(), NonStandardName(non_standard_name='foo'))
+        value_to_str_for_query(
+            Filter(search_fields=['custom_name_field']).refine_done(), NonStandardName(non_standard_name='foo')
+        )
 
     assert (
         str(e.value)
@@ -979,9 +978,7 @@ def test_choices_in_char_field_model():
     ChoicesModel(color='purple').save()
     ChoicesModel(color='orange').save()
 
-    query = Query(
-        auto__model=ChoicesModel,
-    ).bind(
+    query = Query(auto__model=ChoicesModel).bind(
         request=req('get', color='purple'),
     )
 
@@ -995,7 +992,9 @@ def test_choices_in_char_field_model():
         == value
     )
     assert (
-        query.form.fields.color.choice_display_name_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
+        query.form.fields.color.choice_display_name_formatter(
+            value, **query.form.fields.color.iommi_evaluate_parameters()
+        )
         == display_name
     )
     assert query.form.fields.color.choice_tuples == [
@@ -1013,11 +1012,7 @@ def test_choices_in_char_field_model_as_class():
     ChoicesClassModel(color='purple').save()
     ChoicesClassModel(color='orange').save()
 
-    query = Query(
-        auto__model=ChoicesClassModel,
-    ).bind(
-        request=req('get', color='orange'),
-    )
+    query = Query(auto__model=ChoicesClassModel).bind(request=req('get', color='orange'))
 
     assert Query.filter(query, ChoicesClassModel.objects.all()).get().color == 'orange'
 
@@ -1029,7 +1024,9 @@ def test_choices_in_char_field_model_as_class():
         == value
     )
     assert (
-        query.form.fields.color.choice_display_name_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
+        query.form.fields.color.choice_display_name_formatter(
+            value, **query.form.fields.color.iommi_evaluate_parameters()
+        )
         == label
     )
 
