@@ -288,7 +288,9 @@ def test_traversable_repr():
     basket = basket.bind(request=None)
 
     assert repr(basket) == "<tests.helpers.Basket basket (bound) members:['fruits']>"
-    assert repr(basket._bound_members.fruits) == "<iommi.member.Members fruits (bound) path:<no path>>"
+    assert (
+        repr(basket._bound_members.fruits) == "<iommi.member.Members fruits (bound) path:<no path> members:['banana']>"
+    )
 
 
 def test_apply_style_not_affecting_definition(settings):
