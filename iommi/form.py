@@ -1613,7 +1613,10 @@ class Form(Part):
         return model, fields
 
     def is_target(self):
-        this_form_is_target = any(action.is_target() for action in values(self.actions))
+        self.iommi_path  # Make sure path tree is calculated top down.
+        declared_members = object.__getattribute__(self.actions, '_declared_members')
+        this_form_is_target = any(f'-{action.iommi_path}' in self._request_data for action in values(declared_members))
+
         if this_form_is_target:
             return True
         if self.parent_form is not None:

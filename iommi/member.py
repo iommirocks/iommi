@@ -248,6 +248,10 @@ class MemberBinder(dict):
         _force_bind_all(self)
         return super().keys()
 
+    def __len__(self):
+        _force_bind_all(self)
+        return super().__len__()
+
     def __repr__(self):
         bound_members = list(dict.keys(self))
         members = [
