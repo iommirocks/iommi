@@ -74,7 +74,7 @@ class EditCell(Cell):
             field._errors = set()
             field.form.instance = self.row
             field._iommi_path_override = path
-            field.input.attrs.pop('value', None)
+            field.input = field.iommi_namespace.input(_name='input')
             field.bind_from_instance()
 
             input_html = field.input.__html__()
@@ -188,6 +188,7 @@ def edit_table__post_handler(table, request, **_):
                 path = cell.get_path()
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
+                field.input = field.iommi_namespace.input(_name='input')
                 field.bind_from_instance()
                 field_errors = field.get_errors()
                 if field_errors:

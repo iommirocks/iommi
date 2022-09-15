@@ -555,8 +555,12 @@ class Field(Part, Tag):
         input__attrs__id=default_input_id,
         input__attrs__name=lambda field, **_: field.iommi_path,
         input__extra__placeholder='',
-        non_editable_input__call_target=Fragment,
-        non_editable_input__attrs__disabled=True,
+        non_editable_input=dict(
+            call_target=Fragment,
+            children__text=lambda fragment, field, **_: None if fragment.tag == 'input' else field.rendered_value,
+            attrs__value=lambda fragment, field, **_: field.rendered_value if fragment.tag == 'input' else None,
+            attrs__disabled=lambda fragment, field, **_: True if fragment.tag == 'input' else None,
+        ),
         initial=MISSING,
         choice_to_optgroup=None,
         choice_id_formatter=lambda choice, **_: '%s' % choice,
@@ -702,19 +706,9 @@ class Field(Part, Tag):
             self._validate()
 
         if self.editable:
-            self.input = self.iommi_namespace.input(_name='input').bind(parent=self)
+            self.input = self.input.bind(parent=self)
         else:
-            if self.iommi_namespace.non_editable_input.get('tag', self.iommi_namespace.input.get('tag')) == 'input':
-                self.input = self.iommi_namespace.input(
-                    attrs__value=self.rendered_value,
-                    attrs__disabled=True,
-                    **self.iommi_namespace.non_editable_input,
-                ).bind(parent=self)
-            else:
-                self.input = self.iommi_namespace.input(
-                    children__text=self.rendered_value,
-                    **self.iommi_namespace.non_editable_input,
-                ).bind(parent=self)
+            self.input = self.non_editable_input.bind(parent=self)
 
         if self.is_boolean:
             if 'checked' not in self.input.attrs and self.value:
