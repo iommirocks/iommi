@@ -690,7 +690,7 @@ def test_non_editable_other_tag():
                 <label for="id_foo">
                     Foo
                 </label>
-                <div custom="7" disabled="" id="id_foo" name="foo" type="text" value="11">
+                <div custom="7" id="id_foo" name="foo" type="text">
                     11
                 </div>
             </div>
