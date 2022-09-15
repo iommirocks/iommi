@@ -668,6 +668,38 @@ def test_non_editable():
     assert actual == expected
 
 
+def test_non_editable_other_tag():
+    actual = prettify(
+        Form(
+            fields__foo=Field(
+                editable=False,
+                input__attrs__custom=7,
+                initial='11',
+                non_editable_input__tag='div',
+            ),
+        )
+        .bind(
+            request=req('get'),
+        )
+        .fields.foo.__html__()
+    )
+
+    expected = prettify(
+        """
+            <div>
+                <label for="id_foo">
+                    Foo
+                </label>
+                <div custom="7" disabled="" id="id_foo" name="foo" type="text" value="11">
+                    11
+                </div>
+            </div>
+        """
+    )
+
+    assert actual == expected
+
+
 def test_editable():
     actual = prettify(
         Form(
