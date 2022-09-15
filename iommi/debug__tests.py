@@ -2,6 +2,8 @@ import pytest
 from iommi.struct import Struct
 
 from iommi import (
+    Field,
+    Form,
     Page,
     Table,
 )
@@ -66,6 +68,34 @@ parts__nested__parts, None, Members[Fragment], True
 parts__nested__parts__foo, foo, Fragment, True
 parts__nested__parts__foo__children, None, Members[Fragment], True
 parts__nested__parts__foo__children__text, None, str, False"""
+    assert '\n'.join(tree) == expected
+
+
+def test_debug_tree_crash_on_non_editable(settings):
+    settings.DEBUG = True
+
+    root = Form(fields__foo=Field.info(value='bar')).bind(request=req('get', **{'/debug_tree': '7'}))
+    target = find_target(path='/debug_tree', root=root)
+    result = target.func(value='', **target.iommi_evaluate_parameters())
+
+    assert isinstance(result, Table)
+    tree = [', '.join([str(x.value) for x in cells]) for cells in result.cells_for_rows()]
+    expected = """\
+, , Form, True
+endpoints, None, Members[Endpoint], True
+endpoints__debug_tree, debug_tree, Endpoint, True
+fields, None, Members[Field], True
+fields__foo, foo, Field, True
+fields__foo__endpoints, None, Members[Endpoint], True
+fields__foo__endpoints__config, config, Endpoint, True
+fields__foo__endpoints__validate, validate, Endpoint, True
+fields__foo__input, non_editable_input, Fragment, True
+fields__foo__input__children, None, Members[Fragment], True
+fields__foo__input__children__text, None, NoneType, False
+fields__foo__label, label, Fragment, True
+fields__foo__non_editable_input, non_editable_input, Fragment, True
+fields__foo__non_editable_input__children, None, Members[Fragment], True
+fields__foo__non_editable_input__children__text, None, NoneType, False"""
     assert '\n'.join(tree) == expected
 
 
