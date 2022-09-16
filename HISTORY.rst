@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+5.2.0 (2022-09-16)
+~~~~~~~~~~~~~~~~~~
+
+* Insert arbitrary parts in Table. There is a namespace `outer` on table where you can insert things.
+
+* Filter form fields failed to respect include directive from filter
+
+* Fix for live edit when used with iommi path decoding
+
+* Fixed a crash in the debug tree that sometimes happened if you had an non-editable `Field`
+
+* Live edit internal API is now a bit more flexible, making it possible to adapt it to your own use cases better
+
+
 5.1.2 (2022-09-02)
 ~~~~~~~~~~~~~~~~~~
 
