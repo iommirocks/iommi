@@ -82,7 +82,7 @@ def get_display_name(part):
 
 
 def get_wrapped_view(view):
-    if hasattr(view, '__iommi_target__'):
+    while hasattr(view, '__iommi_target__'):
         view = view.__iommi_target__
 
     while hasattr(view, '__wrapped__'):

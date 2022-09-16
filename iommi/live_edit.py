@@ -293,7 +293,7 @@ def dangerous_execute_code(code, request, view, args, kwargs):
     request.GET['_iommi_disable_debug_panel'] = ''
     new_view = list(local_variables.values())[0]
     if isinstance(new_view, type) and issubclass(new_view, Part):
-        response = new_view().bind(request=request).render_to_response()
+        response = new_view().as_view()(request, *args, **kwargs)
     else:
         response = new_view(request, *args, **kwargs)
     response = render_if_needed(request, response)
