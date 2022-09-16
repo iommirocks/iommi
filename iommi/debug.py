@@ -1,3 +1,4 @@
+import inspect
 import sys
 from os.path import (
     dirname,
@@ -212,7 +213,13 @@ def get_instantiated_at_info(frame):
 
 
 def filename_and_line_num_from_part(part):
-    return getattr(part, '_instantiated_at_info', (None, None))
+    filename, line_num = getattr(part, '_instantiated_at_info', (None, None))
+    if (filename, line_num) == (None, None) and isinstance(part, Traversable):
+        # inspect.findsource() parses the full AST of the file, so beware the performance implications
+        filename = inspect.getsourcefile(part.__class__)
+        line_num = inspect.findsource(part.__class__)[1] + 1
+        setattr(part, '_instantiated_at_info', (filename, line_num))
+    return filename, line_num
 
 
 def iommi_debug_panel(part):
