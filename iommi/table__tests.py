@@ -2287,6 +2287,18 @@ def test_preprocess_row():
 
 
 @pytest.mark.django_db
+def test_preprocess_row_parameters():
+    p = Page(
+        extra__x=17,
+        parts__table=Table(
+            rows=[Struct()],
+            preprocess_row=lambda page, **_: Struct(y=page.extra.x),
+        ),
+    ).bind()
+    assert [c.row for c in p.parts.table.cells_for_rows()] == [Struct(y=17)]
+
+
+@pytest.mark.django_db
 def test_yield_rows():
     f = TFoo.objects.create(a=3, b='d')
 

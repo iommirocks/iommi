@@ -2071,7 +2071,7 @@ class Table(Part, Tag):
             rows = self.sorted_and_filtered_rows
         preprocessed_rows = self.preprocess_rows(rows=rows, **self.iommi_evaluate_parameters())
         for i, row in enumerate(preprocessed_rows):
-            row = self.preprocess_row(table=self, row=row)
+            row = self.preprocess_row(row=row, **self.iommi_evaluate_parameters())
             assert row is not None, 'preprocess_row must return the row'
             yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
