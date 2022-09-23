@@ -25,6 +25,7 @@ from iommi.traversable import (
     Traversable,
 )
 from ._web_compat import settings
+from .declarative.namespace import getattr_path
 
 
 def iommi_debug_on():
@@ -43,7 +44,7 @@ def dunder_path__format(row, **_):
     )
 
 
-def endpoint__debug_tree(endpoint, **_):
+def endpoint__debug_tree(endpoint, value, **_):
     root = endpoint.iommi_root()
     assert root._is_bound
 
@@ -129,6 +130,7 @@ def endpoint__debug_tree(endpoint, **_):
         dunder_path = Column(
             cell__value=lambda row, **_: row.dunder_path,
             cell__format=dunder_path__format,
+            cell__url=lambda value, **_: f'?/debug_tree={value}',
         )
         path = Column()
         type = Column(
@@ -143,6 +145,15 @@ def endpoint__debug_tree(endpoint, **_):
     request.META = root._request.META
     if hasattr(root._request, 'user'):
         request.user = root._request.user
+
+    if value:
+        import pprint
+        from iommi.fragment import Fragment
+
+        return Fragment(
+            pprint.pformat(getattr_path(root, value).iommi_namespace.as_stack()),
+            tag='pre',
+        )
 
     return TreeTable(rows=rows(root)).bind(request=request)
 
