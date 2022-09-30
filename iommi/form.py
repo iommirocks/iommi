@@ -656,9 +656,9 @@ class Field(Part, Tag):
 
     @staticmethod
     @refinable
-    def render_value(form: 'Form', field: 'Field', value: Any) -> str:
+    def render_value(form: 'Form', field: 'Field', value: Any, **kwargs) -> str:
         if isinstance(value, (list, QuerySet)):
-            return ', '.join(field.render_value(form=form, field=field, value=v) for v in value)
+            return ', '.join(field.render_value(form=form, field=field, value=v, **kwargs) for v in value)
         else:
             return f'{value}' if value is not None else ''
 
@@ -887,7 +887,7 @@ class Field(Part, Tag):
     def rendered_value(self):
         if self.errors:
             return self.raw_data
-        return self.render_value(form=self.form, field=self, value=self.value)
+        return self.render_value(value=self.value, **self.iommi_evaluate_parameters())
 
     def _build_option(self, choice):
         # The legacy structure is `(choice, id, display_name, is_selected)`
