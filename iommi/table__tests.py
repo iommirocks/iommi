@@ -3556,12 +3556,19 @@ def test_invalid_form_message():
 @pytest.mark.django_db
 def test_empty_message():
     empty_message = 'Destruction of the empty spaces was my one and only crime'
-    t = Table(
-        auto__model=TBar,
-        columns__foo__filter__include=True,
-        empty_message=empty_message,
-    ).bind(request=req('get'))
-    assert empty_message in t.__html__()
+    verify_table_html(
+        table=Table(empty_message=empty_message, rows=[]),
+        find=dict(class_='iommi-table-container'),
+        expected_html=f"<div class='iommi-table-container'> {empty_message} </div>",
+    )
+
+
+def test_empty_empty_message():
+    verify_table_html(
+        table=Table(empty_message='', rows=[]),
+        find=dict(class_='iommi-table-container'),
+        expected_html="<div class='iommi-table-container'></div>",
+    )
 
 
 @pytest.mark.django_db
