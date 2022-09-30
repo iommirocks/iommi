@@ -1750,7 +1750,7 @@ def test_render_custom():
     sentinel = '!!custom!!'
     assert (
         sentinel
-        in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value: sentinel))
+        in Form(fields__foo=Field(initial='not sentinel value', render_value=lambda form, field, value, **_: sentinel))
         .bind(request=req('get'))
         .__html__()
     )
