@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.2.1 (2022-10-03)
+~~~~~~~~~~~~~~~~~~
+
+* Fix regression in 5.2.0 after fixing include directive on filter form fields
+
+
 5.2.0 (2022-09-16)
 ~~~~~~~~~~~~~~~~~~
 
