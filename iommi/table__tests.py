@@ -725,11 +725,35 @@ def test_column_filter_include():
 
 
 @pytest.mark.django_db
+def test_column_filter_include_order():
+    t = Table(
+        auto__model=TFoo,
+        columns__a__filter__include=lambda **_: False,
+        columns__a__filter__field__include=False,
+        columns__b__filter__include=lambda **_: True,
+        columns__b__filter__field__include=True,
+    ).bind()
+    assert list(t.query.filters.keys()) == ['b']
+    assert list(t.query.form.fields.keys()) == ['b']
+
+
+@pytest.mark.django_db
 def test_column_filter_include_lambda():
     t = Table(
         auto__model=TFoo,
         columns__a__filter__include=lambda **_: False,
         columns__a__filter__field__include=True,
+    ).bind()
+    assert list(t.query.filters.keys()) == []
+    assert list(t.query.form.fields.keys()) == []
+
+
+@pytest.mark.django_db
+def test_column_filter_include_lambda2():
+    t = Table(
+        auto__model=TFoo,
+        columns__b__filter__include=lambda **_: False,
+        columns__b__filter__field__include=True,
     ).bind()
     assert list(t.query.filters.keys()) == []
     assert list(t.query.form.fields.keys()) == []
