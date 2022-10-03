@@ -711,13 +711,17 @@ class Query(Part):
             )
 
         for name, filter in items(self.iommi_namespace.filters):
-            orig_include = getattr_path(filter, 'field__include', False)
+            _orig_include = getattr_path(filter, 'field__include', not filter.freetext)
             declared_fields[name] = setdefaults_path(
                 Namespace(
-                    include=lambda query, field, **_: (
-                        (field.iommi_name() in query.filters and not query.filters[field.iommi_name()].freetext)
-                        or evaluate_strict(orig_include, **query.iommi_evaluate_parameters())
-                    ),
+                    include=(
+                        lambda query, field, _orig_include=_orig_include, **_: (
+                            field.iommi_name() in query.filters
+                            and evaluate_strict(_orig_include, **query.iommi_evaluate_parameters())
+                        )
+                    )
+                    if getattr(filter, 'include', None) is not False
+                    else False,
                 ),
                 filter.field,
                 _name=name,
