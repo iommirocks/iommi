@@ -984,20 +984,13 @@ def test_choices_in_char_field_model():
 
     assert Query.filter(query, ChoicesModel.objects.all()).get().color == 'purple'
 
-    assert query.form.fields.color.choices == ['purple', 'orange']
+    field = query.form.fields.color
+    assert field.choices == ['purple', 'orange']
 
-    value, display_name = ChoicesModel.CHOICES[0]
-    assert (
-        query.form.fields.color.choice_id_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
-        == value
-    )
-    assert (
-        query.form.fields.color.choice_display_name_formatter(
-            value, **query.form.fields.color.iommi_evaluate_parameters()
-        )
-        == display_name
-    )
-    assert query.form.fields.color.choice_tuples == [
+    choice, display_name = ChoicesModel.CHOICES[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == choice
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == display_name
+    assert field.choice_tuples == [
         (None, '', '---', False, 0),
         ('purple', 'purple', 'Purple', True, 1),
         ('orange', 'orange', 'Orange', False, 2),
@@ -1016,21 +1009,14 @@ def test_choices_in_char_field_model_as_class():
 
     assert Query.filter(query, ChoicesClassModel.objects.all()).get().color == 'orange'
 
-    assert query.form.fields.color.choices == ['purple_thing-thing', 'orange']
+    field = query.form.fields.color
+    assert field.choices == ['purple_thing-thing', 'orange']
 
-    value, label = ChoicesClassModel.ColorChoices.choices[0]
-    assert (
-        query.form.fields.color.choice_id_formatter(value, **query.form.fields.color.iommi_evaluate_parameters())
-        == value
-    )
-    assert (
-        query.form.fields.color.choice_display_name_formatter(
-            value, **query.form.fields.color.iommi_evaluate_parameters()
-        )
-        == label
-    )
+    choice, label = ChoicesClassModel.ColorChoices.choices[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == choice
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == label
 
-    assert query.form.fields.color.choice_tuples == [
+    assert field.choice_tuples == [
         (None, '', '---', False, 0),
         ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', True, 2),

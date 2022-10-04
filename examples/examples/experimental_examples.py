@@ -22,17 +22,17 @@ def save_nested_forms(form, request, **_):
         for action in nested_form.actions.values():
             if action.post_handler is None:
                 continue
-            if action.post_handler and action.post_handler(**action.iommi_evaluate_parameters()) is None:
+            if action.post_handler and action.invoke_callback(action.post_handler) is None:
                 did_fail = True
 
     if not did_fail:
         if 'post_save' in form.extra:
-            form.extra.post_save(**form.iommi_evaluate_parameters())
+            form.invoke_callback(form.extra.post_save)
 
         request.method = 'GET'
 
         redirect_to = form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.'))
-        target = redirect_to(**form.iommi_evaluate_parameters())
+        target = form.invoke_callback(redirect_to)
         assert isinstance(target, str), 'redirect_to must return a str'
         return redirect(target)
 

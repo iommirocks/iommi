@@ -5,8 +5,6 @@ from typing import (
     List,
 )
 
-from iommi.struct import Struct
-
 from iommi.attrs import evaluate_attrs
 from iommi.base import (
     items,
@@ -17,6 +15,10 @@ from iommi.evaluate import (
     evaluate_members,
     evaluate_strict,
     evaluate_strict_container,
+    get_callable_description,
+    get_signature,
+    matches,
+    signature_from_kwargs,
 )
 from iommi.path import decode_path_components
 from iommi.refinable import (
@@ -28,6 +30,7 @@ from iommi.refinable import (
     RefinableMembers,
     RefinableObject,
 )
+from iommi.struct import Struct
 from iommi.style import Style
 
 # Backward compatible definition
@@ -204,6 +207,17 @@ class Traversable(RefinableObject):
 
     def iommi_evaluate_parameters(self):
         return self._evaluate_parameters
+
+    def invoke_callback(self, callback, **kwargs):
+        try:
+            return callback(**kwargs, **self.iommi_evaluate_parameters())
+        except TypeError as e:
+            if not matches(signature_from_kwargs(kwargs), get_signature(callback), __match_empty=True):
+                raise TypeError(
+                    f'TypeError when invoking callback {get_callable_description(callback)}.\n'
+                    f'(Keyword arguments: {", ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))})'
+                ) from e
+            raise
 
     def get_request(self):
         if self._parent is None:

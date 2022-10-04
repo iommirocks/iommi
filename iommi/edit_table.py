@@ -230,7 +230,7 @@ def edit_table__post_handler(table, request, **_):
     save(table.cells_for_rows_for_create(), table.create_form)
 
     if 'post_save' in table.extra:
-        table.extra.post_save(**table.iommi_evaluate_parameters())
+        table.invoke_callback(table.extra.post_save)
 
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 

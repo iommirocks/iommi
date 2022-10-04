@@ -428,3 +428,57 @@ def test_get_config():
                 'my_basket_fruit_invoke',
             }
         )
+
+
+def test_invoke_callback():
+    class MyTraversable(Traversable):
+        def own_evaluate_parameters(self):
+            return dict(a=1)
+
+    t = MyTraversable().bind()
+
+    def callback(**kwargs):
+        return kwargs
+
+    assert t.invoke_callback(callback, b=2) == dict(
+        a=1,
+        b=2,
+        request=None,
+        traversable=t,
+    )
+
+
+def test_invoke_callback_error_message_lambda():
+    t = Traversable().bind()
+    with pytest.raises(TypeError) as e:
+        t.invoke_callback(lambda a: None, b=2)
+
+    assert str(e.value) == (
+        'TypeError when invoking callback lambda found at: `t.invoke_callback(lambda a: None, b=2)`.\n'
+        '(Keyword arguments: b, request, traversable)'
+    )
+
+
+def test_invoke_callback_error_message_function():
+    def broken_callback(a):
+        pass
+
+    t = Traversable().bind()
+    with pytest.raises(TypeError) as e:
+        t.invoke_callback(broken_callback)
+
+    assert str(e.value).startswith(
+        'TypeError when invoking callback `<function test_invoke_callback_error_message_function.<locals>.broken_callback at 0x'
+    )
+    assert str(e.value).endswith('`.\n(Keyword arguments: request, traversable)')
+
+
+def test_invoke_callback_transparent_type_error():
+    def broken_callback(**_):
+        raise TypeError('not modified')
+
+    t = Traversable().bind()
+    with pytest.raises(TypeError) as e:
+        t.invoke_callback(broken_callback)
+
+    assert str(e.value) == 'not modified'
