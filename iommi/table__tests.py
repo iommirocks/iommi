@@ -3805,14 +3805,13 @@ def test_text_choices():
     assert table.get_visible_rows().get().color == 'orange'
 
     form = table.query.form
-    assert form.fields.color.choices == ['purple_thing-thing', 'orange']
+    field = form.fields.color
+    assert field.choices == ['purple_thing-thing', 'orange']
 
-    value, label = list(ChoicesClassModel.ColorChoices.choices)[0]
-    assert form.fields.color.choice_id_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == value
-    assert (
-        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == label
-    )
-    assert form.fields.color.choice_tuples == [
+    choice, label = list(ChoicesClassModel.ColorChoices.choices)[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == choice
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == label
+    assert field.choice_tuples == [
         (None, '', '---', False, 0),
         ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', True, 2),

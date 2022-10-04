@@ -183,7 +183,7 @@ def find_unique_prefixes(attributes):
 def create_or_edit_object__post_handler(*, form, is_create, **_):
     if is_create:
         assert form.instance is None
-        form.instance = evaluate(form.extra.new_instance, **form.iommi_evaluate_parameters())
+        form.instance = form.invoke_callback(form.extra.new_instance)
 
         # `own_evaluate_parameters` can't be used here because it is calculated too early when the instance doesn't exist yet. So instead we have to insert it manually when we get it.
         # noinspection PyProtectedMember
@@ -202,9 +202,9 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
         return
 
     if is_create:  # two phase save for creation in django...
-        form.extra.pre_save_all_but_related_fields(**form.iommi_evaluate_parameters())
+        form.invoke_callback(form.extra.pre_save_all_but_related_fields)
         form.instance.save()
-        form.extra.on_save_all_but_related_fields(**form.iommi_evaluate_parameters())
+        form.invoke_callback(form.extra.on_save_all_but_related_fields)
 
     form.apply(form.instance)
 
@@ -215,13 +215,13 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if form.is_valid():
         attributes = filter(None, [f.attr for f in form.fields.values()])
 
-        form.extra.pre_save(**form.iommi_evaluate_parameters())
+        form.invoke_callback(form.extra.pre_save)
         for prefix in find_unique_prefixes(attributes):
             model_object = form.instance
             if prefix:  # Might be ''
                 model_object = getattr_path(model_object, prefix)
             model_object.save()
-        form.extra.on_save(**form.iommi_evaluate_parameters())
+        form.invoke_callback(form.extra.on_save)
 
         return create_or_edit_object_redirect(
             is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form
@@ -259,7 +259,7 @@ def choice_is_valid(field, parsed_data, **_):
 
 def choice_parse(form, field, string_value):
     for choice in field.choices:
-        if string_value == field.choice_id_formatter(choice=choice, **field.iommi_evaluate_parameters()):
+        if string_value == field.invoke_callback(field.choice_id_formatter, choice=choice):
             return choice
 
     if string_value in [None, '']:
@@ -303,10 +303,9 @@ def choice_queryset__endpoint_handler(*, form, field, value, page_size=40, **_):
 def choice_queryset__extra__model_from_choices(form, field, choices):
     def traverse():
         for choice in choices:
-            option = field._build_option(choice)
             yield Struct(
-                id=option[1],
-                text=option[2],
+                id=field.invoke_callback(field.choice_id_formatter, choice=choice),
+                text=field.invoke_callback(field.choice_display_name_formatter, choice=choice),
             )
 
     return list(traverse())
@@ -887,14 +886,14 @@ class Field(Part, Tag):
     def rendered_value(self):
         if self.errors:
             return self.raw_data
-        return self.render_value(value=self.value, **self.iommi_evaluate_parameters())
+        return self.invoke_callback(self.render_value, value=self.value)
 
     def _build_option(self, choice):
         # The legacy structure is `(choice, id, display_name, is_selected)`
         return (
             choice,
-            self.choice_id_formatter(choice=choice, **self.iommi_evaluate_parameters()),
-            self.choice_display_name_formatter(choice=choice, **self.iommi_evaluate_parameters()),
+            self.invoke_callback(self.choice_id_formatter, choice=choice),
+            self.invoke_callback(self.choice_display_name_formatter, choice=choice),
             ((choice == self.value) if not self.is_list else (self.value is not None and choice in self.value)),
         )
 
@@ -932,7 +931,7 @@ class Field(Part, Tag):
             groups.append((current_group_name, current_group))
             for choice_tuple in self.choice_tuples:
                 choice = choice_tuple[0]
-                group_name = self.choice_to_optgroup(choice=choice, **self.iommi_evaluate_parameters())
+                group_name = self.invoke_callback(self.choice_to_optgroup, choice=choice)
                 if current_group_name != group_name:
                     current_group_name = group_name
                     current_group = []
@@ -1259,7 +1258,7 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
 
 def delete_object__post_handler(form, **_):
     instance = form.instance
-    form.extra.on_delete(**form.iommi_evaluate_parameters())
+    form.invoke_callback(form.extra.on_delete)
     if instance.pk is not None:  # Check if already deleted by the callback
         try:
             instance.delete()
@@ -1634,7 +1633,7 @@ class Form(Part):
             self._valid = True
         for field in values(self.fields):
             with validation_errors_reported_on(field):
-                field.post_validation(**field.iommi_evaluate_parameters())
+                field.invoke_callback(field.post_validation)
 
         for nested_form in values(self.nested_forms):
             # At this point the nested forms are already validated, because
@@ -1644,7 +1643,7 @@ class Form(Part):
 
         if self.mode is FULL_FORM_FROM_REQUEST:
             with validation_errors_reported_on(self):
-                self.post_validation(**self.iommi_evaluate_parameters())
+                self.invoke_callback(self.post_validation)
 
         return self
 

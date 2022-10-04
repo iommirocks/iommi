@@ -3075,15 +3075,13 @@ def test_choices_in_char_field_model():
     )
     form = form.bind(request=req('get'))
 
-    assert form.fields.color.choices == ['purple', 'orange']
+    field = form.fields.color
+    assert field.choices == ['purple', 'orange']
 
-    value, display_name = ChoicesModel.CHOICES[0]
-    assert form.fields.color.choice_id_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == value
-    assert (
-        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters())
-        == display_name
-    )
-    assert form.fields.color.choice_tuples == [
+    choice, display_name = ChoicesModel.CHOICES[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == choice
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == display_name
+    assert field.choice_tuples == [
         ('purple', 'purple', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', False, 2),
     ]
@@ -3099,14 +3097,13 @@ def test_choices_in_char_field_model_as_class():
     )
     form = form.bind(request=req('get'))
 
-    assert form.fields.color.choices == ['purple_thing-thing', 'orange']
+    field = form.fields.color
+    assert field.choices == ['purple_thing-thing', 'orange']
 
-    value, label = ChoicesClassModel.ColorChoices.choices[0]
-    assert form.fields.color.choice_id_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == value
-    assert (
-        form.fields.color.choice_display_name_formatter(value, **form.fields.color.iommi_evaluate_parameters()) == label
-    )
-    assert form.fields.color.choice_tuples == [
+    choice, label = ChoicesClassModel.ColorChoices.choices[0]
+    assert field.invoke_callback(field.choice_id_formatter, choice=choice) == choice
+    assert field.invoke_callback(field.choice_display_name_formatter, choice=choice) == label
+    assert field.choice_tuples == [
         ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', False, 2),
     ]

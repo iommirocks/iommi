@@ -794,7 +794,7 @@ class Query(Part):
             if q:
                 rows = rows.filter(q)
 
-        return query.postprocess(rows=rows, **query.iommi_evaluate_parameters())
+        return query.invoke_callback(query.postprocess, rows=rows)
 
     @staticmethod
     @refinable

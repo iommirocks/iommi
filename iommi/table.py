@@ -1103,12 +1103,12 @@ def bulk__post_handler(table, form, **_):
                 getattr(obj, attr).set(value)
             obj.save()
 
-    response = table.post_bulk_edit(
+    response = table.invoke_callback(
+        table.post_bulk_edit,
         pks=pks,
         queryset=queryset,
         updates=updates,
         m2m_updates=m2m_updates,
-        **table.iommi_evaluate_parameters(),
     )
 
     if response is not None:
@@ -1910,8 +1910,8 @@ class Table(Part, Tag):
         self._bound_members.query = self.query
 
         if self.query is not None:
-            self.sorted_and_filtered_rows = self.query.filter(
-                query=self.query, rows=self.sorted_rows, **self.iommi_evaluate_parameters()
+            self.sorted_and_filtered_rows = self.invoke_callback(
+                self.query.filter, query=self.query, rows=self.sorted_rows
             )
             self.rows = self.sorted_and_filtered_rows
         else:
@@ -2069,9 +2069,9 @@ class Table(Part, Tag):
             rows = self.get_visible_rows()
         else:
             rows = self.sorted_and_filtered_rows
-        preprocessed_rows = self.preprocess_rows(rows=rows, **self.iommi_evaluate_parameters())
+        preprocessed_rows = self.invoke_callback(self.preprocess_rows, rows=rows)
         for i, row in enumerate(preprocessed_rows):
-            row = self.preprocess_row(row=row, **self.iommi_evaluate_parameters())
+            row = self.invoke_callback(self.preprocess_row, row=row)
             assert row is not None, 'preprocess_row must return the row'
             yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
