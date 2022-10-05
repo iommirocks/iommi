@@ -91,6 +91,9 @@ class Middleware:
         request.iommi_start_time = datetime.now()
         sql_trace = request.GET.get('_iommi_sql_trace')
 
+        if sql_trace is None:
+            sql_trace = get_sql_debug()
+
         if sql_trace == '':
             sql_trace = SQL_DEBUG_LEVEL_WORST
 
@@ -103,10 +106,13 @@ class Middleware:
 
             response = self.get_response(request)
 
-            if not settings.DEBUG and not request.user.is_staff:
+            sql_debug_last_call(response)
+
+            if '_iommi_sql_trace' not in request.GET:
                 return response
 
-            sql_debug_last_call(response)
+            if not settings.DEBUG and not request.user.is_staff:
+                return response
 
             if sql_trace is not None:
                 iommi_sql_debug_log = getattr(request, 'iommi_sql_debug_log', None)
