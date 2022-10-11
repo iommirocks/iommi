@@ -8,10 +8,11 @@ from typing import (
 )
 
 from django.db.models import Model
+from django.db.models.base import ModelBase
 from django.http import Http404
 
 from iommi.base import items
-
+from iommi.struct import Struct
 
 _camel_to_snake_regex = re.compile(r'(?<!^)(?=[A-Z])')
 
@@ -58,7 +59,38 @@ def register_advanced_path_decoding(conf):
     return _unregister()
 
 
-def register_path_decoding(*models):
+def register_explicit_path_decoding(**kwargs):
+    registered_keys = []
+    for definition, model_or_decode in items(kwargs):
+        if isinstance(model_or_decode, ModelBase):
+            key, _, attribute = definition.partition('__')
+            model = model_or_decode
+            decoder = Decoder(attribute)
+        else:
+            model = None
+            attribute = None
+            key = definition
+            decoder = Decoder(decode=model_or_decode)
+
+        _path_component_to_decode_data[key] = (model, key, attribute, decoder)
+        registered_keys.append(key)
+
+    @contextmanager
+    def _unregister():
+        try:
+            yield
+        finally:
+            for key in registered_keys:
+                del _path_component_to_decode_data[key]
+
+    return _unregister()
+
+
+def register_path_decoding(*models, **kwargs):
+    if kwargs:
+        assert not models
+        return register_explicit_path_decoding(**kwargs)
+
     return register_advanced_path_decoding({model: _default_decoder for model in models})
 
 
@@ -91,7 +123,7 @@ def decode_path_components(request, **kwargs):
             decoded_keys.add(k)
 
     if not hasattr(request, 'iommi_view_params'):
-        request.iommi_view_params = {}
+        request.iommi_view_params = Struct()
     request.iommi_view_params.update(kwargs)
     request.iommi_view_params.update(decoded_kwargs)
 
