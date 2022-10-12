@@ -20,6 +20,7 @@ from tests.helpers import (
 )
 from tests.models import (
     TBar,
+    TBaz,
     TFoo,
 )
 
@@ -35,7 +36,7 @@ def test_no_longer_experimental():
 
 
 @pytest.mark.django_db
-def test_formset_table():
+def test_edit_table():
     edit_table = EditTable(
         sortable=False,
         columns=dict(
@@ -100,7 +101,7 @@ def test_formset_table():
 
 
 @pytest.mark.django_db
-def test_formset_table_nested():
+def test_edit_table_nested():
     form = Form(
         fields__edit_table=EditTable(
             sortable=False,
@@ -122,7 +123,7 @@ def test_formset_table_nested():
 
 
 @pytest.mark.django_db
-def test_formset_table_post():
+def test_edit_table_post():
     rows = [
         Struct(
             pk=1,
@@ -197,6 +198,36 @@ def test_formset_table_post():
     assert post_save_was_called
 
 
+@pytest.mark.django_db
+def test_edit_table_related_objects():
+    baz = TBaz.objects.create()
+    foo = TFoo.objects.create(a=1)
+    baz.foo.set([foo, TFoo.objects.create(a=2)])
+
+    edit_table = EditTable(
+        rows=TBaz.objects.all(),
+        columns__foo=EditColumn(
+            edit=Namespace(
+                call_target=Field.many_to_many,
+                model_field=TBaz.foo.field,
+            )
+        ),
+    )
+
+    bound = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/foo/1': str(baz.pk),
+                '-actions/submit': '',
+            },
+        )
+    )
+    response = bound.render_to_response()
+    assert response.status_code == 302
+    assert list(baz.foo.all()) == [foo]
+
+
 def test_edit_table_definition():
     class MyEditTable(EditTable):
         foo = EditColumn(edit=None)
@@ -257,7 +288,7 @@ def test_edit_table_auto_rows():
 
 
 @pytest.mark.django_db
-def test_formset_table_post_create():
+def test_edit_table_post_create():
     foo_pk = TFoo.objects.create(a=1, b='asd').pk
     edit_table = EditTable(auto__model=TBar).refine_done()
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
@@ -297,7 +328,7 @@ def test_formset_table_post_create():
 
 
 @pytest.mark.django_db
-def test_formset_table_post_delete():
+def test_edit_table_post_delete():
     tfoo = TFoo.objects.create(a=1, b='asd')
     edit_table = EditTable(auto__model=TFoo, columns__delete=EditColumn.delete()).refine_done()
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
