@@ -148,7 +148,7 @@ def many_to_many_factory_read_from_instance(field, instance):
 
 
 def many_to_many_factory_write_to_instance(field, instance, value):
-    getattr_path(instance, field.attr).set(value)
+    getattr_path(instance, field.attr).set(value or [])
 
 
 _field_factory_by_field_type = {}

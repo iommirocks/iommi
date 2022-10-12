@@ -211,7 +211,11 @@ class Traversable(RefinableObject):
         try:
             return callback(**kwargs, **self.iommi_evaluate_parameters())
         except TypeError as e:
-            if not matches(signature_from_kwargs(kwargs), get_signature(callback), __match_empty=True):
+            if not matches(
+                signature_from_kwargs(dict(**kwargs, **self.iommi_evaluate_parameters())),
+                get_signature(callback),
+                __match_empty=True,
+            ):
                 raise TypeError(
                     f'TypeError when invoking callback {get_callable_description(callback)}.\n'
                     f'(Keyword arguments: {", ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))})'

@@ -12,7 +12,6 @@ from django.template import (
 )
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from iommi.struct import Struct
 
 from iommi.action import Action
 from iommi.asset import Asset
@@ -25,7 +24,6 @@ from iommi.base import (
 )
 from iommi.declarative.namespace import (
     EMPTY,
-    getattr_path,
     Namespace,
     setdefaults_path,
 )
@@ -45,6 +43,7 @@ from iommi.refinable import (
     refinable,
 )
 from iommi.shortcut import with_defaults
+from iommi.struct import Struct
 from iommi.table import (
     Cell,
     Cells,
@@ -216,9 +215,10 @@ def edit_table__post_handler(table, request, **_):
                 value = parsed_data[path]
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
-                if cells.is_create_template or getattr_path(instance, field.attr) != value:
+                if cells.is_create_template or field.read_from_instance(field=field, instance=instance) != value:
                     field.write_to_instance(field=field, instance=instance, value=value)
-                    attrs_to_save.append(field.attr)
+                    if not field.extra.get('django_related_field', False):
+                        attrs_to_save.append(field.attr)
 
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
