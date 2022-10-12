@@ -117,6 +117,23 @@ def test_as_view_decodes():
     assert 'Black Sabbath' in actual.content.decode()
 
 
+@pytest.mark.skip('not yet')
+@pytest.mark.django_db
+def test_decode_from_namespace():
+    artist = Artist.objects.create(pk=3, name='Black Sabbath')
+
+    from iommi import Page
+
+    view = Page(
+        params__album__pk=Artist,
+        parts__foo__children__text=lambda params, **_: str(params.artist),
+    ).as_view()
+
+    actual = view(req('get'), artist=str(artist.pk), pass_through=7)
+
+    assert 'Black Sabbath' in actual.content.decode()
+
+
 @pytest.mark.django_db
 def test_legacy_path_decode():
     artist = Artist.objects.create(pk=3, name='Black Sabbath')
