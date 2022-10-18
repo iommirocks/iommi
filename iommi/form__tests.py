@@ -3300,6 +3300,23 @@ def test_render_grouped_fields():
     assert prettified_actual == prettified_expected
 
 
+def test_create_not_fail_on_invalid_form():
+    def custom_write_to_instance(field, instance, value, **_):
+        assert value is not None
+        instance.foo = value
+
+    f = Form.create(
+        auto__model=Foo,
+        fields__foo__write_to_instance=custom_write_to_instance,
+    ).refine_done()
+
+    form = f.bind(request=req('post', **{'-submit': ''}))
+    response = form.render_to_response()
+    assert response.status_code == 200
+    assert form.get_errors() == {'fields': {'foo': {'This field is required'}}}
+    assert not form._valid
+
+
 def test_error_accidental_cache_of_valid_state():
     f = Form.create(auto__model=Foo).refine_done()
     form = f.bind(request=req('post', **{'-submit': ''}))

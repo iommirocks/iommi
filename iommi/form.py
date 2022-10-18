@@ -181,6 +181,9 @@ def find_unique_prefixes(attributes):
 
 
 def create_or_edit_object__post_handler(*, form, is_create, **_):
+    if not form.is_valid():
+        return
+
     if is_create:
         assert form.instance is None
         form.instance = form.invoke_callback(form.extra.new_instance)
@@ -189,19 +192,17 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
         # noinspection PyProtectedMember
         form._evaluate_parameters['instance'] = form.instance
 
-        for field in values(
-            form.fields
-        ):  # two phase save for creation in django, have to save main object before related stuff
+        for field in values(form.fields):
+            # two phase save for creation in django, have to save main object before related stuff
             if not field.extra.get('django_related_field', False):
                 form.apply_field(field=field, instance=form.instance)
 
-    with validation_errors_reported_on(form):
-        form.instance.validate_unique()
+        with validation_errors_reported_on(form):
+            form.instance.validate_unique()
+        if not form.is_valid():
+            return
 
-    if not form.is_valid():
-        return
-
-    if is_create:  # two phase save for creation in django...
+        # two phase save for creation in django...
         form.invoke_callback(form.extra.pre_save_all_but_related_fields)
         form.instance.save()
         form.invoke_callback(form.extra.on_save_all_but_related_fields)
@@ -211,21 +212,22 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if not is_create:
         with validation_errors_reported_on(form):
             form.instance.validate_unique()
+        if not form.is_valid():
+            return
 
-    if form.is_valid():
-        attributes = filter(None, [f.attr for f in form.fields.values()])
+    attributes = filter(None, [f.attr for f in form.fields.values()])
 
-        form.invoke_callback(form.extra.pre_save)
-        for prefix in find_unique_prefixes(attributes):
-            model_object = form.instance
-            if prefix:  # Might be ''
-                model_object = getattr_path(model_object, prefix)
-            model_object.save()
-        form.invoke_callback(form.extra.on_save)
+    form.invoke_callback(form.extra.pre_save)
+    for prefix in find_unique_prefixes(attributes):
+        model_object = form.instance
+        if prefix:  # Might be ''
+            model_object = getattr_path(model_object, prefix)
+        model_object.save()
+    form.invoke_callback(form.extra.on_save)
 
-        return create_or_edit_object_redirect(
-            is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form
-        )
+    return create_or_edit_object_redirect(
+        is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form
+    )
 
 
 def default_endpoints__config(field: 'Field', **_) -> dict:
