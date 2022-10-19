@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8'] # , 'pypy3']  # pypy3 is broken on github actions right now
+        python-version: ['3.8'] # , 'pypy3']  # pypy3 is broken on github actions right now
         django-version: ['3.0', '3.1', '3.2', '4.0', '4.1']
 
     steps:
