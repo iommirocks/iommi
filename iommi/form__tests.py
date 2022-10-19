@@ -2975,7 +2975,7 @@ def test_create_or_edit_object_full_template_1():
 
     request = req('get')
 
-    response = Form.create(auto__model=Foo).bind(request=request).render_to_response()
+    response = Form.create(auto__model=Foo, assets__ajax_enhance=None).bind(request=request).render_to_response()
     assert response.status_code == 200
 
     # language=HTML
