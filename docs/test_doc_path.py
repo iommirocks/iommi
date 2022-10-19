@@ -1,3 +1,4 @@
+import django
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.urls import (
@@ -109,8 +110,9 @@ def test_path_decoder(artist, album):
     # @end
 
     register_path_decoding(
-        Artist,
-        Album,
+        artist_name=Artist.name,
+        artist_pk=Artist,
+        album_pk=Album,
     )
 
     # @test
@@ -174,15 +176,18 @@ For cases where you want to decode something other than a pk or name you need th
 """
 
 
+@pytest.mark.skipif(not django.VERSION[:2] >= (4, 0), reason='Requires django 4.0+')
 def test_path_advanced_decoder(track):
     # @test
     unregister_encoding = (
     # @end
 
-    register_advanced_path_decoding({
-        User: Decoder('pk', 'username', 'email'),
-        Track: Decoder('foo', decode=lambda string, model, request, decoded_kwargs, kwargs, **_: model.objects.get(name__iexact=string.strip())),
-    })
+    register_path_decoding(
+        user_pk=User,
+        user_username=User.username,
+        user_email=User.email,
+        track_foo=lambda string, request, decoded_kwargs, kwargs, **_: Track.objects.get(name__iexact=string.strip())
+    )
 
     # @test
     )
@@ -202,7 +207,7 @@ def test_path_advanced_decoder(track):
     user = User.objects.create(pk=11, username='tony', email='tony@example.com')
     result = decode_path_components(request=req('get'), user_email='tony@example.com', track_foo='  neoN kNights\n \t ')
     assert result['user'] == user
-    assert result['track'] == track
+    assert result['track_foo'] == track
 
     unregister_encoding.__exit__(None, None, None)
     # @end

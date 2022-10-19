@@ -20,7 +20,6 @@ from iommi.evaluate import (
     matches,
     signature_from_kwargs,
 )
-from iommi.path import decode_path_components
 from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
@@ -172,7 +171,7 @@ class Traversable(RefinableObject):
         if parent is None:
             evaluate_parameters['request'] = request
             if hasattr(request, 'iommi_view_params'):
-                evaluate_parameters['params'] = Struct(decode_path_components(request, **request.iommi_view_params))
+                evaluate_parameters['params'] = request.iommi_view_params
         result._evaluate_parameters = evaluate_parameters
 
         if hasattr(result, 'include'):

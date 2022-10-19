@@ -997,7 +997,6 @@ def test_choices_in_char_field_model():
     ]
 
 
-@pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
 @pytest.mark.django_db
 def test_choices_in_char_field_model_as_class():
     from tests.models import ChoicesClassModel

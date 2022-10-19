@@ -3733,7 +3733,6 @@ def test_auto_model_for_textchoices():
     verify_table_html(table=TestTable(rows=[]), find=dict(name='tbody'), expected_html="""<tbody></tbody>""")
 
 
-@pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
 @pytest.mark.django_db
 def test_auto_model_for_textchoices_with_choices_class():
     from tests.models import ChoicesClassModel
@@ -3788,7 +3787,6 @@ def test_turn_off_entire_query():
     assert t.query is None
 
 
-@pytest.mark.skipif(not django.VERSION[:2] >= (3, 0), reason='Requires django 3.0+')
 @pytest.mark.django_db
 def test_text_choices():
     from tests.models import ChoicesClassModel
