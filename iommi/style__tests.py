@@ -757,3 +757,10 @@ def test_resolve_shortcut_multi_base():
     )
 
     assert style.resolve(Cat.garfield()) == [dict(teeth='sharp'), dict(legs='long', belly='slim'), dict(belly='fat')]
+
+
+def test_warning_for_config_into_the_void():
+    with pytest.warns() as records:
+        Style(foo__bar=3)
+
+    assert records[0].message

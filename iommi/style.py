@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import (
@@ -77,6 +78,10 @@ class Style:
 
         self.root = {k: v for k, v in items(Namespace(*(base.root for base in bases), root)) if v is not None}
         self.config = Namespace(*[x.config for x in bases], recursive_namespace(kwargs))
+
+        for k, v in items(self.config):
+            if k[0].islower():
+                warnings.warn(f"Style definition got the keyword {k} which starts with a lowercase letter. Classes should start with an uppercase letter. Either you made a mistake in passing something that won't match any config, or you should rename your class to start with a capital letter.")
 
         sub_style_names = list(sub_styles)
         for base in bases:
