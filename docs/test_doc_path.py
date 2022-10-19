@@ -1,3 +1,4 @@
+import django
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.urls import (
@@ -175,6 +176,7 @@ For cases where you want to decode something other than a pk or name you need th
 """
 
 
+@pytest.mark.skipif(not django.VERSION[:2] >= (4, 0), reason='Requires django 4.0+')
 def test_path_advanced_decoder(track):
     # @test
     unregister_encoding = (
