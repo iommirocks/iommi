@@ -1,3 +1,4 @@
+import django
 import pytest
 from django.contrib.auth.models import User
 from django.http import Http404
@@ -73,6 +74,7 @@ def test_path_decode():
         assert actual == expected
 
 
+@pytest.mark.skipif(not django.VERSION[:2] >= (4, 0), reason='Requires django 4.0+')
 @pytest.mark.django_db
 def test_other_attribute_path_decode():
     user = User.objects.create(pk=11, username='tony', email='tony@example.com')
