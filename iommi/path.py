@@ -1,14 +1,15 @@
 import functools
 import re
+import typing
+import warnings
 from contextlib import contextmanager
-from typing import (
-    Dict,
-    Tuple,
-    Type,
-)
 
-from django.db.models import Model
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import (
+    Model,
+)
 from django.db.models.base import ModelBase
+from django.db.models.query_utils import DeferredAttribute
 from django.http import Http404
 
 from iommi.base import items
@@ -29,7 +30,17 @@ class Decoder:
             return self._decode(lookup=lookup, string=string, model=model, **kwargs)
 
 
-_path_component_to_decode_data: Dict[str, Tuple[Type[Model], str, str, Decoder]] = {}
+class PathDecoder:
+    def __init__(self, *, decode=None, model=None, name):
+        if decode is None:
+            decode = lambda string, _model=model, **_: _model.objects.get(pk=string)
+
+        self.decode = decode
+        self.model = model
+        self.name = name
+
+
+_path_component_to_decode_data: typing.Dict[str, typing.Tuple[typing.Optional[typing.Type[Model]], str, typing.Optional[str], typing.Union[Decoder, PathDecoder]]] = {}
 
 
 _default_decoder = Decoder('pk', 'name')
@@ -39,7 +50,25 @@ def camel_to_snake(s):
     return _camel_to_snake_regex.sub('_', s).lower()
 
 
-def register_advanced_path_decoding(conf):
+def register_advanced_path_decoding(conf, *, warn=True):
+    if warn:
+        warnings.warn('''Path decoder syntax has been changed. Please use the new syntax. The old:
+        
+        register_advanced_path_decoder({
+            User: Decoder('pk', 'username', 'email'),
+            Track: Decoder('foo', decode=lambda string, model, **_: model.objects.get(name__iexact=string.strip())),
+        })
+         
+        is equivalent to:
+        
+        register_path_decoder(
+            user_pk=User,
+            user_username=User.username,
+            user_email=User.email,
+            track_foo=lambda string, **_: Track.objects.get(name__iexact=string.strip()),
+        )
+        ''', category=DeprecationWarning)
+
     registered_keys = []
     for model, decoder in items(conf):
         snake_name = camel_to_snake(model.__name__)
@@ -61,18 +90,32 @@ def register_advanced_path_decoding(conf):
 
 def register_explicit_path_decoding(**kwargs):
     registered_keys = []
-    for definition, model_or_decode in items(kwargs):
-        if isinstance(model_or_decode, ModelBase):
-            key, _, attribute = definition.partition('__')
-            model = model_or_decode
-            decoder = Decoder(attribute)
+    for key, definition in items(kwargs):
+        if isinstance(definition, ModelBase):
+            decoder = PathDecoder(
+                model=definition,
+                name=camel_to_snake(definition.__name__),
+            )
+        elif isinstance(definition, property):
+            assert False, f'Got a property for {key}. Maybe you did Foo.pk? In that case write just Foo, or Foo.id.'
+        elif isinstance(definition, DeferredAttribute):
+            field = definition.field
+            model = field.model
+            attr = field.name
+            decoder = PathDecoder(
+                decode=lambda string, _model=model, _attr=attr, **_: _model.objects.get(**{attr: string}),
+                name=camel_to_snake(model.__name__),
+            )
+        elif callable(definition):
+            decoder = PathDecoder(
+                decode=definition,
+                name=key,
+            )
         else:
-            model = None
-            attribute = None
-            key = definition
-            decoder = Decoder(decode=model_or_decode)
+            assert isinstance(definition, PathDecoder)
+            decoder = definition
 
-        _path_component_to_decode_data[key] = (model, key, attribute, decoder)
+        _path_component_to_decode_data[key] = (None, key, None, decoder)
         registered_keys.append(key)
 
     @contextmanager
@@ -87,11 +130,12 @@ def register_explicit_path_decoding(**kwargs):
 
 
 def register_path_decoding(*models, **kwargs):
+    assert not (models and kwargs), 'Mixing of new and deprecated syntax in the same call to register_path_decoding is not supported.'
     if kwargs:
-        assert not models
         return register_explicit_path_decoding(**kwargs)
 
-    return register_advanced_path_decoding({model: _default_decoder for model in models})
+    warnings.warn('Path decoder syntax has been changed. Please use the new syntax. The old `register_path_decoder(Foo)` is equivalent to `register_path_decoder(foo_pk=Foo, foo_name=Foo.name)`', category=DeprecationWarning)
+    return register_advanced_path_decoding({model: _default_decoder for model in models}, warn=False)
 
 
 def decode_path_components(request, **kwargs):
@@ -104,22 +148,33 @@ def decode_path_components(request, **kwargs):
             if decode_data is None:
                 continue
 
-            model, snake_name, lookup, decoder = decode_data
+            model, key, lookup, decoder = decode_data
 
             try:
-                obj = decoder.decode(
-                    lookup=lookup,
-                    string=v,
-                    request=request,
-                    model=model,
-                    snake_name=snake_name,
-                    decoded_kwargs=decoded_kwargs,
-                    kwargs=kwargs,
-                )
-            except model.DoesNotExist:
+                if isinstance(decoder, Decoder):
+                    # deprecated path
+                    obj = decoder.decode(
+                        lookup=lookup,
+                        string=v,
+                        request=request,
+                        model=model,
+                        snake_name=key,
+                        decoded_kwargs=decoded_kwargs,
+                        kwargs=kwargs,
+                    )
+                else:
+                    obj = decoder.decode(
+                        key=key,
+                        string=v,
+                        request=request,
+                        decoded_kwargs=decoded_kwargs,
+                        kwargs=kwargs,
+                    )
+                    key = decoder.name
+            except ObjectDoesNotExist:
                 raise Http404()
 
-            decoded_kwargs[snake_name] = obj
+            decoded_kwargs[key] = obj
             decoded_keys.add(k)
 
     if not hasattr(request, 'iommi_view_params'):
