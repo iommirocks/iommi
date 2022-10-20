@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+5.3.0 (2022-10-20)
+~~~~~~~~~~~~~~~~~~
+
+* New path decoding API
+
+* Form data for filled fields should be sent with select2 ajax callbacks (the documentation said we did this :P)
+
+* Fix EditTable save on ManyToMany fields
+
+* The default SQL tracer didn't output to the console
+
+* If a create form is not valid the save post handler should not try to build an instance
+
+* Drop support for django <3.0, Add tests for django 4.1
+
+* Drop python 3.7
+
+* Introduce Traversable.invoke_callback(...) helper function with better error reporting
+
+
 5.2.1 (2022-10-03)
 ~~~~~~~~~~~~~~~~~~
 
