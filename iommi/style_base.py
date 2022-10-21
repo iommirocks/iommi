@@ -6,72 +6,11 @@ from iommi.debug import (
     iommi_debug_on,
 )
 from iommi.style import Style
-from iommi._web_compat import mark_safe
 
 select2_assets = dict(
-    select2_js=Asset.js(
-        attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
-    ),
-    select2_iommi_js=Asset.js(
-        # language=js
-        children__text=mark_safe(
-            '''
-                document.addEventListener('readystatechange', () => {
-                    if (document.readyState === 'complete') {
-                        iommi_init_all_select2();
-                    }
-                });
-
-                function iommi_init_all_select2() {
-                    $('.select2_enhance').each(function (_, x) {
-                        iommi_init_select2(x);
-                    });
-                    // Second time is a workaround because the table might resize on select2-ification
-                    $('.select2_enhance').each(function (_, x) {
-                        iommi_init_select2(x);
-                    });
-                }
-
-                function iommi_init_select2(elem) {
-                    let f = $(elem);
-                    let endpoint_path = f.attr('data-choices-endpoint');
-                    let multiple = f.attr('multiple') !== undefined;
-                    let options = {
-                        placeholder: f.attr('data-placeholder'),
-                        allowClear: true,
-                        multiple: multiple
-                    };
-                    if (endpoint_path) {
-                        options.ajax = {
-                            url: function() {
-                                return '?' + this.closest('form').serialize();
-                            },
-                            dataType: "json",
-                            data: function (params) {
-                                let result = {
-                                    page: params.page || 1
-                                }
-                                result[endpoint_path] = params.term || '';
-
-                                return result;
-                            }
-                        }
-                    }
-                    f.select2(options);
-                    f.on('change', function(e) {
-                        let element = e.target.closest('form');
-                        // Fire a non-jquery event so that ajax_enhance.html gets the event
-                        element.dispatchEvent(new Event('change'));
-                    });
-                }
-            '''
-        )
-    ),
-    select2_css=Asset.css(
-        attrs=dict(
-            href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
-        )
-    ),
+    select2_js=Asset.js(attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js'),
+    select2_css=Asset.css(attrs__href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css'),
+    select2_init_select2_js=Asset.js(children__text__template='iommi/form/init_select2.js'),
 )
 
 select2_enhanced_forms = Style(
@@ -91,9 +30,7 @@ select2_enhanced_forms = Style(
                 non_editable_input__attrs__disabled=True,
                 assets=select2_assets,
                 input__attrs__class__select2_enhance=True,
-                attrs__style={
-                    'min-width': '200px',
-                },
+                attrs__style={'min-width': '200px'},
             ),
         ),
     ),
@@ -170,7 +107,7 @@ base = Style(
     Query=dict(
         template='iommi/query/form.html',
         advanced__template='iommi/query/advanced.html',
-        assets__ajax_enhance__template='iommi/query/ajax_enhance.html',
+        assets__ajax_enhance=Asset.js(children__text__template='iommi/query/ajax_enhance.js'),
         form__attrs__class__iommi_filter=True,
     ),
     Actions=dict(

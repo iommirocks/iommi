@@ -1,5 +1,3 @@
-<script>
-
 let iommiTableCall;
 
 let Axios = axios;
@@ -23,7 +21,7 @@ async function iommi_validate_form(params, form) {
     const iommiErrorsPath = form.getAttribute('data-iommi-errors');
     try {
         const {
-            data: { global, fields },
+            data: {global, fields},
         } = await Axios.get(`?${params.toString()}&/${iommiErrorsPath}`, {
             cancelToken: iommiTableCall.token,
         });
@@ -63,11 +61,11 @@ async function iommi_validate_form(params, form) {
 
 
 function iommi_show_spinner(isLoading, container) {
-    {# TODO: implement this thing #}
+    // TODO: implement this thing
     if (isLoading) {
-        {#window.showLoadingIndicator(container, 't-big');#}
+        // window.showLoadingIndicator(container, 't-big');
     } else {
-        {#window.removeLoadingIndicator(container);#}
+        // window.removeLoadingIndicator(container);
     }
 }
 
@@ -93,7 +91,7 @@ async function iommi_query_populate(form) {
 
     try {
         const {
-            data: { html },
+            data: {html},
         } = await Axios.get(`?${params.toString()}&${iommiTbodyPath}`, {
             cancelToken: iommiTableCall.token,
         });
@@ -163,14 +161,14 @@ function iommi_enhance_form(form) {
     const elements = form.parentNode.getElementsByClassName('iommi_query_toggle_simple_mode');
     if (elements.length > 0) {
         elements[0].addEventListener('click', () => {
-            const event = new CustomEvent('switch-mode', { bubbles: true });
+            const event = new CustomEvent('switch-mode', {bubbles: true});
             form.dispatchEvent(event);
         });
     }
 
     Array.from(form.getElementsByClassName('select2')).forEach(s => {
         s.addEventListener('change', onChange);
-     });
+    });
 
     form.querySelector('[data-iommi-filter-button]').remove();
 }
@@ -178,6 +176,3 @@ function iommi_enhance_form(form) {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.iommi_filter').forEach(form => iommi_enhance_form(form));
 });
-
-
-</script>
