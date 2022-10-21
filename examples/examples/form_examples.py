@@ -100,7 +100,7 @@ def form_example_3(request):
 
 @example(gettext("Create forms from database models"))
 def form_example_4(request):
-    return Form.create(auto__model=Album)
+    return Form.create(auto__model=Artist)
 
 
 @example(gettext("Create edit forms from database models"))
