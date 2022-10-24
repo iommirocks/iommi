@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.3.1 (2022-10-24)
+~~~~~~~~~~~~~~~~~~
+
+* Fix regression in 5.3.0 moving javascript assets
+
+
 5.3.0 (2022-10-20)
 ~~~~~~~~~~~~~~~~~~
 
