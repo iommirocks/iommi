@@ -82,8 +82,6 @@ def test_debug_tree_crash_on_non_editable(settings):
     tree = [', '.join([str(x.value) for x in cells]) for cells in result.cells_for_rows()]
     expected = """\
 , , Form, True
-assets, None, Members[Asset], True
-assets__ajax_enhance, ajax_enhance, Asset, True
 endpoints, None, Members[Endpoint], True
 endpoints__debug_tree, debug_tree, Endpoint, True
 fields, None, Members[Field], True
