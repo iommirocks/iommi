@@ -6,7 +6,6 @@ from datetime import (
     time,
 )
 
-import django
 import pytest
 from django.db.models import (
     F,
@@ -3072,7 +3071,7 @@ def test_evil_names():
 def test_sort_list():
     class TestTable(Table):
         foo = Column()
-        bar = Column.number(sort_key='bar')
+        bar = Column.number(sort_key=lambda **_: 'bar')
 
     rows = [
         Struct(foo='c', bar=3),
@@ -3373,10 +3372,7 @@ def test_order_by_on_list_nested():
         Struct(foo=Struct(bar='a')),
     ]
 
-    sorted_rows = ordered_by_on_list(rows, 'foo__bar')
-    assert sorted_rows == list(reversed(rows))
-
-    sorted_rows = ordered_by_on_list(rows, lambda x: x.foo.bar)
+    sorted_rows = ordered_by_on_list(rows, 'foo__bar', False)
     assert sorted_rows == list(reversed(rows))
 
 
@@ -3867,3 +3863,31 @@ def test_insert_subtitle():
     assert h1 in t
     assert h2 in t
     assert t.index(h1) < t.index(h2)
+
+
+def test_custom_sorter():
+    class MyTable(Table):
+        class Meta:
+            @staticmethod
+            def sorter(rows, sort_key, descending, **_):
+                assert sort_key == 'banana'
+                assert descending is False
+
+                rows.reverse()
+                return rows
+
+            default_sort_order = 'banana'
+
+        banana = Column()
+
+    table = MyTable(
+        rows=[
+            Struct(banana='yellow'),
+            Struct(banana='green'),
+        ],
+    ).bind(request=req('get'))
+    table.render_to_response()
+    assert table.visible_rows == [
+        Struct(banana='green'),
+        Struct(banana='yellow'),
+    ]
