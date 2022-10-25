@@ -213,25 +213,23 @@ class MinType(object):
 MIN = MinType()
 
 
-def ordered_by_on_list(objects, order_field, is_desc=False):
+def ordered_by_on_list(rows, sort_key, descending):
     """
     Utility function to sort objects django-style even for non-query set collections
 
-    :param objects: list of objects to sort
-    :param order_field: field name, follows django conventions, so `foo__bar` means `foo.bar`, can be a callable.
-    :param is_desc: reverse the sorting
+    :param rows: list of objects to sort
+    :param sort_key: field name, follows django conventions, so `foo__bar` means `foo.bar`, can be a callable.
+    :param descending: reverse the sorting
     :return: a sorted sequence
     """
-    if callable(order_field):
-        return sorted(objects, key=order_field, reverse=is_desc)
 
     def order_key(x):
-        v = getattr_path(x, order_field)
+        v = getattr_path(x, sort_key)
         if v is None:
             return MIN
         return v
 
-    return sorted(objects, key=order_key, reverse=is_desc)
+    return sorted(rows, key=order_key, reverse=descending)
 
 
 def yes_no_formatter(value, **_):
@@ -1994,23 +1992,35 @@ class Table(Part, Tag):
 
         order = request.GET.get(path_join(self.iommi_path, 'order'), self.default_sort_order)
         if order is not None:
-            is_desc = order[0] == '-'
-            order_field = is_desc and order[1:] or order
-            tmp = [x for x in values(self.columns) if x._name == order_field]
-            if len(tmp) == 0:
-                return  # Unidentified sort column
-            sort_column = tmp[0]
-            order_args = evaluate_strict(sort_column.sort_key, column=sort_column)
-            order_args = isinstance(order_args, list) and order_args or [order_args]
-
+            descending = order[0] == '-'
+            order_field = order[1:] if descending else order
+            sort_column = self.columns.get(order_field, None)
+            if sort_column is None:
+                return
             if sort_column.sortable:
-                if isinstance(self.initial_rows, list):
-                    self.sorted_rows = ordered_by_on_list(self.initial_rows, order_args[0], is_desc)
-                    self.rows = self.sorted_rows
-                else:
-                    order_args = ["%s%s" % (is_desc and '-' or '', x) for x in order_args]
-                    self.sorted_rows = self.initial_rows.order_by(*order_args)
-                    self.rows = self.sorted_rows
+                sort_key = sort_column.sort_key
+                self.sorted_rows = self.invoke_callback(
+                    self.sorter,
+                    rows=self.initial_rows,
+                    sort_key=sort_key,
+                    descending=descending,
+                )
+                self.rows = self.sorted_rows
+
+    @staticmethod
+    @refinable
+    def sorter(
+        rows: Union[QuerySet, list],
+        sort_key: str,
+        descending: bool,
+        **_,
+    ):
+        if isinstance(rows, list):
+            return ordered_by_on_list(rows, sort_key, descending)
+        else:
+            sort_keys = [sort_key] if not isinstance(sort_key, list) else sort_key
+            sort_keys = [('-' + x if descending else x) for x in sort_keys]
+            return rows.order_by(*sort_keys)
 
     def _bind_headers(self):
         prepare_headers(self)
