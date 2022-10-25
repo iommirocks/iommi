@@ -3891,3 +3891,66 @@ def test_custom_sorter():
         Struct(banana='green'),
         Struct(banana='yellow'),
     ]
+
+
+def test_custom_rows():
+    class CustomRows:
+        def __len__(self):
+            return 8
+
+        def __getitem__(self, key):
+            assert key == slice(3, 6)
+            return [
+                Struct(banana='green'),
+                Struct(banana='yellow'),
+                Struct(banana='black'),
+            ]
+
+    class MyTable(Table):
+        class Meta:
+            page_size = 3
+            rows = CustomRows()
+
+            @staticmethod
+            def sorter(rows, sort_key, descending, **_):
+                assert sort_key == 'banana'
+                assert descending is False
+                return rows
+
+        banana = Column()
+
+    verify_table_html(
+        table=MyTable(),
+        query=dict(page=2, order='banana'),
+        find=dict(class_="iommi-table-container"),
+        # language=html
+        expected_html="""\
+            <div class="iommi-table-container">
+                <div class="iommi-table-plus-paginator">
+                    <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                        <thead>
+                            <tr>
+                                <th class="ascending first_column sorted subheader">
+                                    <a href="?page=2&amp;order=-banana"> Banana </a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr> <td> green </td> </tr>
+                            <tr> <td> yellow </td> </tr>
+                            <tr> <td> black </td> </tr>
+                        </tbody>
+                    </table>
+                    <nav aria-label="Pages">
+                        <ul>
+                            <li> <a aria-label="Previous Page" href="?order=banana&amp;page=1"> &lt; </li>
+                            <li> <a aria-label="Page 1" href="?order=banana&amp;page=1"> 1 </a> </li>
+                            <li> <a aria-label="Page 2" href="?order=banana&amp;page=2"> 2 </a> </li>
+                            <li> <a aria-label="Page 3" href="?order=banana&amp;page=3"> 3 </a> </li>
+                            <li>  <a aria-label="Next Page" href="?order=banana&amp;page=3"> &gt; </a> </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        """,
+    )
