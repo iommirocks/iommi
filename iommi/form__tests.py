@@ -3397,3 +3397,33 @@ def test_action_callbacks_should_be_lazy():
         )
     )
     assert form.bind(request=req('post', **{'-foo': ''})).render_to_response().content == b'{}'
+
+
+@pytest.mark.django_db
+def test_form_save_write_only_specified_attributes():
+    orig_value = 11
+    instance = FormFromModelTest.objects.create(f_int=1, f_float=3, f_bool=True, f_int_excluded=orig_value)
+
+    request = req(
+        'POST',
+        **{
+            'f_int': '7',
+            '-submit': '',
+        },
+    )
+
+    updated_value = 7
+
+    def trigger_race(form, **_):
+        FormFromModelTest.objects.filter(pk=instance.pk).update(f_int_excluded=updated_value)
+
+    form = Form.edit(
+        auto__instance=instance,
+        auto__include=['f_int'],
+        extra__pre_save=trigger_race,
+    )
+    form = form.bind(request=request)
+    form.render_to_response()
+
+    instance.refresh_from_db()
+    assert instance.f_int_excluded == updated_value
