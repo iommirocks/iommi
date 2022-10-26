@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.4.0 (2022-10-26)
+~~~~~~~~~~~~~~~~~~
+
+* Add `sorter` configuration to `Table` for when rows need special handling on sorting.
+
+
 5.3.1 (2022-10-24)
 ~~~~~~~~~~~~~~~~~~
 
