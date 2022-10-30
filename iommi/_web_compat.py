@@ -20,22 +20,25 @@ try:
     from django.utils.safestring import mark_safe
     from django.http import HttpRequest
     from django.http.response import HttpResponseBase
+    from django.template.backends.django import Template as DjangoLoadedTemplate
 
     DjangoTemplate = None
     JinjaTemplate = None
 
     from django.conf import settings
 
+    template_types = tuple()
+
     if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
         from django.template import Template as DjangoTemplate
 
-        template_types = template_types + (DjangoTemplate,)
-    else:
-        assert any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES)
+        template_types += (DjangoTemplate, DjangoLoadedTemplate)
+
+    if any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES):
         import jinja2  # noqa: F401
         from jinja2 import Template as JinjaTemplate
 
-        template_types = template_types + (JinjaTemplate,)
+        template_types += (JinjaTemplate,)
 
     class Template:
         def __init__(self, template_string):
@@ -81,6 +84,8 @@ try:
             return ''
         elif isinstance(template, str):
             return mark_safe(render_to_string(template_name=template, context=context, request=request))
+        elif isinstance(template, DjangoLoadedTemplate):
+            return mark_safe(template.render(context=context, request=request))
         elif isinstance(template, template_types):
             return mark_safe(template.render(context=RequestContext(request, context)))
         else:

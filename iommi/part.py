@@ -12,6 +12,7 @@ from iommi._web_compat import (
     HttpResponse,
     HttpResponseBase,
     mark_safe,
+    render_template,
     Template,
 )
 from iommi.base import (
@@ -270,7 +271,7 @@ def as_html(*, request=None, part: PartType, context):
 
         assert not isinstance(context, RequestContext)
         template = part
-        return mark_safe(template.render(context=RequestContext(request, context)))
+        return render_template(template=template, request=request, context=context)
     elif hasattr(part, '__html__'):
         return part.__html__()
     elif part is None:

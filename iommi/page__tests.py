@@ -1,6 +1,7 @@
 from platform import python_implementation
 
 import pytest
+from django.template.loader import get_template
 from django.test import override_settings
 
 from iommi import (
@@ -96,12 +97,13 @@ def test_as_html_integer():
 def test_page_context():
     class MyPage(Page):
         part1 = Template('Template: {{foo}}\n')
-        part2 = html.div(template=Template('Template2: {{foo}}'))
+        part2 = html.div(template=Template('Template2: {{foo}}\n'))
+        part3 = get_template('test_page_context.html')
 
         class Meta:
             context__foo = 'foo'
 
-    assert MyPage().bind(request=req('get')).__html__() == 'Template: foo\nTemplate2: foo'
+    assert MyPage().bind(request=req('get')).__html__().strip() == 'Template: foo\nTemplate2: foo\nTemplate3: foo'
 
 
 def test_invalid_context_specified():
