@@ -332,10 +332,10 @@ def choice_queryset__extra__filter_and_sort(field, value, **_):
 
     when_clauses = [When(q, then=rank) for rank, q in enumerate(q_objects)]
     choices = field.choices.annotate(
-        iommi_ranking=Case(*when_clauses, default=len(q_objects) + 1, output_field=IntegerField())
+        _iommi_ranking=Case(*when_clauses, default=len(q_objects) + 1, output_field=IntegerField())
     )
 
-    return choices.filter(reduce(or_, q_objects)).order_by('iommi_ranking', *field.search_fields)
+    return choices.filter(reduce(or_, q_objects)).order_by('_iommi_ranking', *field.search_fields)
 
 
 def choice_queryset__parse(field, string_value, **_):

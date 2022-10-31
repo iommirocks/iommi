@@ -14,6 +14,7 @@ from django.db.models import (
 )
 
 from iommi import register_search_fields
+from iommi.model import IommiModel
 
 
 class FormFromModelTest(Model):
@@ -153,8 +154,8 @@ class TBaz(Model):
 
     class Meta:
         ordering = ('pk',)
-        
-        
+
+
 class AdminUnique(Model):
     foo = IntegerField()
     unique = IntegerField(unique=True)
@@ -271,3 +272,24 @@ class CustomField(models.Field):
 
 class NotRegisteredCustomFieldModel(models.Model):
     custom_field = CustomField()
+
+
+class RaceConditionModel(models.Model):
+    a = IntegerField()
+    b = IntegerField()
+
+
+class NoRaceConditionModel(IommiModel):
+    a = IntegerField()
+    b = IntegerField()
+
+
+class MyIommiModel(IommiModel):
+    foo = IntegerField()
+
+
+class MyAnnotatedIommiModel(IommiModel):
+    foo = IntegerField()
+
+    def get_annotated_attributes(self):
+        return ['fisk']
