@@ -168,6 +168,29 @@ def test_from_model():
     assert declared_fields['foo_bar'].attr == 'foo__bar'
 
 
+def test_from_model_declarative_style():
+    class MyForm(Form):
+        foo = Field.from_model(model_field=SomeModel.foo.field)
+        foo_bar = Field.from_model(attr='foo__bar', model_field=OtherModel.bar.field)
+
+    f = MyForm().bind()
+    declared_fields = f.fields
+    assert list(declared_fields.keys()) == ['foo', 'foo_bar']
+    assert declared_fields['foo_bar'].attr == 'foo__bar'
+
+
+@pytest.mark.skip('This would require major reshuffle of how auto__ is done...')
+def test_from_model_using_attr():
+    class MyForm(Form):
+        foo = Field.from_model()
+        foo_bar = Field.from_model(attr='foo__bar')
+
+    f = MyForm().bind()
+    declared_fields = f.fields
+    assert list(declared_fields.keys()) == ['foo', 'foo_bar']
+    assert declared_fields['foo_bar'].attr == 'foo__bar'
+
+
 def test_from_model_missing_subfield():
     with pytest.raises(Exception) as e:
         Form(

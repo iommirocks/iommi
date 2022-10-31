@@ -942,7 +942,7 @@ class Field(Part, Tag):
             return groups
 
     @classmethod
-    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,

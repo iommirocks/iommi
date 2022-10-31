@@ -103,6 +103,11 @@ def member_from_model(
             )
             result = result.refine(attr=model_field_name)
             return result
+    else:
+        if model is None:
+            model = model_field.model
+        if model_field_name is None:
+            model_field_name = model_field.name
 
     factory = factory_lookup.get(type(model_field), MISSING)
 
