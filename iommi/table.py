@@ -477,7 +477,7 @@ class Column(Part):
         filter__call_target__attribute='from_model',
         bulk__call_target__attribute='from_model',
     )
-    def from_model(cls, model, model_field_name=None, model_field=None, **kwargs):
+    def from_model(cls, model=None, model_field_name=None, model_field=None, **kwargs):
         return member_from_model(
             cls=cls,
             model=model,

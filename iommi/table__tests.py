@@ -1053,6 +1053,22 @@ def test_bulk_edit_from_model_has_tristate_for_booleans():
     assert t2.bulk.fields.b.iommi_shortcut_stack[0] == 'boolean_tristate'
 
 
+def test_from_model_field():
+    class MyTable(Table):
+        class Meta:
+            model = TBar
+
+        c = Column.from_model(
+            model_field=TBar.c.field,
+            filter__include=True,
+        )
+        foo_a = Column.from_model(attr='foo__a', model_field=TFoo.a.field)
+
+    f = MyTable().bind()
+    assert list(f.columns.keys()) == ['c', 'foo_a']
+    assert f.columns['foo_a'].attr == 'foo__a'
+
+
 @pytest.mark.django_db
 def test_bulk_edit_container():
     t = Table(
