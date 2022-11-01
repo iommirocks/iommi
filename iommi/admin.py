@@ -382,8 +382,8 @@ class Admin(Page):
 
                             Read <a href="https://docs.iommi.rocks/en/latest/admin.html#customization">the docs for admin customization</a> for more information.
                         ''',
-                        include=settings.DEBUG,
-                    )
+                    ),
+                    include=settings.DEBUG,
                 ),
                 add_models=add_models,
             ),
