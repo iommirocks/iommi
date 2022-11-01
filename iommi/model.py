@@ -16,7 +16,7 @@ class IommiModel(Model):
 
             except FieldDoesNotExist as e:
                 if name not in self.get_annotated_attributes():
-                    raise TypeError(f'There is no field {name}') from e
+                    raise TypeError(f'There is no field {name} on the model {self.__class__.__name__}. You can assign arbitrary attributes if they start with `_`. If this is an annotation, please add a method `get_annotated_attributes` that returns a list of valid annotated attributes that should not trigger this message.') from e
 
             self.get_updated_fields().add(name)
 
@@ -43,3 +43,6 @@ class IommiModel(Model):
         )
 
         self.get_updated_fields().clear()
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} pk={self.pk}>'

@@ -101,3 +101,8 @@ def test_annotation():
 @pytest.mark.django_db
 def test_force_insert():
     MyIommiModel.objects.create(pk=3, foo=1)
+
+
+def test_repr():
+    assert repr(MyIommiModel(pk=None, foo=1)) == '<MyIommiModel pk=None>'
+    assert repr(MyIommiModel(pk=7, foo=1)) == '<MyIommiModel pk=7>'
