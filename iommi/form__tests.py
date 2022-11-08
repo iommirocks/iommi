@@ -20,10 +20,6 @@ from django.core.exceptions import FieldError
 from django.http.response import HttpResponseBase
 from django.test import override_settings
 from django.urls import reverse_lazy
-from iommi.struct import (
-    merged,
-    Struct,
-)
 
 from iommi import (
     Action,
@@ -83,13 +79,17 @@ from iommi.shortcut import (
     Shortcut,
     with_defaults,
 )
+from iommi.struct import (
+    merged,
+    Struct,
+)
 from tests.compat import RequestFactory
 from tests.helpers import (
     get_attrs,
-    prettify,
-    reindent,
     remove_csrf,
     req,
+    verify_html,
+    verify_part_html,
 )
 from tests.models import (
     Bar,
@@ -646,46 +646,34 @@ def test_declared_fields():
 
 
 def test_non_editable():
-    actual = prettify(
-        Form(
+    verify_part_html(
+        part=Form(
             fields__foo=Field(editable=False, input__attrs__custom=7, initial='11'),
-        )
-        .bind(
-            request=req('get'),
-        )
-        .fields.foo.__html__()
+        ),
+        find__name='div',
+        # language=html
+        expected_html="""
+            <div>
+                <label for="id_foo">Foo</label>
+                <input custom="7" disabled="" id="id_foo" name="foo" type="text" value="11"/>
+            </div>
+        """,
     )
-
-    expected = prettify(
-        """
-        <div>
-            <label for="id_foo">Foo</label>
-            <input custom="7" disabled="" id="id_foo" name="foo" type="text" value="11"/>
-        </div>
-    """
-    )
-
-    assert actual == expected
 
 
 def test_non_editable_other_tag():
-    actual = prettify(
-        Form(
+    verify_part_html(
+        part=Form(
             fields__foo=Field(
                 editable=False,
                 input__attrs__custom=7,
                 initial='11',
                 non_editable_input__tag='div',
             ),
-        )
-        .bind(
-            request=req('get'),
-        )
-        .fields.foo.__html__()
-    )
-
-    expected = prettify(
-        """
+        ),
+        find__name='div',
+        # language=html
+        expected_html="""
             <div>
                 <label for="id_foo">
                     Foo
@@ -694,33 +682,24 @@ def test_non_editable_other_tag():
                     11
                 </div>
             </div>
-        """
+        """,
     )
-
-    assert actual == expected
 
 
 def test_editable():
-    actual = prettify(
-        Form(
+    verify_part_html(
+        part=Form(
             fields__foo=Field(input__attrs__custom=7, initial='11'),
-        )
-        .bind(
-            request=req('get'),
-        )
-        .fields.foo.__html__()
+        ),
+        find__name='div',
+        # language=html
+        expected_html="""
+            <div>
+                <label for="id_foo">Foo</label>
+                <input custom="7" id="id_foo" name="foo" type="text" value="11"/>
+            </div>
+        """,
     )
-
-    expected = prettify(
-        """
-        <div>
-            <label for="id_foo">Foo</label>
-            <input custom="7" id="id_foo" name="foo" type="text" value="11"/>
-        </div>
-    """
-    )
-
-    assert actual == expected
 
 
 def test_non_editable_form():
@@ -892,11 +871,7 @@ def test_info():
 
 
 def test_radio():
-    choices = [
-        'a',
-        'b',
-        'c',
-    ]
+    choices = ['a', 'b', 'c']
     form = Form(
         fields__foo=Field.radio(choices=choices),
     )
@@ -910,11 +885,7 @@ def test_radio():
 
 
 def test_radio_full_render():
-    choices = [
-        'a',
-        'b',
-        'c',
-    ]
+    choices = ['a', 'b', 'c']
     req('get')
     form = Form(
         fields__foo=Field.radio(choices=choices),
@@ -925,38 +896,27 @@ def test_radio_full_render():
     first = form.fields.foo.__html__()
     second = form.fields.foo.__html__()
     assert first == second
-    actual = prettify(first)
-    expected = prettify(
-        """
-<div>
-    <label for="id_foo">Foo</label>
-
-    <div>
-
-        <input type="radio" value="a" name="foo" id="id_foo_1" name="foo" checked/>
-        <label for="id_foo_1">a</label>
-
-    </div>
-
-    <div>
-
-        <input type="radio" value="b" name="foo" id="id_foo_2" name="foo" />
-        <label for="id_foo_2">b</label>
-
-    </div>
-
-    <div>
-
-        <input type="radio" value="c" name="foo" id="id_foo_3" name="foo" />
-        <label for="id_foo_3">c</label>
-
-    </div>
-
-</div>
-
-    """
+    verify_part_html(
+        part=form.fields.foo,
+        # language=html
+        expected_html="""
+            <div>
+                <label for="id_foo">Foo</label>
+                <div>
+                    <input type="radio" value="a" name="foo" id="id_foo_1" name="foo" checked/>
+                    <label for="id_foo_1"> a </label>
+                </div>
+                <div>
+                    <input type="radio" value="b" name="foo" id="id_foo_2" name="foo" />
+                    <label for="id_foo_2"> b </label>
+                </div>
+                <div>
+                    <input type="radio" value="c" name="foo" id="id_foo_3" name="foo" />
+                    <label for="id_foo_3"> c </label>
+                </div>
+            </div>
+        """,
     )
-    assert actual == expected
 
 
 def test_hidden():
@@ -1089,10 +1049,15 @@ def test_multi_choice_queryset():
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo._errors == set()
-    result = form.__html__()
-    assert (
-        str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
-        == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" multiple="" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=HTML
+        expected_html="""
+            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" multiple="" name="foo">
+                <option label="foo" selected="selected" value="1"> foo </option>
+            </select>
+        """,
     )
 
 
@@ -1128,10 +1093,15 @@ def test_choice_queryset():
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo._errors == set()
-    result = form.__html__()
-    assert (
-        str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
-        == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=HTML
+        expected_html="""
+            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">
+                <option label="foo" selected="selected" value="1"> foo </option>
+            </select>
+        """,
     )
 
 
@@ -1148,18 +1118,31 @@ def test_choice_queryset_do_not_cache():
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo._errors == set()
 
-    assert (
-        str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0])
-        == '<select class="select2_enhance" id="id_foo" name="foo">\n<option value="1">foo</option>\n</select>'
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=html
+        expected_html="""
+            <select class="select2_enhance" id="id_foo" name="foo">
+                <option value="1"> foo </option>
+            </select>
+        """,
     )
 
     # Now create a new queryset, check that we get two!
     User.objects.create(username='foo2')
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo._errors == set()
-    assert (
-        str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0])
-        == '<select class="select2_enhance" id="id_foo" name="foo">\n<option value="1">foo</option>\n<option value="2">foo2</option>\n</select>'
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=html
+        expected_html="""
+            <select class="select2_enhance" id="id_foo" name="foo">
+                <option value="1"> foo </option>
+                <option value="2"> foo2 </option>
+            </select>
+        """,
     )
 
 
@@ -1176,9 +1159,14 @@ def test_choice_queryset_do_not_look_up_by_default():
     assert form.fields.foo._errors == set()
 
     # The list should be empty because options are retrieved via ajax when needed
-    assert (
-        str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0])
-        == '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n</select>'
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=HTML
+        expected_html="""
+            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">
+            </select>
+        """,
     )
     assert form.fields.foo.input.template is not None
 
@@ -1190,8 +1178,16 @@ def test_choice_queryset_do_not_look_up_by_default():
     assert form.fields.foo.input.template is not None
 
     # language=HTML
-    expected = '<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="1">foo</option>\n</select>'
-    assert str(BeautifulSoup(form.__html__(), "html.parser").select('select')[0]) == expected
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=HTML
+        expected_html="""
+            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">
+                <option label="foo" selected="selected" value="1"> foo </option>
+            </select>
+        """,
+    )
 
 
 @pytest.mark.django
@@ -2064,47 +2060,39 @@ def test_render_with_action():
             def actions__submit__post_handler(**_):
                 pass  # pragma: no cover
 
-    # language=HTML
-    expected_html = """
-        <form action="" enctype="multipart/form-data" method="post">
-            <div>
-                <label for="id_bar">
-                    Bar
-                </label>
-                <input id="id_bar" name="bar" type="text" value="">
-            </div>
-            <div class="links">
-                <button accesskey="s" name="-submit">Submit</button>
-            </div>
-        </form>
-    """
-
-    actual_html = remove_csrf(MyForm().bind(request=req('get')).__html__())
-    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
-    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
-    assert prettified_actual == prettified_expected
+    verify_part_html(
+        part=MyForm(),
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div>
+                    <label for="id_bar"> Bar </label>
+                    <input id="id_bar" name="bar" type="text" value="">
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Submit</button>
+                </div>
+            </form>
+        """,
+    )
 
 
 def test_render_without_actions():
     class MyForm(Form):
         bar = Field()
 
-    # language=HTML
-    expected_html = """
-        <form action="" enctype="multipart/form-data" method="post">
-            <div>
-                <label for="id_bar">
-                    Bar
-                </label>
-                <input id="id_bar" name="bar" type="text" value="">
-            </div>
-        </form>
-    """
-
-    actual_html = remove_csrf(MyForm().bind(request=req('get')).__html__())
-    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
-    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
-    assert prettified_actual == prettified_expected
+    verify_part_html(
+        part=MyForm(),
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <div>
+                    <label for="id_bar"> Bar </label>
+                    <input id="id_bar" name="bar" type="text" value="">
+                </div>
+            </form>
+        """,
+    )
 
 
 def test_bool_parse():
@@ -2978,40 +2966,31 @@ def test_create_or_edit_object_full_template_1():
     response = Form.create(auto__model=Foo).bind(request=request).render_to_response()
     assert response.status_code == 200
 
-    # language=HTML
-    expected_html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>
-            Create foo
-        </title>
-    </head>
-    <body>
-        <form action="" enctype="multipart/form-data" method="post">
-            <h1>
-                Create foo
-            </h1>
-            <div>
-                <label for="id_foo">
-                    Foo
-                </label>
-                <input id="id_foo" name="foo" type="text" value=""/>
-                <div class="helptext">
-                    foo_help_text
-                </div>
-            </div>
-            <div class="links">
-                <button accesskey="s" name="-submit">Create</button>
-            </div>
-        </form>
-    </body>
-</html>
-
-    """
-    actual = prettify(remove_csrf(response.content.decode()))
-    expected = prettify(expected_html)
-    assert actual == expected
+    verify_html(
+        actual_html=remove_csrf(response.content.decode()),
+        # language=HTML
+        expected_html="""
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title> Create foo </title>
+                </head>
+                <body>
+                    <form action="" enctype="multipart/form-data" method="post">
+                        <h1> Create foo </h1>
+                        <div>
+                            <label for="id_foo"> Foo </label>
+                            <input id="id_foo" name="foo" type="text" value=""/>
+                            <div class="helptext"> foo_help_text </div>
+                        </div>
+                        <div class="links">
+                            <button accesskey="s" name="-submit">Create</button>
+                        </div>
+                    </form>
+                </body>
+            </html>
+        """,
+    )
 
 
 def test_create_or_edit_view_name():
@@ -3287,25 +3266,31 @@ def test_render_grouped_fields():
         e = Field(group='2')
         f = Field(group='2')
 
-    actual_html = MyForm().bind(request=req('get')).render_fields
-    # language=HTML
-    expected_html = '''
-         <div><label for="id_a">A</label><input id="id_a" name="a" type="text" value=""></div>
-         <div class="form_group">
-            <div><label for="id_b">B</label><input id="id_b" name="b" type="text" value=""></div>
-         </div>
-
-         <div><label for="id_c">C</label><input id="id_c" name="c" type="text" value=""></div>
-
-         <div class="form_group this_is_two">
-             <div><label for="id_d">D</label><input id="id_d" name="d" type="text" value=""></div>
-             <div><label for="id_e">E</label><input id="id_e" name="e" type="text" value=""></div>
-             <div><label for="id_f">F</label><input id="id_f" name="f" type="text" value=""></div>
-         </div>
-    '''
-    prettified_expected = reindent(BeautifulSoup(expected_html, 'html.parser').prettify()).strip()
-    prettified_actual = reindent(BeautifulSoup(actual_html, 'html.parser').prettify()).strip()
-    assert prettified_actual == prettified_expected
+    verify_html(
+        actual_html=MyForm().bind(request=req('get')).render_fields,
+        # language=HTML
+        expected_html='''
+            <div>
+                <label for="id_a"> A </label>
+                <input id="id_a" name="a" type="text" value="">
+            </div>
+            <div class="form_group">
+                <div>
+                    <label for="id_b"> B </label>
+                    <input id="id_b" name="b" type="text" value="">
+                </div>
+            </div>
+            <div>
+                <label for="id_c"> C </label>
+                <input id="id_c" name="c" type="text" value="">
+            </div>
+            <div class="form_group this_is_two">
+                <div> <label for="id_d"> D </label> <input id="id_d" name="d" type="text" value=""> </div>
+                <div> <label for="id_e"> E </label> <input id="id_e" name="e" type="text" value=""> </div>
+                <div> <label for="id_f"> F </label> <input id="id_f" name="f" type="text" value=""> </div>
+            </div>
+        ''',
+    )
 
 
 def test_create_not_fail_on_invalid_form():
@@ -3390,10 +3375,15 @@ def test_choice_queryset_with_thousands_separator_setting(settings):
 
     form = MyForm().bind(request=req('get', foo=[smart_str(user.pk)]))
     assert form.fields.foo._errors == set()
-    result = form.__html__()
-    assert (
-        str(BeautifulSoup(result, "html.parser").select('#id_foo')[0])
-        == f'<select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">\n<option label="foo" selected="selected" value="{user.pk}">foo</option>\n</select>'
+    verify_part_html(
+        part=form,
+        find__name='select',
+        # language=HTML
+        expected_html=f"""
+            <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">
+                <option label="foo" selected="selected" value="{user.pk}"> foo </option>
+            </select>
+        """,
     )
 
 

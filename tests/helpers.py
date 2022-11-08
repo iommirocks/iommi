@@ -46,23 +46,24 @@ def remove_csrf(html_code):
 
 @dispatch
 def verify_table_html(*, table: Table, query=None, find=None, expected_html: str, **kwargs):
-    """
-    Verify that the table renders to the expected markup, modulo formatting
-    """
-
     if find is None:
         find = dict(class_='table')
         if not expected_html.strip():
             expected_html = "<table/>"  # pragma: no cover
 
-    request = RequestFactory().get("/", query)
-    if not table._is_bound:
-        table = table.bind(request=request)
+    verify_part_html(part=table, query=query, find=find, expected_html=expected_html, **kwargs)
 
-    from django.contrib.auth.models import AnonymousUser
 
-    request.user = AnonymousUser()
-    actual_html = remove_csrf(table.__html__(**kwargs))
+@dispatch
+def verify_part_html(*, part, query=None, find=None, expected_html, **kwargs):
+    if not part._is_bound:
+        from django.contrib.auth.models import AnonymousUser
+
+        request = RequestFactory().get("/", query)
+        request.user = AnonymousUser()
+        part = part.bind(request=request)
+
+    actual_html = remove_csrf(part.__html__(**kwargs))
 
     verify_html(actual_html=actual_html, find=find, expected_html=expected_html)
 
@@ -80,9 +81,8 @@ def verify_html(*, actual_html, find=None, expected_html):
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
     if not hit:  # pragma: no cover
-        print(actual_html)
+        print(reindent(actual_soup.prettify()).strip())
         assert False, f"Couldn't find selector {find} in actual output"
-    assert hit, actual_soup
     prettified_actual = reindent(hit.prettify()).strip()
 
     if prettified_actual != prettified_expected:  # pragma: no cover
