@@ -284,6 +284,9 @@ class Filter(Part):
     def own_evaluate_parameters(self):
         return dict(filter=self)
 
+    def __html__(self, *, render=None):
+        assert False, "Filters aren't rendered directly. You either render the Field corresponding to the filter, or the entire Query object."
+
     @staticmethod
     @refinable
     def query_operator_to_q_operator(op: str) -> str:
