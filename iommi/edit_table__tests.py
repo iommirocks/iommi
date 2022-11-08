@@ -53,7 +53,7 @@ def test_edit_table():
 
     verify_table_html(
         table=edit_table.bind(request=req('get')),
-        find=dict(method='post'),
+        find__method='post',
         # language=html
         expected_html="""
             <form enctype="multipart/form-data" method="post">
@@ -69,20 +69,12 @@ def test_edit_table():
                             </thead>
                             <tbody>
                                 <tr data-pk="1">
-                                    <td>
-                                         <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/>
-                                    </td>
-                                    <td>
-                                        bar
-                                    </td>
+                                    <td> <input id="id_editable_thing__1" name="editable_thing/1" type="text" value="foo"/> </td>
+                                    <td> bar </td>
                                 </tr>
                                 <tr data-pk="2">
-                                    <td>
-                                        <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/>
-                                    </td>
-                                    <td>
-                                        buzz
-                                    </td>
+                                    <td> <input id="id_editable_thing__2" name="editable_thing/2" type="text" value="baz"/> </td>
+                                    <td> buzz </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -91,9 +83,7 @@ def test_edit_table():
                 <div class="links">
                     <button accesskey="s" name="-submit"> Save </button>
                     <div style="display: none"> Csrf </div>
-                    <button onclick="iommi_add_row(this); return false">
-                        Add row
-                    </button>
+                    <button onclick="iommi_add_row(this); return false"> Add row </button>
                 </div>
             </form>
         """,

@@ -211,25 +211,25 @@ def test_actions():
 
     verify_table_html(
         table=TestTable(rows=rows),
-        find=dict(class_='links'),
+        find__class='links',
+        # language=html
         expected_html="""
-        <div class="links">
-            <div class="btn-group">
-                <button class="btn btn-primary dropdown-toggle" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button" type="button">
-                    Other
-                </button>
-                <div aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
-                    <a class="dropdown-item" href="/bar/" role="menuitem"> Baz </a>
-                    <a class="dropdown-item" href="/bar/" role="menuitem"> Qux </a>
+            <div class="links">
+                <div class="btn-group">
+                    <button class="btn btn-primary dropdown-toggle" data-target="#" data-toggle="dropdown" href="/page.html" id="id_dropdown_other" role="button" type="button">
+                        Other
+                    </button>
+                    <div aria-labelledby="id_dropdown_Other" class="dropdown-menu" role="menu">
+                        <a class="dropdown-item" href="/bar/" role="menuitem"> Baz </a>
+                        <a class="dropdown-item" href="/bar/" role="menuitem"> Qux </a>
+                    </div>
                 </div>
+                <a href="/bar/"> Bar </a>
+                <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
+                <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
+                <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
             </div>
-
-            <a href="/bar/"> Bar </a>
-
-            <a href="/icon_foo/"> <i class="fa fa-icon_foo " /> Icon foo </a>
-            <a href="/icon_bar/"> <i class="fa fa-icon_bar fa-lg" /> Icon bar </a>
-            <a href="/icon_baz/"> <i class="fa fa-icon_baz fa-one fa-two" /> Icon baz </a>
-        </div>""",
+        """,
     )
 
 

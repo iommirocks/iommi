@@ -3042,6 +3042,14 @@ def test_delete_form_not_editable():
 
 
 @pytest.mark.django_db
+def test_delete_form_default_text():
+    from tests.models import Foo
+
+    foo = Foo.objects.create(foo=7)
+    assert Form.delete(instance=foo).bind(request=req('get')).__html__()
+
+
+@pytest.mark.django_db
 def test_evil_names():
     from tests.models import EvilNames
 
