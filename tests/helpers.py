@@ -44,25 +44,11 @@ def remove_csrf(html_code):
     return re.sub(csrf_regex, '', html_code)
 
 
-def assert_html(actual_html, expected_html):
-    from bs4 import BeautifulSoup
-
-    expected_soup = BeautifulSoup(expected_html, 'html.parser')
-    prettified_expected = reindent(expected_soup.prettify()).strip()
-    actual_soup = BeautifulSoup(actual_html, 'html.parser')
-    prettified_actual = reindent(actual_soup.prettify()).strip()
-
-    if prettified_actual != prettified_expected:  # pragma: no cover
-        print(actual_html)
-    assert prettified_actual == prettified_expected
-
-
 @dispatch
 def verify_table_html(*, table: Table, query=None, find=None, expected_html: str, **kwargs):
     """
     Verify that the table renders to the expected markup, modulo formatting
     """
-    from bs4 import BeautifulSoup
 
     if find is None:
         find = dict(class_='table')
@@ -78,8 +64,19 @@ def verify_table_html(*, table: Table, query=None, find=None, expected_html: str
     request.user = AnonymousUser()
     actual_html = remove_csrf(table.__html__(**kwargs))
 
+    verify_html(actual_html=actual_html, find=find, expected_html=expected_html)
+
+
+@dispatch
+def verify_html(*, actual_html, find=None, expected_html):
+    from bs4 import BeautifulSoup
+
+    if find is None:
+        find = dict()
+
     expected_soup = BeautifulSoup(expected_html, 'html.parser')
     prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
+
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
     if not hit:  # pragma: no cover
@@ -90,6 +87,7 @@ def verify_table_html(*, table: Table, query=None, find=None, expected_html: str
 
     if prettified_actual != prettified_expected:  # pragma: no cover
         print(actual_html)
+
     assert prettified_actual == prettified_expected
 
 

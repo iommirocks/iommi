@@ -14,8 +14,8 @@ from iommi.table import (
     Column,
 )
 from tests.helpers import (
-    assert_html,
     req,
+    verify_html,
     verify_table_html,
 )
 from tests.models import (
@@ -283,17 +283,20 @@ def test_edit_table_post_create():
     edit_table = EditTable(auto__model=TBar).refine_done()
     assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
     # language=html
-    expected_create_template = '''
-        <tr data-pk="#sentinel#">
-            <td>
-                <select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices"></select>
-            </td>
-            <td>
-                <input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox">
-            </td>
-        </tr>
-    '''
-    assert_html(edit_table.bind().attrs['data-add-template'], expected_create_template)
+    verify_html(
+        actual_html=edit_table.bind().attrs['data-add-template'],
+        # language=html
+        expected_html='''
+            <tr data-pk="#sentinel#">
+                <td>
+                    <select class="select2_enhance" id="id_columns__foo__#sentinel#" name="columns/foo/#sentinel#" data-placeholder="" data-choices-endpoint="/create_form/foo/choices"></select>
+                </td>
+                <td>
+                    <input id="id_columns__c__#sentinel#" name="columns/c/#sentinel#" type="checkbox">
+                </td>
+            </tr>
+        ''',
+    )
 
     assert not TBar.objects.exists()
 
