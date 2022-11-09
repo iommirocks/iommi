@@ -3007,7 +3007,25 @@ def test_create_or_edit_object_full_template_2():
     from tests.models import Foo
 
     foo = Foo.objects.create(foo=7)
-    Form.delete(auto__instance=foo).bind(request=req('post', **{'-submit': ''})).render_to_response()
+    form = Form.delete(auto__instance=foo)
+    verify_part_html(
+        part=form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1> Delete foo </h1>
+                <div>
+                    <label for="id_foo">Foo</label>
+                    <input disabled="" id="id_foo" name="foo" type="text" value="7"/>
+                    <div class="helptext">foo_help_text</div>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit">Delete</button>
+                </div>
+            </form>
+        """,
+    )
+    form.bind(request=req('post', **{'-submit': ''})).render_to_response()
     with pytest.raises(Foo.DoesNotExist):
         foo.refresh_from_db()
 
@@ -3025,7 +3043,18 @@ def test_delete_form_default_text():
     from tests.models import Foo
 
     foo = Foo.objects.create(foo=7)
-    assert Form.delete(instance=foo).bind(request=req('get')).__html__()
+    verify_part_html(
+        part=Form.delete(instance=foo),
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <p> Are you sure you want to delete the foo "Foo object (1)"?</p>
+                <div class="links">
+                    <button accesskey="s" name="-submit"> Delete </button>
+                </div>
+            </form>
+        """,
+    )
 
 
 @pytest.mark.django_db
