@@ -2923,11 +2923,32 @@ def test_create_or_edit_object_validate_unique():
         },
     )
 
-    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
+    create_form = Form.create(auto__model=Baz)
+    verify_part_html(
+        part=create_form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1> Create baz </h1>
+                <div>
+                    <label for="id_a"> A </label>
+                    <input id="id_a" name="a" type="text" value=""/>
+                </div>
+                <div>
+                    <label for="id_b"> B </label>
+                    <input id="id_b" name="b" type="text" value=""/>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit"> Create </button>
+                </div>
+            </form>
+        """,
+    )
+    response = create_form.bind(request=request).render_to_response()
     assert response.status_code == 302
     assert Baz.objects.filter(a=1, b=1).exists()
 
-    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
+    response = create_form.bind(request=request).render_to_response()
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
@@ -2939,9 +2960,31 @@ def test_create_or_edit_object_validate_unique():
             '-submit': '',
         },
     )
-    response = Form.create(auto__model=Baz).bind(request=request).render_to_response()
+    response = create_form.bind(request=request).render_to_response()
     assert response.status_code == 302
     instance = Baz.objects.get(a=1, b=2)
+
+    edit_form = Form.edit(auto__instance=instance)
+    verify_part_html(
+        part=edit_form,
+        # language=HTML
+        expected_html="""
+            <form action="" enctype="multipart/form-data" method="post">
+                <h1> Edit baz </h1>
+                <div>
+                    <label for="id_a"> A </label>
+                    <input id="id_a" name="a" type="text" value="1"/>
+                </div>
+                <div>
+                    <label for="id_b"> B </label>
+                    <input id="id_b" name="b" type="text" value="2"/>
+                </div>
+                <div class="links">
+                    <button accesskey="s" name="-submit"> Save </button>
+                </div>
+            </form>
+        """,
+    )
 
     request = req(
         'post',
@@ -2951,8 +2994,7 @@ def test_create_or_edit_object_validate_unique():
             '-submit': '',
         },
     )
-
-    response = Form.edit(auto__instance=instance).bind(request=request).render_to_response()
+    response = edit_form.bind(request=request).render_to_response()
     assert response.status_code == 200
     assert 'Baz with this A and B already exists.' in response.content.decode('utf-8')
 
