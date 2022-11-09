@@ -32,7 +32,6 @@ from iommi.traversable import (
 
 
 def reindent(s, before=" ", after="    "):
-
     def reindent_line(line):
         m = re.match(r'^((' + re.escape(before) + r')*)(.*)', line)
         return after * (len(m.group(1)) // len(before)) + m.group(3)
@@ -45,56 +44,50 @@ def remove_csrf(html_code):
     return re.sub(csrf_regex, '', html_code)
 
 
-def assert_html(actual_html, expected_html):
-    from bs4 import BeautifulSoup
-    expected_soup = BeautifulSoup(expected_html, 'html.parser')
-    prettified_expected = reindent(expected_soup.prettify()).strip()
-    actual_soup = BeautifulSoup(actual_html, 'html.parser')
-    prettified_actual = reindent(actual_soup.prettify()).strip()
-
-    if prettified_actual != prettified_expected:  # pragma: no cover
-        print(actual_html)
-    assert prettified_actual == prettified_expected
-
-
-@dispatch(
-    table__call_target=Table,
-)
-def verify_table_html(*, expected_html, query=None, find=None, table, **kwargs):
-    """
-    Verify that the table renders to the expected markup, modulo formatting
-    """
-    from bs4 import BeautifulSoup
+@dispatch
+def verify_table_html(*, table: Table, query=None, find=None, expected_html: str, **kwargs):
     if find is None:
         find = dict(class_='table')
         if not expected_html.strip():
             expected_html = "<table/>"  # pragma: no cover
 
-    if isinstance(table, Namespace):
-        table = table()
+    verify_part_html(part=table, query=query, find=find, expected_html=expected_html, **kwargs)
 
-    table: Table
 
-    request = RequestFactory().get("/", query)
-    if not table._is_bound:
-        table = table.bind(request=request)
+@dispatch
+def verify_part_html(*, part, query=None, find=None, expected_html, **kwargs):
+    if not part._is_bound:
+        from django.contrib.auth.models import AnonymousUser
 
-    from django.contrib.auth.models import AnonymousUser
-    request.user = AnonymousUser()
-    actual_html = remove_csrf(table.__html__(**kwargs))
+        request = RequestFactory().get("/", query)
+        request.user = AnonymousUser()
+        part = part.bind(request=request)
+
+    actual_html = remove_csrf(part.__html__(**kwargs))
+
+    verify_html(actual_html=actual_html, find=find, expected_html=expected_html)
+
+
+@dispatch
+def verify_html(*, actual_html, find=None, expected_html):
+    from bs4 import BeautifulSoup
+
+    if find is None:
+        find = dict()
 
     expected_soup = BeautifulSoup(expected_html, 'html.parser')
     prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
+
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
     if not hit:  # pragma: no cover
-        print(actual_html)
+        print(reindent(actual_soup.prettify()).strip())
         assert False, f"Couldn't find selector {find} in actual output"
-    assert hit, actual_soup
     prettified_actual = reindent(hit.prettify()).strip()
 
     if prettified_actual != prettified_expected:  # pragma: no cover
         print(actual_html)
+
     assert prettified_actual == prettified_expected
 
 
@@ -146,7 +139,14 @@ class Basket(Traversable):
         super(Basket, self).__init__(**kwargs)
 
     def on_refine_done(self):
-        refine_done_members(container=self, name='fruits', members_from_namespace=self.fruits, members_from_declared=self.get_declared('fruits_dict'), cls=Fruit, unknown_types_fall_through=self.unknown_types_fall_through)
+        refine_done_members(
+            container=self,
+            name='fruits',
+            members_from_namespace=self.fruits,
+            members_from_declared=self.get_declared('fruits_dict'),
+            cls=Fruit,
+            unknown_types_fall_through=self.unknown_types_fall_through,
+        )
         super(Basket, self).on_refine_done()
 
     def on_bind(self):
@@ -162,7 +162,14 @@ class Box(Traversable):
         super(Box, self).__init__(**kwargs)
 
     def on_refine_done(self):
-        refine_done_members(container=self, name='items', members_from_namespace=self.items, members_from_declared=self.get_declared('items_dict'), cls=Basket, unknown_types_fall_through=self.unknown_types_fall_through)
+        refine_done_members(
+            container=self,
+            name='items',
+            members_from_namespace=self.items,
+            members_from_declared=self.get_declared('items_dict'),
+            cls=Basket,
+            unknown_types_fall_through=self.unknown_types_fall_through,
+        )
         super(Box, self).on_refine_done()
 
     def on_bind(self):
@@ -171,6 +178,7 @@ class Box(Traversable):
 
 def prettify(content):
     from bs4 import BeautifulSoup
+
     return reindent(BeautifulSoup(content, 'html.parser').prettify().strip())
 
 
@@ -187,7 +195,9 @@ _show_output_used = set()
 
 def show_output(part, path='/'):
     frame = inspect.currentframe().f_back
-    base_name = os.path.join(Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name)
+    base_name = os.path.join(
+        Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name
+    )
     name = base_name
     counter = 0
     while name in _show_output_used:
