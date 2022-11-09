@@ -1794,6 +1794,16 @@ class Form(Part):
         actions__submit__post_handler=delete_object__post_handler,
         extra__crud_type='delete',
         editable=False,
+        fields__iommi_default_text=dict(
+            call_target=Fragment,
+            include=lambda form, **_: list(form.iommi_namespace.fields.keys()) == ['iommi_default_text'],
+            after=0,
+            tag='p',
+            children__text=lambda instance, **_: (
+                gettext('Are you sure you want to delete the %(model_name)s "%(instance)s"?')
+                % dict(model_name=instance._meta.verbose_name, instance=str(instance))
+            ),
+        ),
     )
     def delete(cls, **kwargs):
         return cls.crud(**kwargs)

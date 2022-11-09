@@ -45,17 +45,22 @@ def remove_csrf(html_code):
 
 
 @dispatch
-def verify_table_html(*, table: Table, query=None, find=None, expected_html: str, **kwargs):
+def verify_table_html(*, table: Table, query=None, find=None, expected_html: str = None):
     if find is None:
         find = dict(class_='table')
         if not expected_html.strip():
             expected_html = "<table/>"  # pragma: no cover
 
-    verify_part_html(part=table, query=query, find=find, expected_html=expected_html, **kwargs)
+    verify_part_html(
+        part=table,
+        query=query,
+        find=find,
+        expected_html=expected_html,
+    )
 
 
 @dispatch
-def verify_part_html(*, part, query=None, find=None, expected_html, **kwargs):
+def verify_part_html(*, part, query=None, find=None, expected_html: str = None):
     if not part._is_bound:
         from django.contrib.auth.models import AnonymousUser
 
@@ -63,32 +68,37 @@ def verify_part_html(*, part, query=None, find=None, expected_html, **kwargs):
         request.user = AnonymousUser()
         part = part.bind(request=request)
 
-    actual_html = remove_csrf(part.__html__(**kwargs))
-
-    verify_html(actual_html=actual_html, find=find, expected_html=expected_html)
+    verify_html(
+        actual_html=remove_csrf(part.__html__()),
+        find=find,
+        expected_html=expected_html,
+    )
 
 
 @dispatch
-def verify_html(*, actual_html, find=None, expected_html):
+def verify_html(*, actual_html: str, find=None, expected_html: str = None):
     from bs4 import BeautifulSoup
+
+    if expected_html is None:
+        expected_html = '<html/>'
+
+    expected_soup = BeautifulSoup(expected_html, 'html.parser')
+    actual_soup = BeautifulSoup(actual_html, 'html.parser')
 
     if find is None:
         find = dict()
-
-    expected_soup = BeautifulSoup(expected_html, 'html.parser')
-    prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
-
-    actual_soup = BeautifulSoup(actual_html, 'html.parser')
     hit = actual_soup.find(**find)
     if not hit:  # pragma: no cover
-        print(reindent(actual_soup.prettify()).strip())
+        prettied_actual = reindent(actual_soup.prettify()).strip()
+        print(prettied_actual)
         assert False, f"Couldn't find selector {find} in actual output"
-    prettified_actual = reindent(hit.prettify()).strip()
 
-    if prettified_actual != prettified_expected:  # pragma: no cover
-        print(actual_html)
+    prettified_hit = reindent(hit.prettify()).strip()
+    prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
+    if prettified_hit != prettified_expected:  # pragma: no cover
+        print(prettified_hit)
 
-    assert prettified_actual == prettified_expected
+    assert prettified_hit == prettified_expected
 
 
 def request_with_middleware(response, request):
