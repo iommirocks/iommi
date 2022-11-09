@@ -3048,6 +3048,7 @@ def test_delete_form_default_text():
         # language=HTML
         expected_html="""
             <form action="" enctype="multipart/form-data" method="post">
+                <h1> Delete foo </h1>
                 <p> Are you sure you want to delete the foo "Foo object (1)"?</p>
                 <div class="links">
                     <button accesskey="s" name="-submit"> Delete </button>

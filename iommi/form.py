@@ -1464,21 +1464,22 @@ class Form(Part):
             )
             if auto.instance is not None:
                 self.instance = auto.instance
-            crud_type = self.extra.get('crud_type')
-            if 'title' not in self.iommi_namespace and crud_type is not None:
-                self.title = capitalize(
-                    gettext('%(crud_type)s %(model_name)s')
-                    % dict(crud_type=gettext(crud_type), model_name=model._meta.verbose_name)
-                )
-                # TODO this in extra_member_defaults
-                setdefaults_path(
-                    self.actions,
-                    submit__display_name=gettext('Save') if crud_type == 'edit' else capitalize(gettext(crud_type)),
-                )
 
             self.model = model
         else:
             fields_from_auto = None
+
+        crud_type = self.extra.get('crud_type')
+        if 'title' not in self.iommi_namespace and crud_type is not None:
+            self.title = capitalize(
+                gettext('%(crud_type)s %(model_name)s')
+                % dict(crud_type=gettext(crud_type), model_name=(self.model or self.instance)._meta.verbose_name)
+            )
+            # TODO this in extra_member_defaults
+            setdefaults_path(
+                self.actions,
+                submit__display_name=gettext('Save') if crud_type == 'edit' else capitalize(gettext(crud_type)),
+            )
 
         # Submit is special.
         # We used to have an automatic action submit button. Now we instead if something is inj
