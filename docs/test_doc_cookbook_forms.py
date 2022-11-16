@@ -496,3 +496,27 @@ def test_how_do_I_make_a_fields_choices_depend_on_another_field():
     )
     form.bind(request=req('get')).render_to_response()
     # @end
+
+
+def test_form_with_foreign_key_reverse(small_discography, artist):
+    # language=rst
+    """
+    How do I show a reverse foreign key relationship?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    By default reverse foreign key relationships are hidden. To turn it on, pass `include=False` to the field. Note that these are read only, because the semantics of hijacking another models foreign keys would be quite weird.
+    """
+
+    f = Form(
+        auto__instance=artist,
+        fields__albums__include=True,
+    )
+
+    # @test
+    f = f.bind(request=req('get'))
+
+    assert list(f.fields.keys()) == ['name', 'albums']
+    assert f.fields.albums.model_field is Artist._meta.get_field('albums')
+    assert f.fields.albums.display_name == 'Albums'
+
+    show_output(f)

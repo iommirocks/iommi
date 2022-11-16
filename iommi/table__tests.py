@@ -1979,7 +1979,7 @@ def test_from_model():
         columns__a__extra__stuff='Some stuff',
     )
     t = t.bind(request=None)
-    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'a', 'b'}
+    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'a', 'b', 'tbar', 'queryfromindexestestmodel'}
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
     assert 'Some stuff' == t.columns['a'].extra.stuff
@@ -1990,7 +1990,7 @@ def test_from_model_foreign_key():
     t = Table(
         auto__model=TBar,
     ).bind(request=None)
-    assert list(t.iommi_namespace.columns.keys()) == ['select', 'id', 'foo', 'c']
+    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'foo', 'c', 'tbar2'}
     assert list(t.columns.keys()) == ['foo', 'c']
 
 
@@ -2000,7 +2000,7 @@ def test_select_ordering():
         auto__model=TBar,
         columns__select__include=True,
     ).bind(request=None)
-    assert list(t.iommi_namespace.columns.keys()) == ['select', 'id', 'foo', 'c']
+    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'foo', 'c', 'tbar2'}
     assert list(t.columns.keys()) == ['select', 'foo', 'c']
 
 
@@ -2022,7 +2022,8 @@ def test_explicit_table_does_not_use_from_model():
 @pytest.mark.django_db
 def test_from_model_implicit():
     t = Table(auto__rows=TBar.objects.all()).bind(request=None)
-    assert list(t.iommi_namespace.columns.keys()) == ['select', 'id', 'foo', 'c']
+    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'foo', 'c', 'tbar2'}
+    assert list(t.columns.keys()) == ['foo', 'c']
 
 
 @pytest.mark.django_db
@@ -2748,6 +2749,7 @@ def test_all_column_shortcuts():
         columns__column_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
         columns__column_of_type_many_to_many__model_field=TBaz.foo.field,
         columns__column_of_type_foreign_key__model_field=TBar.foo.field,
+        columns__column_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
     )
 
     table = MyFancyTable(

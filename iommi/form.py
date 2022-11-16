@@ -154,10 +154,10 @@ def many_to_many_factory_write_to_instance(field, instance, value):
 _field_factory_by_field_type = {}
 
 
-def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
-        factory = Shortcut(call_target__attribute=shortcut_name)
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _field_factory_by_field_type[django_field_class] = factory
 
@@ -1219,6 +1219,21 @@ class Field(Part, Tag):
             choices=model_field.foreign_related_fields[0].model.objects.all(),
         )
         return cls.choice_queryset(model_field=model_field, **kwargs)
+
+    @classmethod
+    @with_defaults(
+        editable=False,
+        display_name=lambda field, **_: capitalize(field.model_field.related_model._meta.verbose_name_plural),
+        help_text=None,
+    )
+    def foreign_key_reverse(cls, *, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=lambda field, **_: field.model_field.remote_field.model.objects.all(),
+            read_from_instance=lambda field, instance, **_: getattr_path(instance, field.attr).all(),
+            extra__django_related_field=True,
+        )
+        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
     @with_defaults

@@ -8,20 +8,21 @@ def setup_db_compat():
     setup_db_compat_django()
 
 
-def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+def register_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     from iommi.form import register_field_factory
     from iommi.query import register_filter_factory
     from iommi.table import register_column_factory
 
-    register_field_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
-    register_filter_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
-    register_column_factory(django_field_class, shortcut_name=shortcut_name, factory=factory)
+    register_field_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_filter_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
+    register_column_factory(django_field_class, shortcut_name=shortcut_name, factory=factory, **kwargs)
 
 
 def setup_db_compat_django():
     from iommi.form import register_field_factory
     from iommi.query import register_filter_factory
     from iommi.table import register_column_factory
+    from iommi.sort_after import LAST
 
     from django.db.models import (
         AutoField,
@@ -102,9 +103,14 @@ def setup_db_compat_django():
     register_factory(FloatField, shortcut_name='float')
     register_factory(IntegerField, shortcut_name='integer')
     register_factory(FileField, shortcut_name='file')
-    register_factory(AutoField, factory=Shortcut(call_target__attribute='integer', include=False))
-    register_factory(ManyToOneRel, factory=None)
-    register_factory(ManyToManyRel, factory=None)
+    register_factory(AutoField, shortcut_name='integer', include=False)
+    register_factory(
+        ManyToOneRel,
+        shortcut_name='foreign_key_reverse',
+        include=False,
+        after=LAST,
+    )
+    register_factory(ManyToManyRel, factory=None)  # shortcut_name='many_to_many')
     register_factory(ManyToManyField, shortcut_name='many_to_many')
     register_factory(ForeignKey, shortcut_name='foreign_key')
     register_factory(GenericIPAddressField, shortcut_name='text')
@@ -114,7 +120,7 @@ def setup_db_compat_django():
         # This raises ImportError when the postgres driver isn't installed
         from django.contrib.postgres.fields import JSONField
 
-        register_factory(JSONField, factory=None)
+        register_factory(JSONField, shortcut_name='text', include=False)
     except ImportError:
         pass
 

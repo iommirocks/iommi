@@ -2485,6 +2485,8 @@ def test_all_field_shortcuts():
         fields__field_of_type_many_to_many__model_field=TBaz.foo.field,
         fields__field_of_type_foreign_key__model_field=TBar.foo.field,
         fields__field_of_type_foreign_key__model=TBar,
+        fields__field_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
+        fields__field_of_type_foreign_key_reverse__model=TFoo,
         fields__field_of_type_info__value='dummy information',
     )
 
@@ -3477,3 +3479,7 @@ def test_action_callbacks_should_be_lazy():
         )
     )
     assert form.bind(request=req('post', **{'-foo': ''})).render_to_response().content == b'{}'
+
+
+def test_many_to_one_rel():
+    pass
