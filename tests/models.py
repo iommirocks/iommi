@@ -263,3 +263,11 @@ if django.VERSION[:2] >= (3, 0):
 
 class CamelCaseFieldModel(models.Model):
     camelCaseField = models.BooleanField()
+
+
+class CustomField(models.Field):
+    pass
+
+
+class NotRegisteredCustomFieldModel(models.Model):
+    custom_field = CustomField()
