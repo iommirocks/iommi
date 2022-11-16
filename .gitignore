@@ -183,5 +183,7 @@ docs/legacy_fbv.rst
 docs/pages.rst
 docs/tables.rst
 docs/architecture.rst
+docs/admin.rst
+docs/path.rst
 
 .cache/pip
