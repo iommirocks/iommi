@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from iommi._web_compat import HttpResponseRedirect
+from iommi._web_compat import (
+    HttpResponseRedirect,
+    mark_safe,
+)
 from tests.helpers import (
     req,
     show_output,
@@ -11,6 +14,7 @@ request = req('get')
 from tests.helpers import req, user_req, staff_req
 from django.template import Template
 import pytest
+
 pytestmark = pytest.mark.django_db
 
 
@@ -214,17 +218,68 @@ def test_how_do_i_set_if_a_field_is_required():
 
 
     """
-    form = Form(
+    form = Form.create(
         auto__model=Album,
         fields__name__required=True,
         fields__year__required=lambda field, form, **_: True,
     )
+    # @test
+
+    f = form.bind(request=req('post', **{'-submit': ''}))
+    assert f.fields.name.required is True
+    assert f.fields.year.required is True
+    show_output(f)
+
+    from iommi.style_bootstrap_docs import bootstrap_docs
+
+    bootstrap = Style(
+        bootstrap_docs,
+        root__assets__required_css=Asset(tag='style', children__text=mark_safe('''
+    .required label:after {
+        content: " *";
+        color: red;
+    }
+    '''))
+    )
+
+    # @end_test
+
+    # language=rst
+    """
+    To show the field as required before posting, you can add a CSS class rendering to your style definition:
+    """
+
+    IOMMI_DEFAULT_STYLE = Style(
+        bootstrap,
+        Field__attrs__class__required=lambda field, **_: field.required,
+    )
+
+    # language=rst
+    """
+    ...and this CSS added to your sites custom style sheet:
+    
+    .. code-block:: css
+
+        .required label:after {
+            content: " *";
+            color: red;
+        }
+
+    For the following result:
+    """
 
     # @test
 
-    form = form.bind(request=req('get'))
-    assert form.fields.name.required is True
-    assert form.fields.year.required is True
+    form2 = form.refine(iommi_style=IOMMI_DEFAULT_STYLE)
+    f = form2.bind(request=req('get'))
+    assert f.fields.name.required is True
+    assert f.fields.year.required is True
+    show_output(f)
+
+    # language=rst
+    """
+    See the style docs for more information on defining a custom style for your project.
+    """
 
 
 def test_how_do_i_change_the_order_of_the_fields():

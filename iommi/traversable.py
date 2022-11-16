@@ -187,11 +187,11 @@ class Traversable(RefinableObject):
         if result.include is False:
             return None
 
-        if hasattr(result, 'attrs'):
-            result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
-
         evaluated_attributes = [k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)]
         evaluate_members(result, evaluated_attributes, **evaluate_parameters)
+
+        if hasattr(result, 'attrs'):
+            result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
         if hasattr(result, 'extra_evaluated'):
             result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **evaluate_parameters)
