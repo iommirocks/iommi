@@ -162,6 +162,12 @@ class Middleware:
                             }
                         }
                     </style>
+
+                    <div>
+                        <a href="?_iommi_prof=graph">graph</a>
+                        <a href="?_iommi_prof=snake">snakeviz</a>
+                    </div>
+
                     <div>
                 '''
                 lines_html = "<br />\n".join(result)
