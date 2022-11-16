@@ -118,13 +118,16 @@ def member_from_model(
                 break  # pragma: no mutate optimization
 
     if factory is MISSING:
-        message = f'No factory for {type(model_field).__name__}.'
-        if factory_lookup_register_function is not None:
-            message += (
-                ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type'
-                % factory_lookup_register_function.__name__
-            )
-        raise AssertionError(message)
+        def no_factory_defined(**_):
+            message = f'No factory for {model.__name__}.{model_field_name} of type {type(model_field).__name__}.'
+            if factory_lookup_register_function is not None:
+                message += (
+                    ' Register a factory with register_factory or %s, you can also register one that returns None to not handle this field type'
+                    % factory_lookup_register_function.__name__
+                )
+            raise AssertionError(message)
+
+        factory = no_factory_defined
 
     if factory is None:
         return None

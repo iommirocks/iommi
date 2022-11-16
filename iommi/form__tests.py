@@ -2212,6 +2212,16 @@ def test_auto_field_not_included_by_default():
 
 
 @pytest.mark.django_db
+def test_not_registered_custom_field():
+    from tests.models import NotRegisteredCustomFieldModel
+
+    with pytest.raises(AssertionError) as e:
+        Form(auto__model=NotRegisteredCustomFieldModel).bind(request=req('get'))
+
+    assert str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type'
+
+
+@pytest.mark.django_db
 def test_auto_field_possible_to_show():
     from tests.models import Foo
 

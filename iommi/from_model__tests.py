@@ -145,7 +145,7 @@ def test_field_from_model_factory_error_message():
 
     assert (
         str(error.value)
-        == "No factory for CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
+        == "No factory for FooFromModelTestModel.foo of type CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
     )
 
 
