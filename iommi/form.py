@@ -158,6 +158,8 @@ def register_field_factory(django_field_class, *, shortcut_name=MISSING, factory
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
         factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
+    else:
+        assert not kwargs, 'Can not provide both a factory and additional defaults separately'
 
     _field_factory_by_field_type[django_field_class] = factory
 

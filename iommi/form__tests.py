@@ -2218,7 +2218,11 @@ def test_not_registered_custom_field():
     with pytest.raises(AssertionError) as e:
         Form(auto__model=NotRegisteredCustomFieldModel).bind(request=req('get'))
 
-    assert str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type'
+    assert (
+        str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. '
+        'Register a factory with register_factory or register_field_factory, you can also register one that '
+        'returns None to not handle this field type'
+    )
 
 
 @pytest.mark.django_db
@@ -3479,7 +3483,3 @@ def test_action_callbacks_should_be_lazy():
         )
     )
     assert form.bind(request=req('post', **{'-foo': ''})).render_to_response().content == b'{}'
-
-
-def test_many_to_one_rel():
-    pass
