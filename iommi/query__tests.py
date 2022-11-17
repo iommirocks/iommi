@@ -613,14 +613,14 @@ def test_multi_choice_queryset():
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert list(t.iommi_namespace.filters.keys()) == ['id', 'foo']
+    assert set(t.iommi_namespace.filters.keys()) == {'id', 'foo', 'bars', 'fieldfrommodelforeignkeytest', 'fieldfrommodelonetoonetest'}
     assert list(t.filters.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert list(t.iommi_namespace.filters.keys()) == ['id', 'foo']
+    assert set(t.iommi_namespace.filters.keys()) == {'id', 'foo', 'bars', 'fieldfrommodelforeignkeytest', 'fieldfrommodelonetoonetest'}
     assert list(t.filters.keys()) == ['foo']
 
 
@@ -631,7 +631,7 @@ def test_from_model_foreign_key():
             filters = Query.filters_from_model(model=Bar)
 
     t = MyQuery().bind(request=req('get'))
-    assert list(t.iommi_namespace.filters.keys()) == ['id', 'foo']
+    assert set(t.iommi_namespace.filters.keys()) == {'id', 'foo'}
     assert isinstance(t.filters['foo'].choices, QuerySet)
 
 
@@ -844,6 +844,7 @@ def test_shortcuts_map_to_form(name, shortcut):
         'case_sensitive',
         'textarea',
         'foreign_key',
+        'foreign_key_reverse',
         'many_to_many',
     ]
 
@@ -887,6 +888,7 @@ def test_all_filter_shortcuts():
         filters__filter_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
         filters__filter_of_type_many_to_many__model_field=TBaz.foo.field,
         filters__filter_of_type_foreign_key__model_field=TBar.foo.field,
+        filters__filter_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
     )
 
     query = MyFancyQuery(**config, **type_specifics).bind(request=req('get'))

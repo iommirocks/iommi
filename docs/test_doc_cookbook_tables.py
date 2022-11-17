@@ -762,3 +762,27 @@ def test_what_is_the_difference_between_attr_and__name():
 
     `_name` is the name used internally. By default `attr` is set to the value of `_name`. This name is used when accessing the column from `Table.columns` and it's the name used in the GET parameter to sort by that column. This is a required field.
     """
+
+
+def test_table_with_foreign_key_reverse(small_discography):
+    # language=rst
+    """
+    How do I show a reverse foreign key relationship?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    By default reverse foreign key relationships are hidden. To turn it on, pass `include=False` to the column:
+    """
+
+    t = Table(
+        auto__model=Artist,
+        columns__albums__include=True,
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    assert list(t.columns.keys()) == ['name', 'albums']
+    assert t.columns.albums.display_name == 'Albums'
+    assert t.columns.albums.model_field is Artist._meta.get_field('albums')
+
+    show_output(t)

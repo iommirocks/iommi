@@ -42,6 +42,7 @@ from iommi.action import (
     Action,
 )
 from iommi.base import (
+    capitalize,
     items,
     keys,
     MISSING,
@@ -130,10 +131,10 @@ FREETEXT_SEARCH_NAME = 'freetext_search'
 _filter_factory_by_django_field_type = {}
 
 
-def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+def register_filter_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
-        factory = Shortcut(call_target__attribute=shortcut_name)
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _filter_factory_by_django_field_type[django_field_class] = factory
 
@@ -521,6 +522,18 @@ class Filter(Part):
             choices=model_field.foreign_related_fields[0].model.objects.all(),
         )
         return cls.choice_queryset(model_field=model_field, **kwargs)
+
+    @classmethod
+    @with_defaults(
+        field__call_target__attribute='foreign_key_reverse',
+    )
+    def foreign_key_reverse(cls, *, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=model_field.remote_field.model.objects.all(),
+            extra__django_related_field=True,
+        )
+        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
     @classmethod
     @with_defaults(

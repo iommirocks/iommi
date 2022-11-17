@@ -64,6 +64,7 @@ from iommi.attrs import (
 )
 from iommi.base import (
     build_as_view_wrapper,
+    capitalize,
     get_display_name,
     items,
     keys,
@@ -145,10 +146,10 @@ LAST = LAST
 _column_factory_by_field_type = {}
 
 
-def register_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING):
+def register_column_factory(django_field_class, *, shortcut_name=MISSING, factory=MISSING, **kwargs):
     assert shortcut_name is not MISSING or factory is not MISSING
     if factory is MISSING:
-        factory = Shortcut(call_target__attribute=shortcut_name)
+        factory = Shortcut(call_target__attribute=shortcut_name, **kwargs)
 
     _column_factory_by_field_type[django_field_class] = factory
 
@@ -831,6 +832,23 @@ class Column(Part):
             choices=remote_model.objects.all(),
         )
         return cls.choice_queryset(model_field=model_field, **kwargs)
+
+    @classmethod
+    @with_defaults(
+        bulk__call_target__attribute='foreign_key_reverse',
+        filter__call_target__attribute='foreign_key_reverse',
+        cell__format=lambda value, **_: ', '.join(['%s' % x for x in value.all()]),
+        data_retrieval_method=DataRetrievalMethods.prefetch,
+        sortable=False,
+        extra__django_related_field=True,
+        display_name=lambda column, **_: capitalize(column.model_field.remote_field.model._meta.verbose_name_plural),
+    )
+    def foreign_key_reverse(cls, *, model_field, **kwargs):
+        setdefaults_path(
+            kwargs,
+            choices=model_field.remote_field.model.objects.all(),
+        )
+        return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
 
 @with_meta

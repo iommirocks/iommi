@@ -2218,7 +2218,11 @@ def test_not_registered_custom_field():
     with pytest.raises(AssertionError) as e:
         Form(auto__model=NotRegisteredCustomFieldModel).bind(request=req('get'))
 
-    assert str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type'
+    assert (
+        str(e.value) == 'No factory for NotRegisteredCustomFieldModel.custom_field of type CustomField. '
+        'Register a factory with register_factory or register_field_factory, you can also register one that '
+        'returns None to not handle this field type'
+    )
 
 
 @pytest.mark.django_db
@@ -2485,6 +2489,8 @@ def test_all_field_shortcuts():
         fields__field_of_type_many_to_many__model_field=TBaz.foo.field,
         fields__field_of_type_foreign_key__model_field=TBar.foo.field,
         fields__field_of_type_foreign_key__model=TBar,
+        fields__field_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
+        fields__field_of_type_foreign_key_reverse__model=TFoo,
         fields__field_of_type_info__value='dummy information',
     )
 
