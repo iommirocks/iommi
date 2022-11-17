@@ -6,6 +6,8 @@ class IommiModel(Model):
     class Meta:
         abstract = True
 
+    iommi_ignored_attributes = ()
+
     def __setattr__(self, name, value):
         if not name.startswith('_') and name != 'pk':
             try:
@@ -15,8 +17,13 @@ class IommiModel(Model):
                     return object.__setattr__(self, name, value)
 
             except FieldDoesNotExist as e:
-                if name not in self.get_annotated_attributes():
-                    raise TypeError(f'There is no field {name} on the model {self.__class__.__name__}. You can assign arbitrary attributes if they start with `_`. If this is an annotation, please add a method `get_annotated_attributes` that returns a list of valid annotated attributes that should not trigger this message.') from e
+                if name not in self.iommi_ignored_attributes:
+                    raise TypeError(
+                        f'There is no field {name} on the model {self.__class__.__name__}. '
+                        f'You can assign arbitrary attributes if they start with `_`. '
+                        f'If this is an annotation, please add a method `get_annotated_attributes` that returns a list '
+                        f'of valid annotated attributes that should not trigger this message.'
+                    ) from e
 
             self.get_updated_fields().add(name)
 
@@ -24,9 +31,6 @@ class IommiModel(Model):
 
     def get_updated_fields(self):
         return self.__dict__.setdefault('_updated_fields', set())
-
-    def get_annotated_attributes(self):
-        return ()
 
     @classmethod
     def from_db(cls, db, field_names, values):

@@ -291,5 +291,4 @@ class MyIommiModel(IommiModel):
 class MyAnnotatedIommiModel(IommiModel):
     foo = IntegerField()
 
-    def get_annotated_attributes(self):
-        return ['fisk']
+    iommi_ignored_attributes = ['fisk']
