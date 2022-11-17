@@ -42,9 +42,7 @@ class IommiModel(Model):
         if self.pk is not None and not force_insert:
             update_fields = self.get_updated_fields()
 
-        super(IommiModel, self).save(
-            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
-        )
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
         self.get_updated_fields().clear()
 
