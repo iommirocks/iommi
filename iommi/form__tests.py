@@ -1508,6 +1508,31 @@ def test_field_from_model_many_to_many_editable():
 
 
 @pytest.mark.django_db
+def test_field_from_model_many_to_many_reverse():
+    from django.db.models import QuerySet
+    from tests.models import Foo, FieldFromModelManyToManyTest
+
+    FieldFromModelManyToManyTest.objects.create(pk=1)
+    b = FieldFromModelManyToManyTest.objects.create(pk=2)
+    c = FieldFromModelManyToManyTest.objects.create(pk=3)
+
+    class MyForm(Form):
+        fieldfrommodelmanytomanytest_set = Field.from_model(Foo, 'fieldfrommodelmanytomanytest', include=True)
+
+    form = MyForm().bind(request=req('get'))
+    choices = form.fields.fieldfrommodelmanytomanytest_set.choices
+
+    assert isinstance(choices, QuerySet)
+    assert set(choices) == set(FieldFromModelManyToManyTest.objects.all())
+    m2m = Foo.objects.create(foo=4)
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.fieldfrommodelmanytomanytest_set.initial) == set()
+    m2m.fieldfrommodelmanytomanytest_set.add(b)
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.fieldfrommodelmanytomanytest_set.initial) == {b}
+    m2m.fieldfrommodelmanytomanytest_set.add(c)
+    assert set(MyForm(instance=m2m).bind(request=req('get')).fields.fieldfrommodelmanytomanytest_set.initial) == {b, c}
+
+
+@pytest.mark.django_db
 def test_field_from_model_many_to_one_foreign_key():
     from tests.models import Bar
 

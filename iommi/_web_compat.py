@@ -3,7 +3,10 @@ from django.template.utils import InvalidTemplateEngineError
 template_types = tuple()
 
 try:
-    from django.core.exceptions import ValidationError
+    from django.core.exceptions import (
+        ImproperlyConfigured,
+        ValidationError,
+    )
     from django.core.validators import validate_email, URLValidator
     from django.http import HttpResponse
     from django.http import QueryDict  # noqa: F401
@@ -29,16 +32,19 @@ try:
 
     template_types = tuple()
 
-    if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
-        from django.template import Template as DjangoTemplate
+    try:
+        if not settings.TEMPLATES or any('DjangoTemplates' in x['BACKEND'] for x in settings.TEMPLATES):
+            from django.template import Template as DjangoTemplate
 
-        template_types += (DjangoTemplate, DjangoLoadedTemplate)
+            template_types += (DjangoTemplate, DjangoLoadedTemplate)
 
-    if any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES):
-        import jinja2  # noqa: F401
-        from jinja2 import Template as JinjaTemplate
+        if any('Jinja2' in x['BACKEND'] for x in settings.TEMPLATES):
+            import jinja2  # noqa: F401
+            from jinja2 import Template as JinjaTemplate
 
-        template_types += (JinjaTemplate,)
+            template_types += (JinjaTemplate,)
+    except ImproperlyConfigured:
+        pass
 
     class Template:
         def __init__(self, template_string):

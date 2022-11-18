@@ -110,7 +110,11 @@ def setup_db_compat_django():
         include=False,
         after=LAST,
     )
-    register_factory(ManyToManyRel, factory=None)  # shortcut_name='many_to_many')
+    register_factory(
+        ManyToManyRel,
+        shortcut_name='many_to_many',
+        include=False,
+    )
     register_factory(ManyToManyField, shortcut_name='many_to_many')
     register_factory(ForeignKey, shortcut_name='foreign_key')
     register_factory(GenericIPAddressField, shortcut_name='text')
@@ -146,6 +150,12 @@ def setup_db_compat_django():
     )
     register_field_factory(TextField, shortcut_name='textarea')
     register_field_factory(FileField, shortcut_name='file')
+    register_field_factory(
+        ManyToManyRel,
+        shortcut_name='many_to_many',
+        help_text=None,
+        include=False,
+    )
 
 
 def base_defaults_factory(model_field):
