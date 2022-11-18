@@ -13,7 +13,10 @@ from iommi.declarative.namespace import (
     flatten,
     Namespace,
 )
-from iommi.shortcut import get_shortcuts_by_name
+from iommi.shortcut import (
+    get_shortcuts_by_name,
+    is_shortcut,
+)
 
 
 def read_cookbook_links():
@@ -108,6 +111,35 @@ def get_docs_callable_description(c):
 
         return inspect.getsource(c).strip()
     return c.__module__ + '.' + c.__name__
+
+
+def get_methods_by_type_by_name(class_):
+    function_type = type(get_methods_by_type_by_name)
+    ignore_list = ['get_declared', 'set_declared', 'get_meta']
+
+    r = {
+        k: v
+        for k, v in class_.__dict__.items()
+        if not k.startswith('_') and k not in ignore_list and not is_shortcut(getattr(class_, k))
+    }
+
+    return {
+        'Methods': {
+            k: v
+            for k, v in r.items()
+            if isinstance(v, function_type)
+        },
+        'Static methods': {
+            k: v
+            for k, v in r.items()
+            if isinstance(v, staticmethod)
+        },
+        'Class methods': {
+            k: v
+            for k, v in r.items()
+            if isinstance(v, classmethod)
+        },
+    }
 
 
 def _generate_tests_from_class_docs(classes):
@@ -319,6 +351,20 @@ request = req('get')
                         w(0, f'* `{k}`')
                         w(1, f'* `{v}`')
                     w(0, '')
+
+        for k, v in get_methods_by_type_by_name(c).items():
+            methods = v
+            if methods:
+                section(1, k)
+
+                for name, method in sorted(methods.items()):
+                    section(2, f'`{name}`')
+
+                    doc = getattr(c, name).__doc__
+                    if doc:
+                        f.write(doc.strip())
+                        w(0, '')
+                        w(0, '')
 
         w(0, '''"""''')
         yield 'test_doc__api_%s.py' % c.__name__, f.getvalue()
