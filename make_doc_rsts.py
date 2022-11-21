@@ -29,58 +29,56 @@ def write_rst_from_pytest():
 
 
 def rst_from_pytest(source_f, target_f, target):
-    if True:
-        if True:
-            state = 'import'
-            prev_state = state
-            func_name = None
+    state = 'import'
+    prev_state = state
+    func_name = None
+    func_count = 0
+    should_dedent = None
+    write_code_block = False
+    for line in source_f.readlines():
+        stripped_line = line.strip()
+        if line.startswith('def '):  # not stripped_line!
+            state = 'py'
+            func_name = line[len('def '):].partition('(')[0]
             func_count = 0
-            should_dedent = None
-            write_code_block = False
-            for line in source_f.readlines():
-                stripped_line = line.strip()
-                if line.startswith('def '):  # not stripped_line!
-                    state = 'py'
-                    func_name = line[len('def '):].partition('(')[0]
-                    func_count = 0
-                elif stripped_line.startswith("# language=rst"):
-                    state = 'starting rst'
-                elif stripped_line in ('"""', "'''"):
-                    if state == 'starting rst':
-                        target_f.write('\n')
-                        state = 'rst'
-                        should_dedent = line.startswith('    ')
-                    elif state == 'rst':
-                        state = 'py'
-                        write_code_block = True
-                elif stripped_line.startswith('# @test'):
-                    prev_state = state
-                    state = 'only test'
-                elif stripped_line.startswith('# @end'):
-                    state = prev_state
+        elif stripped_line.startswith("# language=rst"):
+            state = 'starting rst'
+        elif stripped_line in ('"""', "'''"):
+            if state == 'starting rst':
+                target_f.write('\n')
+                state = 'rst'
+                should_dedent = line.startswith('    ')
+            elif state == 'rst':
+                state = 'py'
+                write_code_block = True
+        elif stripped_line.startswith('# @test'):
+            prev_state = state
+            state = 'only test'
+        elif stripped_line.startswith('# @end'):
+            state = prev_state
+        else:
+            if state == 'rst':
+                if should_dedent and line.startswith('    '):
+                    target_f.write(line[4:])
                 else:
-                    if state == 'rst':
-                        if should_dedent and line.startswith('    '):
-                            target_f.write(line[4:])
-                        else:
-                            target_f.write(line)
-                    elif state == 'py':
-                        if stripped_line:
-                            if write_code_block:
-                                target_f.write('.. code-block:: python\n\n')
-                                write_code_block = False
+                    target_f.write(line)
+            elif state == 'py':
+                if stripped_line:
+                    if write_code_block:
+                        target_f.write('.. code-block:: python\n\n')
+                        write_code_block = False
 
-                        if line.startswith('    ') or not stripped_line:
-                            target_f.write(line)
-                    elif state == 'only test':
-                        if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
-                            name = join(target.stem, func_name)
-                            if func_count:
-                                name += str(func_count)
-                            func_count += 1
+                if line.startswith('    ') or not stripped_line:
+                    target_f.write(line)
+            elif state == 'only test':
+                if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
+                    name = join(target.stem, func_name)
+                    if func_count:
+                        name += str(func_count)
+                    func_count += 1
 
-                            target_f.write('.. raw:: html\n\n')
-                            target_f.write('    ' + create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed')))
+                    target_f.write('.. raw:: html\n\n')
+                    target_f.write('    ' + create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed')))
 
 
 if __name__ == '__main__':
