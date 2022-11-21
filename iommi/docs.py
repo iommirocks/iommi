@@ -346,8 +346,8 @@ request = req('get')
             section(2, f'`{name}`')
 
             if shortcut.__doc__:
-                doc = shortcut.__doc__
-                f.write(doc.strip())
+                doc = dedent(shortcut.__doc__)
+                f.write(doc)
                 w(0, '')
                 w(0, '')
 
@@ -373,7 +373,7 @@ request = req('get')
 
                 doc = getattr(c, name).__doc__
                 if doc:
-                    f.write(doc.strip())
+                    f.write(dedent(doc))
                     w(0, '')
                     w(0, '')
 

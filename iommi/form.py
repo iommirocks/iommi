@@ -1638,8 +1638,10 @@ class Form(Part):
         return False
 
     def is_valid(self):
-        """Is the form valid?  Can be called inside forms post_validation hook to determine if the
-        individual fields were all valid."""
+        """
+        Is the form valid?  Can be called inside forms post_validation hook to determine if the
+        individual fields were all valid.
+        """
         assert self._is_bound, NOT_BOUND_MESSAGE
         assert self._valid is not None, "Internal error: Once a form is bound we should know if it is valid or not"
         return self._valid
@@ -1734,7 +1736,8 @@ class Form(Part):
     @staticmethod
     @refinable
     def write_nested_form_to_instance(form, instance):
-        """Write the nested_form to the instance.
+        """
+        Write the nested_form to the instance.
 
         This is analogous to `Field.write_to_instance` but for nested forms.
         """
@@ -1747,7 +1750,8 @@ class Form(Part):
     @staticmethod
     @refinable
     def read_nested_form_from_instance(form: 'Form', instance: Any) -> Any:
-        """Read the nested forms instance from the parent forms instance.
+        """
+        Read the nested forms instance from the parent forms instance.
 
         This is analogous to `Field.read_from_instance` but for nested forms.
         """
@@ -1765,6 +1769,12 @@ class Form(Part):
             field.write_to_instance(field, instance, field.value)
 
     def get_errors(self):
+        """
+        Get a dict containing two keys:
+
+        - `global` for errors global to the entire form.
+        - `fields` for errors specific to fields. This is itself a dict with a key for each field.
+        """
         assert self._is_bound, NOT_BOUND_MESSAGE
         r = {}
         if self._errors:
