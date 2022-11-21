@@ -72,7 +72,11 @@ Defaults
 
 shortcut3 docstring
 
-            :param call_target: something something call_target
+Parameters
+++++++++++
+
+* `call_target`
+    * `something something call_target`
 
 Defaults
 ++++++++

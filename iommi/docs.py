@@ -331,6 +331,7 @@ request = req('get')
 
             ref_name = f'{c.__name__}.{refinable}'
             if ref_name in cookbook_name_by_refinable_name:
+                w(2, '')
                 w(2, f'Cookbook: :ref:`{ref_name.lower()}`')
                 w(2, '')
 
@@ -346,9 +347,17 @@ request = req('get')
             section(2, f'`{name}`')
 
             if shortcut.__doc__:
-                doc = dedent(shortcut.__doc__)
-                f.write(doc)
+                foo = docstring_param_dict(shortcut)
+                f.write(foo['text'])
                 w(0, '')
+
+                if foo['params']:
+                    w(0, '')
+                    section(3, 'Parameters')
+                    for k, v in foo['params'].items():
+                        w(0, f'* `{k}`')
+                        w(1, f'* `{v}`')
+
                 w(0, '')
 
             defaults = (
