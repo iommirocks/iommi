@@ -1,3 +1,4 @@
+import re
 from glob import glob
 from pathlib import Path
 from textwrap import dedent
@@ -142,9 +143,31 @@ def get_methods_by_type_by_name(class_):
     }
 
 
-def _generate_tests_from_class_docs(classes):
-    import re
+def docstring_param_dict(obj):
+    doc = obj.__doc__
+    if doc is None:
+        return dict(text=None, params={})
+    doc = dedent(doc)
+    return dict(
+        text=doc[: doc.find(':param')].strip() if ':param' in doc else doc.strip(),
+        params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc)),
+    )
 
+
+def indent(levels, s):
+    return (' ' * levels * 4) + s.strip()
+
+
+def get_namespace(c):
+    return Namespace(
+        {
+            k: getattr(c.__init__, '__iommi_with_defaults_kwargs', {}).get(k)
+            for k, v in items(get_declared(c, 'refinable'))
+        }
+    )
+
+
+def get_cookbook_name_by_refinable_name():
     cookbook_links = read_cookbook_links()
     validate_cookbook_links(cookbook_links)
     # TODO: validate that all cookbook links are actually linked somewhere. For example ".. _Column.cells_for_rows" isn't right now.
@@ -152,33 +175,22 @@ def _generate_tests_from_class_docs(classes):
     for links, name in cookbook_links:
         for link in links:
             cookbook_name_by_refinable_name[link] = name
+    return cookbook_name_by_refinable_name
 
-    def docstring_param_dict(obj):
-        doc = obj.__doc__
-        if doc is None:
-            return dict(text=None, params={})
-        doc = dedent(doc)
-        return dict(
-            text=doc[: doc.find(':param')].strip() if ':param' in doc else doc.strip(),
-            params=dict(re.findall(r":param (?P<name>\w+): (?P<text>.*)", doc)),
-        )
 
-    def indent(levels, s):
-        return (' ' * levels * 4) + s.strip()
-
-    def get_namespace(c):
-        return Namespace(
-            {
-                k: getattr(c.__init__, '__iommi_with_defaults_kwargs', {}).get(k)
-                for k, v in items(get_declared(c, 'refinable'))
-            }
-        )
+def _generate_tests_from_class_docs(classes):
+    cookbook_name_by_refinable_name = get_cookbook_name_by_refinable_name()
 
     for c in classes:
         from io import StringIO
 
         f = StringIO()
 
+        yield _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name)
+
+
+def _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name):
+    if True:  # avoid indent blame
         def w(levels, s):
             f.write(indent(levels, s))
             f.write('\n')
@@ -367,4 +379,4 @@ request = req('get')
                         w(0, '')
 
         w(0, '''"""''')
-        yield 'test_doc__api_%s.py' % c.__name__, f.getvalue()
+        return 'test_doc__api_%s.py' % c.__name__, f.getvalue()

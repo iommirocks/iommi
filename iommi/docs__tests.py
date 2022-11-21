@@ -1,3 +1,4 @@
+from io import StringIO
 from platform import python_implementation
 from typing import Dict
 
@@ -5,6 +6,7 @@ import pytest
 
 from iommi import Fragment
 from iommi.docs import (
+    _generate_tests_from_class_doc,
     _generate_tests_from_class_docs,
     get_default_classes,
 )
@@ -184,3 +186,45 @@ Defaults
     * `time`"""
         in actual_doc
     )
+
+
+def test_generate_docs_ends_rst_block_badly():
+    f = StringIO()
+
+    # language=python
+    f.write('''
+
+def test_1():
+    # language=rst
+    """
+`apply`
+^^^^^^^
+
+Write the new values specified in the form into the instance specified.
+
+        .. code-block:: python
+
+            foo()
+
+            # @test
+            bar()
+            # @end
+
+            baz()
+
+
+`as_view`
+^^^^^^^^^
+"""
+def test_2():
+    pass
+''')
+    f.seek(0)
+    target_f = StringIO()
+
+    from make_doc_rsts import rst_from_pytest
+    rst_from_pytest(source_f=f, target_f=target_f, target=None)
+
+    v = target_f.getvalue()
+    print(v)
+    assert 'as_view' in v

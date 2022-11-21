@@ -17,12 +17,22 @@ generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
 
 docs_dir = Path(__file__).parent / 'docs'
 
-for source in docs_dir.glob('test_*.py'):
-    target = source.parent / f'{source.stem.replace("test_doc__api_", "").replace("test_doc_", "")}.rst'
 
-    with open(source) as source_f:
-        with open(target, 'w') as target_f:
+def write_rst_from_pytest():
+    for source in docs_dir.glob('test_*.py'):
+        target = source.parent / f'{source.stem.replace("test_doc__api_", "").replace("test_doc_", "")}.rst'
+
+        with open(source) as source_f:
+            with open(target, 'w') as target_f:
+
+                rst_from_pytest(source_f, target_f, target)
+
+
+def rst_from_pytest(source_f, target_f, target):
+    if True:
+        if True:
             state = 'import'
+            prev_state = state
             func_name = None
             func_count = 0
             should_dedent = None
@@ -44,9 +54,10 @@ for source in docs_dir.glob('test_*.py'):
                         state = 'py'
                         write_code_block = True
                 elif stripped_line.startswith('# @test'):
+                    prev_state = state
                     state = 'only test'
                 elif stripped_line.startswith('# @end'):
-                    state = 'py'
+                    state = prev_state
                 else:
                     if state == 'rst':
                         if should_dedent and line.startswith('    '):
@@ -71,3 +82,6 @@ for source in docs_dir.glob('test_*.py'):
                             target_f.write('.. raw:: html\n\n')
                             target_f.write('    ' + create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed')))
 
+
+if __name__ == '__main__':
+    write_rst_from_pytest()
