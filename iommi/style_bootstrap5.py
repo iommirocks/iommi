@@ -75,6 +75,7 @@ bootstrap5_base = Style(
                     'form-control': False,
                 },
             ),
+            choice__input__attrs__class={'form-select': True},
         ),
         attrs__class={
             'mb-3': True,
@@ -92,7 +93,7 @@ bootstrap5_base = Style(
     ),
     FieldGroup=dict(
         tag='div',
-        attrs__class={'form-row': True},
+        attrs__class={'row': True},
     ),
     Action=dict(
         shortcuts=dict(
@@ -139,7 +140,7 @@ bootstrap5_base = Style(
         form_container=dict(
             tag='span',
             attrs__class={
-                'form-row': True,
+                'row': True,
                 'align-items-center': True,
             },
         ),
