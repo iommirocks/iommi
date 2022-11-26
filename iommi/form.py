@@ -1676,6 +1676,27 @@ class Form(Part):
         pass
 
     def add_error(self, msg):
+        # language=rst
+        """
+        Explicitly add an error message to the forms global error set.
+
+        Example:
+
+        .. code-block:: python
+
+            def post_validation(form, **_):
+                form.add_error('global error')
+
+            form = Form.create(
+                auto__model=Album,
+                post_validation=post_validation,
+            )
+            # @test
+            form = form.bind(request=req('post', **{'-submit': '',}))
+            assert form.get_errors()['global'] == {'global error'}
+            show_output(form)
+            # @end
+        """
         assert msg
         self._errors.add(msg)
         self._valid = False
