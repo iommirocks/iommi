@@ -1,5 +1,6 @@
 import re
 from glob import glob
+from io import StringIO
 from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
@@ -155,7 +156,7 @@ def docstring_param_dict(obj):
 
 
 def indent(levels, s):
-    return (' ' * levels * 4) + s.strip()
+    return (' ' * levels * 4) + s
 
 
 def get_namespace(c):
@@ -212,7 +213,7 @@ from django.urls import (
     path,
 )
 from django.db import models
-from tests.helpers import req, user_req, staff_req
+from tests.helpers import req, user_req, staff_req, show_output
 from docs.models import *
 request = req('get')
 
@@ -240,39 +241,12 @@ request = req('get')
     w(1, '"""')
 
     if class_doc['text']:
-        in_code_block = False
-        code_block_indent = None
-        for line in class_doc['text'].split('\n'):
-            if line.strip().startswith('.. code-block:: python'):
-                w(1, '"""')
-
-                in_code_block = True
-            elif in_code_block:
-                if code_block_indent is None:
-                    if line.strip():
-                        code_block_indent = len(line) - len(line.lstrip(' '))
-                    f.write(line)
-                    f.write('\n')
-                else:
-                    if line.startswith(' ' * code_block_indent) or not line.strip():
-                        f.write(line)
-                        f.write('\n')
-                    else:
-                        in_code_block = False
-                        w(1, '# language=rst')
-                        w(1, '"""')
-                        w(1, line)
-            else:
-                w(1, line)
-        if in_code_block:
-            w(0, '# language=rst')
-            w(0, '"""')
-        w(1, '')
+        _print_rst_or_python(class_doc['text'], w)
 
     w(1, '"""')
     w(0, '')
-    w(0, '# language=rst')
-    w(0, '"""')
+    w(1, '# language=rst')
+    w(1, '"""')
 
     if constructor_doc['text']:
         if class_doc['text']:
@@ -293,7 +267,7 @@ request = req('get')
             v = get_docs_callable_description(v)
 
             if 'lambda' in v:
-                v = v[v.find('lambda') :]
+                v = v[v.find('lambda'):]
                 v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
         if isinstance(v, Part):
             v = v.bind()
@@ -306,12 +280,12 @@ request = req('get')
         section(1, 'Refinable members')
         type_hints = get_type_hints(c)
         for refinable, value in refinable_members:
-            w(0, '* `' + refinable + '`')
-            w(0, '')
+            w(1, '* `' + refinable + '`')
+            w(1, '')
 
             if constructor_doc['params'].get(refinable):
-                w(2, constructor_doc['params'][refinable])
-                w(0, '')
+                w(3, constructor_doc['params'][refinable])
+                w(1, '')
             type_hint = type_hints.get(refinable)
             if type_hint:
                 name = str(type_hint)
@@ -321,19 +295,19 @@ request = req('get')
                     name = type_hint.__name__
 
                 if type_hint in classes:
-                    w(2, f'Type: :doc:`{name}`')
+                    w(3, f'Type: :doc:`{name}`')
                 else:
-                    w(2, f'Type: `{name}`')
-                w(1, '')
+                    w(3, f'Type: `{name}`')
+                w(0, '')
 
             if refinable in defaults:
-                w(2, f'Default: `{default_description(defaults.pop(refinable))}`')
+                w(3, f'Default: `{default_description(defaults.pop(refinable))}`')
 
             ref_name = f'{c.__name__}.{refinable}'
             if ref_name in cookbook_name_by_refinable_name:
-                w(2, '')
-                w(2, f'Cookbook: :ref:`{ref_name.lower()}`')
-                w(2, '')
+                w(3, '')
+                w(3, f'Cookbook: :ref:`{ref_name.lower()}`')
+                w(3, '')
 
         w(0, '')
 
@@ -382,9 +356,41 @@ request = req('get')
 
                 doc = getattr(c, name).__doc__
                 if doc:
-                    f.write(dedent(doc))
                     w(0, '')
+                    _print_rst_or_python(doc, w)
                     w(0, '')
 
-    w(0, '''"""''')
+    w(1, '''"""''')
     return 'test_doc__api_%s.py' % c.__name__, f.getvalue()
+
+
+def _print_rst_or_python(doc, w):
+    in_code_block = False
+    code_block_indent = None
+    for line in dedent(doc).split('\n'):
+        assert '\n' not in line
+        if line.strip().startswith('.. code-block:: python'):
+            w(1, '"""')
+
+            in_code_block = True
+        elif in_code_block:
+            if code_block_indent is None:
+                if line.strip():
+                    code_block_indent = len(line) - len(line.lstrip(' '))
+                w(0, line)
+                w(0, '')
+            else:
+                if line.startswith(' ' * code_block_indent) or not line.strip():
+                    w(0, line)
+                    w(0, '')
+                else:
+                    in_code_block = False
+                    w(1, '# language=rst')
+                    w(1, '"""')
+                    w(1, line)
+        else:
+            w(1, line)
+    if in_code_block:
+        w(1, '# language=rst')
+        w(1, '"""')
+    w(1, '')
