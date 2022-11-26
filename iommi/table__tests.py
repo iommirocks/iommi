@@ -59,6 +59,7 @@ from iommi.sql_trace import (
 from iommi.table import (
     bulk_delete__post_handler,
     Column,
+    ColumnHeader,
     datetime_formatter,
     ordered_by_on_list,
     register_cell_formatter,
@@ -67,6 +68,7 @@ from iommi.table import (
     yes_no_formatter,
 )
 from tests.helpers import (
+    prettify,
     req,
     request_with_middleware,
     verify_table_html,
@@ -2849,7 +2851,7 @@ def test_cell_value_is_none_if_attr_is_none():
     assert cell.get_request() is cells.get_request()
     assert cell.get_context() == cells.get_context()
     assert repr(cell) == '<Cell column=<iommi.table.Column foo> row=11>'
-    assert repr(t.header_levels[0][0]) == '<Header: foo>'
+    assert repr(t.header_levels[0][0]) == '<ColumnHeader: foo>'
 
 
 @pytest.mark.django_db

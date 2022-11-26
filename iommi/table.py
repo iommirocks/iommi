@@ -1051,7 +1051,8 @@ class ColumnHeader(object):
         self,
         *,
         display_name,
-        attrs,
+        header_config,
+        colspan=None,
         template,
         table,
         url=None,
@@ -1066,16 +1067,23 @@ class ColumnHeader(object):
         self.column = column
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
-        self.attrs = attrs
         self._name = 'header'
+        try:
+            self._attrs_const = header_config._attrs_const
+            self._attrs_dynamic = header_config._attrs_dynamic
+        except AttributeError:
+            pass
+        self.attrs = header_config.attrs
         self.attrs = evaluate_attrs(self, table=table, column=column, header=self)
+        if colspan:
+            self.attrs['colspan'] = colspan
 
     @property
     def rendered(self):
         return render_template(self.table.get_request(), self.template, dict(header=self))
 
     def __repr__(self):
-        return f'<Header: {"superheader" if self.column is None else self.column._name}>'
+        return f'<ColumnHeader: {"superheader" if self.column is None else self.column._name}>'
 
     @property
     def iommi_dunder_path(self):
@@ -2059,8 +2067,8 @@ class Table(Part, Tag):
                 ColumnHeader(
                     display_name=group_name or '',
                     table=self,
-                    attrs=self.superheader.attrs,
-                    attrs__colspan=number_of_columns_in_group,
+                    header_config=self.superheader,
+                    colspan=number_of_columns_in_group,
                     template=self.superheader.template,
                 )
             )
@@ -2070,7 +2078,7 @@ class Table(Part, Tag):
                     ColumnHeader(
                         display_name=column.display_name,
                         table=self,
-                        attrs=column.header.attrs,
+                        header_config=column.header,
                         template=column.header.template,
                         url=column.header.url,
                         column=column,

@@ -6,12 +6,17 @@ from iommi.evaluate import evaluate_strict
 
 
 def evaluate_attrs(obj, **kwargs):
-    attrs = obj.attrs or {}
-
-    # Micro optimization
     from iommi.debug import iommi_debug_on
+    try:
+        attrs = obj._attrs_dynamic
+        attrs_const = obj._attrs_const
+    except AttributeError:
+        attrs = obj.attrs
+        attrs_const = {}
 
-    if not attrs and not iommi_debug_on():  # pragma: no mutate
+    attrs = attrs or {}
+
+    if not attrs and not attrs_const and not iommi_debug_on():  # pragma: no mutate
         return ''
 
     classes = evaluate_strict(attrs.get('class', {}), **kwargs)
@@ -37,10 +42,13 @@ or
         field__style={'background-color': 'blue'}"""
 
     return Attrs(
-        obj,
-        **{'class': {k: evaluate_strict(v, **kwargs) for k, v in items(classes)}},
-        style={k: evaluate_strict(v, **kwargs) for k, v in items(styles)},
-        **{k: evaluate_strict(v, **kwargs) for k, v in items(attrs) if k not in ('class', 'style')},
+        parent=obj,
+        **Namespace(
+            attrs_const,
+            {'class': {k: evaluate_strict(v, **kwargs) for k, v in items(classes)}},
+            dict(style={k: evaluate_strict(v, **kwargs) for k, v in items(styles)}),
+            {k: evaluate_strict(v, **kwargs) for k, v in items(attrs) if k not in ('class', 'style')},
+        ),
     )
 
 
@@ -89,6 +97,7 @@ def render_attrs(attrs):
 
 
 class Attrs(Namespace):
+    # language=rst
     """
     The `attrs` namespace on `Field`, `Form`, `Header`, `Cell` and more is used to customize HTML attributes.
 

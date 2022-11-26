@@ -173,13 +173,13 @@ def test_lambda_tag():
 def test_action_groups():
     non_grouped, grouped = group_actions(
         dict(
-            a=Action().refine_done(),
-            b=Action().refine_done(),
-            c=Action(group='a').refine_done(),
-            d=Action(group='a').refine_done(),
-            e=Action(group='a').refine_done(),
-            f=Action(group='b').refine_done(),
-            g=Action(group='b').refine_done(),
+            a=Action().bind(),
+            b=Action().bind(),
+            c=Action(group='a').bind(),
+            d=Action(group='a').bind(),
+            e=Action(group='a').bind(),
+            f=Action(group='b').bind(),
+            g=Action(group='b').bind(),
         )
     )
 

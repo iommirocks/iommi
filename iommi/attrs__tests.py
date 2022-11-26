@@ -1,6 +1,9 @@
 import pytest
 from django.test import override_settings
+
+from iommi import Fragment
 from iommi.declarative.namespace import Namespace
+from iommi.refinable import Refinable
 from iommi.struct import Struct
 
 from iommi.attrs import (
@@ -9,8 +12,15 @@ from iommi.attrs import (
 )
 
 
+class Foo(Fragment):
+    foo = Refinable()
+
+    def own_evaluate_parameters(self):
+        return dict(foo=self.foo)
+
+
 def render_attrs_test(attrs, **kwargs):
-    return str(evaluate_attrs(Struct(attrs=attrs), **kwargs))
+    return str(evaluate_attrs(Fragment(attrs=attrs).bind(), **kwargs))
 
 
 def test_render_attrs():
@@ -45,6 +55,16 @@ def test_render_style():
         )
         == ' style="bar: 2; foo: 1"'
     )
+
+
+def test_render_style_fragment():
+    f = Fragment(
+        attrs__style=dict(
+            foo='1',
+            bar='2',
+        )
+    ).bind()
+    assert str(f.attrs) == ' style="bar: 2; foo: 1"'
 
 
 def test_render_with_empty():
@@ -125,16 +145,18 @@ def test_render_attrs_empty():
 
 
 def test_evaluate_attrs():
-    class Foo:
-        def __init__(self):
-            self.attrs = Namespace(
-                a=3,
-                b=lambda foo: foo + 7,
-                class__a=True,
-                class__b=lambda foo: True,
-                style__a=3,
-                style__b=lambda foo: foo + 7,
-            )
+
+    foo = Foo(
+        foo=1,
+        attrs=dict(
+            a=3,
+            b=lambda foo, **_: foo + 7,
+            class__a=True,
+            class__b=lambda foo, **_: True,
+            style__a=3,
+            style__b=lambda foo, **_: foo + 7,
+        )
+    ).bind()
 
     expected = {
         'a': 3,
@@ -148,20 +170,20 @@ def test_evaluate_attrs():
             'b': 8,
         },
     }
-    assert evaluate_attrs(Foo(), foo=1) == expected
+    assert foo.attrs == expected
 
 
 def test_empty_class_and_struct_then_something():
     assert (
         str(
             evaluate_attrs(
-                Struct(
+                Fragment(
                     attrs={
                         'class': {},
                         'style': {},
                         'z': 'bar',
                     }
-                )
+                ).refine_done()
             )
         )
         == ' z="bar"'

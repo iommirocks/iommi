@@ -187,8 +187,10 @@ class Fragment(Part, Tag):
         )
 
     def __repr__(self):
-        if self.is_refine_done:
+        if self._is_bound:
             return f'<{self.__class__.__name__} tag:{self.tag} attrs:{dict(self.attrs)!r}>'
+        elif self.is_refine_done:
+            return f'<{self.__class__.__name__} tag:{self.tag} attrs_const:{dict(self._attrs_const)!r} attrs_dynamic:{dict(self._attrs_dynamic)!r}>'
         else:
             return f'<{self.__class__.__name__}>'
 

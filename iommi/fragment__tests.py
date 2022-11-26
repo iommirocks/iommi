@@ -241,10 +241,11 @@ def test_fragment__render__simple_cases():
 
 
 def test_fragment_repr():
-    assert (
-        repr(Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'})).refine_done())
-        == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
-    )
+    f = Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'}))
+
+    assert repr(f) == '<Fragment>'
+    assert repr(f.refine_done()) == "<Fragment tag:foo attrs_const:{'foo-bar': 'baz', 'style': {}, 'class': {}} attrs_dynamic:{'style': {}, 'class': {}}>"
+    assert repr(f.bind()) == "<Fragment tag:foo attrs:{'foo-bar': 'baz', 'style': Namespace(), 'class': Namespace()}>"
 
 
 def test_fragment_repr_not_done():

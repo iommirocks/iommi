@@ -41,6 +41,24 @@ class PathNotFoundException(Exception):
     pass
 
 
+def split_dynamic_const(d):
+    if d is None:
+        return {}, {}
+    dynamic = {}
+    const = {}
+    for k, v in items(d):
+        if callable(v):
+            dynamic[k] = v
+        else:
+            const[k] = v
+    return dynamic, const
+
+
+class YourAttrsAreInADifferentCastle:
+    def __repr__(self):
+        return '<<< attrs are split into ._attrs_const and ._attrs_dynamic >>>'
+
+
 class Traversable(RefinableObject):
     """
     Abstract API for objects that have a place in the iommi path structure.
@@ -137,6 +155,22 @@ class Traversable(RefinableObject):
 
         result.iommi_style = iommi_style
         return result
+
+    def on_refine_done(self, parent=None):
+        super(Traversable, self).on_refine_done()
+
+        if hasattr(self, 'attrs'):
+            attrs = self.attrs or {}
+
+            style_dynamic, style_const = split_dynamic_const(attrs.pop('style', {}))
+            class_dynamic, class_const = split_dynamic_const(attrs.pop('class', {}))
+
+            self._attrs_dynamic, self._attrs_const = split_dynamic_const(self.attrs)
+            self._attrs_dynamic['style'] = style_dynamic
+            self._attrs_const['style'] = style_const
+            self._attrs_dynamic['class'] = class_dynamic
+            self._attrs_const['class'] = class_const
+            self.attrs = YourAttrsAreInADifferentCastle()
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound

@@ -406,7 +406,7 @@ class EditTable(Table):
             sentinel_row = self.model(pk='#sentinel#')
         else:
             sentinel_row = Struct(pk='#sentinel#', **{k: '' for k in keys(self.create_form.fields)})
-        self.attrs['data-add-template'] = (
+        self._attrs_const['data-add-template'] = (
             self.cells_class(row=sentinel_row, row_index=-1, is_create_template=True, **self.row.as_dict())
             .bind(parent=self.create_form)
             .__html__()
