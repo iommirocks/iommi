@@ -23,7 +23,7 @@ from iommi.evaluate import (
 from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
-    is_evaluated_refinable,
+    get_evaluated_attributes,
     Prio,
     Refinable,
     RefinableMembers,
@@ -39,19 +39,6 @@ evaluated_refinable = evaluated_refinable  # pragma: no mutate this is just mark
 
 class PathNotFoundException(Exception):
     pass
-
-
-_get_evaluated_attributes_cache = {}
-
-
-def get_evaluated_attributes(result):
-    class_ = type(result)
-    try:
-        return _get_evaluated_attributes_cache[class_]
-    except KeyError:
-        r = [k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)]
-        _get_evaluated_attributes_cache[class_] = r
-        return r
 
 
 class Traversable(RefinableObject):
