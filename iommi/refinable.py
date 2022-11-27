@@ -16,6 +16,7 @@ from iommi.declarative.namespace import (
     getattr_path,
     Namespace,
 )
+from iommi.evaluate import get_signature
 
 
 def prefixes(path):
@@ -234,6 +235,13 @@ class RefinableObject:
 
         result.on_refine_done()
 
+        refinables_dynamic = set()
+        for k in get_evaluated_attributes(result):
+            v = getattr(result, k)
+            if callable(v):
+                get_signature(v)  # warm the signature cache
+                refinables_dynamic.add(k)
+        result._refinables_dynamic = refinables_dynamic
         return result
 
     def on_refine_done(self):
