@@ -41,6 +41,19 @@ class PathNotFoundException(Exception):
     pass
 
 
+_get_evaluated_attributes_cache = {}
+
+
+def get_evaluated_attributes(result):
+    class_ = type(result)
+    try:
+        return _get_evaluated_attributes_cache[class_]
+    except KeyError:
+        r = [k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)]
+        _get_evaluated_attributes_cache[class_] = r
+        return r
+
+
 class Traversable(RefinableObject):
     """
     Abstract API for objects that have a place in the iommi path structure.
@@ -187,7 +200,7 @@ class Traversable(RefinableObject):
         if result.include is False:
             return None
 
-        evaluated_attributes = [k for k, v in items(result.get_declared('refinable')) if is_evaluated_refinable(v)]
+        evaluated_attributes = get_evaluated_attributes(result)
         evaluate_members(result, evaluated_attributes, **evaluate_parameters)
 
         if hasattr(result, 'attrs'):
