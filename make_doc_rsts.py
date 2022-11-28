@@ -30,35 +30,44 @@ def write_rst_from_pytest():
 
 def rst_from_pytest(source_f, target_f, target):
     state = 'import'
-    prev_state = state
+    prev_state = []
     func_name = None
     func_count = 0
     should_dedent = None
     write_code_block = False
-    for line in source_f.readlines():
+
+    for i, line in enumerate(source_f.readlines(), start=1):
+        print(source_f.name, i, func_name, state)
         stripped_line = line.strip()
-        if line.startswith('def '):  # not stripped_line!
+        if state == 'import' and line.startswith('def test_'):  # not stripped_line!
+            prev_state.append(state)
             state = 'py'
             func_name = line[len('def '):].partition('(')[0]
             func_count = 0
         elif stripped_line.startswith("# language=rst"):
+            prev_state.append(state)
             state = 'starting rst'
         elif stripped_line in ('"""', "'''"):
             if state == 'starting rst':
                 target_f.write('\n')
+                prev_state.append(state)
                 state = 'rst'
                 should_dedent = line.startswith('    ')
             elif state == 'rst':
-                state = 'py'
+                state = prev_state.pop()
+                assert state == 'starting rst'
+                state = prev_state.pop() if prev_state else 'import'
                 write_code_block = True
         elif stripped_line.startswith('# @test'):
-            prev_state = state
+            prev_state.append(state)
             state = 'only test'
         elif stripped_line.startswith('# @end'):
-            state = prev_state
+            state = prev_state.pop()
         else:
             if state == 'rst':
-                if should_dedent and line.startswith('    '):
+                if should_dedent and not line.startswith('    '):
+                    should_dedent = False
+                if should_dedent:
                     target_f.write(line[4:])
                 else:
                     target_f.write(line)
@@ -66,6 +75,7 @@ def rst_from_pytest(source_f, target_f, target):
                 if stripped_line:
                     if write_code_block:
                         target_f.write('.. code-block:: python\n\n')
+                        target_f.write('    ')  # guarantee empty code block
                         write_code_block = False
 
                 if line.startswith('    ') or not stripped_line:

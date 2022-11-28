@@ -84,7 +84,7 @@ def get_default_classes():
 
 def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this is tested by rtd anyway
     """
-    Generate test files for tri.declarative APIs
+    Generate test files for declarative APIs
 
     :param directory: directory to write the .py files into
     :param classes: list of classes to generate tests for
@@ -280,12 +280,12 @@ request = req('get')
         section(1, 'Refinable members')
         type_hints = get_type_hints(c)
         for refinable, value in refinable_members:
-            w(1, '* `' + refinable + '`')
-            w(1, '')
+            w(0, '')
+            w(0, '* `' + refinable + '`')
 
             if constructor_doc['params'].get(refinable):
-                w(3, constructor_doc['params'][refinable])
-                w(1, '')
+                w(1, constructor_doc['params'][refinable])
+                w(0, '')
             type_hint = type_hints.get(refinable)
             if type_hint:
                 name = str(type_hint)
@@ -295,19 +295,19 @@ request = req('get')
                     name = type_hint.__name__
 
                 if type_hint in classes:
-                    w(3, f'Type: :doc:`{name}`')
+                    w(1, f'Type: :doc:`{name}`')
                 else:
-                    w(3, f'Type: `{name}`')
+                    w(1, f'Type: `{name}`')
                 w(0, '')
 
             if refinable in defaults:
-                w(3, f'Default: `{default_description(defaults.pop(refinable))}`')
+                w(1, f'Default: `{default_description(defaults.pop(refinable))}`')
 
             ref_name = f'{c.__name__}.{refinable}'
             if ref_name in cookbook_name_by_refinable_name:
-                w(3, '')
-                w(3, f'Cookbook: :ref:`{ref_name.lower()}`')
-                w(3, '')
+                w(0, '')
+                w(1, f'Cookbook: :ref:`{ref_name.lower()}`')
+                w(0, '')
 
         w(0, '')
 
@@ -378,19 +378,17 @@ def _print_rst_or_python(doc, w):
                 if line.strip():
                     code_block_indent = len(line) - len(line.lstrip(' '))
                 w(0, line)
-                w(0, '')
             else:
                 if line.startswith(' ' * code_block_indent) or not line.strip():
                     w(0, line)
-                    w(0, '')
                 else:
                     in_code_block = False
                     w(1, '# language=rst')
                     w(1, '"""')
                     w(1, line)
         else:
-            w(1, line)
+            w(0, line)
     if in_code_block:
         w(1, '# language=rst')
         w(1, '"""')
-    w(1, '')
+    w(0, '')

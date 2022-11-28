@@ -57,14 +57,16 @@ class Action(Fragment):
         # The primary submit button on a form.
         Action.primary()
 
-        # Notice that because forms
-        # with a single primary submit button are so common, iommi assumes
-        # that if you have a action called submit and do NOT explicitly
-        # specify the action that it is a primary action. This is only
-        # done for the action called submit, inside the Forms actions
-        # Namespace.
-        #
-        # For that reason this works:
+    Notice that because forms
+    with a single primary submit button are so common, iommi assumes
+    that if you have an action called submit and do NOT explicitly
+    specify the action that it is a primary action. This is only
+    done for the action called submit, inside the Forms actions
+    Namespace.
+
+    For that reason this works:
+
+    .. code-block:: python
 
         class MyForm(Form):
             class Meta:
@@ -75,7 +77,9 @@ class Action(Fragment):
 
                     ...
 
-        # and is roughly equivalent to
+    and is roughly equivalent to
+
+    .. code-block:: python
 
         def on_submit(form, **_):
             if not form.is_valid():
