@@ -21,7 +21,7 @@ class IommiModel(Model):
                     raise TypeError(
                         f'There is no field {name} on the model {self.__class__.__name__}. '
                         f'You can assign arbitrary attributes if they start with `_`. '
-                        f'If this is an annotation, please add a method `get_annotated_attributes` that returns a list '
+                        f'If this is an annotation, please add a tuple on the class named `iommi_ignored_attributes`'
                         f'of valid annotated attributes that should not trigger this message.'
                     ) from e
 
