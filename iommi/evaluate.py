@@ -50,8 +50,15 @@ def get_callable_description(c):
     return f'`{c}`'
 
 
+def is_callable(v):
+    if isinstance(v, Namespace) and 'call_target' not in v:
+        return False
+    else:
+        return callable(v)
+
+
 def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True, **kwargs):
-    if callable(func_or_value):
+    if is_callable(func_or_value):
         if __signature is None:
             __signature = signature_from_kwargs(kwargs)
 
@@ -117,14 +124,14 @@ def signature_from_kwargs(kwargs):
     return ','.join(sorted(keys(kwargs)))
 
 
-def evaluate_members(obj, keys, **kwargs):
-    for key in keys:
+def evaluate_members(obj, **kwargs):
+    for key in obj._refinables_dynamic:
         evaluate_member(obj, key, **kwargs)
 
 
 def evaluate_member(obj, key, strict=True, **kwargs):
     value = getattr(obj, key)
-    new_value = evaluate(value, __strict=strict, **kwargs)
+    new_value = evaluate(value, __strict=strict, __signature=signature_from_kwargs(kwargs), **kwargs)
     if new_value is not value:
         setattr(obj, key, new_value)
 
