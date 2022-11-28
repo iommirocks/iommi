@@ -13,11 +13,15 @@ from iommi._web_compat import (
     Template,
 )
 from iommi.member import _force_bind_all
-from iommi.part import as_html
+from iommi.part import (
+    as_html,
+    render_root,
+)
 from tests.helpers import (
     prettify,
     req,
     user_req,
+    verify_html,
 )
 
 
@@ -138,4 +142,62 @@ def test_title_attr():
     assert (
         '<h1 class="foo">Foo</h1>'
         == Page(title='foo', h_tag__attrs__class__foo=True).bind(request=req('get')).__html__()
+    )
+
+
+def test_page_h_tag():
+    assert '<h1>$$$</h1>' in Page(title='$$$').bind().__html__()
+    assert '<b>$$$</b>' in Page(title='$$$', h_tag__tag='b').bind().__html__()
+    assert '<b>$$$</b>' in Page(h_tag=html.b('$$$')).bind().__html__()
+    assert 'None' not in Page(h_tag=None).bind().__html__()
+    assert 'None' not in Page(h_tag__include=False).bind().__html__()
+
+
+def test_sort_after_h_tag():
+    verify_html(
+        actual_html=render_root(
+            part=Page(
+                title='My title',
+                parts__foo=html.p('foo', after='bar'),
+                parts__bar=html.p('bar', after=0),
+                parts__baz=html.p('baz'),
+            ).bind()
+        ),
+        # language=HTML
+        expected_html='''\
+            <html>
+                <head>
+                    <title> My title </title>
+                </head>
+                <body>
+                    <p> bar </p>
+                    <p> foo </p>
+                    <h1> My title </h1>
+                    <p> baz </p>
+                </body>
+            </html>
+        ''',
+    )
+
+
+def test_custom_h_tag():
+    verify_html(
+        actual_html=render_root(
+            part=Page(
+                h_tag=html.b('custom h_tag'),
+                parts__foo=html.p('foo', after=0),
+            ).bind()
+        ),
+        # language=HTML
+        expected_html='''\
+            <html>
+                <head>
+                    <title> </title>
+                </head>
+                <body>
+                    <p> foo </p>
+                    <b> custom h_tag </b>
+                </body>
+            </html>
+        ''',
     )

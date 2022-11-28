@@ -40,6 +40,8 @@ from iommi.refinable import (
     Refinable,
     RefinableMembers,
 )
+from iommi.shortcut import with_defaults
+from iommi.sort_after import sort_after
 from iommi.traversable import Traversable
 
 
@@ -69,7 +71,12 @@ class Page(Part):
 
         parts = EMPTY
         context = EMPTY
-        h_tag__call_target = Header
+
+    @with_defaults(
+        h_tag__call_target=Header,
+    )
+    def __init__(self, **kwargs):
+        super(Page, self).__init__(**kwargs)
 
     def on_refine_done(self):
         # First we have to up sample parts that aren't Part into Fragment
@@ -109,11 +116,16 @@ class Page(Part):
         self.context = evaluate_strict_container(self.context or {}, **self.iommi_evaluate_parameters())
         request = self.get_request()
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}
-        rendered = {'h_tag': as_html(request=request, part=self.h_tag, context=context)}
-        rendered.update(
-            {name: as_html(request=request, part=part, context=context) for name, part in items(self.parts)}
-        )
-
+        parts = dict(h_tag=self.h_tag)
+        parts.update(items(self.parts))
+        rendered = {
+            name: as_html(
+                request=request,
+                part=part,
+                context=context,
+            )
+            for name, part in items(sort_after(parts))
+        }
         return render(rendered)
 
     def as_view(self):
