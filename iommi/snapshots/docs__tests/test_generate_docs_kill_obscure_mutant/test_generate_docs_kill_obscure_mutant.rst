@@ -33,8 +33,8 @@ def test_base():
 Refinable members
 -----------------
 
-    * `name`
-    
-            Default: `lambda X: X`
+
+* `name`
+    Default: `lambda X: X`
 
     """

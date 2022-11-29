@@ -286,19 +286,16 @@ Methods
 ^^^^^
 
 
-    
-    Bla bla
-    
-    """
 
+Bla bla
+
+    """
 
     assert False
 
-
-
     # language=rst
     """
-    
+
 
     """
 

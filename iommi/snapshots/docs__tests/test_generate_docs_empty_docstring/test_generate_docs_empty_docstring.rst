@@ -33,7 +33,7 @@ def test_base():
 Refinable members
 -----------------
 
-    * `name`
-    
+
+* `name`
 
     """

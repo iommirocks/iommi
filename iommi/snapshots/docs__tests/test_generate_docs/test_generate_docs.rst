@@ -25,8 +25,8 @@ Base class: `RefinableObject`
 def test_base():
     # language=rst
     """
-    docstring for Foo
-    
+docstring for Foo
+
     """
 
     # language=rst
@@ -35,22 +35,22 @@ def test_base():
 Refinable members
 -----------------
 
-    * `description`
-    
-            Default: `lambda foo, bar: 'qwe'`
-    * `empty_string_default`
-    
-            Default: `""`
-    * `name`
-    
-            description of the name field
-    
-            Default: `foo-name`
-    * `refinable_func`
-    
-    * `some_other_thing`
-    
-            Default: `iommi.docs__tests.some_callable`
+
+* `description`
+    Default: `lambda foo, bar: 'qwe'`
+
+* `empty_string_default`
+    Default: `""`
+
+* `name`
+    description of the name field
+
+    Default: `foo-name`
+
+* `refinable_func`
+
+* `some_other_thing`
+    Default: `iommi.docs__tests.some_callable`
 
 Shortcuts
 ---------
