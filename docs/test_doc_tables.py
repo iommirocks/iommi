@@ -36,9 +36,8 @@ def test_tables():
     .. image:: tables_example_albums.png
 
     The code for the example above:
-
-
     """
+
     Table(
         auto__model=Album,
         page_size=10,
@@ -47,7 +46,6 @@ def test_tables():
     # language=rst
     """
     Read the full documentation and the :doc:`cookbook` for more.
-
     """
     
 
@@ -58,8 +56,8 @@ def test_creating_tables_from_models():
     ---------------------------
 
     Say I have some model:
-
     """
+
     class Foo(models.Model):
         a = models.IntegerField()
 
@@ -69,8 +67,8 @@ def test_creating_tables_from_models():
     # @test
         class Meta:
             app_label = 'docs_tables'
-    assert str(Foo(a=7)) == 'Foo: 7'
 
+    assert str(Foo(a=7)) == 'Foo: 7'
     # @end
 
     class Bar(models.Model):
@@ -82,12 +80,12 @@ def test_creating_tables_from_models():
             app_label = 'docs_tables'
 
     # @end
+
     # language=rst
     """
     Now I can display a list of `Bar` in a table like this:
-
-
     """
+
     def my_view(request):
         return Table(auto__model=Bar)
 
@@ -101,8 +99,6 @@ def test_creating_tables_from_models():
     `query_from_indexes=True` you will get filters for all the model fields
     that have database indexes. This filtering system includes an advanced filter
     language. See :doc:`queries` for more on filtering.
-
-
     """
 
 
@@ -113,9 +109,8 @@ def test_explicit_tables(small_discography):
     ---------------
 
     You can also create tables explicitly:
-
-
     """
+
     def albums(request):
         class AlbumTable(Table):
             # Shortcut for creating checkboxes to select rows
@@ -194,9 +189,8 @@ def test_table_of_plain_python_objects():
     """
     Table of plain python objects
     -----------------------------
-
-
     """
+
     def plain_objs_view(request):
         # Say I have a class...
         class Foo(object):

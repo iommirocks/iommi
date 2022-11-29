@@ -177,6 +177,7 @@ def test_permissions():
     # @test
     assert Admin.has_permission  # validate that we haven't changed the API of Admin too badly
     assert MyAdmin.has_permission(staff_req('get'), None, None, None)
+    # @end
 
     # language=rst
     """

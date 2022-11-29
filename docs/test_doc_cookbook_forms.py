@@ -47,10 +47,10 @@ def test_how_do_i_supply_a_custom_parser_for_a_field():
     )
 
     # @test
-
     form = form.bind(request=req('get', index='123abc'))
     assert not form.get_errors()
     assert form.fields.index.value == 123
+    # @end
 
 
 def test_how_do_i_make_a_field_non_editable():
@@ -62,9 +62,8 @@ def test_how_do_i_make_a_field_non_editable():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Pass a callable or `bool` to the `editable` member of the field:
-
-
     """
+
     form = Form(
         auto__model=Album,
         fields__name__editable=
@@ -80,6 +79,7 @@ def test_how_do_i_make_a_field_non_editable():
     staff_form = form.bind(request=staff_req('get'))
     assert staff_form.fields.name.editable is True
     assert staff_form.fields.artist.editable is False
+    # @end
 
 
 def test_how_do_i_make_an_entire_form_non_editable(album):
@@ -91,21 +91,18 @@ def test_how_do_i_make_an_entire_form_non_editable(album):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     This is a very common case so there's a special syntax for this: pass a `bool` to the form:
-
-
     """
+
     form = Form.edit(
         auto__instance=album,
         editable=False,
     )
 
     # @test
-
     form = form.bind(request=req('get'))
     assert form.fields.name.editable is False
     assert form.fields.year.editable is False
     show_output(form)
-
     # @end
 
 
@@ -129,10 +126,10 @@ def test_how_do_i_supply_a_custom_validator():
     )
 
     # @test
-
     form = form.bind(request=req('post', name='foo', **{'-submit': ''}))
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
     show_output(form)
+    # @end
 
 
 def test_how_do_i_validate_multiple_fields_together():
@@ -154,8 +151,6 @@ def test_how_do_i_exclude_a_field():
     ~~~~~~~~~~~~~~~~~~~~~~~~~
 
     See `How do I say which fields to include when creating a form from a model?`_
-
-
     """
 
 
@@ -184,9 +179,8 @@ def test_how_do_i_supply_a_custom_initial_value():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Pass a value or callable to the `initial` member:
-
-
     """
+
     form = Form(
         auto__model=Album,
         fields__name__initial='Paranoid',
@@ -194,11 +188,11 @@ def test_how_do_i_supply_a_custom_initial_value():
     )
 
     # @test
-
     form = form.bind(request=req('get'))
     assert form.fields.name.value == 'Paranoid'
     assert form.fields.year.value == 1970
     show_output(form)
+    # @end
 
     # language=rst
     """
@@ -223,8 +217,8 @@ def test_how_do_i_set_if_a_field_is_required():
         fields__name__required=True,
         fields__year__required=lambda field, form, **_: True,
     )
-    # @test
 
+    # @test
     f = form.bind(request=req('post', **{'-submit': ''}))
     assert f.fields.name.required is True
     assert f.fields.year.required is True
@@ -242,7 +236,7 @@ def test_how_do_i_set_if_a_field_is_required():
     '''))
     )
 
-    # @end_test
+    # @end
 
     # language=rst
     """
@@ -269,12 +263,12 @@ def test_how_do_i_set_if_a_field_is_required():
     """
 
     # @test
-
     form2 = form.refine(iommi_style=IOMMI_DEFAULT_STYLE)
     f = form2.bind(request=req('get'))
     assert f.fields.name.required is True
     assert f.fields.year.required is True
     show_output(f)
+    # @end
 
     # language=rst
     """
@@ -304,17 +298,16 @@ def test_how_do_i_change_the_order_of_the_fields():
     )
 
     # @test
-
     form = form.bind(request=req('get'))
     assert list(form.fields.keys()) == ['artist', 'year', 'name']
     show_output(form)
+    # @end
 
     # language=rst
     """
     This will make the field order `artist`, `year`, `name`.
 
     If there are multiple fields with the same index or name the order of the fields will be used to disambiguate.
-
     """
 
 
@@ -333,20 +326,21 @@ def test_how_do_i_specify_which_model_fields_the_search_of_a_choice_queryset_use
 
     In special cases you can override which attributes it uses for
     searching by specifying `search_fields`:
-
-
     """
+
     form = Form(
         auto__model=Album,
         fields__name__search_fields=('name', 'year'),
     )
 
+    # @test
+    form.bind(request=req('get'))
+    # @end
+
     # language=rst
     """
     This last method is discouraged though, because it will mean searching behaves
     differently in different parts of your application for the same data.
-
-
     """
 
 
@@ -357,7 +351,6 @@ def test_how_do_i_insert_a_css_class_or_html_attribute():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     See :doc:`Attrs`.
-
     """
 
 
@@ -370,9 +363,8 @@ def test_how_do_i_override_rendering_of_an_entire_field():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Pass a template name:
-
-
     """
+
     form = Form(
         auto__model=Album,
         fields__year__template='my_template.html',
@@ -407,9 +399,8 @@ def test_how_do_i_override_rendering_of_the_input_field():
 
 
     Pass a template name or a `Template` object to the `input` namespace:
-
-
     """
+
     form = Form(
         auto__model=Album,
         fields__year__input__template='my_template.html',
@@ -421,7 +412,6 @@ def test_how_do_i_override_rendering_of_the_input_field():
     
     # language=rst
     """
-    
     """
 
     form = Form(

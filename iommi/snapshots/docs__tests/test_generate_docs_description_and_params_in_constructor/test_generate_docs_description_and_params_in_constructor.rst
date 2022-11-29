@@ -25,8 +25,8 @@ Base class: :doc:`RefinableObject`
 def test_base():
     # language=rst
     """
-    First description
-    
+First description
+
     """
 
     # language=rst
@@ -37,7 +37,7 @@ __init__ description
 Refinable members
 -----------------
 
-    * `name`
-    
+
+* `name`
 
     """

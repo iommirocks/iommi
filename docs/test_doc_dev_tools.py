@@ -12,8 +12,6 @@ def test_dev_tools():
     iommi ships with several integrated tools to increase your development speed. They
     are shown on iommi pages when `settings.DEBUG` is `True`. Some are always
     active and some are optional and needs to be added to your project.
-
-
     """
     
 
@@ -32,8 +30,6 @@ def test_code_():
     which can be very handy.
 
     For VSCode: `IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: 'vscode://file/%s:' % (filename,)+ ('' if lineno is None else "%d" % (lineno,))`
-
-
     """
     
 
@@ -46,8 +42,6 @@ def test_tree():
     This tool shows you the full tree of the current page with the names, full
     iommi paths, types (with links to documentation), and the included state
     of all the nodes in the tree.
-
-
     """
     
 
@@ -61,8 +55,6 @@ def test_pick():
     pick tool and then click on the item and you'll get the iommi path to that
     part with the type shown (with a link to the documentation). You will also
     get the paths and types of all the parent components up the tree.
-
-
     """
     
 
@@ -84,8 +76,6 @@ def test_edit():
         to add this at the very top of the middleware list!
 
     This tool is full arbitrary remote execution so it will be *very* bad if you run this in production! It will only work when `DEBUG` is true.
-
-
     """
     
 
@@ -109,8 +99,6 @@ def test_profile():
         need to put this below `django.contrib.auth.middleware.AuthenticationMiddleware`
         if you want to use this in production. Only staff users are allowed to
         profile in production, but all users can profile in debug mode.
-
-
     """
     
 

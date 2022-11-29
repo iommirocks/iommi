@@ -8,8 +8,6 @@ import pytest
 pytestmark = pytest.mark.django_db
 
 
-
-
 def test_queries():
     # language=rst
     """
@@ -29,9 +27,8 @@ def test_how_do_i_override_what_operator_is_used_for_a_query():
 
     The member `query_operator_to_q_operator` for `Filter` is used to convert from e.g. `:`
     to `icontains`. You can specify another callable here:
-
-
     """
+
     Table(
         auto__model=Track,
         columns__album__filter__query_operator_to_q_operator=lambda op: 'exact',

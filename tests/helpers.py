@@ -206,7 +206,7 @@ _show_output_used = set()
 def show_output(part, path='/'):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
-        Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', ''), frame.f_code.co_name
+        Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''), frame.f_code.co_name
     )
     name = base_name
     counter = 0

@@ -12,10 +12,10 @@ def test_general():
     General
     -------
 
-
     """
-    
 
+
+# noinspection PyUnusedLocal
 def test_how_do_i_find_the_path_to_a_parameter():
     # language=rst
     """
@@ -41,15 +41,18 @@ def test_how_do_i_find_the_path_to_a_parameter():
         <td data-iommi-path="columns__e__cell">explicit value</td>
 
     To customize this cell you can pass for example
-    `columns__e__cell__format=lambda value, **_: value.upper()`. See below for
-    many more examples.
+    `columns__e__cell__format=lambda value, **_: value.upper()`. 
+    
+    Instead of looking at the DOM, you can use the "pick" tool where you can get
+    the path by clicking on the item you want. You will also get a link to the 
+    right place into the API docs for the thing you clicked on. 
 
     Another nice way to find what is available is to append `?/debug_tree` in the
     url of your view. You will get a table of available paths with the ajax
     endpoint path, and their types with links to the appropriate documentation.
 
-    If `IOMMI_DEBUG` is on you will also get two links on the top of your pages
-    called `Code` and `Tree`. Code will jump to the code for the current view
+    If `IOMMI_DEBUG` is on you will also get the iommi debug toolbar on your pages.
+    `Code` will jump to the code for the current view
     in PyCharm. You can configure the URL builder to make it open your favored
     editor by setting `IOMMI_DEBUG_URL_BUILDER` in settings:
 
@@ -63,7 +66,7 @@ def test_how_do_i_find_the_path_to_a_parameter():
 
 
     """
-    IOMMI_DEBUG_URL_BUILDER=lambda filename, lineno: f"vscode://file/{filename}:{lineno}:0"
+    IOMMI_DEBUG_URL_BUILDER = lambda filename, lineno: f"vscode://file/{filename}:{lineno}:0"
 
     # language=rst
     """

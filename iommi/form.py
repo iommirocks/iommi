@@ -1377,8 +1377,6 @@ class Form(Part):
             ),
         ).bind(request=request)
 
-    See tri.declarative docs for more on this dual style of declaration.
-
     In the common case the fields namespace will contain only instances of `Field`, but
     iommi actually supports arbitrary `Part` objects. For example:
 

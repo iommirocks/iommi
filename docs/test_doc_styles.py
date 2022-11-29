@@ -103,6 +103,7 @@ def test_basing_on_another_style():
     """
 
 
+# noinspection SpellCheckingInspection
 def test_assets():
     # language=rst
     """
@@ -116,9 +117,8 @@ def test_assets():
     `<head>` tag.
 
     Defining an asset on the root:
-
-
     """
+
     Style(
         root__assets__my_design_system_css=Asset.css(
             attrs=dict(
@@ -133,17 +133,15 @@ def test_assets():
     """
     There is also a useful shortcut for JavaScript assets: `Asset.js(attrs__src='url')`.
     You can put script and css literals (or anything really) there if you want:
-
-
     """
+
     Asset(tag='style', text='body { font-color: blue; }')
 
     # language=rst
     """
     Adding an asset on a specific shortcut:
-
-
     """
+
     Style(
         Field__shortcuts__multi_choice__assets__foo=Asset.css(
             attrs__href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
@@ -153,16 +151,13 @@ def test_assets():
     # language=rst
     """
     Adding an asset on a specific class:
-
-
     """
+
     Style(
         Field__assets__foo=Asset.css(
             attrs__href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css',
         ),
     )
-
-
 
 
 def test_base_template_content_block():
@@ -174,9 +169,8 @@ def test_base_template_content_block():
     By default iommi uses `iommi/base.html` to render pages. For simple projects
     this works very well, but for more complex sites you might need something
     more complex. So you can define your base template in a style definition:
-
-
     """
+
     Style(
         base_template='base.html',
     )
@@ -194,15 +188,12 @@ def test_base_template_content_block():
 
     By default iommi will render the iommi page contents into the "content" block,
     to override this you can define `content_block`:
-
-
     """
+
     Style(
         base_template='base.html',
         content_block='body',
     )
-
-
 
 
 def test_targeting_a_class_for_styling():
@@ -212,9 +203,8 @@ def test_targeting_a_class_for_styling():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     You can apply style definitions via the class name:
-
-
     """
+
     Style(
         Field__attrs__class__foo=True,
     )
@@ -224,8 +214,6 @@ def test_targeting_a_class_for_styling():
     The style system will look at the full class hierarchy when it looks at what
     definitions to apply. It will also match on the name of the class only,
     the package name doesn't matter.
-
-
     """
 
 
@@ -236,9 +224,8 @@ def test_targeting_a_shortcut_for_styling():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     You can apply style definitions on shortcut names:
-
-
     """
+
     Style(
         MyClass__shortcuts__my_shortcut__attrs__class__foo=True,
     )

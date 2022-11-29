@@ -125,7 +125,7 @@ class Fragment(Part, Tag):
 
     .. code-block:: python
 
-        # @ test
+        # @test
         from iommi.fragment import Fragment
         # @end
 

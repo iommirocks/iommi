@@ -33,17 +33,17 @@ def test_base():
 Refinable members
 -----------------
 
-    * `a`
-    
-            Type: `int`
 
-    * `b`
-    
-            Type: `Dict`
+* `a`
+    Type: `int`
 
-    * `c`
-    
-            Type: :doc:`Fragment`
+
+* `b`
+    Type: `Dict`
+
+
+* `c`
+    Type: :doc:`Fragment`
 
 
     """

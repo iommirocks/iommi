@@ -14,7 +14,6 @@ def test_registrations():
     =============
 
     To make iommi understand the specifics of your code base you can register various handlers and behaviors.
-
     """
     
 
@@ -34,12 +33,11 @@ def test_django_custom_fields():
 
 
     You use the `register_factory` function to register your own factory. The simplest way is:
-
     """
+
     # @test
     class TimeField:
         pass
-
     # @end
 
     register_factory(
@@ -58,10 +56,10 @@ def test_django_custom_fields():
     For more advanced behavior you can pass a `Shortcut` instance or a callable that returns a shortcut. This is the iommi definition for booleans:
 
     """
+
     # @test
     from django.db.models.fields import BooleanField
     # @end
-
 
     register_field_factory(
         BooleanField,
@@ -73,8 +71,6 @@ def test_django_custom_fields():
     )
 
 
-
-
 def test_rendering_of_your_custom_types_in_a_table():
     # language=rst
     """
@@ -82,12 +78,11 @@ def test_rendering_of_your_custom_types_in_a_table():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     iommi renders `bool`, `list`, `set`, `tuple`, `QuerySet` and any type that has a `__html__` method with special logic to make it look nice in a table. If you have a type where you can't or don't want to implement a `__html__` method (or you want more complex rendering) you can plug into this system yourself with `register_cell_formatter`:
-
     """
+
     # @test
     class MyType:
         pass
-
     # @end
 
     register_cell_formatter(MyType, lambda value, **_: f'hello {value}')
@@ -95,8 +90,6 @@ def test_rendering_of_your_custom_types_in_a_table():
     # language=rst
     """
     The callable you register gets the keyword arguments `value`, `table`, `column` and `row`.
-
-
     """
 
 
@@ -116,8 +109,6 @@ def test_the_search_fields_of_your_django_models():
     # language=rst
     """
     On startup iommi registers just this one particular canonical name for you since you probably want it. Note also that you can can use `__` separated paths here if you have a one-to-one with another model where the name field exists.
-
-
     """
 
 
@@ -128,6 +119,4 @@ def test_custom_styles():
     ~~~~~~~~~~~~~
 
     You can register your own styles with `register_style`. By default the style `bootstrap` is used. You can use it as the basis of your custom look and feel or start with the `base` style and work from there.
-
-
     """

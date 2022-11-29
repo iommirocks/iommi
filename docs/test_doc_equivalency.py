@@ -31,7 +31,6 @@ def test_equivalence():
     We want to create a form to create an album. We already have the artist from the URL, so that field shouldn't be in the form.
 
     The following forms all accomplish this goal (you can use `form.as_view()` to create a view from a `Form` instance):
-
     """
 
     form = Form.create(
@@ -42,10 +41,6 @@ def test_equivalence():
     # @test
     show_output(form)
     # @end
-
-    # language=rst
-    """
-    """
 
     form = Form.create(
         auto=dict(
@@ -58,10 +53,6 @@ def test_equivalence():
     show_output_collapsed(form)
     # @end
 
-    # language=rst
-    """
-    """
-
     form = Form.create(
         auto__model=Album,
         fields__artist__include=False,
@@ -70,10 +61,6 @@ def test_equivalence():
     # @test
     show_output_collapsed(form)
     # @end
-
-    # language=rst
-    """
-    """
 
     class ArtistForm(Form):
         class Meta:
@@ -86,10 +73,6 @@ def test_equivalence():
     show_output_collapsed(form)
     # @end
 
-    # language=rst
-    """
-    """
-
     class ArtistForm(Form):
         class Meta:
             auto__model = Album
@@ -100,10 +83,6 @@ def test_equivalence():
     # @test
     show_output_collapsed(form)
     # @end
-
-    # language=rst
-    """
-    """
 
     class ArtistForm(Form):
         class Meta:
@@ -139,10 +118,6 @@ def test_equivalence():
     # @test
     show_output_collapsed(form)
     # @end
-
-    # language=rst
-    """
-    """
 
     form = Form(
         fields__name=Field(),

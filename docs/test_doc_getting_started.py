@@ -23,8 +23,9 @@ def test_getting_started():
     ===============
 
     """
-    
 
+
+# noinspection PyUnusedLocal
 def test_1__install():
     # language=rst
     """
@@ -71,8 +72,6 @@ def test_1__install():
         The iommi middleware must be the last middleware in the list!
 
     By default iommi uses a very basic bootstrap base template. We'll get to how to integrate it into your site later.
-
-
     """
     
 
@@ -144,9 +143,8 @@ def test_4__your_first_page():
     ------------------
 
     Pages are the method to compose complex pages from parts. Add this to your `views.py`:
-
-
     """
+
     from iommi import Page, Form, Table
 
     class TestPage(Page):
@@ -159,9 +157,8 @@ def test_4__your_first_page():
     # language=rst
     """
     then hook into `urls.py`:
-
-
     """
+
     urlpatterns = [
         # ...your urls...
         path(
@@ -189,11 +186,10 @@ def test_5__a_simple_function_based_view():
     `views.py`:
 
     """
-    # @test
 
+    # @test
     class TestPage(Page):
         pass
-
     # @end
 
     def iommi_view(request, name):
@@ -202,9 +198,8 @@ def test_5__a_simple_function_based_view():
     # language=rst
     """
     `urls.py`:
-
-
     """
+
     urlpatterns = [
         # ...your urls...
         path(
@@ -218,6 +213,7 @@ def test_5__a_simple_function_based_view():
     # @end
 
 
+# noinspection PyUnusedLocal
 def test_6__make_iommi_pages_fit_into_your_projects_design():
     # language=rst
     """
@@ -228,9 +224,8 @@ def test_6__make_iommi_pages_fit_into_your_projects_design():
     the iommi views you've already added into the design of your project.
 
     The simplest is to add something like this to your `settings.py`:
-
-
     """
+
     # These imports need to be at the bottom of the file!
     from iommi import Style, Asset
     from iommi.style_bootstrap import bootstrap

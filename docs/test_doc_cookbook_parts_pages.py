@@ -54,8 +54,6 @@ def test_how_do_i_override_part_of_a_part_page():
         return IndexPage(parts__subtitle__children__child='Still rocking...')
 
     # @test
-
-    # @test
     show_output(index(req('get')))
     # @end
 
@@ -149,12 +147,11 @@ def test_how_do_i_specify_the_context_used_when_a_template_is_rendered():
 
     # language=rst
     """
-    You can use the full power of `tri.declarative` to construct the context. This
+    You can also insert items in the context via the declaration. This
     not only makes the above shorter, but also makes it easy to write abstractions that
     can be extended later:
-
-
     """
+
     Page(
         parts__body=Template("""A django template was rendered on {{today}}."""),
         context__today=date.today(),
