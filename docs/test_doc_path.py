@@ -17,13 +17,9 @@ from iommi import (
 from iommi.path import (
     decode_path,
     decode_path_components,
-    Decoder,
-    register_advanced_path_decoding,
     register_path_decoding,
 )
-from tests.helpers import (
-    req,
-)
+from tests.helpers import req
 
 request = req('get')
 

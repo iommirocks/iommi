@@ -39,7 +39,6 @@ def test_how_do_i_customize_the_rendering_of_a_table():
     To customize the row, see `How do I customize the rendering of a row?`_
 
     To customize the cell, see `How do I customize the rendering of a cell?`_
-
     """
     
 
@@ -52,8 +51,8 @@ def test_how_do_you_turn_off_pagination():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Specify `page_size=None`:
-
     """
+
     Table(
         auto__model=Album,
         page_size=None,
@@ -132,11 +131,11 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
             app_label = 'docs_computed'
 
     foos = [Foo(value=8)]
+    # @end
 
     # language=rst
     """
     And we want a computed column `square` that is the square of the value, then we can do:
-
     """
 
     table = Table(
@@ -201,6 +200,7 @@ def test_how_do_i_reorder_columns():
     # @test
         class Meta:
             app_label = 'docs_reorder'
+    # @end
 
     # language=rst
     """
@@ -309,6 +309,7 @@ def test_how_do_i_make_a_freetext_search_field():
 def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specifications():
     # @test
     # TODO: the code in here is no longer tested!
+    # @end
 
     # language=rst
     """
@@ -518,6 +519,7 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     # @test
         class Meta:
             app_label = 'docs_fk'
+    # @end
 
     # language=rst
     """
@@ -750,6 +752,7 @@ def test_how_do_i_make_a_custom_bulk_action(album):
     t.bind(request=req('post', **{'-my_action': '', '_all_pks_': '1'})).render_to_response()
     album.refresh_from_db()
     assert album.name == 'Paranoid'
+    # @end
 
 
 def test_what_is_the_difference_between_attr_and__name():

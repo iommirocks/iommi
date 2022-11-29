@@ -34,9 +34,8 @@ def test_queries():
     .. image:: queries_example.png
 
     The code for the example above:
-
-
     """
+
     Table(
         auto__model=Album,
         page_size=10,
@@ -47,7 +46,6 @@ def test_queries():
     # language=rst
     """
     Read the full documentation and the :doc:`cookbook` for more.
-
     """
     
 
@@ -91,8 +89,6 @@ def test_query_language():
     something other special for just this view you can use the `search_fields`
     parameter to specify the fields to use. Note that you can use `pk` or
     other non-string columns as search fields if you want.
-
-
     """
     
 
@@ -104,9 +100,8 @@ def test_stand_alone_example():
 
     Simple view that allows the user to search for a car by choosing the make from a drop down, and search
     for specific model in the advanced mode:
-
-
     """
+
     class CarQuery(Query):
         make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])
         model = Filter.text()
@@ -149,7 +144,7 @@ def test_stand_alone_example():
     Car.objects.create(name='Tonys car', make='Toyota')
     Car.objects.create(name='Ozzys car', make='Toyota')
     # TODO: go through these examples, as they don't really work... and remove the images and do show_output instead
-    # show_output(cars(req('get')))
+    show_output(cars(req('get')))
     # @end
 
     # language=rst
@@ -162,9 +157,8 @@ def test_stand_alone_example():
     .. image:: advanced_gui.png
 
     Programmatically call the search API:
-
-
     """
+
     query = CarQuery().bind(request=request)
     cars_query_set = query.parse_query_string(
         'make=Toyota and (make=1991 or make=1992)'

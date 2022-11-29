@@ -1,6 +1,10 @@
 import os
 from os.path import join
 from pathlib import Path
+from textwrap import (
+    dedent,
+    indent,
+)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
 
@@ -10,6 +14,7 @@ django.setup()
 from tests.helpers import create_iframe
 
 from iommi.docs import generate_api_docs_tests
+from iommi.struct import Struct
 generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
 
 
@@ -29,66 +34,82 @@ def write_rst_from_pytest():
 
 
 def rst_from_pytest(source_f, target_f, target):
-    state = 'import'
-    prev_state = []
+    blocks = []
+    stack = []
+    state_ = None
+
+    def push(new_state, **kwargs):
+        nonlocal state_
+        nonlocal i
+        assert state_ != 'only test', ('exited @test without @end', source_f.name, i)
+        stack.append(new_state)
+        blocks.append(Struct(state=new_state, lines=[], metadata=kwargs))
+        state_ = new_state
+
+    def pop():
+        nonlocal state_
+        stack.pop()
+        state_ = stack[-1]
+        blocks.append(Struct(state=state_, lines=[], metadata={}))
+
+    def add_line(line):
+        blocks[-1].lines.append(line)
+
+    push('import')
+
     func_name = None
     func_count = 0
-    should_dedent = None
-    write_code_block = False
 
     for i, line in enumerate(source_f.readlines(), start=1):
-        print(source_f.name, i, func_name, state)
         stripped_line = line.strip()
-        if state == 'import' and line.startswith('def test_'):  # not stripped_line!
-            prev_state.append(state)
-            state = 'py'
+        if state_ in ('import', 'py') and line.startswith('def test_'):  # not stripped_line!
             func_name = line[len('def '):].partition('(')[0]
+            push('py', func_name=func_name, func_count=0)
             func_count = 0
         elif stripped_line.startswith("# language=rst"):
-            prev_state.append(state)
-            state = 'starting rst'
+            push('starting rst')
         elif stripped_line in ('"""', "'''"):
-            if state == 'starting rst':
-                target_f.write('\n')
-                prev_state.append(state)
-                state = 'rst'
-                should_dedent = line.startswith('    ')
-            elif state == 'rst':
-                state = prev_state.pop()
-                assert state == 'starting rst'
-                state = prev_state.pop() if prev_state else 'import'
-                write_code_block = True
+            if state_ == 'starting rst':
+                # add_line('')
+                pop()
+                push('rst')
+            elif state_ == 'rst':
+                pop()
         elif stripped_line.startswith('# @test'):
-            prev_state.append(state)
-            state = 'only test'
+            push('only test')
         elif stripped_line.startswith('# @end'):
-            state = prev_state.pop()
+            pop()
+        elif state_ == 'py' and line.startswith('#'):  # not stripped_line! skip comments on the global level between functions
+            continue
         else:
-            if state == 'rst':
-                if should_dedent and not line.startswith('    '):
-                    should_dedent = False
-                if should_dedent:
-                    target_f.write(line[4:])
-                else:
-                    target_f.write(line)
-            elif state == 'py':
-                if stripped_line:
-                    if write_code_block:
-                        target_f.write('.. code-block:: python\n\n')
-                        target_f.write('    ')  # guarantee empty code block
-                        write_code_block = False
-
-                if line.startswith('    ') or not stripped_line:
-                    target_f.write(line)
-            elif state == 'only test':
+            if state_ == 'only test':
                 if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
                     name = join(target.stem, func_name)
                     if func_count:
                         name += str(func_count)
                     func_count += 1
 
-                    target_f.write('.. raw:: html\n\n')
-                    target_f.write('    ' + create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed')))
+                    blocks.append(Struct(state='raw', lines=[create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed'))], metadata={}))
+            else:
+                add_line(line)
+
+    for b in blocks:
+        b.text = dedent(''.join(b.lines)).strip()
+        del b['lines']
+
+    blocks = [x for x in blocks if x.text]
+
+    for b in blocks:
+        if b.state == 'rst':
+            target_f.write(b.text)
+        elif b.state == 'py':
+            target_f.write('.. code-block:: python\n\n')
+            target_f.write(indent(b.text, '    '))
+        elif b.state == 'raw':
+            target_f.write('.. raw:: html\n\n')
+            target_f.write(indent(b.text, '    '))
+
+        target_f.write('\n\n')
 
 
 if __name__ == '__main__':

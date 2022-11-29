@@ -1,14 +1,14 @@
-from iommi import *
-from iommi.admin import Admin
 from django.urls import (
-    include,
     path,
 )
-from django.db import models
-from tests.helpers import req, user_req, staff_req
-from docs.models import *
-request = req('get')
 
+from docs.models import *
+from iommi import *
+from tests.helpers import req
+import pytest
+pytestmark = pytest.mark.django_db
+
+request = req('get')
 
 
 def test_iommi():
@@ -70,6 +70,10 @@ def test_iommi():
     urlpatterns = [
         path('', IndexPage().as_view()),
     ]
+
+    # @test
+    urlpatterns[0].callback(request=req('get'))
+    # @end
 
     # language=rst
     """

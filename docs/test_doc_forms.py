@@ -37,7 +37,7 @@ def test_forms():
     - AJAX-backed select widgets for your foreign key relationships.
     - Supports `__` syntax for going across table/object boundaries, similar to how Django does with QuerySets.
     - Send in a callable that is late evaluated to determine if a field should be displayed (`include`). This is very handy for showing a slightly different form to administrators for example.
-    - Eeasily add a CSS class or style to just the thing you need just now.
+    - Easily add a CSS class or style to just the thing you need just now.
     - Easy configuration without writing entire classes that are only used in one place anyway.
 
     Read the full documentation and the :doc:`cookbook` for more.
@@ -309,9 +309,7 @@ def test_post_handlers():
         actions__disable__post_handler=disable_action,
     )
 
-
     # @test
-
     request = req('post', username='foo', **{'-disable': True})
     form.bind(request=request).render_to_response()
     # @end

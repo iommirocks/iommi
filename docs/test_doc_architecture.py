@@ -148,10 +148,6 @@ def test_evaluate():
     Evaluate
     --------
 
-    .. comment
-
-        TODO: add this a table of contents somewhere
-
     To customize iommi you can pass functions/lambdas in many places. This makes it super easy and fast to customize things, but how does this all work? Let's start with a concrete example:
 
     """
@@ -182,17 +178,15 @@ def test_evaluate():
     """
     This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious question here is: what other keyword arguments besides `value` do I get? In this case you get:
 
-
     """
     # @test
-
     kwargs = {}
-
     t = Table(
         auto__model=Artist,
         columns__name__cell__format=lambda **format_kwargs: kwargs.update(format_kwargs),
     )
     str(t.bind(request=req('get')))  # trigger render
+    # @end
 
     # language=rst
     """
@@ -232,11 +226,9 @@ def test_evaluate():
     `traversable` is exactly the same object as `column`. It's the general name of the closest object (or the leaf) for that callback. You can think of it as similar to `self`. This is useful for creating functions that you can use for `Field`, `Column`, and `Filter`; as the keyword argument `traversable` is the same, but they will get `field`, `column`, and `filter` as the specific keyword arguments. Prefer the specific name if possible since it makes the code more readable.
 
 
-
     .. note::
 
         It is a good idea to always give your callbacks `**_` even if you match all keyword arguments. We don't consider adding keyword arguments a breaking change so additional keyword arguments can be added at any time.
-
 
     """
 

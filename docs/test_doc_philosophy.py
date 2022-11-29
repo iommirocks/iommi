@@ -9,12 +9,11 @@ class BogusClass:
     def __init__(self, **kwargs):
         pass
 
+
 Car = BogusClass
 InternalCombustionEngine = BogusClass
 ElectricEngine = BogusClass
 SequentialGearbox = BogusClass
-
-
 
 
 def test_philosophy():
@@ -96,8 +95,9 @@ def test_everything_has_a_name():
     This philosophy is what enables `Single point customization with no boilerplate`_ via :ref:`dispatching`.
 
     """
-    
 
+
+# noinspection PyUnusedLocal
 def test_traversing_a_namespace_is_done_with____when___cant_be_used_in_normal_python_syntax():
     # language=rst
     """
@@ -158,7 +158,7 @@ def test_traversing_a_namespace_is_done_with____when___cant_be_used_in_normal_py
 
     # language=rst
     """
-    this is an elegant solution to this problem, one we've stolen from Djangos ORM.
+    this is an elegant solution to this problem, one we've stolen from Django's ORM.
 
 
     """
@@ -181,6 +181,10 @@ def test_callables_for_advanced_usage__values_for_the_simple_cases():
         fields__instrument__initial='guitar',
     )
 
+    # @test
+    form.bind(request=req('get'))
+    # @end
+
     # language=rst
     """
     but for the more dynamic case we can write:
@@ -191,8 +195,12 @@ def test_callables_for_advanced_usage__values_for_the_simple_cases():
     form = Form(
         auto__model=Musician,
         fields__instrument__initial=
-            lambda request, **_: 'guitar' if request.is_staff else 'tambourine',
+            lambda request, **_: 'guitar' if request.user.is_staff else 'tambourine',
     )
+
+    # @test
+    form.bind(request=req('get'))
+    # @end
 
     # language=rst
     """
@@ -232,7 +240,7 @@ def test_declarative_programmatic_hybrid_api():
     -----------------------------------
 
     The ``@declarative`` and ``@with_meta``
-    decorators from tri.declarative enables us to very easily write an API
+    decorators enables us to very easily write an API
     that can look both like a normal simple python API:
 
 
@@ -243,6 +251,10 @@ def test_declarative_programmatic_hybrid_api():
             bar=Column(),
         ),
         sortable=False)
+
+    # @test
+    my_table.bind(request=req('get'))
+    # @end
 
     # language=rst
     """
@@ -260,6 +272,10 @@ def test_declarative_programmatic_hybrid_api():
 
     my_table = MyTable()
 
+    # @test
+    my_table.bind(request=req('get'))
+    # @end
+
     # language=rst
     """
     This style can be much more readable. There's a subtle different though
@@ -274,6 +290,10 @@ def test_declarative_programmatic_hybrid_api():
         columns__foo__include=False,  # <- hides the column foo
         sortable=True,                # <- turns on sorting again
     )
+
+    # @test
+    my_table.bind(request=req('get'))
+    # @end
 
     # language=rst
     """

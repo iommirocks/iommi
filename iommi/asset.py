@@ -11,7 +11,7 @@ class Asset(Fragment):
     Every :doc:`Part` can include the assets it needs. Similarly :doc:`Style` can include assets.
     When a part is rendered all assets are included in the head of the document.
 
-    Because assets have names (`Everything has a name`), assets with the same name will overwrite
+    Because assets have names (:doc:`Everything has a name <philosophy>`), assets with the same name will overwrite
     each other, resulting in only one asset with a given name being rendered.
     """
 

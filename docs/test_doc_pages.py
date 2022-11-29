@@ -2,7 +2,6 @@ from docs.models import *
 from iommi import *
 from tests.helpers import (
     req,
-    show_output,
     show_output_collapsed,
 )
 
@@ -32,8 +31,8 @@ def test_example():
     -------
 
     """
-    # @test
 
+    # @test
     from django.contrib.auth.models import User
     from iommi import (
         Page,
@@ -67,12 +66,11 @@ def test_page(small_discography):
     The `Page` class is used to compose pages. If you have installed the iommi
     middleware you can also return them directly from your views. They accept
     `str`, `Part` and Django `Template` types:
-
     """
+
     # @test
     class MyOtherPage(Page):
         pass
-
     # @end
 
     class MyPage(Page):
