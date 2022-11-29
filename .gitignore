@@ -173,9 +173,11 @@ tests/test_edit_views_temp.py
 docs/test_doc__api_*.py
 docs/custom/doc_includes/
 
+docs/cookbook_general.rst
 docs/cookbook_forms.rst
 docs/cookbook_parts_pages.rst
 docs/cookbook_tables.rst
+docs/cookbook_queries.rst
 docs/equivalency.rst
 docs/forms.rst
 docs/getting_started.rst
@@ -185,5 +187,13 @@ docs/tables.rst
 docs/architecture.rst
 docs/admin.rst
 docs/path.rst
+docs/dev_tools.rst
+docs/styles.rst
+docs/registrations.rst
+docs/production_use.rst
+
+docs/queries.rst
+docs/extra.rst
+docs/philosophy.rst
 
 .cache/pip
