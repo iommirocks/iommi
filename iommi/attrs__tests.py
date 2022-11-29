@@ -155,7 +155,7 @@ def test_evaluate_attrs():
             class__b=lambda foo, **_: True,
             style__a=3,
             style__b=lambda foo, **_: foo + 7,
-        )
+        ),
     ).bind()
 
     expected = {
@@ -316,6 +316,18 @@ def test_class_style_callable():
     }
 
     assert actual == expected
+
+
+def test_class_lambda():
+    assert (
+        render_attrs_test(
+            {
+                'class': lambda **_: {'foo': True},
+                'style': lambda **_: {'bar': 'baz'},
+            }
+        )
+        == ' class="foo" style="bar: baz"'
+    )
 
 
 def test_error_message_for_str_in_style():

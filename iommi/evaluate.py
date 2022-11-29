@@ -86,6 +86,11 @@ def get_signature(func):
     except AttributeError:
         pass
 
+    if isinstance(func, Namespace):
+        func = func.get('call_target')
+        if not func:
+            return None
+
     try:
         names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)
     except TypeError:

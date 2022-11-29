@@ -244,8 +244,11 @@ def test_fragment_repr():
     f = Fragment(tag='foo', attrs=Attrs(None, **{'foo-bar': 'baz'}))
 
     assert repr(f) == '<Fragment>'
-    assert repr(f.refine_done()) == "<Fragment tag:foo attrs_const:{'foo-bar': 'baz', 'style': {}, 'class': {}} attrs_dynamic:{'style': {}, 'class': {}}>"
-    assert repr(f.bind()) == "<Fragment tag:foo attrs:{'foo-bar': 'baz', 'style': Namespace(), 'class': Namespace()}>"
+    assert (
+        repr(f.refine_done())
+        == "<Fragment tag:foo attrs:{'class': Namespace(), 'style': Namespace(), 'foo-bar': 'baz'}>"
+    )
+    assert repr(f.bind()) == "<Fragment tag:foo attrs:{'class': {}, 'style': {}, 'foo-bar': 'baz'}>"
 
 
 def test_fragment_repr_not_done():

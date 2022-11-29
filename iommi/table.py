@@ -1068,11 +1068,6 @@ class ColumnHeader(object):
         self.number_of_columns_in_group = number_of_columns_in_group
         self.index_in_group = index_in_group
         self._name = 'header'
-        try:
-            self._attrs_const = header_config._attrs_const
-            self._attrs_dynamic = header_config._attrs_dynamic
-        except AttributeError:
-            pass
         self.attrs = header_config.attrs
         self.attrs = evaluate_attrs(self, table=table, column=column, header=self)
         if colspan:

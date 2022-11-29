@@ -41,22 +41,9 @@ class PathNotFoundException(Exception):
     pass
 
 
-def split_dynamic_const(d):
-    if d is None:
-        return {}, {}
-    dynamic = {}
-    const = {}
-    for k, v in items(d):
-        if callable(v):
-            dynamic[k] = v
-        else:
-            const[k] = v
-    return dynamic, const
-
-
-class YourAttrsAreInADifferentCastle:
-    def __repr__(self):
-        return '<<< attrs are split into ._attrs_const and ._attrs_dynamic >>>'
+def find_static_items(d):
+    if d and isinstance(d, Namespace):
+        object.__setattr__(d, '_static_items', {k for k, v in items(d) if not callable(v)})
 
 
 class Traversable(RefinableObject):
@@ -159,18 +146,11 @@ class Traversable(RefinableObject):
     def on_refine_done(self, parent=None):
         super(Traversable, self).on_refine_done()
 
-        if hasattr(self, 'attrs'):
-            attrs = self.attrs or {}
-
-            style_dynamic, style_const = split_dynamic_const(attrs.pop('style', {}))
-            class_dynamic, class_const = split_dynamic_const(attrs.pop('class', {}))
-
-            self._attrs_dynamic, self._attrs_const = split_dynamic_const(self.attrs)
-            self._attrs_dynamic['style'] = style_dynamic
-            self._attrs_const['style'] = style_const
-            self._attrs_dynamic['class'] = class_dynamic
-            self._attrs_const['class'] = class_const
-            self.attrs = YourAttrsAreInADifferentCastle()
+        attrs = getattr(self, 'attrs', None)
+        if attrs:
+            find_static_items(attrs)
+            find_static_items(attrs.get('style', None))
+            find_static_items(attrs.get('class', None))
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound

@@ -7,16 +7,10 @@ from iommi.evaluate import evaluate_strict
 
 def evaluate_attrs(obj, **kwargs):
     from iommi.debug import iommi_debug_on
-    try:
-        attrs = obj._attrs_dynamic
-        attrs_const = obj._attrs_const
-    except AttributeError:
-        attrs = obj.attrs
-        attrs_const = {}
 
-    attrs = attrs or {}
+    attrs = obj.attrs or {}
 
-    if not attrs and not attrs_const and not iommi_debug_on():  # pragma: no mutate
+    if not attrs and not iommi_debug_on():  # pragma: no mutate
         return ''
 
     classes = evaluate_strict(attrs.get('class', {}), **kwargs)
@@ -41,14 +35,19 @@ or
 
         field__style={'background-color': 'blue'}"""
 
+    def evaluate_as_needed(d, ignore=()):
+        static_items = getattr(d, '_static_items', [])
+        return {k: d[k] if k in static_items else evaluate_strict(v, **kwargs) for k, v in items(d) if k not in ignore}
+
     return Attrs(
         parent=obj,
-        **Namespace(
-            attrs_const,
-            {'class': {k: evaluate_strict(v, **kwargs) for k, v in items(classes)}},
-            dict(style={k: evaluate_strict(v, **kwargs) for k, v in items(styles)}),
-            {k: evaluate_strict(v, **kwargs) for k, v in items(attrs) if k not in ('class', 'style')},
-        ),
+        **{
+            **{
+                'class': evaluate_as_needed(classes),
+                'style': evaluate_as_needed(styles),
+            },
+            **evaluate_as_needed(attrs, ignore=('class', 'style')),
+        },
     )
 
 
