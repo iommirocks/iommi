@@ -1,6 +1,40 @@
 Changelog
 ---------
 
+5.5.0 (2022-11-30)
+~~~~~~~~~~~~~~~~~~
+
+* Support reverse foreign key relationships
+
+* Improved handling of unknown database field types: don't crash if they are not included anyway
+
+* API docs are much improved, and all docs have been improved with updated tooling to automatically catch future errors
+
+* Admin: copy to clipboard of conf. This  should make it even faster to customize your admin.
+
+* Profiling page: links to graph and snakeviz profiling views
+
+* Render "loaded templates" where templates are normally accepted
+
+* Fix missing crud form header when not using `auto__`
+
+* Add default message to delete form when there are no specified fields
+
+* Fix Column.from_model still require model parameter
+
+* Make `h_tag` respect `sort_after`
+
+* Admin: Fixed display of help text
+
+* Derive missing config when from_model only gets model_field parameter
+
+* Some optimizations when you can reuse an object from `on_refine_done`.
+
+* Minor bootstrap5 style fixes
+
+* Fix cache key snafu in parameter matching cache for evaluate
+
+
 5.4.0 (2022-10-26)
 ~~~~~~~~~~~~~~~~~~
 
