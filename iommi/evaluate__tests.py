@@ -104,6 +104,11 @@ def test_match_special_case():
     assert not matches("a,b,c", "||*")
 
 
+def test_match_cache_snafu():
+    assert matches("", "||*", __match_empty=True)
+    assert not matches("", "||*")
+
+
 def test_evaluate_extra_kwargs_with_defaults():
     # noinspection PyUnusedLocal
     def f(x, y=17):
