@@ -4,6 +4,7 @@ from iommi.struct import Struct
 from iommi.declarative.namespace import (
     EMPTY,
     flatten,
+    func_from_namespace,
     getattr_path,
     Namespace,
     setattr_path,
@@ -515,3 +516,32 @@ def test_none_semantics():
 
 def test_none_overwrite_semantics():
     assert Namespace(Namespace(foo__bar='baz'), foo=None) == Namespace(foo=None)
+
+
+def test_func_from_namespace():
+    def f():
+        return 'f'
+
+    n = Namespace(call_target=f)
+    assert n() == 'f'
+    assert func_from_namespace(n) is f
+
+    n = Namespace(call_target__call_target=f)
+    assert n() == 'f'
+    assert func_from_namespace(n) is f
+
+    class F:
+        @staticmethod
+        def g():
+            return 'g'
+
+    n = Namespace(call_target__cls=F)
+    assert isinstance(n(), F)
+    assert func_from_namespace(n) is F
+
+    n = Namespace(
+        call_target__cls=F,
+        call_target__attribute='g',
+    )
+    assert n() == 'g'
+    assert func_from_namespace(n) is F.g
