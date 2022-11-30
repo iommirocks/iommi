@@ -11,10 +11,9 @@ _matches_cache = {}
 
 
 def matches(caller_parameters, callee_parameters, __match_empty=False):
-    cache_key = ';'.join((caller_parameters, callee_parameters))  # pragma: no mutate
-    cached_value = _matches_cache.get(
-        cache_key, None
-    )  # pragma: no mutate (mutation changes this to cached_value = None, which just slows down the code)
+    cache_key = ';'.join((caller_parameters, callee_parameters, str(int(__match_empty))))  # pragma: no mutate
+    # (mutation changes this to cached_value = None, which just slows down the code)
+    cached_value = _matches_cache.get(cache_key, None)  # pragma: no mutate
     if cached_value is not None:
         return cached_value
 
@@ -26,12 +25,12 @@ def matches(caller_parameters, callee_parameters, __match_empty=False):
     wildcard = c == '*'
 
     if not __match_empty and not required and not optional and wildcard:
-        return False  # Special case to not match no-specification function "lambda **whatever: ..."
-
-    if wildcard:
-        result = caller >= required
+        result = False  # Special case to not match no-specification function "lambda **whatever: ..."
     else:
-        result = required <= caller <= required.union(optional)
+        if wildcard:
+            result = caller >= required
+        else:
+            result = required <= caller <= required.union(optional)
 
     _matches_cache[
         cache_key
