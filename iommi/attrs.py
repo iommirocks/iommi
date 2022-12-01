@@ -6,10 +6,9 @@ from iommi.evaluate import evaluate_strict
 
 
 def evaluate_attrs(obj, **kwargs):
-    attrs = obj.attrs or {}
-
-    # Micro optimization
     from iommi.debug import iommi_debug_on
+
+    attrs = obj.attrs or {}
 
     if not attrs and not iommi_debug_on():  # pragma: no mutate
         return ''
@@ -37,11 +36,25 @@ or
         field__style={'background-color': 'blue'}"""
 
     return Attrs(
-        obj,
-        **{'class': {k: evaluate_strict(v, **kwargs) for k, v in items(classes)}},
-        style={k: evaluate_strict(v, **kwargs) for k, v in items(styles)},
-        **{k: evaluate_strict(v, **kwargs) for k, v in items(attrs) if k not in ('class', 'style')},
+        _parent=obj,
+        **{
+            **{
+                'class': evaluate_as_needed(classes, kwargs),
+                'style': evaluate_as_needed(styles, kwargs),
+            },
+            **evaluate_as_needed(attrs, kwargs, ignore=('class', 'style')),
+        },
     )
+
+
+def find_static_items(d):
+    if d and isinstance(d, Namespace):
+        object.__setattr__(d, '_static_items', {k for k, v in items(d) if not callable(v)})
+
+
+def evaluate_as_needed(d, kwargs, ignore=()):
+    static_items = getattr(d, '_static_items', [])
+    return {k: d[k] if k in static_items else evaluate_strict(v, **kwargs) for k, v in items(d) if k not in ignore}
 
 
 def render_attrs(attrs):
@@ -89,6 +102,7 @@ def render_attrs(attrs):
 
 
 class Attrs(Namespace):
+    # language=rst
     """
     The `attrs` namespace on `Field`, `Form`, `Header`, `Cell` and more is used to customize HTML attributes.
 
@@ -135,12 +149,12 @@ class Attrs(Namespace):
         )
     """
 
-    def __init__(self, parent, **attrs):
+    def __init__(self, _parent, **attrs):
         from iommi.debug import iommi_debug_on
 
-        if iommi_debug_on() and getattr(parent, '_name', None) is not None:
-            attrs['data-iommi-path'] = parent.iommi_dunder_path
-            attrs['data-iommi-type'] = type(parent).__name__
+        if iommi_debug_on() and getattr(_parent, '_name', None) is not None:
+            attrs['data-iommi-path'] = _parent.iommi_dunder_path
+            attrs['data-iommi-type'] = type(_parent).__name__
 
         super(Attrs, self).__init__(attrs)
 

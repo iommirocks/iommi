@@ -118,6 +118,27 @@ class Namespace(Struct):
         return call_target(*args, **params)
 
 
+def func_from_namespace(namespace):
+    call_target = namespace.get('call_target')
+    func = None
+    if isinstance(call_target, Namespace):
+        if 'call_target' in call_target:
+            return func_from_namespace(call_target)
+        else:
+            # The default
+            attribute = call_target.get('attribute', None)
+            cls = call_target.get('cls', None)
+            if cls is not None:
+                if attribute is not None:
+                    func = getattr(call_target.cls, attribute)
+                else:
+                    func = call_target.cls
+    else:
+        func = call_target
+
+    return func
+
+
 class FrozenNamespace(Frozen, Namespace):
     pass
 

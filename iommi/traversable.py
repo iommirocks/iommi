@@ -5,7 +5,10 @@ from typing import (
     List,
 )
 
-from iommi.attrs import evaluate_attrs
+from iommi.attrs import (
+    evaluate_attrs,
+    find_static_items,
+)
 from iommi.base import (
     items,
     NOT_BOUND_MESSAGE,
@@ -23,7 +26,6 @@ from iommi.evaluate import (
 from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
-    get_evaluated_attributes,
     Prio,
     Refinable,
     RefinableMembers,
@@ -137,6 +139,15 @@ class Traversable(RefinableObject):
 
         result.iommi_style = iommi_style
         return result
+
+    def on_refine_done(self, parent=None):
+        super(Traversable, self).on_refine_done()
+
+        attrs = getattr(self, 'attrs', None)
+        if attrs:
+            find_static_items(attrs)
+            find_static_items(attrs.get('style', None))
+            find_static_items(attrs.get('class', None))
 
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound

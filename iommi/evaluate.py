@@ -1,6 +1,9 @@
 import inspect
 
-from iommi.declarative.namespace import Namespace
+from iommi.declarative.namespace import (
+    func_from_namespace,
+    Namespace,
+)
 
 from iommi.base import (
     items,
@@ -91,6 +94,9 @@ def get_signature(func):
         return object.__getattribute__(func, '__iommi_declarative_signature')
     except AttributeError:
         pass
+
+    if isinstance(func, Namespace):
+        func = func_from_namespace(func)
 
     try:
         names, _, varkw, defaults, _, _, _ = inspect.getfullargspec(func)

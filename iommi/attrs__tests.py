@@ -1,16 +1,17 @@
 import pytest
 from django.test import override_settings
-from iommi.declarative.namespace import Namespace
-from iommi.struct import Struct
 
+from iommi import Fragment
 from iommi.attrs import (
     evaluate_attrs,
     render_attrs,
 )
+from iommi.declarative.namespace import Namespace
+from iommi.struct import Struct
 
 
 def render_attrs_test(attrs, **kwargs):
-    return str(evaluate_attrs(Struct(attrs=attrs), **kwargs))
+    return str(evaluate_attrs(Fragment(attrs=attrs).bind(), **kwargs))
 
 
 def test_render_attrs():
@@ -45,6 +46,16 @@ def test_render_style():
         )
         == ' style="bar: 2; foo: 1"'
     )
+
+
+def test_render_style_fragment():
+    f = Fragment(
+        attrs__style=dict(
+            foo='1',
+            bar='2',
+        )
+    ).bind()
+    assert str(f.attrs) == ' style="bar: 2; foo: 1"'
 
 
 def test_render_with_empty():
@@ -294,6 +305,18 @@ def test_class_style_callable():
     }
 
     assert actual == expected
+
+
+def test_class_lambda():
+    assert (
+        render_attrs_test(
+            {
+                'class': lambda **_: {'foo': True},
+                'style': lambda **_: {'bar': 'baz'},
+            }
+        )
+        == ' class="foo" style="bar: baz"'
+    )
 
 
 def test_error_message_for_str_in_style():
