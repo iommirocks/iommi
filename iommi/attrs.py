@@ -36,7 +36,7 @@ or
         field__style={'background-color': 'blue'}"""
 
     return Attrs(
-        parent=obj,
+        _parent=obj,
         **{
             **{
                 'class': evaluate_as_needed(classes, kwargs),
@@ -149,12 +149,12 @@ class Attrs(Namespace):
         )
     """
 
-    def __init__(self, parent, **attrs):
+    def __init__(self, _parent, **attrs):
         from iommi.debug import iommi_debug_on
 
-        if iommi_debug_on() and getattr(parent, '_name', None) is not None:
-            attrs['data-iommi-path'] = parent.iommi_dunder_path
-            attrs['data-iommi-type'] = type(parent).__name__
+        if iommi_debug_on() and getattr(_parent, '_name', None) is not None:
+            attrs['data-iommi-path'] = _parent.iommi_dunder_path
+            attrs['data-iommi-type'] = type(_parent).__name__
 
         super(Attrs, self).__init__(attrs)
 
