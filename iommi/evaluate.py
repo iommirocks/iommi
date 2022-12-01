@@ -1,13 +1,12 @@
 import inspect
 
-from iommi.declarative.namespace import (
-    func_from_namespace,
-    Namespace,
-)
-
 from iommi.base import (
     items,
     keys,
+)
+from iommi.declarative.namespace import (
+    func_from_namespace,
+    Namespace,
 )
 
 _matches_cache = {}
@@ -141,5 +140,11 @@ def evaluate_member(obj, key, strict=True, **kwargs):
         setattr(obj, key, new_value)
 
 
-def evaluate_strict_container(c, **kwargs):
-    return Namespace({k: evaluate_strict(v, **kwargs) for k, v in items(c)})
+def find_static_items(d):
+    if d and isinstance(d, Namespace):
+        object.__setattr__(d, '_static_items', {k for k, v in items(d) if not callable(v)})
+
+
+def evaluate_as_needed(d, kwargs, ignore=()):
+    static_items = getattr(d, '_static_items', [])
+    return {k: d[k] if k in static_items else evaluate_strict(v, **kwargs) for k, v in items(d) if k not in ignore}

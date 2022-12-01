@@ -8,6 +8,10 @@ from iommi._web_compat import (
     format_html,
     template_types,
 )
+from iommi.evaluate import (
+    evaluate_as_needed,
+    find_static_items,
+)
 from iommi.base import (
     build_as_view_wrapper,
     items,
@@ -20,7 +24,6 @@ from iommi.declarative.namespace import (
     Namespace,
 )
 from iommi.declarative.with_meta import with_meta
-from iommi.evaluate import evaluate_strict_container
 from iommi.fragment import (
     build_and_bind_h_tag,
     Fragment,
@@ -98,7 +101,7 @@ class Page(Part):
             members_from_declared=_parts_dict,
             cls=self.get_meta().member_class,
         )
-
+        find_static_items(self.context)
         super(Page, self).on_refine_done()
 
     def on_bind(self) -> None:
@@ -113,7 +116,7 @@ class Page(Part):
 
     @dispatch(render=lambda rendered: format_html('{}' * len(rendered), *values(rendered)))
     def __html__(self, *, render=None):
-        self.context = evaluate_strict_container(self.context or {}, **self.iommi_evaluate_parameters())
+        self.context = evaluate_as_needed(self.context or {}, self.iommi_evaluate_parameters())
         request = self.get_request()
         context = {**self.get_context(), **self.iommi_evaluate_parameters()}
         parts = dict(h_tag=self.h_tag)

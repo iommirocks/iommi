@@ -1,4 +1,6 @@
+import itertools
 from platform import python_implementation
+from unittest import mock
 
 import pytest
 from django.template.loader import get_template
@@ -12,6 +14,7 @@ from iommi import (
 from iommi._web_compat import (
     Template,
 )
+from iommi.evaluate import evaluate_strict
 from iommi.member import _force_bind_all
 from iommi.part import (
     as_html,
@@ -201,3 +204,29 @@ def test_custom_h_tag():
             </html>
         ''',
     )
+
+
+@mock.patch('iommi.evaluate.evaluate_strict')
+def test_only_evaluate_callbacks(mock_evaluate_strict):
+    counter = itertools.count()
+
+    def side_effect(func_or_value, __signature=None, __match_empty=True, **kwargs):
+        assert callable(func_or_value)
+        next(counter)
+        return evaluate_strict(func_or_value, __signature, __match_empty, **kwargs)
+
+    mock_evaluate_strict.side_effect = side_effect
+    part = Page(
+        context=dict(
+            static_part='This is a static thing',
+            callback_part=lambda **_: 'This is a callback',
+        ),
+    ).bind()
+
+    part.__html__()
+
+    assert part.context == {
+        'callback_part': 'This is a callback',
+        'static_part': 'This is a static thing',
+    }
+    assert next(counter) == 1

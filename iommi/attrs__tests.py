@@ -1,3 +1,6 @@
+import itertools
+from unittest import mock
+
 import pytest
 from django.test import override_settings
 
@@ -7,11 +10,12 @@ from iommi.attrs import (
     render_attrs,
 )
 from iommi.declarative.namespace import Namespace
+from iommi.evaluate import evaluate_strict
 from iommi.struct import Struct
 
 
-def render_attrs_test(attrs, **kwargs):
-    return str(evaluate_attrs(Fragment(attrs=attrs).bind(), **kwargs))
+def render_attrs_test(attrs):
+    return str(Fragment(attrs=attrs).bind().attrs)
 
 
 def test_render_attrs():
@@ -331,3 +335,27 @@ def test_error_message_for_str_in_class():
         evaluate_attrs(Namespace(attrs__class='foo bar'))
 
     assert str(e.value).startswith('CSS classes')
+
+
+@mock.patch('iommi.evaluate.evaluate_strict')
+def test_only_evaluate_callbacks(mock_evaluate_strict):
+    counter = itertools.count()
+
+    def side_effect(func_or_value, __signature=None, __match_empty=True, **kwargs):
+        assert callable(func_or_value)
+        next(counter)
+        return evaluate_strict(func_or_value, __signature, __match_empty, **kwargs)
+
+    mock_evaluate_strict.side_effect = side_effect
+    assert (
+        render_attrs_test(
+            {
+                'apple': 'red',
+                'banana': lambda **_: 'orange',
+                'class': {'bar': lambda **_: True, 'foo': True},
+                'style': {'fie': lambda **_: 'foe', 'fum': 'bink'},
+            }
+        )
+        == ' apple="red" banana="orange" class="bar foo" style="fie: foe; fum: bink"'
+    )
+    assert next(counter) == 3

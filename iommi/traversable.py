@@ -7,7 +7,6 @@ from typing import (
 
 from iommi.attrs import (
     evaluate_attrs,
-    find_static_items,
 )
 from iommi.base import (
     items,
@@ -15,9 +14,10 @@ from iommi.base import (
 )
 from iommi.declarative.namespace import Namespace
 from iommi.evaluate import (
+    evaluate_as_needed,
     evaluate_members,
     evaluate_strict,
-    evaluate_strict_container,
+    find_static_items,
     get_callable_description,
     get_signature,
     matches,
@@ -149,6 +149,10 @@ class Traversable(RefinableObject):
             find_static_items(attrs.get('style', None))
             find_static_items(attrs.get('class', None))
 
+        extra_evaluated = getattr(self, 'extra_evaluated', None)
+        if extra_evaluated:
+            find_static_items(extra_evaluated)
+
     def bind(self, *, parent=None, request=None):
         assert parent is None or parent._is_bound
         assert not self._is_bound
@@ -204,7 +208,7 @@ class Traversable(RefinableObject):
             result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
 
         if hasattr(result, 'extra_evaluated'):
-            result.extra_evaluated = evaluate_strict_container(result.extra_evaluated or {}, **evaluate_parameters)
+            result.extra_evaluated = Struct(evaluate_as_needed(result.extra_evaluated or {}, evaluate_parameters))
 
         return result
 

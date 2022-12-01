@@ -1,3 +1,6 @@
+import itertools
+from unittest import mock
+
 import pytest
 from django.template import Template
 from django.utils.html import format_html
@@ -10,8 +13,12 @@ from iommi import (
     Page,
 )
 from iommi.attrs import Attrs
+from iommi.evaluate import evaluate_strict
 from iommi.fragment import fragment__render
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    verify_part_html,
+)
 
 
 def test_basic_render():
@@ -331,3 +338,23 @@ def test_build_and_bind_h_tag():
     assert form.h_tag._name == 'h_tag'
     assert form.h_tag.iommi_parent() is form
     assert form.h_tag.__html__() == '<div>hello</div>'
+
+
+@mock.patch('iommi.evaluate.evaluate_strict')
+def test_only_evaluate_callbacks(mock_evaluate_strict):
+    counter = itertools.count()
+
+    def side_effect(func_or_value, __signature=None, __match_empty=True, **kwargs):
+        assert callable(func_or_value)
+        next(counter)
+        return evaluate_strict(func_or_value, __signature, __match_empty, **kwargs)
+
+    mock_evaluate_strict.side_effect = side_effect
+    part = html.p(
+        children__static='This is static ',
+        children__dynamic=lambda **_: 'Not so static',
+    ).bind()
+
+    verify_part_html(part=part, expected_html='<p> This is static Not so static </p>')
+
+    assert next(counter) == 1

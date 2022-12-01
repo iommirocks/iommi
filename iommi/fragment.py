@@ -25,8 +25,9 @@ from iommi.declarative.namespace import (
 )
 from iommi.declarative.with_meta import with_meta
 from iommi.evaluate import (
+    evaluate_as_needed,
     evaluate_strict,
-    evaluate_strict_container,
+    find_static_items,
 )
 from iommi.member import (
     bind_members,
@@ -178,6 +179,9 @@ class Fragment(Part, Tag):
             cls=Fragment,
             unknown_types_fall_through=True,
         )
+        if self.children:
+            find_static_items(self.children)
+            self._children_static_items = self.children._static_items
 
     def render_text_or_children(self, context):
         request = self.get_request()
@@ -198,7 +202,12 @@ class Fragment(Part, Tag):
 
         # Fragment children are special and they can be raw str/int etc but
         # also callables. We need to evaluate them!
-        children = evaluate_strict_container(self.children, **self.iommi_evaluate_parameters())
+
+        _children_static_items = getattr(self, '_children_static_items', None)
+        if _children_static_items:
+            object.__setattr__(self.children, '_static_items', self._children_static_items)
+
+        children = evaluate_as_needed(self.children, self.iommi_evaluate_parameters())
         self.children.update(children)
         self._bound_members.children._bound_members.update(children)
 
