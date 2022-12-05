@@ -152,7 +152,7 @@ def refine_done_members(
         del member_by_name[k]
 
     for key, item in items(member_by_name):
-        if isinstance(item, Traversable):
+        if isinstance(item, Traversable) and not item.is_refine_done:
             member_by_name[key] = item.refine_done(parent=container)
 
     member_by_name = sort_after(member_by_name)
