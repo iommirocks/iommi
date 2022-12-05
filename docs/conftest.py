@@ -32,3 +32,13 @@ def small_discography(artist):
         Album.objects.create(name='Heaven & Hell', artist=artist, year=1980),
         Album.objects.create(name='Mob Rules', artist=artist, year=1981),
     ]
+
+
+@pytest.fixture
+def medium_discography(artist):
+    ozzy = Artist.objects.create(name='Ozzy Osbourne')
+    return [
+        Album.objects.create(name='Heaven & Hell', artist=artist, year=1980),
+        Album.objects.create(name='Blizzard of Ozz', artist=ozzy, year=1980),
+        Album.objects.create(name='Mob Rules', artist=artist, year=1981),
+    ]

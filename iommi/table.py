@@ -346,6 +346,7 @@ class Column(Part):
     sortable: bool = EvaluatedRefinable()
     group: Optional[str] = EvaluatedRefinable()
     auto_rowspan: bool = EvaluatedRefinable()
+    row_group: Namespace = EvaluatedRefinable()
     cell: Namespace = Refinable()
     model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
     model_field = Refinable()
@@ -384,6 +385,10 @@ class Column(Part):
         header__template='iommi/table/header.html',
         header__url=None,
         render_column=True,
+        row_group__include=False,
+        row_group__template='iommi/table/row_group.html',
+        row_group__tag='th',
+        row_group__attrs__colspan='99',
     )
     def __init__(self, **kwargs):
         """
@@ -906,6 +911,18 @@ class Cells(Traversable, Tag):
     def __getitem__(self, name):
         column = self.iommi_parent().columns[name]
         return self.cell_class(cells=self, column=column).refine_done(parent=self)
+
+
+class RowGroup(Fragment):
+    def __init__(self, *, value, **kwargs):
+        super(RowGroup, self).__init__(**kwargs)
+        self.value = value
+
+    def get_context(self):
+        return {**super(RowGroup, self).get_context(), 'value': self.value}
+
+    def own_evaluate_parameters(self):
+        return dict(row_group=self)
 
 
 class CellConfig(RefinableObject, Tag):
@@ -1479,6 +1496,7 @@ class Table(Part, Tag):
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()
     cells_class: Type[Cells] = Refinable()
+    row_group_class: Type[RowGroup] = Refinable()
 
     empty_message: str = Refinable()
     invalid_form_message: str = Refinable()
@@ -1496,6 +1514,7 @@ class Table(Part, Tag):
         action_class = Action
         page_class = Page
         cells_class = Cells
+        row_group_class = RowGroup
         endpoints__tbody__func = lambda table, **_: {
             'html': table.__html__(template='iommi/table/table_container.html')
         }
@@ -2099,9 +2118,30 @@ class Table(Part, Tag):
         else:
             rows = self.sorted_and_filtered_rows
         preprocessed_rows = self.invoke_callback(self.preprocess_rows, rows=rows)
+
+        row_groups = [
+            c
+            for c in values(self.columns)
+            if c.row_group.include
+        ]
+        row_group_values = {
+            c._name: None
+            for c in row_groups
+        }
+
         for i, row in enumerate(preprocessed_rows):
             row = self.invoke_callback(self.preprocess_row, row=row)
             assert row is not None, 'preprocess_row must return the row'
+
+            for column in row_groups:
+                v = getattr_path(row, column.attr)
+                old_value = row_group_values[column._name]
+                if old_value != v:
+                    # noinspection PyCallingNonCallable
+                    yield self.row_group_class(**column.row_group, value=v).bind(parent=self).__html__()
+                row_group_values[column._name] = v
+
+            # noinspection PyCallingNonCallable
             yield self.cells_class(row=row, row_index=i, **self.row.as_dict()).bind(parent=self)
 
     @classmethod
