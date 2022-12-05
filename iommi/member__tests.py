@@ -14,6 +14,7 @@ from iommi.shortcut import with_defaults
 from tests.helpers import (
     Basket,
     Fruit,
+    verify_part_html,
 )
 
 
@@ -383,3 +384,20 @@ def test_unknown_attribute():
     ):
         # noinspection PyStatementEffect
         my_basket.fruits.fruit_fly
+
+
+def test_partial_refine_done():
+    part = html.p('my part').refine_done()
+    verify_part_html(
+        part=html.div(
+            children__first_part=part,
+            children__another_part='another part',
+        ),
+        # language=HTML
+        expected_html='''
+            <div>
+                <p> my part </p>
+                another part
+            </div>
+        ''',
+    ),
