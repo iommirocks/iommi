@@ -1,5 +1,6 @@
 from docs.models import *
 from iommi import *
+from iommi._web_compat import Template
 from tests.helpers import (
     req,
     show_output,
@@ -638,7 +639,45 @@ def test_how_do_i_group_columns():
     # @test
     show_output(table)
     # @end
-    
+
+
+def test_how_do_i_group_rows(medium_discography):
+    # language=rst
+    """
+    .. _Column.row_group:
+
+    How do I group rows?
+    ~~~~~~~~~~~~~~~~~~~~
+
+    Use `row_group`. By default this will output a `<th>` tag. You can configure it like any other fragment if you want to change that to a `<td>`. Note that the order of the columns in the table is used for grouping. This is why in the example below the `year` column is moved to index zero: we want to group on year first.
+    """
+
+    table = Table(
+        auto__rows=Album.objects.order_by('year', 'artist', 'name'),
+        columns__artist=dict(
+            row_group__include=True,
+            render_column=False,
+        ),
+        columns__year=dict(
+            after=0,
+            render_column=False,
+            row_group=dict(
+                include=True,
+                template=Template('''
+                <tr>
+                    {{ row_group.iommi_open_tag }}
+                        {{ value }} in our hearts
+                    {{ row_group.iommi_close_tag }}
+                </tr>
+                '''),
+            ),
+        ),
+    )
+
+    # @test
+    show_output(table)
+    # @end
+
 
 def test_how_do_i_get_rowspan_on_a_table(small_discography, artist):
     # language=rst
