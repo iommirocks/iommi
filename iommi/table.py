@@ -1444,19 +1444,26 @@ class _Lazy_tbody:
 @declarative(Column, '_columns_dict', add_init_kwargs=False)
 @with_meta
 class Table(Part, Tag):
+    # language=rst
     """
     Describe a table. Example:
 
     .. code-block:: python
 
-        class FooTable(Table):
-            a = Column()
-            b = Column()
+        class AlbumTable(Table):
+            name = Column()
+            artist = Column()
 
             class Meta:
                 sortable = False
-                attrs__style = 'background: green'
 
+        # @test
+        artist = Artist.objects.create(name='Black Sabbath')
+        Album.objects.create(name='Heaven & Hell', artist=artist, year=1980),
+        Album.objects.create(name='Mob Rules', artist=artist, year=1981),
+
+        show_output(AlbumTable(rows=Album.objects.all()))
+        # @end
     """
 
     query = Refinable()

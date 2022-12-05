@@ -212,9 +212,13 @@ from django.urls import (
     include,
     path,
 )
+import pytest
 from django.db import models
 from tests.helpers import req, user_req, staff_req, show_output
 from docs.models import *
+
+pytestmark = pytest.mark.django_db
+
 request = req('get')
 
 
