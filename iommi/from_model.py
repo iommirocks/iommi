@@ -118,6 +118,7 @@ def member_from_model(
                 break  # pragma: no mutate optimization
 
     if factory is MISSING:
+
         def no_factory_defined(**_):
             message = f'No factory for {model.__name__}.{model_field_name} of type {type(model_field).__name__}.'
             if factory_lookup_register_function is not None:

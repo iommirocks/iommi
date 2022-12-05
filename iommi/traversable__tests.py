@@ -1,4 +1,6 @@
+import itertools
 from typing import Dict
+from unittest import mock
 
 import pytest
 
@@ -24,6 +26,7 @@ from iommi.declarative.namespace import (
     Namespace,
 )
 from iommi.declarative.with_meta import with_meta
+from iommi.evaluate import evaluate_strict
 from iommi.member import (
     bind_members,
     refine_done_members,
@@ -490,3 +493,27 @@ def test_invoke_callback_transparent_type_error():
         t.invoke_callback(broken_callback)
 
     assert str(e.value) == 'not modified'
+
+
+@mock.patch('iommi.evaluate.evaluate_strict')
+def test_only_evaluate_callbacks(mock_evaluate_strict):
+    counter = itertools.count()
+
+    def side_effect(func_or_value, __signature=None, __match_empty=True, **kwargs):
+        assert callable(func_or_value)
+        next(counter)
+        return evaluate_strict(func_or_value, __signature, __match_empty, **kwargs)
+
+    mock_evaluate_strict.side_effect = side_effect
+
+    class Foo(Traversable):
+        extra_evaluated = Refinable()
+
+    f = Foo(
+        extra_evaluated__foo=lambda **_: 'banana',
+        extra_evaluated__bar='apple',
+    ).bind()
+
+    assert f.extra_evaluated == dict(bar='apple', foo='banana')
+
+    assert next(counter) == 1

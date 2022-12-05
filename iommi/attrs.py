@@ -2,7 +2,10 @@ from iommi.declarative.namespace import Namespace
 
 from iommi._web_compat import mark_safe
 from iommi.base import items
-from iommi.evaluate import evaluate_strict
+from iommi.evaluate import (
+    evaluate_as_needed,
+    evaluate_strict,
+)
 
 
 def evaluate_attrs(obj, **kwargs):
@@ -45,16 +48,6 @@ or
             **evaluate_as_needed(attrs, kwargs, ignore=('class', 'style')),
         },
     )
-
-
-def find_static_items(d):
-    if d and isinstance(d, Namespace):
-        object.__setattr__(d, '_static_items', {k for k, v in items(d) if not callable(v)})
-
-
-def evaluate_as_needed(d, kwargs, ignore=()):
-    static_items = getattr(d, '_static_items', [])
-    return {k: d[k] if k in static_items else evaluate_strict(v, **kwargs) for k, v in items(d) if k not in ignore}
 
 
 def render_attrs(attrs):

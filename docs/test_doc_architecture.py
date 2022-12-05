@@ -94,7 +94,7 @@ def test_namespace_dispatching():
 
     @dispatch(
         b__x=1,  # these are default values. "b" here is implicitly
-                 # defining a namespace with a member "x" set to 1
+        # defining a namespace with a member "x" set to 1
         c__y=2,
     )
     def a(foo, b, c):
@@ -156,21 +156,15 @@ def test_evaluate():
 
     t = (
         # @end
-
         Table(
             auto__model=Artist,
             columns__name__cell__format=lambda value, **_: f'{value} !!!',
         )
-
         # @test
-
     )
 
     t = t.bind(request=req('get'))
-    data = [
-        [cell.render_cell_contents() for cell in cells]
-        for cells in t.cells_for_rows()
-    ]
+    data = [[cell.render_cell_contents() for cell in cells] for cells in t.cells_for_rows()]
     assert data == [['Dio !!!']]
     # @end
 
@@ -196,11 +190,11 @@ def test_evaluate():
     # @test
 
     expected = (
+        (
+            # @end
+            # language=rst
+            """
 
-        # @end
-        # language=rst
-        """
-    
         request        WSGIRequest
         table          Table
         column         Column
@@ -209,8 +203,11 @@ def test_evaluate():
         row            Artist
 
         """
-        # @test
-    ).strip().split('\n')
+            # @test
+        )
+        .strip()
+        .split('\n')
+    )
     expected = dict(
         x.strip().replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').replace('  ', ' ').split(' ')
         for x in expected
@@ -243,7 +240,6 @@ def test_evaluate___under_the_hood():
 
     - `evaluate`: evaluates non-strict, which means it will allow functions that don't match the given signature to pass through
     - `evaluate_strict`: evaluates strictly, which means functions that don't match the given signature will be an error
-    - `evaluate_strict_container`: used for evaluating all the values of a dict
 
     Each object in the tree declares what it adds to the evaluate parameters with a method `own_evaluate_parameters`. For example `Table` adds just one argument `table` which is itself. The method `iommi_evaluate_parameters` gives you all the evaluate parameters up the tree from where you are.
 
