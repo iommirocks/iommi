@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+5.6.0 (5055-12-06)
+~~~~~~~~~~~~~~~~~~
+
+* Added row grouping feature on Table
+
+* Allow pre-invoking `.refine_done()` on parts of pages for optimization.
+
+* Optimization of excessive attempts to invoke callbacks
+
+
 5.5.0 (2022-11-30)
 ~~~~~~~~~~~~~~~~~~
 
