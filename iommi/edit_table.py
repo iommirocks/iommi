@@ -181,6 +181,8 @@ def edit_table__post_handler(table, request, **_):
 
     def validate(cells_iterator, form, errors):
         for cells in cells_iterator:
+            if not isinstance(cells, EditCells):
+                continue
             instance = cells.row
             form.instance = instance
             for cell in cells.iter_editable_cells():
@@ -207,6 +209,8 @@ def edit_table__post_handler(table, request, **_):
 
     def save(cells_iterator, form):
         for cells in cells_iterator:
+            if not isinstance(cells, EditCells):
+                continue
             instance = cells.row
             form.instance = instance
             attrs_to_save = []

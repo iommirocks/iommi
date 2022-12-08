@@ -1,10 +1,17 @@
 Changelog
 ---------
 
-5.6.0 (5055-12-06)
+
+5.6.1 (2022-12-08)
 ~~~~~~~~~~~~~~~~~~
 
-* Added row grouping feature on Table
+* Row grouping on `EditTable` now works.
+
+
+5.6.0 (2022-12-06)
+~~~~~~~~~~~~~~~~~~
+
+* Added row grouping feature on `Table`
 
 * Allow pre-invoking `.refine_done()` on parts of pages for optimization.
 

@@ -1,4 +1,6 @@
 import pytest
+
+from docs.models import Album
 from iommi.struct import Struct
 
 from iommi.declarative.namespace import Namespace
@@ -342,5 +344,30 @@ def test_edit_table_post_delete():
 
     assert TFoo.objects.all().count() == 0
 
+
+@pytest.mark.django_db
+def test_edit_table_post_row_group(small_discography):
+    edit_table = EditTable(
+        auto__model=Album,
+        columns__artist=dict(
+            row_group__include=True,
+            render_column=False,
+        ),
+        columns__year__edit__include=True,
+    )
+
+    bound = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                'columns/year/1': '1980',
+                'columns/year/2': '1979',
+                '-actions/submit': '',
+            },
+        )
+    )
+    assert not edit_table.get_errors()
+    response = bound.render_to_response()
+    assert response.status_code == 302
 
 # TODO: attr=None on a column crashes
