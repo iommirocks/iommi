@@ -40,7 +40,10 @@ class PathDecoder:
         self.name = name
 
 
-_path_component_to_decode_data: typing.Dict[str, typing.Tuple[typing.Optional[typing.Type[Model]], str, typing.Optional[str], typing.Union[Decoder, PathDecoder]]] = {}
+_path_component_to_decode_data: typing.Dict[
+    str,
+    typing.Tuple[typing.Optional[typing.Type[Model]], str, typing.Optional[str], typing.Union[Decoder, PathDecoder]],
+] = {}
 
 
 _default_decoder = Decoder('pk', 'name')
@@ -52,22 +55,25 @@ def camel_to_snake(s):
 
 def register_advanced_path_decoding(conf, *, warn=True):
     if warn:
-        warnings.warn('''Path decoder syntax has been changed. Please use the new syntax. The old:
-        
+        warnings.warn(
+            '''Path decoder syntax has been changed. Please use the new syntax. The old:
+
         register_advanced_path_decoder({
             User: Decoder('pk', 'username', 'email'),
             Track: Decoder('foo', decode=lambda string, model, **_: model.objects.get(name__iexact=string.strip())),
         })
-         
+
         is equivalent to:
-        
+
         register_path_decoder(
             user_pk=User,
             user_username=User.username,
             user_email=User.email,
             track_foo=lambda string, **_: Track.objects.get(name__iexact=string.strip()),
         )
-        ''', category=DeprecationWarning)
+        ''',
+            category=DeprecationWarning,
+        )
 
     registered_keys = []
     for model, decoder in items(conf):
@@ -130,11 +136,16 @@ def register_explicit_path_decoding(**kwargs):
 
 
 def register_path_decoding(*models, **kwargs):
-    assert not (models and kwargs), 'Mixing of new and deprecated syntax in the same call to register_path_decoding is not supported.'
+    assert not (
+        models and kwargs
+    ), 'Mixing of new and deprecated syntax in the same call to register_path_decoding is not supported.'
     if kwargs:
         return register_explicit_path_decoding(**kwargs)
 
-    warnings.warn('Path decoder syntax has been changed. Please use the new syntax. The old `register_path_decoder(Foo)` is equivalent to `register_path_decoder(foo_pk=Foo, foo_name=Foo.name)`', category=DeprecationWarning)
+    warnings.warn(
+        'Path decoder syntax has been changed. Please use the new syntax. The old `register_path_decoder(Foo)` is equivalent to `register_path_decoder(foo_pk=Foo, foo_name=Foo.name)`',
+        category=DeprecationWarning,
+    )
     return register_advanced_path_decoding({model: _default_decoder for model in models}, warn=False)
 
 

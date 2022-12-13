@@ -11,7 +11,6 @@ from iommi._web_compat import (
     get_template_from_string,
     HttpResponse,
     HttpResponseBase,
-    mark_safe,
     render_template,
     Template,
 )
