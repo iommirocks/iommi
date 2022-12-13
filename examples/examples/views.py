@@ -178,6 +178,7 @@ def all_field_sorts(request):
                         # These only work if we have an instance
                         'foreign_key',
                         'many_to_many',
+                        'foreign_key_reverse',
                     ]
                 },
                 fields__radio__choices=some_choices,

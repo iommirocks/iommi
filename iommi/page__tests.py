@@ -167,7 +167,8 @@ def test_sort_after_h_tag():
             ).bind()
         ),
         # language=HTML
-        expected_html='''\
+        expected_html='''
+            <!DOCTYPE html>
             <html>
                 <head>
                     <title> My title </title>
@@ -192,7 +193,8 @@ def test_custom_h_tag():
             ).bind()
         ),
         # language=HTML
-        expected_html='''\
+        expected_html='''
+            <!DOCTYPE html>
             <html>
                 <head>
                     <title> </title>

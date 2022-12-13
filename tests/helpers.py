@@ -85,20 +85,21 @@ def verify_html(*, actual_html: str, find=None, expected_html: str = None):
     expected_soup = BeautifulSoup(expected_html, 'html.parser')
     actual_soup = BeautifulSoup(actual_html, 'html.parser')
 
-    if find is None:
-        find = dict()
-    hit = actual_soup.find(**find)
-    if not hit:  # pragma: no cover
-        prettied_actual = reindent(actual_soup.prettify()).strip()
-        print(prettied_actual)
-        assert False, f"Couldn't find selector {find} in actual output"
+    if find is not None:
+        actual_soup = actual_soup.find(**find)
+        if not actual_soup:  # pragma: no cover
+            prettied_actual = reindent(actual_soup.prettify()).strip()
+            print(prettied_actual)
+            assert False, f"Couldn't find selector {find} in actual output"
 
-    prettified_hit = reindent(hit.prettify()).strip()
-    prettified_expected = reindent(expected_soup.find(**find).prettify()).strip()
-    if prettified_hit != prettified_expected:  # pragma: no cover
-        print(prettified_hit)
+        expected_soup = expected_soup.find(**find)
 
-    assert prettified_hit == prettified_expected
+    prettified_actual = reindent(actual_soup.prettify()).strip()
+    prettified_expected = reindent(expected_soup.prettify()).strip()
+    if prettified_actual != prettified_expected:  # pragma: no cover
+        print(prettified_actual)
+
+    assert prettified_actual == prettified_expected
 
 
 def request_with_middleware(response, request):
@@ -206,7 +207,8 @@ _show_output_used = set()
 def show_output(part, path='/'):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
-        Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''), frame.f_code.co_name
+        Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
+        frame.f_code.co_name,
     )
     name = base_name
     counter = 0

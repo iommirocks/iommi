@@ -38,6 +38,8 @@ from iommi.traversable import (
 from tests.helpers import (
     prettify,
     req,
+    verify_html,
+    verify_part_html,
 )
 from tests.models import TBar
 
@@ -146,9 +148,16 @@ def test_style_menu():
     class MyMenu(Menu):
         item = MenuItem()
 
-    assert (
-        MyMenu().bind(request=req('get')).__html__()
-        == '<nav><ul><li><a class="link" href="/item/">Item</a></li></ul></nav>'
+    verify_part_html(
+        part=MyMenu(),
+        # language=HTML
+        expected_html='''
+            <nav>
+                <ul>
+                    <li> <a class="link" href="/item/"> Item </a> </li>
+                </ul>
+            </nav>
+        ''',
     )
 
 
@@ -156,9 +165,16 @@ def test_style_menu_active():
     class MyMenu(Menu):
         item = MenuItem(url='/')
 
-    assert (
-        MyMenu().bind(request=req('get')).__html__()
-        == '<nav><ul><li><a class="active link" href="/">Item</a></li></ul></nav>'
+    verify_part_html(
+        part=MyMenu(),
+        # language=HTML
+        expected_html='''
+            <nav>
+                <ul>
+                    <li> <a class="active link" href="/"> Item</a> </li>
+                </ul>
+            </nav>
+        ''',
     )
 
 
@@ -348,21 +364,25 @@ def test_assets_render_from_style():
             root__assets__an_asset=Asset.css(attrs__href='http://foo.bar/baz'),
         ),
     ):
-
-        expected = prettify(
-            '''
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <title/>
-                    <link href='http://foo.bar/baz' rel="stylesheet"/>
-                </head>
-                <body/>
-            </html>
-        '''
+        verify_html(
+            actual_html=Page(
+                iommi_style='my_style',
+            )
+            .bind(request=req('get'))
+            .render_to_response()
+            .content,
+            # language=HTML
+            expected_html='''
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <title/>
+                        <link href='http://foo.bar/baz' rel="stylesheet"/>
+                    </head>
+                    <body/>
+                </html>
+            ''',
         )
-        actual = prettify(Page(iommi_style='my_style').bind(request=req('get')).render_to_response().content)
-        assert actual == expected
 
 
 def test_assets_render_any_fragment_from_style():
@@ -378,20 +398,20 @@ def test_assets_render_any_fragment_from_style():
             class Meta:
                 iommi_style = 'my_style'
 
-        expected = prettify(
-            '''
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <title/>
-                    This is a fragment!
-                </head>
-                <body/>
-            </html>
-        '''
+        verify_html(
+            actual_html=prettify(MyPage().bind(request=req('get')).render_to_response().content),
+            # language=HTML
+            expected_html='''
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <title/>
+                        This is a fragment!
+                    </head>
+                    <body/>
+                </html>
+            ''',
         )
-        actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
-        assert actual == expected
 
 
 def test_assets_render_from_bulma_style():
@@ -400,15 +420,19 @@ def test_assets_render_from_bulma_style():
             iommi_style = 'bulma'
             assets__axios = None
 
-    expected = prettify(
-        '''\
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <title></title>
-                <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js"></script>
-                <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" rel="stylesheet">
-                <script>
+    verify_html(
+        actual_html=MyPage().bind(request=req('get')).render_to_response().content,
+        # language=HTML
+        expected_html='''
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title> </title>
+                    <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js">
+                    </script>
+                    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" rel="stylesheet">
+                    <script>
+
     $(document).ready(function() {
           // Check for click events on the navbar burger icon
           $(".navbar-burger").click(function() {
@@ -419,17 +443,15 @@ def test_assets_render_from_bulma_style():
 
           });
     });
-</script>
-                <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-            </head>
-            <body >
-                <div class="container main" />
-            </body>
-        </html>
-    '''
+                    </script>
+                    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+                </head>
+                <body >
+                    <div class="container main" />
+                </body>
+            </html>
+        ''',
     )
-    actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
-    assert actual == expected
 
 
 def test_style_inheritance():
@@ -447,7 +469,6 @@ def test_style_inheritance():
 
         form = page1.bind().parts.form
         assert form.iommi_style is custom_style
-
         assert form.template == 'custom_style_form.html'
 
         page2 = Page(
@@ -461,7 +482,6 @@ def test_style_inheritance():
 
         form = page.parts.form
         assert form.iommi_style is custom_style
-
         assert form.template == 'custom_style_form.html'
 
 
@@ -489,7 +509,6 @@ def test_style_inheritance_tricky():
 
         form = page.parts.form
         assert form.iommi_style.name == 'custom_sub_style'
-
         assert form.template == 'sub.html'
 
 
@@ -555,7 +574,7 @@ def test_filter_assets_for_foreign_key():
         filters__foo__assets__select2_js=Asset.js(
             attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js',
         ),
-    ).bind(request=req('get'))
+    ).bind()
     assert 'select2_js' in q.iommi_collected_assets().keys()
 
 
@@ -573,9 +592,10 @@ def test_assets_from_different_sources():
                 iommi_style = 'my_style'
                 assets__another_asset = html.script('This is another asset')
 
-        # language=html
-        expected = prettify(
-            '''
+        verify_html(
+            actual_html=MyPage().bind(request=req('get')).render_to_response().content,
+            # language=HTML
+            expected_html='''
                 <!DOCTYPE html>
                 <html>
                     <head>
@@ -585,13 +605,8 @@ def test_assets_from_different_sources():
                     </head>
                     <body/>
                 </html>
-            '''
+            ''',
         )
-        actual = prettify(MyPage().bind(request=req('get')).render_to_response().content)
-        print(expected)
-        print(actual)
-
-        assert actual == expected
 
 
 @pytest.mark.django_db
@@ -616,10 +631,6 @@ def test_bootstrap_template_snafu():
 
 @pytest.mark.django_db
 def test_filter_assets_for_foreign_key3():
-    # form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
-    # assert form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
-    # assert 'data-choices-endpoint' in form.fields.foo.__html__()
-
     q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='horizontal').bind(request=req('get'))
     assert q.form.fields.foo.iommi_style.name == 'horizontal'
     assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
