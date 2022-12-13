@@ -370,4 +370,5 @@ def test_edit_table_post_row_group(small_discography):
     response = bound.render_to_response()
     assert response.status_code == 302
 
+
 # TODO: attr=None on a column crashes

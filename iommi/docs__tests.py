@@ -272,7 +272,7 @@ request = req('get')
 
 # language=rst
 """
-
+    
 Foo
 ===
 
