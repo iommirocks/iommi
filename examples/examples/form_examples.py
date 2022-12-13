@@ -249,7 +249,6 @@ def form_example_children_that_are_not_fields(request):
             ),
             children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
             children__f3=Field.integer(attrs__class_column=True),
-            iommi_style="horizontal",
             attrs__class={'box': True, 'columns': True, 'is-vcentered': True},
         ),
         post_validation=post_validation,
@@ -280,7 +279,6 @@ def form_example_children_that_are_not_fields_declarative(request):
             ),
             children__equals=html.span("=", attrs__class={'column': True, 'is-narrow': True}),
             children__f3=Field.integer(attrs__class_column=True),
-            iommi_style="horizontal",
             attrs__class={'box': True, 'columns': True, 'is-vcentered': True},
         )
 

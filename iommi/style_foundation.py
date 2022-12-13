@@ -1,28 +1,15 @@
 from iommi.asset import Asset
-from iommi.style import (
-    Style,
-)
+from iommi.style import Style
 from iommi.style_base import (
     base,
     select2_enhanced_forms,
 )
 from iommi.style_font_awesome_4 import font_awesome_4
 
-foundation_base = Style(
+foundation = Style(
     base,
-    sub_styles__horizontal=dict(
-        Form__attrs__class={},
-        Field=dict(
-            shortcuts=dict(
-                boolean__attrs__class={'medium-2': True, 'medium-4': False},
-                boolean_tristate__attrs__class={'medium-2': True, 'medium-4': False},
-            ),
-            attrs__class={
-                'medium-4': True,
-                'cell': True,
-            },
-        ),
-    ),
+    font_awesome_4,
+    select2_enhanced_forms,
     root__assets=dict(
         css=Asset.css(
             attrs=dict(
@@ -67,7 +54,7 @@ foundation_base = Style(
         ),
     ),
     Query=dict(
-        form__iommi_style='horizontal',
+        form__iommi_style='foundation_horizontal',
         form_container=dict(
             tag='span',
             attrs__class={
@@ -87,8 +74,17 @@ foundation_base = Style(
 )
 
 
-foundation = Style(
-    foundation_base,
-    font_awesome_4,
-    select2_enhanced_forms,
+foundation_horizontal = Style(
+    foundation,
+    Form__attrs__class={},
+    Field=dict(
+        shortcuts=dict(
+            boolean__attrs__class={'medium-2': True, 'medium-4': False},
+            boolean_tristate__attrs__class={'medium-2': True, 'medium-4': False},
+        ),
+        attrs__class={
+            'medium-4': True,
+            'cell': True,
+        },
+    ),
 )

@@ -12,9 +12,6 @@ django_admin = Style(
     base,
     font_awesome_4,
     select2_enhanced_forms,
-    sub_styles__horizontal=dict(
-        Field__attrs__class={'compact-form-row': True},
-    ),
     root__assets=dict(
         css_base=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/base.css")),
         css_login=html.link(attrs=dict(rel="stylesheet", type="text/css", href="/static/admin/css/login.css")),
@@ -46,7 +43,7 @@ django_admin = Style(
         },
     ),
     Table__attrs__id='changelist',
-    Query__form__iommi_style='horizontal',
+    Query__form__iommi_style='django_admin_horizontal',
     Field__attrs__class={'form-row': True},
     Form__attrs__class=dict(
         aligned=True,
@@ -58,4 +55,9 @@ django_admin = Style(
     Table__bulk__attrs__id=None,
     # Admin__parts__menu__attrs__id='header',
     Menu__tag='nav',
+)
+
+django_admin_horizontal = Style(
+    django_admin,
+    Field__attrs__class={'compact-form-row': True},
 )

@@ -8,25 +8,10 @@ from iommi.style_base import (
 )
 from iommi.style_bootstrap_icons import bootstrap_icons
 
-bootstrap5_base = Style(
+bootstrap5 = Style(
     base,
-    sub_styles__horizontal=dict(
-        Field=dict(
-            shortcuts=dict(
-                boolean__label__attrs__class={
-                    'col-form-label': True,
-                },
-            ),
-            attrs__class={
-                'mb-3': False,
-                'col-sm-3': True,
-                'my-1': True,
-            },
-        ),
-        Form__attrs__class={
-            'align-items-center': True,
-        },
-    ),
+    bootstrap_icons,
+    select2_enhanced_forms,
     root__assets=dict(
         css=Asset.css(
             attrs=dict(
@@ -136,7 +121,7 @@ bootstrap5_base = Style(
         ),
     ),
     Query=dict(
-        form__iommi_style='horizontal',
+        form__iommi_style='bootstrap5_horizontal',
         form_container=dict(
             tag='span',
             attrs__class={
@@ -193,8 +178,22 @@ bootstrap5_base = Style(
     ),
     Errors__attrs__class={'with-errors': True},
 )
-bootstrap5 = Style(
-    bootstrap5_base,
-    bootstrap_icons,
-    select2_enhanced_forms,
+
+bootstrap5_horizontal = Style(
+    bootstrap5,
+    Field=dict(
+        shortcuts=dict(
+            boolean__label__attrs__class={
+                'col-form-label': True,
+            },
+        ),
+        attrs__class={
+            'mb-3': False,
+            'col-sm-3': True,
+            'my-1': True,
+        },
+    ),
+    Form__attrs__class={
+        'align-items-center': True,
+    },
 )

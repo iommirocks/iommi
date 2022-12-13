@@ -29,12 +29,16 @@ def test_style():
         # language=rst
         '''
         - bootstrap
+        - bootstrap_horizontal
         - bootstrap5
+        - bootstrap5_horizontal
         - bulma
         - foundation
+        - foundation_horizontal
         - semantic_ui
         - water
         - django_admin
+        - django_admin_horizontal
         '''
         # @test
     ).replace('- ', '').strip().split('\n')

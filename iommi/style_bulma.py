@@ -13,41 +13,33 @@ from iommi.style_font_awesome_4 import font_awesome_4
 
 navbar_burger_click_js = Fragment(
     mark_safe(
-        """\
-<script>
-    $(document).ready(function() {
-          // Check for click events on the navbar burger icon
-          $(".navbar-burger").click(function() {
+        # language=HTML
+        '''
+            <script>
+                $(document).ready(function() {
+                      // Check for click events on the navbar burger icon
+                      $(".navbar-burger").click(function() {
 
-              // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
-              $(".navbar-burger").toggleClass("is-active");
-              $(".navbar-menu").toggleClass("is-active");
+                          // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                          $(".navbar-burger").toggleClass("is-active");
+                          $(".navbar-menu").toggleClass("is-active");
 
-          });
-    });
-</script>
-"""
+                      });
+                });
+            </script>
+        '''
     )
 )
 
-bulma_base = Style(
+bulma = Style(
     base,
+    font_awesome_4,
+    select2_enhanced_forms,
     root__assets=dict(
         css=Asset.css(
             attrs__href='https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css',
         ),
         navbar_burger_click_js=navbar_burger_click_js,
-    ),
-    sub_styles__horizontal=dict(
-        Field=dict(
-            attrs__class={
-                'mr-4': True,
-            },
-            label__attrs__class={
-                'mt-2': True,
-                'mr-1': True,
-            },
-        ),
     ),
     Header__attrs__class={
         'title': True,
@@ -162,8 +154,16 @@ bulma_base = Style(
         'is-danger': True,
     },
 )
-bulma = Style(
-    bulma_base,
-    font_awesome_4,
-    select2_enhanced_forms,
+
+bulma_horizontal = Style(
+    bulma,
+    Field=dict(
+        attrs__class={
+            'mr-4': True,
+        },
+        label__attrs__class={
+            'mt-2': True,
+            'mr-1': True,
+        },
+    ),
 )

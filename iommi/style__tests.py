@@ -420,37 +420,37 @@ def test_assets_render_from_bulma_style():
             iommi_style = 'bulma'
             assets__axios = None
 
+    # language=HTML
+    expected_html = '''
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title> </title>
+                <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js">
+                </script>
+                <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+                <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" rel="stylesheet">
+                <script>
+                $(document).ready(function() {
+                      // Check for click events on the navbar burger icon
+                      $(".navbar-burger").click(function() {
+
+                          // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                          $(".navbar-burger").toggleClass("is-active");
+                          $(".navbar-menu").toggleClass("is-active");
+
+                      });
+                });
+                </script>
+            </head>
+            <body >
+                <div class="container main" />
+            </body>
+        </html>
+    '''
     verify_html(
         actual_html=MyPage().bind(request=req('get')).render_to_response().content,
-        # language=HTML
-        expected_html='''
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <title> </title>
-                    <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js">
-                    </script>
-                    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" rel="stylesheet">
-                    <script>
-
-    $(document).ready(function() {
-          // Check for click events on the navbar burger icon
-          $(".navbar-burger").click(function() {
-
-              // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
-              $(".navbar-burger").toggleClass("is-active");
-              $(".navbar-menu").toggleClass("is-active");
-
-          });
-    });
-                    </script>
-                    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-                </head>
-                <body >
-                    <div class="container main" />
-                </body>
-            </html>
-        ''',
+        expected_html=expected_html,
     )
 
 
@@ -531,7 +531,7 @@ def styled_form():
 
 
 def test_style_on_form_in_page(styled_form):
-    bound_form = styled_form.bind(request=req('get'))
+    bound_form = styled_form.bind()
     assert bound_form.fields.foo.template == 'my_other_template.html'
     assert bound_form.fields.foo.attrs.other_thing == 'Also styled'
     assert bound_form.template == 'my_template.html'
@@ -540,7 +540,7 @@ def test_style_on_form_in_page(styled_form):
 
 def test_style_on_form_as_root(styled_form):
     page = Page(parts__form=styled_form)
-    bound_page = page.bind(request=req('get'))
+    bound_page = page.bind()
     assert bound_page.parts.form.fields.foo.template == 'my_other_template.html'
     assert bound_page.parts.form.fields.foo.attrs.other_thing == 'Also styled'
     assert bound_page.parts.form.template == 'my_template.html'
@@ -611,11 +611,11 @@ def test_assets_from_different_sources():
 
 @pytest.mark.django_db
 def test_filter_assets_for_foreign_key2():
-    form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    form = Form(auto__model=TBar, iommi_style='bootstrap').bind()
     assert 'data-choices-endpoint' in form.fields.foo.__html__()
-    q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='bootstrap').bind(request=req('get'))
+    q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='bootstrap').bind()
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
-    q = Query(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    q = Query(auto__model=TBar, iommi_style='bootstrap').bind()
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
 
@@ -631,15 +631,19 @@ def test_bootstrap_template_snafu():
 
 @pytest.mark.django_db
 def test_filter_assets_for_foreign_key3():
-    q = Query(auto__model=TBar, iommi_style='bootstrap', form__iommi_style='horizontal').bind(request=req('get'))
-    assert q.form.fields.foo.iommi_style.name == 'horizontal'
+    q = Query(
+        auto__model=TBar,
+        iommi_style='bootstrap',
+        form__iommi_style='bootstrap_horizontal',
+    ).bind()
+    assert q.form.fields.foo.iommi_style.name == 'bootstrap_horizontal'
     assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
-    form = Form(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    form = Form(auto__model=TBar, iommi_style='bootstrap').bind()
     assert 'data-choices-endpoint' in form.fields.foo.__html__()
 
-    q = Query(auto__model=TBar, iommi_style='bootstrap').bind(request=req('get'))
+    q = Query(auto__model=TBar, iommi_style='bootstrap').bind()
     assert q.form.fields.foo.iommi_shortcut_stack == ['foreign_key', 'choice_queryset', 'choice']
     assert 'data-choices-endpoint' in q.form.fields.foo.__html__()
 
