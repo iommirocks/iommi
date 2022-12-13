@@ -14,14 +14,14 @@ def pytest_runtest_setup(item):
     django_marker = item.get_closest_marker("django_db") or item.get_closest_marker("django")
     if django_marker is not None:
         try:
-            import django
+            import django  # noqa: F401
         except ImportError:
             pytest.skip("test requires django")
 
     flask_marker = item.get_closest_marker("flask")
     if flask_marker is not None:
         try:
-            import flask
+            import flask  # noqa: F401
         except ImportError:
             pytest.skip('test requires flask')
 

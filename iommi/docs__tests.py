@@ -308,5 +308,5 @@ Bla bla
 
     """
 
-    '''.strip()
-    )  # noqa: W293
+    '''.strip()  # noqa: W293
+    )
