@@ -5,7 +5,6 @@ from datetime import (
     time,
 )
 
-import django
 import pytest
 import time_machine
 from django.db.models import (
@@ -13,7 +12,6 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from iommi.struct import Struct
 
 from iommi import from_model
 from iommi.base import (
@@ -47,6 +45,7 @@ from iommi.shortcut import (
     Shortcut,
     with_defaults,
 )
+from iommi.struct import Struct
 from tests.helpers import req
 from tests.models import (
     Bar,
@@ -613,14 +612,26 @@ def test_multi_choice_queryset():
 @pytest.mark.django_db
 def test_from_model_with_model_class():
     t = Query(auto__model=Foo).bind(request=None)
-    assert set(t.iommi_namespace.filters.keys()) == {'id', 'foo', 'bars', 'fieldfrommodelforeignkeytest', 'fieldfrommodelonetoonetest'}
+    assert set(t.iommi_namespace.filters.keys()) == {
+        'id',
+        'foo',
+        'bars',
+        'fieldfrommodelforeignkeytest',
+        'fieldfrommodelonetoonetest',
+    }
     assert list(t.filters.keys()) == ['foo']
 
 
 @pytest.mark.django_db
 def test_from_model_with_queryset():
     t = Query(auto__rows=Foo.objects.all()).bind(request=None)
-    assert set(t.iommi_namespace.filters.keys()) == {'id', 'foo', 'bars', 'fieldfrommodelforeignkeytest', 'fieldfrommodelonetoonetest'}
+    assert set(t.iommi_namespace.filters.keys()) == {
+        'id',
+        'foo',
+        'bars',
+        'fieldfrommodelforeignkeytest',
+        'fieldfrommodelonetoonetest',
+    }
     assert list(t.filters.keys()) == ['foo']
 
 

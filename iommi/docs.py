@@ -1,6 +1,5 @@
 import re
 from glob import glob
-from io import StringIO
 from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
@@ -126,21 +125,9 @@ def get_methods_by_type_by_name(class_):
     }
 
     return {
-        'Methods': {
-            k: v
-            for k, v in r.items()
-            if isinstance(v, function_type)
-        },
-        'Static methods': {
-            k: v
-            for k, v in r.items()
-            if isinstance(v, staticmethod)
-        },
-        'Class methods': {
-            k: v
-            for k, v in r.items()
-            if isinstance(v, classmethod)
-        },
+        'Methods': {k: v for k, v in r.items() if isinstance(v, function_type)},
+        'Static methods': {k: v for k, v in r.items() if isinstance(v, staticmethod)},
+        'Class methods': {k: v for k, v in r.items() if isinstance(v, classmethod)},
     }
 
 
@@ -271,7 +258,7 @@ request = req('get')
             v = get_docs_callable_description(v)
 
             if 'lambda' in v:
-                v = v[v.find('lambda'):]
+                v = v[v.find('lambda') :]
                 v = v.strip().strip(',').replace('\n', ' ').replace('  ', ' ')
         if isinstance(v, Part):
             v = v.bind()
@@ -338,9 +325,7 @@ request = req('get')
 
                 w(0, '')
 
-            defaults = (
-                shortcut if isinstance(shortcut, dict) else getattr(shortcut, '__iommi_with_defaults_kwargs', {})
-            )
+            defaults = shortcut if isinstance(shortcut, dict) else getattr(shortcut, '__iommi_with_defaults_kwargs', {})
             if defaults:
                 defaults = Namespace(defaults)
                 section(3, 'Defaults')

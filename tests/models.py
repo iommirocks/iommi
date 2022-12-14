@@ -153,8 +153,8 @@ class TBaz(Model):
 
     class Meta:
         ordering = ('pk',)
-        
-        
+
+
 class AdminUnique(Model):
     foo = IntegerField()
     unique = IntegerField(unique=True)

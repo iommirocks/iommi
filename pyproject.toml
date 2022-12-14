@@ -11,3 +11,5 @@ exclude = '''
   )/
 )
 '''
+[flake8]
+exclude = 'docs/test_doc_styles.py'

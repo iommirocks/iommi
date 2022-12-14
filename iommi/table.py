@@ -2126,15 +2126,8 @@ class Table(Part, Tag):
             rows = self.sorted_and_filtered_rows
         preprocessed_rows = self.invoke_callback(self.preprocess_rows, rows=rows)
 
-        row_groups = [
-            c
-            for c in values(self.columns)
-            if c.row_group.include
-        ]
-        row_group_values = {
-            c._name: None
-            for c in row_groups
-        }
+        row_groups = [c for c in values(self.columns) if c.row_group.include]
+        row_group_values = {c._name: None for c in row_groups}
 
         for i, row in enumerate(preprocessed_rows):
             row = self.invoke_callback(self.preprocess_row, row=row)

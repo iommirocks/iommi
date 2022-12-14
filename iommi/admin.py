@@ -361,7 +361,20 @@ class Admin(Page):
                 .table_class.get_meta()
                 .member_class(
                     cell__value=lambda row, **_: f'apps__{row.key}__include = True' if row.key else '',
-                    cell__format=lambda value, **_: format_html('''{} <span style="margin-left: 1rem" onclick="navigator.clipboard.writeText('{}')"><i class="fa fa-copy"></i></span>''', value, value) if value else '',
+                    cell__format=lambda value, **_: (
+                        format_html(
+                            '''
+                                {}
+                                <span style="margin-left: 1rem" onclick="navigator.clipboard.writeText('{}')">
+                                    <i class="fa fa-copy"></i>
+                                </span>
+                            ''',
+                            value,
+                            value,
+                        )
+                        if value
+                        else ''
+                    ),
                     # cell__url=lambda row, **_: f'{row.url}add_model/' if row.key else None,
                     after=LAST,
                 )

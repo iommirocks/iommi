@@ -5,16 +5,15 @@ from textwrap import (
     dedent,
     indent,
 )
+import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
-
-import django
 django.setup()
 
-from tests.helpers import create_iframe
+from tests.helpers import create_iframe  # noqa: E402
+from iommi.docs import generate_api_docs_tests  # noqa: E402
+from iommi.struct import Struct  # noqa: E402
 
-from iommi.docs import generate_api_docs_tests
-from iommi.struct import Struct
 generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
 
 
@@ -63,7 +62,7 @@ def rst_from_pytest(source_f, target_f, target):
     for i, line in enumerate(source_f.readlines(), start=1):
         stripped_line = line.strip()
         if state_ in ('import', 'py') and line.startswith('def test_'):  # not stripped_line!
-            func_name = line[len('def '):].partition('(')[0]
+            func_name = line[len('def ') :].partition('(')[0]
             push('py', func_name=func_name, func_count=0)
             func_count = 0
         elif stripped_line.startswith("# language=rst"):
@@ -79,7 +78,9 @@ def rst_from_pytest(source_f, target_f, target):
             push('only test')
         elif stripped_line.startswith('# @end'):
             pop()
-        elif state_ == 'py' and line.startswith('#'):  # not stripped_line! skip comments on the global level between functions
+        elif state_ == 'py' and line.startswith(
+            '#'
+        ):  # not stripped_line! skip comments on the global level between functions
             continue
         else:
             if state_ == 'only test':
@@ -89,7 +90,13 @@ def rst_from_pytest(source_f, target_f, target):
                         name += str(func_count)
                     func_count += 1
 
-                    blocks.append(Struct(state='raw', lines=[create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed'))], metadata={}))
+                    blocks.append(
+                        Struct(
+                            state='raw',
+                            lines=[create_iframe(name, collapsed=stripped_line.startswith('show_output_collapsed'))],
+                            metadata={},
+                        )
+                    )
             else:
                 add_line(line)
 
