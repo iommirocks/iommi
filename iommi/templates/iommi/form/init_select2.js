@@ -42,7 +42,7 @@ function iommi_init_select2(elem) {
     f.select2(options);
     f.on('change', function (e) {
         let element = e.target.closest('form');
-        // Fire a non-jquery event so that ajax_enhance.html gets the event
+        // Fire a non-jquery event so that ajax_enhance.js gets the event
         element.dispatchEvent(new Event('change'));
     });
 }
