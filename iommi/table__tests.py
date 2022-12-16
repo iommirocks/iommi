@@ -2650,6 +2650,7 @@ def test_csv_download():
     CSVExportTestModel.objects.create(a=2, b='b', c=5.0)
     t = Table(
         auto__model=CSVExportTestModel,
+        columns__a__row_group__include=True,
         columns__a__extra_evaluated__report_name='A',
         columns__b__extra_evaluated__report_name='B',
         columns__c__extra_evaluated__report_name='C',
