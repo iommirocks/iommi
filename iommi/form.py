@@ -1454,6 +1454,8 @@ class Form(Part):
         attrs__enctype='multipart/form-data',
         h_tag__call_target=Header,
         field_group__call_target=FieldGroup,
+        template='iommi/form/form.html',
+        actions_template='iommi/form/actions.html',
         attr=MISSING,
     )
     def __init__(self, **kwargs):

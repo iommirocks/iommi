@@ -3483,3 +3483,22 @@ def test_action_callbacks_should_be_lazy():
         )
     )
     assert form.bind(request=req('post', **{'-foo': ''})).render_to_response().content == b'{}'
+
+
+def test_form_template_override_bug():
+    class MyForm(Form):
+        @classmethod
+        @with_defaults()
+        def case1(cls, **kwargs):
+            kwargs['template'] = 'case1'
+            return cls(**kwargs)
+
+        @classmethod
+        @with_defaults(
+            template='case2',
+        )
+        def case2(cls, **kwargs):
+            return cls(**kwargs)
+
+    assert MyForm.case1().refine_done().iommi_namespace.template == 'case1'
+    assert MyForm.case2().refine_done().iommi_namespace.template == 'case2'
