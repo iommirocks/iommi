@@ -1410,7 +1410,8 @@ def endpoint__csv(table, **_):
 
     def rows():
         for cells in table.cells_for_rows(paginate=False):
-            yield [cell_value(cells, bound_column) for bound_column in columns]
+            if isinstance(cells, Cells):
+                yield [cell_value(cells, bound_column) for bound_column in columns]
 
     def write_csv_row(writer, row):
         row_strings = [smart_text2(value) for value in row]
