@@ -362,7 +362,6 @@ class Column(Part):
     class Meta:
         filter = EMPTY
         cell__attrs = EMPTY
-        cell__contents__attrs = EMPTY
         cell__link = EMPTY
 
     @with_defaults(
@@ -932,7 +931,6 @@ class CellConfig(RefinableObject, Tag):
     tag: str = Refinable()
     template: Union[str, Template] = Refinable()
     value = Refinable()
-    contents = Refinable()
     format: Callable = Refinable()
     link = Refinable()
 
