@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+5.6.2 (2022-12-16)
+~~~~~~~~~~~~~~~~~~
+
+* CSV export and row_group didn't work together
+
 
 5.6.1 (2022-12-08)
 ~~~~~~~~~~~~~~~~~~
