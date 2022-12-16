@@ -70,8 +70,6 @@ base = Style(
             create__actions__submit__display_name=gettext_lazy('Create'),
             delete__actions__submit__display_name=gettext_lazy('Delete'),
         ),
-        template='iommi/form/form.html',
-        actions_template='iommi/form/actions.html',
     ),
     Field=dict(
         shortcuts=dict(
