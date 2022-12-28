@@ -1,5 +1,8 @@
 import pytest
-from iommi.sort_after import LAST
+from iommi.sort_after import (
+    LAST,
+    SortAfterException,
+)
 from iommi.struct import Struct
 
 from iommi.base import (
@@ -147,7 +150,7 @@ def sorts_right(objects):
 
 
 def test_sort_after_points_to_nothing():
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(SortAfterException) as e:
         sort_after(
             dict(
                 quux=Struct(),
@@ -168,7 +171,7 @@ Available names:
 
 
 def test_sort_after_points_to_nothing_plural():
-    with pytest.raises(KeyError) as e:
+    with pytest.raises(SortAfterException) as e:
         sort_after(
             dict(
                 quux=Struct(),

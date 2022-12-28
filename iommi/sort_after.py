@@ -9,6 +9,10 @@ except ImportError:
     LAST = object()
 
 
+class SortAfterException(Exception):
+    pass
+
+
 def sort_after(d):
     unmoved = []
     to_be_moved_by_index = []
@@ -68,7 +72,7 @@ def sort_after(d):
 
     if to_be_moved_by_name:
         available_names = "\n    ".join(sorted(list(d.keys())))
-        raise KeyError(
+        raise SortAfterException(
             f'Tried to order after {", ".join(sorted(to_be_moved_by_name.keys()))} '
             f'but {"that key does" if len(to_be_moved_by_name) == 1 else "those keys do"} '
             f'not exist.\nAvailable names:\n    {available_names}'
