@@ -7,6 +7,7 @@ from iommi._web_compat import (
 from tests.helpers import (
     req,
     show_output,
+    show_output_collapsed,
 )
 
 request = req('get')
@@ -565,3 +566,91 @@ def test_form_with_foreign_key_reverse(small_discography, artist):
     assert f.fields.albums.display_name == 'Albums'
 
     show_output(f)
+    # @end
+
+
+def test_non_rendered(artist):
+    # language=rst
+    """
+    How set an initial value on a field that is not in the form?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    You do have to include the field, but you can make it not rendered by using
+    the `non_rendered` shortcut and setting `initial`.
+    """
+    # @test
+    black_sabbath = artist
+    # @end
+
+    f = Form.create(
+        auto__model=Album,
+        fields__artist=Field.non_rendered(initial=black_sabbath),
+        fields__year=Field.non_rendered(initial='1980'),
+    )
+
+    # @test
+    f2 = f.bind(request=req('get'))
+
+    assert 'artist' not in f2.__html__()
+
+    show_output(f2)
+    # @end
+
+    # language=rst
+    """
+    If you post this form you will get this object:
+    """
+
+    # @test
+    assert Album.objects.all().count() == 0
+    f2 = f.bind(request=req('post', name='Heaven & Hell', artist=black_sabbath.pk+1, year='1999', **{'-submit': '',}))
+    assert f2.get_errors() == {}
+    f2.render_to_response()
+
+    assert 'artist' not in f2.__html__()
+
+    album = Album.objects.all().get()
+    show_output(Form(auto__instance=album))
+    # @end
+
+
+    # language=rst
+    """
+    By default this will be non-editable, but you can allow editing (via the
+    URL `GET` parameters) by setting `editable=True`.
+    """
+
+    f = Form.create(
+        auto__model=Album,
+        fields__artist=Field.non_rendered(initial=black_sabbath),
+        fields__year=Field.non_rendered(
+            initial='1980',
+            editable=True,
+        ),
+    )
+
+    # @test
+    f2 = f.bind(request=req('get', year='1970'))
+
+    assert 'artist' not in f2.__html__()
+    assert 'year' not in f2.__html__()
+
+    show_output_collapsed(f2)
+    # @end
+
+    # language=rst
+    """
+    Accessing this create form with `?year=1999` in the title will create this object on submit:
+    """
+
+    # @test
+    Album.objects.all().delete()
+    f2 = f.bind(request=req('post', name='Heaven & Hell', artist=black_sabbath.pk+1, year='1999', **{'-submit': '',}))
+    assert f2.get_errors() == {}
+    f2.render_to_response()
+
+    assert 'artist' not in f2.__html__()
+
+    album = Album.objects.all().get()
+    show_output(Form(auto__instance=album))
+    # @end

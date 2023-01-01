@@ -1213,6 +1213,14 @@ class Field(Part, Tag):
         return cls(**kwargs)
 
     @classmethod
+    @with_defaults(
+        template=Template(''),
+        editable=False,
+    )
+    def non_rendered(cls, **kwargs):
+        return cls(**kwargs)
+
+    @classmethod
     @with_defaults
     def foreign_key(cls, model_field, model, **kwargs):
         del model
