@@ -28,7 +28,7 @@ def test_equivalence():
 
     # language=rst
     """
-    We want to create a form to create an album. We already have the artist from the URL, so that field shouldn't be in the form.
+    We want to create a form to create an album for a specific artist. We already have the artist from the URL, so that field shouldn't be in the form.
 
     The following forms all accomplish this goal (you can use `form.as_view()` to create a view from a `Form` instance):
     """

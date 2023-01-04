@@ -550,7 +550,7 @@ def test_form_with_foreign_key_reverse(small_discography, artist):
     How do I show a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    By default reverse foreign key relationships are hidden. To turn it on, pass `include=False` to the field. Note that these are read only, because the semantics of hijacking another models foreign keys would be quite weird.
+    By default reverse foreign key relationships are hidden. To turn it on, pass `include=True` to the field. Note that these are read only, because the semantics of hijacking another models foreign keys would be quite weird.
     """
 
     f = Form(

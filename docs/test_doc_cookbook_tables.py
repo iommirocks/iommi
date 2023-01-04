@@ -259,7 +259,7 @@ def test_how_do_i_enable_searching_filter_on_columns():
 
     # language=rst
     """
-    The `query` namespace here is used to configure a :doc:`Filter` so you can
+    The `filter` namespace here is used to configure a :doc:`Filter` so you can
     configure the behavior of the searching by passing parameters here.
 
     The `filter__field` namespace is used to configure the :doc:`Field`, so here you
@@ -538,6 +538,26 @@ def test_how_do_i_access_foreign_key_related_data_in_a_column():
     show_output(table.refine(rows=[b]))
     # @end
 
+    # language=rst
+    """
+    Or like this:
+    """
+
+    table = Table(
+        auto__model=Bar,
+        include=['b', 'c__a'],
+    )
+
+    # @test
+    f = Foo(a=7)
+    b = Bar(b=3, c=f)
+    show_output(table.refine(rows=[b]))
+    # @end
+
+    # language=rst
+    """
+    iommi will do automatic `select_related` and/or `prefetch_related` as appropriate in many cases too, so you mostly don't need to worry about that.
+    """
 
 def test_how_do_i_turn_off_sorting(small_discography):
     # language=rst
@@ -812,7 +832,7 @@ def test_table_with_foreign_key_reverse(small_discography):
     How do I show a reverse foreign key relationship?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    By default reverse foreign key relationships are hidden. To turn it on, pass `include=False` to the column:
+    By default reverse foreign key relationships are hidden. To turn it on, pass `include=True` to the column:
     """
 
     t = Table(
