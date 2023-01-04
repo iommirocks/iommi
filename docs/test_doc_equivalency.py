@@ -62,34 +62,34 @@ def test_equivalence():
     show_output_collapsed(form)
     # @end
 
-    class ArtistForm(Form):
+    class AlbumForm(Form):
         class Meta:
             auto__model = Album
             auto__exclude = ['artist']
 
-    form = ArtistForm.create()
+    form = AlbumForm.create()
 
     # @test
     show_output_collapsed(form)
     # @end
 
-    class ArtistForm(Form):
+    class AlbumForm(Form):
         class Meta:
             auto__model = Album
             auto__include = ['name', 'year']
 
-    form = ArtistForm.create()
+    form = AlbumForm.create()
 
     # @test
     show_output_collapsed(form)
     # @end
 
-    class ArtistForm(Form):
+    class AlbumForm(Form):
         class Meta:
             auto__model = Album
             fields__artist__include = False
 
-    form = ArtistForm.create()
+    form = AlbumForm.create()
 
     # @test
     show_output_collapsed(form)
@@ -101,19 +101,19 @@ def test_equivalence():
     """
 
     # @test
-    def create_artist(**_):
+    def create_album(**_):
         pass
     # @end
 
-    class ArtistForm(Form):
+    class AlbumForm(Form):
         name = Field()
         year = Field.integer()
 
         class Meta:
             title = 'Create album'
-            actions__submit__post_handler = create_artist
+            actions__submit__post_handler = create_album
 
-    form = ArtistForm()
+    form = AlbumForm()
 
     # @test
     show_output_collapsed(form)
@@ -123,7 +123,7 @@ def test_equivalence():
         fields__name=Field(),
         fields__year=Field.integer(),
         title='Create album',
-        actions__submit__post_handler=create_artist,
+        actions__submit__post_handler=create_album,
     )
 
     # @test
