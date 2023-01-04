@@ -118,7 +118,7 @@ available parameters.
 Part
 --------
 
-`Part` it the base class/API for objects that can be composed into a page.
+`Part` is the base class/API for objects that can be composed into a page.
 
 
 """
