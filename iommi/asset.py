@@ -42,7 +42,7 @@ class Asset(Fragment):
     )
     def css(cls, text=None, **kwargs):
         """
-        To use this shortcut, pass `attrs__href='/my_url_to_the.js'`
+        To use this shortcut, pass `attrs__href='/my_url_to_the.css'`
 
         Examples:
 
