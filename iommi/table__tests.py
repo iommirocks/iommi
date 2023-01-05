@@ -702,6 +702,58 @@ def test_column_presets(NoSortTable):
     )
 
 
+def test_select_column_preset(NoSortTable):
+    class TestTable(NoSortTable):
+        select = Column.select()
+        checked_select = Column.select(extra__checked=True)
+        named_select = Column.select(extra__checkbox_name='banana')
+
+    verify_table_html(
+        table=TestTable(rows=[Struct()]),
+        # language=HTML
+        expected_html='''
+            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <thead>
+                    <tr>
+                        <th class="first_column subheader" title="Select all">
+                            <i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, false)"> </i>
+                        </th>
+                        <th class="first_column subheader" title="Select all">
+                            <i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, false)"> </i>
+                        </th>
+                        <th class="first_column subheader" title="Select all">
+                            <i class="fa fa-check-square-o" onclick="iommi_table_js_select_all(this, false)"> </i>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> <input class="checkbox" name="pk_0" type="checkbox"/> </td>
+                        <td> <input checked="" class="checkbox" name="pk_0" type="checkbox"/> </td>
+                        <td> <input class="checkbox" name="banana_0" type="checkbox"/> </td>
+                    </tr>
+                </tbody>
+            </table>
+        ''',
+    )
+
+
+def test_select_colum_deprecation():
+    with pytest.warns(
+        DeprecationWarning,
+        match='The preferred way to specify checkbox name is renamed to extra__checkbox_name',
+    ):
+        select = Column.select(checkbox_name='banana')
+    assert select.refine_done().extra.checkbox_name == 'banana'
+
+    with pytest.warns(
+        DeprecationWarning,
+        match='The preferred way to specify checked callback is renamed to extra__checked',
+    ):
+        select = Column.select(checked=True)
+    assert select.refine_done().extra.checked is True
+
+
 def test_column_select_shortcut_no_override_call_target(NoSortTable):
     class TestTable(NoSortTable):
         select = Column.select()
