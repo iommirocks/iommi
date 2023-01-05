@@ -8,7 +8,9 @@ from bs4 import BeautifulSoup
 import requests
 
 session = requests.session()
-headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
+}
 
 session.get(
     'https://www.discogs.com/artist/144998-Black-Sabbath?sort=year%2Casc&limit=100&layout=sm&page_size=50&subtype=Albums&filter_anv=0&type=Releases&page=1'
@@ -107,7 +109,6 @@ def scrape_data():
         for title, album in albums.items():
             if album['thumbnails']:
                 download_album_art(artist, title, album['thumbnails'][0])
-
 
 
 if __name__ == '__main__':
