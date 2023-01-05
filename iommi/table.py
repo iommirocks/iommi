@@ -41,7 +41,10 @@ from django.utils.translation import (
     gettext_lazy,
 )
 from math import ceil
-from iommi.struct import Struct
+from iommi.struct import (
+    merged,
+    Struct,
+)
 
 from iommi._web_compat import (
     format_html,
@@ -958,7 +961,13 @@ class Cell(CellConfig):
         self.row = cells.row
 
     def on_refine_done(self):
-        self._evaluate_parameters = {**self.cells.iommi_evaluate_parameters(), 'column': self.column}
+        self._evaluate_parameters = merged(
+            self.column.iommi_evaluate_parameters(),
+            cells=self.cells,
+            column=self.column,
+            row=self.row,
+            bound_cell=self,
+        )
 
         self.value = evaluate_strict(self.value, **self._evaluate_parameters)
         self._evaluate_parameters['value'] = self.value
@@ -977,9 +986,7 @@ class Cell(CellConfig):
     def __html__(self):
         cell__template = self.column.cell.template
         if cell__template:
-            context = dict(
-                table=self.table, column=self.column, cells=self.cells, row=self.row, value=self.value, bound_cell=self
-            )
+            context = self._evaluate_parameters
             return render_template(self.table.get_request(), cell__template, context)
 
         if self.tag:
@@ -1002,9 +1009,7 @@ class Cell(CellConfig):
         return cell_contents
 
     def render_formatted(self):
-        return evaluate_strict(
-            self.column.cell.format, row=self.row, value=self.value, **self.column.iommi_evaluate_parameters()
-        )
+        return evaluate_strict(self.column.cell.format, **self._evaluate_parameters)
 
     def __str__(self):
         return self.__html__()

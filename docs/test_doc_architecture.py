@@ -201,6 +201,8 @@ def test_evaluate():
         traversable    Column
         value          str
         row            Artist
+        cells          Cells
+        bound_cell     Cell
 
         """
             # @test
