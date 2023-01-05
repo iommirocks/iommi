@@ -11,7 +11,7 @@ def test_style():
     =====
 
     iommi has the goal to be easy to integrate into your existing code base,
-    in addition to be being great for developing new products. In order to
+    in addition to being great for developing new products. In order to
     accomplish both these goals we need to be able to plug in to whatever
     CSS framework you have. By default iommi uses a bootstrap style, but
     it also ships with a few other style definitions, and you can define your
