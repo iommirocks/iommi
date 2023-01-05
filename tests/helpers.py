@@ -48,8 +48,8 @@ def remove_csrf(html_code):
 def verify_table_html(*, table: Table, query=None, find=None, expected_html: str = None):
     if find is None:
         find = dict(class_='table')
-        if not expected_html.strip():
-            expected_html = "<table/>"  # pragma: no cover
+        if not expected_html or not expected_html.strip():
+            expected_html = "<table class='table'/>"  # pragma: no cover
 
     verify_part_html(
         part=table,
