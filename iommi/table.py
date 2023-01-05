@@ -1,4 +1,5 @@
 import csv
+import warnings
 from datetime import (
     date,
     datetime,
@@ -574,8 +575,29 @@ class Column(Part):
         filter__is_valid_filter=lambda **_: (True, ''),
         filter__field__include=False,
         attr=None,
+        cell__value=lambda table, cells, row, **_: (
+            row.pk
+            if isinstance(table.rows, QuerySet)
+            else
+            # row_index is the visible row number
+            # See selection() for the code that does the lookup
+            cells.row_index
+        ),
+        cell__format=lambda column, row, value, **kwargs: format_html(
+            # language=HTML
+            '<input type="checkbox" class="checkbox" name="{checkbox_name}_{row_id}" {checked_str} />',
+            checkbox_name=column.extra.checkbox_name,
+            row_id=value,
+            checked_str=(
+                'checked'
+                if evaluate_strict(column.extra.checked, column=column, row=row, value=value, **kwargs)
+                else ''
+            ),
+        ),
+        extra__checkbox_name='pk',
+        extra__checked=lambda **_: False,
     )
-    def select(cls, checkbox_name='pk', checked=lambda row, **_: False, **kwargs):
+    def select(cls, *, checkbox_name=None, checked=None, **kwargs):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
@@ -593,21 +615,21 @@ class Column(Part):
                 bulk__actions=Action.submit(post_handler=my_handler)
             )
 
-        :param checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
-        :param checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
+        :param extra__checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
+        :param extra__checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
         """
-
-        def cell__value(row, table, cells, **kwargs):
-            checked_str = ' checked' if evaluate_strict(checked, row=row, **kwargs) else ''
-            if isinstance(table.rows, QuerySet):
-                row_id = row.pk
-            else:
-                # row_index is the visible row number
-                # See selection() for the code that does the lookup
-                row_id = cells.row_index
-            return mark_safe(f'<input type="checkbox"{checked_str} class="checkbox" name="{checkbox_name}_{row_id}" />')
-
-        setdefaults_path(kwargs, dict(cell__value=cell__value))
+        if checkbox_name is not None:
+            warnings.warn(
+                'The preferred way to specify checkbox name is renamed to extra__checkbox_name',
+                category=DeprecationWarning,
+            )
+            setdefaults_path(kwargs, extra__checkbox_name=checkbox_name)
+        if checked is not None:
+            warnings.warn(
+                'The preferred way to specify checked callback is renamed to extra__checked',
+                category=DeprecationWarning,
+            )
+            setdefaults_path(kwargs, extra__checked=checked)
         return cls(**kwargs)
 
     @classmethod
@@ -1166,7 +1188,7 @@ def bulk_delete__post_handler(table, form, **_):
             auto__rows=queryset,
             columns__select=dict(
                 include=True,
-                checked=True,
+                extra__checked=True,
                 bulk__include=True,
                 bulk__attrs__style__display='none',
             ),
