@@ -364,14 +364,14 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
     .. code-block:: pycon
 
         >>> render_attrs(
-             Namespace(
-                 foo='bar',
-                 class__foo=True,
-                 class__bar=True,
-                 style__font='Arial',
-                 **{'style__font-family': 'serif'}
-             )
-         )
+        ...     Namespace(
+        ...         foo='bar',
+        ...         class__foo=True,
+        ...         class__bar=True,
+        ...         style__font='Arial',
+        ...         **{'style__font-family': 'serif'}
+        ...     )
+        ... )
         ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
     """

@@ -614,7 +614,7 @@ class Column(Part):
                 # matching the type of rows of the table
                 ...
 
-            Table(.... ,
+            Table(... ,
                 bulk__actions=Action.submit(post_handler=my_handler)
             )
 

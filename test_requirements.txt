@@ -1,4 +1,4 @@
-beautifulsoup4==4.7.1
+beautifulsoup4==4.11.1
 pytest==7.1.1
 pytest-django==4.5.2
 time-machine==2.6.0

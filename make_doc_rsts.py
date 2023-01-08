@@ -82,6 +82,10 @@ def rst_from_pytest(source_f, target_f, target):
             '#'
         ):  # not stripped_line! skip comments on the global level between functions
             continue
+        elif state_ == 'py' and line.startswith(
+                '@'
+            ):  # not stripped_line! skip decorators on the global level between functions
+            continue
         else:
             if state_ == 'only test':
                 if stripped_line.startswith('show_output(') or stripped_line.startswith('show_output_collapsed('):
