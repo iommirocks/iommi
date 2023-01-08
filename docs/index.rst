@@ -32,6 +32,7 @@ Contents:
    philosophy
    architecture
    legacy_fbv
+   imports
    history
    authors
    contributing

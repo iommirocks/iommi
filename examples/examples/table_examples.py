@@ -20,6 +20,7 @@ from examples.views import (
 from iommi import (
     Action,
     Column,
+    EditTable,
     Field,
     html,
     Page,
@@ -245,6 +246,19 @@ def csv(request):
         ),
     )
 
+@example(gettext('EditTable example'))
+def edit_table(request):
+    return EditTable(
+        auto__model=Album,
+        columns=dict(
+            name=dict(
+                filter__include=True,
+                edit__include=True,
+            ),
+            year__edit__include=True,
+        ),
+    )
+
 
 class IndexPage(ExamplesPage):
     header = html.h1('Table examples')
@@ -274,4 +288,5 @@ urlpatterns = [
     path('example_8/', table_post_handler_on_lists),
     path('example_9/', extra_fields),
     path('example_10/', csv),
+    path('example_11/', edit_table),
 ]

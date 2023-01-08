@@ -194,5 +194,6 @@ docs/production_use.rst
 docs/queries.rst
 docs/extra.rst
 docs/philosophy.rst
+docs/imports.rst
 
 .cache/pip
