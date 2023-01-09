@@ -12,12 +12,10 @@ class Artist(models.Model):
         app_label = 'docs'
 
 
-# album_start
 class Album(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums')
     year = models.IntegerField()
-    # album_end
 
     def __str__(self):
         return self.name
@@ -47,19 +45,6 @@ class Track(models.Model):
 class Musician(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     instrument = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ('name',)
-        app_label = 'docs'
-
-
-class Car(models.Model):
-    name = models.CharField(max_length=255, db_index=True)
-    make = models.CharField(max_length=255)
-    model = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name

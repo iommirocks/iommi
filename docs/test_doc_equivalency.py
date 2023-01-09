@@ -21,8 +21,8 @@ def test_equivalence():
     First a model:
 
     .. literalinclude:: models.py
-         :start-after: # album_start
-         :end-before: # album_end
+         :start-at: class Album
+         :end-before: def __str__
          :language: python
     """
 

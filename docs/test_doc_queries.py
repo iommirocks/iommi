@@ -92,42 +92,45 @@ def test_query_language():
     """
     
 
-def test_stand_alone_example():
+def test_stand_alone_example(small_discography):
     # language=rst
     """
     Stand alone example
     -------------------
 
-    Simple view that allows the user to search for a car by choosing the make from a drop down, and search
-    for specific model in the advanced mode:
+    Simple view that allows the user to search for an album by choosing the artist from a drop down, and search
+    for specific year in the advanced mode:
     """
 
-    class CarQuery(Query):
-        make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])
-        model = Filter.text()
+    class AlbumQuery(Query):
+        artist = Filter.choice_queryset(choices=Artist.objects.all())
+        year = Filter.integer()
 
-    def cars(request):
-        query = CarQuery().bind(request=request)
-        cars_query_set = query.get_q()
+    def albums(request):
+        query = AlbumQuery().bind(request=request)
         return render(
             request=request,
-            template_name='cars.html',
+            template_name='albums.html',
             context={
                 'query': query,
-                'cars': cars_query_set,
+                'albums': query.get_q(),
             },
         )
+
+    # @test
+    albums(req('get'))
+    # @end
 
     # language=rst
     """
     .. code-block:: html
 
-        <!-- cars.html -->
+        <!-- albums.html -->
         {{ query }}
 
         <ul>
-            {% for car in cars %}
-                <li>{{ car }}</li>
+            {% for album in albums %}
+                <li>{{ album }}</li>
             {% endfor %}
         </ul>
         
@@ -141,25 +144,15 @@ def test_stand_alone_example():
     """
 
     # @test
-    Car.objects.create(name='Tonys car', make='Toyota')
-    Car.objects.create(name='Ozzys car', make='Toyota')
-    # TODO: go through these examples, as they don't really work... and remove the images and do show_output instead
-    show_output(cars(req('get')))
+    show_output(albums(req('get')))
     # @end
 
     # language=rst
     """
-
-    .. image:: simple_gui.png
-
-    After switching to the advanced mode:
-
-    .. image:: advanced_gui.png
-
     Programmatically call the search API:
     """
 
-    query = CarQuery().bind(request=request)
-    cars_query_set = query.parse_query_string(
-        'make=Toyota and (make=1991 or make=1992)'
+    query = Query(auto__model=Album).bind(request=request)
+    albums_queryset = query.parse_query_string(
+        'artist="Black Sabbath" and (year=1991 or year=1992)'
     )

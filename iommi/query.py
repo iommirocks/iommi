@@ -601,17 +601,18 @@ class Advanced(Fragment):
 @declarative(Filter, '_filters_dict', add_init_kwargs=False)
 @with_meta
 class Query(Part):
+    # language=rst
     """
     Declare a query language. Example:
 
     .. code-block:: python
 
-        class CarQuery(Query):
-            make = Filter.choice(choices=['Toyota', 'Volvo', 'Ford'])
-            model = Filter()
+        class AlbumQuery(Query):
+            year = Filter.integer()
+            name = Filter()
 
-        query_set = Car.objects.filter(
-            CarQuery().bind(request=request).get_q()
+        query_set = Album.objects.filter(
+            AlbumQuery().bind(request=request).get_q()
         )
     """
 

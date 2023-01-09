@@ -71,5 +71,4 @@ def test_imports():
         Album,
         Track,
         Musician,
-        Car,
     )
