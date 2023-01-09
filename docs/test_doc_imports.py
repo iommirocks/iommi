@@ -1,7 +1,7 @@
 # language=rst
 """
-Imports used in the iommi documentation:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Imports used in the iommi documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
 
 
@@ -53,6 +53,16 @@ def test_imports():
 
     # language=rst
     """
+    Django imports
+    ==============
+    """
+    from django.template import Template
+    from django.contrib.auth.models import User
+    from django.shortcuts import get_object_or_404
+    from django.urls import path
+
+    # language=rst
+    """
     Documentation models
     ====================
     """
@@ -63,14 +73,3 @@ def test_imports():
         Musician,
         Car,
     )
-
-
-    # language=rst
-    """
-    Django imports
-    ==============
-    """
-    from django.template import Template
-    from django.contrib.auth.models import User
-    from django.shortcuts import get_object_or_404
-    from django.urls import path

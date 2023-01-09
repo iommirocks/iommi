@@ -28,6 +28,8 @@
       <excludeFolder url="file://$MODULE_DIR$/lib/iommi.egg-info" />
       <excludeFolder url="file://$MODULE_DIR$/logo.pxd" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/custom/doc_includes" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/examples/static/album_art" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
