@@ -711,7 +711,7 @@ def test_forms():
 
 
     Automatic views
-    ---------------
+    ===============
 
     iommi goes a step further than this though, by supplying full views that can
     be used from either a declarative form or an auto generated form. An example
