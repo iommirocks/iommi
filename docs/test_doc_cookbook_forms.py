@@ -654,3 +654,23 @@ def test_non_rendered(artist):
     album = Album.objects.all().get()
     show_output(Form(auto__instance=album))
     # @end
+
+def test_grouped_fields():
+    # language=rst
+    """
+    How to I group fields?
+    ~~~~~~~~~~~~~~~~~~~~~~
+
+    Use the `group` field. You can
+
+    """
+
+    form = Form(
+        auto__model=Album,
+        fields__year__group='metadata',
+        fields__artist__group='metadata',
+    )
+
+    # @test
+    show_output(form)
+    # @end
