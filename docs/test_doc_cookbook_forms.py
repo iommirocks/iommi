@@ -661,8 +661,7 @@ def test_grouped_fields():
     How to I group fields?
     ~~~~~~~~~~~~~~~~~~~~~~
 
-    Use the `group` field. You can
-
+    Use the `group` field:
     """
 
     form = Form(
