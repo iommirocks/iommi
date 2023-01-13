@@ -507,7 +507,7 @@ def test__foo():
                 <td>
                     <img 
                         height="30"
-                        src="/album_art/{{ row.artist }}/{{ row.name }}.jpg">
+                        src="../../album_art/{{ row.artist }}/{{ row.name }}.jpg">
                 </td>
             '''),
         ),
@@ -538,7 +538,7 @@ def test__foo():
         header__template=None,
         row__template=Template("""
             <div class="card" style="width: 15rem; display: inline-block;" {{ cells.attrs }}>
-                <img class="card-img-top" src="/album_art/{{ row.artist }}/{{ row.name|urlencode }}.jpg">
+                <img class="card-img-top" src="../../album_art/{{ row.artist }}/{{ row.name|urlencode }}.jpg">
                 <div class="card-body text-center">
                     <h5>{{ cells.name }}</h5>
                     <p class="card-text">
@@ -594,7 +594,7 @@ def test__foo():
     
     .. raw:: html
     
-        <video controls><source src="/iommi-admin-customization.mp4"></video>
+        <video controls><source src="../../iommi-admin-customization.mp4"></video>
 
     You can override an entire field rendering with `template`, the template 
     of the label with `label__template`, the name of a field with `display_name`,
