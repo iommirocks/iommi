@@ -594,7 +594,7 @@ def test__foo():
     
     .. raw:: html
     
-        <video controls><source src="../../iommi-admin-customization.mp4"></video>
+        <video controls><source src="iommi-admin-customization.mp4"></video>
 
     You can override an entire field rendering with `template`, the template 
     of the label with `label__template`, the name of a field with `display_name`,
