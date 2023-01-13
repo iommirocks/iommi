@@ -87,10 +87,12 @@ def create_discography_dump():
                 yield f"Track.objects.create(album=y, name={track.name!r}, index={track.index})"
 
 def test_setup_data():
+    # @test
     with open(Path(__file__).parent / 'custom' / 'big_discography.py', 'w') as f:
         for l in create_discography_dump():
             f.write(l)
             f.write('\n')
+    # @end
 
     # language=rst
     """
