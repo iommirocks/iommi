@@ -39,6 +39,15 @@ setup()
 check_call(f"python {(Path(__file__).parent.parent / 'make_doc_rsts.py').absolute()}", shell=True)
 check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python -m pytest docs -q", shell=True)
 
+
+def build_finished(app, exception):
+    print('Running build_finished')
+    check_call(f"cd {(Path(__file__).parent.parent).absolute()}; python insert_docs_links.py", shell=True)
+
+
+def setup(app):
+    app.connect('build-finished', build_finished)
+
 # -- General configuration -----------------------------------------------------
 html_css_files = [
     'custom.css',
