@@ -15,6 +15,7 @@ Contents:
    :maxdepth: 2
 
    getting_started
+   tutorial
    production_use
    equivalency
    cookbook

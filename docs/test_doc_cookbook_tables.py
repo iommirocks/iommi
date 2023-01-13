@@ -13,6 +13,7 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect,
 )
+from django.db import models
 import pytest
 pytestmark = pytest.mark.django_db
 

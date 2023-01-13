@@ -1,4 +1,5 @@
 import pytest
+from django.db import models
 from docs.models import *
 from iommi import *
 from tests.helpers import (

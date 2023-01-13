@@ -1,3 +1,4 @@
+import re
 from os import walk
 from os.path import join
 from pathlib import Path
@@ -40,9 +41,17 @@ for root, dirs, files in walk(html_dir):
             continue
 
         with open(join(root, filename)) as f:
-            soup = BeautifulSoup(f.read(), 'html.parser')
+            content = f.read()
 
         did_change = False
+
+        # remove some extra newlines we can get from literalinclude
+        if '\n</pre>' in content:
+            did_change = True
+            content = re.sub(r'\n+</pre>', '\n</pre>', content)
+
+        soup = BeautifulSoup(content, 'html.parser')
+
         for symbol in soup.find_all('span', class_='n'):
             t = symbol.text
             if t in iommi_classes:

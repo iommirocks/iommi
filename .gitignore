@@ -195,5 +195,6 @@ docs/queries.rst
 docs/extra.rst
 docs/philosophy.rst
 docs/imports.rst
+docs/tutorial.rst
 
 .cache/pip

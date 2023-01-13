@@ -68,3 +68,51 @@ def medium_discography(artist):
         Album.objects.create(name='Blizzard of Ozz', artist=ozzy, year=1980),
         Album.objects.create(name='Mob Rules', artist=artist, year=1981),
     ]
+
+
+def create_tracks(album_name, tracks):
+    album = Album.objects.get(name=album_name)
+    Track.objects.bulk_create(
+        [
+            Track(album=album, name=name, index=i + 1)
+            for i, name in enumerate(tracks)
+        ]
+    )
+
+
+@pytest.fixture
+def big_discography(medium_discography):
+    create_tracks('Heaven & Hell', [
+        'Neon Knights',
+        'Children of the Sea',
+        'Lady Evil',
+        'Heaven and Hell',
+        'Wishing Well',
+        'Die Young',
+        'Walk Away',
+        'Lonely Is the Word',
+    ])
+
+    create_tracks('Blizzard of Ozz', [
+        'I Don\'t Know',
+        'Crazy Train',
+        'Goodbye to Romance',
+        'Dee',
+        'Suicide Solution',
+        'Mr. Crowley',
+        'No Bone Movies',
+        'Revelation (Mother Earth)',
+        'Steal Away (The Night)',
+    ])
+
+    create_tracks('Mob Rules', [
+        'Turn Up the Night',
+        'Voodoo',
+        'The Sign of the Southern Cross',
+        'E5150" (instrumental',
+        'The Mob Rules',
+        'Country Girl',
+        'Slipping Away',
+        'Falling Off the Edge of the World',
+        'Over and Over',
+    ])

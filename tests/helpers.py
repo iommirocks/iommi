@@ -8,6 +8,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.test import RequestFactory
+from django.urls import URLPattern
+
 from iommi.struct import Struct
 
 from iommi import (
@@ -219,6 +221,10 @@ def show_output(part, path='/'):
 
     file_path = _show_path_from_name(name)
     makedirs(file_path.parent, exist_ok=True)
+
+    if isinstance(part, URLPattern):
+        part = part.callback(req('get', path=path))
+
     with open(file_path, 'wb') as f:
         content = part if isinstance(part, bytes) else render_if_needed(req('get', path=path), part).content
         f.write(content)
