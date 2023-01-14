@@ -491,7 +491,7 @@ def test__foo():
 
     # language=rst
     """
-    For non-staff the button isn't shown:
+    For non-staff the "Create album" button isn't shown, neither are the edit and delete columns:
     """
 
     # @test
