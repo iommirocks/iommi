@@ -206,6 +206,10 @@ from docs.models import *
 
 pytestmark = pytest.mark.django_db
 
+@pytest.fixture(autouse=True)
+def auto_use(big_discography):
+    pass
+
 request = req('get')
 
 

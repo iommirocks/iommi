@@ -543,9 +543,22 @@ class Column(Part):
         display_name=gettext_lazy('Delete'),
     )
     def delete(cls, **kwargs):
+        # language=rst
         """
         Shortcut for creating a clickable delete icon. The URL defaults to `your_object.get_absolute_url() + 'delete/'`. Specify the option cell__url to override.
+
+        .. code-block:: python
+
+            table = Table(
+                auto__model=Album,
+                columns__delete=Column.delete(),
+            )
+
+            # @test
+            show_output(table)
+            # @end
         """
+
         return cls.icon(**kwargs)
 
     @classmethod
