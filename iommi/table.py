@@ -601,6 +601,7 @@ class Column(Part):
         extra__checked=lambda **_: False,
     )
     def select(cls, *, checkbox_name=None, checked=None, **kwargs):
+        # language=rst
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
@@ -614,7 +615,8 @@ class Column(Part):
                 # matching the type of rows of the table
                 ...
 
-            Table(... ,
+            Table(
+                auto__model=Album,
                 bulk__actions=Action.submit(post_handler=my_handler)
             )
 

@@ -231,8 +231,7 @@ request = req('get')
     w(1, '# language=rst')
     w(1, '"""')
 
-    if class_doc['text']:
-        _print_rst_or_python(class_doc['text'], w)
+    _print_rst_or_python(class_doc['text'], w)
 
     w(1, '"""')
     w(0, '')
@@ -313,7 +312,7 @@ request = req('get')
 
             if shortcut.__doc__:
                 foo = docstring_param_dict(shortcut)
-                f.write(foo['text'])
+                _print_rst_or_python(foo['text'], w)
                 w(0, '')
 
                 if foo['params']:
@@ -354,6 +353,8 @@ request = req('get')
 
 
 def _print_rst_or_python(doc, w):
+    if not doc:
+        return
     in_code_block = False
     code_block_indent = None
     for line in dedent(doc).split('\n'):
