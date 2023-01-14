@@ -464,7 +464,10 @@ def test__foo():
     
     An `Action` in iommi is a link or a button. We use them for submit buttons of
     forms and for links that you can add to a part. A common use case is to add
-    links to a table. In our example app we want to add a create button for staff:
+    links to a table. In our example app we want to add a create button for staff.
+
+    While we're at it, let's add some new columns for edit and delete links. There
+    are special shortcuts in iommi prebuild for that too: `Column.edit` and `Column.delete`.
     """
 
     albums = Table(
@@ -472,7 +475,14 @@ def test__foo():
         actions__create_album=Action(
             attrs__href='/albums/create/', 
             include=lambda request, **_: request.user.is_staff,
-        )
+        ),
+        columns__edit=Column.edit(
+            after=0,
+            include=lambda request, **_: request.user.is_staff,
+        ),
+        columns__delete=Column.delete(
+            include=lambda request, **_: request.user.is_staff,
+        ),
     )
 
     # @test
@@ -680,7 +690,7 @@ def test_forms():
     override at the constructor call.
 
     An advantage to this strict definition is that we don't have silent failures
-    in iommi. If you make a spelling mistake in a value in `Meta`, you will get
+    in iommi. If you make a spelling mistake for a setting in `Meta`, you will get
     an error message.
 
 
