@@ -651,7 +651,7 @@ def test_forms():
 
     # language=rst
     """
-    No template needed, and this the view too.
+    No template needed, and this is the view too.
     
     In iommi you always get a form encoding specified on the form, so they all work
     with file uploads. Missing form encoding on the form tag is a very common 
