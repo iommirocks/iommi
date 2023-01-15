@@ -511,10 +511,22 @@ class Column(Part):
         extra__icon_attrs__style=EMPTY,
     )
     def icon(cls, *args, **kwargs):
+        # language=rst
         """
         Shortcut to create font awesome-style icons.
 
         :param extra__icon: the font awesome name of the icon
+
+        .. code-block:: python
+
+            table = Table(
+                auto__model=Album,
+                columns__icon=Column(extra__icon='music'),
+            )
+
+            # @test
+            show_output(table)
+            # @end
         """
         assert len(args) in (0, 1), "You can only pass 1 positional argument: icon, or you can pass no arguments."
 
@@ -532,8 +544,20 @@ class Column(Part):
         display_name=gettext_lazy('Edit'),
     )
     def edit(cls, **kwargs):
+        # language=rst
         """
         Shortcut for creating a clickable edit icon. The URL defaults to `your_object.get_absolute_url() + 'edit/'`. Specify the option cell__url to override.
+
+        .. code-block:: python
+
+            table = Table(
+                auto__model=Album,
+                columns__edit=Column.edit(after=0),
+            )
+
+            # @test
+            show_output(table)
+            # @end
         """
         return cls.icon(**kwargs)
 
@@ -568,8 +592,21 @@ class Column(Part):
         display_name=gettext_lazy('Download'),
     )
     def download(cls, **kwargs):
+        # language=rst
         """
         Shortcut for creating a clickable download icon. The URL defaults to `your_object.get_absolute_url() + 'download/'`. Specify the option cell__url to override.
+
+
+        .. code-block:: python
+
+            table = Table(
+                auto__model=Album,
+                columns__download=Column.download(),
+            )
+
+            # @test
+            show_output(table)
+            # @end
         """
         return cls.icon(**kwargs)
 
@@ -579,8 +616,21 @@ class Column(Part):
         display_name=gettext_lazy('Run'),
     )
     def run(cls, **kwargs):
+        # language=rst
         """
         Shortcut for creating a clickable run icon. The URL defaults to `your_object.get_absolute_url() + 'run/'`. Specify the option cell__url to override.
+
+
+        .. code-block:: python
+
+            table = Table(
+                auto__model=Album,
+                columns__run=Column.run(),
+            )
+
+            # @test
+            show_output(table)
+            # @end
         """
         return cls.icon(**kwargs)
 
@@ -618,6 +668,9 @@ class Column(Part):
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
 
+        By default tables have a column named `select` that is hidden that is used for this purpose, so you only
+        need to turn it on to get it. See the example below.
+
         To implement a custom post handler that operates on the selected rows, do
 
          .. code-block:: python
@@ -628,10 +681,15 @@ class Column(Part):
                 # matching the type of rows of the table
                 ...
 
-            Table(
+            table = Table(
                 auto__model=Album,
-                bulk__actions=Action.submit(post_handler=my_handler)
+                columns__select__include=True,
+                bulk__actions__submit=Action.submit(post_handler=my_handler)
             )
+
+            # @test
+            show_output(table)
+            # @end
 
         :param extra__checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
         :param extra__checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
@@ -658,8 +716,26 @@ class Column(Part):
         cell__format=lambda value, **_: mark_safe('<i class="fa fa-check" title="Yes"></i>') if value else '',
     )
     def boolean(cls, **kwargs):
+        # language=rst
         """
         Shortcut to render booleans as a check mark if true or blank if false.
+
+
+        .. code-block:: python
+
+            table = Table(
+                columns__name=Column(),
+                columns__boolean=Column.boolean(),
+                rows=[
+                    Struct(name='true!', boolean=True),
+                    Struct(name='false!', boolean=False),
+                ]
+            )
+
+            # @test
+            show_output(table)
+            # @end
+
         """
         return cls(**kwargs)
 
@@ -668,6 +744,11 @@ class Column(Part):
         filter__call_target__attribute='boolean_tristate',
     )
     def boolean_tristate(cls, **kwargs):
+        # language=rst
+        """
+        This shortcut sets up `boolean_tristate` for the filter.
+        """
+
         return cls.boolean(**kwargs)
 
     @classmethod
@@ -676,6 +757,11 @@ class Column(Part):
         filter__call_target__attribute='choice',
     )
     def choice(cls, **kwargs):
+        # language=rst
+        """
+        This shortcut sets up `choices` for the filter and bulk form.
+        """
+
         instance = cls(**kwargs)
         instance = instance.refine(
             Prio.shortcut,
@@ -690,6 +776,10 @@ class Column(Part):
         filter__call_target__attribute='choice_queryset',
     )
     def choice_queryset(cls, **kwargs):
+        # language=rst
+        """
+        This shortcut sets up `choices` for the filter and bulk form for the choice queryset case.
+        """
         setdefaults_path(
             kwargs,
             dict(
@@ -705,6 +795,10 @@ class Column(Part):
         filter__call_target__attribute='multi_choice_queryset',
     )
     def multi_choice_queryset(cls, **kwargs):
+        # language=rst
+        """
+        This shortcut sets up `choices` for the filter and bulk form for the multi choice queryset case.
+        """
         setdefaults_path(
             kwargs,
             dict(
@@ -720,6 +814,10 @@ class Column(Part):
         filter__call_target__attribute='multi_choice',
     )
     def multi_choice(cls, **kwargs):
+        # language=rst
+        """
+        This shortcut sets up `choices` for the filter and bulk form for the multi choice case.
+        """
         setdefaults_path(
             kwargs,
             dict(
@@ -735,6 +833,10 @@ class Column(Part):
         filter__call_target__attribute='text',
     )
     def text(cls, **kwargs):
+        # language=rst
+        """
+        This is an explicit synonym for `Column()`.
+        """
         return cls(**kwargs)
 
     @classmethod
@@ -745,7 +847,10 @@ class Column(Part):
     @classmethod
     @with_defaults
     def link(cls, **kwargs):
-        # Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
+        # language=rst
+        """
+        Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
+        """
         def link_cell_url(column, row, **_):
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''

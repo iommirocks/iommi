@@ -195,6 +195,7 @@ def _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_nam
 
 from iommi import *
 from iommi.admin import Admin
+from iommi.struct import Struct
 from django.urls import (
     include,
     path,

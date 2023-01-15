@@ -3,6 +3,7 @@
 
 from iommi import *
 from iommi.admin import Admin
+from iommi.struct import Struct
 from django.urls import (
     include,
     path,

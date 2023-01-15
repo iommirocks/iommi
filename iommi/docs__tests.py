@@ -256,6 +256,7 @@ def test_generate_tests_from_class_doc():
 
 from iommi import *
 from iommi.admin import Admin
+from iommi.struct import Struct
 from django.urls import (
     include,
     path,
