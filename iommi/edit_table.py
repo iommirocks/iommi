@@ -124,6 +124,12 @@ class EditCells(Cells):
 
 
 class EditColumn(Column):
+    # language=rst
+    """
+    The column class for `EditTable`.
+    """
+
+
     edit: Field = Refinable()
 
     def on_refine_done(self):
@@ -242,7 +248,7 @@ def edit_table__post_handler(table, request, **_):
 class EditTable(Table):
     # language=rst
     """
-    Describe a table. Example:
+    Describe an editable table. Example:
 
     .. code-block:: python
 
@@ -252,10 +258,6 @@ class EditTable(Table):
         )
 
         # @test
-        artist = Artist.objects.create(name='Black Sabbath')
-        Album.objects.create(name='Heaven & Hell', artist=artist, year=1980),
-        Album.objects.create(name='Mob Rules', artist=artist, year=1981),
-
         show_output(table)
         # @end
     """

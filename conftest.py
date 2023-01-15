@@ -55,18 +55,18 @@ def track(album):
 @pytest.fixture
 def small_discography(artist):
     return [
-        Album.objects.create(name='Heaven & Hell', artist=artist, year=1980),
-        Album.objects.create(name='Mob Rules', artist=artist, year=1981),
+        Album.objects.get_or_create(name='Heaven & Hell', artist=artist, year=1980)[0],
+        Album.objects.get_or_create(name='Mob Rules', artist=artist, year=1981)[0],
     ]
 
 
 @pytest.fixture
 def medium_discography(artist):
-    ozzy = Artist.objects.create(name='Ozzy Osbourne')
+    ozzy, _ = Artist.objects.get_or_create(name='Ozzy Osbourne')
     return [
-        Album.objects.create(name='Heaven & Hell', artist=artist, year=1980),
-        Album.objects.create(name='Blizzard of Ozz', artist=ozzy, year=1980),
-        Album.objects.create(name='Mob Rules', artist=artist, year=1981),
+        Album.objects.get_or_create(name='Heaven & Hell', artist=artist, year=1980)[0],
+        Album.objects.get_or_create(name='Blizzard of Ozz', artist=ozzy, year=1980)[0],
+        Album.objects.get_or_create(name='Mob Rules', artist=artist, year=1981)[0],
     ]
 
 

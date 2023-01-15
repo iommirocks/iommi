@@ -108,6 +108,10 @@ class Attrs(Namespace):
             fields__name__attrs__style__baz='qwe',
         )
 
+        # @test
+        form.bind(request=req('get')).__html__()
+        # @end
+
     or more succinctly:
 
     .. code-block:: python
@@ -121,6 +125,9 @@ class Attrs(Namespace):
             )
         )
 
+        # @test
+        form.bind(request=req('get')).__html__()
+        # @end
 
     The thing to remember is that the basic namespace is a dict with key value
     pairs that gets projected out into the HTML, but there are two special cases

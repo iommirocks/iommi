@@ -3,6 +3,7 @@ from iommi.shortcut import with_defaults
 
 
 class Asset(Fragment):
+    # language=rst
     """
     Class that describes an asset in iommi. Assets are meant to be the elements that you refer
     to in the HEAD of your document such as links to scripts, style sheets as well as
@@ -20,6 +21,7 @@ class Asset(Fragment):
         tag='script',
     )
     def js(cls, text=None, **kwargs):
+        # language=rst
         """
         To use this shortcut, pass `attrs__src='/my_url_to_the.js'`
 
@@ -41,6 +43,7 @@ class Asset(Fragment):
         attrs__rel='stylesheet',
     )
     def css(cls, text=None, **kwargs):
+        # language=rst
         """
         To use this shortcut, pass `attrs__href='/my_url_to_the.css'`
 

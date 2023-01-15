@@ -471,6 +471,7 @@ def render_fragment(fragment):
 
 @with_meta
 class Field(Part, Tag):
+    # language=rst
     """
     Class that describes a field, i.e. what input controls to render, the label, etc.
 
@@ -572,6 +573,7 @@ class Field(Part, Tag):
         empty_label='---',
     )
     def __init__(self, **kwargs):
+        # language=rst
         """
         Note that, in addition to the parameters with the defined behavior below, you can pass in any keyword argument you need yourself, including callables that conform to the protocol, and they will be added and evaluated as members.
 
@@ -582,8 +584,6 @@ class Field(Part, Tag):
                 Field(attrs__id=lambda form, field: 'my_id_%s' % field._name)
 
         :param after: Set the order of columns, see the `howto <https://docs.iommi.rocks/en/latest/cookbook_forms.html#how-do-i-change-the-order-of-the-fields>`_ for an example.
-        :param is_valid: validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError. Default: `lambda form, field, parsed_data: (True, '')`
-        :param parse: Parse function. Default just returns the string input unchanged: `lambda form, field, string_value: string_value`. This function can raise `ValueError` or `ValidationError` to produce a field error message.
         :param initial: Initial value of the field
         :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Defaults to same as name
         :param attrs: A dict containing any custom html attributes to be sent to the `input__template`.
@@ -597,7 +597,6 @@ class Field(Part, Tag):
 
         :param editable: Is this field editable.
         :param strip_input: Runs the input data through standard python .strip() before passing it to the parse function (can NOT be callable). Default: `True`
-        :param render_value: Render the parsed and validated value into a string. Default just converts to unicode: `lambda form, field, value: unicode(value)`
         :param is_list: Interpret request data as a list (can NOT be a callable). Default: `False``
         :param read_from_instance: Callback to retrieve value from edited instance. Invoked with parameters field and instance.
         :param write_to_instance: Callback to write value to instance. Invoked with parameters field, instance and value.
@@ -643,12 +642,33 @@ class Field(Part, Tag):
     @staticmethod
     @refinable
     def is_valid(form: 'Form', field: 'Field', parsed_data: Any, **_) -> Tuple[bool, str]:
+        # language=rst
+        """
+        Validation function. Should return a tuple of `(bool, reason_for_failure_if_bool_is_false)` or raise ValidationError.
+
+        .. code-block:: python
+
+            form = Form.create(
+                auto__model=Artist,
+                fields__name__is_valid=lambda parsed_data, **_: (parsed_data.startswith('H'), 'Must start with H!'),
+            )
+
+            # @test
+            show_output(form.bind(request=req('post', **{'-submit': '', 'name': 'blizzard of ozz'})))
+            # @end
+        """
+
         return True, ''
 
     # noinspection PyUnusedLocal
     @staticmethod
     @refinable
     def parse(form: 'Form', field: 'Field', string_value: str, **_) -> Any:
+        # language=rst
+        """
+        Parse function. Default just returns the string input unchanged. This function can raise `ValueError` or `ValidationError` to produce a field error message.
+        """
+
         del form, field
         return string_value
 
@@ -660,6 +680,27 @@ class Field(Part, Tag):
     @staticmethod
     @refinable
     def render_value(form: 'Form', field: 'Field', value: Any, **kwargs) -> str:
+        # language=rst
+        """
+        Render the parsed and validated value into a string. Default just converts to `str`.
+
+        .. code-block:: python
+
+            sentinel = '!!custom!!'
+            form = Form(
+                fields__foo=Field(
+                    initial='not sentinel value',
+                    render_value=lambda form, field, value, **_: sentinel,
+                )
+            )
+
+            # @test
+            show_output(form)
+            assert sentinel in form.bind(request=req('get')).__html__()
+            # @end
+        """
+
+
         if isinstance(value, (list, QuerySet)):
             return ', '.join(field.render_value(form=form, field=field, value=v, **kwargs) for v in value)
         else:

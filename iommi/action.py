@@ -42,20 +42,37 @@ class Action(Fragment):
 
     .. code-block:: python
 
+        # @test
+        actions = [
+        # @end
+
         # Link
-        Action(attrs__href='http://example.com')
+        Action(attrs__href='http://example.com'),
 
         # Link with icon
-        Action.icon('edit', attrs__href="edit/")
+        Action.icon('edit', attrs__href="edit/"),
 
         # Button
-        Action.button(display_name='Button title!')
+        Action.button(display_name='Button title!'),
 
         # A submit button
-        Action.submit(display_name='Do this')
+        Action.submit(display_name='Do this'),
 
         # The primary submit button on a form.
-        Action.primary()
+        Action.primary(),
+
+        # @test
+        ]
+
+        from iommi.refinable import Prio
+        foo = Page(
+            parts={
+                f'button_{i}': html.div(action.refine(display_name='Action', prio=Prio.shortcut))
+                for i, action in enumerate(actions)
+            }
+        )
+        show_output(foo)
+        # @end
 
     Notice that because forms
     with a single primary submit button are so common, iommi assumes

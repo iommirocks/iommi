@@ -14,6 +14,7 @@ from iommi.declarative.namespace import (
     flatten,
     Namespace,
 )
+from iommi.refinable import is_refinable_function
 from iommi.shortcut import (
     get_shortcuts_by_name,
     is_shortcut,
@@ -121,7 +122,7 @@ def get_methods_by_type_by_name(class_):
     r = {
         k: v
         for k, v in class_.__dict__.items()
-        if not k.startswith('_') and k not in ignore_list and not is_shortcut(getattr(class_, k))
+        if not k.startswith('_') and k not in ignore_list and not is_shortcut(getattr(class_, k)) and not is_refinable_function(getattr(class_, k))
     }
 
     return {
@@ -278,7 +279,11 @@ request = req('get')
             w(0, '')
             w(0, '* `' + refinable + '`')
 
-            if constructor_doc['params'].get(refinable):
+            docstring = getattr(getattr(c, refinable, None), '__doc__')
+            if docstring:
+                _print_rst_or_python(docstring, w, indent=1)
+                w(0, '')
+            elif constructor_doc['params'].get(refinable):
                 w(1, constructor_doc['params'][refinable])
                 w(0, '')
             type_hint = type_hints.get(refinable)
@@ -357,7 +362,7 @@ request = req('get')
     return 'test_doc__api_%s.py' % c.__name__, f.getvalue()
 
 
-def _print_rst_or_python(doc, w):
+def _print_rst_or_python(doc, w, indent=0):
     if not doc:
         return
     in_code_block = False
@@ -380,9 +385,9 @@ def _print_rst_or_python(doc, w):
                     in_code_block = False
                     w(1, '# language=rst')
                     w(1, '"""')
-                    w(1, line)
+                    w(1+indent, line)
         else:
-            w(0, line)
+            w(0+indent, line)
     if in_code_block:
         w(1, '# language=rst')
         w(1, '"""')
