@@ -614,6 +614,8 @@ class Field(Part, Tag):
         model_field = self.model_field
         if model_field and model_field.remote_field:
             self.model = model_field.remote_field.model
+        elif isinstance(self.model, SpecialEvaluatedRefinable):
+            self.model = None
 
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None

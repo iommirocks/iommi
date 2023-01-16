@@ -1422,6 +1422,7 @@ class Paginator(Traversable):
 
         if self.page_size is None:
             self.number_of_pages = 1
+            self.count = None
         else:
             self.count = evaluate_strict(self.count, **evaluate_parameters) if rows is not None else 0
             if self.count is None:
