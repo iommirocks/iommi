@@ -588,10 +588,9 @@ class Field(Part, Tag):
         :param attr: The attribute path to apply or get the data from. For example using `foo__bar__baz` will result in `your_instance.foo.bar.baz` will be set by the `apply()` function. Defaults to same as name
         :param attrs: A dict containing any custom html attributes to be sent to the `input__template`.
         :param display_name: The text in the HTML label tag. Default: `capitalize(name).replace('_', ' ')`
-        :param template: django template filename for the entire row. Normally you shouldn't need to override on this level. Prefer overriding `input__template`, `label__template` or `error__template` as needed.
-        :param template_string: You can inline a template string here if it's more convenient than creating a file. Default: `None`
-        :param input__template: Django template filename for the template for just the input control.
-        :param label__template: Django template filename for the template for just the label tab.
+        :param template: Django template filename or `Template` instance for the entire row. Normally you shouldn't need to override on this level. Prefer overriding `input__template`, `label__template` or `error__template` as needed.
+        :param input__template: Django template filename or `Template` instance for the template for just the input control.
+        :param label__template: Django template filename or `Template` instance for the template for just the label tab.
         :param required: If the field is a required field. Default: `True`
         :param help_text: The help text will be grabbed from the django model if specified and available.
 
