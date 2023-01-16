@@ -145,6 +145,8 @@ def test_namespace_dispatching():
 def test_evaluate():
     # language=rst
     """
+    .. _evaluate:
+
     Evaluate
     --------
 
