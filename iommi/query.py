@@ -96,6 +96,7 @@ from iommi.refinable import (
     Refinable,
     refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import (
     Shortcut,
@@ -231,7 +232,7 @@ class Filter(Part):
     field: Namespace = Refinable()
     query_operator_for_field: str = EvaluatedRefinable()
     freetext = EvaluatedRefinable()
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
     choices = EvaluatedRefinable()
@@ -619,7 +620,7 @@ class Query(Part):
     auto: Namespace = Refinable()
     form: Namespace = Refinable()
     advanced: Namespace = Refinable()
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
     rows = Refinable()
     template: Union[str, Template] = EvaluatedRefinable()
     form_container: Fragment = EvaluatedRefinable()

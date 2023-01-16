@@ -45,6 +45,7 @@ from iommi.refinable import (
     Prio,
     Refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 
@@ -154,7 +155,7 @@ class Fragment(Part, Tag):
     `MyPage(parts__header__tag='h2')` it will be rendered with a `<h2>`.
     """
 
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     tag = EvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     children = RefinableMembers()

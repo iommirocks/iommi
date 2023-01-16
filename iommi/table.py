@@ -137,6 +137,7 @@ from iommi.refinable import (
     refinable,
     RefinableMembers,
     RefinableObject,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 from iommi.sort_after import LAST
@@ -352,7 +353,7 @@ class Column(Part):
     auto_rowspan: bool = EvaluatedRefinable()
     row_group: Namespace = EvaluatedRefinable()
     cell: Namespace = Refinable()
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
     choices: Iterable = EvaluatedRefinable()
@@ -1008,7 +1009,7 @@ class Cells(Traversable, Tag):
     """
 
     template: Union[str, Template] = EvaluatedRefinable()
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     tag: str = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     # not EvaluatedRefinable because this is an evaluated container so is special
@@ -1171,7 +1172,7 @@ class TemplateConfig(RefinableObject):
 
 
 class HeaderConfig(Traversable):
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     extra_evaluated: Dict[str, Any] = Refinable()
@@ -1185,13 +1186,13 @@ class HeaderConfig(Traversable):
 
 
 class HeaderColumnConfig(Traversable):
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     url = EvaluatedRefinable()
 
 
 class RowConfig(RefinableObject, Tag):
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     tag = Refinable()
     template: Union[str, Template] = Refinable()
     extra: Dict[str, Any] = Refinable()
@@ -1355,18 +1356,17 @@ def paginator__count(rows, **_):
 
 @with_meta
 class Paginator(Traversable):
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     container = Refinable()
-    page: int = Refinable()  # page is evaluated, but in a special way so gets no EvaluatedRefinable type
+    page: int = SpecialEvaluatedRefinable()
     active_item = Refinable()
     item = Refinable()
     link = Refinable()
     adjacent_pages: int = Refinable()
     min_page_size: int = Refinable()
-    # number_of_pages is evaluated, but in a special way so gets no EvaluatedRefinable type
-    number_of_pages: int = Refinable()
-    count: int = Refinable()  # count is evaluated, but in a special way so gets no EvaluatedRefinable type
+    number_of_pages: int = SpecialEvaluatedRefinable()
+    count: int = SpecialEvaluatedRefinable()
     slice = Refinable()
     show_always = Refinable()
 
@@ -1620,18 +1620,16 @@ class Table(Part, Tag):
     sortable: bool = EvaluatedRefinable()
     query_from_indexes: bool = Refinable()
     default_sort_order = Refinable()
-    # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    attrs: Attrs = Refinable()
+    attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     tag: str = EvaluatedRefinable()
-    # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
-    h_tag: Union[Fragment, str] = Refinable()
-    title: str = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
+    title: str = SpecialEvaluatedRefinable()
     row: RowConfig = EvaluatedRefinable()
     cell: CellConfig = EvaluatedRefinable()
     header = Refinable()
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
-    rows = Refinable()  # rows is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
+    rows = SpecialEvaluatedRefinable()
     actions: Dict[str, Action] = RefinableMembers()
     parts: Namespace = RefinableMembers()
     bulk: Optional[Form] = EvaluatedRefinable()

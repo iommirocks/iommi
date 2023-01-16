@@ -28,6 +28,7 @@ from iommi.part import Part
 from iommi.refinable import (
     EvaluatedRefinable,
     Refinable,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 
@@ -208,6 +209,5 @@ def group_actions(actions: Dict[str, Action]):
 
 
 class Actions(Members, Tag):
-    # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
-    attrs: Attrs = Refinable()
+    attrs: Attrs = SpecialEvaluatedRefinable()
     tag = EvaluatedRefinable()

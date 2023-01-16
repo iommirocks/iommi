@@ -20,12 +20,14 @@ from iommi.evaluate import (
     find_static_items,
     get_callable_description,
     get_signature,
+    is_callable,
     matches,
     signature_from_kwargs,
 )
 from iommi.refinable import (
     evaluated_refinable,
     EvaluatedRefinable,
+    get_special_evaluated_attributes,
     Prio,
     Refinable,
     RefinableMembers,
@@ -209,6 +211,11 @@ class Traversable(RefinableObject):
 
         if hasattr(result, 'extra_evaluated'):
             result.extra_evaluated = Struct(evaluate_as_needed(result.extra_evaluated or {}, evaluate_parameters))
+
+        for k in get_special_evaluated_attributes(result):
+            v = getattr(result, k)
+            if is_callable(v) and not isinstance(v, type):
+                assert False, ('SpecialEvaluatedRefinable not evaluated', k, v, repr(result))
 
         return result
 
