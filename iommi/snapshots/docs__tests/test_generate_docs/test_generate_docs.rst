@@ -112,10 +112,4 @@ Defaults
 * `description`
     * `qwe`
 
-Static methods
---------------
-
-`refinable_func`
-^^^^^^^^^^^^^^^^
-
     """
