@@ -42,6 +42,7 @@ from iommi.refinable import (
     EvaluatedRefinable,
     Refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 from iommi.sort_after import sort_after
@@ -64,9 +65,8 @@ class Page(Part):
 
     title: str = EvaluatedRefinable()
     member_class: Type[Fragment] = Refinable()
-    context = Refinable()  # context is evaluated, but in a special way so gets no EvaluatedRefinable type
-    # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
-    h_tag: Union[Fragment, str] = Refinable()
+    context = SpecialEvaluatedRefinable()
+    h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
     parts: Dict[str, PartType] = RefinableMembers()
 
     class Meta:

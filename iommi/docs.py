@@ -14,7 +14,11 @@ from iommi.declarative.namespace import (
     flatten,
     Namespace,
 )
-from iommi.refinable import is_refinable_function
+from iommi.refinable import (
+    EvaluatedRefinable,
+    is_refinable_function,
+    SpecialEvaluatedRefinable,
+)
 from iommi.shortcut import (
     get_shortcuts_by_name,
     is_shortcut,
@@ -276,8 +280,12 @@ request = req('get')
         section(1, 'Refinable members')
         type_hints = get_type_hints(c)
         for refinable, value in refinable_members:
+            evaluated_marker = ''
+            if isinstance(getattr(c, refinable, None), (EvaluatedRefinable, SpecialEvaluatedRefinable)):
+                evaluated_marker = '  \N{NO-BREAK SPACE}\N{NO-BREAK SPACE}\N{NO-BREAK SPACE}  (:ref:`evaluated <evaluate>`)'
+
             w(0, '')
-            w(0, '* `' + refinable + '`')
+            w(0, '* `' + refinable + '`' + evaluated_marker)
 
             docstring = getattr(getattr(c, refinable, None), '__doc__')
             if docstring:

@@ -41,6 +41,7 @@ from iommi.refinable import (
     EvaluatedRefinable,
     Refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 
@@ -49,7 +50,7 @@ class MenuBase(Part, Tag):
     tag: str = EvaluatedRefinable()
     sort: bool = EvaluatedRefinable()  # only applies for submenu items
     sub_menu: Dict = RefinableMembers()
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
     class Meta:
@@ -99,7 +100,7 @@ class MenuItem(MenuBase):
     """
 
     display_name: str = EvaluatedRefinable()
-    url: str = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    url: str = SpecialEvaluatedRefinable()
     regex: str = EvaluatedRefinable()
     group: str = EvaluatedRefinable()
     a = Refinable()

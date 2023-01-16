@@ -55,6 +55,7 @@ from .refinable import (
     EvaluatedRefinable,
     Refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from .sort_after import sort_after
 
@@ -66,7 +67,7 @@ class Part(Traversable):
     See the `howto <https://docs.iommi.rocks/en/latest/cookbook_parts_pages.html#parts-pages>`_ for example usages.
     """
 
-    include: bool = Refinable()  # This is evaluated, but first and in a special way
+    include: bool = SpecialEvaluatedRefinable()
     after: Union[int, str] = EvaluatedRefinable()
     extra: Dict[str, Any] = Refinable()
     # not EvaluatedRefinable because this is an evaluated container so is special

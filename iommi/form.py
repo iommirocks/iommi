@@ -113,6 +113,7 @@ from iommi.refinable import (
     Refinable,
     refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import with_defaults
 from iommi.sort_after import sort_after
@@ -495,12 +496,12 @@ class Field(Part, Tag):
 
     parse_empty_string_as_none: bool = EvaluatedRefinable()
     # parsed_data/parsed_data contains data that has been interpreted, but not checked for validity or access control
-    parsed_data: Any = Refinable()  # parsed_data is evaluated, but in a special way so gets no EvaluatedRefinable type
+    parsed_data: Any = SpecialEvaluatedRefinable()
 
-    initial: Any = Refinable()  # initial is evaluated, but in a special way so gets no EvaluatedRefinable type
+    initial: Any = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
 
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     required: bool = EvaluatedRefinable()
 
     input: Fragment = Refinable()
@@ -510,15 +511,14 @@ class Field(Part, Tag):
 
     is_list: bool = EvaluatedRefinable()
     is_boolean: bool = EvaluatedRefinable()
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
     model_field = Refinable()
     model_field_name = Refinable()
 
     editable: bool = EvaluatedRefinable()
     strip_input: bool = EvaluatedRefinable()
 
-    # choices is evaluated, but in a special way so gets no EvaluatedRefinable type
-    choices: Callable[..., List[Any]] = Refinable()
+    choices: Callable[..., List[Any]] = SpecialEvaluatedRefinable()
     choice_id_formatter: Callable[..., str] = Refinable()
     choice_display_name_formatter: Callable[..., str] = Refinable()
     choice_to_optgroup: Optional[Callable[..., Optional[str]]] = Refinable()
@@ -614,6 +614,8 @@ class Field(Part, Tag):
         model_field = self.model_field
         if model_field and model_field.remote_field:
             self.model = model_field.remote_field.model
+        elif isinstance(self.model, SpecialEvaluatedRefinable):
+            self.model = None
 
         # value/value_data_list is the final step that contains parsed and valid data
         self.value = None
@@ -1467,15 +1469,14 @@ class Form(Part):
     actions_template: Union[str, Template] = Refinable()
     # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
     attr: str = EvaluatedRefinable()
-    attrs: Attrs = Refinable()  # attrs is evaluated, but in a special way so gets no EvaluatedRefinable type
+    attrs: Attrs = SpecialEvaluatedRefinable()
     editable: bool = Refinable()
-    # h_tag is evaluated, but in a special way so gets no EvaluatedRefinable type
-    h_tag: Union[Fragment, str] = Refinable()
-    title: Fragment = Refinable()  # title is evaluated, but in a special way so gets no EvaluatedRefinable type
+    h_tag: Union[Fragment, str] = SpecialEvaluatedRefinable()
+    title: Fragment = SpecialEvaluatedRefinable()
     template: Union[str, Template] = EvaluatedRefinable()
     errors: Errors = Refinable()
 
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
     member_class: Type[Field] = Refinable()
     action_class: Type[Action] = Refinable()
     page_class: Type[Page] = Refinable()

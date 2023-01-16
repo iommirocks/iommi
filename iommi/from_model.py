@@ -24,6 +24,7 @@ from iommi.evaluate import evaluate
 from iommi.refinable import (
     Refinable,
     RefinableObject,
+    SpecialEvaluatedRefinable,
 )
 
 
@@ -272,7 +273,7 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
 
 
 class AutoConfig(RefinableObject):
-    model: Type[Model] = Refinable()  # model is evaluated, but in a special way so gets no EvaluatedRefinable type
+    model: Type[Model] = SpecialEvaluatedRefinable()
     include = Refinable()
     exclude = Refinable()
     default_included = Refinable()

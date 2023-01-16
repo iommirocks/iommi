@@ -160,6 +160,30 @@ def get_evaluated_attributes(result):
         return r
 
 
+class SpecialEvaluatedRefinable(Refinable):
+    pass
+
+def special_evaluated_refinable(f):
+    f = refinable(f)
+    f.__iommi__special_evaluated = True
+    return f
+
+def is_special_evaluated_refinable(x):
+    return isinstance(x, SpecialEvaluatedRefinable) or getattr(x, '__iommi__special_evaluated', False)
+
+
+_get_special_evaluated_attributes_cache = {}
+
+def get_special_evaluated_attributes(result):
+    class_ = type(result)
+    try:
+        return _get_special_evaluated_attributes_cache[class_]
+    except KeyError:
+        r = [k for k, v in items(result.get_declared('refinable')) if is_special_evaluated_refinable(v)]
+        _get_special_evaluated_attributes_cache[class_] = r
+        return r
+
+
 class RefinableMembers(Refinable):
     pass
 
