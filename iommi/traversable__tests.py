@@ -39,6 +39,7 @@ from iommi.refinable import (
     EvaluatedRefinable,
     Refinable,
     RefinableMembers,
+    SpecialEvaluatedRefinable,
 )
 from iommi.shortcut import (
     superinvoking_classmethod,
@@ -517,3 +518,57 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
     assert f.extra_evaluated == dict(bar='apple', foo='banana')
 
     assert next(counter) == 1
+
+
+def test_attribute_non_evaluation():
+    class MyTraversable(Traversable):
+        color = Refinable()
+        taste = EvaluatedRefinable()
+        smell = SpecialEvaluatedRefinable()
+
+    my_instance = MyTraversable(
+        color='red',
+        taste='sour',
+        smell='foul',
+    ).bind()
+
+    assert my_instance.color == 'red'
+    assert my_instance.taste == 'sour'
+    assert my_instance.smell == 'foul'
+
+
+def test_attribute_evaluation():
+    class MyTraversable(Traversable):
+        color = Refinable()
+        taste = EvaluatedRefinable()
+        smell = SpecialEvaluatedRefinable()
+
+    my_callbacky_instance = MyTraversable(
+        color=lambda **_: 'red',
+        taste=lambda **_: 'sour',
+    ).bind()
+    assert callable(my_callbacky_instance.color)
+    assert my_callbacky_instance.taste == 'sour'
+
+
+def test_attribute_evaluation_special_handling():
+    class MySpecialEvaluatingTraversable(Traversable):
+        smell = SpecialEvaluatedRefinable()
+
+        def on_bind(self):
+            self.smell = self.smell()
+
+    my_special_evaluated_instance = MySpecialEvaluatingTraversable(
+        smell=lambda **_: 'foul',
+    ).bind()
+    assert my_special_evaluated_instance.smell == 'foul'
+
+
+def test_attribute_evaluation_missed_special_handling():
+    class MyTraversable(Traversable):
+        smell = SpecialEvaluatedRefinable()
+
+    with pytest.raises(AssertionError):
+        MyTraversable(
+            smell=lambda **_: 'foul',
+        ).bind()
