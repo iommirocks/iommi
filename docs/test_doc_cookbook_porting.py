@@ -25,7 +25,9 @@ def test_existing_views():
     """
     Existing function based views often have an initial part building a set of values from the view parameters that then is passed on as a context to the template rendering.
 
-    When refactoring this to the more iommi ideomatic style of calculating values in callbacks it can sometimes be helpfull to not have to move everythin at once.
+    When refactoring this to the more iommi idiomatic style of calculating values in callbacks, it can sometimes be helpful to not have to move everything at once.
+
+    Let's look at an example to make this more concrete:
 
     """
 
@@ -42,7 +44,7 @@ def test_existing_views():
 
     # language=rst
     """
-    There is a configurable callback, `extra_params`, to provide extra parameters given the parameters already provided by django and the iommi path machinery.
+    There is a configurable callback, `extra_params`, to provide extra parameters given, on top of the parameters already provided by Django and the iommi path machinery:
     """
 
     class IommiPage(Page):
