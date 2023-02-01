@@ -15,6 +15,7 @@ from iommi import (
     Style,
     Table,
 )
+from iommi._web_compat import Template
 from iommi.base import (
     items,
     keys,
@@ -54,6 +55,7 @@ from tests.helpers import (
     Box,
     Fruit,
     req,
+    verify_html,
 )
 from tests.models import TFoo
 
@@ -572,3 +574,27 @@ def test_attribute_evaluation_missed_special_handling():
         MyTraversable(
             smell=lambda **_: 'foul',
         ).bind()
+
+
+def test_extra_params():
+    class MyPage(Page):
+        class Meta:
+            extra_params = lambda x, **_: dict(
+                y=x + 1,
+            )
+
+        content = Template('x={{params.x}} y={{params.y}}')
+
+    view = MyPage().as_view()
+    response = view(req('get'), x=17)
+
+    verify_html(
+        actual_html=response.content.decode(),
+        find=dict(name='body'),
+        # language=HTML
+        expected_html='''
+            <body>
+                x=17 y=18
+            </body>
+        ''',
+    )
