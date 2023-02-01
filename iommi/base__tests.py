@@ -128,12 +128,18 @@ def test_get_wrapped_part_view_wrapped():
     assert isinstance(view.__iommi_target__, PartBasedViewPage)
 
 
-def test_refine_done_optimization():
-    with override_settings(IOMMI_REFINE_DONE_OPTIMIZATION=True):
-        assert PartBasedViewPage().as_view().__iommi_target__.is_refine_done
+@pytest.mark.parametrize('optimize', [False, True])
+def test_refine_done_optimization(optimize):
+    with override_settings(IOMMI_REFINE_DONE_OPTIMIZATION=optimize):
+        view = PartBasedViewPage().as_view()
+        assert not view.__iommi_target__.is_refine_done
 
-    with override_settings(IOMMI_REFINE_DONE_OPTIMIZATION=False):
-        assert not PartBasedViewPage().as_view().__iommi_target__.is_refine_done
+        view(req('get'))
+
+        if optimize:
+            assert view.__iommi_target__.is_refine_done
+        else:
+            assert not view.__iommi_target__.is_refine_done
 
 
 def test_not_bound_yet_error():

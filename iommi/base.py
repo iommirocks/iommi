@@ -39,12 +39,14 @@ def model_and_rows(model, rows):
 def build_as_view_wrapper(target):
     from iommi.path import decode_path_components  # avoid circular import
 
-    if not target.is_refine_done and getattr(settings, 'IOMMI_REFINE_DONE_OPTIMIZATION', True):
-        target = target.refine_done()
+    optimize = getattr(settings, 'IOMMI_REFINE_DONE_OPTIMIZATION', True)
 
     def view_wrapper(request, **view_params):
+        if not view_wrapper.__iommi_target__.is_refine_done and optimize:
+            view_wrapper.__iommi_target__ = view_wrapper.__iommi_target__.refine_done()
+
         decode_path_components(request, **view_params)
-        return target.bind(request=request).render_to_response()
+        return view_wrapper.__iommi_target__.bind(request=request).render_to_response()
 
     view_wrapper.__name__ = f'{target.__class__.__name__}.as_view'
     view_wrapper.__doc__ = target.__class__.__doc__
