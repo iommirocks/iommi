@@ -195,7 +195,9 @@ class Traversable(RefinableObject):
             evaluate_parameters['request'] = request
             if hasattr(request, 'iommi_view_params'):
                 params = request.iommi_view_params
-                params.update(result.extra_params(**params))
+                extra_params = result.extra_params(request=request, **params)
+                assert isinstance(extra_params, dict), 'extra_params needs to return a dict with additional parameters'
+                params.update(extra_params)
                 evaluate_parameters['params'] = params
         result._evaluate_parameters = evaluate_parameters
 
