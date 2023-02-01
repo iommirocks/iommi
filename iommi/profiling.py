@@ -76,19 +76,21 @@ class Middleware:
                     if not gprof2dot_path.exists():
                         raise Exception('gprof2dot not found. Please install it to use the graph feature.')
 
-                    gprof2dot = subprocess.Popen(
+                    with subprocess.Popen(
                         (sys.executable, gprof2dot_path, '-f', 'pstats', stats_dump.name), stdout=subprocess.PIPE
-                    )
+                    ) as gprof2dot:
 
-                    response['Content-Type'] = 'image/svg+xml'
+                        response['Content-Type'] = 'image/svg+xml'
 
-                    dot_path = get_dot_path()
-                    if dot_path:
-                        response.content = subprocess.check_output((dot_path, '-Tsvg'), stdin=gprof2dot.stdout)
-                    else:
-                        response['Content-Type'] = 'text/plain'
-                        response['Content-Disposition'] = "attachment; filename=gprof2dot-graph.txt"
-                        response.content = subprocess.check_output('tee', stdin=gprof2dot.stdout)
+                        dot_path = get_dot_path()
+                        if dot_path:
+                            response.content = subprocess.check_output((dot_path, '-Tsvg'), stdin=gprof2dot.stdout)
+                        else:
+                            response['Content-Type'] = 'text/plain'
+                            response['Content-Disposition'] = "attachment; filename=gprof2dot-graph.txt"
+                            response.content = subprocess.check_output('tee', stdin=gprof2dot.stdout)
+
+                        gprof2dot.wait()
 
             elif prof_command == 'snake':
                 # noinspection PyPackageRequirements
