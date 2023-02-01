@@ -1,6 +1,28 @@
 Changelog
 ---------
 
+5.7.0 (2023-02-01)
+~~~~~~~~~~~~~~~~~~
+
+* Make `Column.select()` more suitable to customization
+
+* Unify callback parameters for `cell__value` and `cell__format`
+
+* Make .as_view be lazy with refine_done to not explode import times
+
+* Added `extra_params` callback to sneak in parameters while porting old-style view code
+
+* Added `Field.non_rendered` shortcut
+
+* `sort_after` raises `SortAfterException` instead of `KeyError` to improve error message rendering in debug page (`KeyError` did `repr(message)`)
+
+* Bootstrap style fix for grouped fields when using select2
+
+* Fixed examples project scrape code
+
+* Move Form style template definition to be more of an overridable default
+
+
 5.6.2 (2022-12-16)
 ~~~~~~~~~~~~~~~~~~
 
