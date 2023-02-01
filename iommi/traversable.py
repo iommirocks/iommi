@@ -30,6 +30,7 @@ from iommi.refinable import (
     get_special_evaluated_attributes,
     Prio,
     Refinable,
+    refinable,
     RefinableMembers,
     RefinableObject,
 )
@@ -61,6 +62,11 @@ class Traversable(RefinableObject):
     iommi_style: str = Refinable()
     assets = RefinableMembers()
     endpoints = RefinableMembers()
+
+    @staticmethod
+    @refinable
+    def extra_params(**_):
+        return {}
 
     _bound_members: Dict[str, 'Traversable']
 
@@ -188,7 +194,9 @@ class Traversable(RefinableObject):
         if parent is None:
             evaluate_parameters['request'] = request
             if hasattr(request, 'iommi_view_params'):
-                evaluate_parameters['params'] = request.iommi_view_params
+                params = request.iommi_view_params
+                params.update(result.extra_params(**params))
+                evaluate_parameters['params'] = params
         result._evaluate_parameters = evaluate_parameters
 
         if hasattr(result, 'include'):

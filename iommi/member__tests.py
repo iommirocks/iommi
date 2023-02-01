@@ -92,6 +92,7 @@ def test_bind_via_unapplied_config():
             r'Available attributes:\n'
             r'    assets\n'
             r'    endpoints\n'
+            r'    extra_params\n'
             r'    iommi_style\n'
             r'    taste\n'
         ),
