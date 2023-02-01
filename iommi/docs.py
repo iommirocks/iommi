@@ -1,5 +1,7 @@
+import inspect
 import re
 from glob import glob
+from os import stat
 from pathlib import Path
 from textwrap import dedent
 from typing import get_type_hints
@@ -98,15 +100,14 @@ def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this
         classes = get_default_classes()
 
     doc_by_filename = _generate_tests_from_class_docs(classes=classes)  # pragma: no mutate
-    for filename, doc in doc_by_filename:  # pragma: no mutate
-        # Avoid rewriting the files! If we do then pytest will redo the assertion rewriting which is very slow.
+    for source_filename, filename, doc_generator in doc_by_filename:  # pragma: no mutate
         try:
-            with open(directory / filename) as f2:
-                old_contents = f2.read()
-            if old_contents == doc:
+            if stat(source_filename).st_mtime <= stat(directory / filename).st_mtime:
                 continue
         except FileNotFoundError:
             pass
+
+        doc = doc_generator()
         with open(directory / filename, 'w') as f2:  # pragma: no mutate
             f2.write(doc)  # pragma: no mutate
 
@@ -183,6 +184,10 @@ def _generate_tests_from_class_docs(classes):
 
 
 def _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name):
+    return inspect.getfile(c), 'test_doc__api_%s.py' % c.__name__, lambda: _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name)
+
+
+def _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name):
     def w(levels, s):
         f.write(indent(levels, s))
         f.write('\n')
@@ -367,7 +372,7 @@ request = req('get')
                     w(0, '')
 
     w(1, '''"""''')
-    return 'test_doc__api_%s.py' % c.__name__, f.getvalue()
+    return f.getvalue()
 
 
 def _print_rst_or_python(doc, w, indent=0):
