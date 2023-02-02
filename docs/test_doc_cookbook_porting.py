@@ -50,7 +50,7 @@ def test_existing_views():
     class IommiPage(Page):
         class Meta:
             @staticmethod
-            def extra_params(a, b):
+            def extra_params(request, a, b):
                 return dict(
                     c=some_function(a, b),
                 )

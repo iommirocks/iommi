@@ -598,3 +598,23 @@ def test_extra_params():
             </body>
         ''',
     )
+
+
+def test_extra_params_params():
+    my_request = req('get')
+
+    class MyPage(Page):
+        class Meta:
+            @staticmethod
+            def extra_params(request, foo, **_):
+                assert request is my_request
+                assert foo == 17
+                return {}
+
+    MyPage().as_view()(my_request, foo=17)
+
+
+def test_extra_params_missing_return_value():
+    with pytest.raises(AssertionError) as e:
+        Page(extra_params=lambda **_: None).as_view()(req('get'))
+    assert str(e.value) == 'extra_params needs to return a dict with additional parameters'
