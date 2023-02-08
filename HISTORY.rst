@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.7.1 (5023-02-08)
+~~~~~~~~~~~~~~~~~~
+
+* Add `request` parameter to `extra_params` callback.
+
+
 5.7.0 (2023-02-01)
 ~~~~~~~~~~~~~~~~~~
 
