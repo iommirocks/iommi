@@ -1758,7 +1758,8 @@ class Form(Part):
         r = []
         for group, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
             if group is not MISSING:
-                current_group = self.field_group(group=group).bind(parent=self)
+                current_group = self.field_group(_name=f'iommi_field_group_{group}', group=group).bind(parent=self)
+                # current_group = self.field_group(group=group, _name=group).bind(parent=self)
                 r.append(current_group.iommi_open_tag())
 
                 r.extend([part.__html__() for part in parts])

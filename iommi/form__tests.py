@@ -21,6 +21,7 @@ from django.http.response import HttpResponseBase
 from django.test import override_settings
 from django.urls import reverse_lazy
 
+from docs.models import Track
 from iommi import (
     Action,
     html,
@@ -3502,3 +3503,13 @@ def test_form_template_override_bug():
 
     assert MyForm.case1().refine_done().iommi_namespace.template == 'case1'
     assert MyForm.case2().refine_done().iommi_namespace.template == 'case2'
+
+
+def test_bootstrap_crash_when_no_iommi_name_on_field_group(settings):
+    settings.IOMMI_DEBUG = True
+
+    Form(
+        auto__model=Track,
+        fields__name__group='group',
+        iommi_style='bootstrap',
+    ).bind(request=req('get')).render_to_response()
