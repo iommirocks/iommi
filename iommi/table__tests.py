@@ -575,13 +575,14 @@ def test_attr(NoSortTable):
     )
 
 
+# noinspection HtmlUnknownAttribute
 def test_attrs(NoSortTable):
     class TestTable(NoSortTable):
         class Meta:
             attrs__class__classy = True
             attrs__foo = lambda **_: 'bar'
             row__attrs__class__classier = True
-            row__attrs__foo = lambda **_: "barier"
+            row__attrs__foo = lambda **_: "quux"
 
         yada = Column()
 
@@ -596,10 +597,10 @@ def test_attrs(NoSortTable):
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="classier" foo="barier">
+                    <tr class="classier" foo="quux">
                         <td> 1 </td>
                     </tr>
-                    <tr class="classier" foo="barier">
+                    <tr class="classier" foo="quux">
                         <td> 2 </td>
                     </tr>
                 </tbody>
@@ -608,6 +609,7 @@ def test_attrs(NoSortTable):
     )
 
 
+# noinspection HtmlUnknownAttribute
 def test_attrs_new_syntax(NoSortTable):
     class TestTable(NoSortTable):
         class Meta:
@@ -615,7 +617,7 @@ def test_attrs_new_syntax(NoSortTable):
             attrs__foo = lambda table, **_: 'bar'
 
             row__attrs__class__classier = True
-            row__attrs__foo = lambda table, **_: "barier"
+            row__attrs__foo = lambda table, **_: "quux"
 
         yada = Column()
 
@@ -630,10 +632,10 @@ def test_attrs_new_syntax(NoSortTable):
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="classier" foo="barier">
+                    <tr class="classier" foo="quux">
                         <td> 1 </td>
                     </tr>
-                    <tr class="classier" foo="barier">
+                    <tr class="classier" foo="quux">
                         <td> 2 </td>
                     </tr>
                 </tbody>
@@ -2571,7 +2573,7 @@ def test_render_column_attribute():
 @pytest.mark.parametrize('name, shortcut', get_shortcuts_by_name(Column).items())
 def test_shortcuts_map_to_form_and_query(name, shortcut):
     whitelist = {
-        'boolean_tristate',  # this is special in the bulk case where you want want a boolean_quadstate: don't change, clear, True, False. For now we'll wait for someone to report this misfeature/bug :)
+        'boolean_tristate',  # this is special in the bulk case where you want a boolean_quadstate: don't change, clear, True, False. For now, we'll wait for someone to report this misfeature/bug :)
         'delete',
         'download',
         'edit',
@@ -3665,7 +3667,7 @@ def test_rows_should_not_cache():
 
 
 @pytest.mark.django_db
-def test_auto_model_for_textchoices():
+def test_auto_model_for_text_choices():
     class TestTable(Table):
         class Meta:
             auto__model = ChoicesModel
@@ -3678,7 +3680,7 @@ def test_auto_model_for_textchoices():
 
 
 @pytest.mark.django_db
-def test_auto_model_for_textchoices_with_choices_class():
+def test_auto_model_for_text_choices_with_choices_class():
     from tests.models import ChoicesClassModel
 
     class TestTable(Table):
