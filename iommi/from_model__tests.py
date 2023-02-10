@@ -3,6 +3,7 @@ from django.contrib.auth.models import (
     Group,
     User,
 )
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     CASCADE,
     CharField,
@@ -209,7 +210,7 @@ Existing fields:
     foo__bar
     foo__id
     foo__pk
-    foo__somemodel'''
+    foo__somemodel_set'''
     )
 
 
@@ -265,8 +266,11 @@ def test_weird_override_bug_working_case_2(MyField):
 
 
 def test_get_field_many_to_many_reverse():
-    assert get_field(Group, 'user_set') == Group.user_set
+    # This test looks weird because Django's API is weird. `Group.user_set` is not the same as the "field", and the "field" is misnamed as "user" for some reason
+    assert get_field(Group, 'user_set') == Group._meta.get_field('user')
 
+    with pytest.raises(FieldDoesNotExist):
+        get_field(Group, 'user')
 
 
 def test_error_includes_reverse_field(MyField):

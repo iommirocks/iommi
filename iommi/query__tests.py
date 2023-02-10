@@ -616,10 +616,9 @@ def test_from_model_with_model_class():
         'id',
         'foo',
         'bars',
-        'fieldfrommodelforeignkeytest',
-        'fieldfrommodelonetoonetest',
-        'fieldfrommodelmanytomanytest',
-        'createoreditobjecttest',
+        'fieldfrommodelforeignkeytest_set',
+        'fieldfrommodelonetoonetest_set',
+        'createoreditobjecttest_set',
     }
     assert list(t.filters.keys()) == ['foo']
 
@@ -631,10 +630,9 @@ def test_from_model_with_queryset():
         'id',
         'foo',
         'bars',
-        'fieldfrommodelforeignkeytest',
-        'fieldfrommodelonetoonetest',
-        'fieldfrommodelmanytomanytest',
-        'createoreditobjecttest',
+        'fieldfrommodelforeignkeytest_set',
+        'fieldfrommodelonetoonetest_set',
+        'createoreditobjecttest_set',
     }
     assert list(t.filters.keys()) == ['foo']
 

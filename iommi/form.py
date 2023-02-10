@@ -1305,7 +1305,6 @@ class Field(Part, Tag):
         help_text=None,
     )
     def many_to_many_reverse(cls, model_field, **kwargs):
-        kwargs['model_field_name'] = model_field.remote_field.name
         return cls.many_to_many(model_field=model_field, **kwargs)
 
 
