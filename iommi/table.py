@@ -431,6 +431,12 @@ class Column(Part):
                 self.iommi_namespace.get('choices') is not None
             ), 'To use Column.choice, you must pass the choices list'
 
+        model_field = self.model_field
+        if model_field and model_field.remote_field:
+            self.model = model_field.remote_field.model
+        elif isinstance(self.model, SpecialEvaluatedRefinable):
+            self.model = None
+
         self.header = HeaderColumnConfig(**self.header).refine_done(parent=self)
         self.is_sorting: bool = None
         self.sort_direction: str = None
@@ -960,9 +966,19 @@ class Column(Part):
         setdefaults_path(
             kwargs,
             choices=model_field.remote_field.model.objects.all(),
-            model_field=model_field.remote_field,
+            model_field=model_field,
         )
         return cls.multi_choice_queryset(**kwargs)
+
+    @classmethod
+    @with_defaults(
+        bulk__call_target__attribute='many_to_many_reverse',
+        filter__call_target__attribute='many_to_many_reverse',
+        display_name=lambda column, **_: capitalize(column.model_field.remote_field.model._meta.verbose_name_plural),
+    )
+    def many_to_many_reverse(cls, model_field, **kwargs):
+        kwargs['model_field_name'] = model_field.remote_field.name
+        return cls.many_to_many(model_field=model_field, **kwargs)
 
     @classmethod
     @with_defaults(

@@ -3,8 +3,23 @@ from django.db.models import (
     CharField,
     ForeignKey,
     IntegerField,
+    ManyToManyField,
     Model,
 )
+
+
+class Genre(Model):
+    name = CharField(max_length=255, db_index=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return f'/genres/{self.pk}/'
+
+    class Meta:
+        ordering = ('name',)
+        app_label = 'docs'
 
 
 class Artist(Model):
@@ -25,6 +40,8 @@ class Album(Model):
     name = CharField(max_length=255, db_index=True)
     artist = ForeignKey(Artist, on_delete=CASCADE, related_name='albums')
     year = IntegerField()
+
+    genres = ManyToManyField(Genre, related_name='albums')
 
     def __str__(self):
         return self.name

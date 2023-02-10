@@ -1299,6 +1299,15 @@ class Field(Part, Tag):
         )
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
+    @classmethod
+    @with_defaults(
+        display_name=lambda field, **_: capitalize(field.model_field.remote_field.model._meta.verbose_name_plural),
+        help_text=None,
+    )
+    def many_to_many_reverse(cls, model_field, **kwargs):
+        kwargs['model_field_name'] = model_field.remote_field.name
+        return cls.many_to_many(model_field=model_field, **kwargs)
+
 
 def is_django_promise_with_string_proxy(redirect_to):
     return (

@@ -300,7 +300,7 @@ def test_how_do_i_change_the_order_of_the_fields():
 
     # @test
     form = form.bind(request=req('get'))
-    assert list(form.fields.keys()) == ['artist', 'year', 'name']
+    assert list(form.fields.keys()) == ['artist', 'year', 'genres', 'name']
     show_output(form)
     # @end
 
@@ -671,5 +671,38 @@ def test_grouped_fields():
     )
 
     # @test
+    show_output(form)
+    # @end
+
+
+
+def test_form_with_m2m_key_reverse(small_discography):
+    # @test
+    heavy_metal = Genre.objects.create(name='Heavy Metal')
+    for album in Album.objects.all():
+        album.genres.add(heavy_metal)
+    # @end
+
+    # language=rst
+    """
+    How do I show a reverse many-to-many relationship?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the field:
+    """
+
+    form = Form(
+        auto__model=Genre,
+        instance=heavy_metal,
+        fields__albums__include=True,
+    )
+
+    # @test
+    form = form.bind(request=req('get'))
+
+    assert list(form.fields.keys()) == ['name', 'albums']
+    assert form.fields.albums.display_name == 'Albums'
+    assert form.fields.albums.model_field is Genre._meta.get_field('albums')
+
     show_output(form)
     # @end

@@ -194,7 +194,10 @@ def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
                 current_model = get_field(current_model, part).remote_field.model
             except FieldDoesNotExist:
                 return sorted(
-                    ['__'.join(prefix + [field.name]) for field in get_fields(current_model)]
+                    [
+                        '__'.join(prefix + [field.name])
+                        for field in get_fields(current_model)
+                    ]
                     + ['__'.join(prefix + ['pk'])]
                 )
             else:

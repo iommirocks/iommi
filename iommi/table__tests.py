@@ -14,6 +14,10 @@ from django.db.models import (
 from django.http import HttpResponse
 from django.test import override_settings
 
+from docs.models import (
+    Album,
+    Genre,
+)
 from iommi import (
     Action,
     Fragment,
@@ -2033,7 +2037,7 @@ def test_from_model():
         columns__a__extra__stuff='Some stuff',
     )
     t = t.bind(request=None)
-    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'a', 'b', 'tbar', 'queryfromindexestestmodel'}
+    assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'a', 'b', 'tbar', 'tbaz', 'queryfromindexestestmodel'}
     assert list(t.columns.keys()) == ['a', 'b']
     assert 'Some a' == t.columns['a'].display_name
     assert 'Some stuff' == t.columns['a'].extra.stuff
@@ -2805,6 +2809,7 @@ def test_all_column_shortcuts():
         columns__column_of_type_many_to_many__model_field=TBaz.foo.field,
         columns__column_of_type_foreign_key__model_field=TBar.foo.field,
         columns__column_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
+        columns__column_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,
     )
 
     table = MyFancyTable(
@@ -3905,3 +3910,20 @@ def test_custom_rows():
             </div>
         """,
     )
+
+
+
+def test_foo():
+    form = Form(auto__model=Album).bind(request=req('get'))
+    assert form.fields.artist.model_field is Album._meta.get_field('artist')
+    assert form.fields.genres.model_field is Album._meta.get_field('genres')
+
+    query = Query(auto__model=Album).bind(request=req('get'))
+    assert query.filters.artist.model_field is Album._meta.get_field('artist')
+    assert query.filters.genres.model_field is Album._meta.get_field('genres')
+
+
+    t = Table(auto__model=Album).bind(request=req('get'))
+    assert t.columns.artist.model_field is Album._meta.get_field('artist')
+    # Fails:
+    assert t.columns.genres.model_field is Album._meta.get_field('genres')
