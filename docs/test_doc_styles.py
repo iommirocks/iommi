@@ -34,6 +34,7 @@ def test_style():
         - foundation
         - semantic_ui
         - water
+        - uikit
         - django_admin
         '''
         # @test

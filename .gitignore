@@ -169,7 +169,9 @@ docs/_generated_tests/test_*.py
 
 examples/examples/admin/
 
-tests/test_edit_views_temp.py
+tests/edit_style_temp.py
+tests/style_editor_new_tmp.py
+tests/edit_views_temp.py
 docs/test_doc__api_*.py
 docs/custom/doc_includes/
 

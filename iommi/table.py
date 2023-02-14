@@ -1413,6 +1413,11 @@ class Paginator(Traversable):
         self.item.attrs = evaluate_attrs(self.item)
         self.link.attrs = evaluate_attrs(self.link)
 
+        self.container.tag = evaluate_strict(self.container.tag)
+        self.active_item.tag = evaluate_strict(self.active_item.tag)
+        self.item.tag = evaluate_strict(self.item.tag)
+        self.link.tag = evaluate_strict(self.link.tag)
+
         rows = table.sorted_and_filtered_rows
         evaluate_parameters = dict(
             page_size=self.page_size,

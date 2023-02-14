@@ -105,6 +105,7 @@ class MenuItem(MenuBase):
     group: str = EvaluatedRefinable()
     a = Refinable()
     active_class = Refinable()
+    active_class_on_item = Refinable()
 
     class Meta:
         a = EMPTY
@@ -149,7 +150,7 @@ class MenuItem(MenuBase):
             attrs__href=self.url,
             _name='a',
         )
-        if self._active:
+        if self._active and not self.active_class_on_item:
             setdefaults_path(
                 a,
                 attrs__class={self.active_class: True},
@@ -158,14 +159,21 @@ class MenuItem(MenuBase):
         if self.url is None and a.tag == 'a':
             a.tag = None
 
-        fragment = Fragment(
+        fragment = Namespace(
+            call_target=Fragment,
             children__a=a,
             tag=self.tag,
             template=self.template,
             attrs=self.attrs,
             _name='fragment',
         )
-        fragment = fragment.bind(parent=self)
+        if self._active and self.active_class_on_item:
+            setdefaults_path(
+                fragment,
+                attrs__class={self.active_class: True},
+            )
+
+        fragment = fragment().bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
         for name, item in items(self.sub_menu):
             assert name not in fragment.children
@@ -305,12 +313,11 @@ def get_debug_menu(**kwargs):
         tree = MenuItem(url='?/debug_tree', tag='li')
         pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
         edit = MenuItem(
-            display_name=lambda request, **_: 'Edit'
-            if request.GET.get('_iommi_live_edit') in (None, 'row')
-            else 'Edit vertical',
-            url=lambda request, **_: '?_iommi_live_edit'
-            if request.GET.get('_iommi_live_edit') in (None, 'row')
-            else '?_iommi_live_edit=row',
+            display_name=lambda request, **_: 'Edit vertical'
+            if request.GET.get('_iommi_live_edit') is not None and request.GET.get('_iommi_live_edit_flow') != 'row' else 'Edit',
+            url=lambda request, **_: '?_iommi_live_edit&_iommi_live_edit_flow=row'
+            if request.GET.get('_iommi_live_edit') is not None and request.GET.get('_iommi_live_edit_flow') != 'row'
+            else '?_iommi_live_edit',
             tag='li',
             include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
@@ -319,6 +326,11 @@ def get_debug_menu(**kwargs):
             url='?_iommi_live_edit=stop',
             tag='li',
             include=lambda request, **_: '_iommi_live_edit' in request.GET,
+        )
+        edit_style = MenuItem(
+            url='?_iommi_live_edit=style_editor',
+            tag='li',
+            include=lambda **_: 'iommi.live_edit.Middleware' in settings.MIDDLEWARE,
         )
         profile = MenuItem(
             url='?_iommi_prof', tag='li', include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE

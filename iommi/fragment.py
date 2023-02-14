@@ -184,7 +184,9 @@ class Fragment(Part, Tag):
             find_static_items(self.children)
             self._children_static_items = self.children._static_items
 
-    def render_text_or_children(self, context):
+    def render_text_or_children(self, context=None):
+        if context is None:
+            context = self.get_context()
         request = self.get_request()
         return format_html(
             '{}' * len(self.children),

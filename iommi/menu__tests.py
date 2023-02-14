@@ -85,7 +85,7 @@ def test_submenu():
 def test_debug_menu():
     assert (
         get_debug_menu().bind(request=req('get')).__html__()
-        == '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100"><ul style="list-style: none"><li><a class="link" href="/code/">Code</a></li><li><a class="link" href="?/debug_tree">Tree</a></li><li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li><li><a class="link" href="?_iommi_live_edit">Edit</a></li><li><a class="link" href="?_iommi_prof">Profile</a></li><li><a class="link" href="?_iommi_sql_trace">SQL trace</a></li></ul></nav>'
+        == '<nav style="background: white; border: 1px solid black; bottom: -1px; position: fixed; right: -1px; z-index: 100"><ul style="list-style: none"><li><a class="link" href="/code/">Code</a></li><li><a class="link" href="?/debug_tree">Tree</a></li><li onclick="window.iommi_start_pick()"><a class="link" href="#">Pick</a></li><li><a class="link" href="?_iommi_live_edit">Edit</a></li><li><a class="link" href="?_iommi_live_edit=style_editor">Edit style</a></li><li><a class="link" href="?_iommi_prof">Profile</a></li><li><a class="link" href="?_iommi_sql_trace">SQL trace</a></li></ul></nav>'
     )
 
 
@@ -173,3 +173,19 @@ def test_reverse_lazy(settings):
 
     # This shouldn't raise
     str(menu)
+
+
+def test_active_on_li():
+    class MyMenu(Menu):
+        qwe = MenuItem(
+            url=None,
+            sub_menu=dict(
+                bar=MenuItem(active_class_on_item=True),
+                foo=MenuItem(after=0, active_class_on_item=True),
+            )
+        )
+
+    menu = MyMenu().bind(request=req('GET'))
+    menu.set_active('/foo/')
+    assert menu.sub_menu.qwe.sub_menu.foo._active is True
+    assert '<li class="active">' in menu.__html__()

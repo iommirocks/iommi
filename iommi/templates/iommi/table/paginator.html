@@ -1,34 +1,34 @@
 <div aria-label="Pages"{{ paginator.attrs }}>
-    <div{{ paginator.container.attrs }}>
+    <{{ paginator.container.tag }}{{ paginator.container.attrs }}>
         {% if show_first %}
-            <span{{ paginator.item.attrs }}>
+            <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
                 <a href="?{{ extra|escape }}{{ paginator.iommi_path }}=1" aria-label="First Page"{{ paginator.link.attrs }}>&laquo;</a>
-            </span>
+            </{{ paginator.item.tag }}>
         {% endif %}
 
         {% if has_previous %}
-            <span{{ paginator.item.attrs }}>
+            <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
                 <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ previous|stringformat:'s' }}" aria-label="Previous Page"{{ paginator.link.attrs }}>&lt;</a>
-            </span>
+            </{{ paginator.item.tag }}>
         {% endif %}
 
         {% for num in page_numbers %}
-            <span{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>
+            <{{ paginator.active_item.tag }}{% if num == page %}{{ paginator.active_item.attrs }}{% else %}{{ paginator.item.attrs }}{% endif %}>
                 <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ num|stringformat:'s' }}" aria-label="Page {{ num }}"{{ paginator.link.attrs }}>{{ num }}</a>
-            </span>
+            </{{ paginator.active_item.tag }}>
         {% endfor %}
 
         {% if has_next %}
-            <span{{ paginator.item.attrs }}>
+            <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
                 <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ next|stringformat:'s' }}" aria-label="Next Page"{{ paginator.link.attrs }}>&gt;</a>
-            </span>
+            </{{ paginator.item.tag }}>
         {% endif %}
 
         {% if show_last %}
-            <span{{ paginator.item.attrs }}>
+            <{{ paginator.item.tag }}{{ paginator.item.attrs }}>
                 <a href="?{{ extra|escape }}{{ paginator.iommi_path }}={{ pages|stringformat:'s' }}" aria-label="Last Page"{{ paginator.link.attrs }}>&raquo;</a>
-            </span>
+            </{{ paginator.item.tag }}>
         {% endif %}
-    </div>
+    </{{ paginator.container.tag }}>
 </div>
 
