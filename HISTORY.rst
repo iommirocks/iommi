@@ -1,7 +1,19 @@
 Changelog
 ---------
 
-5.7.1 (5023-02-08)
+5.8.0 (2023-02-14)
+~~~~~~~~~~~~~~~~~~
+
+* ManyToMany reverse support
+
+* Live editing of styles
+
+* Fixed crash when using form field groups and bootstrap
+
+* Basic support for the UIKit CSS framework added
+
+
+5.7.1 (2023-02-08)
 ~~~~~~~~~~~~~~~~~~
 
 * Add `request` parameter to `extra_params` callback.
