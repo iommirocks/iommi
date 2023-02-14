@@ -616,8 +616,9 @@ def test_from_model_with_model_class():
         'id',
         'foo',
         'bars',
-        'fieldfrommodelforeignkeytest',
-        'fieldfrommodelonetoonetest',
+        'fieldfrommodelforeignkeytest_set',
+        'fieldfrommodelonetoonetest_set',
+        'createoreditobjecttest_set',
     }
     assert list(t.filters.keys()) == ['foo']
 
@@ -629,8 +630,9 @@ def test_from_model_with_queryset():
         'id',
         'foo',
         'bars',
-        'fieldfrommodelforeignkeytest',
-        'fieldfrommodelonetoonetest',
+        'fieldfrommodelforeignkeytest_set',
+        'fieldfrommodelonetoonetest_set',
+        'createoreditobjecttest_set',
     }
     assert list(t.filters.keys()) == ['foo']
 
@@ -857,6 +859,7 @@ def test_shortcuts_map_to_form(name, shortcut):
         'foreign_key',
         'foreign_key_reverse',
         'many_to_many',
+        'many_to_many_reverse',
     ]
 
     if name in whitelist:  # This has no equivalent in Field
@@ -900,6 +903,7 @@ def test_all_filter_shortcuts():
         filters__filter_of_type_many_to_many__model_field=TBaz.foo.field,
         filters__filter_of_type_foreign_key__model_field=TBar.foo.field,
         filters__filter_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
+        filters__filter_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,
     )
 
     query = MyFancyQuery(**config, **type_specifics).bind(request=req('get'))

@@ -44,7 +44,7 @@ def test_how_do_i_customize_the_rendering_of_a_table():
     """
     
 
-def test_how_do_you_turn_off_pagination():
+def test_how_do_you_turn_off_pagination(small_discography):
     # language=rst
     """
     .. _Table.page_size:
@@ -55,10 +55,15 @@ def test_how_do_you_turn_off_pagination():
     Specify `page_size=None`:
     """
 
-    Table(
+    table = Table(
         auto__model=Album,
         page_size=None,
     )
+
+    # @test
+    show_output(table)
+    # @end
+
 
     # language=rst
     """
@@ -66,10 +71,14 @@ def test_how_do_you_turn_off_pagination():
     """
 
     class MyTable(Table):
-        a = Column()
+        name = Column()
 
         class Meta:
             page_size = None
+
+    # @test
+    show_output(MyTable(rows=Album.objects.all()))
+    # @end
 
 
 def test_how_do_i_customize_the_rendering_of_a_cell():
@@ -849,3 +858,35 @@ def test_table_with_foreign_key_reverse(small_discography):
     assert t.columns.albums.model_field is Artist._meta.get_field('albums')
 
     show_output(t)
+    # @end
+
+
+def test_table_with_m2m_key_reverse(small_discography):
+    # @test
+    heavy_metal = Genre.objects.create(name='Heavy Metal')
+    for album in Album.objects.all():
+        album.genres.add(heavy_metal)
+    # @end
+
+    # language=rst
+    """
+    How do I show a reverse many-to-many relationship?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the column:
+    """
+
+    t = Table(
+        auto__model=Genre,
+        columns__albums__include=True,
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
+
+    assert list(t.columns.keys()) == ['name', 'albums']
+    assert t.columns.albums.display_name == 'Albums'
+    assert t.columns.albums.model_field is Genre._meta.get_field('albums')
+
+    show_output(t)
+    # @end

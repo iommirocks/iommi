@@ -110,7 +110,12 @@ def setup_db_compat_django():
         include=False,
         after=LAST,
     )
-    register_factory(ManyToManyRel, factory=None)  # shortcut_name='many_to_many')
+    register_factory(
+        ManyToManyRel,
+        shortcut_name='many_to_many_reverse',
+        include=False,
+        after=LAST,
+    )
     register_factory(ManyToManyField, shortcut_name='many_to_many')
     register_factory(ForeignKey, shortcut_name='foreign_key')
     register_factory(GenericIPAddressField, shortcut_name='text')

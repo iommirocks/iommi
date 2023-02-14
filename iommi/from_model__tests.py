@@ -1,5 +1,9 @@
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import (
+    Group,
+    User,
+)
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     CASCADE,
     CharField,
@@ -13,6 +17,7 @@ from iommi import (
     Form,
 )
 from iommi.from_model import (
+    get_field,
     get_field_path,
     get_search_fields,
     NoRegisteredSearchFieldException,
@@ -205,7 +210,7 @@ Existing fields:
     foo__bar
     foo__id
     foo__pk
-    foo__somemodel'''
+    foo__somemodel_set'''
     )
 
 
@@ -258,3 +263,22 @@ def test_weird_override_bug_working_case_2(MyField):
         fields__foo=MyField.my_integer(),
     )
     assert form.bind().fields.foo.extra.value == 'this is my shortcut'
+
+
+def test_get_field_many_to_many_reverse():
+    # This test looks weird because Django's API is weird. `Group.user_set` is not the same as the "field", and the "field" is misnamed as "user" for some reason
+    assert get_field(Group, 'user_set') == Group._meta.get_field('user')
+
+    with pytest.raises(FieldDoesNotExist):
+        get_field(Group, 'user')
+
+
+def test_error_includes_reverse_field(MyField):
+    form = Form(
+        auto__model=Group,
+        auto__include=['does_not_exist']
+    )
+    with pytest.raises(AssertionError) as e:
+        form.bind()
+
+    assert 'user_set' in str(e.value)

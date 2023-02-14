@@ -549,6 +549,11 @@ class Filter(Part):
         )
         return cls.multi_choice_queryset(model_field=model_field, **kwargs)
 
+    @classmethod
+    @with_defaults
+    def many_to_many_reverse(cls, model_field, **kwargs):
+        return cls.many_to_many(model_field=model_field, **kwargs)
+
 
 Filter.value_to_q.iommi_needs_attr = True
 

@@ -2492,6 +2492,8 @@ def test_all_field_shortcuts():
         fields__field_of_type_foreign_key__model=TBar,
         fields__field_of_type_foreign_key_reverse__model_field=TFoo.tbar_set.field,
         fields__field_of_type_foreign_key_reverse__model=TFoo,
+        fields__field_of_type_many_to_many_reverse__model_field=TFoo.tbar_set.field,
+        fields__field_of_type_many_to_many_reverse__model=TFoo,
         fields__field_of_type_info__value='dummy information',
     )
 
@@ -3503,6 +3505,30 @@ def test_form_template_override_bug():
 
     assert MyForm.case1().refine_done().iommi_namespace.template == 'case1'
     assert MyForm.case2().refine_done().iommi_namespace.template == 'case2'
+
+
+@pytest.mark.django_db
+def test_many_to_many_reverse_trivial():
+    from django.contrib.auth.models import Group
+
+    form = Form.edit(
+        auto__instance=Group.objects.create(name='group'),
+        fields__user_set__include=True,
+    )
+
+    form.bind(request=req('get')).render_to_response()
+
+
+@pytest.mark.django_db
+def test_many_to_many_reverse_trivial_2():
+    from django.contrib.auth.models import Group
+
+    form = Form.edit(
+        auto__instance=Group.objects.create(name='group'),
+        auto__include=['user_set'],
+    )
+
+    form.bind(request=req('get')).render_to_response()
 
 
 def test_bootstrap_crash_when_no_iommi_name_on_field_group(settings):

@@ -185,7 +185,7 @@ class QueryFromIndexesTestModel(Model):
     a = IntegerField()
     b = CharField(max_length=1, db_index=True)
     c = FloatField(db_index=True)
-    d = ForeignKey(TFoo, on_delete=CASCADE)
+    d = ForeignKey(TFoo, on_delete=CASCADE, related_name='+')
 
     class Meta:
         ordering = ('pk',)

@@ -1,5 +1,6 @@
 import warnings
 from typing import (
+    Dict,
     Iterator,
     List,
     Type,
@@ -8,6 +9,8 @@ from typing import (
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
     Field as DjangoField,
+    ManyToManyRel,
+    ManyToOneRel,
     Model,
 )
 from iommi.struct import Struct
@@ -41,7 +44,7 @@ def create_members_from_model(
     check_list(model, include, 'include')
     check_list(model, exclude, 'exclude')
 
-    model_field_names = include if include is not None else [field.name for field in get_fields(model)]
+    model_field_names = include if include is not None else list(get_field_by_name(model).keys())
 
     for model_field_name in model_field_names:
         if exclude is not None and model_field_name in exclude:
@@ -156,18 +159,40 @@ def member_from_model(
     return factory(model_field=model_field, model_field_name=model_field_name, model=model, **kwargs)
 
 
-def get_fields(model: Type[Model]) -> Iterator[DjangoField]:
-    # noinspection PyProtectedMember
-    for field in model._meta.get_fields():
-        yield field
+def get_field_by_name(model: Type[Model]) -> Dict[str, DjangoField]:
+    if not hasattr(model._meta, '_iommi_fields'):
+        model._meta._iommi_fields = {
+            get_field_name(field): field
+            for field in model._meta.get_fields()
+        }
+        if None in model._meta._iommi_fields:
+            model._meta._iommi_fields.pop(None)
+    return model._meta._iommi_fields
+
+
+def get_field_name(field: DjangoField) -> str:
+    if isinstance(field, ManyToManyRel):
+        return field.related_name
+    elif isinstance(field, ManyToOneRel):
+        if field.related_name:
+            return field.related_name
+        elif field.related_name == '+':
+            return None
+        else:
+            return f'{field.name}_set'
+    else:
+        return field.name
 
 
 def get_field(model: Type[Model], field_name: str) -> DjangoField:
     if field_name == 'pk':
         return model._meta.auto_field
 
-    # noinspection PyProtectedMember
-    return model._meta.get_field(field_name)
+    try:
+        return get_field_by_name(model)[field_name]
+    except KeyError:
+        valid_names = '\n    '.join(sorted(get_field_by_name(model).keys()))
+        raise FieldDoesNotExist(f"{model._meta.object_name} has no field with name '{field_name}', valid names are:\n\n    {valid_names}")
 
 
 def get_field_path(model, path):
@@ -194,7 +219,10 @@ def check_list(model: Type[Model], paths: List[str], operation: str) -> None:
                 current_model = get_field(current_model, part).remote_field.model
             except FieldDoesNotExist:
                 return sorted(
-                    ['__'.join(prefix + [field.name]) for field in get_fields(current_model)]
+                    [
+                        '__'.join(prefix + [name])
+                        for name in get_field_by_name(current_model).keys()
+                    ]
                     + ['__'.join(prefix + ['pk'])]
                 )
             else:
@@ -223,7 +251,7 @@ def get_search_fields(*, model):
     search_fields = _search_fields_by_model.get(model, MISSING)
     if search_fields is MISSING:
         try:
-            field = model._meta.get_field('name')
+            field = get_field(model, 'name')
         except FieldDoesNotExist:
             raise NoRegisteredSearchFieldException(
                 f'{model.__name__} has no registered search fields. Please register a list of field names with register_search_fields.'
@@ -245,7 +273,7 @@ def register_search_fields(*, model, search_fields, allow_non_unique=False, over
     assert isinstance(search_fields, (tuple, list))
 
     def validate_name_field(search_field, path, model):
-        field = model._meta.get_field(path[0])
+        field = get_field(model, path[0])
         if len(path) == 1:
             if allow_non_unique:
                 return
