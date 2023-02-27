@@ -11,6 +11,7 @@ from io import (
     BytesIO,
     StringIO,
 )
+from urllib.parse import urlencode
 
 import django
 import pytest
@@ -3341,6 +3342,27 @@ def test_edit_no_require_auto():
     f.render_to_response()
     x.refresh_from_db()
     assert x.foo == 43
+
+
+def test_render_fields_retain_other_parameters():
+    request = req(
+        'get',
+        url='/?'
+        + urlencode(
+            {
+                'banana': 1,
+                '-pear': 2,
+                '/apple': 3,
+            }
+        ),
+    )
+    verify_html(
+        actual_html=Form().bind(request=request).render_fields,
+        # language=HTML
+        expected_html='''
+            <input name="banana" type="hidden" value="1" />
+        ''',
+    )
 
 
 def test_render_grouped_fields():

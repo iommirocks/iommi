@@ -33,6 +33,8 @@ from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.functional import Promise
 from django.utils.translation import gettext
+
+from iommi.endpoint import DISPATCH_PREFIX
 from iommi.struct import Struct
 
 from iommi._db_compat import field_defaults_factory
@@ -700,7 +702,6 @@ class Field(Part, Tag):
             assert sentinel in form.bind(request=req('get')).__html__()
             # @end
         """
-
 
         if isinstance(value, (list, QuerySet)):
             return ', '.join(field.render_value(form=form, field=field, value=v, **kwargs) for v in value)
@@ -1778,7 +1779,7 @@ class Form(Part):
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}
         for k, v in items(self.get_request().GET):
-            if k not in own_field_paths and not k.startswith('-'):
+            if k not in own_field_paths and not k.startswith('-') and not k.startswith(DISPATCH_PREFIX):
                 r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
 
         return format_html('{}\n' * len(r), *r)
