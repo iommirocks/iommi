@@ -4,6 +4,7 @@ from iommi._web_compat import (
     HttpResponseRedirect,
     mark_safe,
 )
+from iommi.form import save_nested_forms
 from tests.helpers import (
     req,
     show_output,
@@ -374,7 +375,7 @@ def test_how_do_i_override_rendering_of_an_entire_field():
     # @test
     show_output(form)
     # @end
-    
+
     # language=rst
     """
     or a `Template` object:
@@ -410,7 +411,7 @@ def test_how_do_i_override_rendering_of_the_input_field():
     # @test
     show_output(form)
     # @end
-    
+
     # language=rst
     """
     """
@@ -703,6 +704,30 @@ def test_form_with_m2m_key_reverse(small_discography):
     assert list(form.fields.keys()) == ['name', 'albums']
     assert form.fields.albums.display_name == 'Albums'
     assert form.fields.albums.model_field is Genre._meta.get_field('albums')
+
+    show_output(form)
+    # @end
+
+
+def test_nested_forms(small_discography):
+    # language=rst
+    """
+    How do I nest multiple forms?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    """
+
+    class MyNestedForm(Form):
+        edit_dio = Form.edit(auto__instance=Artist.objects.get(name='Black Sabbath'))
+        create_artist = Form.create(auto__model=Artist)
+        create_album = Form.create(auto__model=Album)
+
+        class Meta:
+            actions__submit__post_handler = save_nested_forms
+
+    # @test
+    form = MyNestedForm().bind(request=req('get'))
+
+    assert list(form.nested_forms.keys()) == ['edit_dio', 'create_artist', 'create_album']
 
     show_output(form)
     # @end
