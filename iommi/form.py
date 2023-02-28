@@ -20,7 +20,10 @@ from typing import (
 )
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError
+from django.db import (
+    IntegrityError,
+    models,
+)
 from django.db.models import (
     Case,
     IntegerField,
@@ -183,6 +186,27 @@ def find_unique_prefixes(attributes):
         for i in range(len(parts)):
             result.add(tuple(parts[: i + 1]))
     return ['__'.join(p) for p in sorted(sorted(result), key=len)]
+
+
+def save_nested_forms(form, request, **_):
+    did_fail = False
+    for nested_form in form.nested_forms.values():
+        for action in nested_form.actions.values():
+            if action.post_handler is None:
+                continue
+            if action.post_handler and action.invoke_callback(action.post_handler) is None:
+                did_fail = True
+
+    if not did_fail:
+        if 'post_save' in form.extra:
+            form.invoke_callback(form.extra.post_save)
+
+        request.method = 'GET'
+
+        redirect_to = form.extra.get('redirect_to', lambda **_: request.POST.get('next', '.'))
+        target = form.invoke_callback(redirect_to)
+        assert isinstance(target, str), 'redirect_to must return a str'
+        return HttpResponseRedirect(target)
 
 
 def create_or_edit_object__post_handler(*, form, is_create, **_):
@@ -513,8 +537,8 @@ class Field(Part, Tag):
 
     is_list: bool = EvaluatedRefinable()
     is_boolean: bool = EvaluatedRefinable()
-    model: Type[Model] = SpecialEvaluatedRefinable()
-    model_field = Refinable()
+    model: Optional[Type[Model]] = SpecialEvaluatedRefinable()
+    model_field : Optional[models.Field] = Refinable()
     model_field_name = Refinable()
 
     editable: bool = EvaluatedRefinable()
