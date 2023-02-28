@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.8.1 (2023-02-28)
+~~~~~~~~~~~~~~~~~~
+
+* Fix bug where form submit include dispatch parameters e.g. bulk forms break after table tbody reload.
+
+
 5.8.0 (2023-02-14)
 ~~~~~~~~~~~~~~~~~~
 
