@@ -16,6 +16,7 @@ from django.test import override_settings
 
 from docs.models import (
     Album,
+    Track,
 )
 from iommi import (
     Action,
@@ -3935,7 +3936,7 @@ def test_custom_rows():
     )
 
 
-def test_foo():
+def test_reverse_mappings():
     form = Form(auto__model=Album).bind(request=req('get'))
     assert form.fields.artist.model_field is Album._meta.get_field('artist')
     assert form.fields.genres.model_field is Album._meta.get_field('genres')
@@ -3948,6 +3949,25 @@ def test_foo():
     assert t.columns.artist.model_field is Album._meta.get_field('artist')
     # Fails:
     assert t.columns.genres.model_field is Album._meta.get_field('genres')
+
+
+@pytest.mark.django_db
+def test_choices_passed_down_through_shortcuts(big_discography):
+    choices = Album.objects.filter(name__startswith='H')
+    t = Table(
+        auto__model=Track,
+        auto__include=['album'],
+        columns__album=dict(
+            choices=choices,
+            filter__include=True,
+        ),
+    )
+
+    t = t.bind(request=req('get'))
+
+    assert t.columns.album.choices == choices
+    assert t.query.filters.album.choices == choices
+    assert t.query.form.fields.album.choices == choices
 
 
 class MyTable(Table):
