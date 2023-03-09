@@ -25,7 +25,7 @@ def test_tables():
     ------
 
     """
-    
+
 
 def test_how_do_i_customize_the_rendering_of_a_table():
     # language=rst
@@ -42,7 +42,7 @@ def test_how_do_i_customize_the_rendering_of_a_table():
 
     To customize the cell, see `How do I customize the rendering of a cell?`_
     """
-    
+
 
 def test_how_do_you_turn_off_pagination(small_discography):
     # language=rst
@@ -99,7 +99,7 @@ def test_how_do_i_customize_the_rendering_of_a_cell():
 
 
     """
-    
+
 
 def test_how_do_i_make_a_link_in_a_cell(album):
     # language=rst
@@ -178,7 +178,7 @@ def test_how_do_i_create_a_column_based_on_computed_data_():
     """
     This only affects the formatting when we render the cell value. Which might make more sense depending on your situation but for the simple case like we have here the two are equivalent.
     """
-    
+
 
 def test_how_do_i_get_iommi_tables_to_understand_my_django_modelfield_subclasses():
     # language=rst
@@ -189,7 +189,7 @@ def test_how_do_i_get_iommi_tables_to_understand_my_django_modelfield_subclasses
     See :doc:`registrations`.
 
     """
-    
+
 
 def test_how_do_i_reorder_columns():
     # language=rst
@@ -385,7 +385,7 @@ def test_how_do_i_customize_html_attributes__css_classes_or_css_style_specificat
         ' class="bar foo" foo="bar" style="font-family: serif; font: Arial"'
 
     """
-    
+
 
 def test_how_do_i_customize_the_rendering_of_a_row():
     # language=rst
@@ -406,7 +406,7 @@ def test_how_do_i_customize_the_rendering_of_a_row():
     To customize the cell, see `How do I customize the rendering of a cell?`_
 
     """
-    
+
 
 def test_how_do_i_customize_the_rendering_of_a_header():
     # language=rst
@@ -423,7 +423,7 @@ def test_how_do_i_customize_the_rendering_of_a_header():
     - Use `header__template` to specify a template. You can give a string and it will be interpreted as a template name, or you can pass a `Template` object. The default is `iommi/table/table_header_rows.html`.
 
     """
-    
+
 
 def test_how_do_i_turn_off_the_header():
     # language=rst
@@ -437,7 +437,7 @@ def test_how_do_i_turn_off_the_header():
 
 
     """
-    
+
 
 def test_how_do_i_add_fields_to_a_table_that_is_generated_from_a_model():
     # language=rst
@@ -448,7 +448,7 @@ def test_how_do_i_add_fields_to_a_table_that_is_generated_from_a_model():
     See the question `How do I create a column based on computed data?`_
 
     """
-    
+
 
 def test_how_do_i_specify_which_columns_to_show():
     # language=rst
@@ -475,7 +475,7 @@ def test_how_do_i_specify_which_columns_to_show():
     To be more precise, `include` turns off the entire column. Sometimes you want to have the searching turned on, but disable the rendering of the column. To do this use the `render_column` parameter instead.
 
     """
-    
+
 
 def test_how_do_i_access_table_data_programmatically_(capsys, small_discography):
     # language=rst
@@ -763,7 +763,7 @@ def test_how_do_i_enable_bulk_editing(small_discography):
     # @test
     show_output(table)
     # @end
-    
+
 
 def test_how_do_i_enable_bulk_delete(small_discography):
     # language=rst
@@ -862,12 +862,6 @@ def test_table_with_foreign_key_reverse(small_discography):
 
 
 def test_table_with_m2m_key_reverse(small_discography):
-    # @test
-    heavy_metal = Genre.objects.create(name='Heavy Metal')
-    for album in Album.objects.all():
-        album.genres.add(heavy_metal)
-    # @end
-
     # language=rst
     """
     How do I show a reverse many-to-many relationship?
@@ -875,6 +869,12 @@ def test_table_with_m2m_key_reverse(small_discography):
 
     By default reverse many-to-many relationships are hidden. To turn it on, pass `include=True` to the column:
     """
+
+    # @test
+    heavy_metal = Genre.objects.create(name='Heavy Metal')
+    for album in Album.objects.all():
+        album.genres.add(heavy_metal)
+    # @end
 
     t = Table(
         auto__model=Genre,
@@ -887,6 +887,36 @@ def test_table_with_m2m_key_reverse(small_discography):
     assert list(t.columns.keys()) == ['name', 'albums']
     assert t.columns.albums.display_name == 'Albums'
     assert t.columns.albums.model_field is Genre._meta.get_field('albums')
+
+    show_output(t)
+    # @end
+
+
+
+def test_insert_arbitrary_html(big_discography):
+    # language=rst
+    """
+    How do I insert arbitrary html into a Table?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Sometimes you want to insert some extra html, css, or `Part` into a
+    `Table`. You can do this with the `container` or `outer` namespaces.
+
+    For `container`, by default items are added after the table but you
+    can put them above with `after=0`.
+
+    For `outer`, you can put content before the `h` tag even.
+    """
+
+    t = Table(
+        auto__model=Genre,
+        container__children__foo='Foo',
+        container__children__bar=html.div('Bar', after=0),
+        outer__children__bar=html.div('Baz', after=0),
+    )
+
+    # @test
+    t = t.bind(request=req('get'))
 
     show_output(t)
     # @end
