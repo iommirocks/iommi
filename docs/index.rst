@@ -5,7 +5,7 @@ iommi
 .. include:: README.rst
     :start-line: 3
 
-    
+
 
 
 Contents:
@@ -38,11 +38,11 @@ Contents:
    authors
    contributing
 
-   @github <https://github.com/TriOptima/iommi>
+   @github <https://github.com/iommirocks/iommi>
    @discord <https://discord.gg/ZyYRYhf7Pd>
    @pypi <https://pypi.org/project/iommi/>
 
-    
+
 
 
 Indices and tables
@@ -51,4 +51,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
