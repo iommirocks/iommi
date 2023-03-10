@@ -2,10 +2,18 @@ from django.urls import (
     path,
 )
 
-from docs.models import *
-from iommi import *
+from docs.models import (
+    Album,
+    Artist,
+)
+from iommi import (
+    html,
+    Page,
+    Table,
+)
 from tests.helpers import req
 import pytest
+
 pytestmark = pytest.mark.django_db
 
 request = req('get')
@@ -18,18 +26,18 @@ def test_iommi():
     =====
     .. raw:: html
 
-        <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://raw.githubusercontent.com/TriOptima/iommi/master/logo_with_outline.svg" alt="iommi" style="max-width: 200px" width=300></a></p>
+        <p class="mobile-logo" align="center"><a href="#"><img class="logo" src="https://raw.githubusercontent.com/iommirocks/iommi/master/logo_with_outline.svg" alt="iommi" style="max-width: 200px" width=300></a></p>
 
         <h3 class="pun">Your first pick for a django power chord</h3>
 
     .. image:: https://img.shields.io/discord/773470009795018763?logo=discord&logoColor=fff?label=Discord&color=7389d8
         :target: https://discord.gg/ZyYRYhf7Pd
 
-    .. image:: https://github.com/TriOptima/iommi/workflows/tests/badge.svg
-        :target: https://github.com/TriOptima/iommi/actions?query=workflow%3Atests+branch%3Amaster
+    .. image:: https://github.com/iommirocks/iommi/workflows/tests/badge.svg
+        :target: https://github.com/iommirocks/iommi/actions?query=workflow%3Atests+branch%3Amaster
 
-    .. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
-        :target: https://codecov.io/gh/TriOptima/iommi
+    .. image:: https://codecov.io/gh/iommirocks/iommi/branch/master/graph/badge.svg
+        :target: https://codecov.io/gh/iommirocks/iommi
 
     .. image:: https://readthedocs.org/projects/iommi/badge/?version=latest
         :target: https://docs.iommi.rocks
@@ -55,6 +63,7 @@ def test_iommi():
 
 
     """
+
     class IndexPage(Page):
         title = html.h1('Supernaut')
         welcome_text = 'This is a discography of the best acts in music!'
@@ -65,7 +74,6 @@ def test_iommi():
             page_size=5,
         )
         tracks = Table(auto__model=Album, page_size=5)
-
 
     urlpatterns = [
         path('', IndexPage().as_view()),
@@ -81,7 +89,7 @@ def test_iommi():
 
     .. image:: README-screenshot.png
 
-    For more examples, see the `examples project <https://github.com/TriOptima/iommi/tree/master/examples/examples>`_.
+    For more examples, see the `examples project <https://github.com/iommirocks/iommi/tree/master/examples/examples>`_.
 
 
     Getting started
