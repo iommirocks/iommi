@@ -13,15 +13,12 @@ iommi
 .. image:: https://github.com/iommirocks/iommi/workflows/tests/badge.svg
     :target: https://github.com/iommirocks/iommi/actions?query=workflow%3Atests+branch%3Amaster
 
-.. image:: https://codecov.io/gh/TriOptima/iommi/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/TriOptima/iommi
+.. image:: https://codecov.io/gh/iommirocks/iommi/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/iommirocks/iommi
 
 .. image:: https://readthedocs.org/projects/iommi/badge/?version=latest
     :target: https://docs.iommi.rocks
     :alt: Documentation Status
-
-.. image:: https://repl.it/badge/github/boxed/iommi-repl.it
-    :target: https://repl.it/github/boxed/iommi-repl.it
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black

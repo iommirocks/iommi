@@ -123,33 +123,6 @@ class Admin(Page):
         form_class = Form
         apps = EMPTY
         parts = EMPTY
-        apps__auth_user__include = True
-        apps__auth_group__include = True
-        parts__messages = Messages()
-        parts__list_auth_user = dict(
-            auto__include=['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
-            columns=dict(
-                username__filter=dict(
-                    include=True,
-                    freetext=True,
-                ),
-                email__filter=dict(
-                    include=True,
-                    freetext=True,
-                ),
-                first_name__filter=dict(
-                    include=True,
-                    freetext=True,
-                ),
-                last_name__filter=dict(
-                    include=True,
-                    freetext=True,
-                ),
-                is_staff__filter__include=True,
-                is_active__filter__include=True,
-                is_superuser__filter__include=True,
-            ),
-        )
 
     model: Type[Model] = Refinable()
     instance: Model = Refinable()
@@ -175,6 +148,35 @@ class Admin(Page):
     )
 
     @read_config
+    @with_defaults(
+        apps__auth_user__include = True,
+        apps__auth_group__include = True,
+        parts__messages = Messages(),
+        parts__list_auth_user = dict(
+            auto__include=['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
+            columns=dict(
+                username__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                email__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                first_name__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                last_name__filter=dict(
+                    include=True,
+                    freetext=True,
+                ),
+                is_staff__filter__include=True,
+                is_active__filter__include=True,
+                is_superuser__filter__include=True,
+            ),
+        ),
+    )
     def __init__(self, parts, apps, **kwargs):
         # Validate apps params
         for k in apps.keys():
