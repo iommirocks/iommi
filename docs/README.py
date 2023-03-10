@@ -2,10 +2,18 @@ from django.urls import (
     path,
 )
 
-from docs.models import *
-from iommi import *
+from docs.models import (
+    Album,
+    Artist,
+)
+from iommi import (
+    html,
+    Page,
+    Table,
+)
 from tests.helpers import req
 import pytest
+
 pytestmark = pytest.mark.django_db
 
 request = req('get')
@@ -55,6 +63,7 @@ def test_iommi():
 
 
     """
+
     class IndexPage(Page):
         title = html.h1('Supernaut')
         welcome_text = 'This is a discography of the best acts in music!'
@@ -65,7 +74,6 @@ def test_iommi():
             page_size=5,
         )
         tracks = Table(auto__model=Album, page_size=5)
-
 
     urlpatterns = [
         path('', IndexPage().as_view()),
