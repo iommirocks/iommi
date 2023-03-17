@@ -1,3 +1,7 @@
+from django.contrib.contenttypes.fields import (
+    GenericForeignKey,
+    GenericRelation,
+)
 from django.db.models import ManyToManyField
 from iommi.shortcut import Shortcut
 
@@ -117,6 +121,8 @@ def setup_db_compat_django():
         after=LAST,
     )
     register_factory(ManyToManyField, shortcut_name='many_to_many')
+    register_factory(GenericRelation, factory=None)
+    register_factory(GenericForeignKey, factory=None)
     register_factory(ForeignKey, shortcut_name='foreign_key')
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
