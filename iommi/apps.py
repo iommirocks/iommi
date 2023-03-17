@@ -43,3 +43,11 @@ class IommiConfig(AppConfig):
         register_style('django_admin', django_admin)
         register_style('uikit', uikit)
         register_style('bootstrap_docs', bootstrap_docs)
+
+        from django.contrib.contenttypes.fields import (
+            GenericForeignKey,
+            GenericRelation,
+        )
+        from iommi import register_factory
+        register_factory(GenericRelation, factory=None)
+        register_factory(GenericForeignKey, factory=None)

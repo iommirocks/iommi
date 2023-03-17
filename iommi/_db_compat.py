@@ -1,8 +1,3 @@
-from django.contrib.contenttypes.fields import (
-    GenericForeignKey,
-    GenericRelation,
-)
-from django.db.models import ManyToManyField
 from iommi.shortcut import Shortcut
 
 from iommi.base import MISSING
@@ -121,8 +116,6 @@ def setup_db_compat_django():
         after=LAST,
     )
     register_factory(ManyToManyField, shortcut_name='many_to_many')
-    register_factory(GenericRelation, factory=None)
-    register_factory(GenericForeignKey, factory=None)
     register_factory(ForeignKey, shortcut_name='foreign_key')
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
@@ -171,7 +164,7 @@ def base_defaults_factory(model_field):
 
 # TODO: move to form.py! remember to take the tests with them
 def field_defaults_factory(model_field):
-    from django.db.models import BooleanField
+    from django.db.models import BooleanField, ManyToManyField
 
     r = base_defaults_factory(model_field)
 
