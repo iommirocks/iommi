@@ -271,3 +271,11 @@ class CustomField(models.Field):
 
 class NotRegisteredCustomFieldModel(models.Model):
     custom_field = CustomField()
+
+
+class OtherModel(Model):
+    bar = CharField(max_length=255)
+
+
+class SomeModel(Model):
+    foo = ForeignKey(OtherModel, on_delete=CASCADE)

@@ -39,7 +39,7 @@ class Artist(Model):
 class Album(Model):
     name = CharField(max_length=255, db_index=True)
     artist = ForeignKey(Artist, on_delete=CASCADE, related_name='albums')
-    year = IntegerField()
+    year = IntegerField(default=1980)
 
     genres = ManyToManyField(Genre, related_name='albums')
 

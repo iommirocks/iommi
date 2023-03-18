@@ -140,6 +140,7 @@ def test_as_view_decodes():
 
 
 @pytest.mark.django_db
+@pytest.mark.skipif(pytest.__name__ == 'hammett', reason='hammett has problems with this warns() thing')
 def test_legacy_path_decode():
     artist = Artist.objects.create(pk=3, name='Black Sabbath')
     album = Album.objects.create(pk=7, name='Heaven & Hell', artist=artist, year=1980)
@@ -176,6 +177,7 @@ def test_legacy_path_decode():
 
 
 @pytest.mark.django_db
+@pytest.mark.skipif(pytest.__name__ == 'hammett', reason='hammett has problems with this warns() thing')
 def test_view_legacy_decorator():
     artist = Artist.objects.create(pk=3, name='Black Sabbath')
 

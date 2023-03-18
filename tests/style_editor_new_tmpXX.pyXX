@@ -1,0 +1,8 @@
+
+from iommi.style import Style
+from iommi.style_base import base
+from iommi.asset import Asset
+
+style_editor_new_tmp = Style(
+    base,
+)

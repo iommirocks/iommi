@@ -38,7 +38,7 @@ def pytest_sessionstart(session):
 
 
 @pytest.fixture
-def artist():
+def artist(transactional_db):
     return Artist.objects.create(name='Black Sabbath')
 
 

@@ -29,6 +29,8 @@ from tests.helpers import req
 from tests.models import (
     Foo,
     FormFromModelTest,
+    OtherModel,
+    SomeModel,
 )
 
 
@@ -152,14 +154,6 @@ def test_field_from_model_factory_error_message():
         str(error.value)
         == "No factory for FooFromModelTestModel.foo of type CustomField. Register a factory with register_factory or register_field_factory, you can also register one that returns None to not handle this field type"
     )
-
-
-class OtherModel(Model):
-    bar = CharField()
-
-
-class SomeModel(Model):
-    foo = ForeignKey(OtherModel, on_delete=CASCADE)
 
 
 def test_from_model():

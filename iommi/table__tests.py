@@ -95,7 +95,7 @@ from tests.models import (
     TFoo,
 )
 
-register_search_fields(model=TFoo, search_fields=['b'], allow_non_unique=True)
+register_search_fields(model=TFoo, search_fields=['b'], allow_non_unique=True, overwrite=True)
 
 
 def get_rows():
@@ -747,6 +747,7 @@ def test_select_column_preset(NoSortTable):
     )
 
 
+@pytest.mark.skipif(pytest.__name__ == 'hammett', reason='hammett has problems with this warns() thing')
 def test_select_colum_deprecation():
     with pytest.warns(
         DeprecationWarning,

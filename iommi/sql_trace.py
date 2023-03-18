@@ -25,12 +25,13 @@ from iommi.thread_locals import (
     set_current_request,
 )
 
+def no_coloring(text, color=None, on_color=None, attrs=None):
+    return text
+
 try:
     from termcolor import colored
 except ImportError:
-
-    def colored(text, color=None, on_color=None, attrs=None):
-        return text
+    colored = no_coloring
 
 
 from django.conf import settings

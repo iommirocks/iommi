@@ -201,3 +201,5 @@ docs/imports.rst
 docs/tutorial.rst
 
 .cache/pip
+
+mutants/

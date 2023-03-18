@@ -1055,9 +1055,9 @@ def test_multi_choice_queryset():
         part=form,
         find__name='select',
         # language=HTML
-        expected_html="""
+        expected_html=f"""
             <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" multiple="" name="foo">
-                <option label="foo" selected="selected" value="1"> foo </option>
+                <option label="foo" selected="selected" value="{user.pk}"> foo </option>
             </select>
         """,
     )
@@ -1099,9 +1099,9 @@ def test_choice_queryset():
         part=form,
         find__name='select',
         # language=HTML
-        expected_html="""
+        expected_html=f"""
             <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">
-                <option label="foo" selected="selected" value="1"> foo </option>
+                <option label="foo" selected="selected" value="{user.pk}"> foo </option>
             </select>
         """,
     )
@@ -1111,7 +1111,7 @@ def test_choice_queryset():
 def test_choice_queryset_do_not_cache():
     from django.contrib.auth.models import User
 
-    User.objects.create(username='foo')
+    user = User.objects.create(username='foo')
 
     class MyForm(Form):
         foo = Field.choice_queryset(attr=None, choices=User.objects.all(), template='iommi/form/choice.html')
@@ -1124,25 +1124,25 @@ def test_choice_queryset_do_not_cache():
         part=form,
         find__name='select',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <select class="select2_enhance" id="id_foo" name="foo">
-                <option value="1"> foo </option>
+                <option value="{user.pk}"> foo </option>
             </select>
         """,
     )
 
     # Now create a new queryset, check that we get two!
-    User.objects.create(username='foo2')
+    user2 = User.objects.create(username='foo2')
     form = MyForm().bind(request=req('get'))
     assert form.fields.foo._errors == set()
     verify_part_html(
         part=form,
         find__name='select',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <select class="select2_enhance" id="id_foo" name="foo">
-                <option value="1"> foo </option>
-                <option value="2"> foo2 </option>
+                <option value="{user.pk}"> foo </option>
+                <option value="{user2.pk}"> foo2 </option>
             </select>
         """,
     )
@@ -1184,9 +1184,9 @@ def test_choice_queryset_do_not_look_up_by_default():
         part=form,
         find__name='select',
         # language=HTML
-        expected_html="""
+        expected_html=f"""
             <select class="select2_enhance" data-choices-endpoint="/choices" data-placeholder="" id="id_foo" name="foo">
-                <option label="foo" selected="selected" value="1"> foo </option>
+                <option label="foo" selected="selected" value="{user.pk}"> foo </option>
             </select>
         """,
     )

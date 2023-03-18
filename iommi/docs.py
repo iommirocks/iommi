@@ -95,7 +95,6 @@ def generate_api_docs_tests(directory, classes=None):  # pragma: no cover - this
     :param directory: directory to write the .py files into
     :param classes: list of classes to generate tests for
     """
-    print(f'generate_api_docs_tests("{directory}")')
     if classes is None:
         classes = get_default_classes()
 

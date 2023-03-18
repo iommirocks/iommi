@@ -180,36 +180,34 @@ test_edit_style = Style(
         f.write(orig_code)
 
     from tests.edit_style_temp import test_edit_style
-    register_style('test_edit_style', test_edit_style)
+    with register_style('test_edit_style', test_edit_style):
 
-    # Broken changes are NOT written to disk
-    data = json.loads(style_editor__edit(req('post', data='syntax error!', name='test_edit_style')).content)
-    assert data == {'error': 'invalid syntax (<string>, line 1)'}
+        # Broken changes are NOT written to disk
+        data = json.loads(style_editor__edit(req('post', data='syntax error!', name='test_edit_style')).content)
+        assert data == {'error': 'invalid syntax (<string>, line 1)'}
 
-    with open(path) as f:
-        assert f.read() == orig_code
+        with open(path) as f:
+            assert f.read() == orig_code
 
-    # Valid changes are written to disk
-    data = json.loads(style_editor__edit(req('post', data=new_code, name='test_edit_style')).content)
-    assert '<title>Style showcase</title>' in data['page']
+        # Valid changes are written to disk
+        data = json.loads(style_editor__edit(req('post', data=new_code, name='test_edit_style')).content)
+        assert '<title>Style showcase</title>' in data['page']
 
-    with open(path) as f:
-        actual_new_code = f.read()
+        with open(path) as f:
+            actual_new_code = f.read()
 
-    assert actual_new_code == orig_code.replace('Field', 'Form')
+        assert actual_new_code == orig_code.replace('Field', 'Form')
 
-    # Reload trigger hack
-    if orig_reload is not None:  # modern django
+        # Reload trigger hack
+        if orig_reload is not None:  # modern django
 
-        from django.utils import autoreload
-        autoreload.trigger_reload('notused')
-        captured = capsys.readouterr()
-        assert captured.out == 'Skipped reload\n'
-
-        with pytest.raises(SystemExit):
+            from django.utils import autoreload
             autoreload.trigger_reload('notused')
+            captured = capsys.readouterr()
+            assert captured.out == 'Skipped reload\n'
 
-    unregister_style('test_edit_style')
+            with pytest.raises(SystemExit):
+                autoreload.trigger_reload('notused')
 
 
 def test_style_editor__new():
