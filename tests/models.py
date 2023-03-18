@@ -14,6 +14,7 @@ from django.db.models import (
 )
 
 from iommi import register_search_fields
+from iommi.model import IommiModel
 
 
 class FormFromModelTest(Model):
@@ -271,3 +272,23 @@ class CustomField(models.Field):
 
 class NotRegisteredCustomFieldModel(models.Model):
     custom_field = CustomField()
+
+
+class RaceConditionModel(models.Model):
+    a = IntegerField()
+    b = IntegerField()
+
+
+class NoRaceConditionModel(IommiModel):
+    a = IntegerField()
+    b = IntegerField()
+
+
+class MyIommiModel(IommiModel):
+    foo = IntegerField()
+
+
+class MyAnnotatedIommiModel(IommiModel):
+    foo = IntegerField()
+
+    iommi_ignored_attributes = ['fisk']
