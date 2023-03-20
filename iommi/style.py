@@ -166,6 +166,8 @@ def register_style(name, style, allow_overwrite=False):
 
 def unregister_style(name):
     assert name in _styles
+    style = _styles[name]
+    style.name = None
     del _styles[name]
 
 

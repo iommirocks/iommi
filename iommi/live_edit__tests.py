@@ -180,7 +180,7 @@ test_edit_style = Style(
         f.write(orig_code)
 
     from tests.edit_style_temp import test_edit_style
-    with register_style('test_edit_style', test_edit_style):
+    with register_style('test_edit_style', test_edit_style, allow_overwrite=True):
 
         # Broken changes are NOT written to disk
         data = json.loads(style_editor__edit(req('post', data='syntax error!', name='test_edit_style')).content)

@@ -15,7 +15,7 @@ def test_registrations():
 
     To make iommi understand the specifics of your code base you can register various handlers and behaviors.
     """
-    
+
 
 def test_django_custom_fields():
     # language=rst
@@ -100,11 +100,20 @@ def test_the_search_fields_of_your_django_models():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     When searching for an object with `Query` we need to know which fields to use to find the object. This enables the advanced query language to be `my_car_brand='toyota'` instead of `my_car_brand.pk=42` which is a lot nicer. iommi will automatically use a field called `name` if it exists and is unique. If you have other fields you want iommi to use to find objects you can register it like this:
-
-
-
     """
+    # @test
+    from iommi.from_model import _search_fields_by_model
+    assert Album not in _search_fields_by_model
+    # @end
+
+
     register_search_fields(model=Album, search_fields=['year'], allow_non_unique=True)
+
+    # @test
+    # restore the previous state
+    del _search_fields_by_model[Album]
+    # @end
+
 
     # language=rst
     """
