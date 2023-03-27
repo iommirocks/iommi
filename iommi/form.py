@@ -228,6 +228,8 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
 
         with validation_errors_reported_on(form):
             form.instance.validate_unique()
+            if hasattr(form.instance, 'validate_constraints'):
+                form.instance.validate_constraints()
         if not form.is_valid():
             return
 
@@ -241,6 +243,8 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     if not is_create:
         with validation_errors_reported_on(form):
             form.instance.validate_unique()
+            if hasattr(form.instance, 'validate_constraints'):
+                form.instance.validate_constraints()
         if not form.is_valid():
             return
 

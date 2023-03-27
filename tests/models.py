@@ -75,6 +75,20 @@ class UniqueConstraintTest(Model):
         unique_together = ('f_int', 'f_float', 'f_bool')
 
 
+class UniqueConstraintAlternativeTest(Model):
+    """Test unique constraints defined with UniqueConstraint
+    instead of unique_together."""
+    f_int = IntegerField()
+    f_float = FloatField()
+    f_bool = BooleanField()
+
+    class Meta:
+        verbose_name = "Unique constraint test"
+        constraints = [
+            models.UniqueConstraint(fields=('f_int', 'f_float', 'f_bool'), name="unique_test")
+        ]
+
+
 class NamespaceFormsTest(Model):
     f_int = IntegerField()
     f_float = FloatField()
