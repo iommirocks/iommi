@@ -105,6 +105,8 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
+    UniqueConstraintTest,
+    UniqueConstraintAlternativeTest,
 )
 
 
@@ -2850,9 +2852,8 @@ def test_redirect_to_with_reverse_lazy():
 
 
 @pytest.mark.django_db
-def test_unique_constraint_violation():
-    from tests.models import UniqueConstraintTest
-
+@pytest.mark.parametrize("unique_model", (UniqueConstraintTest, UniqueConstraintAlternativeTest))
+def test_unique_constraint_violation(unique_model):
     request = req(
         'post',
         **{
@@ -2862,9 +2863,9 @@ def test_unique_constraint_violation():
             '-submit': '',
         },
     )
-    form = Form.create(auto__model=UniqueConstraintTest)
+    form = Form.create(auto__model=unique_model)
     form.bind(request=request).render_to_response()
-    assert UniqueConstraintTest.objects.all().count() == 1
+    assert unique_model.objects.all().count() == 1
 
     bound_form = form.bind(request=request)
     bound_form.render_to_response()
@@ -2873,21 +2874,20 @@ def test_unique_constraint_violation():
     assert bound_form.get_errors() == {
         'global': {'Unique constraint test with this F int, F float and F bool already exists.'}
     }
-    assert UniqueConstraintTest.objects.all().count() == 1
+    assert unique_model.objects.all().count() == 1
 
 
 @pytest.mark.django_db
-def test_unique_constraint_violation_edit():
-    from tests.models import UniqueConstraintTest
-
-    form = Form.create(auto__model=UniqueConstraintTest)
+@pytest.mark.parametrize("unique_model", (UniqueConstraintTest, UniqueConstraintAlternativeTest))
+def test_unique_constraint_violation_edit(unique_model):
+    form = Form.create(auto__model=unique_model)
     form.bind(request=req('post', f_int='3', f_float='5.1', f_bool='True', **{'-submit': ''})).render_to_response()
 
     form.bind(request=req('post', f_int='3', f_float='5.1', f_bool='False', **{'-submit': ''})).render_to_response()
 
-    assert UniqueConstraintTest.objects.all().count() == 2
+    assert unique_model.objects.all().count() == 2
 
-    instance = UniqueConstraintTest.objects.get(f_bool=False)
+    instance = unique_model.objects.get(f_bool=False)
 
     form = Form.edit(auto__instance=instance)
     bound_form = form.bind(request=req('post', f_int='3', f_float='5.1', f_bool='True', **{'-submit': ''}))
