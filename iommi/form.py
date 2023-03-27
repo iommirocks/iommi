@@ -803,7 +803,7 @@ class Field(Part, Tag):
 
         self.errors = Errors(parent=self, **self.errors)
 
-        if form.editable is False:
+        if not form.editable:
             self.editable = False
 
         # Not strict evaluate on purpose
