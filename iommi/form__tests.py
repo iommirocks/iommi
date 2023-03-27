@@ -1209,7 +1209,6 @@ def test_field_from_model():
 @pytest.mark.django
 def test_fields_from_model():
     class TestForm(Form):
-
         f_float = Field.from_model(FormFromModelTest, 'f_float')
 
         class Meta:
@@ -2806,7 +2805,12 @@ def test_edit_object_foreign_related_attribute():
 
 
 def test_redirect_default_case():
-    sentinel1, sentinel2, sentinel3, sentinel4 = object(), '#sentinel#', object(), object()
+    sentinel1, sentinel2, sentinel3, sentinel4 = (
+        object(),
+        "#sentinel#",
+        object(),
+        object(),
+    )
     expected = dict(redirect_to=sentinel2, request=sentinel3, form=sentinel4)
 
     class FakeHttpResponse(HttpResponseBase):
@@ -2816,19 +2820,22 @@ def test_redirect_default_case():
 
     assert (
         create_or_edit_object_redirect(
-            **merged(
-                expected,
-                is_create=sentinel1,
-                redirect_to=sentinel2,
-                redirect=lambda **kwargs: FakeHttpResponse(**kwargs),
-            )
+            is_create=sentinel1,
+            redirect_to=sentinel2,
+            redirect=lambda **kwargs: FakeHttpResponse(**kwargs),
+            form=Struct(
+                iommi_evaluate_parameters=lambda: dict(
+                    request=sentinel3,
+                    form=sentinel4,
+                )
+            ),
         ).kwargs
         == expected
     )
 
 
 def test_redirect_to_with_reverse_lazy():
-    sentinel1, sentinel2, sentinel3, sentinel4 = object(), '/dummy/', object(), object()
+    sentinel1, sentinel2, sentinel3, sentinel4 = object(), "/dummy/", object(), object()
     expected = dict(redirect_to=sentinel2, request=sentinel3, form=sentinel4)
 
     class FakeHttpResponse(HttpResponseBase):
@@ -2838,12 +2845,15 @@ def test_redirect_to_with_reverse_lazy():
 
     assert (
         create_or_edit_object_redirect(
-            **merged(
-                expected,
-                is_create=sentinel1,
-                redirect_to=reverse_lazy('dummy_view'),
-                redirect=lambda **kwargs: FakeHttpResponse(**kwargs),
-            )
+            is_create=sentinel1,
+            redirect_to=reverse_lazy("dummy_view"),
+            redirect=lambda **kwargs: FakeHttpResponse(**kwargs),
+            form=Struct(
+                iommi_evaluate_parameters=lambda: dict(
+                    request=sentinel3,
+                    form=sentinel4,
+                )
+            ),
         ).kwargs
         == expected
     )

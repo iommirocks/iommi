@@ -255,7 +255,7 @@ def create_or_edit_object__post_handler(*, form, is_create, **_):
     form.invoke_callback(form.extra.on_save)
 
     return create_or_edit_object_redirect(
-        is_create, form.extra.redirect_to, form.get_request(), form.extra.redirect, form
+        is_create, form.extra.redirect_to, form.extra.redirect, form
     )
 
 
@@ -1342,7 +1342,7 @@ def is_django_promise_with_string_proxy(redirect_to):
     )
 
 
-def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, form):
+def create_or_edit_object_redirect(is_create, redirect_to, redirect, form):
     assert (
         redirect_to is None or isinstance(redirect_to, str) or is_django_promise_with_string_proxy(redirect_to)
     ), 'redirect_to must be a str'
@@ -1353,7 +1353,7 @@ def create_or_edit_object_redirect(is_create, redirect_to, request, redirect, fo
             redirect_to = (
                 "../../"  # We guess here that the path ends with '<pk>/edit/' so this should end up at a good place
             )
-    response = redirect(request=request, redirect_to=redirect_to, form=form)
+    response = redirect(redirect_to=redirect_to, **form.iommi_evaluate_parameters())
     assert isinstance(response, HttpResponseBase), 'redirect must return a http response'
     return response
 
@@ -1408,7 +1408,6 @@ def delete_object__post_handler(form, **_):
     return create_or_edit_object_redirect(
         is_create=False,
         redirect_to=form.extra.redirect_to,
-        request=form.get_request(),
         redirect=form.extra.redirect,
         form=form,
     )
