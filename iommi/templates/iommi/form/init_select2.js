@@ -26,7 +26,18 @@ function iommi_init_select2(elem) {
     if (endpoint_path) {
         options.ajax = {
             url: function () {
-                return '?' + this.closest('form').serialize();
+                let form = this.closest('form');
+
+                let full_state = form.attr('data-select2-full-state');
+                if (full_state === undefined) {
+                    full_state = "true";
+                }
+                if (full_state === 'true') {
+                    return '?' + form.serialize();
+                }
+                else {
+                    return "";
+                }
             },
             dataType: "json",
             data: function (params) {
