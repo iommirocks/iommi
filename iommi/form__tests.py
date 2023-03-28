@@ -717,10 +717,18 @@ def test_non_editable_form():
     ).bind(
         request=req('get', foo='1', bar='2'),
     )
-    assert 3 == form.fields.foo.value
-    assert 4 == form.fields.bar.value
-    assert False is form.fields.foo.editable
-    assert False is form.fields.bar.editable
+    assert form.fields.foo.value == 3
+    assert form.fields.bar.value == 4
+    assert form.fields.foo.editable is False
+    assert form.fields.bar.editable is False
+
+
+def test_non_editable_form_falsy():
+    form = Form(
+        editable=0,
+        fields__foo=Field(),
+    ).bind()
+    assert form.fields.foo.editable is False
 
 
 def test_text_field():
