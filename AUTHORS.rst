@@ -24,3 +24,4 @@ Credits
 * flying_sausages
 * Nigel Metheringham <nigel.metheringham@gmail.com>
 * Maximilian Albert <https://github.com/maxalbert>
+* Yury Bulka <setthemfree@privacyrequired.com>

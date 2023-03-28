@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+5.9.0 (2023-03-28)
+~~~~~~~~~~~~~~~~~~
+
+* `iommi.forms.save_nested_form` added. This is useful for when you want to save multiple forms with one submit button.
+
+* Fixed admin defaults to have lower priority so you can properly override them.
+
+* Added dummy factory registration to not crash on `GenericRelation` and `GenericForeignKey`
+
+* Forms: check `model.validate_constraints()` on Django 4.1+ (Thanks Yury Bulka!)
+
+* Enable users to disable full form state sending on select2 ajax. To disable, set the `data-select2-full-state` attribute to `false` on the form.
+
+
 5.8.1 (2023-02-28)
 ~~~~~~~~~~~~~~~~~~
 
