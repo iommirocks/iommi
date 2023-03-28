@@ -3106,7 +3106,7 @@ def test_delete_form_default_text():
 
     foo = Foo.objects.create(foo=7)
     verify_part_html(
-        part=Form.delete(instance=foo),
+        part=Form.delete(instance=lambda **_: foo),
         # language=HTML
         expected_html="""
             <form action="" enctype="multipart/form-data" method="post">

@@ -538,7 +538,7 @@ class Field(Part, Tag):
     is_list: bool = EvaluatedRefinable()
     is_boolean: bool = EvaluatedRefinable()
     model: Optional[Type[Model]] = SpecialEvaluatedRefinable()
-    model_field : Optional[models.Field] = Refinable()
+    model_field: Optional[models.Field] = Refinable()
     model_field_name = Refinable()
 
     editable: bool = EvaluatedRefinable()
@@ -1571,9 +1571,12 @@ class Form(Part):
         extra_action_defaults = Namespace()
         crud_type = self.extra.get('crud_type')
         if 'title' not in self.iommi_namespace and crud_type is not None:
-            self.title = capitalize(
+            self.title = lambda form, **_: capitalize(
                 gettext('%(crud_type)s %(model_name)s')
-                % dict(crud_type=gettext(crud_type), model_name=(self.model or self.instance)._meta.verbose_name)
+                % dict(
+                    crud_type=gettext(crud_type),
+                    model_name=(form.model or form.instance)._meta.verbose_name,
+                )
             )
             extra_action_defaults = setdefaults_path(
                 extra_action_defaults,
