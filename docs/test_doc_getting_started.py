@@ -2,7 +2,6 @@ from django.urls import (
     path,
 )
 
-from docs.models import *
 from iommi import *
 from tests.helpers import (
     req,
@@ -73,7 +72,7 @@ def test_1__install():
 
     By default iommi uses a very basic bootstrap base template. We'll get to how to integrate it into your site later.
     """
-    
+
 
 def test_2__your_first_form():
     # language=rst
@@ -86,6 +85,9 @@ def test_2__your_first_form():
 
     """
     from iommi import Form
+
+    # Import any models you need from your models.  Here I'm using Album
+    from .models import Album
 
     urlpatterns = [
         # ...your urls...
@@ -108,6 +110,9 @@ def test_3__your_first_table(small_discography):
 
     """
     from iommi import Table
+
+    # Import any models you need from your models.  Here I'm using Album
+    from .models import Album
 
     urlpatterns = [
         # ...your urls...
@@ -146,6 +151,9 @@ def test_4__your_first_page():
     """
 
     from iommi import Page, Form, Table
+
+    # Import any models you need from your models.  Here I'm using Artist
+    from .models import Artist
 
     class TestPage(Page):
         create_form = Form.create(auto__model=Artist)
