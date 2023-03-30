@@ -143,37 +143,39 @@ class MenuItem(MenuBase):
         return r
 
     def __html__(self, *, render=None):
-        a = setdefaults_path(
-            Namespace(),
-            self.a,
-            children__text=self.display_name,
-            attrs__href=self.url,
-            _name='a',
-        )
-        if self._active and not self.active_class_on_item:
-            setdefaults_path(
-                a,
-                attrs__class={self.active_class: True},
+        if not hasattr(self._declared, '_fragment'):
+            a = setdefaults_path(
+                Namespace(),
+                self.a,
+                children__text=self.display_name,
+                attrs__href=self.url,
+                _name='a',
             )
+            if self._active and not self.active_class_on_item:
+                setdefaults_path(
+                    a,
+                    attrs__class={self.active_class: True},
+                )
 
-        if self.url is None and a.tag == 'a':
-            a.tag = None
+            if self.url is None and a.tag == 'a':
+                a.tag = None
 
-        fragment = Namespace(
-            call_target=Fragment,
-            children__a=a,
-            tag=self.tag,
-            template=self.template,
-            attrs=self.attrs,
-            _name='fragment',
-        )
-        if self._active and self.active_class_on_item:
-            setdefaults_path(
-                fragment,
-                attrs__class={self.active_class: True},
+            fragment = Namespace(
+                call_target=Fragment,
+                children__a=a,
+                tag=self.tag,
+                template=self.template,
+                attrs=self.attrs,
+                _name='fragment',
             )
+            if self._active and self.active_class_on_item:
+                setdefaults_path(
+                    fragment,
+                    attrs__class={self.active_class: True},
+                )
+            self._declared._fragment = fragment().refine_done()
 
-        fragment = fragment().bind(parent=self)
+        fragment = self._declared._fragment.bind(parent=self)
         # need to do this here because otherwise the sub menu will get get double bind
         for name, item in items(self.sub_menu):
             assert name not in fragment.children
@@ -229,15 +231,17 @@ class Menu(MenuBase):
         super(Menu, self).__init__(**kwargs)
 
     def __html__(self, *, render=None):
-        fragment = Fragment(
-            _name=self._name,
-            tag=self.tag,
-            template=self.template,
-            children__items_container=Fragment(
-                **self.items_container,
-            ),
-        ).bind(parent=self)
-        # need to do this here because otherwise the sub menu will get get double bind
+        if not hasattr(self._declared, '_fragment'):
+            self._declared._fragment = Fragment(
+                _name=self._name,
+                tag=self.tag,
+                template=self.template,
+                children__items_container=Fragment(
+                    **self.items_container,
+                ),
+            ).refine_done()
+        fragment = self._declared._fragment.bind(parent=self)
+        # need to do this here because otherwise the sub menu will get double bind
         items_container = fragment.children.items_container
         for name, item in items(self.sub_menu):
             assert name not in items_container.children
@@ -307,9 +311,12 @@ class Menu(MenuBase):
             current._active = True
 
 
-def get_debug_menu(**kwargs):
+def get_debug_menu():
+    if hasattr(get_debug_menu, '_menu'):
+        return get_debug_menu._menu
+
     class DebugMenu(Menu):
-        code = MenuItem(tag='li')
+        code = MenuItem(tag='li', url=lambda request, **_: request._iommi_debug_source_url)
         tree = MenuItem(url='?/debug_tree', tag='li')
         pick = MenuItem(url='#', attrs__onclick='window.iommi_start_pick()', tag='li')
         edit = MenuItem(
@@ -342,4 +349,5 @@ def get_debug_menu(**kwargs):
             include=lambda **_: 'iommi.sql_trace.Middleware' in settings.MIDDLEWARE,
         )
 
-    return DebugMenu(**kwargs)
+    get_debug_menu._menu = DebugMenu().refine_done()
+    return get_debug_menu._menu

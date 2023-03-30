@@ -223,7 +223,7 @@ def filename_and_line_num_from_part(part):
 
 
 def iommi_debug_panel(part):
-    source_url = source_url_from_part(part)
+    part.get_request()._iommi_debug_source_url = source_url_from_part(part)
     script = r"""
         window.iommi_start_pick = function() {
             window.iommi_pick_stack = [];
@@ -314,7 +314,7 @@ def iommi_debug_panel(part):
 
     from iommi.menu import get_debug_menu
 
-    return get_debug_menu(sub_menu__code__url=source_url).bind(request=part.get_request()).__html__() + mark_safe(
+    return get_debug_menu().bind(request=part.get_request()).__html__() + mark_safe(
         f'<script>{script}</script>'
     )
 

@@ -224,8 +224,11 @@ def render_root(*, part, context, **render):
     from iommi import Page
     from iommi.fragment import Container
 
+    if not hasattr(render_root, '_container'):
+        render_root._container = Container(_name='Container').refine_done(parent=part)
+
     context = dict(
-        container=Container(_name='Container').refine_done(parent=part).bind(parent=part),
+        container=render_root._container.bind(parent=part),
         content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=(

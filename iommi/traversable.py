@@ -172,7 +172,7 @@ class Traversable(RefinableObject):
         if not result.is_refine_done:
             result = result.refine_done(parent=parent)
 
-        # todo drop _declared
+        # todo drop _declared... maybe. But what if I need it to do explicit cache on the refined obj?
         result._declared = self
         del self  # to prevent mistakes when changing the code below
 
