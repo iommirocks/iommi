@@ -228,9 +228,7 @@ class MemberBinder(dict):
     def __delitem__(self, name):
         dict.__delitem__(self, name)
         _bindable_names = object.__getattribute__(self, '_bindable_names')
-        _declared_members = object.__getattribute__(self, '_declared_members')
         _bindable_names.remove(name)
-        del _declared_members[name]
 
     def get(self, name, *args):
         _force_bind(self, name)
