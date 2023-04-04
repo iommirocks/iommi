@@ -16,7 +16,6 @@ from django.test import override_settings
 
 from docs.models import (
     Album,
-    Genre,
 )
 from iommi import (
     Action,
@@ -76,6 +75,8 @@ from iommi.table import (
 from tests.helpers import (
     req,
     request_with_middleware,
+    staff_req,
+    user_req,
     verify_table_html,
 )
 from tests.models import (
@@ -3917,7 +3918,6 @@ def test_custom_rows():
     )
 
 
-
 def test_foo():
     form = Form(auto__model=Album).bind(request=req('get'))
     assert form.fields.artist.model_field is Album._meta.get_field('artist')
@@ -3927,8 +3927,29 @@ def test_foo():
     assert query.filters.artist.model_field is Album._meta.get_field('artist')
     assert query.filters.genres.model_field is Album._meta.get_field('genres')
 
-
     t = Table(auto__model=Album).bind(request=req('get'))
     assert t.columns.artist.model_field is Album._meta.get_field('artist')
     # Fails:
     assert t.columns.genres.model_field is Album._meta.get_field('genres')
+
+
+class MyTable(Table):
+    class Meta:
+        rows = Album.objects.none()
+
+    goosfraba = Column(
+        include=lambda request, **_: request.user.is_staff,
+        filter__include=True,
+    )
+
+
+def test_filter_include1():
+    view = MyTable().refine_done()
+    assert list(view.bind(request=staff_req('get')).query.form.fields.keys()) == ['goosfraba']
+    assert list(view.bind(request=user_req('get')).query.form.fields.keys()) == []
+
+
+def test_filter_include2():
+    view = MyTable().refine_done()
+    assert list(view.bind(request=user_req('get')).query.form.fields.keys()) == []
+    assert list(view.bind(request=staff_req('get')).query.form.fields.keys()) == ['goosfraba']
