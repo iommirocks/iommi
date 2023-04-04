@@ -3953,3 +3953,9 @@ def test_filter_include2():
     view = MyTable().refine_done()
     assert list(view.bind(request=user_req('get')).query.form.fields.keys()) == []
     assert list(view.bind(request=staff_req('get')).query.form.fields.keys()) == ['goosfraba']
+
+
+def test_filter_include_parts():
+    view = MyTable().refine_done()
+    assert list(view.bind(request=staff_req('get')).query.form.parts.keys()) == ['goosfraba']
+    assert list(view.bind(request=user_req('get')).query.form.parts.keys()) == []

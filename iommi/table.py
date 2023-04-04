@@ -2080,6 +2080,7 @@ class Table(Part, Tag):
                     del self.query.filters[name]
                 if self.query and self.query.form and name in self.query.form.fields:
                     del self.query.form.fields[name]
+                    del self.query.form.parts[name]
                 if self.bulk and name in self.bulk.fields:
                     del self.bulk.fields[name]
 
