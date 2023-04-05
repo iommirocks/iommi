@@ -858,6 +858,7 @@ class Column(Part):
         """
         Shortcut for creating a cell that is a link. The URL is the result of calling `get_absolute_url()` on the object.
         """
+
         def link_cell_url(column, row, **_):
             r = getattr_path(row, column.attr)
             return r.get_absolute_url() if r else ''
@@ -2077,8 +2078,9 @@ class Table(Part, Tag):
             if name not in keys(self.columns):
                 if self.query and name in self.query.filters:
                     del self.query.filters[name]
-                    if self.query.form and name in self.query.form.fields:
-                        del self.query.form.fields[name]
+                if self.query and self.query.form and name in self.query.form.fields:
+                    del self.query.form.fields[name]
+                    del self.query.form.parts[name]
                 if self.bulk and name in self.bulk.fields:
                     del self.bulk.fields[name]
 

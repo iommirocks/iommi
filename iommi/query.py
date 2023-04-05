@@ -715,7 +715,6 @@ class Query(Part):
         return render(request=self.get_request())
 
     def _on_refine_done_form(self):
-
         field_class = self.get_meta().form_class.get_meta().member_class
 
         declared_fields = Struct()
