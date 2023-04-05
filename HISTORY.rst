@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+5.10.0 (2023-04-05)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix issue with filter fields not beeing hidden when the corresponding column is hidden.
+
+* Fix `extra__redirect` not getting all parameters.
+
+* Fix `Form.editable` to have truesy semantics, not requireing strictly `False`
+
+* CRUD Form default title should be done lazily, since instance might be a lambda
+
+
 5.9.0 (2023-03-28)
 ~~~~~~~~~~~~~~~~~~
 
