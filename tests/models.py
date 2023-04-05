@@ -42,6 +42,7 @@ class FieldFromModelForeignKeyTest(Model):
 
 class FieldFromModelOneToOneTest(Model):
     foo_one_to_one = OneToOneField(Foo, on_delete=CASCADE)
+    f_char = CharField(max_length=255, blank=True)
 
 
 class ExpandModelTestA(Model):
