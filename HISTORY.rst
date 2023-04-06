@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.10.1 (2023-04-06)
+~~~~~~~~~~~~~~~~~~~
+
+* `OneToOneField` reverse mapping should use the singular field name. This was a regression introduced in 5.8.0 when ManyToMany reverse support was fixed. (Thanks Yury Bulka!)
+
+
 5.10.0 (2023-04-05)
 ~~~~~~~~~~~~~~~~~~~
 
