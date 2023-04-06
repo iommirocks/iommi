@@ -86,6 +86,8 @@ from tests.models import (
     ChoicesModel,
     CSVExportTestModel,
     DefaultsInForms,
+    Foo,
+    FieldFromModelOneToOneTest,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
@@ -3516,6 +3518,21 @@ def test_auto_model_dunder_path():
 
     assert 'bar_foo' in keys(table.columns)
     table.__html__()
+
+
+@pytest.mark.django_db
+def test_auto_model_dunder_path_1to1_reverse():
+    foo = Foo.objects.create(foo=1)
+    FieldFromModelOneToOneTest.objects.create(foo_one_to_one=foo, f_char="dunder_1to1")
+    assert foo.fieldfrommodelonetoonetest.f_char == "dunder_1to1"
+    table = Table(
+        auto__model=Foo,
+        auto__include=[
+            "foo",
+            "fieldfrommodelonetoonetest__f_char",
+        ]
+    ).bind(request=req('get'))
+    assert "fieldfrommodelonetoonetest_f_char" in keys(table.columns)
 
 
 @pytest.mark.django_db

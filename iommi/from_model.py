@@ -11,6 +11,7 @@ from django.db.models import (
     Field as DjangoField,
     ManyToManyRel,
     ManyToOneRel,
+    OneToOneRel,
     Model,
 )
 from iommi.struct import Struct
@@ -178,6 +179,8 @@ def get_field_name(field: DjangoField) -> str:
             return field.related_name
         elif field.related_name == '+':
             return None
+        elif isinstance(field, OneToOneRel):
+            return field.name
         else:
             return f'{field.name}_set'
     else:
