@@ -16,11 +16,11 @@ Changelog
 5.10.0 (2023-04-05)
 ~~~~~~~~~~~~~~~~~~~
 
-* Fix issue with filter fields not beeing hidden when the corresponding column is hidden.
+* Fix issue with filter fields not being hidden when the corresponding column is hidden.
 
 * Fix `extra__redirect` not getting all parameters.
 
-* Fix `Form.editable` to have truesy semantics, not requireing strictly `False`
+* Fix `Form.editable` to have truthy semantics, not requiring strictly `False`
 
 * CRUD Form default title should be done lazily, since instance might be a lambda
 
@@ -399,7 +399,7 @@ Changelog
 
 * Dropped support for `__` in names of declared columns/fields/filters (deprecated since 3.2.0)
 
-* Big internal refactoring. You should see some performance improvements accross the board.
+* Big internal refactoring. You should see some performance improvements across the board.
 
 
 3.4.0 (2021-10-22)
@@ -465,7 +465,7 @@ Using `foo__bar` had some weird consequences like you not being able to later ta
 
 * Expand ajax reload on filter change of tables to also include the bulk form. If not done, the bulk options are not in sync with the filtering.
 
-* Remove reference to non-existant `errors.html` in bootstrap style
+* Remove reference to non-existent `errors.html` in bootstrap style
 
 * Make `Table.visible_rows` non-lazy and not a property
 
@@ -509,7 +509,7 @@ Using `foo__bar` had some weird consequences like you not being able to later ta
 
 * Fixed nesting tables inside forms. This would previously crash with a strange error message.
 
-* Avoid infinite loop in sort_after on too large indicies
+* Avoid infinite loop in sort_after on too large indices
 
 
 2.8.10 (2021-04-28)
