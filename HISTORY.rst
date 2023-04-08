@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.11.0 (2023-04-08)
+~~~~~~~~~~~~~~~~~~~
+
+* Ukrainian language support (Thanks Yury Bulka!)
+
+
 5.10.1 (2023-04-06)
 ~~~~~~~~~~~~~~~~~~~
 
