@@ -772,8 +772,10 @@ class Column(Part):
         instance = cls(**kwargs)
         instance = instance.refine(
             Prio.shortcut,
-            bulk__choices=kwargs.get('choices'),
-            filter__choices=kwargs.get('choices'),
+            bulk__choices=lambda table, field, **_: table.columns.get(field.iommi_name()).choices,
+            filter__choices=lambda table, **kwargs: table.columns.get(
+                (kwargs.get('filter') or kwargs.get('field')).iommi_name()
+            ).choices,
         )
         return instance
 
