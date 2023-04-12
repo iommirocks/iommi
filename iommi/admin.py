@@ -135,6 +135,23 @@ class Admin(Page):
     # Global configuration on apps level
     apps: Namespace = Refinable()
 
+    menu = Menu(
+        sub_menu=dict(
+            root=MenuItem(
+                url=lambda admin, **_: reverse('iommi.Admin.all_models', current_app=admin.app_name),
+                display_name=gettext('iommi administration'),
+            ),
+            change_password=MenuItem(
+                url=lambda admin, **_: reverse(Auth.change_password, current_app=admin.app_name),
+                display_name=gettext('Change password'),
+            ),
+            logout=MenuItem(
+                url=lambda admin, **_: reverse(Auth.logout, current_app=admin.app_name),
+                display_name=gettext('Logout')
+            ),
+        ),
+    )
+
     @read_config
     @with_defaults(
         apps__auth_user__include = True,
@@ -174,17 +191,6 @@ class Admin(Page):
                 sorted(joined_app_name_and_model)
             )
         super(Admin, self).__init__(parts=parts, apps=apps, **kwargs)
-        menu = Menu(
-                    sub_menu=dict(
-                        root=MenuItem(
-                            url=lambda admin, **_: reverse('iommi.Admin.all_models', current_app=self.app_name), display_name=gettext('iommi administration')
-                        ),
-                        change_password=MenuItem(
-                            url=lambda **_: reverse(Auth.change_password, current_app=self.app_name), display_name=gettext('Change password')
-                        ),
-                        logout=MenuItem(url=lambda **_: reverse(Auth.logout, current_app=self.app_name), display_name=gettext('Logout')),
-                    ),
-                )
 
     def refine_with_params(self, app_name: str = None, model_name: str = None, pk: str = None):
         refined_admin = self.refine(app_name=app_name, model_name=model_name)
@@ -205,11 +211,13 @@ class Admin(Page):
 
     def as_view(self):
         def admin_view(request, *args, **kwargs):
+            app_name = kwargs.pop('app_name', None)
+
             if not getattr(request, 'user', None) or not request.user.is_authenticated:
-                return HttpResponseRedirect(f'{reverse(Auth.login,current_app=kwargs["app_name"])}?{urlencode(dict(next=request.path))}')
+                return HttpResponseRedirect(f'{reverse(Auth.login, current_app=app_name)}?{urlencode(dict(next=request.path))}')
 
             final_page = self.refine_with_params(
-                app_name=kwargs.pop('app_name', None),
+                app_name=app_name,
                 model_name=kwargs.pop('model_name', None),
                 pk=kwargs.pop('pk', None),
             ).refine_done()
