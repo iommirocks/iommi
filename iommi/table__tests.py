@@ -3948,6 +3948,10 @@ def test_reverse_mappings():
     assert t.columns.genres.model_field is Album._meta.get_field('genres')
 
 
+def assert_same_query(a, b):
+    assert str(a.query) == str(b.query)
+
+
 @pytest.mark.django_db
 def test_choices_passed_down_through_shortcuts(big_discography):
     choices = Album.objects.filter(name__startswith='H')
@@ -3959,9 +3963,9 @@ def test_choices_passed_down_through_shortcuts(big_discography):
         ),
     ).bind(request=req('get'))
 
-    assert t.columns.album.choices == choices
-    assert t.query.filters.album.choices == choices
-    assert str(t.query.form.fields.album.choices.query) == str(choices.query)
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
 
 
 @pytest.mark.django_db
@@ -3976,9 +3980,9 @@ def test_choices_passed_down_through_shortcuts_from_from_model(big_discography):
         ),
     ).bind(request=req('get'))
 
-    assert list(t.columns.album.choices) == list(choices)
-    assert list(t.query.filters.album.choices) == list(choices)
-    assert list(t.query.form.fields.album.choices) == list(choices)
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
 
 
 @pytest.mark.django_db
@@ -3994,9 +3998,9 @@ def test_choices_passed_down_through_shortcuts_from_from_model_declared(big_disc
 
     t = MyTable(model=Track).bind(request=req('get'))
 
-    assert list(t.columns.album.choices) == list(choices)
-    assert list(t.query.filters.album.choices) == list(choices)
-    assert list(t.query.form.fields.album.choices) == list(choices)
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
 
 
 @pytest.mark.django_db
@@ -4011,9 +4015,9 @@ def test_choices_passed_down_through_shortcuts_from_auto(big_discography):
         ),
     ).bind(request=req('get'))
 
-    assert list(t.columns.album.choices) == list(choices)
-    assert list(t.query.filters.album.choices) == list(choices)
-    assert list(t.query.form.fields.album.choices) == list(choices)
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
 
 
 class MyTable(Table):
