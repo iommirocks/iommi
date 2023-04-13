@@ -36,7 +36,7 @@ from iommi.refinable import (
     RefinableMembers,
     RefinableObject,
 )
-from iommi.struct import Struct
+from iommi.struct import merged, Struct
 from iommi.style import Style
 
 # Backward compatible definition
@@ -241,11 +241,12 @@ class Traversable(RefinableObject):
         return self._evaluate_parameters
 
     def invoke_callback(self, callback, **kwargs):
+        all_kwargs = merged(self.iommi_evaluate_parameters(), kwargs)
         try:
-            return callback(**kwargs, **self.iommi_evaluate_parameters())
+            return callback(**all_kwargs)
         except TypeError as e:
             if not matches(
-                signature_from_kwargs(dict(**kwargs, **self.iommi_evaluate_parameters())),
+                signature_from_kwargs(all_kwargs),
                 get_signature(callback),
                 __match_empty=True,
             ):

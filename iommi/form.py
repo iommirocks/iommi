@@ -897,14 +897,8 @@ class Field(Part, Tag):
             assert self.form._valid is False
 
     def _validate_parsed_data(self, value):
-        # In next major: is_valid, error = self.invoke_callback(self.is_valid, parsed_data=value)
         with validation_errors_reported_on(self):
-            is_valid, error = self.invoke_deprecated_callback(
-                self.is_valid,
-                form=self.form,
-                field=self,
-                parsed_data=value,
-            )
+            is_valid, error = self.invoke_callback(self.is_valid, parsed_data=value)
             if is_valid and not self.errors and self.parsed_data is not None and not self.is_list:
                 value = self.parsed_data
             elif not is_valid and self.form.mode:
@@ -918,20 +912,10 @@ class Field(Part, Tag):
         form = self.form
         if self.initial is MISSING and self.include and self.attr:
             if form.instance is not None:
-                # In next major: self.initial = self.invoke_callback(self.read_from_instance, instance = form.instance)
-                self.initial = self.invoke_deprecated_callback(
-                    self.read_from_instance,
-                    field=self,
-                    instance=form.instance,
-                )
+                self.initial = self.invoke_callback(self.read_from_instance, instance=form.instance)
             elif form.model is not None:
                 try:
-                    # In next major: self.initial = self.invoke_callback(self.read_from_instance, instance = form.model())
-                    self.initial = self.invoke_deprecated_callback(
-                        self.read_from_instance,
-                        field=self,
-                        instance=form.model(),
-                    )
+                    self.initial = self.invoke_callback(self.read_from_instance, instance=form.model())
                 except (ObjectDoesNotExist, AttributeError, ValueError):
                     pass
 
