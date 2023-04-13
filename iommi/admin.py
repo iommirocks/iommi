@@ -138,12 +138,17 @@ class Admin(Page):
     menu = Menu(
         sub_menu=dict(
             root=MenuItem(
-                url=lambda admin, **_: reverse('iommi.Admin.all_models'), display_name=gettext('iommi administration')
+                url=lambda admin, **_: reverse('iommi.Admin.all_models', current_app=admin.app_name),
+                display_name=gettext('iommi administration'),
             ),
             change_password=MenuItem(
-                url=lambda **_: reverse(Auth.change_password), display_name=gettext('Change password')
+                url=lambda admin, **_: reverse(Auth.change_password, current_app=admin.app_name),
+                display_name=gettext('Change password'),
             ),
-            logout=MenuItem(url=lambda **_: reverse(Auth.logout), display_name=gettext('Logout')),
+            logout=MenuItem(
+                url=lambda admin, **_: reverse(Auth.logout, current_app=admin.app_name),
+                display_name=gettext('Logout')
+            ),
         ),
     )
 
@@ -206,11 +211,13 @@ class Admin(Page):
 
     def as_view(self):
         def admin_view(request, *args, **kwargs):
+            app_name = kwargs.pop('app_name', None)
+
             if not getattr(request, 'user', None) or not request.user.is_authenticated:
-                return HttpResponseRedirect(f'{reverse(Auth.login)}?{urlencode(dict(next=request.path))}')
+                return HttpResponseRedirect(f'{reverse(Auth.login, current_app=app_name)}?{urlencode(dict(next=request.path))}')
 
             final_page = self.refine_with_params(
-                app_name=kwargs.pop('app_name', None),
+                app_name=app_name,
                 model_name=kwargs.pop('model_name', None),
                 pk=kwargs.pop('pk', None),
             ).refine_done()
