@@ -136,7 +136,7 @@ def MyTestForm():
     class MyTestForm(Form):
         party = Field.choice(choices=['ABC'], required=False)
         username = Field(
-            is_valid=lambda form, field, parsed_data: (
+            is_valid=lambda form, parsed_data, **_: (
                 parsed_data.startswith(form.fields['party'].parsed_data.lower() + '_')
                 if parsed_data is not None
                 else None,
@@ -1816,7 +1816,7 @@ def test_file():
 @pytest.mark.django
 def test_file_no_roundtrip():
     class FooForm(Form):
-        foo = Field.file(is_valid=lambda form, field, parsed_data: (False, 'invalid!'))
+        foo = Field.file(is_valid=lambda **_: (False, 'invalid!'))
 
     fake_file = BytesIO(b'binary_content_here')
 

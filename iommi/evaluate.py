@@ -148,3 +148,7 @@ def find_static_items(d):
 def evaluate_as_needed(d, kwargs, ignore=()):
     static_items = getattr(d, '_static_items', [])
     return {k: d[k] if k in static_items else evaluate_strict(v, **kwargs) for k, v in items(d) if k not in ignore}
+
+
+def has_catch_all_kwargs(callback):
+    return get_signature(callback).endswith('|*')

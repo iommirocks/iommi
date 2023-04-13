@@ -182,7 +182,7 @@ def boolean__query_operator_to_q_operator(op):
     return 'exact'
 
 
-def choice_queryset_value_to_q(filter, op, value_string_or_f):
+def choice_queryset_value_to_q(filter, op, value_string_or_f, **_):
     if op != '=':
         raise QueryException(f'Invalid operator "{op}" for filter "{filter._name}"')
     if filter.attr is None:
@@ -302,7 +302,7 @@ class Filter(Part):
 
     @staticmethod
     @refinable
-    def value_to_q(filter, op, value_string_or_f) -> Q:
+    def value_to_q(filter, op, value_string_or_f, **_) -> Q:
         if filter.attr is None:
             return Q()
         negated = False
@@ -953,7 +953,10 @@ class Query(Part):
                 raise QueryException(
                     f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"'
                 )
-            result = filter.value_to_q(filter=filter, op='=', value_string_or_f=value)
+            # In next major: result = filter.invoke_callback(filter.value_to_q, op='=', value_string_or_f=value)
+            result = filter.invoke_deprecated_callback(
+                filter.value_to_q, filter=filter, op='=', value_string_or_f=value
+            )
             return result
         raise QueryException(
             f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(keys(self.filters)))}'
@@ -1003,7 +1006,10 @@ class Query(Part):
         else:
             value_string_or_f = value_string_or_filter_name
         try:
-            result = filter.value_to_q(filter=filter, op=op, value_string_or_f=value_string_or_f)
+            # In next major: result = filter.invoke_callback(filter.value_to_q, op='=', value_string_or_f=value_string_or_f)
+            result = filter.invoke_deprecated_callback(
+                filter.value_to_q, filter=filter, op=op, value_string_or_f=value_string_or_f
+            )
         except ValidationError as e:
             raise QueryException(f'{e.message}')
         if result is None:

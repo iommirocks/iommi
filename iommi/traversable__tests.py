@@ -1,4 +1,5 @@
 import itertools
+import re
 from typing import Dict
 from unittest import mock
 
@@ -444,12 +445,13 @@ def test_get_config():
         )
 
 
-def test_invoke_callback():
-    class MyTraversable(Traversable):
-        def own_evaluate_parameters(self):
-            return dict(a=1)
+class MyCallbackTraversable(Traversable):
+    def own_evaluate_parameters(self):
+        return dict(a=1)
 
-    t = MyTraversable().bind()
+
+def test_invoke_callback():
+    t = MyCallbackTraversable().bind()
 
     def callback(**kwargs):
         return kwargs
@@ -460,6 +462,26 @@ def test_invoke_callback():
         request=None,
         traversable=t,
     )
+
+
+def test_invoke_deprecated_callback():
+    t = MyCallbackTraversable().bind()
+
+    def callback(**kwargs):
+        return kwargs
+
+    assert t.invoke_deprecated_callback(callback, b=2) == dict(b=2)
+
+    def deprecated_callback(b):
+        return dict(b=b)
+
+    with pytest.warns(DeprecationWarning) as records:
+        assert t.invoke_deprecated_callback(deprecated_callback, b=2) == dict(b=2)
+
+        assert re.match(
+            r"The callback <function .*> is not safe for additional future keyword arguments",
+            records[0].message.args[0],
+        )
 
 
 def test_invoke_callback_error_message_lambda():

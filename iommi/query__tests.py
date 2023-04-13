@@ -339,12 +339,12 @@ def test_gui_is_not_required():
 
 def test_invalid_value():
     q = Query(
-        filters__bazaar=Filter.integer(value_to_q=lambda filter, op, value_string_or_f: None),
+        filters__bazaar=Filter.integer(value_to_q=lambda filter, op, value_string_or_f, **_: None),
     ).bind(request=req('get'))
     request = req('get', **{q.get_advanced_query_param(): 'bazaar=asd'})
 
     query2 = Query(
-        filters__bazaar=Filter.integer(value_to_q=lambda filter, op, value_string_or_f: None),
+        filters__bazaar=Filter.integer(value_to_q=lambda filter, op, value_string_or_f, **_: None),
     ).bind(request=request)
     with pytest.raises(QueryException) as e:
         query2.get_q()
@@ -390,7 +390,7 @@ def test_none_attr_with_value_to_q():
     q = Query(
         filters__bazaar=Filter(
             attr=None,
-            value_to_q=lambda filter, op, value_string_or_f: Q(bazonk=value_string_or_f),
+            value_to_q=lambda filter, op, value_string_or_f, **_: Q(bazonk=value_string_or_f),
             field__include=True,
         ),
     ).bind(request=req('get', bazaar='foo'))

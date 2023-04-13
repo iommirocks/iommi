@@ -6,7 +6,7 @@ from iommi.evaluate import (
     evaluate_strict,
     get_callable_description,
     get_signature,
-    matches,
+    has_catch_all_kwargs, matches,
     Namespace,
 )
 
@@ -32,6 +32,19 @@ def test_get_signature():
     assert get_signature(lambda a, b: None) == get_signature(f2) == get_signature(f) == 'a,b||'
     # noinspection PyUnresolvedReferences
     assert f.__iommi_declarative_signature == 'a,b||'
+
+
+@pytest.mark.parametrize(
+    'callback, result',
+    [
+        (lambda: None, False),
+        (lambda x, y=None: None, False),
+        (lambda **kwargs: None, True),
+        (lambda x, y=None, **kwargs: None, True),
+    ],
+)
+def test_has_catch_all_kwargs(callback, result):
+    assert has_catch_all_kwargs(callback) == result
 
 
 def test_get_signature_fails_on_native():
