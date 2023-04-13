@@ -761,21 +761,16 @@ class Column(Part):
     @classmethod
     @with_defaults(
         bulk__call_target__attribute='choice',
+        bulk__choices=lambda table, traversable, **_: table.columns.get(traversable.iommi_name()).choices,
         filter__call_target__attribute='choice',
+        filter__choices=lambda table, traversable, **_: table.columns.get(traversable.iommi_name()).choices,
     )
     def choice(cls, **kwargs):
         # language=rst
         """
         This shortcut sets up `choices` for the filter and bulk form.
         """
-
-        instance = cls(**kwargs)
-        instance = instance.refine(
-            Prio.shortcut,
-            bulk__choices=kwargs.get('choices'),
-            filter__choices=kwargs.get('choices'),
-        )
-        return instance
+        return cls(**kwargs)
 
     @classmethod
     @with_defaults(

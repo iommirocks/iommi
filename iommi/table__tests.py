@@ -16,6 +16,7 @@ from django.test import override_settings
 
 from docs.models import (
     Album,
+    Track,
 )
 from iommi import (
     Action,
@@ -1208,7 +1209,6 @@ def test_bulk_delete_all_uses_original_rows():
 
 @pytest.mark.django_db
 def test_bulk_include_false():
-
     table = Table(
         auto__rows=TFoo.objects.all(),
         columns__a__bulk__include=True,
@@ -2047,8 +2047,8 @@ def test_from_model():
     assert set(get_field_by_name(TFoo).keys()) == {'id', 'a', 'b', 'tbar_set'}
     assert set(t.iommi_namespace.columns.keys()) == {'select', 'id', 'a', 'b', 'tbar_set'}
     assert list(t.columns.keys()) == ['a', 'b']
-    assert 'Some a' == t.columns['a'].display_name
-    assert 'Some stuff' == t.columns['a'].extra.stuff
+    assert t.columns['a'].display_name == 'Some a'
+    assert t.columns['a'].extra.stuff == 'Some stuff'
 
 
 @pytest.mark.django_db
@@ -3258,7 +3258,6 @@ def test_sort_list_bad_parameter():
 
 @pytest.mark.django_db
 def test_sort_django_table():
-
     TFoo(a=4711, b="c").save()
     TFoo(a=17, b="a").save()
     TFoo(a=42, b="b").save()
@@ -3409,7 +3408,6 @@ def test_sort_default_desc_already_sorted():
 
 @pytest.mark.django_db
 def test_sort_django_table_from_model():
-
     TFoo(a=4711, b="c").save()
     TFoo(a=17, b="a").save()
     TFoo(a=42, b="b").save()
@@ -3530,7 +3528,7 @@ def test_auto_model_dunder_path_1to1_reverse():
         auto__include=[
             "foo",
             "fieldfrommodelonetoonetest__f_char",
-        ]
+        ],
     ).bind(request=req('get'))
     assert "fieldfrommodelonetoonetest_f_char" in keys(table.columns)
 
@@ -3935,7 +3933,7 @@ def test_custom_rows():
     )
 
 
-def test_foo():
+def test_reverse_mappings():
     form = Form(auto__model=Album).bind(request=req('get'))
     assert form.fields.artist.model_field is Album._meta.get_field('artist')
     assert form.fields.genres.model_field is Album._meta.get_field('genres')
@@ -3948,6 +3946,78 @@ def test_foo():
     assert t.columns.artist.model_field is Album._meta.get_field('artist')
     # Fails:
     assert t.columns.genres.model_field is Album._meta.get_field('genres')
+
+
+def assert_same_query(a, b):
+    assert str(a.query) == str(b.query)
+
+
+@pytest.mark.django_db
+def test_choices_passed_down_through_shortcuts(big_discography):
+    choices = Album.objects.filter(name__startswith='H')
+    t = Table(
+        model=Track,
+        columns__album=Column.choice_queryset(
+            choices=choices,
+            filter__include=True,
+        ),
+    ).bind(request=req('get'))
+
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
+
+
+@pytest.mark.django_db
+def test_choices_passed_down_through_shortcuts_from_from_model(big_discography):
+    choices = Album.objects.filter(name__startswith='H')
+    t = Table(
+        model=Track,
+        columns__album=Column.from_model(
+            model_field=Track.album.field,
+            choices=choices,
+            filter__include=True,
+        ),
+    ).bind(request=req('get'))
+
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
+
+
+@pytest.mark.django_db
+def test_choices_passed_down_through_shortcuts_from_from_model_declared(big_discography):
+    choices = Album.objects.filter(name__startswith='H')
+
+    class MyTable(Table):
+        album = Column.from_model(
+            model_field=Track.album.field,
+            choices=choices,
+            filter__include=True,
+        )
+
+    t = MyTable(model=Track).bind(request=req('get'))
+
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
+
+
+@pytest.mark.django_db
+def test_choices_passed_down_through_shortcuts_from_auto(big_discography):
+    choices = Album.objects.filter(name__startswith='H')
+    t = Table(
+        auto__model=Track,
+        auto__include=['album'],
+        columns__album=dict(
+            choices=choices,
+            filter__include=True,
+        ),
+    ).bind(request=req('get'))
+
+    assert_same_query(t.columns.album.choices, choices)
+    assert_same_query(t.query.filters.album.choices, choices)
+    assert_same_query(t.query.form.fields.album.choices, choices)
 
 
 class MyTable(Table):
