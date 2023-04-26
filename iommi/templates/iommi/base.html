@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html{% block iommi_html_tag_attrs %}{% endblock %}>
 <head>
     <title>{% block title %}{{ title }}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}
@@ -7,7 +7,7 @@
       {{ asset }}
     {% endfor %}
 </head>
-<body>
+<body{% block iommi_body_tag_attrs %}{% endblock %}>
     {% block iommi_top %}{% endblock %}
 
     {{ container.iommi_open_tag }}
