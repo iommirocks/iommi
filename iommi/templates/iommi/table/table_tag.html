@@ -5,6 +5,7 @@
 {% else %}
 
     <div class="iommi-table-plus-paginator">
+        {{ table.table_tag_wrapper.iommi_open_tag }}
         {{ table.iommi_open_tag }}
 
             {{ table.header }}
@@ -12,6 +13,7 @@
             {{ table.tbody }}
 
         {{ table.iommi_close_tag }}
+        {{ table.table_tag_wrapper.iommi_close_tag }}
 
         {{ table.paginator }}
     </div>

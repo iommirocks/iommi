@@ -3976,3 +3976,49 @@ def test_filter_include_parts():
     view = MyTable().refine_done()
     assert list(view.bind(request=staff_req('get')).query.form.parts.keys()) == ['goosfraba']
     assert list(view.bind(request=user_req('get')).query.form.parts.keys()) == []
+
+
+@pytest.mark.django_db
+def test_table_tag_wrapper():
+    for x in range(4):
+        TFoo(a=x, b="foo").save()
+
+    class TestTable(Table):
+        a = Column.number()
+
+    verify_table_html(
+        table=TestTable(rows=TFoo.objects.all().order_by('pk'), table_tag_wrapper=dict(tag='div', attrs__class__foo=True)),
+        query={'page_size': 2, 'page': 1, 'query': 'b="foo"'},
+        find__class='iommi-table-plus-paginator',
+        # language=html
+        expected_html="""
+            <div class="iommi-table-plus-paginator">
+                <div class="foo">
+                    <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                        <thead>
+                            <tr>
+                                <th class="first_column subheader">
+                                    <a href="?page_size=2&amp;page=1&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr data-pk="1">
+                                <td class="rj"> 0 </td>
+                            </tr>
+                            <tr data-pk="2">
+                                <td class="rj"> 1 </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav aria-label="Pages">
+                    <ul>
+                        <li> <a aria-label="Page 1" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
+                        <li> <a aria-label="Page 2" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
+                        <li> <a aria-label="Next Page" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
+                    </ul>
+                </nav>
+            </div>
+        """,
+    )

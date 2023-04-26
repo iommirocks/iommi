@@ -1663,6 +1663,7 @@ class Table(Part, Tag):
     actions_below: bool = EvaluatedRefinable()
     tbody: Fragment = EvaluatedRefinable()
     container: Fragment = EvaluatedRefinable()
+    table_tag_wrapper: Fragment = EvaluatedRefinable()
     outer: Fragment = EvaluatedRefinable()
 
     member_class = Refinable()
@@ -1716,6 +1717,7 @@ class Table(Part, Tag):
         auto = EMPTY
         attrs__class = EMPTY
         attrs__style = EMPTY
+        table_tag_wrapper = EMPTY
 
     @staticmethod
     @refinable
@@ -1747,6 +1749,7 @@ class Table(Part, Tag):
         container__attrs__class={'iommi-table-container': True},
         container__children__text__template='iommi/table/table_container.html',
         container__call_target=Fragment,
+        table_tag_wrapper__call_target=Fragment,
         outer__call_target=Fragment,
         row__tag='tr',
         row__attrs={'data-pk': lambda row, **_: getattr(row, 'pk', None)},
@@ -2008,6 +2011,7 @@ class Table(Part, Tag):
 
         self.bulk_container = self.bulk_container(_name='bulk_container').refine_done(parent=self)
         self.container = self.container(_name='container').refine_done(parent=self)
+        self.table_tag_wrapper = self.table_tag_wrapper(_name='table_tag_wrapper').refine_done(parent=self)
 
         self.outer = (
             self.outer(_name='outer').refine(
@@ -2051,6 +2055,7 @@ class Table(Part, Tag):
 
         self.tbody = self.tbody(_name='tbody', children__text=_Lazy_tbody(self)).bind(parent=self)
         self.container = self.container.bind(parent=self)
+        self.table_tag_wrapper = self.table_tag_wrapper.bind(parent=self)
 
         self.outer = self.outer.bind(parent=self)
 
