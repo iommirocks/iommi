@@ -1,6 +1,22 @@
 Changelog
 ---------
 
+5.12.0 (2023-04-26)
+~~~~~~~~~~~~~~~~~~~
+
+* More blocks to customize the base template: `iommi_html_tag_attrs` and `iommi_html_tag_attrs`
+
+* Added `Table.table_tag_wrapper` for when you want to wrap the `<table>` tag but not the paginator. This is useful for making apps work better on phone layouts.
+
+* Insert the language code into the `<html>` tag.
+
+* Generate deprecation warnings in all places not yet passing standard callback parameters
+
+* Choices now passes correctly downstream from `Column(choices=...)` to the filter, the filters form, and bulk fields.
+
+* The admin now can be inserted into the url patterns inside a named app (thanks Mickey McClellan)
+
+
 5.11.0 (2023-04-08)
 ~~~~~~~~~~~~~~~~~~~
 

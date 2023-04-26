@@ -25,3 +25,4 @@ Credits
 * Nigel Metheringham <nigel.metheringham@gmail.com>
 * Maximilian Albert <https://github.com/maxalbert>
 * Yury Bulka <setthemfree@privacyrequired.com>
+Mickey McClellan <77741738+MickeyM79@users.noreply.github.com>
