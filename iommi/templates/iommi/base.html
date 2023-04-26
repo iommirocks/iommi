@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html{% block iommi_html_tag_attrs %}{% endblock %}>
+<html{% block iommi_html_tag_attrs %} lang="{{ iommi_language_code }}"{% endblock %}>
 <head>
     <title>{% block title %}{{ title }}{% endblock %}</title>
     {% block iommi_head_contents %}{% endblock %}

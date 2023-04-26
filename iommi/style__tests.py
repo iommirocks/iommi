@@ -374,7 +374,7 @@ def test_assets_render_from_style():
             # language=HTML
             expected_html='''
                 <!DOCTYPE html>
-                <html>
+                <html lang="en-us">
                     <head>
                         <title/>
                         <link href='http://foo.bar/baz' rel="stylesheet"/>
@@ -403,7 +403,7 @@ def test_assets_render_any_fragment_from_style():
             # language=HTML
             expected_html='''
                 <!DOCTYPE html>
-                <html>
+                <html lang="en-us">
                     <head>
                         <title/>
                         This is a fragment!
@@ -425,7 +425,7 @@ def test_assets_render_from_bulma_style():
         # language=HTML
         expected_html='''
             <!DOCTYPE html>
-            <html>
+            <html lang="en-us">
                 <head>
                     <title> </title>
                     <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js">
@@ -597,7 +597,7 @@ def test_assets_from_different_sources():
             # language=HTML
             expected_html='''
                 <!DOCTYPE html>
-                <html>
+                <html lang="en-us">
                     <head>
                         <title/>
                         <script> This is an asset </script>

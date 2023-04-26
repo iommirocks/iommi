@@ -224,15 +224,18 @@ def render_root(*, part, context, **render):
     from iommi import Page
     from iommi.fragment import Container
 
+    request = part.get_request()
+
     context = dict(
         container=Container(_name='Container').refine_done(parent=part).bind(parent=part),
         content=content,
         title=title if title not in (None, MISSING) else '',
         iommi_debug_panel=(
             iommi_debug_panel(part)
-            if iommi_debug_on() and '_iommi_disable_debug_panel' not in part.get_request().GET
+            if iommi_debug_on() and '_iommi_disable_debug_panel' not in request.GET
             else ''
         ),
+        iommi_language_code=getattr(request, 'LANGUAGE_CODE', settings.LANGUAGE_CODE),
         assets=assets,
         **(part.context if isinstance(part, Page) else {}),
         **context,
@@ -245,7 +248,7 @@ def render_root(*, part, context, **render):
         + content_block_name
         + ' %}{{ iommi_debug_panel }}{{ content }}{% endblock %}'
     )
-    return get_template_from_string(template_string).render(context=context, request=part.get_request())
+    return get_template_from_string(template_string).render(context=context, request=request)
 
 
 PartType = Union[Part, str, Template]

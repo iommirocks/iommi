@@ -72,7 +72,7 @@ def test_page_render():
 
     expected_html = '''
         <!DOCTYPE html>
-        <html>
+        <html lang="en-us">
             <head>
                 <title></title>
             </head>
@@ -169,7 +169,7 @@ def test_sort_after_h_tag():
         # language=HTML
         expected_html='''
             <!DOCTYPE html>
-            <html>
+            <html lang="en-us">
                 <head>
                     <title> My title </title>
                 </head>
@@ -195,7 +195,7 @@ def test_custom_h_tag():
         # language=HTML
         expected_html='''
             <!DOCTYPE html>
-            <html>
+            <html lang="en-us">
                 <head>
                     <title> </title>
                 </head>

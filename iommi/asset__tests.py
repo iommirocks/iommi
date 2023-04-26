@@ -16,7 +16,7 @@ def test_assets_float_to_root():
     expected = prettify(
         '''
         <!DOCTYPE html>
-        <html>
+        <html lang="en-us">
             <head>
                 <title/>
                 <link href='http://foo.bar/baz' rel="stylesheet"/>
@@ -41,7 +41,7 @@ def test_assets_render_once():
     expected = prettify(
         '''
         <!DOCTYPE html>
-        <html>
+        <html lang="en-us">
             <head>
                 <title/>
                 <link href='http://foo.bar/baz' rel="stylesheet"/>
@@ -64,7 +64,7 @@ def test_assets_render_any_fragment():
     expected = prettify(
         '''
         <!DOCTYPE html>
-        <html>
+        <html lang="en-us">
             <head>
                 <title/>
                 <span href='http://foo.bar/baz'/>
@@ -88,7 +88,7 @@ def test_asset_shortcuts():
     expected = prettify(
         '''
         <!DOCTYPE html>
-        <html>
+        <html lang="en-us">
             <head>
                 <title/>
                 <link href="http://foo.bar/baz.css" rel="stylesheet"/>
