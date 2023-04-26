@@ -184,6 +184,7 @@ def test_traverse_on_iommi():
         'some_other_form/fisk': 'parts/some_other_form/fields/fisk',
         'submit': 'parts/a_table/query/form/actions/submit',
         'table_js_select_all': 'parts/a_table/assets/table_js_select_all',
+        'table_tag_wrapper': 'parts/a_table/table_tag_wrapper',
         'text': 'parts/a_table/query/assets/ajax_enhance/children/text',
         'tbody': 'parts/a_table/endpoints/tbody',
         'toggle': 'parts/a_table/query/advanced/toggle',
