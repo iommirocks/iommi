@@ -35,7 +35,7 @@ def test_missing():
         if MISSING:
             pass  # pragma: no cover
 
-    assert str(e.value) == 'MISSING is neither True nor False, is is unknown'
+    assert str(e.value) == 'MISSING is neither True nor False,it is unknown'
 
 
 def test_build_as_view_wrapper():
