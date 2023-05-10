@@ -16,6 +16,7 @@ from django.test import override_settings
 
 from docs.models import (
     Album,
+    Artist,
     Track,
 )
 from iommi import (
@@ -87,8 +88,8 @@ from tests.models import (
     ChoicesModel,
     CSVExportTestModel,
     DefaultsInForms,
-    Foo,
     FieldFromModelOneToOneTest,
+    Foo,
     FromModelWithInheritanceTest,
     QueryFromIndexesTestModel,
     SortKeyOnForeignKeyB,
@@ -4057,7 +4058,10 @@ def test_table_tag_wrapper():
         a = Column.number()
 
     verify_table_html(
-        table=TestTable(rows=TFoo.objects.all().order_by('pk'), table_tag_wrapper=dict(tag='div', attrs__class__foo=True)),
+        table=TestTable(
+            rows=TFoo.objects.all().order_by('pk'),
+            table_tag_wrapper=dict(tag='div', attrs__class__foo=True),
+        ),
         query={'page_size': 2, 'page': 1, 'query': 'b="foo"'},
         find__class='iommi-table-plus-paginator',
         # language=html
@@ -4091,4 +4095,27 @@ def test_table_tag_wrapper():
                 </nav>
             </div>
         """,
+    )
+
+
+@pytest.mark.django_db
+def test_late_column_include_removal_trip_up_filter_choices():
+    t = Table(
+        model=Album,
+        rows=Album.objects.none(),
+        columns__artist=Column.choice_queryset(
+            include=lambda **_: False,
+            choices=Artist.objects.all(),
+            filter__include=True,  # This tried to read the choices from the non-included column
+        ),
+    )
+    verify_table_html(
+        table=t,
+        # language=HTML
+        expected_html='''
+            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <thead> <tr/> </thead>
+                <tbody/>
+            </table>
+        ''',
     )
