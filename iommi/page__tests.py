@@ -215,7 +215,12 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
     def side_effect(func_or_value, __signature=None, __match_empty=True, **kwargs):
         assert callable(func_or_value)
         next(counter)
-        return evaluate_strict(func_or_value, __signature, __match_empty, **kwargs)
+        return evaluate_strict(
+            func_or_value,
+            __signature=__signature,
+            __match_empty=__match_empty,
+            **kwargs,
+        )
 
     mock_evaluate_strict.side_effect = side_effect
     part = Page(

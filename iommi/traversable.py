@@ -219,7 +219,7 @@ class Traversable(RefinableObject):
         evaluate_members(result, **evaluate_parameters)
 
         if hasattr(result, 'attrs'):
-            result.attrs = evaluate_attrs(result, **result.iommi_evaluate_parameters())
+            result.attrs = evaluate_attrs(result, **evaluate_parameters)
 
         if hasattr(result, 'extra_evaluated'):
             result.extra_evaluated = Struct(evaluate_as_needed(result.extra_evaluated or {}, evaluate_parameters))

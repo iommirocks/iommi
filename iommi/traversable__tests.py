@@ -314,7 +314,6 @@ def test_apply_style_not_affecting_definition(settings):
         'other_style',
         Style(Fragment__attrs__class__bar=True),
     ):
-
         definition = Fragment()
 
         settings.IOMMI_DEFAULT_STYLE = 'my_style'
@@ -528,7 +527,12 @@ def test_only_evaluate_callbacks(mock_evaluate_strict):
     def side_effect(func_or_value, __signature=None, __match_empty=True, **kwargs):
         assert callable(func_or_value)
         next(counter)
-        return evaluate_strict(func_or_value, __signature, __match_empty, **kwargs)
+        return evaluate_strict(
+            func_or_value,
+            __signature=__signature,
+            __match_empty=__match_empty,
+            **kwargs,
+        )
 
     mock_evaluate_strict.side_effect = side_effect
 
