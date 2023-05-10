@@ -12,6 +12,7 @@ from enum import (
 from functools import total_ordering
 from io import StringIO
 from itertools import groupby
+from math import ceil
 from typing import (
     Any,
     Callable,
@@ -40,11 +41,6 @@ from django.utils.html import (
 from django.utils.translation import (
     gettext,
     gettext_lazy,
-)
-from math import ceil
-from iommi.struct import (
-    merged,
-    Struct,
 )
 
 from iommi._web_compat import (
@@ -86,9 +82,7 @@ from iommi.declarative.namespace import (
     Namespace,
     setdefaults_path,
 )
-from iommi.shortcut import Shortcut
 from iommi.declarative.with_meta import with_meta
-
 from iommi.endpoint import (
     DISPATCH_PREFIX,
     path_join,
@@ -139,8 +133,15 @@ from iommi.refinable import (
     RefinableObject,
     SpecialEvaluatedRefinable,
 )
-from iommi.shortcut import with_defaults
+from iommi.shortcut import (
+    Shortcut,
+    with_defaults,
+)
 from iommi.sort_after import LAST
+from iommi.struct import (
+    merged,
+    Struct,
+)
 from iommi.traversable import (
     Traversable,
 )
@@ -337,6 +338,14 @@ def foreign_key__sort_key(column, **_):
     return column.attr
 
 
+def get_choices_from_column(table, traversable, **_):
+    column_definition = table.iommi_namespace.columns[traversable.iommi_name()]
+    return evaluate(
+        column_definition.choices,
+        **traversable.iommi_evaluate_parameters(),
+    )
+
+
 @with_meta
 class Column(Part):
     """
@@ -459,7 +468,6 @@ class Column(Part):
         return get_display_name(traversable)
 
     def on_bind(self) -> None:
-
         self.table = self.iommi_parent().iommi_parent()
 
         if self.attr is MISSING:
@@ -761,9 +769,9 @@ class Column(Part):
     @classmethod
     @with_defaults(
         bulk__call_target__attribute='choice',
-        bulk__choices=lambda table, traversable, **_: table.columns.get(traversable.iommi_name()).choices,
+        bulk__choices=get_choices_from_column,
         filter__call_target__attribute='choice',
-        filter__choices=lambda table, traversable, **_: table.columns.get(traversable.iommi_name()).choices,
+        filter__choices=get_choices_from_column,
     )
     def choice(cls, **kwargs):
         # language=rst

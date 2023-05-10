@@ -58,7 +58,7 @@ def is_callable(v):
         return callable(v)
 
 
-def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True, **kwargs):
+def evaluate(func_or_value, *, __signature=None, __strict=False, __match_empty=True, **kwargs):
     if is_callable(func_or_value):
         if __signature is None:
             __signature = signature_from_kwargs(kwargs)
@@ -79,7 +79,7 @@ def evaluate(func_or_value, __signature=None, __strict=False, __match_empty=True
     return func_or_value
 
 
-def evaluate_strict(func_or_value, __signature=None, __match_empty=True, **kwargs):
+def evaluate_strict(func_or_value, *, __signature=None, __match_empty=True, **kwargs):
     # noinspection PyArgumentEqualDefault
     return evaluate(func_or_value, __signature=None, __strict=True, __match_empty=__match_empty, **kwargs)
 
