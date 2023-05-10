@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+5.13.0 (2023-05-10)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix regression in 5.12.0 where tables fail to calculate filter choices on optional columns.
+
+
 5.12.0 (2023-04-26)
 ~~~~~~~~~~~~~~~~~~~
 
