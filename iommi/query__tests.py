@@ -13,7 +13,12 @@ from django.db.models import (
     QuerySet,
 )
 
-from iommi import from_model
+from docs.models import Album
+from iommi import (
+    from_model,
+    Style,
+    Table,
+)
 from iommi.base import (
     items,
     keys,
@@ -46,7 +51,11 @@ from iommi.shortcut import (
     with_defaults,
 )
 from iommi.struct import Struct
-from tests.helpers import req
+from iommi.style_test_base import test
+from tests.helpers import (
+    req,
+    verify_part_html,
+)
 from tests.models import (
     Bar,
     BooleanFromModelTestModel,
@@ -195,7 +204,6 @@ def test_parenthesis(MyTestQuery):
 
 
 def test_request_to_q_advanced(MyTestQuery):
-
     q = MyTestQuery().bind(request=req('get'))
     query = MyTestQuery().bind(
         request=req('get', **{q.get_advanced_query_param(): 'foo_name="asd" and (bar_name = 7 or baz_name = 11)'})
@@ -365,7 +373,6 @@ def test_invalid_filter():
 
 
 def test_invalid_form_data():
-
     query2 = Query(
         filters__bazaar=Filter.integer(attr='quux__bar__bazaar', field__include=True),
     ).bind(request=req('get', bazaar='asds'))
@@ -398,7 +405,6 @@ def test_none_attr_with_value_to_q():
 
 
 def test_request_to_q_freetext(MyTestQuery):
-
     query = MyTestQuery().bind(request=req('get', **{FREETEXT_SEARCH_NAME: "asd"}))
     assert repr(query.get_q()) == repr(Q(**{'foo__icontains': 'asd'}) | Q(**{'bar__contains': 'asd'}))
 
@@ -1037,3 +1043,39 @@ def test_choices_in_char_field_model_as_class():
         ('purple_thing-thing', 'purple_thing-thing', 'Purple', False, 1),
         ('orange', 'orange', 'Orange', True, 2),
     ]
+
+
+@pytest.mark.django_db
+def test_required_freetext():
+    t = Table(
+        auto__model=Album,
+        auto__include=['name'],
+        columns__name=dict(
+            filter__include=True,
+            filter__freetext=True,
+        ),
+        query__advanced__include=False,
+        query__form__fields__freetext_search__display_name='Zearch',
+        iommi_style=Style(
+            test,
+            Field=dict(
+                label__attrs__class__required=lambda field, **_: bool(field.required),
+            ),
+        ),
+    ).bind(request=req('get'))
+    assert t.query.form.fields.freetext_search.required is False
+    assert t.query.form.fields.freetext_search.label.attrs['class']['required'] is False
+
+    verify_part_html(
+        part=t,
+        find=dict(class_='iommi_query_form_simple'),
+        # language=html
+        expected_html='''
+            <span class="iommi_query_form_simple">
+                <div>
+                    <label for="id_freetext_search"> Zearch </label>
+                    <input id="id_freetext_search" name="freetext_search" type="text" value=""/>
+                </div>
+            </span>
+        ''',
+    )
