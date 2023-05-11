@@ -144,6 +144,7 @@ from iommi.sort_after import LAST
 from iommi.traversable import (
     Traversable,
 )
+from . import Asset
 from ._db_compat import base_defaults_factory
 
 LAST = LAST
@@ -459,7 +460,6 @@ class Column(Part):
         return get_display_name(traversable)
 
     def on_bind(self) -> None:
-
         self.table = self.iommi_parent().iommi_parent()
 
         if self.attr is MISSING:
@@ -1677,8 +1677,8 @@ class Table(Part, Tag):
     columns: Dict[str, Column] = RefinableMembers()
 
     class Meta:
-        assets__query_form_toggle_script__template = "iommi/query/form_toggle_script.html"
-        assets__table_js_select_all__template = "iommi/table/js_select_all.html"
+        assets__query_form_toggle_script = Asset.js(children__text__template="iommi/query/form_toggle_script.js")
+        assets__table_js_select_all = Asset.js(children__text__template="iommi/table/js_select_all.js")
         member_class = Column
         form_class = Form
         query_class = Query
