@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+
 from docs.models import *
 from iommi import *
 from iommi._web_compat import (
@@ -117,9 +119,8 @@ def test_how_do_i_supply_a_custom_validator():
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Pass a callable that has the arguments `form`, `field`, and `parsed_data`. Return a tuple `(is_valid, 'error message if not valid')`.
-
-
     """
+
     form = Form.create(
         auto__model=Album,
         auto__include=['name'],
@@ -132,6 +133,28 @@ def test_how_do_i_supply_a_custom_validator():
     assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
     show_output(form)
     # @end
+
+    # language=rst
+    """
+    You can also raise `ValidationError`:
+    """
+
+    def name_is_valid(form, field, parsed_data, **_):
+        if parsed_data != 'only this value is valid':
+            raise ValidationError('invalid!')
+
+    form = Form.create(
+        auto__model=Album,
+        auto__include=['name'],
+        fields__name__is_valid=name_is_valid,
+    )
+
+    # @test
+    form = form.bind(request=req('post', name='foo', **{'-submit': ''}))
+    assert form.get_errors() == {'fields': {'name': {'invalid!'}}}
+    show_output(form)
+    # @end
+
 
 
 def test_how_do_i_validate_multiple_fields_together():

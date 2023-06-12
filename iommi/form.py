@@ -898,19 +898,20 @@ class Field(Part, Tag):
 
     def _validate_parsed_data(self, value):
         # In next major: is_valid, error = self.invoke_callback(self.is_valid, parsed_data=value)
-        is_valid, error = self.invoke_deprecated_callback(
-            self.is_valid,
-            form=self.form,
-            field=self,
-            parsed_data=value,
-        )
-        if is_valid and not self.errors and self.parsed_data is not None and not self.is_list:
-            value = self.parsed_data
-        elif not is_valid and self.form.mode:
-            if not isinstance(error, set):
-                error = {error}
-            for e in error:
-                self.add_error(e)
+        with validation_errors_reported_on(self):
+            is_valid, error = self.invoke_deprecated_callback(
+                self.is_valid,
+                form=self.form,
+                field=self,
+                parsed_data=value,
+            )
+            if is_valid and not self.errors and self.parsed_data is not None and not self.is_list:
+                value = self.parsed_data
+            elif not is_valid and self.form.mode:
+                if not isinstance(error, set):
+                    error = {error}
+                for e in error:
+                    self.add_error(e)
         return value
 
     def _read_initial(self):
