@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -151,8 +154,8 @@ def test_evaluate():
     --------
 
     To customize iommi you can pass functions/lambdas in many places. This makes it super easy and fast to customize things, but how does this all work? Let's start with a concrete example:
-
     """
+
     # @test
     Artist.objects.create(name='Dio')
 
@@ -165,6 +168,8 @@ def test_evaluate():
         # @test
     )
 
+    show_output(t)
+
     t = t.bind(request=req('get'))
     data = [[cell.render_cell_contents() for cell in cells] for cells in t.cells_for_rows()]
     assert data == [['Dio !!!']]
@@ -173,30 +178,19 @@ def test_evaluate():
     # language=rst
     """
     This will change the rendering of Dios name from `Dio` to `Dio !!!`. The obvious question here is: what other keyword arguments besides `value` do I get? In this case you get:
-
     """
     # @test
+
     kwargs = {}
     t = Table(
         auto__model=Artist,
         columns__name__cell__format=lambda **format_kwargs: kwargs.update(format_kwargs),
     )
     str(t.bind(request=req('get')))  # trigger render
-    # @end
-
-    # language=rst
-    """
-    .. code-block:: python
-    """
-
-    # @test
-
     expected = (
         (
             # @end
-            # language=rst
             """
-
         request        WSGIRequest
         table          Table
         column         Column
@@ -205,7 +199,6 @@ def test_evaluate():
         row            Artist
         cells          Cells
         bound_cell     Cell
-
         """
             # @test
         )
