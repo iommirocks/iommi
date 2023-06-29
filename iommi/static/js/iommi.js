@@ -178,7 +178,7 @@ class IommiBase {
     }
 
     async updateTableContainer(container, params, extra){
-        const tbodyPath = container.querySelector('table[data-endpoint]').getAttribute(
+        const tbodyPath = container.querySelector('[data-endpoint]').getAttribute(
             'data-endpoint'
         );
 
