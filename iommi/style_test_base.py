@@ -15,7 +15,8 @@ test = Style(
         select2_js=None,
         select2_css=None,
         icons=None,
-        axios=None,
+        iommi_js=None,
+        iommi_js_init=None,
     ),
     Field=dict(
         shortcuts=dict(),
