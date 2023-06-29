@@ -131,7 +131,6 @@ def test_traverse_on_iommi():
         'config': 'parts/some_form/fields/fisk/endpoints/config',
         'csv': 'parts/a_table/endpoints/csv',
         'container': 'parts/a_table/container',
-        'container/text': 'parts/a_table/container/children/text',
         'debug_tree': 'endpoints/debug_tree',
         'errors': 'parts/a_table/query/endpoints/errors',
         'fisk': 'parts/some_form/fields/fisk',
@@ -186,6 +185,7 @@ def test_traverse_on_iommi():
         'table_js_select_all': 'parts/a_table/assets/table_js_select_all',
         'table_tag_wrapper': 'parts/a_table/table_tag_wrapper',
         'tbody': 'parts/a_table/endpoints/tbody',
+        'text': 'parts/a_table/container/children/text',
         'toggle': 'parts/a_table/query/advanced/toggle',
         'validate': 'parts/some_form/fields/fisk/endpoints/validate',
     }
