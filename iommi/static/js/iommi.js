@@ -315,7 +315,7 @@ class IommiBase {
                 SELF.queryPopulate(form);
             }
         };
-        ['change', 'input', 'switch-mode'].forEach(eventType => {
+        ['change', 'input', 'switch-mode', 'reset'].forEach(eventType => {
             form.addEventListener(eventType, onChange);
         });
 
