@@ -281,7 +281,7 @@ class IommiBase {
         let table = document.querySelector(
             `[data-iommi-id="${form.getAttribute('data-iommi-id-of-table')}"]`
         )
-        const container = table.parentNode;
+        const container = table.closest('.iommi-table-container');
 
         form.setAttribute('autocomplete', 'off');
         const debouncedPopulate = this.debounce(this.queryPopulate, 400);
@@ -315,8 +315,13 @@ class IommiBase {
                 SELF.queryPopulate(form);
             }
         };
-        ['change', 'input', 'switch-mode', 'reset'].forEach(eventType => {
+        ['change', 'input', 'switch-mode'].forEach(eventType => {
             form.addEventListener(eventType, onChange);
+        });
+        // reset event is being called just before the values get reset
+        // timeout is probably the only way to run onChange after values get reset
+        form.addEventListener('reset', (event) => {
+            setTimeout(() => {onChange(event);}, 1);
         });
 
         const elements = form.parentNode.getElementsByClassName(
