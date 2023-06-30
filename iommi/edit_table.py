@@ -347,7 +347,7 @@ class EditTable(Table):
                         y.setAttribute('data-pk', virtual_pk)
                         table.querySelector('tbody').appendChild(y);
                         if (y.querySelector('.select2_enhance')) {
-                            iommi_init_all_select2();
+                            window.iommi.select2.initAll(y);
                         }
                     }
                 '''

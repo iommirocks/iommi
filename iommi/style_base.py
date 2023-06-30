@@ -1,5 +1,8 @@
 from django.utils.translation import gettext_lazy
+from django.templatetags.static import static
+from django.utils.safestring import mark_safe
 
+from iommi import Fragment
 from iommi.asset import Asset
 from iommi.debug import (
     endpoint__debug_tree,
@@ -10,7 +13,6 @@ from iommi.style import Style
 select2_assets = dict(
     select2_js=Asset.js(attrs__src='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js'),
     select2_css=Asset.css(attrs__href='https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css'),
-    select2_init_select2_js=Asset.js(children__text__template='iommi/form/init_select2.js'),
 )
 
 select2_enhanced_forms = Style(
@@ -36,6 +38,19 @@ select2_enhanced_forms = Style(
     ),
 )
 
+iommi_js_init = Fragment(
+    mark_safe(
+        """\
+<script>
+    document.addEventListener("iommi.init.start", (event) => {
+        event.detail.iommi.debug = true;
+    });
+</script>
+"""
+    ),
+    include=lambda **_: iommi_debug_on(),
+)
+
 base = Style(
     internal=True,
     base_template='iommi/base.html',
@@ -54,14 +69,12 @@ base = Style(
                 ),
                 after=-1,
             ),
-            axios=Asset.js(
+            iommi_js=Asset.js(
                 attrs=dict(
-                    src='https://cdn.jsdelivr.net/npm/axios@0.21.0/dist/axios.min.js',
-                    integrity='sha256-OPn1YfcEh9W2pwF1iSS+yDk099tYj+plSrCS6Esa9NA=',
-                    crossorigin='anonymous',
+                    src=lambda **_: static('js/iommi.js'),
                 ),
-                after=-1,
             ),
+            iommi_js_init=iommi_js_init,
         ),
     ),
     Form=dict(
@@ -105,11 +118,11 @@ base = Style(
         container__tag='div',
         active_item__tag='span',
         link__tag='a',
+        link__attrs__class__iommi_page_link=True,
     ),
     Query=dict(
         template='iommi/query/form.html',
         advanced__template='iommi/query/advanced.html',
-        assets__ajax_enhance=Asset.js(children__text__template='iommi/query/ajax_enhance.js'),
         form__attrs__class__iommi_filter=True,
     ),
     Actions=dict(

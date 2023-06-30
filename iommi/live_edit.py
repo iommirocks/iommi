@@ -477,7 +477,6 @@ def style_showcase(request, style=None, **_):
             ),
             table=Table(
                 title='Table',
-                assets__ajax_enhance__template=None,
                 model=User,
                 columns={
                     t.__name__: dict(call_target=t, display_name=t.__name__)

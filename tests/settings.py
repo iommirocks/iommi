@@ -86,3 +86,5 @@ DATE_FORMAT = r'\d\a\t\e\: N j, Y'
 TIME_FORMAT = r'\t\i\m\e\: P'
 
 USE_L10N = False
+
+STATIC_URL = '/static/'

@@ -266,7 +266,6 @@ def all_column_sorts(request):
             header=Header('All sorts of columns'),
             form=ShortcutSelectorForm(),
             table=Table(
-                assets__ajax_enhance__template=None,
                 columns={
                     f'column_of_type_{t}': dict(
                         type_specifics.get(t, {}),

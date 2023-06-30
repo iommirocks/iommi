@@ -3002,9 +3002,9 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                 </table>
                 <nav aria-label="Pages">
                     <ul>
-                        <li> <a aria-label="Page 1" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
-                        <li> <a aria-label="Page 2" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
-                        <li> <a aria-label="Next Page" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
+                        <li> <a aria-label="Page 1" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
+                        <li> <a aria-label="Page 2" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
+                        <li> <a aria-label="Next Page" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
                     </ul>
                 </nav>
             </div>
@@ -3037,9 +3037,9 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                 </table>
                 <nav aria-label="Pages">
                     <ul>
-                        <li> <a aria-label="Page 1" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
-                        <li> <a aria-label="Page 2" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
-                        <li> <a aria-label="Next Page" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
+                        <li> <a aria-label="Page 1" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
+                        <li> <a aria-label="Page 2" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
+                        <li> <a aria-label="Next Page" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
                     </ul>
                 </nav>
             </div>
@@ -3814,15 +3814,15 @@ def test_pagination_with_thousands_separator(settings):
         expected_html="""
             <nav aria-label="Pages">
                 <ul>
-                    <li> <a href="?page_size=1&amp;page=1" aria-label="First Page">&laquo;</a> </li>
-                    <li> <a href="?page_size=1&amp;page=1001" aria-label="Previous Page">&lt;</a> </li>
-                    <li> <a href="?page_size=1&amp;page=996" aria-label="Page 996">996</a> </li>
-                    <li> <a href="?page_size=1&amp;page=997" aria-label="Page 997">997</a> </li>
-                    <li> <a href="?page_size=1&amp;page=998" aria-label="Page 998">998</a> </li>
-                    <li> <a href="?page_size=1&amp;page=999" aria-label="Page 999">999</a> </li>
-                    <li> <a href="?page_size=1&amp;page=1000" aria-label="Page 1,000">1,000</a> </li>
-                    <li> <a href="?page_size=1&amp;page=1001" aria-label="Page 1,001">1,001</a> </li>
-                    <li> <a href="?page_size=1&amp;page=1002" aria-label="Page 1,002">1,002</a> </li>
+                    <li> <a href="?page_size=1&amp;page=1" aria-label="First Page" class="iommi_page_link">&laquo;</a> </li>
+                    <li> <a href="?page_size=1&amp;page=1001" aria-label="Previous Page" class="iommi_page_link">&lt;</a> </li>
+                    <li> <a href="?page_size=1&amp;page=996" aria-label="Page 996" class="iommi_page_link">996</a> </li>
+                    <li> <a href="?page_size=1&amp;page=997" aria-label="Page 997" class="iommi_page_link">997</a> </li>
+                    <li> <a href="?page_size=1&amp;page=998" aria-label="Page 998" class="iommi_page_link">998</a> </li>
+                    <li> <a href="?page_size=1&amp;page=999" aria-label="Page 999" class="iommi_page_link">999</a> </li>
+                    <li> <a href="?page_size=1&amp;page=1000" aria-label="Page 1,000" class="iommi_page_link">1,000</a> </li>
+                    <li> <a href="?page_size=1&amp;page=1001" aria-label="Page 1,001" class="iommi_page_link">1,001</a> </li>
+                    <li> <a href="?page_size=1&amp;page=1002" aria-label="Page 1,002" class="iommi_page_link">1,002</a> </li>
                 </ul>
             </nav>
         """,
@@ -3921,11 +3921,11 @@ def test_custom_rows():
                     </table>
                     <nav aria-label="Pages">
                         <ul>
-                            <li> <a aria-label="Previous Page" href="?order=banana&amp;page=1"> &lt; </li>
-                            <li> <a aria-label="Page 1" href="?order=banana&amp;page=1"> 1 </a> </li>
-                            <li> <a aria-label="Page 2" href="?order=banana&amp;page=2"> 2 </a> </li>
-                            <li> <a aria-label="Page 3" href="?order=banana&amp;page=3"> 3 </a> </li>
-                            <li> <a aria-label="Next Page" href="?order=banana&amp;page=3"> &gt; </a> </li>
+                            <li> <a aria-label="Previous Page" class="iommi_page_link" href="?order=banana&amp;page=1"> &lt; </li>
+                            <li> <a aria-label="Page 1" class="iommi_page_link" href="?order=banana&amp;page=1"> 1 </a> </li>
+                            <li> <a aria-label="Page 2" class="iommi_page_link" href="?order=banana&amp;page=2"> 2 </a> </li>
+                            <li> <a aria-label="Page 3" class="iommi_page_link" href="?order=banana&amp;page=3"> 3 </a> </li>
+                            <li> <a aria-label="Next Page" class="iommi_page_link" href="?order=banana&amp;page=3"> &gt; </a> </li>
                         </ul>
                     </nav>
                 </div>
@@ -4088,9 +4088,9 @@ def test_table_tag_wrapper():
                 </div>
                 <nav aria-label="Pages">
                     <ul>
-                        <li> <a aria-label="Page 1" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
-                        <li> <a aria-label="Page 2" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
-                        <li> <a aria-label="Next Page" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
+                        <li> <a aria-label="Page 1" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=1"> 1 </a> </li>
+                        <li> <a aria-label="Page 2" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> 2 </a> </li>
+                        <li> <a aria-label="Next Page" class="iommi_page_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;page=2"> &gt; </a> </li>
                     </ul>
                 </nav>
             </div>

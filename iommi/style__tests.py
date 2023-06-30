@@ -418,7 +418,6 @@ def test_assets_render_from_bulma_style():
     class MyPage(Page):
         class Meta:
             iommi_style = 'bulma'
-            assets__axios = None
 
     verify_html(
         actual_html=MyPage().bind(request=req('get')).render_to_response().content,
@@ -430,6 +429,7 @@ def test_assets_render_from_bulma_style():
                     <title> </title>
                     <script crossorigin="anonymous" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" src="https://code.jquery.com/jquery-3.4.1.js">
                     </script>
+                    <script src="/static/js/iommi.js"></script>
                     <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" rel="stylesheet">
                     <script>
 
