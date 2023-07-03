@@ -1,5 +1,4 @@
 import copy
-import warnings
 from typing import (
     Any,
     Dict,
@@ -21,7 +20,6 @@ from iommi.evaluate import (
     find_static_items,
     get_callable_description,
     get_signature,
-    has_catch_all_kwargs,
     is_callable,
     matches,
     signature_from_kwargs,
@@ -36,7 +34,7 @@ from iommi.refinable import (
     RefinableMembers,
     RefinableObject,
 )
-from iommi.struct import Struct
+from iommi.struct import merged, Struct
 from iommi.style import Style
 
 # Backward compatible definition
@@ -241,11 +239,12 @@ class Traversable(RefinableObject):
         return self._evaluate_parameters
 
     def invoke_callback(self, callback, **kwargs):
+        all_kwargs = merged(self.iommi_evaluate_parameters(), kwargs)
         try:
-            return callback(**kwargs, **self.iommi_evaluate_parameters())
+            return callback(**all_kwargs)
         except TypeError as e:
             if not matches(
-                signature_from_kwargs(dict(**kwargs, **self.iommi_evaluate_parameters())),
+                signature_from_kwargs(all_kwargs),
                 get_signature(callback),
                 __match_empty=True,
             ):
@@ -254,16 +253,6 @@ class Traversable(RefinableObject):
                     f'(Keyword arguments: {", ".join(sorted([*kwargs, *self.iommi_evaluate_parameters()]))})'
                 ) from e
             raise
-
-    @staticmethod
-    def invoke_deprecated_callback(callback, **kwargs):
-        try:
-            return callback(**kwargs)
-        finally:
-            if not has_catch_all_kwargs(callback):
-                warnings.warn(
-                    f"The callback {callback} is not safe for additional future keyword arguments", DeprecationWarning
-                )
 
     def get_request(self):
         if self._parent is None:

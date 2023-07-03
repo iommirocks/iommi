@@ -225,13 +225,9 @@ def edit_table__post_handler(table, request, **_):
                 field = form.fields[cell.column.iommi_name()]
                 field._iommi_path_override = path
                 if cells.is_create_template or (
-                    # In next major: field.invoke_callback(field.read_from_instance) != value
-                    field.invoke_deprecated_callback(field.read_from_instance, field=field, instance=instance) != value
+                    field.invoke_callback(field.read_from_instance, instance=instance) != value
                 ):
-                    # In next major: field.invoke_callback(field.write_to_instance, value=value)
-                    field.invoke_deprecated_callback(
-                        field.write_to_instance, field=field, instance=instance, value=value
-                    )
+                    field.invoke_callback(field.write_to_instance, instance=instance, value=value)
                     if not field.extra.get('django_related_field', False):
                         attrs_to_save.append(field.attr)
 
