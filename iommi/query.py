@@ -952,10 +952,7 @@ class Query(Part):
                 raise QueryException(
                     f'"{filter_name}" is not a unary filter, you must use it like "{filter_name}=something"'
                 )
-            # In next major: result = filter.invoke_callback(filter.value_to_q, op='=', value_string_or_f=value)
-            result = filter.invoke_deprecated_callback(
-                filter.value_to_q, filter=filter, op='=', value_string_or_f=value
-            )
+            result = filter.invoke_callback(filter.value_to_q, op='=', value_string_or_f=value)
             return result
         raise QueryException(
             f'Unknown unary filter "{filter_name}", available filters: {", ".join(list(keys(self.filters)))}'
@@ -1005,10 +1002,7 @@ class Query(Part):
         else:
             value_string_or_f = value_string_or_filter_name
         try:
-            # In next major: result = filter.invoke_callback(filter.value_to_q, op='=', value_string_or_f=value_string_or_f)
-            result = filter.invoke_deprecated_callback(
-                filter.value_to_q, filter=filter, op=op, value_string_or_f=value_string_or_f
-            )
+            result = filter.invoke_callback(filter.value_to_q, op=op, value_string_or_f=value_string_or_f)
         except ValidationError as e:
             raise QueryException(f'{e.message}')
         if result is None:
