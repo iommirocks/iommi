@@ -97,10 +97,11 @@ def test_legacy_fbv_step3(artist, album, track):
     AJAX dispatch
     =============
 
-    There's a problem with this code so far though, and that is that if we add filtering on album it breaks. One of the nice features
-    of iommi is the automatic ajax endpoints (and by default a select2 widget), but this requires some extra routing.
+    There are two problems with this code so far though, and that is that if we add filtering on album it breaks. One of the nice features
+    of iommi is the automatic ajax endpoints (and by default a select2 widget), but this requires some extra routing, and that we include the
+    relevant JS assets.
 
-    For views that are fully iommi this routing is done for you, but as this is a legacy function based view that we don't want to
+    For views that are fully iommi the routing is done for you, but as this is a legacy function based view that we don't want to
     rewrite fully right now, we'll have to add the routing boilerplate ourselves:
     """
 
@@ -122,8 +123,20 @@ def test_legacy_fbv_step3(artist, album, track):
             context={
                 'artist': artist,
                 'tracks': tracks,
+                'assets': tracks.iommi_collected_assets(),
             }
         )
+
+    # language=rst
+    """
+    You will also have to render the assets into the `<head>` block of your html:
+    
+    .. code-block:: html
+    
+        {% for asset in assets.values %}
+            {{ asset }}
+        {% endfor %}
+    """
 
     # @test
     response = view_artist(req('get'), artist_name=artist.name)
