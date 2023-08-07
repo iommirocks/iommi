@@ -7,6 +7,7 @@ from iommi._web_compat import (
     mark_safe,
 )
 from iommi.form import save_nested_forms
+from iommi.struct import Struct
 from tests.helpers import (
     req,
     show_output,
@@ -57,13 +58,19 @@ def test_how_do_i_supply_a_custom_parser_for_a_field():
     # @end
 
 
-def test_how_do_i_make_a_field_non_editable():
+def test_how_do_i_make_a_field_non_editable(artist):
     # language=rst
     """
     .. _Field.editable:
 
     How do I make a field non-editable?
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    There are two cases: A) non-editable and you want to show the value to the
+    user, or B) non-editable but do not show it ("hardcoded").
+
+    A) Show the value
+    =================
 
     Pass a callable or `bool` to the `editable` member of the field:
     """
@@ -75,14 +82,58 @@ def test_how_do_i_make_a_field_non_editable():
         fields__artist__editable=False,
     )
 
+    # language=rst
+    """
+    For a normal user:
+    """
+
     # @test
     user_form = form.bind(request=user_req('get'))
     assert user_form.fields.name.editable is False
     assert user_form.fields.artist.editable is False
+    show_output(user_form)
+    # @end
 
+
+    # language=rst
+    """
+    For a staff user:
+    """
+
+    # @test
     staff_form = form.bind(request=staff_req('get'))
     assert staff_form.fields.name.editable is True
     assert staff_form.fields.artist.editable is False
+    show_output(staff_form)
+    # @end
+
+    # language=rst
+    """
+    B) Hardcode the value
+    =====================
+    
+    A common use case is to navigate to some object, then create a sub-object.
+    In this example we have a url like `/artists/Black Sabbath/`, where the
+    artist name is parsed into an `Artist` instance by an iommi path decoder.
+    
+    Then under that we have `/artists/Black Sabbath/create_album/`, and in this
+    form, we don't want to make the user choose Black Sabbath again. We
+    accomplish this with the `hardcoded` shortcut: 
+    """
+
+
+    form = Form.create(
+        auto__model=Album,
+        fields__artist=Field.hardcoded(
+            parsed_data=lambda params, **_: params.artist,
+        ),
+    )
+
+    # @test
+    r = user_req('get')
+    r.iommi_view_params = Struct(artist=artist)
+    form = form.bind(request=r)
+    show_output(form)
     # @end
 
 

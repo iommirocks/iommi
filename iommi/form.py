@@ -1335,6 +1335,12 @@ class Field(Part, Tag):
     def many_to_many_reverse(cls, model_field, **kwargs):
         return cls.many_to_many(model_field=model_field, **kwargs)
 
+    @classmethod
+    @with_defaults(
+        template='iommi/blank.html',
+    )
+    def hardcoded(cls, **kwargs):
+        return cls(**kwargs)
 
 def is_django_promise_with_string_proxy(redirect_to):
     return (
