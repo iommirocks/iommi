@@ -678,7 +678,7 @@ class Column(Part):
         extra__checkbox_name='pk',
         extra__checked=lambda **_: False,
     )
-    def select(cls, *, checkbox_name=None, checked=None, **kwargs):
+    def select(cls, **kwargs):
         # language=rst
         """
         Shortcut for a column of checkboxes to select rows. This is useful for implementing bulk operations.
@@ -709,18 +709,6 @@ class Column(Part):
         :param extra__checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.
         :param extra__checked: callable to specify if the checkbox should be checked initially. Defaults to `False`.
         """
-        if checkbox_name is not None:
-            warnings.warn(
-                'The preferred way to specify checkbox name is renamed to extra__checkbox_name',
-                category=DeprecationWarning,
-            )
-            setdefaults_path(kwargs, extra__checkbox_name=checkbox_name)
-        if checked is not None:
-            warnings.warn(
-                'The preferred way to specify checked callback is renamed to extra__checked',
-                category=DeprecationWarning,
-            )
-            setdefaults_path(kwargs, extra__checked=checked)
         return cls(**kwargs)
 
     @classmethod

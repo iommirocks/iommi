@@ -753,22 +753,6 @@ def test_select_column_preset(NoSortTable):
 
 
 @pytest.mark.skipif(pytest.__name__ == 'hammett', reason='hammett has problems with this warns() thing')
-def test_select_colum_deprecation():
-    with pytest.warns(
-        DeprecationWarning,
-        match='The preferred way to specify checkbox name is renamed to extra__checkbox_name',
-    ):
-        select = Column.select(checkbox_name='banana')
-    assert select.refine_done().extra.checkbox_name == 'banana'
-
-    with pytest.warns(
-        DeprecationWarning,
-        match='The preferred way to specify checked callback is renamed to extra__checked',
-    ):
-        select = Column.select(checked=True)
-    assert select.refine_done().extra.checked is True
-
-
 def test_column_select_shortcut_no_override_call_target(NoSortTable):
     class TestTable(NoSortTable):
         select = Column.select()
