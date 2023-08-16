@@ -53,47 +53,6 @@ def camel_to_snake(s):
     return _camel_to_snake_regex.sub('_', s).lower()
 
 
-def register_advanced_path_decoding(conf, *, warn=True):
-    if warn:
-        warnings.warn(
-            '''Path decoder syntax has been changed. Please use the new syntax. The old:
-
-        register_advanced_path_decoder({
-            User: Decoder('pk', 'username', 'email'),
-            Track: Decoder('foo', decode=lambda string, model, **_: model.objects.get(name__iexact=string.strip())),
-        })
-
-        is equivalent to:
-
-        register_path_decoder(
-            user_pk=User,
-            user_username=User.username,
-            user_email=User.email,
-            track_foo=lambda string, **_: Track.objects.get(name__iexact=string.strip()),
-        )
-        ''',
-            category=DeprecationWarning,
-        )
-
-    registered_keys = []
-    for model, decoder in items(conf):
-        snake_name = camel_to_snake(model.__name__)
-        for lookup in decoder.lookups:
-            key = f'{snake_name}_{lookup}'
-            _path_component_to_decode_data[key] = (model, snake_name, lookup, decoder)
-            registered_keys.append(key)
-
-    @contextmanager
-    def _unregister():
-        try:
-            yield conf
-        finally:
-            for key in registered_keys:
-                del _path_component_to_decode_data[key]
-
-    return _unregister()
-
-
 def register_explicit_path_decoding(**kwargs):
     registered_keys = []
     for key, definition in items(kwargs):
@@ -135,18 +94,8 @@ def register_explicit_path_decoding(**kwargs):
     return _unregister()
 
 
-def register_path_decoding(*models, **kwargs):
-    assert not (
-        models and kwargs
-    ), 'Mixing of new and deprecated syntax in the same call to register_path_decoding is not supported.'
-    if kwargs:
-        return register_explicit_path_decoding(**kwargs)
-
-    warnings.warn(
-        'Path decoder syntax has been changed. Please use the new syntax. The old `register_path_decoder(Foo)` is equivalent to `register_path_decoder(foo_pk=Foo, foo_name=Foo.name)`',
-        category=DeprecationWarning,
-    )
-    return register_advanced_path_decoding({model: _default_decoder for model in models}, warn=False)
+def register_path_decoding(**kwargs):
+    return register_explicit_path_decoding(**kwargs)
 
 
 def decode_path_components(request, **kwargs):
