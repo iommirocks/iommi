@@ -1,6 +1,26 @@
 Changelog
 ---------
 
+6.0.0 (2023-08-16)
+~~~~~~~~~~~~~~~~~~~
+
+* JS refactoring of table filtering. This drops Axios as a dependency. (Thanks Bery!)
+
+* `Field.is_valid` callback should handle raised `ValidationError`
+
+* Added `Field.hardcoded`
+
+* Fix setting `display_name` on `freetext_search` field implying required
+
+* Fixed filter form reset (thanks Bery!)
+
+* Dropped `invoke_deprecated_callback`
+
+* Removed support for deprecated arguments `checked` and `checkbox_name` for `Column.select`
+
+* Removed deprecated `register_advanced_path_decoding`, and the corresponding old syntax for `register_path_decoding`
+
+
 5.13.0 (2023-05-10)
 ~~~~~~~~~~~~~~~~~~~
 
