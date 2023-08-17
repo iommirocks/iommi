@@ -1411,8 +1411,15 @@ class Paginator(Traversable):
     def on_bind(self) -> None:
         request = self.get_request()
         table = self.iommi_evaluate_parameters()['table']
-        page_size = request.GET.get(self.iommi_path + '_size') if request else None
-        self.page_size = table.page_size if page_size is None else int(page_size)
+        page_size = None
+        if request:
+            page_size_str=request.GET.get(self.iommi_path+'_size')
+            if page_size_str is not None:
+                try:
+                    page_size = int(page_size_str)
+                except ValueError:
+                    pass
+        self.page_size = page_size if page_size is not None else table.page_size
 
         self.attrs = evaluate_attrs(self)
         self.container.attrs = evaluate_attrs(self.container)
