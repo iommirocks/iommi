@@ -863,6 +863,54 @@ def test_django_table_pagination():
         """,
     )
 
+@pytest.mark.django_db
+def test_page_size():
+    for x in range(10):
+        TFoo(a=x, b='foo').save()
+
+    class TestTable(Table):
+        class Meta:
+            page_size = 3
+            rows = lambda **_: TFoo.objects.all()
+
+        a = Column()
+
+    verify_table_html(
+        table=TestTable(),
+        find__name='tbody',
+        expected_html="""
+            <tbody>
+                <tr data-pk="1"> <td> 0 </td> </tr>
+                <tr data-pk="2"> <td> 1 </td> </tr>
+                <tr data-pk="3"> <td> 2 </td> </tr>
+            </tbody>
+        """,
+    )
+
+    verify_table_html(
+        table=TestTable(),
+        query=dict(page_size=2),
+        find__name='tbody',
+        expected_html="""
+            <tbody>
+                <tr data-pk="1"> <td> 0 </td> </tr>
+                <tr data-pk="2"> <td> 1 </td> </tr>
+            </tbody>
+        """,
+    )
+
+    verify_table_html(
+        table=TestTable(),
+        query=dict(page_size='string'),
+        find__name='tbody',
+        expected_html="""
+            <tbody>
+                <tr data-pk="1"> <td> 0 </td> </tr>
+                <tr data-pk="2"> <td> 1 </td> </tr>
+                <tr data-pk="3"> <td> 2 </td> </tr>
+            </tbody>
+        """,
+    )
 
 @pytest.mark.django_db
 def test_bulk_edit_table():
