@@ -41,7 +41,7 @@ class IommiBase {
 
     onPopState(event) {
         // in extra method, so it can be overridden
-        if (event.state.reloadOnUserAction) {
+        if (event.state && event.state.reloadOnUserAction) {
             if(this.historyStatePushedByUser) {
                 // TODO in the future
                 //  it might be better to rewrite this with element.iommi.reload()
