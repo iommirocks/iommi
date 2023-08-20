@@ -2148,7 +2148,7 @@ def test_email_parse():
     with pytest.raises(ValidationError) as e:
         email_parse(string_value='asdasd')
 
-    assert e.value.messages == ['Enter a valid URL.']
+    assert e.value.messages == ['Enter a valid email address.']
 
     assert email_parse(string_value='', field=Field.email(required=False)) == ''
 
