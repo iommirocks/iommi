@@ -2136,10 +2136,10 @@ def test_url_parse():
 
     assert url_parse(string_value='', field=Field.url(required=False)) == ''
 
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(ValidationError) as e2:
         url_parse(string_value='')
 
-    assert e.value.messages == ['Enter a valid URL.']
+    assert e2.value.messages == ['Enter a valid URL.']
 
 
 def test_email_parse():
@@ -2152,10 +2152,10 @@ def test_email_parse():
 
     assert email_parse(string_value='', field=Field.email(required=False)) == ''
 
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(ValidationError) as e2:
         email_parse(string_value='')
 
-    assert e.value.messages == ['Enter a valid email address.']
+    assert e2.value.messages == ['Enter a valid email address.']
 
 
 def test_render_temlate_none():
