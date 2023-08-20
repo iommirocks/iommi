@@ -3378,7 +3378,7 @@ def test_render_fields_retain_other_parameters():
         actual_html=Form().bind(request=request).render_fields,
         # language=HTML
         expected_html='''
-            <input name="banana" type="hidden" value="1" />
+            <input name="banana" type="hidden" value="1">
         ''',
     )
 
@@ -3579,3 +3579,52 @@ def test_bootstrap_crash_when_no_iommi_name_on_field_group(settings):
         fields__name__group='group',
         iommi_style='bootstrap',
     ).bind(request=req('get')).render_to_response()
+
+
+def test_render_fields_template():
+    class MyForm(Form):
+        class Meta:
+            fields_template = Template('''
+            {{ fields.test_hidden }}
+            <div class="row">
+                <div class="col">
+                    {{ fields.name }}
+                </div>
+                <div class="col">
+                    {{ fields.email }}
+                </div>
+            </div>
+            {{ fields.comment }}
+            ''')
+
+        name = Field()
+        email = Field()
+        comment = Field.textarea()
+        test_hidden = Field.hidden()
+
+    verify_html(
+        actual_html=MyForm().bind(request=req('get', url='/?foo=bar')).render_fields,
+        # language=HTML
+        expected_html='''
+            <input id="id_test_hidden" name="test_hidden" type="hidden" value="">
+            <div class="row">
+                <div class="col">
+                    <div>
+                        <label for="id_name"> Name </label>
+                        <input id="id_name" name="name" type="text" value="">
+                    </div>
+                </div>
+                <div class="col">
+                    <div>
+                        <label for="id_email"> Email </label>
+                        <input id="id_email" name="email" type="text" value="">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="id_comment">Comment</label>
+                <textarea id="id_comment" name="comment"></textarea>
+            </div>
+            <input type="hidden" name="foo" value="bar">
+        ''',
+    )

@@ -1525,6 +1525,7 @@ class Form(Part):
     fields: Namespace = RefinableMembers()
     instance: Any = Refinable()
     field_group: Namespace = Refinable()
+    fields_template: Union[str, Template] = EvaluatedRefinable()
 
     class Meta:
         member_class = Field
@@ -1547,6 +1548,7 @@ class Form(Part):
         template='iommi/form/form.html',
         actions_template='iommi/form/actions.html',
         attr=MISSING,
+        fields_template=None,
     )
     def __init__(self, **kwargs):
         super(Form, self).__init__(
@@ -1803,9 +1805,17 @@ class Form(Part):
     def render_fields(self):
         assert self._is_bound, NOT_BOUND_MESSAGE
 
-        r = []
+        if self.fields_template is None:
+            r = []
+        else:
+            context = self.iommi_evaluate_parameters().copy()
+            context['fields'] = {}
+
         for group, parts in groupby(values(self.parts), key=lambda x: getattr(x, 'group', MISSING)):
             if group is not MISSING:
+                # using groups with fields_template doesn't really make sense
+                assert self.fields_template is None
+
                 current_group = self.field_group(_name=f'iommi_field_group_{group}', group=group).bind(parent=self)
                 r.append(current_group.iommi_open_tag())
 
@@ -1813,15 +1823,29 @@ class Form(Part):
 
                 r.append(current_group.iommi_close_tag())
             else:
-                r.extend([part.__html__() for part in parts])
+                if self.fields_template is None:
+                    r.extend([part.__html__() for part in parts])
+                else:
+                    for part in parts:
+                        context['fields'][part._name] = part
 
         # We need to preserve all other GET parameters, so we can e.g. filter in two forms on the same page, and keep sorting after filtering
         own_field_paths = {f.iommi_path for f in values(self.fields)}
+        hidden_fields = []
         for k, v in items(self.get_request().GET):
             if k not in own_field_paths and not k.startswith('-') and not k.startswith(DISPATCH_PREFIX):
-                r.append(format_html('<input type="hidden" name="{}" value="{}" />', k, v))
+                hidden = format_html('<input type="hidden" name="{}" value="{}">', k, v)
+                hidden_fields.append(hidden)
 
-        return format_html('{}\n' * len(r), *r)
+        if self.fields_template is None:
+            html = format_html('{}\n' * len(r), *r)
+        else:
+            html = render_template(request=self.get_request(), template=self.fields_template, context=context)
+
+        if hidden_fields:
+            html = format_html('{}\n' * (len(hidden_fields)+1), html, *hidden_fields)
+
+        return html
 
     @dispatch(
         render__call_target=render_template,
