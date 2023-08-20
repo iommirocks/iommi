@@ -69,6 +69,7 @@ from iommi.form import (
     render_template,
     time_parse,
     url_parse,
+    choice_parse,
 )
 from iommi.from_model import (
     member_from_model,
@@ -2205,6 +2206,25 @@ def test_choice_post_validation_chains_empty_choice_when_required_false():
         (2, '2', '2', False, 2),
         (3, '3', '3', False, 3),
     ]
+
+
+def test_choice_parse_empty_string_as_none():
+    form = Form(
+        fields__foo = Field.choice(
+            choices=["foo", "bar"],
+            choice_display_name_formatter=lambda choice, **_: choice.title(),
+        )
+    ).bind()
+    assert choice_parse(form, form.fields.foo, '') is None
+
+    form = Form(
+        fields__foo = Field.choice(
+            choices=["foo", "bar"],
+            choice_display_name_formatter=lambda choice, **_: choice.title(),
+            parse_empty_string_as_none=False,
+        )
+    ).bind()
+    assert choice_parse(form, form.fields.foo, '') == ''
 
 
 def test_instance_set_earlier_than_evaluate_is_called():
