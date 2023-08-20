@@ -69,6 +69,7 @@ from iommi.form import (
     render_template,
     time_parse,
     url_parse,
+    email_parse,
 )
 from iommi.from_model import (
     member_from_model,
@@ -2132,6 +2133,29 @@ def test_url_parse():
         url_parse(string_value='asdasd')
 
     assert e.value.messages == ['Enter a valid URL.']
+
+    assert url_parse(string_value='', field=Field.url(required=False)) == ''
+
+    with pytest.raises(ValidationError) as e:
+        url_parse(string_value='')
+
+    assert e.value.messages == ['Enter a valid URL.']
+
+
+def test_email_parse():
+    assert email_parse(string_value='someone@example.com') == 'someone@example.com'
+
+    with pytest.raises(ValidationError) as e:
+        email_parse(string_value='asdasd')
+
+    assert e.value.messages == ['Enter a valid URL.']
+
+    assert email_parse(string_value='', field=Field.email(required=False)) == ''
+
+    with pytest.raises(ValidationError) as e:
+        email_parse(string_value='')
+
+    assert e.value.messages == ['Enter a valid email address.']
 
 
 def test_render_temlate_none():
