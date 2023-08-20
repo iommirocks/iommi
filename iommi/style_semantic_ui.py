@@ -51,6 +51,10 @@ semantic_ui_base = Style(
                 input__template='iommi/form/semantic_ui/radio.html',
                 attrs__class={'grouped fields': True},
             ),
+            checkboxes=dict(
+                input__template='iommi/form/semantic_ui/checkboxes.html',
+                attrs__class={'grouped fields': True},
+            ),
         ),
         attrs__class__field=True,
         help__attrs__class=dict(

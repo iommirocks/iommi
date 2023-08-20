@@ -26,6 +26,9 @@ select2_enhanced_forms = Style(
                 assets=select2_assets,
                 input__attrs__class__select2_enhance=True,
             ),
+            checkboxes=dict(
+                input__attrs__class__select2_enhance=False,
+            ),
             choice_queryset=dict(
                 input__template='iommi/form/choice_select2.html',
                 non_editable_input__attrs__class__select2_enhance=False,
@@ -98,6 +101,10 @@ base = Style(
             date__input__attrs__type='date',
             radio=dict(
                 input__template='iommi/form/radio.html',
+            ),
+            checkboxes=dict(
+                input__template='iommi/form/checkboxes.html',
+                input__attrs__multiple=None,
             ),
             heading=dict(
                 template='iommi/form/heading.html',

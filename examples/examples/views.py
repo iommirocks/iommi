@@ -180,9 +180,11 @@ def all_field_sorts(request):
                         'foreign_key',
                         'many_to_many',
                         'foreign_key_reverse',
+                        'many_to_many_reverse',
                     ]
                 },
                 fields__radio__choices=some_choices,
+                fields__checkboxes__choices=some_choices,
                 fields__choice__choices=some_choices,
                 fields__choice_queryset__choices=Artist.objects.all(),
                 fields__multi_choice__choices=some_choices,

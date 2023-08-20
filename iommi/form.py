@@ -1193,6 +1193,14 @@ class Field(Part, Tag):
 
     @classmethod
     @with_defaults(
+        input__attrs__id=None,
+        extra_evaluated__id=default_input_id,
+    )
+    def checkboxes(cls, **kwargs):
+        return cls.multi_choice(**kwargs)
+
+    @classmethod
+    @with_defaults(
         parse=datetime_parse,
         render_value=datetime_render_value,
     )
