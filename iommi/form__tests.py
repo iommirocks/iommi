@@ -933,6 +933,55 @@ def test_radio_full_render():
     )
 
 
+def test_checkboxes():
+    choices = ['a', 'b', 'c']
+    form = Form(
+        fields__foo=Field.checkboxes(choices=choices),
+    )
+    form = form.bind(
+        request=req('get', foo='a'),
+    )
+    soup = BeautifulSoup(form.__html__(), 'html.parser')
+    items = [x for x in soup.find_all('input') if x.attrs['type'] == 'checkbox']
+    assert len(items) == 3
+    assert [x.attrs['value'] for x in items if 'checked' in x.attrs] == ['a']
+
+
+def test_checkboxes_full_render():
+    choices = ['a', 'b', 'c']
+    req('get')
+    form = Form(
+        fields__foo=Field.checkboxes(choices=choices),
+    )
+    form = form.bind(
+        request=req('get', foo='a'),
+    )
+    first = form.fields.foo.__html__()
+    second = form.fields.foo.__html__()
+    assert first == second
+    verify_part_html(
+        part=form.fields.foo,
+        # language=html
+        expected_html="""
+            <div>
+                <label for="id_foo">Foo</label>
+                <div>
+                    <input type="checkbox" value="a" name="foo" id="id_foo_1" name="foo" checked/>
+                    <label for="id_foo_1"> a </label>
+                </div>
+                <div>
+                    <input type="checkbox" value="b" name="foo" id="id_foo_2" name="foo" />
+                    <label for="id_foo_2"> b </label>
+                </div>
+                <div>
+                    <input type="checkbox" value="c" name="foo" id="id_foo_3" name="foo" />
+                    <label for="id_foo_3"> c </label>
+                </div>
+            </div>
+        """,
+    )
+
+
 def test_hidden():
     soup = BeautifulSoup(Form(fields__foo=Field.hidden()).bind(request=req('get', foo='1')).__html__(), 'html.parser')
     x = soup.find(id='id_foo')
@@ -2541,6 +2590,7 @@ def test_all_field_shortcuts():
         fields__field_of_type_choice__choices=[],
         fields__field_of_type_multi_choice__choices=[],
         fields__field_of_type_radio__choices=[],
+        fields__field_of_type_checkboxes__choices=[],
         fields__field_of_type_choice_queryset__choices=TFoo.objects.none(),
         fields__field_of_type_multi_choice_queryset__choices=TFoo.objects.none(),
         fields__field_of_type_many_to_many__model_field=TBaz.foo.field,

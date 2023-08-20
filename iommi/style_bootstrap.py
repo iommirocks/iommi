@@ -75,6 +75,16 @@ bootstrap_base = Style(
                     'form-control': False,
                 },
             ),
+            checkboxes=dict(
+                attrs__class={
+                    'form-group': False,
+                    'form-check': True,
+                },
+                input__attrs__class={
+                    'form-check-input': True,
+                    'form-control': False,
+                },
+            ),
         ),
         attrs__class={
             'form-group': True,

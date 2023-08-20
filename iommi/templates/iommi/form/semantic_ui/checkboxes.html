@@ -1,0 +1,11 @@
+{% for choice in field.choice_tuples %}
+    <div class="field">
+        <div class="ui radio checkbox">  {# TODO: use fields.attrs #}
+            <input type="checkbox" value="{{ choice.1 }}" id="{{ field.extra_evaluated.id }}_{{ choice.4 }}" {{ field.input.attrs }} {% if choice.3 %}checked{% endif %}/>
+            <label for="{{ field.extra_evaluated.id }}_{{ choice.4 }}">{{ choice.2 }}</label>
+
+            {{ field.help }}
+            {{ field.errors }}
+        </div>
+    </div>
+{% endfor %}
