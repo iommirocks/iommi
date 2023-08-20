@@ -2134,7 +2134,8 @@ def test_url_parse():
 
     assert e.value.messages == ['Enter a valid URL.']
 
-    assert url_parse(string_value='', field=Field.url(required=False)) == ''
+    test_form = Form(fields__url=Field.url(required=False)).bind(request=req('get'))
+    assert url_parse(string_value='', field=test_form.fields.url) == ''
 
     with pytest.raises(ValidationError) as e2:
         url_parse(string_value='')
@@ -2150,7 +2151,8 @@ def test_email_parse():
 
     assert e.value.messages == ['Enter a valid email address.']
 
-    assert email_parse(string_value='', field=Field.email(required=False)) == ''
+    test_form = Form(fields__email=Field.email(required=False)).bind(request=req('get'))
+    assert email_parse(string_value='', field=test_form.fields.email) == ''
 
     with pytest.raises(ValidationError) as e2:
         email_parse(string_value='')
