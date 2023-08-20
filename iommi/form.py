@@ -296,7 +296,7 @@ def choice_parse(form, field, string_value, **_):
             return choice
 
     if string_value in [None, '']:
-        return None
+        return None if field.parse_empty_string_as_none else ''
 
     return string_value
 
