@@ -3585,7 +3585,7 @@ def test_render_fields_template():
     class MyForm(Form):
         class Meta:
             fields_template = Template('''
-            {{ fields.test_hidden }}
+            {{ fields.test_hidden.input }}
             <div class="row">
                 <div class="col">
                     {{ fields.name }}

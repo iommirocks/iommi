@@ -1834,8 +1834,7 @@ class Form(Part):
         hidden_fields = []
         for k, v in items(self.get_request().GET):
             if k not in own_field_paths and not k.startswith('-') and not k.startswith(DISPATCH_PREFIX):
-                hidden = format_html('<input type="hidden" name="{}" value="{}">', k, v)
-                hidden_fields.append(hidden)
+                hidden_fields.append(format_html('<input type="hidden" name="{}" value="{}">', k, v))
 
         if self.fields_template is None:
             html = format_html('{}\n' * len(r), *r)
