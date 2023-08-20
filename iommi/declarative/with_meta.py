@@ -40,8 +40,9 @@ def get_meta(cls):
     merged_attributes = Namespace()
     for class_ in reversed(cls.mro()):
         if hasattr(class_, 'Meta'):
-            for key in class_.Meta.__dict__:
-                if not key.startswith('__'):
-                    value = getattr(class_.Meta, key)
-                    merged_attributes.setitem_path(key, value)
+            for meta_class_ in reversed(class_.Meta.mro()):
+                for key in meta_class_.__dict__:
+                    if not key.startswith('__'):
+                        value = getattr(class_.Meta, key)
+                        merged_attributes.setitem_path(key, value)
     return merged_attributes

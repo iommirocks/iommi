@@ -454,7 +454,9 @@ def decimal_parse(string_value, **_):
         raise ValidationError(f"Invalid literal for Decimal: '{string_value}'")
 
 
-def url_parse(string_value, **_):
+def url_parse(string_value, field=None, **_):
+    if string_value == '' and field is not None and not field.required:
+        return string_value
     return URLValidator()(string_value) or string_value
 
 
@@ -463,7 +465,9 @@ def file_write_to_instance(field, instance, value, **kwargs):
         Field.write_to_instance(field=field, instance=instance, value=value, **kwargs)
 
 
-def email_parse(string_value, **_):
+def email_parse(string_value, field=None, **_):
+    if string_value == '' and field is not None and not field.required:
+        return string_value
     return validate_email(string_value) or string_value
 
 

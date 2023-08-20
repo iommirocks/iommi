@@ -341,3 +341,35 @@ def test_meta_staticmethod():
             pass
 
     assert Foo().get_meta().foo(17) == 17
+
+
+def test_meta_inheritance():
+    class TestMetaMixin:
+        foo = 'bar'
+
+    @with_meta
+    class Test:
+        class Meta(TestMetaMixin):
+            pass
+
+        def __init__(self, foo):
+            assert foo == 'bar'
+
+    # noinspection PyArgumentList
+    Test()
+
+
+def test_meta_inheritance_with_override():
+    class TestMetaMixin:
+        foo = 'bar'
+
+    @with_meta
+    class Test:
+        class Meta(TestMetaMixin):
+            foo = 'baz'
+
+        def __init__(self, foo):
+            assert foo == 'baz'
+
+    # noinspection PyArgumentList
+    Test()

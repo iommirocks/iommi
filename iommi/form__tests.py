@@ -58,6 +58,7 @@ from iommi.form import (
     datetime_iso_formats,
     datetime_parse,
     decimal_parse,
+    email_parse,
     Field,
     find_unique_prefixes,
     float_parse,
@@ -2133,6 +2134,31 @@ def test_url_parse():
         url_parse(string_value='asdasd')
 
     assert e.value.messages == ['Enter a valid URL.']
+
+    test_form = Form(fields__url=Field.url(required=False)).bind(request=req('get'))
+    assert url_parse(string_value='', field=test_form.fields.url) == ''
+
+    with pytest.raises(ValidationError) as e2:
+        url_parse(string_value='')
+
+    assert e2.value.messages == ['Enter a valid URL.']
+
+
+def test_email_parse():
+    assert email_parse(string_value='someone@example.com') == 'someone@example.com'
+
+    with pytest.raises(ValidationError) as e:
+        email_parse(string_value='asdasd')
+
+    assert e.value.messages == ['Enter a valid email address.']
+
+    test_form = Form(fields__email=Field.email(required=False)).bind(request=req('get'))
+    assert email_parse(string_value='', field=test_form.fields.email) == ''
+
+    with pytest.raises(ValidationError) as e2:
+        email_parse(string_value='')
+
+    assert e2.value.messages == ['Enter a valid email address.']
 
 
 def test_render_temlate_none():
