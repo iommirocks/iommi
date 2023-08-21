@@ -1,8 +1,24 @@
 Changelog
 ---------
 
+6.1.0 (2023-08-21)
+~~~~~~~~~~~~~~~~~~
+
+* `Field.checkboxes` added
+
+* `parse_empty_string_as_none` not working properly with choice
+
+* Fix `EmailField` / `URLField` with `required=False`
+
+* Allow inheritance for `class Meta`
+
+* JS crash on inter-page link navigation (like `foo/#something`)
+
+* Don't crash if `page_size` not integer (Thanks to new contributor Oana!)
+
+
 6.0.0 (2023-08-16)
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 * JS refactoring of table filtering. This drops Axios as a dependency. (Thanks Bery!)
 
