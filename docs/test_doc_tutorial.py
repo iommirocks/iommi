@@ -114,13 +114,13 @@ def test_declarative_tables():
     We’ll start with using iommi declarative tables to create a list of albums:
     """
 
-    class AlbumsTable(Table):
+    class AlbumTable(Table):
         name = Column()
         artist = Column()
         year = Column()
 
     def index(request):
-        return AlbumsTable(
+        return AlbumTable(
             title='Albums',
             rows=Album.objects.all(),
         )
@@ -149,7 +149,7 @@ def test_class_meta():
     The `class Meta` concept in iommi is slightly different from how it's used in Django. In iommi any argument to the constructor of a class can be put into `Meta`. In fact, ONLY valid arguments to the constructor can be set in `Meta`. In our example above we set `title` and `rows`. We can also instead set them via `Meta`:
     """
 
-    class AlbumsTable(Table):
+    class AlbumTable(Table):
         name = Column()
         artist = Column()
         year = Column()
@@ -159,7 +159,7 @@ def test_class_meta():
             rows = Album.objects.all()
 
     def index(request):
-        return AlbumsTable()
+        return AlbumTable()
 
     # @test
     index(req('get'))
@@ -176,7 +176,7 @@ def test_class_meta():
     """
 
     urlpatterns = [
-        path('', AlbumsTable().as_view()),
+        path('', AlbumTable().as_view()),
     ]
 
     # @test
@@ -187,11 +187,11 @@ def test_class_meta():
     """
     This looks superficially similar to class based views, but they are very different! Notice the parenthesis after the class name for example. And Django CBVs can't be combined with iommi classes because they are radically different concepts. 
     
-    That an instance of `AlbumsTable` is created here means we can pass arguments here:
+    That an instance of `AlbumTable` is created here means we can pass arguments here:
     """
 
     urlpatterns = [
-        path('', AlbumsTable(title='Other title', page_size=2).as_view()),
+        path('', AlbumTable(title='Other title', page_size=2).as_view()),
     ]
 
     # @test
@@ -204,7 +204,7 @@ def test_class_meta():
     auto__model
     ===========
     
-    The next step in the simplification is to realize that this table is trivially derived from the model definition. iommi has features to do this for you so we can simplify even further! We delete the entire `AlbumsTable` class and replace the url definition with this single line:
+    The next step in the simplification is to realize that this table is trivially derived from the model definition. iommi has features to do this for you so we can simplify even further! We delete the entire `AlbumTable` class and replace the url definition with this single line:
     """
 
     urlpatterns = [
