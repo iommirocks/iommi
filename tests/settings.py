@@ -48,9 +48,6 @@ DATABASES = {
 
 USE_TZ = False
 
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
-]
 
 IOMMI_DEFAULT_STYLE = 'test'
 
