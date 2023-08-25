@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+6.1.1 (2023-08-25)
+~~~~~~~~~~~~~~~~~~
+
+* `JSONField` was incorrectly handled in Django 3.1+
+
+* Dropped support for Django 3.0
+
+
 6.1.0 (2023-08-21)
 ~~~~~~~~~~~~~~~~~~
 

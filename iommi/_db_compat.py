@@ -46,6 +46,7 @@ def setup_db_compat_django():
         TimeField,
         URLField,
         UUIDField,
+        JSONField,
     )
 
     def _get_choices_from_model_choices(model_field):
@@ -120,13 +121,7 @@ def setup_db_compat_django():
     register_factory(GenericIPAddressField, shortcut_name='text')
     register_factory(FilePathField, shortcut_name='text')
     register_factory(BinaryField, factory=None)
-    try:
-        # This raises ImportError when the postgres driver isn't installed
-        from django.contrib.postgres.fields import JSONField
-
-        register_factory(JSONField, shortcut_name='text', include=False)
-    except ImportError:
-        pass
+    register_factory(JSONField, shortcut_name='text', include=False)
 
     # Column specific
     register_column_factory(BooleanField, shortcut_name='boolean')
