@@ -33,6 +33,7 @@ from iommi import (
     Menu,
     MenuItem,
     Page,
+    render_if_needed,
     Table,
 )
 from iommi._web_compat import format_html
@@ -147,17 +148,17 @@ class Admin(Page):
             ),
             logout=MenuItem(
                 url=lambda admin, **_: reverse(Auth.logout, current_app=admin.app_name),
-                display_name=gettext('Logout')
+                display_name=gettext('Logout'),
             ),
         ),
     )
 
     @read_config
     @with_defaults(
-        apps__auth_user__include = True,
-        apps__auth_group__include = True,
-        parts__messages = Messages(),
-        parts__list_auth_user = dict(
+        apps__auth_user__include=True,
+        apps__auth_group__include=True,
+        parts__messages=Messages(),
+        parts__list_auth_user=dict(
             auto__include=['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'is_superuser'],
             columns=dict(
                 username__filter=dict(
@@ -214,7 +215,9 @@ class Admin(Page):
             app_name = kwargs.pop('app_name', None)
 
             if not getattr(request, 'user', None) or not request.user.is_authenticated:
-                return HttpResponseRedirect(f'{reverse(Auth.login, current_app=app_name)}?{urlencode(dict(next=request.path))}')
+                return HttpResponseRedirect(
+                    f'{reverse(Auth.login, current_app=app_name)}?{urlencode(dict(next=request.path))}'
+                )
 
             final_page = self.refine_with_params(
                 app_name=app_name,
@@ -541,7 +544,7 @@ class Admin(Page):
 class Auth:
     @classmethod
     def login(cls, request):
-        return LoginPage()
+        return render_if_needed(request, LoginPage())
 
     @classmethod
     def logout(cls, request):
@@ -550,7 +553,7 @@ class Auth:
 
     @classmethod
     def change_password(cls, request):
-        return ChangePasswordPage()
+        return render_if_needed(request, ChangePasswordPage())
 
     @classmethod
     def urls(cls):
