@@ -23,7 +23,7 @@ class IommiBase {
         );
 
         const SELF = this;
-        this.initAjaxPagination();
+        this.initAjaxPaginationAndSorting();
         document.querySelectorAll('.iommi_filter').forEach(
             form => SELF.enhanceFilterForm(form)
         );
@@ -376,11 +376,11 @@ class IommiBase {
         });
     }
 
-    initAjaxPagination() {
+    initAjaxPaginationAndSorting() {
         const SELF = this;
         IommiBase.addLiveEventListener(
             'click',
-            '.iommi-table-container .iommi_page_link',
+            '.iommi-table-container .iommi_page_link, .iommi-table-container table[data-iommi-id]>thead>tr>th>a',
             function (event) {
                 const container = this.closest('.iommi-table-container');
                 const href = this.getAttribute('href');
