@@ -1,4 +1,5 @@
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # These overly specific paths are for jinja2
@@ -47,7 +48,6 @@ DATABASES = {
 }
 
 USE_TZ = False
-
 
 IOMMI_DEFAULT_STYLE = 'test'
 

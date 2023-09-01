@@ -42,7 +42,7 @@ test-all:
 	tox --skip-missing-interpreters
 
 test:
-	pytest
+	python -m pytest
 
 coverage:
 	tox -e coverage
