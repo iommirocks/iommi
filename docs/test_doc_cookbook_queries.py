@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
