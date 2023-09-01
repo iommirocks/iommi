@@ -63,7 +63,7 @@ def test_how_do_i_control_what_q_is_produced():
         class Meta:
             auto__model = Album
 
-            query__form__fields__eighties = iommi.Field.boolean(
+            query__form__fields__eighties = Field.boolean(
                 display_name=_("the '80s"),
             )
 
