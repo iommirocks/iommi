@@ -733,7 +733,7 @@ def test_non_rendered(artist):
 def test_grouped_fields():
     # language=rst
     """
-    How to I group fields?
+    How do I group fields?
     ~~~~~~~~~~~~~~~~~~~~~~
 
     Use the `group` field:
@@ -802,6 +802,46 @@ def test_nested_forms(small_discography):
     form = MyNestedForm().bind(request=req('get'))
 
     assert list(form.nested_forms.keys()) == ['edit_dio', 'create_artist', 'create_album']
+
+    show_output(form)
+    # @end
+
+
+def test_fields_template(album):
+    # language=rst
+    """
+    .. _Form.fields_template:
+
+    How do I use templates for fields?
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Sometimes field groups just aren't enough and you may want to use a template to make your forms pretty:
+    """
+
+    class CommentForm(Form):
+        class Meta:
+            fields_template = Template('''
+            {{ fields.album.input }}
+            <div class="row">
+                <div class="col">
+                    {{ fields.name }}
+                </div>
+                <div class="col">
+                    {{ fields.email }}
+                </div>
+            </div>
+            {{ fields.comment }}
+            ''')
+
+        name = Field()
+        email = Field()
+        comment = Field.textarea()
+        album = Field.hidden(initial=album)
+
+    # @test
+    form = CommentForm().bind(request=req('get'))
+
+    assert list(form.fields.keys()) == ['name', 'email', 'comment', 'album']
 
     show_output(form)
     # @end
