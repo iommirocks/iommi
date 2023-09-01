@@ -463,12 +463,13 @@ class IommiSelect2 {
                 url: function () {
                     let form = this.closest('form');
 
-                    // Url with query string can be usually ~4kB.
+                    // Url with query string can usually be max 4kB.
                     // If you have big forms, then your select2's can stop working, so you have to
-                    // turn off sending form data to the server with form.attrs={'data-select2-full-state': ''}
+                    // turn off sending form data to the server with:
+                    // form.attrs={'data-select2-full-state': ''}
                     let fullState = form.attr('data-select2-full-state');
-                    // but if you need some values for some field.choicesyou can  specify the names of fields
-                    // that need to be sent to the server with
+                    // but if you need some values for some field.choices, you can specify the names of the fields,
+                    // that you need to be sent to the server, with:
                     // field.input__attrs={'data-select2-partial-state': json.dumps(['artist', 'year'])}
                     let partialState = f.data('select2-partial-state');
                     if (fullState === undefined) {
