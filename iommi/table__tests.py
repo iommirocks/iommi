@@ -863,6 +863,7 @@ def test_django_table_pagination():
         """,
     )
 
+
 @pytest.mark.django_db
 def test_page_size():
     for x in range(10):
@@ -878,6 +879,7 @@ def test_page_size():
     verify_table_html(
         table=TestTable(),
         find__name='tbody',
+        # language=html
         expected_html="""
             <tbody>
                 <tr data-pk="1"> <td> 0 </td> </tr>
@@ -891,6 +893,7 @@ def test_page_size():
         table=TestTable(),
         query=dict(page_size=2),
         find__name='tbody',
+        # language=html
         expected_html="""
             <tbody>
                 <tr data-pk="1"> <td> 0 </td> </tr>
@@ -903,6 +906,7 @@ def test_page_size():
         table=TestTable(),
         query=dict(page_size='string'),
         find__name='tbody',
+        # language=html
         expected_html="""
             <tbody>
                 <tr data-pk="1"> <td> 0 </td> </tr>
@@ -911,6 +915,7 @@ def test_page_size():
             </tbody>
         """,
     )
+
 
 @pytest.mark.django_db
 def test_bulk_edit_table():
