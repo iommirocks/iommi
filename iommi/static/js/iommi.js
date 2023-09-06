@@ -23,7 +23,7 @@ class IommiBase {
         );
 
         const SELF = this;
-        this.initAjaxPagination();
+        this.initAjaxPaginationAndSorting();
         document.querySelectorAll('.iommi_filter').forEach(
             form => SELF.enhanceFilterForm(form)
         );
@@ -80,7 +80,7 @@ class IommiBase {
         if(response.body) {
             return await response.json();
         }
-        return {}
+        return {};
     }
 
     isAjaxAbort(err) {
@@ -321,7 +321,10 @@ class IommiBase {
         // reset event is being called just before the values get reset
         // timeout is probably the only way to run onChange after values get reset
         form.addEventListener('reset', (event) => {
-            setTimeout(() => {onChange(event);}, 1);
+            setTimeout(() => {
+                $('.select2-hidden-accessible', form).val('');  // select2 does not react to reset
+                onChange(event);
+            }, 1);
         });
 
         const elements = form.parentNode.getElementsByClassName(
@@ -373,14 +376,14 @@ class IommiBase {
         });
     }
 
-    initAjaxPagination() {
+    initAjaxPaginationAndSorting() {
         const SELF = this;
         IommiBase.addLiveEventListener(
             'click',
-            '.iommi-table-container .iommi_page_link',
+            '.iommi-table-container .iommi_page_link, .iommi-table-container table[data-iommi-id]>thead>tr>th>a',
             function (event) {
                 const container = this.closest('.iommi-table-container');
-                const href = this.getAttribute('href')
+                const href = this.getAttribute('href');
                 let hrefSearchParams;
                 try {
                     hrefSearchParams = new URL(href).searchParams;
@@ -429,21 +432,24 @@ class IommiSelect2 {
         this.initAll();
     }
 
-    initAll(parent) {
+    initAll(parent, selector, extra_options) {
         const SELF = this;
         if(!parent) {
             parent = document;
         }
-        $('.select2_enhance', parent).each(function (_, x) {
-            SELF.initOne(x);
+        if(!selector) {
+            selector = '.select2_enhance';
+        }
+        $(selector, parent).each(function (_, x) {
+            SELF.initOne(x, extra_options);
         });
         // Second time is a workaround because the table might resize on select2-ification
-        $('.select2_enhance', parent).each(function (_, x) {
-            SELF.initOne(x);
+        $(selector, parent).each(function (_, x) {
+            SELF.initOne(x, extra_options);
         });
     }
 
-    initOne(elem) {
+    initOne(elem, extra_options) {
         let f = $(elem);
         let endpointPath = f.attr('data-choices-endpoint');
         let multiple = f.attr('multiple') !== undefined;
@@ -457,14 +463,23 @@ class IommiSelect2 {
                 url: function () {
                     let form = this.closest('form');
 
+                    // Url with query string can usually be max 4kB.
+                    // If you have big forms, then your select2's can stop working, so you have to
+                    // turn off sending form data to the server with:
+                    // form.attrs={'data-select2-full-state': ''}
                     let fullState = form.attr('data-select2-full-state');
+                    // but if you need some values for some field.choices, you can specify the names of the fields,
+                    // that you need to be sent to the server, with:
+                    // field.input__attrs={'data-select2-partial-state': json.dumps(['artist', 'year'])}
+                    let partialState = f.data('select2-partial-state');
                     if (fullState === undefined) {
                         fullState = 'true';
                     }
-                    if (fullState === 'true') {
+                    if(partialState) {
+                        return '?' + $(partialState.map(function(value) {return `[name="${value}"]`}).join(', '), form).serialize();
+                    } else if (fullState === 'true') {
                         return '?' + form.serialize();
-                    }
-                    else {
+                    } else {
                         return '';
                     }
                 },
@@ -478,6 +493,9 @@ class IommiSelect2 {
                     return result;
                 }
             }
+        }
+        if(extra_options) {
+            $.extend(options, extra_options);
         }
         f.select2(options);
         f.on('change', function (e) {
