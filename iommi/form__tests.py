@@ -770,7 +770,7 @@ def test_integer_field():
 def test_float_field():
     assert Form(fields__foo=Field.float()).bind(request=req('get', foo=' 7.3  ')).fields.foo.parsed_data == 7.3
     assert Form(fields__foo=Field.float()).bind(request=req('get', foo=' foo  ')).fields.foo._errors == {
-        "could not convert string to float: foo"
+        "Could not convert string to float: foo"
     }
 
 
@@ -1438,7 +1438,7 @@ def test_form_from_model_invalid_form():
     ]
 
     assert len(actual_errors) == 4
-    assert {'could not convert string to float: true'} in actual_errors
+    assert {'Could not convert string to float: true'} in actual_errors
     assert {u'asd is not a valid boolean value'} in actual_errors
     assert {"invalid literal for int() with base 10: '1.1'"} in actual_errors or {
         "invalid literal for int() with base 10: u'1.1'"
