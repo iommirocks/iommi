@@ -1243,6 +1243,8 @@ class Field(Part, Tag):
         input__attrs__type='file',
         raw_data=file__raw_data,
         write_to_instance=file_write_to_instance,
+        # Prevent double save. See https://github.com/iommirocks/iommi/issues/419
+        extra__django_related_field=True,
     )
     def file(cls, **kwargs):
         return cls(**kwargs)
