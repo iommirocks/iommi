@@ -15,7 +15,10 @@ from django.db.models import (
     Q,
     QuerySet,
 )
-from django.utils.translation import gettext
+from django.utils.translation import (
+    gettext,
+    pgettext,
+)
 from pyparsing import (
     alphanums,
     alphas,
@@ -776,7 +779,7 @@ class Query(Part):
                     attrs__method='get',
                     actions__submit=dict(
                         attrs={'data-iommi-filter-button': ''},
-                        display_name=gettext('Filter'),
+                        display_name=pgettext(context='verb', message='Filter'),
                     ),
                 )
             )
