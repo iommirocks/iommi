@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-20 12:49+0100\n"
+"POT-Creation-Date: 2023-09-06 09:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,72 +18,80 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: examples/form_examples.py:42
+#: examples/form_examples.py:43
 msgid "Use much like a django form"
 msgstr ""
 
-#: examples/form_examples.py:74
+#: examples/form_examples.py:75
 msgid "Use more ideomatic like an iommi part"
 msgstr ""
 
-#: examples/form_examples.py:92
+#: examples/form_examples.py:93
 msgid "Endpoints using ajax need no extra url entry"
 msgstr ""
 
-#: examples/form_examples.py:100
+#: examples/form_examples.py:101
 msgid "Create forms from database models"
 msgstr ""
 
-#: examples/form_examples.py:105
+#: examples/form_examples.py:106
 msgid "Create edit forms from database models"
 msgstr ""
 
-#: examples/form_examples.py:110
+#: examples/form_examples.py:114
 msgid "Custom actions can be added to forms"
 msgstr ""
 
-#: examples/form_examples.py:125
+#: examples/form_examples.py:129
 msgid "Multiple forms can be composed in a page"
 msgstr ""
 
-#: examples/form_examples.py:205 examples/form_examples.py:216
+#: examples/form_examples.py:178
+msgid "Custom validation for all fields in a form"
+msgstr ""
+
+#: examples/form_examples.py:209 examples/form_examples.py:220
 msgid "Error messages"
 msgstr ""
 
-#: examples/form_examples.py:208
+#: examples/form_examples.py:212
 msgid "Global error message 1"
 msgstr ""
 
-#: examples/form_examples.py:209
+#: examples/form_examples.py:213
 msgid "Global error message 2"
 msgstr ""
 
-#: examples/form_examples.py:212
+#: examples/form_examples.py:216
 msgid "Field error message 1"
 msgstr ""
 
-#: examples/form_examples.py:213
+#: examples/form_examples.py:217
 msgid "Field error message 2"
 msgstr ""
 
-#: examples/form_examples.py:223
+#: examples/form_examples.py:227
 msgid "Form children do not need to be all fields"
 msgstr ""
 
-#: examples/form_examples.py:256
+#: examples/form_examples.py:260
 msgid "Form children do not need to be all fields -- declarative"
 msgstr ""
 
-#: examples/form_examples.py:292
+#: examples/form_examples.py:296
 msgid "Nested forms -- to abstract out behaviour and create complex 'fields'."
 msgstr ""
 
-#: examples/form_examples.py:332
+#: examples/form_examples.py:336
 msgid "File upload"
 msgstr ""
 
-#: examples/form_examples.py:346
+#: examples/form_examples.py:350
 msgid "Field groups"
+msgstr ""
+
+#: examples/form_examples.py:363
+msgid "Dependent choices"
 msgstr ""
 
 #: examples/menu_examples.py:20
@@ -146,62 +154,70 @@ msgstr ""
 msgid "Busy page with different components"
 msgstr ""
 
-#: examples/supernaut.py:29
+#: examples/supernaut.py:36
 msgid "Home"
 msgstr ""
 
-#: examples/supernaut.py:30
+#: examples/supernaut.py:37
 msgid "Artists"
 msgstr ""
 
-#: examples/supernaut.py:31
+#: examples/supernaut.py:38
 msgid "Albums"
 msgstr ""
 
-#: examples/supernaut.py:32
+#: examples/supernaut.py:39
 msgid "Tracks"
 msgstr ""
 
-#: examples/supernaut.py:62
+#: examples/supernaut.py:69
 msgid "Create album"
 msgstr ""
 
-#: examples/supernaut.py:78
+#: examples/supernaut.py:85
 msgid "Supernaut"
 msgstr ""
 
-#: examples/supernaut.py:79
+#: examples/supernaut.py:86
 msgid "This is a discography of the best acts in music!"
 msgstr ""
 
-#: examples/table_examples.py:32
+#: examples/table_examples.py:35
 msgid "Readme example 1"
 msgstr ""
 
-#: examples/table_examples.py:57
+#: examples/table_examples.py:60
 msgid "Readme example 2"
 msgstr ""
 
-#: examples/table_examples.py:73
+#: examples/table_examples.py:76
 msgid "Auto from model example 1"
 msgstr ""
 
-#: examples/table_examples.py:80
+#: examples/table_examples.py:83
 msgid "Auto from model example 2"
 msgstr ""
 
-#: examples/table_examples.py:88
+#: examples/table_examples.py:91
 msgid "Kitchen sink example"
 msgstr ""
 
-#: examples/table_examples.py:144
+#: examples/table_examples.py:149
 msgid "Two tables on the same page"
 msgstr ""
 
-#: examples/table_examples.py:161
+#: examples/table_examples.py:166
 msgid "post handlers on lists"
 msgstr ""
 
-#: examples/table_examples.py:199
+#: examples/table_examples.py:204
 msgid "You can have extra fields in your form that the query will ignore"
+msgstr ""
+
+#: examples/table_examples.py:216
+msgid "Tables know how to render as CSV files"
+msgstr ""
+
+#: examples/table_examples.py:249
+msgid "EditTable example"
 msgstr ""

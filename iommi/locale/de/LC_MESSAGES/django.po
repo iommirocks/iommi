@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-20 12:49+0100\n"
+"POT-Creation-Date: 2023-09-06 09:50+0200\n"
 "PO-Revision-Date: 2021-10-07 17:36+0000\n"
 "Last-Translator: Waldemar Hamm <wh@ravok.de>\n"
 "Language-Team: German <https://weblate.ravok.de/projects/iommi/iommi/de/>\n"
@@ -18,147 +18,170 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.8.1\n"
 
-#: action.py:143
+#: action.py:164
 msgid "Submit"
 msgstr "Absenden"
 
-#: admin.py:171
+#: admin.py:143
 msgid "iommi administration"
 msgstr "iommi Verwaltung"
 
-#: admin.py:174 admin.py:489
+#: admin.py:147 admin.py:627
 msgid "Change password"
 msgstr "Passwort ändern"
 
-#: admin.py:176
+#: admin.py:151
 msgid "Logout"
 msgstr "Abmelden"
 
-#: admin.py:267
+#: admin.py:351
 msgid "All models"
 msgstr "Alle Modelle"
 
-#: admin.py:313
+#: admin.py:403
+msgid "Add models to admin"
+msgstr ""
+
+#: admin.py:447
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "%(model_name)s anlegen"
 
-#: admin.py:432
+#: admin.py:570
 msgid "Username"
 msgstr "Benutzername"
 
-#: admin.py:433
+#: admin.py:571
 msgid "Password"
 msgstr "Passwort"
 
-#: admin.py:436
+#: admin.py:574
 msgid "Login"
 msgstr "Anmelden"
 
-#: admin.py:451
+#: admin.py:589
 msgid "Unknown username or password"
 msgstr "Unbekannter Benutzername oder ungültiges Passwort"
 
-#: admin.py:467
+#: admin.py:605
 msgid "Incorrect password"
 msgstr "Passwort ungültig"
 
-#: admin.py:483
+#: admin.py:621
 msgid "New passwords does not match"
 msgstr "Neue Passwörter sind nicht identisch"
 
-#: admin.py:499
+#: admin.py:637
 msgid "Current password"
 msgstr "Aktuelles Passwort"
 
-#: admin.py:500
+#: admin.py:638
 msgid "New password"
 msgstr "Neues Passwort"
 
-#: admin.py:501
+#: admin.py:639
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: experimental/edit_table.py:134 style_base.py:129 table.py:523
+#: edit_table.py:145 style_base.py:87 table.py:582
 msgid "Delete"
 msgstr "Löschen"
 
-#: experimental/edit_table.py:239 form.py:1422 style_base.py:127
+#: edit_table.py:282 form.py:1607 style_base.py:85
 msgid "Save"
 msgstr "Speichern"
 
-#: form.py:798
+#: edit_table.py:294
+msgid "Add row"
+msgstr ""
+
+#: form.py:896
 msgid "This field is required"
 msgstr "Dieses Feld ist erforderlich"
 
-#: form.py:1059 table.py:241
+#: form.py:1136 table.py:247
 msgid "Yes"
 msgstr "Ja"
 
-#: form.py:1059 table.py:243
+#: form.py:1136 table.py:249
 msgid "No"
 msgstr "Nein"
 
-#: form.py:1272
+#: form.py:1396
+#, fuzzy, python-format
+#| msgid "Create %(model_name)s"
+msgid "Cannot delete %(name)s"
+msgstr "%(model_name)s anlegen"
+
+#: form.py:1442
 msgid "create"
 msgstr "anlegen"
 
-#: form.py:1273
+#: form.py:1443
 msgid "edit"
 msgstr "bearbeiten"
 
-#: form.py:1274
+#: form.py:1444
 msgid "delete"
 msgstr "löschen"
 
-#: form.py:1416
+#: form.py:1599
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(model_name)s %(crud_type)s"
 
-#: query.py:574 templates/iommi/query/form_toggle_script.html:26
+#: form.py:1987
+#, fuzzy, python-format
+#| msgid "Are you sure you want to delete these {} items?"
+msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
+msgstr "Bist Du sicher, dass du diese {} Zeilen löschen willst?"
+
+#: query.py:601 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion wechseln"
 
-#: query.py:698
+#: query.py:732
 msgid "Search"
 msgstr "Suche"
 
-#: query.py:737
+#: query.py:782
+#, fuzzy
+#| msgid "Filter"
+msgctxt "verb"
 msgid "Filter"
 msgstr "Filtere"
 
-#: style_base.py:128
+#: style_base.py:86
 #, fuzzy
 #| msgid "create"
 msgid "Create"
 msgstr "anlegen"
 
-#: table.py:511
+#: table.py:559
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: table.py:536
+#: table.py:607
 msgid "Download"
 msgstr "Herunterladen"
 
-#: table.py:548
+#: table.py:631
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1131
+#: table.py:1319
 msgid "Are you sure you want to delete these {} items?"
 msgstr "Bist Du sicher, dass du diese {} Zeilen löschen willst?"
 
-#: table.py:1146
+#: table.py:1334
 msgid "Yes, delete all!"
 msgstr "Ja, lösche alles!"
 
-#: table.py:1541 table.py:1738
+#: table.py:1760 table.py:1972
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1744
+#: table.py:1978
 msgid "Bulk delete"
 msgstr "Massenlöschung"
 
@@ -221,8 +244,8 @@ msgid ""
 "You can filter for relative dates: <code>field_name < \"10 days ago\"</"
 "code>. Supported fields are <code>days</code>, <code>months</code>, "
 "<code>years</code>, <code>quarters</code> and <code>weekdays</code>. They "
-"can be negative and abbreviated from <code>\"10 days ago\"</code> to <code>"
-"\"-10d\"</code>."
+"can be negative and abbreviated from <code>\"10 days ago\"</code> to "
+"<code>\"-10d\"</code>."
 msgstr ""
 "Du kannst nach Zeitpunkten relativ zum heutigen Tag suchen: <code>feld_name "
 "< \"10 days ago\"</code>. Unterstützte Zeitspannen sind Tage (<code>days</"

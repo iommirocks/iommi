@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-08 10:40+0000\n"
+"POT-Creation-Date: 2023-09-06 09:50+0200\n"
 "PO-Revision-Date: 2023-04-08 13:50+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -21,188 +21,191 @@ msgstr ""
 "(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 "X-Generator: Poedit 3.1.1\n"
 
-#: iommi/action.py:164
+#: action.py:164
 msgid "Submit"
 msgstr "Надіслати"
 
-#: iommi/admin.py:141
+#: admin.py:143
 msgid "iommi administration"
 msgstr "адміністрування iommi"
 
-#: iommi/admin.py:144 iommi/admin.py:617
+#: admin.py:147 admin.py:627
 msgid "Change password"
 msgstr "Змінити пароль"
 
-#: iommi/admin.py:146
+#: admin.py:151
 msgid "Logout"
 msgstr "Вийти"
 
-#: iommi/admin.py:341
+#: admin.py:351
 msgid "All models"
 msgstr "Усі моделі"
 
-#: iommi/admin.py:393
+#: admin.py:403
 msgid "Add models to admin"
 msgstr "Додати моделі до адміністрування"
 
-#: iommi/admin.py:437
+#: admin.py:447
 #, python-format
 msgid "Create %(model_name)s"
 msgstr "Створити %(model_name)s"
 
-#: iommi/admin.py:560
+#: admin.py:570
 msgid "Username"
 msgstr "Ім'я користувача"
 
-#: iommi/admin.py:561
+#: admin.py:571
 msgid "Password"
 msgstr "Пароль"
 
-#: iommi/admin.py:564
+#: admin.py:574
 msgid "Login"
 msgstr "Увійти"
 
-#: iommi/admin.py:579
+#: admin.py:589
 msgid "Unknown username or password"
 msgstr "Неправильне ім'я користувача або пароль"
 
-#: iommi/admin.py:595
+#: admin.py:605
 msgid "Incorrect password"
 msgstr "Неправильний пароль"
 
-#: iommi/admin.py:611
+#: admin.py:621
 msgid "New passwords does not match"
 msgstr "Нові паролі не збігаються"
 
-#: iommi/admin.py:627
+#: admin.py:637
 msgid "Current password"
 msgstr "Поточний пароль"
 
-#: iommi/admin.py:628
+#: admin.py:638
 msgid "New password"
 msgstr "Новий пароль"
 
-#: iommi/admin.py:629
+#: admin.py:639
 msgid "Confirm password"
 msgstr "Підтвердити пароль"
 
-#: iommi/edit_table.py:146 iommi/style_base.py:71 iommi/table.py:574
+#: edit_table.py:145 style_base.py:87 table.py:582
 msgid "Delete"
 msgstr "Вилучити"
 
-#: iommi/edit_table.py:281 iommi/form.py:1586 iommi/style_base.py:69
+#: edit_table.py:282 form.py:1607 style_base.py:85
 msgid "Save"
 msgstr "Зберегти"
 
-#: iommi/edit_table.py:293
+#: edit_table.py:294
 msgid "Add row"
 msgstr "Додати рядок"
 
-#: iommi/form.py:894
+#: form.py:896
 msgid "This field is required"
 msgstr "Це поле обов'язкове"
 
-#: iommi/form.py:1133 iommi/table.py:246
+#: form.py:1136 table.py:247
 msgid "Yes"
 msgstr "Так"
 
-#: iommi/form.py:1133 iommi/table.py:248
+#: form.py:1136 table.py:249
 msgid "No"
 msgstr "Ні"
 
-#: iommi/form.py:1377
+#: form.py:1396
 #, python-format
 msgid "Cannot delete %(name)s"
 msgstr "Неможливо вилучити %(name)s"
 
-#: iommi/form.py:1423
+#: form.py:1442
 msgid "create"
 msgstr "створити"
 
-#: iommi/form.py:1424
+#: form.py:1443
 msgid "edit"
 msgstr "редагувати"
 
-#: iommi/form.py:1425
+#: form.py:1444
 msgid "delete"
 msgstr "вилучити"
 
-#: iommi/form.py:1578
+#: form.py:1599
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: iommi/form.py:1941
+#: form.py:1987
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Ви справді хочете вилучити %(model_name)s \"%(instance)s\"?"
 
-#: iommi/query.py:598 iommi/templates/iommi/query/form_toggle_script.html:26
+#: query.py:601 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Розширений пошук"
 
-#: iommi/query.py:729
+#: query.py:732
 msgid "Search"
 msgstr "Пошук"
 
-#: iommi/query.py:780
+#: query.py:782
+#, fuzzy
+#| msgid "Filter"
+msgctxt "verb"
 msgid "Filter"
 msgstr "Фільтр"
 
-#: iommi/style_base.py:70
+#: style_base.py:86
 msgid "Create"
 msgstr "Створити"
 
-#: iommi/table.py:551
+#: table.py:559
 msgid "Edit"
 msgstr "Редагувати"
 
-#: iommi/table.py:599
+#: table.py:607
 msgid "Download"
 msgstr "Завантажити"
 
-#: iommi/table.py:623
+#: table.py:631
 msgid "Run"
 msgstr "Виконати"
 
-#: iommi/table.py:1328
+#: table.py:1319
 msgid "Are you sure you want to delete these {} items?"
 msgstr "Ви справді хочете вилучити ці {} елементів?"
 
-#: iommi/table.py:1343
+#: table.py:1334
 msgid "Yes, delete all!"
 msgstr "Так, вилучити усі!"
 
-#: iommi/table.py:1759 iommi/table.py:1971
+#: table.py:1760 table.py:1972
 msgid "Bulk change"
 msgstr "Масово змінити"
 
-#: iommi/table.py:1977
+#: table.py:1978
 msgid "Bulk delete"
 msgstr "Масово вилучити"
 
-#: iommi/templates/iommi/query/advanced.html:5
+#: templates/iommi/query/advanced.html:5
 msgid "Search query"
 msgstr "Пошуковий запит"
 
-#: iommi/templates/iommi/query/advanced.html:9
-#: iommi/templates/iommi/query/form_toggle_script.html:48
+#: templates/iommi/query/advanced.html:9
+#: templates/iommi/query/form_toggle_script.html:48
 msgid "Show help"
 msgstr "Показати довідку"
 
-#: iommi/templates/iommi/query/advanced.html:14
+#: templates/iommi/query/advanced.html:14
 msgid "Available fields"
 msgstr "Доступні поля"
 
-#: iommi/templates/iommi/query/advanced.html:22
+#: templates/iommi/query/advanced.html:22
 msgid "Queries"
 msgstr "Запити"
 
-#: iommi/templates/iommi/query/advanced.html:24
+#: templates/iommi/query/advanced.html:24
 msgid "Search for an exact value: <code>field_name=value</code>"
 msgstr "Шукати точне значення: <code>назва_поля=значення</code>"
 
-#: iommi/templates/iommi/query/advanced.html:25
+#: templates/iommi/query/advanced.html:25
 msgid ""
 "Search for an exact value containing space: <code>field_name=\"value with "
 "space\"</code>"
@@ -210,15 +213,15 @@ msgstr ""
 "Шукати точне значення, що містить пропукс: <code>назва_поля=\"значення з "
 "пропуском\"</code>"
 
-#: iommi/templates/iommi/query/advanced.html:26
+#: templates/iommi/query/advanced.html:26
 msgid "Containing a text: <code>field_name:val</code>"
 msgstr "Містить текст: <code>назва_поля:значення</code>"
 
-#: iommi/templates/iommi/query/advanced.html:27
+#: templates/iommi/query/advanced.html:27
 msgid "Exclude a value: <code>field_name!=value</code>"
 msgstr "Виключити значення: <code>назва_поля!=значення</code>"
 
-#: iommi/templates/iommi/query/advanced.html:28
+#: templates/iommi/query/advanced.html:28
 msgid ""
 "You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
 "and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
@@ -228,31 +231,31 @@ msgstr ""
 "code> і <code>&gt;=</code>, щоб знаходити діапазони значень: "
 "<code>назва_поля&lt;10</code>"
 
-#: iommi/templates/iommi/query/advanced.html:29
+#: templates/iommi/query/advanced.html:29
 msgid ""
 "To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
 msgstr ""
-"Аби шукати дати, використовуйте формат ISO8601: "
-"<code>назва_поля>1969-07-20</code>"
+"Аби шукати дати, використовуйте формат ISO8601: <code>назва_поля>1969-07-20</"
+"code>"
 
-#: iommi/templates/iommi/query/advanced.html:30
+#: templates/iommi/query/advanced.html:30
 msgid ""
 "You can filter for relative dates: <code>field_name < \"10 days ago\"</"
 "code>. Supported fields are <code>days</code>, <code>months</code>, "
 "<code>years</code>, <code>quarters</code> and <code>weekdays</code>. They "
-"can be negative and abbreviated from <code>\"10 days ago\"</code> to <code>"
-"\"-10d\"</code>."
+"can be negative and abbreviated from <code>\"10 days ago\"</code> to "
+"<code>\"-10d\"</code>."
 msgstr ""
 "Можна шукати відносні дати: <code>назва_поля < \"10 days ago\"</code>. "
-"Підтримуються значення <code>days</code>(дні), <code>months</code> "
-"(місяці), <code>years</code> (роки), <code>quarters</code> (квартали) and "
-"<code>weekdays</code> (будні). Вони також можуть бути від'ємними: <code>"
-"\"10 days ago\"</code> і скорочуватися як <code>\"-10d\"</code>."
+"Підтримуються значення <code>days</code>(дні), <code>months</code> (місяці), "
+"<code>years</code> (роки), <code>quarters</code> (квартали) and "
+"<code>weekdays</code> (будні). Вони також можуть бути від'ємними: <code>\"10 "
+"days ago\"</code> і скорочуватися як <code>\"-10d\"</code>."
 
-#: iommi/templates/iommi/query/form_toggle_script.html:17
+#: templates/iommi/query/form_toggle_script.html:17
 msgid "Switch to basic search"
 msgstr "Базовий пошук"
 
-#: iommi/templates/iommi/query/form_toggle_script.html:42
+#: templates/iommi/query/form_toggle_script.html:42
 msgid "Hide help"
 msgstr "Приховати довідку"
