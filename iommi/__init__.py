@@ -3,6 +3,7 @@ __version__ = '6.1.1'
 from functools import wraps
 
 import django
+from django.core.exceptions import ImproperlyConfigured
 
 from iommi._db_compat import (
     register_factory,
@@ -136,3 +137,12 @@ __all__ = [
 
 if django.VERSION[:2] < (3, 2):
     default_app_config = 'iommi.apps.IommiConfig'
+
+
+try:
+    from django.conf import settings
+except ImproperlyConfigured:
+    pass
+else:
+    if 'iommi' not in settings.INSTALLED_APPS:
+        raise Exception("You must add 'iommi' to INSTALLED_APPS")
