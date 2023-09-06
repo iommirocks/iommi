@@ -808,6 +808,7 @@ def test_nested_forms(small_discography):
 
 
 def test_fields_template(album):
+    heaven_and_hell = album
     # language=rst
     """
     .. _Form.fields_template:
@@ -820,23 +821,24 @@ def test_fields_template(album):
 
     class CommentForm(Form):
         class Meta:
+            # language=html
             fields_template = Template('''
-            {{ fields.album.input }}
-            <div class="row">
-                <div class="col">
-                    {{ fields.name }}
+                {{ fields.album.input }}
+                <div class="row">
+                    <div class="col">
+                        {{ fields.name }}
+                    </div>
+                    <div class="col">
+                        {{ fields.email }}
+                    </div>
                 </div>
-                <div class="col">
-                    {{ fields.email }}
-                </div>
-            </div>
-            {{ fields.comment }}
+                {{ fields.comment }}
             ''')
 
         name = Field()
         email = Field()
         comment = Field.textarea()
-        album = Field.hidden(initial=album)
+        album = Field.hardcoded(initial=heaven_and_hell)
 
     # @test
     form = CommentForm().bind(request=req('get'))
