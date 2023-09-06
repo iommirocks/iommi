@@ -1,6 +1,9 @@
 from docs.models import *
 from iommi import *
-from tests.helpers import req
+from tests.helpers import (
+    req,
+    show_output,
+)
 
 request = req('get')
 
@@ -58,3 +61,21 @@ def test_how_do_i_control_what_q_is_produced():
     `Q` object. The default handles `__`, different operators, negation
     and special handling of when the user searches for `null`.
     """
+
+    class AlbumTable(Table):
+        class Meta:
+            auto__model = Album
+
+            query__form__fields__eighties = Field.boolean(
+                display_name="the '80s",
+            )
+
+            @staticmethod
+            def query__filters__eighties__value_to_q(value_string_or_f, **_):
+                if value_string_or_f == "1":
+                    return Q(year__gte=1980) & Q(year__lte=1989)
+                return Q()
+
+    # @test
+    show_output(AlbumTable())
+    # @end
