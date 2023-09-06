@@ -146,7 +146,7 @@ def bool_parse(string_value, **_):
     elif s in ('0', 'false', 'f', 'no', 'n', 'off'):
         return False
     else:
-        raise ValueError('%s is not a valid boolean value' % string_value)
+        raise ValueError(gettext('{} is not a valid boolean value').format(string_value))
 
 
 def many_to_many_factory_read_from_instance(field, instance, **_):
@@ -279,7 +279,7 @@ def float_parse(string_value: str, **_):
         return float(string_value)
     except ValueError:
         # Acrobatics so we get equal formatting in python 2/3
-        raise ValueError("could not convert string to float: %s" % string_value)
+        raise ValueError(gettext("Could not convert string to float: {}").format(string_value))
 
 
 def int_parse(string_value, **_):
@@ -287,7 +287,7 @@ def int_parse(string_value, **_):
 
 
 def choice_is_valid(field, parsed_data, **_):
-    return parsed_data in field.choices, f'{parsed_data} not in available choices'
+    return parsed_data in field.choices, gettext('{} not in available choices').format(parsed_data)
 
 
 def choice_parse(form, field, string_value, **_):
@@ -302,9 +302,10 @@ def choice_parse(form, field, string_value, **_):
 
 
 def choice_queryset__is_valid(field, parsed_data, **_):
+    value = ", ".join(field.raw_data) if field.is_list else field.raw_data
     return (
         field.choices.filter(pk=parsed_data.pk).exists(),
-        f'{", ".join(field.raw_data) if field.is_list else field.raw_data} not in available choices',
+        gettext('{} not in available choices').format(value),
     )
 
 
@@ -391,7 +392,13 @@ def datetime_parse(string_value, **_):
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
         raise ValidationError(
-            f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"'
+            gettext(
+                'Time data "{string_value}" does not match any of the formats "now", {formats}, '
+                'and is not a relative date like "2d" or "2 weeks ago"'
+            ).format(
+                string_value=string_value,
+                formats=formats,
+            )
         )
     return result
 
@@ -409,13 +416,20 @@ def date_parse(string_value, **_):
         return datetime.strptime(string_value, date_iso_format).date()
     except ValueError as e:
         if 'out of range' in str(e) or 'unconverted data remains' in str(e):
-            extra_information = ' (out of range)'
+            extra_information = f' ({gettext("out of range")})'
 
     result = parse_relative_date(string_value)
     if result is None:
         formats = ', '.join('"%s"' % x for x in datetime_iso_formats)
         raise ValidationError(
-            f'Time data "{string_value}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"{extra_information}'
+            gettext(
+                'Time data "{string_value}" does not match any of the formats "now", {formats}, '
+                'and is not a relative date like "2d" or "2 weeks ago"{extra_information}'
+            ).format(
+                string_value=string_value,
+                formats=formats,
+                extra_information=extra_information,
+            )
         )
     return result
 
@@ -440,7 +454,14 @@ def time_parse(string_value, **_):
         except ValueError:
             pass
     formats = ', '.join('"%s"' % x for x in time_iso_formats)
-    raise ValidationError(f'Time data "{string_value}" does not match any of the formats "now" or {formats}')
+    raise ValidationError(
+        gettext(
+            'Time data "{string_value}" does not match any of the formats "now" or {formats}'
+        ).format(
+            string_value=string_value,
+            formats=formats,
+        )
+    )
 
 
 def time_render_value(value, **_):
@@ -451,7 +472,7 @@ def decimal_parse(string_value, **_):
     try:
         return Decimal(string_value)
     except InvalidOperation:
-        raise ValidationError(f"Invalid literal for Decimal: '{string_value}'")
+        raise ValidationError(gettext("Invalid literal for Decimal: '{string_value}'").format(string_value=string_value))
 
 
 def url_parse(string_value, field=None, **_):
@@ -474,7 +495,7 @@ def email_parse(string_value, field=None, **_):
 def phone_number_is_valid(parsed_data, **_):
     return (
         re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE),
-        'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567',
+        gettext('Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'),
     )
 
 
