@@ -1521,7 +1521,7 @@ class Form(Part):
     """
 
     actions: Namespace = RefinableMembers()
-    actions_template: Union[str, Template] = Refinable()
+    actions_template: Union[str, Template] = EvaluatedRefinable()
     # Only for nested forms: The attribute of the parent forms instance to use as this forms instance (default _name)
     attr: str = EvaluatedRefinable()
     attrs: Attrs = SpecialEvaluatedRefinable()
