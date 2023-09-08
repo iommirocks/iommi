@@ -99,6 +99,9 @@ def verify_html(*, actual_html: str, find=None, expected_html: str = None):
     prettified_actual = reindent(actual_soup.prettify()).strip()
     prettified_expected = reindent(expected_soup.prettify()).strip()
     if prettified_actual != prettified_expected:  # pragma: no cover
+        print("Expected")
+        print(prettified_expected)
+        print("Actual")
         print(prettified_actual)
 
     assert prettified_actual == prettified_expected
