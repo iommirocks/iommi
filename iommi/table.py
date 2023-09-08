@@ -1,5 +1,4 @@
 import csv
-import warnings
 from datetime import (
     date,
     datetime,
@@ -12,7 +11,6 @@ from enum import (
 from functools import total_ordering
 from io import StringIO
 from itertools import groupby
-from math import ceil
 from typing import (
     Any,
     Callable,
@@ -42,6 +40,7 @@ from django.utils.translation import (
     gettext,
     gettext_lazy,
 )
+from math import ceil
 
 from iommi._web_compat import (
     format_html,
@@ -202,7 +201,9 @@ def prepare_headers(table):
                     params[param_path] = new_order
                     column.sort_direction = DESCENDING if is_desc else ASCENDING
                     column.is_sorting = True
-
+            if table.iommi_namespace.parts.page:
+                paginator_parameter_name = table.iommi_namespace.parts.page.iommi_path
+                params.pop(paginator_parameter_name, None)
             column.header.url = "?" + params.urlencode()
         else:
             column.is_sorting = False
@@ -1413,7 +1414,7 @@ class Paginator(Traversable):
         table = self.iommi_evaluate_parameters()['table']
         page_size = None
         if request:
-            page_size_str=request.GET.get(self.iommi_path+'_size')
+            page_size_str = request.GET.get(self.iommi_path + '_size')
             if page_size_str is not None:
                 try:
                     page_size = int(page_size_str)
