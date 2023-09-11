@@ -1,0 +1,241 @@
+msgid ""
+msgstr ""
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-09-11 11:20+0200\n"
+"Last-Translator: Martin Beran <info@berycz.net>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n>=2 && n<=4 ? 1 : 2);\n"
+
+#: action.py:164
+msgid "Submit"
+msgstr "Odeslat"
+
+#: admin.py:143
+msgid "iommi administration"
+msgstr "iommi administrace"
+
+#: admin.py:147 admin.py:627
+msgid "Change password"
+msgstr "Změnit heslo"
+
+#: admin.py:151
+msgid "Logout"
+msgstr "Odhlásit se"
+
+#: admin.py:351
+msgid "All models"
+msgstr "Všechny modely"
+
+#: admin.py:403
+msgid "Add models to admin"
+msgstr "Přidat modely do administrace"
+
+#: admin.py:447
+#, python-format
+msgid "Create %(model_name)s"
+msgstr "Vytvořit %(model_name)s"
+
+#: admin.py:570
+msgid "Username"
+msgstr "Uživatelské jméno"
+
+#: admin.py:571
+msgid "Password"
+msgstr "Heslo"
+
+#: admin.py:574
+msgid "Login"
+msgstr "Přihlášení"
+
+#: admin.py:589
+msgid "Unknown username or password"
+msgstr "Neznámé uživatelské jméno či heslo"
+
+#: admin.py:605
+msgid "Incorrect password"
+msgstr "Nesprávné heslo"
+
+#: admin.py:621
+msgid "New passwords does not match"
+msgstr "Nová hesla se neshodují"
+
+#: admin.py:637
+msgid "Current password"
+msgstr "Současné heslo"
+
+#: admin.py:638
+msgid "New password"
+msgstr "Nové heslo"
+
+#: admin.py:639
+msgid "Confirm password"
+msgstr "Potvrdit heslo"
+
+#: edit_table.py:145 style_base.py:87 table.py:582
+msgid "Delete"
+msgstr "Smazat"
+
+#: edit_table.py:282 form.py:1603 style_base.py:85
+msgid "Save"
+msgstr "Uložit"
+
+#: edit_table.py:294
+msgid "Add row"
+msgstr "Přidat řádek"
+
+#: form.py:896
+msgid "This field is required"
+msgstr "Toto pole je povinné"
+
+#: form.py:1136 table.py:247
+msgid "Yes"
+msgstr "Ano"
+
+#: form.py:1136 table.py:249
+msgid "No"
+msgstr "Ne"
+
+#: form.py:1440
+msgid "create"
+msgstr "vytvořit"
+
+#: form.py:1441
+msgid "edit"
+msgstr "editace"
+
+#: form.py:1442
+msgid "delete"
+msgstr "smazat"
+
+#: form.py:1595
+#, python-format
+msgid "%(crud_type)s %(model_name)s"
+msgstr "%(crud_type)s %(model_name)s"
+
+#: form.py:1962
+#, python-format
+msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
+msgstr "Jste si jisti, že chcete smazat %(model_name)s \"%(instance)s\"?"
+
+#: query.py:598 templates/iommi/query/form_toggle_script.html:26
+msgid "Switch to advanced search"
+msgstr "Přepnout do rozšířeného hledání"
+
+#: query.py:729
+msgid "Search"
+msgstr "Hledané slovo"
+
+#: query.py:779
+msgid "Filter"
+msgstr "Filtrovat"
+
+#: style_base.py:86
+msgid "Create"
+msgstr "Vytvořit"
+
+#: table.py:559
+msgid "Edit"
+msgstr "Editovat"
+
+#: table.py:607
+msgid "Download"
+msgstr "Stáhnout"
+
+#: table.py:631
+msgid "Run"
+msgstr "Spustit"
+
+#: table.py:1319
+msgid "Are you sure you want to delete these {} items?"
+msgstr "Jste si jisti, že chcete smazat těchto {} položek?"
+
+#: table.py:1334
+msgid "Yes, delete all!"
+msgstr "Ano, smazat vše!"
+
+#: table.py:1760 table.py:1972
+msgid "Bulk change"
+msgstr "Hromadné úpravy"
+
+#: table.py:1978
+msgid "Bulk delete"
+msgstr "Hromadné mazání"
+
+#: templates/iommi/query/advanced.html:5
+msgid "Search query"
+msgstr "Hledaný výraz"
+
+#: templates/iommi/query/advanced.html:9
+#: templates/iommi/query/form_toggle_script.html:48
+msgid "Show help"
+msgstr "Zobrazit nápovědu"
+
+#: templates/iommi/query/advanced.html:14
+msgid "Available fields"
+msgstr "Dostupná pole"
+
+#: templates/iommi/query/advanced.html:22
+msgid "Queries"
+msgstr "Příkazy"
+
+#: templates/iommi/query/advanced.html:24
+msgid "Search for an exact value: <code>field_name=value</code>"
+msgstr "Hledání přesné hodnoty: <code>nazev_pole=hodnota</code>"
+
+#: templates/iommi/query/advanced.html:25
+msgid ""
+"Search for an exact value containing space: <code>field_name=\"value with "
+"space\"</code>"
+msgstr ""
+"Hledání přesné hodnoty obsahující mezery: <code>nazev_pole=\"hodnota s "
+"mezerami\"</code>"
+
+#: templates/iommi/query/advanced.html:26
+msgid "Containing a text: <code>field_name:val</code>"
+msgstr "Obsahující text: <code>nazev_pole:hodnota</code>"
+
+#: templates/iommi/query/advanced.html:27
+msgid "Exclude a value: <code>field_name!=value</code>"
+msgstr "Vyřadit hodnotu: <code>nazev_pole!=hodnota</code>"
+
+#: templates/iommi/query/advanced.html:28
+msgid ""
+"You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
+"and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
+"code>"
+msgstr ""
+"Můžete také použít <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
+"a <code>&gt;=</code> pro hledání rozsahů hodnot: <code>nazev_pole&lt;10</"
+"code>"
+
+#: templates/iommi/query/advanced.html:29
+msgid ""
+"To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
+msgstr ""
+"Pro vyhledávání datumů použijte ISO8601 formát: <code>nazev_pole>1969-07-20</"
+"code>"
+
+#: templates/iommi/query/advanced.html:30
+msgid ""
+"You can filter for relative dates: <code>field_name < \"10 days ago\"</"
+"code>. Supported fields are <code>days</code>, <code>months</code>, "
+"<code>years</code>, <code>quarters</code> and <code>weekdays</code>. They "
+"can be negative and abbreviated from <code>\"10 days ago\"</code> to <code>"
+"\"-10d\"</code>."
+msgstr ""
+"Také můžete filtrovat relativní datumy: <code>nazev_pole < \"10 days ago\"</"
+"code>. Podporované termíny jsou <code>days</code>, <code>months</code>, "
+"<code>years</code>, <code>quarters</code> a <code>weekdays</code>. Hodnoty "
+"mohou být záporné a lze je zkrátit z <code>\"10 days ago\"</code> na <code>"
+"\"-10d\"</code>."
+
+#: templates/iommi/query/form_toggle_script.html:17
+msgid "Switch to basic search"
+msgstr "Přepnout do základního hledání"
+
+#: templates/iommi/query/form_toggle_script.html:42
+msgid "Hide help"
+msgstr "Skrýt nápovědu"
