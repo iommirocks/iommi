@@ -116,7 +116,8 @@ base = Style(
             select=dict(
                 header__attrs__title='Select all',
             ),
-        )
+        ),
+        header__attrs__class__iommi_sort_header=lambda header, **_: header.url is not None,
     ),
     Paginator=dict(
         show_always=False,
