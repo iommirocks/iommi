@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db.models import QuerySet
 from django.utils.encoding import force_str
 from django.utils.safestring import SafeText
+from django.utils.functional import keep_lazy_text
 
 NOT_BOUND_MESSAGE = (
     'This object is not bound. You need to call `.bind(request=request)` before you can call this function.'
@@ -55,6 +56,7 @@ def build_as_view_wrapper(target):
     return view_wrapper
 
 
+@keep_lazy_text
 def capitalize(s):
     if isinstance(s, SafeText):
         return SafeText(capitalize('' + s))  # str(s) will give you back SafeText, and then we have infinite recursion

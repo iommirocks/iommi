@@ -1819,7 +1819,7 @@ class Table(Part, Tag):
                 rows = auto_rows
 
             if self.title is MISSING:
-                self.title = f'{model._meta.verbose_name_plural.title()}'
+                self.title = capitalize(model._meta.verbose_name_plural)
         else:
             columns_from_auto = None
 
