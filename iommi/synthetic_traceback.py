@@ -6,6 +6,7 @@ class SyntheticCode:
         self.co_argcount = 0
         self.co_flags = 0
         self.co_varnames = []
+        self.co_positions = lambda: [(None, None, None, None)]
 
 
 class SyntheticFrame:
@@ -24,7 +25,7 @@ class SyntheticTraceback:
         self._line_nums = line_nums
         self.tb_frame = frames[0]
         self.tb_lineno = line_nums[0]
-        self.tb_lasti = -1
+        self.tb_lasti = 0
 
     @property
     def tb_next(self):
