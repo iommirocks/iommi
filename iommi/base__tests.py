@@ -1,10 +1,12 @@
 import pytest
 from django.http import HttpResponse
 from django.template import RequestContext
+from django.utils import translation
 from django.utils.safestring import (
     mark_safe,
     SafeText,
 )
+from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.test import override_settings
 from iommi.struct import Struct
@@ -59,6 +61,15 @@ def test_capitalize_safetext():
     capitalized = capitalize(mark_safe('xFooBarBaz Foo oOOOo'))
     assert str(capitalized) == 'XFooBarBaz Foo oOOOo'
     assert isinstance(capitalized, SafeText)
+
+
+def test_capitalize_lazy():
+    capitalized = capitalize(gettext_lazy('edit'))
+    assert str(capitalized) == 'Edit'
+    translation.activate('sv')
+    assert str(capitalized) == 'Ändra'
+    translation.activate('en')
+    assert str(capitalized) == 'Edit'
 
 
 @pytest.mark.django_db
