@@ -380,7 +380,7 @@ class IommiBase {
         const SELF = this;
         IommiBase.addLiveEventListener(
             'click',
-            '.iommi-table-container .iommi_page_link, .iommi-table-container .iommi_sort_link',
+            '.iommi-table-container .iommi_page_link, .iommi-table-container .iommi_sort_header a',
             function (event) {
                 const container = this.closest('.iommi-table-container');
                 const href = this.getAttribute('href');

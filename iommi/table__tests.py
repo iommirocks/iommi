@@ -137,11 +137,11 @@ def test_render_impl(table_builder):
             <table class="another_class table" data-endpoint="/endpoints/tbody" data-iommi-id="" id="table_id">
                 <thead>
                     <tr>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=foo"> Foo </a>
+                        <th class="first_column iommi_sort_header subheader">
+                            <a href="?order=foo"> Foo </a>
                         </th>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=bar"> Bar </a>
+                        <th class="first_column iommi_sort_header subheader">
+                            <a href="?order=bar"> Bar </a>
                         </th>
                     </tr>
                 </thead>
@@ -244,14 +244,14 @@ def test_django_table():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=foo_a"> Foo a </a>
+                        <th class="first_column iommi_sort_header subheader">
+                            <a href="?order=foo_a"> Foo a </a>
                         </th>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=foo_b"> Foo b </a>
+                        <th class="first_column iommi_sort_header subheader">
+                            <a href="?order=foo_b"> Foo b </a>
                         </th>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=foo"> Foo </a>
+                        <th class="first_column iommi_sort_header subheader">
+                            <a href="?order=foo"> Foo </a>
                         </th>
                     </tr>
                 </thead>
@@ -316,8 +316,8 @@ def test_output():
                         <th class="superheader" colspan="1"> </th>
                     </tr>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=bar"> Bar </a> </th>
                         <th class="first_column subheader"> </th>
                         <th class="subheader"> Edit </th>
                         <th class="first_column subheader"> Delete </th>
@@ -351,8 +351,8 @@ def test_generator():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=bar"> Bar </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -494,7 +494,7 @@ def test_header_url(NoSortTable):
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="/some/url"> Foo </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="/some/url"> Foo </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2360,8 +2360,8 @@ def test_preprocess_row():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=some_non_existent_property"> Some non existent property </a>
+                        <th class="first_column  iommi_sort_header subheader">
+                            <a href="?order=some_non_existent_property"> Some non existent property </a>
                         </th>
                     </tr>
                 </thead>
@@ -2607,8 +2607,8 @@ def test_render_column_attribute():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader">
-                            <a class="iommi_sort_link" href="?order=a"> A </a>
+                        <th class="first_column  iommi_sort_header subheader">
+                            <a href="?order=a"> A </a>
                         </th>
                     </tr>
                 </thead>
@@ -2705,8 +2705,8 @@ def test_data_iommi_path():
                         <th class="superheader" colspan="1" data-iommi-type="ColumnHeader"> foo </th>
                     </tr>
                     <tr>
-                        <th class="first_column subheader" data-iommi-path="columns__a__header" data-iommi-type="ColumnHeader">
-                            <a class="iommi_sort_link" href="?order=a"> A </a>
+                        <th class="first_column iommi_sort_header subheader" data-iommi-path="columns__a__header" data-iommi-type="ColumnHeader">
+                            <a href="?order=a"> A </a>
                         </th>
                     </tr>
                 </thead>
@@ -3023,8 +3023,8 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                 <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                     <thead>
                         <tr>
-                            <th class="first_column subheader">
-                                <a class="iommi_sort_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
+                            <th class="first_column iommi_sort_header subheader">
+                                <a href="?page_size=2&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
                             </th>
                         </tr>
                     </thead>
@@ -3058,8 +3058,8 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                 <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                     <thead>
                         <tr>
-                            <th class="first_column subheader">
-                                <a class="iommi_sort_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
+                            <th class="first_column iommi_sort_header subheader">
+                                <a href="?page_size=2&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
                             </th>
                         </tr>
                     </thead>
@@ -3110,8 +3110,8 @@ def test_sort_list():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="ascending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=-bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-bar"> Bar </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3141,8 +3141,8 @@ def test_sort_list():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="descending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="descending first_column iommi_sort_header sorted subheader"> <a href="?order=bar"> Bar </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3187,8 +3187,8 @@ def test_sort_with_name():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="ascending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=-bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-bar"> Bar </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3230,8 +3230,8 @@ def test_sort_list_with_none_values():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="ascending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=-bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-bar"> Bar </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3275,8 +3275,8 @@ def test_sort_list_bad_parameter():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=bar"> Bar </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=bar"> Bar </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3312,8 +3312,8 @@ def test_sort_django_table():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="ascending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=-a"> A </a> </th>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=b"> B </a> </th>
+                        <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-a"> A </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=b"> B </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3343,8 +3343,8 @@ def test_sort_django_table():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                  <thead>
                      <tr>
-                         <th class="descending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=a"> A </a> </th>
-                         <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=b"> B </a> </th>
+                         <th class="descending first_column iommi_sort_header sorted subheader"> <a href="?order=a"> A </a> </th>
+                         <th class="first_column iommi_sort_header subheader"> <a href="?order=b"> B </a> </th>
                      </tr>
                  </thead>
                  <tbody>
@@ -3390,8 +3390,8 @@ def test_sort_default_desc_no_sort():
         expected_html="""
             <thead>
                 <tr>
-                    <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                    <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=-bar"> Bar </a> </th>
+                    <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                    <th class="first_column iommi_sort_header subheader"> <a href="?order=-bar"> Bar </a> </th>
                 </tr>
             </thead>
         """,
@@ -3411,11 +3411,11 @@ def test_sort_default_desc_other_col_sorted():
         expected_html="""\
             <thead>
                 <tr>
-                    <th class="ascending first_column sorted subheader">
-                        <a class="iommi_sort_link" href="?order=-foo"> Foo </a>
+                    <th class="ascending first_column iommi_sort_header sorted subheader">
+                        <a href="?order=-foo"> Foo </a>
                     </th>
-                    <th class="first_column subheader">
-                        <a class="iommi_sort_link" href="?order=-bar"> Bar </a>
+                    <th class="first_column iommi_sort_header subheader">
+                        <a href="?order=-bar"> Bar </a>
                     </th>
                 </tr>
             </thead>
@@ -3436,8 +3436,8 @@ def test_sort_default_desc_already_sorted():
         expected_html="""
             <thead>
                 <tr>
-                    <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=foo"> Foo </a> </th>
-                    <th class="ascending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=-bar"> Bar </a> </th>
+                    <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                    <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-bar"> Bar </a> </th>
                 </tr>
             </thead>
         """,
@@ -3458,8 +3458,8 @@ def test_sort_django_table_from_model():
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
-                        <th class="ascending first_column sorted subheader"> <a class="iommi_sort_link" href="?order=-a"> A </a> </th>
-                        <th class="first_column subheader"> <a class="iommi_sort_link" href="?order=b"> B </a> </th>
+                        <th class="ascending first_column iommi_sort_header sorted subheader"> <a href="?order=-a"> A </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=b"> B </a> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3945,8 +3945,8 @@ def test_custom_rows():
                     <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                         <thead>
                             <tr>
-                                <th class="ascending first_column sorted subheader">
-                                    <a class="iommi_sort_link" href="?order=-banana"> Banana </a>
+                                <th class="ascending first_column iommi_sort_header sorted subheader">
+                                    <a href="?order=-banana"> Banana </a>
                                 </th>
                             </tr>
                         </thead>
@@ -4108,8 +4108,8 @@ def test_table_tag_wrapper():
                     <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                         <thead>
                             <tr>
-                                <th class="first_column subheader">
-                                    <a class="iommi_sort_link" href="?page_size=2&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
+                                <th class="first_column iommi_sort_header subheader">
+                                    <a href="?page_size=2&amp;query=b%3D%22foo%22&amp;order=a"> A </a>
                                 </th>
                             </tr>
                         </thead>
