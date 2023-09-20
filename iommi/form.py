@@ -384,7 +384,9 @@ datetime_iso_formats = [
 ]
 
 
-def datetime_parse(string_value, traversable=None, **_):
+def datetime_parse(string_value, traversable=None, filter=None, **_):
+    if filter:
+        raise SystemError(filter.extra_evaluated)
     def make_tz_aware_when_needed(value):
         if traversable is not None and evaluate_strict(
                 traversable.extra_evaluated.is_tz_aware,
