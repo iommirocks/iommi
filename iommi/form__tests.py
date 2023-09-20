@@ -2478,7 +2478,7 @@ def test_datetime_render_value():
     assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
 
     form = Form(
-        fields__foo=Field.datetime(initial=datetime(2020, 1, 2, 3, 4, 5), is_tz_aware=False)
+        fields__foo=Field.datetime(initial=datetime(2020, 1, 2, 3, 4, 5), extra__is_tz_aware=False)
     ).bind(request=None)
 
     assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
