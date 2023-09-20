@@ -2471,8 +2471,19 @@ def test_datetime_parse():
 
 @override_settings(TIME_ZONE="Europe/Prague")
 def test_datetime_render_value():
-    dt = timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5))
-    assert datetime_render_value(dt) == '2020-01-02 03:04:05'
+    class MyForm(Form):
+        foo = Field.datetime(initial=timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5)))
+
+    form = MyForm()
+
+    assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
+
+    class MyForm(Form):
+        foo = Field.datetime(initial=datetime(2020, 1, 2, 3, 4, 5), is_tz_aware=False)
+
+    form = MyForm()
+
+    assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
 
 
 @pytest.mark.django_db

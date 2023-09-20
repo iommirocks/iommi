@@ -37,6 +37,7 @@ from django.template import Context
 from django.utils.functional import Promise
 from django.utils.translation import gettext
 from django.utils import timezone
+from django.conf import settings
 
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.struct import Struct
@@ -383,10 +384,15 @@ datetime_iso_formats = [
 ]
 
 
-def datetime_parse(string_value, **_):
+def datetime_parse(string_value, field=None, filter=None, **_):
+    def make_aware_when_needed(value):
+        if (field and field.is_tz_aware) or (filter and filter.field.is_tz_aware):
+            return timezone.make_aware(value)
+        return value
+
     for iso_format in datetime_iso_formats:
         try:
-            return datetime.strptime(string_value, iso_format)
+            return make_aware_when_needed(datetime.strptime(string_value, iso_format))
         except ValueError:
             pass
     result = parse_relative_datetime(string_value)
@@ -401,11 +407,12 @@ def datetime_parse(string_value, **_):
                 formats=formats,
             )
         )
-    return result
+    return make_aware_when_needed(result)
 
 
-def datetime_render_value(value, **_):
-    return timezone.localtime(value).strftime(datetime_iso_formats[0]) if value else ''
+def datetime_render_value(field, value, **_):
+    dt = timezone.localtime(value) if field.is_tz_aware else value
+    return dt.strftime(datetime_iso_formats[0]) if value else ''
 
 
 date_iso_format = '%Y-%m-%d'
@@ -584,6 +591,8 @@ class Field(Part, Tag):
 
     group: str = EvaluatedRefinable()
 
+    is_tz_aware = Refinable()
+
     class Meta:
         attrs__class = EMPTY
         attrs__style = EMPTY
@@ -625,6 +634,7 @@ class Field(Part, Tag):
         choice_display_name_formatter=lambda choice, **_: '%s' % choice,
         group=MISSING,
         empty_label='---',
+        is_tz_aware=MISSING,
     )
     def __init__(self, **kwargs):
         # language=rst
@@ -1225,6 +1235,7 @@ class Field(Part, Tag):
     @with_defaults(
         parse=datetime_parse,
         render_value=datetime_render_value,
+        is_tz_aware=settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
         return cls(**kwargs)
