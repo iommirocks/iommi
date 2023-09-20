@@ -2475,7 +2475,6 @@ def test_datetime_render_value():
     assert datetime_render_value(dt) == '2020-01-02 03:04:05'  # '%Y-%m-%d %H:%M:%S'
 
 
-
 @pytest.mark.django_db
 def test_from_model_with_inheritance():
     from tests.models import FromModelWithInheritanceTest
