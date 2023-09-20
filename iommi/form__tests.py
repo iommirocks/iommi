@@ -2469,7 +2469,7 @@ def test_datetime_parse():
     assert actual == expected
 
 
-@override_settings(TIME_ZONE="Europe/Prague")
+@override_settings(USE_TZ=True, TIME_ZONE="Europe/Prague")
 def test_datetime_render_value():
     form = Form(
         fields__foo=Field.datetime(initial=timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5)))

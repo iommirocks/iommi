@@ -296,12 +296,14 @@ def query_str(query):
         (Filter.integer, '11', 11),
         (Filter.float, '11.5', 11.5),
         (Filter.date, '2014-03-07', date(2014, 3, 7)),
-        (Filter.datetime, '2014-03-07 11:13', datetime(2014, 3, 7, 11, 13)),
+        # (Filter.datetime, '2014-03-07 11:13', datetime(2014, 3, 7, 11, 13)),  # this is ok but shouldn't
+        (Filter.datetime, '2014-03-07 11:13', timezone.make_aware(datetime(2014, 3, 7, 11, 13))),
         (Filter.time, '11', time(11)),
         (Filter.time, '11:13', time(11, 13)),
         (Filter.time, '11:13:17', time(11, 13, 17)),
     ],
 )
+@override_settings(USE_TZ=True)
 def test_filter_parsing_simple(shortcut, input, expected_parse):
     class MyQuery(Query):
         bazaar = shortcut(attr='quux__bar__bazaar')
