@@ -19,6 +19,7 @@ from django.utils.translation import (
     gettext,
     pgettext,
 )
+from django.conf import settings
 from pyparsing import (
     alphanums,
     alphas,
@@ -484,6 +485,7 @@ class Filter(Part):
     @with_defaults(
         field__call_target__attribute='datetime',
         parse=datetime_parse,
+        extra__is_tz_aware=settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
         return cls(**kwargs)

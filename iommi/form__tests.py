@@ -2471,17 +2471,15 @@ def test_datetime_parse():
 
 @override_settings(TIME_ZONE="Europe/Prague")
 def test_datetime_render_value():
-    class MyForm(Form):
-        foo = Field.datetime(initial=timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5)))
-
-    form = MyForm()
+    form = Form(
+        fields__foo=Field.datetime(initial=timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5)))
+    ).bind(request=None)
 
     assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
 
-    class MyForm(Form):
-        foo = Field.datetime(initial=datetime(2020, 1, 2, 3, 4, 5), is_tz_aware=False)
-
-    form = MyForm()
+    form = Form(
+        fields__foo=Field.datetime(initial=datetime(2020, 1, 2, 3, 4, 5), is_tz_aware=False)
+    ).bind(request=None)
 
     assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
 

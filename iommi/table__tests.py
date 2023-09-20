@@ -1878,7 +1878,8 @@ def test_default_formatters(NoSortTable):
     TFoo(a=1, b="3").save()
     TFoo(a=2, b="5").save()
 
-    dt = timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5))
+    dt = datetime(2020, 1, 2, 3, 4, 5)
+    assert datetime_formatter(timezone.make_aware(dt), format='DATETIME_FORMAT') == 'datetime: Jan. 2, 2020, 3:04 a.m.'
     assert datetime_formatter(dt, format='DATETIME_FORMAT') == 'datetime: Jan. 2, 2020, 3:04 a.m.'
 
     rows = [
