@@ -385,11 +385,11 @@ datetime_iso_formats = [
 
 
 def datetime_parse(string_value, traversable=None, filter=None, **_):
-    if filter:
-        raise SystemError(evaluate_strict(
-            traversable.extra_evaluated.is_tz_aware,
-            **traversable.iommi_evaluate_parameters()
-        ))
+    # if filter:
+    #     raise SystemError(evaluate_strict(
+    #         traversable.extra_evaluated.is_tz_aware,
+    #         **traversable.iommi_evaluate_parameters()
+    #     ))
     def make_tz_aware_when_needed(value):
         if traversable is not None and evaluate_strict(
                 traversable.extra_evaluated.is_tz_aware,
