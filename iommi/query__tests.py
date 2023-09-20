@@ -13,6 +13,7 @@ from django.db.models import (
     QuerySet,
 )
 from django.utils import timezone
+from django.test import override_settings
 
 from docs.models import Album
 from iommi import (
