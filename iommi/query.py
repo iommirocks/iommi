@@ -485,7 +485,7 @@ class Filter(Part):
     @with_defaults(
         field__call_target__attribute='datetime',
         parse=datetime_parse,
-        extra__is_tz_aware=settings.USE_TZ,
+        extra_evaluated__is_tz_aware=lambda **_: settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
         return cls(**kwargs)

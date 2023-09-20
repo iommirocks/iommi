@@ -384,9 +384,12 @@ datetime_iso_formats = [
 ]
 
 
-def datetime_parse(string_value, field=None, filter=None, **_):
+def datetime_parse(string_value, traversable=None, **_):
     def make_tz_aware_when_needed(value):
-        if (field and field.extra.is_tz_aware) or (filter and filter.extra.is_tz_aware):
+        if traversable is not None and evaluate_strict(
+                traversable.extra_evaluated.is_tz_aware,
+                **traversable.iommi_evaluate_parameters()
+        ):
             return timezone.make_aware(value)
         return value
 
@@ -411,7 +414,13 @@ def datetime_parse(string_value, field=None, filter=None, **_):
 
 
 def datetime_render_value(field, value, **_):
-    dt = timezone.localtime(value) if field.extra.is_tz_aware else value
+    if field is not None and evaluate_strict(
+            field.extra_evaluated.is_tz_aware,
+            **field.iommi_evaluate_parameters()
+    ):
+        dt = timezone.localtime(value)
+    else:
+        dt = value
     return dt.strftime(datetime_iso_formats[0]) if value else ''
 
 
@@ -1232,7 +1241,7 @@ class Field(Part, Tag):
     @with_defaults(
         parse=datetime_parse,
         render_value=datetime_render_value,
-        extra__is_tz_aware=settings.USE_TZ,
+        extra_evaluated__is_tz_aware=lambda **_: settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
         return cls(**kwargs)
