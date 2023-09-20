@@ -21,6 +21,7 @@ from django.core.exceptions import FieldError
 from django.http.response import HttpResponseBase
 from django.test import override_settings
 from django.urls import reverse_lazy
+from django.utils.timezone import make_aware
 
 from docs.models import Track
 from iommi import (
@@ -57,6 +58,7 @@ from iommi.form import (
     date_parse,
     datetime_iso_formats,
     datetime_parse,
+    datetime_render_value,
     decimal_parse,
     email_parse,
     Field,
@@ -2465,6 +2467,13 @@ def test_datetime_parse():
     expected = f'Time data "{bad_date}" does not match any of the formats "now", {formats}, and is not a relative date like "2d" or "2 weeks ago"'
     actual = e.value.message
     assert actual == expected
+
+
+@override_settings(TIME_ZONE="Europe/Prague")
+def test_datetime_render_value():
+    dt = make_aware(datetime(2020, 1, 2, 3, 4, 5))
+    assert datetime_render_value(dt) == '2020-01-02 03:04:05'  # '%Y-%m-%d %H:%M:%S'
+
 
 
 @pytest.mark.django_db

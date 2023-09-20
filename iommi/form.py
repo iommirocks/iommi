@@ -36,6 +36,7 @@ from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.functional import Promise
 from django.utils.translation import gettext
+from django.utils import timezone
 
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.struct import Struct
@@ -404,7 +405,7 @@ def datetime_parse(string_value, **_):
 
 
 def datetime_render_value(value, **_):
-    return value.strftime(datetime_iso_formats[0]) if value else ''
+    return timezone.localtime(value).strftime(datetime_iso_formats[0]) if value else ''
 
 
 date_iso_format = '%Y-%m-%d'

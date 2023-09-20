@@ -40,6 +40,7 @@ from django.utils.translation import (
     gettext,
     gettext_lazy,
 )
+from django.utils import timezone
 from math import ceil
 
 from iommi._web_compat import (
@@ -256,7 +257,7 @@ def list_formatter(value, **_):
 
 
 def datetime_formatter(value, **_):
-    return date_format(value, format='DATETIME_FORMAT')
+    return date_format(timezone.localtime(value), format='DATETIME_FORMAT')
 
 
 def date_formatter(value, **_):
