@@ -2472,7 +2472,7 @@ def test_datetime_parse():
 @override_settings(TIME_ZONE="Europe/Prague")
 def test_datetime_render_value():
     dt = timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5))
-    assert datetime_render_value(dt) == '2020-01-02 03:04:05'  # '%Y-%m-%d %H:%M:%S'
+    assert datetime_render_value(dt) == '2020-01-02 03:04:05'
 
 
 @pytest.mark.django_db
