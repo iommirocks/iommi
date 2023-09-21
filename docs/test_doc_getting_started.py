@@ -211,7 +211,7 @@ def test_5__a_simple_function_based_view():
     urlpatterns = [
         # ...your urls...
         path(
-            'iommi-view-test/{name}',
+            'iommi-view-test/<name>/',
             iommi_view
         ),
     ]
