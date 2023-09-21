@@ -13,6 +13,7 @@ from django.db.models import (
 )
 from django.http import HttpResponse
 from django.test import override_settings
+from django.utils import timezone
 
 from docs.models import (
     Album,
@@ -1861,6 +1862,7 @@ def test_render_table(NoSortTable):
 
 
 @pytest.mark.django_db
+@override_settings(TIME_ZONE="Europe/Prague")
 def test_default_formatters(NoSortTable):
     class TestTable(NoSortTable):
         foo = Column()
@@ -1877,6 +1879,7 @@ def test_default_formatters(NoSortTable):
     TFoo(a=2, b="5").save()
 
     dt = datetime(2020, 1, 2, 3, 4, 5)
+    assert datetime_formatter(timezone.make_aware(dt), format='DATETIME_FORMAT') == 'datetime: Jan. 2, 2020, 3:04 a.m.'
     assert datetime_formatter(dt, format='DATETIME_FORMAT') == 'datetime: Jan. 2, 2020, 3:04 a.m.'
 
     rows = [

@@ -36,6 +36,8 @@ from django.http.response import HttpResponseBase
 from django.template import Context
 from django.utils.functional import Promise
 from django.utils.translation import gettext
+from django.utils import timezone
+from django.conf import settings
 
 from iommi.endpoint import DISPATCH_PREFIX
 from iommi.struct import Struct
@@ -382,10 +384,18 @@ datetime_iso_formats = [
 ]
 
 
-def datetime_parse(string_value, **_):
+def datetime_parse(string_value, traversable=None, **_):
+    def make_tz_aware_when_needed(value):
+        if traversable is not None and evaluate_strict(
+                traversable.extra_evaluated.is_tz_aware,
+                **traversable.iommi_evaluate_parameters()
+        ):
+            return timezone.make_aware(value)
+        return value
+
     for iso_format in datetime_iso_formats:
         try:
-            return datetime.strptime(string_value, iso_format)
+            return make_tz_aware_when_needed(datetime.strptime(string_value, iso_format))
         except ValueError:
             pass
     result = parse_relative_datetime(string_value)
@@ -400,11 +410,18 @@ def datetime_parse(string_value, **_):
                 formats=formats,
             )
         )
-    return result
+    return make_tz_aware_when_needed(result)
 
 
-def datetime_render_value(value, **_):
-    return value.strftime(datetime_iso_formats[0]) if value else ''
+def datetime_render_value(field, value, **_):
+    if field is not None and evaluate_strict(
+            field.extra_evaluated.is_tz_aware,
+            **field.iommi_evaluate_parameters()
+    ):
+        dt = timezone.localtime(value)
+    else:
+        dt = value
+    return dt.strftime(datetime_iso_formats[0]) if value else ''
 
 
 date_iso_format = '%Y-%m-%d'
@@ -1224,6 +1241,7 @@ class Field(Part, Tag):
     @with_defaults(
         parse=datetime_parse,
         render_value=datetime_render_value,
+        extra_evaluated__is_tz_aware=lambda **_: settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
         return cls(**kwargs)

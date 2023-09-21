@@ -1,3 +1,4 @@
+import datetime
 import operator
 from functools import reduce
 from typing import (
@@ -15,10 +16,12 @@ from django.db.models import (
     Q,
     QuerySet,
 )
+from django.utils import timezone
 from django.utils.translation import (
     gettext,
     pgettext,
 )
+from django.conf import settings
 from pyparsing import (
     alphanums,
     alphas,
@@ -152,6 +155,8 @@ def value_to_str_for_query(filter, v):
         return {True: '1', False: '0'}.get(v)
     if type(v) in (int, float):
         return str(v)
+    if isinstance(v, datetime.datetime) and timezone.is_aware(v):
+        v = timezone.make_naive(v, timezone=datetime.timezone.utc)
     if isinstance(v, Model):
         model = type(v)
         search_field = filter.search_fields[-1]
@@ -484,6 +489,7 @@ class Filter(Part):
     @with_defaults(
         field__call_target__attribute='datetime',
         parse=datetime_parse,
+        extra_evaluated__is_tz_aware=lambda **_: settings.USE_TZ,
     )
     def datetime(cls, **kwargs):
         return cls(**kwargs)
