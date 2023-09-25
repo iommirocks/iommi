@@ -289,6 +289,9 @@ def int_parse(string_value, **_):
 
 
 def choice_is_valid(field, parsed_data, **_):
+    if not field.parse_empty_string_as_none and parsed_data == "":
+        # django models.CharField(choices=..., blank=True, null=False) does not need to have an empty choice
+        return True, ''
     return parsed_data in field.choices, gettext('{} not in available choices').format(parsed_data)
 
 
