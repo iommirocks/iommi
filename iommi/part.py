@@ -7,6 +7,8 @@ from typing import (
     Union,
 )
 
+from django.core.serializers.json import DjangoJSONEncoder
+
 from iommi._web_compat import (
     get_template_from_string,
     HttpResponse,
@@ -131,7 +133,7 @@ class Part(Traversable):
                     r = r.bind(request=request)
                 return HttpResponse(render_root(part=r, **kwargs))
             else:
-                return HttpResponse(json.dumps(r), content_type='application/json')
+                return HttpResponse(json.dumps(r, cls=DjangoJSONEncoder), content_type='application/json')
 
         if request.method == 'GET':
             dispatch_prefix = DISPATCH_PATH_SEPARATOR
