@@ -6,6 +6,7 @@
     {% for asset in assets.values %}
       {{ asset }}
     {% endfor %}
+    {% block iommi_head_contents_last %}{% endblock %}
 </head>
 <body{% block iommi_body_tag_attrs %}{% endblock %}>
     {% block iommi_top %}{% endblock %}
