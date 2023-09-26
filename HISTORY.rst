@@ -1,6 +1,39 @@
 Changelog
 ---------
 
+
+6.2.0 (2023-09-26)
+~~~~~~~~~~~~~~~~~~
+
+* Added `iommi_head_contents_last` block to `base.html`
+
+* Fixed `models.CharField(choices=..., blank=True, null=False)` validation
+
+* `Column.select` didn't handle models with UUID primary keys
+
+* Datetime rendering should be in local time format, not UTC
+
+* Fixed for Python 3.11
+
+* Sort links on table ajax reloads
+
+* Fixed lazy capitalization of titles
+
+* Added Czech translation
+
+* Warn if user has forgotten to add iommi to `INSTALLED_APPS`
+
+* Fixed translation context for "Filter" (The verb and the noun are the same in English, so there was some confusion)
+
+* Fixed translations
+
+* Prevent double save on files/images when over the in-memory limit
+
+* Added `Form.fields_template`
+
+* Avoid crash on admin pages when running without `iommi.middleware`
+
+
 6.1.1 (2023-08-25)
 ~~~~~~~~~~~~~~~~~~
 
