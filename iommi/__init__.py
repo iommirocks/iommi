@@ -78,25 +78,17 @@ def render_if_needed(request, response):
 
 def middleware(get_response):
     from django.db import connections, transaction
-
     atomic_request_connections = [db for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']]
-    if any(atomic_request_connections):
-        def iommi_middleware(request):
-            sid = transaction.savepoint()
-            try:
+
+    def iommi_middleware(request):
+        if any(atomic_request_connections):
+            with transaction.atomic():
                 response = render_if_needed(request, get_response(request))
-                transaction.savepoint_commit(sid)
-            except Exception:
-                transaction.savepoint_rollback(sid)
-                raise  # Raise same exception
-            return response
+        else:
+            response = render_if_needed(request, get_response(request))
+        return response
 
-        return iommi_middleware
-    else:
-        def iommi_middleware(request):
-            return render_if_needed(request, get_response(request))
-
-        return iommi_middleware
+    return iommi_middleware
 
 
 def iommi_render(view):
