@@ -1,6 +1,7 @@
-import re
+from unittest.mock import patch, Mock
 
 import pytest
+from django.db import connections
 from django.http import HttpResponse
 
 from iommi import iommi_render
@@ -25,21 +26,67 @@ def test_render_decorator():
 
 
 @pytest.mark.django_db
-def test_middleware():
-    from django.db import connections
-
+def test_middleware_atomic_block():
     default_database_settings = connections['default'].settings_dict
     old_value = default_database_settings['ATOMIC_REQUESTS']
+    default_database_settings['ATOMIC_REQUESTS'] = True
+    mock_response = Mock()
+
     try:
-        default_database_settings['ATOMIC_REQUESTS'] = True
-        with pytest.raises(TypeError) as e:
-            request_with_middleware(object(), req('get'))
-        assert re.match(
-            'The iommi middleware is unable to retain atomic transactions. Disable '
-            'ATOMIC_REQUEST for database connections '
-            r'\(.*\) or remove middleware and '
-            'use the @iommi_render decorator on the views instead.',
-            str(e.value),
-        )
+        with patch('iommi.render_if_needed', return_value=mock_response) as mock_render, \
+             patch('django.db.transaction.atomic') as mock_atomic:
+
+            response = request_with_middleware(object(), req('get'))
+
+            # Assert that transaction.atomic was called and render_if_needed was called
+            mock_atomic.assert_called_once()
+            mock_render.assert_called_once()
+
+            assert response == mock_response
+
+    finally:
+        default_database_settings['ATOMIC_REQUESTS'] = old_value
+
+
+@pytest.mark.django_db
+def test_middleware_rollback_on_exception():
+    default_database_settings = connections['default'].settings_dict
+    old_value = default_database_settings['ATOMIC_REQUESTS']
+    default_database_settings['ATOMIC_REQUESTS'] = True
+
+    try:
+        with patch('iommi.render_if_needed', side_effect=Exception) as mock_render, \
+             patch('django.db.transaction.atomic') as mock_atomic:
+
+            with pytest.raises(Exception):
+                request_with_middleware(object(), req('get'))
+
+            # Assert that transaction.atomic was called and render_if_needed was called
+            mock_atomic.assert_called_once()
+            mock_render.assert_called_once()
+
+    finally:
+        default_database_settings['ATOMIC_REQUESTS'] = old_value
+
+
+@pytest.mark.django_db
+def test_middleware_no_atomic_requests():
+    default_database_settings = connections['default'].settings_dict
+    old_value = default_database_settings['ATOMIC_REQUESTS']
+    default_database_settings['ATOMIC_REQUESTS'] = False
+    mock_response = Mock()
+
+    try:
+        with patch('iommi.render_if_needed', return_value=mock_response) as mock_render, \
+             patch('django.db.transaction.atomic') as mock_atomic:
+
+            response = request_with_middleware(object(), req('get'))
+
+            # Assert that transaction.atomic was not called and render_if_needed was called
+            mock_atomic.assert_not_called()
+            mock_render.assert_called_once()
+
+            assert response == mock_response
+
     finally:
         default_database_settings['ATOMIC_REQUESTS'] = old_value
