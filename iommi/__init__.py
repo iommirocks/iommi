@@ -78,10 +78,10 @@ def render_if_needed(request, response):
 
 def middleware(get_response):
     from django.db import connections, transaction
-    atomic_request_connections = [db for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']]
+    has_atomic_request_connections = any([db for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']])
 
     def iommi_middleware(request):
-        if any(atomic_request_connections):
+        if has_atomic_request_connections:
             with transaction.atomic():
                 response = render_if_needed(request, get_response(request))
         else:
