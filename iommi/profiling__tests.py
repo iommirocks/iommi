@@ -26,6 +26,7 @@ def test_profiler_no_access():
     assert middleware(req('get')) is sentinel
     assert middleware(user_req('get')) is sentinel
     assert middleware(user_req('get', _iommi_prof='')) is sentinel
+    assert middleware(user_req('post', _iommi_prof='')) is sentinel
 
 
 def test_profiler_plain():
