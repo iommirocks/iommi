@@ -295,8 +295,6 @@ def query_str(query):
 @pytest.mark.parametrize(
     'shortcut, input, expected_parse',
     [
-        (Filter.integer, '11', 11),
-        (Filter.float, '11.5', 11.5),
         (Filter.date, '2014-03-07', date(2014, 3, 7)),
         (Filter.datetime, '2014-03-07 11:13', timezone.make_naive(
             timezone.make_aware(datetime(2014, 3, 7, 11, 13)),
@@ -318,6 +316,24 @@ def test_filter_parsing_simple(shortcut, input, expected_parse):
     assert query.form.fields.bazaar.iommi_path == 'bazaar'
     assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__iexact': expected_parse}))
 
+
+@pytest.mark.parametrize(
+    'shortcut, input, expected_parse',
+    [
+        (Filter.integer, '11', 11),
+        (Filter.float, '11.5', 11.5),
+    ],
+)
+@override_settings(USE_TZ=True)
+def test_filter_parsing_simple_number(shortcut, input, expected_parse):
+    class MyQuery(Query):
+        bazaar = shortcut(attr='quux__bar__bazaar')
+
+    query = MyQuery().bind(request=req('get', bazaar=input))
+    assert 'bazaar' in query.form.fields
+    assert not query.form.get_errors(), query.form.get_errors()
+    assert query.form.fields.bazaar.iommi_path == 'bazaar'
+    assert query_str(query.get_q()) == query_str(Q(**{'quux__bar__bazaar__exact': expected_parse}))
 
 @pytest.mark.parametrize(
     'shortcut, input, expected_parse',
