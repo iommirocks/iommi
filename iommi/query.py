@@ -450,6 +450,7 @@ class Filter(Part):
     @classmethod
     @with_defaults(
         field__call_target__attribute='number',
+        query_operator_to_q_operator=case_sensitive_query_operator_to_q_operator,
     )
     def number(cls, **kwargs):
         return cls(**kwargs)
