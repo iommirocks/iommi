@@ -707,6 +707,7 @@ class Column(Part):
 
             # @test
             show_output(table)
+            my_handler(table.bind(request=req('get')))
             # @end
 
         :param extra__checkbox_name: the name of the checkbox. Default is `"pk"`, resulting in checkboxes like `"pk_1234"`.

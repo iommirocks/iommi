@@ -1558,6 +1558,8 @@ class Form(Part):
             # print(form.fields.box.a.value, form.fields.box.b.value, form.fields.c.value)
 
         # @test
+        assert post_handler(form=Struct(is_valid=lambda: False)) is None
+
         post_handler(form.bind(request=req('post')))
         # @end
     """

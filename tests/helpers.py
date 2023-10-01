@@ -209,7 +209,7 @@ def _show_path_from_name(name):
 _show_output_used = set()
 
 
-def show_output(part, path='/'):
+def show_output(part, path='/', data=None):
     frame = inspect.currentframe().f_back
     base_name = os.path.join(
         Path(frame.f_code.co_filename).stem.replace('test_', '').replace('doc_', '').replace('_api_', ''),
@@ -229,7 +229,7 @@ def show_output(part, path='/'):
         part = part.callback(req('get', path=path))
 
     with open(file_path, 'wb') as f:
-        content = part if isinstance(part, bytes) else render_if_needed(req('get', path=path), part).content
+        content = part if isinstance(part, bytes) else render_if_needed(req('get', url=path), part).content
         f.write(content)
         return content
 

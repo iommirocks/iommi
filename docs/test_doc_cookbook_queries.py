@@ -1,8 +1,11 @@
+from django.db.models import Q
+
 from docs.models import *
 from iommi import *
 from tests.helpers import (
     req,
     show_output,
+    show_output_collapsed,
 )
 
 request = req('get')
@@ -18,7 +21,7 @@ def test_queries():
     -------
 
     """
-    
+
 
 def test_how_do_i_override_what_operator_is_used_for_a_query():
     # language=rst
@@ -46,7 +49,7 @@ def test_how_do_i_override_what_operator_is_used_for_a_query():
     See also `How do I control what Q is produced?`_
 
     """
-    
+
 
 def test_how_do_i_control_what_q_is_produced():
     # language=rst
@@ -77,5 +80,6 @@ def test_how_do_i_control_what_q_is_produced():
                 return Q()
 
     # @test
-    show_output(AlbumTable())
+    show_output(AlbumTable(), path='/?eighties=1')
+    show_output_collapsed(AlbumTable(), path='/?eighties=0')
     # @end
