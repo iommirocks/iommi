@@ -8,6 +8,8 @@ from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from django.http import StreamingHttpResponse
+
 from iommi._web_compat import HttpResponse
 from ._web_compat import settings
 
@@ -30,7 +32,7 @@ def should_profile(request):
     disabled = getattr(request, 'profiler_disabled', True)
     is_staff = hasattr(request, 'user') and request.user.is_staff
 
-    return '_iommi_prof' in request.GET and ((not disabled and is_staff) or settings.DEBUG)
+    return ('_iommi_prof' in request.GET or '_iommi_prof' in request.POST) and ((not disabled and is_staff) or settings.DEBUG)
 
 
 class Middleware:
@@ -49,26 +51,31 @@ class Middleware:
         if should_profile(request):
             prof = cProfile.Profile()
             prof.enable()
+            request._iommi_prof = [prof]
         else:
-            prof = None
+            request._iommi_prof = []
 
         response = self.get_response(request)
 
-        if prof is not None:
+        if request._iommi_prof:
+            if isinstance(response, StreamingHttpResponse):
+                # consume the entire streaming response, redirecting to stdout
+                for line in response.streaming_content:
+                    print(line.decode(), file=sys.__stdout__)
+
             response = HttpResponse()
-            prof.disable()
+            for prof in request._iommi_prof:
+                prof.disable()
 
             import pstats
 
             s = StringIO()
-            ps = pstats.Stats(prof, stream=s)
+            ps = pstats.Stats(*request._iommi_prof, stream=s)
 
             prof_command = request.GET.get('_iommi_prof')
 
             if prof_command == 'graph':
                 with NamedTemporaryFile() as stats_dump:
-                    s = StringIO()
-                    ps = pstats.Stats(prof, stream=s)
                     ps.stream = stats_dump
                     ps.dump_stats(stats_dump.name)
 
@@ -147,6 +154,7 @@ class Middleware:
                     line = line.replace(' ', '&nbsp;')
                     result.append(line)
 
+                # language=html
                 start_html = '''
                     <style>
                         html {

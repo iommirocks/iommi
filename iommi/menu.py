@@ -335,6 +335,21 @@ def get_debug_menu(**kwargs):
         profile = MenuItem(
             url='?_iommi_prof', tag='li', include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE
         )
+        profile_post = MenuItem(
+            display_name='Profile POST',
+            url='#',
+            # language=js
+            attrs__onclick="""
+            for (form of document.querySelectorAll('form')) {
+                var input = document.createElement("input");
+                input.setAttribute("type", "hidden");
+                input.setAttribute("name", "_iommi_prof");
+                form.appendChild(input);
+            }
+            """,
+            tag='li',
+            include=lambda **_: 'iommi.profiling.Middleware' in settings.MIDDLEWARE,
+        )
         sql_trace = MenuItem(
             display_name='SQL trace',
             url='?_iommi_sql_trace',
