@@ -80,6 +80,7 @@ from tests.helpers import (
     request_with_middleware,
     staff_req,
     user_req,
+    verify_html,
     verify_table_html,
 )
 from tests.models import (
@@ -4158,4 +4159,56 @@ def test_late_column_include_removal_trip_up_filter_choices():
                 <tbody/>
             </table>
         ''',
+    )
+
+
+def test_tbody_endpoint():
+    class TestTable(Table):
+        class Meta:
+            rows = [Struct(foo="foo", bar="bar")]
+            container__children__top_thing = html.div('top', after=0)
+            container__children__bottom_thing = html.div('bottom')
+
+        foo = Column()
+        bar = Column()
+
+    # language=html
+    expected_container_content = '''
+        <div> top </div>
+        <div class="iommi-table-plus-paginator">
+            <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
+                <thead>
+                    <tr>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=foo"> Foo </a> </th>
+                        <th class="first_column iommi_sort_header subheader"> <a href="?order=bar"> Bar </a> </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> foo </td>
+                        <td> bar </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div> bottom </div>
+    '''
+
+    verify_table_html(
+        table=TestTable(),
+        find=dict(class_='iommi-table-container'),
+        # language=html
+        expected_html=f"""
+            <div class="iommi-table-container">
+                { expected_container_content }
+            </div>
+        """,
+    )
+
+    new_html = perform_ajax_dispatch(root=TestTable().bind(request=req('get')), path='/endpoints/tbody', value='')[
+        'html'
+    ]
+    verify_html(
+        actual_html=new_html,
+        expected_html=expected_container_content,
     )
