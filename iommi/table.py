@@ -1694,7 +1694,9 @@ class Table(Part, Tag):
         cells_class = Cells
         row_group_class = RowGroup
         endpoints__tbody__func = lambda table, **_: {
-            'html': table.__html__(template='iommi/table/table_container.html')
+            'html': table.container.__html__(
+                render=lambda fragment, context: fragment.render_text_or_children(context=context)
+            )
         }
         endpoints__csv__func = endpoint__csv
 
