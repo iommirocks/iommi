@@ -76,19 +76,30 @@ def render_if_needed(request, response):
         return response
 
 
-def middleware(get_response):
-    from django.db import connections, transaction
-    has_atomic_request_connections = any([db for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']])
+class IommiMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.non_atomic_requests = set()
 
-    def iommi_middleware(request):
-        if has_atomic_request_connections:
-            with transaction.atomic():
-                response = render_if_needed(request, get_response(request))
-        else:
-            response = render_if_needed(request, get_response(request))
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        self.non_atomic_requests = getattr(view_func, '_non_atomic_requests', set())
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if isinstance(response, Part):
+            from django.db import connections, transaction
+
+            render = render_if_needed
+            for db in connections.all():
+                if db.settings_dict['ATOMIC_REQUESTS'] and db.alias not in self.non_atomic_requests:
+                    render = transaction.atomic(using=db.alias)(render)
+            return render(request, response)
+
         return response
 
-    return iommi_middleware
+
+middleware = IommiMiddleware
 
 
 def iommi_render(view):

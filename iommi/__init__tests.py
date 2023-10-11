@@ -1,14 +1,14 @@
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 import pytest
-from django.db import connections
+from django.db import connections, transaction
 from django.http import HttpResponse
 
 from iommi import iommi_render
 from iommi.fragment import Fragment
 from tests.helpers import (
+    call_view_through_middleware,
     req,
-    request_with_middleware,
 )
 
 
@@ -26,67 +26,59 @@ def test_render_decorator():
 
 
 @pytest.mark.django_db
-def test_middleware_atomic_block():
-    default_database_settings = connections['default'].settings_dict
-    old_value = default_database_settings['ATOMIC_REQUESTS']
-    default_database_settings['ATOMIC_REQUESTS'] = True
-    mock_response = Mock()
-
-    try:
-        with patch('iommi.render_if_needed', return_value=mock_response) as mock_render, \
-             patch('django.db.transaction.atomic') as mock_atomic:
-
-            response = request_with_middleware(object(), req('get'))
-
-            # Assert that transaction.atomic was called and render_if_needed was called
-            mock_atomic.assert_called_once()
-            mock_render.assert_called_once()
-
-            assert response == mock_response
-
-    finally:
-        default_database_settings['ATOMIC_REQUESTS'] = old_value
-
-
-@pytest.mark.django_db
-def test_middleware_rollback_on_exception():
-    default_database_settings = connections['default'].settings_dict
-    old_value = default_database_settings['ATOMIC_REQUESTS']
-    default_database_settings['ATOMIC_REQUESTS'] = True
-
-    try:
-        with patch('iommi.render_if_needed', side_effect=Exception) as mock_render, \
-             patch('django.db.transaction.atomic') as mock_atomic:
-
-            with pytest.raises(Exception):
-                request_with_middleware(object(), req('get'))
-
-            # Assert that transaction.atomic was called and render_if_needed was called
-            mock_atomic.assert_called_once()
-            mock_render.assert_called_once()
-
-    finally:
-        default_database_settings['ATOMIC_REQUESTS'] = old_value
-
-
-@pytest.mark.django_db
 def test_middleware_no_atomic_requests():
+    def view(request):
+        return Fragment('The content')
+
+    with patch('django.db.transaction.atomic') as mock_atomic:
+        response = call_view_through_middleware(view, req('get'))
+
+    mock_atomic.assert_not_called()
+
+    assert isinstance(response, HttpResponse)
+    assert 'The content' in response.content.decode()
+
+
+@pytest.fixture
+def atomic_requests_fixture():
     default_database_settings = connections['default'].settings_dict
     old_value = default_database_settings['ATOMIC_REQUESTS']
-    default_database_settings['ATOMIC_REQUESTS'] = False
-    mock_response = Mock()
+    default_database_settings['ATOMIC_REQUESTS'] = True
+    yield
+    default_database_settings['ATOMIC_REQUESTS'] = old_value
 
-    try:
-        with patch('iommi.render_if_needed', return_value=mock_response) as mock_render, \
-             patch('django.db.transaction.atomic') as mock_atomic:
 
-            response = request_with_middleware(object(), req('get'))
+def atomic_mock(using):
+    assert using == 'default'
+    return lambda f: f
 
-            # Assert that transaction.atomic was not called and render_if_needed was called
-            mock_atomic.assert_not_called()
-            mock_render.assert_called_once()
 
-            assert response == mock_response
+@pytest.mark.django_db
+@pytest.mark.usefixtures("atomic_requests_fixture")
+def test_middleware_atomic_block():
+    def view(request):
+        return Fragment('The content')
 
-    finally:
-        default_database_settings['ATOMIC_REQUESTS'] = old_value
+    with patch('django.db.transaction.atomic', side_effect=atomic_mock) as mock_atomic:
+        response = call_view_through_middleware(view, req('get'))
+
+    mock_atomic.assert_called_once()
+
+    assert isinstance(response, HttpResponse)
+    assert 'The content' in response.content.decode()
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("atomic_requests_fixture")
+def test_no_atomic_block_on_decorated_view():
+    @transaction.non_atomic_requests
+    def non_atomic_requests_view(request):
+        return Fragment('The content')
+
+    with patch('django.db.transaction.atomic', side_effect=atomic_mock) as mock_atomic:
+        response = call_view_through_middleware(non_atomic_requests_view, req('get'))
+
+    mock_atomic.assert_not_called()
+
+    assert isinstance(response, HttpResponse)
+    assert 'The content' in response.content.decode()
