@@ -76,7 +76,7 @@ def render_if_needed(request, response):
         return response
 
 
-class IommiMiddleware:
+class middleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.non_atomic_requests = set()
@@ -97,9 +97,6 @@ class IommiMiddleware:
             return render(request, response)
 
         return response
-
-
-middleware = IommiMiddleware
 
 
 def iommi_render(view):
