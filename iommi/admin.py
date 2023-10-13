@@ -33,7 +33,7 @@ from iommi import (
     Menu,
     MenuItem,
     Page,
-    render_if_needed,
+    render_part,
     Table,
 )
 from iommi._web_compat import format_html
@@ -544,7 +544,7 @@ class Admin(Page):
 class Auth:
     @classmethod
     def login(cls, request):
-        return render_if_needed(request, LoginPage())
+        return render_part(request, LoginPage())
 
     @classmethod
     def logout(cls, request):
@@ -553,7 +553,7 @@ class Auth:
 
     @classmethod
     def change_password(cls, request):
-        return render_if_needed(request, ChangePasswordPage())
+        return render_part(request, ChangePasswordPage())
 
     @classmethod
     def urls(cls):

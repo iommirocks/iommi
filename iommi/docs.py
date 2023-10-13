@@ -74,6 +74,7 @@ def get_default_classes():
         iommi.Style,
         iommi.fragment.Header,
         iommi.Asset,
+        iommi.middleware,
         # Private-ish APIs
         iommi.endpoint.Endpoint,
         iommi.part.Part,
@@ -126,7 +127,10 @@ def get_methods_by_type_by_name(class_):
     r = {
         k: v
         for k, v in class_.__dict__.items()
-        if not k.startswith('_') and k not in ignore_list and not is_shortcut(getattr(class_, k)) and not is_refinable_function(getattr(class_, k))
+        if not k.startswith('_')
+        and k not in ignore_list
+        and not is_shortcut(getattr(class_, k))
+        and not is_refinable_function(getattr(class_, k))
     }
 
     return {
@@ -183,7 +187,11 @@ def _generate_tests_from_class_docs(classes):
 
 
 def _generate_tests_from_class_doc(f, c, classes, cookbook_name_by_refinable_name):
-    return inspect.getfile(c), 'test_doc__api_%s.py' % c.__name__, lambda: _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name)
+    return (
+        inspect.getfile(c),
+        'test_doc__api_%s.py' % c.__name__,
+        lambda: _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name),
+    )
 
 
 def _generate_tests_from_class_doc_inner(f, c, classes, cookbook_name_by_refinable_name):
@@ -286,7 +294,9 @@ request = req('get')
         for refinable, value in refinable_members:
             evaluated_marker = ''
             if isinstance(getattr(c, refinable, None), (EvaluatedRefinable, SpecialEvaluatedRefinable)):
-                evaluated_marker = '  \N{NO-BREAK SPACE}\N{NO-BREAK SPACE}\N{NO-BREAK SPACE}  (:ref:`evaluated <evaluate>`)'
+                evaluated_marker = (
+                    '  \N{NO-BREAK SPACE}\N{NO-BREAK SPACE}\N{NO-BREAK SPACE}  (:ref:`evaluated <evaluate>`)'
+                )
 
             w(0, '')
             w(0, '* `' + refinable + '`' + evaluated_marker)
@@ -397,9 +407,9 @@ def _print_rst_or_python(doc, w, indent=0):
                     in_code_block = False
                     w(1, '# language=rst')
                     w(1, '"""')
-                    w(1+indent, line)
+                    w(1 + indent, line)
         else:
-            w(0+indent, line)
+            w(0 + indent, line)
     if in_code_block:
         w(1, '# language=rst')
         w(1, '"""')

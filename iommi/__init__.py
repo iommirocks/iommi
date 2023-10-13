@@ -59,36 +59,51 @@ setup_db_compat()
 
 def render_if_needed(request, response):
     if isinstance(response, Part):
-        try:
-            if not response._is_bound:
-                response = response.bind(request=request)
-            return response.render_to_response()
-        except Exception as e:
-            filename, lineno = response._instantiated_at_info
-            from iommi.synthetic_traceback import SyntheticException
-
-            fake = SyntheticException(
-                tb=[dict(filename=filename, f_lineno=lineno, function='<iommi declaration>', f_globals={}, f_locals={})]
-            )
-
-            raise e from fake
+        return render_part(request, response)
     else:
         return response
 
 
-def middleware(get_response):
-    from django.db import connections, transaction
-    has_atomic_request_connections = any([db for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']])
+def render_part(request, part: Part):
+    try:
+        if not part._is_bound:
+            part = part.bind(request=request)
+        return part.render_to_response()
+    except Exception as e:
+        filename, lineno = part._instantiated_at_info
+        from iommi.synthetic_traceback import SyntheticException
 
-    def iommi_middleware(request):
-        if has_atomic_request_connections:
-            with transaction.atomic():
-                response = render_if_needed(request, get_response(request))
-        else:
-            response = render_if_needed(request, get_response(request))
+        fake = SyntheticException(
+            tb=[dict(filename=filename, f_lineno=lineno, function='<iommi declaration>', f_globals={}, f_locals={})]
+        )
+
+        raise e from fake
+
+
+# noinspection PyPep8Naming
+class middleware:
+    def __init__(self, get_response):
+        from django.db import connections
+
+        self.get_response = get_response
+        self.atomic_db_aliases = {db.alias for db in connections.all() if db.settings_dict['ATOMIC_REQUESTS']}
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        request.iommi_not_atomic_for = getattr(view_func, '_non_atomic_requests', set())
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if isinstance(response, Part):
+            from django.db import transaction
+
+            render = render_part
+            for alias in self.atomic_db_aliases:
+                if alias not in request.iommi_not_atomic_for:
+                    render = transaction.atomic(using=alias)(render)
+            return render(request, response)
+
         return response
-
-    return iommi_middleware
 
 
 def iommi_render(view):

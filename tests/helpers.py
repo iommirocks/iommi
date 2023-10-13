@@ -10,8 +10,6 @@ from uuid import uuid4
 from django.test import RequestFactory
 from django.urls import URLPattern
 
-from iommi.struct import Struct
-
 from iommi import (
     middleware,
     render_if_needed,
@@ -28,6 +26,7 @@ from iommi.refinable import (
     Refinable,
     RefinableMembers,
 )
+from iommi.struct import Struct
 from iommi.traversable import (
     Traversable,
 )
@@ -113,6 +112,15 @@ def request_with_middleware(response, request):
         return response
 
     m = middleware(get_response)
+    return m(request=request)
+
+
+def call_view_through_middleware(view, request, *args, **kwargs):
+    def get_response(request):
+        return view(request, *args, **kwargs)
+
+    m = middleware(get_response)
+    m.process_view(request, view, args, kwargs)
     return m(request=request)
 
 
@@ -229,7 +237,10 @@ def show_output(part, path='/', data=None):
         part = part.callback(req('get', path=path))
 
     with open(file_path, 'wb') as f:
-        content = part if isinstance(part, bytes) else render_if_needed(req('get', url=path), part).content
+        if isinstance(part, bytes):
+            content = part
+        else:
+            content = render_if_needed(req('get', url=path), part).content
         f.write(content)
         return content
 
