@@ -62,7 +62,7 @@ def endpoint__debug_tree(endpoint, **_):
         base_type_name = type_name
         if isinstance(node, Members):
             if node._declared_members:
-                type_name = f'Members[{node._cls.__name__}]'
+                type_name = None
             else:
                 return
 
@@ -70,7 +70,6 @@ def endpoint__debug_tree(endpoint, **_):
         if isinstance(node, dict):
             children = list(node.items())
         elif isinstance(node, Traversable):
-
             children = []
             for k, v in items(declared_members(node)):
                 if node._bound_members is not None and isinstance(node._bound_members.get(k, None), MemberBinder):
@@ -80,10 +79,15 @@ def endpoint__debug_tree(endpoint, **_):
         if (isinstance(node, Members) or isinstance(node, dict)) and not children:
             return
 
+        shortcut_stack = getattr(node, 'iommi_shortcut_stack', None)
+        shortcut = shortcut_stack[0] if shortcut_stack else None
+        if shortcut:
+            type_name = f'{type_name}.{shortcut}'
         yield Struct(
             name=name,
             obj=node,
             type=type_name,
+            shortcut=shortcut,
             base_type=base_type_name,
             path=p,
             dunder_path='__'.join(path),
@@ -132,9 +136,14 @@ def endpoint__debug_tree(endpoint, **_):
         )
         path = Column()
         type = Column(
-            cell__url=lambda row, **_: f'https://docs.iommi.rocks/en/latest/{row.base_type}.html'
-            if row.base_type
-            else None
+            cell__url=lambda row, **_: (
+                (
+                    f'https://docs.iommi.rocks/en/latest/{row.base_type}.html'
+                    + (f'#{row.shortcut.replace("_", "-")}' if row.shortcut else '')
+                )
+                if row.base_type
+                else None
+            )
         )
         included = Column.boolean()
 

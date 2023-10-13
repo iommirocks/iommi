@@ -359,12 +359,20 @@ request = req('get')
             defaults = shortcut if isinstance(shortcut, dict) else getattr(shortcut, '__iommi_with_defaults_kwargs', {})
             if defaults:
                 defaults = Namespace(defaults)
-                section(3, 'Defaults')
+                section(3, 'Defaultses')
                 for k, v in items(flatten(defaults)):
                     v = default_description(v)
                     w(0, f'* `{k}`')
                     w(1, f'* `{v}`')
                 w(0, '')
+
+            try:
+                instance = shortcut()
+                parent = instance.iommi_shortcut_stack
+                w(0, f'{parent=}')
+            except Exception:
+                w(0, 'poop')
+                pass
 
     for k, v in get_methods_by_type_by_name(c).items():
         methods = v
