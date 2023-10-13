@@ -1,7 +1,6 @@
 import json
 from datetime import (
     date,
-    datetime,
 )
 from pathlib import Path
 
@@ -13,6 +12,7 @@ from django.urls import (
     path,
     reverse,
 )
+from django.utils.timezone import now
 
 import iommi.part
 import iommi.style
@@ -196,9 +196,9 @@ def all_field_sorts(request):
                 fields__float__initial=3.14,
                 fields__password__initial='abc123',
                 fields__boolean__initial=True,
-                fields__datetime__initial=datetime.now(),
+                fields__datetime__initial=now(),
                 fields__date__initial=date.today(),
-                fields__time__initial=datetime.now().time(),
+                fields__time__initial=now().time(),
                 fields__decimal__initial=3.14,
                 fields__url__initial='http://iommi.rocks',
                 fields__email__initial='example@example.com',
@@ -217,6 +217,7 @@ class DummyRow:
         _, _, shortcut = attr.partition('column_of_type_')
         s = f'{shortcut} #{self.idx}'
         if shortcut == 'link' or attr == 'link':
+
             class Link:
                 def get_absolute_url(self):
                     return '#'
