@@ -237,7 +237,10 @@ def show_output(part, path='/', data=None):
         part = part.callback(req('get', path=path))
 
     with open(file_path, 'wb') as f:
-        content = part if isinstance(part, bytes) else render_if_needed(req('get', url=path), part).content
+        if isinstance(part, bytes):
+            content = part
+        else:
+            content = render_if_needed(req('get', url=path), part).content
         f.write(content)
         return content
 

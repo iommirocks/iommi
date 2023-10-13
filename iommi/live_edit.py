@@ -16,11 +16,11 @@ from iommi import (
     Page,
     Part,
     render_if_needed,
+    render_part,
     Style,
 )
 from iommi._web_compat import mark_safe
-from iommi.base import get_wrapped_view
-from iommi.base import items
+from iommi.base import get_wrapped_view, items
 from iommi.struct import Struct
 from iommi.style import (
     get_global_style,
@@ -45,7 +45,9 @@ class Middleware:
 
     def process_view(self, request, callback, callback_args, callback_kwargs):
         if should_edit(request):
-            return live_edit_dispatch(request)(request=request, view=callback, args=callback_args, kwargs=callback_kwargs)
+            return live_edit_dispatch(request)(
+                request=request, view=callback, args=callback_args, kwargs=callback_kwargs
+            )
 
 
 def live_edit_dispatch(request):
@@ -120,6 +122,7 @@ def create_response_for_view(new_view, request, args, kwargs, **_):
         response = new_view(request, *args, **kwargs)
     return render_if_needed(request, response)
 
+
 def get_ast(view):
     import parso
 
@@ -146,15 +149,19 @@ def get_ast(view):
 
     return ast_of_old_code, is_unix_line_endings, ast_of_entire_file, filename
 
+
 def live_edit_post_handler(request, code, view, filename, create_response, write_new_code_to_disk, **params):
     try:
-        final_result = dangerous_execute_code(code, request, view, create_response=create_response, args=params['args'], kwargs=params['kwargs'])
+        final_result = dangerous_execute_code(
+            code, request, view, create_response=create_response, args=params['args'], kwargs=params['kwargs']
+        )
 
         if orig_reload is not None:
             # A little monkey patch dance to avoid one reload of the runserver when it's just us writing the code to disk
             # This only works in django 2.2+
             def restore_auto_reload(filename):
                 from django.utils import autoreload
+
                 print('Skipped reload')
                 autoreload.trigger_reload = orig_reload
 
@@ -165,6 +172,7 @@ def live_edit_post_handler(request, code, view, filename, create_response, write
         return final_result
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         error = str(e)
         if not error:
@@ -174,6 +182,7 @@ def live_edit_post_handler(request, code, view, filename, create_response, write
 
 def write_new_code_to_disk_for_view(ast_of_entire_file, ast_of_old_code, code, filename, view, **_):
     import parso
+
     if isinstance(view, Part):
         ast_of_new_code = find_node(name=view.__class__.__name__, node=parso.parse(code), node_type='classdef')
     else:
@@ -238,7 +247,18 @@ def live_edit_view(request, view, args=None, kwargs=None):
     )
 
 
-def live_edit_view_impl(request, view, filename, build_params, get_code, create_response, write_new_code_to_disk, flow_direction, args, kwargs):
+def live_edit_view_impl(
+    request,
+    view,
+    filename,
+    build_params,
+    get_code,
+    create_response,
+    write_new_code_to_disk,
+    flow_direction,
+    args,
+    kwargs,
+):
     with open(filename) as f:
         entire_file = f.read()
 
@@ -309,11 +329,11 @@ def live_edit_view_impl(request, view, filename, build_params, get_code, create_
                 .container #editor_and_error {
                     flex: 2 1 auto;
                 }
-                
+
                 #editor {
                     height: 90% !important;
                 }
-                
+
                 #error {
                     height: 10% !important;
                 }
@@ -321,9 +341,7 @@ def live_edit_view_impl(request, view, filename, build_params, get_code, create_
                 '<<flow_direction>>', flow_direction
             ),
         ),
-
         iommi_style='bootstrap',
-
         parts__result=html.iframe(attrs__id='result'),
         parts__editor_and_error=html.div(
             attrs__id='editor_and_error',
@@ -413,6 +431,7 @@ def style_showcase(request, style=None, **_):
 
     if style is None:
         from iommi.style import DEFAULT_STYLE
+
         style = getattr(settings, 'IOMMI_DEFAULT_STYLE', DEFAULT_STYLE)
 
     class DummyRow:
@@ -423,6 +442,7 @@ def style_showcase(request, style=None, **_):
             _, _, shortcut = attr.partition('column_of_type_')
             s = f'{shortcut} #{self.idx}'
             if shortcut == 'link' or attr == 'link':
+
                 class Link:
                     def get_absolute_url(self):
                         return '#'
@@ -449,6 +469,7 @@ def style_showcase(request, style=None, **_):
         Table,
         Column,
     )
+
     return Page(
         iommi_style=style,
         parts=dict(
@@ -480,7 +501,16 @@ def style_showcase(request, style=None, **_):
                 model=User,
                 columns={
                     t.__name__: dict(call_target=t, display_name=t.__name__)
-                    for t in [Column.select, Column.edit, Column.delete, Column.boolean, Column.text, Column.number, Column.link, Column.icon]
+                    for t in [
+                        Column.select,
+                        Column.edit,
+                        Column.delete,
+                        Column.boolean,
+                        Column.text,
+                        Column.number,
+                        Column.link,
+                        Column.icon,
+                    ]
                 },
                 columns__text__filter__include=True,
                 columns__number__filter__include=True,
@@ -496,18 +526,17 @@ def style_editor__select(**_):
     from iommi import Form
     from iommi import Field
     from iommi import Action
+
     return Form(
         title='Select style to edit',
-        fields__name=Field.choice(
-            choices=[
-                k
-                for k, v in items(_styles)
-                if not v.internal
-            ]
-        ),
+        fields__name=Field.choice(choices=[k for k, v in items(_styles) if not v.internal]),
         actions__edit=Action.primary(
             display_name='Edit',
-            post_handler=lambda form, **_: HttpResponseRedirect(f'?_iommi_live_edit=style_editor__edit&name={form.fields.name.value}') if form.is_valid() else None,
+            post_handler=lambda form, **_: HttpResponseRedirect(
+                f'?_iommi_live_edit=style_editor__edit&name={form.fields.name.value}'
+            )
+            if form.is_valid()
+            else None,
         ),
         actions__new_style__attrs__href='?_iommi_live_edit=style_editor__new',
     )
@@ -521,10 +550,15 @@ def style_editor__edit(request, **_):
     filename = style._instantiated_at_frame.f_back.f_code.co_filename
 
     def create_response(view, local_variables, **_):
-        view._instantiated_at_frame = style._instantiated_at_frame  # otherwise we end up at <string> which is not what we want
+        view._instantiated_at_frame = (
+            style._instantiated_at_frame
+        )  # otherwise we end up at <string> which is not what we want
         style_editor_name = 'style_editor'
         with register_style(style_editor_name, style=local_variables[name], allow_overwrite=True):
-            return render_if_needed(request, style_showcase(request, style=style_editor_name))
+            return render_part(
+                request,
+                style_showcase(request, style=style_editor_name),
+            )
 
     def write_new_code_to_disk(code, **_):
         with open(filename, 'w') as f:
@@ -550,6 +584,7 @@ def style_editor__new(**_):
         Form,
         Field,
     )
+
     def new_style(form, **_):
         if not form.is_valid():
             return
@@ -561,7 +596,8 @@ def style_editor__new(**_):
             form.add_error(f'File {target_filename} already exists')
 
         with open(target_filename, 'w') as f:
-            f.write(f'''
+            f.write(
+                f'''
 from iommi.style import Style
 from iommi.style_base import base
 from iommi.asset import Asset
@@ -569,16 +605,19 @@ from iommi.asset import Asset
 {new} = Style(
     base,
 )
-''')
+'''
+            )
             return Page(
                 parts=dict(
                     title=Header('Style created... now what?'),
-                    message=html.p(f'''
-                    The style file was written to {target_filename}. 
-                    Now you need to register this style in order to edit it. This is
-                    typically done by adding `register_style('{new}')` into `on_ready`
-                    of your `AppConfig`.
-                    '''),
+                    message=html.p(
+                        f'''
+                            The style file was written to {target_filename}.
+                            Now you need to register this style in order to edit it. This is
+                            typically done by adding `register_style('{new}')` into `on_ready`
+                            of your `AppConfig`.
+                        '''
+                    ),
                     message2=html.p("When you've done that, you can proceed to "),
                     edit=html.a('edit it', attrs__href=f'?_iommi_live_edit=style_editor__edit&name={new}'),
                 ),
