@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from django.db import connection
 
 from docs.models import (
     Album,
@@ -35,6 +36,21 @@ def pytest_sessionstart(session):
     from iommi.docs import generate_api_docs_tests
 
     generate_api_docs_tests((Path(__file__).parent / 'docs').absolute())
+
+
+@pytest.fixture(autouse=True)
+def reset_sequences(request, django_db_blocker):
+    if request.node.get_closest_marker('django_db'):
+        with django_db_blocker.unblock():
+            cursor = connection.cursor()
+
+            # noinspection SqlResolve
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            for i, (table,) in enumerate(cursor.fetchall()):
+                cursor.execute(f"""
+                    INSERT INTO SQLITE_SEQUENCE (name,seq) SELECT '{table}', {(i + 1) * 1000} WHERE NOT EXISTS 
+                        (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);
+                    """)
 
 
 @pytest.fixture

@@ -215,8 +215,8 @@ def test_django_table():
     f1 = TFoo.objects.create(a=17, b="Hej")
     f2 = TFoo.objects.create(a=42, b="Hopp")
 
-    TBar(foo=f1, c=True).save()
-    TBar(foo=f2, c=False).save()
+    b1 = TBar.objects.create(foo=f1, c=True)
+    b2 = TBar.objects.create(foo=f2, c=False)
 
     class TestTable(Table):
         foo_a = Column.number(attr='foo__a')
@@ -242,7 +242,7 @@ def test_django_table():
     verify_table_html(
         table=t,
         # language=html
-        expected_html="""
+        expected_html=f"""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
@@ -258,13 +258,13 @@ def test_django_table():
                     </tr>
                 </thead>
                 <tbody>
-                    <tr data-pk="1">
+                    <tr data-pk="{b1.pk}">
                         <td class="rj"> 17 </td>
                         <td> Hej </td>
                         <td> Foo(17, Hej) </td>
 
                     </tr>
-                    <tr data-pk="2">
+                    <tr data-pk="{b2.pk}">
                         <td class="rj"> 42 </td>
                         <td> Hopp </td>
                         <td> Foo(42, Hopp) </td>
@@ -831,18 +831,21 @@ def test_django_table_pagination():
         a = Column.number(sortable=False)  # turn off sorting to not get the link with random query params
         b = Column(include=False)  # should still be able to filter on this though!
 
+
+    a, b, c, d = TFoo.objects.all().order_by('pk')[:4]
+
     verify_table_html(
         table=TestTable(rows=TFoo.objects.all().order_by('pk')),
         query=dict(page_size=2, page=1, query='b="foo"'),
         # language=html
-        expected_html="""
+        expected_html=f"""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr> <th class="first_column subheader"> A </th> </tr>
                 </thead>
                 <tbody>
-                    <tr data-pk="1"> <td class="rj"> 0 </td> </tr>
-                    <tr data-pk="2"> <td class="rj"> 1 </td> </tr>
+                    <tr data-pk="{a.pk}"> <td class="rj"> 0 </td> </tr>
+                    <tr data-pk="{b.pk}"> <td class="rj"> 1 </td> </tr>
                 </tbody>
             </table>
         """,
@@ -852,14 +855,14 @@ def test_django_table_pagination():
         table=TestTable(rows=TFoo.objects.all().order_by('pk')),
         query=dict(page_size=2, page=2, query='b="foo"'),
         # language=html
-        expected_html="""
+        expected_html=f"""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr> <th class="first_column subheader"> A </th> </tr>
                 </thead>
                 <tbody>
-                    <tr data-pk="3"> <td class="rj"> 2 </td> </tr>
-                    <tr data-pk="4"> <td class="rj"> 3 </td> </tr>
+                    <tr data-pk="{c.pk}"> <td class="rj"> 2 </td> </tr>
+                    <tr data-pk="{d.pk}"> <td class="rj"> 3 </td> </tr>
                 </tbody>
             </table>
         """,
@@ -878,15 +881,17 @@ def test_page_size():
 
         a = Column()
 
+    a, b, c, d = TFoo.objects.all()[:4]
+
     verify_table_html(
         table=TestTable(),
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="1"> <td> 0 </td> </tr>
-                <tr data-pk="2"> <td> 1 </td> </tr>
-                <tr data-pk="3"> <td> 2 </td> </tr>
+                <tr data-pk="{a.pk}"> <td> 0 </td> </tr>
+                <tr data-pk="{b.pk}"> <td> 1 </td> </tr>
+                <tr data-pk="{c.pk}"> <td> 2 </td> </tr>
             </tbody>
         """,
     )
@@ -896,10 +901,10 @@ def test_page_size():
         query=dict(page_size=2),
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="1"> <td> 0 </td> </tr>
-                <tr data-pk="2"> <td> 1 </td> </tr>
+                <tr data-pk="{a.pk}"> <td> 0 </td> </tr>
+                <tr data-pk="{b.pk}"> <td> 1 </td> </tr>
             </tbody>
         """,
     )
@@ -909,11 +914,11 @@ def test_page_size():
         query=dict(page_size='string'),
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="1"> <td> 0 </td> </tr>
-                <tr data-pk="2"> <td> 1 </td> </tr>
-                <tr data-pk="3"> <td> 2 </td> </tr>
+                <tr data-pk="{a.pk}"> <td> 0 </td> </tr>
+                <tr data-pk="{b.pk}"> <td> 1 </td> </tr>
+                <tr data-pk="{c.pk}"> <td> 2 </td> </tr>
             </tbody>
         """,
     )
@@ -929,8 +934,6 @@ def test_bulk_edit_table():
         TFoo.objects.create(a=3, b=""),
         TFoo.objects.create(a=4, b=""),
     ]
-
-    assert [x.pk for x in foos] == [1, 2, 3, 4]
 
     class TestTable(Table):
         a = Column.integer(
@@ -954,38 +957,38 @@ def test_bulk_edit_table():
     def post_bulk_edit(table, pks, queryset, updates, **_):
         assert isinstance(table, TestTable)
         assert isinstance(queryset, QuerySet)
-        assert {x.pk for x in queryset} == {1, 2}
-        assert set(pks) == {1, 2}
+        assert {x.pk for x in queryset} == {foos[0].pk, foos[1].pk}
+        assert set(pks) == {foos[0].pk, foos[1].pk}
         assert updates == dict(a=0, b='changed')
 
     # The most important part of the test: don't bulk update with an invalid form!
     t = TestTable(post_bulk_edit=post_bulk_edit).bind(
-        request=req('post', pk_1='', pk_2='', **{'bulk/a': 'asd', 'bulk/b': 'changed', '-bulk/submit': ''}),
+        request=req('post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': 'asd', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
     assert t.bulk._name == 'bulk'
     t.render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (1, 1, u''),
-        (2, 2, u''),
-        (3, 3, u''),
-        (4, 4, u''),
+        (foos[0].pk, 1, u''),
+        (foos[1].pk, 2, u''),
+        (foos[2].pk, 3, u''),
+        (foos[3].pk, 4, u''),
     ]
 
     # Now do the bulk update
     t = TestTable(post_bulk_edit=post_bulk_edit).bind(
-        request=req('post', pk_1='', pk_2='', **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
+        request=req('post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': '0', 'bulk/b': 'changed', '-bulk/submit': ''}),
     )
     assert t._is_bound
     assert t.bulk._name == 'bulk'
     t.render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (1, 0, u'changed'),
-        (2, 0, u'changed'),
-        (3, 3, u''),
-        (4, 4, u''),
+        (foos[0].pk, 0, u'changed'),
+        (foos[1].pk, 0, u'changed'),
+        (foos[2].pk, 3, u''),
+        (foos[3].pk, 4, u''),
     ]
 
     # Test that empty field means "no change", even with the form set to not parse empty as None
@@ -994,15 +997,15 @@ def test_bulk_edit_table():
         # bulk__fields__b__parse_empty_string_as_none=False,
         columns__b__bulk__parse_empty_string_as_none=False,
     ).bind(
-        request=req('post', pk_1='', pk_2='', **{'bulk/a': '', 'bulk/b': '', '-bulk/submit': ''}),
+        request=req('post', **{f'pk_{x.pk}': '' for x in foos[:2]}, **{'bulk/a': '', 'bulk/b': '', '-bulk/submit': ''}),
     )
     t.render_to_response()
     assert t.bulk.fields.b.value == ''
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (1, 0, u'changed'),
-        (2, 0, u'changed'),
-        (3, 3, u''),
-        (4, 4, u''),
+        (foos[0].pk, 0, u'changed'),
+        (foos[1].pk, 0, u'changed'),
+        (foos[2].pk, 3, u''),
+        (foos[3].pk, 4, u''),
     ]
 
     # Test edit all feature
@@ -1011,10 +1014,10 @@ def test_bulk_edit_table():
     ).render_to_response()
 
     assert [(x.pk, x.a, x.b) for x in TFoo.objects.all()] == [
-        (1, 11, u'changed2'),
-        (2, 11, u'changed2'),
-        (3, 11, u'changed2'),
-        (4, 11, u'changed2'),
+        (foos[0].pk, 11, u'changed2'),
+        (foos[1].pk, 11, u'changed2'),
+        (foos[2].pk, 11, u'changed2'),
+        (foos[3].pk, 11, u'changed2'),
     ]
 
 
@@ -1121,7 +1124,7 @@ def test_django_broken_update():
 def test_bulk_edit_with_annotate():
     assert TBar.objects.all().count() == 0
 
-    TBar.objects.create(
+    tbar = TBar.objects.create(
         c=False,
         foo=TFoo.objects.create(a=2, b=''),
     )
@@ -1140,7 +1143,7 @@ def test_bulk_edit_with_annotate():
         request=req(
             'post',
             **{
-                'pk_1': '',
+                f'pk_{tbar.pk}': '',
                 'bulk/c': 'True',
                 '-bulk/submit': '',
             },
@@ -1148,7 +1151,7 @@ def test_bulk_edit_with_annotate():
     ).render_to_response()
 
     x = TBar.objects.get()
-    assert (x.pk, x.c) == (1, True)
+    assert (x.pk, x.c) == (tbar.pk, True)
 
 
 @pytest.mark.django_db
@@ -1454,10 +1457,12 @@ def test_query_form_foo__exclude_label():
 def test_query_filtering():
     assert TFoo.objects.all().count() == 0
 
-    TFoo(a=1, b="foo").save()
-    TFoo(a=2, b="foo").save()
-    TFoo(a=3, b="bar").save()
-    TFoo(a=4, b="bar").save()
+    foos = [
+        TFoo.objects.create(a=1, b="foo"),
+        TFoo.objects.create(a=2, b="foo"),
+        TFoo.objects.create(a=3, b="bar"),
+        TFoo.objects.create(a=4, b="bar"),
+    ]
 
     class TestTable(Table):
         a = Column.number(
@@ -1481,9 +1486,9 @@ def test_query_filtering():
         query=dict(a='1'),
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="1">
+                <tr data-pk="{foos[0].pk}">
                     <td class="rj"> 1 </td>
                     <td> foo </td>
                 </tr>
@@ -1495,13 +1500,13 @@ def test_query_filtering():
         query=dict(b='bar'),
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="3">
+                <tr data-pk="{foos[2].pk}">
                     <td class="rj"> 3 </td>
                     <td> bar </td>
                 </tr>
-                <tr data-pk="4">
+                <tr data-pk="{foos[3].pk}">
                     <td class="rj"> 4 </td>
                     <td> bar </td>
                 </tr>
@@ -1513,13 +1518,13 @@ def test_query_filtering():
         query={t2.query.get_advanced_query_param(): 'b="bar"'},
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="3">
+                <tr data-pk="{foos[2].pk}">
                     <td class="rj"> 3 </td>
                     <td> bar </td>
                 </tr>
-                <tr data-pk="4">
+                <tr data-pk="{foos[3].pk}">
                     <td class="rj"> 4 </td>
                     <td> bar </td>
                 </tr>
@@ -1531,13 +1536,13 @@ def test_query_filtering():
         query=dict(b='fo'),
         find__name='tbody',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <tbody>
-                <tr data-pk="1">
+                <tr data-pk="{foos[0].pk}">
                     <td class="rj"> 1 </td>
                     <td> foo </td>
                 </tr>
-                <tr data-pk="2">
+                <tr data-pk="{foos[1].pk}">
                     <td class="rj"> 2 </td>
                     <td> foo </td>
                 </tr>
@@ -2166,7 +2171,7 @@ def test_ajax_endpoint():
     )
     assert json.loads(result.content) == {
         'results': [
-            {'id': 2, 'text': 'Foo(42, Hopp)'},
+            {'id': f2.pk, 'text': 'Foo(42, Hopp)'},
         ],
         'pagination': {'more': False},
         'page': 1,
@@ -2329,13 +2334,13 @@ def test_many_to_many():
     verify_table_html(
         table=Table(auto__model=TBaz),
         # language=html
-        expected_html="""
+        expected_html=f"""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
               <thead>
                   <tr> <th class="first_column subheader"> Foo </th> </tr>
               </thead>
               <tbody>
-                  <tr data-pk="1"> <td> Foo(17, Hej), Foo(23, Hopp) </td> </tr>
+                  <tr data-pk="{baz.pk}"> <td> Foo(17, Hej), Foo(23, Hopp) </td> </tr>
               </tbody>
             </table>
         """,
@@ -2344,7 +2349,7 @@ def test_many_to_many():
 
 @pytest.mark.django_db
 def test_preprocess_row():
-    TFoo.objects.create(a=1, b='d')
+    foo = TFoo.objects.create(a=1, b='d')
 
     def preprocess(row, **_):
         row.some_non_existent_property = 1
@@ -2360,7 +2365,7 @@ def test_preprocess_row():
     verify_table_html(
         table=PreprocessedTable(),
         # language=html
-        expected_html="""
+        expected_html=f"""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
@@ -2370,7 +2375,7 @@ def test_preprocess_row():
                     </tr>
                 </thead>
                 <tbody>
-                    <tr data-pk="1">
+                    <tr data-pk="{foo.pk}">
                         <td> 1 </td>
                     </tr>
                 </tbody>
@@ -2528,9 +2533,11 @@ def test_override_doesnt_stick():
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_new_style_ajax_dispatch():
-    TFoo.objects.create(a=1, b='A')
-    TFoo.objects.create(a=2, b='B')
-    TFoo.objects.create(a=3, b='C')
+    foos = [
+        TFoo.objects.create(a=1, b='A'),
+        TFoo.objects.create(a=2, b='B'),
+        TFoo.objects.create(a=3, b='C'),
+    ]
 
     def get_response(request):
         del request
@@ -2543,9 +2550,9 @@ def test_new_style_ajax_dispatch():
 
     assert json.loads(response.content) == {
         'results': [
-            {'id': 1, 'text': 'Foo(1, A)'},
-            {'id': 2, 'text': 'Foo(2, B)'},
-            {'id': 3, 'text': 'Foo(3, C)'},
+            {'id': foos[0].pk, 'text': 'Foo(1, A)'},
+            {'id': foos[1].pk, 'text': 'Foo(2, B)'},
+            {'id': foos[2].pk, 'text': 'Foo(3, C)'},
         ],
         'page': 1,
         'pagination': {'more': False},
@@ -3011,8 +3018,7 @@ def test_icon_value():
 
 @pytest.mark.django_db
 def test_no_dispatch_parameter_in_sorting_or_pagination_links():
-    for x in range(4):
-        TFoo(a=x, b="foo").save()
+    foos = [TFoo.objects.create(a=x, b="foo") for x in range(4)]
 
     class TestTable(Table):
         a = Column.number()
@@ -3022,7 +3028,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
         query={'page_size': 2, 'page': 1, 'query': 'b="foo"'},
         find__class='iommi-table-plus-paginator',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <div class="iommi-table-plus-paginator">
                 <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                     <thead>
@@ -3033,10 +3039,10 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                         </tr>
                     </thead>
                     <tbody>
-                        <tr data-pk="1">
+                        <tr data-pk="{foos[0].pk}">
                             <td class="rj"> 0 </td>
                         </tr>
-                        <tr data-pk="2">
+                        <tr data-pk="{foos[1].pk}">
                             <td class="rj"> 1 </td>
                         </tr>
                     </tbody>
@@ -3057,7 +3063,7 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
         query={'page_size': 2, 'page': 1, 'query': 'b="foo"', '/tbody': ''},
         find__class='iommi-table-plus-paginator',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <div class="iommi-table-plus-paginator">
                 <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                     <thead>
@@ -3068,10 +3074,10 @@ def test_no_dispatch_parameter_in_sorting_or_pagination_links():
                         </tr>
                     </thead>
                     <tbody>
-                        <tr data-pk="1">
+                        <tr data-pk="{foos[0].pk}">
                             <td class="rj"> 0 </td>
                         </tr>
-                        <tr data-pk="2">
+                        <tr data-pk="{foos[1].pk}">
                             <td class="rj"> 1 </td>
                         </tr>
                     </tbody>
@@ -3300,9 +3306,11 @@ def test_sort_list_bad_parameter():
 
 @pytest.mark.django_db
 def test_sort_django_table():
-    TFoo(a=4711, b="c").save()
-    TFoo(a=17, b="a").save()
-    TFoo(a=42, b="b").save()
+    foos = [
+        TFoo.objects.create(a=4711, b="c"),
+        TFoo.objects.create(a=17, b="a"),
+        TFoo.objects.create(a=42, b="b"),
+    ]
 
     class TestTable(Table):
         a = Column.number()
@@ -3312,7 +3320,7 @@ def test_sort_django_table():
         table=TestTable(rows=TFoo.objects.all()),
         query=dict(order='a'),
         # language=html
-        expected_html="""\
+        expected_html=f"""\
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
@@ -3321,15 +3329,15 @@ def test_sort_django_table():
                     </tr>
                 </thead>
                 <tbody>
-                    <tr data-pk="2">
+                    <tr data-pk="{foos[1].pk}">
                         <td class="rj"> 17 </td>
                         <td> a </td>
                     </tr>
-                    <tr data-pk="3">
+                    <tr data-pk="{foos[2].pk}">
                         <td class="rj"> 42 </td>
                         <td> b </td>
                     </tr>
-                    <tr data-pk="1">
+                    <tr data-pk="{foos[0].pk}">
                         <td class="rj"> 4711 </td>
                         <td> c </td>
                     </tr>
@@ -3343,7 +3351,7 @@ def test_sort_django_table():
         table=TestTable(rows=TFoo.objects.all()),
         query=dict(order='-a'),
         # language=html
-        expected_html="""\
+        expected_html=f"""\
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                  <thead>
                      <tr>
@@ -3352,15 +3360,15 @@ def test_sort_django_table():
                      </tr>
                  </thead>
                  <tbody>
-                     <tr data-pk="1">
+                     <tr data-pk="{foos[0].pk}">
                          <td class="rj"> 4711 </td>
                          <td> c </td>
                      </tr>
-                     <tr data-pk="3">
+                     <tr data-pk="{foos[2].pk}">
                          <td class="rj"> 42 </td>
                          <td> b </td>
                      </tr>
-                     <tr data-pk="2">
+                     <tr data-pk="{foos[1].pk}">
                          <td class="rj"> 17 </td>
                          <td> a </td>
                      </tr>
@@ -3450,15 +3458,17 @@ def test_sort_default_desc_already_sorted():
 
 @pytest.mark.django_db
 def test_sort_django_table_from_model():
-    TFoo(a=4711, b="c").save()
-    TFoo(a=17, b="a").save()
-    TFoo(a=42, b="b").save()
+    foos = [
+        TFoo.objects.create(a=4711, b="c"),
+        TFoo.objects.create(a=17, b="a"),
+        TFoo.objects.create(a=42, b="b"),
+    ]
 
     verify_table_html(
         table=Table(auto__rows=TFoo.objects.all()),
         query=dict(order='a'),
         # language=html
-        expected_html="""
+        expected_html=f"""
             <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
                 <thead>
                     <tr>
@@ -3467,15 +3477,15 @@ def test_sort_django_table_from_model():
                     </tr>
                 </thead>
                 <tbody>
-                    <tr data-pk="2">
+                    <tr data-pk="{foos[1].pk}">
                         <td class="rj"> 17 </td>
                         <td> a </td>
                     </tr>
-                    <tr data-pk="3">
+                    <tr data-pk="{foos[2].pk}">
                         <td class="rj"> 42 </td>
                         <td> b </td>
                     </tr>
-                    <tr data-pk="1">
+                    <tr data-pk="{foos[0].pk}">
                         <td class="rj"> 4711 </td>
                          <td> c </td>
                     </tr>
@@ -4092,8 +4102,7 @@ def test_filter_include_parts():
 
 @pytest.mark.django_db
 def test_table_tag_wrapper():
-    for x in range(4):
-        TFoo(a=x, b="foo").save()
+    foos = [TFoo.objects.create(a=x, b="foo") for x in range(4)]
 
     class TestTable(Table):
         a = Column.number()
@@ -4106,7 +4115,7 @@ def test_table_tag_wrapper():
         query={'page_size': 2, 'page': 1, 'query': 'b="foo"'},
         find__class='iommi-table-plus-paginator',
         # language=html
-        expected_html="""
+        expected_html=f"""
             <div class="iommi-table-plus-paginator">
                 <div class="foo">
                     <table class="table" data-endpoint="/endpoints/tbody" data-iommi-id="">
@@ -4118,10 +4127,10 @@ def test_table_tag_wrapper():
                             </tr>
                         </thead>
                         <tbody>
-                            <tr data-pk="1">
+                            <tr data-pk="{foos[0].pk}">
                                 <td class="rj"> 0 </td>
                             </tr>
-                            <tr data-pk="2">
+                            <tr data-pk="{foos[1].pk}">
                                 <td class="rj"> 1 </td>
                             </tr>
                         </tbody>

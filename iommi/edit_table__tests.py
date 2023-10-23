@@ -210,7 +210,7 @@ def test_edit_table_related_objects():
         request=req(
             'POST',
             **{
-                'columns/foo/1': str(baz.pk),
+                f'columns/foo/{baz.pk}': str(foo.pk),
                 '-actions/submit': '',
             },
         )
@@ -360,15 +360,17 @@ def test_edit_table_post_row_group(small_discography):
         request=req(
             'POST',
             **{
-                'columns/year/1': '1980',
-                'columns/year/2': '1979',
+                f'columns/year/{small_discography[0].pk}': '5',
+                f'columns/year/{small_discography[1].pk}': '7',
                 '-actions/submit': '',
             },
         )
     )
-    assert not edit_table.get_errors()
     response = bound.render_to_response()
-    assert response.status_code == 302
+    assert not edit_table.get_errors()
+    assert response.status_code == 302, response.content.decode()
+    assert Album.objects.get(pk=small_discography[0].pk).year == 5
+    assert Album.objects.get(pk=small_discography[1].pk).year == 7
 
 
 # TODO: attr=None on a column crashes

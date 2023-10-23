@@ -3239,10 +3239,10 @@ def test_delete_form_default_text():
     verify_part_html(
         part=Form.delete(instance=lambda **_: foo),
         # language=HTML
-        expected_html="""
+        expected_html=f"""
             <form action="" enctype="multipart/form-data" method="post">
                 <h1> Delete foo </h1>
-                <p> Are you sure you want to delete the foo "Foo object (1)"?</p>
+                <p> Are you sure you want to delete the foo "Foo object ({foo.pk})"?</p>
                 <div class="links">
                     <button accesskey="s" name="-submit"> Delete </button>
                 </div>
