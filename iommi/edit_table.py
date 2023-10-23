@@ -22,6 +22,7 @@ from iommi.base import (
     NOT_BOUND_MESSAGE,
     values,
 )
+from iommi.declarative.dispatch import dispatch
 from iommi.declarative.namespace import (
     EMPTY,
     Namespace,
@@ -34,6 +35,7 @@ from iommi.endpoint import (
 from iommi.form import (
     Field,
     Form,
+    FULL_FORM_FROM_REQUEST,
 )
 from iommi.fragment import (
     Fragment,
@@ -114,9 +116,6 @@ class EditCells(Cells):
     def iter_editable_cells(self):
         table = self.iommi_evaluate_parameters()['table']
         for column in values(table.columns):
-            if not column.render_column:
-                continue
-
             field = self.get_field(column)
             if not field:
                 continue
@@ -177,12 +176,25 @@ class EditColumn(Column):
         setdefaults_path(kwargs, dict(cell__value=cell__value))
         return cls(**kwargs)
 
+    @classmethod
+    @dispatch(
+        edit=EMPTY,
+    )
+    def hardcoded(cls, **kwargs):
+        assert 'parsed_data' in kwargs['edit'], 'Specify a hardcoded value by specifying `edit__parsed_data` as a callable'
+        return cls(**kwargs)
+
 
 def edit_table__post_handler(table, request, **_):
     # 1. Validate all the fields
     table.edit_errors = defaultdict(set)
     table.create_errors = defaultdict(set)
     parsed_data = {}
+
+    assert table.edit_form._is_bound
+    assert table.create_form._is_bound
+    table.edit_form.mode = FULL_FORM_FROM_REQUEST
+    table.create_form.mode = FULL_FORM_FROM_REQUEST
 
     def validate(cells_iterator, form, errors):
         for cells in cells_iterator:
@@ -438,6 +450,7 @@ class EditTable(Table):
             .bind(parent=self.create_form)
             .__html__()
         )
+
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors
