@@ -1,6 +1,19 @@
 Changelog
 ---------
 
+6.3.0 (2023-09-26)
+~~~~~~~~~~~~~~~~~~
+
+* Edit table: support non-rendered and hardcoded column
+
+* Improvements to transaction handling in the middleware: The middleware should have the same atomic behaviour as django BaseHandler.make_view_atomic
+
+* You can now use iommi's profiler on form POST requests. Click the "Profile POST" button then press submit on the form you wish to profile.
+
+* Tables/queries: Filtering on numbers broken
+
+* Fixed bootstrap styling to style numeric input as right aligned
+
 
 6.2.0 (2023-09-26)
 ~~~~~~~~~~~~~~~~~~

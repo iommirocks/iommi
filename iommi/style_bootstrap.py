@@ -85,6 +85,7 @@ bootstrap_base = Style(
                     'form-control': False,
                 },
             ),
+            number__input__attrs__class={'text-right': True},
         ),
         attrs__class={
             'form-group': True,
