@@ -103,6 +103,7 @@ from iommi.from_model import (
     NoRegisteredSearchFieldException,
 )
 from iommi.member import (
+    bind_member,
     bind_members,
     refine_done_members,
 )
@@ -390,8 +391,8 @@ datetime_iso_formats = [
 def datetime_parse(string_value, traversable=None, **_):
     def make_tz_aware_when_needed(value):
         if traversable is not None and evaluate_strict(
-                traversable.extra_evaluated.is_tz_aware,
-                **traversable.iommi_evaluate_parameters()
+            traversable.extra_evaluated.is_tz_aware,
+            **traversable.iommi_evaluate_parameters(),
         ):
             return timezone.make_aware(value)
         return value
@@ -417,10 +418,8 @@ def datetime_parse(string_value, traversable=None, **_):
 
 
 def datetime_render_value(field, value, **_):
-    if field is not None and evaluate_strict(
-            field.extra_evaluated.is_tz_aware,
-            **field.iommi_evaluate_parameters()
-    ):
+    is_tz_aware = evaluate_strict(field.extra_evaluated.is_tz_aware, **field.iommi_evaluate_parameters())
+    if field is not None and is_tz_aware:
         dt = timezone.localtime(value)
     else:
         dt = value
@@ -475,9 +474,7 @@ def time_parse(string_value, **_):
             pass
     formats = ', '.join('"%s"' % x for x in time_iso_formats)
     raise ValidationError(
-        gettext(
-            'Time data "{string_value}" does not match any of the formats "now" or {formats}'
-        ).format(
+        gettext('Time data "{string_value}" does not match any of the formats "now" or {formats}').format(
             string_value=string_value,
             formats=formats,
         )
@@ -492,7 +489,9 @@ def decimal_parse(string_value, **_):
     try:
         return Decimal(string_value)
     except InvalidOperation:
-        raise ValidationError(gettext("Invalid literal for Decimal: '{string_value}'").format(string_value=string_value))
+        raise ValidationError(
+            gettext("Invalid literal for Decimal: '{string_value}'").format(string_value=string_value)
+        )
 
 
 def url_parse(string_value, field=None, **_):
@@ -515,7 +514,9 @@ def email_parse(string_value, field=None, **_):
 def phone_number_is_valid(parsed_data, **_):
     return (
         re.match(r'^\+\d{1,3}(([ \-])?\(\d+\))?(([ \-])?\d+)+$', parsed_data, re.IGNORECASE),
-        gettext('Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'),
+        gettext(
+            'Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) 123 4567 or +1 212 123 4567'
+        ),
     )
 
 
@@ -822,10 +823,9 @@ class Field(Part, Tag):
 
             self._validate()
 
-        if self.editable:
-            self.input = self.input.bind(parent=self)
-        else:
-            self.input = self.non_editable_input.bind(parent=self)
+        if not self.editable:
+            self.input = self.non_editable_input
+        bind_member(self, name='input')
 
         if self.is_boolean:
             if 'checked' not in self.input.attrs and self.value:
@@ -858,16 +858,21 @@ class Field(Part, Tag):
 
         self.bind_from_instance()
 
-        self.label = self.label.bind(parent=self)
+        bind_member(self, name='label')
         if self.label is not None:
             assert not self.label.children
-            self.label.children = dict(text=evaluate_strict(self.display_name, **self.iommi_evaluate_parameters()))
+            self.label.children = dict(
+                text=evaluate_strict(
+                    self.display_name,
+                    **self.iommi_evaluate_parameters(),
+                )
+            )
         if self.display_name is None:
             self.label = None
 
-        self.non_editable_input = self.non_editable_input.bind(parent=self)
+        bind_member(self, name='non_editable_input')
 
-        self.help = self.help.bind(parent=self)
+        bind_member(self, name='help')
         if self.help is not None:
             help_text = evaluate_strict(self.help_text, **self.iommi_evaluate_parameters())
             self.help.children = dict(text=help_text)
@@ -1077,7 +1082,11 @@ class Field(Part, Tag):
     def __html__(self, *, render=None):
         assert not render
         if self.template:
-            return render_template(self.get_request(), self.template, self.iommi_evaluate_parameters())
+            return render_template(
+                self.get_request(),
+                self.template,
+                self.iommi_evaluate_parameters(),
+            )
 
         f = Fragment(
             _name=self._name,
@@ -1397,6 +1406,7 @@ class Field(Part, Tag):
     )
     def hardcoded(cls, **kwargs):
         return cls(**kwargs)
+
 
 def is_django_promise_with_string_proxy(redirect_to):
     return (
@@ -1900,7 +1910,7 @@ class Form(Part):
             html = render_template(request=self.get_request(), template=self.fields_template, context=context)
 
         if hidden_fields:
-            html = format_html('{}\n' * (len(hidden_fields)+1), html, *hidden_fields)
+            html = format_html('{}\n' * (len(hidden_fields) + 1), html, *hidden_fields)
 
         return html
 

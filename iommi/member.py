@@ -184,6 +184,13 @@ def bind_members(container: Traversable, *, name: str, lazy=True) -> None:
         _force_bind_all(m._bound_members)
 
 
+def bind_member(container, *, name: str) -> None:
+    bound_member = getattr(container, name).bind(parent=container)
+    setattr(container, name, bound_member)
+    if bound_member is not None:
+        setattr(container._bound_members, name, bound_member)
+
+
 class ForbiddenNamesException(Exception):
     pass
 
@@ -262,7 +269,6 @@ class MemberBinder(dict):
 # noinspection PyCallByClass
 def _force_bind(member_binder: MemberBinder, name: str):
     if name not in member_binder:
-
         _parent = object.__getattribute__(member_binder, '_parent')
         _bindable_names = object.__getattribute__(member_binder, '_bindable_names')
         _declared_members = object.__getattribute__(member_binder, '_declared_members')

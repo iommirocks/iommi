@@ -89,6 +89,7 @@ from iommi.from_model import (
     NoRegisteredSearchFieldException,
 )
 from iommi.member import (
+    bind_member,
     bind_members,
     refine_done_members,
 )
@@ -805,12 +806,9 @@ class Query(Part):
 
         bind_members(self, name='endpoints')
 
-        self.form = self.form.bind(parent=self)
-        self._bound_members.form = self.form
-
-        self.advanced = self._bound_members.advanced = self.advanced.bind(parent=self)
-
-        self.form_container = self.form_container.bind(parent=self)
+        bind_member(self, name='form')
+        bind_member(self, name='advanced')
+        bind_member(self, name='form_container')
 
         self.filter_name_by_query_name = {x.query_name: name for name, x in items(self.filters)}
 

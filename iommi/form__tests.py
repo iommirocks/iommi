@@ -54,11 +54,11 @@ from iommi.endpoint import (
 from iommi.form import (
     bool_parse,
     boolean_tristate__parse,
+    choice_parse,
     create_or_edit_object_redirect,
     date_parse,
     datetime_iso_formats,
     datetime_parse,
-    datetime_render_value,
     decimal_parse,
     email_parse,
     Field,
@@ -72,7 +72,6 @@ from iommi.form import (
     render_template,
     time_parse,
     url_parse,
-    choice_parse,
 )
 from iommi.from_model import (
     member_from_model,
@@ -86,7 +85,6 @@ from iommi.shortcut import (
     with_defaults,
 )
 from iommi.struct import (
-    merged,
     Struct,
 )
 from tests.compat import RequestFactory
@@ -109,8 +107,8 @@ from tests.models import (
     TBar,
     TBaz,
     TFoo,
-    UniqueConstraintTest,
     UniqueConstraintAlternativeTest,
+    UniqueConstraintTest,
 )
 
 
@@ -170,7 +168,8 @@ def test_field_repr():
     assert repr(Field(_name='foo')) == "<iommi.form.Field foo>"
     assert (
         repr(Form(fields__foo=Field()).bind(request=None).fields.foo)
-        == "<iommi.form.Field foo (bound) path:'foo' members:['endpoints', 'assets']>"
+        == "<iommi.form.Field foo (bound) path:'foo' members:['input', 'label', "
+        "'non_editable_input', 'help', 'endpoints', 'assets']>"
     )
 
 
@@ -2287,7 +2286,7 @@ def test_choice_post_validation_chains_empty_choice_when_required_false():
 
 def test_choice_parse_empty_string_as_none():
     form = Form(
-        fields__foo = Field.choice(
+        fields__foo=Field.choice(
             choices=["foo", "bar"],
             choice_display_name_formatter=lambda choice, **_: choice.title(),
         )
@@ -2295,7 +2294,7 @@ def test_choice_parse_empty_string_as_none():
     assert choice_parse(form, form.fields.foo, '') is None
 
     form = Form(
-        fields__foo = Field.choice(
+        fields__foo=Field.choice(
             choices=["foo", "bar"],
             choice_display_name_formatter=lambda choice, **_: choice.title(),
             parse_empty_string_as_none=False,
@@ -2472,13 +2471,16 @@ def test_datetime_parse():
 @override_settings(USE_TZ=True, TIME_ZONE="Europe/Prague")
 def test_datetime_render_value():
     form = Form(
-        fields__foo=Field.datetime(initial=timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5)))
+        fields__foo=Field.datetime(initial=timezone.make_aware(datetime(2020, 1, 2, 3, 4, 5))),
     ).bind(request=None)
 
     assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
 
     form = Form(
-        fields__foo=Field.datetime(initial=datetime(2020, 1, 2, 3, 4, 5), extra_evaluated__is_tz_aware=lambda **_: False)
+        fields__foo=Field.datetime(
+            initial=datetime(2020, 1, 2, 3, 4, 5),
+            extra_evaluated__is_tz_aware=lambda **_: False,
+        )
     ).bind(request=None)
 
     assert form.fields.foo.rendered_value == '2020-01-02 03:04:05'
@@ -2897,7 +2899,10 @@ def test_edit_object_foreign_related_attribute():
     )
 
     request = req('get')
-    form = Form.edit(auto__instance=instance, auto__include=['f_foreign_key__foo'])
+    form = Form.edit(
+        auto__instance=instance,
+        auto__include=['f_foreign_key__foo'],
+    )
 
     form = form.bind(request=request)
     response = form.__html__(
@@ -2914,7 +2919,10 @@ def test_edit_object_foreign_related_attribute():
             '-submit': '',
         },
     )
-    form = Form.edit(auto__instance=instance, auto__include=['f_foreign_key__foo'])
+    form = Form.edit(
+        auto__instance=instance,
+        auto__include=['f_foreign_key__foo'],
+    )
     form = form.bind(request=request)
     assert form.mode == FULL_FORM_FROM_REQUEST
     response = form.render_to_response()
@@ -3012,16 +3020,22 @@ def test_unique_constraint_violation(unique_model):
 @pytest.mark.parametrize("unique_model", (UniqueConstraintTest, UniqueConstraintAlternativeTest))
 def test_unique_constraint_violation_edit(unique_model):
     form = Form.create(auto__model=unique_model)
-    form.bind(request=req('post', f_int='3', f_float='5.1', f_bool='True', **{'-submit': ''})).render_to_response()
+    form.bind(
+        request=req('post', f_int='3', f_float='5.1', f_bool='True', **{'-submit': ''}),
+    ).render_to_response()
 
-    form.bind(request=req('post', f_int='3', f_float='5.1', f_bool='False', **{'-submit': ''})).render_to_response()
+    form.bind(
+        request=req('post', f_int='3', f_float='5.1', f_bool='False', **{'-submit': ''}),
+    ).render_to_response()
 
     assert unique_model.objects.all().count() == 2
 
     instance = unique_model.objects.get(f_bool=False)
 
     form = Form.edit(auto__instance=instance)
-    bound_form = form.bind(request=req('post', f_int='3', f_float='5.1', f_bool='True', **{'-submit': ''}))
+    bound_form = form.bind(
+        request=req('post', f_int='3', f_float='5.1', f_bool='True', **{'-submit': ''}),
+    )
     bound_form.render_to_response()
 
     assert bound_form.is_valid() is False
@@ -3697,7 +3711,8 @@ def test_bootstrap_crash_when_no_iommi_name_on_field_group(settings):
 def test_render_fields_template():
     class MyForm(Form):
         class Meta:
-            fields_template = Template('''
+            fields_template = Template(
+                '''
             {{ fields.test_hidden.input }}
             <div class="row">
                 <div class="col">
@@ -3708,7 +3723,8 @@ def test_render_fields_template():
                 </div>
             </div>
             {{ fields.comment }}
-            ''')
+            '''
+            )
 
         name = Field()
         email = Field()
