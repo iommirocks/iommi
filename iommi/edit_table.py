@@ -225,6 +225,7 @@ def edit_table__post_handler(table, request, **_):
         table.bulk_queryset(prefix=prefix).delete()
 
     def save(cells_iterator, form):
+        to_save = []
         for cells in cells_iterator:
             if not isinstance(cells, EditCells):
                 continue
@@ -243,6 +244,10 @@ def edit_table__post_handler(table, request, **_):
                     if not field.extra.get('django_related_field', False):
                         attrs_to_save.append(field.attr)
 
+            to_save.append((instance, attrs_to_save))
+
+        to_save.sort(key=lambda x: abs(x[0].pk))
+        for instance, attrs_to_save in to_save:
             if instance.pk is not None and instance.pk < 0:
                 instance.pk = None
             if instance.pk is None:

@@ -339,6 +339,8 @@ def test_edit_table_post_create_hardcoded():
                 f'columns/a/{foo.pk}': f'2',
                 f'columns/b/{foo.pk}': 'hardcoded column should be ignored',
                 # create
+                'columns/a/-2': f'4',
+                'columns/b/-2': 'hardcoded column should be ignored',
                 'columns/a/-1': f'3',
                 'columns/b/-1': 'hardcoded column should be ignored',
                 '-actions/submit': '',
@@ -351,10 +353,11 @@ def test_edit_table_post_create_hardcoded():
 
     assert [
         dict(a=x.a, b=x.b)
-        for x in TFoo.objects.all()
+        for x in TFoo.objects.all().order_by('pk')
     ] == [
         dict(a=2, b='asd'),
         dict(a=3, b='hardcoded'),
+        dict(a=4, b='hardcoded'),
     ]
 
 
