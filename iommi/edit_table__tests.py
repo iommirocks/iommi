@@ -37,8 +37,7 @@ def test_no_longer_experimental():
         import iommi.experimental.edit_table  # noqa
 
 
-@pytest.mark.django_db
-def test_edit_table():
+def test_edit_table_rendering():
     edit_table = EditTable(
         sortable=False,
         columns=dict(
@@ -320,6 +319,43 @@ def test_edit_table_post_create():
     assert obj.pk >= 0
     assert obj.foo.pk == foo_pk
     assert obj.c is True
+
+
+@pytest.mark.django_db
+def test_edit_table_post_create_hardcoded():
+    foo = TFoo.objects.create(a=1, b='asd')
+    edit_table = EditTable(
+        auto__model=TFoo,
+        columns__a__edit__include=True,
+        columns__b=EditColumn.hardcoded(edit__parsed_data=lambda **_: 'hardcoded'),
+    ).refine_done()
+    assert edit_table.bind().actions.submit.iommi_path == 'actions/submit'
+
+    edit_table = edit_table.bind(
+        request=req(
+            'POST',
+            **{
+                # edit
+                f'columns/a/{foo.pk}': f'2',
+                f'columns/b/{foo.pk}': 'hardcoded column should be ignored',
+                # create
+                'columns/a/-1': f'3',
+                'columns/b/-1': 'hardcoded column should be ignored',
+                '-actions/submit': '',
+            },
+        )
+    )
+    assert not edit_table.get_errors()
+    response = edit_table.render_to_response()
+    assert response.status_code == 302
+
+    assert [
+        dict(a=x.a, b=x.b)
+        for x in TFoo.objects.all()
+    ] == [
+        dict(a=2, b='asd'),
+        dict(a=3, b='hardcoded'),
+    ]
 
 
 @pytest.mark.django_db
