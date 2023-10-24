@@ -40,6 +40,7 @@ from iommi.form import (
 from iommi.fragment import (
     Fragment,
 )
+from iommi.member import bind_member
 from iommi.refinable import (
     Refinable,
     refinable,
@@ -181,7 +182,9 @@ class EditColumn(Column):
         edit=EMPTY,
     )
     def hardcoded(cls, **kwargs):
-        assert 'parsed_data' in kwargs['edit'], 'Specify a hardcoded value by specifying `edit__parsed_data` as a callable'
+        assert (
+            'parsed_data' in kwargs['edit']
+        ), 'Specify a hardcoded value by specifying `edit__parsed_data` as a callable'
         return cls(**kwargs)
 
 
@@ -433,10 +436,8 @@ class EditTable(Table):
 
     def on_bind(self) -> None:
         super(EditTable, self).on_bind()
-        self.edit_form = self.edit_form.bind(parent=self)
-        self._bound_members.edit_form = self.edit_form
-        self.create_form = self.create_form.bind(parent=self)
-        self._bound_members.create_form = self.create_form
+        bind_member(self, name='edit_form')
+        bind_member(self, name='create_form')
 
         # If this is a nested form register it with the parent, need
         # to do this early because is_target needs self.parent_form
@@ -455,7 +456,6 @@ class EditTable(Table):
             .bind(parent=self.create_form)
             .__html__()
         )
-
 
     def is_valid(self):
         return not self.edit_errors and not self.create_errors

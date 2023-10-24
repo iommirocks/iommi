@@ -111,6 +111,7 @@ from iommi.from_model import (
     NoRegisteredSearchFieldException,
 )
 from iommi.member import (
+    bind_member,
     bind_members,
     refine_done_members,
 )
@@ -2057,13 +2058,13 @@ class Table(Part, Tag):
         self.title = evaluate_strict(self.title, **self.iommi_evaluate_parameters())
         build_and_bind_h_tag(self)
 
-        self.tbody = self.tbody(_name='tbody', children__text=_Lazy_tbody(self)).bind(parent=self)
-        self.container = self.container.bind(parent=self)
-        self.table_tag_wrapper = self.table_tag_wrapper.bind(parent=self)
+        self.tbody = self.tbody(_name='tbody', children__text=_Lazy_tbody(self))
+        bind_member(self, name='tbody')
 
-        self.outer = self.outer.bind(parent=self)
-
-        self.header = self.header.bind(parent=self)
+        bind_member(self, name='container')
+        bind_member(self, name='table_tag_wrapper')
+        bind_member(self, name='outer')
+        bind_member(self, name='header')
 
         # needs to be done first because _bind_headers depends on it
         evaluate_member(self, 'sortable', **self.iommi_evaluate_parameters())
@@ -2111,7 +2112,7 @@ class Table(Part, Tag):
                 self.sorted_and_filtered_rows = self.sorted_and_filtered_rows.select_related(*select)
                 self.rows = self.sorted_and_filtered_rows
 
-        self.bulk_container = self.bulk_container.bind(parent=self)
+        bind_member(self, name='bulk_container')
 
     def get_visible_rows(self):
         self.visible_rows = self.parts.page.rows
@@ -2127,8 +2128,7 @@ class Table(Part, Tag):
         if self.query is None:
             return
 
-        self.query = self.query.bind(parent=self)
-        self._bound_members.query = self.query
+        bind_member(self, name='query')
 
         if self.query is not None:
             self.sorted_and_filtered_rows = self.invoke_callback(
@@ -2143,7 +2143,7 @@ class Table(Part, Tag):
         if self.bulk is None:
             return
 
-        self.bulk = self.bulk.bind(parent=self)
+        bind_member(self, name='bulk')
         if self.bulk is not None:
             if self.bulk.actions:
                 self._bound_members.bulk = self.bulk

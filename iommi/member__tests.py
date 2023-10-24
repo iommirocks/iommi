@@ -8,9 +8,17 @@ from iommi import (
     Style,
 )
 from iommi.declarative.with_meta import with_meta
-from iommi.member import ForbiddenNamesException
+from iommi.endpoint import (
+    DISPATCH_PATH_SEPARATOR,
+    find_target,
+)
+from iommi.member import (
+    bind_member,
+    ForbiddenNamesException,
+)
 from iommi.refinable import Refinable
 from iommi.shortcut import with_defaults
+from iommi.traversable import Traversable
 from tests.helpers import (
     Basket,
     Fruit,
@@ -402,3 +410,20 @@ def test_partial_refine_done():
             </div>
         ''',
     ),
+
+
+def test_bind_single_member():
+    class Lid(Traversable):
+        pass
+
+    class MyBasket(Basket):
+        lid: Lid = Refinable()
+
+        def on_bind(self):
+            super().on_bind()
+            bind_member(self, name='lid')
+
+    basket = MyBasket(lid=Lid(_name='lid')).bind()
+
+    lid_path = DISPATCH_PATH_SEPARATOR + basket.lid.iommi_path
+    assert find_target(path=lid_path, root=basket) == basket.lid

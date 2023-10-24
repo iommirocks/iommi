@@ -30,6 +30,7 @@ from iommi.evaluate import (
     find_static_items,
 )
 from iommi.member import (
+    bind_member,
     bind_members,
     refine_done_members,
 )
@@ -43,7 +44,6 @@ from iommi.part import (
 from iommi.refinable import (
     EvaluatedRefinable,
     Prio,
-    Refinable,
     RefinableMembers,
     SpecialEvaluatedRefinable,
 )
@@ -264,11 +264,12 @@ def build_and_bind_h_tag(p):
             p.h_tag = p.h_tag(
                 _name='h_tag',
                 children__text=capitalize(evaluate_strict(p.title, **p.iommi_evaluate_parameters())),
-            ).bind(parent=p)
+            )
+            bind_member(p, name='h_tag')
         else:
             p.h_tag = ''
     elif p.h_tag is not None:
-        p.h_tag = p.h_tag.bind(parent=p)
+        bind_member(p, name='h_tag')
         p.h_tag._name = 'h_tag'
 
     if p.h_tag is None:
