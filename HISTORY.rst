@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-6.3.0 (2023-09-26)
+6.3.0 (2023-10-24)
 ~~~~~~~~~~~~~~~~~~
 
 * Edit table: support non-rendered and hardcoded column
