@@ -34,18 +34,10 @@ class Struct(dict):
     __str__ = __repr__
 
     def __getattribute__(self, item):
-        if not dict.__contains__(self, item):
-            try:
-                return object.__getattribute__(self, item)
-            except AttributeError as e:
-                try:
-                    missing_ = object.__getattribute__(self, '__missing__')
-                except AttributeError:
-                    pass
-                else:
-                    return missing_.__get__(self)(item)
-                raise e
         return dict.__getitem__(self, item)
+
+    def __missing__(self, item):
+        return object.__getattribute__(self, item)
 
     def __setattr__(self, key, value):
         self[key] = value
