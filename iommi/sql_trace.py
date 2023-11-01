@@ -349,10 +349,27 @@ def sql_debug_total_time():
     return sum(x['duration'] for x in log)
 
 
+def get_line_cached_on_request(file_name, line):
+    request = get_current_request()
+
+    if not request:
+        return linecache.getline(file_name, line)
+
+    if not hasattr(request, '_iommi_line_cache'):
+        request._iommi_line_cache = {}
+
+    if file_name not in request._iommi_line_cache:
+        request._iommi_line_cache[file_name] = linecache.getlines(file_name)
+
+    if not request._iommi_line_cache[file_name]:
+        return ''
+    return request._iommi_line_cache[file_name][line - 1]
+
+
 def format_clickable_filename(file_name, line, fn, extra=None):
     if not extra:
         if line is not None:
-            extra = linecache.getline(file_name, line)
+            extra = get_line_cached_on_request(file_name, line)
 
     if extra is None:
         extra = '<unknown>'
