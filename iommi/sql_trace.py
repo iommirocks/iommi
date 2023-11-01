@@ -362,7 +362,7 @@ def get_line_cached_on_request(file_name, line):
         request._iommi_line_cache[file_name] = linecache.getlines(file_name)
 
     if not request._iommi_line_cache[file_name]:
-        return None
+        return ''
     return request._iommi_line_cache[file_name][line - 1]
 
 
