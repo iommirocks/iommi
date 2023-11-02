@@ -34,6 +34,13 @@ def test_get_item():
     assert 1 == s.get('a')
 
 
+def test_get_item_missing_key():
+    with pytest.raises(KeyError) as e:
+        _ = Struct()['a']
+    assert isinstance(e.value, KeyError)
+    assert e.value.args == ('a',)
+
+
 def test_get_attr_broken_shadow():
     # This is mostly to document the somewhat quirky behavior when shadowing __getitem__
     class MyStruct(Struct):
