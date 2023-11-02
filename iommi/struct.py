@@ -33,14 +33,11 @@ class Struct(dict):
 
     __str__ = __repr__
 
-    def __getattribute__(self, item):
-        return dict.__getitem__(self, item)
+    __getattribute__ = dict.__getitem__
 
-    def __missing__(self, item):
-        return object.__getattribute__(self, item)
+    __missing__ = object.__getattribute__
 
-    def __setattr__(self, key, value):
-        self[key] = value
+    __setattr__ = dict.__setitem__
 
     def __delattr__(self, item):
         try:
