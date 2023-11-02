@@ -33,9 +33,12 @@ class Struct(dict):
 
     __str__ = __repr__
 
-    __getattribute__ = dict.__getitem__
-
-    __missing__ = object.__getattribute__
+    def __getattribute__(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            pass
+        return object.__getattribute__(self, item)
 
     __setattr__ = dict.__setitem__
 
