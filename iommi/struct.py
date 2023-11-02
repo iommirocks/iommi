@@ -37,8 +37,7 @@ class Struct(dict):
 
     __missing__ = object.__getattribute__
 
-    def __setattr__(self, key, value):
-        self[key] = value
+    __setattr__ = dict.__setitem__
 
     def __delattr__(self, item):
         try:
