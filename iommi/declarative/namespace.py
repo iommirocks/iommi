@@ -11,7 +11,7 @@ def _get_type_of_namespace(dict_value):
         return Namespace
 
 
-class Namespace(Struct):
+class Namespace(dict):
     """
     Namespace represents a structure of nested dicts. It behaves like a regular
     dictionary, with the added feature that values at nested levels can be set via
@@ -36,6 +36,21 @@ class Namespace(Struct):
                 self.setitem_path(path, value)
         for path, value in dict.items(kwargs):
             self.setitem_path(path, value)
+
+    __slots__ = ('_static_items',)
+    __getattribute__ = dict.__getitem__
+    __missing__ = object.__getattribute__
+    __setattr__ = dict.__setitem__
+
+    def __delattr__(self, item):
+        try:
+            del self[item]
+        except KeyError:
+            object.__delattr__(self, item)
+
+    def copy(self):
+        return type(self)(self)
+
 
     def setitem_path(self, path, value):
         key, delimiter, rest_path = path.partition('__')

@@ -38,7 +38,16 @@ class Struct(dict):
             return dict.__getitem__(self, item)
         except KeyError:
             pass
-        return object.__getattribute__(self, item)
+        try:
+            return object.__getattribute__(self, item)
+        except AttributeError as e:
+            try:
+                missing_ = object.__getattribute__(self, '__missing__')
+            except AttributeError:
+                pass
+            else:
+                return missing_.__get__(self)(item)
+            raise e
 
     __setattr__ = dict.__setitem__
 
