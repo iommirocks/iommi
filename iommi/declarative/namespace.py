@@ -37,6 +37,10 @@ class Namespace(Struct):
         for path, value in dict.items(kwargs):
             self.setitem_path(path, value)
 
+    __getattribute__ = dict.__getitem__
+    __missing__ = object.__getattribute__
+    __setattr__ = dict.__setitem__
+
     def setitem_path(self, path, value):
         key, delimiter, rest_path = path.partition('__')
         existing = Struct.get(self, key)
