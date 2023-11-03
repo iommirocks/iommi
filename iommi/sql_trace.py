@@ -408,8 +408,6 @@ def sql_debug_format_stack_trace(frame):
             continue
 
         file_name, line, fn = frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name
-
-        file_name = file_name.replace(base_path, '')
         extra = ''
         if fn == '_resolve_lookup':
             f = frame
