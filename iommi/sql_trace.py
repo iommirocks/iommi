@@ -388,7 +388,7 @@ def sql_debug_format_stack_trace(frame):
         return None
 
     base_path = os.path.abspath(os.path.join(settings.BASE_DIR, '..')) + "/"
-    msg = []
+    lines = []
     skip_template_code = False
 
     def skip_line(frame):
@@ -398,6 +398,8 @@ def sql_debug_format_stack_trace(frame):
             or 'django/core' in filename
             or 'pydev/pydevd' in filename
             or 'gunicorn' in filename
+            or 'iommi/iommi/declarative/dispatch.py' in filename
+            or 'iommi/iommi/member.py' in filename
         )
 
     while frame:
@@ -423,11 +425,11 @@ def sql_debug_format_stack_trace(frame):
         elif skip_template_code:
             skip_template_code = False
 
-        msg.append(format_clickable_filename(file_name, line, fn, extra))
+        lines.append(format_clickable_filename(file_name, line, fn, extra))
 
         frame = frame.f_back
 
-    stack = "\n".join(msg[-20:]).rstrip()
+    stack = "\n".join(lines).rstrip()
     return stack
 
 
