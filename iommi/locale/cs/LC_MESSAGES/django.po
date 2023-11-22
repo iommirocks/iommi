@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-11 11:20+0200\n"
+"POT-Creation-Date: 2023-11-22 09:51+0100\n"
 "Last-Translator: Martin Beran <info@berycz.net>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -74,61 +74,115 @@ msgstr "Nové heslo"
 msgid "Confirm password"
 msgstr "Potvrdit heslo"
 
-#: edit_table.py:145 style_base.py:87 table.py:582
-msgid "Delete"
-msgstr "Smazat"
-
-#: edit_table.py:282 form.py:1603 style_base.py:85
-msgid "Save"
-msgstr "Uložit"
-
-#: edit_table.py:294
-msgid "Add row"
-msgstr "Přidat řádek"
-
-#: form.py:896
-msgid "This field is required"
-msgstr "Toto pole je povinné"
-
-#: form.py:1136 table.py:247
-msgid "Yes"
-msgstr "Ano"
-
-#: form.py:1136 table.py:249
-msgid "No"
-msgstr "Ne"
-
-#: form.py:1440
-msgid "create"
-msgstr "vytvořit"
-
-#: form.py:1441
+#: base__tests.py:67 form.py:1495
 msgid "edit"
 msgstr "editace"
 
-#: form.py:1442
+#: edit_table.py:145 style_base.py:87 table.py:586
+msgid "Delete"
+msgstr "Smazat"
+
+#: edit_table.py:302 form.py:1661 style_base.py:85
+msgid "Save"
+msgstr "Uložit"
+
+#: edit_table.py:314
+msgid "Add row"
+msgstr "Přidat řádek"
+
+#: form.py:152
+msgid "{} is not a valid boolean value"
+msgstr ""
+
+#: form.py:285
+msgid "Could not convert string to float: {}"
+msgstr ""
+
+#: form.py:296 form.py:314
+msgid "{} not in available choices"
+msgstr ""
+
+#: form.py:410
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks ago\""
+msgstr ""
+
+#: form.py:445
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks "
+"ago\"{extra_information}"
+msgstr ""
+
+#: form.py:477
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\" or "
+"{formats}"
+msgstr ""
+
+#: form.py:493
+#, python-brace-format
+msgid "Invalid literal for Decimal: '{string_value}'"
+msgstr ""
+
+#: form.py:518
+msgid ""
+"Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
+"123 4567 or +1 212 123 4567"
+msgstr ""
+
+#: form.py:942
+msgid "This field is required"
+msgstr "Toto pole je povinné"
+
+#: form.py:1186 table.py:250
+msgid "Yes"
+msgstr "Ano"
+
+#: form.py:1186 table.py:252
+msgid "No"
+msgstr "Ne"
+
+#: form.py:1448
+#, fuzzy, python-format
+#| msgid "Create %(model_name)s"
+msgid "Cannot delete %(name)s"
+msgstr "Vytvořit %(model_name)s"
+
+#: form.py:1494
+msgid "create"
+msgstr "vytvořit"
+
+#: form.py:1496
 msgid "delete"
 msgstr "smazat"
 
-#: form.py:1595
+#: form.py:1653
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:1962
+#: form.py:2041
 #, python-format
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Jste si jisti, že chcete smazat %(model_name)s \"%(instance)s\"?"
 
-#: query.py:598 templates/iommi/query/form_toggle_script.html:26
+#: query.py:609 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Přepnout do rozšířeného hledání"
 
-#: query.py:729
+#: query.py:740
 msgid "Search"
 msgstr "Hledané slovo"
 
-#: query.py:779
+#: query.py:790
+#, fuzzy
+#| msgid "Filter"
+msgctxt "verb"
 msgid "Filter"
 msgstr "Filtrovat"
 
@@ -136,31 +190,32 @@ msgstr "Filtrovat"
 msgid "Create"
 msgstr "Vytvořit"
 
-#: table.py:559
+#: table.py:563
 msgid "Edit"
 msgstr "Editovat"
 
-#: table.py:607
+#: table.py:611
 msgid "Download"
 msgstr "Stáhnout"
 
-#: table.py:631
+#: table.py:635
 msgid "Run"
 msgstr "Spustit"
 
-#: table.py:1319
-msgid "Are you sure you want to delete these {} items?"
-msgstr "Jste si jisti, že chcete smazat těchto {} položek?"
+#: table.py:1324
+#, python-brace-format
+msgid "Are you sure you want to delete these {count} items?"
+msgstr "Jste si jisti, že chcete smazat těchto {count} položek?"
 
-#: table.py:1334
+#: table.py:1339
 msgid "Yes, delete all!"
 msgstr "Ano, smazat vše!"
 
-#: table.py:1760 table.py:1972
+#: table.py:1767 table.py:1979
 msgid "Bulk change"
 msgstr "Hromadné úpravy"
 
-#: table.py:1978
+#: table.py:1985
 msgid "Bulk delete"
 msgstr "Hromadné mazání"
 
@@ -223,14 +278,14 @@ msgid ""
 "You can filter for relative dates: <code>field_name < \"10 days ago\"</"
 "code>. Supported fields are <code>days</code>, <code>months</code>, "
 "<code>years</code>, <code>quarters</code> and <code>weekdays</code>. They "
-"can be negative and abbreviated from <code>\"10 days ago\"</code> to <code>"
-"\"-10d\"</code>."
+"can be negative and abbreviated from <code>\"10 days ago\"</code> to "
+"<code>\"-10d\"</code>."
 msgstr ""
 "Také můžete filtrovat relativní datumy: <code>nazev_pole < \"10 days ago\"</"
 "code>. Podporované termíny jsou <code>days</code>, <code>months</code>, "
 "<code>years</code>, <code>quarters</code> a <code>weekdays</code>. Hodnoty "
-"mohou být záporné a lze je zkrátit z <code>\"10 days ago\"</code> na <code>"
-"\"-10d\"</code>."
+"mohou být záporné a lze je zkrátit z <code>\"10 days ago\"</code> na "
+"<code>\"-10d\"</code>."
 
 #: templates/iommi/query/form_toggle_script.html:17
 msgid "Switch to basic search"

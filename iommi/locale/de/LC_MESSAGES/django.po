@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-06 09:50+0200\n"
+"POT-Creation-Date: 2023-11-22 09:51+0100\n"
 "PO-Revision-Date: 2021-10-07 17:36+0000\n"
 "Last-Translator: Waldemar Hamm <wh@ravok.de>\n"
 "Language-Team: German <https://weblate.ravok.de/projects/iommi/iommi/de/>\n"
@@ -83,68 +83,113 @@ msgstr "Neues Passwort"
 msgid "Confirm password"
 msgstr "Passwort bestätigen"
 
-#: edit_table.py:145 style_base.py:87 table.py:582
+#: base__tests.py:67 form.py:1495
+msgid "edit"
+msgstr "bearbeiten"
+
+#: edit_table.py:145 style_base.py:87 table.py:586
 msgid "Delete"
 msgstr "Löschen"
 
-#: edit_table.py:282 form.py:1607 style_base.py:85
+#: edit_table.py:302 form.py:1661 style_base.py:85
 msgid "Save"
 msgstr "Speichern"
 
-#: edit_table.py:294
+#: edit_table.py:314
 msgid "Add row"
 msgstr ""
 
-#: form.py:896
+#: form.py:152
+msgid "{} is not a valid boolean value"
+msgstr ""
+
+#: form.py:285
+msgid "Could not convert string to float: {}"
+msgstr ""
+
+#: form.py:296 form.py:314
+msgid "{} not in available choices"
+msgstr ""
+
+#: form.py:410
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks ago\""
+msgstr ""
+
+#: form.py:445
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks "
+"ago\"{extra_information}"
+msgstr ""
+
+#: form.py:477
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\" or "
+"{formats}"
+msgstr ""
+
+#: form.py:493
+#, python-brace-format
+msgid "Invalid literal for Decimal: '{string_value}'"
+msgstr ""
+
+#: form.py:518
+msgid ""
+"Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
+"123 4567 or +1 212 123 4567"
+msgstr ""
+
+#: form.py:942
 msgid "This field is required"
 msgstr "Dieses Feld ist erforderlich"
 
-#: form.py:1136 table.py:247
+#: form.py:1186 table.py:250
 msgid "Yes"
 msgstr "Ja"
 
-#: form.py:1136 table.py:249
+#: form.py:1186 table.py:252
 msgid "No"
 msgstr "Nein"
 
-#: form.py:1396
+#: form.py:1448
 #, fuzzy, python-format
 #| msgid "Create %(model_name)s"
 msgid "Cannot delete %(name)s"
 msgstr "%(model_name)s anlegen"
 
-#: form.py:1442
+#: form.py:1494
 msgid "create"
 msgstr "anlegen"
 
-#: form.py:1443
-msgid "edit"
-msgstr "bearbeiten"
-
-#: form.py:1444
+#: form.py:1496
 msgid "delete"
 msgstr "löschen"
 
-#: form.py:1599
+#: form.py:1653
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(model_name)s %(crud_type)s"
 
-#: form.py:1987
+#: form.py:2041
 #, fuzzy, python-format
 #| msgid "Are you sure you want to delete these {} items?"
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Bist Du sicher, dass du diese {} Zeilen löschen willst?"
 
-#: query.py:601 templates/iommi/query/form_toggle_script.html:26
+#: query.py:609 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Zur erweiterten Suchfunktion wechseln"
 
-#: query.py:732
+#: query.py:740
 msgid "Search"
 msgstr "Suche"
 
-#: query.py:782
+#: query.py:790
 #, fuzzy
 #| msgid "Filter"
 msgctxt "verb"
@@ -157,31 +202,32 @@ msgstr "Filtere"
 msgid "Create"
 msgstr "anlegen"
 
-#: table.py:559
+#: table.py:563
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: table.py:607
+#: table.py:611
 msgid "Download"
 msgstr "Herunterladen"
 
-#: table.py:631
+#: table.py:635
 msgid "Run"
 msgstr "Ausführen"
 
-#: table.py:1319
-msgid "Are you sure you want to delete these {} items?"
-msgstr "Bist Du sicher, dass du diese {} Zeilen löschen willst?"
+#: table.py:1324
+#, python-brace-format
+msgid "Are you sure you want to delete these {count} items?"
+msgstr "Bist Du sicher, dass du diese {count} Zeilen löschen willst?"
 
-#: table.py:1334
+#: table.py:1339
 msgid "Yes, delete all!"
 msgstr "Ja, lösche alles!"
 
-#: table.py:1760 table.py:1972
+#: table.py:1767 table.py:1979
 msgid "Bulk change"
 msgstr "Massenänderung"
 
-#: table.py:1978
+#: table.py:1985
 msgid "Bulk delete"
 msgstr "Massenlöschung"
 
