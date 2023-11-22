@@ -55,18 +55,18 @@ def test_debug_tree(settings):
     tree = [', '.join([str(x.value) for x in cells]) for cells in result.cells_for_rows()]
     expected = """\
 , , MyPage, True
-endpoints, None, Members[Endpoint], True
+endpoints, None, Endpoint, True
 endpoints__debug_tree, debug_tree, Endpoint, True
-parts, None, Members[Fragment], True
+parts, None, Fragment, True
 parts__bar, bar, Fragment, True
-parts__bar__children, None, Members[Fragment], True
+parts__bar__children, None, Fragment, True
 parts__bar__children__text, None, str, False
 parts__nested, nested, NestedPage, True
-parts__nested__endpoints, None, Members[Endpoint], True
+parts__nested__endpoints, None, Endpoint, True
 parts__nested__endpoints__fisk, fisk, Endpoint, True
-parts__nested__parts, None, Members[Fragment], True
+parts__nested__parts, None, Fragment, True
 parts__nested__parts__foo, foo, Fragment, True
-parts__nested__parts__foo__children, None, Members[Fragment], True
+parts__nested__parts__foo__children, None, Fragment, True
 parts__nested__parts__foo__children__text, None, str, False"""
     assert '\n'.join(tree) == expected
 
@@ -82,19 +82,19 @@ def test_debug_tree_crash_on_non_editable(settings):
     tree = [', '.join([str(x.value) for x in cells]) for cells in result.cells_for_rows()]
     expected = """\
 , , Form, True
-endpoints, None, Members[Endpoint], True
+endpoints, None, Endpoint, True
 endpoints__debug_tree, debug_tree, Endpoint, True
-fields, None, Members[Field], True
+fields, None, Field, True
 fields__foo, foo, Field, True
-fields__foo__endpoints, None, Members[Endpoint], True
+fields__foo__endpoints, None, Endpoint, True
 fields__foo__endpoints__config, config, Endpoint, True
 fields__foo__endpoints__validate, validate, Endpoint, True
 fields__foo__input, non_editable_input, Fragment, True
-fields__foo__input__children, None, Members[Fragment], True
+fields__foo__input__children, None, Fragment, True
 fields__foo__input__children__text, None, NoneType, False
 fields__foo__label, label, Fragment, True
 fields__foo__non_editable_input, non_editable_input, Fragment, True
-fields__foo__non_editable_input__children, None, Members[Fragment], True
+fields__foo__non_editable_input__children, None, Fragment, True
 fields__foo__non_editable_input__children__text, None, NoneType, False"""
     assert '\n'.join(tree) == expected
 

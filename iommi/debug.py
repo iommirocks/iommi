@@ -139,7 +139,7 @@ def endpoint__debug_tree(endpoint, **_):
         )
         path = Column()
         type = Column(
-            attr=None,
+            attr='type_name',
             cell__format=lambda row, **_: (
                 format_html(
                     '{prefix}<a href="https://docs.iommi.rocks/en/latest/{type_name}.html{anchor}">{display_name}</a>',

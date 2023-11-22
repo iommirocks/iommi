@@ -64,11 +64,11 @@ Refinable members
 Shortcuts
 ---------
 
-`shortcut1`
-^^^^^^^^^^^
+`Foo.shortcut1`
+^^^^^^^^^^^^^^^
 
-`shortcut2`
-^^^^^^^^^^^
+`Foo.shortcut2`
+^^^^^^^^^^^^^^^
 
 shortcut2 docstring
 
@@ -80,8 +80,8 @@ Defaults
 * `description`
     * `fish`
 
-`shortcut3`
-^^^^^^^^^^^
+`Foo.shortcut3`
+^^^^^^^^^^^^^^^
 
 shortcut3 docstring
 
@@ -99,8 +99,8 @@ Defaults
 * `description`
     * `lambda foo: 'qwe'`
 
-`shortcut4`
-^^^^^^^^^^^
+`Foo.shortcut4`
+^^^^^^^^^^^^^^^
 
 Defaults
 ++++++++

@@ -188,8 +188,8 @@ def test_read_defaults():
     actual_doc = doc_generator()
 
     assert (
-        """`time`
-^^^^^^
+        """`Column.time`
+^^^^^^^^^^^^^
 
 Defaults
 ++++++++
