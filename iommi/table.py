@@ -1321,7 +1321,7 @@ def bulk_delete__post_handler(table, form, **_):
     )
 
     class ConfirmPage(Page):
-        title = html.h1(gettext_lazy('Are you sure you want to delete these {} items?').format(queryset.count()))
+        title = html.h1(gettext_lazy('Are you sure you want to delete these {count} items?').format(count=queryset.count()))
         confirm = Table(
             auto__rows=queryset,
             columns__select=dict(

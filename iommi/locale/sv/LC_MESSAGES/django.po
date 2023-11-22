@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-06 09:50+0200\n"
+"POT-Creation-Date: 2023-11-22 09:51+0100\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -72,103 +72,152 @@ msgstr "Nytt lösenord"
 msgid "Confirm password"
 msgstr "Repetera lösenord"
 
-#: edit_table.py:145 style_base.py:87 table.py:582
-msgid "Delete"
-msgstr "Radera"
-
-#: edit_table.py:282 form.py:1607 style_base.py:85
-msgid "Save"
-msgstr "Spara"
-
-#: edit_table.py:294
-msgid "Add row"
-msgstr ""
-
-#: form.py:896
-msgid "This field is required"
-msgstr "Detta fält får inte vara tomt"
-
-#: form.py:1136 table.py:247
-msgid "Yes"
-msgstr "Ja"
-
-#: form.py:1136 table.py:249
-msgid "No"
-msgstr "Nej"
-
-#: form.py:1396
-#, python-format
-#| msgid "Create %(model_name)s"
-msgid "Cannot delete %(name)s"
-msgstr "Kan inte radera %(name)s"
-
-#: form.py:1442
-msgid "create"
-msgstr "skapa"
-
-#: form.py:1443
+#: base__tests.py:67 form.py:1495
 msgid "edit"
 msgstr "ändra"
 
-#: form.py:1444
+#: edit_table.py:145 style_base.py:87 table.py:586
+msgid "Delete"
+msgstr "Radera"
+
+#: edit_table.py:302 form.py:1661 style_base.py:85
+msgid "Save"
+msgstr "Spara"
+
+#: edit_table.py:314
+msgid "Add row"
+msgstr "Lägg till rad"
+
+#: form.py:152
+msgid "{} is not a valid boolean value"
+msgstr "{} är inte ett giltigt booleskt värde"
+
+#: form.py:285
+msgid "Could not convert string to float: {}"
+msgstr "Kunde inte konvertera sträng till flyttal: {}"
+
+#: form.py:296 form.py:314
+msgid "{} not in available choices"
+msgstr "{} är inte ett giltigt val"
+
+#: form.py:410
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks ago\""
+msgstr ""
+"Tidsdata \"{string_value}\" matchar inget av formaten \"now\", "
+"{formats}, och är inte ett relativt datum som \"2d\" or \"2 weeks ago\""
+
+#: form.py:445
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\", "
+"{formats}, and is not a relative date like \"2d\" or \"2 weeks "
+"ago\"{extra_information}"
+msgstr ""
+"Tidsdata \"{string_value}\" matchar inget av formaten \"now\", "
+"{formats}, och är inte ett relativt datum som \"2d\" or \"2 weeks ago\"{extra_information}"
+
+#: form.py:477
+#, python-brace-format
+msgid ""
+"Time data \"{string_value}\" does not match any of the formats \"now\" or "
+"{formats}"
+msgstr ""
+"Tidsdata \"{string_value}\" matchar inget av formaten \"now\", "
+"{formats}"
+
+#: form.py:493
+#, python-brace-format
+msgid "Invalid literal for Decimal: '{string_value}'"
+msgstr "Ogiltig Decimal-literal: '{string_value}'"
+
+#: form.py:518
+msgid ""
+"Please use format +<country code> (XX) XX XX. Example of US number: +1 (212) "
+"123 4567 or +1 212 123 4567"
+msgstr ""
+"Var god använd formatet +<landskod> (XX) XX XX. Exempel på svenskt telefonnummer: +46 70 123 123"
+
+#: form.py:942
+msgid "This field is required"
+msgstr "Detta fält får inte vara tomt"
+
+#: form.py:1186 table.py:250
+msgid "Yes"
+msgstr "Ja"
+
+#: form.py:1186 table.py:252
+msgid "No"
+msgstr "Nej"
+
+#: form.py:1448
+#, python-format
+msgid "Cannot delete %(name)s"
+msgstr "Kan inte radera %(name)s"
+
+#: form.py:1494
+msgid "create"
+msgstr "skapa"
+
+#: form.py:1496
 msgid "delete"
 msgstr "radera"
 
-#: form.py:1599
+#: form.py:1653
 #, python-format
 msgid "%(crud_type)s %(model_name)s"
 msgstr "%(crud_type)s %(model_name)s"
 
-#: form.py:1987
+#: form.py:2041
 #, python-format
-#| msgid "Are you sure you want to delete these {} items?"
 msgid "Are you sure you want to delete the %(model_name)s \"%(instance)s\"?"
 msgstr "Är du säker att du vill radera %(model_name)s \"%(instance)s\"?"
 
-#: query.py:601 templates/iommi/query/form_toggle_script.html:26
+#: query.py:609 templates/iommi/query/form_toggle_script.html:26
 msgid "Switch to advanced search"
 msgstr "Byt till avancerad sökning"
 
-#: query.py:732
+#: query.py:740
 msgid "Search"
 msgstr "Sök"
 
-#: query.py:782
-#| msgid "Filter"
+#: query.py:790
 msgctxt "verb"
 msgid "Filter"
 msgstr "Filtrera"
 
 #: style_base.py:86
-#| msgid "create"
 msgid "Create"
 msgstr "Skapa"
 
-#: table.py:559
+#: table.py:563
 msgid "Edit"
 msgstr "Ändra"
 
-#: table.py:607
+#: table.py:611
 msgid "Download"
 msgstr "Ladda ner"
 
-#: table.py:631
+#: table.py:635
 msgid "Run"
 msgstr "Kör"
 
-#: table.py:1319
-msgid "Are you sure you want to delete these {} items?"
-msgstr "Är du säker att du vill radera dessa {} rader?"
+#: table.py:1324
+#, python-brace-format
+msgid "Are you sure you want to delete these {count} items?"
+msgstr "Är du säker att du vill radera dessa {count} rader?"
 
-#: table.py:1334
+#: table.py:1339
 msgid "Yes, delete all!"
 msgstr "Ja, radera alla!"
 
-#: table.py:1760 table.py:1972
+#: table.py:1767 table.py:1979
 msgid "Bulk change"
 msgstr "Ändra markerade"
 
-#: table.py:1978
+#: table.py:1985
 msgid "Bulk delete"
 msgstr "Radera markerade"
 
@@ -190,54 +239,43 @@ msgid "Queries"
 msgstr "Filtreringar"
 
 #: templates/iommi/query/advanced.html:24
-#| msgid "Search for an exact value: field_name=value"
 msgid "Search for an exact value: <code>field_name=value</code>"
 msgstr "Sök efter ett exakt värde: <code>fält_namn=värde</code>"
 
 #: templates/iommi/query/advanced.html:25
-#| msgid ""
-#| "Search for an exact value containing space: field_name=\"value with "
-#| "space\""
 msgid ""
 "Search for an exact value containing space: <code>field_name=\"value with "
 "space\"</code>"
 msgstr ""
-"Sök efter ett exakt värde som har ett mellanslag: <code>fält_namn=\"värde med "
-"mellanslag\"</code>"
+"Sök efter ett exakt värde som har ett mellanslag: <code>fält_namn=\"värde "
+"med mellanslag\"</code>"
 
 #: templates/iommi/query/advanced.html:26
-#| msgid "Containing a text: field_name:val"
 msgid "Containing a text: <code>field_name:val</code>"
 msgstr "Innehåller text: <code>fält_namn:värde</code>"
 
 #: templates/iommi/query/advanced.html:27
-#| msgid "Exclude a value: field_name!=value"
 msgid "Exclude a value: <code>field_name!=value</code>"
 msgstr "Uteslut ett värde: <code>fält_namn!=värde</code>"
 
 #: templates/iommi/query/advanced.html:28
-#| msgid ""
-#| "You can also use &lt;, &gt;, &lt;= and &gt;= to find ranges of values: "
-#| "field_name&lt;10"
 msgid ""
 "You can also use <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> "
 "and <code>&gt;=</code> to find ranges of values: <code>field_name&lt;10</"
 "code>"
 msgstr ""
-"Du kan också använda <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code> och <code>&gt;=</code> för att filtrera ut "
-"intervall: <code>fält_namn&lt;10</code>"
+"Du kan också använda <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</"
+"code> och <code>&gt;=</code> för att filtrera ut intervall: "
+"<code>fält_namn&lt;10</code>"
 
 #: templates/iommi/query/advanced.html:29
-#| msgid "To search for dates, use ISO8601 format: field_name>1969-07-20"
 msgid ""
 "To search for dates, use ISO8601 format: <code>field_name>1969-07-20</code>"
-msgstr "För att söka efter datum, använd ISO8601-format: <code>fält_namn>1969-07-20</code>"
+msgstr ""
+"För att söka efter datum, använd ISO8601-format: <code>fält_namn>1969-07-20</"
+"code>"
 
 #: templates/iommi/query/advanced.html:30
-#| msgid ""
-#| "You can filter for relative dates: field_name < \"10 days ago\". "
-#| "Supported fields are days, months, years, quarters and weekdays. They can "
-#| "be negative and abbreviated from \"10 days ago\" to \"-10d\"."
 msgid ""
 "You can filter for relative dates: <code>field_name < \"10 days ago\"</"
 "code>. Supported fields are <code>days</code>, <code>months</code>, "
@@ -245,9 +283,9 @@ msgid ""
 "can be negative and abbreviated from <code>\"10 days ago\"</code> to "
 "<code>\"-10d\"</code>."
 msgstr ""
-"Du kan filtrera på relativa datum: <code>fält_namn < \"10 days ago\"</code>. Enheter som "
-"stöds är days, months, years, quarters and weekdays. Dom kan vara negativa "
-"och förkortas från <code>\"10 days ago\" to \"-10d\"</code>."
+"Du kan filtrera på relativa datum: <code>fält_namn < \"10 days ago\"</code>. "
+"Enheter som stöds är days, months, years, quarters and weekdays. Dom kan "
+"vara negativa och förkortas från <code>\"10 days ago\" to \"-10d\"</code>."
 
 #: templates/iommi/query/form_toggle_script.html:17
 msgid "Switch to basic search"
